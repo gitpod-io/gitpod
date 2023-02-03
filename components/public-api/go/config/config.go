@@ -17,6 +17,9 @@ type Configuration struct {
 	// StripeWebhookSigningSecretPath is a filepath to a secret used to validate incoming webhooks from Stripe
 	StripeWebhookSigningSecretPath string `json:"stripeWebhookSigningSecretPath"`
 
+	// OIDCClientJWTSigningSecretPath is a filepath to a secret used to sign and validate JWTs used for OIDC flows
+	OIDCClientJWTSigningSecretPath string `json:"oidcClientJWTSigningSecretPath"`
+
 	// Path to file which contains personal access token singing key
 	PersonalAccessTokenSigningKeyPath string `json:"personalAccessTokenSigningKeyPath"`
 

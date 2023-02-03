@@ -99,7 +99,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                     e.preventDefault();
                 }
             }
-            if (e.key === " ") {
+            if (e.key === " " && search === "") {
                 toggleDropDown();
                 e.preventDefault();
             }

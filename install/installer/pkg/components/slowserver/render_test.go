@@ -30,17 +30,9 @@ func TestObjects_NotRenderedByDefault(t *testing.T) {
 	require.Empty(t, objects, "no objects should be rendered with default config")
 }
 
-func TestObjects_RenderedWhenExperimentalConfigSet(t *testing.T) {
-	ctx := renderContext(t, nil, true)
-
-	objects, err := Objects(ctx)
-	require.NoError(t, err)
-	require.NotEmpty(t, objects, "must render objects because experimental config is specified")
-	require.Len(t, objects, 10, "should render expected k8s objects")
-}
-
 func TestServerDeployment_UsesToxiproxyDbHost(t *testing.T) {
-	ctx := renderContext(t, nil, true)
+	slowDbHost := toxiproxy.Component
+	ctx := renderContext(t, nil, slowDbHost)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -53,7 +45,7 @@ func TestServerDeployment_UsesToxiproxyDbHost(t *testing.T) {
 		if c.Name == Component {
 			for _, e := range c.Env {
 				if e.Name == "DB_HOST" {
-					require.Equal(t, toxiproxy.Component, e.Value)
+					require.Equal(t, slowDbHost, e.Value)
 				}
 			}
 		}
@@ -61,7 +53,8 @@ func TestServerDeployment_UsesToxiproxyDbHost(t *testing.T) {
 }
 
 func TestServerDeployment_DbWaiterUsesToxiproxyDbHost(t *testing.T) {
-	ctx := renderContext(t, nil, true)
+	slowDbHost := toxiproxy.Component
+	ctx := renderContext(t, nil, slowDbHost)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -81,7 +74,7 @@ func TestServerDeployment_DbWaiterUsesToxiproxyDbHost(t *testing.T) {
 	waiterContainer := dbWaiterContainers[0]
 	for _, e := range waiterContainer.Env {
 		if e.Name == "DB_HOST" {
-			require.Equal(t, toxiproxy.Component, e.Value)
+			require.Equal(t, slowDbHost, e.Value)
 		}
 	}
 }
@@ -107,7 +100,8 @@ func TestSlowServerDeployment_UsesServerReplicaCountAndResources(t *testing.T) {
 		},
 	}
 
-	ctx := renderContext(t, podConfig, true)
+	slowDbHost := toxiproxy.Component
+	ctx := renderContext(t, podConfig, slowDbHost)
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -133,7 +127,7 @@ func TestSlowServerDeployment_UsesServerReplicaCountAndResources(t *testing.T) {
 }
 
 func TestServerDeployment_MountsGithubAppSecret(t *testing.T) {
-	ctx := renderContext(t, nil, false)
+	ctx := renderContext(t, nil, "")
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -163,7 +157,7 @@ func TestServerDeployment_MountsGithubAppSecret(t *testing.T) {
 }
 
 func TestServerDeployment_UsesTracingConfig(t *testing.T) {
-	ctx := renderContext(t, nil, false)
+	ctx := renderContext(t, nil, "")
 
 	objects, err := deployment(ctx)
 	require.NoError(t, err)
@@ -186,7 +180,7 @@ func TestServerDeployment_UsesTracingConfig(t *testing.T) {
 	require.Equal(t, "12.5", actualSamplerParam)
 }
 
-func renderContext(t *testing.T, podConfig map[string]*config.PodConfig, slowDatabase bool) *common.RenderContext {
+func renderContext(t *testing.T, podConfig map[string]*config.PodConfig, slowDatabaseHost string) *common.RenderContext {
 	var samplerType experimental.TracingSampleType = "probabilistic"
 
 	ctx, err := common.NewRenderContext(config.Config{
@@ -209,7 +203,7 @@ func renderContext(t *testing.T, podConfig map[string]*config.PodConfig, slowDat
 					SamplerType:  &samplerType,
 					SamplerParam: pointer.Float64(12.5),
 				},
-				SlowDatabase: slowDatabase,
+				SlowDatabase: slowDatabaseHost,
 				Server: &experimental.ServerConfig{
 					GithubApp: &experimental.GithubApp{
 						AppId:           0,

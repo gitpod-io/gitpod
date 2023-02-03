@@ -367,6 +367,20 @@ if [[ "${GITPOD_WITH_DEDICATED_EMU}" == "true" ]]
 then
   # Suppress the Self-Hosted setup modal
   yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.showSetupModal "false"
+
+  #
+  # configure admin-login-secret
+  #
+  kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret admin-login-secret -o yaml > admin-login-secret.yaml
+  yq w -i admin-login-secret.yaml metadata.namespace "default"
+  yq d -i admin-login-secret.yaml metadata.creationTimestamp
+  yq d -i admin-login-secret.yaml metadata.uid
+  yq d -i admin-login-secret.yaml metadata.resourceVersion
+  kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f admin-login-secret.yaml
+  rm -f admin-login-secret.yaml
+
+  yq w -i "${INSTALLER_CONFIG_PATH}" adminLoginSecret.kind "secret"
+  yq w -i "${INSTALLER_CONFIG_PATH}" adminLoginSecret.name "admin-login-secret"
 fi
 
 #
@@ -418,6 +432,11 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.baseUrl "
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.pollInterval "1m"
 
 #
+# configure JWT signign key
+#
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.publicApi.oidcClientJWTSigningKeySecretName "oidc-client-jwt-signing-key"
+
+#
 # configure Personal Access Token signign key
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.publicApi.personalAccessTokenSigningKeySecretName "personal-access-token-signing-key"
@@ -442,7 +461,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templat
 #
 if [[ "${GITPOD_WITH_SLOW_DATABASE}" == "true" ]]
 then
-  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.slowDatabase" "true"
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.slowDatabase" "toxiproxy"
 fi
 
 #
@@ -495,6 +514,18 @@ yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "st
 # Enable SpiceDB on all preview envs
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.spicedb.enabled "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.spicedb.secretRef "spicedb-secret"
+
+#
+# Configure spicedb secret
+#
+kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret spicedb-secret -o yaml > spicedb-secret.yaml
+yq w -i spicedb-secret.yaml metadata.namespace "default"
+yq d -i spicedb-secret.yaml metadata.creationTimestamp
+yq d -i spicedb-secret.yaml metadata.uid
+yq d -i spicedb-secret.yaml metadata.resourceVersion
+kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f spicedb-secret.yaml
+rm -f spicedb-secret.yaml
 
 #
 # Enable "Frontend Dev" on all preview envs

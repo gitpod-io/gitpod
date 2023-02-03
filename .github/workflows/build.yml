@@ -14,13 +14,16 @@ jobs:
       group: ${{ github.head_ref || github.ref }}-configuration
       cancel-in-progress: true
     outputs:
+      is_main_branch: ${{ steps.output.outputs.is_main_branch }}
       version: ${{ steps.output.outputs.version }}
       preview_enable: ${{ steps.output.outputs.preview_enable }}
       preview_infra_provider: ${{ steps.output.outputs.preview_infra_provider }}
-      build_enable: ${{ steps.output.outputs.build_enable }}
+      with_github_actions: ${{ steps.output.outputs.with_github_actions }}
       build_no_cache: ${{ steps.output.outputs.build_no_cache }}
       build_no_test: ${{ steps.output.outputs.build_no_test }}
       build_leeway_target: ${{ steps.output.outputs.build_leeway_target }}
+      with_large_vm: ${{ steps.output.outputs.with_large_vm }}
+      publish_to_npm: ${{ steps.output.outputs.publish_to_npm }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -32,13 +35,16 @@ jobs:
         shell: bash
         run: |
           {
-            echo "version=${{ steps.branches.outputs.sanitized-branch-name }}.${{github.run_number}}"
+            echo "is_main_branch=${{ (github.head_ref || github.ref) == 'refs/heads/main' }}"
+            echo "version=${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}"
+            echo "with_github_actions=${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}"
             echo "preview_enable=${{ contains(github.event.pull_request.body, '[x] /werft with-preview') }}"
             echo "preview_infra_provider=${{ contains(github.event.pull_request.body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}"
-            echo "build_enable=${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}"
             echo "build_no_cache=${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}"
             echo "build_no_test=${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}"
             echo "build_leeway_target=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')"
+            echo "with_large_vm=${{ contains(github.event.pull_request.body, '[X] /werft with-large-vm') }}"
+            echo "publish_to_npm=${{ contains(github.event.pull_request.body, '[X] /werft publish-to-npm') }}"
           } >> $GITHUB_OUTPUT
 
   build-previewctl:
@@ -46,7 +52,8 @@ jobs:
     needs: [configuration]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-previewctl
-      cancel-in-progress: true
+      # see comment in build-gitpod below for context
+      cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: [self-hosted]
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
@@ -68,33 +75,36 @@ jobs:
 
           export LEEWAY_WORKSPACE_ROOT="$(pwd)"
           leeway build dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}"
-          echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
+          echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}" -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
 
   infrastructure:
     needs: [configuration, build-previewctl]
-    if: ${{ needs.configuration.outputs.preview_enable == 'true' }}
+    if: ${{ needs.configuration.outputs.preview_enable == 'true' && needs.configuration.outputs.with_github_actions == 'true' }}
     runs-on: [self-hosted]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Create preview environment infrastructure
-        env:
-          TF_VAR_infra_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
         id: create
         uses: ./.github/actions/preview-create
         with:
+          name: ${{ github.head_ref || github.ref }}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
+          large_vm: ${{ needs.configuration.outputs.with_large_vm }}
 
   build-gitpod:
     name: Build Gitpod
     needs: [configuration]
-    if: ${{ needs.configuration.outputs.build_enable == 'true' }}
+    if: ${{ needs.configuration.outputs.is_main_branch == 'true' || needs.configuration.outputs.with_github_actions == 'true' }}
     runs-on: [self-hosted]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-gitpod
-      cancel-in-progress: true
+      # For the main branch we always want the build job to run to completion
+      # For other branches we only care about the "latest" version, so it is fine to cancel in-progress builds
+      cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     services:
       mysql:
         image: mysql:5.7
@@ -157,6 +167,7 @@ jobs:
         with:
           secrets: |-
             segment-io-token:gitpod-core-dev/segment-io-token
+            npm-auth-token:gitpod-core-dev/npm-auth-token
       - name: Leeway Build
         id: leeway
         shell: bash
@@ -168,10 +179,13 @@ jobs:
           PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
           PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
           PR_LEEWAY_TARGET: ${{needs.configuration.outputs.build_leeway_target}}
+          NPM_AUTH_TOKEN: '${{ steps.secrets.outputs.npm-auth-token }}'
+          PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true' }}
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
           [[ -z "$PR_LEEWAY_TARGET" ]] && PR_LEEWAY_TARGET="components:all"
+          [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
 
           mkdir -p /__w/gitpod/gitpod/test-coverage-report
 
@@ -182,7 +196,8 @@ jobs:
             $TEST \
             -Dversion=$VERSION \
             -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
-            -DpublishToNPM=false \
+            -DpublishToNPM="${PUBLISH_TO_NPM}" \
+            -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
             --coverage-output-path=/__w/gitpod/gitpod/test-coverage-report \
             --report report.html || RESULT=$?
           set +x
@@ -210,8 +225,9 @@ jobs:
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          name: ${{ github.head_ref || github.ref }}
           version: ${{needs.configuration.outputs.version}}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
 
   monitoring:

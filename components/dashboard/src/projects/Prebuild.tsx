@@ -6,54 +6,30 @@
 
 import dayjs from "dayjs";
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useState } from "react";
-import { useHistory, useLocation, useRouteMatch } from "react-router";
+import { useEffect, useState } from "react";
+import { useHistory, useParams } from "react-router";
 import Header from "../components/Header";
 import PrebuildLogs from "../components/PrebuildLogs";
 import Spinner from "../icons/Spinner.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { shortCommitMessage } from "./render-utils";
-import { listAllProjects } from "../service/public-api";
-import { UserContext } from "../user-context";
+import { useCurrentProject } from "./project-context";
 
 export default function () {
     const history = useHistory();
-    const location = useLocation();
+    const project = useCurrentProject();
 
-    const { teams } = useContext(TeamsContext);
-    const { user } = useContext(UserContext);
-    const team = getCurrentTeam(location, teams);
-
-    const match = useRouteMatch<{ team: string; project: string; prebuildId: string }>(
-        "/(t/)?:team/:project/:prebuildId",
-    );
-    const projectSlug = match?.params?.project;
-    const prebuildId = match?.params?.prebuildId;
+    const { prebuildId } = useParams<{ prebuildId: string }>();
 
     const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
     const [isRerunningPrebuild, setIsRerunningPrebuild] = useState<boolean>(false);
     const [isCancellingPrebuild, setIsCancellingPrebuild] = useState<boolean>(false);
 
     useEffect(() => {
-        if (!teams || !projectSlug || !prebuildId) {
+        if (!project || !prebuildId) {
             return;
         }
         (async () => {
-            let projects: Project[];
-            if (!!team) {
-                projects = await listAllProjects({ teamId: team.id });
-            } else {
-                projects = await listAllProjects({ userId: user?.id });
-            }
-
-            const project =
-                projectSlug && projects.find((p) => (!!p.slug ? p.slug === projectSlug : p.name === projectSlug));
-            if (!project) {
-                console.error(new Error(`Project not found! (teamId: ${team?.id}, projectName: ${projectSlug})`));
-                return;
-            }
-
             const prebuilds = await getGitpodService().server.findPrebuilds({
                 projectId: project.id,
                 prebuildId,
@@ -70,7 +46,7 @@ export default function () {
                 setPrebuild(update);
             },
         }).dispose;
-    }, [prebuildId, projectSlug, team, teams]);
+    }, [prebuildId, project]);
 
     const renderTitle = () => {
         if (!prebuild) {
@@ -131,7 +107,7 @@ export default function () {
             setIsRerunningPrebuild(true);
             await getGitpodService().server.triggerPrebuild(prebuild.info.projectId, prebuild.info.branch);
             // TODO: Open a Prebuilds page that's specific to `prebuild.info.branch`?
-            history.push(`/${!!team ? "t/" + team.slug : "projects"}/${projectSlug}/prebuilds`);
+            history.push(`/projects/${Project.slug(project!)}/prebuilds`);
         } catch (error) {
             console.error("Could not rerun prebuild", error);
         } finally {

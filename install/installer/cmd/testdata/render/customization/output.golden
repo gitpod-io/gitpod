@@ -1360,19 +1360,6 @@ data:
   proxyUsername: ""
   proxyPassword: ""
 ---
-# v1/Secret server-admin-secret
-apiVersion: v1
-data:
-  login-key: bTMwRUgtTTItY1dNZ2tnZHk3cHU=
-kind: Secret
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: server
-  name: server-admin-secret
-  namespace: default
----
 # v1/ConfigMap agent-smith
 apiVersion: v1
 data:
@@ -1770,6 +1757,9 @@ data:
           },
           "workspace": {
             "codeImage": {
+              "version": "test"
+            },
+            "codeHelperImage": {
               "version": "test"
             },
             "dockerUp": {
@@ -2324,21 +2314,6 @@ data:
         gitpod.io: hello
         hello: world
       name: ide-config
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ConfigMap
-    metadata:
-      annotations:
-        gitpod.io: hello
-        hello: world
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: server
-        gitpod.io: hello
-        hello: world
-      name: server-ide-config
       namespace: default
     ---
     apiVersion: v1
@@ -2947,16 +2922,6 @@ data:
       name: server
       namespace: default
     ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: server
-      name: server-admin-secret
-      namespace: default
-    ---
     apiVersion: networking.k8s.io/v1
     kind: NetworkPolicy
     metadata:
@@ -3121,7 +3086,7 @@ data:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 8f9715de0ca5459f27239b0de167ca51f970b650173d793545278bf049b47465
+        gitpod.io/checksum_config: 0bb7669b80268061303b990baae787a8d997b25fb668c6ae4ddd32db507823e0
         hello: world
       creationTimestamp: null
       labels:
@@ -4232,8 +4197,16 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8f9e9f93136a787fde5142f0708367ffaf46094c",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-6f51885933f59a9f6fab937e8cb07a432559a28c",
+            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly",
+            "imageLayers": [
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-1f8f65b4b9b1be9c8bc5a981974a8d29c54ba235",
+              "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
+            ],
+            "latestImageLayers": [
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-1f8f65b4b9b1be9c8bc5a981974a8d29c54ba235",
+              "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
+            ]
           },
           "code-desktop": {
             "orderKey": "02",
@@ -5694,6 +5667,7 @@ data:
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "sessionServiceAddress": "server.default.svc.cluster.local:9876",
       "stripeWebhookSigningSecretPath": "",
+      "oidcClientJWTSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
       "databaseConfigPath": "/secrets/database-config",
       "server": {
@@ -5893,7 +5867,7 @@ data:
       },
       "oauthServer": {
         "enabled": true,
-        "jwtSecret": "_7wODLGlsPauKCw4SBI2"
+        "jwtSecret": "m30EH-M2-cWMgkgdy7pu"
       },
       "rateLimiter": {
         "groups": {
@@ -5929,7 +5903,7 @@ data:
       "admin": {
         "grantFirstUserAdminRole": true
       },
-      "adminLoginKeyFile": "/admin/login-key",
+      "adminLoginKeyFile": "",
       "prebuildLimiter": {
         "*": {
           "limit": 100,
@@ -5961,233 +5935,6 @@ metadata:
     gitpod.io: hello
     hello: world
   name: server-config
-  namespace: default
----
-# v1/ConfigMap server-ide-config
-apiVersion: v1
-data:
-  config.json: |-
-    {
-      "gpRunImage": "registry.hub.docker.com/gitpod/gp-run:ak-test",
-      "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
-      "ideOptions": {
-        "options": {
-          "clion": {
-            "orderKey": "11",
-            "title": "CLion",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/clionLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/clion:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/clion:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-            "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ],
-            "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ]
-          },
-          "code": {
-            "orderKey": "00",
-            "title": "VS Code",
-            "type": "browser",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
-            "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8f9e9f93136a787fde5142f0708367ffaf46094c",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly"
-          },
-          "code-desktop": {
-            "orderKey": "02",
-            "title": "VS Code",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:test"
-          },
-          "goland": {
-            "orderKey": "05",
-            "title": "GoLand",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/golandLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-            "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ],
-            "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ]
-          },
-          "intellij": {
-            "orderKey": "04",
-            "title": "IntelliJ IDEA",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/intellijIdeaLogo.svg",
-            "label": "Ultimate",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-            "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ],
-            "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ]
-          },
-          "phpstorm": {
-            "orderKey": "07",
-            "title": "PhpStorm",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/phpstormLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-            "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ],
-            "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ]
-          },
-          "pycharm": {
-            "orderKey": "06",
-            "title": "PyCharm",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/pycharmLogo.svg",
-            "label": "Professional",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-            "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ],
-            "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ]
-          },
-          "rider": {
-            "orderKey": "10",
-            "title": "Rider",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/riderLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/rider:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rider:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-            "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ],
-            "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ]
-          },
-          "rubymine": {
-            "orderKey": "08",
-            "title": "RubyMine",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/rubymineLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/rubymine:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-            "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ],
-            "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ]
-          },
-          "webstorm": {
-            "orderKey": "09",
-            "title": "WebStorm",
-            "type": "desktop",
-            "logo": "https://ide.gitpod.example.com/image/ide-logo/webstormLogo.svg",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:test",
-            "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/webstorm:latest",
-            "pluginImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-            "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:test",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ],
-            "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest",
-              "eu.gcr.io/gitpod-core-dev/build/ide/jb-launcher:test"
-            ]
-          }
-        },
-        "defaultIde": "code",
-        "defaultDesktopIde": "code-desktop",
-        "clients": {
-          "jetbrains-gateway": {
-            "defaultDesktopIDE": "intellij",
-            "desktopIDEs": [
-              "intellij",
-              "goland",
-              "pycharm",
-              "phpstorm",
-              "rubymine",
-              "webstorm",
-              "rider",
-              "clion"
-            ],
-            "installationSteps": [
-              "If you don't see an open dialog in your browser, make sure you have the \u003ca target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'\u003eJetBrains Gateway with Gitpod Plugin\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
-            ]
-          },
-          "vscode": {
-            "defaultDesktopIDE": "code-desktop",
-            "desktopIDEs": [
-              "code-desktop"
-            ],
-            "installationSteps": [
-              "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/download'\u003eVS Code\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
-            ]
-          },
-          "vscode-insiders": {
-            "defaultDesktopIDE": "code-desktop",
-            "desktopIDEs": [
-              "code-desktop"
-            ],
-            "installationSteps": [
-              "If you don't see an open dialog in your browser, make sure you have \u003ca target='_blank' class='gp-link' href='https://code.visualstudio.com/insiders'\u003eVS Code Insiders\u003c/a\u003e installed on your machine, and then click \u003cb\u003e${OPEN_LINK_LABEL}\u003c/b\u003e below."
-            ]
-          }
-        }
-      }
-    }
-kind: ConfigMap
-metadata:
-  annotations:
-    gitpod.io: hello
-    hello: world
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: server
-    gitpod.io: hello
-    hello: world
-  name: server-ide-config
   namespace: default
 ---
 # v1/ConfigMap workspace-templates
@@ -6462,6 +6209,9 @@ data:
       },
       "prometheus": {
         "addr": "127.0.0.1:9500"
+      },
+      "health": {
+        "addr": ""
       }
     }
 kind: ConfigMap
@@ -10716,6 +10466,8 @@ spec:
           value: gitpod.example.com
         - name: FRONTEND_DEV_ENABLED
           value: "false"
+        - name: WORKSPACE_HANDLER_FILE
+          value: full
         image: eu.gcr.io/gitpod-core-dev/build/proxy:test
         imagePullPolicy: IfNotPresent
         name: proxy
@@ -10795,7 +10547,7 @@ kind: Deployment
 metadata:
   annotations:
     gitpod.io: hello
-    gitpod.io/checksum_config: 8f9715de0ca5459f27239b0de167ca51f970b650173d793545278bf049b47465
+    gitpod.io/checksum_config: 0bb7669b80268061303b990baae787a8d997b25fb668c6ae4ddd32db507823e0
     hello: world
   creationTimestamp: null
   labels:
@@ -11118,7 +10870,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 5e80b56add47823bbf0336ebb857536d7038bc6479adcd4968aed08b987699ac
+        gitpod.io/checksum_config: e6d05fffcf5e9ac587d92811be31ad9dc44b346e423c57418d858e26bcf9552b
         hello: world
       creationTimestamp: null
       labels:
@@ -11210,8 +10962,6 @@ spec:
           value: /config/config.json
         - name: GITPOD_LICENSE_TYPE
           value: gitpod
-        - name: IDE_CONFIG_PATH
-          value: /ide-config/config.json
         - name: NODE_ENV
           value: production
         - name: SHLVL
@@ -11253,17 +11003,11 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
-        - mountPath: /ide-config
-          name: ide-config
-          readOnly: true
         - mountPath: /twilio-config
           name: twilio-secret-volume
           readOnly: true
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
-          readOnly: true
-        - mountPath: /admin
-          name: admin-login-key
           readOnly: true
       - args:
         - --logtostderr
@@ -11369,9 +11113,6 @@ spec:
       - configMap:
           name: server-config
         name: config
-      - configMap:
-          name: server-ide-config
-        name: ide-config
       - name: twilio-secret-volume
         secret:
           optional: true
@@ -11379,9 +11120,6 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
-      - name: admin-login-key
-        secret:
-          secretName: server-admin-secret
 status: {}
 ---
 # apps/v1/Deployment ws-manager
@@ -11414,7 +11152,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 73e659a7fb2aa1e8503b572ee8217f6e841db2e3ac8ebb8ca4a0ebf5beff6d9b
+        gitpod.io/checksum_config: 6b983353d1c4c0423d1f5df73a747cc6c897e1cfc515bbf0c5539110c172618b
         hello: world
       creationTimestamp: null
       labels:

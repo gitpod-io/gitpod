@@ -161,6 +161,8 @@ type Config struct {
 
 	Telemetry *TelemetryConfig `json:"telemetry,omitempty"`
 
+	AdminLoginSecret *ObjectRef `json:"adminLoginSecret,omitempty"`
+
 	Experimental *experimental.Config `json:"experimental,omitempty"`
 }
 
@@ -224,7 +226,6 @@ type ObjectStorage struct {
 	InCluster    *bool                      `json:"inCluster,omitempty"`
 	S3           *ObjectStorageS3           `json:"s3,omitempty"`
 	CloudStorage *ObjectStorageCloudStorage `json:"cloudStorage,omitempty"`
-	Azure        *ObjectStorageAzure        `json:"azure,omitempty"`
 	// DEPRECATED
 	MaximumBackupCount *int       `json:"maximumBackupCount,omitempty"`
 	BlobQuota          *int64     `json:"blobQuota,omitempty"`
@@ -243,10 +244,6 @@ type ObjectStorageS3 struct {
 type ObjectStorageCloudStorage struct {
 	ServiceAccount ObjectRef `json:"serviceAccount" validate:"required"`
 	Project        string    `json:"project" validate:"required"`
-}
-
-type ObjectStorageAzure struct {
-	Credentials ObjectRef `json:"credentials" validate:"required"`
 }
 
 type InstallationKind string
@@ -289,6 +286,8 @@ type S3Storage struct {
 	Endpoint    string     `json:"endpoint" validate:"required"`
 	Certificate *ObjectRef `json:"certificate,omitempty"`
 }
+
+type ServiceAnnotations map[string]string
 
 type LogLevel string
 
@@ -381,12 +380,17 @@ type Workspace struct {
 }
 
 type OpenVSX struct {
-	URL   string `json:"url" validate:"url"`
-	Proxy *Proxy `json:"proxy,omitempty"`
+	URL   string        `json:"url" validate:"url"`
+	Proxy *OpenVSXProxy `json:"proxy,omitempty"`
+}
+
+type OpenVSXProxy struct {
+	DisablePVC bool `json:"disablePVC"`
+	Proxy      `json:",inline"`
 }
 
 type Proxy struct {
-	DisablePVC bool `json:"disablePVC"`
+	ServiceAnnotations ServiceAnnotations `json:"serviceAnnotations"`
 }
 
 type LicensorType string
@@ -437,8 +441,19 @@ type CustomizationSpec struct {
 
 type Components struct {
 	AgentSmith *agentSmith.Config    `json:"agentSmith,omitempty"`
+	IDE        *IDEComponents        `json:"ide"`
 	PodConfig  map[string]*PodConfig `json:"podConfig,omitempty"`
 	Proxy      *ProxyComponent       `json:"proxy,omitempty"`
+}
+
+type IDEComponents struct {
+	Metrics       *IDEMetrics `json:"metrics,omitempty"`
+	Proxy         *Proxy      `json:"proxy,omitempty"`
+	ResolveLatest *bool       `json:"resolveLatest,omitempty"`
+}
+
+type IDEMetrics struct {
+	ErrorReportingEnabled bool `json:"errorReportingEnabled,omitempty"`
 }
 
 type PodConfig struct {

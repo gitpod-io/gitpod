@@ -154,7 +154,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 
 	var mgr manager.Manager
 	if config.WorkspaceController.Enabled {
-		mgr, err := ctrl.NewManager(restCfg, ctrl.Options{
+		mgr, err = ctrl.NewManager(restCfg, ctrl.Options{
 			Scheme:    scheme,
 			Port:      9443,
 			Namespace: config.Runtime.KubernetesNamespace,
@@ -175,6 +175,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 			UIDMapperConfig:  config.Uidmapper,
 			ContainerRuntime: containerRuntime,
 			CGroupMountPoint: config.CPULimit.CGroupBasePath,
+			MetricsRegistry:  reg,
 		})
 		if err != nil {
 			return nil, err
@@ -211,8 +212,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	}
 
 	return &Daemon{
-		Config: config,
-
+		Config:         config,
 		dispatch:       dsptch,
 		content:        contentService,
 		diskGuards:     dsk,

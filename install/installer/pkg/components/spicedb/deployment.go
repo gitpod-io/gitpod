@@ -5,6 +5,10 @@
 package spicedb
 
 import (
+	"errors"
+	"fmt"
+	"strings"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database/cloudsql"
@@ -26,6 +30,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, nil
 	}
 
+	if cfg.SecretRef == "" {
+		return nil, errors.New("missing configuration for spicedb.secretRef")
+	}
+
+	bootstrapVolume, bootstrapVolumeMount, bootstrapFiles, err := getBootstrapConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get bootstrap config: %w", err)
+	}
+
+	replicas := common.Replicas(ctx, Component)
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
@@ -37,7 +52,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Spec: appsv1.DeploymentSpec{
 				Selector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(Component)},
-				Replicas: common.Replicas(ctx, Component),
+				Replicas: replicas,
 				Strategy: common.DeploymentStrategy,
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
@@ -65,13 +80,25 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:            ContainerName,
 								Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), RegistryImage, ImageTag),
 								ImagePullPolicy: corev1.PullIfNotPresent,
-								Args: []string{
-									"serve",
-									"--log-format=json",
-									"--log-level=debug",
-									"--datastore-engine=mysql",
-									"--datastore-conn-max-open=100",
-								},
+								Args: (func() []string {
+									args := []string{
+										"serve",
+										"--log-format=json",
+										"--log-level=debug",
+										"--datastore-engine=mysql",
+										"--datastore-conn-max-open=100",
+										"--telemetry-endpoint=", // disable telemetry to https://telemetry.authzed.com
+										fmt.Sprintf("--datastore-bootstrap-files=%s", strings.Join(bootstrapFiles, ",")),
+										"--datastore-bootstrap-overwrite=true",
+									}
+
+									// Dispatching only makes sense, when we have more than one replica
+									if *replicas > 1 {
+										args = append(args, fmt.Sprintf("--dispatch-upstream-addr=kubernetes:///spicedb:%d", ContainerDispatchPort))
+									}
+
+									return args
+								})(),
 								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									common.DefaultEnv(&ctx.Config),
 									spicedbEnvVars(ctx),
@@ -125,7 +152,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									SuccessThreshold: 1,
 									TimeoutSeconds:   5,
 								},
+								VolumeMounts: []v1.VolumeMount{
+									bootstrapVolumeMount,
+								},
 							},
+						},
+						Volumes: []v1.Volume{
+							bootstrapVolume,
 						},
 					},
 				},
@@ -138,15 +171,7 @@ func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 	containerEnvVars := common.DatabaseEnv(&ctx.Config)
 
 	if ctx.Config.Database.CloudSQLGlobal != nil {
-		var withoutDBHost []corev1.EnvVar
-
-		for _, v := range containerEnvVars {
-			if v.Name == "DB_HOST" {
-				continue
-			}
-			withoutDBHost = append(withoutDBHost, v)
-		}
-
+		withoutDBHost := filterOutEnvVars("DB_HOST", containerEnvVars)
 		withoutDBHost = append(withoutDBHost,
 			// Override the DB host to point to global cloudsql
 			corev1.EnvVar{
@@ -161,15 +186,34 @@ func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 	return containerEnvVars
 }
 
+func filterOutEnvVars(name string, vars []corev1.EnvVar) []corev1.EnvVar {
+	var filtered []corev1.EnvVar
+	for _, v := range vars {
+		if v.Name == name {
+			continue
+		}
+
+		filtered = append(filtered, v)
+	}
+
+	return filtered
+}
+
 func dbWaiter(ctx *common.RenderContext) v1.Container {
 	databaseWaiter := common.DatabaseWaiterContainer(ctx)
 	// Use updated env-vars, which in the case cloud-sql-proxy override default db conf
-	databaseWaiter.Env = common.MergeEnv(databaseWaiter.Env, dbEnvVars(ctx))
+
+	databaseWaiter.Env = dbEnvVars(ctx)
 
 	return *databaseWaiter
 }
 
 func spicedbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
+	cfg := getExperimentalSpiceDBConfig(ctx)
+	if cfg == nil {
+		return nil
+	}
+
 	return common.MergeEnv(
 		dbEnvVars(ctx),
 		[]corev1.EnvVar{
@@ -178,8 +222,15 @@ func spicedbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
 				Value: "$(DB_USERNAME):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/authorization?parseTime=true",
 			},
 			{
-				Name:  "SPICEDB_GRPC_PRESHARED_KEY",
-				Value: "static-for-now",
+				Name: "SPICEDB_GRPC_PRESHARED_KEY",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: cfg.SecretRef,
+						},
+						Key: SecretPresharedKeyName,
+					},
+				},
 			},
 		},
 	)

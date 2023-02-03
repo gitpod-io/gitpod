@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/spicedb"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
@@ -83,6 +84,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.AnalyticsEnv(&ctx.Config),
 		common.MessageBusEnv(&ctx.Config),
 		common.ConfigcatEnv(ctx),
+		spicedb.Env(ctx),
 		[]corev1.EnvVar{
 			{
 				Name:  "CONFIG_PATH",
@@ -107,10 +109,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 				return envvar
 			}(),
-			{
-				Name:  "IDE_CONFIG_PATH",
-				Value: "/ide-config/config.json",
-			},
 			{
 				Name:  "NODE_ENV",
 				Value: "production", // todo(sje): will we need to change this?
@@ -303,14 +301,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	addWsManagerTls := true
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.WithoutWorkspaceComponents {
-			// No ws-manager exists in the cluster, so no TLS secret to mount.
-			addWsManagerTls = false
-		}
-		return nil
-	})
+	addWsManagerTls := common.WithLocalWsManager(ctx)
 	if addWsManagerTls {
 		volumes = append(volumes, corev1.Volume{
 			Name: "ws-manager-client-tls-certs",
@@ -328,19 +319,21 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	// admin secret
-	volumes = append(volumes, corev1.Volume{
-		Name: "admin-login-key",
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: AdminSecretName,
+	if ctx.Config.AdminLoginSecret != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "admin-login-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.AdminLoginSecret.Name,
+				},
 			},
-		},
-	})
-	volumeMounts = append(volumeMounts, corev1.VolumeMount{
-		Name:      "admin-login-key",
-		MountPath: AdminSecretMountPath,
-		ReadOnly:  true,
-	})
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "admin-login-key",
+			MountPath: AdminSecretMountPath,
+			ReadOnly:  true,
+		})
+	}
 
 	return []runtime.Object{
 		&appsv1.Deployment{
@@ -382,14 +375,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									VolumeSource: corev1.VolumeSource{
 										ConfigMap: &corev1.ConfigMapVolumeSource{
 											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
-										},
-									},
-								},
-								{
-									Name: "ide-config",
-									VolumeSource: corev1.VolumeSource{
-										ConfigMap: &corev1.ConfigMapVolumeSource{
-											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-ide-config", Component)},
 										},
 									},
 								},
@@ -454,11 +439,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									{
 										Name:      "config",
 										MountPath: "/config",
-										ReadOnly:  true,
-									},
-									{
-										Name:      "ide-config",
-										MountPath: "/ide-config",
 										ReadOnly:  true,
 									},
 								},

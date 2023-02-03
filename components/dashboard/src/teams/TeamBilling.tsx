@@ -4,38 +4,36 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { useContext, useEffect, useState } from "react";
-import { Redirect, useLocation } from "react-router";
 import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { Currency, Plan, Plans, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
+import React, { useContext, useEffect, useState } from "react";
+import { Redirect } from "react-router";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import Alert from "../components/Alert";
 import Card from "../components/Card";
 import DropDown from "../components/DropDown";
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import SolidCard from "../components/SolidCard";
-import { ReactComponent as CheckSvg } from "../images/check.svg";
+import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { getExperimentsClient } from "../experiments/client";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import { ReactComponent as CheckSvg } from "../images/check.svg";
 import { PaymentContext } from "../payment-context";
+import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import { getGitpodService } from "../service/service";
-import { getCurrentTeam, TeamsContext } from "./teams-context";
+import { UserContext } from "../user-context";
+import { useCurrentTeam } from "./teams-context";
 import { getTeamSettingsMenu } from "./TeamSettings";
 import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
-import { UserContext } from "../user-context";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
-import Alert from "../components/Alert";
-import { getExperimentsClient } from "../experiments/client";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 type PendingPlan = Plan & { pendingSince: number };
 
 export default function TeamBilling() {
     const { user } = useContext(UserContext);
-    const { teams } = useContext(TeamsContext);
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
     const [isUserOwner, setIsUserOwner] = useState(true);
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
@@ -170,7 +168,7 @@ export default function TeamBilling() {
     };
 
     if (!isUserOwner) {
-        return <Redirect to={team ? `/t/${team.slug}` : "/"} />;
+        return <Redirect to={`/`} />;
     }
 
     function renderTeamBilling(): JSX.Element {
@@ -190,7 +188,7 @@ export default function TeamBilling() {
                         2023.
                     </Alert>
                 )}
-                <h3>{!teamPlan ? "Select Team Plan" : "Team Plan"}</h3>
+                <h3>{!teamPlan ? "Select Plan" : "Current Plan"}</h3>
                 <h2 className="text-gray-500">
                     {!teamPlan ? (
                         <div className="flex space-x-1">
@@ -213,7 +211,7 @@ export default function TeamBilling() {
                         </div>
                     ) : (
                         <span>
-                            This team is currently on the <strong>{teamPlan.name}</strong> plan.
+                            This organization is currently on the <strong>{teamPlan.name}</strong> plan.
                         </span>
                     )}
                 </h2>
@@ -335,7 +333,7 @@ export default function TeamBilling() {
                     )}
                 </div>
                 <div className="mt-4 text-gray-500">
-                    Team Billing automatically adds all members to the plan.{" "}
+                    Gitpod automatically adds all members of this organization to the plan.{" "}
                     <a href="https://www.gitpod.io/docs/team-billing" rel="noopener" className="gp-link">
                         Learn more
                     </a>
@@ -349,7 +347,7 @@ export default function TeamBilling() {
         <PageWithSubMenu
             subMenu={getTeamSettingsMenu({ team, billingMode: teamBillingMode, ssoEnabled: oidcServiceEnabled })}
             title="Billing"
-            subtitle="Configure and manage billing for your team."
+            subtitle="Configure and manage billing for your organization."
         >
             {teamBillingMode === undefined ? (
                 <div className="p-20">

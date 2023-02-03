@@ -5,4 +5,4 @@
 
 set -Eeuo pipefail
 
-source /workspace/gitpod/scripts/ws-deploy.sh deployment ws-manager
+source /workspace/gitpod/scripts/ws-deploy.sh deployment ws-manager-mk2

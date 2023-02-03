@@ -21,6 +21,7 @@ export interface AuthProviderEntryDB {
     findAllHosts(): Promise<string[]>;
     findByHost(host: string): Promise<AuthProviderEntry | undefined>;
     findByUserId(userId: string): Promise<AuthProviderEntry[]>;
+    findByOrgId(organizationId: string): Promise<AuthProviderEntry[]>;
 }
 
 export function hashOAuth(oauth: AuthProviderEntry["oauth"]): string {

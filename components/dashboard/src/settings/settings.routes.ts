@@ -13,11 +13,6 @@ export const settingsPathNotifications = "/notifications";
 export const settingsPathBilling = "/billing";
 export const settingsPathPlans = "/plans";
 export const settingsPathPreferences = "/preferences";
-
-export const settingsPathTeams = "/teams";
-export const settingsPathTeamsJoin = [settingsPathTeams, "join"].join("/");
-export const settingsPathTeamsNew = [settingsPathTeams, "new"].join("/");
-
 export const settingsPathVariables = "/variables";
 export const settingsPathPersonalAccessTokens = "/tokens";
 export const settingsPathPersonalAccessTokenCreate = "/tokens/create";

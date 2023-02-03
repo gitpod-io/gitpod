@@ -175,6 +175,10 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getGenericInvite(teamId: string): Promise<TeamMembershipInvite>;
     resetGenericInvite(inviteId: string): Promise<TeamMembershipInvite>;
     deleteTeam(teamId: string): Promise<void>;
+    createOrgAuthProvider(params: GitpodServer.CreateOrgAuthProviderParams): Promise<AuthProviderEntry>;
+    updateOrgAuthProvider(params: GitpodServer.UpdateOrgAuthProviderParams): Promise<AuthProviderEntry>;
+    getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;
+    deleteOrgAuthProvider(params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void>;
 
     // Projects
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
@@ -461,6 +465,19 @@ export namespace GitpodServer {
     }
     export interface DeleteOwnAuthProviderParams {
         readonly id: string;
+    }
+    export interface CreateOrgAuthProviderParams {
+        readonly entry: AuthProviderEntry.NewOrgEntry;
+    }
+    export interface UpdateOrgAuthProviderParams {
+        readonly entry: AuthProviderEntry.UpdateOrgEntry;
+    }
+    export interface GetOrgAuthProviderParams {
+        readonly organizationId: string;
+    }
+    export interface DeleteOrgAuthProviderParams {
+        readonly id: string;
+        readonly organizationId: string;
     }
     export type AdmissionLevel = "owner" | "everyone";
     export type PinAction = "pin" | "unpin" | "toggle";

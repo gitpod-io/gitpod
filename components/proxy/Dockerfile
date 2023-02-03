@@ -35,6 +35,7 @@ COPY --from=builder /caddy /usr/bin/caddy
 
 COPY conf/Caddyfile /etc/caddy/Caddyfile
 COPY conf/vhost.empty /etc/caddy/vhosts/vhost.empty
+COPY conf/workspace-handler.* /etc/caddy/workspace-handler/
 
 ARG __GIT_COMMIT
 ARG VERSION

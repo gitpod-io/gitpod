@@ -14,9 +14,6 @@ var Objects = common.CompositeRenderFunc(
 	configmap,
 	deployment,
 	func(ctx *common.RenderContext) ([]runtime.Object, error) {
-		return AdminSecret(ctx)
-	},
-	func(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return Networkpolicy(ctx, Component)
 	},
 	func(ctx *common.RenderContext) ([]runtime.Object, error) {

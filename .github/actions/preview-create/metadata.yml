@@ -1,6 +1,16 @@
 name: "Create preview environment"
 description: "Creates the infrastructure for a preview environment"
 inputs:
+    name:
+        description: "The name of the preview environment to deploy Gitpod to"
+        required: false
+    infrastructure_provider:
+        description: "The infrastructure provider to use"
+        required: true
+    large_vm:
+        description: "Whether to use a larger VM for the env"
+        required: true
+        default: false
     sa_key:
         description: "The service account key to use when authenticating with GCP"
         required: true

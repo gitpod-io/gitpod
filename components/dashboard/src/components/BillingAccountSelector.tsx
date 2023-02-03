@@ -8,7 +8,7 @@ import { useContext, useEffect, useState } from "react";
 import { Team, TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { AttributionId, AttributionTarget } from "@gitpod/gitpod-protocol/lib/attribution";
 import { getGitpodService } from "../service/service";
-import { TeamsContext } from "../teams/teams-context";
+import { useTeams } from "../teams/teams-context";
 import { UserContext } from "../user-context";
 import SelectableCardSolid from "../components/SelectableCardSolid";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
@@ -17,7 +17,7 @@ import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-
 
 export function BillingAccountSelector(props: { onSelected?: () => void }) {
     const { user, setUser } = useContext(UserContext);
-    const { teams } = useContext(TeamsContext);
+    const teams = useTeams();
     const [teamsAvailableForAttribution, setTeamsAvailableForAttribution] = useState<Team[] | undefined>();
     const [membersByTeam, setMembersByTeam] = useState<Record<string, TeamMemberInfo[]>>({});
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -28,7 +28,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             return;
         }
 
-        // Fetch the list of teams we can actually attribute to
+        // Fetch the list of orgs we can actually attribute to
         getGitpodService()
             .server.listAvailableUsageAttributionIds()
             .then((attrIds) => {
@@ -59,7 +59,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                         (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
                     );
                 } catch (error) {
-                    console.warn("Could not get members of team", team, error);
+                    console.warn("Could not get members of org", team, error);
                 }
             }),
         ).then(() => setMembersByTeam(members));

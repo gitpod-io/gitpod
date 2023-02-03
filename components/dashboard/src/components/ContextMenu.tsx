@@ -7,10 +7,12 @@
 import React, { HTMLAttributeAnchorTarget } from "react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import cn from "classnames";
 
 export interface ContextMenuProps {
     children?: React.ReactChild[] | React.ReactChild;
     menuEntries: ContextMenuEntry[];
+    changeMenuState?: (state: boolean) => void;
     customClasses?: string;
 }
 
@@ -33,8 +35,22 @@ export interface ContextMenuEntry {
 
 function ContextMenu(props: ContextMenuProps) {
     const [expanded, setExpanded] = useState(false);
+
+    const { changeMenuState } = props;
+
+    useEffect(() => {
+        return () => {
+            if (changeMenuState) {
+                changeMenuState(!expanded);
+            }
+        };
+    }, [expanded]);
+
     const toggleExpanded = () => {
         setExpanded(!expanded);
+        if (props.changeMenuState) {
+            props.changeMenuState(!expanded);
+        }
     };
 
     const keydownHandler = (evt: KeyboardEvent) => {
@@ -73,7 +89,10 @@ function ContextMenu(props: ContextMenuProps) {
     // Default 'children' is the three dots hamburger button.
     const children = props.children || (
         <svg
-            className="w-8 h-8 p-1 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+            className={cn(
+                "w-8 h-8 p-1 rounded-md text-gray-600 dark:text-gray-300",
+                expanded ? "bg-gray-200 dark:bg-gray-700" : "hover:bg-gray-200 dark:hover:bg-gray-700",
+            )}
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
         >

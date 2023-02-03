@@ -24,9 +24,6 @@ import {
     settingsPathNotifications,
     settingsPathPlans,
     settingsPathPreferences,
-    settingsPathTeams,
-    settingsPathTeamsJoin,
-    settingsPathTeamsNew,
     settingsPathVariables,
     settingsPathSSHKeys,
     usagePathMain,
@@ -34,12 +31,7 @@ import {
     settingsPathPersonalAccessTokenCreate,
     settingsPathPersonalAccessTokenEdit,
 } from "../settings/settings.routes";
-import {
-    projectsPathInstallGitHubApp,
-    projectsPathMain,
-    projectsPathMainWithParams,
-    projectsPathNew,
-} from "../projects/projects.routes";
+import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/projects.routes";
 import { workspacesPathMain } from "../workspaces/workspaces.routes";
 import { LocalPreviewAlert } from "./LocalPreviewAlert";
 import OAuthClientApproval from "../OauthClientApproval";
@@ -58,7 +50,7 @@ const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../settings
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Notifications"));
 const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Billing"));
 const Plans = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Plans"));
-const Teams = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Teams"));
+const ChargebeeTeams = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/ChargebeeTeams"));
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/EnvironmentVariables"));
 const SSHKeys = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/SSHKeys"));
 const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Integrations"));
@@ -73,7 +65,6 @@ const Members = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/Me
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamSettings"));
 const TeamBilling = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamBilling"));
 const SSO = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/SSO"));
-const TeamUsage = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamUsage"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/NewProject"));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Projects"));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/Project"));
@@ -198,7 +189,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route path="/from-referrer" exact component={FromReferrer} />
 
                     <AdminRoute path="/admin/users" component={UserSearch} />
-                    <AdminRoute path="/admin/teams" component={TeamsSearch} />
+                    <AdminRoute path="/admin/orgs" component={TeamsSearch} />
                     <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
                     <AdminRoute path="/admin/projects" component={ProjectsSearch} />
                     <AdminRoute path="/admin/blocked-repositories" component={BlockedRepositories} />
@@ -226,75 +217,26 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                             <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                         </div>
                     </Route>
-                    <Route path={projectsPathMain}>
-                        <Route exact path={projectsPathMain} component={Projects} />
-                        <Route
-                            exact
-                            path={projectsPathMainWithParams}
-                            render={({ match }) => {
-                                const { resourceOrPrebuild } = match.params;
-                                switch (resourceOrPrebuild) {
-                                    case "events":
-                                        return <Events />;
-                                    case "prebuilds":
-                                        return <Prebuilds />;
-                                    case "settings":
-                                        return <ProjectSettings />;
-                                    case "variables":
-                                        return <ProjectVariables />;
-                                    default:
-                                        return resourceOrPrebuild ? <Prebuild /> : <Project />;
-                                }
-                            }}
-                        />
+                    <Route exact path="/old-team-plans" component={ChargebeeTeams} />
+                    {/* TODO remove the /teams/join navigation after a few weeks */}
+                    <Route exact path="/teams/join" component={JoinTeam} />
+                    <Route exact path="/orgs/new" component={NewTeam} />
+                    <Route exact path="/orgs/join" component={JoinTeam} />
+                    <Route exact path="/members" component={Members} />
+                    <Route exact path="/projects" component={Projects} />
+                    <Route exact path="/org-settings" component={TeamSettings} />
+                    <Route exact path="/org-billing" component={TeamBilling} />
+                    <Route exact path="/sso" component={SSO} />
+                    <Route exact path={`/projects/:projectSlug`} component={Project} />
+                    <Route exact path={`/projects/:projectSlug/events`} component={Events} />
+                    <Route exact path={`/projects/:projectSlug/prebuilds`} component={Prebuilds} />
+                    <Route exact path={`/projects/:projectSlug/settings`} component={ProjectSettings} />
+                    <Route exact path={`/projects/:projectSlug/variables`} component={ProjectVariables} />
+                    <Route exact path={`/projects/:projectSlug/:prebuildId`} component={Prebuild} />
+                    {/* basic redirect for old team slugs */}
+                    <Route path={["/t/"]} exact>
+                        <Redirect to="/projects" />
                     </Route>
-                    <Route path={settingsPathTeams}>
-                        <Route exact path={settingsPathTeams} component={Teams} />
-                        <Route exact path={settingsPathTeamsNew} component={NewTeam} />
-                        <Route exact path={settingsPathTeamsJoin} component={JoinTeam} />
-                    </Route>
-                    {(teams || []).map((team) => (
-                        <Route path={`/t/${team.slug}`} key={team.slug}>
-                            <Route exact path={`/t/${team.slug}`}>
-                                <Redirect to={`/t/${team.slug}/projects`} />
-                            </Route>
-                            <Route
-                                exact
-                                path={`/t/${team.slug}/:maybeProject/:resourceOrPrebuild?`}
-                                render={({ match }) => {
-                                    const { maybeProject, resourceOrPrebuild } = match.params;
-                                    switch (maybeProject) {
-                                        case "projects":
-                                            return <Projects />;
-                                        case "members":
-                                            return <Members />;
-                                        case "settings":
-                                            return <TeamSettings />;
-                                        case "billing":
-                                            return <TeamBilling />;
-                                        case "sso":
-                                            return <SSO />;
-                                        case "usage":
-                                            return <TeamUsage />;
-                                        default:
-                                            break;
-                                    }
-                                    switch (resourceOrPrebuild) {
-                                        case "events":
-                                            return <Events />;
-                                        case "prebuilds":
-                                            return <Prebuilds />;
-                                        case "settings":
-                                            return <ProjectSettings />;
-                                        case "variables":
-                                            return <ProjectVariables />;
-                                        default:
-                                            return resourceOrPrebuild ? <Prebuild /> : <Project />;
-                                    }
-                                }}
-                            />
-                        </Route>
-                    ))}
                     <Route
                         path="*"
                         render={(_match) => {

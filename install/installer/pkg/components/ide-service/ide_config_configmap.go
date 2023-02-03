@@ -10,7 +10,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace/ide"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 
 	ide_config "github.com/gitpod-io/gitpod/ide-service-api/config"
@@ -38,18 +37,17 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	resolveLatestImage := func(name string, tag string, bundledLatest versions.Versioned) string {
 		resolveLatest := true
-		ctx.WithExperimental(func(ucfg *experimental.Config) error {
-			if ucfg.IDE != nil && ucfg.IDE.ResolveLatest != nil {
-				resolveLatest = *ucfg.IDE.ResolveLatest
-			}
-			return nil
-		})
+		if ctx.Config.Components != nil && ctx.Config.Components.IDE != nil && ctx.Config.Components.IDE.ResolveLatest != nil {
+			resolveLatest = *ctx.Config.Components.IDE.ResolveLatest
+		}
 		if resolveLatest {
 			return ctx.ImageName(ctx.Config.Repository, name, tag)
 		}
 		return ctx.ImageName(ctx.Config.Repository, name, bundledLatest.Version)
 	}
 
+	codeHelperImage := ctx.ImageName(ctx.Config.Repository, ide.CodeHelperIDEImage, ctx.VersionManifest.Components.Workspace.CodeHelperImage.Version)
+	codeWebExtensionImage := ctx.ImageName(ctx.Config.Repository, ide.CodeWebExtensionImage, ide.CodeWebExtensionVersion)
 	jbPluginImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsBackendPluginImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginImage.Version)
 	jbPluginLatestImage := resolveLatestImage(ide.JetBrainsBackendPluginImage, "latest", ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsBackendPluginLatestImage)
 	jbLauncherImage := ctx.ImageName(ctx.Config.Repository, ide.JetBrainsLauncherImage, ctx.VersionManifest.Components.Workspace.DesktopIdeImages.JetBrainsLauncherImage.Version)
@@ -82,13 +80,15 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Options: map[string]ide_config.IDEOption{
 				"code": {
-					OrderKey:    "00",
-					Title:       "VS Code",
-					Type:        ide_config.IDETypeBrowser,
-					Label:       "Browser",
-					Logo:        getIdeLogoPath("vscode"),
-					Image:       ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
-					LatestImage: resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
+					OrderKey:          "00",
+					Title:             "VS Code",
+					Type:              ide_config.IDETypeBrowser,
+					Label:             "Browser",
+					Logo:              getIdeLogoPath("vscode"),
+					Image:             ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
+					ImageLayers:       []string{codeWebExtensionImage, codeHelperImage},
+					LatestImage:       resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
+					LatestImageLayers: []string{codeWebExtensionImage, codeHelperImage},
 				},
 				codeDesktop: {
 					OrderKey:    "02",
@@ -223,18 +223,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Namespace:   ctx.Namespace,
 				Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaConfigmap),
 				Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaConfigmap),
-			},
-			Data: map[string]string{
-				"config.json": string(fc),
-			},
-		},
-		&corev1.ConfigMap{
-			TypeMeta: common.TypeMetaConfigmap,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "server-ide-config",
-				Namespace:   ctx.Namespace,
-				Labels:      common.CustomizeLabel(ctx, "server", common.TypeMetaConfigmap),
-				Annotations: common.CustomizeAnnotation(ctx, "server", common.TypeMetaConfigmap),
 			},
 			Data: map[string]string{
 				"config.json": string(fc),

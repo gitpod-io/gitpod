@@ -66,6 +66,8 @@ components:
   workspace:
     codeImage:
       version: test
+    codeHelperImage:
+      version: test
     desktopIdeImages:
       codeDesktop:
         version: test

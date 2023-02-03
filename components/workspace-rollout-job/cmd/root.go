@@ -96,6 +96,13 @@ var rootCmd = &cobra.Command{
 			return err
 		}
 
+		// Check if prometheus is reachable
+		err = analysis.CheckPrometheusReachable(ctx, conf.prometheusURL)
+		if err != nil {
+			log.WithError(err).Fatal("init: prometheus is not reachable")
+			return err
+		}
+
 		prometheusAnalyzer, err := analysis.NewWorkspaceKeyMetricsAnalyzer(ctx, config, conf.prometheusURL, conf.targetPositivePercentage, 30305)
 		if err != nil {
 			log.WithError(err).Fatal("failed to create a prometheus client")

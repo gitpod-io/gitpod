@@ -68,6 +68,9 @@ type ServiceConfiguration struct {
 	Prometheus struct {
 		Addr string `json:"addr"`
 	} `json:"prometheus"`
+	Health struct {
+		Addr string `json:"addr"`
+	} `json:"health"`
 }
 
 // Configuration is the configuration of the ws-manager

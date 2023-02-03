@@ -38,7 +38,7 @@ func renderContextWithSlowDatabaseEnabled(t *testing.T) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
-				SlowDatabase: true,
+				SlowDatabase: "toxiproxy",
 			},
 		},
 	}, versions.Manifest{

@@ -41,6 +41,7 @@ export class AuthProviderEntryDBSpec {
             id: "0049b9d2-005f-43c2-a0ae-76377805d8b8",
             host,
             ownerId,
+            organizationId: null!,
             status: "verified",
             type: "GitHub",
             oauthRevision: undefined,
@@ -101,6 +102,21 @@ export class AuthProviderEntryDBSpec {
         expect(loadedAp?.oauthRevision, "findByHost()").to.equal(
             "b05eb3256a101f6cbca1d8885c8ee241891582e78c567b7305f097ab3556d5f0",
         );
+    }
+
+    @test public async findByOrgId() {
+        const ap1 = this.authProvider({ id: "1", organizationId: "O1" });
+        const ap2 = this.authProvider({ id: "2", organizationId: "O1" });
+        const ap3 = this.authProvider({ id: "3", organizationId: "O2" });
+
+        await this.db.storeAuthProvider(ap1, false);
+        await this.db.storeAuthProvider(ap2, false);
+        await this.db.storeAuthProvider(ap3, false);
+
+        const results = await this.db.findByOrgId("O1");
+        expect(results.length).to.equal(2);
+        expect(results).to.deep.contain(ap1);
+        expect(results).to.deep.contain(ap2);
     }
 }
 

@@ -6,14 +6,14 @@
 
 import { Team } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { gitpodHostUrl } from "../service/service";
-import { TeamsContext } from "../teams/teams-context";
+import { useTeams } from "../teams/teams-context";
 import Alert from "./Alert";
 import Modal from "./Modal";
 
 export function UsageLimitReachedModal(p: { hints: any }) {
-    const { teams } = useContext(TeamsContext);
+    const teams = useTeams();
     // const [attributionId, setAttributionId] = useState<AttributionId | undefined>();
     const [attributedTeam, setAttributedTeam] = useState<Team | undefined>();
 
@@ -39,7 +39,7 @@ export function UsageLimitReachedModal(p: { hints: any }) {
                     You have reached the <strong>usage limit</strong> of your billing account.
                 </Alert>
                 <p className="mt-3 text-base text-gray-600 dark:text-gray-300">
-                    {"Contact a team owner "}
+                    {"Contact an organization owner "}
                     {attributedTeamName && (
                         <>
                             of <strong>{attributedTeamName} </strong>

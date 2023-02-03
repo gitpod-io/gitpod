@@ -96,6 +96,8 @@
 /dev/gpctl/api/ @gitpod-io/engineering-webapp
 /dev/loadgen @gitpod-io/engineering-workspace
 /dev/preview @gitpod-io/engineering-delivery-operations-experience
+# The deploy-gitpod.sh is shared between all teams.
+/dev/preview/workflow/preview/deploy-gitpod.sh
 /operations/observability/mixins @gitpod-io/engineering-delivery-operations-experience
 /operations/observability/mixins/platform @gitpod-io/engineering-delivery-operations-experience
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
@@ -115,6 +117,8 @@
 
 /dev/preview/infrastructure/harvester @gitpod-io/engineering-delivery-operations-experience
 /dev/preview/workflow @gitpod-io/engineering-delivery-operations-experience
+
+.github/workflows/ide-*.yml @gitpod-io/engineering-ide
 
 #
 # Automation

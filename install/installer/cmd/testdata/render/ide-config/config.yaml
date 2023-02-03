@@ -1,0 +1,18 @@
+# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: v1
+domain: gitpod.example.com
+components:
+  ide:
+    resolveLatest: true
+    metrics:
+      errorReportingEnabled: true
+    proxy:
+      serviceAnnotations:
+        ideProxyAnnotation: some-value
+openVSX:
+  proxy:
+    serviceAnnotations:
+      openvsxProxyAnnotation: some-other-value

@@ -25,18 +25,6 @@ variable "dev_kube_context" {
   description = "The name of the dev kube context"
 }
 
-variable "vm_memory" {
-  type        = string
-  default     = "12Gi"
-  description = "Memory for the VM"
-}
-
-variable "vm_cpu" {
-  type        = number
-  default     = 6
-  description = "CPU for the VM"
-}
-
 variable "ssh_key" {
   type        = string
   description = "ssh public key used for access to the vm"
@@ -64,4 +52,10 @@ variable "gcp_project_dns" {
   type        = string
   default     = "gitpod-core-dev"
   description = "The GCP project in which to create DNS records"
+}
+
+variable "with_large_vm" {
+  type        = bool
+  default     = false
+  description = "Flag to decide whether to use a larger VM"
 }

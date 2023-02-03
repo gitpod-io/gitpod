@@ -7,7 +7,7 @@
 import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { useContext, useEffect, useState } from "react";
-import { useHistory, useLocation } from "react-router";
+import { useHistory } from "react-router";
 import Header from "../components/Header";
 import DropDown from "../components/DropDown";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
@@ -15,18 +15,17 @@ import Modal from "../components/Modal";
 import Tooltip from "../components/Tooltip";
 import copy from "../images/copy.svg";
 import { UserContext } from "../user-context";
-import { TeamsContext, getCurrentTeam } from "./teams-context";
+import { TeamsContext, useCurrentTeam } from "./teams-context";
 import { trackEvent } from "../Analytics";
 import { publicApiTeamMembersToProtocol, publicApiTeamsToProtocol, teamsService } from "../service/public-api";
 import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 export default function () {
     const { user } = useContext(UserContext);
-    const { teams, setTeams } = useContext(TeamsContext);
+    const { setTeams } = useContext(TeamsContext);
 
     const history = useHistory();
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
     const [members, setMembers] = useState<TeamMemberInfo[]>([]);
     const [genericInviteId, setGenericInviteId] = useState<string>();
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
@@ -58,7 +57,7 @@ export default function () {
 
     const getInviteURL = (inviteId: string) => {
         const link = new URL(window.location.href);
-        link.pathname = "/teams/join";
+        link.pathname = "/orgs/join";
         link.search = "?inviteId=" + inviteId;
         return link.href;
     };
@@ -131,7 +130,7 @@ export default function () {
 
     return (
         <>
-            <Header title="Members" subtitle="Manage team members." />
+            <Header title="Members" subtitle="Manage organization members." />
             <div className="app-container">
                 <div className="flex mt-8">
                     <div className="flex">
@@ -266,7 +265,9 @@ export default function () {
                                             m.userId === user?.id
                                                 ? [
                                                       {
-                                                          title: leaveTeamEnabled ? "Leave Team" : "Remaining owner",
+                                                          title: leaveTeamEnabled
+                                                              ? "Leave Organization"
+                                                              : "Remaining owner",
                                                           customFontStyle: leaveTeamEnabled
                                                               ? "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                                                               : "text-gray-400 dark:text-gray-200",
@@ -319,7 +320,9 @@ export default function () {
                                 </div>
                             </div>
                         </div>
-                        <p className="mt-1 text-gray-500 text-sm">Use this URL to join this team as a Member.</p>
+                        <p className="mt-1 text-gray-500 text-sm">
+                            Use this URL to join this organization as a member.
+                        </p>
                     </div>
                     <div className="flex justify-end mt-6 space-x-2">
                         <button className="secondary" onClick={() => resetInviteLink()}>

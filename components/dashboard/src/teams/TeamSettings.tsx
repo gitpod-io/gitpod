@@ -18,24 +18,24 @@ import { useCurrentUser } from "../user-context";
 import { TeamsContext, useCurrentTeam } from "./teams-context";
 
 export function getTeamSettingsMenu(params: { team?: Team; billingMode?: BillingMode; ssoEnabled?: boolean }) {
-    const { team, billingMode, ssoEnabled } = params;
+    const { billingMode, ssoEnabled } = params;
     const result = [
         {
             title: "General",
-            link: [`/t/${team?.slug}/settings`],
+            link: [`/org-settings`],
         },
     ];
     if (ssoEnabled) {
         result.push({
             title: "SSO",
-            link: [`/t/${team?.slug}/sso`],
+            link: [`/sso`],
         });
     }
     if (billingMode?.mode !== "none") {
         // The Billing page contains both chargebee and usage-based components, so: always show them!
         result.push({
             title: "Billing",
-            link: [`/t/${team?.slug}/billing`],
+            link: [`/org-billing`],
         });
     }
     return result;
@@ -84,7 +84,7 @@ export default function TeamSettings() {
             setUpdated(true);
             setTimeout(() => setUpdated(false), 3000);
         } catch (error) {
-            setErrorMessage(`Failed to update team information: ${error.message}`);
+            setErrorMessage(`Failed to update organization information: ${error.message}`);
         }
     }, [team, errorMessage, teams, teamName, setTeams]);
 
@@ -96,10 +96,10 @@ export default function TeamSettings() {
             const newName = event.target.value || "";
             setTeamName(newName);
             if (newName.trim().length === 0) {
-                setErrorMessage("Team name can not be blank.");
+                setErrorMessage("Organization name can not be blank.");
                 return;
             } else if (newName.trim().length > 32) {
-                setErrorMessage("Team name must not be longer than 32 characters.");
+                setErrorMessage("Organization name must not be longer than 32 characters.");
                 return;
             } else {
                 setErrorMessage(undefined);
@@ -127,11 +127,11 @@ export default function TeamSettings() {
             <PageWithSubMenu
                 subMenu={getTeamSettingsMenu({ team, billingMode, ssoEnabled: oidcServiceEnabled })}
                 title="Settings"
-                subtitle="Manage general team settings."
+                subtitle="Manage general organization settings."
             >
-                <h3>Team Name</h3>
+                <h3>Organization Name</h3>
                 <p className="text-base text-gray-500 max-w-2xl">
-                    This is your team's visible name within Gitpod. For example, the name of your company.
+                    This is your organization's visible name within Gitpod. For example, the name of your company.
                 </p>
                 {errorMessage && (
                     <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
@@ -140,7 +140,7 @@ export default function TeamSettings() {
                 )}
                 {updated && (
                     <Alert type="message" closable={true} className="mb-2 max-w-xl rounded-md">
-                        Team name has been updated.
+                        Organization name has been updated.
                     </Alert>
                 )}
                 <div className="flex flex-col lg:flex-row">
@@ -157,17 +157,17 @@ export default function TeamSettings() {
                         disabled={team?.name === teamName || !!errorMessage}
                         onClick={updateTeamInformation}
                     >
-                        Update Team Name
+                        Update Organization Name
                     </button>
                 </div>
 
-                <h3 className="pt-12">Delete Team</h3>
+                <h3 className="pt-12">Delete Organization</h3>
                 <p className="text-base text-gray-500 pb-4 max-w-2xl">
-                    Deleting this team will also remove all associated data with this team, including projects and
-                    workspaces. Deleted teams cannot be restored!
+                    Deleting this organization will also remove all associated data, including projects and workspaces.
+                    Deleted organizations cannot be restored!
                 </p>
                 <button className="danger secondary" onClick={() => setModal(true)}>
-                    Delete Team
+                    Delete Organization
                 </button>
             </PageWithSubMenu>
 
@@ -182,16 +182,16 @@ export default function TeamSettings() {
                 onConfirm={deleteTeam}
             >
                 <p className="text-base text-gray-500">
-                    You are about to permanently delete <b>{team?.slug}</b> including all associated data with this
-                    team.
+                    You are about to permanently delete <b>{team?.name}</b> including all associated data.
                 </p>
                 <ol className="text-gray-500 text-m list-outside list-decimal">
                     <li className="ml-5">
-                        All <b>projects</b> added in this team will be deleted and cannot be restored afterwards.
+                        All <b>projects</b> added in this organization will be deleted and cannot be restored
+                        afterwards.
                     </li>
                     <li className="ml-5">
-                        All <b>members</b> of this team will lose access to this team, associated projects and
-                        workspaces.
+                        All <b>members</b> of this organization will lose access to this organization, associated
+                        projects and workspaces.
                     </li>
                 </ol>
                 <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">

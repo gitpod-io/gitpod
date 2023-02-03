@@ -322,7 +322,7 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 					},
 				},
 			},
-			ExpectedErr: "no running ws-daemon pod found",
+			ExpectedErr: "timed out attempting to connect to Gitpod ws-daemon",
 		},
 		{
 			Name: "handles no endpoint on current node",
@@ -361,7 +361,7 @@ func TestConnectToWorkspaceDaemon(t *testing.T) {
 					},
 				},
 			},
-			ExpectedErr: "no running ws-daemon pod found",
+			ExpectedErr: "timed out attempting to connect to Gitpod ws-daemon",
 		},
 		{
 			Name: "finds endpoint on current node",

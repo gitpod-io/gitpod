@@ -4,19 +4,25 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
-
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import UsageView from "./components/UsageView";
-import { UserContext } from "./user-context";
+import { useCurrentTeam } from "./teams/teams-context";
+import { useCurrentUser } from "./user-context";
 
-function TeamUsage() {
-    const { user } = useContext(UserContext);
+function Usage() {
+    const user = useCurrentUser();
+    const org = useCurrentTeam();
 
     if (!user) {
         return <></>;
     }
 
-    return <UsageView attributionId={{ kind: "user", userId: user.id }} />;
+    let attributionId: AttributionId = { kind: "user", userId: user.id };
+    if (org) {
+        attributionId = { kind: "team", teamId: org.id };
+    }
+
+    return <UsageView attributionId={attributionId} />;
 }
 
-export default TeamUsage;
+export default Usage;

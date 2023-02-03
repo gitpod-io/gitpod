@@ -32,8 +32,6 @@ Config defines the v1 version structure of the gitpod config file
 |`objectStorage.cloudStorage.serviceAccount.kind`|string|N| `secret` ||
 |`objectStorage.cloudStorage.serviceAccount.name`|string|Y|  ||
 |`objectStorage.cloudStorage.project`|string|Y|  ||
-|`objectStorage.azure.credentials.kind`|string|N| `secret` ||
-|`objectStorage.azure.credentials.name`|string|Y|  ||
 |`objectStorage.maximumBackupCount`|int|N|  |  DEPRECATED|
 |`objectStorage.blobQuota`|int64|N|  ||
 |`objectStorage.resources.requests`||Y|  |  todo(sje): add custom validation to corev1.ResourceList|
@@ -120,6 +118,7 @@ Additional config parameters that are in experimental state
 |`experimental.workspace.wsProxy`||N|  ||
 |`experimental.workspace.contentService`||N|  ||
 |`experimental.workspace.enableProtectedSecrets`|bool|N|  ||
+|`experimental.webapp.publicApi.oidcClientJWTSigningSecretName`|string|N|  |  Name of the kubernetes secret to use for signing JWTs of OIDC flows|
 |`experimental.webapp.publicApi.stripeSecretName`|string|N|  |  Name of the kubernetes secret to use for Stripe secrets|
 |`experimental.webapp.publicApi.personalAccessTokenSigningKeySecretName`|string|N|  |  Name of the kubernetes secret to use for signature of Personal Access Tokens|
 |`experimental.webapp.server.workspaceDefaults.workspaceImage`|string|N|  |  @deprecated use workspace.workspaceImage instead|

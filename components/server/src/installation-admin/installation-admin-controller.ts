@@ -50,10 +50,15 @@ export class InstallationAdminController {
 
             log.info(`${adminUserCreateLoginTokenRoute} received.`);
             try {
+                // In case there is no/an empty key specified: Nobody should be able to call this so they are not able to guess values here
+                if (!this.config.admin.loginKey) {
+                    throw new Error("Cannot handle request");
+                }
+
                 // Unblock the admin-user: it's blocked initially!
                 const user = await this.userDb.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID);
                 if (!user) {
-                    throw new Error("Cannot find builint admin-user");
+                    throw new Error("Cannot find builtin admin-user");
                 }
                 user.blocked = false;
                 await this.userDb.storeUser(user);
@@ -74,7 +79,7 @@ export class InstallationAdminController {
                 TraceContext.setError(ctx, err);
                 span.finish();
                 log.error(`${adminUserCreateLoginTokenRoute} error`, err);
-                res.sendStatus(502);
+                res.sendStatus(500);
             }
         });
 

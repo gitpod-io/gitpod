@@ -25,12 +25,12 @@ import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
-export default function Teams() {
+export default function ChargebeeTeams() {
     return (
         <div>
             <PageWithSettingsSubMenu
-                title="Team Plans"
-                subtitle="View and manage subscriptions for your team with one centralized billing."
+                title="Team Plans (deprecated)"
+                subtitle="View and manage subscriptions for entire teams with one centralized billing."
             >
                 <AllTeams />
             </PageWithSettingsSubMenu>
@@ -470,7 +470,7 @@ function AllTeams() {
             <div className="flex flex-row">
                 <div className="flex-grow ">
                     <h3 className="self-center">All Team Plans</h3>
-                    <h2>Manage team plans and team members.</h2>
+                    <h2>Manage team plans and members.</h2>
                 </div>
                 <div className="flex flex-end space-x-3">
                     {isChargebeeCustomer && (
@@ -523,15 +523,7 @@ function AllTeams() {
                         <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No Active Team Plans</h3>
                         <div className="text-gray-500 mb-6">
                             Get started by creating a team plan
-                            <br /> and adding team members.{" "}
-                            <a
-                                href="https://www.gitpod.io/docs/teams/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="gp-link"
-                            >
-                                Learn more
-                            </a>
+                            <br /> and adding members.{" "}
                         </div>
                         <button className="self-center" onClick={() => showCreateTeamModal()}>
                             Create Team Plan
@@ -651,7 +643,7 @@ function InviteMembersModal(props: { sub: TeamSubscription; onClose: () => void 
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="pb-2">Invite Members</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
-                <p className="pb-2 text-gray-500 text-base">Invite members to the team plan using the URL below.</p>
+                <p className="pb-2 text-gray-500 text-base">Invite members to the plan using the URL below.</p>
 
                 <div className="flex flex-col space-y-2">
                     <label htmlFor="inviteUrl" className="font-medium">
@@ -671,7 +663,7 @@ function InviteMembersModal(props: { sub: TeamSubscription; onClose: () => void 
                         </div>
                     </div>
                     <p className="pb-4 text-gray-500 text-sm">
-                        {copied ? "Copied to clipboard!" : "Use this URL to join this team plan."}
+                        {copied ? "Copied to clipboard!" : "Use this URL to join this plan."}
                     </p>
                 </div>
             </div>
@@ -710,7 +702,7 @@ function AddMembersModal(props: {
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="pb-2">Add Members</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
-                <p className="pb-4 text-gray-500 text-base">Select the number of members to add to the team plan.</p>
+                <p className="pb-4 text-gray-500 text-base">Select the number of members to add to the plan.</p>
 
                 <div className="flex flex-col space-y-2 pb-4">
                     <label htmlFor="quantity" className="font-medium">
@@ -776,11 +768,11 @@ function NewTeamModal(props: {
         <Modal visible={true} onClose={props.onClose}>
             <h3 className="pb-2">New Team Plan</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
-                <p className="pb-4 text-gray-500 text-base">Create a team plan and add team members.</p>
+                <p className="pb-4 text-gray-500 text-base">Create a plan and add members.</p>
 
                 <div className="flex flex-col space-y-2">
                     <label htmlFor="type" className="font-medium">
-                        Team
+                        Plan
                     </label>
                     <select
                         name="type"
@@ -856,7 +848,7 @@ function ManageTeamModal(props: { slots: Slot[]; slotInputHandler: SlotInputHand
     return (
         // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.onClose}>
-            <h3 className="pb-2">Manage Team</h3>
+            <h3 className="pb-2">Manage Plan</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
                 <p className="pb-4 text-gray-500 text-base">
                     Add members using their username prefixed by the Git Provider's host.

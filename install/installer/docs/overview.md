@@ -214,7 +214,7 @@ is `true`. External dependencies can be used in their place
 | `domain` | Y | The domain to deploy to | This will need to be changed on every deployment |
 | `kind` | Y | Installation type to run - for most users, this will be `Full` | Available options are: <ul><li>`Meta`: To install the tools that make up the front-end facing side of `Gitpod` </li><li>`Workspace`: To install the components that make up the `Gitpod Workspaces`</li><li>`Full`: To install the complete setup, i.e. both `Meta` and `Workspace`</li> |
 | `metadata.region` | Y | Location for your `objectStorage` provider | If using Minio, set to `local` |
-| `workspace.runtime.containerdRuntimeDir` | Y | The location of containerd on host machine | Common values are: <ul><li>`/run/containerd/io.containerd.runtime.v2.task/k8s.io` (K3s)</li><li>`/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io` (AWS/Azure/GCP)</li><li>`/run/containerd/io.containerd.runtime.v1.linux/k8s.io`</li><li>`/run/containerd/io.containerd.runtime.v1.linux/moby`</li></ul> |
+| `workspace.runtime.containerdRuntimeDir` | Y | The location of containerd on host machine | Common values are: <ul><li>`/run/containerd/io.containerd.runtime.v2.task/k8s.io` (K3s)</li><li>`/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io` (AWS/GCP)</li><li>`/run/containerd/io.containerd.runtime.v1.linux/k8s.io`</li><li>`/run/containerd/io.containerd.runtime.v1.linux/moby`</li></ul> |
 | `workspace.runtime.containerdSocket` | Y | The location of containerd socket on the host machine |
 | `workspace.runtime.fsShiftMethod` | Y | File system | Can be either `fuse` (fuse-overlayfs) or `shiftfs`. This depending upon your host OS/distribution. If unsure, use `fuse`. |
 
@@ -371,26 +371,6 @@ objectStorage:
 
 The `gcp-storage-token` secret must contain the following key/value pairs:
 - `service-account.json` - GCP Service Account key with `roles/storage.admin` and `roles/storage.objectAdmin` roles
-
-### Azure
-
-> Azure Blob Storage is not S3 compatible. This uses Minio Gateway to
-> provide an S3 interface
-
-```yaml
-metadata:
-  region: <azure-region-code, eg northeurope>
-objectStorage:
-  inCluster: false
-  azure:
-    certificate:
-      kind: secret
-      name: az-storage-token
-```
-
-The `az-storage-token` secret must contain the following key/value pairs:
-- `accountName` - the globally-unique storage account name
-- `accountKey` - access key for the storage account
 
 ### S3
 

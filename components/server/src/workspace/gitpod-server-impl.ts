@@ -180,6 +180,11 @@ import * as grpc from "@grpc/grpc-js";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
+import {
+    ConfigCatClientFactory,
+    getExperimentsClientForBackend,
+} from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { OrganizationOperation } from "../authorization/perms";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -249,6 +254,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(VerificationService) protected readonly verificationService: VerificationService;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
+
+    @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -2027,14 +2034,38 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return await this.projectsService.getProjectEnvironmentVariables(projectId);
     }
 
-    protected async guardTeamOperation(teamId: string | undefined, op: ResourceAccessOp): Promise<Team> {
-        const team = await this.teamDB.findTeamById(teamId || "");
-        if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+    protected async guardTeamOperation(
+        teamId: string,
+        op: ResourceAccessOp,
+        fineGrainedOps: OrganizationOperation[],
+    ): Promise<{ team: Team; members: TeamMemberInfo[] }> {
+        if (!uuidValidate(teamId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
+
+        const user = this.checkUser();
+        const centralizedPermissionsEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "centralizedPermissions",
+            false,
+            {
+                user: user,
+                teamId: teamId,
+            },
+        );
+
+        if (centralizedPermissionsEnabled) {
+            log.info("[perms] Checking team operations.", { org: teamId, operations: fineGrainedOps, user: user.id });
+        }
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            // We return Permission Denied because we don't want to leak the existence, or not of the Organization.
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${teamId}`);
+        }
+
         const members = await this.teamDB.findMembersByTeam(team.id);
         await this.guardAccess({ kind: "team", subject: team, members }, op);
-        return team;
+        return { team, members };
     }
 
     public async getTeams(ctx: TraceContext): Promise<Team[]> {
@@ -2046,33 +2077,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeam(ctx: TraceContext, teamId: string): Promise<Team> {
         traceAPIParams(ctx, { teamId });
 
-        if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
-        }
-
         this.checkAndBlockUser("getTeam");
 
-        const team = await this.teamDB.findTeamById(teamId);
-        if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Team ${teamId} does not exist`);
-        }
-
+        const { team } = await this.guardTeamOperation(teamId, "get", ["org_members_read"]);
         return team;
     }
 
     public async updateTeam(ctx: TraceContext, teamId: string, team: Pick<Team, "name">): Promise<Team> {
         traceAPIParams(ctx, { teamId });
-
-        if (!teamId || !uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
-        }
         this.checkUser("updateTeam");
-        const existingTeam = await this.teamDB.findTeamById(teamId);
-        if (!existingTeam) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Team ${teamId} does not exist`);
-        }
-        const members = await this.teamDB.findMembersByTeam(teamId);
-        await this.guardAccess({ kind: "team", subject: existingTeam, members }, "update");
+
+        await this.guardTeamOperation(teamId, "update", ["org_metadata_write"]);
 
         const updatedTeam = await this.teamDB.updateTeam(teamId, team);
         return updatedTeam;
@@ -2081,14 +2096,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
         traceAPIParams(ctx, { teamId });
 
-        if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
-        }
-
         this.checkUser("getTeamMembers");
-        const team = await this.getTeam(ctx, teamId);
-        const members = await this.teamDB.findMembersByTeam(team.id);
-        await this.guardAccess({ kind: "team", subject: team, members }, "get");
+        const { members } = await this.guardTeamOperation(teamId, "get", ["org_members_read"]);
+
         return members;
     }
 
@@ -2106,7 +2116,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             properties: {
                 id: team.id,
                 name: team.name,
-                slug: team.slug,
                 created_at: team.creationTime,
                 invite_id: invite.id,
             },
@@ -2134,7 +2143,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 properties: {
                     team_id: invite.teamId,
                     team_name: team?.name,
-                    team_slug: team?.slug,
                     invite_id: inviteId,
                 },
             });
@@ -2151,10 +2159,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {
         traceAPIParams(ctx, { teamId, userId, role });
 
-        if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
-        }
-
         if (!uuidValidate(userId)) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
         }
@@ -2164,27 +2168,31 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         this.checkAndBlockUser("setTeamMemberRole");
-        await this.guardTeamOperation(teamId, "update");
+        await this.guardTeamOperation(teamId, "update", ["org_members_write"]);
+
         await this.teamDB.setTeamMemberRole(userId, teamId, role);
     }
 
     public async removeTeamMember(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
         traceAPIParams(ctx, { teamId, userId });
 
-        if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
-        }
-
         if (!uuidValidate(userId)) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
         }
 
         const user = this.checkAndBlockUser("removeTeamMember");
-        // Users are free to leave any team themselves, but only owners can remove others from their teams.
-        await this.guardTeamOperation(teamId, user.id === userId ? "get" : "update");
+        // The user is leaving a team, if they are removing themselves from the team.
+        const userLeavingTeam = user.id === userId;
+
+        if (userLeavingTeam) {
+            await this.guardTeamOperation(teamId, "update", ["not_implemented"]);
+        } else {
+            await this.guardTeamOperation(teamId, "get", ["org_members_write"]);
+        }
+
         const membership = await this.teamDB.findTeamMembership(userId, teamId);
         if (!membership) {
-            throw new Error(`Could not find membership for user '${userId}' in team '${teamId}'`);
+            throw new Error(`Could not find membership for user '${userId}' in organization '${teamId}'`);
         }
         await this.teamDB.removeMemberFromTeam(userId, teamId);
         await this.onTeamMemberRemoved(userId, teamId, membership.id);
@@ -2201,12 +2209,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         traceAPIParams(ctx, { teamId });
 
-        if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
-        }
-
         this.checkUser("getGenericInvite");
-        await this.guardTeamOperation(teamId, "get");
+        await this.guardTeamOperation(teamId, "get", ["org_members_write"]);
+
         const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
         if (invite) {
             return invite;
@@ -2217,12 +2222,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async resetGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         traceAPIParams(ctx, { teamId });
 
-        if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "team ID must be a valid UUID");
-        }
-
         this.checkAndBlockUser("resetGenericInvite");
-        await this.guardTeamOperation(teamId, "update");
+        await this.guardTeamOperation(teamId, "update", ["org_members_write"]);
         return this.teamDB.resetGenericInvite(teamId);
     }
 
@@ -2239,7 +2240,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
         } else {
             // Anyone who can read a team's information (i.e. any team member) can manage team projects
-            await this.guardTeamOperation(project.teamId, "get");
+            await this.guardTeamOperation(project.teamId || "", "get", ["not_implemented"]);
         }
     }
 
@@ -2266,7 +2267,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
         } else {
             // Anyone who can read a team's information (i.e. any team member) can create a new project.
-            await this.guardTeamOperation(params.teamId, "get");
+            await this.guardTeamOperation(params.teamId || "", "get", ["not_implemented"]);
         }
 
         return this.projectsService.createProject(params, user);
@@ -2291,7 +2292,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = this.checkAndBlockUser("deleteTeam");
         traceAPIParams(ctx, { teamId, userId: user.id });
 
-        await this.guardTeamOperation(teamId, "delete");
+        await this.guardTeamOperation(teamId, "delete", ["org_write"]);
 
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach((project) => {
@@ -2324,7 +2325,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkUser("getTeamProjects");
 
-        await this.guardTeamOperation(teamId, "get");
+        await this.guardTeamOperation(teamId, "get", ["not_implemented"]);
         return this.projectsService.getTeamProjects(teamId);
     }
 
@@ -2912,6 +2913,159 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to delete the provider.";
             throw new ResponseError(ErrorCodes.CONFLICT, message);
+        }
+    }
+
+    async createOrgAuthProvider(
+        ctx: TraceContext,
+        { entry }: GitpodServer.CreateOrgAuthProviderParams,
+    ): Promise<AuthProviderEntry> {
+        traceAPIParams(ctx, {}); // entry contains PII
+
+        let user = this.checkAndBlockUser("createOrgAuthProvider");
+
+        // map params to a new provider
+        const newProvider = <AuthProviderEntry.NewOrgEntry>{
+            host: entry.host,
+            type: entry.type,
+            clientId: entry.clientId,
+            clientSecret: entry.clientSecret,
+            ownerId: user.id,
+            organizationId: entry.organizationId,
+        };
+
+        if (!newProvider.organizationId || !uuidValidate(newProvider.organizationId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
+        }
+
+        await this.guardWithFeatureFlag("orgGitAuthProviders", newProvider.organizationId);
+
+        if (!newProvider.host) {
+            throw new ResponseError(
+                ErrorCodes.BAD_REQUEST,
+                "Must provider a host value when creating a new auth provider.",
+            );
+        }
+
+        // Ensure user can perform this operation on this organization
+        await this.guardTeamOperation(newProvider.organizationId, "create", ["org_authprovider_write"]);
+
+        try {
+            // on creating we're are checking for already existing runtime providers
+            const host = newProvider.host && newProvider.host.toLowerCase();
+
+            if (!(await this.authProviderService.isHostReachable(host))) {
+                log.debug(`Host could not be reached.`, { entry, newProvider });
+                throw new Error("Host could not be reached.");
+            }
+
+            const hostContext = this.hostContextProvider.get(host);
+            if (hostContext) {
+                const builtInExists = hostContext.authProvider.params.ownerId === undefined;
+                log.debug(`Attempt to override existing auth provider.`, { entry, newProvider, builtInExists });
+                throw new Error("Provider for this host already exists.");
+            }
+
+            const result = await this.authProviderService.createOrgAuthProvider(newProvider);
+            return AuthProviderEntry.redact(result);
+        } catch (error) {
+            const message = error && error.message ? error.message : "Failed to create the provider.";
+            throw new ResponseError(ErrorCodes.CONFLICT, message);
+        }
+    }
+
+    async updateOrgAuthProvider(
+        ctx: TraceContext,
+        { entry }: GitpodServer.UpdateOrgAuthProviderParams,
+    ): Promise<AuthProviderEntry> {
+        traceAPIParams(ctx, {}); // entry contains PII
+
+        this.checkAndBlockUser("updateOrgAuthProvider");
+
+        // map params to a provider update
+        const providerUpdate: AuthProviderEntry.UpdateOrgEntry = {
+            id: entry.id,
+            clientId: entry.clientId,
+            clientSecret: entry.clientSecret,
+            organizationId: entry.organizationId,
+        };
+
+        if (!providerUpdate.organizationId || !uuidValidate(providerUpdate.organizationId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
+        }
+
+        await this.guardWithFeatureFlag("orgGitAuthProviders", providerUpdate.organizationId);
+
+        await this.guardTeamOperation(providerUpdate.organizationId, "update", ["org_authprovider_write"]);
+
+        try {
+            const result = await this.authProviderService.updateOrgAuthProvider(providerUpdate);
+            return AuthProviderEntry.redact(result);
+        } catch (error) {
+            const message = error && error.message ? error.message : "Failed to update the provider.";
+            throw new ResponseError(ErrorCodes.CONFLICT, message);
+        }
+    }
+
+    async getOrgAuthProviders(
+        ctx: TraceContext,
+        params: GitpodServer.GetOrgAuthProviderParams,
+    ): Promise<AuthProviderEntry[]> {
+        traceAPIParams(ctx, { params });
+
+        this.checkAndBlockUser("getOrgAuthProviders");
+
+        await this.guardWithFeatureFlag("orgGitAuthProviders", params.organizationId);
+
+        await this.guardTeamOperation(params.organizationId, "get", ["org_authprovider_read"]);
+
+        try {
+            const result = await this.authProviderService.getAuthProvidersOfOrg(params.organizationId);
+            return result.map(AuthProviderEntry.redact.bind(AuthProviderEntry));
+        } catch (error) {
+            const message =
+                error && error.message ? error.message : "Error retreiving auth providers for organization.";
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, message);
+        }
+    }
+
+    async deleteOrgAuthProvider(ctx: TraceContext, params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void> {
+        traceAPIParams(ctx, { params });
+
+        this.checkAndBlockUser("deleteOrgAuthProvider");
+
+        const team = await this.getTeam(ctx, params.organizationId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
+        }
+
+        await this.guardWithFeatureFlag("orgGitAuthProviders", team.id);
+
+        // Find the matching auth provider we're attempting to delete
+        const orgProviders = await this.authProviderService.getAuthProvidersOfOrg(team.id);
+        const authProvider = orgProviders.find((p) => p.id === params.id);
+        if (!authProvider) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
+        }
+
+        await this.guardTeamOperation(authProvider.organizationId || "", "delete", ["org_authprovider_write"]);
+
+        try {
+            await this.authProviderService.deleteAuthProvider(authProvider);
+        } catch (error) {
+            const message = error && error.message ? error.message : "Failed to delete the provider.";
+            throw new ResponseError(ErrorCodes.CONFLICT, message);
+        }
+    }
+
+    protected async guardWithFeatureFlag(flagName: string, teamId: string) {
+        // Guard method w/ a feature flag check
+        const isEnabled = await this.configCatClientFactory().getValueAsync(flagName, false, {
+            user: this.user,
+            teamId,
+        });
+        if (!isEnabled) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Method not available");
         }
     }
 

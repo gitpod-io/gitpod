@@ -4,18 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useState } from "react";
-import { useLocation } from "react-router";
+import { useEffect, useState } from "react";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { getCurrentTeam, TeamsContext } from "./teams-context";
+import { useCurrentTeam } from "./teams-context";
 import { getGitpodService } from "../service/service";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export default function TeamUsageBasedBilling() {
-    const { teams } = useContext(TeamsContext);
-    const location = useLocation();
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
     const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
 
     useEffect(() => {
@@ -33,7 +30,7 @@ export default function TeamUsageBasedBilling() {
 
     return (
         <>
-            <h3>Team Billing</h3>
+            <h3>Organization Billing</h3>
             <UsageBasedBillingConfig attributionId={team && AttributionId.render({ kind: "team", teamId: team.id })} />
         </>
     );

@@ -22,13 +22,7 @@ const StorageMount = "/mnt/secrets/storage"
 
 func useMinio(context *RenderContext) bool {
 	// Minio is used for in-cluster storage and as a facade to non-GCP providers
-	if pointer.BoolDeref(context.Config.ObjectStorage.InCluster, false) {
-		return true
-	}
-	if context.Config.ObjectStorage.Azure != nil {
-		return true
-	}
-	return false
+	return pointer.BoolDeref(context.Config.ObjectStorage.InCluster, false)
 }
 
 func StorageConfig(context *RenderContext) storageconfig.StorageConfig {

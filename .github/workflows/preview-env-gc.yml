@@ -1,0 +1,57 @@
+name: "Preview environment garbage collection"
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: "0 */4 * * *"
+jobs:
+    stale:
+        name: "Find stale preview environments"
+        runs-on: [self-hosted]
+        container:
+            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+        outputs:
+            names: ${{ steps.set-matrix.outputs.names }}
+            count: ${{ steps.set-matrix.outputs.count }}
+        steps:
+            - uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+            - name: Compute matrix
+              id: set-matrix
+              shell: bash
+              env:
+                  PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
+              run: |
+                  set -euo pipefail
+
+                  export LEEWAY_WORKSPACE_ROOT="$(pwd)"
+                  export HOME="/home/gitpod"
+                  export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
+                  # Used by 'previewctl list stale'
+                  export GOOGLE_APPLICATION_CREDENTIALS="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
+
+                  echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+                  gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+                  leeway run dev/preview/previewctl:install
+
+                  previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+                  previewctl list stale | jq --null-input --raw-input --compact-output '[inputs | select(length>0)]' > /tmp/stale-json
+                  echo "names=$(cat /tmp/stale-json)" >> $GITHUB_OUTPUT
+                  echo "count=$(jq '. | length' /tmp/stale-json)" >> $GITHUB_OUTPUT
+
+    delete:
+        name: "Delete preview environment"
+        needs: [stale]
+        runs-on: [self-hosted]
+        if: ${{ needs.stale.outputs.count > 0 }}
+        strategy:
+            matrix:
+                name: ${{ fromJSON(needs.stale.outputs.names) }}
+        steps:
+            - uses: actions/checkout@v3
+            - name: Delete preview environment ${{ matrix.name }}
+              uses: ./.github/actions/delete-preview
+              with:
+                  name: ${{ matrix.name }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}

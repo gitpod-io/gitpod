@@ -8,7 +8,6 @@ package minio
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/minio/azure"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/minio/incluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/helm"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -33,9 +32,6 @@ var Helm = common.CompositeHelmFunc(
 
 		if pointer.BoolDeref(cfg.Config.ObjectStorage.InCluster, false) {
 			return incluster.Helm(ServiceAPIPort, ServiceConsolePort, commonHelmValues)(cfg)
-		}
-		if cfg.Config.ObjectStorage.Azure != nil {
-			return azure.Helm(ServiceAPIPort, ServiceConsolePort, commonHelmValues)(cfg)
 		}
 
 		return nil, nil

@@ -1596,7 +1596,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     // Team Subscriptions 2
     async getTeamSubscription(ctx: TraceContext, teamId: string): Promise<TeamSubscription2 | undefined> {
         this.checkUser("getTeamSubscription");
-        await this.guardTeamOperation(teamId, "get");
+        await this.guardTeamOperation(teamId, "get", ["not_implemented"]);
         return this.teamSubscription2DB.findForTeam(teamId, new Date().toISOString());
     }
 
@@ -2098,7 +2098,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         try {
             if (attrId.kind == "team") {
-                await this.guardTeamOperation(attrId.teamId, "get");
+                await this.guardTeamOperation(attrId.teamId, "get", ["not_implemented"]);
             }
             const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(attributionId);
             return subscriptionId;
@@ -2119,7 +2119,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         let team: Team | undefined;
         if (attrId.kind === "team") {
-            team = await this.guardTeamOperation(attrId.teamId, "update");
+            team = (await this.guardTeamOperation(attrId.teamId, "update", ["not_implemented"])).team;
             await this.ensureStripeApiIsAllowed({ team });
         } else {
             if (attrId.userId !== user.id) {
@@ -2141,7 +2141,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         let team: Team | undefined;
         if (attrId.kind === "team") {
-            team = await this.guardTeamOperation(attrId.teamId, "update");
+            team = (await this.guardTeamOperation(attrId.teamId, "update", ["not_implemented"])).team;
             await this.ensureStripeApiIsAllowed({ team });
         } else {
             if (attrId.userId !== user.id) {
@@ -2211,7 +2211,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         let team: Team | undefined;
         try {
             if (attrId.kind === "team") {
-                team = await this.guardTeamOperation(attrId.teamId, "update");
+                team = (await this.guardTeamOperation(attrId.teamId, "update", ["not_implemented"])).team;
                 await this.ensureStripeApiIsAllowed({ team });
             } else {
                 await this.ensureStripeApiIsAllowed({ user });
@@ -2257,9 +2257,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (attrId.kind === "user") {
             await this.ensureStripeApiIsAllowed({ user });
         } else if (attrId.kind === "team") {
-            const team = await this.guardTeamOperation(attrId.teamId, "update");
+            const team = (await this.guardTeamOperation(attrId.teamId, "update", ["not_implemented"])).team;
             await this.ensureStripeApiIsAllowed({ team });
-            returnUrl = this.config.hostUrl.with(() => ({ pathname: `/t/${team.slug}/billing` })).toString();
+            returnUrl = this.config.hostUrl
+                .with(() => ({ pathname: `/org-billing`, search: `org=${team.id}` }))
+                .toString();
         }
         let url: string;
         try {
@@ -2362,10 +2364,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                         const teamOrUser = await this.teamDB.findTeamById(limit.attributionId.teamId);
                         if (teamOrUser) {
                             if (limit.reached) {
-                                result.push(teamOrUser?.slug);
+                                result.push(teamOrUser?.name);
                                 result.unshift(`Your team '${teamOrUser?.name}' has reached its usage limit.`);
                             } else if (limit.almostReached) {
-                                result.push(teamOrUser?.slug);
+                                result.push(teamOrUser?.name);
                                 result.unshift(
                                     `Your team '${teamOrUser?.name}' has reached 80% or more of its usage limit.`,
                                 );
@@ -2491,7 +2493,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         traceAPIParams(ctx, { teamId });
 
         this.checkAndBlockUser("getBillingModeForTeam");
-        const team = await this.guardTeamOperation(teamId, "get");
+        const { team } = await this.guardTeamOperation(teamId, "get", ["not_implemented"]);
 
         return this.billingModes.getBillingModeForTeam(team, new Date());
     }

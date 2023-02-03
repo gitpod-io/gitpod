@@ -70,6 +70,11 @@ export class AuthProviderService {
         return result;
     }
 
+    async getAuthProvidersOfOrg(organizationId: string): Promise<AuthProviderEntry[]> {
+        const result = await this.authProviderDB.findByOrgId(organizationId);
+        return result;
+    }
+
     async deleteAuthProvider(authProvider: AuthProviderEntry): Promise<void> {
         await this.authProviderDB.delete(authProvider);
     }
@@ -112,6 +117,51 @@ export class AuthProviderService {
         }
         return await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry, true);
     }
+
+    async createOrgAuthProvider(entry: AuthProviderEntry.NewOrgEntry): Promise<AuthProviderEntry> {
+        // TODO: only restrict existing provider w/ same host if it's the same organization
+        const existing = await this.authProviderDB.findByHost(entry.host);
+        if (existing) {
+            throw new Error("Provider for this host already exists.");
+        }
+
+        const authProvider = this.initializeNewProvider(entry);
+
+        return await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry, true);
+    }
+
+    async updateOrgAuthProvider(entry: AuthProviderEntry.UpdateOrgEntry): Promise<AuthProviderEntry> {
+        let authProvider: AuthProviderEntry;
+
+        const { id, organizationId } = entry;
+        // TODO can we change this to query for the provider by id and org instead of loading all from org?
+        const existing = (await this.authProviderDB.findByOrgId(organizationId)).find((p) => p.id === id);
+        if (!existing) {
+            throw new Error("Provider does not exist.");
+        }
+        const changed =
+            entry.clientId !== existing.oauth.clientId ||
+            (entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret);
+
+        if (!changed) {
+            return existing;
+        }
+
+        // update config on demand
+        const oauth = {
+            ...existing.oauth,
+            clientId: entry.clientId,
+            clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
+        };
+        authProvider = {
+            ...existing,
+            oauth,
+            status: "pending",
+        };
+
+        return await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry, true);
+    }
+
     protected initializeNewProvider(newEntry: AuthProviderEntry.NewEntry): AuthProviderEntry {
         const { host, type, clientId, clientSecret } = newEntry;
         let urls;

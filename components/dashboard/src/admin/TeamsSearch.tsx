@@ -18,7 +18,7 @@ import Pagination from "../Pagination/Pagination";
 
 export default function TeamsSearchPage() {
     return (
-        <PageWithAdminSubMenu title="Teams" subtitle="Search and manage teams.">
+        <PageWithAdminSubMenu title="Organizations" subtitle="Search and manage organizations.">
             <TeamsSearch />
         </PageWithAdminSubMenu>
     );
@@ -104,7 +104,7 @@ export function TeamsSearch() {
                         </div>
                         <input
                             type="search"
-                            placeholder="Search Teams"
+                            placeholder="Search Organizations"
                             onKeyDown={(k) => k.key === "Enter" && search()}
                             onChange={(v) => {
                                 setSearchTerm(v.target.value.trim());
@@ -147,7 +147,7 @@ export function TeamsSearch() {
         return (
             <Link
                 key={"pr-" + props.team.name}
-                to={"/admin/teams/" + props.team.id}
+                to={"/admin/orgs/" + props.team.id}
                 data-analytics='{"button_type":"sidebar_menu"}'
             >
                 <div className="rounded-xl whitespace-nowrap flex py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">

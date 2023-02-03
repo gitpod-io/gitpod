@@ -39,6 +39,7 @@ import (
 	kubectlexec "k8s.io/kubectl/pkg/cmd/exec"
 	"sigs.k8s.io/e2e-framework/klient"
 
+	ide "github.com/gitpod-io/gitpod/ide-service-api/config"
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
 
@@ -556,24 +557,9 @@ func GetServerConfig(namespace string, client klient.Client) (*ServerConfigParti
 	return &config, nil
 }
 
-// ServerIDEConfigPartial is the subset of server IDE config we're using for integration tests.
-// NOTE: keep in sync with chart/templates/server-ide-configmap.yaml
-type ServerIDEConfigPartial struct {
-	IDEOptions struct {
-		Options struct {
-			Code struct {
-				Image string `json:"image"`
-			} `json:"code"`
-			CodeLatest struct {
-				Image string `json:"image"`
-			} `json:"code-latest"`
-		} `json:"options"`
-	} `json:"ideOptions"`
-}
-
-func GetServerIDEConfig(namespace string, client klient.Client) (*ServerIDEConfigPartial, error) {
+func GetIDEConfig(namespace string, client klient.Client) (*ide.IDEConfig, error) {
 	var cm corev1.ConfigMap
-	err := client.Resources().Get(context.Background(), "server-ide-config", namespace, &cm)
+	err := client.Resources().Get(context.Background(), "ide-config", namespace, &cm)
 	if err != nil {
 		return nil, err
 	}
@@ -584,7 +570,7 @@ func GetServerIDEConfig(namespace string, client klient.Client) (*ServerIDEConfi
 		return nil, fmt.Errorf("key %s not found", key)
 	}
 
-	var config ServerIDEConfigPartial
+	var config ide.IDEConfig
 	err = json.Unmarshal([]byte(configJson), &config)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling server IDE config: %v", err)

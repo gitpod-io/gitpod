@@ -26,7 +26,7 @@ import (
 type Config struct {
 	Workspace  *WorkspaceConfig   `json:"workspace,omitempty"`
 	WebApp     *WebAppConfig      `json:"webapp,omitempty"`
-	IDE        *IDEConfig         `json:"ide,omitempty"`
+	IDE        *IDEConfig         `json:"ide,omitempty"`    // @deprecated
 	Common     *CommonConfig      `json:"common,omitempty"` // @deprecated
 	Overrides  *[]Overrides       `json:"overrides,omitempty"`
 	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`  // @deprecated
@@ -199,32 +199,26 @@ type SpiceDBConfig struct {
 
 	DisableMigrations bool `json:"disableMigrations"`
 
-	CloudSQL *struct {
-		Instance string `json:"instance"`
-		Database string `json:"database"`
-		// Credentials for CloudSQL proxy to authenticate with GCP
-		ProxySecretRef string `json:"proxySecretRef"`
-		// Username/Password to authenticate with the database
-		DatabaseSecretRef string `json:"databaseSecretRef"`
-	} `json:"cloudSql,omitempty"`
+	// Reference to a k8s secret which contains a "presharedKey" for authentication with SpiceDB
+	// Required.
+	SecretRef string `json:"secretRef"`
 }
 
 type WebAppConfig struct {
-	PublicAPI                  *PublicAPIConfig       `json:"publicApi,omitempty"`
-	Server                     *ServerConfig          `json:"server,omitempty"`
-	ProxyConfig                *ProxyConfig           `json:"proxy,omitempty"`
-	WorkspaceManagerBridge     *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`
-	Tracing                    *Tracing               `json:"tracing,omitempty"`
-	UsePodAntiAffinity         bool                   `json:"usePodAntiAffinity"`
-	DisableMigration           bool                   `json:"disableMigration"`
-	Usage                      *UsageConfig           `json:"usage,omitempty"`
-	ConfigcatKey               string                 `json:"configcatKey"`
-	WorkspaceClasses           []WebAppWorkspaceClass `json:"workspaceClasses"`
-	Stripe                     *StripeConfig          `json:"stripe,omitempty"`
-	SlowDatabase               bool                   `json:"slowDatabase,omitempty"`
-	IAM                        *IAMConfig             `json:"iam,omitempty"`
-	WithoutWorkspaceComponents bool                   `json:"withoutWorkspaceComponents,omitempty"`
-	SpiceDB                    *SpiceDBConfig         `json:"spicedb,omitempty"`
+	PublicAPI              *PublicAPIConfig       `json:"publicApi,omitempty"`
+	Server                 *ServerConfig          `json:"server,omitempty"`
+	ProxyConfig            *ProxyConfig           `json:"proxy,omitempty"`
+	WorkspaceManagerBridge *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`
+	Tracing                *Tracing               `json:"tracing,omitempty"`
+	UsePodAntiAffinity     bool                   `json:"usePodAntiAffinity"`
+	DisableMigration       bool                   `json:"disableMigration"`
+	Usage                  *UsageConfig           `json:"usage,omitempty"`
+	ConfigcatKey           string                 `json:"configcatKey"`
+	WorkspaceClasses       []WebAppWorkspaceClass `json:"workspaceClasses"`
+	Stripe                 *StripeConfig          `json:"stripe,omitempty"`
+	SlowDatabase           string                 `json:"slowDatabase,omitempty"`
+	IAM                    *IAMConfig             `json:"iam,omitempty"`
+	SpiceDB                *SpiceDBConfig         `json:"spicedb,omitempty"`
 }
 
 type WorkspaceDefaults struct {
@@ -296,6 +290,9 @@ type PublicAPIConfig struct {
 	// Name of the kubernetes secret to use for Stripe secrets
 	StripeSecretName string `json:"stripeSecretName"`
 
+	// Name of the kubernetes secret to use for signing JWTs
+	OIDCClientJWTSigningKeySecretName string `json:"oidcClientJWTSigningKeySecretName"`
+
 	// Name of the kubernetes secret to use for signature of Personal Access Tokens
 	PersonalAccessTokenSigningKeySecretName string `json:"personalAccessTokenSigningKeySecretName"`
 }
@@ -325,6 +322,7 @@ type WorkspaceClassCredits struct {
 	PerMinute float64 `json:"perMinute,omitempty"`
 }
 
+// @deprecated
 type IDEConfig struct {
 	// Disable resolution of latest images and use bundled latest versions instead
 	ResolveLatest    *bool             `json:"resolveLatest,omitempty"`
@@ -333,14 +331,17 @@ type IDEConfig struct {
 	IDEMetricsConfig *IDEMetricsConfig `json:"ideMetrics,omitempty"`
 }
 
+// @deprecated
 type IDEProxyConfig struct {
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
 }
 
+// @deprecated
 type IDEMetricsConfig struct {
 	EnabledErrorReporting bool `json:"enabledErrorReporting,omitempty"`
 }
 
+// @deprecated
 type VSXProxyConfig struct {
 	ServiceAnnotations map[string]string `json:"serviceAnnotations"`
 }

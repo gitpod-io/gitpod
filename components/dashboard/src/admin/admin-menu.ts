@@ -19,8 +19,8 @@ export function getAdminMenu() {
             link: ["/admin/projects"],
         },
         {
-            title: "Teams",
-            link: ["/admin/teams"],
+            title: "Organizations",
+            link: ["/admin/orgs"],
         },
         {
             title: "Blocked Repositories",

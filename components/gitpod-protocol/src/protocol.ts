@@ -1419,6 +1419,7 @@ export interface AuthProviderEntry {
     readonly type: AuthProviderEntry.Type;
     readonly host: string;
     readonly ownerId: string;
+    readonly organizationId?: string;
 
     readonly status: AuthProviderEntry.Status;
 
@@ -1450,6 +1451,14 @@ export namespace AuthProviderEntry {
     };
     export type UpdateEntry = Pick<AuthProviderEntry, "id" | "ownerId"> &
         Pick<OAuth2Config, "clientId" | "clientSecret">;
+    export type NewOrgEntry = NewEntry & {
+        organizationId: string;
+    };
+    export type UpdateOrgEntry = Pick<AuthProviderEntry, "id"> & {
+        clientId: string;
+        clientSecret: string;
+        organizationId: string;
+    };
     export function redact(entry: AuthProviderEntry): AuthProviderEntry {
         return {
             ...entry,

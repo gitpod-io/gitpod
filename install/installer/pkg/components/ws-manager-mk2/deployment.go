@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
 
@@ -53,8 +54,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			RunAsUser: pointer.Int64(31002),
 		},
 		Containers: []corev1.Container{{
-			Name:            Component,
-			Args:            []string{"--config", "/config/config.json"},
+			Name: Component,
+			Args: []string{
+				"--config", "/config/config.json",
+				"--leader-elect",
+			},
 			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.WSManagerMk2.Version),
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			Resources: common.ResourceRequirements(ctx, Component, Component, corev1.ResourceRequirements{
@@ -63,6 +67,26 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					"memory": resource.MustParse("32Mi"),
 				},
 			}),
+			LivenessProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: "/healthz",
+						Port: intstr.FromInt(HealthPort),
+					},
+				},
+				InitialDelaySeconds: 15,
+				PeriodSeconds:       20,
+			},
+			ReadinessProbe: &corev1.Probe{
+				ProbeHandler: corev1.ProbeHandler{
+					HTTPGet: &corev1.HTTPGetAction{
+						Path: "/readyz",
+						Port: intstr.FromInt(HealthPort),
+					},
+				},
+				InitialDelaySeconds: 5,
+				PeriodSeconds:       10,
+			},
 			Ports: []corev1.ContainerPort{
 				{
 					Name:          RPCPortName,

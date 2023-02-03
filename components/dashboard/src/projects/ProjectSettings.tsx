@@ -5,11 +5,11 @@
  */
 
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useLocation, useHistory } from "react-router";
+import { useHistory } from "react-router";
 import { Project, ProjectSettings, Team } from "@gitpod/gitpod-protocol";
 import CheckBox from "../components/CheckBox";
 import { getGitpodService } from "../service/service";
-import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
+import { useCurrentTeam } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
@@ -20,23 +20,20 @@ import { Link } from "react-router-dom";
 import { RemoveProjectModal } from "./RemoveProjectModal";
 
 export function getProjectSettingsMenu(project?: Project, team?: Team) {
-    const teamOrUserSlug = !!team ? "t/" + team.slug : "projects";
     return [
         {
             title: "General",
-            link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/settings`],
+            link: [`/projects/${Project.slug(project!)}/settings`],
         },
         {
             title: "Variables",
-            link: [`/${teamOrUserSlug}/${project?.slug || project?.name}/variables`],
+            link: [`/projects/${Project.slug(project!)}/variables`],
         },
     ];
 }
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
-    const location = useLocation();
-    const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(location, teams);
+    const team = useCurrentTeam();
 
     return (
         <PageWithSubMenu
@@ -53,8 +50,7 @@ export default function () {
     const { project, setProject } = useContext(ProjectContext);
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [showRemoveModal, setShowRemoveModal] = useState(false);
-    const { teams } = useContext(TeamsContext);
-    const team = getCurrentTeam(useLocation(), teams);
+    const team = useCurrentTeam();
     const history = useHistory();
 
     useEffect(() => {
@@ -101,13 +97,8 @@ export default function () {
     );
 
     const onProjectRemoved = useCallback(() => {
-        // if there's a current team, navigate to team projects
-        if (team) {
-            history.push(`/t/${team.slug}/projects`);
-        } else {
-            history.push("/projects");
-        }
-    }, [history, team]);
+        history.push("/projects");
+    }, [history]);
 
     // TODO: Render a generic error screen for when an entity isn't found
     if (!project) return null;
@@ -141,7 +132,7 @@ export default function () {
                             , first cancel your existing plan.
                         </span>
                         <Link className="mt-2" to={project.teamId ? "../billing" : "/plans"}>
-                            <button>Go to {project.teamId ? "Team" : "Personal"} Billing</button>
+                            <button>Go to {project.teamId ? "Organization" : "Personal"} Billing</button>
                         </Link>
                     </div>
                 </Alert>
@@ -254,7 +245,7 @@ export default function () {
                                 , first cancel your existing plan.
                             </span>
                             <Link className="mt-2" to={project.teamId ? "../billing" : "/plans"}>
-                                <button>Go to {project.teamId ? "Team" : "Personal"} Billing</button>
+                                <button>Go to {project.teamId ? "Organization" : "Personal"} Billing</button>
                             </Link>
                         </div>
                     </Alert>

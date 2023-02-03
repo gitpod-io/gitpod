@@ -51,7 +51,7 @@ export function AppNotifications() {
         if (notifications.length === 1) {
             href = `${gitpodHostUrl}billing`;
         } else if (notifications.length === 2) {
-            href = `${gitpodHostUrl}t/${notifications[notifications.length - 1]}/billing`;
+            href = `${gitpodHostUrl}/org-billing`;
         }
         return (
             <span>

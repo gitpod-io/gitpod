@@ -7,6 +7,8 @@ module "preview_gce" {
   preview_namespace = kubernetes_namespace.preview_namespace.metadata[0].name
   ssh_key           = local.ssh_key
   use_spot          = var.gce_use_spot
+  with_large_vm     = var.with_large_vm
+  vm_type           = var.vm_type
 
   providers = {
     google           = google,
@@ -25,6 +27,7 @@ module "preview_harvester" {
   cert_issuer       = var.cert_issuer
   preview_namespace = kubernetes_namespace.preview_namespace.metadata[0].name
   ssh_key           = local.ssh_key
+  with_large_vm     = var.with_large_vm
 
   providers = {
     google              = google,

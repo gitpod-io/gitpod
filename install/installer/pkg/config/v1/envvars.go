@@ -75,7 +75,6 @@ type ConfigEnvvars struct {
 	SSHGatewayHostKeyName                string   `env:"SSH_GATEWAY_HOST_KEY_NAME"`
 	StorageProvider                      string   `env:"STORE_PROVIDER" envDefault:"incluster"`
 	StorageRegion                        string   `env:"STORE_REGION"`
-	StorageAzureCredsName                string   `env:"STORE_AZURE_CREDENTIALS_NAME"`
 	StorageGCPProjectName                string   `env:"STORE_GCP_PROJECT"`
 	StorageGCPServiceAccountName         string   `env:"STORE_GCP_SERVICE_ACCOUNT_NAME"`
 	StorageS3Bucket                      string   `env:"STORE_S3_BUCKET"`
@@ -297,7 +296,6 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 
 	cfg.ObjectStorage.InCluster = pointer.Bool(true)
 	cfg.Metadata.Region = defaultMetadataRegion
-	cfg.ObjectStorage.Azure = nil
 	cfg.ObjectStorage.CloudStorage = nil
 	cfg.ObjectStorage.S3 = nil
 	if storageProvider := envvars.StorageProvider; storageProvider != "incluster" {
@@ -307,14 +305,6 @@ func (v version) BuildFromEnvvars(in interface{}) error {
 		cfg.ObjectStorage.InCluster = pointer.Bool(false)
 
 		switch storageProvider {
-		case "azure":
-			log.Infof("Configuring storage for Azure")
-			cfg.ObjectStorage.Azure = &ObjectStorageAzure{
-				Credentials: ObjectRef{
-					Kind: ObjectRefSecret,
-					Name: envvars.StorageAzureCredsName,
-				},
-			}
 		case "gcp":
 			log.Infof("Configuring storage for GCP")
 			cfg.ObjectStorage.CloudStorage = &ObjectStorageCloudStorage{

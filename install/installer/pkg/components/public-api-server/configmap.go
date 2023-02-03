@@ -28,8 +28,14 @@ const (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
+	var oidcClientJWTSigningSecretPath string
 	var stripeSecretPath string
 	var personalAccessTokenSigningKeyPath string
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		_, _, oidcClientJWTSigningSecretPath, _ = getOIDCClientJWTSecretConfig(cfg)
+		return nil
+	})
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		_, _, stripeSecretPath, _ = getStripeConfig(cfg)
@@ -45,6 +51,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	cfg := config.Configuration{
 		GitpodServiceURL:                  fmt.Sprintf("ws://%s.%s.svc.cluster.local:%d", server.Component, ctx.Namespace, server.ContainerPort),
+		OIDCClientJWTSigningSecretPath:    oidcClientJWTSigningSecretPath,
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
 		BillingServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
@@ -109,6 +116,38 @@ func getStripeConfig(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMoun
 		Name:      "stripe-secret",
 		MountPath: stripeSecretMountPath,
 		SubPath:   "stripe-webhook-secret",
+		ReadOnly:  true,
+	}
+
+	return volume, mount, path, true
+}
+
+func getOIDCClientJWTSecretConfig(cfg *experimental.Config) (corev1.Volume, corev1.VolumeMount, string, bool) {
+	var volume corev1.Volume
+	var mount corev1.VolumeMount
+	var path string
+
+	if cfg == nil || cfg.WebApp == nil || cfg.WebApp.PublicAPI == nil || cfg.WebApp.PublicAPI.OIDCClientJWTSigningKeySecretName == "" {
+		return volume, mount, path, false
+	}
+
+	oidcClientJWTSigningKeySecretName := cfg.WebApp.PublicAPI.OIDCClientJWTSigningKeySecretName
+	path = oidcClientJWTSigningKeyMountPath
+
+	volume = corev1.Volume{
+		Name: "oidc-client-jwt-signing-key",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: oidcClientJWTSigningKeySecretName,
+				Optional:   pointer.Bool(true),
+			},
+		},
+	}
+
+	mount = corev1.VolumeMount{
+		Name:      "oidc-client-jwt-signing-key",
+		MountPath: oidcClientJWTSigningKeyMountPath,
+		SubPath:   "oidc-client-jwt-signing-key",
 		ReadOnly:  true,
 	}
 

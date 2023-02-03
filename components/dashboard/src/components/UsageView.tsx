@@ -18,7 +18,6 @@ import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Pagination from "../Pagination/Pagination";
 import Header from "../components/Header";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ReactComponent as CreditsSvg } from "../images/credits.svg";
 import Spinner from "../icons/Spinner.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
@@ -174,9 +173,6 @@ function UsageView({ attributionId }: UsageViewProps) {
     };
 
     const currentPaginatedResults = usagePage?.usageEntriesList.filter((u) => u.kind === "workspaceinstance") ?? [];
-
-    const headerTitle = attributionId.kind === "team" ? "Team Usage" : "Personal Usage";
-
     const DateDisplay = forwardRef((arg: any, ref: any) => (
         <div
             className="px-2 py-0.5 text-gray-500 bg-gray-50 dark:text-gray-400 dark:bg-gray-800 rounded-md cursor-pointer flex items-center hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -209,7 +205,7 @@ function UsageView({ attributionId }: UsageViewProps) {
             <Header
                 title={
                     <div className="flex items-baseline">
-                        <h1 className="tracking-tight">{headerTitle}</h1>
+                        <h1 className="tracking-tight">Usage</h1>
                         <h2 className="ml-3">(updated every 15 minutes).</h2>
                     </div>
                 }
@@ -260,10 +256,11 @@ function UsageView({ attributionId }: UsageViewProps) {
                                 {!isLoading && (
                                     <div>
                                         <div className="flex flex-col truncate">
-                                            <div className="text-base text-gray-500">Total Usage</div>
+                                            <div className="text-base text-gray-500">Credits</div>
                                             <div className="flex text-lg text-gray-600 font-semibold">
-                                                <CreditsSvg className="my-auto mr-1" />
-                                                <span>{totalCreditsUsed.toLocaleString()} Credits</span>
+                                                <span className="dark:text-gray-400">
+                                                    {totalCreditsUsed.toLocaleString()}
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -281,7 +278,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                                             {" "}
                                             workspaces
                                         </a>{" "}
-                                        in {startDate.format("MMMM YYYY")} or checked your other teams?
+                                        in {startDate.format("MMMM YYYY")} or checked your other organizations?
                                     </p>
                                 </div>
                             )}

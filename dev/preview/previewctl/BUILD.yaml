@@ -47,7 +47,7 @@ scripts:
         # If a specific hash isn't provided we'll use the latest image off main
         PREVIEWCTL_VERSION=$(\
             gcloud container images list-tags eu.gcr.io/gitpod-core-dev/build/previewctl \
-                --filter="tags:main.*" \
+                --filter="tags:main-gha.*" \
                 --limit=1 \
                 --format=json \
             | jq --raw-output '.[0].tags[0]' \
@@ -57,6 +57,6 @@ scripts:
         PREVIEWCTL_IMAGE="eu.gcr.io/gitpod-core-dev/build/previewctl:hash-$INPUT_PREVIEWCTL_HASH"
       fi
 
-      echo "Downloading previewctil for $PREVIEWCTL_IMAGE"
+      echo "Downloading previewctl for $PREVIEWCTL_IMAGE"
       oci-tool fetch file -o $HOME/bin/previewctl --platform=linux-amd64 "$PREVIEWCTL_IMAGE" app/previewctl
       chmod +x $HOME/bin/previewctl

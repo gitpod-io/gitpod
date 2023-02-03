@@ -1523,27 +1523,56 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 		return nil, xerrors.Errorf("workspace without a valid node name")
 	}
 
-	var podList corev1.PodList
-	err = m.Clientset.List(ctx, &podList,
-		&client.ListOptions{
-			Namespace: m.Config.Namespace,
-			LabelSelector: labels.SelectorFromSet(labels.Set{
-				"component": "ws-daemon",
-				"app":       "gitpod",
-			}),
-		},
-	)
-	if err != nil {
-		return nil, xerrors.Errorf("unexpected error searching for Gitpod ws-daemon pod: %w", err)
-	}
-
 	// find the ws-daemon on this node
 	var hostIP string
-	for _, pod := range podList.Items {
-		if pod.Spec.NodeName == nodeName {
+
+	waitErr := wait.PollImmediate(1*time.Second, 30*time.Second, func() (bool, error) {
+		var podList corev1.PodList
+		err := m.Clientset.List(ctx, &podList,
+			&client.ListOptions{
+				Namespace: m.Config.Namespace,
+				LabelSelector: labels.SelectorFromSet(labels.Set{
+					"component": "ws-daemon",
+					"app":       "gitpod",
+				}),
+			},
+		)
+		if err != nil {
+			log.WithFields(wso.GetOWI()).WithError(err).Warn("cannot connect to Gitpod ws-daemon")
+			return false, xerrors.Errorf("cannot connect to Gitpod ws-daemon")
+		}
+
+		for _, pod := range podList.Items {
+			if pod.Spec.NodeName != nodeName {
+				continue
+			}
+
+			var isReady bool
+			for _, cond := range pod.Status.Conditions {
+				if cond.Type == corev1.PodReady {
+					isReady = cond.Status == corev1.ConditionTrue
+					break
+				}
+			}
+			if !isReady {
+				return false, nil
+			}
+
 			hostIP = pod.Status.PodIP
 			break
 		}
+
+		if hostIP == "" {
+			return false, nil
+		}
+
+		return true, nil
+	})
+	if waitErr == wait.ErrWaitTimeout {
+		return nil, xerrors.Errorf("timed out attempting to connect to Gitpod ws-daemon")
+	} else if waitErr != nil {
+		log.WithFields(wso.GetOWI()).WithError(waitErr).Warn("cannot connect to Gitpod ws-daemon")
+		return nil, xerrors.Errorf("cannot connect to Gitpod ws-daemon")
 	}
 
 	if hostIP == "" {

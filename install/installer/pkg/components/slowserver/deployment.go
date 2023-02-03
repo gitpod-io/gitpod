@@ -14,7 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/toxiproxy"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/spicedb"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
@@ -85,6 +85,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.AnalyticsEnv(&ctx.Config),
 		common.MessageBusEnv(&ctx.Config),
 		common.ConfigcatEnv(ctx),
+		spicedb.Env(ctx),
 		[]corev1.EnvVar{
 			{
 				Name:  "CONFIG_PATH",
@@ -110,10 +111,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				return envvar
 			}(),
 			{
-				Name:  "IDE_CONFIG_PATH",
-				Value: "/ide-config/config.json",
-			},
-			{
 				Name:  "NODE_ENV",
 				Value: "production", // todo(sje): will we need to change this?
 			},
@@ -128,10 +125,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 	)
 
+	var slowDatabaseHost string
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil {
+			slowDatabaseHost = cfg.WebApp.SlowDatabase
+		}
+		return nil
+	})
 	for i := range env {
 		if env[i].Name == "DB_HOST" {
 			env[i].ValueFrom = nil
-			env[i].Value = toxiproxy.Component
+			env[i].Value = slowDatabaseHost
 		}
 	}
 
@@ -328,18 +332,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	for i := range dbWaiterDbEnv {
 		if dbWaiterDbEnv[i].Name == "DB_HOST" {
 			dbWaiterDbEnv[i].ValueFrom = nil
-			dbWaiterDbEnv[i].Value = toxiproxy.Component
+			dbWaiterDbEnv[i].Value = slowDatabaseHost
 		}
 	}
 
-	addWsManagerTls := true
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.WithoutWorkspaceComponents {
-			// No ws-manager exists in the cluster, so no TLS secret to mount.
-			addWsManagerTls = false
-		}
-		return nil
-	})
+	addWsManagerTls := common.WithLocalWsManager(ctx)
 	if addWsManagerTls {
 		volumes = append(volumes, corev1.Volume{
 			Name: "ws-manager-client-tls-certs",
@@ -357,19 +354,21 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	// admin secret
-	volumes = append(volumes, corev1.Volume{
-		Name: "admin-login-key",
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: server.AdminSecretName,
+	if ctx.Config.AdminLoginSecret != nil {
+		volumes = append(volumes, corev1.Volume{
+			Name: "admin-login-key",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.AdminLoginSecret.Name,
+				},
 			},
-		},
-	})
-	volumeMounts = append(volumeMounts, corev1.VolumeMount{
-		Name:      "admin-login-key",
-		MountPath: server.AdminSecretMountPath,
-		ReadOnly:  true,
-	})
+		})
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      "admin-login-key",
+			MountPath: server.AdminSecretMountPath,
+			ReadOnly:  true,
+		})
+	}
 
 	return []runtime.Object{
 		&appsv1.Deployment{
@@ -411,14 +410,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									VolumeSource: corev1.VolumeSource{
 										ConfigMap: &corev1.ConfigMapVolumeSource{
 											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", common.ServerComponent)},
-										},
-									},
-								},
-								{
-									Name: "ide-config",
-									VolumeSource: corev1.VolumeSource{
-										ConfigMap: &corev1.ConfigMapVolumeSource{
-											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-ide-config", common.ServerComponent)},
 										},
 									},
 								},
@@ -499,11 +490,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									{
 										Name:      "config",
 										MountPath: "/config",
-										ReadOnly:  true,
-									},
-									{
-										Name:      "ide-config",
-										MountPath: "/ide-config",
 										ReadOnly:  true,
 									},
 								},

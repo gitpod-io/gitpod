@@ -6,31 +6,19 @@
 
 import dayjs from "dayjs";
 import { PrebuildEvent, Project } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useState } from "react";
-import { useLocation, useRouteMatch } from "react-router";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import { ItemsList, Item, ItemField } from "../components/ItemsList";
 import { getGitpodService } from "../service/service";
-import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
-import { toRemoteURL } from "./render-utils";
 import Spinner from "../icons/Spinner.svg";
 import NoAccess from "../icons/NoAccess.svg";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../provider-utils";
-import { UserContext } from "../user-context";
-import { listAllProjects } from "../service/public-api";
+import { useCurrentProject } from "./project-context";
+import { toRemoteURL } from "./render-utils";
 
 export default function () {
-    const location = useLocation();
-
-    const { teams } = useContext(TeamsContext);
-    const { user } = useContext(UserContext);
-    const team = getCurrentTeam(location, teams);
-
-    const match = useRouteMatch<{ team: string; resource: string }>("/(t/)?:team/:resource");
-    const projectSlug = match?.params?.resource;
-
-    const [project, setProject] = useState<Project | undefined>();
+    const project = useCurrentProject();
 
     const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(false);
     const [events, setEvents] = useState<PrebuildEvent[]>([]);
@@ -38,10 +26,6 @@ export default function () {
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
 
     const [showAuthBanner, setShowAuthBanner] = useState<{ host: string } | undefined>(undefined);
-
-    useEffect(() => {
-        updateProject();
-    }, [teams]);
 
     useEffect(() => {
         if (!project) {
@@ -59,27 +43,6 @@ export default function () {
             }
         })();
     }, [project]);
-
-    const updateProject = async () => {
-        if (!teams || !projectSlug) {
-            return;
-        }
-        let projects: Project[];
-        if (!!team) {
-            projects = await listAllProjects({ teamId: team.id });
-        } else {
-            projects = await listAllProjects({ userId: user?.id });
-        }
-
-        // Find project matching with slug, otherwise with name
-        const project = projectSlug && projects.find((p) => (p.slug ? p.slug === projectSlug : p.name === projectSlug));
-
-        if (!project) {
-            return;
-        }
-
-        setProject(project);
-    };
 
     const updatePrebuildEvents = async () => {
         if (!project) {
@@ -240,9 +203,7 @@ export default function () {
                                                 {event.prebuildId && (
                                                     <a
                                                         className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer"
-                                                        href={`/${
-                                                            !!team ? "t/" + team.slug : "projects"
-                                                        }/${projectSlug}/${event.prebuildId}`}
+                                                        href={`/projects/${Project.slug(project!)}/${event.prebuildId}`}
                                                     >
                                                         {<>{status}</>}
                                                     </a>

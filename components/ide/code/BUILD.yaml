@@ -1,11 +1,6 @@
 packages:
   - name: docker
     type: docker
-    srcs:
-      - "startup.sh"
-      - "supervisor-ide-config.json"
-    deps:
-      - components/ide/code/codehelper:app
     argdeps:
       - imageRepoBase
       - codeCommit

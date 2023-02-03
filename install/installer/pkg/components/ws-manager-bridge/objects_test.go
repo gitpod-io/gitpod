@@ -17,15 +17,18 @@ import (
 
 func TestWorkspaceManagerList_WhenSkipSelfIsSet(t *testing.T) {
 	testCases := []struct {
+		Kind                    config.InstallationKind
 		SkipSelf                bool
 		ExpectWorkspaceClusters bool
 	}{
-		{SkipSelf: true, ExpectWorkspaceClusters: false},
-		{SkipSelf: false, ExpectWorkspaceClusters: true},
+		{Kind: config.InstallationMeta, SkipSelf: true, ExpectWorkspaceClusters: false},
+		{Kind: config.InstallationMeta, SkipSelf: false, ExpectWorkspaceClusters: false}, // cannot mount anything it if there is nothing to mount
+		{Kind: config.InstallationFull, SkipSelf: true, ExpectWorkspaceClusters: false},
+		{Kind: config.InstallationFull, SkipSelf: false, ExpectWorkspaceClusters: true},
 	}
 
 	for _, testCase := range testCases {
-		ctx := renderContextWithConfig(t, testCase.SkipSelf)
+		ctx := renderContextWithConfig(t, testCase.Kind, testCase.SkipSelf)
 
 		wsclusters := WSManagerList(ctx)
 		if testCase.ExpectWorkspaceClusters {
@@ -36,8 +39,9 @@ func TestWorkspaceManagerList_WhenSkipSelfIsSet(t *testing.T) {
 	}
 }
 
-func renderContextWithConfig(t *testing.T, skipSelf bool) *common.RenderContext {
+func renderContextWithConfig(t *testing.T, kind config.InstallationKind, skipSelf bool) *common.RenderContext {
 	ctx, err := common.NewRenderContext(config.Config{
+		Kind: kind,
 		Experimental: &experimental.Config{
 			WebApp: &experimental.WebAppConfig{
 				WorkspaceManagerBridge: &experimental.WsManagerBridgeConfig{

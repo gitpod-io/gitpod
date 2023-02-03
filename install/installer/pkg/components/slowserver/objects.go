@@ -13,16 +13,13 @@ import (
 
 func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := common.ExperimentalWebappConfig(ctx)
-	if cfg == nil || !cfg.SlowDatabase {
+	if cfg == nil || cfg.SlowDatabase == "" {
 		return nil, nil
 	}
 
 	return common.CompositeRenderFunc(
 		configmap,
 		deployment,
-		func(ctx *common.RenderContext) ([]runtime.Object, error) {
-			return server.AdminSecret(ctx)
-		},
 		func(ctx *common.RenderContext) ([]runtime.Object, error) {
 			return server.Networkpolicy(ctx, Component)
 		},

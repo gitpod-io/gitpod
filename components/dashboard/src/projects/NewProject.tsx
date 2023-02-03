@@ -7,9 +7,8 @@
 import { useContext, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "../provider-utils";
-import { AuthProviderInfo, Project, ProviderRepository, Team, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
-import { TeamsContext } from "../teams/teams-context";
-import { useLocation } from "react-router";
+import { AuthProviderInfo, Project, ProviderRepository, Team, User } from "@gitpod/gitpod-protocol";
+import { useCurrentTeam } from "../teams/teams-context";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import CaretDown from "../icons/CaretDown.svg";
 import Plus from "../icons/Plus.svg";
@@ -21,18 +20,10 @@ import { trackEvent } from "../Analytics";
 import exclamation from "../images/exclamation.svg";
 import ErrorMessage from "../components/ErrorMessage";
 import Spinner from "../icons/Spinner.svg";
-import {
-    publicApiTeamMembersToProtocol,
-    publicApiTeamsToProtocol,
-    publicApiTeamToProtocol,
-    teamsService,
-} from "../service/public-api";
-import { ConnectError } from "@bufbuild/connect-web";
 import { useRefreshProjects } from "../data/projects/list-projects-query";
 
 export default function NewProject() {
-    const location = useLocation();
-    const { teams } = useContext(TeamsContext);
+    const currentTeam = useCurrentTeam();
     const { user, setUser } = useContext(UserContext);
     const refreshProjects = useRefreshProjects();
 
@@ -42,9 +33,6 @@ export default function NewProject() {
     const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
     const [showGitProviders, setShowGitProviders] = useState<boolean>(false);
     const [selectedRepo, setSelectedRepo] = useState<ProviderRepository | undefined>(undefined);
-    const [selectedTeamOrUser, setSelectedTeamOrUser] = useState<Team | User | undefined>(undefined);
-
-    const [showNewTeam, setShowNewTeam] = useState<boolean>(false);
     const [loaded, setLoaded] = useState<boolean>(false);
 
     const [project, setProject] = useState<Project | undefined>();
@@ -96,46 +84,10 @@ export default function NewProject() {
     }, [authProviders, isGitHubAppEnabled, selectedProviderHost]);
 
     useEffect(() => {
-        const params = new URLSearchParams(location.search);
-        const teamParam = params.get("team");
-        if (teamParam) {
-            window.history.replaceState({}, "", window.location.pathname);
-            const team = teams?.find((t) => t.slug === teamParam);
-            setSelectedTeamOrUser(team);
+        if (selectedRepo && user) {
+            createProject(currentTeam, user, selectedRepo);
         }
-        if (params.get("user")) {
-            window.history.replaceState({}, "", window.location.pathname);
-            setSelectedTeamOrUser(user);
-        }
-    }, []);
-
-    const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
-    useEffect(() => {
-        if (!teams) {
-            return;
-        }
-        (async () => {
-            const members: Record<string, TeamMemberInfo[]> = {};
-            await Promise.all(
-                teams.map(async (team) => {
-                    try {
-                        members[team.id] = publicApiTeamMembersToProtocol(
-                            (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-                        );
-                    } catch (error) {
-                        console.error("Could not get members of team", team, error);
-                    }
-                }),
-            );
-            setTeamMembers(members);
-        })();
-    }, [teams]);
-
-    useEffect(() => {
-        if (selectedTeamOrUser && selectedRepo) {
-            createProject(selectedTeamOrUser, selectedRepo);
-        }
-    }, [selectedTeamOrUser, selectedRepo]);
+    }, [selectedRepo, currentTeam, user]);
 
     useEffect(() => {
         if (reposInAccounts.length === 0) {
@@ -227,7 +179,7 @@ export default function NewProject() {
     };
 
     // TODO: Look into making this a react-query mutation
-    const createProject = async (teamOrUser: Team | User, repo: ProviderRepository) => {
+    const createProject = async (team: Team | undefined, user: User, repo: ProviderRepository) => {
         if (!selectedProviderHost) {
             return;
         }
@@ -238,7 +190,7 @@ export default function NewProject() {
                 name: repo.name,
                 slug: repoSlug,
                 cloneUrl: repo.cloneUrl,
-                ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
+                ...(team ? { teamId: team.id } : { userId: user.id }),
                 appInstallationId: String(repo.installationId),
             });
 
@@ -333,7 +285,7 @@ export default function NewProject() {
                 <p className="text-gray-500 text-center text-base">
                     Projects allow you to manage prebuilds and workspaces for your repository.{" "}
                     <a
-                        href="https://www.gitpod.io/docs/teams-and-projects"
+                        href="https://www.gitpod.io/docs/configure/projects"
                         target="_blank"
                         rel="noreferrer"
                         className="gp-link"
@@ -526,70 +478,6 @@ export default function NewProject() {
         return renderRepos();
     };
 
-    const renderSelectTeam = () => {
-        const userFullName = user?.fullName || user?.name || "...";
-        const teamsToRender = teams || [];
-        return (
-            <>
-                <p className="mt-2 text-gray-500 text-center text-base">Select team or personal account</p>
-                <div className="mt-14 flex flex-col space-y-2">
-                    <label
-                        key={`user-${userFullName}`}
-                        className={`w-80 px-4 py-3 flex space-x-3 items-center cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800`}
-                        onClick={() => setSelectedTeamOrUser(user)}
-                    >
-                        <input type="radio" />
-                        <div className="flex-grow overflow-ellipsis truncate flex flex-col">
-                            <span className="font-semibold">{userFullName}</span>
-                            <span className="text-sm text-gray-400">Personal account</span>
-                        </div>
-                    </label>
-                    {teamsToRender.map((t) => (
-                        <label
-                            key={`team-${t.name}`}
-                            className={`w-80 px-4 py-3 flex space-x-3 items-center cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800`}
-                            onClick={() => setSelectedTeamOrUser(t)}
-                        >
-                            <input type="radio" />
-                            <div className="flex-grow overflow-ellipsis truncate flex flex-col">
-                                <span className="font-semibold">{t.name}</span>
-                                <span className="text-sm text-gray-400">
-                                    {!!teamMembers[t.id]
-                                        ? `${teamMembers[t.id].length} member${
-                                              teamMembers[t.id].length === 1 ? "" : "s"
-                                          }`
-                                        : "Team"}
-                                </span>
-                            </div>
-                        </label>
-                    ))}
-                    <label className="w-80 px-4 py-3 flex flex-col cursor-pointer rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <div className="flex space-x-3 items-center relative">
-                            <input type="radio" onChange={() => setShowNewTeam(!showNewTeam)} />
-                            <div className="flex-grow overflow-ellipsis truncate flex flex-col">
-                                <span className="font-semibold">Create new team</span>
-                                <span className="text-sm text-gray-400">Collaborate with others</span>
-                            </div>
-                            {teamsToRender.length > 0 && (
-                                <img
-                                    alt=""
-                                    src={CaretDown}
-                                    title="Select Account"
-                                    className={`${
-                                        showNewTeam ? "transform rotate-180" : ""
-                                    } filter-grayscale absolute top-1/2 right-3 cursor-pointer`}
-                                />
-                            )}
-                        </div>
-                        {(showNewTeam || teamsToRender.length === 0) && (
-                            <NewTeam onSuccess={(t) => setSelectedTeamOrUser(t)} />
-                        )}
-                    </label>
-                </div>
-            </>
-        );
-    };
-
     const onNewWorkspace = async () => {
         const redirectToNewWorkspace = () => {
             // instead of `history.push` we want forcibly to redirect here in order to avoid a following redirect from `/` -> `/projects` (cf. App.tsx)
@@ -608,25 +496,19 @@ export default function NewProject() {
                     <h1>New Project</h1>
 
                     {!selectedRepo && renderSelectRepository()}
-
-                    {selectedRepo && !selectedTeamOrUser && renderSelectTeam()}
-
-                    {selectedRepo && selectedTeamOrUser && <div></div>}
                 </>
             </div>
         );
     } else {
-        const projectLink = User.is(selectedTeamOrUser)
-            ? `/projects/${project.slug}`
-            : `/t/${selectedTeamOrUser?.slug}/${project.slug}`;
-        const location = User.is(selectedTeamOrUser) ? (
+        const projectLink = `/projects/${Project.slug(project!)}`;
+        const location = !currentTeam ? (
             ""
         ) : (
             <>
                 {" "}
-                in team{" "}
-                <a className="gp-link" href={`/t/${selectedTeamOrUser?.slug}/projects`}>
-                    {selectedTeamOrUser?.name}
+                in organization{" "}
+                <a className="gp-link" href={`/projects`}>
+                    {currentTeam?.name}
                 </a>
             </>
         );
@@ -725,57 +607,6 @@ function GitProviders(props: {
                 {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
             </div>
         </div>
-    );
-}
-
-function NewTeam(props: { onSuccess: (team: Team) => void }) {
-    const { setTeams } = useContext(TeamsContext);
-
-    const [teamName, setTeamName] = useState<string | undefined>();
-    const [error, setError] = useState<string | undefined>();
-
-    const onNewTeam = async () => {
-        if (!teamName) {
-            return;
-        }
-
-        try {
-            const team = publicApiTeamToProtocol((await teamsService.createTeam({ name: teamName })).team!);
-            const teams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
-
-            setTeams(teams);
-            props.onSuccess(team);
-        } catch (error) {
-            console.error(error);
-            if (error instanceof ConnectError) {
-                setError(error.rawMessage);
-            } else {
-                setError(error?.message || "Failed to create new team!");
-            }
-        }
-    };
-
-    const onTeamNameChanged = (name: string) => {
-        setTeamName(name);
-        setError(undefined);
-    };
-
-    return (
-        <>
-            <div className="mt-6 mb-1 flex flex-row space-x-2">
-                <input
-                    type="text"
-                    className="py-1 min-w-0"
-                    name="new-team-inline"
-                    value={teamName}
-                    onChange={(e) => onTeamNameChanged(e.target.value)}
-                />
-                <button key={`new-team-inline-create`} disabled={!teamName} onClick={() => onNewTeam()}>
-                    Continue
-                </button>
-            </div>
-            {error && <p className="text-gitpod-red">{error}</p>}
-        </>
     );
 }
 

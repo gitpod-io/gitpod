@@ -28,7 +28,7 @@ func migrations(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	objectMeta := metav1.ObjectMeta{
-		Name:        Component,
+		Name:        fmt.Sprintf("%s-migrations", Component),
 		Namespace:   ctx.Namespace,
 		Labels:      common.CustomizeLabel(ctx, Component, common.TypeMetaBatchJob),
 		Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaBatchJob),
@@ -39,7 +39,7 @@ func migrations(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta:   common.TypeMetaBatchJob,
 			ObjectMeta: objectMeta,
 			Spec: batchv1.JobSpec{
-				TTLSecondsAfterFinished: pointer.Int32(120),
+				TTLSecondsAfterFinished: pointer.Int32(60),
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: objectMeta,
 					Spec: corev1.PodSpec{

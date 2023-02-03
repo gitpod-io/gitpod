@@ -132,4 +132,18 @@ describe("Migration Service", () => {
                 .length,
         ).be.eq(1);
     });
+
+    it("should not migrate the same user multiple times", async () => {
+        await wipeRepo();
+        const user = await userDB.newUser();
+
+        // run multiple migration
+        await Promise.all([
+            migrationService.migrateUser(user),
+            migrationService.migrateUser(user),
+            migrationService.migrateUser(user),
+        ]);
+        let teams = await teamDB.findTeamsByUser(user.id);
+        expect(teams.length).to.be.eq(1);
+    });
 });

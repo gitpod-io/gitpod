@@ -33,7 +33,10 @@ func newListStaleCmd(logger *logrus.Logger) *cobra.Command {
 		Short: "Get preview envs that are inactive (no branch with recent commits, and no db activity in the last 48h)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if _, err := os.Stat(opts.sshPrivateKeyPath); errors.Is(err, fs.ErrNotExist) {
-				return preview.InstallVMSSHKeys()
+				opts.logger.Debug("Installing SSH keys")
+				if err := preview.InstallVMSSHKeys(); err != nil {
+					return err
+				}
 			}
 
 			statuses, err := opts.listWorskpaceStatus(ctx)
@@ -67,16 +70,19 @@ func newListStaleCmd(logger *logrus.Logger) *cobra.Command {
 }
 
 func (o *listWorkspaceOpts) listWorskpaceStatus(ctx context.Context) ([]preview.Status, error) {
+	o.logger.Debug("Getting recent branches")
 	branches, err := preview.GetRecentBranches(time.Now().AddDate(0, 0, -30))
 	if err != nil {
 		return nil, err
 	}
 
+	o.logger.Debug("Getting terraform workspaces")
 	workspaces, err := o.getWorkspaces(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	o.logger.Debug("Finding workspaces without associated branches")
 	branchlessWorkspaces, err := getBranchlessWorkspaces(workspaces, branches)
 	if err != nil {
 		return nil, err

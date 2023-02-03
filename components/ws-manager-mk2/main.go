@@ -87,13 +87,19 @@ func main() {
 		Scheme:                 scheme,
 		MetricsBindAddress:     cfg.Prometheus.Addr,
 		Port:                   9443,
-		HealthProbeBindAddress: ":9090",
+		HealthProbeBindAddress: cfg.Health.Addr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "0616d21e.gitpod.io",
+		LeaderElectionID:       "ws-manager-mk2.gitpod.io",
 		Namespace:              cfg.Manager.Namespace,
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), cfg.Manager, metrics.Registry)
+	if err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)
 	}
 
@@ -103,16 +109,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), cfg.Manager)
-	if err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
-		os.Exit(1)
-	}
 	reconciler.OnReconcile = wsmanService.OnWorkspaceReconcile
 	if err = reconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)
 	}
+
 	// if err = (&workspacev1.Workspace{}).SetupWebhookWithManager(mgr); err != nil {
 	// 	setupLog.Error(err, "unable to create webhook", "webhook", "Workspace")
 	// 	os.Exit(1)
@@ -168,7 +170,7 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client) (*ser
 
 	grpcOpts = append(grpcOpts, grpc.UnknownServiceHandler(proxy.TransparentHandler(imagebuilderDirector(cfg.ImageBuilderProxy.TargetAddr))))
 
-	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager)
+	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry)
 
 	grpcServer := grpc.NewServer(grpcOpts...)
 	grpc_prometheus.Register(grpcServer)
