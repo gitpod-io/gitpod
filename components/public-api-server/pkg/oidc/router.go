@@ -106,7 +106,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 
 		log.WithField("id_token", result.IDToken).Trace("user verification was successful")
 
-		cookie, err := s.CreateSession(r.Context(), result)
+		cookie, err := s.CreateSession(r.Context(), result, config.OrganizationID)
 		if err != nil {
 			log.Warn("Failed to create session: " + err.Error())
 			http.Error(rw, "Failed to create session", http.StatusInternalServerError)

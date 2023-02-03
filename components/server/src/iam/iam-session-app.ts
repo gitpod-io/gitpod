@@ -11,6 +11,7 @@ import { Authenticator } from "../auth/authenticator";
 import { UserService } from "../user/user-service";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { User } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class IamSessionApp {
@@ -60,20 +61,7 @@ export class IamSessionApp {
                 authName: claims.name,
             },
         });
-        const user =
-            existingUser ||
-            (await this.userService.createUser({
-                identity: {
-                    authId: claims.sub,
-                    authProviderId: claims.iss,
-                    authName: claims.name,
-                    primaryEmail: claims.email,
-                },
-                userUpdate: (user) => {
-                    user.name = claims.name;
-                    user.avatarUrl = claims.picture;
-                },
-            }));
+        const user = existingUser || (await this.createNewOIDCUser(payload));
 
         await new Promise<void>((resolve, reject) => {
             req.login(user, (err) => {
@@ -88,5 +76,26 @@ export class IamSessionApp {
             sessionId: req.sessionID,
             userId: user.id,
         };
+    }
+
+    protected async createNewOIDCUser(payload: OIDCCreateSessionPayload): Promise<User> {
+        const { claims, organizationId } = payload;
+
+        // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
+        const user = await this.userService.createUser({
+            identity: {
+                authId: claims.sub,
+                authProviderId: claims.iss,
+                authName: claims.name,
+                primaryEmail: claims.email,
+            },
+            userUpdate: (user) => {
+                user.name = claims.name;
+                user.avatarUrl = claims.picture;
+                user.organizationId = organizationId;
+            },
+        });
+
+        return user;
     }
 }

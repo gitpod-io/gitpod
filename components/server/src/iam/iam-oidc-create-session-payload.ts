@@ -13,7 +13,8 @@ export namespace OIDCCreateSessionPayload {
             "iss" in payload.claims &&
             "sub" in payload.claims &&
             "name" in payload.claims &&
-            "email" in payload.claims
+            "email" in payload.claims &&
+            "organizationId" in payload
         );
     }
 
@@ -29,6 +30,9 @@ export namespace OIDCCreateSessionPayload {
         }
         if (isEmpty(payload.claims.email)) {
             throw new Error("Email is missing");
+        }
+        if (isEmpty(payload.organizationId)) {
+            throw new Error("OrganizationId is missing");
         }
     }
 
@@ -58,4 +62,5 @@ export interface OIDCCreateSessionPayload {
         picture: string; // URL of avatar
         sub: string; // "1234567890"
     };
+    organizationId: string; // TODO(gpl) Remove once we implemented either SKIM, or a proper UserService
 }

@@ -40,6 +40,7 @@ type Service struct {
 
 type ClientConfig struct {
 	ID             string
+	OrganizationID string
 	Issuer         string
 	OAuth2Config   *oauth2.Config
 	VerifierConfig *goidc.Config
@@ -205,8 +206,9 @@ func (s *Service) getConfigById(id string) (*ClientConfig, error) {
 	}
 
 	return &ClientConfig{
-		ID:     dbEntry.ID.String(),
-		Issuer: dbEntry.Issuer,
+		ID:             dbEntry.ID.String(),
+		OrganizationID: dbEntry.OrganizationID.String(),
+		Issuer:         dbEntry.Issuer,
 		OAuth2Config: &oauth2.Config{
 			ClientID:     spec.ClientID,
 			ClientSecret: spec.ClientSecret,
@@ -254,8 +256,16 @@ func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (
 	}, nil
 }
 
-func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult) (*http.Cookie, error) {
-	payload, err := json.Marshal(flowResult)
+func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult, organizationId string) (*http.Cookie, error) {
+	type CreateSessionPayload struct {
+		AuthFlowResult
+		OrganizationID string `json:"organizationId"`
+	}
+	sessionPayload := CreateSessionPayload{
+		AuthFlowResult: *flowResult,
+		OrganizationID: organizationId,
+	}
+	payload, err := json.Marshal(sessionPayload)
 	if err != nil {
 		return nil, err
 	}
