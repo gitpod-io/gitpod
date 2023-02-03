@@ -194,6 +194,15 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			return ctrl.Result{Requeue: true}, err
 		}
 
+	// if the workspace timed out, delete it
+	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) && !isPodBeingDeleted(pod):
+		err := r.Client.Delete(ctx, pod)
+		if errors.IsNotFound(err) {
+			// pod is gone - nothing to do here
+		} else {
+			return ctrl.Result{Requeue: true}, err
+		}
+
 	// if the content initialization failed, delete the pod
 	case wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") && !isPodBeingDeleted(pod):
 		err := r.Client.Delete(ctx, pod)

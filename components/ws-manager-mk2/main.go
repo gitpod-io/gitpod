@@ -102,6 +102,12 @@ func main() {
 	}
 
 	activity := &activity.WorkspaceActivity{}
+	timeoutReconciler, err := controllers.NewTimeoutReconciler(mgr.GetClient(), cfg.Manager, activity)
+	if err != nil {
+		setupLog.Error(err, "unable to create timeout controller", "controller", "Timeout")
+		os.Exit(1)
+	}
+
 	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager service")
@@ -110,7 +116,11 @@ func main() {
 
 	reconciler.OnReconcile = wsmanService.OnWorkspaceReconcile
 	if err = reconciler.SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
+		setupLog.Error(err, "unable to setup workspace controller with manager", "controller", "Workspace")
+		os.Exit(1)
+	}
+	if err = timeoutReconciler.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to setup timeout controller with manager", "controller", "Timeout")
 		os.Exit(1)
 	}
 
