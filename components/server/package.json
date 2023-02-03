@@ -27,6 +27,7 @@
     "/dist"
   ],
   "dependencies": {
+    "@authzed/authzed-node": "^0.10.0",
     "@gitbeaker/node": "^35.7.0",
     "@gitpod/content-service": "0.1.5",
     "@gitpod/gitpod-db": "0.1.5",
