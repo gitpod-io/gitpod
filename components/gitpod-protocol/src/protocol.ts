@@ -17,6 +17,9 @@ export interface User {
     /** The user id */
     id: string;
 
+    /** The ID of the Organization this user is owned by. If undefined, the user is owned by the installation */
+    organizationId?: string;
+
     /** The timestamp when the user entry was created */
     creationDate: string;
 
