@@ -177,7 +177,9 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                                             key={element.id}
                                             id={element.id}
                                             tabIndex={0}
-                                            className={"h-16 rounded-lg flex items-center px-2 " + selectionClasses}
+                                            className={
+                                                "h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses
+                                            }
                                             onMouseDown={() => {
                                                 if (element.isSelectable) {
                                                     setFocussedElement(element.id);
