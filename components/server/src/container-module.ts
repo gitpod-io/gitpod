@@ -112,6 +112,7 @@ import { contentServiceBinder } from "./util/content-service-sugar";
 import { UbpResetOnCancel } from "@gitpod/gitpod-payment-endpoint/lib/chargebee/ubp-reset-on-cancel";
 import { retryMiddleware } from "nice-grpc-client-middleware-retry";
 import { IamSessionApp } from "./iam/iam-session-app";
+import { spicedbClientFromEnv, SpiceDBClient } from "./authorization/spicedb";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -307,4 +308,9 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     // IAM Support
     bind(IamSessionApp).toSelf().inSingletonScope();
+
+    // Authorization & Perms
+    bind(SpiceDBClient)
+        .toDynamicValue(() => spicedbClientFromEnv())
+        .inSingletonScope();
 });
