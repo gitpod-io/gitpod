@@ -5,6 +5,7 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"regexp"
@@ -13,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/namegen"
 )
 
 const (
@@ -26,7 +28,6 @@ const (
 	forwardedHostnameHeader = "x-wsproxy-host"
 
 	// This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21).
-	workspaceIDRegex   = "(?P<" + workspaceIDIdentifier + ">[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11})"
 	workspacePortRegex = "(?P<" + workspacePortIdentifier + ">[0-9]+)-"
 
 	debugWorkspaceIdentifier = "debugWorkspace"
@@ -34,6 +35,10 @@ const (
 
 	workspacePathPrefixIdentifier = "workspacePathPrefix"
 )
+
+// This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21).
+// "(?P<" + workspaceIDIdentifier + ">[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8,11})"
+var workspaceIDRegex = fmt.Sprintf("(?P<%s>%s)", workspaceIDIdentifier, strings.Join(namegen.PossibleWorkspaceIDPatterns, "|"))
 
 // WorkspaceRouter is a function that configures subrouters (one for theia, one for the exposed ports) on the given router
 // which resolve workspace coordinates (ID, port?) from each request. The contract is to store those in the request's mux.Vars
