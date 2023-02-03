@@ -12,6 +12,7 @@ import { UserService } from "../user/user-service";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { User } from "@gitpod/gitpod-protocol";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 
 @injectable()
 export class IamSessionApp {
@@ -21,6 +22,8 @@ export class IamSessionApp {
     protected readonly authenticator: Authenticator;
     @inject(UserService)
     protected readonly userService: UserService;
+    @inject(TeamDB)
+    protected readonly teamDb: TeamDB;
 
     public getMiddlewares() {
         return [express.json(), this.sessionHandlerProvider.sessionHandler, ...this.authenticator.initHandlers];
@@ -95,6 +98,14 @@ export class IamSessionApp {
                 user.organizationId = organizationId;
             },
         });
+
+        // Check: Is this the first login? If yes, make the logged-in user the owner
+        const memberInfos = await this.teamDb.findMembersByTeam(organizationId);
+        const firstMember = memberInfos.filter((m) => m.userId !== BUILTIN_INSTLLATION_ADMIN_USER_ID).length === 0;
+        await this.teamDb.addMemberToTeam(user.id, organizationId);
+        if (firstMember) {
+            await this.teamDb.setTeamMemberRole(user.id, organizationId, "owner");
+        }
 
         return user;
     }
