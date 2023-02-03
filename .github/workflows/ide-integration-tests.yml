@@ -49,6 +49,10 @@ jobs:
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
             - name: Check
+              env:
+                  ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
+                  USER_TOKEN: $ {{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
               run: |
                   echo "IDE tests would run here. Good luck Pudong 🧡"
                   sleep 60
