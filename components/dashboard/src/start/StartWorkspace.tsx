@@ -338,7 +338,13 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             workspaceInstance.ideUrl &&
             (!this.props.dontAutostart || workspaceInstance.status.phase === "running")
         ) {
-            this.redirectTo(workspaceInstance.ideUrl);
+            (async () => {
+                // At this point we cannot be certain that we already have the relevant cookie in multi-cluster
+                // scenarios with distributed workspace bridges (control loops): We might receive the update, but the backend might not have the token, yet.
+                // So we have to ask again, and wait until we're actually successful (it returns immediately on the happy path)
+                await this.ensureWorkspaceAuth(workspaceInstance.id, true);
+                this.redirectTo(workspaceInstance.ideUrl);
+            })().catch(console.error);
             return;
         }
 
@@ -366,51 +372,64 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
 
     async ensureWorkspaceAuth(instanceID: string, retry: boolean) {
-        if (!document.cookie.includes(`${instanceID}_owner_`)) {
-            let attempt = 0;
-            let fetchError: Error | undefined = undefined;
-            while (attempt <= 10) {
-                attempt++;
+        if (document.cookie.includes(`${instanceID}_owner_`)) {
+            // Cookie already present
+            return;
+        }
 
-                let code: number | undefined = undefined;
-                fetchError = undefined;
-                try {
-                    const authURL = gitpodHostUrl.asWorkspaceAuth(instanceID);
-                    const response = await fetch(authURL.toString());
-                    code = response.status;
-                } catch (err) {
-                    fetchError = err;
+        // TODO(gpl) Would be nice to track # of attempts once we have frontend error monitoring
+        const MAX_ATTEMPTS = 10;
+        const ATTEMPT_INTERVAL_MS = 2000;
+        let attempt = 0;
+        let fetchError: Error | undefined = undefined;
+        while (attempt <= MAX_ATTEMPTS) {
+            attempt++;
+
+            let code: number | undefined = undefined;
+            fetchError = undefined;
+            try {
+                const authURL = gitpodHostUrl.asWorkspaceAuth(instanceID);
+                const response = await fetch(authURL.toString());
+                code = response.status;
+            } catch (err) {
+                fetchError = err;
+            }
+
+            if (retry) {
+                if (code === 404 && !fetchError) {
+                    fetchError = new Error("Unable to retrieve workspace-auth cookie (code: 404)");
                 }
-
-                if (retry && (code === 404 || !!fetchError)) {
+                if (fetchError) {
                     console.warn("Unable to retrieve workspace-auth cookie! Retrying shortly...", fetchError, {
+                        instanceID,
                         code,
                         attempt,
                     });
                     // If the token is not there, we assume it will appear, soon: Retry a couple of times.
-                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                    await new Promise((resolve) => setTimeout(resolve, ATTEMPT_INTERVAL_MS));
                     continue;
                 }
-                if (code !== 200) {
-                    // getting workspace auth didn't work as planned
-                    console.error("Unable to retrieve workspace-auth cookie! Quitting.", {
-                        code,
-                        attempt,
-                    });
-                    return;
-                }
-
-                // Response code is 200 at this point: done!
-                console.info("Retrieved workspace-auth cookie.", { code, attempt });
+            }
+            if (code !== 200) {
+                // getting workspace auth didn't work as planned
+                console.error("Unable to retrieve workspace-auth cookie! Quitting.", {
+                    instanceID,
+                    code,
+                    attempt,
+                });
                 return;
             }
 
-            console.error("Unable to retrieve workspace-auth cookie! Giving up.", { attempt });
+            // Response code is 200 at this point: done!
+            console.info("Retrieved workspace-auth cookie.", { instanceID, code, attempt });
+            return;
+        }
 
-            if (fetchError) {
-                // To maintain prior behavior we bubble up this error to callers
-                throw fetchError;
-            }
+        console.error("Unable to retrieve workspace-auth cookie! Giving up.", { instanceID, attempt });
+
+        if (fetchError) {
+            // To maintain prior behavior we bubble up this error to callers
+            throw fetchError;
         }
     }
 
