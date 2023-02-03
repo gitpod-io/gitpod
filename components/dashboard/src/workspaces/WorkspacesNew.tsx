@@ -136,8 +136,10 @@ const WorkspacesPage: FunctionComponent = () => {
                                                 Workspaces that have been stopped for more than 24 hours. Inactive
                                                 workspaces are automatically deleted after 14 days.{" "}
                                                 <a
+                                                    target="_blank"
+                                                    rel="noreferrer"
                                                     className="gp-link"
-                                                    href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection"
+                                                    href="https://www.gitpod.io/docs/configure/workspaces/workspace-lifecycle#workspace-deletion"
                                                     onClick={(evt) => evt.stopPropagation()}
                                                 >
                                                     Learn more
