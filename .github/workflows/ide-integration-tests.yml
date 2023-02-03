@@ -1,0 +1,58 @@
+name: "IDE integration tests"
+on:
+    workflow_dispatch:
+        inputs:
+            name:
+                required: true
+                description: "The name of the preview environment"
+            version:
+                required: true
+                description: "The version of Gitpod to install"
+jobs:
+    configuration:
+        name: Configuration
+        runs-on: [self-hosted]
+        outputs:
+            name: ${{ steps.configuration.outputs.name }}
+            version: ${{ steps.configuration.outputs.version }}
+        steps:
+            - name: "Set outputs"
+              id: configuration
+              run: |
+                  if [[ '${{ github.event.inputs.name }}' != '' ]]; then
+                      # The workflow was triggered by workflow_dispatch
+                      {
+                          echo "version=${{ github.event.inputs.version }}"
+                          echo "name=${{ github.event.inputs.name }}"
+                      } >> $GITHUB_OUTPUT
+                  fi
+    check:
+        name: Check for regressions
+        needs: [configuration]
+        runs-on: [self-hosted]
+        steps:
+            - uses: actions/checkout@v3
+            - name: Create preview environment infrastructure
+              uses: ./.github/actions/preview-create
+              with:
+                  name: ${{ needs.configuration.outputs.name }}
+                  infrastructure_provider: harvester
+                  large_vm: false
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+            - name: Deploy Gitpod to the preview environment
+              id: deploy-gitpod
+              uses: ./.github/actions/deploy-gitpod
+              with:
+                  name: ${{ needs.configuration.outputs.name }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+                  version: ${{ needs.configuration.outputs.version}}
+            - name: Check
+              run: |
+                  echo "IDE tests would run here. Good luck Pudong 🧡"
+                  sleep 60
+            - name: Delete preview environment
+              if: always()
+              uses: ./.github/actions/delete-preview
+              with:
+                  name: ${{ needs.configuration.outputs.name }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
