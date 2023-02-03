@@ -184,7 +184,20 @@ import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { OrganizationOperation } from "../authorization/perms";
+import {
+    Authorizer,
+    CheckResult,
+    OrganizationOperation,
+    NotPermitted,
+    PermissionChecker,
+} from "../authorization/perms";
+import {
+    ReadOrganizationMembers,
+    ReadOrganizationMetadata,
+    WriteOrganizationMembers,
+    WriteOrganizationMetadata,
+} from "../authorization/checks";
+import { reportCentralizedPermsValidation } from "../prometheus-metrics";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -256,6 +269,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
 
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
+
+    @inject(PermissionChecker) protected readonly authorizer: Authorizer;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -2037,7 +2052,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async guardTeamOperation(
         teamId: string,
         op: ResourceAccessOp,
-        fineGrainedOps: OrganizationOperation[],
+        fineGrainedOp: OrganizationOperation,
     ): Promise<{ team: Team; members: TeamMemberInfo[] }> {
         if (!uuidValidate(teamId)) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
@@ -2053,19 +2068,92 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             },
         );
 
-        if (centralizedPermissionsEnabled) {
-            log.info("[perms] Checking team operations.", { org: teamId, operations: fineGrainedOps, user: user.id });
-        }
+        const checkAgainstDB = async (): Promise<{ team: Team; members: TeamMemberInfo[] }> => {
+            // We deliberately wrap the entiry check in try-catch, because we're using Promise.all, which rejects if any of the promises reject.
+            const team = await this.teamDB.findTeamById(teamId);
+            if (!team) {
+                // We return Permission Denied because we don't want to leak the existence, or not of the Organization.
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${teamId}`);
+            }
 
-        const team = await this.teamDB.findTeamById(teamId);
-        if (!team) {
-            // We return Permission Denied because we don't want to leak the existence, or not of the Organization.
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${teamId}`);
-        }
+            const members = await this.teamDB.findMembersByTeam(team.id);
+            await this.guardAccess({ kind: "team", subject: team, members }, op);
 
-        const members = await this.teamDB.findMembersByTeam(team.id);
-        await this.guardAccess({ kind: "team", subject: team, members }, op);
-        return { team, members };
+            return { team, members };
+        };
+
+        const checkWithCentralizedPerms = async (): Promise<CheckResult> => {
+            if (centralizedPermissionsEnabled) {
+                log.info("[perms] Checking team operations.", {
+                    org: teamId,
+                    operations: fineGrainedOp,
+                    user: user.id,
+                });
+
+                return await this.guardOrganizationOperationWithCentralizedPerms(teamId, fineGrainedOp);
+            }
+
+            throw new Error("Centralized permissions feature not enabled.");
+        };
+
+        const [fromDB, fromCentralizedPerms] = await Promise.allSettled([
+            // Permission checks against the DB will throw, if the user is not permitted to perform the action, or if iteraction with
+            // dependencies (DB) fail.
+            checkAgainstDB(),
+
+            // Centralized perms checks only throw, when an interaction error occurs - connection not available or similar.
+            // When the user is not permitted to perform the action, the call will resolve, encoding the result in the response.
+            checkWithCentralizedPerms(),
+        ]);
+
+        // check against DB resolved, which means the user is permitted to perform the action
+        if (fromDB.status === "fulfilled") {
+            if (fromCentralizedPerms.status === "fulfilled") {
+                // we got a result from centralized perms, but we still need to check if the outcome was such that the user is permitted
+                reportCentralizedPermsValidation(fineGrainedOp, fromCentralizedPerms.value.permitted === true);
+            } else {
+                // centralized perms promise rejected, we do not have an agreement
+                reportCentralizedPermsValidation(fineGrainedOp, false);
+            }
+
+            // Always return the result from the DB check
+            return fromDB.value;
+        } else {
+            // The check agains the DB failed. This means the user does not have access.
+
+            if (fromCentralizedPerms.status === "fulfilled") {
+                // we got a result from centralized perms, but we still need to check if the outcome was such that the user is NOT permitted
+                reportCentralizedPermsValidation(fineGrainedOp, fromCentralizedPerms.value.permitted === false);
+            } else {
+                // centralized perms promise rejected, we do not have an agreement
+                reportCentralizedPermsValidation(fineGrainedOp, false);
+            }
+
+            // We re-throw the error from the DB permission check, to propagate it upstream.
+            throw fromDB.reason;
+        }
+    }
+
+    protected async guardOrganizationOperationWithCentralizedPerms(
+        orgId: string,
+        op: OrganizationOperation,
+    ): Promise<CheckResult> {
+        const user = this.checkUser();
+
+        switch (op) {
+            case "org_metadata_read":
+                return await this.authorizer.check(ReadOrganizationMetadata(user.id, orgId));
+            case "org_metadata_write":
+                return await this.authorizer.check(WriteOrganizationMetadata(user.id, orgId));
+
+            case "org_members_read":
+                return await this.authorizer.check(ReadOrganizationMembers(user.id, orgId));
+            case "org_members_write":
+                return await this.authorizer.check(WriteOrganizationMembers(user.id, orgId));
+
+            default:
+                return NotPermitted;
+        }
     }
 
     public async getTeams(ctx: TraceContext): Promise<Team[]> {
@@ -2079,7 +2167,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkAndBlockUser("getTeam");
 
-        const { team } = await this.guardTeamOperation(teamId, "get", ["org_members_read"]);
+        const { team } = await this.guardTeamOperation(teamId, "get", "org_members_read");
         return team;
     }
 
@@ -2087,7 +2175,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
         this.checkUser("updateTeam");
 
-        await this.guardTeamOperation(teamId, "update", ["org_metadata_write"]);
+        await this.guardTeamOperation(teamId, "update", "org_metadata_write");
 
         const updatedTeam = await this.teamDB.updateTeam(teamId, team);
         return updatedTeam;
@@ -2097,7 +2185,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         this.checkUser("getTeamMembers");
-        const { members } = await this.guardTeamOperation(teamId, "get", ["org_members_read"]);
+        const { members } = await this.guardTeamOperation(teamId, "get", "org_members_read");
 
         return members;
     }
@@ -2168,7 +2256,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         this.checkAndBlockUser("setTeamMemberRole");
-        await this.guardTeamOperation(teamId, "update", ["org_members_write"]);
+        await this.guardTeamOperation(teamId, "update", "org_members_write");
 
         await this.teamDB.setTeamMemberRole(userId, teamId, role);
     }
@@ -2185,9 +2273,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const userLeavingTeam = user.id === userId;
 
         if (userLeavingTeam) {
-            await this.guardTeamOperation(teamId, "update", ["not_implemented"]);
+            await this.guardTeamOperation(teamId, "update", "not_implemented");
         } else {
-            await this.guardTeamOperation(teamId, "get", ["org_members_write"]);
+            await this.guardTeamOperation(teamId, "get", "org_members_write");
         }
 
         const membership = await this.teamDB.findTeamMembership(userId, teamId);
@@ -2210,7 +2298,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         this.checkUser("getGenericInvite");
-        await this.guardTeamOperation(teamId, "get", ["org_members_write"]);
+        await this.guardTeamOperation(teamId, "get", "org_members_write");
 
         const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
         if (invite) {
@@ -2223,7 +2311,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         this.checkAndBlockUser("resetGenericInvite");
-        await this.guardTeamOperation(teamId, "update", ["org_members_write"]);
+        await this.guardTeamOperation(teamId, "update", "org_members_write");
         return this.teamDB.resetGenericInvite(teamId);
     }
 
@@ -2240,7 +2328,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
         } else {
             // Anyone who can read a team's information (i.e. any team member) can manage team projects
-            await this.guardTeamOperation(project.teamId || "", "get", ["not_implemented"]);
+            await this.guardTeamOperation(project.teamId || "", "get", "not_implemented");
         }
     }
 
@@ -2267,7 +2355,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
         } else {
             // Anyone who can read a team's information (i.e. any team member) can create a new project.
-            await this.guardTeamOperation(params.teamId || "", "get", ["not_implemented"]);
+            await this.guardTeamOperation(params.teamId || "", "get", "not_implemented");
         }
 
         return this.projectsService.createProject(params, user);
@@ -2292,7 +2380,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = this.checkAndBlockUser("deleteTeam");
         traceAPIParams(ctx, { teamId, userId: user.id });
 
-        await this.guardTeamOperation(teamId, "delete", ["org_write"]);
+        await this.guardTeamOperation(teamId, "delete", "org_write");
 
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach((project) => {
@@ -2325,7 +2413,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkUser("getTeamProjects");
 
-        await this.guardTeamOperation(teamId, "get", ["not_implemented"]);
+        await this.guardTeamOperation(teamId, "get", "not_implemented");
         return this.projectsService.getTeamProjects(teamId);
     }
 
@@ -2948,7 +3036,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         // Ensure user can perform this operation on this organization
-        await this.guardTeamOperation(newProvider.organizationId, "create", ["org_authprovider_write"]);
+        await this.guardTeamOperation(newProvider.organizationId, "create", "org_authprovider_write");
 
         try {
             // on creating we're are checking for already existing runtime providers
@@ -2996,7 +3084,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", providerUpdate.organizationId);
 
-        await this.guardTeamOperation(providerUpdate.organizationId, "update", ["org_authprovider_write"]);
+        await this.guardTeamOperation(providerUpdate.organizationId, "update", "org_authprovider_write");
 
         try {
             const result = await this.authProviderService.updateOrgAuthProvider(providerUpdate);
@@ -3017,7 +3105,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", params.organizationId);
 
-        await this.guardTeamOperation(params.organizationId, "get", ["org_authprovider_read"]);
+        await this.guardTeamOperation(params.organizationId, "get", "org_authprovider_read");
 
         try {
             const result = await this.authProviderService.getAuthProvidersOfOrg(params.organizationId);
@@ -3048,7 +3136,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
 
-        await this.guardTeamOperation(authProvider.organizationId || "", "delete", ["org_authprovider_write"]);
+        await this.guardTeamOperation(authProvider.organizationId || "", "delete", "org_authprovider_write");
 
         try {
             await this.authProviderService.deleteAuthProvider(authProvider);

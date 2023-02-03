@@ -113,6 +113,7 @@ import { UbpResetOnCancel } from "@gitpod/gitpod-payment-endpoint/lib/chargebee/
 import { retryMiddleware } from "nice-grpc-client-middleware-retry";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { spicedbClientFromEnv, SpiceDBClient } from "./authorization/spicedb";
+import { Authorizer, PermissionChecker } from "./authorization/perms";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -313,4 +314,5 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(SpiceDBClient)
         .toDynamicValue(() => spicedbClientFromEnv())
         .inSingletonScope();
+    bind(PermissionChecker).to(Authorizer).inSingletonScope();
 });
