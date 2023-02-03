@@ -125,6 +125,9 @@ type Configuration struct {
 	WorkspaceClasses map[string]*WorkspaceClass `json:"workspaceClass"`
 	// DebugWorkspacePod adds extra finalizer to workspace to prevent it from shutting down. Helps to debug.
 	DebugWorkspacePod bool `json:"debugWorkspacePod,omitempty"`
+	// TimeoutMaxConcurrentReconciles configures the max amount of concurrent workspace reconciliations on
+	// the timeout controller.
+	TimeoutMaxConcurrentReconciles int `json:"timeoutMaxConcurrentReconciles,omitempty"`
 }
 
 type WorkspaceClass struct {
