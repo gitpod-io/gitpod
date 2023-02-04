@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "../provider-utils";
 import { AuthProviderInfo, Project, ProviderRepository, Team, User } from "@gitpod/gitpod-protocol";
@@ -87,6 +87,7 @@ export default function NewProject() {
         if (selectedRepo && user) {
             createProject(currentTeam, user, selectedRepo);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedRepo, currentTeam, user]);
 
     useEffect(() => {
@@ -116,6 +117,7 @@ export default function NewProject() {
         (async () => {
             await updateReposInAccounts();
         })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedProviderHost]);
 
     useEffect(() => {
@@ -179,30 +181,33 @@ export default function NewProject() {
     };
 
     // TODO: Look into making this a react-query mutation
-    const createProject = async (team: Team | undefined, user: User, repo: ProviderRepository) => {
-        if (!selectedProviderHost) {
-            return;
-        }
-        const repoSlug = repo.path || repo.name;
+    const createProject = useCallback(
+        async (team: Team | undefined, user: User, repo: ProviderRepository) => {
+            if (!selectedProviderHost) {
+                return;
+            }
+            const repoSlug = repo.path || repo.name;
 
-        try {
-            const project = await getGitpodService().server.createProject({
-                name: repo.name,
-                slug: repoSlug,
-                cloneUrl: repo.cloneUrl,
-                ...(team ? { teamId: team.id } : { userId: user.id }),
-                appInstallationId: String(repo.installationId),
-            });
+            try {
+                const project = await getGitpodService().server.createProject({
+                    name: repo.name,
+                    slug: repoSlug,
+                    cloneUrl: repo.cloneUrl,
+                    ...(team ? { teamId: team.id } : { userId: user.id }),
+                    appInstallationId: String(repo.installationId),
+                });
 
-            // TODO: After converting this to a mutation, we can handle invalidating/updating the query in a side effect
-            refreshProjects(project.teamId ? { teamId: project.teamId } : { userId: project.userId || "" });
+                // TODO: After converting this to a mutation, we can handle invalidating/updating the query in a side effect
+                refreshProjects(project.teamId ? { teamId: project.teamId } : { userId: project.userId || "" });
 
-            setProject(project);
-        } catch (error) {
-            const message = (error && error?.message) || "Failed to create new project.";
-            window.alert(message);
-        }
-    };
+                setProject(project);
+            } catch (error) {
+                const message = (error && error?.message) || "Failed to create new project.";
+                window.alert(message);
+            }
+        },
+        [refreshProjects, selectedProviderHost],
+    );
 
     const toSimpleName = (fullName: string) => {
         const splitted = fullName.split("/");
@@ -224,7 +229,7 @@ export default function NewProject() {
     const getDropDownEntries = (accounts: Map<string, { avatarUrl: string }>) => {
         const renderItemContent = (label: string, icon: string, addClasses?: string) => (
             <div className="w-full flex">
-                <img src={icon} className="rounded-full w-6 h-6 my-auto" />
+                <img src={icon} className="rounded-full w-6 h-6 my-auto" alt="icon" />
                 <span className={"pl-2 text-gray-600 dark:text-gray-100 text-base " + (addClasses || "")}>{label}</span>
             </div>
         );
@@ -319,6 +324,7 @@ export default function NewProject() {
                                         <img
                                             src={user?.avatarUrl}
                                             className="rounded-full w-6 h-6 absolute my-2.5 left-3"
+                                            alt="user avatar"
                                         />
                                         <input
                                             className="w-full px-12 cursor-pointer font-semibold"
@@ -333,6 +339,7 @@ export default function NewProject() {
                                         <img
                                             src={icon ? icon : ""}
                                             className="rounded-full w-6 h-6 absolute my-2.5 left-3"
+                                            alt="icon"
                                         />
                                         <input
                                             className="w-full px-12 cursor-pointer font-semibold"
@@ -346,12 +353,18 @@ export default function NewProject() {
                                     src={CaretDown}
                                     title="Select Account"
                                     className="filter-grayscale absolute top-1/2 right-3"
+                                    alt="down caret icon"
                                 />
                             </div>
                         </ContextMenu>
                         {showSearchInput && (
                             <div className="w-full relative ">
-                                <img src={search} title="Search" className="filter-grayscale absolute top-1/3 left-3" />
+                                <img
+                                    src={search}
+                                    title="Search"
+                                    className="filter-grayscale absolute top-1/3 left-3"
+                                    alt="search icon"
+                                />
                                 <input
                                     className="w-96 pl-10 border-0"
                                     type="text"
@@ -450,7 +463,7 @@ export default function NewProject() {
                     <div>
                         <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
                             <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm">
-                                <img className="h-4 w-4 animate-spin" src={Spinner} />
+                                <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
                                 <span>Fetching repositories...</span>
                             </div>
                         </div>

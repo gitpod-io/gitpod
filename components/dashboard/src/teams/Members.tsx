@@ -51,7 +51,7 @@ export default function () {
         const owners = members.filter((m) => m.role === "owner");
         const isOwner = owners.some((o) => o.userId === user?.id);
         setLeaveTeamEnabled(!isOwner || owners.length > 1);
-    }, [members]);
+    }, [members, user?.id]);
 
     const ownMemberInfo = members.find((m) => m.userId === user?.id);
 
@@ -313,7 +313,7 @@ export default function () {
                             >
                                 <div className="absolute top-1/3 right-3">
                                     <Tooltip content={copied ? "Copied!" : "Copy Invite URL"}>
-                                        <img src={copy} title="Copy Invite URL" />
+                                        <img src={copy} title="Copy Invite URL" alt="copy icon" />
                                     </Tooltip>
                                 </div>
                             </div>

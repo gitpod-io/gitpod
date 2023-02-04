@@ -5,7 +5,7 @@
  */
 
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
@@ -84,7 +84,7 @@ function ListAccessTokensView() {
     const pageLength = 25;
     const [currentPage, setCurrentPage] = useState<number>(1);
 
-    async function loadTokens() {
+    const loadTokens = useCallback(async () => {
         try {
             setLoading(true);
             const response = await personalAccessTokensService.listPersonalAccessTokens({
@@ -96,11 +96,11 @@ function ListAccessTokensView() {
             setErrorMsg(e.message);
         }
         setLoading(false);
-    }
+    }, [currentPage]);
 
     useEffect(() => {
         loadTokens();
-    }, [currentPage]);
+    }, [loadTokens]);
 
     useEffect(() => {
         if (location.state) {

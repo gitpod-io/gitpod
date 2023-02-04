@@ -118,7 +118,12 @@ export function StartPage(props: StartPageProps) {
                 {props.showLatestIdeWarning && (
                     <Alert type="warning" className="mt-4 w-96">
                         This workspace is configured with the latest release (unstable) for the editor.{" "}
-                        <a className="gp-link" target="_blank" href={gitpodHostUrl.asPreferences().toString()}>
+                        <a
+                            className="gp-link"
+                            target="_blank"
+                            rel="noreferrer"
+                            href={gitpodHostUrl.asPreferences().toString()}
+                        >
                             Change Preferences
                         </a>
                     </Alert>

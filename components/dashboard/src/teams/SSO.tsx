@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Redirect } from "react-router";
 import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
@@ -69,18 +69,18 @@ function OIDCClients(props: { organizationId: string }) {
         | undefined
     >(undefined);
 
-    useEffect(() => {
-        reloadClientConfigs().catch(console.error);
-    }, []);
-
-    const reloadClientConfigs = async () => {
+    const reloadClientConfigs = useCallback(async () => {
         const clientConfigs = await oidcService
             .listClientConfigs({ organizationId: props.organizationId })
             .then((resp) => {
                 return resp.clientConfigs;
             });
         setClientConfigs(clientConfigs);
-    };
+    }, [props.organizationId]);
+
+    useEffect(() => {
+        reloadClientConfigs().catch(console.error);
+    }, [reloadClientConfigs]);
 
     const loginWith = (id: string) => {
         window.location.href = gitpodHostUrl.with({ pathname: `/iam/oidc/start`, search: `id=${id}` }).toString();
@@ -289,6 +289,7 @@ function OIDCClientConfigModal(
                                     src={copy}
                                     title="Copy the Redirect URL to clipboard"
                                     className="absolute top-1/3 right-3"
+                                    alt="copy icon"
                                 />
                             </div>
                         </div>
@@ -322,7 +323,11 @@ function OIDCClientConfigModal(
 
                 {(errorMessage || validationError) && (
                     <div className="flex rounded-md bg-red-600 p-3">
-                        <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
+                        <img
+                            className="w-4 h-4 mx-2 my-auto filter-brightness-10"
+                            src={exclamation}
+                            alt="exclamation mark icon"
+                        />
                         <span className="text-white">{errorMessage || validationError}</span>
                     </div>
                 )}

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { getGitpodService } from "../service/service";
 import Alert from "../components/Alert";
@@ -115,6 +115,7 @@ function AllTeams() {
             pendingSlotsPurchasePoller.current?.dispose();
             removeLocalStorageObject("pendingSlotsPurchase");
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pendingSlotsPurchase]);
 
     useEffect(() => {
@@ -154,6 +155,7 @@ function AllTeams() {
                 setPendingPlanPurchase(undefined);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [teamSubscriptions]);
 
     useEffect(() => {
@@ -162,6 +164,7 @@ function AllTeams() {
                 setPendingSlotsPurchase(undefined);
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [slots]);
 
     const getSubscriptionTypes = () =>
@@ -656,7 +659,12 @@ function InviteMembersModal(props: { sub: TeamSubscription; onClose: () => void 
                             className="rounded-md w-full truncate pr-8"
                         />
                         <div className="cursor-pointer" onClick={() => copyToClipboard(getInviteURL())}>
-                            <img src={copy} title="Copy Invite URL" className="absolute top-1/3 right-3" />
+                            <img
+                                src={copy}
+                                title="Copy Invite URL"
+                                className="absolute top-1/3 right-3"
+                                alt="copy icon"
+                            />
                         </div>
                     </div>
                     <p className="pb-4 text-gray-500 text-sm">
@@ -688,11 +696,12 @@ function AddMembersModal(props: {
         const plan = getPlan();
         const expectedPrice = quantity * plan.pricePerMonth;
         setExpectedPrice(`${Currency.getSymbol(plan.currency)}${expectedPrice}`);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [quantity]);
 
-    const getPlan = () => {
+    const getPlan = useCallback(() => {
         return Plans.getAvailableTeamPlans().filter((p) => p.chargebeeId === props.sub.planId)[0];
-    };
+    }, [props.sub.planId]);
 
     return (
         // TODO: Use title and buttons props
@@ -754,6 +763,7 @@ function NewTeamModal(props: {
         }
         const expectedPrice = quantity * newPlan.pricePerMonth;
         setExpectedPrice(`${Currency.getSymbol(newPlan.currency)}${expectedPrice}`);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currency, type, quantity]);
 
     const teamTypeLabel = (type: string) => {
@@ -1020,7 +1030,11 @@ function SlotInput(props: { slot: Slot; inputHandler: SlotInputHandler }) {
             )}
             {errorMsg && (
                 <div className="flex rounded-md bg-red-600 p-3">
-                    <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
+                    <img
+                        className="w-4 h-4 mx-2 my-auto filter-brightness-10"
+                        src={exclamation}
+                        alt="exclamation icon"
+                    />
                     <span className="text-white text-sm">{errorMsg}</span>
                 </div>
             )}

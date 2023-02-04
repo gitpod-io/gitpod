@@ -78,6 +78,7 @@ function PersonalAccessTokenCreateView() {
             }
             setLoading(false);
         })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const update = (change: Partial<EditPATData>, addScopes?: string[], removeScopes?: string[]) => {

@@ -66,6 +66,7 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build --verbose",
+    "lint": "eslint --ext=.jsx,.js,.tsx,.ts ./src",
     "test": "yarn test:unit && ./scripts/run-integration-tests.sh",
     "test:unit": "craco test --all --watchAll=false",
     "test:unit:watch": "craco test --all",

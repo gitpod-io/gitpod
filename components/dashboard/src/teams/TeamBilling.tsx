@@ -52,7 +52,7 @@ export default function TeamBilling() {
             const subscription = await getGitpodService().server.getTeamSubscription(team.id);
             setTeamSubscription(subscription);
         })();
-    }, [team]);
+    }, [team, user?.id]);
 
     useEffect(() => {
         setPendingTeamPlan(undefined);

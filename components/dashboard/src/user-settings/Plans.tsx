@@ -68,6 +68,7 @@ export default function () {
         return function cleanup() {
             clearTimeout(pollAccountStatementTimeout!);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const activeSubscriptions = (accountStatement?.subscriptions || []).filter((s) =>
@@ -240,7 +241,7 @@ export default function () {
             return;
         }
         if ((paidSubscription?.paymentReference || "").startsWith("github:")) {
-            const url = (gitHubUpgradeUrls || []).find((u) => u.planID == to.githubId);
+            const url = (gitHubUpgradeUrls || []).find((u) => u.planID === to.githubId);
             if (url) {
                 window.location.href = url.url;
             }
@@ -294,7 +295,7 @@ export default function () {
             return;
         }
         if ((paidSubscription?.paymentReference || "").startsWith("github:")) {
-            const url = (gitHubUpgradeUrls || []).find((u) => u.planID == to.githubId);
+            const url = (gitHubUpgradeUrls || []).find((u) => u.planID === to.githubId);
             if (!url) {
                 return;
             }
@@ -391,6 +392,7 @@ export default function () {
                 <p className="text-green-600">
                     Downgrade scheduled
                     <br />
+                    {/* TODO: change these <a> to use a LinkButton component once we have it */}
                     <a
                         className="text-blue-light leading-6"
                         href="javascript:void(0)"
@@ -959,7 +961,7 @@ function setLocalStorageObject(key: string, object: Object): void {
 }
 
 function applyCoupons(plan: Plan, coupons: PlanCoupon[] | undefined): PlanWithOriginalPrice {
-    let coupon = (coupons || []).find((c) => c.chargebeePlanID == plan.chargebeeId);
+    let coupon = (coupons || []).find((c) => c.chargebeePlanID === plan.chargebeeId);
     if (!coupon) {
         return plan;
     }
