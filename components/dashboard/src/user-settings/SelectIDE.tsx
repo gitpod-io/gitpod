@@ -52,6 +52,7 @@ export default function SelectIDE(props: SelectIDEProps) {
     // Only exec once when we access this component
     useEffect(() => {
         user && User.migrationIDESettings(user);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const actualUpdateUserIDEInfo = async (user: User, selectedIde: string, useLatestVersion: boolean) => {

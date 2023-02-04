@@ -41,6 +41,7 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
         };
 
         fetchClasses().catch(console.error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

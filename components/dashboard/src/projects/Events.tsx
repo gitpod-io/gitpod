@@ -6,7 +6,7 @@
 
 import dayjs from "dayjs";
 import { PrebuildEvent, Project } from "@gitpod/gitpod-protocol";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Header from "../components/Header";
 import { ItemsList, Item, ItemField } from "../components/ItemsList";
 import { getGitpodService } from "../service/service";
@@ -27,6 +27,19 @@ export default function () {
 
     const [showAuthBanner, setShowAuthBanner] = useState<{ host: string } | undefined>(undefined);
 
+    const updatePrebuildEvents = useCallback(async () => {
+        if (!project) {
+            return;
+        }
+        setIsLoadingEvents(true);
+        try {
+            const events = await getGitpodService().server.getPrebuildEvents(project.id);
+            setEvents(events);
+        } finally {
+            setIsLoadingEvents(false);
+        }
+    }, [project]);
+
     useEffect(() => {
         if (!project) {
             return;
@@ -42,20 +55,7 @@ export default function () {
                 }
             }
         })();
-    }, [project]);
-
-    const updatePrebuildEvents = async () => {
-        if (!project) {
-            return;
-        }
-        setIsLoadingEvents(true);
-        try {
-            const events = await getGitpodService().server.getPrebuildEvents(project.id);
-            setEvents(events);
-        } finally {
-            setIsLoadingEvents(false);
-        }
-    };
+    }, [project, updatePrebuildEvents]);
 
     const tryAuthorize = async (host: string, onSuccess: () => void) => {
         try {
@@ -174,7 +174,7 @@ export default function () {
                             </Item>
                             {isLoadingEvents && (
                                 <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm pt-16 pb-40">
-                                    <img className="h-4 w-4 animate-spin" src={Spinner} />
+                                    <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
                                     <span>Fetching Prebuild Events...</span>
                                 </div>
                             )}

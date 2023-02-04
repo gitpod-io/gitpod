@@ -6,7 +6,7 @@
 
 import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import Alert from "../components/Alert";
 import CheckBox from "../components/CheckBox";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -49,17 +49,14 @@ function GitProviders() {
 
     useEffect(() => {
         updateAuthProviders();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => {
-        updateCurrentScopes();
-    }, [user, authProviders]);
-
-    const updateAuthProviders = async () => {
+    const updateAuthProviders = useCallback(async () => {
         setAuthProviders(await getGitpodService().server.getAuthProviders());
-    };
+    }, []);
 
-    const updateCurrentScopes = async () => {
+    const updateCurrentScopes = useCallback(async () => {
         if (user) {
             const scopesByProvider = new Map<string, string[]>();
             const connectedProviders = user.identities.map((i) =>
@@ -74,7 +71,11 @@ function GitProviders() {
             }
             setAllScopes(scopesByProvider);
         }
-    };
+    }, [authProviders, user]);
+
+    useEffect(() => {
+        updateCurrentScopes();
+    }, [updateCurrentScopes]);
 
     const isConnected = (authProviderId: string) => {
         return !!user?.identities?.find((i) => i.authProviderId === authProviderId);
@@ -280,7 +281,11 @@ function GitProviders() {
 
             {errorMessage && (
                 <div className="flex rounded-md bg-red-600 p-3 mb-4">
-                    <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
+                    <img
+                        className="w-4 h-4 mx-2 my-auto filter-brightness-10"
+                        src={exclamation}
+                        alt="exclamation mark icon"
+                    />
                     <span className="text-white">{errorMessage}</span>
                 </div>
             )}
@@ -555,11 +560,13 @@ export function GitIntegrationModal(
             setClientSecret(props.provider.oauth.clientSecret);
             setRedirectURL(props.provider.oauth.callBackUrl);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
         setErrorMessage(undefined);
         validate();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clientId, clientSecret, type]);
 
     // "bitbucket.org" is set as host value whenever "Bitbucket" is selected
@@ -567,6 +574,7 @@ export function GitIntegrationModal(
         if (props.mode === "new") {
             updateHostValue(type === "Bitbucket" ? "bitbucket.org" : "");
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [type]);
 
     const onClose = () => props.onClose && props.onClose();
@@ -831,6 +839,7 @@ export function GitIntegrationModal(
                                     src={copy}
                                     title="Copy the Redirect URL to clipboard"
                                     className="absolute top-1/3 right-3"
+                                    alt="copy icon"
                                 />
                             </div>
                         </div>
@@ -864,7 +873,11 @@ export function GitIntegrationModal(
 
                 {(errorMessage || validationError) && (
                     <div className="flex rounded-md bg-red-600 p-3">
-                        <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
+                        <img
+                            className="w-4 h-4 mx-2 my-auto filter-brightness-10"
+                            src={exclamation}
+                            alt="exclamation mark icon"
+                        />
                         <span className="text-white">{errorMessage || validationError}</span>
                     </div>
                 )}

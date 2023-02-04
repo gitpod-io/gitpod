@@ -217,15 +217,14 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
             this.fetchWorkspaceInfo(result.instanceID);
         } catch (error) {
-            console.error(error);
-            if (typeof error === "string") {
-                error = { message: error };
-            }
-            if (error?.code === ErrorCodes.USER_BLOCKED) {
+            const normalizedError = typeof error === "string" ? { message: error } : error;
+            console.error(normalizedError);
+
+            if (normalizedError?.code === ErrorCodes.USER_BLOCKED) {
                 this.redirectTo(gitpodHostUrl.with({ pathname: "/blocked" }).toString());
                 return;
             }
-            this.setState({ error });
+            this.setState({ error: normalizedError });
         }
     }
 
@@ -463,8 +462,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
             // are still preparing for launch.
             case "preparing":
-            // Building means we're building the Docker image for the workspace.
+            // falls through
             case "building":
+                // Building means we're building the Docker image for the workspace.
                 return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
 
             // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
@@ -521,6 +521,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             {client.installationSteps.map((step) => (
                                 <div
                                     dangerouslySetInnerHTML={{
+                                        // eslint-disable-next-line no-template-curly-in-string
                                         __html: step.replaceAll("${OPEN_LINK_LABEL}", openLinkLabel),
                                     }}
                                 />
@@ -591,6 +592,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                     <a
                                         className="gp-link"
                                         target="_blank"
+                                        rel="noreferrer"
                                         href={gitpodHostUrl.asPreferences().toString()}
                                     >
                                         user preferences
@@ -764,6 +766,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
         return function cleanup() {
             toDispose.dispose();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
