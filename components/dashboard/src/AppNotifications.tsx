@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import Alert from "./components/Alert";
-import { getGitpodService, gitpodHostUrl } from "./service/service";
+import { getGitpodService } from "./service/service";
 
 const KEY_APP_NOTIFICATIONS = "gitpod-app-notifications";
 
@@ -49,9 +49,9 @@ export function AppNotifications() {
     const getManageBilling = () => {
         let href;
         if (notifications.length === 1) {
-            href = `${gitpodHostUrl}billing`;
+            href = "/user/billing";
         } else if (notifications.length === 2) {
-            href = `${gitpodHostUrl}/org-billing`;
+            href = `/billing`;
         }
         return (
             <span>

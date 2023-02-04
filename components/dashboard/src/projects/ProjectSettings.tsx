@@ -6,40 +6,27 @@
 
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router";
-import { Project, ProjectSettings, Team } from "@gitpod/gitpod-protocol";
+import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
 import CheckBox from "../components/CheckBox";
 import { getGitpodService } from "../service/service";
 import { useCurrentTeam } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { ProjectContext } from "./project-context";
-import SelectWorkspaceClass from "../settings/selectClass";
+import SelectWorkspaceClass from "../user-settings/selectClass";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import Alert from "../components/Alert";
 import { Link } from "react-router-dom";
 import { RemoveProjectModal } from "./RemoveProjectModal";
-
-export function getProjectSettingsMenu(project?: Project, team?: Team) {
-    return [
-        {
-            title: "General",
-            link: [`/projects/${Project.slug(project!)}/settings`],
-        },
-        {
-            title: "Variables",
-            link: [`/projects/${Project.slug(project!)}/variables`],
-        },
-    ];
-}
+import { getProjectSettingsMenu, getProjectTabs } from "./projects.routes";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
-    const team = useCurrentTeam();
-
     return (
         <PageWithSubMenu
-            subMenu={getProjectSettingsMenu(props.project, team)}
-            title="Settings"
+            subMenu={getProjectSettingsMenu(props.project)}
+            title={props.project?.name || "Unknown project"}
             subtitle="Manage project settings and configuration"
+            tabs={getProjectTabs(props.project)}
         >
             {props.children}
         </PageWithSubMenu>
@@ -131,7 +118,7 @@ export default function () {
                             </a>
                             , first cancel your existing plan.
                         </span>
-                        <Link className="mt-2" to={project.teamId ? "../billing" : "/plans"}>
+                        <Link className="mt-2" to={project.teamId ? "/billing" : "/plans"}>
                             <button>Go to {project.teamId ? "Organization" : "Personal"} Billing</button>
                         </Link>
                     </div>

@@ -20,7 +20,7 @@ import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import StartWorkspace, { parseProps } from "./StartWorkspace";
 import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
-import { SelectAccountModal } from "../settings/SelectAccountModal";
+import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import PrebuildLogs from "../components/PrebuildLogs";
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
 import { isGitpodIo } from "../utils";

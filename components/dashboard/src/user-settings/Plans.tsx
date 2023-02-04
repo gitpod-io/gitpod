@@ -633,7 +633,7 @@ export default function () {
 
     return (
         <div>
-            <PageWithSettingsSubMenu title="Plans" subtitle="Manage account usage and billing.">
+            <PageWithSettingsSubMenu>
                 {isUsageBasedBillingEnabled && (
                     <Alert type="message" className="mb-4">
                         To access{" "}

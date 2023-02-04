@@ -7,7 +7,7 @@
 import { useEffect, useState } from "react";
 import Modal from "./components/Modal";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
-import { GitIntegrationModal } from "./settings/Integrations";
+import { GitIntegrationModal } from "./user-settings/Integrations";
 
 export default function Setup() {
     const [showModal, setShowModal] = useState<boolean>(false);

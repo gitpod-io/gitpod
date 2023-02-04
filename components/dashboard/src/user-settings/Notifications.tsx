@@ -80,7 +80,7 @@ export default function Notifications() {
 
     return (
         <div>
-            <PageWithSettingsSubMenu title="Notifications" subtitle="Choose when to be notified.">
+            <PageWithSettingsSubMenu>
                 <h3>Email Notification Preferences</h3>
                 <CheckBox
                     title="Account Notifications [required]"

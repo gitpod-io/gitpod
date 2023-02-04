@@ -15,7 +15,7 @@ export default function Billing() {
     const { user } = useContext(UserContext);
 
     return (
-        <PageWithSettingsSubMenu title="Billing" subtitle="Configure and manage billing for your personal account.">
+        <PageWithSettingsSubMenu>
             <div>
                 <h3>Default Billing Account</h3>
                 <BillingAccountSelector />

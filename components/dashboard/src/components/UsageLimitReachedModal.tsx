@@ -7,7 +7,7 @@
 import { Team } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { useEffect, useState } from "react";
-import { gitpodHostUrl } from "../service/service";
+import { settingsPathBilling } from "../user-settings/settings.routes";
 import { useTeams } from "../teams/teams-context";
 import Alert from "./Alert";
 import Modal from "./Modal";
@@ -29,6 +29,7 @@ export function UsageLimitReachedModal(p: { hints: any }) {
     }, []);
 
     const attributedTeamName = attributedTeam?.name;
+    const billingLink = attributedTeam ? "/billing" : settingsPathBilling;
     return (
         <Modal visible={true} closeable={false} onClose={() => {}}>
             <h3 className="flex">
@@ -45,11 +46,11 @@ export function UsageLimitReachedModal(p: { hints: any }) {
                             of <strong>{attributedTeamName} </strong>
                         </>
                     )}
-                    to increase the usage limit, or change your <a href="/billing">billing settings</a>.
+                    to increase the usage limit, or change your <a href={billingLink}>billing settings</a>.
                 </p>
             </div>
             <div className="flex justify-end mt-6 space-x-2">
-                <a href={gitpodHostUrl.asBilling().toString()}>
+                <a href={billingLink}>
                     <button className="secondary">Go to Billing</button>
                 </a>
             </div>

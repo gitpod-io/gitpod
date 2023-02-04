@@ -6,12 +6,12 @@
 
 import React, { FunctionComponent, useContext, useState } from "react";
 import { ContextURL, User, Team } from "@gitpod/gitpod-protocol";
-import SelectIDEModal from "../settings/SelectIDEModal";
+import SelectIDEModal from "../user-settings/SelectIDEModal";
 import { StartPage, StartPhase } from "../start/StartPage";
 import { getURLHash, isGitpodIo, isLocalPreview } from "../utils";
 import { shouldSeeWhatsNew, WhatsNew } from "../whatsnew/WhatsNew";
 import { Redirect, Route, Switch } from "react-router";
-import Menu from "../Menu";
+import Menu from "../menu/Menu";
 import { parseProps } from "../start/StartWorkspace";
 import { AppNotifications } from "../AppNotifications";
 import { AdminRoute } from "./AdminRoute";
@@ -30,7 +30,7 @@ import {
     settingsPathPersonalAccessTokens,
     settingsPathPersonalAccessTokenCreate,
     settingsPathPersonalAccessTokenEdit,
-} from "../settings/settings.routes";
+} from "../user-settings/settings.routes";
 import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/projects.routes";
 import { workspacesPathMain } from "../workspaces/workspaces.routes";
 import { LocalPreviewAlert } from "./LocalPreviewAlert";
@@ -39,23 +39,27 @@ import { Blocked } from "./Blocked";
 
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
-import PersonalAccessTokenCreateView from "../settings/PersonalAccessTokensCreateView";
+import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokensCreateView";
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { WebsocketClients } from "./WebsocketClients";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const WorkspacesNew = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/WorkspacesNew"));
-const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Account"));
-const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Notifications"));
-const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Billing"));
-const Plans = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Plans"));
-const ChargebeeTeams = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/ChargebeeTeams"));
-const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/EnvironmentVariables"));
-const SSHKeys = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/SSHKeys"));
-const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Integrations"));
-const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/Preferences"));
-const PersonalAccessTokens = React.lazy(() => import(/* webpackPrefetch: true */ "../settings/PersonalAccessTokens"));
+const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
+const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Notifications"));
+const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Billing"));
+const Plans = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Plans"));
+const ChargebeeTeams = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/ChargebeeTeams"));
+const EnvironmentVariables = React.lazy(
+    () => import(/* webpackPrefetch: true */ "../user-settings/EnvironmentVariables"),
+);
+const SSHKeys = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/SSHKeys"));
+const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Integrations"));
+const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Preferences"));
+const PersonalAccessTokens = React.lazy(
+    () => import(/* webpackPrefetch: true */ "../user-settings/PersonalAccessTokens"),
+);
 const Open = React.lazy(() => import(/* webpackPrefetch: true */ "../start/Open"));
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "../start/StartWorkspace"));
 const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "../start/CreateWorkspace"));
@@ -224,8 +228,8 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route exact path="/orgs/join" component={JoinTeam} />
                     <Route exact path="/members" component={Members} />
                     <Route exact path="/projects" component={Projects} />
-                    <Route exact path="/org-settings" component={TeamSettings} />
-                    <Route exact path="/org-billing" component={TeamBilling} />
+                    <Route exact path="/settings" component={TeamSettings} />
+                    <Route exact path="/billing" component={TeamBilling} />
                     <Route exact path="/sso" component={SSO} />
                     <Route exact path={`/projects/:projectSlug`} component={Project} />
                     <Route exact path={`/projects/:projectSlug/events`} component={Events} />

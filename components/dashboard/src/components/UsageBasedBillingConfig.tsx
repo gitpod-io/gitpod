@@ -32,6 +32,7 @@ interface Props {
 
 export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const location = useLocation();
+    const attrId = attributionId ? AttributionId.parse(attributionId) : undefined;
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
@@ -102,7 +103,6 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 // Pick a good initial value for the Stripe usage limit (base_limit * team_size)
                 // FIXME: Should we ask the customer to confirm or edit this default limit?
                 let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
-                const attrId = AttributionId.parse(attributionId);
                 if (attrId?.kind === "team") {
                     const members = publicApiTeamMembersToProtocol(
                         (await teamsService.getTeam({ teamId: attrId.teamId })).team?.members || [],
@@ -227,9 +227,9 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                             </div>
                             <div>
                                 <Link
-                                    to={`./usage#${billingCycleFrom.format("YYYY-MM-DD")}:${billingCycleTo.format(
-                                        "YYYY-MM-DD",
-                                    )}`}
+                                    to={`/usage?org=${
+                                        attrId?.kind === "team" ? attrId.teamId : "0"
+                                    }#${billingCycleFrom.format("YYYY-MM-DD")}:${billingCycleTo.format("YYYY-MM-DD")}`}
                                 >
                                     <button className="secondary">View Usage →</button>
                                 </Link>

@@ -2253,15 +2253,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkAndBlockUser("getStripePortalUrl");
 
-        let returnUrl = this.config.hostUrl.with(() => ({ pathname: `/billing` })).toString();
+        let returnUrl = this.config.hostUrl
+            .with(() => ({ pathname: `/billing`, search: `org=${attrId.kind === "team" ? attrId.teamId : "0"}` }))
+            .toString();
         if (attrId.kind === "user") {
             await this.ensureStripeApiIsAllowed({ user });
+            returnUrl = this.config.hostUrl.with(() => ({ pathname: `/user/billing`, search: `org=0` })).toString();
         } else if (attrId.kind === "team") {
             const team = (await this.guardTeamOperation(attrId.teamId, "update", ["not_implemented"])).team;
             await this.ensureStripeApiIsAllowed({ team });
-            returnUrl = this.config.hostUrl
-                .with(() => ({ pathname: `/org-billing`, search: `org=${team.id}` }))
-                .toString();
         }
         let url: string;
         try {

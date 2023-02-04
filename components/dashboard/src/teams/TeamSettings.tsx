@@ -6,23 +6,22 @@
 
 import { Team } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 import { Redirect } from "react-router";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
+import { teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
-import { TeamsContext, useCurrentTeam } from "./teams-context";
+import { OrgSettingsPage } from "./OrgSettingsPage";
+import { TeamsContext, useCurrentTeam, useIsOwnerOfCurrentTeam } from "./teams-context";
 
 export function getTeamSettingsMenu(params: { team?: Team; billingMode?: BillingMode; ssoEnabled?: boolean }) {
     const { billingMode, ssoEnabled } = params;
     const result = [
         {
             title: "General",
-            link: [`/org-settings`],
+            link: [`/settings`],
         },
     ];
     if (ssoEnabled) {
@@ -35,7 +34,7 @@ export function getTeamSettingsMenu(params: { team?: Team; billingMode?: Billing
         // The Billing page contains both chargebee and usage-based components, so: always show them!
         result.push({
             title: "Billing",
-            link: [`/org-billing`],
+            link: ["/billing"],
         });
     }
     return result;
@@ -49,28 +48,10 @@ export default function TeamSettings() {
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(team?.name || "");
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-    const [isUserOwner, setIsUserOwner] = useState(true);
-    const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
+    const isUserOwner = useIsOwnerOfCurrentTeam();
     const [updated, setUpdated] = useState(false);
-    const { oidcServiceEnabled } = useContext(FeatureFlagContext);
 
     const close = () => setModal(false);
-
-    useEffect(() => {
-        (async () => {
-            if (!team) return;
-            const members = publicApiTeamMembersToProtocol(
-                (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-            );
-
-            const currentUserInTeam = members.find((member) => member.userId === user?.id);
-            setIsUserOwner(currentUserInTeam?.role === "owner");
-
-            // TODO(gpl) Maybe we should have TeamContext here instead of repeating ourselves...
-            const billingMode = await getGitpodService().server.getBillingModeForTeam(team.id);
-            setBillingMode(billingMode);
-        })();
-    }, [team, user]);
 
     const updateTeamInformation = useCallback(async () => {
         if (!team || errorMessage || !teams) {
@@ -124,11 +105,7 @@ export default function TeamSettings() {
 
     return (
         <>
-            <PageWithSubMenu
-                subMenu={getTeamSettingsMenu({ team, billingMode, ssoEnabled: oidcServiceEnabled })}
-                title="Settings"
-                subtitle="Manage general organization settings."
-            >
+            <OrgSettingsPage>
                 <h3>Organization Name</h3>
                 <p className="text-base text-gray-500 max-w-2xl">
                     This is your organization's visible name within Gitpod. For example, the name of your company.
@@ -169,7 +146,7 @@ export default function TeamSettings() {
                 <button className="danger secondary" onClick={() => setModal(true)}>
                     Delete Organization
                 </button>
-            </PageWithSubMenu>
+            </OrgSettingsPage>
 
             <ConfirmationModal
                 title="Delete Team"

@@ -49,7 +49,7 @@ export default function Preferences() {
 
     return (
         <div>
-            <PageWithSettingsSubMenu title="Preferences" subtitle="Configure user preferences.">
+            <PageWithSettingsSubMenu>
                 <h3>Editor</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">
                     Choose the editor for opening workspaces.{" "}

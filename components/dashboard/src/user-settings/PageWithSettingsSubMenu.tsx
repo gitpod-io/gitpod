@@ -11,20 +11,18 @@ import { UserContext } from "../user-context";
 import getSettingsMenu from "./settings-menu";
 
 export interface PageWithAdminSubMenuProps {
-    title: string;
-    subtitle: string;
     children: React.ReactNode;
 }
 
-export function PageWithSettingsSubMenu({ title, subtitle, children }: PageWithAdminSubMenuProps) {
+export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps) {
     const { userBillingMode } = useContext(UserContext);
     const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
 
     return (
         <PageWithSubMenu
             subMenu={getSettingsMenu({ userBillingMode, enablePersonalAccessTokens })}
-            title={title}
-            subtitle={subtitle}
+            title="User Settings"
+            subtitle="Manage your personal account settings."
         >
             {children}
         </PageWithSubMenu>
