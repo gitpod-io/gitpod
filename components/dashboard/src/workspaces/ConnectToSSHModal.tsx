@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import Alert from "../components/Alert";
 import TabMenuItem from "../components/TabMenuItem";
-import { settingsPathSSHKeys } from "../settings/settings.routes";
+import { settingsPathSSHKeys } from "../user-settings/settings.routes";
 import { getGitpodService } from "../service/service";
 import { InputWithCopy } from "../components/InputWithCopy";
 import { Link } from "react-router-dom";

@@ -174,7 +174,7 @@ export default function SSHKeys() {
     };
 
     return (
-        <PageWithSettingsSubMenu title="SSH Keys" subtitle="Connect securely to workspaces.">
+        <PageWithSettingsSubMenu>
             {showAddModal && (
                 <AddSSHKeyModal value={currentData} onSave={loadData} onClose={() => setShowAddModal(false)} />
             )}

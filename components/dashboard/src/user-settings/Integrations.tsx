@@ -26,10 +26,7 @@ import { SelectAccountModal } from "./SelectAccountModal";
 export default function Integrations() {
     return (
         <div>
-            <PageWithSettingsSubMenu
-                title="Integrations"
-                subtitle="Manage permissions for Git providers and integrations."
-            >
+            <PageWithSettingsSubMenu>
                 <GitProviders />
                 <div className="h-12"></div>
                 <GitIntegrations />

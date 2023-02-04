@@ -66,7 +66,7 @@ export default function Account() {
                 <input autoFocus className="w-full" type="text" onChange={(e) => setTypedEmail(e.target.value)}></input>
             </ConfirmationModal>
 
-            <PageWithSettingsSubMenu title="Account" subtitle="Manage account and Git configuration.">
+            <PageWithSettingsSubMenu>
                 <h3>Profile</h3>
                 <form
                     onSubmit={(e) => {

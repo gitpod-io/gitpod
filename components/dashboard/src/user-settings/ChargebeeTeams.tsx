@@ -28,10 +28,7 @@ import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 export default function ChargebeeTeams() {
     return (
         <div>
-            <PageWithSettingsSubMenu
-                title="Team Plans (deprecated)"
-                subtitle="View and manage subscriptions for entire teams with one centralized billing."
-            >
+            <PageWithSettingsSubMenu>
                 <AllTeams />
             </PageWithSettingsSubMenu>
         </div>

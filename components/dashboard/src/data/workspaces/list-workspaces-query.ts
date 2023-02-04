@@ -12,6 +12,7 @@ export type ListWorkspacesQueryResult = WorkspaceInfo[];
 
 type UseListWorkspacesQueryArgs = {
     limit: number;
+    orgId?: string;
 };
 
 export const useListWorkspacesQuery = ({ limit }: UseListWorkspacesQueryArgs) => {

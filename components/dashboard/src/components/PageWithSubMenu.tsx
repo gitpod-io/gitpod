@@ -6,7 +6,7 @@
 
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import Header from "../components/Header";
+import Header, { TabEntry } from "../components/Header";
 
 export interface PageWithSubMenuProps {
     title: string;
@@ -15,6 +15,7 @@ export interface PageWithSubMenuProps {
         title: string;
         link: string[];
     }[];
+    tabs?: TabEntry[];
     children: React.ReactNode;
 }
 
@@ -22,7 +23,7 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
     const location = useLocation();
     return (
         <div className="w-full">
-            <Header title={p.title} subtitle={p.subtitle} />
+            <Header title={p.title} subtitle={p.subtitle} tabs={p.tabs} />
             <div className="app-container flex pt-9">
                 <div>
                     <ul className="flex flex-col text tracking-wide text-gray-500 pt-4 lg:pt-0 w-52 space-y-2">

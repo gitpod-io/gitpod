@@ -148,7 +148,7 @@ function PersonalAccessTokenCreateView() {
 
     return (
         <div>
-            <PageWithSettingsSubMenu title="Access Tokens" subtitle="Manage your access tokens.">
+            <PageWithSettingsSubMenu>
                 <div className="mb-4 flex gap-2">
                     <Link to={settingsPathPersonalAccessTokens}>
                         <button className="secondary">

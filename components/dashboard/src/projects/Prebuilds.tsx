@@ -21,6 +21,7 @@ import { shortCommitMessage } from "./render-utils";
 import { Link } from "react-router-dom";
 import { Disposable } from "vscode-jsonrpc";
 import { useCurrentProject } from "./project-context";
+import { getProjectTabs } from "./projects.routes";
 
 export default function (props: { project?: Project; isAdminDashboard?: boolean }) {
     const currentProject = useCurrentProject();
@@ -130,7 +131,11 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
     return (
         <>
             {!props.isAdminDashboard && (
-                <Header title="Prebuilds" subtitle={`View recent prebuilds for active branches.`} />
+                <Header
+                    title={project?.name || "Unknown project"}
+                    subtitle={`View recent prebuilds for active branches.`}
+                    tabs={getProjectTabs(project)}
+                />
             )}
             <div className={props.isAdminDashboard ? "" : "app-container"}>
                 <div className={props.isAdminDashboard ? "flex" : "flex mt-8"}>

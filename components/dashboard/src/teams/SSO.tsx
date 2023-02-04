@@ -7,30 +7,25 @@
 import { useContext, useEffect, useState } from "react";
 import { Redirect } from "react-router";
 import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { useCurrentTeam } from "./teams-context";
-import { getTeamSettingsMenu } from "./TeamSettings";
 import { UserContext } from "../user-context";
 import { oidcService, publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { gitpodHostUrl } from "../service/service";
 import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import Modal from "../components/Modal";
 
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
+import { OrgSettingsPage } from "./OrgSettingsPage";
 
 export default function SSO() {
     const { user } = useContext(UserContext);
     const team = useCurrentTeam();
-    const [teamBillingMode, setTeamBillingMode] = useState<BillingMode | undefined>(undefined);
     const [isUserOwner, setIsUserOwner] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
-    const { oidcServiceEnabled } = useContext(FeatureFlagContext);
 
     useEffect(() => {
         if (!team) {
@@ -40,32 +35,27 @@ export default function SSO() {
             const memberInfos = await teamsService.getTeam({ teamId: team!.id }).then((resp) => {
                 return publicApiTeamMembersToProtocol(resp.team?.members || []);
             });
-            getGitpodService().server.getBillingModeForTeam(team.id).then(setTeamBillingMode).catch(console.error);
 
             const currentUserInTeam = memberInfos.find((member: TeamMemberInfo) => member.userId === user?.id);
             const isUserOwner = currentUserInTeam?.role === "owner";
             setIsUserOwner(isUserOwner);
             setIsLoading(false);
         })();
-    }, [team]);
+    }, [team, user?.id]);
 
     if (!isUserOwner) {
         return <Redirect to={`/`} />;
     }
 
     return (
-        <PageWithSubMenu
-            subMenu={getTeamSettingsMenu({ team, billingMode: teamBillingMode, ssoEnabled: oidcServiceEnabled })}
-            title="SSO"
-            subtitle="Setup SSO for your organization."
-        >
+        <OrgSettingsPage>
             {isLoading && (
                 <div className="p-20">
                     <Spinner className="h-5 w-5 animate-spin" />
                 </div>
             )}
             {!isLoading && team && isUserOwner && <OIDCClients organizationId={team.id} />}
-        </PageWithSubMenu>
+        </OrgSettingsPage>
     );
 }
 

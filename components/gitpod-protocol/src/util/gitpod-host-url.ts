@@ -100,28 +100,16 @@ export class GitpodHostUrl {
         return this.with((url) => ({ pathname: "/" }));
     }
 
-    asBilling(): GitpodHostUrl {
-        return this.with((url) => ({ pathname: "/billing" }));
-    }
-
     asLogin(): GitpodHostUrl {
         return this.with((url) => ({ pathname: "/login" }));
-    }
-
-    asUpgradeSubscription(): GitpodHostUrl {
-        return this.with((url) => ({ pathname: "/plans" }));
     }
 
     asAccessControl(): GitpodHostUrl {
         return this.with((url) => ({ pathname: "/integrations" }));
     }
 
-    asSettings(): GitpodHostUrl {
-        return this.with((url) => ({ pathname: "/settings" }));
-    }
-
     asPreferences(): GitpodHostUrl {
-        return this.with((url) => ({ pathname: "/preferences" }));
+        return this.with((url) => ({ pathname: "/user/preferences" }));
     }
 
     asStart(workspaceId = this.workspaceId): GitpodHostUrl {

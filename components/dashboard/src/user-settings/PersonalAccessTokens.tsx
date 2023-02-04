@@ -32,7 +32,7 @@ export default function PersonalAccessTokens() {
 
     return (
         <div>
-            <PageWithSettingsSubMenu title="Access Tokens" subtitle="Manage your access tokens.">
+            <PageWithSettingsSubMenu>
                 <ListAccessTokensView />
             </PageWithSettingsSubMenu>
         </div>
