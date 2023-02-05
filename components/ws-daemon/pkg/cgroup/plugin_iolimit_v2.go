@@ -6,6 +6,7 @@ package cgroup
 
 import (
 	"context"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -142,4 +143,28 @@ func buildV2Limits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs 
 	log.WithField("resources", resources).Debug("cgroups v2 limits")
 
 	return resources
+}
+
+// TODO: enable custom configuration
+var blockDevices = []string{"dm*", "sd*", "md*", "nvme0n*"}
+
+func buildDevices() []string {
+	var devices []string
+	for _, wc := range blockDevices {
+		matches, err := filepath.Glob(filepath.Join("/sys/block", wc, "dev"))
+		if err != nil {
+			log.WithField("wc", wc).Warn("cannot glob devices")
+			continue
+		}
+
+		for _, dev := range matches {
+			fc, err := os.ReadFile(dev)
+			if err != nil {
+				log.WithField("dev", dev).WithError(err).Error("cannot read device file")
+			}
+			devices = append(devices, strings.TrimSpace(string(fc)))
+		}
+	}
+
+	return devices
 }
