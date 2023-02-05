@@ -18,6 +18,11 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
+var (
+	fuseDeviceMajor int64 = 10
+	fuseDeviceMinor int64 = 229
+)
+
 type FuseDeviceEnablerV2 struct{}
 
 func (c *FuseDeviceEnablerV2) Name() string  { return "fuse-device-enabler-v2" }
