@@ -181,7 +181,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 								VolumeMounts: volumeMounts,
 							},
-							*common.KubeRBACProxyContainerWithConfig(ctx),
+							*common.KubeRBACProxyContainer(ctx),
 						},
 						Volumes: volumes,
 					},

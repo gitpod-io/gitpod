@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database/cloudsql"
@@ -91,6 +92,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										fmt.Sprintf("--datastore-bootstrap-files=%s", strings.Join(bootstrapFiles, ",")),
 										"--dispatch-cluster-enabled=true",
 										"--datastore-bootstrap-overwrite=true",
+										fmt.Sprintf("--metrics-addr=:%d", baseserver.BuiltinMetricsPort),
 									}
 
 									// Dispatching only makes sense, when we have more than one replica
@@ -157,6 +159,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									bootstrapVolumeMount,
 								},
 							},
+							*common.KubeRBACProxyContainer(ctx),
 						},
 						Volumes: []v1.Volume{
 							bootstrapVolume,
