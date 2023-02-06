@@ -301,10 +301,11 @@ func resolveGatewayLink(backendPort string, wsInfo *supervisor.WorkspaceInfoResp
 	if err != nil {
 		return "", err
 	}
+	debugWorkspace := wsInfo.DebugWorkspaceType != supervisor.DebugWorkspaceType_noDebug
 	link := url.URL{
 		Scheme:   "jetbrains-gateway",
 		Host:     "connect",
-		Fragment: fmt.Sprintf("gitpodHost=%s&workspaceId=%s&backendPort=%s", gitpodUrl.Hostname(), wsInfo.WorkspaceId, backendPort),
+		Fragment: fmt.Sprintf("gitpodHost=%s&workspaceId=%s&backendPort=%s&debugWorkspace=%t", gitpodUrl.Hostname(), wsInfo.WorkspaceId, backendPort, debugWorkspace),
 	}
 	return link.String(), nil
 }

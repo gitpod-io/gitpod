@@ -18,6 +18,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 )
 
 func newSSHServer(ctx context.Context, cfg *Config, envvars []string) (*sshServer, error) {
@@ -85,7 +86,8 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		return
 	}
 
-	args := []string{
+	var args []string
+	args = append(args,
 		"-ieD", "-f/dev/null",
 		"-oProtocol 2",
 		"-oAllowUsers gitpod",
@@ -95,13 +97,33 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oLoginGraceTime 20",
 		"-oPrintLastLog no",
 		"-oPermitUserEnvironment yes",
-		"-oHostKey " + s.sshkey,
+		"-oHostKey "+s.sshkey,
 		"-oPidFile /dev/null",
 		"-oUseDNS no", // Disable DNS lookups.
 		"-oSubsystem sftp internal-sftp",
 		"-oStrictModes no", // don't care for home directory and file permissions
-		"-oLogLevel DEBUG", // enabled DEBUG mode by default
+	)
+	// TODO enabled DEBUG mode by default - reconsider it
+	sshdLogLevel := "DEBUG"
+	if s.cfg.isDebugWorkspace() {
+		switch log.Log.Logger.GetLevel() {
+		case logrus.PanicLevel:
+			sshdLogLevel = "FATAL"
+		case logrus.FatalLevel:
+			sshdLogLevel = "FATAL"
+		case logrus.ErrorLevel:
+			sshdLogLevel = "ERROR"
+		case logrus.WarnLevel:
+			sshdLogLevel = "INFO"
+		case logrus.InfoLevel:
+			sshdLogLevel = "INFO"
+		case logrus.DebugLevel:
+			sshdLogLevel = "VERBOSE"
+		case logrus.TraceLevel:
+			sshdLogLevel = "DEBUG"
+		}
 	}
+	args = append(args, "-oLogLevel "+sshdLogLevel)
 
 	envs := make([]string, 0)
 	for _, env := range s.envvars {

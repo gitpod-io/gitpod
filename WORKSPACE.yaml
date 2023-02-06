@@ -7,7 +7,7 @@ defaultArgs:
   publishToNPM: true
   publishToJBMarketplace: true
   localAppVersion: unknown
-  codeCommit: a22e18bcce821d889b541107a695dd93835c7cc7
+  codeCommit: 0180d69921094cacdaa8d4b6ef007a0783a95e3b
   codeVersion: 1.75.0
   codeQuality: stable
   noVerifyJBPlugin: false
@@ -22,6 +22,7 @@ defaultArgs:
   jbBackendVersion: "latest"
   REPLICATED_API_TOKEN: ""
   REPLICATED_APP: ""
+  dockerVersion: 20.10.17
 provenance:
   enabled: true
   slsa: true

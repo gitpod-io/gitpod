@@ -51,6 +51,16 @@ var initCmd = &cobra.Command{
 		if err != nil {
 			supervisorPath = "/.supervisor/supervisor"
 		}
+
+		debugProxyCtx, stopDebugProxy := context.WithCancel(context.Background())
+		if os.Getenv("SUPERVISOR_DEBUG_WORKSPACE_TYPE") != "" {
+			err = exec.CommandContext(debugProxyCtx, supervisorPath, "debug-proxy").Start()
+			if err != nil {
+				log.WithError(err).Fatal("cannot run debug workspace proxy")
+			}
+		}
+		defer stopDebugProxy()
+
 		runCommand := exec.Command(supervisorPath, "run")
 		runCommand.Args[0] = "supervisor"
 		runCommand.Stdin = os.Stdin

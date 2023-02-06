@@ -298,7 +298,7 @@ func TestGetTask(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			command := getCommand(&task{config: test.Task, TaskStatus: api.TaskStatus{Id: "0"}}, test.IsHeadless, test.ContentSource, "/")
+			command := getCommand(&task{config: test.Task, TaskStatus: api.TaskStatus{Id: "0"}}, test.IsHeadless, test.IsHeadless, test.ContentSource, "/")
 			if diff := cmp.Diff(test.Expectation, command); diff != "" {
 				t.Errorf("unexpected getCommand() (-want +got):\n%s", diff)
 			}

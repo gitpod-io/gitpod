@@ -8,9 +8,12 @@ packages:
       - dependencies.sh
     deps:
       - components/common-go:lib
+    argdeps:
+      - dockerVersion
     env:
       - CGO_ENABLED=0
       - GOOS=linux
+      - DOCKER_VERSION=${dockerVersion}
     prep:
       - ["mv", "docker-up/main.go", "."]
       - ["rmdir", "docker-up"]

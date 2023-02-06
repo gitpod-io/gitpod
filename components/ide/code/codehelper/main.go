@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -24,6 +25,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -34,8 +36,9 @@ var (
 )
 
 const (
-	Code                = "/ide/bin/gitpod-code"
-	ProductJsonLocation = "/ide/product.json"
+	Code                     = "/ide/bin/gitpod-code"
+	ProductJsonLocation      = "/ide/product.json"
+	WebWorkbenchMainLocation = "/ide/out/vs/workbench/workbench.web.main.js"
 )
 
 func main() {
@@ -57,11 +60,32 @@ func main() {
 	}
 	phaseDone()
 
+	if err := prepareWebWorkbenchMain(wsInfo); err != nil {
+		log.WithError(err).Error("failed to prepare web workbench")
+	}
+
 	// code server args install extension with id
 	args := []string{}
 
 	if enableDebug {
 		args = append(args, "--inspect", "--log=trace")
+	} else {
+		switch log.Log.Logger.GetLevel() {
+		case logrus.PanicLevel:
+			args = append(args, "--log=critical")
+		case logrus.FatalLevel:
+			args = append(args, "--log=critical")
+		case logrus.ErrorLevel:
+			args = append(args, "--log=error")
+		case logrus.WarnLevel:
+			args = append(args, "--log=warn")
+		case logrus.InfoLevel:
+			args = append(args, "--log=info")
+		case logrus.DebugLevel:
+			args = append(args, "--log=debug")
+		case logrus.TraceLevel:
+			args = append(args, "--log=trace")
+		}
 	}
 
 	args = append(args, "--install-builtin-extension", "gitpod.gitpod-theme")
@@ -204,14 +228,43 @@ func replaceOpenVSXUrl() error {
 	if err != nil {
 		return errors.New("failed to read product.json: " + err.Error())
 	}
+	b = replaceOpenVSX(b)
+	if err := os.WriteFile(ProductJsonLocation, b, 0644); err != nil {
+		return errors.New("failed to write product.json: " + err.Error())
+	}
+	return nil
+}
+
+// TODO it is be applied as well by blobserve if served for regular workspace location
+// reconsider how to configure in all modes, i.e. regular, debug, dev
+func prepareWebWorkbenchMain(wsInfo *supervisor.WorkspaceInfoResponse) error {
+	phase := phaseLogging("prepareWebWorkbenchMain")
+	defer phase()
+	b, err := os.ReadFile(WebWorkbenchMainLocation)
+	if err != nil {
+		return errors.New("failed to read " + WebWorkbenchMainLocation + ": " + err.Error())
+	}
+	url, err := url.Parse(wsInfo.GitpodHost)
+	if err != nil {
+		return errors.New("failed to parse " + wsInfo.GitpodHost + ": " + err.Error())
+	}
+	domain := url.Hostname()
+	b = bytes.ReplaceAll(b, []byte("vscode-cdn.net"), []byte(domain))
+	b = bytes.ReplaceAll(b, []byte("ide.gitpod.io/code/markeplace.json"), []byte(fmt.Sprintf("ide.%s/code/marketplace.json", domain)))
+
+	b = replaceOpenVSX(b)
+
+	if err := os.WriteFile(WebWorkbenchMainLocation, b, 0644); err != nil {
+		return errors.New("failed to write " + WebWorkbenchMainLocation + ": " + err.Error())
+	}
+	return nil
+}
+
+func replaceOpenVSX(b []byte) []byte {
 	registryUrl := os.Getenv("VSX_REGISTRY_URL")
 	if registryUrl != "" {
 		b = bytes.ReplaceAll(b, []byte("https://open-vsx.org"), []byte(registryUrl))
 	}
 	b = bytes.ReplaceAll(b, []byte("{{extensionsGalleryItemUrl}}"), []byte("https://open-vsx.org/vscode/item"))
-	b = bytes.ReplaceAll(b, []byte("{{trustedDomain}}"), []byte("https://open-vsx.org"))
-	if err := os.WriteFile(ProductJsonLocation, b, 0644); err != nil {
-		return errors.New("failed to write product.json: " + err.Error())
-	}
-	return nil
+	return bytes.ReplaceAll(b, []byte("{{trustedDomain}}"), []byte("https://open-vsx.org"))
 }

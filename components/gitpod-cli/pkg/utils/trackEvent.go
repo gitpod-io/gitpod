@@ -33,6 +33,8 @@ const (
 	RebuildErrorCode_MalformedGitpodYaml = "rebuild_malformed_gitpod_yaml"
 	RebuildErrorCode_MissingGitpodYaml   = "rebuild_missing_gitpod_yaml"
 	RebuildErrorCode_NoCustomImage       = "rebuild_no_custom_image"
+	RebuildErrorCode_AlreadyInDebug      = "rebuild_already_in_debug"
+	RebuildErrorCode_InvaligLogLevel     = "rebuild_invalid_log_level"
 )
 
 type TrackCommandUsageParams struct {

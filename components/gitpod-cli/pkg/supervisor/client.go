@@ -21,9 +21,11 @@ type SupervisorClient struct {
 	conn      *grpc.ClientConn
 	closeOnce sync.Once
 
-	Status   api.StatusServiceClient
-	Terminal api.TerminalServiceClient
-	Info     api.InfoServiceClient
+	Status       api.StatusServiceClient
+	Terminal     api.TerminalServiceClient
+	Info         api.InfoServiceClient
+	Notification api.NotificationServiceClient
+	Control      api.ControlServiceClient
 }
 
 type SupervisorClientOption struct {
@@ -43,10 +45,12 @@ func New(ctx context.Context, options ...*SupervisorClientOption) (*SupervisorCl
 	}
 
 	return &SupervisorClient{
-		conn:     conn,
-		Status:   api.NewStatusServiceClient(conn),
-		Terminal: api.NewTerminalServiceClient(conn),
-		Info:     api.NewInfoServiceClient(conn),
+		conn:         conn,
+		Status:       api.NewStatusServiceClient(conn),
+		Terminal:     api.NewTerminalServiceClient(conn),
+		Info:         api.NewInfoServiceClient(conn),
+		Notification: api.NewNotificationServiceClient(conn),
+		Control:      api.NewControlServiceClient(conn),
 	}, nil
 }
 

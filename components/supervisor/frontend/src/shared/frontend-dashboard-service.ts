@@ -7,7 +7,7 @@
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Emitter } from "@gitpod/gitpod-protocol/lib/util/event";
-import { serverUrl } from "./urls";
+import { workspaceUrl, serverUrl } from "./urls";
 
 export class FrontendDashboardServiceClient implements IDEFrontendDashboardService.IClient {
     public latestStatus!: IDEFrontendDashboardService.Status;
@@ -47,6 +47,8 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
     }
 
     trackEvent(msg: RemoteTrackMessage): void {
+        const debugWorkspace = workspaceUrl.debugWorkspace;
+        msg.properties = { ...msg.properties, debugWorkspace };
         this.serverWindow.postMessage(
             { type: "ide-track-event", msg } as IDEFrontendDashboardService.TrackEventData,
             serverUrl.url.origin,

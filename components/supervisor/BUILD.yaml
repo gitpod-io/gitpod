@@ -30,9 +30,11 @@ packages:
       - components/gitpod-cli:app
     argdeps:
       - imageRepoBase
+      - dockerVersion
     config:
       buildArgs:
         VERSION: ${version}
+        DOCKER_VERSION: ${dockerVersion}
       dockerfile: leeway.Dockerfile
       metadata:
         helm-component: workspace.supervisor

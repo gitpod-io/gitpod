@@ -41,7 +41,6 @@ func main() {
 	errlog := log.New(os.Stderr, "VS Code Desktop status: ", log.LstdFlags)
 
 	http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-
 		wsInfo, err := GetWSInfo(context.Background())
 		if err != nil {
 			errlog.Printf("cannot get workspace info: %v\n", err)
@@ -49,14 +48,20 @@ func main() {
 		}
 
 		type Query struct {
-			InstanceId  string `json:"instanceId"`
-			WorkspaceId string `json:"workspaceId"`
-			GitpodHost  string `json:"gitpodHost"`
+			InstanceId     string `json:"instanceId"`
+			WorkspaceId    string `json:"workspaceId"`
+			GitpodHost     string `json:"gitpodHost"`
+			DebugWorkspace bool   `json:"debugWorkspace"`
+		}
+		debugWorkspace := false
+		if wsInfo.GetDebugWorkspaceType() != supervisor.DebugWorkspaceType_noDebug {
+			debugWorkspace = true
 		}
 		query := &Query{
-			InstanceId:  wsInfo.InstanceId,
-			WorkspaceId: wsInfo.WorkspaceId,
-			GitpodHost:  wsInfo.GitpodHost,
+			InstanceId:     wsInfo.InstanceId,
+			WorkspaceId:    wsInfo.WorkspaceId,
+			GitpodHost:     wsInfo.GitpodHost,
+			DebugWorkspace: debugWorkspace,
 		}
 		b, err := json.Marshal(query)
 		if err != nil {

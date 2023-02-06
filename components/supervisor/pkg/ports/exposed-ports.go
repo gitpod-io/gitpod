@@ -140,7 +140,7 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 				res[uint32(p.Port)] = ExposedPort{
 					LocalPort: uint32(p.Port),
 					Public:    p.Visibility == "public",
-					URL:       p.URL,
+					URL:       g.getPortUrl(uint32(p.Port)),
 				}
 			}
 			exposedPort := make([]ExposedPort, 0, len(res))

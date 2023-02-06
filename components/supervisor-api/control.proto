@@ -6,6 +6,9 @@ syntax = "proto3";
 
 package supervisor;
 
+import "status.proto";
+import "info.proto";
+
 option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
 option java_package = "io.gitpod.supervisor.api";
 
@@ -17,6 +20,9 @@ service ControlService {
 
   // CreateSSHKeyPair Create a pair of SSH Keys and put them in ~/.ssh/authorized_keys, this will only be generated once in the entire workspace lifecycle
   rpc CreateSSHKeyPair(CreateSSHKeyPairRequest) returns (CreateSSHKeyPairResponse) {}
+
+  // CreateDebugEnv creates a debug workspace envs
+  rpc CreateDebugEnv(CreateDebugEnvRequest) returns (CreateDebugEnvResponse) {}
 }
 
 message ExposePortRequest {
@@ -31,4 +37,25 @@ message CreateSSHKeyPairRequest {}
 message CreateSSHKeyPairResponse {
     // Return privateKey for ws-proxy
     string private_key = 1;
+}
+
+message CreateDebugEnvRequest {
+  // workspace_type indicates whether it is a regular or prebuild workspace
+  DebugWorkspaceType workspace_type = 1;
+  // content_source indicates where the workspace content came from
+  ContentSource content_source = 2;
+  // workspace_url is an URL for which the workspace is accessed.
+  string workspace_url = 3;
+  // JSON serialized tasks to run
+  string tasks = 4;
+  // checkout_location is the path where we initialized the workspace content
+  string checkout_location = 5;
+  // workspace_location is the location of the IDE workspace
+  string workspace_location = 6;
+  // logLevel to use in a debug workspace.
+  string logLevel = 7;
+}
+
+message CreateDebugEnvResponse {
+  repeated string envs = 1;
 }
