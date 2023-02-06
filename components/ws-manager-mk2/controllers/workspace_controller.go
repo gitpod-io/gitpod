@@ -16,6 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/prometheus/client_golang/prometheus"
@@ -176,7 +177,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 	switch {
 	// if there is a pod, and it's failed, delete it
-	case conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) && !isPodBeingDeleted(pod):
+	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) && !isPodBeingDeleted(pod):
 		err := r.Client.Delete(ctx, pod)
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
@@ -185,7 +186,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		}
 
 	// if the pod was stopped by request, delete it
-	case conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)) && !isPodBeingDeleted(pod):
+	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)) && !isPodBeingDeleted(pod):
 		err := r.Client.Delete(ctx, pod)
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
@@ -194,7 +195,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		}
 
 	// if the content initialization failed, delete the pod
-	case conditionWithStatusAndReson(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") && !isPodBeingDeleted(pod):
+	case wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") && !isPodBeingDeleted(pod):
 		err := r.Client.Delete(ctx, pod)
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
@@ -243,28 +244,28 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 		phase == workspacev1.WorkspacePhaseCreating ||
 		phase == workspacev1.WorkspacePhaseInitializing:
 
-		if conditionWithStatusAndReson(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
+		if wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
 			r.metrics.countTotalRestoreFailures(&log, workspace)
 			r.metrics.countWorkspaceStartFailures(&log, workspace)
 		}
 
-		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
+		if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
 			r.metrics.countWorkspaceStartFailures(&log, workspace)
 		}
 
 	case phase == workspacev1.WorkspacePhaseRunning:
 		r.metrics.recordWorkspaceStartupTime(&log, workspace)
-		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) {
+		if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) {
 			r.metrics.countTotalRestores(&log, workspace)
 		}
 
 	case phase == workspacev1.WorkspacePhaseStopped:
-		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
+		if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
 			r.metrics.countTotalBackups(&log, workspace)
 			r.metrics.countTotalBackupFailures(&log, workspace)
 		}
 
-		if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
+		if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
 			r.metrics.countTotalBackups(&log, workspace)
 		}
 
@@ -274,24 +275,6 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	}
 
 	r.metrics.rememberWorkspace(workspace)
-}
-
-func conditionPresentAndTrue(cond []metav1.Condition, tpe string) bool {
-	for _, c := range cond {
-		if c.Type == tpe {
-			return c.Status == metav1.ConditionTrue
-		}
-	}
-	return false
-}
-
-func conditionWithStatusAndReson(cond []metav1.Condition, tpe string, status bool, reason string) bool {
-	for _, c := range cond {
-		if c.Type == tpe {
-			return c.Type == tpe && c.Reason == reason
-		}
-	}
-	return false
 }
 
 var (
@@ -325,19 +308,4 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
 		Complete(r)
-}
-
-func AddUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
-	if cond.Reason == "" {
-		cond.Reason = "unknown"
-	}
-
-	for i, c := range conds {
-		if c.Type == cond.Type {
-			conds[i] = cond
-			return conds
-		}
-	}
-
-	return append(conds, cond)
 }
