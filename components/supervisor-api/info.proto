@@ -94,4 +94,13 @@ message WorkspaceInfoResponse {
 
     // owner_id is user id who owns the workspace
     string owner_id = 16;
+
+    // debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+    DebugWorkspaceType debug_workspace_type = 17;
+}
+
+enum DebugWorkspaceType {
+  noDebug = 0;
+  regular = 1;
+  prebuild = 2;
 }

@@ -18,6 +18,7 @@ import (
 	env "github.com/Netflix/go-env"
 	"golang.org/x/xerrors"
 
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
@@ -82,9 +83,6 @@ type StaticConfig struct {
 
 	// APIEndpointPort is the port where to serve the API endpoint on
 	APIEndpointPort int `json:"apiEndpointPort"`
-
-	// HostAPIEndpointPort is the port where to the host API endpoint served
-	HostAPIEndpointPort *int `json:"hostAPIEndpointPort,omitempty"`
 
 	// SSHPort is the port we run the SSH server on
 	SSHPort int `json:"sshPort"`
@@ -288,6 +286,12 @@ type WorkspaceConfig struct {
 
 	// OwnerId is the user id who owns the workspace
 	OwnerId string `env:"GITPOD_OWNER_ID"`
+
+	// DebugWorkspaceType indicates whether it is a regular or prebuild debug workspace
+	DebugWorkspaceType api.DebugWorkspaceType `env:"SUPERVISOR_DEBUG_WORKSPACE_TYPE"`
+
+	// DebugWorkspaceContenSource indicates where the debug workspace content came from
+	DebugWorkspaceContenSource api.ContentSource `env:"SUPERVISOR_DEBUG_WORKSPACE_CONTENT_SOURCE"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.
@@ -390,9 +394,29 @@ func (c WorkspaceConfig) GitpodAPIEndpoint() (endpoint, host string, err error) 
 	return
 }
 
+// isPrebuild returns true if the workspace is prebuild.
+func (c WorkspaceConfig) isPrebuild() bool {
+	return c.GitpodHeadless == "true" || c.DebugWorkspaceType == api.DebugWorkspaceType_prebuild
+}
+
 // getGitpodTasks returns true if the workspace is headless.
 func (c WorkspaceConfig) isHeadless() bool {
 	return c.GitpodHeadless == "true"
+}
+
+// isDebugWorkspace returns true if the workspace is in debug mode.
+func (c WorkspaceConfig) isDebugWorkspace() bool {
+	return c.DebugWorkspaceType != api.DebugWorkspaceType_noDebug
+}
+
+var contentSources = map[api.ContentSource]csapi.WorkspaceInitSource{
+	api.ContentSource_from_other:    csapi.WorkspaceInitFromOther,
+	api.ContentSource_from_backup:   csapi.WorkspaceInitFromBackup,
+	api.ContentSource_from_prebuild: csapi.WorkspaceInitFromPrebuild,
+}
+
+func (c WorkspaceConfig) GetDebugWorkspaceContentSource() csapi.WorkspaceInitSource {
+	return contentSources[c.DebugWorkspaceContenSource]
 }
 
 // getGitpodTasks parses gitpod tasks.

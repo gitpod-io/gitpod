@@ -174,46 +174,62 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 			forceUpdate = true
 		case exposed = <-exposedUpdates:
 			if exposed == nil {
-				log.Error("exposed ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("exposed ports observer stopped unexpectedly")
+				}
 				return
 			}
 		case served = <-servedUpdates:
 			if served == nil {
-				log.Error("served ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("served ports observer stopped unexpectedly")
+				}
 				return
 			}
 		case configured = <-configUpdates:
 			if configured == nil {
-				log.Error("configured ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("configured ports observer stopped unexpectedly")
+				}
 				return
 			}
 		case tunneled = <-tunneledUpdates:
 			if tunneled == nil {
-				log.Error("tunneled ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("tunneled ports observer stopped unexpectedly")
+				}
 				return
 			}
 
 		case err := <-exposedErrors:
 			if err == nil {
-				log.Error("exposed ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("exposed ports observer stopped unexpectedly")
+				}
 				return
 			}
 			log.WithError(err).Warn("error while observing exposed ports")
 		case err := <-servedErrors:
 			if err == nil {
-				log.Error("served ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("served ports observer stopped unexpectedly")
+				}
 				return
 			}
 			log.WithError(err).Warn("error while observing served ports")
 		case err := <-configErrors:
 			if err == nil {
-				log.Error("port configs observer stopped")
+				if ctx.Err() == nil {
+					log.Error("port configs observer stopped unexpectedly")
+				}
 				return
 			}
 			log.WithError(err).Warn("error while observing served port configs")
 		case err := <-tunneledErrors:
 			if err == nil {
-				log.Error("tunneled ports observer stopped")
+				if ctx.Err() == nil {
+					log.Error("tunneled ports observer stopped unexpectedly")
+				}
 				return
 			}
 			log.WithError(err).Warn("error while observing tunneled ports")

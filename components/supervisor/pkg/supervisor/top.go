@@ -51,15 +51,15 @@ func (t *TopService) Observe(ctx context.Context) {
 	go func() {
 		for {
 			data, err := t.top(ctx)
-			if err != nil {
-				log.WithField("error", err).Errorf("failed to retrieve resource status from upstream, trying again in %d seconds...", uint32(delay.Seconds()))
-			} else {
+			if err == nil {
 				delay = minReconnectionDelay
 				t.data = data
 
 				t.readyOnce.Do(func() {
 					close(t.ready)
 				})
+			} else if ctx.Err() == nil {
+				log.WithField("error", err).Errorf("failed to retrieve resource status from upstream, trying again in %d seconds...", uint32(delay.Seconds()))
 			}
 			select {
 			case <-ctx.Done():
