@@ -6,7 +6,7 @@
 
 import { Team } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Redirect } from "react-router";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -43,15 +43,24 @@ export function getTeamSettingsMenu(params: { team?: Team; billingMode?: Billing
 export default function TeamSettings() {
     const user = useCurrentUser();
     const team = useCurrentTeam();
+    const isUserOwner = useIsOwnerOfCurrentTeam();
     const { teams, setTeams } = useContext(TeamsContext);
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(team?.name || "");
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-    const isUserOwner = useIsOwnerOfCurrentTeam();
     const [updated, setUpdated] = useState(false);
 
     const close = () => setModal(false);
+
+    // reset state if organization changes
+    useEffect(() => {
+        setModal(false);
+        setTeamNameToDelete("");
+        setTeamName(team?.name || "");
+        setErrorMessage(undefined);
+        setUpdated(false);
+    }, [team]);
 
     const updateTeamInformation = useCallback(async () => {
         if (!team || errorMessage || !teams) {
@@ -99,7 +108,7 @@ export default function TeamSettings() {
         document.location.href = gitpodHostUrl.asDashboard().toString();
     }, [team, user]);
 
-    if (!isUserOwner) {
+    if (!isUserOwner || !team) {
         return <Redirect to="/" />;
     }
 
@@ -151,7 +160,7 @@ export default function TeamSettings() {
             <ConfirmationModal
                 title="Delete Team"
                 buttonText="Delete Team"
-                buttonDisabled={teamNameToDelete !== team!.name}
+                buttonDisabled={teamNameToDelete !== team?.name}
                 visible={modal}
                 warningHead="Warning"
                 warningText="This action cannot be reversed."
