@@ -145,13 +145,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ReadinessProbe: &corev1.Probe{
 									ProbeHandler: corev1.ProbeHandler{
 										Exec: &v1.ExecAction{
-											Command: []string{"grpc_health_probe", "-v", "-addr=localhost:50051"},
+											Command: []string{"grpc_health_probe", "-v", fmt.Sprintf("-addr=localhost:%d", ContainerGRPCPort)},
 										},
 									},
-									FailureThreshold: 5,
-									PeriodSeconds:    10,
-									SuccessThreshold: 1,
-									TimeoutSeconds:   5,
+									InitialDelaySeconds: 5,
+									PeriodSeconds:       30,
+									FailureThreshold:    5,
+									SuccessThreshold:    1,
+									TimeoutSeconds:      3,
 								},
 								VolumeMounts: []v1.VolumeMount{
 									bootstrapVolumeMount,
