@@ -39,6 +39,7 @@ const (
 	Code                     = "/ide/bin/gitpod-code"
 	ProductJsonLocation      = "/ide/product.json"
 	WebWorkbenchMainLocation = "/ide/out/vs/workbench/workbench.web.main.js"
+	ServerMainLocation       = "/ide/out/vs/server/node/server.main.js"
 )
 
 func main() {
@@ -62,6 +63,10 @@ func main() {
 
 	if err := prepareWebWorkbenchMain(wsInfo); err != nil {
 		log.WithError(err).Error("failed to prepare web workbench")
+	}
+
+	if err := prepareServerMain(wsInfo); err != nil {
+		log.WithError(err).Error("failed to prepare server")
 	}
 
 	// code server args install extension with id
@@ -256,6 +261,25 @@ func prepareWebWorkbenchMain(wsInfo *supervisor.WorkspaceInfoResponse) error {
 
 	if err := os.WriteFile(WebWorkbenchMainLocation, b, 0644); err != nil {
 		return errors.New("failed to write " + WebWorkbenchMainLocation + ": " + err.Error())
+	}
+	return nil
+}
+
+func prepareServerMain(wsInfo *supervisor.WorkspaceInfoResponse) error {
+	phase := phaseLogging("prepareServerMain")
+	defer phase()
+	b, err := os.ReadFile(ServerMainLocation)
+	if err != nil {
+		return errors.New("failed to read " + ServerMainLocation + ": " + err.Error())
+	}
+	url, err := url.Parse(wsInfo.GitpodHost)
+	if err != nil {
+		return errors.New("failed to parse " + wsInfo.GitpodHost + ": " + err.Error())
+	}
+	domain := url.Hostname()
+	b = bytes.ReplaceAll(b, []byte("https://*.vscode-cdn.net"), []byte(fmt.Sprintf("https://*.vscode-cdn.net https://%s https://*.%s", domain, domain)))
+	if err := os.WriteFile(ServerMainLocation, b, 0644); err != nil {
+		return errors.New("failed to write " + ServerMainLocation + ": " + err.Error())
 	}
 	return nil
 }
