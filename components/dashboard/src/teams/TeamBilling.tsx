@@ -7,8 +7,7 @@
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { Currency, Plan, Plans, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import React, { useCallback, useContext, useEffect, useState } from "react";
-import { Redirect } from "react-router";
+import React, { FunctionComponent, useCallback, useContext, useEffect, useState } from "react";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
 import Alert from "../components/Alert";
 import Card from "../components/Card";
@@ -16,6 +15,7 @@ import DropDown from "../components/DropDown";
 import PillLabel from "../components/PillLabel";
 import SolidCard from "../components/SolidCard";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { useOrgMembers } from "../data/organizations/org-members-query";
 import { getExperimentsClient } from "../experiments/client";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as CheckSvg } from "../images/check.svg";
@@ -23,17 +23,24 @@ import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-import { useCurrentTeam, useIsOwnerOfCurrentTeam, useTeamMemberInfos } from "./teams-context";
+import { useCurrentTeam } from "./teams-context";
 import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
 
 type PendingPlan = Plan & { pendingSince: number };
 
-export default function TeamBilling() {
+export default function TeamBillingPage() {
+    return (
+        <OrgSettingsPage>
+            <TeamBilling />
+        </OrgSettingsPage>
+    );
+}
+
+const TeamBilling: FunctionComponent = () => {
     const user = useCurrentUser();
     const team = useCurrentTeam();
-    const members = useTeamMemberInfos();
-    const isUserOwner = useIsOwnerOfCurrentTeam();
-    const { data: teamBillingMode } = useOrgBillingMode();
+    const { data: teamBillingMode, isLoading: teamBillingModeLoading } = useOrgBillingMode();
+    const { data: members, isLoading: membersLoading } = useOrgMembers();
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
     const { currency, setCurrency } = useContext(PaymentContext);
     const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
@@ -117,7 +124,7 @@ export default function TeamBilling() {
 
     const checkout = useCallback(
         async (plan: Plan) => {
-            if (!team || !members[team.id]) {
+            if (!team || (members || []).length < 1) {
                 return;
             }
             const chargebeeClient = await ChargebeeClient.getOrCreate(team.id);
@@ -137,7 +144,7 @@ export default function TeamBilling() {
         [members, team],
     );
 
-    const isLoading = !team || !members[team.id];
+    const isLoading = teamBillingModeLoading || membersLoading;
     const teamPlan = pendingTeamPlan || Plans.getById(teamSubscription?.planId);
 
     const featuresByPlanType: { [type in PlanType]?: Array<React.ReactNode> } = {
@@ -155,10 +162,6 @@ export default function TeamBilling() {
             <span>3 hr Timeout Boost</span>,
         ],
     };
-
-    if (!isUserOwner || !team) {
-        return <Redirect to={`/`} />;
-    }
 
     function renderTeamBilling(): JSX.Element {
         return (
@@ -233,10 +236,9 @@ export default function TeamBilling() {
                                             </div>
                                             <div className="mt-2">
                                                 <PillLabel type="warn" className="font-semibold normal-case text-sm">
-                                                    {team && members[team.id]?.length} x{" "}
-                                                    {Currency.getSymbol(tp.currency)}
+                                                    {(members || []).length} x {Currency.getSymbol(tp.currency)}
                                                     {tp.pricePerMonth} = {Currency.getSymbol(tp.currency)}
-                                                    {team && members[team.id]?.length * tp.pricePerMonth} per month
+                                                    {(members || []).length * tp.pricePerMonth} per month
                                                 </PillLabel>
                                             </div>
                                             <div className="mt-4 font-semibold text-sm">Includes:</div>
@@ -294,7 +296,7 @@ export default function TeamBilling() {
                                             Members
                                         </div>
                                         <div className="font-semibold text-base text-gray-600 dark:text-gray-400">
-                                            {members.length}
+                                            {(members || []).length}
                                         </div>
                                         <div className="mt-4 font-medium text-base text-gray-400 dark:text-gray-600">
                                             Next invoice on
@@ -333,21 +335,9 @@ export default function TeamBilling() {
     }
 
     const showUBP = BillingMode.showUsageBasedBilling(teamBillingMode);
-    return (
-        <OrgSettingsPage>
-            {teamBillingMode === undefined ? (
-                <div className="p-20">
-                    <Spinner className="h-5 w-5 animate-spin" />
-                </div>
-            ) : (
-                <>
-                    {showUBP && <TeamUsageBasedBilling />}
-                    {!showUBP && renderTeamBilling()}
-                </>
-            )}
-        </OrgSettingsPage>
-    );
-}
+
+    return showUBP ? <TeamUsageBasedBilling /> : renderTeamBilling();
+};
 
 function guessNextInvoiceDate(startDate: string): Date {
     const now = new Date();

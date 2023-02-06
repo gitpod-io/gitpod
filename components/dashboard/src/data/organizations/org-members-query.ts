@@ -37,12 +37,14 @@ export const useCurrentOrgMember = () => {
 
     return useMemo(() => {
         let member: TeamMemberInfo | undefined;
+        let isOwner = false;
 
         if (!isLoading && members && user) {
             member = members.find((m) => m.userId === user.id);
+            isOwner = member?.role === "owner";
         }
 
-        return { isLoading, member };
+        return { isLoading, member, isOwner };
     }, [isLoading, members, user]);
 };
 
