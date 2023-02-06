@@ -7,14 +7,13 @@
 import { Team } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import React, { useCallback, useContext, useState } from "react";
-import { Redirect } from "react-router";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-import { TeamsContext, useCurrentTeam, useIsOwnerOfCurrentTeam } from "./teams-context";
+import { TeamsContext, useCurrentTeam } from "./teams-context";
 
 export function getTeamSettingsMenu(params: {
     team?: Team;
@@ -54,7 +53,6 @@ export function getTeamSettingsMenu(params: {
 export default function TeamSettings() {
     const user = useCurrentUser();
     const team = useCurrentTeam();
-    const isUserOwner = useIsOwnerOfCurrentTeam();
     const { teams, setTeams } = useContext(TeamsContext);
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
@@ -109,10 +107,6 @@ export default function TeamSettings() {
 
         document.location.href = gitpodHostUrl.asDashboard().toString();
     }, [team, user]);
-
-    if (!isUserOwner || !team) {
-        return <Redirect to="/" />;
-    }
 
     return (
         <>

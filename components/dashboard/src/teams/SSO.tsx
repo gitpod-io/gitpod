@@ -4,13 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useEffect, useState } from "react";
-import { Redirect } from "react-router";
-import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
-import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import { useCallback, useEffect, useState } from "react";
 import { useCurrentTeam } from "./teams-context";
-import { UserContext } from "../user-context";
-import { oidcService, publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
+import { oidcService } from "../service/public-api";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { gitpodHostUrl } from "../service/service";
 import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
@@ -22,41 +18,9 @@ import exclamation from "../images/exclamation.svg";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 
 export default function SSO() {
-    const { user } = useContext(UserContext);
     const team = useCurrentTeam();
-    const [isUserOwner, setIsUserOwner] = useState(true);
-    const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        if (!team) {
-            return;
-        }
-        (async () => {
-            const memberInfos = await teamsService.getTeam({ teamId: team!.id }).then((resp) => {
-                return publicApiTeamMembersToProtocol(resp.team?.members || []);
-            });
-
-            const currentUserInTeam = memberInfos.find((member: TeamMemberInfo) => member.userId === user?.id);
-            const isUserOwner = currentUserInTeam?.role === "owner";
-            setIsUserOwner(isUserOwner);
-            setIsLoading(false);
-        })();
-    }, [team, user?.id]);
-
-    if (!isUserOwner) {
-        return <Redirect to={`/`} />;
-    }
-
-    return (
-        <OrgSettingsPage>
-            {isLoading && (
-                <div className="p-20">
-                    <Spinner className="h-5 w-5 animate-spin" />
-                </div>
-            )}
-            {!isLoading && team && isUserOwner && <OIDCClients organizationId={team.id} />}
-        </OrgSettingsPage>
-    );
+    return <OrgSettingsPage>{team && <OIDCClients organizationId={team.id} />}</OrgSettingsPage>;
 }
 
 function OIDCClients(props: { organizationId: string }) {
