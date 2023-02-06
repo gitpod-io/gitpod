@@ -167,11 +167,11 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
 
     return (
         <div className="mb-16">
-            <h2 className="text-gray-500">
+            <p className="text-gray-500 text-base">
                 {attributionId && AttributionId.parse(attributionId)?.kind === "user"
                     ? "Manage billing for your personal account."
                     : "Manage billing for your organization."}
-            </h2>
+            </p>
             <div className="max-w-xl flex flex-col">
                 {errorMessage && (
                     <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">
