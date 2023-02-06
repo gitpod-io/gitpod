@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,7 +45,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		// continue below
 	default:
 		// This is exceptional - not sure what to do here. Probably fail the pod
-		workspace.Status.Conditions = AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+		workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionFailed),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
@@ -54,7 +55,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		return nil
 	}
 
-	workspace.Status.Conditions = AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+	workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 		Type:               string(workspacev1.WorkspaceConditionDeployed),
 		Status:             metav1.ConditionTrue,
 		LastTransitionTime: metav1.Now(),
@@ -83,9 +84,9 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		workspace.Status.Phase = *phase
 	}
 
-	if failure != "" && !conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
+	if failure != "" && !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
 		// workspaces can fail only once - once there is a failed condition set, stick with it
-		workspace.Status.Conditions = AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+		workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionFailed),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
@@ -105,9 +106,9 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			}
 		}
 		if hasFinalizer {
-			if conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
-				conditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
-				conditionWithStatusAndReson(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
+			if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
+				wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
+				wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
 
 				workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 			}

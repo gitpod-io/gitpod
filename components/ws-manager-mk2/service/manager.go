@@ -342,10 +342,10 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 
 	// We do however maintain the the "closed" flag as annotation on the workspace. This flag should not change
 	// very often and provides a better UX if it persists across ws-manager restarts.
-	isMarkedClosed := conditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed))
+	isMarkedClosed := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed))
 	if req.Closed && !isMarkedClosed {
 		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.Conditions = addUniqueCondition(ws.Status.Conditions, metav1.Condition{
+			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionClosed),
 				Status:             metav1.ConditionTrue,
 				LastTransitionTime: metav1.NewTime(now),
@@ -355,7 +355,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 		})
 	} else if !req.Closed && isMarkedClosed {
 		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.Conditions = addUniqueCondition(ws.Status.Conditions, metav1.Condition{
+			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionClosed),
 				Status:             metav1.ConditionFalse,
 				LastTransitionTime: metav1.NewTime(now),
@@ -375,7 +375,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 	// If it's the first call: Mark the pod with FirstUserActivity condition.
 	if firstUserActivity == nil {
 		err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.Conditions = addUniqueCondition(ws.Status.Conditions, metav1.Condition{
+			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionFirstUserActivity),
 				Status:             metav1.ConditionTrue,
 				LastTransitionTime: metav1.NewTime(now),
@@ -969,24 +969,4 @@ func (m *workspaceMetrics) Describe(ch chan<- *prometheus.Desc) {
 // Collect implements Collector.
 func (m *workspaceMetrics) Collect(ch chan<- prometheus.Metric) {
 	m.totalStartsCounterVec.Collect(ch)
-}
-
-func addUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
-	for i, c := range conds {
-		if c.Type == cond.Type {
-			conds[i] = cond
-			return conds
-		}
-	}
-
-	return append(conds, cond)
-}
-
-func conditionPresentAndTrue(cond []metav1.Condition, tpe string) bool {
-	for _, c := range cond {
-		if c.Type == tpe {
-			return c.Status == metav1.ConditionTrue
-		}
-	}
-	return false
 }

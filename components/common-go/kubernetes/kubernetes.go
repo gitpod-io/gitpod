@@ -171,3 +171,27 @@ func GetCondition(conds []metav1.Condition, tpe string) *metav1.Condition {
 	}
 	return nil
 }
+
+// ConditionPresentAndTrue returns whether a condition is present and its status set to True.
+func ConditionPresentAndTrue(cond []metav1.Condition, tpe string) bool {
+	for _, c := range cond {
+		if c.Type == tpe {
+			return c.Status == metav1.ConditionTrue
+		}
+	}
+	return false
+}
+
+// ConditionWithStatusAndReason returns whether a condition is present, and with the given Reason.
+func ConditionWithStatusAndReason(cond []metav1.Condition, tpe string, status bool, reason string) bool {
+	st := metav1.ConditionFalse
+	if status {
+		st = metav1.ConditionTrue
+	}
+	for _, c := range cond {
+		if c.Type == tpe {
+			return c.Type == tpe && c.Status == st && c.Reason == reason
+		}
+	}
+	return false
+}
