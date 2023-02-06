@@ -1,6 +1,7 @@
 # Change Log
 
 ## February 2023
+- Improve the ItemsList and ContextMenu components ([#16151](https://github.com/gitpod-io/gitpod/pull/16151)) - [@henit-chobisa](https://github.com/henit-chobisa)
 - [fix] : workspace options model closes on entering space(" ") ([#15889](https://github.com/gitpod-io/gitpod/pull/15889)) - [@vedant-jain03](https://github.com/vedant-jain03)
 - [installer]: deprecate experimental IDE config ([#15976](https://github.com/gitpod-io/gitpod/pull/15976)) - [@](), [@iQQBot](https://github.com/iQQBot)
 
