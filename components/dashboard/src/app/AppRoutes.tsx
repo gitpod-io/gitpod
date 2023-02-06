@@ -221,6 +221,9 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                             <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                         </div>
                     </Route>
+                    <Route exact path="/teams">
+                        <Redirect to="/old-team-plans" />
+                    </Route>
                     <Route exact path="/old-team-plans" component={ChargebeeTeams} />
                     {/* TODO remove the /teams/join navigation after a few weeks */}
                     <Route exact path="/teams/join" component={JoinTeam} />

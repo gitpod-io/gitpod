@@ -7,7 +7,7 @@
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { Currency, Plan, Plans, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useEffect, useState } from "react";
 import { Redirect } from "react-router";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
 import Alert from "../components/Alert";
@@ -20,7 +20,7 @@ import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as CheckSvg } from "../images/check.svg";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
-import { UserContext } from "../user-context";
+import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import {
     useBillingModeForCurrentTeam,
@@ -33,7 +33,7 @@ import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
 type PendingPlan = Plan & { pendingSince: number };
 
 export default function TeamBilling() {
-    const { user } = useContext(UserContext);
+    const user = useCurrentUser();
     const team = useCurrentTeam();
     const members = useTeamMemberInfos();
     const isUserOwner = useIsOwnerOfCurrentTeam();
@@ -119,24 +119,27 @@ export default function TeamBilling() {
 
     const availableTeamPlans = Plans.getAvailableTeamPlans(currency || "USD").filter((p) => p.type !== "student");
 
-    const checkout = async (plan: Plan) => {
-        if (!team || !members[team.id]) {
-            return;
-        }
-        const chargebeeClient = await ChargebeeClient.getOrCreate(team.id);
-        await new Promise((resolve, reject) => {
-            chargebeeClient.checkout((paymentServer) => paymentServer.teamCheckout(team.id, plan.chargebeeId), {
-                success: resolve,
-                error: reject,
+    const checkout = useCallback(
+        async (plan: Plan) => {
+            if (!team || !members[team.id]) {
+                return;
+            }
+            const chargebeeClient = await ChargebeeClient.getOrCreate(team.id);
+            await new Promise((resolve, reject) => {
+                chargebeeClient.checkout((paymentServer) => paymentServer.teamCheckout(team.id, plan.chargebeeId), {
+                    success: resolve,
+                    error: reject,
+                });
             });
-        });
-        const pending = {
-            ...plan,
-            pendingSince: Date.now(),
-        };
-        setPendingTeamPlan(pending);
-        window.localStorage.setItem(`pendingPlanForTeam${team.id}`, JSON.stringify(pending));
-    };
+            const pending = {
+                ...plan,
+                pendingSince: Date.now(),
+            };
+            setPendingTeamPlan(pending);
+            window.localStorage.setItem(`pendingPlanForTeam${team.id}`, JSON.stringify(pending));
+        },
+        [members, team],
+    );
 
     const isLoading = !team || !members[team.id];
     const teamPlan = pendingTeamPlan || Plans.getById(teamSubscription?.planId);
@@ -157,7 +160,7 @@ export default function TeamBilling() {
         ],
     };
 
-    if (!isUserOwner) {
+    if (!isUserOwner || !team) {
         return <Redirect to={`/`} />;
     }
 

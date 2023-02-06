@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { forwardRef, useEffect, useState } from "react";
+import { forwardRef, useCallback, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import {
     ListUsageRequest,
@@ -60,35 +60,38 @@ function UsageView({ attributionId }: UsageViewProps) {
         })();
     }, [location]);
 
-    const loadPage = async (page: number = 1) => {
-        if (usagePage === undefined) {
-            setIsLoading(true);
-            setTotalCreditsUsed(0);
-        }
-        const request: ListUsageRequest = {
-            attributionId: AttributionId.render(attributionId),
-            from: startDate.startOf("day").valueOf(),
-            to: endDate.endOf("day").valueOf(),
-            order: Ordering.ORDERING_DESCENDING,
-            pagination: {
-                perPage: 50,
-                page,
-            },
-        };
-        try {
-            const page = await getGitpodService().server.listUsage(request);
-            setUsagePage(page);
-            setTotalCreditsUsed(page.creditsUsed);
-        } catch (error) {
-            if (error.code === ErrorCodes.PERMISSION_DENIED) {
-                setErrorMessage("Access to usage details is restricted to team owners.");
-            } else {
-                setErrorMessage(`Error: ${error?.message}`);
+    const loadPage = useCallback(
+        async (page: number = 1) => {
+            if (usagePage === undefined) {
+                setIsLoading(true);
+                setTotalCreditsUsed(0);
             }
-        } finally {
-            setIsLoading(false);
-        }
-    };
+            const request: ListUsageRequest = {
+                attributionId: AttributionId.render(attributionId),
+                from: startDate.startOf("day").valueOf(),
+                to: endDate.endOf("day").valueOf(),
+                order: Ordering.ORDERING_DESCENDING,
+                pagination: {
+                    perPage: 50,
+                    page,
+                },
+            };
+            try {
+                const page = await getGitpodService().server.listUsage(request);
+                setUsagePage(page);
+                setTotalCreditsUsed(page.creditsUsed);
+            } catch (error) {
+                if (error.code === ErrorCodes.PERMISSION_DENIED) {
+                    setErrorMessage("Access to usage details is restricted to team owners.");
+                } else {
+                    setErrorMessage(`Error: ${error?.message}`);
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [attributionId, endDate, startDate, usagePage],
+    );
     useEffect(() => {
         if (startDate.isAfter(endDate)) {
             setErrorMessage("The start date needs to be before the end date.");
@@ -100,7 +103,7 @@ function UsageView({ attributionId }: UsageViewProps) {
         }
         setErrorMessage("");
         loadPage(1);
-    }, [startDate, endDate]);
+    }, [startDate, endDate, loadPage]);
 
     const getType = (type: WorkspaceType) => {
         if (type === "regular") {
