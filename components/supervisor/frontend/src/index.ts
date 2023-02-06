@@ -56,7 +56,7 @@ import * as IDEWebSocket from "./ide/ide-web-socket";
 import { SupervisorServiceClient } from "./ide/supervisor-service-client";
 import * as LoadingFrame from "./shared/loading-frame";
 
-window.gitpod = {};
+window.gitpod = {} as any;
 IDEWorker.install();
 IDEWebSocket.install();
 const ideService = IDEFrontendService.create();
@@ -74,6 +74,7 @@ LoadingFrame.load().then(async (loading) => {
 
     document.title = frontendDashboardServiceClient.latestStatus.workspaceDescription ?? "gitpod";
     window.gitpod.loggedUserID = frontendDashboardServiceClient.latestStatus.loggedUserId;
+    window.gitpod.openDesktopIDE = frontendDashboardServiceClient.openDesktopIDE.bind(frontendDashboardServiceClient);
 
     (async () => {
         const supervisorServiceClient = SupervisorServiceClient.get();

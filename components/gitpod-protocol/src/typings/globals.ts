@@ -9,5 +9,7 @@ interface Window {
     gitpod: {
         ideService?: import("../ide-frontend-service").IDEFrontendService;
         loggedUserID?: string;
+
+        openDesktopIDE(url: string): void;
     };
 }
