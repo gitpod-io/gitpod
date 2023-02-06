@@ -32,6 +32,23 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Ports: []networkingv1.NetworkPolicyPort{
 							{
 								Protocol: common.TCPProtocol,
+								Port:     &intstr.IntOrString{IntVal: ContainerDispatchPort},
+							},
+						},
+						From: []networkingv1.NetworkPolicyPeer{
+							{
+								PodSelector: &metav1.LabelSelector{
+									MatchLabels: map[string]string{
+										"component": Component,
+									},
+								},
+							},
+						},
+					},
+					{
+						Ports: []networkingv1.NetworkPolicyPort{
+							{
+								Protocol: common.TCPProtocol,
 								Port:     &intstr.IntOrString{IntVal: ContainerHTTPPort},
 							},
 							{
