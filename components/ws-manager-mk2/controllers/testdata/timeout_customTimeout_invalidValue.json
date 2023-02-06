@@ -1,0 +1,91 @@
+{
+    "creationDelta": "70m",
+    "ws": {
+        "metadata": {
+            "name": "486e5f88-4354-11e9-aee4-080027861af1",
+            "namespace": "default",
+            "creationTimestamp": "2019-03-10T16:48:08Z",
+            "annotations": {
+                "gitpod/id": "foobas",
+                "gitpod/ready": "true",
+                "gitpod.io/alreadyInitializing": "true",
+                "gitpod/servicePrefix": "foobas",
+                "gitpod/url": "http://10.0.0.114:8082",
+                "gitpod/customTimeout": "this is not a valid duration"
+            }
+        },
+        "spec": {
+            "timeout": {
+                "time": "this is not a valid duration"
+            },
+            "containers": [
+                {
+                    "name": "workspace",
+                    "image": "nginx:latest",
+                    "ports": [
+                        {
+                            "containerPort": 23000,
+                            "protocol": "TCP"
+                        }
+                    ]
+                }
+            ]
+        },
+        "status": {
+            "phase": "Running",
+            "conditions": [
+                {
+                    "type": "Initialized",
+                    "status": "True",
+                    "lastProbeTime": null,
+                    "lastTransitionTime": "2019-03-10T16:48:08Z"
+                },
+                {
+                    "type": "Ready",
+                    "status": "True",
+                    "lastProbeTime": null,
+                    "lastTransitionTime": "2019-03-10T16:48:13Z"
+                },
+                {
+                    "type": "PodScheduled",
+                    "status": "True",
+                    "lastProbeTime": null,
+                    "lastTransitionTime": "2019-03-10T16:48:08Z"
+                }
+            ],
+            "hostIP": "10.0.2.15",
+            "podIP": "172.17.0.5",
+            "startTime": "2019-03-10T16:48:08Z",
+            "containerStatuses": [
+                {
+                    "name": "sync",
+                    "state": {
+                        "running": {
+                            "startedAt": "2019-03-10T16:48:13Z"
+                        }
+                    },
+                    "lastState": {},
+                    "ready": true,
+                    "restartCount": 0,
+                    "image": "csweichel/noop:latest",
+                    "imageID": "docker-pullable://csweichel/noop@sha256:aaa6b993f4c853fac7101aa7fc087926f829004e62cbce6e1852e5a3aac87c52",
+                    "containerID": "docker://9961f75ea72f36bb0ba1e42b3b2da98eb44a9dc12e7c7e8edfb52512b3b04016"
+                },
+                {
+                    "name": "workspace",
+                    "state": {
+                        "running": {
+                            "startedAt": "2019-03-10T16:48:12Z"
+                        }
+                    },
+                    "lastState": {},
+                    "ready": true,
+                    "restartCount": 0,
+                    "image": "nginx:latest",
+                    "imageID": "docker-pullable://nginx@sha256:98efe605f61725fd817ea69521b0eeb32bef007af0e3d0aeb6258c6e6fe7fc1a",
+                    "containerID": "docker://e7080b843a47db414d6c94cfda7f657b99d8aa5bbf7c9c118ec98c0eefb6c0df"
+                }
+            ]
+        }
+    }
+}

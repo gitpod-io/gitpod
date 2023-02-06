@@ -6,6 +6,7 @@ packages:
         - go.sum
         - "**/*.go"
         - "config/**/*"
+        - "pkg/manager/testdata/**"
       env:
         - CGO_ENABLED=0
       deps:
