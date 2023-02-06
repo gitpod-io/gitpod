@@ -89,6 +89,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										"--datastore-conn-max-open=100",
 										"--telemetry-endpoint=", // disable telemetry to https://telemetry.authzed.com
 										fmt.Sprintf("--datastore-bootstrap-files=%s", strings.Join(bootstrapFiles, ",")),
+										"--dispatch-cluster-enabled=true",
 										"--datastore-bootstrap-overwrite=true",
 									}
 
