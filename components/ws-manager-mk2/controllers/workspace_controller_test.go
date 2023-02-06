@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"github.com/aws/smithy-go/ptr"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/proto"
 
 	// . "github.com/onsi/ginkgo/extensions/table"
 
@@ -37,6 +39,12 @@ var _ = Describe("WorkspaceController", func() {
 			By("creating a status")
 
 			ctx := context.Background()
+			initializer := &csapi.WorkspaceInitializer{
+				Spec: &csapi.WorkspaceInitializer_Empty{Empty: &csapi.EmptyInitializer{}},
+			}
+			initializerBytes, err := proto.Marshal(initializer)
+			Expect(err).ToNot(HaveOccurred())
+
 			workspace := &workspacev1.Workspace{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: "workspace.gitpod.io/v1",
@@ -62,7 +70,7 @@ var _ = Describe("WorkspaceController", func() {
 						},
 					},
 					Ports:       []workspacev1.PortSpec{},
-					Initializer: []byte("abc"),
+					Initializer: initializerBytes,
 					Admission: workspacev1.AdmissionSpec{
 						Level: workspacev1.AdmissionLevelEveryone,
 					},

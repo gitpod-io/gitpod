@@ -16,7 +16,6 @@ packages:
         - components/ws-manager-api/go:lib
       config:
         packaging: app
-        dontTest: true
         buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s -X 'github.com/gitpod-io/gitpod/ws-manager-mk2/cmd.Version=commit-${__git_commit}'"]
     - name: docker
       type: docker
