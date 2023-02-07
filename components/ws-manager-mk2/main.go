@@ -6,25 +6,20 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"net"
 	"os"
-	"strings"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/mwitkow/grpc-proxy/proxy"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -37,9 +32,11 @@ import (
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
+	imgproxy "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -170,11 +167,35 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activ
 		log.Warn("no TLS configured - gRPC server will be unsecured")
 	}
 
-	grpcOpts = append(grpcOpts, grpc.UnknownServiceHandler(proxy.TransparentHandler(imagebuilderDirector(cfg.ImageBuilderProxy.TargetAddr))))
+	grpcServer := grpc.NewServer(grpcOpts...)
+
+	//grpcOpts = append(grpcOpts, grpc.UnknownServiceHandler(proxy.TransparentHandler(imagebuilderDirector(cfg.ImageBuilderProxy.TargetAddr))))
+
+	if cfg.ImageBuilderProxy.TargetAddr != "" {
+		creds := insecure.NewCredentials()
+		if cfg.ImageBuilderProxy.TLS.CA != "" && cfg.ImageBuilderProxy.TLS.Certificate != "" && cfg.ImageBuilderProxy.TLS.PrivateKey != "" {
+			tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+				cfg.ImageBuilderProxy.TLS.CA, cfg.ImageBuilderProxy.TLS.Certificate, cfg.ImageBuilderProxy.TLS.PrivateKey,
+				common_grpc.WithSetRootCAs(true),
+				common_grpc.WithServerName("image-builder-mk3"),
+			)
+			if err != nil {
+				log.WithError(err).Fatal("cannot load image-builder-mk3 TLS certs")
+			}
+			log.Info("Loaded TLS for image builder")
+			creds = credentials.NewTLS(tlsConfig)
+		}
+		// Note: never use block here, because image-builder connects to ws-manager,
+		//       and if we blocked here, ws-manager wouldn't come up, hence we couldn't connect to ws-manager.
+		conn, err := grpc.Dial(cfg.ImageBuilderProxy.TargetAddr, grpc.WithTransportCredentials(creds))
+		if err != nil {
+			log.WithError(err).Fatal("failed to connect to image builder")
+		}
+		imgbldr.RegisterImageBuilderServer(grpcServer, imgproxy.ImageBuilder{D: imgbldr.NewImageBuilderClient(conn)})
+	}
 
 	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, activity)
 
-	grpcServer := grpc.NewServer(grpcOpts...)
 	grpc_prometheus.Register(grpcServer)
 	wsmanapi.RegisterWorkspaceManagerServer(grpcServer, srv)
 	regapi.RegisterSpecProviderServer(grpcServer, &service.WorkspaceImageSpecProvider{
@@ -212,24 +233,4 @@ func getConfig(fn string) (*config.ServiceConfiguration, error) {
 	}
 
 	return &cfg, nil
-}
-
-func imagebuilderDirector(targetAddr string) proxy.StreamDirector {
-	if targetAddr == "" {
-		return func(ctx context.Context, fullMethodName string) (context.Context, *grpc.ClientConn, error) {
-			return ctx, nil, status.Error(codes.Unimplemented, "Unknown method")
-		}
-	}
-
-	return func(ctx context.Context, fullMethodName string) (outCtx context.Context, conn *grpc.ClientConn, err error) {
-		md, _ := metadata.FromIncomingContext(ctx)
-		outCtx = metadata.NewOutgoingContext(ctx, md.Copy())
-
-		if strings.HasPrefix(fullMethodName, "/builder.") {
-			conn, err = grpc.DialContext(ctx, targetAddr, grpc.WithInsecure())
-			return
-		}
-
-		return outCtx, nil, status.Error(codes.Unimplemented, "Unknown method")
-	}
 }
