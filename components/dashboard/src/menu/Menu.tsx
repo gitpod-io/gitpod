@@ -152,7 +152,7 @@ export default function Menu() {
                         <OrganizationSelector />
                         {!isMinimalUI && (
                             <>
-                                <div className="pl-2 text-base text-gray-500 dark:text-gray-400 flex max-w-lg overflow-scroll">
+                                <div className="pl-2 text-base text-gray-500 dark:text-gray-400 flex max-w-lg overflow-hidden">
                                     {leftMenu.map((entry) => (
                                         <div className="p-1" key={entry.title}>
                                             <PillMenuItem
