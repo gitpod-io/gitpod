@@ -91,7 +91,9 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
     return (
         <ContextMenu customClasses="w-64 left-0" menuEntries={entries}>
             <div className={`${classes} rounded-2xl pl-3`}>
-                <div className="py-1 pr-2 font-semibold">{selectedEntry.title!}</div>
+                <div className="py-1 pr-2 font-semibold whitespace-nowrap max-w-xs overflow-hidden">
+                    {selectedEntry.title!}
+                </div>
                 <div className="flex h-full pl-0 pr-1 py-1.5 text-gray-50">
                     <svg width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path
