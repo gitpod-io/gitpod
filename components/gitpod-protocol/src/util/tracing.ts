@@ -186,6 +186,15 @@ export namespace TraceContext {
             context: owi,
         });
     }
+
+    export function finishOnce(span: opentracing.Span): () => void {
+        let done = false;
+        return () => {
+            if (done) return;
+            span.finish();
+            done = true;
+        };
+    }
 }
 
 @injectable()
