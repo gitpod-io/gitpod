@@ -182,6 +182,7 @@ export class PromisifiedImageBuilderClient {
         logInfoDeferred: Deferred<ImageBuildLogInfo> = new Deferred<ImageBuildLogInfo>(),
     ): Promise<StagedBuildResponse> {
         const span = TraceContext.startSpan(`/image-builder/build`, ctx);
+        const finishSpanOnce = TraceContext.finishOnce(span);
 
         const buildResult = new Deferred<BuildResponse>();
 
@@ -207,7 +208,7 @@ export class PromisifiedImageBuilderClient {
                 }
 
                 TraceContext.setError({ span }, err);
-                span.finish();
+                finishSpanOnce();
             });
             stream.on("data", (resp: BuildResponse) => {
                 log.debug("stream resp", resp);
@@ -253,7 +254,7 @@ export class PromisifiedImageBuilderClient {
                         logInfoDeferred.reject(new Error("no log stream for this image build"));
                     }
 
-                    span.finish();
+                    finishSpanOnce();
                 }
             });
             stream.on("end", () => {
@@ -269,12 +270,12 @@ export class PromisifiedImageBuilderClient {
 
                 if (!spanFinished) {
                     TraceContext.setError({ span }, err);
-                    span.finish();
+                    finishSpanOnce();
                 }
             });
         } catch (err) {
             TraceContext.setError({ span }, err);
-            span.finish();
+            finishSpanOnce();
 
             log.debug("failed to start image build", request);
             log.error("failed to start image build", {
