@@ -233,7 +233,7 @@ func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (r
 		}
 	}
 	if !regAllowed {
-		log.WithField("reg", reg).WithField("ref", ref).WithField("a", a).Error("registry not allowed - you may want to add this to the list of allowed registries in your installation config")
+		log.WithField("reg", reg).WithField("ref", ref).WithField("a", a).Warn("registry not allowed - you may want to add this to the list of allowed registries in your installation config")
 		return nil, nil
 	}
 
