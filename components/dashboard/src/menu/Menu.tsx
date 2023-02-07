@@ -134,13 +134,13 @@ export default function Menu() {
             <header className="app-container flex flex-col pt-4 space-y-4" data-analytics='{"button_type":"menu"}'>
                 <div className="flex h-10 mb-3">
                     <div className="flex justify-between items-center pr-3">
-                        <Link to="/" className="pr-3">
+                        <Link to="/" className="pr-3 w-10">
                             <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
                         </Link>
                         <OrganizationSelector />
                         {!isMinimalUI && (
                             <>
-                                <div className="pl-2 text-base text-gray-500 dark:text-gray-400 flex">
+                                <div className="pl-2 text-base text-gray-500 dark:text-gray-400 flex max-w-lg overflow-scroll">
                                     {leftMenu.map((entry) => (
                                         <div className="p-1" key={entry.title}>
                                             <PillMenuItem

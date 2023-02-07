@@ -244,6 +244,34 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route path={["/t/"]} exact>
                         <Redirect to="/projects" />
                     </Route>
+                    {/* redirect for old user settings slugs */}
+                    <Route path="/account" exact>
+                        <Redirect to={settingsPathAccount} />
+                    </Route>
+                    <Route path="/integrations" exact>
+                        <Redirect to={settingsPathIntegrations} />
+                    </Route>
+                    <Route path="/notifications" exact>
+                        <Redirect to={settingsPathNotifications} />
+                    </Route>
+                    <Route path="/billing" exact>
+                        <Redirect to={settingsPathBilling} />
+                    </Route>
+                    <Route path="/plans" exact>
+                        <Redirect to={settingsPathPlans} />
+                    </Route>
+                    <Route path="/preferences" exact>
+                        <Redirect to={settingsPathPreferences} />
+                    </Route>
+                    <Route path="/variables" exact>
+                        <Redirect to={settingsPathVariables} />
+                    </Route>
+                    <Route path="/tokens">
+                        <Redirect to={settingsPathPersonalAccessTokens} />
+                    </Route>
+                    <Route path="/keys" exact>
+                        <Redirect to={settingsPathSSHKeys} />
+                    </Route>
                     <Route
                         path="*"
                         render={(_match) => {
