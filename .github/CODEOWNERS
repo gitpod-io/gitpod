@@ -8,7 +8,7 @@
 /components/common-go @gitpod-io/engineering-staff-engineers
 /components/content-service-api @gitpod-io/engineering-workspace
 /components/content-service @gitpod-io/engineering-workspace
-/components/dashboard @gitpod-io/engineering-webapp
+/components/dashboard @gitpod-io/engineering-webapp @gtsiolis
 /components/docker-up @gitpod-io/engineering-workspace
 /components/ee/agent-smith @gitpod-io/engineering-workspace
 /components/ee/db-sync @gitpod-io/engineering-webapp
