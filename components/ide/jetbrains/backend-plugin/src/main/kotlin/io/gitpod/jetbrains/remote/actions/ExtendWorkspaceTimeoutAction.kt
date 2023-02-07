@@ -82,7 +82,7 @@ class ExtendWorkspaceTimeoutAction : AnAction() {
             val dialog = InputDurationDialog()
             if (dialog.showAndGet()) {
                 val duration = dialog.getDuration()
-                manager.client.server.setWorkspaceTimeout(workspaceInfo.workspaceId, duration.toString()).whenComplete { _, e ->
+                manager.client.server.setWorkspaceTimeout(workspaceInfo.workspaceId, duration.toString()).whenComplete { result, e ->
                     var message: String
                     var notificationType: NotificationType
 
@@ -91,7 +91,7 @@ class ExtendWorkspaceTimeoutAction : AnAction() {
                         notificationType = NotificationType.ERROR
                         thisLogger().error("gitpod: failed to extend workspace timeout", e)
                     } else {
-                        message = "Workspace timeout has been extended to ${duration}."
+                        message = "Workspace timeout has been extended to ${result.humanReadableDuration}."
                         notificationType = NotificationType.INFORMATION
                     }
 
