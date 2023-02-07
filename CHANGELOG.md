@@ -1,6 +1,9 @@
 # Change Log
 
 ## February 2023
+- Associate users logging in with a SSO provider to that Organization (and make the first an owner) ([#16206](https://github.com/gitpod-io/gitpod/pull/16206)) - [@geropl](https://github.com/geropl)
+- Allow to test the workspace configuration changes within the current workspace with gp rebuild. ([#15795](https://github.com/gitpod-io/gitpod/pull/15795)) - [@akosyakov](https://github.com/akosyakov)
+- Make organization selection a global setting. ([#16164](https://github.com/gitpod-io/gitpod/pull/16164)) - [@svenefftinge](https://github.com/svenefftinge)
 - Improve the ItemsList and ContextMenu components ([#16151](https://github.com/gitpod-io/gitpod/pull/16151)) - [@henit-chobisa](https://github.com/henit-chobisa)
 - [fix] : workspace options model closes on entering space(" ") ([#15889](https://github.com/gitpod-io/gitpod/pull/15889)) - [@vedant-jain03](https://github.com/vedant-jain03)
 - [installer]: deprecate experimental IDE config ([#15976](https://github.com/gitpod-io/gitpod/pull/15976)) - [@](), [@iQQBot](https://github.com/iQQBot)
