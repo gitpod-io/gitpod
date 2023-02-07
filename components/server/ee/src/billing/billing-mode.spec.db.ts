@@ -282,6 +282,18 @@ class BillingModeSpec {
             },
             // user: usage-based
             {
+                name: "user: stripe free, chargebee FREE (old)",
+                subject: user(),
+                config: {
+                    enablePayment: true,
+                    usageBasedPricingEnabled: true,
+                    subscriptions: [subscription(Plans.FREE)],
+                },
+                expectation: {
+                    mode: "usage-based",
+                },
+            },
+            {
                 name: "user: stripe free, chargebee paid personal (inactive) + team seat (inactive)",
                 subject: user(),
                 config: {
