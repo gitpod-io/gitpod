@@ -6,7 +6,7 @@
 
 import { Team } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import React, { useCallback, useContext, useEffect, useState } from "react";
+import React, { useCallback, useContext, useState } from "react";
 import { Redirect } from "react-router";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -63,15 +63,6 @@ export default function TeamSettings() {
     const [updated, setUpdated] = useState(false);
 
     const close = () => setModal(false);
-
-    // reset state if organization changes
-    useEffect(() => {
-        setModal(false);
-        setTeamNameToDelete("");
-        setTeamName(team?.name || "");
-        setErrorMessage(undefined);
-        setUpdated(false);
-    }, [team]);
 
     const updateTeamInformation = useCallback(async () => {
         if (!team || errorMessage || !teams) {

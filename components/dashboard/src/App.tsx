@@ -12,12 +12,14 @@ import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 import { AppLoading } from "./app/AppLoading";
 import { AppRoutes } from "./app/AppRoutes";
+import { useCurrentTeam } from "./teams/teams-context";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 
 // Top level Dashboard App component
 const App: FunctionComponent = () => {
     const { user, teams, isSetupRequired, loading } = useUserAndTeamsLoader();
+    const currentOrg = useCurrentTeam();
 
     // Setup analytics/tracking
     useAnalyticsTracking();
@@ -53,7 +55,8 @@ const App: FunctionComponent = () => {
     // If we made it here, we have a logged in user w/ their teams. Yay.
     return (
         <Suspense fallback={<AppLoading />}>
-            <AppRoutes user={user} teams={teams} />
+            {/* Use org id as key to force re-render on org change */}
+            <AppRoutes key={currentOrg?.id ?? "no-org"} user={user} teams={teams} />
         </Suspense>
     );
 };
