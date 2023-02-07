@@ -24,11 +24,7 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     const { data: teamBillingMode, isLoading: isBillingModeLoading } = useOrgBillingMode();
     const { isOwner, isLoading: isMemberInfoLoading } = useCurrentOrgMember();
     const { oidcServiceEnabled, orgGitAuthProviders } = useFeatureFlags();
-
-    const isLoading = useMemo(
-        () => isBillingModeLoading || isMemberInfoLoading,
-        [isBillingModeLoading, isMemberInfoLoading],
-    );
+    const isLoading = isBillingModeLoading || isMemberInfoLoading;
 
     const menu = useMemo(
         () =>
