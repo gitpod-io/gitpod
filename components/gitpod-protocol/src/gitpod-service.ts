@@ -402,6 +402,7 @@ export const createServerMock = function <C extends GitpodClient, S extends Gitp
 
 export interface SetWorkspaceTimeoutResult {
     resetTimeoutOnWorkspaces: string[];
+    humanReadableDuration: string;
 }
 
 export interface GetWorkspaceTimeoutResult {

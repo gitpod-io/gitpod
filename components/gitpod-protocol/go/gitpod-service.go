@@ -2250,6 +2250,7 @@ type GetTokenSearchOptions struct {
 // SetWorkspaceTimeoutResult is the SetWorkspaceTimeoutResult message type
 type SetWorkspaceTimeoutResult struct {
 	ResetTimeoutOnWorkspaces []string `json:"resetTimeoutOnWorkspaces,omitempty"`
+	HumanReadableDuration    string   `json:"humanReadableDuration,omitempty"`
 }
 
 // UserMessage is the UserMessage message type
