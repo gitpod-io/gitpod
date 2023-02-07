@@ -54,6 +54,7 @@ export function useTeams(): Team[] | undefined {
     return teams;
 }
 
+// TODO: deprecate and use the react-query hook for team members
 export function useTeamMemberInfos(): Record<string, TeamMemberInfo[]> {
     const [teamMembers, setTeamMembers] = useState<Record<string, TeamMemberInfo[]>>({});
     const teams = useTeams();
@@ -77,14 +78,4 @@ export function useTeamMemberInfos(): Record<string, TeamMemberInfo[]> {
         })();
     }, [teams]);
     return teamMembers;
-}
-
-export function useIsOwnerOfCurrentTeam(): boolean {
-    const team = useCurrentTeam();
-    const teamMemberInfos = useTeamMemberInfos();
-
-    if (!team || !teamMemberInfos[team.id]) {
-        return true;
-    }
-    return teamMemberInfos[team.id]?.some((tmi) => tmi.role === "owner") || false;
 }
