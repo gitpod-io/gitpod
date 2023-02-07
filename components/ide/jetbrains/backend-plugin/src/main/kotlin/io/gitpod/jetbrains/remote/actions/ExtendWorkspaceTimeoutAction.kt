@@ -11,6 +11,64 @@ import com.intellij.openapi.diagnostic.thisLogger
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceTimeoutDuration
 import io.gitpod.jetbrains.remote.GitpodManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
+import javax.swing.JComponent
+import javax.swing.JTextField
+import javax.swing.JPanel
+import javax.swing.JComboBox
+import javax.swing.BoxLayout
+
+// validation from https://github.com/gitpod-io/gitpod/blob/74ccaea38db8df2d1666161a073015485ebb90ca/components/gitpod-protocol/src/gitpod-service.ts#L361-L383
+const val WORKSPACE_MAXIMUM_TIMEOUT_HOURS = 24
+fun validate(duration: Int, unit: Char): String {
+    if (duration <= 0) {
+        throw IllegalArgumentException("Invalid timeout value: ${duration}${unit}")
+    }
+    if (
+        (unit == 'h' && duration > WORKSPACE_MAXIMUM_TIMEOUT_HOURS) ||
+        (unit == 'm' && duration > WORKSPACE_MAXIMUM_TIMEOUT_HOURS * 60)
+    ) {
+        throw IllegalArgumentException("Workspace inactivity timeout cannot exceed 24h")
+    }
+    return "valid"
+}
+
+class InputDurationDialog : DialogWrapper(null, true) {
+    private val textField = JTextField(10)
+    private val unitComboBox = JComboBox(arrayOf("minutes", "hours"))
+
+    init {
+        init()
+        title = "Set timeout duration"
+    }
+
+    override fun createCenterPanel(): JComponent {
+        val customComponent = JPanel()
+        customComponent.layout = BoxLayout(customComponent, BoxLayout.X_AXIS)
+        customComponent.add(textField)
+        customComponent.add(unitComboBox)
+
+        textField.text = "180"
+
+        return customComponent
+    }
+
+    override fun doValidate(): ValidationInfo? {
+        try {
+            val selectedUnit = unitComboBox.selectedItem.toString()
+            validate(textField.text.toInt(), selectedUnit[0])
+            return null
+        } catch (e: IllegalArgumentException) {
+            return ValidationInfo(e.message ?: "An unknown error has occurred", textField)
+        }
+    }
+
+    fun getDuration(): String {
+        val selectedUnit = unitComboBox.selectedItem.toString()
+        return "${textField.text}${selectedUnit[0]}"
+    }
+}
 
 class ExtendWorkspaceTimeoutAction : AnAction() {
     private val manager = service<GitpodManager>()
@@ -21,26 +79,25 @@ class ExtendWorkspaceTimeoutAction : AnAction() {
                 "action" to "extend-timeout"
             ))
 
-            manager.client.server.setWorkspaceTimeout(workspaceInfo.workspaceId, WorkspaceTimeoutDuration.DURATION_180M.toString()).whenComplete { result, e ->
-                var message: String
-                var notificationType: NotificationType
+            val dialog = InputDurationDialog()
+            if (dialog.showAndGet()) {
+                val duration = dialog.getDuration()
+                manager.client.server.setWorkspaceTimeout(workspaceInfo.workspaceId, duration.toString()).whenComplete { _, e ->
+                    var message: String
+                    var notificationType: NotificationType
 
-                if (e != null) {
-                    message = "Cannot extend workspace timeout: ${e.message}"
-                    notificationType = NotificationType.ERROR
-                    thisLogger().error("gitpod: failed to extend workspace timeout", e)
-                } else {
-                    if (result.resetTimeoutOnWorkspaces.isNotEmpty()) {
-                        message = "Workspace timeout has been extended to three hours. This reset the workspace timeout for other workspaces."
-                        notificationType = NotificationType.WARNING
+                    if (e != null) {
+                        message = "Cannot extend workspace timeout: ${e.message}"
+                        notificationType = NotificationType.ERROR
+                        thisLogger().error("gitpod: failed to extend workspace timeout", e)
                     } else {
-                        message = "Workspace timeout has been extended to three hours."
+                        message = "Workspace timeout has been extended to ${duration}."
                         notificationType = NotificationType.INFORMATION
                     }
-                }
 
-                val notification = manager.notificationGroup.createNotification(message, notificationType)
-                notification.notify(null)
+                    val notification = manager.notificationGroup.createNotification(message, notificationType)
+                    notification.notify(null)
+                }
             }
         }
     }
