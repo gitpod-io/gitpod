@@ -13,6 +13,24 @@ inputs:
     previewctl_hash:
         description: "The Leeway hash of the dev/preview/previewctl:docker package to be used when downloading previewclt"
         required: false
+    with_ws_manager_mk2:
+        description: "Use WS Manager MK2"
+        required: false
+    with_dedicated_emu:
+        description: "Dedicated Auth"
+        required: false
+    with_ee_licencse:
+        description: "Use EE license"
+        required: false
+    with_slow_database:
+        description: "Use slow database"
+        required: false
+    analytics:
+        description: "With analytics"
+        required: false
+    workspace_feature_flags:
+        description: "Workspace feature flags"
+        required: false
 runs:
     using: "docker"
     image: "Dockerfile"
