@@ -127,7 +127,11 @@ export class BillingModesImpl implements BillingModes {
         const cbSubscriptions = await this.subscriptionSvc.getActivePaidSubscription(user.id, now);
         const cbTeamSubscriptions = cbSubscriptions.filter((s) => isOldTeamSubscription(s));
         const cbPersonalSubscriptions = cbSubscriptions.filter(
-            (s) => isPersonalSubscription(s) && s.planId !== Plans.FREE_OPEN_SOURCE.chargebeeId,
+            (s) =>
+                isPersonalSubscription(s) &&
+                ![Plans.FREE_OPEN_SOURCE.chargebeeId, Plans.FREE.chargebeeId, Plans.FREE_50.chargebeeId].includes(
+                    s.planId!,
+                ),
         );
         const cbOwnedTeamSubscriptions = (
             await this.teamSubscriptionDb.findTeamSubscriptions({ userId: user.id })
