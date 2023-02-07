@@ -7,10 +7,11 @@
 import { UserEnvVar, UserEnvVarValue } from "@gitpod/gitpod-protocol";
 import { useEffect, useRef, useState } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
+import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { getGitpodService } from "../service/service";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
+import { EnvironmentVariableEntry } from "./EnvironmentVariableEntry";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -259,33 +260,13 @@ export default function EnvVars() {
                         <ItemField className="w-5/12 my-auto">Name</ItemField>
                         <ItemField className="w-5/12 my-auto">Scope</ItemField>
                     </Item>
-                    {envVars.map((variable) => {
-                        return (
-                            <Item className="whitespace-nowrap">
-                                <ItemField className="w-5/12 overflow-ellipsis truncate my-auto">
-                                    {variable.name}
-                                </ItemField>
-                                <ItemField className="w-5/12 overflow-ellipsis truncate text-sm text-gray-400 my-auto">
-                                    {variable.repositoryPattern}
-                                </ItemField>
-                                <ItemFieldContextMenu
-                                    menuEntries={[
-                                        {
-                                            title: "Edit",
-                                            onClick: () => edit(variable),
-                                            separator: true,
-                                        },
-                                        {
-                                            title: "Delete",
-                                            customFontStyle:
-                                                "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                            onClick: () => confirmDeleteVariable(variable),
-                                        },
-                                    ]}
-                                />
-                            </Item>
-                        );
-                    })}
+                    {envVars.map((variable) => (
+                        <EnvironmentVariableEntry
+                            variable={variable}
+                            edit={edit}
+                            confirmDeleteVariable={confirmDeleteVariable}
+                        />
+                    ))}
                 </ItemsList>
             )}
         </PageWithSettingsSubMenu>
