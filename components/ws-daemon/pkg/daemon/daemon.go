@@ -147,9 +147,11 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	var mgr manager.Manager
 	if config.WorkspaceController.Enabled {
 		mgr, err = ctrl.NewManager(restCfg, ctrl.Options{
-			Scheme:    scheme,
-			Port:      9443,
-			Namespace: config.Runtime.KubernetesNamespace,
+			Scheme:                 scheme,
+			Port:                   9443,
+			Namespace:              config.Runtime.KubernetesNamespace,
+			HealthProbeBindAddress: "0",
+			MetricsBindAddress:     "0",
 		})
 		if err != nil {
 			return nil, err
