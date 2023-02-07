@@ -37,7 +37,24 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
       leeway-target=components:all
 - [ ] /werft no-test
       Run Leeway with `--dont-test`
+
+<details>
+<summary>Publish Options</summary>
+
 - [ ] /werft publish-to-npm
+- [ ] /werft publish-to-jb-marketplace
+</details>
+
+<details>
+<summary>Installer Options</summary>
+
+- [ ] with-ee-license
+- [ ] with-slow-database
+- [ ] with-dedicated-emulation
+- [ ] with-ws-manager-mk2
+- [ ] workspace-feature-flags
+  Add desired feature flags to the end of the line above, space separated
+</details>
 
 #### Preview Environment Options:
 - [ ] /werft with-local-preview

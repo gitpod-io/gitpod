@@ -24,6 +24,13 @@ jobs:
       build_leeway_target: ${{ steps.output.outputs.build_leeway_target }}
       with_large_vm: ${{ steps.output.outputs.with_large_vm }}
       publish_to_npm: ${{ steps.output.outputs.publish_to_npm }}
+      publish_to_jbmp: ${{ steps.output.outputs.publish_to_jbmp }}
+      with_ws_manager_mk2: ${{ steps.output.outputs.with_ws_manager_mk2 }}
+      with_dedicated_emulation: ${{ steps.output.outputs.with_dedicated_emulation }}
+      with_ee_license: ${{ steps.output.outputs.with_ee_license }}
+      with_slow_database: ${{ steps.output.outputs.with_slow_database }}
+      analytics: ${{ steps.output.outputs.analytics }}
+      workspace_feature_flags: ${{ steps.output.outputs.workspace_feature_flags }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -45,6 +52,13 @@ jobs:
             echo "build_leeway_target=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')"
             echo "with_large_vm=${{ contains(github.event.pull_request.body, '[X] /werft with-large-vm') }}"
             echo "publish_to_npm=${{ contains(github.event.pull_request.body, '[X] /werft publish-to-npm') }}"
+            echo "publish_to_jbmp=${{ contains(github.event.pull_request.body, '[X] /werft publish-to-jb-marketplace') }}"
+            echo "with_ws_manager_mk2=${{ contains(github.event.pull_request.body, '[X] with-ws-manager-mk2') }}"
+            echo "with_dedicated_emulation=${{ contains(github.event.pull_request.body, '[X] with-dedicated-emulation') }}"
+            echo "with_ee_license=${{ contains(github.event.pull_request.body, '[X] with-ee-license') }}"
+            echo "with_slow_database=${{ contains(github.event.pull_request.body, '[X] with-slow-database') }}"
+            echo "analytics=${{ contains(github.event.pull_request.body, '[X] analytics') }}"
+            echo "workspace_feature_flags=$(echo "$PR_DESC" | grep -oP '(?<=\[X\] workspace-feature-flags).*')"
           } >> $GITHUB_OUTPUT
 
   build-previewctl:
@@ -168,6 +182,8 @@ jobs:
           secrets: |-
             segment-io-token:gitpod-core-dev/segment-io-token
             npm-auth-token:gitpod-core-dev/npm-auth-token
+            jb-marketplace-publish-token:gitpod-core-dev/jb-marketplace-publish-token
+            codecov-token:gitpod-core-dev/codecov
       - name: Leeway Build
         id: leeway
         shell: bash
@@ -181,6 +197,9 @@ jobs:
           PR_LEEWAY_TARGET: ${{needs.configuration.outputs.build_leeway_target}}
           NPM_AUTH_TOKEN: '${{ steps.secrets.outputs.npm-auth-token }}'
           PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true' }}
+          JB_MARKETPLACE_PUBLISH_TOKEN: '${{ steps.secrets.outputs.jb-marketplace-publish-token }}'
+          PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true' }}
+          CODECOV_TOKEN: '${{ steps.secrets.outputs.codecov-token }}'
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
@@ -195,9 +214,11 @@ jobs:
             --cache $CACHE \
             $TEST \
             -Dversion=$VERSION \
+            -DlocalAppVersion=$VERSION \
             -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
             -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
+            -DpublishToJBMarketplace="${PUBLISH_TO_JBPM}" \
             --coverage-output-path=/__w/gitpod/gitpod/test-coverage-report \
             --report report.html || RESULT=$?
           set +x
@@ -229,6 +250,12 @@ jobs:
           version: ${{needs.configuration.outputs.version}}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
+          with_ws_manager_mk2: ${{needs.configuration.outputs.with_ws_manager_mk2}}
+          with_dedicated_emulation: ${{needs.configuration.outputs.with_dedicated_emulation}}
+          with_ee_license: ${{needs.configuration.outputs.with_ee_license}}
+          with_slow_database: ${{needs.configuration.outputs.with_slow_database}}
+          analytics: ${{needs.configuration.outputs.analytics}}
+          workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
 
   monitoring:
     name: "Install Monitoring Satellite"
