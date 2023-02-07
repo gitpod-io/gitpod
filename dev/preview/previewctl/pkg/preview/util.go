@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/cockroachdb/errors"
-
 	"github.com/gitpod-io/gitpod/previewctl/pkg/util"
 )
 

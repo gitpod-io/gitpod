@@ -17,8 +17,7 @@ import (
 )
 
 type listWorkspaceOpts struct {
-	TFDir             string
-	sshPrivateKeyPath string
+	TFDir string
 
 	logger  *logrus.Logger
 	timeout time.Duration
@@ -77,5 +76,12 @@ func (o *listWorkspaceOpts) getWorkspaces(ctx context.Context) ([]string, error)
 		return nil, errors.Wrap(err, "error running list")
 	}
 
-	return list, nil
+	filtered := []string{}
+	for i := range list {
+		if list[i] != "default" {
+			filtered = append(filtered, list[i])
+		}
+	}
+
+	return filtered, nil
 }
