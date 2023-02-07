@@ -88,6 +88,7 @@ export class AuthProviderEntryDBImpl implements AuthProviderEntryDB {
         const query = repo
             .createQueryBuilder("auth_provider")
             .where(`auth_provider.ownerId = :ownerId`, { ownerId })
+            .andWhere("(auth_provider.organization_id IS NULL OR auth_provider.organization_id = '')")
             .andWhere("auth_provider.deleted != true");
         return query.getMany();
     }
