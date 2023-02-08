@@ -201,10 +201,8 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		}
 	}
 
-	priceID, err := getPriceIdentifier(attributionID, stripeCustomer, s)
-	if err != nil {
-		return nil, err
-	}
+	// usage based + 1000cr. package, both EUR
+	priceIDs := []string{"price_1LiId7GadRXm50o3OayAS2y4", "price_1MZAv9GadRXm50o3VJEp2ORJ"}
 
 	var isAutomaticTaxSupported bool
 	if stripeCustomer.Tax != nil {
@@ -214,7 +212,7 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
 	}
 
-	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceID, isAutomaticTaxSupported)
+	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceIDs, isAutomaticTaxSupported)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to create subscription with customer ID %s", customer.Customer.Id)
 	}

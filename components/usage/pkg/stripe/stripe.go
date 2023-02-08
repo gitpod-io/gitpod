@@ -356,21 +356,24 @@ func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID
 	return subscription, nil
 }
 
-func (c *Client) CreateSubscription(ctx context.Context, customerID string, priceID string, isAutomaticTaxSupported bool) (*stripe.Subscription, error) {
+func (c *Client) CreateSubscription(ctx context.Context, customerID string, priceIDs []string, isAutomaticTaxSupported bool) (*stripe.Subscription, error) {
 	if customerID == "" {
 		return nil, fmt.Errorf("no customerID specified")
 	}
-	if priceID == "" {
+	if len(priceIDs) == 0 {
 		return nil, fmt.Errorf("no priceID specified")
+	}
+
+	var items []*stripe.SubscriptionItemsParams
+	for _, priceID := range priceIDs {
+		items = append(items, &stripe.SubscriptionItemsParams{
+			Price: stripe.String(priceID),
+		})
 	}
 
 	params := &stripe.SubscriptionParams{
 		Customer: stripe.String(customerID),
-		Items: []*stripe.SubscriptionItemsParams{
-			{
-				Price: stripe.String(priceID),
-			},
-		},
+		Items:    items,
 		AutomaticTax: &stripe.SubscriptionAutomaticTaxParams{
 			Enabled: stripe.Bool(isAutomaticTaxSupported),
 		},
