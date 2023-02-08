@@ -133,6 +133,11 @@ export default function Menu() {
         userBillingMode,
     ]);
 
+    const adminMenu: Entry = {
+        title: "Admin",
+        link: "/admin",
+    };
+
     const handleFeedbackFormClick = () => {
         setFeedbackFormVisible(true);
     };
@@ -172,7 +177,11 @@ export default function Menu() {
                                 <li className="flex-1"></li>
                                 {user?.rolesOrPermissions?.includes("admin") && (
                                     <li className="cursor-pointer">
-                                        <PillMenuItem name="Admin" link="/admin" />
+                                        <PillMenuItem
+                                            name="Admin"
+                                            selected={isSelected(adminMenu, location)}
+                                            link="/admin"
+                                        />
                                     </li>
                                 )}
                                 {isGitpodIo() && (
