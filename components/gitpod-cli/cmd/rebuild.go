@@ -84,14 +84,15 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		return utils.Outcome_UserErr, nil
 	}
 
-	var baseimage string
+	var image string
+	var dockerfilePath string
 	switch img := gitpodConfig.Image.(type) {
 	case nil:
-		baseimage = "FROM gitpod/workspace-full:latest"
+		image = "gitpod/workspace-full:latest"
 	case string:
-		baseimage = "FROM " + img
+		image = img
 	case map[interface{}]interface{}:
-		dockerfilePath := filepath.Join(checkoutLocation, img["file"].(string))
+		dockerfilePath = filepath.Join(checkoutLocation, img["file"].(string))
 
 		if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
 			fmt.Println("Your .gitpod.yml points to a Dockerfile that doesn't exist: " + dockerfilePath)
@@ -110,35 +111,20 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 			fmt.Println("Once you configure your Dockerfile, re-run this command to validate your changes")
 			return utils.Outcome_UserErr, nil
 		}
-		baseimage = "\n" + string(dockerfile) + "\n"
 	default:
 		fmt.Println("Check your .gitpod.yml and make sure the image property is configured correctly")
 		event.Set("ErrorCode", utils.RebuildErrorCode_MalformedGitpodYaml)
 		return utils.Outcome_UserErr, nil
 	}
 
-	if baseimage == "" {
-		fmt.Println("Your project is not using any custom Docker image.")
-		fmt.Println("Check out the following docs, to know how to get started")
-		fmt.Println("")
-		fmt.Println("https://www.gitpod.io/docs/configure/workspaces/workspace-image#use-a-public-docker-image")
-		event.Set("ErrorCode", utils.RebuildErrorCode_NoCustomImage)
-		return utils.Outcome_UserErr, nil
-	}
-
 	// 2. build image
+	fmt.Println("Building the workspace image...")
+
 	tmpDir, err := os.MkdirTemp("", "gp-rebuild-*")
 	if err != nil {
 		return utils.Outcome_SystemErr, err
 	}
 	defer os.RemoveAll(tmpDir)
-
-	dockerFile := filepath.Join(tmpDir, "Dockerfile")
-	err = os.WriteFile(dockerFile, []byte(baseimage), 0644)
-	if err != nil {
-		fmt.Println("Could not write the temporary Dockerfile")
-		return utils.Outcome_SystemErr, err
-	}
 
 	dockerPath, err := exec.LookPath("docker")
 	if err == nil {
@@ -149,26 +135,36 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		dockerPath = "/.supervisor/gitpod-docker-cli"
 	}
 
-	imageTag := "gp-rebuild-temp-build"
-
-	fmt.Println("Building the workspace image...")
-	dockerCmd := exec.CommandContext(ctx, dockerPath, "build", "-t", imageTag, "-f", dockerFile, checkoutLocation)
-	dockerCmd.Stdout = os.Stdout
-	dockerCmd.Stderr = os.Stderr
-
-	imageBuildStartTime := time.Now()
-	err = dockerCmd.Run()
-	if _, ok := err.(*exec.ExitError); ok {
-		fmt.Println("Image Build Failed")
-		event.Set("ErrorCode", utils.RebuildErrorCode_ImageBuildFailed)
-		return utils.Outcome_UserErr, nil
-	} else if err != nil {
-		fmt.Println("Docker error")
-		event.Set("ErrorCode", utils.RebuildErrorCode_DockerErr)
-		return utils.Outcome_SystemErr, err
+	var dockerCmd *exec.Cmd
+	if image != "" {
+		err = exec.CommandContext(ctx, dockerPath, "image", "inspect", image).Run()
+		if err == nil {
+			fmt.Printf("%s: image found\n", image)
+		} else {
+			dockerCmd = exec.CommandContext(ctx, dockerPath, "image", "pull", image)
+		}
+	} else {
+		image = "gp-rebuild-temp-build"
+		dockerCmd = exec.CommandContext(ctx, dockerPath, "build", "-t", image, "-f", dockerfilePath, checkoutLocation)
 	}
-	ImageBuildDuration := time.Since(imageBuildStartTime).Milliseconds()
-	event.Set("ImageBuildDuration", ImageBuildDuration)
+	if dockerCmd != nil {
+		dockerCmd.Stdout = os.Stdout
+		dockerCmd.Stderr = os.Stderr
+
+		imageBuildStartTime := time.Now()
+		err = dockerCmd.Run()
+		if _, ok := err.(*exec.ExitError); ok {
+			fmt.Println("Image Build Failed")
+			event.Set("ErrorCode", utils.RebuildErrorCode_ImageBuildFailed)
+			return utils.Outcome_UserErr, nil
+		} else if err != nil {
+			fmt.Println("Docker error")
+			event.Set("ErrorCode", utils.RebuildErrorCode_DockerErr)
+			return utils.Outcome_SystemErr, err
+		}
+		ImageBuildDuration := time.Since(imageBuildStartTime).Milliseconds()
+		event.Set("ImageBuildDuration", ImageBuildDuration)
+	}
 
 	// 3. start debug
 	fmt.Println("")
@@ -196,8 +192,13 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	}
 	workspaceUrl.Host = "debug-" + workspaceUrl.Host
 
+	// TODO validate that checkout and workspace locations don't leave /workspace folder
 	workspaceLocation := gitpodConfig.WorkspaceLocation
-	if workspaceLocation == "" {
+	if workspaceLocation != "" {
+		if !filepath.IsAbs(workspaceLocation) {
+			workspaceLocation = filepath.Join("/workspace", workspaceLocation)
+		}
+	} else {
 		workspaceLocation = checkoutLocation
 	}
 
@@ -274,7 +275,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		"-v", "/ide-desktop:/ide-desktop",
 		"-v", "/ide-desktop-plugins:/ide-desktop-plugins", // TODO refactor to keep all IDE deps under ide or ide-desktop
 
-		imageTag,
+		image,
 		"/.supervisor/supervisor", "init",
 	)
 
