@@ -264,8 +264,8 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		"-v", "/.supervisor:/.supervisor",
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
 		"-v", "/ide:/ide",
-		"-v", "/ide-desktop:/ide-desktop",
-		"-v", "/ide-desktop-plugins:/ide-desktop-plugins", // TODO refactor to keep all IDE deps under ide or ide-desktop
+		// "-v", "/ide-desktop:/ide-desktop", // TODO fix desktop IDEs later
+		// "-v", "/ide-desktop-plugins:/ide-desktop-plugins", // TODO refactor to keep all IDE deps under ide or ide-desktop
 
 		image,
 		"/.supervisor/supervisor", "init",
