@@ -198,6 +198,7 @@ import {
     WriteOrganizationMetadata,
 } from "../authorization/checks";
 import { reportCentralizedPermsValidation } from "../prometheus-metrics";
+import { RegionService } from "./region-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -746,6 +747,42 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             : Promise.resolve(undefined);
 
         await mayStartPromise;
+
+        const logCtx = { userId: user.id, workspaceId };
+
+        const guessWorkspaceRegionEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "guessWorkspaceRegion",
+            false,
+            {
+                user,
+            },
+        );
+        const regionLogContext = {
+            requested_region: options.region,
+            client_region_from_header: this.clientHeaderFields.clientRegion,
+            experiment_enabled: false,
+            guessed_region: "",
+        };
+        if (guessWorkspaceRegionEnabled) {
+            regionLogContext.experiment_enabled = true;
+
+            if (!options.region) {
+                // Attempt to identify the region based on LoadBalancer headers, if there was no explicit choice on the request.
+                // The Client region contains the two letter country code.
+                if (this.clientHeaderFields.clientRegion) {
+                    const countryCode = this.clientHeaderFields.clientRegion;
+
+                    const nearestWorkspaceRegion = RegionService.countryCodeToNearestWorkspaceRegion(countryCode);
+                    regionLogContext.guessed_region = nearestWorkspaceRegion;
+
+                    if (nearestWorkspaceRegion !== "unknown") {
+                        options.region = nearestWorkspaceRegion;
+                    }
+                }
+            }
+        }
+
+        log.info(logCtx, "[guessWorkspaceRegion] Workspace Start with region selection", regionLogContext);
 
         // at this point we're about to actually start a new workspace
         const result = await this.workspaceStarter.startWorkspace(

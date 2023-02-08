@@ -54,6 +54,7 @@
     "cookie": "^0.4.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.4",
+    "countries-list": "^2.6.1",
     "deep-equal": "^2.0.5",
     "deepmerge": "^4.2.2",
     "express": "^4.17.3",

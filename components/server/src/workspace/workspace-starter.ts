@@ -444,6 +444,7 @@ export class WorkspaceStarter {
         region?: string,
     ): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("actuallyStartWorkspace", ctx);
+        span.setTag("region_preference", region);
 
         try {
             // build workspace image
