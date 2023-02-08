@@ -282,6 +282,56 @@ func (s *BillingService) ReconcileInvoices(ctx context.Context, in *v1.Reconcile
 	return &v1.ReconcileInvoicesResponse{}, nil
 }
 
+func (s *BillingService) InitializeInvoice(ctx context.Context, in *v1.InitializeInvoiceRequest) (*v1.InitializeInvoiceResponse, error) {
+	logger := log.WithField("invoice_id", in.GetInvoiceId())
+
+	if in.GetInvoiceId() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Missing InvoiceID")
+	}
+
+	invoice, err := s.stripeClient.GetInvoiceWithCustomer(ctx, in.GetInvoiceId())
+	if err != nil {
+		logger.WithError(err).Error("Failed to retrieve invoice from Stripe.")
+		return nil, status.Errorf(codes.NotFound, "Failed to get invoice with ID %s: %s", in.GetInvoiceId(), err.Error())
+	}
+	attributionID, err := stripe.GetAttributionID(ctx, invoice.Customer)
+	if err != nil {
+		return nil, err
+	}
+
+	debitsFromPackage := 1000.0 // TODO(gpl) get debits to grant from priceId metadata. default: none
+	// if err != nil {
+	// 	return nil, err
+	// }
+	debits := db.Usage{
+		ID:            uuid.New(),
+		AttributionID: attributionID,
+		Description:   "Credits from \"100 credits Package\"",
+		CreditCents:   -db.NewCreditCents(debitsFromPackage),
+		EffectiveTime: db.VarcharTime{},
+		Kind:          db.PackageKind,
+		// Draft: , ??
+	}
+	err = debits.SetPackageMetaData(db.PackageMetaData{
+		InvoiceId: invoice.ID,
+		PriceId:   "really relevant?",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if debitsFromPackage > 0 {
+		err = db.InsertUsage(ctx, s.conn, debits)
+		if err != nil {
+			logger.WithError(err).Errorf("Failed to insert Invoice package usage record into the db.")
+			return nil, status.Errorf(codes.Internal, "Failed to insert Invoice into usage records.")
+		}
+		logger.WithField("usage_id", debits.ID).Infof("Inserted usage record into database for %f credits against %s attribution", debits.CreditCents.ToCredits(), debits.AttributionID)
+	}
+
+	return &v1.InitializeInvoiceResponse{}, nil
+}
+
 func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInvoiceRequest) (*v1.FinalizeInvoiceResponse, error) {
 	logger := log.WithField("invoice_id", in.GetInvoiceId())
 

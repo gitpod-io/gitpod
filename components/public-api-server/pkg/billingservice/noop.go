@@ -8,6 +8,10 @@ import "context"
 
 type NoOpClient struct{}
 
+func (c *NoOpClient) InitializeInvoice(ctx context.Context, invoiceId string) error {
+	return nil
+}
+
 func (c *NoOpClient) FinalizeInvoice(ctx context.Context, invoiceId string) error {
 	return nil
 }

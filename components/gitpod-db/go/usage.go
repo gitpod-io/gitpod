@@ -22,6 +22,7 @@ type UsageKind string
 const (
 	WorkspaceInstanceUsageKind UsageKind = "workspaceinstance"
 	InvoiceUsageKind           UsageKind = "invoice"
+	PackageKind                UsageKind = "package"
 	CreditNoteKind             UsageKind = "creditnote"
 )
 
@@ -94,6 +95,31 @@ type WorkspaceInstanceUsageData struct {
 
 type CreditNoteMetaData struct {
 	UserId string `json:userId`
+}
+
+type PackageMetaData struct {
+	InvoiceId string `json:"invoiceId"`
+	PriceId   string `json:"priceId"`
+}
+
+func (u *Usage) SetPackageMetaData(data PackageMetaData) error {
+	b, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("failed to serialize package meta data into json: %w", err)
+	}
+
+	u.Metadata = b
+	return nil
+}
+
+func (u *Usage) GetPackageMetaData() (PackageMetaData, error) {
+	var data PackageMetaData
+	err := json.Unmarshal(u.Metadata, &data)
+	if err != nil {
+		return PackageMetaData{}, fmt.Errorf("failed unmarshal metadata into package data: %w", err)
+	}
+
+	return data, nil
 }
 
 type FindUsageResult struct {

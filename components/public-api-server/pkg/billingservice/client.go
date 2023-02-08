@@ -14,6 +14,7 @@ import (
 )
 
 type Interface interface {
+	InitializeInvoice(ctx context.Context, invoiceId string) error
 	FinalizeInvoice(ctx context.Context, invoiceId string) error
 	CancelSubscription(ctx context.Context, subscriptionId string) error
 }
@@ -29,6 +30,15 @@ func New(billingServiceAddress string) (*Client, error) {
 	}
 
 	return &Client{b: v1.NewBillingServiceClient(conn)}, nil
+}
+
+func (c *Client) InitializeInvoice(ctx context.Context, invoiceId string) error {
+	_, err := c.b.InitializeInvoice(ctx, &v1.InitializeInvoiceRequest{InvoiceId: invoiceId})
+	if err != nil {
+		return fmt.Errorf("failed RPC to billing service: %s", err)
+	}
+
+	return nil
 }
 
 func (c *Client) FinalizeInvoice(ctx context.Context, invoiceId string) error {

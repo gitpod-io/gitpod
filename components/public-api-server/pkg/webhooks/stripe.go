@@ -58,6 +58,19 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	switch event.Type {
+	case "invoice.created":
+		invoiceId, ok := event.Data.Object["id"].(string)
+		if !ok {
+			log.Error("failed to find invoice id in Stripe event payload")
+			w.WriteHeader(http.StatusBadRequest)
+		}
+
+		err = h.billingService.InitializeInvoice(req.Context(), invoiceId)
+		if err != nil {
+			log.WithError(err).Error("Failed to initialize invoice")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 	case "invoice.finalized":
 		invoiceId, ok := event.Data.Object["id"].(string)
 		if !ok {

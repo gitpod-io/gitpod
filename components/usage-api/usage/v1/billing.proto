@@ -9,6 +9,9 @@ service BillingService {
   // Internal RPC, not intended for general consumption.
   rpc ReconcileInvoices(ReconcileInvoicesRequest) returns (ReconcileInvoicesResponse) {};
 
+  // InitializeInvoice configures the Stripe subscription in our system
+  rpc InitializeInvoice(InitializeInvoiceRequest) returns (InitializeInvoiceResponse) {};
+
   // FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
   // having been invoiced.
   rpc FinalizeInvoice(FinalizeInvoiceRequest) returns (FinalizeInvoiceResponse) {};
@@ -31,6 +34,13 @@ service BillingService {
 message ReconcileInvoicesRequest {}
 
 message ReconcileInvoicesResponse {}
+
+message InitializeInvoiceRequest {
+  string invoice_id = 1;
+}
+
+message InitializeInvoiceResponse {
+}
 
 message FinalizeInvoiceRequest {
   string invoice_id = 1;

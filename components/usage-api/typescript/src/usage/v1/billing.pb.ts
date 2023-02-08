@@ -17,6 +17,13 @@ export interface ReconcileInvoicesRequest {
 export interface ReconcileInvoicesResponse {
 }
 
+export interface InitializeInvoiceRequest {
+  invoiceId: string;
+}
+
+export interface InitializeInvoiceResponse {
+}
+
 export interface FinalizeInvoiceRequest {
   invoiceId: string;
 }
@@ -154,6 +161,92 @@ export const ReconcileInvoicesResponse = {
 
   fromPartial(_: DeepPartial<ReconcileInvoicesResponse>): ReconcileInvoicesResponse {
     const message = createBaseReconcileInvoicesResponse();
+    return message;
+  },
+};
+
+function createBaseInitializeInvoiceRequest(): InitializeInvoiceRequest {
+  return { invoiceId: "" };
+}
+
+export const InitializeInvoiceRequest = {
+  encode(message: InitializeInvoiceRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.invoiceId !== "") {
+      writer.uint32(10).string(message.invoiceId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): InitializeInvoiceRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseInitializeInvoiceRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.invoiceId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): InitializeInvoiceRequest {
+    return { invoiceId: isSet(object.invoiceId) ? String(object.invoiceId) : "" };
+  },
+
+  toJSON(message: InitializeInvoiceRequest): unknown {
+    const obj: any = {};
+    message.invoiceId !== undefined && (obj.invoiceId = message.invoiceId);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<InitializeInvoiceRequest>): InitializeInvoiceRequest {
+    const message = createBaseInitializeInvoiceRequest();
+    message.invoiceId = object.invoiceId ?? "";
+    return message;
+  },
+};
+
+function createBaseInitializeInvoiceResponse(): InitializeInvoiceResponse {
+  return {};
+}
+
+export const InitializeInvoiceResponse = {
+  encode(_: InitializeInvoiceResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): InitializeInvoiceResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseInitializeInvoiceResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): InitializeInvoiceResponse {
+    return {};
+  },
+
+  toJSON(_: InitializeInvoiceResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<InitializeInvoiceResponse>): InitializeInvoiceResponse {
+    const message = createBaseInitializeInvoiceResponse();
     return message;
   },
 };
@@ -910,6 +1003,15 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    /** InitializeInvoice configures the Stripe subscription in our system */
+    initializeInvoice: {
+      name: "InitializeInvoice",
+      requestType: InitializeInvoiceRequest,
+      requestStream: false,
+      responseType: InitializeInvoiceResponse,
+      responseStream: false,
+      options: {},
+    },
     /**
      * FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
      * having been invoiced.
@@ -980,6 +1082,11 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: ReconcileInvoicesRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<ReconcileInvoicesResponse>>;
+  /** InitializeInvoice configures the Stripe subscription in our system */
+  initializeInvoice(
+    request: InitializeInvoiceRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<InitializeInvoiceResponse>>;
   /**
    * FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
    * having been invoiced.
@@ -1025,6 +1132,11 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<ReconcileInvoicesRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<ReconcileInvoicesResponse>;
+  /** InitializeInvoice configures the Stripe subscription in our system */
+  initializeInvoice(
+    request: DeepPartial<InitializeInvoiceRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<InitializeInvoiceResponse>;
   /**
    * FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
    * having been invoiced.
