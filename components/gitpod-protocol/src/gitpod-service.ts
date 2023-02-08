@@ -358,6 +358,8 @@ export interface ClientHeaderFields {
     clientRegion?: string;
 }
 
+const WORKSPACE_MAXIMUM_TIMEOUT_HOURS = 24;
+
 export type WorkspaceTimeoutDuration = string;
 export namespace WorkspaceTimeoutDuration {
     export function validate(duration: string): WorkspaceTimeoutDuration {
@@ -368,6 +370,12 @@ export namespace WorkspaceTimeoutDuration {
         const value = parseInt(duration.slice(0, -1));
         if (isNaN(value) || value <= 0) {
             throw new Error(`Invalid timeout value: ${duration}`);
+        }
+        if (
+            (unit === "h" && value > WORKSPACE_MAXIMUM_TIMEOUT_HOURS) ||
+            (unit === "m" && value > WORKSPACE_MAXIMUM_TIMEOUT_HOURS * 60)
+        ) {
+            throw new Error(`Timeouts cannot extend to more than a day`);
         }
         return duration;
     }
