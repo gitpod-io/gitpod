@@ -201,6 +201,8 @@ export class AuthProviderService {
         const { ownerId, id } = params;
         let ap: AuthProviderEntry | undefined;
         try {
+            // TODO: Consider org auth providers that wouldn't be returned here
+            // Instead - query directly by id only, and ensure ownerId is a match
             let authProviders = await this.authProviderDB.findByUserId(ownerId);
             if (authProviders.length === 0) {
                 // "no-user" is the magic user id assigned during the initial setup
