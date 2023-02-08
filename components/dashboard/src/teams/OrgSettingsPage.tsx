@@ -52,7 +52,8 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
         );
     }
 
-    if (!isOwner || !team) {
+    // After we've loaded, ensure user is an owner, if not, redirect
+    if (!isOwner) {
         return <Redirect to={"/"} />;
     }
 
