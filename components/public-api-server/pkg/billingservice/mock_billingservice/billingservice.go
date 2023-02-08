@@ -38,6 +38,20 @@ func (m *MockInterface) EXPECT() *MockInterfaceMockRecorder {
 	return m.recorder
 }
 
+// CancelSubscription mocks base method.
+func (m *MockInterface) CancelSubscription(ctx context.Context, subscriptionId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CancelSubscription", ctx, subscriptionId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CancelSubscription indicates an expected call of CancelSubscription.
+func (mr *MockInterfaceMockRecorder) CancelSubscription(ctx, subscriptionId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelSubscription", reflect.TypeOf((*MockInterface)(nil).CancelSubscription), ctx, subscriptionId)
+}
+
 // FinalizeInvoice mocks base method.
 func (m *MockInterface) FinalizeInvoice(ctx context.Context, invoiceId string) error {
 	m.ctrl.T.Helper()
@@ -52,16 +66,16 @@ func (mr *MockInterfaceMockRecorder) FinalizeInvoice(ctx, invoiceId interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinalizeInvoice", reflect.TypeOf((*MockInterface)(nil).FinalizeInvoice), ctx, invoiceId)
 }
 
-// CancelSubscription mocks base method.
-func (m *MockInterface) CancelSubscription(ctx context.Context, subscriptionId string) error {
+// InitializeInvoice mocks base method.
+func (m *MockInterface) InitializeInvoice(ctx context.Context, invoiceId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CancelSubscription", ctx, subscriptionId)
+	ret := m.ctrl.Call(m, "InitializeInvoice", ctx, invoiceId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CancelSubscription indicates an expected call of CancelSubscription.
-func (mr *MockInterfaceMockRecorder) CancelSubscription(ctx, subscriptionId interface{}) *gomock.Call {
+// InitializeInvoice indicates an expected call of InitializeInvoice.
+func (mr *MockInterfaceMockRecorder) InitializeInvoice(ctx, invoiceId interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelSubscription", reflect.TypeOf((*MockInterface)(nil).CancelSubscription), ctx, subscriptionId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitializeInvoice", reflect.TypeOf((*MockInterface)(nil).InitializeInvoice), ctx, invoiceId)
 }
