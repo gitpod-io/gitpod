@@ -6,12 +6,18 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -21,6 +27,15 @@ import (
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+type modifyWorkspace func(ws *workspacev1.Workspace) error
+
+var retryParams = wait.Backoff{
+	Steps:    6,
+	Duration: 10 * time.Millisecond,
+	Factor:   2.0,
+	Jitter:   0.2,
+}
 
 const (
 	metricsNamespace          = "gitpod"
@@ -105,14 +120,14 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	r.updateMetrics(ctx, &workspace)
 
-	result, err := r.actOnStatus(ctx, &workspace, workspacePods)
+	result, mod, err := r.actOnStatus(ctx, &workspace, workspacePods)
 	if err != nil {
 		return result, err
 	}
 
-	err = r.Status().Update(ctx, &workspace)
+	err = r.modifyWorkspace(ctx, workspace.Name, true, mod)
 	if err != nil {
-		// log.WithValues("status", workspace).Error(err, "unable to update workspace status")
+		log.WithValues("status", workspace.Status).Error(err, "unable to update workspace status")
 		return ctrl.Result{Requeue: true}, err
 	}
 
@@ -123,8 +138,9 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	return ctrl.Result{}, nil
 }
 
-func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, error) {
+func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, modifyWorkspace, error) {
 	log := log.FromContext(ctx)
+	var mod modifyWorkspace
 
 	if len(workspacePods.Items) == 0 {
 		// if there isn't a workspace pod and we're not currently deleting this workspace,// create one.
@@ -133,17 +149,17 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			sctx, err := newStartWorkspaceContext(ctx, &r.Config, workspace)
 			if err != nil {
 				log.Error(err, "unable to create startWorkspace context")
-				return ctrl.Result{Requeue: true}, err
+				return ctrl.Result{Requeue: true}, mod, err
 			}
 
 			pod, err := r.createWorkspacePod(sctx)
 			if err != nil {
 				log.Error(err, "unable to produce workspace pod")
-				return ctrl.Result{}, err
+				return ctrl.Result{}, mod, err
 			}
 
 			if err := ctrl.SetControllerReference(workspace, pod, r.Scheme); err != nil {
-				return ctrl.Result{}, err
+				return ctrl.Result{}, mod, err
 			}
 
 			err = r.Create(ctx, pod)
@@ -151,27 +167,28 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				// pod exists, we're good
 			} else if err != nil {
 				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
-				return ctrl.Result{Requeue: true}, err
+				return ctrl.Result{Requeue: true}, mod, err
 			} else {
-				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
-				//			 need to be deleted and re-created
-				workspace.Status.PodStarts++
+				mod = func(ws *workspacev1.Workspace) error {
+					ws.Status.PodStarts = 1
+					return nil
+				}
 			}
 			r.metrics.rememberWorkspace(workspace)
 
 		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
 			err := r.Client.Delete(ctx, workspace)
 			if err != nil {
-				return ctrl.Result{Requeue: true}, err
+				return ctrl.Result{Requeue: true}, mod, err
 			}
 		}
 
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, mod, nil
 	}
 
 	// all actions below assume there is a pod
 	if len(workspacePods.Items) == 0 {
-		return ctrl.Result{}, nil
+		return ctrl.Result{}, mod, nil
 	}
 	pod := &workspacePods.Items[0]
 
@@ -182,7 +199,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
 		} else {
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{Requeue: true}, mod, err
 		}
 
 	// if the pod was stopped by request, delete it
@@ -191,7 +208,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
 		} else {
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{Requeue: true}, mod, err
 		}
 
 	// if the content initialization failed, delete the pod
@@ -200,7 +217,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
 		} else {
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{Requeue: true}, mod, err
 		}
 
 	// we've disposed already - try to remove the finalizer and call it a day
@@ -218,16 +235,16 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		pod.Finalizers = pod.Finalizers[:n]
 		err := r.Client.Update(ctx, pod)
 		if err != nil {
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{Requeue: true}, mod, err
 		}
 
 		if foundFinalizer {
 			// reque to remove workspace
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, mod, nil
 		}
 	}
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, mod, nil
 }
 
 func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *workspacev1.Workspace) {
@@ -308,4 +325,41 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
 		Complete(r)
+}
+
+// modifyWorkspace modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
+// is returned directly. If mod returns a non-gRPC error it is turned into one.
+func (r *WorkspaceReconciler) modifyWorkspace(ctx context.Context, id string, updateStatus bool, mods ...func(ws *workspacev1.Workspace) error) error {
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		var ws workspacev1.Workspace
+		err := r.Get(ctx, types.NamespacedName{Namespace: "default", Name: id}, &ws)
+		if err != nil {
+			return err
+		}
+
+		for _, mod := range mods {
+			err = mod(&ws)
+			if err != nil {
+				return err
+			}
+		}
+
+		if updateStatus {
+			err = r.Status().Update(ctx, &ws)
+		} else {
+			err = r.Update(ctx, &ws)
+
+		}
+		return err
+	})
+	if errors.IsNotFound(err) {
+		return fmt.Errorf("workspace %s not found", id)
+	}
+	if c := status.Code(err); c != codes.Unknown && c != codes.OK {
+		return err
+	}
+	if err != nil {
+		return status.Errorf(codes.Internal, "cannot modify workspace: %v", err)
+	}
+	return nil
 }
