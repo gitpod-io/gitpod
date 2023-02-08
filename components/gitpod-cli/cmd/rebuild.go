@@ -268,9 +268,10 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		"-p", "25003:23003", // debug workspace proxy
 
 		// volumes
-		"-v", "/workspace:/workspace",
+		"-v", checkoutLocation+":"+checkoutLocation,
 		"-v", "/.supervisor:/.supervisor",
-		"-v", "/var/run/docker.sock:/var/run/docker.sock",
+		"-v", "/usr/bin/docker-up:/usr/bin/docker-up",
+		"-v", "/usr/local/bin/docker-compose:/usr/local/bin/docker-compose",
 		"-v", "/ide:/ide",
 		"-v", "/ide-desktop:/ide-desktop",
 		"-v", "/ide-desktop-plugins:/ide-desktop-plugins", // TODO refactor to keep all IDE deps under ide or ide-desktop
