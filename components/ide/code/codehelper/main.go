@@ -61,12 +61,16 @@ func main() {
 	}
 	phaseDone()
 
-	if err := prepareWebWorkbenchMain(wsInfo); err != nil {
-		log.WithError(err).Error("failed to prepare web workbench")
-	}
-
-	if err := prepareServerMain(wsInfo); err != nil {
-		log.WithError(err).Error("failed to prepare server")
+	if wsInfo.DebugWorkspaceType != supervisor.DebugWorkspaceType_noDebug {
+		// TODO actually should be performed always
+		// the better way would be to apply replacements during a workspace start
+		// to aling with content in blobserve
+		if err := prepareWebWorkbenchMain(wsInfo); err != nil {
+			log.WithError(err).Error("failed to prepare web workbench")
+		}
+		if err := prepareServerMain(wsInfo); err != nil {
+			log.WithError(err).Error("failed to prepare server")
+		}
 	}
 
 	// code server args install extension with id
@@ -277,7 +281,7 @@ func prepareServerMain(wsInfo *supervisor.WorkspaceInfoResponse) error {
 		return errors.New("failed to parse " + wsInfo.GitpodHost + ": " + err.Error())
 	}
 	domain := url.Hostname()
-	b = bytes.ReplaceAll(b, []byte("https://*.vscode-cdn.net"), []byte(fmt.Sprintf("https://*.vscode-cdn.net https://%s https://*.%s", domain, domain)))
+	b = bytes.ReplaceAll(b, []byte("https://*.vscode-cdn.net"), []byte(fmt.Sprintf("https://%s https://*.%s", domain, domain)))
 	if err := os.WriteFile(ServerMainLocation, b, 0644); err != nil {
 		return errors.New("failed to write " + ServerMainLocation + ": " + err.Error())
 	}
