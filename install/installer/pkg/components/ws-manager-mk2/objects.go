@@ -37,7 +37,6 @@ var Objects common.RenderFunc = func(cfg *common.RenderContext) ([]runtime.Objec
 				ServicePort:   RPCPort,
 			},
 		}),
-		tlssecret,
 		unprivilegedRolebinding,
 	)(cfg)
 }

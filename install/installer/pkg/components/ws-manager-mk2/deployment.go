@@ -8,6 +8,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
+	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -152,7 +153,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			{
 				Name: VolumeTLSCerts,
 				VolumeSource: corev1.VolumeSource{
-					Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretNameSecret},
+					Secret: &corev1.SecretVolumeSource{SecretName: wsmanager.TLSSecretNameSecret},
 				},
 			},
 		}, volumes...),
