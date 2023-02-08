@@ -53,10 +53,10 @@ function FeedbackComponent(props: {
 
     const emojiGroup = (width: number) => {
         const emojiList = [
-            { id: 4, name: "starry", src: starry },
-            { id: 3, name: "happy", src: happy },
-            { id: 2, name: "meh", src: meh },
             { id: 1, name: "crying", src: crying },
+            { id: 2, name: "meh", src: meh },
+            { id: 3, name: "happy", src: happy },
+            { id: 4, name: "starry", src: starry },
         ];
         return emojiList.map((emoji) => (
             <button
