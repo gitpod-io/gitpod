@@ -91,7 +91,7 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), config.Configuration{
+	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), &config.Configuration{
 		Namespace:      "default",
 		SeccompProfile: "default.json",
 		WorkspaceClasses: map[string]*config.WorkspaceClass{
@@ -100,6 +100,7 @@ var _ = BeforeSuite(func() {
 			},
 		},
 	}, metrics.Registry)
+
 	Expect(err).ToNot(HaveOccurred())
 	err = wsReconciler.SetupWithManager(k8sManager)
 	Expect(err).ToNot(HaveOccurred())

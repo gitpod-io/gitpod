@@ -95,7 +95,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), cfg.Manager, metrics.Registry)
+	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), &cfg.Manager, metrics.Registry)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)
@@ -168,8 +168,6 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activ
 	}
 
 	grpcServer := grpc.NewServer(grpcOpts...)
-
-	//grpcOpts = append(grpcOpts, grpc.UnknownServiceHandler(proxy.TransparentHandler(imagebuilderDirector(cfg.ImageBuilderProxy.TargetAddr))))
 
 	if cfg.ImageBuilderProxy.TargetAddr != "" {
 		creds := insecure.NewCredentials()

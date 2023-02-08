@@ -11,7 +11,9 @@ import (
 	"fmt"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -28,7 +30,7 @@ const (
 	containerUnknownExitCode = 255
 )
 
-func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList) error {
+func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList, cfg *config.Configuration) error {
 	log := log.FromContext(ctx)
 
 	switch len(pods.Items) {
@@ -77,6 +79,26 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 	}
 	if workspace.Status.Runtime.PodName == "" && pod.Name != "" {
 		workspace.Status.Runtime.PodName = pod.Name
+	}
+
+	if workspace.Spec.Type != workspacev1.WorkspaceTypeRegular {
+		workspace.Status.Headless = true
+	}
+
+	if workspace.Status.URL == "" {
+		url, err := config.RenderWorkspaceURL(cfg.WorkspaceURLTemplate, workspace.Name, workspace.Spec.Ownership.WorkspaceID, cfg.GitpodHostURL)
+		if err != nil {
+			return xerrors.Errorf("cannot get workspace URL: %w", err)
+		}
+		workspace.Status.URL = url
+	}
+
+	if workspace.Status.OwnerToken == "" {
+		ownerToken, err := getRandomString(32)
+		if err != nil {
+			return xerrors.Errorf("cannot create owner token: %w", err)
+		}
+		workspace.Status.OwnerToken = ownerToken
 	}
 
 	failure, phase := extractFailure(workspace, pod)
