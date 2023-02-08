@@ -40,6 +40,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "eu02",
+            region: "europe-west1",
             url: "some-url",
             state: "available",
             score: 100,
@@ -49,6 +50,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "us02",
+            region: "us-west1",
             url: "some-url",
             state: "cordoned",
             score: 0,
@@ -58,6 +60,7 @@ export class WorkspaceClusterDBSpec {
         const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             applicationCluster: "eu02",
+            region: "europe-west1",
             url: "some-url",
             state: "cordoned",
             score: 0,
@@ -92,6 +95,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "eu02",
+            region: "europe-west1",
             url: "some-url",
             state: "available",
             score: 100,
@@ -101,6 +105,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "us02",
+            region: "us-west1",
             url: "some-url",
             state: "cordoned",
             score: 0,
@@ -110,6 +115,7 @@ export class WorkspaceClusterDBSpec {
         const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             applicationCluster: "eu02",
+            region: "europe-west1",
             url: "some-url",
             state: "cordoned",
             score: 0,
@@ -132,6 +138,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "eu02",
+            region: "europe-west1",
             url: "some-url",
             state: "available",
             score: 100,
@@ -141,6 +148,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "us02",
+            region: "us-west1",
             url: "some-url",
             state: "cordoned",
             score: 0,
@@ -150,6 +158,7 @@ export class WorkspaceClusterDBSpec {
         const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             applicationCluster: "eu02",
+            region: "europe-west1",
             url: "some-url",
             state: "cordoned",
             score: 0,
@@ -171,6 +180,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "eu02",
+            region: "europe-west1",
             url: "some-url",
             state: "available",
             score: 100,
@@ -180,6 +190,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "us02",
+            region: "us-west1",
             url: "some-url",
             state: "cordoned",
             score: 0,
@@ -189,6 +200,7 @@ export class WorkspaceClusterDBSpec {
         const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             applicationCluster: "us02",
+            region: "us-west1",
             url: "some-url",
             state: "available",
             score: 100,
@@ -204,6 +216,7 @@ export class WorkspaceClusterDBSpec {
             {
                 name: "eu71",
                 applicationCluster: "eu02",
+                region: "europe-west1",
                 url: "some-url",
                 state: "available",
                 score: 100,
@@ -220,6 +233,7 @@ export class WorkspaceClusterDBSpec {
             {
                 name: "eu71",
                 applicationCluster: "us02",
+                region: "us-west1",
                 url: "some-url",
                 state: "cordoned",
                 score: 0,
@@ -230,6 +244,7 @@ export class WorkspaceClusterDBSpec {
             {
                 name: "us71",
                 applicationCluster: "us02",
+                region: "us-west1",
                 url: "some-url",
                 state: "available",
                 score: 100,
@@ -247,6 +262,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "eu02",
+            region: "europe-west1",
             url: "some-url",
             state: "available",
             score: 100,
@@ -256,6 +272,7 @@ export class WorkspaceClusterDBSpec {
         const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "eu71",
             applicationCluster: "us02",
+            region: "us-west1",
             url: "some-url",
             state: "cordoned",
             score: 0,
@@ -265,6 +282,7 @@ export class WorkspaceClusterDBSpec {
         const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             applicationCluster: "us02",
+            region: "us-west1",
             url: "some-url",
             state: "available",
             score: 100,

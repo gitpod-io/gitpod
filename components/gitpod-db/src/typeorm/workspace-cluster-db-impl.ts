@@ -45,6 +45,7 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
     async findFiltered(predicate: WorkspaceClusterFilter): Promise<WorkspaceClusterWoTLS[]> {
         const prototype: WorkspaceClusterWoTLS = {
             name: "",
+            region: "",
             url: "",
             score: 0,
             maxScore: 0,

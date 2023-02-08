@@ -29,6 +29,8 @@ message RegisterRequest {
   TlsConfig tls = 3;
   RegistrationHints hints = 4;
   repeated AdmissionConstraint admission_constraints = 5;
+  // the region this cluster is in, e.g. "europe-west1"
+  string region = 7;
 
   // DEPRECATED
   // repeated AdmissionPreference admission_preference = 6;

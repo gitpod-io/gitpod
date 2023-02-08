@@ -41,6 +41,7 @@ type WorkspaceCluster struct {
 	Govern               bool                  `json:"govern"`
 	AdmissionConstraints []AdmissionConstraint `json:"admissionConstraints"`
 	ApplicationCluster   string                `json:"applicationCluster"`
+	Region               string                `json:"region"`
 }
 
 // WorkspaceClusterTLS is the struct we use in ws-manager-bridge cluster registrations.

@@ -27,8 +27,13 @@ export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManager
         return this.clusters.find((m) => m.name === name && m.applicationCluster === applicationCluster);
     }
 
-    public async getAllWorkspaceClusters(applicationCluster: string): Promise<WorkspaceClusterWoTLS[]> {
-        return this.clusters.filter((m) => m.applicationCluster === applicationCluster) ?? [];
+    public async getAllWorkspaceClusters(
+        applicationCluster: string,
+        region?: string,
+    ): Promise<WorkspaceClusterWoTLS[]> {
+        return this.clusters.filter(
+            (m) => m.applicationCluster === applicationCluster && (!region || m.region === region),
+        );
     }
 
     protected get clusters(): WorkspaceCluster[] {
