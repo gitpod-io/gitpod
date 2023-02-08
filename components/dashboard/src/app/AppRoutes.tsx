@@ -43,6 +43,7 @@ import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokens
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { WebsocketClients } from "./WebsocketClients";
+import { OrgRequiredRoute } from "./OrgRequiredRoute";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const WorkspacesNew = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/WorkspacesNew"));
@@ -230,13 +231,16 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route exact path="/teams/join" component={JoinTeam} />
                     <Route exact path="/orgs/new" component={NewTeam} />
                     <Route exact path="/orgs/join" component={JoinTeam} />
-                    <Route exact path="/members" component={Members} />
                     <Route exact path="/projects" component={Projects} />
-                    <Route exact path="/settings" component={TeamSettings} />
-                    <Route exact path="/settings/git" component={TeamGitIntegrations} />
-                    {/* TODO: migrate other org settings pages underneath /settings prefix */}
-                    <Route exact path="/billing" component={TeamBilling} />
-                    <Route exact path="/sso" component={SSO} />
+
+                    {/* These routes that require a selected organization, otherwise they redirect to "/" */}
+                    <OrgRequiredRoute exact path="/members" component={Members} />
+                    <OrgRequiredRoute exact path="/settings" component={TeamSettings} />
+                    <OrgRequiredRoute exact path="/settings/git" component={TeamGitIntegrations} />
+                    {/* TODO: migrate other org settings pages underneath /settings prefix so we can utilize nested routes */}
+                    <OrgRequiredRoute exact path="/billing" component={TeamBilling} />
+                    <OrgRequiredRoute exact path="/sso" component={SSO} />
+
                     <Route exact path={`/projects/:projectSlug`} component={Project} />
                     <Route exact path={`/projects/:projectSlug/events`} component={Events} />
                     <Route exact path={`/projects/:projectSlug/prebuilds`} component={Prebuilds} />
