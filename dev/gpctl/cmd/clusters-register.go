@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -76,6 +77,9 @@ var clustersRegisterCmd = &cobra.Command{
 		}
 		if len(region) > 0 {
 			request.Region = region
+		}
+		if strings.ToLower(region) != region {
+			log.Fatal("Region must be all lowercase.")
 		}
 
 		url, err := cmd.Flags().GetString("url")
@@ -158,7 +162,7 @@ var clustersRegisterCmd = &cobra.Command{
 
 func init() {
 	clustersRegisterCmd.Flags().String("name", "", "cluster name")
-	clustersRegisterCmd.Flags().String("region", "", "region name")
+	clustersRegisterCmd.Flags().String("region", "", "region name - one of [europe, north-america] or empty, which allows cross-region workspaces")
 	clustersRegisterCmd.Flags().String("url", "", "cluster url")
 	clustersRegisterCmd.Flags().String("tls-path", "", "folder containing the ws cluster's ca.crt, tls.crt and tls.key")
 	clustersRegisterCmd.Flags().Bool("hint-cordoned", false, "sets hint cordoned")
