@@ -29,7 +29,7 @@ const (
 	kubernetesOperationTimeout = 5 * time.Second
 )
 
-func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg config.Configuration, reg prometheus.Registerer) (*WorkspaceReconciler, error) {
+func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg *config.Configuration, reg prometheus.Registerer) (*WorkspaceReconciler, error) {
 	reconciler := &WorkspaceReconciler{
 		Client: c,
 		Scheme: scheme,
@@ -51,7 +51,7 @@ type WorkspaceReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	Config      config.Configuration
+	Config      *config.Configuration
 	metrics     *controllerMetrics
 	OnReconcile func(ctx context.Context, ws *workspacev1.Workspace)
 }
@@ -98,7 +98,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	err = updateWorkspaceStatus(ctx, &workspace, workspacePods)
+	err = updateWorkspaceStatus(ctx, &workspace, workspacePods, r.Config)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -130,7 +130,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		// if there isn't a workspace pod and we're not currently deleting this workspace,// create one.
 		switch {
 		case workspace.Status.PodStarts == 0:
-			sctx, err := newStartWorkspaceContext(ctx, &r.Config, workspace)
+			sctx, err := newStartWorkspaceContext(ctx, r.Config, workspace)
 			if err != nil {
 				log.Error(err, "unable to create startWorkspace context")
 				return ctrl.Result{Requeue: true}, err

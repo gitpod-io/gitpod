@@ -680,31 +680,13 @@ func newStartWorkspaceContext(ctx context.Context, cfg *config.Configuration, ws
 	span, _ := tracing.FromContext(ctx, "newStartWorkspaceContext")
 	defer tracing.FinishSpan(span, &err)
 
-	if ws.Spec.Type != workspacev1.WorkspaceTypeRegular {
-		ws.Status.Headless = true
-	}
-
-	if ws.Status.URL == "" {
-		ws.Status.URL, err = config.RenderWorkspaceURL(cfg.WorkspaceURLTemplate, ws.Name, ws.Spec.Ownership.WorkspaceID, cfg.GitpodHostURL)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot get workspace URL: %w", err)
-		}
-	}
-
-	if ws.Status.OwnerToken == "" {
-		ws.Status.OwnerToken, err = getRandomString(32)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot create owner token: %w", err)
-		}
-	}
-
 	return &startWorkspaceContext{
 		Labels: map[string]string{
 			"app":                  "gitpod",
 			"component":            "workspace",
 			wsk8s.WorkspaceIDLabel: ws.Spec.Ownership.WorkspaceID,
 			wsk8s.OwnerLabel:       ws.Spec.Ownership.Owner,
-			wsk8s.TypeLabel:        string(ws.Spec.Type),
+			wsk8s.TypeLabel:        strings.ToLower(string(ws.Spec.Type)),
 			instanceIDLabel:        ws.Name,
 			headlessLabel:          strconv.FormatBool(ws.Status.Headless),
 		},
