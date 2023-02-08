@@ -2,14 +2,14 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM caddy:2.6.2-builder AS builder
+FROM caddy:2.6.3-builder AS builder
 
 WORKDIR /plugins
 
 COPY plugins /plugins
 
 # build caddy
-RUN xcaddy build v2.6.2 \
+RUN xcaddy build v2.6.3 \
   --output /caddy \
   --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
   --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
