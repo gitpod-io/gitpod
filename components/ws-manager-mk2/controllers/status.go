@@ -11,9 +11,7 @@ import (
 	"fmt"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
-	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -30,52 +28,34 @@ const (
 	containerUnknownExitCode = 255
 )
 
-func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList) (mod modifyWorkspace, err error) {
+func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList) error {
 	log := log.FromContext(ctx)
-
-	headless := workspace.Status.Headless
-	url := workspace.Status.URL
-	ownerToken := workspace.Status.OwnerToken
-	runtime := workspace.Status.Runtime
-	conditions := workspace.Status.Conditions
-	phase := workspace.Status.Phase
-
-	mod = func(ws *workspacev1.Workspace) error {
-		ws.Status.Headless = headless
-		ws.Status.URL = url
-		ws.Status.OwnerToken = ownerToken
-		ws.Status.Runtime = runtime
-		ws.Status.Conditions = conditions
-		ws.Status.Phase = phase
-
-		return nil
-	}
 
 	switch len(pods.Items) {
 	case 0:
-		if phase == "" {
-			phase = workspacev1.WorkspacePhasePending
+		if workspace.Status.Phase == "" {
+			workspace.Status.Phase = workspacev1.WorkspacePhasePending
 		}
 
-		if phase != workspacev1.WorkspacePhasePending {
-			phase = workspacev1.WorkspacePhaseStopped
+		if workspace.Status.Phase != workspacev1.WorkspacePhasePending {
+			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
-		return
+		return nil
 	case 1:
 		// continue below
 	default:
 		// This is exceptional - not sure what to do here. Probably fail the pod
-		conditions = wsk8s.AddUniqueCondition(conditions, metav1.Condition{
+		workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionFailed),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
 			Message:            "multiple pods exists - this should never happen",
 		})
 
-		return
+		return nil
 	}
 
-	conditions = wsk8s.AddUniqueCondition(conditions, metav1.Condition{
+	workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 		Type:               string(workspacev1.WorkspaceConditionDeployed),
 		Status:             metav1.ConditionTrue,
 		LastTransitionTime: metav1.Now(),
@@ -84,48 +64,29 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 	pod := &pods.Items[0]
 
 	if workspace.Status.Runtime == nil {
-		runtime = &workspacev1.WorkspaceRuntimeStatus{}
+		workspace.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{}
 	}
 	if workspace.Status.Runtime.NodeName == "" && pod.Spec.NodeName != "" {
-		runtime.NodeName = pod.Spec.NodeName
+		workspace.Status.Runtime.NodeName = pod.Spec.NodeName
 	}
 	if workspace.Status.Runtime.HostIP == "" && pod.Status.HostIP != "" {
-		runtime.HostIP = pod.Status.HostIP
+		workspace.Status.Runtime.HostIP = pod.Status.HostIP
 	}
 	if workspace.Status.Runtime.PodIP == "" && pod.Status.PodIP != "" {
-		runtime.PodIP = pod.Status.PodIP
+		workspace.Status.Runtime.PodIP = pod.Status.PodIP
 	}
 	if workspace.Status.Runtime.PodName == "" && pod.Name != "" {
-		runtime.PodName = pod.Name
+		workspace.Status.Runtime.PodName = pod.Name
 	}
 
-	if workspace.Spec.Type != workspacev1.WorkspaceTypeRegular {
-		headless = true
+	failure, phase := extractFailure(workspace, pod)
+	if phase != nil {
+		workspace.Status.Phase = *phase
 	}
 
-	if workspace.Status.URL == "" {
-		url, err = config.RenderWorkspaceURL(cfg.WorkspaceURLTemplate, workspace.Name, workspace.Spec.Ownership.WorkspaceID, cfg.GitpodHostURL)
-		if err != nil {
-			return
-		}
-	}
-
-	if workspace.Status.OwnerToken == "" {
-		ownerToken, err = getRandomString(32)
-		if err != nil {
-			err = xerrors.Errorf("cannot create owner token: %w", err)
-			return
-		}
-	}
-
-	failure, p := extractFailure(workspace, pod)
-	if p != nil {
-		phase = *p
-	}
-
-	if failure != "" && !wsk8s.ConditionPresentAndTrue(conditions, string(workspacev1.WorkspaceConditionFailed)) {
+	if failure != "" && !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
 		// workspaces can fail only once - once there is a failed condition set, stick with it
-		conditions = wsk8s.AddUniqueCondition(conditions, metav1.Condition{
+		workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionFailed),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
@@ -135,7 +96,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 
 	switch {
 	case isPodBeingDeleted(pod):
-		phase = workspacev1.WorkspacePhaseStopping
+		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 
 		var hasFinalizer bool
 		for _, f := range pod.Finalizers {
@@ -145,18 +106,18 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			}
 		}
 		if hasFinalizer {
-			if wsk8s.ConditionPresentAndTrue(conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
-				wsk8s.ConditionPresentAndTrue(conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
-				wsk8s.ConditionWithStatusAndReason(conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
+			if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
+				wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
+				wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
 
-				phase = workspacev1.WorkspacePhaseStopped
+				workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 			}
 
 		} else {
 			// We do this independently of the dispostal status because pods only get their finalizer
 			// once they're running. If they fail before they reach the running phase we'll never see
 			// a disposal status, hence would never stop the workspace.
-			phase = workspacev1.WorkspacePhaseStopped
+			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
 
 	case pod.Status.Phase == corev1.PodPending:
@@ -175,9 +136,9 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			}
 		}
 		if creating {
-			phase = workspacev1.WorkspacePhaseCreating
+			workspace.Status.Phase = workspacev1.WorkspacePhaseCreating
 		} else {
-			phase = workspacev1.WorkspacePhasePending
+			workspace.Status.Phase = workspacev1.WorkspacePhasePending
 		}
 
 	case pod.Status.Phase == corev1.PodRunning:
@@ -190,25 +151,25 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		}
 		if ready {
 			// workspace is ready - hence content init is done
-			phase = workspacev1.WorkspacePhaseRunning
+			workspace.Status.Phase = workspacev1.WorkspacePhaseRunning
 		} else {
 			// workspace has not become ready yet - it must be initializing then.
-			phase = workspacev1.WorkspacePhaseInitializing
+			workspace.Status.Phase = workspacev1.WorkspacePhaseInitializing
 		}
 
 	case workspace.Status.Headless && (pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed):
-		phase = workspacev1.WorkspacePhaseStopping
+		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 
 	case pod.Status.Phase == corev1.PodUnknown:
-		phase = workspacev1.WorkspacePhaseUnknown
+		workspace.Status.Phase = workspacev1.WorkspacePhaseUnknown
 
 	default:
 		log.Info("cannot determine workspace phase")
-		phase = workspacev1.WorkspacePhaseUnknown
+		workspace.Status.Phase = workspacev1.WorkspacePhaseUnknown
 
 	}
 
-	return mod, nil
+	return nil
 }
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then
