@@ -13,5 +13,5 @@ import { useCurrentTeam } from "../teams/teams-context";
 export function OrgRequiredRoute({ component }: any) {
     const org = useCurrentTeam();
 
-    return <Route render={({ location }: any) => (!!org ? <Route component={component} /> : <Redirect to={"/"} />)} />;
+    return <Route render={() => (!!org ? <Route component={component} /> : <Redirect to={"/"} />)} />;
 }
