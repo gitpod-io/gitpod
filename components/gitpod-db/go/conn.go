@@ -74,8 +74,9 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 	// refer to https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
 	return gorm.Open(mysql.Open(cfg.FormatDSN()), &gorm.Config{
 		Logger: logger.New(log.Log, logger.Config{
-			SlowThreshold: 200 * time.Millisecond,
-			Colorful:      false,
+			SlowThreshold:             200 * time.Millisecond,
+			Colorful:                  false,
+			IgnoreRecordNotFoundError: true,
 			LogLevel: (func() logger.LogLevel {
 				switch log.Log.Level {
 				case logrus.PanicLevel, logrus.FatalLevel, logrus.ErrorLevel:
