@@ -183,9 +183,16 @@ type GetUsageSummaryParams struct {
 	ExcludeDrafts bool
 }
 
+type TopUser struct {
+	UserName        string `json:"userName"`
+	UserAvatarURL   string `json:"userAvatarURL"`
+	CreditCentsUsed CreditCents
+}
+
 type GetUsageSummaryResponse struct {
 	CreditCentsUsed CreditCents
 	NumberOfRecords int
+	TopUsers        []TopUser
 }
 
 func GetUsageSummary(ctx context.Context, conn *gorm.DB, params GetUsageSummaryParams) (GetUsageSummaryResponse, error) {
@@ -200,6 +207,21 @@ func GetUsageSummary(ctx context.Context, conn *gorm.DB, params GetUsageSummaryP
 	}
 	var result GetUsageSummaryResponse
 	err := query1.Find(&result).Error
+	if err != nil {
+		return result, fmt.Errorf("failed to get usage meta data: %w", err)
+	}
+	query2 := db.Table((&Usage{}).TableName()).
+		Select("sum(creditCents) as CreditCentsUsed, JSON_EXTRACT(metadata, '$.userName', '$.userAvatarURL') as UserData").
+		Where("attributionId = ?", params.AttributionId).
+		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
+		Where("kind = ?", WorkspaceInstanceUsageKind).
+		Group("UserData").
+		Order("CreditCentsUsed DESC").
+		Limit(5)
+	if params.ExcludeDrafts {
+		query2 = query2.Where("draft = ?", false)
+	}
+	err = query2.Find(&result.TopUsers).Error
 	if err != nil {
 		return result, fmt.Errorf("failed to get usage meta data: %w", err)
 	}
