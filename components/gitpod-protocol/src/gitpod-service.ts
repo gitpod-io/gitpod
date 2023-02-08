@@ -363,11 +363,12 @@ const WORKSPACE_MAXIMUM_TIMEOUT_HOURS = 24;
 export type WorkspaceTimeoutDuration = string;
 export namespace WorkspaceTimeoutDuration {
     export function validate(duration: string): WorkspaceTimeoutDuration {
+        duration = duration.toLowerCase();
         const unit = duration.slice(-1);
-        if (!["m", "h", "d"].includes(unit)) {
+        if (!["m", "h"].includes(unit)) {
             throw new Error(`Invalid timeout unit: ${unit}`);
         }
-        const value = parseInt(duration.slice(0, -1));
+        const value = parseInt(duration.slice(0, -1), 10);
         if (isNaN(value) || value <= 0) {
             throw new Error(`Invalid timeout value: ${duration}`);
         }
@@ -375,7 +376,7 @@ export namespace WorkspaceTimeoutDuration {
             (unit === "h" && value > WORKSPACE_MAXIMUM_TIMEOUT_HOURS) ||
             (unit === "m" && value > WORKSPACE_MAXIMUM_TIMEOUT_HOURS * 60)
         ) {
-            throw new Error(`Timeouts cannot extend to more than a day`);
+            throw new Error("Workspace inactivity timeout cannot exceed 24h");
         }
         return duration;
     }
