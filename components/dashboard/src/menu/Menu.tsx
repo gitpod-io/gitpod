@@ -20,7 +20,7 @@ import PillMenuItem from "../components/PillMenuItem";
 import { getTeamSettingsMenu } from "../teams/TeamSettings";
 import { PaymentContext } from "../payment-context";
 import FeedbackFormModal from "../feedback-form/FeedbackModal";
-import { inResource, isGitpodIo } from "../utils";
+import { isGitpodIo } from "../utils";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import OrganizationSelector from "./OrganizationSelector";
@@ -52,9 +52,6 @@ export default function Menu() {
         const path = location.pathname.toLowerCase();
         return all.some((n) => n === path || n + "/" === path);
     }
-
-    // Hide most of the top menu when in a full-page form.
-    const isMinimalUI = inResource(location.pathname, ["new", "orgs/new", "open"]);
 
     useEffect(() => {
         const { server } = getGitpodService();
@@ -150,21 +147,17 @@ export default function Menu() {
                             <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
                         </Link>
                         <OrganizationSelector />
-                        {!isMinimalUI && (
-                            <>
-                                <div className="pl-2 text-base text-gray-500 dark:text-gray-400 flex max-w-lg overflow-hidden">
-                                    {leftMenu.map((entry) => (
-                                        <div className="p-1" key={entry.title}>
-                                            <PillMenuItem
-                                                name={entry.title}
-                                                selected={isSelected(entry, location)}
-                                                link={entry.link}
-                                            />
-                                        </div>
-                                    ))}
+                        <div className="pl-2 text-base text-gray-500 dark:text-gray-400 flex max-w-lg overflow-hidden">
+                            {leftMenu.map((entry) => (
+                                <div className="p-1" key={entry.title}>
+                                    <PillMenuItem
+                                        name={entry.title}
+                                        selected={isSelected(entry, location)}
+                                        link={entry.link}
+                                    />
                                 </div>
-                            </>
-                        )}
+                            ))}
+                        </div>
                     </div>
                     <div className="flex-1 flex items-center w-auto" id="menu">
                         <nav className="flex-1">
