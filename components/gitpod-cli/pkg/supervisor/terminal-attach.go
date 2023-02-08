@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/term"
+	"golang.org/x/xerrors"
 )
 
 type AttachToTerminalOpts struct {
@@ -23,13 +24,13 @@ type AttachToTerminalOpts struct {
 	Token       string
 }
 
-func (client *SupervisorClient) AttachToTerminal(ctx context.Context, alias string, opts AttachToTerminalOpts) {
+func (client *SupervisorClient) AttachToTerminal(ctx context.Context, alias string, opts AttachToTerminalOpts) (int, error) {
 	// Copy to stdout/stderr
 	listen, err := client.Terminal.Listen(ctx, &api.ListenTerminalRequest{
 		Alias: alias,
 	})
 	if err != nil {
-		log.WithError(err).Fatal("cannot attach to terminal")
+		return 0, xerrors.Errorf("cannot attach to terminal: %w", err)
 	}
 	var exitCode int
 	errchan := make(chan error, 5)
@@ -50,7 +51,7 @@ func (client *SupervisorClient) AttachToTerminal(ctx context.Context, alias stri
 	// Set stdin in raw mode.
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
-		log.WithError(err).Fatal("cannot attach to terminal")
+		return 0, xerrors.Errorf("cannot attach to terminal: %w", err)
 	}
 	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 
@@ -115,15 +116,14 @@ func (client *SupervisorClient) AttachToTerminal(ctx context.Context, alias stri
 	}
 
 	// wait indefinitely
-	stopch := make(chan os.Signal, 1)
-	signal.Notify(stopch, syscall.SIGTERM|syscall.SIGINT)
 	select {
 	case err := <-errchan:
 		if err != io.EOF {
-			log.WithError(err).Error("error")
+			return 0, err
 		} else {
-			os.Exit(exitCode)
+			return exitCode, nil
 		}
-	case <-stopch:
+	case <-ctx.Done():
+		return 0, nil
 	}
 }

@@ -8,7 +8,7 @@ import (
 	_ "embed"
 	"fmt"
 
-	gitpod "github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
 
 	"github.com/spf13/cobra"
 )
@@ -19,8 +19,9 @@ var versionCmd = &cobra.Command{
 	Hidden: false,
 	Short:  "Prints the version of the CLI",
 	Args:   cobra.MaximumNArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println(gitpod.Version)
+		return nil
 	},
 }
 

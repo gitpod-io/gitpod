@@ -9,7 +9,8 @@ import (
 	"fmt"
 	"time"
 
-	gitpod "github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/sourcegraph/jsonrpc2"
 	"github.com/spf13/cobra"
@@ -25,31 +26,33 @@ var setTimeoutCmd = &cobra.Command{
 Duration must be in the format of <n>m (minutes), <n>h (hours), or <n>d (days).
 For example, 30m, 1h, 2d, etc.`,
 	Example: `gitpod timeout set 1h`,
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 		wsInfo, err := gitpod.GetWSInfo(ctx)
 		if err != nil {
-			fail(err.Error())
+			return err
 		}
 		client, err := gitpod.ConnectToServer(ctx, wsInfo, []string{
 			"function:setWorkspaceTimeout",
 			"resource:workspace::" + wsInfo.WorkspaceId + "::get/update",
 		})
 		if err != nil {
-			fail(err.Error())
+			return err
 		}
+		defer client.Close()
 		duration, err := time.ParseDuration(args[0])
 		if err != nil {
-			fail(err.Error())
+			return GpError{Err: err, OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
-		if _, err := client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, duration); err != nil {
+		if _, err = client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, duration); err != nil {
 			if err, ok := err.(*jsonrpc2.Error); ok && err.Code == serverapi.PLAN_PROFESSIONAL_REQUIRED {
-				fail("Cannot extend workspace timeout for current plan, please upgrade your plan")
+				return GpError{OutCome: utils.Outcome_UserErr, Message: "Cannot extend workspace timeout for current plan, please upgrade your plan", ErrorCode: utils.UserErrorCode_NeedUpgradePlan}
 			}
-			fail(err.Error())
+			return err
 		}
 		fmt.Printf("Workspace timeout has been set to %d minutes.\n", int(duration.Minutes()))
+		return nil
 	},
 }
 

@@ -7,11 +7,9 @@ package utils
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/analytics"
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
-	"github.com/gitpod-io/gitpod/supervisor/api"
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -35,94 +33,64 @@ const (
 	RebuildErrorCode_NoCustomImage       = "rebuild_no_custom_image"
 	RebuildErrorCode_AlreadyInDebug      = "rebuild_already_in_debug"
 	RebuildErrorCode_InvaligLogLevel     = "rebuild_invalid_log_level"
+
+	// UserError
+	UserErrorCode_NeedUpgradePlan  = "plan_upgrade_required"
+	UserErrorCode_InvalidArguments = "invalid_arg"
+	UserErrorCode_AlreadyAttached  = "already_attached"
 )
 
 type TrackCommandUsageParams struct {
-	Command            string `json:"command,omitempty"`
-	Duration           int64  `json:"duration,omitempty"`
-	ErrorCode          string `json:"errorCode,omitempty"`
-	WorkspaceId        string `json:"workspaceId,omitempty"`
-	InstanceId         string `json:"instanceId,omitempty"`
-	Timestamp          int64  `json:"timestamp,omitempty"`
-	ImageBuildDuration int64  `json:"imageBuildDuration,omitempty"`
-	Outcome            string `json:"outcome,omitempty"`
+	Command            []string `json:"command,omitempty"`
+	Args               int64    `json:"args,omitempty"`
+	Flags              []string `json:"flags,omitempty"`
+	Duration           int64    `json:"duration,omitempty"`
+	ErrorCode          string   `json:"errorCode,omitempty"`
+	WorkspaceId        string   `json:"workspaceId,omitempty"`
+	InstanceId         string   `json:"instanceId,omitempty"`
+	Timestamp          int64    `json:"timestamp,omitempty"`
+	ImageBuildDuration int64    `json:"imageBuildDuration,omitempty"`
+	Outcome            string   `json:"outcome,omitempty"`
 }
 
-type AnalyticsEvent struct {
-	Data             *TrackCommandUsageParams
-	startTime        time.Time
-	supervisorClient *supervisor.SupervisorClient
-	ownerId          string
-	w                analytics.Writer
-}
-
-func NewAnalyticsEvent(ctx context.Context, supervisorClient *supervisor.SupervisorClient, cmdParams *TrackCommandUsageParams) *AnalyticsEvent {
-	event := &AnalyticsEvent{
-		startTime:        time.Now(),
-		supervisorClient: supervisorClient,
-		w:                analytics.NewFromEnvironment(),
-	}
-
-	wsInfo, err := supervisorClient.Info.WorkspaceInfo(ctx, &api.WorkspaceInfoRequest{})
+func (e *TrackCommandUsageParams) ExportToJson() (string, error) {
+	data, err := json.Marshal(e)
 	if err != nil {
-		LogError(ctx, err, "Could not fetch the workspace info", supervisorClient)
-		return nil
+		return "", err
 	}
-
-	event.ownerId = wsInfo.OwnerId
-
-	event.Data = &TrackCommandUsageParams{
-		Command:     cmdParams.Command,
-		Duration:    0,
-		WorkspaceId: wsInfo.WorkspaceId,
-		InstanceId:  wsInfo.InstanceId,
-		ErrorCode:   "",
-		Timestamp:   time.Now().UnixMilli(),
-	}
-
-	return event
+	return string(data), nil
 }
 
-func (e *AnalyticsEvent) Set(key string, value interface{}) *AnalyticsEvent {
-	switch key {
-	case "Command":
-		e.Data.Command = value.(string)
-	case "ErrorCode":
-		e.Data.ErrorCode = value.(string)
-	case "Duration":
-		e.Data.Duration = value.(int64)
-	case "WorkspaceId":
-		e.Data.WorkspaceId = value.(string)
-	case "InstanceId":
-		e.Data.InstanceId = value.(string)
-	case "ImageBuildDuration":
-		e.Data.ImageBuildDuration = value.(int64)
-	case "Outcome":
-		e.Data.Outcome = value.(string)
-	}
-	return e
+type analyticsEvent struct {
+	Data   *TrackCommandUsageParams
+	userId string
+	w      analytics.Writer
 }
 
-func (e *AnalyticsEvent) Send(ctx context.Context) {
+func NewAnalyticsEvent(userId string) *analyticsEvent {
+	return &analyticsEvent{
+		w:      analytics.NewFromEnvironment(),
+		userId: userId,
+	}
+}
+
+func (e *analyticsEvent) Send(ctx context.Context) error {
 	defer e.w.Close()
-
-	e.Set("Duration", time.Since(e.startTime).Milliseconds())
 
 	data := make(map[string]interface{})
 	jsonData, err := json.Marshal(e.Data)
 	if err != nil {
-		LogError(ctx, err, "Could not marshal event data", e.supervisorClient)
-		return
+		return xerrors.Errorf("Could not marshal event data: %w", err)
 	}
 	err = json.Unmarshal(jsonData, &data)
 	if err != nil {
-		LogError(ctx, err, "Could not unmarshal event data", e.supervisorClient)
-		return
+		return xerrors.Errorf("Could not unmarshal event data: %w", err)
 	}
 
 	e.w.Track(analytics.TrackMessage{
-		Identity:   analytics.Identity{UserID: e.ownerId},
+		Identity:   analytics.Identity{UserID: e.userId},
 		Event:      "gp_command",
 		Properties: data,
 	})
+	return nil
 }
