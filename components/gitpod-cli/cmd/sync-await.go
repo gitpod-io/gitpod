@@ -19,7 +19,7 @@ var awaitSyncCmd = &cobra.Command{
 	Use:   "sync-await <name>",
 	Short: "Awaits an event triggered using gp sync-done",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		h := sha1.New()
 		h.Write([]byte(args[0]))
 		id := hex.EncodeToString(h.Sum(nil))
@@ -42,6 +42,7 @@ var awaitSyncCmd = &cobra.Command{
 
 		<-done
 		fmt.Printf("%s done\n", args[0])
+		return nil
 	},
 }
 

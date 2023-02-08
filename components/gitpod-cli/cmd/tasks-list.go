@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -23,24 +23,24 @@ import (
 var listTasksCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Lists the workspace tasks and their state",
-	Run: func(cmd *cobra.Command, args []string) {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
 
 		client, err := supervisor.New(ctx)
 		if err != nil {
-			log.Fatalf("cannot get task list: %s", err)
+			return xerrors.Errorf("cannot get task list: %w", err)
 		}
 		defer client.Close()
 
 		tasks, err := client.GetTasksList(ctx)
 		if err != nil {
-			log.Fatalf("cannot get task list: %s", err)
+			return xerrors.Errorf("cannot get task list: %w", err)
 		}
 
 		if len(tasks) == 0 {
 			fmt.Println("No tasks detected")
-			return
+			return nil
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
@@ -67,7 +67,7 @@ var listTasksCmd = &cobra.Command{
 			isCurrent := false
 
 			if task.State == api.TaskState_running {
-				terminal, err := client.Terminal.Get(context.Background(), &api.GetTerminalRequest{Alias: task.Terminal})
+				terminal, err := client.Terminal.Get(ctx, &api.GetTerminalRequest{Alias: task.Terminal})
 				if err != nil {
 					panic(err)
 				}
@@ -85,6 +85,7 @@ var listTasksCmd = &cobra.Command{
 		}
 
 		table.Render()
+		return nil
 	},
 }
 

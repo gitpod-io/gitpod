@@ -7,7 +7,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpodlib"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 )
 
 var (
@@ -30,17 +30,17 @@ var initCmd = &cobra.Command{
 	Long: `
 Create a Gitpod configuration for this project.
 	`,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg := gitpodlib.GitpodFile{}
 		if interactive {
 			if err := askForDockerImage(&cfg); err != nil {
-				log.Fatal(err)
+				return err
 			}
 			if err := askForPorts(&cfg); err != nil {
-				log.Fatal(err)
+				return err
 			}
 			if err := askForTask(&cfg); err != nil {
-				log.Fatal(err)
+				return err
 			}
 		} else {
 			cfg.AddPort(3000)
@@ -49,7 +49,7 @@ Create a Gitpod configuration for this project.
 
 		d, err := yaml.Marshal(cfg)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		if !interactive {
 			d = []byte(`# List the start up tasks. Learn more: https://www.gitpod.io/docs/configure/workspaces/tasks
@@ -71,26 +71,25 @@ ports:
 			fmt.Printf("\n\n---\n%s", d)
 		}
 
-		if _, err := os.Stat(".gitpod.yml"); err == nil {
+		if _, err = os.Stat(".gitpod.yml"); err == nil {
 			prompt := promptui.Prompt{
 				IsConfirm: true,
 				Label:     ".gitpod.yml file already exists, overwrite?",
 			}
-			if _, err := prompt.Run(); err != nil {
+			if _, err = prompt.Run(); err != nil {
 				fmt.Printf("Not overwriting .gitpod.yml file. Aborting.\n")
-				os.Exit(1)
-				return
+				return GpError{Silence: true, Err: err, OutCome: utils.Outcome_Success}
 			}
 		}
 
-		if err := os.WriteFile(".gitpod.yml", d, 0644); err != nil {
-			log.Fatal(err)
+		if err = os.WriteFile(".gitpod.yml", d, 0644); err != nil {
+			return err
 		}
 
 		// open .gitpod.yml and Dockerfile
 		if v, ok := cfg.Image.(gitpodlib.GitpodImage); ok {
-			if _, err := os.Stat(v.File); os.IsNotExist(err) {
-				if err := os.WriteFile(v.File, []byte(`FROM gitpod/workspace-full
+			if _, err = os.Stat(v.File); os.IsNotExist(err) {
+				if err = os.WriteFile(v.File, []byte(`FROM gitpod/workspace-full
 
 USER gitpod
 
@@ -103,13 +102,13 @@ USER gitpod
 #
 # More information: https://www.gitpod.io/docs/config-docker/
 `), 0644); err != nil {
-					log.Fatal(err)
+					return err
 				}
 			}
 
 			openCmd.Run(cmd, []string{v.File})
 		}
-		openCmd.Run(cmd, []string{".gitpod.yml"})
+		return openCmd.RunE(cmd, []string{".gitpod.yml"})
 	},
 }
 

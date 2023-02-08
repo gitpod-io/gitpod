@@ -6,16 +6,15 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
 	"strconv"
 
 	"github.com/google/tcpproxy"
 	"github.com/gorilla/handlers"
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 )
 
 var rewriteHostHeader bool
@@ -25,12 +24,10 @@ var portExposeCmd = &cobra.Command{
 	Short: "Makes a port available on 0.0.0.0 so that it can be exposed to the internet",
 	Long:  ``,
 	Args:  cobra.RangeArgs(1, 2),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		srcp, err := strconv.ParseUint(args[0], 10, 16)
 		if err != nil {
-			log.Fatalf("local-port cannot be parsed as int: %s", err)
-			os.Exit(-1)
-			return
+			return xerrors.Errorf("local-port cannot be parsed as int: %w", err)
 		}
 
 		trgp := srcp + 1
@@ -38,9 +35,7 @@ var portExposeCmd = &cobra.Command{
 			var err error
 			trgp, err = strconv.ParseUint(args[1], 10, 16)
 			if err != nil {
-				log.Fatalf("target-port cannot be parsed as int: %s", err)
-				os.Exit(-1)
-				return
+				return xerrors.Errorf("target-port cannot be parsed as int: %w", err)
 			}
 		}
 
@@ -54,20 +49,42 @@ var portExposeCmd = &cobra.Command{
 				r.Host = host
 			}
 			// we want both X-Forwarded-Proto AND X-Forwarded-Host to reach the backend
-			http.Handle("/", handlers.ProxyHeaders(http.HandlerFunc(proxy.ServeHTTP)))
 
-			fmt.Printf("Proxying HTTP traffic: 0.0.0.0:%d -> 127.0.0.1:%d (with host rewriting)\n", trgp, srcp)
-			err = http.ListenAndServe(fmt.Sprintf(":%d", trgp), nil)
-			if err != nil {
-				log.Fatalf("reverse proxy: %s", err)
+			server := http.Server{
+				Addr:    fmt.Sprintf(":%d", trgp),
+				Handler: handlers.ProxyHeaders(http.HandlerFunc(proxy.ServeHTTP)),
 			}
-			return
+			fmt.Printf("Proxying HTTP traffic: 0.0.0.0:%d -> 127.0.0.1:%d (with host rewriting)\n", trgp, srcp)
+			errchan := make(chan error)
+			go func() {
+				err := server.ListenAndServe()
+				errchan <- err
+			}()
+
+			select {
+			case <-cmd.Context().Done():
+				server.Close()
+			case err := <-errchan:
+				return xerrors.Errorf("reverse proxy failed: %w", err)
+			}
+			return nil
 		}
 
 		var p tcpproxy.Proxy
 		p.AddRoute(fmt.Sprintf(":%d", trgp), tcpproxy.To(fmt.Sprintf("127.0.0.1:%d", srcp)))
 		fmt.Printf("Forwarding traffic: 0.0.0.0:%d -> 127.0.0.1:%d\n", trgp, srcp)
-		log.Fatal(p.Run())
+		errchan := make(chan error)
+		go func() {
+			err := p.Run()
+			errchan <- err
+		}()
+		select {
+		case <-cmd.Context().Done():
+			p.Close()
+		case err := <-errchan:
+			return xerrors.Errorf("reverse proxy failed: %w", err)
+		}
+		return nil
 	},
 }
 

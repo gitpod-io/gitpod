@@ -15,6 +15,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -51,7 +52,7 @@ Note that you can delete/unset variables if their repository pattern matches the
 delete environment variables with a repository pattern of */foo, foo/* or */*.
 `,
 	Args: cobra.ArbitraryArgs,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		log.SetOutput(io.Discard)
 		f, err := os.OpenFile(os.TempDir()+"/gp-env.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err == nil {
@@ -59,16 +60,19 @@ delete environment variables with a repository pattern of */foo, foo/* or */*.
 			log.SetOutput(f)
 		}
 
+		ctx, cancel := context.WithTimeout(cmd.Context(), 1*time.Minute)
+		defer cancel()
+
 		if len(args) > 0 {
 			if unsetEnvs {
-				deleteEnvs(args)
-				return
+				err = deleteEnvs(ctx, args)
+			} else {
+				err = setEnvs(ctx, args)
 			}
-
-			setEnvs(args)
 		} else {
-			getEnvs()
+			err = getEnvs(ctx)
 		}
+		return err
 	},
 }
 
@@ -120,84 +124,69 @@ func connectToServer(ctx context.Context) (*connectToServerResult, error) {
 	return &connectToServerResult{repositoryPattern, client}, nil
 }
 
-func getEnvs() {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
+func getEnvs(ctx context.Context) error {
 	result, err := connectToServer(ctx)
 	if err != nil {
-		fail(err.Error())
+		return err
 	}
+	defer result.client.Close()
 
 	vars, err := result.client.GetEnvVars(ctx)
 	if err != nil {
-		fail("failed to fetch env vars from server: " + err.Error())
+		return xerrors.Errorf("failed to fetch env vars from server: %w", err)
 	}
 
 	for _, v := range vars {
 		printVar(v, exportEnvs)
 	}
+
+	return nil
 }
 
-func setEnvs(args []string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
+func setEnvs(ctx context.Context, args []string) error {
 	result, err := connectToServer(ctx)
 	if err != nil {
-		fail(err.Error())
+		return err
 	}
+	defer result.client.Close()
 
 	vars, err := parseArgs(args, result.repositoryPattern)
 	if err != nil {
-		fail(err.Error())
+		return err
 	}
 
-	var exitCode int
-	var wg sync.WaitGroup
-	wg.Add(len(vars))
+	g, ctx := errgroup.WithContext(ctx)
 	for _, v := range vars {
-		go func(v *serverapi.UserEnvVarValue) {
+		v := v
+		g.Go(func() error {
 			err = result.client.SetEnvVar(ctx, v)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "cannot set %s: %v\n", v.Name, err)
-				exitCode = -1
-			} else {
-				printVar(v, exportEnvs)
+				return err
 			}
-			wg.Done()
-		}(v)
+			printVar(v, exportEnvs)
+			return nil
+		})
 	}
-	wg.Wait()
-	os.Exit(exitCode)
+	return g.Wait()
 }
 
-func deleteEnvs(args []string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
+func deleteEnvs(ctx context.Context, args []string) error {
 	result, err := connectToServer(ctx)
 	if err != nil {
-		fail(err.Error())
+		return err
 	}
+	defer result.client.Close()
 
-	var exitCode int
+	g, ctx := errgroup.WithContext(ctx)
 	var wg sync.WaitGroup
 	wg.Add(len(args))
 	for _, name := range args {
-		go func(name string) {
-			err = result.client.DeleteEnvVar(ctx, &serverapi.UserEnvVarValue{Name: name, RepositoryPattern: result.repositoryPattern})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "cannot unset %s: %v\n", name, err)
-				exitCode = -1
-			}
-			wg.Done()
-		}(name)
+		name := name
+		g.Go(func() error {
+			return result.client.DeleteEnvVar(ctx, &serverapi.UserEnvVarValue{Name: name, RepositoryPattern: result.repositoryPattern})
+		})
 	}
-	wg.Wait()
-	os.Exit(exitCode)
-}
-
-func fail(msg string) {
-	fmt.Fprintln(os.Stderr, msg)
-	os.Exit(-1)
+	return g.Wait()
 }
 
 func printVar(v *serverapi.UserEnvVarValue, export bool) {

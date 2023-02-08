@@ -13,7 +13,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	gitpod "github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
@@ -27,7 +28,10 @@ var gitTrackCommand = &cobra.Command{
 	Long:   "Sending anonymous statistics about the executed git commands inside a workspace",
 	Args:   cobra.ExactArgs(0),
 	Hidden: true,
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
+		// ignore trace
+		utils.TrackCommandUsageEvent.Command = nil
+
 		log.SetOutput(io.Discard)
 		f, err := os.OpenFile(os.TempDir()+"/gitpod-git-credential-helper.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err == nil {
@@ -37,11 +41,11 @@ var gitTrackCommand = &cobra.Command{
 
 		log.Infof("gp git-track-command")
 
-		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+		ctx, cancel := context.WithTimeout(cmd.Context(), 1*time.Minute)
 		defer cancel()
 		wsInfo, err := gitpod.GetWSInfo(ctx)
 		if err != nil {
-			fail(err.Error())
+			return err
 		}
 
 		client, err := gitpod.ConnectToServer(ctx, wsInfo, []string{"function:trackEvent"})
@@ -76,6 +80,7 @@ var gitTrackCommand = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("error tracking git event")
 		}
+		return nil
 	},
 }
 

@@ -6,13 +6,14 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 	"strconv"
 	"time"
 
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -24,16 +25,16 @@ var awaitPortCmd = &cobra.Command{
 	Use:   "await <port>",
 	Short: "Waits for a process to listen on a port",
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		port, err := strconv.ParseUint(args[0], 10, 16)
 		if err != nil {
-			log.Fatalf("port cannot be parsed as int: %s", err)
+			return GpError{Err: xerrors.Errorf("port cannot be parsed as int: %w", err), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 
 		// Expected format: local port (in hex), remote address (irrelevant here), connection state ("0A" is "TCP_LISTEN")
 		pattern, err := regexp.Compile(fmt.Sprintf(":[0]*%X \\w+:\\w+ 0A ", port))
 		if err != nil {
-			log.Fatal("cannot compile regexp pattern")
+			return GpError{Err: xerrors.Errorf("cannot compile regexp pattern"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 
 		var protos []string
@@ -44,21 +45,26 @@ var awaitPortCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Awaiting port %d... ", port)
-		for {
+		t := time.NewTicker(time.Second * 2)
+		for cmd.Context().Err() == nil {
 			for _, proto := range protos {
 				tcp, err := os.ReadFile(proto)
 				if err != nil {
-					log.Fatalf("cannot read %v: %s", proto, err)
+					return xerrors.Errorf("cannot read %v: %w", proto, err)
 				}
 
 				if pattern.MatchString(string(tcp)) {
 					fmt.Println("ok")
-					return
+					return nil
 				}
 			}
-
-			time.Sleep(2 * time.Second)
+			select {
+			case <-cmd.Context().Done():
+				return nil
+			case <-t.C:
+			}
 		}
+		return nil
 	},
 }
 
