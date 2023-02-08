@@ -5661,7 +5661,8 @@ data:
           "score": 50,
           "govern": true,
           "admissionConstraints": null,
-          "applicationCluster": "dev"
+          "applicationCluster": "dev",
+          "region": ""
         }
       ],
       "clusterService": {
@@ -10155,7 +10156,7 @@ spec:
         - name: SHLVL
           value: "1"
         - name: WSMAN_CFG_MANAGERS
-          value: WwogIHsKICAgICJuYW1lIjogImRldiIsCiAgICAidXJsIjogImRuczovLy93cy1tYW5hZ2VyOjgwODAiLAogICAgInRscyI6IHsKICAgICAgImNhIjogIi93cy1tYW5hZ2VyLWNsaWVudC10bHMtY2VydHMvY2EuY3J0IiwKICAgICAgImNydCI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL3Rscy5jcnQiLAogICAgICAia2V5IjogIi93cy1tYW5hZ2VyLWNsaWVudC10bHMtY2VydHMvdGxzLmtleSIKICAgIH0sCiAgICAic3RhdGUiOiAiYXZhaWxhYmxlIiwKICAgICJtYXhTY29yZSI6IDEwMCwKICAgICJzY29yZSI6IDUwLAogICAgImdvdmVybiI6IHRydWUsCiAgICAiYWRtaXNzaW9uQ29uc3RyYWludHMiOiBudWxsLAogICAgImFwcGxpY2F0aW9uQ2x1c3RlciI6ICJkZXYiCiAgfQpd
+          value: WwogIHsKICAgICJuYW1lIjogImRldiIsCiAgICAidXJsIjogImRuczovLy93cy1tYW5hZ2VyOjgwODAiLAogICAgInRscyI6IHsKICAgICAgImNhIjogIi93cy1tYW5hZ2VyLWNsaWVudC10bHMtY2VydHMvY2EuY3J0IiwKICAgICAgImNydCI6ICIvd3MtbWFuYWdlci1jbGllbnQtdGxzLWNlcnRzL3Rscy5jcnQiLAogICAgICAia2V5IjogIi93cy1tYW5hZ2VyLWNsaWVudC10bHMtY2VydHMvdGxzLmtleSIKICAgIH0sCiAgICAic3RhdGUiOiAiYXZhaWxhYmxlIiwKICAgICJtYXhTY29yZSI6IDEwMCwKICAgICJzY29yZSI6IDUwLAogICAgImdvdmVybiI6IHRydWUsCiAgICAiYWRtaXNzaW9uQ29uc3RyYWludHMiOiBudWxsLAogICAgImFwcGxpY2F0aW9uQ2x1c3RlciI6ICJkZXYiLAogICAgInJlZ2lvbiI6ICIiCiAgfQpd
         image: eu.gcr.io/gitpod-core-dev/build/server:test
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -10469,7 +10470,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 334d637eec12dbe685d0840ca642627b068bb576859982d52b7767b99901a832
+        gitpod.io/checksum_config: 66c2a96f2c9e3749783dbe458cde8be8f05455b289921045e62a0b2cbf641e7c
       creationTimestamp: null
       labels:
         app: gitpod

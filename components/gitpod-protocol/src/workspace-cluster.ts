@@ -19,6 +19,10 @@ export interface WorkspaceCluster {
     // The name can be at most 60 characters.
     applicationCluster: string;
 
+    // The name of the region this cluster belongs to. E.g. us-west1 or europe-west1
+    // The name can be at most 60 characters.
+    region: string;
+
     // URL of the cluster's ws-manager API
     url: string;
 

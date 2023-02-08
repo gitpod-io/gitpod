@@ -145,6 +145,7 @@ export class ClusterService implements IClusterServiceServer {
                     name: req.name,
                     url: req.url,
                     applicationCluster: this.config.installation,
+                    region: req.region,
                     state,
                     score,
                     maxScore: 100,

@@ -92,6 +92,12 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     })
     applicationCluster: string;
 
+    @PrimaryColumn({
+        type: "varchar",
+        length: 60,
+    })
+    region: string;
+
     // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
     @Column()
     deleted: boolean;

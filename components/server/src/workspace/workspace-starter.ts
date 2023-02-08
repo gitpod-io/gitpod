@@ -111,7 +111,6 @@ import * as grpc from "@grpc/grpc-js";
 import { IDEService } from "../ide-service";
 import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
-import { ExtendedUser } from "@gitpod/ws-manager/lib/constraints";
 import {
     FailedInstanceStartReason,
     increaseFailedInstanceStartCounter,
@@ -258,7 +257,7 @@ export class WorkspaceStarter {
                 auth.setTotal(allowAll);
                 req.setAuth(auth);
 
-                const client = await this.getImageBuilderClient(user, workspace, undefined);
+                const client = await this.getImageBuilderClient(user, workspace, undefined, options?.region);
                 const res = await client.resolveBaseImage({ span }, req);
                 workspace.imageSource = <WorkspaceImageSourceReference>{
                     baseImageResolved: res.getRef(),
@@ -301,11 +300,12 @@ export class WorkspaceStarter {
 
             let needsImageBuild: boolean;
             try {
-                // if we need to build the workspace image we musn't wait for actuallyStartWorkspace to return as that would block the
+                // if we need to build the workspace image we must not wait for actuallyStartWorkspace to return as that would block the
                 // frontend until the image is built.
                 const additionalAuth = await this.getAdditionalImageAuth(projectEnvVars);
                 needsImageBuild =
-                    forceRebuild || (await this.needsImageBuild({ span }, user, workspace, instance, additionalAuth));
+                    forceRebuild ||
+                    (await this.needsImageBuild({ span }, user, workspace, instance, additionalAuth, options?.region));
                 if (needsImageBuild) {
                     instance.status.conditions = {
                         neededImageBuild: true,
@@ -335,6 +335,7 @@ export class WorkspaceStarter {
                     projectEnvVars,
                     options.rethrow,
                     forceRebuild,
+                    options?.region,
                 ).catch((err) => log.error("actuallyStartWorkspace", err));
                 return { instanceID: instance.id };
             }
@@ -350,6 +351,7 @@ export class WorkspaceStarter {
                 projectEnvVars,
                 options.rethrow,
                 forceRebuild,
+                options?.region,
             );
         } catch (e) {
             this.logAndTraceStartWorkspaceError({ span }, { userId: user.id, instanceId }, e);
@@ -439,6 +441,7 @@ export class WorkspaceStarter {
         projectEnvVars: ProjectEnvVar[],
         rethrow?: boolean,
         forceRebuild?: boolean,
+        region?: string,
     ): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("actuallyStartWorkspace", ctx);
 
@@ -454,6 +457,7 @@ export class WorkspaceStarter {
                 ideConfig,
                 forceRebuild,
                 forceRebuild,
+                region,
             );
 
             let type: WorkspaceType = WorkspaceType.REGULAR;
@@ -482,11 +486,6 @@ export class WorkspaceStarter {
             startRequest.setSpec(spec);
             startRequest.setServicePrefix(workspace.id);
 
-            // we add additional information to the user to help with cluster selection
-            const euser: ExtendedUser = {
-                ...user,
-            };
-
             const ideUrlPromise = new Deferred<string>();
             const before = Date.now();
             const logSuccess = (fromWsManager: boolean) => {
@@ -510,7 +509,7 @@ export class WorkspaceStarter {
                 let retries = 0;
                 try {
                     for (; retries < MAX_INSTANCE_START_RETRIES; retries++) {
-                        resp = await this.tryStartOnCluster({ span }, startRequest, euser, workspace, instance);
+                        resp = await this.tryStartOnCluster({ span }, startRequest, user, workspace, instance, region);
                         if (resp) {
                             break;
                         }
@@ -635,16 +634,18 @@ export class WorkspaceStarter {
     protected async tryStartOnCluster(
         ctx: TraceContext,
         startRequest: StartWorkspaceRequest,
-        euser: ExtendedUser,
+        user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
+        region?: string,
     ): Promise<StartWorkspaceResponse.AsObject | undefined> {
         let lastInstallation = "";
         const clusters = await this.clientProvider.getStartClusterSets(
             this.config.installationShortname,
-            euser,
+            user,
             workspace,
             instance,
+            region,
         );
         for await (let cluster of clusters) {
             try {
@@ -1060,10 +1061,11 @@ export class WorkspaceStarter {
         workspace: Workspace,
         instance: WorkspaceInstance,
         additionalAuth: Map<string, string>,
+        region?: string,
     ): Promise<boolean> {
         const span = TraceContext.startSpan("needsImageBuild", ctx);
         try {
-            const client = await this.getImageBuilderClient(user, workspace, instance);
+            const client = await this.getImageBuilderClient(user, workspace, instance, region);
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
@@ -1099,12 +1101,13 @@ export class WorkspaceStarter {
         ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
         ignoreBaseImageresolvedAndRebuildBase: boolean = false,
         forceRebuild: boolean = false,
+        region?: string,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
 
         try {
             // Start build...
-            const client = await this.getImageBuilderClient(user, workspace, instance);
+            const client = await this.getImageBuilderClient(user, workspace, instance, region);
             const { src, auth, disposable } = await this.prepareBuildRequest(
                 { span },
                 workspace,
@@ -1193,6 +1196,7 @@ export class WorkspaceStarter {
                         ideConfig,
                         true,
                         forceRebuild,
+                        region,
                     );
                 } else {
                     throw err;
@@ -1822,13 +1826,24 @@ export class WorkspaceStarter {
     }
 
     /**
-     * This method is temporary until we moved image-builder into workspace clusters
      * @param user
      * @param workspace
      * @param instance
+     * @param region
      * @returns
      */
-    protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        return this.imagebuilderClientProvider.getClient(this.config.installationShortname, user, workspace, instance);
+    protected async getImageBuilderClient(
+        user: User,
+        workspace: Workspace,
+        instance?: WorkspaceInstance,
+        region?: string,
+    ) {
+        return this.imagebuilderClientProvider.getClient(
+            this.config.installationShortname,
+            user,
+            workspace,
+            instance,
+            region,
+        );
     }
 }

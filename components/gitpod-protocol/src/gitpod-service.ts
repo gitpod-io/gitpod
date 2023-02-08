@@ -439,6 +439,7 @@ export namespace GitpodServer {
         forceDefaultImage?: boolean;
         workspaceClass?: string;
         ideSettings?: IDESettings;
+        region?: string;
     }
     export interface TakeSnapshotOptions {
         workspaceId: string;

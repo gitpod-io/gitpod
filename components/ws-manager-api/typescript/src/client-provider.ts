@@ -5,7 +5,7 @@
  */
 
 import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
-import { Disposable, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { Disposable, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { WorkspaceClusterWoTLS, WorkspaceManagerConnectionInfo } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
@@ -15,7 +15,7 @@ import {
     WorkspaceManagerClientProviderCompositeSource,
     WorkspaceManagerClientProviderSource,
 } from "./client-provider-source";
-import { ExtendedUser, workspaceClusterSetsAuthorized } from "./constraints";
+import { workspaceClusterSetsAuthorized } from "./constraints";
 import { WorkspaceManagerClient } from "./core_grpc_pb";
 import { linearBackoffStrategy, PromisifiedWorkspaceManagerClient } from "./promisified-client";
 
@@ -47,16 +47,17 @@ export class WorkspaceManagerClientProvider implements Disposable {
      */
     public async getStartClusterSets(
         applicationCluster: string,
-        user: ExtendedUser,
+        user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
+        region?: string,
     ): Promise<IWorkspaceClusterStartSet> {
         const allClusters = await this.source.getAllWorkspaceClusters(applicationCluster);
         const availableClusters = allClusters.filter((c) => c.score > 0 && c.state === "available");
 
         const sets = workspaceClusterSetsAuthorized
             .map((constraints) => {
-                const r = constraints.constraint(availableClusters, user, workspace, instance);
+                const r = constraints.constraint(availableClusters, { user, workspace, instance, region });
                 if (!r) {
                     return;
                 }

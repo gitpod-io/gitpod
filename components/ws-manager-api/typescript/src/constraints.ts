@@ -7,12 +7,6 @@
 import { PermissionName, RolesOrPermissions, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { AdmissionConstraint, WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 
-/**
- * ExtendedUser adds additional attributes to a user which are helpful
- * during cluster selection.
- */
-export interface ExtendedUser extends User {}
-
 export interface WorkspaceClusterConstraintSet {
     name: string;
     constraint: Constraint;
@@ -45,28 +39,30 @@ export const workspaceClusterSetsAuthorized = workspaceClusterSets.map((set) => 
     constraint: intersect(set.constraint, constraintUserIsAuthorized),
 }));
 
-export type Constraint = (
-    all: WorkspaceClusterWoTLS[],
-    user: ExtendedUser,
-    workspace: Workspace,
-    instance: WorkspaceInstance,
-) => WorkspaceClusterWoTLS[];
+export type Constraint = (all: WorkspaceClusterWoTLS[], args: ConstraintArgs) => WorkspaceClusterWoTLS[];
+
+export type ConstraintArgs = {
+    user: User;
+    workspace: Workspace;
+    instance: WorkspaceInstance;
+    region?: string;
+};
 
 export function invert(c: Constraint): Constraint {
-    return (all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance) => {
-        const s = c(all, user, workspace, instance);
+    return (all: WorkspaceClusterWoTLS[], args: ConstraintArgs) => {
+        const s = c(all, args);
         return all.filter((c) => !s.find((sc) => c.name === sc.name));
     };
 }
 
 export function intersect(...cs: Constraint[]): Constraint {
-    return (all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance) => {
+    return (all: WorkspaceClusterWoTLS[], args: ConstraintArgs) => {
         if (cs.length === 0) {
             // no constraints means all clusters match
             return all;
         }
 
-        const sets = cs.map((c) => c(all, user, workspace, instance));
+        const sets = cs.map((c) => c(all, args));
 
         return sets[0].filter((c) => sets.slice(1).every((s) => s.includes(c)));
     };
@@ -84,7 +80,7 @@ function hasPermissionConstraint(cluster: WorkspaceClusterWoTLS, permission: Per
  * @returns
  */
 export function constraintInverseHasPermissions(...permissions: PermissionName[]): Constraint {
-    return (all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance) => {
+    return (all: WorkspaceClusterWoTLS[], args: ConstraintArgs) => {
         return all.filter((cluster) => !permissions.some((p) => hasPermissionConstraint(cluster, p)));
     };
 }
@@ -95,19 +91,16 @@ export function constraintInverseHasPermissions(...permissions: PermissionName[]
  * @returns
  */
 export function constraintHasPermissions(...permissions: PermissionName[]): Constraint {
-    return (all: WorkspaceClusterWoTLS[], user: ExtendedUser, workspace: Workspace, instance: WorkspaceInstance) => {
+    return (all: WorkspaceClusterWoTLS[], args: ConstraintArgs) => {
         return all.filter((cluster) => permissions.some((p) => hasPermissionConstraint(cluster, p)));
     };
 }
 
-export function constraintRegional(
-    all: WorkspaceClusterWoTLS[],
-    user: ExtendedUser,
-    workspace: Workspace,
-    instance: WorkspaceInstance,
-): WorkspaceClusterWoTLS[] {
-    // TODO(cw): implement me
-    return [];
+export function constraintRegional(all: WorkspaceClusterWoTLS[], args: ConstraintArgs): WorkspaceClusterWoTLS[] {
+    if (!args.region || args.region.length === 0) {
+        return [];
+    }
+    return all.filter((cluster) => cluster.region === args.region);
 }
 
 /**
@@ -116,14 +109,12 @@ export function constraintRegional(
  */
 export function constraintUserIsAuthorized(
     all: WorkspaceClusterWoTLS[],
-    user: ExtendedUser,
-    workspace: Workspace,
-    instance: WorkspaceInstance,
+    args: ConstraintArgs,
 ): WorkspaceClusterWoTLS[] {
-    return all.filter((cluster) => userMayAccessCluster(cluster, user));
+    return all.filter((cluster) => userMayAccessCluster(cluster, args.user));
 }
 
-function userMayAccessCluster(cluster: WorkspaceClusterWoTLS, user: ExtendedUser): boolean {
+function userMayAccessCluster(cluster: WorkspaceClusterWoTLS, user: User): boolean {
     const userPermissions = RolesOrPermissions.toPermissionSet(user.rolesOrPermissions);
     return (cluster.admissionConstraints || []).every((c) => {
         switch (c.type) {
