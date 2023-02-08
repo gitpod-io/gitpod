@@ -97,7 +97,7 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 		WithField("page", page).
 		WithField("from", from).
 		WithField("to", to)
-	logger.Info("Fetching usage data")
+	logger.Debug("Fetching usage data")
 	if err != nil {
 		logger.WithError(err).Error("Failed to fetch usage.")
 		return nil, status.Error(codes.Internal, "unable to retrieve usage")
