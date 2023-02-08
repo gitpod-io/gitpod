@@ -92,7 +92,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										fmt.Sprintf("--datastore-bootstrap-files=%s", strings.Join(bootstrapFiles, ",")),
 										"--dispatch-cluster-enabled=true",
 										"--datastore-bootstrap-overwrite=true",
-										fmt.Sprintf("--metrics-addr=:%d", baseserver.BuiltinMetricsPort),
+										fmt.Sprintf("--metrics-addr=127.0.0.1:%d", baseserver.BuiltinMetricsPort),
 									}
 
 									// Dispatching only makes sense, when we have more than one replica
