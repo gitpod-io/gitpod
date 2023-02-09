@@ -130,7 +130,7 @@ type WorkspaceStatus struct {
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 }
 
-// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;EverReady;ContentReady;BackupComplete;BackupFailure
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;ContentReady;BackupComplete;BackupFailure
 type WorkspaceCondition string
 
 const (
@@ -156,9 +156,6 @@ const (
 	// StoppedByRequest is true if the workspace was stopped using a StopWorkspace call
 	WorkspaceConditionStoppedByRequest WorkspaceCondition = "StoppedByRequest"
 
-	// EverReady becomes true if the workspace was ever ready to be used
-	WorkspaceConditionEverReady WorkspaceCondition = "EverReady"
-
 	// ContentReady is true once the content initialisation is complete
 	WorkspaceConditionContentReady WorkspaceCondition = "ContentReady"
 
@@ -182,30 +179,6 @@ const (
 	WorkspacePhaseStopping     WorkspacePhase = "Stopping"
 	WorkspacePhaseStopped      WorkspacePhase = "Stopped"
 )
-
-type WorkspaceConditions struct {
-	// Deployed indicates if a workspace pod is currently deployed.
-	// If this condition is false, there is no means for the user to alter the workspace content.
-	Deployed bool `json:"deployed,omitempty"`
-
-	// Failed contains the reason the workspace failed to operate. If this field is empty, the workspace has not failed.
-	Failed string `json:"failed,omitempty"`
-
-	// Timeout contains the reason the workspace has timed out. If this field is empty, the workspace has not timed out.
-	Timeout string `json:"timeout,omitempty"`
-
-	// FirstUserActivity is the time when MarkActive was first called on the workspace
-	FirstUserActivity *metav1.Time `json:"firstUserActivity,omitempty"`
-
-	// HeadlessTaskFailed indicates that a headless workspace task failed
-	HeadlessTaskFailed string `json:"headlessTaskFailed,omitempty"`
-
-	// StoppedByRequest is true if the workspace was stopped using a StopWorkspace call
-	StoppedByRequest *bool `json:"stoppedByRequest,omitempty"`
-
-	// EverReady becomes true if the workspace was ever ready to be used
-	EverReady bool `json:"everReady,omitempty"`
-}
 
 type GitStatus struct {
 	// branch is branch we're currently on
