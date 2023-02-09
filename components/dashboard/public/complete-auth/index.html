@@ -20,6 +20,7 @@
             window.opener.postMessage(message, `https://${window.location.hostname}`);
         } else {
             console.log("This page is supposed to be opened by Gitpod.")
+            setTimeout("window.close();", 1000);
         }
     </script>
 </head>
