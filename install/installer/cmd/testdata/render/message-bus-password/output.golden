@@ -3668,7 +3668,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-fa016a88512ebc605dd1f13d6fe002398c2540d8",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-b443118d7ef8fff4a8814e5c66cd11da3a87a211",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly",
             "imageLayers": [
               "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-1f8f65b4b9b1be9c8bc5a981974a8d29c54ba235",
