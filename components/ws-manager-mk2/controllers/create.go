@@ -385,6 +385,10 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 								Key:      "gitpod.io/registry-facade_ready_ns_" + sctx.Config.Namespace,
 								Operator: corev1.NodeSelectorOpExists,
 							},
+							{
+								Key:      "gitpod.io/experimental",
+								Operator: corev1.NodeSelectorOpExists,
+							},
 						},
 					},
 				},
