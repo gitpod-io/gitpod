@@ -234,11 +234,10 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 
 func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsmanapi.StopWorkspaceRequest) (*wsmanapi.StopWorkspaceResponse, error) {
 	err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-		ws.Status.Conditions = append(ws.Status.Conditions, metav1.Condition{
+		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
-			Reason:             "unknown",
 		})
 		return nil
 	})
@@ -324,10 +323,8 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 	}
 
 	var firstUserActivity *timestamppb.Timestamp
-	for _, c := range ws.Status.Conditions {
-		if c.Type == string(workspacev1.WorkspaceConditionFirstUserActivity) {
-			firstUserActivity = timestamppb.New(c.LastTransitionTime.Time)
-		}
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFirstUserActivity)); c != nil {
+		firstUserActivity = timestamppb.New(c.LastTransitionTime.Time)
 	}
 
 	// if user already mark workspace as active and this request has IgnoreIfActive flag, just simple ignore it

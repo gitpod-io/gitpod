@@ -99,6 +99,8 @@ var _ = BeforeSuite(func() {
 				Name: "default",
 			},
 		},
+		WorkspaceURLTemplate: "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
+		GitpodHostURL:        "gitpod.io",
 	}, metrics.Registry)
 
 	Expect(err).ToNot(HaveOccurred())

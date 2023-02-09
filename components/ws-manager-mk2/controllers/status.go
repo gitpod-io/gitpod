@@ -16,6 +16,7 @@ import (
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -120,14 +121,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 	case isPodBeingDeleted(pod):
 		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 
-		var hasFinalizer bool
-		for _, f := range pod.Finalizers {
-			if f == gitpodPodFinalizerName {
-				hasFinalizer = true
-				break
-			}
-		}
-		if hasFinalizer {
+		if controllerutil.ContainsFinalizer(pod, gitpodPodFinalizerName) {
 			if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
 				wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
 				wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
