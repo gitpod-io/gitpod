@@ -137,12 +137,13 @@ func TestPythonExtWorkspace(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			serverUrl, err := api.GetServerEndpoint()
+
 			jsonCookie := fmt.Sprintf(
-				`{"name": "%v","value": "%v","domain": "%v","path": "%v","expires": %v,"httpOnly": %v,"secure": %v,"sameSite": "Lax"}`,
+				`{"name": "%v","value": "%v", "url": "%v","expires": %v,"httpOnly": %v,"secure": %v,"sameSite": "Lax"}`,
 				sessionCookie.Name,
 				sessionCookie.Value,
-				sessionCookie.Domain,
-				sessionCookie.Path,
+				serverUrl,
 				sessionCookie.Expires.Unix(),
 				sessionCookie.HttpOnly,
 				sessionCookie.Secure,

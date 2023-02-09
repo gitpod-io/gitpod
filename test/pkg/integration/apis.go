@@ -335,6 +335,25 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (gitpod.APIInterfac
 	return res, nil
 }
 
+func (c *ComponentAPI) GetServerEndpoint() (string, error) {
+	config, err := GetServerConfig(c.namespace, c.client)
+	if err != nil {
+		return "", err
+	}
+
+	hostURL := config.HostURL
+	if hostURL == "" {
+		return "", xerrors.Errorf("server config: empty HostURL")
+	}
+
+	endpoint, err := url.Parse(hostURL)
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s://%s/", "https", endpoint.Hostname()), nil
+}
+
 func (c *ComponentAPI) GitpodSessionCookie(userId string, secretKey string) (*http.Cookie, error) {
 	var res *http.Cookie
 	err := func() error {
