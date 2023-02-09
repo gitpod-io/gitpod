@@ -149,7 +149,7 @@ func GetWorkspaceType(pod *corev1.Pod) string {
 // AddUniqueCondition adds a condition if it doesn't exist already
 func AddUniqueCondition(conds []metav1.Condition, cond metav1.Condition) []metav1.Condition {
 	if cond.Reason == "" {
-		cond.Reason = "unknown"
+		cond.Reason = "Unknown"
 	}
 
 	for i, c := range conds {
