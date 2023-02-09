@@ -507,6 +507,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.chargebeeSecret" 
 #
 # Stripe
 #
+yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.publicApi.stripeSecretName" "stripe-api-keys"
 yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "stripe-api-keys"
 yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
 
