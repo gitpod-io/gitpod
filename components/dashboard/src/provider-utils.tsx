@@ -81,7 +81,7 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     window.open(
         url,
         "gitpod-auth-window",
-        `width=${width},height=${height},top=${top},left=${left}status=yes,scrollbars=yes,resizable=yes`,
+        `width=${width},height=${height},top=${top},left=${left},status=yes,scrollbars=yes,resizable=yes`,
     );
 
     const eventListener = (event: MessageEvent) => {
