@@ -1,6 +1,8 @@
 # Change Log
 
 ## February 2023
+- Reverse order of Feedback emojis ([#16292](https://github.com/gitpod-io/gitpod/pull/16292)) - [@atduarte](https://github.com/atduarte)
+- Fix evaluation of BillingMode: Ignore old "free" subscription entries ([#16270](https://github.com/gitpod-io/gitpod/pull/16270)) - [@geropl](https://github.com/geropl)
 - [fix] :Preselect editor and class on the new workspace modal on first load ([#15946](https://github.com/gitpod-io/gitpod/pull/15946)) - [@yashikajotwani12](https://github.com/yashikajotwani12)
 - Added `Workspace Context Url` to `gp info` ([#16096](https://github.com/gitpod-io/gitpod/pull/16096)) - [@Kwok-he-Chu](https://github.com/Kwok-he-Chu)
 - Associate users logging in with a SSO provider to that Organization (and make the first an owner) ([#16206](https://github.com/gitpod-io/gitpod/pull/16206)) - [@geropl](https://github.com/geropl)
