@@ -998,6 +998,18 @@ automountServiceAccountToken: true
 secrets:
   - name: messagebus
 ---
+# v1/ServiceAccount redis
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: redis
+  name: redis
+  namespace: default
+---
 # v1/ServiceAccount registry-facade
 apiVersion: v1
 automountServiceAccountToken: true
@@ -2758,6 +2770,37 @@ data:
         app: gitpod
         component: public-api-server
       name: public-api-server
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: redis
+      name: redis
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: redis
+        kind: service
+      name: redis
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: redis
+      name: redis
       namespace: default
     ---
     apiVersion: v1
@@ -7364,6 +7407,30 @@ spec:
 status:
   loadBalancer: {}
 ---
+# v1/Service redis
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: redis
+    kind: service
+  name: redis
+  namespace: default
+spec:
+  ports:
+  - name: api
+    port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app: gitpod
+    component: redis
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
 # v1/Service registry
 # Source: docker-registry/charts/docker-registry/templates/service.yaml
 apiVersion: v1
@@ -9940,6 +10007,104 @@ spec:
       - name: database-config
         secret:
           secretName: mysql
+status: {}
+---
+# apps/v1/Deployment redis
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: redis
+  name: redis
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: redis
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: redis
+      name: redis
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - command:
+        - redis-server
+        - --save ""
+        - --appendonly no
+        - --maxmemory 100mb
+        - --maxmemory-policy allkeys-lru
+        - --port 6379
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        image: registry.hub.docker.com/library/redis:7.0.8
+        imagePullPolicy: IfNotPresent
+        name: redis
+        ports:
+        - containerPort: 6379
+          name: api
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - /health/ping_readiness_local.sh 1
+          failureThreshold: 5
+          initialDelaySeconds: 5
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 3
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128M
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      priorityClassName: system-node-critical
+      restartPolicy: Always
+      securityContext:
+        runAsNonRoot: false
+      serviceAccountName: redis
+      terminationGracePeriodSeconds: 30
 status: {}
 ---
 # apps/v1/Deployment registry

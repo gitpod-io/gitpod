@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/proxy"
 	public_api_server "github.com/gitpod-io/gitpod/installer/pkg/components/public-api-server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/rabbitmq"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/slowserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/spicedb"
@@ -37,6 +38,7 @@ var Objects = common.CompositeRenderFunc(
 	usage.Objects,
 	toxiproxy.Objects,
 	spicedb.Objects,
+	redis.Objects,
 )
 
 var Helm = common.CompositeHelmFunc(
