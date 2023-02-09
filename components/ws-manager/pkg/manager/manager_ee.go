@@ -134,9 +134,20 @@ func (m *Manager) SetTimeout(ctx context.Context, req *api.SetTimeoutRequest) (r
 		return nil, xerrors.Errorf("invalid duration \"%s\": %w", req.Duration, err)
 	}
 
-	err = m.markWorkspace(ctx, req.Id, addMark(customTimeoutAnnotation, req.Duration))
-	if err != nil {
-		return nil, xerrors.Errorf("cannot set workspace timeout: %w", err)
+	if req.Type == api.TimeoutType_WORKSPACE_TIMEOUT {
+		err = m.markWorkspace(ctx, req.Id, addMark(customTimeoutAnnotation, req.Duration))
+		if err != nil {
+			return nil, xerrors.Errorf("cannot set workspace timeout: %w", err)
+		}
+		err = m.markWorkspace(ctx, req.Id, addMark(customClosedTimeoutAnnotation, "0"))
+		if err != nil {
+			return nil, xerrors.Errorf("cannot set closed timeout: %w", err)
+		}
+	} else if req.Type == api.TimeoutType_CLOSED_TIMEOUT {
+		err = m.markWorkspace(ctx, req.Id, addMark(customClosedTimeoutAnnotation, req.Duration))
+		if err != nil {
+			return nil, xerrors.Errorf("cannot set closed timeout: %w", err)
+		}
 	}
 
 	return &api.SetTimeoutResponse{}, nil

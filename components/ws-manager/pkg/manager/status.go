@@ -220,6 +220,13 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 	if v, ok := wso.Pod.Annotations[customTimeoutAnnotation]; ok {
 		timeout = v
 	}
+	var closedTimeout string
+	if t := m.Config.Timeouts.AfterClose; t > 0 {
+		closedTimeout = t.String()
+	}
+	if v, ok := wso.Pod.Annotations[customClosedTimeoutAnnotation]; ok {
+		closedTimeout = v
+	}
 
 	var (
 		wsImage         = workspaceContainer.Image
@@ -271,6 +278,7 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 			Url:            wsurl,
 			Type:           tpe,
 			Timeout:        timeout,
+			ClosedTimeout:  closedTimeout,
 			Class:          wso.Pod.Labels[workspaceClassLabel],
 		},
 		Conditions: &api.WorkspaceConditions{
@@ -800,7 +808,24 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 			// the workspace is up and running, but the user has never produced any activity
 			return decide(start, m.Config.Timeouts.TotalStartup, activityNone)
 		} else if isClosed {
-			return decide(*lastActivity, m.Config.Timeouts.AfterClose, activityClosed)
+			reason, err := func() (string, error) {
+				afterClosed := m.Config.Timeouts.AfterClose
+				if ctv, ok := wso.Pod.Annotations[customClosedTimeoutAnnotation]; ok {
+					if ct, err := time.ParseDuration(ctv); err == nil {
+						// skip check if closed timeout set to 0
+						if ct == 0 {
+							return "", nil
+						}
+						afterClosed = util.Duration(ct)
+					} else {
+						log.WithError(err).WithField("customClosedTimeout", ctv).WithFields(wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta)).Warn("pod had custom closed timeout annotation set, but could not parse its value. Defaulting to ws-manager config.")
+					}
+				}
+				return decide(*lastActivity, afterClosed, activityClosed)
+			}()
+			if reason != "" {
+				return reason, err
+			}
 		}
 		if ctv, ok := wso.Pod.Annotations[customTimeoutAnnotation]; ok {
 			if ct, err := time.ParseDuration(ctv); err == nil {
