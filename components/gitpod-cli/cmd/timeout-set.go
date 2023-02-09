@@ -45,13 +45,15 @@ For example: 30m or 1h`,
 		if err != nil {
 			return GpError{Err: err, OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
-		if _, err = client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, duration); err != nil {
+
+		res, err := client.SetWorkspaceTimeout(ctx, wsInfo.WorkspaceId, duration)
+		if err != nil {
 			if err, ok := err.(*jsonrpc2.Error); ok && err.Code == serverapi.PLAN_PROFESSIONAL_REQUIRED {
 				return GpError{OutCome: utils.Outcome_UserErr, Message: "Cannot extend workspace timeout for current plan, please upgrade your plan", ErrorCode: utils.UserErrorCode_NeedUpgradePlan}
 			}
 			return err
 		}
-		fmt.Printf("Workspace timeout has been set to %d minutes.\n", int(duration.Minutes()))
+		fmt.Printf("Workspace timeout has been set to %s.\n", res.HumanReadableDuration)
 		return nil
 	},
 }

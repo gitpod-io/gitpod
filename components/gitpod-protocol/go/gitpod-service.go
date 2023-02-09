@@ -1898,8 +1898,9 @@ type StartWorkspaceOptions struct {
 
 // GetWorkspaceTimeoutResult is the GetWorkspaceTimeoutResult message type
 type GetWorkspaceTimeoutResult struct {
-	CanChange bool   `json:"canChange,omitempty"`
-	Duration  string `json:"duration,omitempty"`
+	CanChange             bool   `json:"canChange,omitempty"`
+	Duration              string `json:"duration,omitempty"`
+	HumanReadableDuration string `json:"humanReadableDuration,omitempty"`
 }
 
 // WorkspaceInstancePort is the WorkspaceInstancePort message type

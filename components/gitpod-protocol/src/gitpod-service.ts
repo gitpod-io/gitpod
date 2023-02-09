@@ -417,6 +417,7 @@ export interface SetWorkspaceTimeoutResult {
 export interface GetWorkspaceTimeoutResult {
     duration: WorkspaceTimeoutDuration;
     canChange: boolean;
+    humanReadableDuration: string;
 }
 
 export interface StartWorkspaceResult {
