@@ -118,8 +118,9 @@ export class EntitlementServiceUBP implements EntitlementService {
      * @param user
      */
     async limitNetworkConnections(user: User, date: Date): Promise<boolean> {
-        const hasPaidPlan = await this.hasPaidSubscription(user, date);
-        return !hasPaidPlan;
+        // gpl: Because with the current payment handling (pay-after-use) having a "paid" plan is not a good enough classifier for trushworthyness atm.
+        // We're looking into improving this, but for the meantime we limit network connections for everybody to reduce the impact of abuse.
+        return true;
     }
 
     protected async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
