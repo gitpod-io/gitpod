@@ -62,22 +62,24 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
     public async createForContext(
         ctx: TraceContext,
         user: User,
+        organizationId: string | undefined,
         project: Project | undefined,
         context: WorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
         if (StartPrebuildContext.is(context)) {
-            return this.createForStartPrebuild(ctx, user, context, normalizedContextURL);
+            return this.createForStartPrebuild(ctx, user, organizationId, context, normalizedContextURL);
         } else if (PrebuiltWorkspaceContext.is(context)) {
-            return this.createForPrebuiltWorkspace(ctx, user, project, context, normalizedContextURL);
+            return this.createForPrebuiltWorkspace(ctx, user, organizationId, project, context, normalizedContextURL);
         }
 
-        return super.createForContext(ctx, user, project, context, normalizedContextURL);
+        return super.createForContext(ctx, user, organizationId, project, context, normalizedContextURL);
     }
 
     protected async createForStartPrebuild(
         ctx: TraceContext,
         user: User,
+        organizationId: string | undefined,
         context: StartPrebuildContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
@@ -147,6 +149,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 ws = await this.createForPrebuiltWorkspace(
                     { span },
                     user,
+                    organizationId,
                     project,
                     incrementalPrebuildContext,
                     normalizedContextURL,
@@ -168,7 +171,14 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
 
             if (!ws) {
                 // No suitable parent prebuild was found -- create a (fresh) full prebuild.
-                ws = await this.createForCommit({ span }, user, project, commitContext, normalizedContextURL);
+                ws = await this.createForCommit(
+                    { span },
+                    user,
+                    organizationId,
+                    project,
+                    commitContext,
+                    normalizedContextURL,
+                );
             }
             ws.type = "prebuild";
             ws.projectId = project?.id;
@@ -207,6 +217,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
     protected async createForPrebuiltWorkspace(
         ctx: TraceContext,
         user: User,
+        organizationId: string | undefined,
         project: Project | undefined,
         context: PrebuiltWorkspaceContext,
         normalizedContextURL: string,
@@ -228,6 +239,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 return await this.createForContext(
                     { span },
                     user,
+                    organizationId,
                     project,
                     context.originalContext,
                     normalizedContextURL,
@@ -275,6 +287,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 id,
                 type: "regular",
                 creationTime: new Date().toISOString(),
+                organizationId,
                 contextURL: normalizedContextURL,
                 projectId,
                 description: this.getDescription(context),

@@ -8,6 +8,7 @@ import * as chai from "chai";
 const expect = chai.expect;
 import { suite, test, timeout } from "mocha-typescript";
 import { fail } from "assert";
+import { v4 as uuidv4 } from "uuid";
 
 import { WorkspaceInstance, Workspace, PrebuiltWorkspace, CommitContext } from "@gitpod/gitpod-protocol";
 import { testContainer } from "./test-container";
@@ -184,6 +185,26 @@ class WorkspaceDBSpec {
         await mnr.getRepository(DBWorkspace).delete({});
         await mnr.getRepository(DBWorkspaceInstance).delete({});
         await mnr.getRepository(DBPrebuiltWorkspace).delete({});
+    }
+
+    @test(timeout(10000))
+    public async testStoreUndefinedOrganizationId() {
+        const workspace: Workspace = {
+            ...this.ws,
+        };
+        const instance = {
+            ...this.wsi1,
+        };
+
+        await this.db.store(workspace);
+        await this.db.storeInstance(instance);
+        let fetchedWs = await this.db.findWorkspaceAndInstance(workspace.id);
+        expect(fetchedWs).to.not.be.undefined;
+        expect(fetchedWs!.organizationId).to.be.undefined;
+        workspace.organizationId = uuidv4();
+        await this.db.store(workspace);
+        fetchedWs = await this.db.findWorkspaceAndInstance(workspace.id);
+        expect(fetchedWs?.organizationId).to.eq(workspace.organizationId);
     }
 
     @test(timeout(10000))

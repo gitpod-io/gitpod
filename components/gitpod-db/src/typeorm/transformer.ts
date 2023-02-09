@@ -23,6 +23,21 @@ export namespace Transformer {
         },
     };
 
+    export const MAP_NULL_TO_UNDEFINED: ValueTransformer = {
+        to(value: any): any {
+            if (value === undefined) {
+                return null;
+            }
+            return value;
+        },
+        from(value: any): any {
+            if (value === null) {
+                return undefined;
+            }
+            return value;
+        },
+    };
+
     export const MAP_ISO_STRING_TO_TIMESTAMP_DROP: ValueTransformer = {
         to(value: any): any {
             // DROP all input values as they are set by the DB 'ON UPDATE'/ as default value.

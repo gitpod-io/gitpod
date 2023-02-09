@@ -117,6 +117,12 @@ export class UserToTeamMigrationService {
         );
         log.info(ctx, "Migrated workspace instances.", { teamId: team.id, result });
 
+        result = await conn.query(
+            "UPDATE d_b_workspace SET organizationId = ? WHERE id IN (SELECT workspaceid from d_b_workspace_instance where usageAttributionId = ?)",
+            [team.id, newAttribution],
+        );
+        log.info(ctx, "Migrated workspaces.", { teamId: team.id, result });
+
         result = await conn.query("UPDATE d_b_usage SET attributionId = ? WHERE attributionId = ?", [
             newAttribution,
             oldAttribution,

@@ -18,12 +18,13 @@ import (
 
 // Workspace represents the underlying DB object
 type Workspace struct {
-	ID          string         `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
-	OwnerID     uuid.UUID      `gorm:"column:ownerId;type:char;size:36;" json:"ownerId"`
-	ProjectID   sql.NullString `gorm:"column:projectId;type:char;size:36;" json:"projectId"`
-	Description string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
-	Type        WorkspaceType  `gorm:"column:type;type:char;size:16;default:regular;" json:"type"`
-	CloneURL    string         `gorm:"column:cloneURL;type:varchar;size:255;" json:"cloneURL"`
+	ID             string         `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
+	OrganizationId *uuid.UUID     `gorm:"column:organizationId;type:char;size:36;" json:"organizationId"`
+	OwnerID        uuid.UUID      `gorm:"column:ownerId;type:char;size:36;" json:"ownerId"`
+	ProjectID      sql.NullString `gorm:"column:projectId;type:char;size:36;" json:"projectId"`
+	Description    string         `gorm:"column:description;type:varchar;size:255;" json:"description"`
+	Type           WorkspaceType  `gorm:"column:type;type:char;size:16;default:regular;" json:"type"`
+	CloneURL       string         `gorm:"column:cloneURL;type:varchar;size:255;" json:"cloneURL"`
 
 	ContextURL            string         `gorm:"column:contextURL;type:text;size:65535;" json:"contextURL"`
 	Context               datatypes.JSON `gorm:"column:context;type:text;size:65535;" json:"context"`

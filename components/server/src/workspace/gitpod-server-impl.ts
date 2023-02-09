@@ -1187,6 +1187,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const project = CommitContext.is(context)
                 ? await this.projectDB.findProjectByCloneUrl(context.repository.cloneUrl)
                 : undefined;
+
+            //TODO(se) relying on the attribution mechanism is a temporary work around. We will go to explicit passing of organization IDs soon.
+            const attributionId = await this.userService.getWorkspaceUsageAttributionId(user, project?.id);
+            const organizationId = attributionId.kind === "team" ? attributionId.teamId : undefined;
+
             const prebuiltWorkspace = await this.findPrebuiltWorkspace(
                 ctx,
                 user,
@@ -1206,6 +1211,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const workspace = await this.workspaceFactory.createForContext(
                 ctx,
                 user,
+                organizationId,
                 project,
                 context,
                 normalizedContextUrl,

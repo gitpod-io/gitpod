@@ -837,7 +837,12 @@ export class WorkspaceStarter {
             await this.tryEnableConnectionLimiting(featureFlags, user, billingTier);
             await this.tryEnablePSI(featureFlags, user, billingTier);
 
-            const usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
+            let usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user, workspace.projectId);
+            // if the workspace has been created in an organization, we need to use the organization's attribution ID
+            if (workspace.organizationId) {
+                const org = await this.teamDB.findTeamById(workspace.organizationId);
+                usageAttributionId = AttributionId.create(org!);
+            }
             let workspaceClass = await getWorkspaceClassForInstance(
                 ctx,
                 workspace,

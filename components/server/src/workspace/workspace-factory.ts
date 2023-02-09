@@ -39,20 +39,29 @@ export class WorkspaceFactory {
     public async createForContext(
         ctx: TraceContext,
         user: User,
+        organizationId: string | undefined,
         project: Project | undefined,
         context: WorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
+        if (user.additionalData?.isMigratedToTeamOnlyAttribution && !organizationId) {
+            throw new ResponseError(ErrorCodes.INVALID_VALUE, "Cannot create workspace without organization.");
+        }
         if (SnapshotContext.is(context)) {
-            return this.createForSnapshot(ctx, user, context);
+            return this.createForSnapshot(ctx, user, organizationId, context);
         } else if (CommitContext.is(context)) {
-            return this.createForCommit(ctx, user, project, context, normalizedContextURL);
+            return this.createForCommit(ctx, user, organizationId, project, context, normalizedContextURL);
         }
         log.error({ userId: user.id }, "Couldn't create workspace for context", context);
         throw new Error("Couldn't create workspace for context");
     }
 
-    protected async createForSnapshot(ctx: TraceContext, user: User, context: SnapshotContext): Promise<Workspace> {
+    protected async createForSnapshot(
+        ctx: TraceContext,
+        user: User,
+        organizationId: string | undefined,
+        context: SnapshotContext,
+    ): Promise<Workspace> {
         const span = TraceContext.startSpan("createForSnapshot", ctx);
 
         try {
@@ -76,11 +85,12 @@ export class WorkspaceFactory {
             const id = await this.generateWorkspaceID(context);
             const date = new Date().toISOString();
 
-            const newWs = <Workspace>{
+            const newWs: Workspace = {
                 id,
                 type: "regular",
                 creationTime: date,
                 ownerId: user.id,
+                organizationId: organizationId,
                 config: workspace.config,
                 context: <SnapshotContext>{
                     ...workspace.context,
@@ -108,6 +118,7 @@ export class WorkspaceFactory {
     protected async createForCommit(
         ctx: TraceContext,
         user: User,
+        organizationId: string | undefined,
         project: Project | undefined,
         context: CommitContext,
         normalizedContextURL: string,
@@ -138,6 +149,7 @@ export class WorkspaceFactory {
             const newWs: Workspace = {
                 id,
                 type: "regular",
+                organizationId: organizationId,
                 creationTime: new Date().toISOString(),
                 contextURL: normalizedContextURL,
                 projectId,
