@@ -24,7 +24,7 @@
 /components/ide-service @gitpod-io/engineering-ide
 /components/ide-service-api @gitpod-io/engineering-ide
 /components/ide-proxy @gitpod-io/engineering-ide
-/components/image-builder-api @WVerlaek @geropl
+/components/image-builder-api @gitpod-io/engineering-workspace
 /components/image-builder-bob @gitpod-io/engineering-workspace
 /components/image-builder-mk3 @gitpod-io/engineering-workspace
 /components/installation-telemetry @gitpod-io/engineering-security-infrastructure-and-delivery
