@@ -59,6 +59,9 @@ const (
 	// This is handy if you want to prevent a workspace from timing out during lunch break.
 	customTimeoutAnnotation = "gitpod/customTimeout"
 
+	// customClosedTimeoutAnnotation configures the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
+	customClosedTimeoutAnnotation = "gitpod/customClosedTimeout"
+
 	// firstUserActivityAnnotation marks a workspace woth the timestamp of first user activity in it
 	firstUserActivityAnnotation = "gitpod/firstUserActivity"
 

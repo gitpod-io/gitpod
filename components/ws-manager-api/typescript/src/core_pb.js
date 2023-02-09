@@ -63,6 +63,7 @@ goog.exportSymbol('proto.wsman.SubscribeRequest', null, global);
 goog.exportSymbol('proto.wsman.SubscribeResponse', null, global);
 goog.exportSymbol('proto.wsman.TakeSnapshotRequest', null, global);
 goog.exportSymbol('proto.wsman.TakeSnapshotResponse', null, global);
+goog.exportSymbol('proto.wsman.TimeoutType', null, global);
 goog.exportSymbol('proto.wsman.UpdateSSHKeyRequest', null, global);
 goog.exportSymbol('proto.wsman.UpdateSSHKeyResponse', null, global);
 goog.exportSymbol('proto.wsman.VolumeSnapshotInfo', null, global);
@@ -3209,7 +3210,8 @@ proto.wsman.SetTimeoutRequest.prototype.toObject = function(opt_includeInstance)
 proto.wsman.SetTimeoutRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    duration: jspb.Message.getFieldWithDefault(msg, 2, "")
+    duration: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    type: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -3254,6 +3256,10 @@ proto.wsman.SetTimeoutRequest.deserializeBinaryFromReader = function(msg, reader
       var value = /** @type {string} */ (reader.readString());
       msg.setDuration(value);
       break;
+    case 3:
+      var value = /** @type {!proto.wsman.TimeoutType} */ (reader.readEnum());
+      msg.setType(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -3297,6 +3303,13 @@ proto.wsman.SetTimeoutRequest.serializeBinaryToWriter = function(message, writer
       f
     );
   }
+  f = message.getType();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -3333,6 +3346,24 @@ proto.wsman.SetTimeoutRequest.prototype.getDuration = function() {
  */
 proto.wsman.SetTimeoutRequest.prototype.setDuration = function(value) {
   return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional TimeoutType type = 3;
+ * @return {!proto.wsman.TimeoutType}
+ */
+proto.wsman.SetTimeoutRequest.prototype.getType = function() {
+  return /** @type {!proto.wsman.TimeoutType} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {!proto.wsman.TimeoutType} value
+ * @return {!proto.wsman.SetTimeoutRequest} returns this
+ */
+proto.wsman.SetTimeoutRequest.prototype.setType = function(value) {
+  return jspb.Message.setProto3EnumField(this, 3, value);
 };
 
 
@@ -5992,7 +6023,8 @@ proto.wsman.WorkspaceSpec.toObject = function(includeInstance, msg) {
     timeout: jspb.Message.getFieldWithDefault(msg, 7, ""),
     ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
     pb_class: jspb.Message.getFieldWithDefault(msg, 9, ""),
-    ideImageLayersList: (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f
+    ideImageLayersList: (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f,
+    closedTimeout: jspb.Message.getFieldWithDefault(msg, 11, "")
   };
 
   if (includeInstance) {
@@ -6070,6 +6102,10 @@ proto.wsman.WorkspaceSpec.deserializeBinaryFromReader = function(msg, reader) {
     case 10:
       var value = /** @type {string} */ (reader.readString());
       msg.addIdeImageLayers(value);
+      break;
+    case 11:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setClosedTimeout(value);
       break;
     default:
       reader.skipField();
@@ -6169,6 +6205,13 @@ proto.wsman.WorkspaceSpec.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeRepeatedString(
       10,
+      f
+    );
+  }
+  f = message.getClosedTimeout();
+  if (f.length > 0) {
+    writer.writeString(
+      11,
       f
     );
   }
@@ -6410,6 +6453,24 @@ proto.wsman.WorkspaceSpec.prototype.addIdeImageLayers = function(value, opt_inde
  */
 proto.wsman.WorkspaceSpec.prototype.clearIdeImageLayersList = function() {
   return this.setIdeImageLayersList([]);
+};
+
+
+/**
+ * optional string closed_timeout = 11;
+ * @return {string}
+ */
+proto.wsman.WorkspaceSpec.prototype.getClosedTimeout = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.WorkspaceSpec} returns this
+ */
+proto.wsman.WorkspaceSpec.prototype.setClosedTimeout = function(value) {
+  return jspb.Message.setProto3StringField(this, 11, value);
 };
 
 
@@ -8012,7 +8073,8 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     sshPublicKeysList: (f = jspb.Message.getRepeatedField(msg, 15)) == null ? undefined : f,
     sysEnvvarsList: jspb.Message.toObjectList(msg.getSysEnvvarsList(),
     proto.wsman.EnvironmentVariable.toObject, includeInstance),
-    ideImageLayersList: (f = jspb.Message.getRepeatedField(msg, 17)) == null ? undefined : f
+    ideImageLayersList: (f = jspb.Message.getRepeatedField(msg, 17)) == null ? undefined : f,
+    closedTimeout: jspb.Message.getFieldWithDefault(msg, 18, "")
   };
 
   if (includeInstance) {
@@ -8121,6 +8183,10 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
     case 17:
       var value = /** @type {string} */ (reader.readString());
       msg.addIdeImageLayers(value);
+      break;
+    case 18:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setClosedTimeout(value);
       break;
     default:
       reader.skipField();
@@ -8267,6 +8333,13 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
   if (f.length > 0) {
     writer.writeRepeatedString(
       17,
+      f
+    );
+  }
+  f = message.getClosedTimeout();
+  if (f.length > 0) {
+    writer.writeString(
+      18,
       f
     );
   }
@@ -8751,6 +8824,24 @@ proto.wsman.StartWorkspaceSpec.prototype.addIdeImageLayers = function(value, opt
  */
 proto.wsman.StartWorkspaceSpec.prototype.clearIdeImageLayersList = function() {
   return this.setIdeImageLayersList([]);
+};
+
+
+/**
+ * optional string closed_timeout = 18;
+ * @return {string}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.getClosedTimeout = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 18, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.setClosedTimeout = function(value) {
+  return jspb.Message.setProto3StringField(this, 18, value);
 };
 
 
@@ -10029,6 +10120,14 @@ proto.wsman.StopWorkspacePolicy = {
   NORMALLY: 0,
   IMMEDIATELY: 1,
   ABORT: 2
+};
+
+/**
+ * @enum {number}
+ */
+proto.wsman.TimeoutType = {
+  WORKSPACE_TIMEOUT: 0,
+  CLOSED_TIMEOUT: 1
 };
 
 /**

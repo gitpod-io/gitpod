@@ -393,6 +393,13 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		}
 		annotations[customTimeoutAnnotation] = req.Spec.Timeout
 	}
+	if req.Spec.ClosedTimeout != "" {
+		_, err := time.ParseDuration(req.Spec.ClosedTimeout)
+		if err != nil {
+			return nil, xerrors.Errorf("invalid closed timeout \"%s\": %w", req.Spec.ClosedTimeout, err)
+		}
+		annotations[customClosedTimeoutAnnotation] = req.Spec.ClosedTimeout
+	}
 
 	for k, v := range req.Metadata.Annotations {
 		annotations[workspaceAnnotationPrefix+k] = v

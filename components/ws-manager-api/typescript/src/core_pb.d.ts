@@ -333,6 +333,8 @@ export class SetTimeoutRequest extends jspb.Message {
     setId(value: string): SetTimeoutRequest;
     getDuration(): string;
     setDuration(value: string): SetTimeoutRequest;
+    getType(): TimeoutType;
+    setType(value: TimeoutType): SetTimeoutRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SetTimeoutRequest.AsObject;
@@ -348,6 +350,7 @@ export namespace SetTimeoutRequest {
     export type AsObject = {
         id: string,
         duration: string,
+        type: TimeoutType,
     }
 }
 
@@ -750,6 +753,8 @@ export class WorkspaceSpec extends jspb.Message {
     getIdeImageLayersList(): Array<string>;
     setIdeImageLayersList(value: Array<string>): WorkspaceSpec;
     addIdeImageLayers(value: string, index?: number): string;
+    getClosedTimeout(): string;
+    setClosedTimeout(value: string): WorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceSpec.AsObject;
@@ -773,6 +778,7 @@ export namespace WorkspaceSpec {
         ideImage?: IDEImage.AsObject,
         pb_class: string,
         ideImageLayersList: Array<string>,
+        closedTimeout: string,
     }
 }
 
@@ -1036,6 +1042,8 @@ export class StartWorkspaceSpec extends jspb.Message {
     getIdeImageLayersList(): Array<string>;
     setIdeImageLayersList(value: Array<string>): StartWorkspaceSpec;
     addIdeImageLayers(value: string, index?: number): string;
+    getClosedTimeout(): string;
+    setClosedTimeout(value: string): StartWorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -1065,6 +1073,7 @@ export namespace StartWorkspaceSpec {
         sshPublicKeysList: Array<string>,
         sysEnvvarsList: Array<EnvironmentVariable.AsObject>,
         ideImageLayersList: Array<string>,
+        closedTimeout: string,
     }
 }
 
@@ -1255,6 +1264,11 @@ export enum StopWorkspacePolicy {
     NORMALLY = 0,
     IMMEDIATELY = 1,
     ABORT = 2,
+}
+
+export enum TimeoutType {
+    WORKSPACE_TIMEOUT = 0,
+    CLOSED_TIMEOUT = 1,
 }
 
 export enum AdmissionLevel {

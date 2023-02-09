@@ -171,6 +171,11 @@ message MarkActiveRequest {
 // MarkActiveResponse is the answer to a mark workspace active request
 message MarkActiveResponse {}
 
+enum TimeoutType {
+    WORKSPACE_TIMEOUT = 0;
+    CLOSED_TIMEOUT = 1;
+}
+
 // SetTimeoutRequest configures the timeout of a workspace
 message SetTimeoutRequest {
     // id is the ID of the workspace
@@ -178,6 +183,8 @@ message SetTimeoutRequest {
 
     // duration is the new timeout duration. Must be a valid Go duration (see https://golang.org/pkg/time/#ParseDuration)
     string duration = 2;
+
+    TimeoutType type = 3;
 }
 
 // SetTimeoutResponse is the answer to a set timeout request
@@ -361,6 +368,9 @@ message WorkspaceSpec {
     // ide_image_layers are contains the images needed for the ide to run,
     // including ide-desktop, desktop-plugin and so on
     repeated string ide_image_layers = 10;
+
+    // The timeout for closed ide.
+    string closed_timeout = 11;
 }
 
 // PortSpec describes a networking port exposed on a workspace
@@ -584,6 +594,9 @@ message StartWorkspaceSpec {
     // ide_image_layers are contains the images needed for the ide to run,
     // including ide-desktop, desktop-plugin and so on
     repeated string ide_image_layers = 17;
+
+    // timeout optionally sets a custom closed timeout
+    string closed_timeout = 18;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces
