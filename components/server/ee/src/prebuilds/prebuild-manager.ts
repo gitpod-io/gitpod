@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, TeamDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     CommitContext,
     CommitInfo,
@@ -37,6 +37,7 @@ import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
 import { PrebuildRateLimiterConfig } from "../../../src/workspace/prebuild-rate-limiter";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { UserService } from "../../../src/user/user-service";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -62,6 +63,8 @@ export class PrebuildManager {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
+    @inject(UserService) protected readonly userService: UserService;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
         const span = TraceContext.startSpan("abortPrebuildsForBranch", ctx);
@@ -217,9 +220,17 @@ export class PrebuildManager {
 
             const projectEnvVarsPromise = project ? this.projectService.getProjectEnvironmentVariables(project.id) : [];
 
+            let organizationId = (await this.teamDB.findTeamById(project.id))?.id;
+            if (!user.additionalData?.isMigratedToTeamOnlyAttribution) {
+                // If the user is not migrated to team-only attribution, we retrieve the organization from the attribution logic.
+                const attributionId = await this.userService.getWorkspaceUsageAttributionId(user, project.id);
+                organizationId = attributionId.kind === "team" ? attributionId.teamId : undefined;
+            }
+
             const workspace = await this.workspaceFactory.createForContext(
                 { span },
                 user,
+                organizationId,
                 project,
                 prebuildContext,
                 context.normalizedContextURL!,

@@ -658,6 +658,10 @@ export type SnapshotState = "pending" | "available" | "error";
 export interface Workspace {
     id: string;
     creationTime: string;
+    /**
+     * undefined means it is owned by the user (legacy mode, soon to be removed)
+     */
+    organizationId?: string;
     contextURL: string;
     description: string;
     ownerId: string;

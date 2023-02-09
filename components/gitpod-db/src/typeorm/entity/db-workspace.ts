@@ -31,6 +31,13 @@ export class DBWorkspace implements Workspace {
     @Index("ind_creationTime")
     creationTime: string;
 
+    @Column({
+        ...TypeORM.UUID_COLUMN_TYPE,
+        transformer: Transformer.MAP_NULL_TO_UNDEFINED,
+    })
+    @Index()
+    organizationId?: string;
+
     @Column(TypeORM.UUID_COLUMN_TYPE)
     @Index()
     ownerId: string;
