@@ -52,6 +52,7 @@ import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-c
 import { LivenessController } from "./liveness/liveness-controller";
 import { FeatureFlagController } from "./feature-flag/featureflag-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
+import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -79,9 +80,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
     @inject(WorkspaceGarbageCollector) protected readonly workspaceGC: WorkspaceGarbageCollector;
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
-
     @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
     @inject(WebhookEventGarbageCollector) protected readonly webhookEventGarbageCollector: WebhookEventGarbageCollector;
+    @inject(LongRunningMigrationService) protected readonly migrationService: LongRunningMigrationService;
 
     @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
 
@@ -283,6 +284,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Start DB updater
         this.startDbDeleter().catch((err) => log.error("starting DB deleter", err));
 
+        // Start long running migrations
+        this.startLongRunningMigrations().catch((err) => log.error("long running migrations errored", err));
+
         // Start WebhookEvent GC
         this.webhookEventGarbageCollector
             .start()
@@ -290,6 +294,17 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         this.app = app;
         log.info("server initialized.");
+    }
+
+    protected async startLongRunningMigrations(): Promise<void> {
+        let completed = false;
+        while (!completed) {
+            if (await this.qorum.areWeLeader()) {
+                completed = await this.migrationService.runMigrationBatch();
+            }
+            // sleep 5min
+            await new Promise((resolve) => setTimeout(resolve, 5 * 60 * 1000));
+        }
     }
 
     protected async startDbDeleter() {
