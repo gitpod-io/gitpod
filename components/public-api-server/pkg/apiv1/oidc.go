@@ -6,8 +6,11 @@ package apiv1
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"net/http"
+	"time"
 
 	connect "github.com/bufbuild/connect-go"
 	goidc "github.com/coreos/go-oidc/v3/oidc"
@@ -48,6 +51,11 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 	organizationID, err := validateOrganizationID(req.Msg.Config.GetOrganizationId())
 	if err != nil {
 		return nil, err
+	}
+
+	err = assertIssuerIsReachable(req.Msg.GetConfig().GetOidcConfig().GetIssuer())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	logger := log.WithField("organization_id", organizationID.String())
@@ -317,4 +325,29 @@ func toDbOIDCSpec(oauth2Config *v1.OAuth2Config, oidcConfig *v1.OIDCConfig) db.O
 		RedirectURL:  oauth2Config.GetAuthorizationEndpoint(),
 		Scopes:       append([]string{goidc.ScopeOpenID, "profile", "email"}, oauth2Config.GetScopes()...),
 	}
+}
+
+func assertIssuerIsReachable(host string) error {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy:           http.ProxyFromEnvironment,
+	}
+	client := &http.Client{
+		Transport: tr,
+		Timeout:   2 * time.Second,
+		// never follow redirects
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	resp, err := client.Get(host)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+	if resp.StatusCode > 499 {
+		return fmt.Errorf("returned status %d", resp.StatusCode)
+	}
+	return nil
 }
