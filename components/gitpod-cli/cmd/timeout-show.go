@@ -38,11 +38,7 @@ var showTimeoutCommand = &cobra.Command{
 			return err
 		}
 
-		duration, err := time.ParseDuration(res.Duration)
-		if err != nil {
-			return err
-		}
-		fmt.Printf("Workspace timeout is set to %d minutes.\n", int(duration.Minutes()))
+		fmt.Printf("Workspace timeout is set to %s.\n", res.HumanReadableDuration)
 		return nil
 	},
 }
