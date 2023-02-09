@@ -511,6 +511,10 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 								Key:      "gitpod.io/registry-facade_ready_ns_" + m.Config.Namespace,
 								Operator: corev1.NodeSelectorOpExists,
 							},
+							{
+								Key:      "gitpod.io/experimental",
+								Operator: corev1.NodeSelectorOpDoesNotExist,
+							},
 						},
 					},
 				},
