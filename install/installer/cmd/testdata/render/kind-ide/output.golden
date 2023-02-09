@@ -3665,7 +3665,7 @@ spec:
       annotations:
         checksum/config: 699dd382179068f3354c330fcce38625e2861d97b962074b4f57005d40497b00
         checksum/secret: 6fe5d819b2ea20bf72ad31384d4886d6f64dd1f0d237703ac3aff11c1e0737fd
-        
+
         gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
     spec:
       serviceAccountName: docker-registry
@@ -3692,9 +3692,9 @@ spec:
               scheme: HTTPS
               path: /
               port: 5000
-          resources: 
+          resources:
             {}
-          env: 
+          env:
             - name: REGISTRY_HTTP_SECRET
               valueFrom:
                 secretKeyRef:
@@ -3706,7 +3706,7 @@ spec:
               value: /etc/ssl/docker/tls.key
             - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
               value: "/var/lib/registry"
-          volumeMounts: 
+          volumeMounts:
             - name: "registry-config"
               mountPath: "/etc/docker/registry"
             - name: data
@@ -3714,7 +3714,7 @@ spec:
             - mountPath: /etc/ssl/docker
               name: tls-cert
               readOnly: true
-      volumes: 
+      volumes:
         - name: registry-config
           configMap:
             name: registry-config
