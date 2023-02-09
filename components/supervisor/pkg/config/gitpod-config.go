@@ -87,11 +87,7 @@ func (service *ConfigService) Watch(ctx context.Context) {
 		return
 	}
 
-	_, err := os.Stat(service.location)
-	if os.IsNotExist(err) {
-		service.poll(ctx)
-	}
-	service.watch(ctx)
+	service.waitUntilExistsAndWatch(ctx)
 }
 
 func (service *ConfigService) markReady() {
@@ -151,14 +147,14 @@ func (service *ConfigService) scheduleUpdateConfig(ctx context.Context, polling 
 		err := service.updateConfig()
 		if os.IsNotExist(err) {
 			polling <- struct{}{}
-			go service.poll(ctx)
+			go service.waitUntilExistsAndWatch(ctx)
 		} else if err != nil {
 			service.log.WithError(err).Error("gitpod config watcher: failed to parse")
 		}
 	})
 }
 
-func (service *ConfigService) poll(ctx context.Context) {
+func (service *ConfigService) waitUntilExistsAndWatch(ctx context.Context) {
 	service.markReady()
 
 	timer := time.NewTicker(2 * time.Second)
