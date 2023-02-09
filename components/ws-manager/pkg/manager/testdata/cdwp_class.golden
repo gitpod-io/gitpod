@@ -256,6 +256,10 @@
                                         "operator": "Exists"
                                     },
                                     {
+                                        "key": "gitpod.io/experimental",
+                                        "operator": "DoesNotExist"
+                                    },
+                                    {
                                         "key": "gitpod.io/workspaceClass",
                                         "operator": "In",
                                         "values": [
