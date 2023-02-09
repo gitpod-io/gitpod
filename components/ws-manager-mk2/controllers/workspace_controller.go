@@ -6,6 +6,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -14,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -214,24 +216,14 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 	// we've disposed already - try to remove the finalizer and call it a day
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
-		var foundFinalizer bool
-		n := 0
-		for _, x := range pod.Finalizers {
-			if x != gitpodPodFinalizerName {
-				pod.Finalizers[n] = x
-				n++
-			} else {
-				foundFinalizer = true
-			}
-		}
-		pod.Finalizers = pod.Finalizers[:n]
-		err := r.Client.Update(ctx, pod)
-		if err != nil {
-			return ctrl.Result{Requeue: true}, err
+		hadFinalizer := controllerutil.ContainsFinalizer(pod, gitpodPodFinalizerName)
+		controllerutil.RemoveFinalizer(pod, gitpodPodFinalizerName)
+		if err := r.Client.Update(ctx, pod); err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to remove gitpod finalizer: %w", err)
 		}
 
-		if foundFinalizer {
-			// reque to remove workspace
+		if hadFinalizer {
+			// Requeue to remove workspace.
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
 	}
