@@ -16,9 +16,10 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { openAuthorizeWindow } from "../provider-utils";
 import { useCurrentProject } from "./project-context";
 import { toRemoteURL } from "./render-utils";
+import { Redirect } from "react-router";
 
 export default function () {
-    const project = useCurrentProject();
+    const { project, loading } = useCurrentProject();
 
     const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(false);
     const [events, setEvents] = useState<PrebuildEvent[]>([]);
@@ -101,6 +102,10 @@ export default function () {
     const renderStatus = (event: PrebuildEvent) => {
         return event.status;
     };
+
+    if (!loading && !project) {
+        return <Redirect to="/projects" />;
+    }
 
     return (
         <>

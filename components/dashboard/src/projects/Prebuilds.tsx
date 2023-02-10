@@ -18,14 +18,14 @@ import StatusPaused from "../icons/StatusPaused.svg";
 import StatusRunning from "../icons/StatusRunning.svg";
 import { getGitpodService } from "../service/service";
 import { shortCommitMessage } from "./render-utils";
-import { Link } from "react-router-dom";
+import { Link, Redirect } from "react-router-dom";
 import { Disposable } from "vscode-jsonrpc";
 import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
 
 export default function (props: { project?: Project; isAdminDashboard?: boolean }) {
     const currentProject = useCurrentProject();
-    const project = props.project || currentProject;
+    const project = props.project || currentProject.project;
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
     const [statusFilter, setStatusFilter] = useState<PrebuiltWorkspaceState | undefined>();
@@ -127,6 +127,10 @@ export default function (props: { project?: Project; isAdminDashboard?: boolean 
     const formatDate = (date: string | undefined) => {
         return date ? dayjs(date).fromNow() : "";
     };
+
+    if (!currentProject.loading && !project) {
+        return <Redirect to="/projects" />;
+    }
 
     return (
         <>

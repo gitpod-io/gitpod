@@ -6,10 +6,10 @@
 
 import { Project } from "@gitpod/gitpod-protocol";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useRouteMatch } from "react-router";
+import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { validate as uuidValidate } from "uuid";
 import { listAllProjects } from "../service/public-api";
-import { useCurrentTeam } from "../teams/teams-context";
+import { useCurrentTeam, useTeams } from "../teams/teams-context";
 import { useCurrentUser } from "../user-context";
 
 export const ProjectContext = createContext<{
@@ -45,15 +45,26 @@ export function useProjectSlugs(): { projectSlug?: string; prebuildId?: string }
     }, [projectsRouteMatch?.params.projectSlug, projectsRouteMatch?.params.prebuildId]);
 }
 
-export function useCurrentProject(): Project | undefined {
+export function useCurrentProject(): { project: Project | undefined; loading: boolean } {
     const { project, setProject } = useContext(ProjectContext);
+    const [loading, setLoading] = useState(true);
     const user = useCurrentUser();
     const team = useCurrentTeam();
+    const teams = useTeams();
     const slugs = useProjectSlugs();
+    const location = useLocation();
+    const history = useHistory();
 
     useEffect(() => {
-        if (!user || !slugs.projectSlug) {
+        setLoading(true);
+        if (!user) {
             setProject(undefined);
+            // without a user we are still consider this loading
+            return;
+        }
+        if (!slugs.projectSlug) {
+            setProject(undefined);
+            setLoading(false);
             return;
         }
         (async () => {
@@ -66,9 +77,32 @@ export function useCurrentProject(): Project | undefined {
 
             // Find project matching with slug, otherwise with name
             const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
-            setProject(project);
-        })();
-    }, [slugs.projectSlug, setProject, team, user]);
+            if (!project && teams) {
+                // check other orgs
+                for (const t of teams) {
+                    if (t.id === team?.id) {
+                        continue;
+                    }
+                    const projects = await listAllProjects({ teamId: t.id });
+                    const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
+                    if (project) {
+                        // redirect to the other org
+                        history.push(location.pathname + "?org=" + t.id);
+                    }
+                }
 
-    return project;
+                // check personal projects
+                const projects = await listAllProjects({ userId: user.id });
+                const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
+                if (project) {
+                    // redirect to the other org
+                    history.push(location.pathname + "?org=0");
+                }
+            }
+            setProject(project);
+            setLoading(false);
+        })();
+    }, [slugs.projectSlug, setProject, team, user, teams, location, history]);
+
+    return { project, loading };
 }

@@ -269,8 +269,11 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route path="/variables" exact>
                         <Redirect to={settingsPathVariables} />
                     </Route>
-                    <Route path="/tokens">
+                    <Route path="/tokens" exact>
                         <Redirect to={settingsPathPersonalAccessTokens} />
+                    </Route>
+                    <Route path="/tokens/create" exact>
+                        <Redirect to={settingsPathPersonalAccessTokenCreate} />
                     </Route>
                     <Route path="/keys" exact>
                         <Redirect to={settingsPathSSHKeys} />

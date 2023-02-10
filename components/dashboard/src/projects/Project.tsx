@@ -8,7 +8,7 @@ import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import dayjs from "dayjs";
 import { useCallback, useContext, useEffect, useState } from "react";
-import { useHistory } from "react-router";
+import { Redirect, useHistory } from "react-router";
 import Alert from "../components/Alert";
 import Header from "../components/Header";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
@@ -24,7 +24,7 @@ import { shortCommitMessage, toRemoteURL } from "./render-utils";
 
 export default function () {
     const history = useHistory();
-    const project = useCurrentProject();
+    const { project, loading } = useCurrentProject();
     const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -183,10 +183,14 @@ export default function () {
         }
     };
 
+    if (!loading && !project) {
+        return <Redirect to="/projects" />;
+    }
+
     return (
         <>
             <Header
-                title={project?.name || "Unknown project"}
+                title={project?.name || "Loading..."}
                 subtitle={
                     <h2 className="tracking-wide">
                         View recent active branches for{" "}
