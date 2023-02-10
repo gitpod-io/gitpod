@@ -36,7 +36,7 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
                           ),
                           active: team === undefined,
                           separator: true,
-                          link: `${location.pathname}?org=0`,
+                          link: `/?org=0`,
                       },
                   ]
                 : []),
@@ -55,7 +55,7 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
                     ),
                     active: team?.id === t.id,
                     separator: true,
-                    link: `${location.pathname}?org=${t.id}`,
+                    link: `/?org=${t.id}`,
                 }))
                 .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1)),
             {

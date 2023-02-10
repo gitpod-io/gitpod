@@ -6,6 +6,7 @@
 
 import { Project, ProjectEnvVar } from "@gitpod/gitpod-protocol";
 import { useEffect, useState } from "react";
+import { Redirect } from "react-router";
 import Alert from "../components/Alert";
 import CheckBox from "../components/CheckBox";
 import InfoBox from "../components/InfoBox";
@@ -16,7 +17,7 @@ import { useCurrentProject } from "./project-context";
 import { ProjectSettingsPage } from "./ProjectSettings";
 
 export default function () {
-    const project = useCurrentProject();
+    const { project, loading } = useCurrentProject();
     const [envVars, setEnvVars] = useState<ProjectEnvVar[]>([]);
     const [showAddVariableModal, setShowAddVariableModal] = useState<boolean>(false);
 
@@ -38,6 +39,10 @@ export default function () {
         await getGitpodService().server.deleteProjectEnvironmentVariable(variableId);
         updateEnvVars();
     };
+
+    if (!loading && !project) {
+        return <Redirect to="/projects" />;
+    }
 
     return (
         <ProjectSettingsPage project={project}>
