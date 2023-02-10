@@ -189,7 +189,16 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 	// if the pod was stopped by request, delete it
 	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)) && !isPodBeingDeleted(pod):
-		err := r.Client.Delete(ctx, pod)
+		var gracePeriodSeconds *int64
+		if c := wsk8s.GetCondition(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)); c != nil {
+			if dt, err := time.ParseDuration(c.Message); err == nil {
+				s := int64(dt.Seconds())
+				gracePeriodSeconds = &s
+			}
+		}
+		err := r.Client.Delete(ctx, pod, &client.DeleteOptions{
+			GracePeriodSeconds: gracePeriodSeconds,
+		})
 		if errors.IsNotFound(err) {
 			// pod is gone - nothing to do here
 		} else {

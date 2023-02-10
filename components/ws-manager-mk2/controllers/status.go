@@ -124,6 +124,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		if controllerutil.ContainsFinalizer(pod, gitpodPodFinalizerName) {
 			if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
 				wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
+				wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) ||
 				wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
 
 				workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
