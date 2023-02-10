@@ -312,6 +312,21 @@ func (s *BillingService) FinalizeInvoice(ctx context.Context, in *v1.FinalizeInv
 		// we are just logging at this point, so that we don't see the event again as the usage has been recorded.
 		logger.WithError(err).Errorf("Failed to increment billing cycle.")
 	}
+
+	// update stripe with current usage immediately, so that invoices created between now and the next reconcile are correct.
+	newBalance, err := db.GetBalance(ctx, s.conn, usage.AttributionID)
+	if err != nil {
+		// we are just logging at this point, so that we don't see the event again as the usage has been recorded.
+		logger.WithError(err).Errorf("Failed to compute new balance.")
+		return &v1.FinalizeInvoiceResponse{}, nil
+	}
+	err = s.stripeClient.UpdateUsage(ctx, map[db.AttributionID]int64{
+		usage.AttributionID: int64(math.Ceil(newBalance.ToCredits())),
+	})
+	if err != nil {
+		// we are just logging at this point, so that we don't see the event again as the usage has been recorded.
+		log.WithError(err).Errorf("Failed to udpate usage in stripe after receiving invoive.finalized.")
+	}
 	return &v1.FinalizeInvoiceResponse{}, nil
 }
 
