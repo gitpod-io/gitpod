@@ -30,6 +30,7 @@ describe("Migration Service", () => {
         await conn.query("DELETE FROM d_b_team");
         await conn.query("DELETE FROM d_b_stripe_customer");
         await conn.query("DELETE FROM d_b_workspace_instance");
+        await conn.query("DELETE FROM d_b_workspace");
         await conn.query("DELETE FROM d_b_usage");
         await conn.query("DELETE FROM d_b_cost_center");
     };
