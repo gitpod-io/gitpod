@@ -100,12 +100,20 @@ export class GitpodHostUrl {
         return this.with((url) => ({ pathname: "/" }));
     }
 
+    asBilling(): GitpodHostUrl {
+        return this.with((url) => ({ pathname: "/user/billing" }));
+    }
+
     asLogin(): GitpodHostUrl {
         return this.with((url) => ({ pathname: "/login" }));
     }
 
     asAccessControl(): GitpodHostUrl {
         return this.with((url) => ({ pathname: "/integrations" }));
+    }
+
+    asSettings(): GitpodHostUrl {
+        return this.with((url) => ({ pathname: "/user/account" }));
     }
 
     asPreferences(): GitpodHostUrl {
