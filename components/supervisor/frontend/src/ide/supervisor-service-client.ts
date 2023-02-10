@@ -52,13 +52,13 @@ export class SupervisorServiceClient {
             let result;
             if (response.ok) {
                 result = await response.json();
-                if (kind === "supervisor" && (result as SupervisorStatusResponse.AsObject).ok) {
+                if (kind === "supervisor" && (!wait || (result as SupervisorStatusResponse.AsObject).ok)) {
                     return;
                 }
-                if (kind === "content" && (result as ContentStatusResponse.AsObject).available) {
+                if (kind === "content" && (!wait || (result as ContentStatusResponse.AsObject).available)) {
                     return;
                 }
-                if (kind === "ide" && (result as IDEStatusResponse.AsObject).ok) {
+                if (kind === "ide" && (!wait || (result as IDEStatusResponse.AsObject).ok)) {
                     return result;
                 }
             }
