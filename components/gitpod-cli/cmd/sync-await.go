@@ -40,8 +40,12 @@ var awaitSyncCmd = &cobra.Command{
 			done <- true
 		}()
 
-		<-done
-		fmt.Printf("%s done\n", args[0])
+		select {
+		case <-cmd.Context().Done():
+		case <-done:
+			fmt.Printf("%s done\n", args[0])
+		}
+
 		return nil
 	},
 }
