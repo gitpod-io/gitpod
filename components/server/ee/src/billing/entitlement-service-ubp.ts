@@ -47,7 +47,7 @@ export class EntitlementServiceUBP implements EntitlementService {
 
     async mayStartWorkspace(
         user: User,
-        workspace: Workspace,
+        workspace: Pick<Workspace, "projectId">,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
@@ -75,7 +75,7 @@ export class EntitlementServiceUBP implements EntitlementService {
 
     protected async checkUsageLimitReached(
         user: User,
-        workspace: Workspace,
+        workspace: Pick<Workspace, "projectId">,
         date: Date,
     ): Promise<AttributionId | undefined> {
         const result = await this.userService.checkUsageLimitReached(user, workspace);

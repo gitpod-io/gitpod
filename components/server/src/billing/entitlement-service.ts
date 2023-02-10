@@ -17,6 +17,7 @@ import { injectable } from "inversify";
 
 export interface MayStartWorkspaceResult {
     hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
+    //** Out of Chargebee credits? */
     oufOfCredits?: boolean;
 
     needsVerification?: boolean;
@@ -42,7 +43,7 @@ export interface EntitlementService {
      */
     mayStartWorkspace(
         user: User,
-        workspace: Workspace,
+        workspace: Pick<Workspace, "projectId">,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult>;

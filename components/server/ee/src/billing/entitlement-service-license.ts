@@ -28,7 +28,7 @@ export class EntitlementServiceLicense implements EntitlementService {
 
     async mayStartWorkspace(
         user: User,
-        workspace: Workspace,
+        workspace: Pick<Workspace, "projectId">,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
