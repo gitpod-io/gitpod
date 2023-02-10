@@ -11,6 +11,6 @@ interface Window {
         loggedUserID?: string;
 
         openDesktopIDE(url: string): void;
-        connectionReady(): Promise<void>;
+        connectionReady: Promise<void>;
     };
 }
