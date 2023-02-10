@@ -9,6 +9,13 @@ import { filePathTelepresenceAware } from "./env";
 import { DeepPartial } from "./util/deep-partial";
 import { PermissionName } from "./permission";
 
+const workspaceRegions = ["europe", "north-america", "south-america", "africa", "asia", ""] as const;
+export type WorkspaceRegion = typeof workspaceRegions[number];
+
+export function isWorkspaceRegion(s: string): s is WorkspaceRegion {
+    return workspaceRegions.indexOf(s as any) !== -1;
+}
+
 export interface WorkspaceCluster {
     // Name of the workspace cluster.
     // This is the string set in each
@@ -19,9 +26,9 @@ export interface WorkspaceCluster {
     // The name can be at most 60 characters.
     applicationCluster: string;
 
-    // The name of the region this cluster belongs to. E.g. us-west1 or europe-west1
+    // The name of the region this cluster belongs to. E.g. europe or north-america
     // The name can be at most 60 characters.
-    region: string;
+    region: WorkspaceRegion;
 
     // URL of the cluster's ws-manager API
     url: string;
@@ -110,5 +117,5 @@ export interface WorkspaceClusterDB {
 }
 
 export type WorkspaceClusterFilter = Pick<WorkspaceCluster, "applicationCluster"> &
-    DeepPartial<Pick<WorkspaceCluster, "name" | "state" | "govern" | "url">> &
+    DeepPartial<Pick<WorkspaceCluster, "name" | "state" | "govern" | "url" | "region">> &
     Partial<{ minScore: number }>;

@@ -45,6 +45,7 @@ import { getSupportedWorkspaceClasses } from "./cluster-sync-service";
 import { Configuration } from "./config";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { GRPCError } from "./rpc";
+import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/src/workspace-cluster";
 
 export interface ClusterServiceServerOptions {
     port: number;
@@ -86,6 +87,10 @@ export class ClusterService implements IClusterServiceServer {
             try {
                 // check if the name or URL are already registered/in use
                 const req = call.request.toObject();
+
+                if (!isWorkspaceRegion(req.region)) {
+                    throw new GRPCError(grpc.status.INVALID_ARGUMENT, `Invalid value for workspace region.`);
+                }
 
                 const clusterByNamePromise = this.clusterDB.findByName(req.name, this.config.installation);
                 const clusterByUrlPromise = this.clusterDB.findFiltered({

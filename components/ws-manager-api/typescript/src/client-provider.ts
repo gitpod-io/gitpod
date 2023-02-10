@@ -8,7 +8,11 @@ import { createClientCallMetricsInterceptor, IClientCallMetrics } from "@gitpod/
 import { Disposable, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { WorkspaceClusterWoTLS, WorkspaceManagerConnectionInfo } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import {
+    WorkspaceClusterWoTLS,
+    WorkspaceManagerConnectionInfo,
+    WorkspaceRegion,
+} from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import * as grpc from "@grpc/grpc-js";
 import { inject, injectable, optional } from "inversify";
 import {
@@ -50,7 +54,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
-        region?: string,
+        region?: WorkspaceRegion,
     ): Promise<IWorkspaceClusterStartSet> {
         const allClusters = await this.source.getAllWorkspaceClusters(applicationCluster);
         const availableClusters = allClusters.filter((c) => c.score > 0 && c.state === "available");

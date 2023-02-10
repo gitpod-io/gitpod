@@ -78,6 +78,9 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         if (predicate.url !== undefined) {
             qb = qb.andWhere("wsc.url = :url", predicate);
         }
+        if (predicate.region !== undefined && predicate.region !== "") {
+            qb = qb.andWhere("wsc.region = :region", predicate);
+        }
         return qb.getMany();
     }
 }
