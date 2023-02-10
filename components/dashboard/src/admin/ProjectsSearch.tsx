@@ -12,14 +12,14 @@ import { useState, useEffect } from "react";
 import ProjectDetail from "./ProjectDetail";
 import { getGitpodService } from "../service/service";
 import { AdminGetListResult, Project } from "@gitpod/gitpod-protocol";
-import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import { AdminPageHeader } from "./AdminPageHeader";
 import Pagination from "../Pagination/Pagination";
 
 export default function ProjectsSearchPage() {
     return (
-        <PageWithAdminSubMenu title="Projects" subtitle="Search and manage all projects.">
+        <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
             <ProjectsSearch />
-        </PageWithAdminSubMenu>
+        </AdminPageHeader>
     );
 }
 

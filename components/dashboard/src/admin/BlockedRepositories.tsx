@@ -7,7 +7,7 @@
 import { AdminGetListResult } from "@gitpod/gitpod-protocol";
 import { useEffect, useRef, useState } from "react";
 import { getGitpodService } from "../service/service";
-import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import { AdminPageHeader } from "./AdminPageHeader";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import ConfirmationModal from "../components/ConfirmationModal";
 import Modal from "../components/Modal";
@@ -18,9 +18,9 @@ import Alert from "../components/Alert";
 
 export function BlockedRepositories() {
     return (
-        <PageWithAdminSubMenu title="Blocked Repositories" subtitle="Search and manage all blocked repositories.">
+        <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
             <BlockedRepositoriesList />
-        </PageWithAdminSubMenu>
+        </AdminPageHeader>
     );
 }
 

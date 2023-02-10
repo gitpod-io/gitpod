@@ -13,14 +13,14 @@ import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { AdminGetListResult, Team } from "@gitpod/gitpod-protocol";
 import Label from "./Label";
-import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import { AdminPageHeader } from "./AdminPageHeader";
 import Pagination from "../Pagination/Pagination";
 
 export default function TeamsSearchPage() {
     return (
-        <PageWithAdminSubMenu title="Organizations" subtitle="Search and manage organizations.">
+        <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
             <TeamsSearch />
-        </PageWithAdminSubMenu>
+        </AdminPageHeader>
     );
 }
 

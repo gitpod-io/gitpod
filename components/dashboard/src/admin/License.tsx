@@ -17,7 +17,7 @@ import { ReactComponent as LinkSvg } from "../images/external-link.svg";
 import SolidCard from "../components/SolidCard";
 import Card from "../components/Card";
 import { isGitpodIo } from "../utils";
-import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import { AdminPageHeader } from "./AdminPageHeader";
 
 export default function License() {
     const { license, setLicense } = useContext(LicenseContext);
@@ -42,7 +42,7 @@ export default function License() {
 
     return (
         <div>
-            <PageWithAdminSubMenu title="License" subtitle="License associated with your Gitpod installation">
+            <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
                 <div className="flex flex-row space-x-4">
                     <Card className="w-72 h-64">
                         <span>
@@ -85,7 +85,7 @@ export default function License() {
                         </span>
                     </SolidCard>
                 </div>
-            </PageWithAdminSubMenu>
+            </AdminPageHeader>
         </div>
     );
 }
