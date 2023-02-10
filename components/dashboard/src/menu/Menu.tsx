@@ -136,6 +136,7 @@ export default function Menu() {
     const adminMenu: Entry = {
         title: "Admin",
         link: "/admin",
+        alternatives: ["/admin/users"],
     };
 
     const handleFeedbackFormClick = () => {
