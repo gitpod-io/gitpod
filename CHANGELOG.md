@@ -1,6 +1,7 @@
 # Change Log
 
 ## February 2023
+- Improve prompt for `Gitpod: Open in VS Code` action in Browser Code ([#16321](https://github.com/gitpod-io/gitpod/pull/16321)) - [@mustard-mh](https://github.com/mustard-mh)
 - Reverse order of Feedback emojis ([#16292](https://github.com/gitpod-io/gitpod/pull/16292)) - [@atduarte](https://github.com/atduarte)
 - Fix evaluation of BillingMode: Ignore old "free" subscription entries ([#16270](https://github.com/gitpod-io/gitpod/pull/16270)) - [@geropl](https://github.com/geropl)
 - [fix] :Preselect editor and class on the new workspace modal on first load ([#15946](https://github.com/gitpod-io/gitpod/pull/15946)) - [@yashikajotwani12](https://github.com/yashikajotwani12)
