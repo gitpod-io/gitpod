@@ -66,7 +66,7 @@ func (s *Service) OAuth2Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		state, err := decodeStateParam(stateParam)
+		state, err := s.decodeStateParam(stateParam)
 		if err != nil {
 			http.Error(rw, "bad state param", http.StatusBadRequest)
 			return
