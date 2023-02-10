@@ -43,6 +43,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const (
+	// stopWorkspaceNormallyGracePeriod is the grace period we use when stopping a pod with StopWorkspaceNormally policy
+	stopWorkspaceNormallyGracePeriod = 30 * time.Second
+	// stopWorkspaceImmediatelyGracePeriod is the grace period we use when stopping a pod as soon as possbile
+	stopWorkspaceImmediatelyGracePeriod = 1 * time.Second
+)
+
 func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer, activity *activity.WorkspaceActivity) *WorkspaceManagerServer {
 	metrics := newWorkspaceMetrics()
 	reg.MustRegister(metrics)
@@ -232,12 +239,39 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	}, nil
 }
 
-func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsmanapi.StopWorkspaceRequest) (*wsmanapi.StopWorkspaceResponse, error) {
-	err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsmanapi.StopWorkspaceRequest) (res *wsmanapi.StopWorkspaceResponse, err error) {
+	owi := log.OWI("", "", req.Id)
+	span, ctx := tracing.FromContext(ctx, "StopWorkspace")
+	tracing.LogRequestSafe(span, req)
+	tracing.ApplyOWI(span, owi)
+	defer tracing.FinishSpan(span, &err)
+
+	gracePeriod := stopWorkspaceNormallyGracePeriod
+	if req.Policy == api.StopWorkspacePolicy_IMMEDIATELY {
+		span.LogKV("policy", "immediately")
+		gracePeriod = stopWorkspaceImmediatelyGracePeriod
+	} else if req.Policy == api.StopWorkspacePolicy_ABORT {
+		span.LogKV("policy", "abort")
+		gracePeriod = stopWorkspaceImmediatelyGracePeriod
+		if err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
+				Type:               string(workspacev1.WorkspaceConditionAborted),
+				Status:             metav1.ConditionTrue,
+				Reason:             "StopWorkspaceRequest",
+				LastTransitionTime: metav1.Now(),
+			})
+			return nil
+		}); err != nil {
+			log.Error(err, "failed to add Aborted condition to workspace")
+		}
+	}
+	err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
 		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
 			Status:             metav1.ConditionTrue,
 			LastTransitionTime: metav1.Now(),
+			Message:            gracePeriod.String(),
+			Reason:             "StopWorkspaceRequest",
 		})
 		return nil
 	})
@@ -661,13 +695,15 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 		},
 		Phase: phase,
 		Conditions: &wsmanapi.WorkspaceConditions{
-			Failed:             getConditionMessageIfTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)),
-			Timeout:            getConditionMessageIfTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)),
-			Snapshot:           ws.Status.Snapshot,
-			Deployed:           convertCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionDeployed)),
-			FirstUserActivity:  firstUserActivity,
-			HeadlessTaskFailed: getConditionMessageIfTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionsHeadlessTaskFailed)),
-			StoppedByRequest:   convertCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)),
+			Failed:              getConditionMessageIfTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)),
+			Timeout:             getConditionMessageIfTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)),
+			Snapshot:            ws.Status.Snapshot,
+			Deployed:            convertCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionDeployed)),
+			FirstUserActivity:   firstUserActivity,
+			HeadlessTaskFailed:  getConditionMessageIfTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionsHeadlessTaskFailed)),
+			StoppedByRequest:    convertCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)),
+			FinalBackupComplete: convertCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)),
+			Aborted:             convertCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)),
 		},
 		Runtime: runtime,
 		Auth: &wsmanapi.WorkspaceAuthentication{
@@ -688,14 +724,7 @@ func getConditionMessageIfTrue(conds []metav1.Condition, tpe string) string {
 }
 
 func convertCondition(conds []metav1.Condition, tpe string) wsmanapi.WorkspaceConditionBool {
-	var res *metav1.Condition
-	for _, c := range conds {
-		if c.Type == tpe {
-			res = &c
-			break
-		}
-	}
-
+	res := wsk8s.GetCondition(conds, tpe)
 	if res == nil {
 		return wsmanapi.WorkspaceConditionBool_EMPTY
 	}

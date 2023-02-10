@@ -130,7 +130,7 @@ type WorkspaceStatus struct {
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 }
 
-// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;ContentReady;BackupComplete;BackupFailure
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;BackupComplete;BackupFailure
 type WorkspaceCondition string
 
 const (
@@ -153,8 +153,12 @@ const (
 	// HeadlessTaskFailed indicates that a headless workspace task failed
 	WorkspaceConditionsHeadlessTaskFailed WorkspaceCondition = "HeadlessTaskFailed"
 
-	// StoppedByRequest is true if the workspace was stopped using a StopWorkspace call
+	// StoppedByRequest is true if the workspace was stopped using a StopWorkspace call.
+	// The condition message will contain the requested grace period.
 	WorkspaceConditionStoppedByRequest WorkspaceCondition = "StoppedByRequest"
+
+	// Aborted is true if StopWorkspace was called with StopWorkspacePolicy set to ABORT
+	WorkspaceConditionAborted WorkspaceCondition = "Aborted"
 
 	// ContentReady is true once the content initialisation is complete
 	WorkspaceConditionContentReady WorkspaceCondition = "ContentReady"

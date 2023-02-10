@@ -47,6 +47,10 @@ const (
 
 	// gitpodPodFinalizerName is the name of the finalizer we use on pods
 	gitpodPodFinalizerName = "gitpod.io/finalizer"
+
+	// Grace time until the process in the workspace is properly completed
+	// e.g. dockerd in the workspace may take some time to clean up the overlay directory.
+	gracePeriod = 3 * time.Minute
 )
 
 type startWorkspaceContext struct {
@@ -396,6 +400,7 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 		},
 	}
 
+	graceSec := int64(gracePeriod.Seconds())
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%s", prefix, sctx.Workspace.Name),
@@ -422,8 +427,9 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
-			RestartPolicy: corev1.RestartPolicyNever,
-			Volumes:       volumes,
+			RestartPolicy:                 corev1.RestartPolicyNever,
+			Volumes:                       volumes,
+			TerminationGracePeriodSeconds: &graceSec,
 			Tolerations: []corev1.Toleration{
 				{
 					Key:      "node.kubernetes.io/disk-pressure",

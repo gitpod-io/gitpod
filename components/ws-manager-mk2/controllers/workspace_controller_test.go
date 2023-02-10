@@ -134,6 +134,28 @@ var _ = Describe("WorkspaceController", func() {
 
 			expectWorkspaceCleanup(ws, pod)
 		})
+
+		It("should handle workspace abort", func() {
+			ws := newWorkspace(uuid.NewString(), "default")
+			pod := createWorkspaceExpectPod(ws)
+
+			// Update Pod with stop and abort conditions.
+			updateObjWithRetries(ws, true, func(ws *workspacev1.Workspace) {
+				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
+					Type:               string(workspacev1.WorkspaceConditionAborted),
+					Status:             metav1.ConditionTrue,
+					LastTransitionTime: metav1.Now(),
+				})
+				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
+					Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
+					Status:             metav1.ConditionTrue,
+					LastTransitionTime: metav1.Now(),
+				})
+			})
+
+			// Expect cleanup without a backup.
+			expectWorkspaceCleanup(ws, pod)
+		})
 	})
 
 	Context("with headless workspaces", func() {
