@@ -11,7 +11,7 @@ import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import Pagination from "../Pagination/Pagination";
 import { getGitpodService } from "../service/service";
-import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import { AdminPageHeader } from "./AdminPageHeader";
 import UserDetail from "./UserDetail";
 
 export default function UserSearch() {
@@ -61,7 +61,7 @@ export default function UserSearch() {
         }
     };
     return (
-        <PageWithAdminSubMenu title="Users" subtitle="Search and manage all users.">
+        <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
             <div className="pt-8 flex">
                 <div className="flex justify-between w-full">
                     <div className="flex">
@@ -123,7 +123,7 @@ export default function UserSearch() {
                 setPage={search}
                 totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
             />
-        </PageWithAdminSubMenu>
+        </AdminPageHeader>
     );
 }
 

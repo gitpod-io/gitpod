@@ -3,36 +3,38 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
+import { TabEntry } from "../components/Header";
 
-export function getAdminMenu() {
+export function getAdminTabs(): TabEntry[] {
     return [
         {
             title: "Users",
-            link: ["/admin/users", "/admin"],
+            link: "/admin/users",
+            alternatives: ["/admin"],
         },
         {
             title: "Workspaces",
-            link: ["/admin/workspaces"],
+            link: "/admin/workspaces",
         },
         {
             title: "Projects",
-            link: ["/admin/projects"],
+            link: "/admin/projects",
         },
         {
             title: "Organizations",
-            link: ["/admin/orgs"],
+            link: "/admin/orgs",
         },
         {
             title: "Blocked Repositories",
-            link: ["/admin/blocked-repositories"],
+            link: "/admin/blocked-repositories",
         },
         {
             title: "License",
-            link: ["/admin/license"],
+            link: "/admin/license",
         },
         {
             title: "Settings",
-            link: ["/admin/settings"],
+            link: "/admin/settings",
         },
     ];
 }

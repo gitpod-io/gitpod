@@ -23,7 +23,7 @@ import Pagination from "../Pagination/Pagination";
 import { getGitpodService } from "../service/service";
 import { getProjectPath } from "../workspaces/WorkspaceEntryNew";
 import WorkspaceDetail from "./WorkspaceDetail";
-import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import { AdminPageHeader } from "./AdminPageHeader";
 import Alert from "../components/Alert";
 import { isGitpodIo } from "../utils";
 import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
@@ -34,9 +34,9 @@ interface Props {
 
 export default function WorkspaceSearchPage() {
     return (
-        <PageWithAdminSubMenu title="Workspaces" subtitle="Search and manage all workspaces.">
+        <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
             <WorkspaceSearch />
-        </PageWithAdminSubMenu>
+        </AdminPageHeader>
     );
 }
 

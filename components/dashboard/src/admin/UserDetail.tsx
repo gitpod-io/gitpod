@@ -21,7 +21,7 @@ import Modal from "../components/Modal";
 import { getGitpodService } from "../service/service";
 import { WorkspaceSearch } from "./WorkspacesSearch";
 import Property from "./Property";
-import { PageWithAdminSubMenu } from "./PageWithAdminSubMenu";
+import { AdminPageHeader } from "./AdminPageHeader";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import CaretDown from "../icons/CaretDown.svg";
@@ -258,7 +258,7 @@ export default function UserDetail(p: { user: User }) {
 
     return (
         <>
-            <PageWithAdminSubMenu title="Users" subtitle="Search and manage all users.">
+            <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
                 <div className="flex">
                     <div className="flex-1">
                         <div className="flex">
@@ -326,7 +326,7 @@ export default function UserDetail(p: { user: User }) {
                 </div>
 
                 <WorkspaceSearch user={user} />
-            </PageWithAdminSubMenu>
+            </AdminPageHeader>
             <Modal
                 visible={editSpendingLimit}
                 onClose={() => setEditSpendingLimit(false)}
