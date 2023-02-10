@@ -4,24 +4,22 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { countries, continents } from "countries-list";
 
-const NorthAmerica = "north-america";
-const Europe = "europe";
-const Unknown = "unknown";
-
-type WorkspaceRegion = "europe" | "north-america" | "unknown";
+const NorthAmerica: WorkspaceRegion = "north-america";
+const Europe: WorkspaceRegion = "europe";
 
 export class RegionService {
     public static countryCodeToNearestWorkspaceRegion(code: string): WorkspaceRegion {
         if (!isCountryCode(code)) {
-            return Unknown;
+            return "";
         }
 
         const continent = countries[code].continent;
 
         if (!isContinentCode(continent)) {
-            return Unknown;
+            return "";
         }
 
         return nearestWorkspaceRegion[continent];

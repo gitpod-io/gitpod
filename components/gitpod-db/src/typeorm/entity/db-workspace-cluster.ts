@@ -13,6 +13,8 @@ import {
 } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { ValueTransformer } from "typeorm/decorator/options/ValueTransformer";
 
+export type WorkspaceRegion = "europe" | "north-america" | "south-america" | "africa" | "asia" | ""; // unknown;
+
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
 export class DBWorkspaceCluster implements WorkspaceCluster {
@@ -96,7 +98,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
         type: "varchar",
         length: 60,
     })
-    region: string;
+    region: WorkspaceRegion;
 
     // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
     @Column()

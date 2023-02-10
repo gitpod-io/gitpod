@@ -126,6 +126,7 @@ import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
@@ -441,7 +442,7 @@ export class WorkspaceStarter {
         projectEnvVars: ProjectEnvVar[],
         rethrow?: boolean,
         forceRebuild?: boolean,
-        region?: string,
+        region?: WorkspaceRegion,
     ): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("actuallyStartWorkspace", ctx);
         span.setTag("region_preference", region);
@@ -638,7 +639,7 @@ export class WorkspaceStarter {
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
-        region?: string,
+        region?: WorkspaceRegion,
     ): Promise<StartWorkspaceResponse.AsObject | undefined> {
         let lastInstallation = "";
         const clusters = await this.clientProvider.getStartClusterSets(
@@ -1067,7 +1068,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         instance: WorkspaceInstance,
         additionalAuth: Map<string, string>,
-        region?: string,
+        region?: WorkspaceRegion,
     ): Promise<boolean> {
         const span = TraceContext.startSpan("needsImageBuild", ctx);
         try {
@@ -1107,7 +1108,7 @@ export class WorkspaceStarter {
         ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
         ignoreBaseImageresolvedAndRebuildBase: boolean = false,
         forceRebuild: boolean = false,
-        region?: string,
+        region?: WorkspaceRegion,
     ): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
 
@@ -1842,7 +1843,7 @@ export class WorkspaceStarter {
         user: User,
         workspace: Workspace,
         instance?: WorkspaceInstance,
-        region?: string,
+        region?: WorkspaceRegion,
     ) {
         return this.imagebuilderClientProvider.getClient(
             this.config.installationShortname,

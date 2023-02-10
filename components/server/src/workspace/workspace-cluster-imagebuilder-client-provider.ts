@@ -6,6 +6,7 @@
 
 import { User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { defaultGRPCOptions, IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
+import { WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import {
     ImageBuilderClient,
     ImageBuilderClientCallMetrics,
@@ -35,7 +36,7 @@ export class WorkspaceClusterImagebuilderClientProvider implements ImageBuilderC
         user: User,
         workspace: Workspace,
         instance: WorkspaceInstance,
-        region?: string,
+        region?: WorkspaceRegion,
     ): Promise<PromisifiedImageBuilderClient> {
         const clusters = await this.clientProvider.getStartClusterSets(
             applicationCluster,

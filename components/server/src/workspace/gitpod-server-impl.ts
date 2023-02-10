@@ -199,6 +199,7 @@ import {
 } from "../authorization/checks";
 import { reportCentralizedPermsValidation } from "../prometheus-metrics";
 import { RegionService } from "./region-service";
+import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -748,7 +749,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await mayStartPromise;
 
-        options.region = await this.determineWorkspaceRegion(workspace, options.region);
+        options.region = await this.determineWorkspaceRegion(workspace, options.region || "");
 
         // at this point we're about to actually start a new workspace
         const result = await this.workspaceStarter.startWorkspace(
@@ -1225,7 +1226,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
 
             let projectEnvVarsPromise = this.internalGetProjectEnvVars(workspace.projectId);
-            options.region = await this.determineWorkspaceRegion(workspace, options.region);
+            options.region = await this.determineWorkspaceRegion(workspace, options.region || "");
 
             logContext.workspaceId = workspace.id;
             traceWI(ctx, { workspaceId: workspace.id });
@@ -3534,7 +3535,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    private async determineWorkspaceRegion(ws: Workspace, preference: string | undefined): Promise<string | undefined> {
+    private async determineWorkspaceRegion(ws: Workspace, preference: WorkspaceRegion): Promise<WorkspaceRegion> {
         const guessWorkspaceRegionEnabled = await getExperimentsClientForBackend().getValueAsync(
             "guessWorkspaceRegion",
             false,
@@ -3551,6 +3552,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
 
         let targetRegion = preference;
+        if (!isWorkspaceRegion(preference)) {
+            targetRegion = "";
+        } else {
+            targetRegion = preference;
+        }
+
         if (guessWorkspaceRegionEnabled) {
             regionLogContext.experiment_enabled = true;
 
@@ -3560,12 +3567,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 if (this.clientHeaderFields.clientRegion) {
                     const countryCode = this.clientHeaderFields.clientRegion;
 
-                    const nearestWorkspaceRegion = RegionService.countryCodeToNearestWorkspaceRegion(countryCode);
-                    regionLogContext.guessed_region = nearestWorkspaceRegion;
-
-                    if (nearestWorkspaceRegion !== "unknown") {
-                        targetRegion = nearestWorkspaceRegion;
-                    }
+                    targetRegion = RegionService.countryCodeToNearestWorkspaceRegion(countryCode);
+                    regionLogContext.guessed_region = targetRegion;
                 }
             }
         }

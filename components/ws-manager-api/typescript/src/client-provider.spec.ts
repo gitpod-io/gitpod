@@ -40,7 +40,7 @@ class TestClientProvider {
                         url: "",
                         admissionConstraints: [],
                         applicationCluster: "xx01",
-                        region: "us-west1",
+                        region: "north-america",
                     },
                     {
                         name: "c2",
@@ -51,7 +51,7 @@ class TestClientProvider {
                         url: "",
                         admissionConstraints: [],
                         applicationCluster: "xx01",
-                        region: "us-west1",
+                        region: "north-america",
                     },
                     {
                         name: "c3",
@@ -62,7 +62,7 @@ class TestClientProvider {
                         url: "",
                         admissionConstraints: [],
                         applicationCluster: "xx01",
-                        region: "us-west1",
+                        region: "north-america",
                     },
                     {
                         name: "a1",
@@ -73,7 +73,7 @@ class TestClientProvider {
                         url: "",
                         admissionConstraints: [],
                         applicationCluster: "xx01",
-                        region: "us-west1",
+                        region: "north-america",
                     },
                     {
                         name: "a2",
@@ -84,7 +84,7 @@ class TestClientProvider {
                         url: "",
                         admissionConstraints: [],
                         applicationCluster: "xx01",
-                        region: "us-west1",
+                        region: "north-america",
                     },
                     {
                         name: "a3",
@@ -95,7 +95,7 @@ class TestClientProvider {
                         url: "",
                         admissionConstraints: [],
                         applicationCluster: "xx01",
-                        region: "europe-west1",
+                        region: "europe",
                     },
                     {
                         name: "con1",
@@ -106,7 +106,7 @@ class TestClientProvider {
                         url: "",
                         admissionConstraints: [{ type: "has-permission", permission: "new-workspace-cluster" }],
                         applicationCluster: "xx01",
-                        region: "europe-west1",
+                        region: "europe",
                     },
                     {
                         name: "con2",
@@ -119,7 +119,7 @@ class TestClientProvider {
                             { type: "has-permission", permission: "monitor" }, // This is meant to represent a permission that does not take special precedence (cmp. constraints.ts)
                         ],
                         applicationCluster: "xx01",
-                        region: "europe-west1",
+                        region: "europe",
                     },
                 ];
                 return <WorkspaceManagerClientProviderSource>{
@@ -183,7 +183,7 @@ class TestClientProvider {
                 {} as User,
                 {} as Workspace,
                 {} as WorkspaceInstance,
-                "europe-west1",
+                "europe",
             ),
             "regional cluster set",
         );

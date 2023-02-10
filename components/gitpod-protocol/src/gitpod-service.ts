@@ -62,6 +62,7 @@ import { IDEServer } from "./ide-protocol";
 import { ListUsageRequest, ListUsageResponse, CostCenterJSON } from "./usage";
 import { SupportedWorkspaceClass } from "./workspace-class";
 import { BillingMode } from "./billing-mode";
+import { WorkspaceRegion } from "./workspace-cluster";
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -450,7 +451,7 @@ export namespace GitpodServer {
         forceDefaultImage?: boolean;
         workspaceClass?: string;
         ideSettings?: IDESettings;
-        region?: string;
+        region?: WorkspaceRegion;
     }
     export interface TakeSnapshotOptions {
         workspaceId: string;
