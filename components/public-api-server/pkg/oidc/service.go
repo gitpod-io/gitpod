@@ -14,7 +14,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	goidc "github.com/coreos/go-oidc/v3/oidc"
@@ -28,8 +27,9 @@ import (
 )
 
 type Service struct {
-	dbConn *gorm.DB
-	cipher db.Cipher
+	dbConn   *gorm.DB
+	cipher   db.Cipher
+	stateJWT *StateJWT
 
 	verifierByIssuer      map[string]*goidc.IDTokenVerifier
 	sessionServiceAddress string
@@ -57,20 +57,16 @@ type AuthFlowResult struct {
 	Claims  map[string]interface{} `json:"claims"`
 }
 
-func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher) *Service {
+func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher, stateJWT *StateJWT) *Service {
 	return &Service{
 		verifierByIssuer:      map[string]*goidc.IDTokenVerifier{},
 		sessionServiceAddress: sessionServiceAddress,
 
 		dbConn: dbConn,
 		cipher: cipher,
-	}
-}
 
-func newTestService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher) *Service {
-	service := NewService(sessionServiceAddress, dbConn, cipher)
-	service.skipVerifyIdToken = true
-	return service
+		stateJWT: stateJWT,
+	}
 }
 
 func (s *Service) GetStartParams(config *ClientConfig, redirectURL string) (*StartParams, error) {
@@ -82,7 +78,7 @@ func (s *Service) GetStartParams(config *ClientConfig, redirectURL string) (*Sta
 		// TODO(at) read a relative URL from `returnTo` query param of the start request
 		ReturnToURL: "/",
 	}
-	state, err := encodeStateParam(stateParam)
+	state, err := s.encodeStateParam(stateParam)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode state")
 	}
@@ -104,21 +100,23 @@ func (s *Service) GetStartParams(config *ClientConfig, redirectURL string) (*Sta
 	}, nil
 }
 
-// TODO(at) state should be a JWT encoding a redirect location
-// For now, just use base64
-func encodeStateParam(state StateParam) (string, error) {
-	b, err := json.Marshal(state)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal state to json: %w", err)
-	}
-
-	return base64.StdEncoding.EncodeToString(b), nil
+func (s *Service) encodeStateParam(state StateParam) (string, error) {
+	encodedState, err := s.stateJWT.Encode(StateClaims{
+		ClientConfigID: state.ClientConfigID,
+		ReturnToURL:    state.ReturnToURL,
+	})
+	return encodedState, err
 }
 
-func decodeStateParam(encoded string) (StateParam, error) {
-	var result StateParam
-	err := json.NewDecoder(base64.NewDecoder(base64.StdEncoding, strings.NewReader(encoded))).Decode(&result)
-	return result, err
+func (s *Service) decodeStateParam(encodedToken string) (StateParam, error) {
+	claims, err := s.stateJWT.Decode(encodedToken)
+	if err != nil {
+		return StateParam{}, err
+	}
+	return StateParam{
+		ClientConfigID: claims.ClientConfigID,
+		ReturnToURL:    claims.ReturnToURL,
+	}, nil
 }
 
 func randString(size int) (string, error) {
@@ -152,7 +150,7 @@ func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientCo
 		return nil, fmt.Errorf("missing state parameter")
 	}
 
-	state, err := decodeStateParam(stateParam)
+	state, err := s.decodeStateParam(stateParam)
 	if err != nil {
 		return nil, fmt.Errorf("bad state param")
 	}

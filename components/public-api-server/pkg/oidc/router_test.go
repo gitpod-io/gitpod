@@ -22,7 +22,7 @@ func TestRoute_start(t *testing.T) {
 	idpUrl := newFakeIdP(t)
 
 	// setup test server with client routes
-	baseUrl, _, configId := newTestServer(t, testServerParams{
+	baseUrl, _, configId, _ := newTestServer(t, testServerParams{
 		issuer:      idpUrl,
 		returnToURL: "",
 	})
@@ -50,11 +50,11 @@ func TestRoute_callback(t *testing.T) {
 	idpUrl := newFakeIdP(t)
 
 	// setup test server with client routes
-	baseUrl, stateParam, _ := newTestServer(t, testServerParams{
+	baseUrl, stateParam, _, service := newTestServer(t, testServerParams{
 		issuer:      idpUrl,
 		returnToURL: "/relative/url/to/some/page",
 	})
-	state, err := encodeStateParam(*stateParam)
+	state, err := service.encodeStateParam(*stateParam)
 	require.NoError(t, err)
 
 	// hit the /callback endpoint
@@ -92,7 +92,7 @@ type testServerParams struct {
 	clientID    string
 }
 
-func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParam, configId string) {
+func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParam, configId string, oidcService *Service) {
 	router := chi.NewRouter()
 	oidcService, dbConn := setupOIDCServiceForTests(t)
 	router.Mount("/oidc", Router(oidcService))
@@ -124,5 +124,5 @@ func newTestServer(t *testing.T, params testServerParams) (url string, state *St
 		ReturnToURL:    params.returnToURL,
 	}
 
-	return url, stateParam, configId
+	return url, stateParam, configId, oidcService
 }

@@ -120,13 +120,13 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 		OAuth2Config:   &oauth2.Config{},
 	})
 
-	state, err := encodeStateParam(StateParam{
+	state, err := service.encodeStateParam(StateParam{
 		ClientConfigID: configID,
 		ReturnToURL:    "",
 	})
 	require.NoError(t, err, "failed encode state param")
 
-	state_unknown, err := encodeStateParam(StateParam{
+	state_unknown, err := service.encodeStateParam(StateParam{
 		ClientConfigID: "UNKNOWN",
 		ReturnToURL:    "",
 	})
@@ -209,10 +209,12 @@ func setupOIDCServiceForTests(t *testing.T) (*Service, *gorm.DB) {
 
 	dbConn := dbtest.ConnectForTests(t)
 	cipher := dbtest.CipherSet(t)
+	stateJWT := newTestStateJWT([]byte("ANY KEY"), 5*time.Minute)
 
 	sessionServerAddress := newFakeSessionServer(t)
 
-	service := newTestService(sessionServerAddress, dbConn, cipher)
+	service := NewService(sessionServerAddress, dbConn, cipher, stateJWT)
+	service.skipVerifyIdToken = true
 	return service, dbConn
 }
 
