@@ -164,29 +164,19 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 
 	specProvider := map[string]ImageSpecProvider{}
 	if cfg.RemoteSpecProvider != nil {
-		grpcOpts := common_grpc.DefaultClientOptions()
-		if cfg.RemoteSpecProvider.TLS != nil {
-			tlsConfig, err := common_grpc.ClientAuthTLSConfig(
-				cfg.RemoteSpecProvider.TLS.Authority, cfg.RemoteSpecProvider.TLS.Certificate, cfg.RemoteSpecProvider.TLS.PrivateKey,
-				common_grpc.WithSetRootCAs(true),
-				common_grpc.WithServerName("ws-manager"),
-			)
+		var providers []ImageSpecProvider
+		for _, providerCfg := range cfg.RemoteSpecProvider {
+			rsp, err := createRemoteSpecProvider(providerCfg)
 			if err != nil {
-				log.WithField("config", cfg.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
-				return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
+				return nil, err
 			}
 
-			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
-		} else {
-			grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+			providers = append(providers, rsp)
 		}
 
-		specprov, err := NewCachingSpecProvider(128, NewRemoteSpecProvider(cfg.RemoteSpecProvider.Addr, grpcOpts))
-		if err != nil {
-			return nil, xerrors.Errorf("cannot create caching spec provider: %w", err)
-		}
-		specProvider[api.ProviderPrefixRemote] = specprov
+		specProvider[api.ProviderPrefixRemote] = NewCompositeSpecProvider(providers...)
 	}
+
 	if cfg.FixedSpecProvider != "" {
 		fc, err := ioutil.ReadFile(cfg.FixedSpecProvider)
 		if err != nil {
@@ -251,6 +241,32 @@ func NewRegistry(cfg config.Config, newResolver ResolverProvider, reg prometheus
 		ConfigModifier:    NewConfigModifierFromLayerSource(layerSource),
 		metrics:           metrics,
 	}, nil
+}
+
+func createRemoteSpecProvider(cfg *config.RSProvider) (ImageSpecProvider, error) {
+	grpcOpts := common_grpc.DefaultClientOptions()
+	if cfg.TLS != nil {
+		tlsConfig, err := common_grpc.ClientAuthTLSConfig(
+			cfg.TLS.Authority, cfg.TLS.Certificate, cfg.TLS.PrivateKey,
+			common_grpc.WithSetRootCAs(true),
+			common_grpc.WithServerName("ws-manager"),
+		)
+		if err != nil {
+			log.WithField("config", cfg.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
+			return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
+		}
+
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
+	} else {
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	}
+
+	specprov, err := NewCachingSpecProvider(128, NewRemoteSpecProvider(cfg.Addr, grpcOpts))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create caching spec provider: %w", err)
+	}
+
+	return specprov, nil
 }
 
 func getRedisClient(cfg *config.RedisCacheConfig) (*redis.Client, error) {

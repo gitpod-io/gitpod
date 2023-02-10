@@ -29,10 +29,20 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	var (
-		ipfsCache     *regfac.IPFSCacheConfig
-		redisCache    *regfac.RedisCacheConfig
-		wsManagerAddr = fmt.Sprintf("dns:///ws-manager:%d", wsmanager.RPCPort)
+		ipfsCache  *regfac.IPFSCacheConfig
+		redisCache *regfac.RedisCacheConfig
 	)
+
+	remoteSpecProviders := []*regfac.RSProvider{
+		{
+			Addr: fmt.Sprintf("dns:///ws-manager:%d", wsmanager.RPCPort),
+			TLS: &regfac.TLS{
+				Authority:   "/ws-manager-client-tls-certs/ca.crt",
+				Certificate: "/ws-manager-client-tls-certs/tls.crt",
+				PrivateKey:  "/ws-manager-client-tls-certs/tls.key",
+			},
+		},
+	}
 
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
@@ -59,7 +69,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 
 		if ucfg.Workspace.UseWsmanagerMk2 {
-			wsManagerAddr = fmt.Sprintf("dns:///ws-manager-mk2:%d", wsmanagermk2.RPCPort)
+			remoteSpecProviders = append(remoteSpecProviders, &regfac.RSProvider{
+				Addr: fmt.Sprintf("dns:///ws-manager-mk2:%d", wsmanagermk2.RPCPort),
+				TLS: &regfac.TLS{
+					Authority:   "/ws-manager-mk2-client-tls-certs/ca.crt",
+					Certificate: "/ws-manager-mk2-client-tls-certs/tls.crt",
+					PrivateKey:  "/ws-manager-mk2-client-tls-certs/tls.key",
+				},
+			})
 		}
 
 		return nil
@@ -67,18 +84,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	rfcfg := regfac.ServiceConfig{
 		Registry: regfac.Config{
-			Port: ContainerPort,
-			RemoteSpecProvider: &regfac.RSProvider{
-				Addr: wsManagerAddr,
-				TLS: &regfac.TLS{
-					Authority:   "/ws-manager-client-tls-certs/ca.crt",
-					Certificate: "/ws-manager-client-tls-certs/tls.crt",
-					PrivateKey:  "/ws-manager-client-tls-certs/tls.key",
-				},
-			},
-			TLS:         &tls,
-			Store:       "/mnt/cache/registry",
-			RequireAuth: false,
+			Port:               ContainerPort,
+			RemoteSpecProvider: remoteSpecProviders,
+			TLS:                &tls,
+			Store:              "/mnt/cache/registry",
+			RequireAuth:        false,
 			StaticLayer: []regfac.StaticLayerCfg{
 				{
 					Ref:  ctx.ImageName(ctx.Config.Repository, SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),

@@ -11,6 +11,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -21,6 +22,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 )
+
+const wsManagerMk2ClientTlsVolume = "ws-manager-mk2-client-tls-certs"
 
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDaemonset)
@@ -138,6 +141,23 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				})
 			}
+		}
+
+		if ucfg.Workspace.UseWsmanagerMk2 {
+			volumes = append(volumes, corev1.Volume{
+				Name: wsManagerMk2ClientTlsVolume,
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: wsmanagermk2.TLSSecretNameClient,
+					},
+				},
+			})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      wsManagerMk2ClientTlsVolume,
+				MountPath: "/ws-manager-mk2-client-tls-certs",
+				ReadOnly:  true,
+			})
 		}
 
 		return nil

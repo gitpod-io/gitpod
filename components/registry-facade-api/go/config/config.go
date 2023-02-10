@@ -64,7 +64,7 @@ type Config struct {
 	Port               int              `json:"port"`
 	Prefix             string           `json:"prefix"`
 	StaticLayer        []StaticLayerCfg `json:"staticLayer"`
-	RemoteSpecProvider *RSProvider      `json:"remoteSpecProvider,omitempty"`
+	RemoteSpecProvider []*RSProvider    `json:"remoteSpecProvider,omitempty"`
 	FixedSpecProvider  string           `json:"fixedSpecFN,omitempty"`
 	Store              string           `json:"store"`
 	RequireAuth        bool             `json:"requireAuth"`
