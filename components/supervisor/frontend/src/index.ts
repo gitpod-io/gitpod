@@ -126,14 +126,15 @@ LoadingFrame.load().then(async (loading) => {
                 } else {
                     currentInstanceId = instanceId;
                 }
-                if (statusPhase === "running") {
-                    if (!hideDesktopIde) {
-                        if (!ideStatus) {
-                            return loading.frame;
-                        }
 
-                        const isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
-                        if (isDesktopIde) {
+                if (!ideStatus) {
+                    return loading.frame;
+                }
+
+                const isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
+                if (isDesktopIde) {
+                    if (statusPhase === "running") {
+                        if (!hideDesktopIde ) {
                             trackDesktopIDEReady(ideStatus.desktop);
                             frontendDashboardServiceClient.setState({
                                 desktopIDE: {
@@ -149,10 +150,14 @@ LoadingFrame.load().then(async (loading) => {
                             return loading.frame;
                         }
                     }
-                    if (ideService.state === "ready") {
-                        return document.body;
+                } else {
+                    if (statusPhase === "running" || statusPhase === "initializing") {
+                        if (ideService.state === "ready") {
+                            return document.body;
+                        }
                     }
                 }
+
             }
             return loading.frame;
         };
@@ -243,23 +248,30 @@ LoadingFrame.load().then(async (loading) => {
 
     (async () => {
         //#region ide lifecycle
+
+        const ideStatus = await SupervisorServiceClient.get().ideStatus;
+        const isDesktopIde = ideStatus && ideStatus.desktop && ideStatus.desktop.link;
+
         function isWorkspaceInstancePhase(phase: WorkspaceInstancePhase): boolean {
             return frontendDashboardServiceClient.latestStatus?.statusPhase === phase;
         }
         if (!isWorkspaceInstancePhase("running")) {
             await new Promise<void>((resolve) => {
                 frontendDashboardServiceClient.onStatusUpdate((status) => {
-                    if (status.statusPhase === "running") {
-                        resolve();
+                    if (!isDesktopIde) {
+                        if (status.statusPhase === "running" || status.statusPhase === "initializing") {
+                            resolve();
+                        }
+                    } else {
+                        if (status.statusPhase === "running") {
+                            resolve();
+                        }
                     }
                 });
             });
         }
 
         await loadingIDE;
-
-        const ideStatus = await SupervisorServiceClient.get().ideStatus;
-        const isDesktopIde = ideStatus && ideStatus.desktop && ideStatus.desktop.link;
 
         if (isWorkspaceInstancePhase("stopping") || isWorkspaceInstancePhase("stopped")) {
             return;
