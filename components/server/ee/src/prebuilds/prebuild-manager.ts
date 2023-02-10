@@ -38,6 +38,7 @@ import { PrebuildRateLimiterConfig } from "../../../src/workspace/prebuild-rate-
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UserService } from "../../../src/user/user-service";
+import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -65,6 +66,7 @@ export class PrebuildManager {
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
     @inject(UserService) protected readonly userService: UserService;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
 
     async abortPrebuildsForBranch(ctx: TraceContext, project: Project, user: User, branch: string): Promise<void> {
         const span = TraceContext.startSpan("abortPrebuildsForBranch", ctx);
@@ -137,6 +139,7 @@ export class PrebuildManager {
                     `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a team.`,
                 );
             }
+            await this.checkUsageLimitReached(user, project); // throws if true
 
             const config = await this.fetchConfig({ span }, user, context);
 
@@ -290,6 +293,26 @@ export class PrebuildManager {
             throw err;
         } finally {
             span.finish();
+        }
+    }
+
+    protected async checkUsageLimitReached(user: User, project: Project): Promise<void> {
+        let result: MayStartWorkspaceResult = {};
+        try {
+            result = await this.entitlementService.mayStartWorkspace(
+                user,
+                { projectId: project.id },
+                new Date(),
+                Promise.resolve([]),
+            );
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
+            return; // we don't want to block workspace starts because of internal errors
+        }
+        if (!!result.usageLimitReachedOnCostCenter) {
+            throw new ResponseError(ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED, "Increase usage limit and try again.", {
+                attributionId: result.usageLimitReachedOnCostCenter,
+            });
         }
     }
 
