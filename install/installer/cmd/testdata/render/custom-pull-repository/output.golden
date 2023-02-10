@@ -3668,11 +3668,11 @@ data:
             "image": "registry.mydomain.com/namespace/ide/code:commit-b443118d7ef8fff4a8814e5c66cd11da3a87a211",
             "latestImage": "registry.mydomain.com/namespace/ide/code:nightly",
             "imageLayers": [
-              "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-759bd2da35066c4cca3f6b99f6ece91529bc45bd",
+              "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-57f10d5fd6d6a325b6d991b96a30fef9eb42ec03",
               "registry.mydomain.com/namespace/ide/code-codehelper:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-759bd2da35066c4cca3f6b99f6ece91529bc45bd",
+              "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-57f10d5fd6d6a325b6d991b96a30fef9eb42ec03",
               "registry.mydomain.com/namespace/ide/code-codehelper:test"
             ]
           },
