@@ -78,7 +78,7 @@ LoadingFrame.load().then(async (loading) => {
     window.gitpod.connectionReady = Promise.all([
         SupervisorServiceClient.get().ideReady,
         SupervisorServiceClient.get().contentReady,
-    ]);
+    ]).then(() => {});
 
     (async () => {
         let hideDesktopIde = false;
