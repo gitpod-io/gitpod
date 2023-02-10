@@ -244,7 +244,10 @@ export class UserService {
      * @param workspace - optional, in which case the default billing account will be checked
      * @returns
      */
-    async checkUsageLimitReached(user: User, workspace?: Workspace): Promise<UsageLimitReachedResult> {
+    async checkUsageLimitReached(
+        user: User,
+        workspace?: Pick<Workspace, "projectId">,
+    ): Promise<UsageLimitReachedResult> {
         const attributionId = await this.getWorkspaceUsageAttributionId(user, workspace?.projectId);
         const creditBalance = await this.usageService.getCurrentBalance(attributionId);
         const currentInvoiceCredits = creditBalance.usedCredits;
