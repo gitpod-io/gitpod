@@ -5,7 +5,7 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router";
 import { Location } from "history";
@@ -13,18 +13,13 @@ import { countries } from "countries-list";
 import gitpodIcon from "../icons/gitpod.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
-import { useCurrentTeam, useTeamMemberInfos } from "../teams/teams-context";
 import ContextMenu from "../components/ContextMenu";
 import Separator from "../components/Separator";
 import PillMenuItem from "../components/PillMenuItem";
-import { getTeamSettingsMenu } from "../teams/TeamSettings";
 import { PaymentContext } from "../payment-context";
 import FeedbackFormModal from "../feedback-form/FeedbackModal";
 import { isGitpodIo } from "../utils";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import OrganizationSelector from "./OrganizationSelector";
-import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { getAdminTabs } from "../admin/admin.routes";
 
 interface Entry {
@@ -35,18 +30,9 @@ interface Entry {
 
 export default function Menu() {
     const user = useCurrentUser();
-    const team = useCurrentTeam();
     const location = useLocation();
-    const { data: teamBillingMode } = useOrgBillingMode();
-    const { showUsageView, oidcServiceEnabled, orgGitAuthProviders } = useFeatureFlags();
     const { setCurrency, setIsStudent, setIsChargebeeCustomer } = useContext(PaymentContext);
-    const [userBillingMode, setUserBillingMode] = useState<BillingMode | undefined>(undefined);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
-    const teamMembers = useTeamMemberInfos();
-
-    useEffect(() => {
-        getGitpodService().server.getBillingModeForUser().then(setUserBillingMode);
-    }, []);
 
     function isSelected(entry: Entry, location: Location<any>) {
         const all = [entry.link, ...(entry.alternatives || [])].map((l) => l.toLowerCase());
@@ -66,70 +52,18 @@ export default function Menu() {
         ]).then((setters) => setters.forEach((s) => s()));
     }, [setCurrency, setIsChargebeeCustomer, setIsStudent]);
 
-    const leftMenu = useMemo(() => {
-        const leftMenu: Entry[] = [
-            {
-                title: "Workspaces",
-                link: "/workspaces",
-                alternatives: ["/"],
-            },
-            {
-                title: "Projects",
-                link: `/projects`,
-                alternatives: [] as string[],
-            },
-        ];
-
-        if (
-            !team &&
-            BillingMode.showUsageBasedBilling(userBillingMode) &&
-            !user?.additionalData?.isMigratedToTeamOnlyAttribution
-        ) {
-            leftMenu.push({
-                title: "Usage",
-                link: "/usage",
-            });
-        }
-        if (team) {
-            leftMenu.push({
-                title: "Members",
-                link: `/members`,
-            });
-            const currentUserInTeam = (teamMembers[team.id] || []).find((m) => m.userId === user?.id);
-            if (
-                currentUserInTeam?.role === "owner" &&
-                (showUsageView || (teamBillingMode && teamBillingMode.mode === "usage-based"))
-            ) {
-                leftMenu.push({
-                    title: "Usage",
-                    link: `/usage`,
-                });
-            }
-            if (currentUserInTeam?.role === "owner") {
-                leftMenu.push({
-                    title: "Settings",
-                    link: `/settings`,
-                    alternatives: getTeamSettingsMenu({
-                        team,
-                        billingMode: teamBillingMode,
-                        ssoEnabled: oidcServiceEnabled,
-                        orgGitAuthProviders,
-                    }).flatMap((e) => e.link),
-                });
-            }
-        }
-        return leftMenu;
-    }, [
-        oidcServiceEnabled,
-        orgGitAuthProviders,
-        showUsageView,
-        team,
-        teamBillingMode,
-        teamMembers,
-        user?.additionalData?.isMigratedToTeamOnlyAttribution,
-        user?.id,
-        userBillingMode,
-    ]);
+    const leftMenu: Entry[] = [
+        {
+            title: "Workspaces",
+            link: "/workspaces",
+            alternatives: ["/"],
+        },
+        {
+            title: "Projects",
+            link: `/projects`,
+            alternatives: [] as string[],
+        },
+    ];
 
     const adminMenu: Entry = {
         title: "Admin",

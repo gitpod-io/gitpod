@@ -23,6 +23,10 @@ module.exports = {
                     DEFAULT: "#5C8DD6",
                     dark: "#265583",
                 },
+                // TODO: figure out if we want to just pull in the specific gitpod-* colors
+                teal: colors.teal,
+                sky: colors.sky,
+                rose: colors.rose,
                 "gitpod-black": "#161616",
                 "gitpod-gray": "#8E8787",
                 "gitpod-red": "#CE4A3E",
