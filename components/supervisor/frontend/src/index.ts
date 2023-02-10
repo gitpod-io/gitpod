@@ -75,10 +75,12 @@ LoadingFrame.load().then(async (loading) => {
     document.title = frontendDashboardServiceClient.latestStatus.workspaceDescription ?? "gitpod";
     window.gitpod.loggedUserID = frontendDashboardServiceClient.latestStatus.loggedUserId;
     window.gitpod.openDesktopIDE = frontendDashboardServiceClient.openDesktopIDE.bind(frontendDashboardServiceClient);
+    window.gitpod.connectionReady = Promise.all([
+        SupervisorServiceClient.get().ideReady,
+        SupervisorServiceClient.get().contentReady,
+    ]);
 
     (async () => {
-        const supervisorServiceClient = SupervisorServiceClient.get();
-
         let hideDesktopIde = false;
         const hideDesktopIdeEventListener = frontendDashboardServiceClient.onOpenBrowserIDE(() => {
             hideDesktopIdeEventListener.dispose();
@@ -105,7 +107,6 @@ LoadingFrame.load().then(async (loading) => {
         //#endregion
 
         type DesktopIDEStatus = { link: string; label: string; clientID?: string; kind?: String };
-        let isDesktopIde: undefined | boolean = undefined;
         let ideStatus: undefined | { desktop: DesktopIDEStatus } = undefined;
 
         //#region current-frame
@@ -127,10 +128,12 @@ LoadingFrame.load().then(async (loading) => {
                 }
                 if (statusPhase === "running") {
                     if (!hideDesktopIde) {
-                        if (isDesktopIde == undefined) {
+                        if (!ideStatus) {
                             return loading.frame;
                         }
-                        if (isDesktopIde && !!ideStatus) {
+
+                        const isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
+                        if (isDesktopIde) {
                             trackDesktopIDEReady(ideStatus.desktop);
                             frontendDashboardServiceClient.setState({
                                 desktopIDE: {
@@ -215,10 +218,9 @@ LoadingFrame.load().then(async (loading) => {
             updateCurrentFrame();
             trackIDEStatusRenderedEvent();
         });
-        supervisorServiceClient.ideReady
-            .then((newIdeStatus) => {
+        SupervisorServiceClient.get()
+            .ideReady.then((newIdeStatus) => {
                 ideStatus = newIdeStatus;
-                isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
                 updateCurrentFrame();
             })
             .catch((error) => console.error(`Unexpected error from supervisorServiceClient.ideReady: ${error}`));
@@ -253,15 +255,16 @@ LoadingFrame.load().then(async (loading) => {
                 });
             });
         }
-        const supervisorServiceClient = SupervisorServiceClient.get();
-        const [ideStatus] = await Promise.all([
-            supervisorServiceClient.ideReady,
-            supervisorServiceClient.contentReady,
-            loadingIDE,
-        ]);
+
+        await loadingIDE;
+
+        const ideStatus = await SupervisorServiceClient.get().ideStatus;
+        const isDesktopIde = ideStatus && ideStatus.desktop && ideStatus.desktop.link;
+
         if (isWorkspaceInstancePhase("stopping") || isWorkspaceInstancePhase("stopped")) {
             return;
         }
+
         toStop.pushAll([
             IDEWebSocket.connectWorkspace(),
             frontendDashboardServiceClient.onStatusUpdate((status) => {
@@ -270,10 +273,10 @@ LoadingFrame.load().then(async (loading) => {
                 }
             }),
         ]);
-        const isDesktopIde = ideStatus && ideStatus.desktop && ideStatus.desktop.link;
         if (!isDesktopIde) {
             toStop.push(ideService.start());
         }
+
         //#endregion
     })();
 });

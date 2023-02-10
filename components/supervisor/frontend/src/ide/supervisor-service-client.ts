@@ -11,6 +11,10 @@ import {
 } from "@gitpod/supervisor-api-grpc/lib/status_pb";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
+export function timeout(millis: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, millis));
+}
+
 export class SupervisorServiceClient {
     private static _instance: SupervisorServiceClient | undefined;
     static get(): SupervisorServiceClient {
@@ -20,23 +24,19 @@ export class SupervisorServiceClient {
         return SupervisorServiceClient._instance;
     }
 
-    readonly supervisorReady = this.checkReady("supervisor");
-    readonly ideReady = this.supervisorReady.then(() => this.checkReady("ide"));
-    readonly contentReady = Promise.all([this.supervisorReady]).then(() => this.checkReady("content"));
+    readonly supervisorReady = this.checkReady("supervisor", true, false);
+
+    readonly ideStatus = this.supervisorReady.then(() => this.checkReady("ide", true, false));
+
+    readonly ideReady = this.supervisorReady.then(() => this.checkReady("ide", true, true));
+    readonly contentReady = this.supervisorReady.then(() => this.checkReady("content", true, true));
 
     private constructor() {}
 
-    private async checkReady(kind: "content" | "ide" | "supervisor", delay?: boolean): Promise<any> {
-        if (delay) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-
-        let wait = "/wait/true";
-        if (kind == "supervisor") {
-            wait = "";
-        }
+    private async checkReady(kind: "content" | "ide" | "supervisor", retry?: boolean, wait?: boolean): Promise<any> {
+        let waitPath = wait ? "/wait/true" : "";
         try {
-            const supervisorStatusPath = "_supervisor/v1/status/" + kind + wait;
+            const supervisorStatusPath = "_supervisor/v1/status/" + kind + waitPath;
             const wsSupervisurStatusUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href).with((url) => {
                 let pathname = url.pathname;
                 if (pathname === "") {
@@ -71,6 +71,6 @@ export class SupervisorServiceClient {
         } catch (e) {
             console.debug(`failed to check whether ${kind} is ready, trying again...`, e);
         }
-        return this.checkReady(kind, true);
+        return retry ? timeout(1000).then(() => this.checkReady(kind, retry, wait)) : Promise.reject();
     }
 }
