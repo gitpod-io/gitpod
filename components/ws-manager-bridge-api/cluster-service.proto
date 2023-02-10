@@ -85,6 +85,9 @@ message ClusterStatus {
   // DEPRECATED
   // repeated AdmissionPreference admission_preference = 9;
   reserved 9;
+
+  // The region in which this cluster runs
+  string region = 11;
 }
 
 enum ClusterState {
