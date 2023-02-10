@@ -5817,14 +5817,16 @@ data:
             "type": "image"
           }
         ],
-        "remoteSpecProvider": {
-          "addr": "dns:///ws-manager:8080",
-          "tls": {
-            "ca": "/ws-manager-client-tls-certs/ca.crt",
-            "crt": "/ws-manager-client-tls-certs/tls.crt",
-            "key": "/ws-manager-client-tls-certs/tls.key"
+        "remoteSpecProvider": [
+          {
+            "addr": "dns:///ws-manager:8080",
+            "tls": {
+              "ca": "/ws-manager-client-tls-certs/ca.crt",
+              "crt": "/ws-manager-client-tls-certs/tls.crt",
+              "key": "/ws-manager-client-tls-certs/tls.key"
+            }
           }
-        },
+        ],
         "store": "/mnt/cache/registry",
         "requireAuth": false,
         "tls": {
@@ -8459,7 +8461,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: c218d6401941c1151e9352d943af91e5702230561bfe7bf6f82f98ec9b1bb4e2
+        gitpod.io/checksum_config: 55dae790b4d616e85abb79ca47d9146bd35daaf1eac479ab68337f80699ce374
         hello: world
       creationTimestamp: null
       labels:

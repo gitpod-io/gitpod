@@ -5010,14 +5010,16 @@ data:
             "type": "image"
           }
         ],
-        "remoteSpecProvider": {
-          "addr": "dns:///ws-manager:8080",
-          "tls": {
-            "ca": "/ws-manager-client-tls-certs/ca.crt",
-            "crt": "/ws-manager-client-tls-certs/tls.crt",
-            "key": "/ws-manager-client-tls-certs/tls.key"
+        "remoteSpecProvider": [
+          {
+            "addr": "dns:///ws-manager:8080",
+            "tls": {
+              "ca": "/ws-manager-client-tls-certs/ca.crt",
+              "crt": "/ws-manager-client-tls-certs/tls.crt",
+              "key": "/ws-manager-client-tls-certs/tls.key"
+            }
           }
-        },
+        ],
         "store": "/mnt/cache/registry",
         "requireAuth": false,
         "tls": {
@@ -7460,7 +7462,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 627e2d5a5d50e8eb2531bd494ceb9cd26315e43008248fb6825dfc2b5189a3d3
+        gitpod.io/checksum_config: b8db96b6f1363f6138d2804e360bcaad1c0badbe9a1ddf3efa81dc4fa1912643
       creationTimestamp: null
       labels:
         app: gitpod
