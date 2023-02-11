@@ -671,16 +671,10 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		}
 	}
 
-	_, contentReady := is.ContentState.ContentSource()
-	if contentReady {
-		stat, err := os.Stat(is.cfg.WorkspaceRoot)
-		if err != nil {
-			log.WithError(err).Error("workspace info: cannot resolve the workspace root")
-		} else if stat.IsDir() {
-			resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFolder{WorkspaceLocationFolder: is.cfg.WorkspaceRoot}
-		} else {
-			resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFile{WorkspaceLocationFile: is.cfg.WorkspaceRoot}
-		}
+	if strings.HasSuffix(is.cfg.WorkspaceRoot, ".code-workspace") {
+		resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFile{WorkspaceLocationFile: is.cfg.WorkspaceRoot}
+	} else {
+		resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFolder{WorkspaceLocationFolder: is.cfg.WorkspaceRoot}
 	}
 
 	resp.UserHome = "/home/gitpod"
