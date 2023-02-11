@@ -71,6 +71,6 @@ export class SupervisorServiceClient {
         } catch (e) {
             console.debug(`failed to check whether ${kind} is ready, trying again...`, e);
         }
-        return retry ? timeout(1000).then(() => this.checkReady(kind, retry, wait)) : Promise.reject();
+        return retry ? timeout(1000).then(() => this.checkReady(kind, retry, wait)) : undefined;
     }
 }

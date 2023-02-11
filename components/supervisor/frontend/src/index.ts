@@ -134,7 +134,7 @@ LoadingFrame.load().then(async (loading) => {
                 const isDesktopIde = !!ideStatus && !!ideStatus.desktop && !!ideStatus.desktop.link;
                 if (isDesktopIde) {
                     if (statusPhase === "running") {
-                        if (!hideDesktopIde ) {
+                        if (!hideDesktopIde) {
                             trackDesktopIDEReady(ideStatus.desktop);
                             frontendDashboardServiceClient.setState({
                                 desktopIDE: {
@@ -157,7 +157,6 @@ LoadingFrame.load().then(async (loading) => {
                         }
                     }
                 }
-
             }
             return loading.frame;
         };
@@ -223,12 +222,10 @@ LoadingFrame.load().then(async (loading) => {
             updateCurrentFrame();
             trackIDEStatusRenderedEvent();
         });
-        SupervisorServiceClient.get()
-            .ideReady.then((newIdeStatus) => {
-                ideStatus = newIdeStatus;
-                updateCurrentFrame();
-            })
-            .catch((error) => console.error(`Unexpected error from supervisorServiceClient.ideReady: ${error}`));
+        SupervisorServiceClient.get().ideStatus.then((newIdeStatus) => {
+            ideStatus = newIdeStatus;
+            updateCurrentFrame();
+        });
         window.addEventListener("unload", () => trackStatusRenderedEvent("window-unload"), { capture: true });
         //#endregion
 
