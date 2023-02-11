@@ -252,20 +252,27 @@ LoadingFrame.load().then(async (loading) => {
         function isWorkspaceInstancePhase(phase: WorkspaceInstancePhase): boolean {
             return frontendDashboardServiceClient.latestStatus?.statusPhase === phase;
         }
-        if (!isWorkspaceInstancePhase("running")) {
-            await new Promise<void>((resolve) => {
-                frontendDashboardServiceClient.onStatusUpdate((status) => {
-                    if (!isDesktopIde) {
-                        if (status.statusPhase === "running" || status.statusPhase === "initializing") {
-                            resolve();
-                        }
-                    } else {
+
+        if (isDesktopIde) {
+            if (!isWorkspaceInstancePhase("running")) {
+                await new Promise<void>((resolve) => {
+                    frontendDashboardServiceClient.onStatusUpdate((status) => {
                         if (status.statusPhase === "running") {
                             resolve();
                         }
-                    }
+                    });
                 });
-            });
+            }
+        } else {
+            if (!isWorkspaceInstancePhase("running") && !isWorkspaceInstancePhase("initializing")) {
+                await new Promise<void>((resolve) => {
+                    frontendDashboardServiceClient.onStatusUpdate((status) => {
+                        if (status.statusPhase === "running" || status.statusPhase === "initializing") {
+                            resolve();
+                        }
+                    });
+                });
+            }
         }
 
         await loadingIDE;
