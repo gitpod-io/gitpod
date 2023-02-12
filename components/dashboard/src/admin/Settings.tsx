@@ -39,51 +39,53 @@ export default function Settings() {
     return (
         <div>
             <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
-                <h3>Usage Statistics</h3>
-                <p className="text-base text-gray-500 pb-4 max-w-2xl">
-                    We collect usage telemetry to gain insights on how you use your Gitpod instance, so we can provide a
-                    better overall experience.
-                </p>
-                <p>
-                    <a className="gp-link" href="https://www.gitpod.io/privacy">
-                        Read our Privacy Policy
-                    </a>
-                </p>
-                <CheckBox
-                    title="Enable usage telemetry"
-                    desc={
-                        <span>
-                            Enable usage telemetry on your Gitpod instance. A preview of your telemetry is available
-                            below.
-                        </span>
-                    }
-                    checked={adminSettings?.sendTelemetry ?? false}
-                    onChange={(evt) =>
-                        actuallySetTelemetryPrefs({
-                            ...adminSettings,
-                            sendTelemetry: evt.target.checked,
-                        } as InstallationAdminSettings)
-                    }
-                />
-                <CheckBox
-                    title="Include customer ID in telemetry"
-                    desc={
-                        <span>
-                            Include an optional customer ID in usage telemetry to provide individualized support.
-                        </span>
-                    }
-                    checked={adminSettings?.sendCustomerID ?? false}
-                    onChange={(evt) =>
-                        actuallySetTelemetryPrefs({
-                            ...adminSettings,
-                            sendCustomerID: evt.target.checked,
-                        } as InstallationAdminSettings)
-                    }
-                />
-                <h3 className="mt-4">Telemetry preview</h3>
-                <InfoBox>
-                    <pre>{JSON.stringify(telemetryData, null, 2)}</pre>
-                </InfoBox>
+                <div className="app-container mt-8">
+                    <h3>Usage Statistics</h3>
+                    <p className="text-base text-gray-500 pb-4 max-w-2xl">
+                        We collect usage telemetry to gain insights on how you use your Gitpod instance, so we can
+                        provide a better overall experience.
+                    </p>
+                    <p>
+                        <a className="gp-link" href="https://www.gitpod.io/privacy">
+                            Read our Privacy Policy
+                        </a>
+                    </p>
+                    <CheckBox
+                        title="Enable usage telemetry"
+                        desc={
+                            <span>
+                                Enable usage telemetry on your Gitpod instance. A preview of your telemetry is available
+                                below.
+                            </span>
+                        }
+                        checked={adminSettings?.sendTelemetry ?? false}
+                        onChange={(evt) =>
+                            actuallySetTelemetryPrefs({
+                                ...adminSettings,
+                                sendTelemetry: evt.target.checked,
+                            } as InstallationAdminSettings)
+                        }
+                    />
+                    <CheckBox
+                        title="Include customer ID in telemetry"
+                        desc={
+                            <span>
+                                Include an optional customer ID in usage telemetry to provide individualized support.
+                            </span>
+                        }
+                        checked={adminSettings?.sendCustomerID ?? false}
+                        onChange={(evt) =>
+                            actuallySetTelemetryPrefs({
+                                ...adminSettings,
+                                sendCustomerID: evt.target.checked,
+                            } as InstallationAdminSettings)
+                        }
+                    />
+                    <h3 className="mt-4">Telemetry preview</h3>
+                    <InfoBox>
+                        <pre>{JSON.stringify(telemetryData, null, 2)}</pre>
+                    </InfoBox>
+                </div>
             </AdminPageHeader>
         </div>
     );

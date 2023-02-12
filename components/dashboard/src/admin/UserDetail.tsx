@@ -259,69 +259,73 @@ export default function UserDetail(p: { user: User }) {
     return (
         <>
             <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
-                <div className="flex">
-                    <div className="flex-1">
-                        <div className="flex">
-                            <h3>{user.fullName}</h3>
-                            {user.blocked ? <Label text="Blocked" color="red" /> : null}{" "}
-                            {user.markedDeleted ? <Label text="Deleted" color="red" /> : null}
-                            {user.lastVerificationTime ? <Label text="Verified" color="green" /> : null}
+                <div className="app-container">
+                    <div className="flex">
+                        <div className="flex-1">
+                            <div className="flex">
+                                <h3>{user.fullName}</h3>
+                                {user.blocked ? <Label text="Blocked" color="red" /> : null}{" "}
+                                {user.markedDeleted ? <Label text="Deleted" color="red" /> : null}
+                                {user.lastVerificationTime ? <Label text="Verified" color="green" /> : null}
+                            </div>
+                            <p>
+                                {user.identities
+                                    .map((i) => i.primaryEmail)
+                                    .filter((e) => !!e)
+                                    .join(", ")}
+                                {user.verificationPhoneNumber ? ` — ${user.verificationPhoneNumber}` : null}
+                            </p>
                         </div>
-                        <p>
-                            {user.identities
-                                .map((i) => i.primaryEmail)
-                                .filter((e) => !!e)
-                                .join(", ")}
-                            {user.verificationPhoneNumber ? ` — ${user.verificationPhoneNumber}` : null}
-                        </p>
-                    </div>
-                    {!user.lastVerificationTime ? (
-                        <button className="secondary ml-3" disabled={activity} onClick={verifyUser}>
-                            Verify User
+                        {!user.lastVerificationTime ? (
+                            <button className="secondary ml-3" disabled={activity} onClick={verifyUser}>
+                                Verify User
+                            </button>
+                        ) : null}
+                        <button className="secondary danger ml-3" disabled={activity} onClick={toggleBlockUser}>
+                            {user.blocked ? "Unblock" : "Block"} User
                         </button>
-                    ) : null}
-                    <button className="secondary danger ml-3" disabled={activity} onClick={toggleBlockUser}>
-                        {user.blocked ? "Unblock" : "Block"} User
-                    </button>
-                    <button className="danger ml-3" disabled={activity} onClick={deleteUser}>
-                        Delete User
-                    </button>
-                </div>
-                <div className="flex mt-6">
-                    <div className="w-40">
-                        <img className="rounded-full h-28 w-28" alt={user.fullName} src={user.avatarUrl} />
+                        <button className="danger ml-3" disabled={activity} onClick={deleteUser}>
+                            Delete User
+                        </button>
                     </div>
-                    <div className="flex flex-col w-full">
-                        <div className="flex w-full mt-6">
-                            <Property name="Sign Up Date">{dayjs(user.creationDate).format("MMM D, YYYY")}</Property>
-                            <Property
-                                name="Feature Flags"
-                                actions={[
-                                    {
-                                        label: "Edit Feature Flags",
-                                        onClick: () => {
-                                            setEditFeatureFlags(true);
-                                        },
-                                    },
-                                ]}
-                            >
-                                {user.featureFlags?.permanentWSFeatureFlags?.join(", ") || "---"}
-                            </Property>
-                            <Property
-                                name="Roles"
-                                actions={[
-                                    {
-                                        label: "Edit Roles",
-                                        onClick: () => {
-                                            setEditRoles(true);
-                                        },
-                                    },
-                                ]}
-                            >
-                                {user.rolesOrPermissions?.join(", ") || "---"}
-                            </Property>
+                    <div className="flex mt-6">
+                        <div className="w-40">
+                            <img className="rounded-full h-28 w-28" alt={user.fullName} src={user.avatarUrl} />
                         </div>
-                        {renderUserBillingProperties()}
+                        <div className="flex flex-col w-full">
+                            <div className="flex w-full mt-6">
+                                <Property name="Sign Up Date">
+                                    {dayjs(user.creationDate).format("MMM D, YYYY")}
+                                </Property>
+                                <Property
+                                    name="Feature Flags"
+                                    actions={[
+                                        {
+                                            label: "Edit Feature Flags",
+                                            onClick: () => {
+                                                setEditFeatureFlags(true);
+                                            },
+                                        },
+                                    ]}
+                                >
+                                    {user.featureFlags?.permanentWSFeatureFlags?.join(", ") || "---"}
+                                </Property>
+                                <Property
+                                    name="Roles"
+                                    actions={[
+                                        {
+                                            label: "Edit Roles",
+                                            onClick: () => {
+                                                setEditRoles(true);
+                                            },
+                                        },
+                                    ]}
+                                >
+                                    {user.rolesOrPermissions?.join(", ") || "---"}
+                                </Property>
+                            </div>
+                            {renderUserBillingProperties()}
+                        </div>
                     </div>
                 </div>
 

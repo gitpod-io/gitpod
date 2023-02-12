@@ -92,65 +92,67 @@ export function ProjectsSearch() {
 
     return (
         <>
-            <div className="pt-8 flex">
-                <div className="flex justify-between w-full">
-                    <div className="flex">
-                        <div className="py-4">
-                            {searching ? (
-                                <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        fill="#A8A29E"
-                                        d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
-                                    >
-                                        <animateTransform
-                                            attributeName="transform"
-                                            type="rotate"
-                                            dur="0.75s"
-                                            values="0 12 12;360 12 12"
-                                            repeatCount="indefinite"
+            <div className="app-container">
+                <div className="pt-8 flex">
+                    <div className="flex justify-between w-full">
+                        <div className="flex">
+                            <div className="py-4">
+                                {searching ? (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            fill="#A8A29E"
+                                            d="M10.14,1.16a11,11,0,0,0-9,8.92A1.59,1.59,0,0,0,2.46,12,1.52,1.52,0,0,0,4.11,10.7a8,8,0,0,1,6.66-6.61A1.42,1.42,0,0,0,12,2.69h0A1.57,1.57,0,0,0,10.14,1.16Z"
+                                        >
+                                            <animateTransform
+                                                attributeName="transform"
+                                                type="rotate"
+                                                dur="0.75s"
+                                                values="0 12 12;360 12 12"
+                                                repeatCount="indefinite"
+                                            />
+                                        </path>
+                                    </svg>
+                                ) : (
+                                    <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path
+                                            fillRule="evenodd"
+                                            clipRule="evenodd"
+                                            d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"
+                                            fill="#A8A29E"
                                         />
-                                    </path>
-                                </svg>
-                            ) : (
-                                <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        fillRule="evenodd"
-                                        clipRule="evenodd"
-                                        d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"
-                                        fill="#A8A29E"
-                                    />
-                                </svg>
-                            )}
+                                    </svg>
+                                )}
+                            </div>
+                            <input
+                                type="search"
+                                placeholder="Search Projects"
+                                onKeyDown={(k) => k.key === "Enter" && search()}
+                                onChange={(v) => {
+                                    setSearchTerm(v.target.value.trim());
+                                }}
+                            />
                         </div>
-                        <input
-                            type="search"
-                            placeholder="Search Projects"
-                            onKeyDown={(k) => k.key === "Enter" && search()}
-                            onChange={(v) => {
-                                setSearchTerm(v.target.value.trim());
-                            }}
-                        />
+                        <button disabled={searching} onClick={() => search()}>
+                            Search
+                        </button>
                     </div>
-                    <button disabled={searching} onClick={() => search()}>
-                        Search
-                    </button>
                 </div>
-            </div>
-            <div className="flex flex-col space-y-2">
-                <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
-                    <div className="w-4/12">Name</div>
-                    <div className="w-6/12">Clone URL</div>
-                    <div className="w-2/12">Created</div>
+                <div className="flex flex-col space-y-2">
+                    <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
+                        <div className="w-4/12">Name</div>
+                        <div className="w-6/12">Clone URL</div>
+                        <div className="w-2/12">Created</div>
+                    </div>
+                    {searchResult.rows.map((project) => (
+                        <ProjectResultItem project={project} />
+                    ))}
                 </div>
-                {searchResult.rows.map((project) => (
-                    <ProjectResultItem project={project} />
-                ))}
+                <Pagination
+                    currentPage={currentPage}
+                    setPage={search}
+                    totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
+                />
             </div>
-            <Pagination
-                currentPage={currentPage}
-                setPage={search}
-                totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
-            />
         </>
     );
 
