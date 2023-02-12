@@ -25,6 +25,7 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import OrganizationSelector from "./OrganizationSelector";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { getAdminTabs } from "../admin/admin.routes";
 
 interface Entry {
     title: string;
@@ -133,7 +134,7 @@ export default function Menu() {
     const adminMenu: Entry = {
         title: "Admin",
         link: "/admin",
-        alternatives: ["/admin/users"],
+        alternatives: [...getAdminTabs().map((entry) => entry.link)],
     };
 
     const handleFeedbackFormClick = () => {

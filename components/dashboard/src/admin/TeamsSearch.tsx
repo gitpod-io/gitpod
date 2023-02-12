@@ -19,7 +19,9 @@ import Pagination from "../Pagination/Pagination";
 export default function TeamsSearchPage() {
     return (
         <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
-            <TeamsSearch />
+            <div className="app-container">
+                <TeamsSearch />
+            </div>
         </AdminPageHeader>
     );
 }
