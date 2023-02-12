@@ -118,6 +118,8 @@ components:
       version: test
     workspacekit:
       version: test
+    devcontainer:
+      version: test
     version: test
   wsDaemon:
     userNamespaces:

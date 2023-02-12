@@ -12,8 +12,9 @@ const (
 )
 
 type IDEConfig struct {
-	SupervisorImage string     `json:"supervisorImage"`
-	IdeOptions      IDEOptions `json:"ideOptions"`
+	DevcontainerImage string     `json:"devcontainerImage"`
+	SupervisorImage   string     `json:"supervisorImage"`
+	IdeOptions        IDEOptions `json:"ideOptions"`
 }
 
 type IDEOptions struct {

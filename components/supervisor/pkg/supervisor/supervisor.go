@@ -72,8 +72,6 @@ const (
 	gitpodUserName  = "gitpod"
 	gitpodGID       = 33333
 	gitpodGroupName = "gitpod"
-	desktopIDEPort  = 24000
-	debugProxyPort  = 23003
 )
 
 var (
@@ -137,10 +135,13 @@ type IDEKind int64
 const (
 	WebIDE IDEKind = iota
 	DesktopIDE
+	IDERuntime
 )
 
 func (s IDEKind) String() string {
 	switch s {
+	case IDERuntime:
+		return "runtime"
 	case WebIDE:
 		return "web"
 	case DesktopIDE:
@@ -234,10 +235,10 @@ func Run(options ...RunOption) {
 
 	internalPorts := []uint32{uint32(cfg.IDEPort), uint32(cfg.APIEndpointPort), uint32(cfg.SSHPort)}
 	if cfg.DesktopIDE != nil {
-		internalPorts = append(internalPorts, desktopIDEPort)
+		internalPorts = append(internalPorts, uint32(cfg.DesktopIDEPort))
 	}
 	if cfg.isDebugWorkspace() {
-		internalPorts = append(internalPorts, debugProxyPort)
+		internalPorts = append(internalPorts, uint32(cfg.DebugProxyPort))
 	}
 
 	endpoint, host, err := cfg.GitpodAPIEndpoint()
@@ -245,6 +246,7 @@ func Run(options ...RunOption) {
 		log.WithError(err).Fatal("cannot find Gitpod API endpoint")
 	}
 	var (
+		ideRuntimeReady *ideReadyState = nil
 		ideReady                       = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 		desktopIdeReady *ideReadyState = nil
 
@@ -265,6 +267,9 @@ func Run(options ...RunOption) {
 		}, tokenService)
 	}
 
+	if cfg.IDERuntime != nil {
+		ideRuntimeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
+	}
 	if cfg.DesktopIDE != nil {
 		desktopIdeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 	}
@@ -369,11 +374,16 @@ func Run(options ...RunOption) {
 	}
 
 	var ideWG sync.WaitGroup
+	if cfg.IDERuntime != nil {
+		// TODO if runtime failed then fail supervisor?
+		ideWG.Add(1)
+		go startAndWatchIDE(ctx, cfg, cfg.IDERuntime, nil, childProcEnvvars, &ideWG, cstate, ideRuntimeReady, nil, IDERuntime, supervisorMetrics)
+	}
 	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, cstate, ideReady, WebIDE, supervisorMetrics)
+	go startAndWatchIDE(ctx, cfg, &cfg.IDE, cfg.IDERuntime, childProcEnvvars, &ideWG, cstate, ideReady, ideRuntimeReady, WebIDE, supervisorMetrics)
 	if cfg.DesktopIDE != nil {
 		ideWG.Add(1)
-		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, cstate, desktopIdeReady, DesktopIDE, supervisorMetrics)
+		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, cfg.IDERuntime, childProcEnvvars, &ideWG, cstate, desktopIdeReady, ideRuntimeReady, DesktopIDE, supervisorMetrics)
 	}
 
 	var (
@@ -768,7 +778,7 @@ var (
 	errSignalTerminated = errors.New("signal: terminated")
 )
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, ideRuntime *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ideRuntimeReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
 
@@ -779,6 +789,15 @@ func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, ch
 
 	// Wait until content ready to launch IDE
 	<-cstate.ContentReady()
+
+	// Wait for IDE runtime to start
+	if ideRuntimeReady != nil {
+		select {
+		case <-ideRuntimeReady.Wait():
+		case <-ctx.Done():
+			return
+		}
+	}
 
 	ideStatus := statusNeverRan
 
@@ -795,8 +814,8 @@ supervisorLoop:
 
 		ideStopped = make(chan struct{}, 1)
 		startTime := time.Now()
-		cmd = prepareIDELaunch(cfg, ideConfig, childProcEnvvars)
-		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
+		cmd = prepareIDELaunch(cfg, ideConfig, ideRuntime, childProcEnvvars)
+		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide, childProcEnvvars)
 
 		if firstStart {
 			firstStart = false
@@ -851,7 +870,7 @@ supervisorLoop:
 	}
 }
 
-func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan struct{}, ideReady *ideReadyState, s *ideStatus, ide IDEKind) {
+func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan struct{}, ideReady *ideReadyState, s *ideStatus, ide IDEKind, childProcEnvvars []string) {
 	go func() {
 		// prepareIDELaunch sets Pdeathsig, which on on Linux, will kill the
 		// child process when the thread dies, not when the process dies.
@@ -874,7 +893,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 		s = func() *ideStatus { i := statusShouldRun; return &i }()
 
 		go func() {
-			IDEStatus := runIDEReadinessProbe(cfg, ideConfig, ide)
+			IDEStatus := runIDEReadinessProbe(cfg, ideConfig, ide, childProcEnvvars)
 			ideReady.Set(true, IDEStatus)
 		}()
 
@@ -896,15 +915,24 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 	}()
 }
 
-func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string) *exec.Cmd {
-	args := ideConfig.EntrypointArgs
+func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig, runtimeConfig *IDEConfig, childProcEnvvars []string) *exec.Cmd {
+	var entrypoint string
+	var args []string
+	if runtimeConfig == nil {
+		entrypoint = ideConfig.Entrypoint
+		args = ideConfig.EntrypointArgs
+	} else {
+		entrypoint = runtimeConfig.Entrypoint
+		args = append(args, ideConfig.Entrypoint)
+		args = append(args, ideConfig.EntrypointArgs...)
+	}
 	for i := range args {
 		args[i] = strings.ReplaceAll(args[i], "{IDEPORT}", strconv.Itoa(cfg.IDEPort))
-		args[i] = strings.ReplaceAll(args[i], "{DESKTOPIDEPORT}", strconv.Itoa(desktopIDEPort))
+		args[i] = strings.ReplaceAll(args[i], "{DESKTOPIDEPORT}", strconv.Itoa(cfg.DesktopIDEPort))
 	}
-	log.WithField("args", args).WithField("entrypoint", ideConfig.Entrypoint).Info("preparing IDE launch")
+	log.WithField("entrypoint", entrypoint).WithField("args", args).Info("preparing IDE launch")
 
-	cmd := exec.Command(ideConfig.Entrypoint, args...)
+	cmd := exec.Command(entrypoint, args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		// We need the child process to run in its own process group, s.t. we can suspend and resume
 		// IDE and its children.
@@ -1035,8 +1063,19 @@ func downloadEnvvarOTS(url string) (res map[string]string, err error) {
 	return res, nil
 }
 
-func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (desktopIDEStatus *DesktopIDEStatus) {
+func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind, childProcEnvvars []string) (desktopIDEStatus *DesktopIDEStatus) {
 	defer log.WithField("ide", ide.String()).Info("IDE is ready")
+	t0 := time.Now()
+	doProbe(cfg, ideConfig, ide, childProcEnvvars)
+	duration := time.Since(t0).Seconds()
+	log.WithField("ide", ide.String()).WithField("duration", duration).Infof("IDE readiness took %.3f seconds", duration)
+	return
+}
+
+func doProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind, childProcEnvvars []string) {
+	if ideConfig.ReadinessProbe.Type == ReadinessProcessProbe {
+		return
+	}
 
 	defaultIfEmpty := func(value, defaultValue string) string {
 		if len(value) == 0 {
@@ -1054,53 +1093,45 @@ func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (deskt
 
 	defaultProbePort := cfg.IDEPort
 	if ide == DesktopIDE {
-		defaultProbePort = desktopIDEPort
+		defaultProbePort = cfg.DesktopIDEPort
 	}
 
-	switch ideConfig.ReadinessProbe.Type {
-	case ReadinessProcessProbe:
-		return
+	for range time.Tick(250 * time.Millisecond) {
+		var probeErr error
+		switch ideConfig.ReadinessProbe.Type {
+		case ReadinessCmdProbe:
+			entrypoint := defaultIfEmpty(ideConfig.ReadinessProbe.CmdProbe.Entrypoint, ideConfig.Entrypoint)
+			probeCmd := exec.Command(entrypoint, ideConfig.ReadinessProbe.CmdProbe.Args...)
+			probeCmd.SysProcAttr = &syscall.SysProcAttr{
+				// We need the child process to run in its own process group, s.t. we can suspend and resume
+				// IDE and its children.
+				Setpgid:   true,
+				Pdeathsig: syscall.SIGKILL,
 
-	case ReadinessHTTPProbe:
-		var (
-			schema = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Schema, "http")
-			host   = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Host, "localhost")
-			port   = defaultIfZero(ideConfig.ReadinessProbe.HTTPProbe.Port, defaultProbePort)
-			url    = fmt.Sprintf("%s://%s:%d/%s", schema, host, port, strings.TrimPrefix(ideConfig.ReadinessProbe.HTTPProbe.Path, "/"))
-		)
-
-		t0 := time.Now()
-
-		var body []byte
-		for range time.Tick(250 * time.Millisecond) {
-			var err error
-			body, err = ideStatusRequest(url)
-			if err != nil {
-				log.WithField("ide", ide.String()).WithError(err).Debug("Error running IDE readiness probe")
-				continue
+				// All supervisor children run as gitpod user. The environment variables we produce are also
+				// gitpod user specific.
+				Credential: &syscall.Credential{
+					Uid: gitpodUID,
+					Gid: gitpodGID,
+				},
 			}
+			probeCmd.Env = childProcEnvvars
+			probeErr = probeCmd.Run()
+		case ReadinessHTTPProbe:
+			var (
+				schema = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Schema, "http")
+				host   = defaultIfEmpty(ideConfig.ReadinessProbe.HTTPProbe.Host, "localhost")
+				port   = defaultIfZero(ideConfig.ReadinessProbe.HTTPProbe.Port, defaultProbePort)
+				url    = fmt.Sprintf("%s://%s:%d/%s", schema, host, port, strings.TrimPrefix(ideConfig.ReadinessProbe.HTTPProbe.Path, "/"))
+			)
 
-			break
+			_, probeErr = ideStatusRequest(url)
 		}
-
-		duration := time.Since(t0).Seconds()
-		log.WithField("ide", ide.String()).WithField("duration", duration).Infof("IDE readiness took %.3f seconds", duration)
-
-		if ide != DesktopIDE {
+		if probeErr == nil {
 			return
 		}
-
-		err := json.Unmarshal(body, &desktopIDEStatus)
-		if err != nil {
-			log.WithField("ide", ide.String()).WithError(err).WithField("body", body).Debugf("Error parsing JSON body from IDE status probe.")
-			return
-		}
-
-		log.WithField("ide", ide.String()).Infof("Desktop IDE status: %s", desktopIDEStatus)
-		return
+		log.WithField("ide", ide.String()).WithError(probeErr).Debug("Error running IDE readiness probe")
 	}
-
-	return
 }
 
 func ideStatusRequest(url string) ([]byte, error) {

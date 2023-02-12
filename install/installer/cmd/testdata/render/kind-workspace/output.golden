@@ -752,6 +752,9 @@ data:
             "workspacekit": {
               "version": "test"
             },
+            "devcontainer": {
+              "version": "test"
+            },
             "desktopIdeImages": {
               "codeDesktop": {
                 "version": "test"

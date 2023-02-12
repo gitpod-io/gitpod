@@ -1,4 +1,5 @@
 {
+  "ideRuntimeConfigLocation": "/ide/supervisor-ide-runtime-config.json",
   "ideConfigLocation": "/ide/supervisor-ide-config.json",
   "desktopIdeConfigLocation": "/ide-desktop/supervisor-ide-config.json",
   "frontendLocation": "/.supervisor/frontend/",

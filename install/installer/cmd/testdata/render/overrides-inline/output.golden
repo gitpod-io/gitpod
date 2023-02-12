@@ -1586,6 +1586,9 @@ data:
             "workspacekit": {
               "version": "test"
             },
+            "devcontainer": {
+              "version": "test"
+            },
             "desktopIdeImages": {
               "codeDesktop": {
                 "version": "test"
@@ -3626,6 +3629,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
+      "devcontainerImage": "eu.gcr.io/gitpod-core-dev/build/ide/devcontainer:test",
       "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:test",
       "ideOptions": {
         "options": {

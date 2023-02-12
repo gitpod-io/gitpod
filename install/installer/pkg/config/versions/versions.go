@@ -47,6 +47,7 @@ type Components struct {
 		DockerUp         Versioned `json:"dockerUp"`
 		Supervisor       Versioned `json:"supervisor"`
 		Workspacekit     Versioned `json:"workspacekit"`
+		Devcontainer     Versioned `json:"devcontainer"`
 		DesktopIdeImages struct {
 			CodeDesktopImage                  Versioned `json:"codeDesktop"`
 			CodeDesktopImageInsiders          Versioned `json:"codeDesktopInsiders"`

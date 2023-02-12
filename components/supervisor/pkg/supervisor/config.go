@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	env "github.com/Netflix/go-env"
@@ -38,6 +39,7 @@ type Config struct {
 	StaticConfig
 	IDE        IDEConfig
 	DesktopIDE *IDEConfig
+	IDERuntime *IDEConfig
 	WorkspaceConfig
 }
 
@@ -78,6 +80,9 @@ type StaticConfig struct {
 	// DesktopIDEConfigLocation is a path in the filesystem where to find the desktop IDE configuration
 	DesktopIDEConfigLocation string `json:"desktopIdeConfigLocation"`
 
+	// IDERuntimeConfigLocation is a path in the filesystem where to find the IDE runtime configuration
+	IDERuntimeConfigLocation string `json:"ideRuntimeConfigLocation"`
+
 	// FrontendLocation is a path in the filesystem where to find supervisor's frontend assets
 	FrontendLocation string `json:"frontendLocation"`
 
@@ -115,6 +120,9 @@ const (
 
 	// ReadinessHTTPProbe returns ready once a single HTTP request against the IDE was successful.
 	ReadinessHTTPProbe ReadinessProbeType = "http"
+
+	// ReadinessCmdProbe returns ready once a single cmd exec against the IDE was successful.
+	ReadinessCmdProbe ReadinessProbeType = "cmd"
 )
 
 // IDEConfig is the IDE specific configuration.
@@ -153,7 +161,25 @@ type IDEConfig struct {
 			// Path is the path to make requests to. Defaults to "/".
 			Path string `json:"path"`
 		} `json:"http"`
+
+		// CmdProbe configures the CMD readiness probe.
+		CmdProbe struct {
+			// Entrypoint is a CMD probe entrypoint, if omitted then IDE entrypoint
+			Entrypoint string `json:"entrypoint"`
+			// Args is a CMD probe entrypoint args
+			Args []string `json:"args"`
+		} `json:"cmd"`
 	} `json:"readinessProbe"`
+
+	// Prebuild configures the prebuild IDE process.
+	Prebuild *struct {
+		// Name of an IDE prebuild task
+		Name string `json:"name"`
+		// Entrypoint is an IDE prebuild entrypoint, if omitted then IDE entrypoint
+		Entrypoint string `json:"entrypoint"`
+		// Args is an IDE entrypoint args
+		Args []string `json:"args"`
+	} `json:"prebuild,omitempty"`
 }
 
 // Validate validates this configuration.
@@ -215,6 +241,12 @@ type WorkspaceConfig struct {
 	// IDEPort is the port at which the IDE will need to run on. This is not an IDE config
 	// because Gitpod determines this port, not the IDE.
 	IDEPort int `env:"GITPOD_THEIA_PORT"`
+
+	// DesktopIDEPort is the port at which the Desktop IDE will need to run on.
+	DesktopIDEPort int `env:"SUPERVISOR_DESKTOP_IDE_PORT"`
+
+	// DebugProxyPort is the port at which the debug workspace http proxy will need to run on.
+	DebugProxyPort int `env:"SUPERVISOR_DEBUG_PROXY_PORT"`
 
 	// IDEAlias is the alias of the IDE to be run. Possible values: "code", "code-latest", "theia"
 	IDEAlias string `env:"GITPOD_IDE_ALIAS"`
@@ -420,13 +452,35 @@ func (c WorkspaceConfig) GetDebugWorkspaceContentSource() csapi.WorkspaceInitSou
 }
 
 // getGitpodTasks parses gitpod tasks.
-func (c WorkspaceConfig) getGitpodTasks() (tasks *[]TaskConfig, err error) {
-	if c.GitpodTasks == "" {
-		return
+func (c Config) getGitpodTasks() (tasks []TaskConfig, err error) {
+	if c.GitpodTasks != "" {
+		var configured *[]TaskConfig
+		err = json.Unmarshal([]byte(c.GitpodTasks), &configured)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot parse tasks: %w", err)
+		}
+		if configured != nil {
+			tasks = append(tasks, *configured...)
+		}
 	}
-	err = json.Unmarshal([]byte(c.GitpodTasks), &tasks)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot parse tasks: %w", err)
+
+	if c.isPrebuild() {
+		for _, ideConfig := range []*IDEConfig{c.IDERuntime, &c.IDE, c.DesktopIDE} {
+			if ideConfig == nil || ideConfig.Prebuild == nil {
+				continue
+			}
+			init := ideConfig.Prebuild.Entrypoint
+			if init == "" {
+				init = ideConfig.Entrypoint
+			}
+			for _, arg := range ideConfig.Prebuild.Args {
+				init = init + " " + arg
+			}
+			tasks = append(tasks, TaskConfig{
+				Init: &init,
+				Name: &ideConfig.Prebuild.Name,
+			})
+		}
 	}
 	return
 }
@@ -473,6 +527,16 @@ func GetConfig() (*Config, error) {
 		}
 	}
 
+	var ideRuntime *IDEConfig
+	if static.IDERuntimeConfigLocation != "" {
+		if _, err := os.Stat(static.IDERuntimeConfigLocation); !os.IsNotExist((err)) {
+			ideRuntime, err = loadIDEConfigFromFile(static.IDERuntimeConfigLocation)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	workspace, err := loadWorkspaceConfigFromEnv()
 	if err != nil {
 		return nil, err
@@ -482,6 +546,7 @@ func GetConfig() (*Config, error) {
 		StaticConfig:    *static,
 		IDE:             *ide,
 		DesktopIDE:      desktopIde,
+		IDERuntime:      ideRuntime,
 		WorkspaceConfig: *workspace,
 	}, nil
 }
@@ -505,6 +570,21 @@ func loadStaticConfigFromFile() (*StaticConfig, error) {
 	err = json.Unmarshal(fc, &res)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot unmarshal supervisor config file %s: %w", loc, err)
+	}
+
+	apiPortEnv := os.Getenv("SUPERVISOR_API_PORT")
+	if apiPortEnv != "" {
+		apiPort, err := strconv.Atoi(apiPortEnv)
+		if err == nil {
+			res.APIEndpointPort = apiPort
+		}
+	}
+	sshPortEnv := os.Getenv("SUPERVISOR_SSH_PORT")
+	if sshPortEnv != "" {
+		sshPort, err := strconv.Atoi(sshPortEnv)
+		if err == nil {
+			res.SSHPort = sshPort
+		}
 	}
 
 	return &res, nil
@@ -537,6 +617,13 @@ func loadWorkspaceConfigFromEnv() (*WorkspaceConfig, error) {
 	//TODO(sefftinge) remove me after deployment (backward compatibility)
 	if res.RepoRoots == "" {
 		res.RepoRoots = res.RepoRoot
+	}
+
+	if res.DesktopIDEPort == 0 {
+		res.DesktopIDEPort = 24000
+	}
+	if res.DebugProxyPort == 0 {
+		res.DebugProxyPort = 23003
 	}
 
 	return &res, nil

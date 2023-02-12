@@ -1,0 +1,20 @@
+{
+    "entrypoint": "/ide/devcontainer/launcher",
+    "entrypointArgs": [
+        "up"
+    ],
+    "readinessProbe": {
+        "type": "cmd",
+        "cmd": {
+            "args": [
+                "probe"
+            ]
+        }
+    },
+    "prebuild": {
+        "name": "Dev Container Prebuild",
+        "args": [
+            "prebuild"
+        ]
+    }
+}

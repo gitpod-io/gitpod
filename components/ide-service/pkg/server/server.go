@@ -408,6 +408,10 @@ JETBRAINS_BACKEND_QUALIFIER=latest /ide-desktop/jb-launcher warmup ${key}
 		}
 	}
 
+	if ideConfig.DevcontainerImage != "" {
+		resp.IdeImageLayers = append(resp.IdeImageLayers, ideConfig.DevcontainerImage)
+	}
+
 	return
 }
 

@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "name": "@gitpod/devcontainer",
+  "version": "0.1.5",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@devcontainers/cli": "0.30.0",
+    "node": "18.14.0"
+  },
+  "scripts": {
+    "build": "npm rebuild",
+    "test": "echo 'no tests'"
+  }
+}

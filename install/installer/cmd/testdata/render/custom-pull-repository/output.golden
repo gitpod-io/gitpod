@@ -1588,6 +1588,9 @@ data:
             "workspacekit": {
               "version": "test"
             },
+            "devcontainer": {
+              "version": "test"
+            },
             "desktopIdeImages": {
               "codeDesktop": {
                 "version": "test"
@@ -3628,6 +3631,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
+      "devcontainerImage": "registry.mydomain.com/namespace/ide/devcontainer:test",
       "supervisorImage": "registry.mydomain.com/namespace/supervisor:test",
       "ideOptions": {
         "options": {

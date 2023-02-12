@@ -22,4 +22,5 @@ const (
 	CLionDesktopIdeImage        = "ide/clion"
 	JetBrainsBackendPluginImage = "ide/jb-backend-plugin"
 	JetBrainsLauncherImage      = "ide/jb-launcher"
+	DevcontainerImage           = "ide/devcontainer"
 )
