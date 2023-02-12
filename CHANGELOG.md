@@ -1,6 +1,8 @@
 # Change Log
 
 ## February 2023
+- Allow user custom workspace timeout in vscode. ([#16220](https://github.com/gitpod-io/gitpod/pull/16220)) - [@iQQBot](https://github.com/iQQBot)
+- Always show all navigation menu items ([#16308](https://github.com/gitpod-io/gitpod/pull/16308)) - [@gtsiolis](https://github.com/gtsiolis)
 - Improve prompt for `Gitpod: Open in VS Code` action in Browser Code ([#16321](https://github.com/gitpod-io/gitpod/pull/16321)) - [@mustard-mh](https://github.com/mustard-mh)
 - Reverse order of Feedback emojis ([#16292](https://github.com/gitpod-io/gitpod/pull/16292)) - [@atduarte](https://github.com/atduarte)
 - Fix evaluation of BillingMode: Ignore old "free" subscription entries ([#16270](https://github.com/gitpod-io/gitpod/pull/16270)) - [@geropl](https://github.com/geropl)
