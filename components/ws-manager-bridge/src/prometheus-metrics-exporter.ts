@@ -7,7 +7,7 @@
 import * as prom from "prom-client";
 import { injectable } from "inversify";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/src/workspace-cluster";
+import { WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { WorkspaceType } from "@gitpod/ws-manager/lib/core_pb";
 
 @injectable()

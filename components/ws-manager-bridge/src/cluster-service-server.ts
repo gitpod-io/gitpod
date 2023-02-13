@@ -45,7 +45,7 @@ import { getSupportedWorkspaceClasses } from "./cluster-sync-service";
 import { Configuration } from "./config";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { GRPCError } from "./rpc";
-import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/src/workspace-cluster";
+import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 
 export interface ClusterServiceServerOptions {
     port: number;
