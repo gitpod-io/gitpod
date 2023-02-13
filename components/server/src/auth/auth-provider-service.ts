@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { AuthProviderEntry as AuthProviderEntry, User } from "@gitpod/gitpod-protocol";
 import { AuthProviderParams } from "./auth-provider";
-import { AuthProviderEntryDB } from "@gitpod/gitpod-db/lib";
+import { AuthProviderEntryDB, TeamDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
 import { v4 as uuidv4 } from "uuid";
 import { oauthUrls as githubUrls } from "../github/github-urls";
@@ -21,6 +21,9 @@ import isReachable = require("is-reachable");
 export class AuthProviderService {
     @inject(AuthProviderEntryDB)
     protected authProviderDB: AuthProviderEntryDB;
+
+    @inject(TeamDB)
+    protected teamDB: TeamDB;
 
     @inject(Config)
     protected readonly config: Config;
@@ -201,24 +204,48 @@ export class AuthProviderService {
         const { ownerId, id } = params;
         let ap: AuthProviderEntry | undefined;
         try {
-            // TODO: Consider org auth providers that wouldn't be returned here
-            // Instead - query directly by id only, and ensure ownerId is a match
-            let authProviders = await this.authProviderDB.findByUserId(ownerId);
-            if (authProviders.length === 0) {
-                // "no-user" is the magic user id assigned during the initial setup
-                authProviders = await this.authProviderDB.findByUserId("no-user");
+            const ap = await this.authProviderDB.findById(id);
+            if (!ap) {
+                log.warn("Failed to find the AuthProviderEntry to be activated.", { params, id });
+                return;
             }
-            ap = authProviders.find((p) => p.id === id);
-            if (ap) {
-                ap = {
-                    ...ap,
-                    ownerId: ownerId,
-                    status: "verified",
-                };
-                await this.authProviderDB.storeAuthProvider(ap, true);
+
+            // Check that user is allowed to verify the AuthProviderEntry
+            if (ap.organizationId) {
+                const membership = await this.teamDB.findTeamMembership(ownerId, ap.organizationId);
+                if (!membership) {
+                    log.warn("Failed to find the TeamMembership for Org AuthProviderEntry to be activated.", {
+                        params,
+                        id,
+                        ap,
+                    });
+                    return;
+                }
+
+                // As long as user is an owner of the org the ap belongs too, they can verify it
+                if (membership.role !== "owner") {
+                    log.warn("User must be an owner of org for AuthProviderEntry to be activated.", {
+                        params,
+                        id,
+                        ap,
+                    });
+                    return;
+                }
             } else {
-                log.warn("Failed to find the AuthProviderEntry to be activated.", { params, id, ap });
+                // For a non-org AuthProviderEntry, user must be the owner, or it must be the special "no-user" entry
+                // "no-user" is the magic user id assigned during the initial setup
+                if (ownerId !== ap.ownerId && ap.ownerId !== "no-user") {
+                    log.warn("User cannot active the AuthProviderEntry.", { params, id, ap });
+                    return;
+                }
             }
+
+            const updatedAP: AuthProviderEntry = {
+                ...ap,
+                ownerId,
+                status: "verified",
+            };
+            await this.authProviderDB.storeAuthProvider(updatedAP, true);
         } catch (error) {
             log.error("Failed to activate AuthProviderEntry.", { params, id, ap });
         }
