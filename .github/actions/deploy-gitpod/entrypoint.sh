@@ -26,13 +26,14 @@ leeway run dev/preview/previewctl:download
 echo "Setting up access to core-dev and harvester"
 previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
-
 PREVIEW_NAME="$(previewctl get-name --branch "${INPUT_NAME}")"
 export PREVIEW_NAME
 
 for var in WITH_WS_MANAGER_MK2 WITH_DEDICATED_EMU WITH_EE_LICENSE WITH_SLOW_DATABASE ANALYTICS WORKSPACE_FEATURE_FLAGS; do
-  input="INPUT_${var}"
-  export GITPOD_${var}=${!input}
+  input_var="INPUT_${var}"
+  if [[ -n "${!input_var:-}" ]];then
+    export GITPOD_${var}=${!input_var}
+  fi
 done
 
 previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 10m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
