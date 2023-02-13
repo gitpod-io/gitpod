@@ -11,6 +11,8 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -24,6 +26,9 @@ import (
 )
 
 func NewTimeoutReconciler(c client.Client, cfg config.Configuration, activity *wsactivity.WorkspaceActivity) (*TimeoutReconciler, error) {
+	if cfg.HeartbeatInterval == 0 {
+		return nil, fmt.Errorf("invalid heartbeat interval, must not be 0")
+	}
 	reconcileInterval := time.Duration(cfg.HeartbeatInterval)
 	// Reconcile interval is half the heartbeat interval to catch timed out workspaces in time.
 	// See https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem why we need this.
@@ -92,18 +97,26 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 
 	// Workspace timed out, set Timeout condition.
 	log.Info("Workspace timed out", "reason", timedout)
-	workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
-		Type:               string(workspacev1.WorkspaceConditionTimeout),
-		Status:             metav1.ConditionTrue,
-		LastTransitionTime: metav1.Now(),
-		Reason:             "TimedOut",
-		Message:            timedout,
-	})
+	if err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err := r.Get(ctx, types.NamespacedName{Name: workspace.Name, Namespace: workspace.Namespace}, &workspace)
+		if err != nil {
+			return err
+		}
 
-	if err = r.Client.Status().Update(ctx, &workspace); err != nil {
+		workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
+			Type:               string(workspacev1.WorkspaceConditionTimeout),
+			Status:             metav1.ConditionTrue,
+			LastTransitionTime: metav1.Now(),
+			Reason:             "TimedOut",
+			Message:            timedout,
+		})
+
+		return r.Status().Update(ctx, &workspace)
+	}); err != nil {
 		log.Error(err, "Failed to update workspace status with Timeout condition")
 		return ctrl.Result{}, err
 	}
+
 	return ctrl.Result{}, nil
 }
 
