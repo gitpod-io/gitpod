@@ -53,9 +53,17 @@ For example: 30m or 1h`,
 			}
 			return err
 		}
-		fmt.Printf("Workspace timeout has been set to %s.\n", res.HumanReadableDuration)
+		fmt.Printf("Workspace timeout has been set to %s.\n", getHumanReadableDuration(res.HumanReadableDuration, duration))
 		return nil
 	},
+}
+
+func getHumanReadableDuration(humanReadableDuration string, inputDuration time.Duration) string {
+	readable := humanReadableDuration
+	if humanReadableDuration == "" {
+		readable = fmt.Sprintf("%d minutes", int(inputDuration.Minutes()))
+	}
+	return readable
 }
 
 func init() {
