@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceCluster } from "@gitpod/gitpod-protocol/src/workspace-cluster";
+import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { ClusterServiceServerOptions } from "./cluster-service-server";
 
 export const Configuration = Symbol("Configuration");

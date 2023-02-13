@@ -16,7 +16,7 @@ import {
     WorkspaceClass,
     WorkspaceManagerClient,
 } from "@gitpod/ws-manager/lib";
-import { AdmissionConstraintHasClass } from "@gitpod/gitpod-protocol/src/workspace-cluster";
+import { AdmissionConstraintHasClass } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { GRPCError } from "./rpc";
 import * as grpc from "@grpc/grpc-js";
 import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
