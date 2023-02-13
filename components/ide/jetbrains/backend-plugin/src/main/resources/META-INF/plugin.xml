@@ -48,6 +48,7 @@
                                            implementation="io.gitpod.jetbrains.remote.GitpodMetricControlProvider"/>
         <gateway.customization.metrics id="gitpodMetricsProvider"
                                        implementation="io.gitpod.jetbrains.remote.GitpodMetricProvider"/>
+        <gateway.customization.tab id="gitpodTimeoutTab" order="after performanceTab" implementation="io.gitpod.jetbrains.remote.GitpodTimeoutControlCenterTabProvider"/>
 
         <registryKey key="gitpod.forceUpdateMavenProjects.disabled" defaultValue="false"
                      description="Disable the forced update of Maven projects when IDE opens."
