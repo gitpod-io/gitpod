@@ -21,9 +21,11 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
@@ -157,6 +159,38 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		})
 	}
 
+	class, ok := wsm.Config.WorkspaceClasses[req.Spec.Class]
+	if !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "workspace class \"%s\" is unknown", req.Spec.Class)
+	}
+
+	annotations := make(map[string]string)
+	for k, v := range req.Metadata.Annotations {
+		annotations[k] = v
+	}
+
+	for _, feature := range req.Spec.FeatureFlags {
+		switch feature {
+		case api.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
+			limits := class.Container.Limits
+			if limits != nil && limits.CPU != nil {
+				if limits.CPU.MinLimit != "" {
+					annotations[kubernetes.WorkspaceCpuMinLimitAnnotation] = limits.CPU.MinLimit
+				}
+
+				if limits.CPU.BurstLimit != "" {
+					annotations[kubernetes.WorkspaceCpuBurstLimitAnnotation] = limits.CPU.BurstLimit
+				}
+			}
+
+		case api.WorkspaceFeatureFlag_WORKSPACE_CONNECTION_LIMITING:
+			annotations[kubernetes.WorkspaceNetConnLimitAnnotation] = util.BooleanTrueString
+
+		case api.WorkspaceFeatureFlag_WORKSPACE_PSI:
+			annotations[kubernetes.WorkspacePressureStallInfoAnnotation] = util.BooleanTrueString
+		}
+	}
+
 	ws := workspacev1.Workspace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: workspacev1.GroupVersion.String(),
@@ -164,7 +198,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        req.Id,
-			Annotations: req.Metadata.Annotations,
+			Annotations: annotations,
 			Namespace:   wsm.Config.Namespace,
 			Labels: map[string]string{
 				wsk8s.WorkspaceIDLabel: req.Metadata.MetaId,

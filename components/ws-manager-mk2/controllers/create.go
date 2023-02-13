@@ -290,6 +290,10 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 		"cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
 	}
 
+	for k, v := range sctx.Workspace.Annotations {
+		annotations[k] = v
+	}
+
 	// By default we embue our workspace pods with some tolerance towards pressure taints,
 	// see https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/#taint-based-evictions
 	// for more details. As hope/assume that the pressure might go away in this time.
