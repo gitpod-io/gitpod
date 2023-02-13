@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { useEffect, useContext, useState } from "react";
+import React, { useEffect, useContext, useState, useCallback } from "react";
 import {
     WorkspaceCreationResult,
     RunningWorkspacePrebuildStarting,
@@ -15,7 +15,7 @@ import {
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { UserContext } from "../user-context";
+import { useCurrentUser, UserContext } from "../user-context";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import StartWorkspace, { parseProps } from "./StartWorkspace";
 import { openAuthorizeWindow } from "../provider-utils";
@@ -28,6 +28,8 @@ import { BillingAccountSelector } from "../components/BillingAccountSelector";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { StartWorkspaceOptions } from "./start-workspace-options";
+import { useLocation } from "react-router";
+import { useCurrentTeam } from "../teams/teams-context";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -40,291 +42,290 @@ export interface CreateWorkspaceState {
     stillParsing: boolean;
 }
 
-export default class CreateWorkspace extends React.Component<CreateWorkspaceProps, CreateWorkspaceState> {
-    constructor(props: CreateWorkspaceProps) {
-        super(props);
-        this.state = { stillParsing: true };
-    }
+export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
+    const [result, setResult] = useState<WorkspaceCreationResult>();
+    const [error, setError] = useState<StartWorkspaceError>();
+    const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload>();
+    const [stillParsing, setStillParsing] = useState(true);
+    const location = useLocation();
+    const org = useCurrentTeam();
+    const user = useCurrentUser();
 
-    componentDidMount() {
-        this.createWorkspace();
-    }
+    const createWorkspace = useCallback(
+        (options?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) => {
+            // Invalidate any previous result.
+            setResult(undefined);
+            setStillParsing(true);
+            setError(undefined);
+            // add options from search params
+            const opts = options || {};
+            Object.assign(opts, StartWorkspaceOptions.parseSearchParams(location.search));
 
-    async createWorkspace(options?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) {
-        // Invalidate any previous result.
-        this.setState({ result: undefined, stillParsing: true });
+            (async () => {
+                // We assume anything longer than 3 seconds is no longer just parsing the context URL (i.e. it's now creating a workspace).
+                let timeout = setTimeout(() => setStillParsing(false), 3000);
+                try {
+                    const result = await getGitpodService().server.createWorkspace({
+                        contextUrl,
+                        // TODO (se): always pass the org id, once we've migrated all users to team-only attribution
+                        organizationId: !!user?.additionalData?.isMigratedToTeamOnlyAttribution ? org?.id : undefined,
+                        ...opts,
+                    });
+                    if (result.workspaceURL) {
+                        window.location.href = result.workspaceURL;
+                        return;
+                    }
+                    clearTimeout(timeout);
+                    setStillParsing(false);
+                    setResult(result);
+                } catch (error) {
+                    clearTimeout(timeout);
+                    console.error(error);
+                    setStillParsing(false);
+                    setError(error);
+                }
+            })();
+        },
+        [contextUrl, org, user, location.search],
+    );
 
-        // add options from search params
-        const opts = options || {};
-        Object.assign(opts, StartWorkspaceOptions.parseSearchParams(window.location.search));
-        // We assume anything longer than 3 seconds is no longer just parsing the context URL (i.e. it's now creating a workspace).
-        let timeout = setTimeout(() => this.setState({ stillParsing: false }), 3000);
+    useEffect(() => {
+        createWorkspace();
+    }, [createWorkspace]);
 
-        try {
-            const result = await getGitpodService().server.createWorkspace({
-                contextUrl: this.props.contextUrl,
-                ...opts,
-            });
-            if (result.workspaceURL) {
-                window.location.href = result.workspaceURL;
-                return;
-            }
-            clearTimeout(timeout);
-            this.setState({ result, stillParsing: false });
-        } catch (error) {
-            clearTimeout(timeout);
-            console.error(error);
-            this.setState({ error, stillParsing: false });
-        }
-    }
-
-    async tryAuthorize(host: string, scopes?: string[]) {
-        try {
-            await openAuthorizeWindow({
-                host,
-                scopes,
-                onSuccess: () => {
-                    window.location.reload();
-                },
-                onError: (error) => {
-                    if (typeof error === "string") {
-                        try {
-                            const payload = JSON.parse(error);
-                            if (SelectAccountPayload.is(payload)) {
-                                this.setState({ selectAccountError: payload });
+    const tryAuthorize = useCallback(
+        async (host: string, scopes?: string[]) => {
+            try {
+                await openAuthorizeWindow({
+                    host,
+                    scopes,
+                    onSuccess: () => {
+                        window.location.reload();
+                    },
+                    onError: (error) => {
+                        if (typeof error === "string") {
+                            try {
+                                const payload = JSON.parse(error);
+                                if (SelectAccountPayload.is(payload)) {
+                                    setSelectAccountError(payload);
+                                }
+                            } catch (error) {
+                                console.log(error);
                             }
-                        } catch (error) {
-                            console.log(error);
                         }
-                    }
-                },
-            });
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
-    render() {
-        if (SelectAccountPayload.is(this.state.selectAccountError)) {
-            return (
-                <StartPage phase={StartPhase.Checking}>
-                    <div className="mt-2 flex flex-col space-y-8">
-                        <SelectAccountModal
-                            {...this.state.selectAccountError}
-                            close={() => {
-                                window.location.href = gitpodHostUrl.asAccessControl().toString();
-                            }}
-                        />
-                    </div>
-                </StartPage>
-            );
-        }
-
-        let phase = StartPhase.Checking;
-        let statusMessage = (
-            <p className="text-base text-gray-400">
-                {this.state.stillParsing ? "Parsing context …" : "Preparing workspace …"}
-            </p>
-        );
-
-        let error = this.state?.error;
-        if (error) {
-            switch (error.code) {
-                case ErrorCodes.CONTEXT_PARSE_ERROR:
-                    statusMessage = (
-                        <div className="text-center">
-                            <p className="text-base mt-2">
-                                Are you trying to open a Git repository from a self-hosted instance?{" "}
-                                <a className="text-blue" href={gitpodHostUrl.asAccessControl().toString()}>
-                                    Add integration
-                                </a>
-                            </p>
-                        </div>
-                    );
-                    break;
-                case ErrorCodes.INVALID_GITPOD_YML:
-                    statusMessage = (
-                        <div className="mt-2 flex flex-col space-y-8">
-                            <button
-                                className=""
-                                onClick={() => {
-                                    this.createWorkspace({ forceDefaultConfig: true });
-                                }}
-                            >
-                                Continue with default configuration
-                            </button>
-                        </div>
-                    );
-                    break;
-                case ErrorCodes.NOT_AUTHENTICATED:
-                    statusMessage = (
-                        <div className="mt-2 flex flex-col space-y-8">
-                            <button
-                                className=""
-                                onClick={() => {
-                                    this.tryAuthorize(error?.data.host, error?.data.scopes);
-                                }}
-                            >
-                                Authorize with {error.data.host}
-                            </button>
-                        </div>
-                    );
-                    break;
-                case ErrorCodes.PERMISSION_DENIED:
-                    statusMessage = <p className="text-base text-gitpod-red w-96">Access is not allowed</p>;
-                    break;
-                case ErrorCodes.USER_BLOCKED:
-                    window.location.href = "/blocked";
-                    return;
-                case ErrorCodes.NOT_FOUND:
-                    return <RepositoryNotFoundView error={error} />;
-                case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
-                    // HACK: Hide the error (behind the modal)
-                    error = undefined;
-                    phase = StartPhase.Stopped;
-                    statusMessage = <LimitReachedParallelWorkspacesModal />;
-                    break;
-                case ErrorCodes.NOT_ENOUGH_CREDIT:
-                    // HACK: Hide the error (behind the modal)
-                    error = undefined;
-                    phase = StartPhase.Stopped;
-                    statusMessage = <LimitReachedOutOfHours />;
-                    break;
-                case ErrorCodes.INVALID_COST_CENTER:
-                    // HACK: Hide the error (behind the modal)
-                    error = undefined;
-                    phase = StartPhase.Stopped;
-                    statusMessage = (
-                        <SelectCostCenterModal
-                            onSelected={() => {
-                                this.setState({ error: undefined });
-                                this.createWorkspace();
-                            }}
-                        />
-                    );
-                    break;
-                case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
-                    error = undefined; // to hide the error (otherwise rendered behind the modal)
-                    phase = StartPhase.Stopped;
-                    statusMessage = <UsageLimitReachedModal hints={this.state?.error?.data} />;
-                    break;
-                case ErrorCodes.PROJECT_REQUIRED:
-                    statusMessage = (
-                        <p className="text-base text-gitpod-red w-96">
-                            <a className="gp-link" href="https://www.gitpod.io/docs/configure/projects">
-                                Learn more about projects
-                            </a>
-                        </p>
-                    );
-                    break;
-                default:
-                    statusMessage = (
-                        <p className="text-base text-gitpod-red w-96">
-                            Unknown Error: {JSON.stringify(this.state?.error, null, 2)}
-                        </p>
-                    );
-                    break;
+                    },
+                });
+            } catch (error) {
+                console.log(error);
             }
-        }
+        },
+        [setSelectAccountError],
+    );
 
-        const result = this.state?.result;
-        if (result?.createdWorkspaceId) {
-            return <StartWorkspace {...parseProps(result?.createdWorkspaceId, window.location.search)} />;
-        } else if (result?.existingWorkspaces) {
-            statusMessage = (
-                // TODO: Use title and buttons props
-                <Modal visible={true} closeable={false} onClose={() => {}}>
-                    <h3>Running Workspaces</h3>
-                    <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
-                        <p className="mt-1 mb-2 text-base">
-                            You already have running workspaces with the same context. You can open an existing one or
-                            open a new workspace.
-                        </p>
-                        <>
-                            {result?.existingWorkspaces?.map((w) => {
-                                const normalizedContextUrl =
-                                    ContextURL.getNormalizedURL(w.workspace)?.toString() || "undefined";
-                                return (
-                                    <a
-                                        href={
-                                            w.latestInstance?.ideUrl ||
-                                            gitpodHostUrl
-                                                .with({
-                                                    pathname: "/start/",
-                                                    hash: "#" + w.latestInstance?.workspaceId,
-                                                })
-                                                .toString()
-                                        }
-                                        className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1"
-                                    >
-                                        <div className="w-full">
-                                            <p className="text-base text-black dark:text-gray-100 font-bold">
-                                                {w.workspace.id}
-                                            </p>
-                                            <p className="truncate" title={normalizedContextUrl}>
-                                                {normalizedContextUrl}
-                                            </p>
-                                        </div>
-                                    </a>
-                                );
-                            })}
-                        </>
-                    </div>
-                    <div className="flex justify-end mt-6">
-                        <button onClick={() => this.createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}>
-                            New Workspace
-                        </button>
-                    </div>
-                </Modal>
-            );
-        } else if (result?.runningWorkspacePrebuild) {
-            return (
-                <RunningPrebuildView
-                    runningPrebuild={result.runningWorkspacePrebuild}
-                    onUseLastSuccessfulPrebuild={() =>
-                        this.createWorkspace({ allowUsingPreviousPrebuilds: true, ignoreRunningPrebuild: true })
-                    }
-                    onIgnorePrebuild={() => this.createWorkspace({ ignoreRunningPrebuild: true })}
-                    onPrebuildSucceeded={() => this.createWorkspace()}
-                />
-            );
-        }
-
+    if (SelectAccountPayload.is(selectAccountError)) {
         return (
-            <StartPage phase={phase} error={error}>
-                {statusMessage}
-                {error && (
-                    <div>
-                        <a href={gitpodHostUrl.asDashboard().toString()}>
-                            <button className="mt-8 secondary">Go to Dashboard</button>
-                        </a>
-                        <p className="mt-14 text-base text-gray-400 flex space-x-2">
-                            <a
-                                className="hover:text-blue-600 dark:hover:text-blue-400"
-                                href="https://www.gitpod.io/docs/"
-                            >
-                                Docs
-                            </a>
-                            <span>—</span>
-                            <a
-                                className="hover:text-blue-600 dark:hover:text-blue-400"
-                                href="https://status.gitpod.io/"
-                            >
-                                Status
-                            </a>
-                            <span>—</span>
-                            <a
-                                className="hover:text-blue-600 dark:hover:text-blue-400"
-                                href="https://www.gitpod.io/blog/"
-                            >
-                                Blog
-                            </a>
-                        </p>
-                    </div>
-                )}
+            <StartPage phase={StartPhase.Checking}>
+                <div className="mt-2 flex flex-col space-y-8">
+                    <SelectAccountModal
+                        {...selectAccountError}
+                        close={() => {
+                            window.location.href = gitpodHostUrl.asAccessControl().toString();
+                        }}
+                    />
+                </div>
             </StartPage>
         );
     }
+
+    let phase = StartPhase.Checking;
+    let statusMessage = (
+        <p className="text-base text-gray-400">{stillParsing ? "Parsing context …" : "Preparing workspace …"}</p>
+    );
+
+    if (error) {
+        switch (error.code) {
+            case ErrorCodes.CONTEXT_PARSE_ERROR:
+                statusMessage = (
+                    <div className="text-center">
+                        <p className="text-base mt-2">
+                            Are you trying to open a Git repository from a self-hosted instance?{" "}
+                            <a className="text-blue" href={gitpodHostUrl.asAccessControl().toString()}>
+                                Add integration
+                            </a>
+                        </p>
+                    </div>
+                );
+                break;
+            case ErrorCodes.INVALID_GITPOD_YML:
+                statusMessage = (
+                    <div className="mt-2 flex flex-col space-y-8">
+                        <button
+                            className=""
+                            onClick={() => {
+                                createWorkspace({ forceDefaultConfig: true });
+                            }}
+                        >
+                            Continue with default configuration
+                        </button>
+                    </div>
+                );
+                break;
+            case ErrorCodes.NOT_AUTHENTICATED:
+                statusMessage = (
+                    <div className="mt-2 flex flex-col space-y-8">
+                        <button
+                            className=""
+                            onClick={() => {
+                                tryAuthorize(error?.data.host, error?.data.scopes);
+                            }}
+                        >
+                            Authorize with {error.data.host}
+                        </button>
+                    </div>
+                );
+                break;
+            case ErrorCodes.PERMISSION_DENIED:
+                statusMessage = <p className="text-base text-gitpod-red w-96">Access is not allowed</p>;
+                break;
+            case ErrorCodes.USER_BLOCKED:
+                window.location.href = "/blocked";
+                return null;
+            case ErrorCodes.NOT_FOUND:
+                return <RepositoryNotFoundView error={error} />;
+            case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
+                // HACK: Hide the error (behind the modal)
+                setError(undefined);
+                phase = StartPhase.Stopped;
+                statusMessage = <LimitReachedParallelWorkspacesModal />;
+                break;
+            case ErrorCodes.NOT_ENOUGH_CREDIT:
+                // HACK: Hide the error (behind the modal)
+                setError(undefined);
+                phase = StartPhase.Stopped;
+                statusMessage = <LimitReachedOutOfHours />;
+                break;
+            case ErrorCodes.INVALID_COST_CENTER:
+                // HACK: Hide the error (behind the modal)
+                setError(undefined);
+                phase = StartPhase.Stopped;
+                statusMessage = (
+                    <SelectCostCenterModal
+                        onSelected={() => {
+                            setError(undefined);
+                            createWorkspace();
+                        }}
+                    />
+                );
+                break;
+            case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
+                setError(undefined); // to hide the error (otherwise rendered behind the modal)
+                phase = StartPhase.Stopped;
+                statusMessage = <UsageLimitReachedModal hints={error?.data} />;
+                break;
+            case ErrorCodes.PROJECT_REQUIRED:
+                statusMessage = (
+                    <p className="text-base text-gitpod-red w-96">
+                        <a className="gp-link" href="https://www.gitpod.io/docs/configure/projects">
+                            Learn more about projects
+                        </a>
+                    </p>
+                );
+                break;
+            default:
+                statusMessage = (
+                    <p className="text-base text-gitpod-red w-96">Unknown Error: {JSON.stringify(error, null, 2)}</p>
+                );
+                break;
+        }
+    }
+
+    if (result?.createdWorkspaceId) {
+        return <StartWorkspace {...parseProps(result?.createdWorkspaceId, window.location.search)} />;
+    } else if (result?.existingWorkspaces) {
+        statusMessage = (
+            // TODO: Use title and buttons props
+            <Modal visible={true} closeable={false} onClose={() => {}}>
+                <h3>Running Workspaces</h3>
+                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
+                    <p className="mt-1 mb-2 text-base">
+                        You already have running workspaces with the same context. You can open an existing one or open
+                        a new workspace.
+                    </p>
+                    <>
+                        {result?.existingWorkspaces?.map((w) => {
+                            const normalizedContextUrl =
+                                ContextURL.getNormalizedURL(w.workspace)?.toString() || "undefined";
+                            return (
+                                <a
+                                    href={
+                                        w.latestInstance?.ideUrl ||
+                                        gitpodHostUrl
+                                            .with({
+                                                pathname: "/start/",
+                                                hash: "#" + w.latestInstance?.workspaceId,
+                                            })
+                                            .toString()
+                                    }
+                                    className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1"
+                                >
+                                    <div className="w-full">
+                                        <p className="text-base text-black dark:text-gray-100 font-bold">
+                                            {w.workspace.id}
+                                        </p>
+                                        <p className="truncate" title={normalizedContextUrl}>
+                                            {normalizedContextUrl}
+                                        </p>
+                                    </div>
+                                </a>
+                            );
+                        })}
+                    </>
+                </div>
+                <div className="flex justify-end mt-6">
+                    <button onClick={() => createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}>
+                        New Workspace
+                    </button>
+                </div>
+            </Modal>
+        );
+    } else if (result?.runningWorkspacePrebuild) {
+        return (
+            <RunningPrebuildView
+                runningPrebuild={result.runningWorkspacePrebuild}
+                onUseLastSuccessfulPrebuild={() =>
+                    createWorkspace({ allowUsingPreviousPrebuilds: true, ignoreRunningPrebuild: true })
+                }
+                onIgnorePrebuild={() => createWorkspace({ ignoreRunningPrebuild: true })}
+                onPrebuildSucceeded={createWorkspace}
+            />
+        );
+    }
+
+    return (
+        <StartPage phase={phase} error={error}>
+            {statusMessage}
+            {error && (
+                <div>
+                    <a href={gitpodHostUrl.asDashboard().toString()}>
+                        <button className="mt-8 secondary">Go to Dashboard</button>
+                    </a>
+                    <p className="mt-14 text-base text-gray-400 flex space-x-2">
+                        <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/docs/">
+                            Docs
+                        </a>
+                        <span>—</span>
+                        <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://status.gitpod.io/">
+                            Status
+                        </a>
+                        <span>—</span>
+                        <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/blog/">
+                            Blog
+                        </a>
+                    </p>
+                </div>
+            )}
+        </StartPage>
+    );
 }
 
 function SelectCostCenterModal(props: { onSelected?: () => void }) {
@@ -555,3 +556,5 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
         </StartPage>
     );
 }
+
+export default CreateWorkspace;

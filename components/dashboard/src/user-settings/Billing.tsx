@@ -4,15 +4,18 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
-import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { BillingAccountSelector } from "../components/BillingAccountSelector";
-import { UserContext } from "../user-context";
-import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { Redirect } from "react-router";
+import { BillingAccountSelector } from "../components/BillingAccountSelector";
+import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
+import { useCurrentUser } from "../user-context";
+import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 
 export default function Billing() {
-    const { user } = useContext(UserContext);
+    const user = useCurrentUser();
+    if (user?.additionalData?.isMigratedToTeamOnlyAttribution) {
+        return <Redirect to="/user/account" />;
+    }
 
     return (
         <PageWithSettingsSubMenu>
