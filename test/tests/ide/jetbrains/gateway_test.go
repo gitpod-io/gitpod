@@ -272,7 +272,9 @@ func TestRubyMine(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-samples/template-ruby-on-rails-postgres")
+			// TODO: open comment after https://github.com/gitpod-io/gitpod/issues/16302 resolved
+			// JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-samples/template-ruby-on-rails-postgres")
+			JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-io/Gitpod-Ruby-On-Rails")
 			return ctx
 		}).
 		Feature()
