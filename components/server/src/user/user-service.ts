@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { User, Identity, UserEnvVarValue, Token, Workspace } from "@gitpod/gitpod-protocol";
+import { User, Identity, UserEnvVarValue, Token } from "@gitpod/gitpod-protocol";
 import { ProjectDB, TeamDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -162,37 +162,37 @@ export class UserService {
     protected async validateUsageAttributionId(user: User, usageAttributionId: string): Promise<AttributionId> {
         const attribution = AttributionId.parse(usageAttributionId);
         if (!attribution) {
-            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "The billing team id configured is invalid.");
+            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "The provided attributionId is invalid.", {
+                id: usageAttributionId,
+            });
         }
         if (attribution.kind === "team") {
             const team = await this.teamDB.findTeamById(attribution.teamId);
             if (!team) {
                 throw new ResponseError(
                     ErrorCodes.INVALID_COST_CENTER,
-                    "The billing team you've selected no longer exists.",
+                    "Organization not found. Please contact support if you believe this is an error.",
                 );
             }
             const members = await this.teamDB.findMembersByTeam(team.id);
             if (!members.find((m) => m.userId === user.id)) {
+                // if the user's not a member of an org, they can't see it
                 throw new ResponseError(
                     ErrorCodes.INVALID_COST_CENTER,
-                    "You're no longer a member of the selected billing team.",
+                    "Organization not found. Please contact support if you believe this is an error.",
                 );
             }
         }
         if (attribution.kind === "user") {
             if (user.id !== attribution.userId) {
-                throw new ResponseError(
-                    ErrorCodes.INVALID_COST_CENTER,
-                    "You can select either yourself or a team you are a member of",
-                );
+                throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Invalid organizationId.");
             }
         }
         const billedAttributionIds = await this.listAvailableUsageAttributionIds(user);
         if (billedAttributionIds.find((id) => AttributionId.equals(id, attribution)) === undefined) {
             throw new ResponseError(
                 ErrorCodes.INVALID_COST_CENTER,
-                "You can select either yourself or a billed team you are a member of",
+                "Organization not found. Please contact support if you believe this is an error.",
             );
         }
         return attribution;
@@ -202,13 +202,17 @@ export class UserService {
      * Identifies the team or user to which a workspace instance's running time should be attributed to
      * (e.g. for usage analytics or billing purposes).
      *
+     * This is the legacy logic for determining a cost center. It's only used for workspaces that are started by users ibefore they have been migrated to org-only mode.
      *
      * @param user
      * @param projectId
      * @returns The validated AttributionId
      */
     async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<AttributionId> {
-        // if it's a workspace for a project the user has access to and the costcenter has credits use that
+        if (user.additionalData?.isMigratedToTeamOnlyAttribution) {
+            throw new Error("getWorkspaceUsageAttributionId should not be called for users in org-only mode.");
+        }
+        // if it's a workspace for a project the user has access to and the org has credits use that
         if (projectId) {
             let attributionId: AttributionId | undefined;
             const project = await this.projectDb.findProjectById(projectId);
@@ -234,7 +238,7 @@ export class UserService {
             if (teams.length > 0) {
                 return AttributionId.create(teams[0]);
             }
-            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "No team found for user");
+            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "No organization found for user");
         }
         return AttributionId.create(user);
     }
@@ -244,11 +248,11 @@ export class UserService {
      * @param workspace - optional, in which case the default billing account will be checked
      * @returns
      */
-    async checkUsageLimitReached(
-        user: User,
-        workspace?: Pick<Workspace, "projectId">,
-    ): Promise<UsageLimitReachedResult> {
-        const attributionId = await this.getWorkspaceUsageAttributionId(user, workspace?.projectId);
+    async checkUsageLimitReached(user: User, organizationId?: string): Promise<UsageLimitReachedResult> {
+        if (!organizationId && user.additionalData?.isMigratedToTeamOnlyAttribution) {
+            throw new Error("organizationId must be provided for org-only users");
+        }
+        const attributionId = AttributionId.createFromOrganizationId(organizationId) || AttributionId.create(user);
         const creditBalance = await this.usageService.getCurrentBalance(attributionId);
         const currentInvoiceCredits = creditBalance.usedCredits;
         const usageLimit = creditBalance.usageLimit;

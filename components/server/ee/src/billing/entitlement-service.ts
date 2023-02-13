@@ -7,7 +7,6 @@
 import {
     BillingTier,
     User,
-    Workspace,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
@@ -38,7 +37,7 @@ export class EntitlementServiceImpl implements EntitlementService {
 
     async mayStartWorkspace(
         user: User,
-        workspace: Workspace,
+        organizationId: string | undefined,
         date: Date = new Date(),
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
@@ -52,11 +51,11 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
-                    return this.license.mayStartWorkspace(user, workspace, date, runningInstances);
+                    return this.license.mayStartWorkspace(user, organizationId, date, runningInstances);
                 case "chargebee":
-                    return this.chargebee.mayStartWorkspace(user, workspace, date, runningInstances);
+                    return this.chargebee.mayStartWorkspace(user, organizationId, date, runningInstances);
                 case "usage-based":
-                    return this.ubp.mayStartWorkspace(user, workspace, date, runningInstances);
+                    return this.ubp.mayStartWorkspace(user, organizationId, date, runningInstances);
                 default:
                     throw new Error("Unsupported billing mode: " + (billingMode as any).mode); // safety net
             }

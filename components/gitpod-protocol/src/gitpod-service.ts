@@ -439,6 +439,7 @@ export namespace GitpodServer {
     }
     export interface CreateWorkspaceOptions extends StartWorkspaceOptions {
         contextUrl: string;
+        organizationId?: string;
 
         // whether running workspaces on the same context should be ignored. If false (default) users will be asked.
         ignoreRunningWorkspaceOnSameCommit?: boolean;
