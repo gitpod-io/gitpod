@@ -140,6 +140,8 @@ Additional config parameters that are in experimental state
 |`experimental.webapp.server.enableLocalApp`|bool|N|  ||
 |`experimental.webapp.server.runDbDeleter`|bool|N|  ||
 |`experimental.webapp.server.disableWorkspaceGarbageCollection`|bool|N|  ||
+|`experimental.webapp.server.disableLongRunningMigrationJob`|bool|N|  ||
+|`experimental.webapp.server.disableCompleteSnapshotJob`|bool|N|  ||
 |`experimental.webapp.server.inactivityPeriodForReposInDays`|int|N|  ||
 |`experimental.webapp.server.defaultBaseImageRegistryWhitelist[ ]`|[]string|N|  |  @deprecated use containerRegistry.privateBaseImageAllowList instead|
 |`experimental.webapp.proxy.staticIP`|string|N|  ||
