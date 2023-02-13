@@ -6,7 +6,6 @@
 
 import {
     User,
-    Workspace,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
@@ -43,7 +42,7 @@ export interface EntitlementService {
      */
     mayStartWorkspace(
         user: User,
-        workspace: Pick<Workspace, "projectId">,
+        organizationId: string | undefined,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult>;
@@ -89,7 +88,7 @@ export interface EntitlementService {
 export class CommunityEntitlementService implements EntitlementService {
     async mayStartWorkspace(
         user: User,
-        workspace: Workspace,
+        organizationId: string | undefined,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {

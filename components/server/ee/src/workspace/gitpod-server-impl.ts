@@ -291,14 +291,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     protected async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
-        workspace: Workspace,
+        organizationId: string | undefined,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<void> {
-        await super.mayStartWorkspace(ctx, user, workspace, runningInstances);
+        await super.mayStartWorkspace(ctx, user, organizationId, runningInstances);
 
         let result: MayStartWorkspaceResult = {};
         try {
-            result = await this.entitlementService.mayStartWorkspace(user, workspace, new Date(), runningInstances);
+            result = await this.entitlementService.mayStartWorkspace(
+                user,
+                organizationId,
+                new Date(),
+                runningInstances,
+            );
             TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
         } catch (err) {
             log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
@@ -2381,7 +2386,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         try {
             const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
             if (billingMode.mode === "usage-based") {
-                const limit = await this.userService.checkUsageLimitReached(user);
+                const attributionId: AttributionId = User.getDefaultAttributionId(user);
+                const limit = await this.userService.checkUsageLimitReached(
+                    user,
+                    attributionId.kind === "team" ? attributionId.teamId : undefined,
+                );
                 await this.guardCostCenterAccess(ctx, user.id, limit.attributionId, "get");
 
                 switch (limit.attributionId.kind) {

@@ -9,7 +9,6 @@ import {
     BillingTier,
     Team,
     User,
-    Workspace,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
@@ -47,7 +46,7 @@ export class EntitlementServiceUBP implements EntitlementService {
 
     async mayStartWorkspace(
         user: User,
-        workspace: Pick<Workspace, "projectId">,
+        organizationId: string | undefined,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
@@ -64,7 +63,7 @@ export class EntitlementServiceUBP implements EntitlementService {
             }
         };
         const [usageLimitReachedOnCostCenter, hitParallelWorkspaceLimit] = await Promise.all([
-            this.checkUsageLimitReached(user, workspace, date),
+            this.checkUsageLimitReached(user, organizationId, date),
             hasHitParallelWorkspaceLimit(),
         ]);
         return {
@@ -75,10 +74,10 @@ export class EntitlementServiceUBP implements EntitlementService {
 
     protected async checkUsageLimitReached(
         user: User,
-        workspace: Pick<Workspace, "projectId">,
+        organizationId: string | undefined,
         date: Date,
     ): Promise<AttributionId | undefined> {
-        const result = await this.userService.checkUsageLimitReached(user, workspace);
+        const result = await this.userService.checkUsageLimitReached(user, organizationId);
         if (result.reached) {
             return result.attributionId;
         }

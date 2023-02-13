@@ -139,7 +139,7 @@ export class PrebuildManager {
                     `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a team.`,
                 );
             }
-            await this.checkUsageLimitReached(user, project); // throws if true
+            await this.checkUsageLimitReached(user, project.teamId); // throws if out of credits
 
             const config = await this.fetchConfig({ span }, user, context);
 
@@ -296,17 +296,17 @@ export class PrebuildManager {
         }
     }
 
-    protected async checkUsageLimitReached(user: User, project: Project): Promise<void> {
+    protected async checkUsageLimitReached(user: User, organizationId?: string): Promise<void> {
         let result: MayStartWorkspaceResult = {};
         try {
             result = await this.entitlementService.mayStartWorkspace(
                 user,
-                { projectId: project.id },
+                organizationId,
                 new Date(),
                 Promise.resolve([]),
             );
         } catch (err) {
-            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
+            log.error({ userId: user.id }, "EntitlementService.mayStartWorkspace error", err);
             return; // we don't want to block workspace starts because of internal errors
         }
         if (!!result.usageLimitReachedOnCostCenter) {

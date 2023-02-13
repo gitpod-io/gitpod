@@ -22,6 +22,10 @@ export interface TeamAttributionId {
 export namespace AttributionId {
     const SEPARATOR = ":";
 
+    export function createFromOrganizationId(organizationId?: string): AttributionId | undefined {
+        return organizationId ? { kind: "team", teamId: organizationId } : undefined;
+    }
+
     export function create(userOrTeam: User | Team): AttributionId {
         if (User.is(userOrTeam)) {
             return { kind: "user", userId: userOrTeam.id };

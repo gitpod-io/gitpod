@@ -8,6 +8,7 @@ import { WorkspaceInstance, PortVisibility } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
 import { createHash } from "crypto";
+import { AttributionId } from "./attribution";
 
 export interface UserInfo {
     name?: string;
@@ -176,6 +177,17 @@ export namespace User {
         user.additionalData.profile.lastUpdatedDetailsNudge = new Date().toISOString();
 
         return user;
+    }
+
+    export function getDefaultAttributionId(user: User): AttributionId {
+        if (user.usageAttributionId) {
+            const result = AttributionId.parse(user.usageAttributionId);
+            if (!result) {
+                throw new Error("Invalid attribution ID: " + user.usageAttributionId);
+            }
+            return result;
+        }
+        return AttributionId.create(user);
     }
 
     // The actual Profile of a User

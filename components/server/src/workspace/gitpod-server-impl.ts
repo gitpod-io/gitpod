@@ -707,7 +707,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const mayStartPromise = this.mayStartWorkspace(
             ctx,
             user,
-            workspace,
+            workspace.organizationId,
             this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id),
         );
         await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
@@ -1189,10 +1189,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ? await this.projectDB.findProjectByCloneUrl(context.repository.cloneUrl)
                 : undefined;
 
-            //TODO(se) relying on the attribution mechanism is a temporary work around. We will go to explicit passing of organization IDs soon.
-            const attributionId = await this.userService.getWorkspaceUsageAttributionId(user, project?.id);
-            const organizationId = attributionId.kind === "team" ? attributionId.teamId : undefined;
+            let organizationId = options.organizationId;
+            if (!organizationId) {
+                if (!user.additionalData?.isMigratedToTeamOnlyAttribution) {
+                    const attributionId = await this.userService.getWorkspaceUsageAttributionId(user, project?.id);
+                    organizationId = attributionId.kind === "team" ? attributionId.teamId : undefined;
+                } else {
+                    throw new ResponseError(ErrorCodes.BAD_REQUEST, "No organizationId provided.");
+                }
+            }
+            const mayStartWorkspacePromise = this.mayStartWorkspace(ctx, user, organizationId, runningInstancesPromise);
 
+            // TODO (se) findPrebuiltWorkspace also needs the organizationId once we limit prebuild reuse to the same org
             const prebuiltWorkspace = await this.findPrebuiltWorkspace(
                 ctx,
                 user,
@@ -1217,7 +1225,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 context,
                 normalizedContextUrl,
             );
-            await this.mayStartWorkspace(ctx, user, workspace, runningInstancesPromise);
+            await mayStartWorkspacePromise;
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
             } catch (err) {
@@ -1332,7 +1340,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
-        workspace: Workspace,
+        organizationId: string | undefined,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<void> {}
 
