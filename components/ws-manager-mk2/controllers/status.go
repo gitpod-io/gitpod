@@ -40,7 +40,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			workspace.Status.Phase = workspacev1.WorkspacePhasePending
 		}
 
-		if workspace.Status.Phase != workspacev1.WorkspacePhasePending {
+		if isDisposalFinished(workspace) {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
 		return nil
@@ -124,11 +124,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 
 		if controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName) {
-			if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
-				wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
-				wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) ||
-				wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
-
+			if isDisposalFinished(workspace) {
 				workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 			}
 
@@ -189,6 +185,13 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 	}
 
 	return nil
+}
+
+func isDisposalFinished(ws *workspacev1.Workspace) bool {
+	return wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
+		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
+		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) ||
+		wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure")
 }
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then

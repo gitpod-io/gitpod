@@ -20,6 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
+	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	//+kubebuilder:scaffold:imports
@@ -27,6 +29,12 @@ import (
 
 // These tests use Ginkgo (BDD-style Go testing framework). Refer to
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
+
+const (
+	timeout  = time.Second * 20
+	duration = time.Second * 2
+	interval = time.Millisecond * 250
+)
 
 // var cfg *rest.Config
 var k8sClient client.Client
@@ -39,8 +47,9 @@ func TestAPIs(t *testing.T) {
 }
 
 var (
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx        context.Context
+	cancel     context.CancelFunc
+	wsActivity *activity.WorkspaceActivity
 )
 
 var _ = BeforeSuite(func() {
@@ -91,21 +100,15 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).ToNot(HaveOccurred())
 
-	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), &config.Configuration{
-		Namespace:      "default",
-		SeccompProfile: "default.json",
-		WorkspaceClasses: map[string]*config.WorkspaceClass{
-			"default": {
-				Name: "default",
-			},
-		},
-		WorkspaceURLTemplate: "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
-		GitpodHostURL:        "gitpod.io",
-	}, metrics.Registry)
+	conf := newTestConfig()
+	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), &conf, metrics.Registry)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(wsReconciler.SetupWithManager(k8sManager)).To(Succeed())
 
+	wsActivity = &activity.WorkspaceActivity{}
+	timeoutReconciler, err := NewTimeoutReconciler(k8sManager.GetClient(), conf, wsActivity)
 	Expect(err).ToNot(HaveOccurred())
-	err = wsReconciler.SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
+	Expect(timeoutReconciler.SetupWithManager(k8sManager)).To(Succeed())
 
 	ctx, cancel = context.WithCancel(context.Background())
 
@@ -116,6 +119,32 @@ var _ = BeforeSuite(func() {
 	}()
 
 })
+
+func newTestConfig() config.Configuration {
+	return config.Configuration{
+		GitpodHostURL:     "gitpod.io",
+		HeartbeatInterval: util.Duration(30 * time.Second),
+		Namespace:         "default",
+		SeccompProfile:    "default.json",
+		Timeouts: config.WorkspaceTimeoutConfiguration{
+			AfterClose:          util.Duration(1 * time.Minute),
+			Initialization:      util.Duration(30 * time.Minute),
+			TotalStartup:        util.Duration(45 * time.Minute),
+			RegularWorkspace:    util.Duration(60 * time.Minute),
+			MaxLifetime:         util.Duration(36 * time.Hour),
+			HeadlessWorkspace:   util.Duration(90 * time.Minute),
+			Stopping:            util.Duration(60 * time.Minute),
+			ContentFinalization: util.Duration(55 * time.Minute),
+			Interrupted:         util.Duration(5 * time.Minute),
+		},
+		WorkspaceClasses: map[string]*config.WorkspaceClass{
+			"default": {
+				Name: "default",
+			},
+		},
+		WorkspaceURLTemplate: "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
+	}
+}
 
 var _ = AfterSuite(func() {
 	cancel()
