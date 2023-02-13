@@ -59,7 +59,7 @@ var aptUpdated = false
 const (
 	dockerSocketFN = "/var/run/docker.sock"
 	gitpodUserId   = 33333
-	containerIf    = "ceth0"
+	containerIf    = "eth0"
 )
 
 func main() {
