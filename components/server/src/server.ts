@@ -297,6 +297,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     }
 
     protected async startLongRunningMigrations(): Promise<void> {
+        if (this.config.longRunningMigrationsJob?.disabled) {
+            return;
+        }
+        log.info("Starting long running migrations job...");
         let completed = false;
         while (!completed) {
             if (await this.qorum.areWeLeader()) {

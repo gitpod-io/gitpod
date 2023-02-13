@@ -45,6 +45,8 @@ type ConfigSerialized struct {
 	Session                    Session                    `json:"session"`
 	GitHubApp                  GitHubApp                  `json:"githubApp"`
 	WorkspaceGarbageCollection WorkspaceGarbageCollection `json:"workspaceGarbageCollection"`
+	CompleteSnapshotJob        JobConfig                  `json:"completeSnapshotJob"`
+	LongRunningMigrationsJob   JobConfig                  `json:"longRunningMigrationsJob"`
 	AuthProviderConfigFiles    []string                   `json:"authProviderConfigFiles"`
 	IncrementalPrebuilds       IncrementalPrebuilds       `json:"incrementalPrebuilds"`
 	BlockNewUsers              config.BlockNewUsers       `json:"blockNewUsers"`
@@ -105,6 +107,10 @@ type WorkspaceGarbageCollection struct {
 	ContentChunkLimit          int32 `json:"contentChunkLimit"`
 	PurgeRetentionPeriodDays   int32 `json:"purgeRetentionPeriodDays"`
 	PurgeChunkLimit            int32 `json:"purgeChunkLimit"`
+}
+
+type JobConfig struct {
+	Disabled bool `json:"disabled"`
 }
 
 type GitHubApp struct {

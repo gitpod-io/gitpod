@@ -27,8 +27,11 @@ export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Se
     public async init(app: express.Application) {
         await super.init(app);
 
-        // Start Snapshot Service
-        await this.snapshotService.start();
+        if (!this.config.completeSnapshotJob?.disabled) {
+            // Start Snapshot Service
+            log.info("Starting snapshot completion job...");
+            await this.snapshotService.start();
+        }
     }
 
     protected async registerRoutes(app: express.Application): Promise<void> {
