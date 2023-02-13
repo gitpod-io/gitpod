@@ -76,6 +76,11 @@ jobs:
       previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
     steps:
       - uses: actions/checkout@v3
+      - name: Configure workspace
+        run: |
+          sudo chown -R gitpod:gitpod /__t
+          # Needed by docker/login-action
+          sudo chmod goa+rw /var/run/docker.sock
       - name: Build previewctl
         id: build
         shell: bash
