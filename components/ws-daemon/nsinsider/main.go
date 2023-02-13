@@ -270,7 +270,7 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					containerIf, vethIf, cethIf := "eth0", "veth0", "ceth0"
+					containerIf, vethIf, cethIf := "eth0", "veth0", "eth0"
 					mask := net.IPv4Mask(255, 255, 255, 0)
 					vethIp := net.IPNet{
 						IP:   net.IPv4(10, 0, 5, 1),
@@ -430,7 +430,7 @@ func main() {
 				Name:  "setup-peer-veth",
 				Usage: "set up a peer veth",
 				Action: func(c *cli.Context) error {
-					cethIf := "ceth0"
+					cethIf := "eth0"
 					mask := net.IPv4Mask(255, 255, 255, 0)
 					cethIp := net.IPNet{
 						IP:   net.IPv4(10, 0, 5, 2),
