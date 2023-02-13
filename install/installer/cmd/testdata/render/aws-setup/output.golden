@@ -4851,6 +4851,12 @@ data:
         "purgeRetentionPeriodDays": 365,
         "purgeChunkLimit": 5000
       },
+      "completeSnapshotJob": {
+        "disabled": false
+      },
+      "longRunningMigrationsJob": {
+        "disabled": false
+      },
       "authProviderConfigFiles": [],
       "incrementalPrebuilds": {
         "repositoryPasslist": [],
@@ -9223,7 +9229,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 938492fbac2160e885f758966c5ba0ba3aeb759c5943b98109dbdf95921a9a78
+        gitpod.io/checksum_config: e641db8210464747aa714799870c610059b5c4880a288a9da91a843660ae9cb0
       creationTimestamp: null
       labels:
         app: gitpod

@@ -117,6 +117,8 @@ export interface ConfigSerialized {
     definitelyGpDisabled: boolean;
 
     workspaceGarbageCollection: WorkspaceGarbageCollection;
+    completeSnapshotJob?: { disabled?: boolean };
+    longRunningMigrationsJob?: { disabled?: boolean };
 
     enableLocalApp: boolean;
 
