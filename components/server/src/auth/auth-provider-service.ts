@@ -200,8 +200,8 @@ export class AuthProviderService {
         };
     }
 
-    async markAsVerified(params: { ownerId: string; id: string }) {
-        const { ownerId, id } = params;
+    async markAsVerified(params: { userId: string; id: string }) {
+        const { userId, id } = params;
         let ap: AuthProviderEntry | undefined;
         try {
             const ap = await this.authProviderDB.findById(id);
@@ -212,7 +212,7 @@ export class AuthProviderService {
 
             // Check that user is allowed to verify the AuthProviderEntry
             if (ap.organizationId) {
-                const membership = await this.teamDB.findTeamMembership(ownerId, ap.organizationId);
+                const membership = await this.teamDB.findTeamMembership(userId, ap.organizationId);
                 if (!membership) {
                     log.warn("Failed to find the TeamMembership for Org AuthProviderEntry to be activated.", {
                         params,
@@ -234,7 +234,7 @@ export class AuthProviderService {
             } else {
                 // For a non-org AuthProviderEntry, user must be the owner, or it must be the special "no-user" entry
                 // "no-user" is the magic user id assigned during the initial setup
-                if (ownerId !== ap.ownerId && ap.ownerId !== "no-user") {
+                if (userId !== ap.ownerId && ap.ownerId !== "no-user") {
                     log.warn("User cannot active the AuthProviderEntry.", { params, id, ap });
                     return;
                 }
@@ -242,7 +242,7 @@ export class AuthProviderService {
 
             const updatedAP: AuthProviderEntry = {
                 ...ap,
-                ownerId,
+                ownerId: userId,
                 status: "verified",
             };
             await this.authProviderDB.storeAuthProvider(updatedAP, true);

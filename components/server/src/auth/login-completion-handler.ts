@@ -108,7 +108,7 @@ export class LoginCompletionHandler {
             const { id, verified, builtin } = config;
             if (!builtin && !verified) {
                 try {
-                    await this.authProviderService.markAsVerified({ id, ownerId: user.id });
+                    await this.authProviderService.markAsVerified({ id, userId: user.id });
                 } catch (error) {
                     log.error(LogContext.from({ user }), `Failed to mark AuthProvider as verified!`, { error });
                 }
