@@ -20,6 +20,7 @@ export interface AuthProviderEntryDB {
      */
     findAllHosts(): Promise<string[]>;
     findByHost(host: string): Promise<AuthProviderEntry | undefined>;
+    findById(id: string): Promise<AuthProviderEntry | undefined>;
     findByUserId(userId: string): Promise<AuthProviderEntry[]>;
     findByOrgId(organizationId: string): Promise<AuthProviderEntry[]>;
 }
