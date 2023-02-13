@@ -58,7 +58,7 @@ var openCmd = &cobra.Command{
 		if wait {
 			pargs = append(pargs, "--wait")
 		}
-		c := exec.Command(pcmd, append(pargs, args...)...)
+		c := exec.CommandContext(cmd.Context(), pcmd, append(pargs[1:], args...)...)
 		c.Stdin = os.Stdin
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
