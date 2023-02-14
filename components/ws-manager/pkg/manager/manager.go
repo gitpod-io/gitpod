@@ -92,6 +92,7 @@ type startWorkspaceContext struct {
 	Labels         map[string]string              `json:"labels"`
 	CLIAPIKey      string                         `json:"cliApiKey"`
 	OwnerToken     string                         `json:"ownerToken"`
+	IdeCredentials string                         `json:"ideCredentials"`
 	IDEPort        int32                          `json:"idePort"`
 	SupervisorPort int32                          `json:"supervisorPort"`
 	WorkspaceURL   string                         `json:"workspaceURL"`

@@ -242,6 +242,11 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 	if !ok {
 		log.WithFields(wso.GetOWI()).Warn("pod has no owner token. is this a legacy pod?")
 	}
+
+	ideCredentials, ok := wso.Pod.Annotations[kubernetes.IdeCredentialsAnnotation]
+	if !ok {
+		log.WithFields(wso.GetOWI()).Warn("pod has no ide credentials")
+	}
 	admission := api.AdmissionLevel_ADMIT_OWNER_ONLY
 	if av, ok := api.AdmissionLevel_value[strings.ToUpper(wso.Pod.Annotations[kubernetes.WorkspaceAdmissionAnnotation])]; ok {
 		admission = api.AdmissionLevel(av)
@@ -272,6 +277,7 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 			Type:           tpe,
 			Timeout:        timeout,
 			Class:          wso.Pod.Labels[workspaceClassLabel],
+			IdeCredentils:  ideCredentials,
 		},
 		Conditions: &api.WorkspaceConditions{
 			Snapshot: wso.Pod.Annotations[workspaceSnapshotAnnotation],

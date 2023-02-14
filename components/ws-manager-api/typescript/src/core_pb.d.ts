@@ -750,6 +750,8 @@ export class WorkspaceSpec extends jspb.Message {
     getIdeImageLayersList(): Array<string>;
     setIdeImageLayersList(value: Array<string>): WorkspaceSpec;
     addIdeImageLayers(value: string, index?: number): string;
+    getIdeCredentils(): string;
+    setIdeCredentils(value: string): WorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceSpec.AsObject;
@@ -773,6 +775,7 @@ export namespace WorkspaceSpec {
         ideImage?: IDEImage.AsObject,
         pb_class: string,
         ideImageLayersList: Array<string>,
+        ideCredentils: string,
     }
 }
 

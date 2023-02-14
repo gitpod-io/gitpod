@@ -361,6 +361,9 @@ message WorkspaceSpec {
     // ide_image_layers are contains the images needed for the ide to run,
     // including ide-desktop, desktop-plugin and so on
     repeated string ide_image_layers = 10;
+
+    // ide_credentials is the credentials token that used for browser ide to decrypt and encrypt
+    string ide_credentils = 11;
 }
 
 // PortSpec describes a networking port exposed on a workspace

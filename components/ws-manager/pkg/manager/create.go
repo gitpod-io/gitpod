@@ -379,6 +379,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		kubernetes.WorkspaceAdmissionAnnotation: admissionLevel,
 		kubernetes.WorkspaceImageSpecAnnotation: imageSpec,
 		kubernetes.OwnerTokenAnnotation:         startContext.OwnerToken,
+		kubernetes.IdeCredentialsAnnotation:     startContext.IdeCredentials,
 		attemptingToCreatePodAnnotation:         "true",
 		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
@@ -1008,6 +1009,12 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		return nil, xerrors.Errorf("cannot create owner token: %w", err)
 	}
 
+	// TODO: random byte?
+	ideCredentials, err := getRandomString(32)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create owner token: %w", err)
+	}
+
 	clsName := req.Spec.Class
 	if _, ok := m.Config.WorkspaceClasses[req.Spec.Class]; clsName == "" || !ok {
 		// For the time being, if the requested workspace class is unknown, or if
@@ -1048,6 +1055,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 		Labels:         labels,
 		CLIAPIKey:      cliAPIKey,
 		OwnerToken:     ownerToken,
+		IdeCredentials: ideCredentials,
 		Request:        req,
 		IDEPort:        23000,
 		SupervisorPort: util.SupervisorPort,

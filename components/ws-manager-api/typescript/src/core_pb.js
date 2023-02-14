@@ -5992,7 +5992,8 @@ proto.wsman.WorkspaceSpec.toObject = function(includeInstance, msg) {
     timeout: jspb.Message.getFieldWithDefault(msg, 7, ""),
     ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
     pb_class: jspb.Message.getFieldWithDefault(msg, 9, ""),
-    ideImageLayersList: (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f
+    ideImageLayersList: (f = jspb.Message.getRepeatedField(msg, 10)) == null ? undefined : f,
+    ideCredentils: jspb.Message.getFieldWithDefault(msg, 11, "")
   };
 
   if (includeInstance) {
@@ -6070,6 +6071,10 @@ proto.wsman.WorkspaceSpec.deserializeBinaryFromReader = function(msg, reader) {
     case 10:
       var value = /** @type {string} */ (reader.readString());
       msg.addIdeImageLayers(value);
+      break;
+    case 11:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setIdeCredentils(value);
       break;
     default:
       reader.skipField();
@@ -6169,6 +6174,13 @@ proto.wsman.WorkspaceSpec.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeRepeatedString(
       10,
+      f
+    );
+  }
+  f = message.getIdeCredentils();
+  if (f.length > 0) {
+    writer.writeString(
+      11,
       f
     );
   }
@@ -6410,6 +6422,24 @@ proto.wsman.WorkspaceSpec.prototype.addIdeImageLayers = function(value, opt_inde
  */
 proto.wsman.WorkspaceSpec.prototype.clearIdeImageLayersList = function() {
   return this.setIdeImageLayersList([]);
+};
+
+
+/**
+ * optional string ide_credentils = 11;
+ * @return {string}
+ */
+proto.wsman.WorkspaceSpec.prototype.getIdeCredentils = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.WorkspaceSpec} returns this
+ */
+proto.wsman.WorkspaceSpec.prototype.setIdeCredentils = function(value) {
+  return jspb.Message.setProto3StringField(this, 11, value);
 };
 
 

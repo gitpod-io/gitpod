@@ -51,6 +51,10 @@ const (
 	// OwnerTokenAnnotation contains the owner token of the workspace.
 	OwnerTokenAnnotation = "gitpod/ownerToken"
 
+	// IdeCredentialsAnnotation contains the ide credentials of the workspace
+	// it will back to server to storage, but if it already set in workspace config, then we use stored one
+	IdeCredentialsAnnotation = "gitpod/ideCredentials"
+
 	// WorkspaceAdmissionAnnotation determines the user admission to a workspace, i.e. if it can be accessed by everyone without token.
 	WorkspaceAdmissionAnnotation = "gitpod/admission"
 
