@@ -6,7 +6,7 @@
 
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import Header from "../components/Header";
-import { WorkspaceEntry } from "./WorkspaceEntryNew";
+import { WorkspaceEntry } from "./WorkspaceEntry";
 import { ItemsList } from "../components/ItemsList";
 import { useCurrentUser } from "../user-context";
 import { User, WorkspaceInfo } from "@gitpod/gitpod-protocol";

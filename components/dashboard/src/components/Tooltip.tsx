@@ -47,8 +47,10 @@ function Tooltip(props: TooltipProps) {
     }, [showTooltipTimeout]);
 
     return (
-        <div onMouseLeave={handleMouseLeave} onMouseEnter={handleMouseEnter} className="relative">
-            <div ref={setTriggerEl}>{props.children}</div>
+        <>
+            <span onMouseLeave={handleMouseLeave} onMouseEnter={handleMouseEnter} ref={setTriggerEl}>
+                {props.children}
+            </span>
             {expanded ? (
                 <Portal>
                     <div
@@ -64,7 +66,7 @@ function Tooltip(props: TooltipProps) {
                     </div>
                 </Portal>
             ) : null}
-        </div>
+        </>
     );
 }
 

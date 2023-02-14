@@ -21,7 +21,7 @@ import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import Pagination from "../Pagination/Pagination";
 import { getGitpodService } from "../service/service";
-import { getProjectPath } from "../workspaces/WorkspaceEntryNew";
+import { getProjectPath } from "../workspaces/WorkspaceEntry";
 import WorkspaceDetail from "./WorkspaceDetail";
 import { AdminPageHeader } from "./AdminPageHeader";
 import Alert from "../components/Alert";
