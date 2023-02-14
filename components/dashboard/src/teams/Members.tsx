@@ -20,7 +20,7 @@ import { trackEvent } from "../Analytics";
 import { publicApiTeamMembersToProtocol, publicApiTeamsToProtocol, teamsService } from "../service/public-api";
 import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
-export default function () {
+export default function MembersPage() {
     const { user } = useContext(UserContext);
     const { setTeams } = useContext(TeamsContext);
 

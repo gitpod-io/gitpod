@@ -18,7 +18,7 @@ import { ProjectListItem } from "./ProjectListItem";
 import { SpinnerLoader } from "../components/Loader";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
 
-export default function () {
+export default function ProjectsPage() {
     const history = useHistory();
     const team = useCurrentTeam();
     const { data, isLoading, isError, refetch } = useListProjectsQuery();

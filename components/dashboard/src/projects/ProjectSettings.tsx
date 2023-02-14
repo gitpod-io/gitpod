@@ -33,7 +33,7 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
     );
 }
 
-export default function () {
+export default function ProjectSettingsView() {
     const { project, setProject } = useContext(ProjectContext);
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [showRemoveModal, setShowRemoveModal] = useState(false);

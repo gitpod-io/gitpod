@@ -43,7 +43,7 @@ type TeamClaimModal =
           mode: "confirmation";
       };
 
-export default function () {
+export default function PlansPage() {
     const { user, userBillingMode } = useContext(UserContext);
     const { currency, setCurrency, isStudent, isChargebeeCustomer } = useContext(PaymentContext);
     const { isUsageBasedBillingEnabled } = useContext(FeatureFlagContext);

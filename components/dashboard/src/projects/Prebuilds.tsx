@@ -23,7 +23,7 @@ import { Disposable } from "vscode-jsonrpc";
 import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
 
-export default function (props: { project?: Project; isAdminDashboard?: boolean }) {
+export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
     const currentProject = useCurrentProject();
     const project = props.project || currentProject.project;
 

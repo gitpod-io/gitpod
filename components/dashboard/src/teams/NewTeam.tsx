@@ -10,7 +10,7 @@ import { TeamsContext } from "./teams-context";
 import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { ConnectError } from "@bufbuild/connect-web";
 
-export default function () {
+export default function NewTeamPage() {
     const { setTeams } = useContext(TeamsContext);
     const [name, setName] = useState("");
 

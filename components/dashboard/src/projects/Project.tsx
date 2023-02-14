@@ -22,7 +22,7 @@ import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
 import { shortCommitMessage, toRemoteURL } from "./render-utils";
 
-export default function () {
+export default function ProjectsPage() {
     const history = useHistory();
     const { project, loading } = useCurrentProject();
     const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);

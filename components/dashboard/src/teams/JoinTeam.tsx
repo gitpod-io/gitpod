@@ -9,7 +9,7 @@ import { useHistory, useLocation } from "react-router-dom";
 import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { TeamsContext } from "./teams-context";
 
-export default function () {
+export default function JoinTeamPage() {
     const { setTeams } = useContext(TeamsContext);
     const history = useHistory();
     const location = useLocation();

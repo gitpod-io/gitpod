@@ -15,7 +15,7 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { shortCommitMessage } from "./render-utils";
 import { useCurrentProject } from "./project-context";
 
-export default function () {
+export default function PrebuildPage() {
     const history = useHistory();
     const { project, loading } = useCurrentProject();
 
@@ -24,10 +24,6 @@ export default function () {
     const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
     const [isRerunningPrebuild, setIsRerunningPrebuild] = useState<boolean>(false);
     const [isCancellingPrebuild, setIsCancellingPrebuild] = useState<boolean>(false);
-
-    if (!loading && !project) {
-        return <Redirect to={"/projects"} />;
-    }
 
     useEffect(() => {
         if (!project || !prebuildId) {
@@ -136,6 +132,10 @@ export default function () {
     useEffect(() => {
         document.title = "Prebuild — Gitpod";
     }, []);
+
+    if (!loading && !project) {
+        return <Redirect to={"/projects"} />;
+    }
 
     return (
         <>
