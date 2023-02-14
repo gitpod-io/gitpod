@@ -266,8 +266,15 @@ func (in *WorkspaceSpec) DeepCopyInto(out *WorkspaceSpec) {
 		*out = make([]byte, len(*in))
 		copy(*out, *in)
 	}
-	if in.Envvars != nil {
-		in, out := &in.Envvars, &out.Envvars
+	if in.UserEnvVars != nil {
+		in, out := &in.UserEnvVars, &out.UserEnvVars
+		*out = make([]corev1.EnvVar, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.SysEnvVars != nil {
+		in, out := &in.SysEnvVars, &out.SysEnvVars
 		*out = make([]corev1.EnvVar, len(*in))
 		for i := range *in {
 			(*in)[i].DeepCopyInto(&(*out)[i])

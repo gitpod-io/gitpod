@@ -113,19 +113,8 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return nil, status.Errorf(codes.InvalidArgument, "cannot serialise content initializer: %v", err)
 	}
 
-	envvars := make([]corev1.EnvVar, 0, len(req.Spec.Envvars))
-	for _, e := range req.Spec.Envvars {
-		env := corev1.EnvVar{Name: e.Name, Value: e.Value}
-		if len(e.Value) == 0 && e.Secret != nil {
-			env.ValueFrom = &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{Name: e.Secret.SecretName},
-					Key:                  e.Secret.Key,
-				},
-			}
-		}
-		envvars = append(envvars, env)
-	}
+	userEnvVars := setEnvironment(req.Spec.Envvars)
+	sysEnvVars := setEnvironment(req.Spec.SysEnvvars)
 
 	var git *workspacev1.GitSpec
 	if req.Spec.Git != nil {
@@ -230,7 +219,8 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 				},
 			},
 			Initializer:       initializer,
-			Envvars:           envvars,
+			UserEnvVars:       userEnvVars,
+			SysEnvVars:        sysEnvVars,
 			WorkspaceLocation: req.Spec.WorkspaceLocation,
 			Git:               git,
 			Timeout: workspacev1.TimeoutSpec{
@@ -641,6 +631,24 @@ func areValidFeatureFlags(value interface{}) error {
 	}
 
 	return nil
+}
+
+func setEnvironment(envs []*wsmanapi.EnvironmentVariable) []corev1.EnvVar {
+	envVars := make([]corev1.EnvVar, 0, len(envs))
+	for _, e := range envs {
+		env := corev1.EnvVar{Name: e.Name, Value: e.Value}
+		if len(e.Value) == 0 && e.Secret != nil {
+			env.ValueFrom = &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{Name: e.Secret.SecretName},
+					Key:                  e.Secret.Key,
+				},
+			}
+		}
+		envVars = append(envVars, env)
+	}
+
+	return envVars
 }
 
 func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus {
