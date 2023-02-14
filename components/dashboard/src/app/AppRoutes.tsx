@@ -44,6 +44,7 @@ import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { WebsocketClients } from "./WebsocketClients";
 import { OrgRequiredRoute } from "./OrgRequiredRoute";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const WorkspacesNew = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/WorkspacesNew"));
@@ -97,6 +98,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     const hash = getURLHash();
     const { startWorkspaceModalProps, setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
+    const { startWithOptions } = useFeatureFlags();
 
     // Prefix with `/#referrer` will specify an IDE for workspace
     // We don't need to show IDE preference in this case
@@ -127,7 +129,11 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <SelectIDEModal location="workspace_start" onClose={() => setShowUserIdePreference(false)} />
                 </StartPage>
             );
-        } else if (new URLSearchParams(window.location.search).has("showOptions")) {
+        } else if (
+            new URLSearchParams(window.location.search).has("showOptions") ||
+            user.additionalData?.isMigratedToTeamOnlyAttribution ||
+            startWithOptions
+        ) {
             const props = StartWorkspaceOptions.parseSearchParams(window.location.search);
             return (
                 <StartWorkspaceModal
