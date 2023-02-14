@@ -55,7 +55,7 @@ module.exports = {
         fs: "empty",
         child_process: "empty",
         net: "empty",
-        crypto: "empty",
+        crypto: true,
         tls: "empty",
     },
     devtool: "source-map",

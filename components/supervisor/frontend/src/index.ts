@@ -75,6 +75,9 @@ LoadingFrame.load().then(async (loading) => {
     document.title = frontendDashboardServiceClient.latestStatus.workspaceDescription ?? "gitpod";
     window.gitpod.loggedUserID = frontendDashboardServiceClient.latestStatus.loggedUserId;
     window.gitpod.openDesktopIDE = frontendDashboardServiceClient.openDesktopIDE.bind(frontendDashboardServiceClient);
+    window.gitpod.decrypt = frontendDashboardServiceClient.decrypt.bind(frontendDashboardServiceClient);
+    window.gitpod.encrypt = frontendDashboardServiceClient.encrypt.bind(frontendDashboardServiceClient);
+    window.gitpod.isEncryptedData = frontendDashboardServiceClient.isEncryptedData.bind(frontendDashboardServiceClient);
 
     (async () => {
         const supervisorServiceClient = SupervisorServiceClient.get();
