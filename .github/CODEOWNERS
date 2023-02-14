@@ -86,7 +86,7 @@
 /components/usage-api @gitpod-io/engineering-webapp
 /components/workspace-rollout-job @gitpod-io/engineering-security-infrastructure-and-delivery @gitpod-io/engineering-workspace
 /components/workspacekit @gitpod-io/engineering-workspace
-/components/ws-daemon-api @aledbf @Furisto
+/components/ws-daemon-api @gitpod-io/engineering-workspace
 /components/ws-daemon @gitpod-io/engineering-workspace
 /components/ws-manager-api @gitpod-io/engineering-workspace
 /components/ws-manager-bridge-api @gitpod-io/engineering-webapp
