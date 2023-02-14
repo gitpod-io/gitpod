@@ -10,7 +10,7 @@ import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
-import { getProjectPath } from "../workspaces/WorkspaceEntryNew";
+import { getProjectPath } from "../workspaces/WorkspaceEntry";
 import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
 import { getAdminLinks } from "./gcp-info";
 import Property from "./Property";
