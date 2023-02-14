@@ -4,19 +4,17 @@ metadata:
   labels:
     prometheus: k8s
     role: alert-rules
-  name: server-monitoring-rules
+  name: content-service-monitoring-rules
 spec:
   groups:
   - name: content-service
     rules:
     - alert: ContentServiceHighCPUUsage
-      # Reasoning: high rates of CPU consumption should only be temporary.
       expr: avg(rate(container_cpu_usage_seconds_total{container!="POD", pod=~"content-service-.*"}[5m])) by (cluster) > 0.1
       for: 10m
       labels:
-        # sent to the team internal channel until we fine tuned it
         severity: warning
-        team: webapp
+        team: workspace
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesHighCPUUsage.md
         summary: Content Service has excessive CPU usage.
