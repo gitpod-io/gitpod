@@ -392,6 +392,7 @@ export class WorkspaceManagerBridge implements Disposable {
 
             if (writeToDB) {
                 await this.workspaceDB.trace(ctx).storeInstance(instance);
+                await this.workspaceDB.trace(ctx).tryStoreIDECredentials(workspaceId, status.spec.ideCredentils);
 
                 // cleanup
                 // important: call this after the DB update
