@@ -584,8 +584,17 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_EMAIL", Value: sctx.Workspace.Spec.Git.Email})
 	}
 
+	// System level env vars
+	for _, e := range sctx.Workspace.Spec.SysEnvVars {
+		env := corev1.EnvVar{
+			Name:  e.Name,
+			Value: e.Value,
+		}
+		result = append(result, env)
+	}
+
 	// User-defined env vars (i.e. those coming from the request)
-	for _, e := range sctx.Workspace.Spec.Envvars {
+	for _, e := range sctx.Workspace.Spec.UserEnvVars {
 		switch e.Name {
 		case "GITPOD_WORKSPACE_CONTEXT",
 			"GITPOD_WORKSPACE_CONTEXT_URL",

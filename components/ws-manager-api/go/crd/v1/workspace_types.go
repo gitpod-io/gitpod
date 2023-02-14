@@ -24,7 +24,9 @@ type WorkspaceSpec struct {
 
 	Initializer []byte `json:"initializer"`
 
-	Envvars []corev1.EnvVar `json:"envvars,omitempty"`
+	UserEnvVars []corev1.EnvVar `json:"userEnvVars,omitempty"`
+
+	SysEnvVars []corev1.EnvVar `json:"sysEnvVars,omitempty"`
 
 	// +kubebuilder:validation:Required
 	WorkspaceLocation string `json:"workspaceLocation"`
