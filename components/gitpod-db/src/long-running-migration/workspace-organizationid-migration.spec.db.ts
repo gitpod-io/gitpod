@@ -52,11 +52,11 @@ describe("Workspace organizationid migration", () => {
             },
         });
 
-        const nowMinus30 = new Date(now.getTime() - 24 * 60 * 60 * 1000 * 30);
+        const oldWorkspaceTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const ws1 = await workspaceDB.store({
             id: "workspace-id1",
             description: "workspace-description",
-            creationTime: nowMinus30.toISOString(),
+            creationTime: oldWorkspaceTime.toISOString(),
             contextURL: "workspace-contextURL",
             context: { title: "workspace-context-title" },
             ownerId: uuidv4(),
@@ -66,7 +66,7 @@ describe("Workspace organizationid migration", () => {
         await workspaceDB.storeInstance({
             id: "workspace-instance-id1",
             workspaceId: ws1.id,
-            creationTime: nowMinus30.toISOString(),
+            creationTime: oldWorkspaceTime.toISOString(),
             usageAttributionId: `team:${orgId}`,
             ideUrl: "workspace-instance-ideUrl",
             region: "workspace-instance-region",

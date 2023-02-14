@@ -42,39 +42,51 @@ export class LongRunningMigrationService {
      * @returns true if all migrations are completed.
      */
     async runMigrationBatch(): Promise<boolean> {
-        return this.distributedLock.synchronized("long-running-migration", "LongRunningMigrationService", async () => {
-            const repo = (await this.typeorm.getConnection()).getRepository(DBLongRunningMigration);
-            let allCompleted = true;
-            for (const migration of this.migrations) {
-                let migrationMetaData = await repo.findOne({ name: migration.getName() });
-                if (!migrationMetaData) {
-                    migrationMetaData = await repo.save({
-                        name: migration.getName(),
-                        firstRun: new Date(),
-                        lastRun: new Date(),
-                        completed: false,
-                    });
-                }
-                if (migrationMetaData.completed) {
-                    continue;
-                }
-                log.info(`Running long running migration '${migration.getName()}' ...`);
-                const now = new Date();
-                try {
-                    const completed = await migration.runMigrationBatch();
-                    log.info(
-                        `Long running migration ${migration.getName()} took ${new Date().getTime() - now.getTime()}ms`,
-                        { completed },
-                    );
-                    migrationMetaData.completed = completed;
-                } catch (e) {
-                    log.error(`Long running migration ${migration.getName()} failed`, e);
-                }
-                allCompleted = allCompleted && migrationMetaData.completed;
-                migrationMetaData.lastRun = new Date();
-                await repo.save(migrationMetaData);
-            }
-            return allCompleted;
-        });
+        const now = new Date();
+        try {
+            log.info(`Running long running migrations ...`);
+            return this.distributedLock.synchronized(
+                "long-running-migration",
+                "LongRunningMigrationService",
+                async () => {
+                    const conn = await this.typeorm.getConnection();
+                    const repo = conn.getRepository(DBLongRunningMigration);
+                    let allCompleted = true;
+                    for (const migration of this.migrations) {
+                        let migrationMetaData = await repo.findOne({ name: migration.getName() });
+                        if (!migrationMetaData) {
+                            migrationMetaData = await repo.save({
+                                name: migration.getName(),
+                                firstRun: new Date(),
+                                lastRun: new Date(),
+                                completed: false,
+                            });
+                        }
+                        if (migrationMetaData.completed) {
+                            log.info(`Skipping completed migration '${migration.getName()}'`);
+                            continue;
+                        }
+                        log.info(`Running migration '${migration.getName()}' ...`);
+                        const now = new Date();
+                        try {
+                            const completed = await migration.runMigrationBatch();
+                            log.info(`Finished batch for migration ${migration.getName()}`, {
+                                duration: new Date().getTime() - now.getTime(),
+                                completed,
+                            });
+                            migrationMetaData.completed = completed;
+                        } catch (e) {
+                            log.error(`Running batch for migration ${migration.getName()} failed`, e);
+                        }
+                        allCompleted = allCompleted && migrationMetaData.completed;
+                        migrationMetaData.lastRun = new Date();
+                        await repo.save(migrationMetaData);
+                    }
+                    return allCompleted;
+                },
+            );
+        } finally {
+            log.info(`Running long running migrations ... done`, { duration: new Date().getTime() - now.getTime() });
+        }
     }
 }

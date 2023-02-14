@@ -9,7 +9,7 @@ import { inject, injectable } from "inversify";
 import { TypeORM } from "../typeorm/typeorm";
 import { LongRunningMigration } from "./long-running-migration";
 
-const BATCH_OFFSET = 1 * 60 * 60 * 1000; /* 1 hour */
+const BATCH_OFFSET = 12 * 60 * 60 * 1000; /* 12 hour */
 
 @injectable()
 export class WorkspaceOrganizationIdMigration implements LongRunningMigration {
@@ -60,6 +60,9 @@ export class WorkspaceOrganizationIdMigration implements LongRunningMigration {
                 log.info(`Migrated ${result.affectedRows} workspaces. Start date: ${startDate}, end date: ${endDate}`, {
                     query,
                 });
+            } else {
+                // Wait a second to avoid hammering the database
+                await new Promise((resolve) => setTimeout(resolve, 1000));
             }
             endDate = new Date(endDate.getTime() - BATCH_OFFSET);
             startDate = new Date(startDate.getTime() - BATCH_OFFSET);
