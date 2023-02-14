@@ -154,13 +154,14 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Websocket for client connection
         const websocketConnectionHandler = this.websocketConnectionHandler;
         this.eventEmitter.on(Server.EVENT_ON_START, (httpServer) => {
-            // CSRF protection: check "Origin" header, it must be either:
-            //  - gitpod.io (hostUrl.hostname) or
-            //  - a workspace location (ending of hostUrl.hostname)
+            // CSRF protection: check "Origin" header:
+            //  - for cookie/session auth: MUST be gitpod.io (hostUrl.hostname)
+            //  - for Bearer auth: MUST be sth with the same base domain (*.gitpod.io) (is this required?)
+            //  - edge case: empty "Origin" is always permitted (can this be removed?)
             // We rely on the origin header being set correctly (needed by regular clients to use Gitpod:
             // CORS allows subdomains to access gitpod.io)
-            const verifyCSRF = (origin: string) => {
-                let allowedRequest = isAllowedWebsocketDomain(origin, this.config.hostUrl.url.hostname);
+            const verifyOrigin = (origin: string, strict: boolean) => {
+                let allowedRequest = isAllowedWebsocketDomain(origin, this.config.hostUrl.url.hostname, strict);
                 if (!allowedRequest && this.config.insecureNoDomain) {
                     log.warn("Websocket connection CSRF guard disabled");
                     allowedRequest = true;
@@ -172,13 +173,17 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
              * Verify the web socket handshake request.
              */
             const verifyClient: ws.VerifyClientCallbackAsync = async (info, callback) => {
-                if (!verifyCSRF(info.origin)) {
-                    log.warn("Websocket connection attempt with non-matching Origin header: " + info.origin);
-                    return callback(false, 403);
-                }
+                let authenticatedUsingBearerToken = false;
                 if (info.req.url === "/v1") {
+                    // Connection attempt with Bearer-Token: be less strict for now
+                    if (!verifyOrigin(info.origin, false)) {
+                        log.warn("Websocket connection attempt with non-matching Origin header: " + info.origin);
+                        return callback(false, 403);
+                    }
+
                     try {
                         await this.bearerAuth.auth(info.req as express.Request);
+                        authenticatedUsingBearerToken = true;
                     } catch (e) {
                         if (isBearerAuthError(e)) {
                             return callback(false, 401, e.message);
@@ -186,7 +191,17 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                         log.warn("authentication failed: ", e);
                         return callback(false, 500);
                     }
+                    // intentional fall-through to cookie/session based authentication
                 }
+
+                if (!authenticatedUsingBearerToken) {
+                    // Connection attempt with cookie/session based authentication: be strict about where we accept connections from!
+                    if (!verifyOrigin(info.origin, true)) {
+                        log.warn("Websocket connection attempt with non-matching Origin header: " + info.origin);
+                        return callback(false, 403);
+                    }
+                }
+
                 return callback(true);
             };
 
