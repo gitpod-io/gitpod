@@ -121,7 +121,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 	case isPodBeingDeleted(pod):
 		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 
-		if controllerutil.ContainsFinalizer(pod, gitpodPodFinalizerName) {
+		if controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName) {
 			if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
 				wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
 				wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) ||

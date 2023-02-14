@@ -45,9 +45,6 @@ const (
 	// TODO(furisto): remove this label once we have moved ws-daemon to a controller setup
 	instanceIDLabel = "gitpod.io/instanceID"
 
-	// gitpodPodFinalizerName is the name of the finalizer we use on pods
-	gitpodPodFinalizerName = "gitpod.io/finalizer"
-
 	// Grace time until the process in the workspace is properly completed
 	// e.g. dockerd in the workspace may take some time to clean up the overlay directory.
 	gracePeriod = 3 * time.Minute
@@ -407,7 +404,7 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			Namespace:   sctx.Config.Namespace,
 			Labels:      labels,
 			Annotations: annotations,
-			Finalizers:  []string{gitpodPodFinalizerName},
+			Finalizers:  []string{workspacev1.GitpodFinalizerName},
 		},
 		Spec: corev1.PodSpec{
 			Hostname:                     sctx.Workspace.Spec.Ownership.WorkspaceID,

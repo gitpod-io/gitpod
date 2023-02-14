@@ -9,6 +9,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// GitpodFinalizerName is the name of the finalizer we use on workspaces and their pods.
+	GitpodFinalizerName = "gitpod.io/finalizer"
+)
+
 // WorkspaceSpec defines the desired state of Workspace
 type WorkspaceSpec struct {
 	// +kubebuilder:validation:Required
