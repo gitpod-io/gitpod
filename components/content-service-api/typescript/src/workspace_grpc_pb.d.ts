@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -19,8 +19,7 @@ interface IWorkspaceServiceService extends grpc.ServiceDefinition<grpc.UntypedSe
     workspaceSnapshotExists: IWorkspaceServiceService_IWorkspaceSnapshotExists;
 }
 
-interface IWorkspaceServiceService_IWorkspaceDownloadURL
-    extends grpc.MethodDefinition<workspace_pb.WorkspaceDownloadURLRequest, workspace_pb.WorkspaceDownloadURLResponse> {
+interface IWorkspaceServiceService_IWorkspaceDownloadURL extends grpc.MethodDefinition<workspace_pb.WorkspaceDownloadURLRequest, workspace_pb.WorkspaceDownloadURLResponse> {
     path: "/contentservice.WorkspaceService/WorkspaceDownloadURL";
     requestStream: false;
     responseStream: false;
@@ -29,8 +28,7 @@ interface IWorkspaceServiceService_IWorkspaceDownloadURL
     responseSerialize: grpc.serialize<workspace_pb.WorkspaceDownloadURLResponse>;
     responseDeserialize: grpc.deserialize<workspace_pb.WorkspaceDownloadURLResponse>;
 }
-interface IWorkspaceServiceService_IDeleteWorkspace
-    extends grpc.MethodDefinition<workspace_pb.DeleteWorkspaceRequest, workspace_pb.DeleteWorkspaceResponse> {
+interface IWorkspaceServiceService_IDeleteWorkspace extends grpc.MethodDefinition<workspace_pb.DeleteWorkspaceRequest, workspace_pb.DeleteWorkspaceResponse> {
     path: "/contentservice.WorkspaceService/DeleteWorkspace";
     requestStream: false;
     responseStream: false;
@@ -39,11 +37,7 @@ interface IWorkspaceServiceService_IDeleteWorkspace
     responseSerialize: grpc.serialize<workspace_pb.DeleteWorkspaceResponse>;
     responseDeserialize: grpc.deserialize<workspace_pb.DeleteWorkspaceResponse>;
 }
-interface IWorkspaceServiceService_IWorkspaceSnapshotExists
-    extends grpc.MethodDefinition<
-        workspace_pb.WorkspaceSnapshotExistsRequest,
-        workspace_pb.WorkspaceSnapshotExistsResponse
-    > {
+interface IWorkspaceServiceService_IWorkspaceSnapshotExists extends grpc.MethodDefinition<workspace_pb.WorkspaceSnapshotExistsRequest, workspace_pb.WorkspaceSnapshotExistsResponse> {
     path: "/contentservice.WorkspaceService/WorkspaceSnapshotExists";
     requestStream: false;
     responseStream: false;
@@ -56,110 +50,32 @@ interface IWorkspaceServiceService_IWorkspaceSnapshotExists
 export const WorkspaceServiceService: IWorkspaceServiceService;
 
 export interface IWorkspaceServiceServer extends grpc.UntypedServiceImplementation {
-    workspaceDownloadURL: grpc.handleUnaryCall<
-        workspace_pb.WorkspaceDownloadURLRequest,
-        workspace_pb.WorkspaceDownloadURLResponse
-    >;
+    workspaceDownloadURL: grpc.handleUnaryCall<workspace_pb.WorkspaceDownloadURLRequest, workspace_pb.WorkspaceDownloadURLResponse>;
     deleteWorkspace: grpc.handleUnaryCall<workspace_pb.DeleteWorkspaceRequest, workspace_pb.DeleteWorkspaceResponse>;
-    workspaceSnapshotExists: grpc.handleUnaryCall<
-        workspace_pb.WorkspaceSnapshotExistsRequest,
-        workspace_pb.WorkspaceSnapshotExistsResponse
-    >;
+    workspaceSnapshotExists: grpc.handleUnaryCall<workspace_pb.WorkspaceSnapshotExistsRequest, workspace_pb.WorkspaceSnapshotExistsResponse>;
 }
 
 export interface IWorkspaceServiceClient {
-    workspaceDownloadURL(
-        request: workspace_pb.WorkspaceDownloadURLRequest,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void,
-    ): grpc.ClientUnaryCall;
-    workspaceDownloadURL(
-        request: workspace_pb.WorkspaceDownloadURLRequest,
-        metadata: grpc.Metadata,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void,
-    ): grpc.ClientUnaryCall;
-    workspaceDownloadURL(
-        request: workspace_pb.WorkspaceDownloadURLRequest,
-        metadata: grpc.Metadata,
-        options: Partial<grpc.CallOptions>,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void,
-    ): grpc.ClientUnaryCall;
-    deleteWorkspace(
-        request: workspace_pb.DeleteWorkspaceRequest,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void,
-    ): grpc.ClientUnaryCall;
-    deleteWorkspace(
-        request: workspace_pb.DeleteWorkspaceRequest,
-        metadata: grpc.Metadata,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void,
-    ): grpc.ClientUnaryCall;
-    deleteWorkspace(
-        request: workspace_pb.DeleteWorkspaceRequest,
-        metadata: grpc.Metadata,
-        options: Partial<grpc.CallOptions>,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void,
-    ): grpc.ClientUnaryCall;
-    workspaceSnapshotExists(
-        request: workspace_pb.WorkspaceSnapshotExistsRequest,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void,
-    ): grpc.ClientUnaryCall;
-    workspaceSnapshotExists(
-        request: workspace_pb.WorkspaceSnapshotExistsRequest,
-        metadata: grpc.Metadata,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void,
-    ): grpc.ClientUnaryCall;
-    workspaceSnapshotExists(
-        request: workspace_pb.WorkspaceSnapshotExistsRequest,
-        metadata: grpc.Metadata,
-        options: Partial<grpc.CallOptions>,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void,
-    ): grpc.ClientUnaryCall;
+    workspaceDownloadURL(request: workspace_pb.WorkspaceDownloadURLRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void): grpc.ClientUnaryCall;
+    workspaceDownloadURL(request: workspace_pb.WorkspaceDownloadURLRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void): grpc.ClientUnaryCall;
+    workspaceDownloadURL(request: workspace_pb.WorkspaceDownloadURLRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void): grpc.ClientUnaryCall;
+    deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
+    workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
+    workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class WorkspaceServiceClient extends grpc.Client implements IWorkspaceServiceClient {
     constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
-    public workspaceDownloadURL(
-        request: workspace_pb.WorkspaceDownloadURLRequest,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void,
-    ): grpc.ClientUnaryCall;
-    public workspaceDownloadURL(
-        request: workspace_pb.WorkspaceDownloadURLRequest,
-        metadata: grpc.Metadata,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void,
-    ): grpc.ClientUnaryCall;
-    public workspaceDownloadURL(
-        request: workspace_pb.WorkspaceDownloadURLRequest,
-        metadata: grpc.Metadata,
-        options: Partial<grpc.CallOptions>,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void,
-    ): grpc.ClientUnaryCall;
-    public deleteWorkspace(
-        request: workspace_pb.DeleteWorkspaceRequest,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void,
-    ): grpc.ClientUnaryCall;
-    public deleteWorkspace(
-        request: workspace_pb.DeleteWorkspaceRequest,
-        metadata: grpc.Metadata,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void,
-    ): grpc.ClientUnaryCall;
-    public deleteWorkspace(
-        request: workspace_pb.DeleteWorkspaceRequest,
-        metadata: grpc.Metadata,
-        options: Partial<grpc.CallOptions>,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void,
-    ): grpc.ClientUnaryCall;
-    public workspaceSnapshotExists(
-        request: workspace_pb.WorkspaceSnapshotExistsRequest,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void,
-    ): grpc.ClientUnaryCall;
-    public workspaceSnapshotExists(
-        request: workspace_pb.WorkspaceSnapshotExistsRequest,
-        metadata: grpc.Metadata,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void,
-    ): grpc.ClientUnaryCall;
-    public workspaceSnapshotExists(
-        request: workspace_pb.WorkspaceSnapshotExistsRequest,
-        metadata: grpc.Metadata,
-        options: Partial<grpc.CallOptions>,
-        callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void,
-    ): grpc.ClientUnaryCall;
+    public workspaceDownloadURL(request: workspace_pb.WorkspaceDownloadURLRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void): grpc.ClientUnaryCall;
+    public workspaceDownloadURL(request: workspace_pb.WorkspaceDownloadURLRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void): grpc.ClientUnaryCall;
+    public workspaceDownloadURL(request: workspace_pb.WorkspaceDownloadURLRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceDownloadURLResponse) => void): grpc.ClientUnaryCall;
+    public deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public deleteWorkspace(request: workspace_pb.DeleteWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.DeleteWorkspaceResponse) => void): grpc.ClientUnaryCall;
+    public workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
+    public workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
+    public workspaceSnapshotExists(request: workspace_pb.WorkspaceSnapshotExistsRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.WorkspaceSnapshotExistsResponse) => void): grpc.ClientUnaryCall;
 }
