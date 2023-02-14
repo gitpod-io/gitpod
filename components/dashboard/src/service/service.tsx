@@ -67,6 +67,7 @@ export function getIDEFrontendService(workspaceID: string, sessionId: string, se
 export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private instanceID: string | undefined;
     private user: User | undefined;
+    private ideCredentials!: string;
 
     private latestStatus?: IDEFrontendDashboardService.Status;
 
@@ -108,9 +109,13 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     }
 
     private async processServerInfo() {
-        this.user = await this.service.server.getLoggedInUser();
-
-        const listener = await this.service.listenToInstance(this.workspaceID);
+        const [user, listener, ideCredentials] = await Promise.all([
+            this.service.server.getLoggedInUser(),
+            this.service.listenToInstance(this.workspaceID),
+            this.service.server.getIDECredentials(this.workspaceID),
+        ]);
+        this.user = user;
+        this.ideCredentials = ideCredentials;
         const reconcile = () => {
             const status = this.getWorkspaceStatus(listener.info);
             this.latestStatus = status;
@@ -134,6 +139,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             statusPhase: workspace.latestInstance?.status.phase,
             workspaceDescription: workspace.workspace.description,
             workspaceType: workspace.workspace.type,
+            credentialsToken: this.ideCredentials,
         };
     }
 
