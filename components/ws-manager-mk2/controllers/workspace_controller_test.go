@@ -39,7 +39,7 @@ var _ = Describe("WorkspaceController", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
 			pod := createWorkspaceExpectPod(ws)
 
-			Expect(controllerutil.ContainsFinalizer(pod, gitpodPodFinalizerName)).To(BeTrue())
+			Expect(controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName)).To(BeTrue())
 
 			By("controller updating the pod starts value")
 			Eventually(func() (int, error) {
@@ -156,6 +156,19 @@ var _ = Describe("WorkspaceController", func() {
 			// Expect cleanup without a backup.
 			expectWorkspaceCleanup(ws, pod)
 		})
+
+		It("deleting workspace resource should gracefully clean up", func() {
+			ws := newWorkspace(uuid.NewString(), "default")
+			pod := createWorkspaceExpectPod(ws)
+
+			Expect(k8sClient.Delete(ctx, ws)).To(Succeed())
+
+			expectPhaseEventually(ws, workspacev1.WorkspacePhaseStopping)
+
+			expectFinalizerAndMarkBackupCompleted(ws, pod)
+
+			expectWorkspaceCleanup(ws, pod)
+		})
 	})
 
 	Context("with headless workspaces", func() {
@@ -250,6 +263,14 @@ func createWorkspaceExpectPod(ws *workspacev1.Workspace) *corev1.Pod {
 	return pod
 }
 
+func expectPhaseEventually(ws *workspacev1.Workspace, phase workspacev1.WorkspacePhase) {
+	By(fmt.Sprintf("controller transition workspace phase to %s", phase))
+	Eventually(func(g Gomega) {
+		g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
+		g.Expect(ws.Status.Phase).To(Equal(phase))
+	}, timeout, interval).Should(Succeed())
+}
+
 func expectConditionEventually(ws *workspacev1.Workspace, tpe string, status string, reason string) {
 	By(fmt.Sprintf("controller setting workspace condition %s to %s", tpe, status))
 	Eventually(func(g Gomega) {
@@ -306,7 +327,7 @@ func expectFinalizerAndMarkBackupCompleted(ws *workspacev1.Workspace, pod *corev
 		if err := k8sClient.Get(ctx, types.NamespacedName{Name: pod.GetName(), Namespace: pod.GetNamespace()}, pod); err != nil {
 			return false, err
 		}
-		return controllerutil.ContainsFinalizer(pod, gitpodPodFinalizerName), nil
+		return controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName), nil
 	}, duration, interval).Should(BeTrue(), "missing gitpod finalizer on pod, expected one to wait for backup to succeed")
 
 	By("signalling backup completed")
@@ -328,7 +349,7 @@ func expectFinalizerAndMarkBackupFailed(ws *workspacev1.Workspace, pod *corev1.P
 		if err := k8sClient.Get(ctx, types.NamespacedName{Name: pod.GetName(), Namespace: pod.GetNamespace()}, pod); err != nil {
 			return false, err
 		}
-		return controllerutil.ContainsFinalizer(pod, gitpodPodFinalizerName), nil
+		return controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName), nil
 	}, duration, interval).Should(BeTrue(), "missing gitpod finalizer on pod, expected one to wait for backup to succeed")
 
 	By("signalling backup completed")
@@ -347,7 +368,8 @@ func expectWorkspaceCleanup(ws *workspacev1.Workspace, pod *corev1.Pod) {
 	Eventually(func() (int, error) {
 		if err := k8sClient.Get(ctx, types.NamespacedName{Name: pod.GetName(), Namespace: pod.GetNamespace()}, pod); err != nil {
 			if errors.IsNotFound(err) {
-				// Pod got deleted, because finalizers got removed.
+				// Race: finalizers got removed causing pod to get deleted before we could check.
+				// This is what we want though.
 				return 0, nil
 			}
 			return 0, err
@@ -360,6 +382,20 @@ func expectWorkspaceCleanup(ws *workspacev1.Workspace, pod *corev1.Pod) {
 	Eventually(func() error {
 		return checkNotFound(pod)
 	}, timeout, interval).Should(Succeed(), "pod did not go away")
+
+	By("controller removing workspace finalizers")
+	Eventually(func() (int, error) {
+		if err := k8sClient.Get(ctx, types.NamespacedName{Name: ws.GetName(), Namespace: ws.GetNamespace()}, ws); err != nil {
+			if errors.IsNotFound(err) {
+				// Race: finalizers got removed causing workspace to get deleted before we could check.
+				// This is what we want though.
+				return 0, nil
+			}
+			return 0, err
+		}
+		return len(ws.ObjectMeta.Finalizers), nil
+
+	}, timeout, interval).Should(Equal(0), "workspace finalizers did not go away")
 
 	By("cleaning up the workspace resource")
 	Eventually(func() error {
@@ -395,8 +431,9 @@ func newWorkspace(name, namespace string) *workspacev1.Workspace {
 			Kind:       "Workspace",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name:       name,
+			Namespace:  namespace,
+			Finalizers: []string{workspacev1.GitpodFinalizerName},
 		},
 		Spec: workspacev1.WorkspaceSpec{
 			Ownership: workspacev1.Ownership{
