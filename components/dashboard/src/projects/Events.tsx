@@ -18,7 +18,7 @@ import { useCurrentProject } from "./project-context";
 import { toRemoteURL } from "./render-utils";
 import { Redirect } from "react-router";
 
-export default function () {
+export default function EventsPage() {
     const { project, loading } = useCurrentProject();
 
     const [isLoadingEvents, setIsLoadingEvents] = useState<boolean>(false);

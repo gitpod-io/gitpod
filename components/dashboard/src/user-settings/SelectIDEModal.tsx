@@ -16,7 +16,7 @@ export interface SelectIDEModalProps {
     onClose?: () => void;
 }
 
-export default function (props: SelectIDEModalProps) {
+export default function SelectIDEModal(props: SelectIDEModalProps) {
     const { user, setUser } = useContext(UserContext);
     const [visible, setVisible] = useState(true);
 

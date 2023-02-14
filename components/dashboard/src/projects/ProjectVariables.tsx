@@ -16,7 +16,7 @@ import { getGitpodService } from "../service/service";
 import { useCurrentProject } from "./project-context";
 import { ProjectSettingsPage } from "./ProjectSettings";
 
-export default function () {
+export default function ProjectVariablesPage() {
     const { project, loading } = useCurrentProject();
     const [envVars, setEnvVars] = useState<ProjectEnvVar[]>([]);
     const [showAddVariableModal, setShowAddVariableModal] = useState<boolean>(false);
