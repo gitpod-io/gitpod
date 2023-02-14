@@ -75,7 +75,7 @@
 # Any team can make changes to the experimental package
 /components/public-api/gitpod/experimental @gitpod-io/engineering-webapp
 /components/public-api-server @gitpod-io/engineering-webapp
-/components/registry-facade-api @csweichel @aledbf
+/components/registry-facade-api @gitpod-io/engineering-workspace
 /components/registry-facade @gitpod-io/engineering-workspace
 /components/server @gitpod-io/engineering-webapp
 /components/server/src/ide-service.* @gitpod-io/engineering-ide
