@@ -46,16 +46,20 @@ export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
     const [result, setResult] = useState<WorkspaceCreationResult>();
     const [error, setError] = useState<StartWorkspaceError>();
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload>();
-    const [stillParsing, setStillParsing] = useState(true);
+    const [stillParsing, setStillParsing] = useState(false);
     const location = useLocation();
     const org = useCurrentTeam();
     const user = useCurrentUser();
 
     const createWorkspace = useCallback(
         (options?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) => {
-            // Invalidate any previous result.
-            setResult(undefined);
+            // are we running a createWorkspace request or have started one already?
+            if (!!result || stillParsing) {
+                return;
+            }
+            // Invalidate any previous state.
             setStillParsing(true);
+            setResult(undefined);
             setError(undefined);
             // add options from search params
             const opts = options || {};
@@ -75,18 +79,18 @@ export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
                         window.location.href = result.workspaceURL;
                         return;
                     }
-                    clearTimeout(timeout);
-                    setStillParsing(false);
                     setResult(result);
                 } catch (error) {
-                    clearTimeout(timeout);
                     console.error(error);
-                    setStillParsing(false);
                     setError(error);
+                } finally {
+                    clearTimeout(timeout);
+                    setStillParsing(false);
                 }
             })();
         },
-        [contextUrl, org, user, location.search],
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [contextUrl],
     );
 
     useEffect(() => {
@@ -193,20 +197,14 @@ export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
             case ErrorCodes.NOT_FOUND:
                 return <RepositoryNotFoundView error={error} />;
             case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
-                // HACK: Hide the error (behind the modal)
-                setError(undefined);
                 phase = StartPhase.Stopped;
                 statusMessage = <LimitReachedParallelWorkspacesModal />;
                 break;
             case ErrorCodes.NOT_ENOUGH_CREDIT:
-                // HACK: Hide the error (behind the modal)
-                setError(undefined);
                 phase = StartPhase.Stopped;
                 statusMessage = <LimitReachedOutOfHours />;
                 break;
             case ErrorCodes.INVALID_COST_CENTER:
-                // HACK: Hide the error (behind the modal)
-                setError(undefined);
                 phase = StartPhase.Stopped;
                 statusMessage = (
                     <SelectCostCenterModal
@@ -218,7 +216,6 @@ export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
                 );
                 break;
             case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
-                setError(undefined); // to hide the error (otherwise rendered behind the modal)
                 phase = StartPhase.Stopped;
                 statusMessage = <UsageLimitReachedModal hints={error?.data} />;
                 break;
