@@ -84,6 +84,7 @@ export interface WorkspaceDB {
     findWorkspacePortsAuthDataById(workspaceId: string): Promise<WorkspacePortsAuthData | undefined>;
 
     storeInstance(instance: WorkspaceInstance): Promise<WorkspaceInstance>;
+    tryStoreIDECredentials(id: string, ideCredentials: string): Promise<void>;
 
     // Partial update: unconditional, single field updates. Enclose in a transaction if necessary
     updateLastHeartbeat(instanceId: string, userId: string, newHeartbeat: Date, wasClosed?: boolean): Promise<void>;

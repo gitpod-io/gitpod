@@ -125,6 +125,17 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return inst;
     }
 
+    async tryStoreIDECredentials(id: string, ideCredentials: string): Promise<void> {
+        this.transaction(async (db) => {
+            const workspace = await db.findById(id);
+            if (!workspace || workspace.config.ideCredentials) {
+                return;
+            }
+            workspace.config.ideCredentials = ideCredentials;
+            await db.store(workspace);
+        });
+    }
+
     public async findRunningInstance(workspaceId: string): Promise<MaybeWorkspaceInstance> {
         const instance = await this.findCurrentInstance(workspaceId);
         if (instance && instance.status.phase !== "stopped") {

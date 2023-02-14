@@ -377,6 +377,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return res;
     }
 
+    protected censorWorkspace<T extends Workspace | undefined>(ws: T): T {
+        if (!ws) {
+            return ws;
+        }
+
+        const res = { ...ws! };
+
+        // ide credentials will fetch in dashboard only
+        delete res.config.ideCredentials;
+
+        return res;
+    }
+
     protected checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): User {
         if (this.showSetupCondition?.value) {
             throw new ResponseError(ErrorCodes.SETUP_REQUIRED, "Setup required.");
@@ -664,7 +677,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         return {
-            workspace,
+            workspace: this.censorWorkspace(workspace),
             latestInstance: this.censorInstance(latestInstance),
         };
     }
