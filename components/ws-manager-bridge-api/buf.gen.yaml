@@ -9,11 +9,14 @@ plugins:
     opt:
       - module=github.com/gitpod-io/gitpod/workspace-manager-bridge/api
 
+  - name: js
+    out: typescript/src
+    opt: import_style=commonjs,binary
+
   - name: protoc-gen-grpc
     path: typescript/node_modules/.bin/grpc_tools_node_protoc_plugin
     out: typescript/src
     opt:
-     - import_style=commonjs,binary
      - grpc_js
 
   - name: protoc-gen-ts
