@@ -11,11 +11,11 @@ import (
 	"github.com/bufbuild/connect-go"
 )
 
-type AuthInterceptor struct {
+type Interceptor struct {
 	accessToken string
 }
 
-func (a *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+func (a *Interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		if req.Spec().IsClient {
 			ctx = TokenToContext(ctx, NewAccessToken(a.accessToken))
@@ -33,7 +33,7 @@ func (a *AuthInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	})
 }
 
-func (a *AuthInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+func (a *Interceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
 	return func(ctx context.Context, s connect.Spec) connect.StreamingClientConn {
 		ctx = TokenToContext(ctx, NewAccessToken(a.accessToken))
 		conn := next(ctx, s)
@@ -42,7 +42,7 @@ func (a *AuthInterceptor) WrapStreamingClient(next connect.StreamingClientFunc) 
 	}
 }
 
-func (a *AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+func (a *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
 		token, err := tokenFromConn(ctx, conn)
 		if err != nil {
@@ -54,7 +54,7 @@ func (a *AuthInterceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc
 
 // NewServerInterceptor creates a server-side interceptor which validates that an incoming request contains a Bearer Authorization header
 func NewServerInterceptor() connect.Interceptor {
-	return &AuthInterceptor{}
+	return &Interceptor{}
 }
 
 func tokenFromRequest(ctx context.Context, req connect.AnyRequest) (Token, error) {
@@ -66,9 +66,8 @@ func tokenFromRequest(ctx context.Context, req connect.AnyRequest) (Token, error
 	}
 
 	cookie := req.Header().Get("Cookie")
-	origin := req.Header().Get("Origin")
 	if cookie != "" {
-		return NewCookieToken(cookie, origin), nil
+		return NewCookieToken(cookie), nil
 	}
 
 	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
@@ -83,9 +82,8 @@ func tokenFromConn(ctx context.Context, conn connect.StreamingHandlerConn) (Toke
 	}
 
 	cookie := conn.RequestHeader().Get("Cookie")
-	origin := conn.RequestHeader().Get("Origin")
 	if cookie != "" {
-		return NewCookieToken(cookie, origin), nil
+		return NewCookieToken(cookie), nil
 	}
 
 	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
@@ -93,7 +91,7 @@ func tokenFromConn(ctx context.Context, conn connect.StreamingHandlerConn) (Toke
 
 // NewClientInterceptor creates a client-side interceptor which injects token as a Bearer Authorization header
 func NewClientInterceptor(accessToken string) connect.Interceptor {
-	return &AuthInterceptor{
+	return &Interceptor{
 		accessToken: accessToken,
 	}
 }

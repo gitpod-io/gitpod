@@ -11,6 +11,7 @@ import (
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/origin"
 	"github.com/golang/mock/gomock"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,7 @@ func TestConnectionPool(t *testing.T) {
 	require.NoError(t, err)
 	pool := &ConnectionPool{
 		cache: cache,
-		connConstructor: func(token auth.Token) (gitpod.APIInterface, error) {
+		connConstructor: func(ctx context.Context, token auth.Token) (gitpod.APIInterface, error) {
 			return srv, nil
 		},
 	}
@@ -45,8 +46,36 @@ func TestConnectionPool(t *testing.T) {
 	_, err = pool.Get(context.Background(), bazToken)
 	require.NoError(t, err)
 	require.Equal(t, 2, pool.cache.Len(), "must keep only last two connectons")
-	require.True(t, pool.cache.Contains(barToken))
-	require.True(t, pool.cache.Contains(bazToken))
+	require.True(t, pool.cache.Contains(pool.cacheKey(barToken, "")))
+	require.True(t, pool.cache.Contains(pool.cacheKey(bazToken, "")))
+}
+
+func TestConnectionPool_ByDistinctOrigins(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	srv := gitpod.NewMockAPIInterface(ctrl)
+
+	cache, err := lru.New(2)
+	require.NoError(t, err)
+	pool := &ConnectionPool{
+		cache: cache,
+		connConstructor: func(ctx context.Context, token auth.Token) (gitpod.APIInterface, error) {
+			return srv, nil
+		},
+	}
+
+	token := auth.NewAccessToken("foo")
+
+	ctxWithOriginA := origin.ToContext(context.Background(), "originA")
+	ctxWithOriginB := origin.ToContext(context.Background(), "originB")
+
+	_, err = pool.Get(ctxWithOriginA, token)
+	require.NoError(t, err)
+	require.Equal(t, 1, pool.cache.Len())
+
+	_, err = pool.Get(ctxWithOriginB, token)
+	require.NoError(t, err)
+	require.Equal(t, 2, pool.cache.Len())
 }
 
 func TestEndpointBasedOnToken(t *testing.T) {
@@ -57,7 +86,7 @@ func TestEndpointBasedOnToken(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "wss://server:3000/v1", endpointForAccessToken)
 
-	endpointForCookie, err := getEndpointBasedOnToken(auth.NewCookieToken("foo", "server"), u)
+	endpointForCookie, err := getEndpointBasedOnToken(auth.NewCookieToken("foo"), u)
 	require.NoError(t, err)
 	require.Equal(t, "wss://server:3000/gitpod", endpointForCookie)
 }
