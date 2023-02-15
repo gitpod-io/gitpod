@@ -67,8 +67,9 @@ export function getIDEFrontendService(workspaceID: string, sessionId: string, se
 export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private instanceID: string | undefined;
     private user: User | undefined;
+    private ideCredentials!: string;
 
-    private latestStatus?: IDEFrontendDashboardService.Status;
+    private latestInfo?: IDEFrontendDashboardService.Status;
 
     private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.SetStateData>();
     readonly onSetState = this.onDidChangeEmitter.event;
@@ -108,24 +109,32 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     }
 
     private async processServerInfo() {
-        this.user = await this.service.server.getLoggedInUser();
-
-        const listener = await this.service.listenToInstance(this.workspaceID);
+        const [user, listener, ideCredentials] = await Promise.all([
+            this.service.server.getLoggedInUser(),
+            this.service.listenToInstance(this.workspaceID),
+            this.service.server.getIDECredentials(this.workspaceID),
+        ]);
+        this.user = user;
+        this.ideCredentials = ideCredentials;
         const reconcile = () => {
-            const status = this.getWorkspaceStatus(listener.info);
-            this.latestStatus = status;
+            const info = this.parseInfo(listener.info);
+            this.latestInfo = info;
             const oldInstanceID = this.instanceID;
-            this.instanceID = status.instanceId;
-            if (status.instanceId && oldInstanceID !== status.instanceId) {
+            this.instanceID = info.instanceId;
+            if (info.instanceId && oldInstanceID !== info.instanceId) {
                 this.auth();
             }
-            this.sendStatusUpdate(this.latestStatus);
+
+            // TODO(hw): to be removed after IDE deployed
+            this.sendStatusUpdate(this.latestInfo);
+            // TODO(hw): end of todo
+            this.sendInfoUpdate(this.latestInfo);
         };
         reconcile();
         listener.onDidChange(reconcile);
     }
 
-    private getWorkspaceStatus(workspace: WorkspaceInfo): IDEFrontendDashboardService.Status {
+    private parseInfo(workspace: WorkspaceInfo): IDEFrontendDashboardService.Info {
         return {
             loggedUserId: this.user!.id,
             workspaceID: this.workspaceID,
@@ -134,6 +143,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             statusPhase: workspace.latestInstance?.status.phase,
             workspaceDescription: workspace.workspace.description,
             workspaceType: workspace.workspace.type,
+            credentialsToken: this.ideCredentials,
         };
     }
 
@@ -153,9 +163,9 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         msg.properties = {
             ...msg.properties,
             sessionId: this.sessionId,
-            instanceId: this.latestStatus?.instanceId,
+            instanceId: this.latestInfo?.instanceId,
             workspaceId: this.workspaceID,
-            type: this.latestStatus?.workspaceType,
+            type: this.latestInfo?.workspaceType,
         };
         this.service.server.trackEvent(msg);
     }
@@ -183,6 +193,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         }
     }
 
+    // TODO(hw): to be removed after IDE deployed
     sendStatusUpdate(status: IDEFrontendDashboardService.Status): void {
         this.clientWindow.postMessage(
             {
@@ -190,6 +201,18 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
                 type: "ide-status-update",
                 status,
             } as IDEFrontendDashboardService.StatusUpdateEventData,
+            "*",
+        );
+    }
+    // TODO(hw): end of todo
+
+    sendInfoUpdate(info: IDEFrontendDashboardService.Info): void {
+        this.clientWindow.postMessage(
+            {
+                version: 1,
+                type: "ide-info-update",
+                info,
+            } as IDEFrontendDashboardService.InfoUpdateEventData,
             "*",
         );
     }
