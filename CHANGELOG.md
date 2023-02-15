@@ -1,6 +1,9 @@
 # Change Log
 
 ## February 2023
+- Update page layout and navigation for the admin dashboard ([#16307](https://github.com/gitpod-io/gitpod/pull/16307)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
+- [dashboard] Fix Dashboard lint errors for Login.tsx ([#16158](https://github.com/gitpod-io/gitpod/pull/16158)) - [@Palanikannan1437](https://github.com/Palanikannan1437)
+- Added Environment Variable Entry Component and associated it with Item List Context Menu, with ChangeMenuState Function, to keep the hovered effect ([#16258](https://github.com/gitpod-io/gitpod/pull/16258)) - [@henit-chobisa](https://github.com/henit-chobisa)
 - Allow user custom workspace timeout in vscode. ([#16220](https://github.com/gitpod-io/gitpod/pull/16220)) - [@iQQBot](https://github.com/iQQBot)
 - Always show all navigation menu items ([#16308](https://github.com/gitpod-io/gitpod/pull/16308)) - [@gtsiolis](https://github.com/gtsiolis)
 - Improve prompt for `Gitpod: Open in VS Code` action in Browser Code ([#16321](https://github.com/gitpod-io/gitpod/pull/16321)) - [@mustard-mh](https://github.com/mustard-mh)
