@@ -60,6 +60,7 @@ function FeedbackComponent(props: {
         ];
         return emojiList.map((emoji) => (
             <button
+                key={emoji.id}
                 className={
                     "hover:scale-150 transform bg-transparent bottom-5 right-5 cursor-pointer " +
                     (selectedEmoji === emoji.id ? "" : "grayed")
