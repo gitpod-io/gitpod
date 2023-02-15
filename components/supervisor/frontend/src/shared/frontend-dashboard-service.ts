@@ -4,16 +4,18 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import * as crypto from "crypto";
 import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Emitter } from "@gitpod/gitpod-protocol/lib/util/event";
 import { workspaceUrl, serverUrl } from "./urls";
 
 export class FrontendDashboardServiceClient implements IDEFrontendDashboardService.IClient {
-    public latestStatus!: IDEFrontendDashboardService.Status;
+    public latestInfo!: IDEFrontendDashboardService.Info;
+    private credentialsToken?: Uint8Array;
 
-    private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.Status>();
-    readonly onStatusUpdate = this.onDidChangeEmitter.event;
+    private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.Info>();
+    readonly onInfoUpdate = this.onDidChangeEmitter.event;
 
     private readonly onOpenBrowserIDEEmitter = new Emitter<void>();
     readonly onOpenBrowserIDE = this.onOpenBrowserIDEEmitter.event;
@@ -28,11 +30,16 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
             if (event.origin !== serverUrl.url.origin) {
                 return;
             }
-            if (IDEFrontendDashboardService.isStatusUpdateEventData(event.data)) {
+            if (IDEFrontendDashboardService.isInfoUpdateEventData(event.data)) {
                 this.version = event.data.version;
-                this.latestStatus = event.data.status;
+                this.latestInfo = event.data.info;
+                if (event.data.info.credentialsToken?.length > 0) {
+                    this.credentialsToken = Uint8Array.from(atob(event.data.info.credentialsToken), (c) =>
+                        c.charCodeAt(0),
+                    );
+                }
                 this.resolveInit();
-                this.onDidChangeEmitter.fire(this.latestStatus);
+                this.onDidChangeEmitter.fire(this.latestInfo);
             }
             if (IDEFrontendDashboardService.isRelocateEventData(event.data)) {
                 window.location.href = event.data.url;
@@ -44,6 +51,50 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
     }
     initialize(): Promise<void> {
         return this.initPromise;
+    }
+
+    decrypt(str: string): string {
+        if (!this.credentialsToken) {
+            throw new Error("no credentials token available");
+        }
+        const obj = JSON.parse(str);
+        if (!isSerializedEncryptedData(obj)) {
+            throw new Error("incorrect encrypted data");
+        }
+        const data = {
+            ...obj,
+            iv: Buffer.from(obj.iv, "base64"),
+            tag: Buffer.from(obj.tag, "base64"),
+        };
+        const decipher = crypto.createDecipheriv("aes-256-gcm", this.credentialsToken, data.iv);
+        decipher.setAuthTag(data.tag);
+        const decrypted = decipher.update(data.encrypted, "hex", "utf8");
+        return decrypted + decipher.final("utf8");
+    }
+
+    encrypt(content: string): string {
+        if (!this.credentialsToken) {
+            throw new Error("no credentials token available");
+        }
+        const iv = crypto.randomBytes(12);
+        const cipher = crypto.createCipheriv("aes-256-gcm", this.credentialsToken, iv);
+        let encrypted = cipher.update(content, "utf8", "hex");
+        encrypted += cipher.final("hex");
+        const tag = cipher.getAuthTag();
+        return JSON.stringify({
+            iv: iv.toString("base64"),
+            tag: tag.toString("base64"),
+            encrypted,
+        });
+    }
+
+    isEncryptedData(content: string): boolean {
+        try {
+            const obj = JSON.parse(content);
+            return isSerializedEncryptedData(obj);
+        } catch (e) {
+            return false;
+        }
     }
 
     trackEvent(msg: RemoteTrackMessage): void {
@@ -77,4 +128,14 @@ export class FrontendDashboardServiceClient implements IDEFrontendDashboardServi
             serverUrl.url.origin,
         );
     }
+}
+
+function isSerializedEncryptedData(obj: any): obj is { iv: string; encrypted: string; tag: string } {
+    return (
+        obj != null &&
+        typeof obj === "object" &&
+        typeof obj.iv === "string" &&
+        typeof obj.encrypted === "string" &&
+        typeof obj.tag === "string"
+    );
 }

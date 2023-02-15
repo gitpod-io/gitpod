@@ -68,13 +68,16 @@ LoadingFrame.load().then(async (loading) => {
     const frontendDashboardServiceClient = loading.frontendDashboardServiceClient;
     await frontendDashboardServiceClient.initialize();
 
-    if (frontendDashboardServiceClient.latestStatus.workspaceType !== "regular") {
+    if (frontendDashboardServiceClient.latestInfo.workspaceType !== "regular") {
         return;
     }
 
-    document.title = frontendDashboardServiceClient.latestStatus.workspaceDescription ?? "gitpod";
-    window.gitpod.loggedUserID = frontendDashboardServiceClient.latestStatus.loggedUserId;
+    document.title = frontendDashboardServiceClient.latestInfo.workspaceDescription ?? "gitpod";
+    window.gitpod.loggedUserID = frontendDashboardServiceClient.latestInfo.loggedUserId;
     window.gitpod.openDesktopIDE = frontendDashboardServiceClient.openDesktopIDE.bind(frontendDashboardServiceClient);
+    window.gitpod.decrypt = frontendDashboardServiceClient.decrypt.bind(frontendDashboardServiceClient);
+    window.gitpod.encrypt = frontendDashboardServiceClient.encrypt.bind(frontendDashboardServiceClient);
+    window.gitpod.isEncryptedData = frontendDashboardServiceClient.isEncryptedData.bind(frontendDashboardServiceClient);
 
     (async () => {
         const supervisorServiceClient = SupervisorServiceClient.get();
@@ -113,7 +116,7 @@ LoadingFrame.load().then(async (loading) => {
         let desktopRedirected = false;
         let currentInstanceId = "";
         const nextFrame = () => {
-            const { instanceId, ideUrl, statusPhase } = frontendDashboardServiceClient.latestStatus ?? {};
+            const { instanceId, ideUrl, statusPhase } = frontendDashboardServiceClient.latestInfo ?? {};
 
             if (instanceId) {
                 // refresh web page when instanceId changed
@@ -209,7 +212,7 @@ LoadingFrame.load().then(async (loading) => {
         updateCurrentFrame();
         updateLoadingState();
         trackIDEStatusRenderedEvent();
-        frontendDashboardServiceClient.onStatusUpdate(() => updateCurrentFrame());
+        frontendDashboardServiceClient.onInfoUpdate(() => updateCurrentFrame());
         ideService.onDidChange(() => {
             updateLoadingState();
             updateCurrentFrame();
@@ -228,25 +231,25 @@ LoadingFrame.load().then(async (loading) => {
         //#region heart-beat
         heartBeat.track(window);
         const updateHeartBeat = () => {
-            if (frontendDashboardServiceClient.latestStatus?.statusPhase === "running") {
+            if (frontendDashboardServiceClient.latestInfo?.statusPhase === "running") {
                 heartBeat.schedule(frontendDashboardServiceClient);
             } else {
                 heartBeat.cancel();
             }
         };
         updateHeartBeat();
-        frontendDashboardServiceClient.onStatusUpdate(() => updateHeartBeat());
+        frontendDashboardServiceClient.onInfoUpdate(() => updateHeartBeat());
         //#endregion
     })();
 
     (async () => {
         //#region ide lifecycle
         function isWorkspaceInstancePhase(phase: WorkspaceInstancePhase): boolean {
-            return frontendDashboardServiceClient.latestStatus?.statusPhase === phase;
+            return frontendDashboardServiceClient.latestInfo?.statusPhase === phase;
         }
         if (!isWorkspaceInstancePhase("running")) {
             await new Promise<void>((resolve) => {
-                frontendDashboardServiceClient.onStatusUpdate((status) => {
+                frontendDashboardServiceClient.onInfoUpdate((status) => {
                     if (status.statusPhase === "running") {
                         resolve();
                     }
@@ -264,7 +267,7 @@ LoadingFrame.load().then(async (loading) => {
         }
         toStop.pushAll([
             IDEWebSocket.connectWorkspace(),
-            frontendDashboardServiceClient.onStatusUpdate((status) => {
+            frontendDashboardServiceClient.onInfoUpdate((status) => {
                 if (status.statusPhase === "stopping" || status.statusPhase === "stopped") {
                     toStop.dispose();
                 }
