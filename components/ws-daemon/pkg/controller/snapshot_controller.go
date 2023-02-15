@@ -12,7 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager-mk2/api/v1"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
 // SnapshotReconciler reconciles a Snapshot object
