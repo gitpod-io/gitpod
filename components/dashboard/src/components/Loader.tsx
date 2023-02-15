@@ -6,9 +6,13 @@
 
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 
-export function SpinnerLoader(props: { content?: string }) {
+export function SpinnerLoader(props: { content?: string; small?: boolean }) {
     return (
-        <div className="flex items-center justify-center space-x-2 text-gray-400 text-sm pt-16 pb-40">
+        <div
+            className={`flex items-center justify-center space-x-2 text-gray-400 text-sm ${
+                props.small ? "" : "pt-16 pb-40"
+            }`}
+        >
             <Spinner className="h-4 w-4 animate-spin" />
             {props.content && <span>{props.content}</span>}
         </div>
