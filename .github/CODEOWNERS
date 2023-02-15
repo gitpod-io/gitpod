@@ -18,6 +18,7 @@
 /components/gitpod-messagebus @gitpod-io/engineering-webapp
 /components/gitpod-protocol @gitpod-io/engineering-webapp
 /components/gitpod-protocol/java @gitpod-io/engineering-ide
+/components/gitpod-protocol/src/typings/globals.ts @gitpod-io/engineering-ide
 /components/ide @gitpod-io/engineering-ide
 /components/ide-metrics @gitpod-io/engineering-ide
 /components/ide-metrics-api @gitpod-io/engineering-ide
