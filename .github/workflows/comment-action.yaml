@@ -1,0 +1,11 @@
+name: Comment Action
+on:
+  workflow_dispatch:
+
+jobs:
+  configuration:
+    runs-on: [ self-hosted ]
+    steps:
+      - name: test
+        run: |
+          echo 123
