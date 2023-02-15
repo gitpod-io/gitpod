@@ -17,7 +17,7 @@ import (
 type OIDCClientConfig struct {
 	ID uuid.UUID `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
 
-	OrganizationID *uuid.UUID `gorm:"column:organizationId;type:char;size:36;" json:"organizationId"`
+	OrganizationID uuid.UUID `gorm:"column:organizationId;type:char;size:36;" json:"organizationId"`
 
 	Issuer string `gorm:"column:issuer;type:char;size:255;" json:"issuer"`
 
@@ -128,7 +128,7 @@ func ListOIDCClientConfigsForOrganization(ctx context.Context, conn *gorm.DB, or
 
 	tx := conn.
 		WithContext(ctx).
-		Where("organizationId = ?", organizationID).
+		Where("organizationId = ?", organizationID.String()).
 		Where("deleted = ?", 0).
 		Order("id").
 		Find(&results)

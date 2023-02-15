@@ -31,13 +31,13 @@ func TestListOIDCClientConfigsForOrganization(t *testing.T) {
 
 	dbtest.CreateOIDCClientConfigs(t, conn,
 		dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
-			OrganizationID: &orgA,
+			OrganizationID: orgA,
 		}),
 		dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
-			OrganizationID: &orgA,
+			OrganizationID: orgA,
 		}),
 		dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
-			OrganizationID: &orgB,
+			OrganizationID: orgB,
 		}),
 	)
 
@@ -70,10 +70,10 @@ func TestDeleteOIDCClientConfig(t *testing.T) {
 		orgID := uuid.New()
 
 		created := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
-			OrganizationID: &orgID,
+			OrganizationID: orgID,
 		})[0]
 
-		err := db.DeleteOIDCClientConfig(context.Background(), conn, created.ID, *created.OrganizationID)
+		err := db.DeleteOIDCClientConfig(context.Background(), conn, created.ID, created.OrganizationID)
 		require.NoError(t, err)
 
 		// Delete only sets the `deleted` field, verify that's true
@@ -100,10 +100,10 @@ func TestGetOIDCClientConfigForOrganization(t *testing.T) {
 		orgID := uuid.New()
 
 		created := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
-			OrganizationID: &orgID,
+			OrganizationID: orgID,
 		})[0]
 
-		retrieved, err := db.GetOIDCClientConfigForOrganization(context.Background(), conn, created.ID, *created.OrganizationID)
+		retrieved, err := db.GetOIDCClientConfigForOrganization(context.Background(), conn, created.ID, created.OrganizationID)
 		require.NoError(t, err)
 
 		require.Equal(t, created, retrieved)

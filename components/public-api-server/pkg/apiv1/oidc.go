@@ -79,7 +79,7 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 
 	created, err := db.CreateOIDCCLientConfig(ctx, s.dbConn, db.OIDCClientConfig{
 		ID:             uuid.New(),
-		OrganizationID: &organizationID,
+		OrganizationID: organizationID,
 		Issuer:         oidcConfig.GetIssuer(),
 		Data:           data,
 	})
