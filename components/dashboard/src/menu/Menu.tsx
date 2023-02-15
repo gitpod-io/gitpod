@@ -5,7 +5,7 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { useContext, useEffect, useState } from "react";
+import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router";
 import { Location } from "history";
@@ -13,14 +13,13 @@ import { countries } from "countries-list";
 import gitpodIcon from "../icons/gitpod.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
-import ContextMenu from "../components/ContextMenu";
+import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import Separator from "../components/Separator";
 import PillMenuItem from "../components/PillMenuItem";
 import { PaymentContext } from "../payment-context";
 import FeedbackFormModal from "../feedback-form/FeedbackModal";
 import { isGitpodIo } from "../utils";
 import OrganizationSelector from "./OrganizationSelector";
-import { getAdminTabs } from "../admin/admin.routes";
 
 interface Entry {
     title: string;
@@ -32,7 +31,6 @@ export default function Menu() {
     const user = useCurrentUser();
     const location = useLocation();
     const { setCurrency, setIsStudent, setIsChargebeeCustomer } = useContext(PaymentContext);
-    const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
     function isSelected(entry: Entry, location: Location<any>) {
         const all = [entry.link, ...(entry.alternatives || [])].map((l) => l.toLowerCase());
@@ -65,29 +63,14 @@ export default function Menu() {
         },
     ];
 
-    const adminMenu: Entry = {
-        title: "Admin",
-        link: "/admin",
-        alternatives: [...getAdminTabs().map((entry) => entry.link)],
-    };
-
-    const handleFeedbackFormClick = () => {
-        setFeedbackFormVisible(true);
-    };
-
-    const onFeedbackFormClose = () => {
-        setFeedbackFormVisible(false);
-    };
-
     return (
         <>
             <header className="app-container flex flex-col pt-4 space-y-4" data-analytics='{"button_type":"menu"}'>
-                <div className="flex h-10 mb-3">
-                    <div className="flex justify-between items-center pr-3">
+                <div className="flex justify-between items-center h-10 mb-3">
+                    <div className="flex items-center pr-3">
                         <Link to="/" className="pr-3 w-10">
                             <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
                         </Link>
-                        <OrganizationSelector />
                         <div className="pl-2 text-base text-gray-500 dark:text-gray-400 flex max-w-lg overflow-hidden">
                             {leftMenu.map((entry) => (
                                 <div className="p-1" key={entry.title}>
@@ -100,72 +83,91 @@ export default function Menu() {
                             ))}
                         </div>
                     </div>
-                    <div className="flex-1 flex items-center w-auto" id="menu">
-                        <nav className="flex-1">
-                            <ul className="flex flex-1 items-center justify-between text-base text-gray-500 dark:text-gray-400 space-x-2">
-                                <li className="flex-1"></li>
-                                {user?.rolesOrPermissions?.includes("admin") && (
-                                    <li className="cursor-pointer">
-                                        <PillMenuItem
-                                            name="Admin"
-                                            selected={isSelected(adminMenu, location)}
-                                            link="/admin"
-                                        />
-                                    </li>
-                                )}
-                                {isGitpodIo() && (
-                                    <li className="cursor-pointer">
-                                        <PillMenuItem name="Feedback" onClick={handleFeedbackFormClick} />
-                                    </li>
-                                )}
-                            </ul>
-                        </nav>
+                    <div className="flex items-center" id="menu">
+                        <OrganizationSelector />
                         <div
                             className="ml-3 flex items-center justify-start mb-0 pointer-cursor m-l-auto rounded-full border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 p-0.5 font-medium flex-shrink-0"
                             data-analytics='{"label":"Account"}'
                         >
-                            <ContextMenu
-                                menuEntries={[
-                                    {
-                                        title: (user && (User.getPrimaryEmail(user) || user?.name)) || "User",
-                                        customFontStyle: "text-gray-400",
-                                        separator: true,
-                                    },
-                                    {
-                                        title: "User Settings",
-                                        link: "/user/settings",
-                                    },
-                                    {
-                                        title: "Docs",
-                                        href: "https://www.gitpod.io/docs/",
-                                        target: "_blank",
-                                        rel: "noreferrer",
-                                    },
-                                    {
-                                        title: "Help",
-                                        href: "https://www.gitpod.io/support/",
-                                        target: "_blank",
-                                        rel: "noreferrer",
-                                        separator: true,
-                                    },
-                                    {
-                                        title: "Logout",
-                                        href: gitpodHostUrl.asApiLogout().toString(),
-                                    },
-                                ]}
-                            >
-                                <img
-                                    className="rounded-full w-6 h-6"
-                                    src={user?.avatarUrl || ""}
-                                    alt={user?.name || "Anonymous"}
-                                />
-                            </ContextMenu>
+                            <UserMenu user={user} />
                         </div>
                     </div>
-                    {isFeedbackFormVisible && <FeedbackFormModal onClose={onFeedbackFormClose} />}
                 </div>
             </header>
             <Separator />
         </>
     );
 }
+
+type UserMenuProps = {
+    user?: User;
+};
+const UserMenu: FunctionComponent<UserMenuProps> = ({ user }) => {
+    const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
+
+    const handleFeedbackFormClick = useCallback(() => {
+        setFeedbackFormVisible(true);
+    }, []);
+
+    const onFeedbackFormClose = useCallback(() => {
+        setFeedbackFormVisible(false);
+    }, []);
+
+    const entries = useMemo((): ContextMenuEntry[] => {
+        return [
+            {
+                title: (user && (User.getPrimaryEmail(user) || user?.name)) || "User",
+                customFontStyle: "text-gray-400",
+                separator: true,
+            },
+            {
+                title: "User Settings",
+                link: "/user/settings",
+            },
+            ...(user?.rolesOrPermissions?.includes("admin")
+                ? [
+                      {
+                          title: "Admin",
+                          link: "/admin",
+                      },
+                  ]
+                : []),
+            {
+                title: "Docs",
+                href: "https://www.gitpod.io/docs/",
+                target: "_blank",
+                rel: "noreferrer",
+            },
+            {
+                title: "Help",
+                href: "https://www.gitpod.io/support/",
+                target: "_blank",
+                rel: "noreferrer",
+                // ensure separator is last item before logout
+                separator: !isGitpodIo(),
+            },
+            ...(isGitpodIo()
+                ? [
+                      {
+                          title: "Feedback",
+                          onClick: handleFeedbackFormClick,
+                          separator: true,
+                      },
+                  ]
+                : []),
+            {
+                title: "Logout",
+                href: gitpodHostUrl.asApiLogout().toString(),
+            },
+        ];
+    }, [handleFeedbackFormClick, user]);
+
+    return (
+        <>
+            <ContextMenu menuEntries={entries}>
+                <img className="rounded-full w-6 h-6" src={user?.avatarUrl || ""} alt={user?.name || "Anonymous"} />
+            </ContextMenu>
+            {isFeedbackFormVisible && <FeedbackFormModal onClose={onFeedbackFormClose} />}
+        </>
+    );
+};
