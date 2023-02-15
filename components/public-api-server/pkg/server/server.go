@@ -26,6 +26,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/origin"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/webhooks"
 	"github.com/sirupsen/logrus"
@@ -112,6 +113,7 @@ func register(srv *baseserver.Server, connPool proxy.ServerConnectionPool, expCl
 			NewMetricsInterceptor(connectMetrics),
 			NewLogInterceptor(log.Log),
 			auth.NewServerInterceptor(),
+			origin.NewInterceptor(),
 		),
 	}
 

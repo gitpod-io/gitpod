@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/origin"
 	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 
 	lru "github.com/hashicorp/golang-lru"
@@ -41,6 +42,7 @@ func (p *NoConnectionPool) Get(ctx context.Context, token auth.Token) (gitpod.AP
 	opts := gitpod.ConnectToServerOpts{
 		Context: ctx,
 		Log:     logger,
+		Origin:  origin.FromContext(ctx),
 	}
 
 	switch token.Type {
@@ -48,7 +50,6 @@ func (p *NoConnectionPool) Get(ctx context.Context, token auth.Token) (gitpod.AP
 		opts.Token = token.Value
 	case auth.CookieTokenType:
 		opts.Cookie = token.Value
-		opts.Origin = token.OriginHeader
 	default:
 		return nil, errors.New("unknown token type")
 	}
@@ -83,11 +84,12 @@ func NewConnectionPool(address *url.URL, poolSize int) (*ConnectionPool, error) 
 
 	return &ConnectionPool{
 		cache: cache,
-		connConstructor: func(token auth.Token) (gitpod.APIInterface, error) {
+		connConstructor: func(ctx context.Context, token auth.Token) (gitpod.APIInterface, error) {
 			opts := gitpod.ConnectToServerOpts{
 				// We're using Background context as we want the connection to persist beyond the lifecycle of a single request
 				Context: context.Background(),
 				Log:     log.Log,
+				Origin:  origin.FromContext(ctx),
 				CloseHandler: func(_ error) {
 					cache.Remove(token)
 					connectionPoolSize.Dec()
@@ -99,7 +101,6 @@ func NewConnectionPool(address *url.URL, poolSize int) (*ConnectionPool, error) 
 				opts.Token = token.Value
 			case auth.CookieTokenType:
 				opts.Cookie = token.Value
-				opts.Origin = token.OriginHeader
 			default:
 				return nil, errors.New("unknown token type")
 			}
@@ -120,15 +121,23 @@ func NewConnectionPool(address *url.URL, poolSize int) (*ConnectionPool, error) 
 
 }
 
+type conenctionPoolCacheKey struct {
+	token  auth.Token
+	origin string
+}
+
 type ConnectionPool struct {
-	connConstructor func(token auth.Token) (gitpod.APIInterface, error)
+	connConstructor func(context.Context, auth.Token) (gitpod.APIInterface, error)
 
 	// cache stores token to connection mapping
 	cache *lru.Cache
 }
 
 func (p *ConnectionPool) Get(ctx context.Context, token auth.Token) (gitpod.APIInterface, error) {
-	cached, found := p.cache.Get(token)
+	origin := origin.FromContext(ctx)
+
+	cacheKey := p.cacheKey(token, origin)
+	cached, found := p.cache.Get(cacheKey)
 	reportCacheOutcome(found)
 	if found {
 		conn, ok := cached.(*gitpod.APIoverJSONRPC)
@@ -137,15 +146,22 @@ func (p *ConnectionPool) Get(ctx context.Context, token auth.Token) (gitpod.APII
 		}
 	}
 
-	conn, err := p.connConstructor(token)
+	conn, err := p.connConstructor(ctx, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new connection to server: %w", err)
 	}
 
-	p.cache.Add(token, conn)
+	p.cache.Add(cacheKey, conn)
 	connectionPoolSize.Inc()
 
 	return conn, nil
+}
+
+func (p *ConnectionPool) cacheKey(token auth.Token, origin string) conenctionPoolCacheKey {
+	return conenctionPoolCacheKey{
+		token:  token,
+		origin: origin,
+	}
 }
 
 func getEndpointBasedOnToken(t auth.Token, u *url.URL) (string, error) {
