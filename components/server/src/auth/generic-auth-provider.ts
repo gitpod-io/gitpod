@@ -145,11 +145,22 @@ export class GenericAuthProvider implements AuthProvider {
     protected readAuthUserSetup?: (accessToken: string, tokenResponse: object) => Promise<AuthUserSetup>;
 
     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        const handler = passport.authenticate(this.getStrategy() as any, {
-            ...this.defaultStrategyOptions,
-            ...{ scope },
-        });
-        handler(req, res, next);
+        // Before the OAuth process is started, the Gitpod cookie is relaxed ot be sent on cross-site request,
+        // which makes possible to re-establish the session on a callback from the 3rd party service.
+        // Once this callback is handled, the Gitpod cookie is elevated to a `strict` one.
+        this.updateCookieSameSiteValue(req, "lax")
+            .then(() => {
+                const handler = passport.authenticate(this.getStrategy() as any, {
+                    ...this.defaultStrategyOptions,
+                    ...{ scope },
+                });
+                handler(req, res, next);
+            })
+            .catch((err) => {
+                log.error(`(${this.strategyName}) Failed to store session before redirect.`, {
+                    err,
+                });
+            });
     }
 
     protected getStrategy() {
@@ -466,6 +477,16 @@ export class GenericAuthProvider implements AuthProvider {
                     ...defaultLogPayload,
                 });
 
+                try {
+                    // When the OAuth process is done, we want to proceed with a `strict` Gitpod cookie.
+                    // This improves the security model with Browser agents, as cross-site requests whould
+                    // not be containing the Gitpod cookie anymore.
+                    await this.updateCookieSameSiteValue(request, "strict");
+                } catch (error) {
+                    response.redirect(this.getSorryUrl(`Failed to save session. (${error})`));
+                    return;
+                }
+
                 // Complete login
                 const { host, returnTo } = authFlow;
                 await this.loginCompletionHandler.complete(request, response, {
@@ -476,6 +497,19 @@ export class GenericAuthProvider implements AuthProvider {
                 });
             }
         }
+    }
+
+    protected async updateCookieSameSiteValue(request: express.Request, newValue: "strict" | "lax") {
+        return new Promise((resolve, reject) => {
+            request.session.cookie.sameSite = newValue;
+            request.session.save((err) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(undefined);
+                }
+            });
+        });
     }
 
     protected sendCompletionRedirectWithError(response: express.Response, error: object): void {
