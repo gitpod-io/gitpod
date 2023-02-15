@@ -57,104 +57,106 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
     );
     return (
         <>
-            <div className="flex">
-                <div className="flex-1">
-                    <div className="flex">
-                        <h3>{workspace.workspaceId}</h3>
-                        <span className="my-auto ml-3">
-                            <WorkspaceStatusIndicator instance={WorkspaceAndInstance.toInstance(workspace)} />
-                        </span>
+            <div className="app-container">
+                <div className="flex">
+                    <div className="flex-1">
+                        <div className="flex">
+                            <h3>{workspace.workspaceId}</h3>
+                            <span className="my-auto ml-3">
+                                <WorkspaceStatusIndicator instance={WorkspaceAndInstance.toInstance(workspace)} />
+                            </span>
+                        </div>
+                        <p>{getProjectPath(WorkspaceAndInstance.toWorkspace(workspace))}</p>
                     </div>
-                    <p>{getProjectPath(WorkspaceAndInstance.toWorkspace(workspace))}</p>
+                    <button
+                        className="secondary ml-3"
+                        onClick={() => {
+                            window.location.href = new GitpodHostUrl(window.location.href)
+                                .with({
+                                    pathname: `/workspace-download/get/${workspace.workspaceId}`,
+                                })
+                                .toString();
+                        }}
+                    >
+                        Download Workspace
+                    </button>
+                    <button
+                        className="danger ml-3"
+                        disabled={activity || workspace.phase === "stopped"}
+                        onClick={stopWorkspace}
+                    >
+                        Stop Workspace
+                    </button>
                 </div>
-                <button
-                    className="secondary ml-3"
-                    onClick={() => {
-                        window.location.href = new GitpodHostUrl(window.location.href)
-                            .with({
-                                pathname: `/workspace-download/get/${workspace.workspaceId}`,
-                            })
-                            .toString();
-                    }}
-                >
-                    Download Workspace
-                </button>
-                <button
-                    className="danger ml-3"
-                    disabled={activity || workspace.phase === "stopped"}
-                    onClick={stopWorkspace}
-                >
-                    Stop Workspace
-                </button>
-            </div>
-            <div className="flex mt-6">
-                <div className="flex flex-col w-full">
-                    <div className="flex w-full mt-6">
-                        <Property name="Created">
-                            {dayjs(workspace.workspaceCreationTime).format("MMM D, YYYY")}
-                        </Property>
-                        <Property name="Last Start">{dayjs(workspace.instanceCreationTime).fromNow()}</Property>
-                        <Property name="Context">
-                            <a
-                                className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
-                                href={ContextURL.getNormalizedURL(workspace)?.toString()}
-                            >
-                                {workspace.context.title}
-                            </a>
-                        </Property>
-                    </div>
-                    <div className="flex w-full mt-6">
-                        <Property name="User">
-                            <Link
-                                className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
-                                to={"/admin/users/" + props.workspace.ownerId}
-                            >
-                                {user?.name || props.workspace.ownerId}
-                            </Link>
-                        </Property>
-                        <Property name="Sharing">{workspace.shareable ? "Enabled" : "Disabled"}</Property>
-                        <Property
-                            name="Soft Deleted"
-                            actions={
-                                !!workspace.softDeleted && !workspace.contentDeletedTime
-                                    ? [
-                                          {
-                                              label: "Restore & Pin",
-                                              onClick: async () => {
-                                                  await getGitpodService().server.adminRestoreSoftDeletedWorkspace(
-                                                      workspace.workspaceId,
-                                                  );
-                                                  await reload();
+                <div className="flex mt-6">
+                    <div className="flex flex-col w-full">
+                        <div className="flex w-full mt-6">
+                            <Property name="Created">
+                                {dayjs(workspace.workspaceCreationTime).format("MMM D, YYYY")}
+                            </Property>
+                            <Property name="Last Start">{dayjs(workspace.instanceCreationTime).fromNow()}</Property>
+                            <Property name="Context">
+                                <a
+                                    className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
+                                    href={ContextURL.getNormalizedURL(workspace)?.toString()}
+                                >
+                                    {workspace.context.title}
+                                </a>
+                            </Property>
+                        </div>
+                        <div className="flex w-full mt-6">
+                            <Property name="User">
+                                <Link
+                                    className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
+                                    to={"/admin/users/" + props.workspace.ownerId}
+                                >
+                                    {user?.name || props.workspace.ownerId}
+                                </Link>
+                            </Property>
+                            <Property name="Sharing">{workspace.shareable ? "Enabled" : "Disabled"}</Property>
+                            <Property
+                                name="Soft Deleted"
+                                actions={
+                                    !!workspace.softDeleted && !workspace.contentDeletedTime
+                                        ? [
+                                              {
+                                                  label: "Restore & Pin",
+                                                  onClick: async () => {
+                                                      await getGitpodService().server.adminRestoreSoftDeletedWorkspace(
+                                                          workspace.workspaceId,
+                                                      );
+                                                      await reload();
+                                                  },
                                               },
-                                          },
-                                      ]
-                                    : undefined
-                            }
-                        >
-                            {workspace.softDeleted
-                                ? `'${workspace.softDeleted}' ${dayjs(workspace.softDeletedTime).fromNow()}`
-                                : "No"}
-                        </Property>
+                                          ]
+                                        : undefined
+                                }
+                            >
+                                {workspace.softDeleted
+                                    ? `'${workspace.softDeleted}' ${dayjs(workspace.softDeletedTime).fromNow()}`
+                                    : "No"}
+                            </Property>
+                        </div>
+                        <div className="flex w-full mt-12">
+                            <Property name="Latest Instance ID">
+                                <div className="overflow-scroll">{workspace.instanceId}</div>
+                            </Property>
+                            <Property name="Region">{workspace.region}</Property>
+                            <Property name="Stopped">
+                                {workspace.stoppedTime ? dayjs(workspace.stoppedTime).fromNow() : "---"}
+                            </Property>
+                        </div>
+                        <div className="flex w-full mt-12">
+                            <Property name="Node">
+                                <div className="overflow-scroll">{workspace.status.nodeName ?? "not assigned"}</div>
+                            </Property>
+                            <Property name="Class">
+                                <div>{workspace.workspaceClass ?? "unknown"}</div>
+                            </Property>
+                        </div>
+                        <div className="flex w-full mt-6">{[0, 1, 2].map(adminLink)}</div>
+                        <div className="flex w-full mt-6">{[3, 4, 5].map(adminLink)}</div>
                     </div>
-                    <div className="flex w-full mt-12">
-                        <Property name="Latest Instance ID">
-                            <div className="overflow-scroll">{workspace.instanceId}</div>
-                        </Property>
-                        <Property name="Region">{workspace.region}</Property>
-                        <Property name="Stopped">
-                            {workspace.stoppedTime ? dayjs(workspace.stoppedTime).fromNow() : "---"}
-                        </Property>
-                    </div>
-                    <div className="flex w-full mt-12">
-                        <Property name="Node">
-                            <div className="overflow-scroll">{workspace.status.nodeName ?? "not assigned"}</div>
-                        </Property>
-                        <Property name="Class">
-                            <div>{workspace.workspaceClass ?? "unknown"}</div>
-                        </Property>
-                    </div>
-                    <div className="flex w-full mt-6">{[0, 1, 2].map(adminLink)}</div>
-                    <div className="flex w-full mt-6">{[3, 4, 5].map(adminLink)}</div>
                 </div>
             </div>
         </>
