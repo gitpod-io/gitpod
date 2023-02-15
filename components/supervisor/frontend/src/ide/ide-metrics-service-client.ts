@@ -36,10 +36,10 @@ export class IDEMetricsServiceClient {
     static serviceClient: FrontendDashboardServiceClient;
 
     static get instanceId(): string {
-        return this.serviceClient.latestStatus?.instanceId ?? "";
+        return this.serviceClient.latestInfo?.instanceId ?? "";
     }
     static get userId(): string {
-        return this.serviceClient.latestStatus?.loggedUserId ?? "";
+        return this.serviceClient.latestInfo?.loggedUserId ?? "";
     }
 
     static async addCounter(

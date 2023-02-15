@@ -11,5 +11,9 @@ interface Window {
         loggedUserID?: string;
 
         openDesktopIDE(url: string): void;
+
+        encrypt(content: string): string;
+        decrypt(content: string): string;
+        isEncryptedData(content: string): boolean;
     };
 }
