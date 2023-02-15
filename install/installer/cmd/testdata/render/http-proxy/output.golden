@@ -8025,11 +8025,16 @@ spec:
         - /app/ready-probe-labeler
         - --label=gitpod.io/registry-facade_ready_ns_default
         - --probe-url=http://localhost:8086/ready
+        - --host-port=20000
         env:
         - name: NODENAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: NODEIP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         - name: HTTP_PROXY
           valueFrom:
             secretKeyRef:
@@ -8409,11 +8414,16 @@ spec:
         - /app/ready-probe-labeler
         - --label=gitpod.io/ws-daemon_ready_ns_default
         - --probe-url=http://localhost:9501/ready
+        - --host-port=8080
         env:
         - name: NODENAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: NODEIP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         - name: HTTP_PROXY
           valueFrom:
             secretKeyRef:

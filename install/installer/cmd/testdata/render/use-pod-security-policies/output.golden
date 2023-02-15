@@ -8306,11 +8306,16 @@ spec:
         - /app/ready-probe-labeler
         - --label=gitpod.io/registry-facade_ready_ns_default
         - --probe-url=http://localhost:8086/ready
+        - --host-port=20000
         env:
         - name: NODENAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: NODEIP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         image: eu.gcr.io/gitpod-core-dev/build/registry-facade:test
         imagePullPolicy: IfNotPresent
         lifecycle:
@@ -8529,11 +8534,16 @@ spec:
         - /app/ready-probe-labeler
         - --label=gitpod.io/ws-daemon_ready_ns_default
         - --probe-url=http://localhost:9501/ready
+        - --host-port=8080
         env:
         - name: NODENAME
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: NODEIP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
         image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
         imagePullPolicy: IfNotPresent
         lifecycle:
