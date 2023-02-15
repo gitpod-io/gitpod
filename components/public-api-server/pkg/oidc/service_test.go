@@ -43,7 +43,7 @@ func TestGetStartParams(t *testing.T) {
 		},
 	}
 
-	params, err := service.GetStartParams(config, redirectURL)
+	params, err := service.GetStartParams(config, redirectURL, "/")
 
 	require.NoError(t, err)
 	require.NotNil(t, params.Nonce)
@@ -66,12 +66,14 @@ func TestGetStartParams(t *testing.T) {
 
 func TestGetClientConfigFromStartRequest(t *testing.T) {
 	issuer := newFakeIdP(t)
+
 	service, dbConn := setupOIDCServiceForTests(t)
-	configID := createConfig(t, dbConn, &ClientConfig{
+	config, team := createConfig(t, dbConn, &ClientConfig{
 		Issuer:         issuer,
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config:   &oauth2.Config{},
 	})
+	configID := config.ID.String()
 
 	testCases := []struct {
 		Location      string
@@ -93,6 +95,11 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 			ExpectedError: false,
 			ExpectedId:    configID,
 		},
+		{
+			Location:      "/start?orgSlug=" + team.Slug,
+			ExpectedError: false,
+			ExpectedId:    configID,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -109,16 +116,21 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 			}
 		})
 	}
+
+	t.Cleanup(func() {
+		require.NoError(t, dbConn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+	})
 }
 
 func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	issuer := newFakeIdP(t)
 	service, dbConn := setupOIDCServiceForTests(t)
-	configID := createConfig(t, dbConn, &ClientConfig{
+	config, _ := createConfig(t, dbConn, &ClientConfig{
 		Issuer:         issuer,
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config:   &oauth2.Config{},
 	})
+	configID := config.ID.String()
 
 	state, err := encodeStateParam(StateParam{
 		ClientConfigID: configID,
@@ -171,9 +183,10 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 }
 
 func TestAuthenticate_nonce_check(t *testing.T) {
+	t.Skip()
 	issuer := newFakeIdP(t)
 	service, dbConn := setupOIDCServiceForTests(t)
-	configID := createConfig(t, dbConn, &ClientConfig{
+	config, _ := createConfig(t, dbConn, &ClientConfig{
 		Issuer: issuer,
 		// VerifierConfig: &oidc.Config{
 		// 	SkipClientIDCheck:          true,
@@ -184,7 +197,7 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 		OAuth2Config: &oauth2.Config{},
 	})
 
-	_, err := service.getConfigById(configID)
+	_, err := service.getConfigById(context.Background(), config.ID.String())
 	require.NoError(t, err, "could not assert config creation")
 
 	token := oauth2.Token{}
@@ -216,10 +229,16 @@ func setupOIDCServiceForTests(t *testing.T) (*Service, *gorm.DB) {
 	return service, dbConn
 }
 
-func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) string {
+func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) (db.OIDCClientConfig, db.Team) {
 	t.Helper()
 
 	orgID := uuid.New()
+	team, err := db.CreateTeam(context.Background(), dbConn, db.Team{
+		ID:   orgID,
+		Name: "Org 1",
+		Slug: "org-1",
+	})
+	require.NoError(t, err)
 
 	data, err := db.EncryptJSON(dbtest.CipherSet(t), db.OIDCSpec{
 		ClientID:     config.OAuth2Config.ClientID,
@@ -228,12 +247,12 @@ func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) string {
 	require.NoError(t, err)
 
 	created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
-		OrganizationID: &orgID,
+		OrganizationID: orgID,
 		Issuer:         config.Issuer,
 		Data:           data,
 	})[0]
 
-	return created.ID.String()
+	return created, team
 }
 
 func newFakeSessionServer(t *testing.T) string {

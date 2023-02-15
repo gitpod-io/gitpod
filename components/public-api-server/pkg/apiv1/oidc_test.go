@@ -197,7 +197,7 @@ func TestOIDCService_GetClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 		orgID := uuid.New()
 
 		created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
-			OrganizationID: &orgID,
+			OrganizationID: orgID,
 			Issuer:         issuer,
 		})[0]
 
@@ -258,15 +258,15 @@ func TestOIDCService_ListClientConfigs_WithFeatureFlagEnabled(t *testing.T) {
 
 		configs := dbtest.CreateOIDCClientConfigs(t, dbConn,
 			dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
-				OrganizationID: &orgA,
+				OrganizationID: orgA,
 				Issuer:         issuer,
 			}),
 			dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
-				OrganizationID: &orgA,
+				OrganizationID: orgA,
 				Issuer:         issuer,
 			}),
 			dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
-				OrganizationID: &orgB,
+				OrganizationID: orgB,
 				Issuer:         issuer,
 			}),
 		)
@@ -373,7 +373,7 @@ func TestOIDCService_DeleteClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 		orgID := uuid.New()
 
 		created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
-			OrganizationID: &orgID,
+			OrganizationID: orgID,
 			Issuer:         issuer,
 		})[0]
 

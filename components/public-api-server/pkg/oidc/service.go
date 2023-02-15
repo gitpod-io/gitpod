@@ -31,7 +31,7 @@ type Service struct {
 	dbConn *gorm.DB
 	cipher db.Cipher
 
-	verifierByIssuer      map[string]*goidc.IDTokenVerifier
+	// verifierByIssuer      map[string]*goidc.IDTokenVerifier
 	sessionServiceAddress string
 
 	// TODO(at) remove by enhancing test setups
@@ -59,7 +59,7 @@ type AuthFlowResult struct {
 
 func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher) *Service {
 	return &Service{
-		verifierByIssuer:      map[string]*goidc.IDTokenVerifier{},
+		// verifierByIssuer:      map[string]*goidc.IDTokenVerifier{},
 		sessionServiceAddress: sessionServiceAddress,
 
 		dbConn: dbConn,
@@ -73,7 +73,7 @@ func newTestService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cip
 	return service
 }
 
-func (s *Service) GetStartParams(config *ClientConfig, redirectURL string) (*StartParams, error) {
+func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, returnToURL string) (*StartParams, error) {
 	// state is supposed to a) be present on client request as cookie header
 	// and b) to be mirrored by the IdP on callback requests.
 	stateParam := StateParam{
@@ -130,13 +130,36 @@ func randString(size int) (string, error) {
 }
 
 func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfig, error) {
+	orgSlug := r.URL.Query().Get("orgSlug")
+	if orgSlug != "" {
+		org, err := db.GetTeamBySlug(r.Context(), s.dbConn, orgSlug)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to find org: %w", err)
+		}
+
+		dbEntries, err := db.ListOIDCClientConfigsForOrganization(r.Context(), s.dbConn, org.ID)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
+		}
+		if len(dbEntries) < 1 {
+			return nil, fmt.Errorf("No OIDC clients.")
+		}
+
+		config, err := s.convertClientConfig(r.Context(), dbEntries[0])
+		if err != nil {
+			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
+		}
+
+		return &config, nil
+	}
+
 	idParam := r.URL.Query().Get("id")
 	if idParam == "" {
 		return nil, fmt.Errorf("missing id parameter")
 	}
 
 	if idParam != "" {
-		config, err := s.getConfigById(idParam)
+		config, err := s.getConfigById(r.Context(), idParam)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +179,7 @@ func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientCo
 	if err != nil {
 		return nil, fmt.Errorf("bad state param")
 	}
-	config, _ := s.getConfigById(state.ClientConfigID)
+	config, _ := s.getConfigById(r.Context(), state.ClientConfigID)
 	if config != nil {
 		return config, nil
 	}
@@ -164,48 +187,37 @@ func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientCo
 	return nil, fmt.Errorf("failed to find OIDC config on callback")
 }
 
-func (s *Service) getConfigById(id string) (*ClientConfig, error) {
+func (s *Service) getConfigById(ctx context.Context, id string) (*ClientConfig, error) {
 	uuid, err := uuid.Parse(id)
 	if err != nil {
 		return nil, err
 	}
-	dbEntry, err := db.GetOIDCClientConfig(context.Background(), s.dbConn, uuid)
+	dbEntry, err := db.GetOIDCClientConfig(ctx, s.dbConn, uuid)
 	if err != nil {
 		return nil, err
 	}
-	spec, err := dbEntry.Data.Decrypt(s.cipher)
+	config, err := s.convertClientConfig(ctx, dbEntry)
 	if err != nil {
 		log.Log.WithError(err).Error("Failed to decrypt oidc client config.")
 		return nil, status.Errorf(codes.Internal, "Failed to decrypt OIDC client config.")
 	}
 
-	provider, err := oidc.NewProvider(context.Background(), dbEntry.Issuer)
+	return &config, nil
+}
+
+func (s *Service) convertClientConfig(ctx context.Context, dbEntry db.OIDCClientConfig) (ClientConfig, error) {
+	spec, err := dbEntry.Data.Decrypt(s.cipher)
 	if err != nil {
-		return nil, err
+		log.Log.WithError(err).Error("Failed to decrypt oidc client config.")
+		return ClientConfig{}, status.Errorf(codes.Internal, "Failed to decrypt OIDC client config.")
 	}
 
-	if s.verifierByIssuer[dbEntry.Issuer] == nil {
-		if s.skipVerifyIdToken {
-			s.verifierByIssuer[dbEntry.Issuer] = provider.Verifier(&goidc.Config{
-				ClientID:                   spec.ClientID,
-				SkipClientIDCheck:          true,
-				SkipIssuerCheck:            true,
-				SkipExpiryCheck:            true,
-				InsecureSkipSignatureCheck: true,
-			})
-		} else {
-			s.verifierByIssuer[dbEntry.Issuer] = provider.Verifier(&goidc.Config{
-				ClientID: spec.ClientID,
-			})
-		}
+	provider, err := oidc.NewProvider(ctx, dbEntry.Issuer)
+	if err != nil {
+		return ClientConfig{}, err
 	}
 
-	scopes := spec.Scopes
-	if len(scopes) < 1 {
-		scopes = []string{"openid"}
-	}
-
-	return &ClientConfig{
+	return ClientConfig{
 		ID:             dbEntry.ID.String(),
 		OrganizationID: dbEntry.OrganizationID.String(),
 		Issuer:         dbEntry.Issuer,
@@ -213,7 +225,7 @@ func (s *Service) getConfigById(id string) (*ClientConfig, error) {
 			ClientID:     spec.ClientID,
 			ClientSecret: spec.ClientSecret,
 			Endpoint:     provider.Endpoint(),
-			Scopes:       scopes,
+			Scopes:       spec.Scopes,
 		},
 		VerifierConfig: &goidc.Config{
 			ClientID: spec.ClientID,
@@ -233,10 +245,13 @@ func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (
 		return nil, fmt.Errorf("id_token not found")
 	}
 
-	verifier := s.verifierByIssuer[params.Issuer]
-	if verifier == nil {
-		return nil, fmt.Errorf("verifier not found")
+	provider, err := oidc.NewProvider(ctx, params.Issuer)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to initialize provider.")
 	}
+	verifier := provider.Verifier(&goidc.Config{
+		ClientID: params.OAuth2Result.ClientID,
+	})
 
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {

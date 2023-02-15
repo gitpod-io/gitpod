@@ -42,8 +42,13 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 			return
 		}
 
+		returnToURL := r.URL.Query().Get("returnTo")
+		if returnToURL == "" {
+			returnToURL = "/"
+		}
+
 		redirectURL := getCallbackURL(r.Host)
-		startParams, err := s.GetStartParams(config, redirectURL)
+		startParams, err := s.GetStartParams(config, redirectURL, returnToURL)
 		if err != nil {
 			http.Error(rw, "failed to start auth flow", http.StatusInternalServerError)
 			return
