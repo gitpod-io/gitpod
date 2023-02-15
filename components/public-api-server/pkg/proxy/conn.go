@@ -48,6 +48,7 @@ func (p *NoConnectionPool) Get(ctx context.Context, token auth.Token) (gitpod.AP
 		opts.Token = token.Value
 	case auth.CookieTokenType:
 		opts.Cookie = token.Value
+		opts.Origin = token.OriginHeader
 	default:
 		return nil, errors.New("unknown token type")
 	}
@@ -98,6 +99,7 @@ func NewConnectionPool(address *url.URL, poolSize int) (*ConnectionPool, error) 
 				opts.Token = token.Value
 			case auth.CookieTokenType:
 				opts.Cookie = token.Value
+				opts.Origin = token.OriginHeader
 			default:
 				return nil, errors.New("unknown token type")
 			}

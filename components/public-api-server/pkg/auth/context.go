@@ -25,6 +25,8 @@ const (
 type Token struct {
 	Type  TokenType
 	Value string
+	// Only relevant for CookieTokenType
+	OriginHeader string
 }
 
 func NewAccessToken(token string) Token {
@@ -34,10 +36,11 @@ func NewAccessToken(token string) Token {
 	}
 }
 
-func NewCookieToken(cookie string) Token {
+func NewCookieToken(cookie string, origin string) Token {
 	return Token{
-		Type:  CookieTokenType,
-		Value: cookie,
+		Type:         CookieTokenType,
+		Value:        cookie,
+		OriginHeader: origin,
 	}
 }
 

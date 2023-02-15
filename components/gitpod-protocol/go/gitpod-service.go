@@ -10,14 +10,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"sync"
 
 	"github.com/sourcegraph/jsonrpc2"
-	"golang.org/x/xerrors"
 
 	"github.com/sirupsen/logrus"
 )
@@ -261,6 +258,7 @@ type ConnectToServerOpts struct {
 	Context             context.Context
 	Token               string
 	Cookie              string
+	Origin              string
 	Log                 *logrus.Entry
 	ReconnectionHandler func()
 	CloseHandler        func(error)
@@ -273,21 +271,9 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 		opts.Context = context.Background()
 	}
 
-	epURL, err := url.Parse(endpoint)
-	if err != nil {
-		return nil, xerrors.Errorf("invalid endpoint URL: %w", err)
-	}
-
-	var protocol string
-	if epURL.Scheme == "wss:" {
-		protocol = "https"
-	} else {
-		protocol = "http"
-	}
-	origin := fmt.Sprintf("%s://%s/", protocol, epURL.Hostname())
-
 	reqHeader := http.Header{}
-	reqHeader.Set("Origin", origin)
+	reqHeader.Set("Origin", opts.Origin)
+
 	for k, v := range opts.ExtraHeaders {
 		reqHeader.Set(k, v)
 	}
