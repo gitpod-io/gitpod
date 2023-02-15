@@ -27,10 +27,10 @@ export class SessionHandlerProvider {
     public init() {
         const options: SessionOptions = {} as SessionOptions;
         options.cookie = this.getCookieOptions(this.config);
-        (options.genid = function (req: any) {
+        options.genid = function (req: any) {
             return uuidv4(); // use UUIDs for session IDs
-        }),
-            (options.name = SessionHandlerProvider.getCookieName(this.config));
+        };
+        options.name = SessionHandlerProvider.getCookieName(this.config);
         // options.proxy = true    // TODO SSL Proxy
         options.resave = true; // TODO Check with store! See docu
         options.rolling = true; // default, new cookie and maxAge
