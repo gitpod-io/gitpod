@@ -246,9 +246,13 @@ type CurrentOrgEntryProps = {
 };
 const CurrentOrgEntry: FunctionComponent<CurrentOrgEntryProps> = ({ title, subtitle }) => {
     return (
-        <div className="w-full text-gray-400 flex flex-col">
-            <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
-            <span>{subtitle}</span>
+        <div className="w-full text-gray-400 flex items-center justify-between">
+            <div className="flex flex-col">
+                <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
+                <span>{subtitle}</span>
+            </div>
+            {/* TODO: Replace this with an SVG icon */}
+            <div className="pl-1 font-semibold">&#x2713;</div>
         </div>
     );
 };

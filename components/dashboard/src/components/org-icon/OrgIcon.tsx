@@ -33,7 +33,12 @@ export const OrgIcon: FunctionComponent<Props> = ({ id, name, size = "medium", c
 
     return (
         <div
-            className={classNames("rounded-full flex items-center justify-center", sizeClasses, logoBGClass, className)}
+            className={classNames(
+                "rounded-full flex items-center justify-center flex-shrink-0",
+                sizeClasses,
+                logoBGClass,
+                className,
+            )}
         >
             <span className={`text-white font-semibold ${textClass}`}>{initials}</span>
         </div>
