@@ -6,11 +6,17 @@
 
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState, useMemo } from "react";
 import { UserContext } from "./user-context";
 import { TeamsContext } from "./teams/teams-context";
 import { getGitpodService } from "./service/service";
-import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName, getSafeURLRedirect } from "./provider-utils";
+import {
+    iconForAuthProvider,
+    openAuthorizeWindow,
+    simplifyProviderName,
+    getSafeURLRedirect,
+    openOIDCStartWindow,
+} from "./provider-utils";
 import gitpod from "./images/gitpod.svg";
 import gitpodDark from "./images/gitpod-dark.svg";
 import gitpodIcon from "./icons/gitpod.svg";
@@ -21,6 +27,7 @@ import customize from "./images/welcome/customize.svg";
 import fresh from "./images/welcome/fresh.svg";
 import prebuild from "./images/welcome/prebuild.svg";
 import exclamation from "./images/exclamation.svg";
+import ssoLinkIcon from "./images/external-link.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
@@ -59,7 +66,8 @@ export function Login() {
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
 
-    const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
+    const [showSSO, setShowSSO] = useState<boolean>(false);
+    const [orgSlug, setOrgSlug] = useState<string>("");
 
     useEffect(() => {
         try {
@@ -77,6 +85,16 @@ export function Login() {
         (async () => {
             setAuthProviders(await getGitpodService().server.getAuthProviders());
         })();
+
+        try {
+            const content = window.localStorage.getItem("gitpod-ui-experiments");
+            const object = content && JSON.parse(content);
+            if (object["ssoLogin"] === true) {
+                setShowSSO(true);
+            }
+        } catch {
+            // ignore as non-critical
+        }
     }, []);
 
     useEffect(() => {
@@ -85,6 +103,8 @@ export function Login() {
             setProviderFromContext(providerFromContext);
         }
     }, [hostFromContext, authProviders]);
+
+    const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
 
     const authorizeSuccessful = async (payload?: string) => {
         updateUser().catch(console.error);
@@ -135,6 +155,46 @@ export function Login() {
             console.log(error);
         }
     };
+
+    const openLoginWithSSO = async () => {
+        setErrorMessage(undefined);
+
+        if (!orgSlug?.trim()) {
+            return;
+        }
+
+        try {
+            await openOIDCStartWindow({
+                orgSlug,
+                onSuccess: authorizeSuccessful,
+                onError: (payload) => {
+                    let errorMessage: string;
+                    if (typeof payload === "string") {
+                        errorMessage = payload;
+                    } else {
+                        errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                    }
+                    setErrorMessage(errorMessage);
+                },
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const onOrgSlugChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newOrgSlug = event.target.value || "";
+        setOrgSlug(newOrgSlug);
+        if (newOrgSlug.trim().length === 0) {
+            setErrorMessage("Organization name can not be blank.");
+            return;
+        } else if (newOrgSlug.trim().length > 32) {
+            setErrorMessage("Organization name must not be longer than 32 characters.");
+            return;
+        } else {
+            setErrorMessage(undefined);
+        }
+    }, []);
 
     return (
         <div id="login-container" className="z-50 flex w-screen h-screen">
@@ -228,6 +288,29 @@ export function Login() {
                                             </span>
                                         </button>
                                     ))
+                                )}
+                                {showSSO && (
+                                    <div className="pt-8">
+                                        <div className="mt-4 mb-3">
+                                            <input
+                                                type="text"
+                                                value={orgSlug}
+                                                onChange={onOrgSlugChange}
+                                                placeholder="org-slug"
+                                            />
+                                        </div>
+                                        <button
+                                            key={"button-sso"}
+                                            className="btn-login flex-none w-56 h-10 p-0 inline-flex"
+                                            disabled={!showSSO || !orgSlug?.trim()}
+                                            onClick={() => openLoginWithSSO()}
+                                        >
+                                            <Item icon={ssoLinkIcon} text="" />
+                                            <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
+                                                Sign in with SSO
+                                            </span>
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                             {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
