@@ -14,7 +14,7 @@ export default function ProjectDetail(props: { project: Project; owner: string |
     return (
         <>
             <div className="app-container">
-                <div className="flex">
+                <div className="flex mt-8">
                     <div className="flex-1">
                         <div className="flex">
                             <h3>{props.project.name}</h3>

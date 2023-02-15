@@ -69,7 +69,7 @@ export default function TeamDetail(props: { team: Team }) {
     };
     return (
         <>
-            <div className="flex">
+            <div className="flex mt-8">
                 <div className="flex-1">
                     <div className="flex">
                         <h3>{team.name}</h3>

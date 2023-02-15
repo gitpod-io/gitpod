@@ -260,7 +260,7 @@ export default function UserDetail(p: { user: User }) {
         <>
             <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
                 <div className="app-container">
-                    <div className="flex">
+                    <div className="flex mt-8">
                         <div className="flex-1">
                             <div className="flex">
                                 <h3>{user.fullName}</h3>
