@@ -109,9 +109,18 @@ export default function UserSearch() {
                 </div>
                 <div className="flex flex-col space-y-2">
                     <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
-                        <div className="w-1/12"></div>
-                        <div className="w-6/12">Name</div>
-                        <div className="w-5/12">Created</div>
+                        <div className="w-7/12">Name</div>
+                        <div className="w-5/12 flex items-center">
+                            <span>Created</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" className="h-4 w-4" viewBox="0 0 16 16">
+                                <path
+                                    fill="#A8A29E"
+                                    fill-rule="evenodd"
+                                    d="M13.366 8.234a.8.8 0 010 1.132l-4.8 4.8a.8.8 0 01-1.132 0l-4.8-4.8a.8.8 0 111.132-1.132L7.2 11.67V2.4a.8.8 0 111.6 0v9.269l3.434-3.435a.8.8 0 011.132 0z"
+                                    clip-rule="evenodd"
+                                />
+                            </svg>
+                        </div>
                     </div>
                     {searchResult.rows
                         .filter((u) => u.identities.length > 0)
