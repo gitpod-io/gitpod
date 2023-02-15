@@ -276,9 +276,11 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					"/app/ready-probe-labeler",
 					fmt.Sprintf("--label=gitpod.io/ws-daemon_ready_ns_%v", ctx.Namespace),
 					fmt.Sprintf(`--probe-url=http://localhost:%v/ready`, ReadinessPort),
+					fmt.Sprintf(`--host-port=%v`, ServicePort),
 				},
 				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 					common.NodeNameEnv(ctx),
+					common.NodeHostIPEnv(ctx),
 					common.ProxyEnv(&ctx.Config),
 				)),
 				ImagePullPolicy: corev1.PullIfNotPresent,

@@ -5,9 +5,11 @@
 package main
 
 import (
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -37,6 +39,7 @@ var opts struct {
 	Kubeconfig string
 	Label      string
 	ProbeURL   string
+	HostPort   int
 	Timeout    time.Duration
 }
 
@@ -48,6 +51,7 @@ func main() {
 	pflag.StringVarP(&opts.Kubeconfig, "kubeconfig", "k", "", "Kubeconfig file path")
 	pflag.StringVarP(&opts.ProbeURL, "probe-url", "p", "http://localhost:9501/ready", "URL to test the readiness of a service")
 	pflag.DurationVarP(&opts.Timeout, "timeout", "t", 60*time.Second, "W")
+	pflag.IntVarP(&opts.HostPort, "host-port", "h", 0, "Check if the host port is reachable before adding a label")
 	pflag.Parse()
 
 	log.Init(ServiceName, Version, opts.JSONLog, opts.Verbose)
@@ -68,12 +72,12 @@ func main() {
 		log.Fatalf("Unexpected error: %v", err)
 	}
 
-	if opts.Shutdown {
-		err = updateLabel(opts.Label, false, nodeName, client)
-		if err != nil {
-			log.Fatalf("Unexpected error removing node label: %v", err)
-		}
+	err = updateLabel(opts.Label, false, nodeName, client)
+	if err != nil {
+		log.Fatalf("Unexpected error removing node label: %v", err)
+	}
 
+	if opts.Shutdown {
 		return
 	}
 
@@ -82,6 +86,17 @@ func main() {
 	err = waitForURLToBeReachable(opts.ProbeURL, opts.Timeout)
 	if err != nil {
 		log.Fatalf("Unexpected error waiting for probe URL: %v", err)
+	}
+
+	nodeIP := os.Getenv("NODEIP")
+	if opts.HostPort != 0 && nodeIP != "" {
+		log.Infof("Waiting for port %v on host %v...", opts.HostPort, nodeIP)
+		err := waitForTCPPortToBeReachable(nodeIP, strconv.Itoa(opts.HostPort), opts.Timeout)
+		if err != nil {
+			log.Fatalf("Unexpected error waiting for port %v on host %v: %v", opts.HostPort, nodeIP, err)
+		}
+
+		time.Sleep(5 * time.Second)
 	}
 
 	err = updateLabel(opts.Label, true, nodeName, client)
@@ -192,6 +207,33 @@ func waitForURLToBeReachable(probeURL string, timeout time.Duration) error {
 			}
 
 			return nil
+		}
+	}
+}
+
+func waitForTCPPortToBeReachable(host string, port string, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return xerrors.Errorf("port %v on host %v never reachable", port, host)
+		case <-ticker.C:
+			conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+			if err != nil {
+				continue
+			}
+
+			if conn != nil {
+				conn.Close()
+				return nil
+			}
+
+			continue
 		}
 	}
 }
