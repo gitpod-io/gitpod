@@ -71,7 +71,7 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: [self-hosted]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
     outputs:
       previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
     steps:
@@ -132,7 +132,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: test
           MYSQL_TCP_PORT: 23306
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
       env:
         DB_HOST: mysql
     steps:

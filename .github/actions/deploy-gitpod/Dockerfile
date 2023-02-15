@@ -1,4 +1,4 @@
-FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
 
 USER root
 ENV OCI_TOOL_VERSION="0.2.0"
