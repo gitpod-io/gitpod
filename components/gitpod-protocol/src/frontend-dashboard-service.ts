@@ -31,12 +31,18 @@ export namespace IDEFrontendDashboardService {
      * IServer is the server side which is using in dashboard loading screen
      */
     export interface IServer {
+        // TODO(hw): to be removed after IDE deployed
         sendStatusUpdate(status: Status): void;
+        // TODO(hw): end of todo
+        sendInfoUpdate(info: Info): void;
         relocate(url: string): void;
         openBrowserIDE(): void;
     }
 
-    export interface Status {
+    /**
+     * Info defined the information that `supervisor/frontend` requires.
+     */
+    export interface Info {
         workspaceID: string;
         loggedUserId: string;
 
@@ -46,7 +52,12 @@ export namespace IDEFrontendDashboardService {
 
         workspaceDescription: string;
         workspaceType: string;
+        credentialsToken: string;
     }
+
+    // TODO(hw): to be removed after IDE deployed
+    export type Status = Info;
+    // TODO(hw): end of todo
 
     export interface SetStateData {
         ideFrontendFailureCause?: string;
@@ -57,14 +68,20 @@ export namespace IDEFrontendDashboardService {
         };
     }
 
-    /**
-     * interface for post message that send status update from dashboard to supervisor
-     */
+    // TODO(hw): to be removed after IDE deployed
     export interface StatusUpdateEventData {
         // protocol version
         version?: number;
         type: "ide-status-update";
         status: Status;
+    }
+    // TODO(hw): end of todo
+
+    export interface InfoUpdateEventData {
+        // protocol version
+        version?: number;
+        type: "ide-info-update";
+        info: Info;
     }
 
     export interface HeartbeatEventData {
@@ -95,8 +112,14 @@ export namespace IDEFrontendDashboardService {
         url: string;
     }
 
+    // TODO(hw): to be removed after IDE deployed
     export function isStatusUpdateEventData(obj: any): obj is StatusUpdateEventData {
         return obj != null && typeof obj === "object" && obj.type === "ide-status-update";
+    }
+    // TODO(hw): end of todo
+
+    export function isInfoUpdateEventData(obj: any): obj is InfoUpdateEventData {
+        return obj != null && typeof obj === "object" && obj.type === "ide-info-update";
     }
 
     export function isHeartbeatEventData(obj: any): obj is HeartbeatEventData {

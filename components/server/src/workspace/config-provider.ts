@@ -7,6 +7,7 @@
 import { inject, injectable } from "inversify";
 import fetch from "node-fetch";
 import * as path from "path";
+import * as crypto from "crypto";
 
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
@@ -243,6 +244,7 @@ export class ConfigProvider {
             ports: [],
             tasks: [],
             image: this.config.workspaceDefaults.workspaceImage,
+            ideCredentials: crypto.randomBytes(32).toString("base64"),
         };
     }
 

@@ -117,6 +117,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getWorkspace(id: string): Promise<WorkspaceInfo>;
     isWorkspaceOwner(workspaceId: string): Promise<boolean>;
     getOwnerToken(workspaceId: string): Promise<string>;
+    getIDECredentials(workspaceId: string): Promise<string>;
 
     /**
      * Creates and starts a workspace for the given context URL.
