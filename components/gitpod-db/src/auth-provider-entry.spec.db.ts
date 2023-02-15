@@ -118,6 +118,18 @@ export class AuthProviderEntryDBSpec {
         expect(results).to.deep.contain(ap1);
         expect(results).to.deep.contain(ap2);
     }
+
+    @test public async findByUserId() {
+        const ap1 = this.authProvider({ id: "1", ownerId: "owner1" });
+        const ap2 = this.authProvider({ id: "2", ownerId: "owner1", organizationId: "org1" });
+
+        await this.db.storeAuthProvider(ap1, false);
+        await this.db.storeAuthProvider(ap2, false);
+
+        const results = await this.db.findByUserId("owner1");
+        expect(results.length).to.equal(1);
+        expect(results).to.deep.contain(ap1);
+    }
 }
 
 module.exports = AuthProviderEntryDBSpec;
