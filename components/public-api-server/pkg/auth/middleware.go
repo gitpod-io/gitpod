@@ -66,8 +66,9 @@ func tokenFromRequest(ctx context.Context, req connect.AnyRequest) (Token, error
 	}
 
 	cookie := req.Header().Get("Cookie")
+	origin := req.Header().Get("Origin")
 	if cookie != "" {
-		return NewCookieToken(cookie), nil
+		return NewCookieToken(cookie, origin), nil
 	}
 
 	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
@@ -82,8 +83,9 @@ func tokenFromConn(ctx context.Context, conn connect.StreamingHandlerConn) (Toke
 	}
 
 	cookie := conn.RequestHeader().Get("Cookie")
+	origin := conn.RequestHeader().Get("Origin")
 	if cookie != "" {
-		return NewCookieToken(cookie), nil
+		return NewCookieToken(cookie, origin), nil
 	}
 
 	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
