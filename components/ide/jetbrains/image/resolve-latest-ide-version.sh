@@ -12,7 +12,7 @@ PLUGIN_PLATFORM_VERSION=$(grep platformVersion= "$ROOT_DIR/components/ide/jetbra
 
 curl -sL "https://data.services.jetbrains.com/products/releases?code=$PRODUCT_CODE&type=eap,rc,release&platform=linux" > "$TEMP_FILENAME"
 IDE_BUILD_VERSION=$(jq -r -c "first(.${PRODUCT_CODE}[] | select(.build | contains(\"$PLUGIN_PLATFORM_VERSION\")) | .build)" < "$TEMP_FILENAME") # Example: IDE_BUILD_VERSION: 223.7571.176
-IDE_VERSION=$(jq -r ".${PRODUCT_CODE}[0].version" < "$TEMP_FILENAME") # Example: IDE_VERSION: 2022.3
+IDE_VERSION=$(jq -r -c "first(.${PRODUCT_CODE}[] | select(.build | contains(\"$PLUGIN_PLATFORM_VERSION\")) | .version)" < "$TEMP_FILENAME") # Example: IDE_VERSION: 2022.3
 rm "$TEMP_FILENAME"
 
 echo "{\"IDE_BUILD_VERSION\": \"$IDE_BUILD_VERSION\", \"IDE_VERSION\": \"$IDE_VERSION\"}"
