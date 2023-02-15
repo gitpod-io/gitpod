@@ -20,7 +20,7 @@ func TestTokenToAndFromContext_AccessToken(t *testing.T) {
 }
 
 func TestTokenToAndFromContext_CookieToken(t *testing.T) {
-	token := NewCookieToken("my_token")
+	token := NewCookieToken("my_token", "gitpod.io")
 
 	extracted, err := TokenFromContext(TokenToContext(context.Background(), token))
 	require.NoError(t, err)

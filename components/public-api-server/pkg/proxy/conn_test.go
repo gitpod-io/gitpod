@@ -57,7 +57,7 @@ func TestEndpointBasedOnToken(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "wss://server:3000/v1", endpointForAccessToken)
 
-	endpointForCookie, err := getEndpointBasedOnToken(auth.NewCookieToken("foo"), u)
+	endpointForCookie, err := getEndpointBasedOnToken(auth.NewCookieToken("foo", "server"), u)
 	require.NoError(t, err)
 	require.Equal(t, "wss://server:3000/gitpod", endpointForCookie)
 }
