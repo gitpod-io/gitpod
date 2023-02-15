@@ -102,8 +102,9 @@ function ContextMenu(props: ContextMenuProps) {
     );
 
     return (
-        <div className="relative cursor-pointer">
+        <div className="relative">
             <div
+                className="cursor-pointer"
                 onClick={(e) => {
                     toggleExpanded();
                     // Don't use `e.stopPropagation();` because that prevents that clicks on other context menus closes this one.
@@ -114,7 +115,7 @@ function ContextMenu(props: ContextMenuProps) {
             </div>
             {expanded ? (
                 <div
-                    className={`cursor-default mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated ${
+                    className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated ${
                         props.customClasses || "w-48 right-0"
                     }`}
                     data-analytics='{"button_type":"context_menu"}'
