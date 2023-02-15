@@ -8,7 +8,7 @@ jobs:
         name: "Find stale preview environments"
         runs-on: [self-hosted]
         container:
-            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:mads-leeway-v0.7.3.4
+            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
         outputs:
             names: ${{ steps.set-matrix.outputs.names }}
             count: ${{ steps.set-matrix.outputs.count }}

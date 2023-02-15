@@ -251,7 +251,7 @@ RUN sudo apt-add-repository -y ppa:fish-shell/release-3 && \
 RUN brew install tmux tmuxinator
 
 # Copy our own tools
-ENV NEW_KUBECDL=1
+ENV NEW_KUBECDL=2
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
 
 # Configure our tools' autocompletion
