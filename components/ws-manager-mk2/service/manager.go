@@ -7,6 +7,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"sync"
 	"time"
@@ -542,10 +543,10 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 	}
 
 	var sso workspacev1.Snapshot
-	err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, func(c context.Context) (done bool, err error) {
-		err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: ws.Name}, &sso)
+	err = wait.PollWithContext(ctx, 100*time.Millisecond, 10*time.Second, func(c context.Context) (done bool, err error) {
+		err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: snapshot.Name}, &sso)
 		if err != nil {
-			return false, nil
+			return false, err
 		}
 
 		if sso.Status.URL != "" && sso.Status.Error == "" {
@@ -556,7 +557,7 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 	})
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot wait for snapshot URL")
+		return nil, status.Errorf(codes.Internal, "cannot wait for snapshot URL: %v", err)
 	}
 
 	if !req.ReturnImmediately {
@@ -581,6 +582,8 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 			return nil, status.Errorf(codes.Internal, "cannot take snapshot: %q", sso.Status.Error)
 		}
 	}
+
+	log.Info("return url")
 
 	return &wsmanapi.TakeSnapshotResponse{
 		Url: sso.Status.URL,
@@ -639,6 +642,39 @@ func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id strin
 	}
 	return nil
 }
+
+// func modifyObject[obj client.Object](ctx context.Context, client client.Client, namespace, id string, updateStatus bool, mod func(o obj) error) error {
+// 	var ws obj
+// 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+// 		err := client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: id}, ws)
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		err = mod(ws)
+// 		if err != nil {
+// 			return err
+// 		}
+
+// 		if updateStatus {
+// 			err = client.Status().Update(ctx, ws)
+// 		} else {
+// 			err = client.Update(ctx, ws)
+
+// 		}
+// 		return err
+// 	})
+// 	if errors.IsNotFound(err) {
+// 		return status.Errorf(codes.NotFound, "%s %s not found", reflect.TypeOf(ws).String(), id)
+// 	}
+// 	if c := status.Code(err); c != codes.Unknown && c != codes.OK {
+// 		return err
+// 	}
+// 	if err != nil {
+// 		return status.Errorf(codes.Internal, "cannot modify %s: %v", reflect.TypeOf(ws).String(), err)
+// 	}
+// 	return nil
+// }
 
 // validateStartWorkspaceRequest ensures that acting on this request will not leave the system in an invalid state
 func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
