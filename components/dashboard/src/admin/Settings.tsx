@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
+import React, { useContext } from "react";
 import { TelemetryData, InstallationAdminSettings } from "@gitpod/gitpod-protocol";
 import { AdminContext } from "../admin-context";
 import CheckBox from "../components/CheckBox";
@@ -12,7 +12,21 @@ import { getGitpodService } from "../service/service";
 import { useEffect, useState } from "react";
 import InfoBox from "../components/InfoBox";
 import { isGitpodIo } from "../utils";
-import { AdminPageHeader } from "./AdminPageHeader";
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import { getAdminTabs, getAdminSettingsMenu } from "./admin.routes";
+
+export function SettingsLayout(props: { children: React.ReactNode }) {
+    return (
+        <PageWithSubMenu
+            subMenu={getAdminSettingsMenu()}
+            title="Admin"
+            subtitle="Configure and manage instance settings."
+            tabs={getAdminTabs()}
+        >
+            {props.children}
+        </PageWithSubMenu>
+    );
+}
 
 export default function Settings() {
     const { adminSettings, setAdminSettings } = useContext(AdminContext);
@@ -38,55 +52,53 @@ export default function Settings() {
 
     return (
         <div>
-            <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
-                <div className="app-container mt-8">
-                    <h3>Usage Statistics</h3>
-                    <p className="text-base text-gray-500 pb-4 max-w-2xl">
-                        We collect usage telemetry to gain insights on how you use your Gitpod instance, so we can
-                        provide a better overall experience.
-                    </p>
-                    <p>
-                        <a className="gp-link" href="https://www.gitpod.io/privacy">
-                            Read our Privacy Policy
-                        </a>
-                    </p>
-                    <CheckBox
-                        title="Enable usage telemetry"
-                        desc={
-                            <span>
-                                Enable usage telemetry on your Gitpod instance. A preview of your telemetry is available
-                                below.
-                            </span>
-                        }
-                        checked={adminSettings?.sendTelemetry ?? false}
-                        onChange={(evt) =>
-                            actuallySetTelemetryPrefs({
-                                ...adminSettings,
-                                sendTelemetry: evt.target.checked,
-                            } as InstallationAdminSettings)
-                        }
-                    />
-                    <CheckBox
-                        title="Include customer ID in telemetry"
-                        desc={
-                            <span>
-                                Include an optional customer ID in usage telemetry to provide individualized support.
-                            </span>
-                        }
-                        checked={adminSettings?.sendCustomerID ?? false}
-                        onChange={(evt) =>
-                            actuallySetTelemetryPrefs({
-                                ...adminSettings,
-                                sendCustomerID: evt.target.checked,
-                            } as InstallationAdminSettings)
-                        }
-                    />
-                    <h3 className="mt-4">Telemetry preview</h3>
-                    <InfoBox>
-                        <pre>{JSON.stringify(telemetryData, null, 2)}</pre>
-                    </InfoBox>
-                </div>
-            </AdminPageHeader>
+            <SettingsLayout>
+                <h3>Usage Statistics</h3>
+                <p className="text-base text-gray-500 pb-4 max-w-2xl">
+                    We collect usage telemetry to gain insights on how you use your Gitpod instance, so we can provide a
+                    better overall experience.
+                </p>
+                <p>
+                    <a className="gp-link" href="https://www.gitpod.io/privacy">
+                        Read our Privacy Policy
+                    </a>
+                </p>
+                <CheckBox
+                    title="Enable usage telemetry"
+                    desc={
+                        <span>
+                            Enable usage telemetry on your Gitpod instance. A preview of your telemetry is available
+                            below.
+                        </span>
+                    }
+                    checked={adminSettings?.sendTelemetry ?? false}
+                    onChange={(evt) =>
+                        actuallySetTelemetryPrefs({
+                            ...adminSettings,
+                            sendTelemetry: evt.target.checked,
+                        } as InstallationAdminSettings)
+                    }
+                />
+                <CheckBox
+                    title="Include customer ID in telemetry"
+                    desc={
+                        <span>
+                            Include an optional customer ID in usage telemetry to provide individualized support.
+                        </span>
+                    }
+                    checked={adminSettings?.sendCustomerID ?? false}
+                    onChange={(evt) =>
+                        actuallySetTelemetryPrefs({
+                            ...adminSettings,
+                            sendCustomerID: evt.target.checked,
+                        } as InstallationAdminSettings)
+                    }
+                />
+                <h3 className="mt-4">Telemetry preview</h3>
+                <InfoBox>
+                    <pre>{JSON.stringify(telemetryData, null, 2)}</pre>
+                </InfoBox>
+            </SettingsLayout>
         </div>
     );
 }
