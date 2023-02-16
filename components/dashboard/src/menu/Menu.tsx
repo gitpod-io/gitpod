@@ -68,7 +68,15 @@ export default function Menu() {
     const adminMenu: Entry = {
         title: "Admin",
         link: "/admin",
-        alternatives: [...getAdminTabs().map((entry) => entry.link)],
+        alternatives: [
+            ...getAdminTabs().reduce(
+                (prevEntry, currEntry) =>
+                    currEntry.alternatives
+                        ? [...prevEntry, ...currEntry.alternatives, currEntry.link]
+                        : [...prevEntry, currEntry.link],
+                [] as string[],
+            ),
+        ],
     };
 
     const handleFeedbackFormClick = () => {
