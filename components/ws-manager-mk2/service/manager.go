@@ -501,8 +501,90 @@ func (wsm *WorkspaceManagerServer) ControlPort(ctx context.Context, req *wsmanap
 	return &wsmanapi.ControlPortResponse{}, nil
 }
 
-func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmanapi.TakeSnapshotRequest) (*wsmanapi.TakeSnapshotResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method TakeSnapshot not implemented")
+func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmanapi.TakeSnapshotRequest) (res *wsmanapi.TakeSnapshotResponse, err error) {
+	span, ctx := tracing.FromContext(ctx, "TakeSnapshot")
+	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
+	defer tracing.FinishSpan(span, &err)
+
+	var ws workspacev1.Workspace
+	err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: req.Id}, &ws)
+	if errors.IsNotFound(err) {
+		return nil, status.Errorf(codes.NotFound, "workspace %s not found", req.Id)
+	}
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot lookup workspace: %w", err)
+	}
+
+	if ws.Status.Phase != workspacev1.WorkspacePhaseRunning {
+		return nil, status.Errorf(codes.FailedPrecondition, "snapshots can only be taken of running workspaces, not %s workspaces", ws.Status.Phase)
+	}
+
+	snapshot := workspacev1.Snapshot{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: workspacev1.GroupVersion.String(),
+			Kind:       "Snapshot",
+		},
+
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-%d", req.Id, time.Now().UnixNano()),
+			Namespace: wsm.Config.Namespace,
+			Labels:    map[string]string{},
+		},
+		Spec: workspacev1.SnapshotSpec{
+			NodeName:    ws.Status.Runtime.NodeName,
+			WorkspaceID: ws.Name,
+		},
+	}
+
+	err = wsm.Client.Create(ctx, &snapshot)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot create snapshot object: %q", err)
+	}
+
+	var sso workspacev1.Snapshot
+	err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, func(c context.Context) (done bool, err error) {
+		err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: ws.Name}, &sso)
+		if err != nil {
+			return false, nil
+		}
+
+		if sso.Status.URL != "" && sso.Status.Error == "" {
+			return true, nil
+		}
+
+		return false, nil
+	})
+
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot wait for snapshot URL")
+	}
+
+	if !req.ReturnImmediately {
+		err = wait.PollWithContext(ctx, 100*time.Millisecond, 0, func(c context.Context) (done bool, err error) {
+			err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: ws.Name}, &sso)
+			if err != nil {
+				return false, nil
+			}
+
+			if sso.Status.Completed {
+				return true, nil
+			}
+
+			return false, nil
+		})
+
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "cannot wait for snapshot: %q", err)
+		}
+
+		if sso.Status.Error != "" {
+			return nil, status.Errorf(codes.Internal, "cannot take snapshot: %q", sso.Status.Error)
+		}
+	}
+
+	return &wsmanapi.TakeSnapshotResponse{
+		Url: sso.Status.URL,
+	}, nil
 }
 
 func (wsm *WorkspaceManagerServer) ControlAdmission(ctx context.Context, req *wsmanapi.ControlAdmissionRequest) (*wsmanapi.ControlAdmissionResponse, error) {
