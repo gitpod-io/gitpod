@@ -6,7 +6,9 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -19,13 +21,15 @@ import (
 // SnapshotReconciler reconciles a Snapshot object
 type SnapshotReconciler struct {
 	client.Client
-	nodeName string
+	nodeName   string
+	operations *WorkspaceOperations
 }
 
-func NewSnapshotController(c client.Client, nodeName string) *SnapshotReconciler {
+func NewSnapshotController(c client.Client, nodeName string, wso *WorkspaceOperations) *SnapshotReconciler {
 	return &SnapshotReconciler{
-		Client:   c,
-		nodeName: nodeName,
+		Client:     c,
+		nodeName:   nodeName,
+		operations: wso,
 	}
 }
 
@@ -67,13 +71,55 @@ func snapshotEventFilter(nodeName string) predicate.Predicate {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
-func (r *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := log.FromContext(ctx)
+	log.Info("Reconciling snapshot")
 
 	var snapshot workspacev1.Snapshot
-	if err := r.Client.Get(ctx, req.NamespacedName, &snapshot); err != nil {
+	if err := ssc.Client.Get(ctx, req.NamespacedName, &snapshot); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	return ctrl.Result{}, nil
+	log.Info("got snapshot")
+	if snapshot.Status.Completed {
+		return ctrl.Result{}, nil
+	}
+
+	snapshotURL, snapshotErr := ssc.operations.SnapshotURL(snapshot.Name)
+	if snapshotErr != nil {
+		return ctrl.Result{}, snapshotErr
+	}
+
+	log.Info("got snapshot url")
+	retry.RetryOnConflict(retryParams, func() error {
+		err := ssc.Client.Get(ctx, req.NamespacedName, &snapshot)
+		if err != nil {
+			return err
+		}
+
+		snapshot.Status.URL = snapshotURL
+		return ssc.Client.Status().Update(ctx, &snapshot)
+	})
+
+	log.Info("updated snapshot url")
+	snapshotErr = ssc.operations.TakeSnapshot(ctx, snapshot.Name)
+	err := retry.RetryOnConflict(retryParams, func() error {
+		err := ssc.Client.Get(ctx, req.NamespacedName, &snapshot)
+		if err != nil {
+			return err
+		}
+
+		snapshot.Status.Completed = true
+		if snapshotErr != nil {
+			snapshot.Status.Error = fmt.Errorf("could not take snapshot: %w", snapshotErr).Error()
+		}
+
+		return ssc.Status().Update(ctx, &snapshot)
+	})
+
+	return ctrl.Result{}, err
 }
+
+// func modifySnapshot() error {
+// 	return nil
+// }

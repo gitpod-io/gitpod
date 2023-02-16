@@ -179,7 +179,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 			return nil, err
 		}
 
-		ssctrl := controller.NewSnapshotController(mgr.GetClient())
+		ssctrl := controller.NewSnapshotController(mgr.GetClient(), nodename)
 		err = ssctrl.SetupWithManager(mgr)
 		if err != nil {
 			return nil, err
