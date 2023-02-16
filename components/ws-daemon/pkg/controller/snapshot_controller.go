@@ -7,10 +7,11 @@ package controller
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
@@ -18,7 +19,39 @@ import (
 // SnapshotReconciler reconciles a Snapshot object
 type SnapshotReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	nodeName string
+}
+
+func NewSnapshotController(c client.Client, nodeName string) *SnapshotReconciler {
+	return &SnapshotReconciler{
+		Client:   c,
+		nodeName: nodeName,
+	}
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *SnapshotReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&workspacev1.Snapshot{}).
+		WithEventFilter(snapshotEventFilter(r.nodeName)).
+		Complete(r)
+}
+
+func snapshotEventFilter(nodeName string) predicate.Predicate {
+	return predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			if ss, ok := e.Object.(*workspacev1.Snapshot); ok {
+				return ss.Spec.NodeName == nodeName
+			}
+			return false
+		},
+		UpdateFunc: func(ue event.UpdateEvent) bool {
+			return false
+		},
+		DeleteFunc: func(de event.DeleteEvent) bool {
+			return false
+		},
+	}
 }
 
 //+kubebuilder:rbac:groups=workspace.gitpod.io,resources=snapshots,verbs=get;list;watch;create;update;patch;delete
@@ -37,14 +70,10 @@ type SnapshotReconciler struct {
 func (r *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	var snapshot workspacev1.Snapshot
+	if err := r.Client.Get(ctx, req.NamespacedName, &snapshot); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
 	return ctrl.Result{}, nil
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *SnapshotReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&workspacev1.Snapshot{}).
-		Complete(r)
 }

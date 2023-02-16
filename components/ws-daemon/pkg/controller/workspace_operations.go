@@ -227,6 +227,10 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 	return false, repo, nil
 }
 
+func (wso *WorkspaceOperations) TakeSnapshot() error {
+	return nil
+}
+
 func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts DisposeOptions) (err error) {
 	// currently we're only uploading prebuild log files
 	logFiles, err := logs.ListPrebuildLogFiles(ctx, opts.WorkspaceLocation)

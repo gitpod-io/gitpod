@@ -178,6 +178,12 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		ssctrl := controller.NewSnapshotController(mgr.GetClient())
+		err = ssctrl.SetupWithManager(mgr)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
