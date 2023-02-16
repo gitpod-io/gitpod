@@ -43,7 +43,6 @@ type Components struct {
 	ToxicConfig           Versioned `json:"toxic-config"`
 	Usage                 Versioned `json:"usage"`
 	Workspace             struct {
-		CodeImage        Versioned `json:"codeImage"`
 		CodeHelperImage  Versioned `json:"codeHelperImage"`
 		DockerUp         Versioned `json:"dockerUp"`
 		Supervisor       Versioned `json:"supervisor"`

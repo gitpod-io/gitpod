@@ -1627,9 +1627,6 @@ data:
             "version": "test"
           },
           "workspace": {
-            "codeImage": {
-              "version": "test"
-            },
             "codeHelperImage": {
               "version": "test"
             },

@@ -87,7 +87,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Logo:              getIdeLogoPath("vscode"),
 					Image:             ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageStableVersion),
 					ImageLayers:       []string{codeWebExtensionImage, codeHelperImage},
-					LatestImage:       resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
+					LatestImage:       ctx.ImageName(ctx.Config.Repository, ide.CodeIDEImage, ide.CodeIDEImageInsidersVersion),
 					LatestImageLayers: []string{codeWebExtensionImage, codeHelperImage},
 				},
 				codeDesktop: {

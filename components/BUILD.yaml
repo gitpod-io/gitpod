@@ -39,7 +39,6 @@ packages:
       - components/gitpod-db:docker
       - components/ide/code-desktop:docker
       - components/ide/code-desktop:docker-insiders
-      - components/ide/code:docker
       - components/ide/code/codehelper:docker
       - components/ide/jetbrains/launcher:docker
       - components/ide/jetbrains/backend-plugin:stable
