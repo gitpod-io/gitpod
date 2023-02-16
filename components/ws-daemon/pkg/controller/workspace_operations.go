@@ -200,7 +200,7 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		}
 	}
 
-	err = wso.uploadWorkspaceContent(ctx, sess)
+	err = wso.uploadWorkspaceContent(ctx, sess, storage.DefaultBackup)
 	if err != nil {
 		return false, nil, xerrors.Errorf("final backup failed for workspace %s", opts.Meta.InstanceId)
 	}
@@ -225,6 +225,50 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 	}
 
 	return false, repo, nil
+}
+
+func (wso *WorkspaceOperations) SnapshotIDs(workspaceID string) (snapshotUrl, snapshotName string, err error) {
+	sess := wso.store.Get(workspaceID)
+	if sess == nil {
+		return "", "", fmt.Errorf("cannot find workspace %s during SnapshotName", workspaceID)
+	}
+
+	baseName := fmt.Sprintf("snapshot-%d", time.Now().UnixNano())
+	snapshotName = baseName + ".tar"
+
+	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
+	if rs == nil || !ok {
+		return "", "", fmt.Errorf("no remote storage configured")
+	}
+
+	return rs.Qualify(snapshotName), snapshotName, nil
+}
+
+func (wso *WorkspaceOperations) TakeSnapshot(ctx context.Context, workspaceID, snapshotName string) (err error) {
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "TakeSnapshot")
+	span.SetTag("workspace", workspaceID)
+	defer tracing.FinishSpan(span, &err)
+
+	if workspaceID == "" {
+		return fmt.Errorf("workspaceID is required")
+	}
+
+	sess := wso.store.Get(workspaceID)
+	if sess == nil {
+		return fmt.Errorf("cannot find workspace %s during DisposeWorkspace", workspaceID)
+	}
+
+	if sess.RemoteStorageDisabled {
+		return fmt.Errorf("workspace has no remote storage")
+	}
+
+	err = wso.uploadWorkspaceContent(ctx, sess, snapshotName)
+	if err != nil {
+		return fmt.Errorf("snapshot failed for workspace %s", workspaceID)
+	}
+
+	return nil
 }
 
 func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts DisposeOptions) (err error) {
@@ -271,8 +315,7 @@ func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts Di
 	return err
 }
 
-func (wso *WorkspaceOperations) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace) error {
-	var backupName = storage.DefaultBackup
+func (wso *WorkspaceOperations) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName string) error {
 	// Avoid too many simultaneous backups in order to avoid excessive memory utilization.
 	var timedOut bool
 	waitStart := time.Now()
