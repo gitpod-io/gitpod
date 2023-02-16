@@ -357,11 +357,20 @@ func (mr *MockAPIInterfaceMockRecorder) GetContentBlobUploadURL(ctx, name interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentBlobUploadURL", reflect.TypeOf((*MockAPIInterface)(nil).GetContentBlobUploadURL), ctx, name)
 }
 
+// GetWorkspaceEnvVars mocks base method.
+func (m *MockAPIInterface) GetWorkspaceEnvVars(ctx context.Context, workspaceID string) ([]*EnvVar, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWorkspaceEnvVars", ctx, workspaceID)
+	ret0, _ := ret[0].([]*EnvVar)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
 // GetEnvVars mocks base method.
-func (m *MockAPIInterface) GetEnvVars(ctx context.Context) ([]*UserEnvVarValue, error) {
+func (m *MockAPIInterface) GetEnvVars(ctx context.Context) ([]*EnvVar, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEnvVars", ctx)
-	ret0, _ := ret[0].([]*UserEnvVarValue)
+	ret0, _ := ret[0].([]*EnvVar)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -323,6 +323,8 @@ export namespace NamedWorkspaceFeatureFlag {
     }
 }
 
+export type EnvVar = UserEnvVar | ProjectEnvVarWithValue | EnvVarWithValue;
+
 export interface EnvVarWithValue {
     name: string;
     value: string;
