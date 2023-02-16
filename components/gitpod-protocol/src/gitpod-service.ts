@@ -27,6 +27,7 @@ import {
     UserSSHPublicKeyValue,
     SSHPublicKeyValue,
     IDESettings,
+    EnvVarWithValue,
 } from "./protocol";
 import {
     Team,
@@ -152,6 +153,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     // User storage
     getUserStorageResource(options: GitpodServer.GetUserStorageResourceOptions): Promise<string>;
     updateUserStorageResource(options: GitpodServer.UpdateUserStorageResourceOptions): Promise<void>;
+
+    // Workspace env vars
+    getWorkspaceEnvVars(workspaceId: string): Promise<EnvVarWithValue[]>;
 
     // User env vars
     getEnvVars(): Promise<UserEnvVarValue[]>;

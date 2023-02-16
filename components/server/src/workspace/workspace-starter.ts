@@ -37,9 +37,6 @@ import {
     SnapshotContext,
     StartWorkspaceResult,
     User,
-    UserEnvVar,
-    UserEnvVarValue,
-    WithEnvvarsContext,
     WithPrebuild,
     Workspace,
     WorkspaceContext,
@@ -54,10 +51,8 @@ import {
     DisposableCollection,
     AdditionalContentContext,
     ImageConfigFile,
-    ProjectEnvVar,
     ImageBuildLogInfo,
     WithReferrerContext,
-    EnvVarWithValue,
     BillingTier,
     Project,
     GitpodServer,
@@ -127,6 +122,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { ResolvedEnvVars } from "./env-var-service";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
@@ -211,8 +207,7 @@ export class WorkspaceStarter {
         workspace: Workspace,
         user: User,
         project: Project | undefined,
-        userEnvVars: UserEnvVar[],
-        projectEnvVars: ProjectEnvVar[],
+        envVars: ResolvedEnvVars,
         options?: StartWorkspaceOptions,
     ): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
@@ -303,7 +298,7 @@ export class WorkspaceStarter {
             try {
                 // if we need to build the workspace image we must not wait for actuallyStartWorkspace to return as that would block the
                 // frontend until the image is built.
-                const additionalAuth = await this.getAdditionalImageAuth(projectEnvVars);
+                const additionalAuth = await this.getAdditionalImageAuth(envVars);
                 needsImageBuild =
                     forceRebuild ||
                     (await this.needsImageBuild({ span }, user, workspace, instance, additionalAuth, options?.region));
@@ -332,8 +327,7 @@ export class WorkspaceStarter {
                     user,
                     lastValidWorkspaceInstance?.id ?? "",
                     ideConfig,
-                    userEnvVars,
-                    projectEnvVars,
+                    envVars,
                     options.rethrow,
                     forceRebuild,
                     options?.region,
@@ -348,8 +342,7 @@ export class WorkspaceStarter {
                 user,
                 lastValidWorkspaceInstance?.id ?? "",
                 ideConfig,
-                userEnvVars,
-                projectEnvVars,
+                envVars,
                 options.rethrow,
                 forceRebuild,
                 options?.region,
@@ -438,8 +431,7 @@ export class WorkspaceStarter {
         user: User,
         lastValidWorkspaceInstanceId: string,
         ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
-        userEnvVars: UserEnvVar[],
-        projectEnvVars: ProjectEnvVar[],
+        envVars: ResolvedEnvVars,
         rethrow?: boolean,
         forceRebuild?: boolean,
         region?: WorkspaceRegion,
@@ -449,7 +441,7 @@ export class WorkspaceStarter {
 
         try {
             // build workspace image
-            const additionalAuth = await this.getAdditionalImageAuth(projectEnvVars);
+            const additionalAuth = await this.getAdditionalImageAuth(envVars);
             instance = await this.buildWorkspaceImage(
                 { span },
                 user,
@@ -475,8 +467,7 @@ export class WorkspaceStarter {
                 instance,
                 lastValidWorkspaceInstanceId,
                 ideConfig,
-                userEnvVars,
-                projectEnvVars,
+                envVars,
             );
 
             // create start workspace request
@@ -686,9 +677,9 @@ export class WorkspaceStarter {
         return undefined;
     }
 
-    protected async getAdditionalImageAuth(projectEnvVars: ProjectEnvVar[]): Promise<Map<string, string>> {
+    protected async getAdditionalImageAuth(envVars: ResolvedEnvVars): Promise<Map<string, string>> {
         const res = new Map<string, string>();
-        const imageAuth = projectEnvVars.find((e) => e.name === "GITPOD_IMAGE_AUTH");
+        const imageAuth = envVars.project.find((e) => e.name === "GITPOD_IMAGE_AUTH");
         if (!imageAuth) {
             return res;
         }
@@ -1294,47 +1285,17 @@ export class WorkspaceStarter {
         instance: WorkspaceInstance,
         lastValidWorkspaceInstanceId: string,
         ideConfig: IdeServiceApi.ResolveWorkspaceConfigResponse,
-        userEnvVars: UserEnvVarValue[],
-        projectEnvVars: ProjectEnvVar[],
+        envVars: ResolvedEnvVars,
     ): Promise<StartWorkspaceSpec> {
         const context = workspace.context;
 
-        let allEnvVars: EnvVarWithValue[] = [];
-        if (userEnvVars.length > 0) {
-            if (CommitContext.is(context)) {
-                // this is a commit context, thus we can filter the env vars
-                allEnvVars = allEnvVars.concat(
-                    UserEnvVar.filter(userEnvVars, context.repository.owner, context.repository.name),
-                );
-            } else {
-                allEnvVars = allEnvVars.concat(userEnvVars);
-            }
-        }
-        if (projectEnvVars.length > 0) {
-            // Instead of using an access guard for Project environment variables, we let Project owners decide whether
-            // a variable should be:
-            //   - exposed in all workspaces (even for non-Project members when the repository is public), or
-            //   - censored from all workspaces (even for Project members)
-            let availablePrjEnvVars = projectEnvVars;
-            if (workspace.type !== "prebuild") {
-                availablePrjEnvVars = projectEnvVars.filter((variable) => !variable.censored);
-            }
-            const withValues = await this.projectDB.getProjectEnvironmentVariableValues(availablePrjEnvVars);
-            allEnvVars = allEnvVars.concat(withValues);
-        }
-        if (WithEnvvarsContext.is(context)) {
-            allEnvVars = allEnvVars.concat(context.envvars);
-        }
-
-        const envvars: EnvironmentVariable[] = [];
-
         // TODO(cw): for the time being we're still pushing the env vars as we did before.
         //           Once everything is running with the latest supervisor, we can stop doing that.
-        allEnvVars.forEach((e) => {
+        const envvars = envVars.workspace.map((e) => {
             const ev = new EnvironmentVariable();
             ev.setName(e.name);
             ev.setValue(e.value);
-            envvars.push(ev);
+            return ev;
         });
 
         const contextUrlEnv = new EnvironmentVariable();
@@ -1539,7 +1500,8 @@ export class WorkspaceStarter {
             "function:getContentBlobDownloadUrl",
             "function:accessCodeSyncStorage",
             "function:guessGitTokenScopes",
-            "function:getEnvVars",
+            "function:getWorkspaceEnvVars",
+            "function:getEnvVars", // TODO remove this after new gitpod-cli is deployed
             "function:setEnvVar",
             "function:deleteEnvVar",
             "function:getTeams",

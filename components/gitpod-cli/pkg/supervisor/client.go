@@ -26,6 +26,7 @@ type SupervisorClient struct {
 	Info         api.InfoServiceClient
 	Notification api.NotificationServiceClient
 	Control      api.ControlServiceClient
+	Token        api.TokenServiceClient
 }
 
 type SupervisorClientOption struct {
@@ -51,6 +52,7 @@ func New(ctx context.Context, options ...*SupervisorClientOption) (*SupervisorCl
 		Info:         api.NewInfoServiceClient(conn),
 		Notification: api.NewNotificationServiceClient(conn),
 		Control:      api.NewControlServiceClient(conn),
+		Token:        api.NewTokenServiceClient(conn),
 	}, nil
 }
 

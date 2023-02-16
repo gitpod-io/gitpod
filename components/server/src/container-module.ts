@@ -114,6 +114,7 @@ import { retryMiddleware } from "nice-grpc-client-middleware-retry";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { spicedbClientFromEnv, SpiceDBClient } from "./authorization/spicedb";
 import { Authorizer, PermissionChecker } from "./authorization/perms";
+import { EnvVarService } from "./workspace/env-var-service";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -255,6 +256,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(HeadlessLogController).toSelf().inSingletonScope();
 
     bind(ProjectsService).toSelf().inSingletonScope();
+
+    bind(EnvVarService).toSelf().inSingletonScope();
 
     bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
 

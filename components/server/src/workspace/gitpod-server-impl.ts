@@ -162,7 +162,7 @@ import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { PartialProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { ClientMetadata, traceClientMetadata } from "../websocket/websocket-connection-manager";
 import { ConfigurationService } from "../config/configuration-service";
-import { ProjectEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
+import { EnvVarWithValue, ProjectEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
 import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
@@ -200,6 +200,7 @@ import {
 import { reportCentralizedPermsValidation } from "../prometheus-metrics";
 import { RegionService } from "./region-service";
 import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { EnvVarService } from "./env-var-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -273,6 +274,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     @inject(PermissionChecker) protected readonly authorizer: Authorizer;
+
+    @inject(EnvVarService)
+    private readonly envVarService: EnvVarService;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -763,8 +767,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (workspace.deleted) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start a deleted workspace.");
         }
-        const userEnvVars = this.userDB.getEnvVars(user.id);
-        const projectEnvVarsPromise = this.internalGetProjectEnvVars(workspace.projectId);
+        const envVarsPromise = this.envVarService.resolve(workspace);
         const projectPromise = workspace.projectId
             ? this.projectDB.findProjectById(workspace.projectId)
             : Promise.resolve(undefined);
@@ -779,8 +782,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             workspace,
             user,
             await projectPromise,
-            await userEnvVars,
-            await projectEnvVarsPromise,
+            await envVarsPromise,
             options,
         );
         traceWI(ctx, { instanceId: result.instanceID });
@@ -1109,7 +1111,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const user = this.checkAndBlockUser("createWorkspace", { options });
             await this.checkTermsAcceptance();
 
-            const envVars = this.userDB.getEnvVars(user.id);
             logContext = { userId: user.id };
 
             // Credit check runs in parallel with the other operations up until we start consuming resources.
@@ -1255,7 +1256,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 throw err;
             }
 
-            let projectEnvVarsPromise = this.internalGetProjectEnvVars(workspace.projectId);
+            const envVarsPromise = this.envVarService.resolve(workspace);
             options.region = await this.determineWorkspaceRegion(workspace, options.region || "");
 
             logContext.workspaceId = workspace.id;
@@ -1265,8 +1266,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 workspace,
                 user,
                 project,
-                await envVars,
-                await projectEnvVarsPromise,
+                await envVarsPromise,
                 options,
             );
             ctx.span?.log({ event: "startWorkspaceComplete", ...startWorkspaceResult });
@@ -1867,7 +1867,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return [];
     }
 
+    async getWorkspaceEnvVars(ctx: TraceContext, workspaceId: string): Promise<EnvVarWithValue[]> {
+        this.checkUser("getWorkspaceEnvVars");
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
+        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        const envVars = await this.envVarService.resolve(workspace);
+
+        const result: EnvVarWithValue[] = [];
+        for (const value of envVars.workspace) {
+            if (
+                "repositoryPattern" in value &&
+                !(await this.resourceAccessGuard.canAccess({ kind: "envVar", subject: value }, "get"))
+            ) {
+                continue;
+            }
+            result.push(value);
+        }
+        return result;
+    }
+
     // Get environment variables (filter by repository pattern precedence)
+    // TODO remove then latsest gitpod-cli is deployed
     async getEnvVars(ctx: TraceContext): Promise<UserEnvVarValue[]> {
         const user = this.checkUser("getEnvVars");
         const result = new Map<string, { value: UserEnvVar; score: number }>();
