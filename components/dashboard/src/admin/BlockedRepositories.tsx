@@ -16,6 +16,7 @@ import { ItemFieldContextMenu } from "../components/ItemsList";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import Alert from "../components/Alert";
 import { SpinnerLoader } from "../components/Loader";
+import searchIcon from "../icons/search.svg";
 
 export function BlockedRepositories() {
     return (
@@ -116,24 +117,23 @@ export function BlockedRepositoriesList(props: Props) {
                         onClose={() => setDeleteModalVisible(false)}
                     />
                 )}
-                <div className="pt-8 flex">
+                <div className="pb-3 mt-3 flex">
                     <div className="flex justify-between w-full">
-                        <div className="flex">
-                            <div className="py-4">
-                                {searching ? (
+                        <div className="flex relative h-10 my-auto">
+                            {searching ? (
+                                <span className="filter-grayscale absolute top-3 left-3">
                                     <SpinnerLoader small={true} />
-                                ) : (
-                                    <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            fillRule="evenodd"
-                                            clipRule="evenodd"
-                                            d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"
-                                            fill="#A8A29E"
-                                        />
-                                    </svg>
-                                )}
-                            </div>
+                                </span>
+                            ) : (
+                                <img
+                                    src={searchIcon}
+                                    title="Search"
+                                    className="filter-grayscale absolute top-3 left-3"
+                                    alt="search icon"
+                                />
+                            )}
                             <input
+                                className="w-64 pl-9 border-0"
                                 type="search"
                                 placeholder="Search by URL RegEx"
                                 onKeyDown={(ke) => ke.key === "Enter" && search()}

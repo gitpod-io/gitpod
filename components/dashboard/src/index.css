@@ -84,10 +84,9 @@
     input[type="text"],
     input[type="tel"],
     input[type="number"],
-    input[type="search"],
     input[type="password"],
     select {
-        @apply block w-56 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-md border border-gray-300 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400 focus:ring-0;
+        @apply block w-56 text-gray-600 dark:text-gray-400 dark:bg-gray-800 bg-white rounded-md border border-gray-300 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400 focus:ring-0;
     }
     textarea::placeholder,
     input[type="text"]::placeholder,
@@ -112,8 +111,10 @@
     input[type="radio"] {
         @apply border border-gray-300 focus:border-gray-400 focus:bg-white focus:ring-0;
     }
+
+    /* Search */
     input[type="search"] {
-        @apply border-0 dark:bg-transparent;
+        @apply border-0 dark:bg-gray-800 bg-gray-50 text-gray-600 dark:text-gray-400 rounded-md focus:border-gray-400 dark:focus:border-gray-400 focus:outline-none focus:ring ring-0 focus:ring-blue-400 dark:focus:ring-blue-500 transition ease-in-out;
     }
     input[type="checkbox"] {
         @apply disabled:opacity-50;
