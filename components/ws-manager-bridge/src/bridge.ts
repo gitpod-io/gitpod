@@ -183,6 +183,7 @@ export class WorkspaceManagerBridge implements Disposable {
         }
 
         const logCtx = {
+            writeToDB,
             instanceId: status.id!,
             workspaceId: status.metadata!.metaId!,
             userId: status.metadata!.owner!,
