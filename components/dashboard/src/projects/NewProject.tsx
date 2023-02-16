@@ -359,7 +359,7 @@ export default function NewProject() {
                             </div>
                         </ContextMenu>
                         {showSearchInput && (
-                            <div className="w-full relative ">
+                            <div className="w-full relative h-10 my-auto">
                                 <img
                                     src={search}
                                     title="Search"
@@ -368,7 +368,7 @@ export default function NewProject() {
                                 />
                                 <input
                                     className="w-96 pl-10 border-0"
-                                    type="text"
+                                    type="search"
                                     placeholder="Search Repositories"
                                     value={repoSearchFilter}
                                     onChange={(e) => setRepoSearchFilter(e.target.value)}

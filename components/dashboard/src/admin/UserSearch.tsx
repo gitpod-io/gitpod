@@ -14,6 +14,7 @@ import Pagination from "../Pagination/Pagination";
 import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
 import UserDetail from "./UserDetail";
+import searchIcon from "../icons/search.svg";
 
 export default function UserSearch() {
     const location = useLocation();
@@ -64,24 +65,23 @@ export default function UserSearch() {
     return (
         <AdminPageHeader title="Admin" subtitle="Configure and manage instance settings.">
             <div className="app-container">
-                <div className="pt-8 flex">
+                <div className="mb-3 mt-3 flex">
                     <div className="flex justify-between w-full">
-                        <div className="flex">
-                            <div className="py-4">
-                                {searching ? (
+                        <div className="flex relative h-10 my-auto">
+                            {searching ? (
+                                <span className="filter-grayscale absolute top-3 left-3">
                                     <SpinnerLoader small={true} />
-                                ) : (
-                                    <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path
-                                            fillRule="evenodd"
-                                            clipRule="evenodd"
-                                            d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"
-                                            fill="#A8A29E"
-                                        />
-                                    </svg>
-                                )}
-                            </div>
+                                </span>
+                            ) : (
+                                <img
+                                    src={searchIcon}
+                                    title="Search"
+                                    className="filter-grayscale absolute top-3 left-3"
+                                    alt="search icon"
+                                />
+                            )}
                             <input
+                                className="w-64 pl-9 border-0"
                                 type="search"
                                 placeholder="Search Users"
                                 onKeyDown={(ke) => ke.key === "Enter" && search()}
@@ -90,9 +90,6 @@ export default function UserSearch() {
                                 }}
                             />
                         </div>
-                        <button disabled={searching} onClick={() => search()}>
-                            Search
-                        </button>
                     </div>
                 </div>
                 <div className="flex flex-col space-y-2">
