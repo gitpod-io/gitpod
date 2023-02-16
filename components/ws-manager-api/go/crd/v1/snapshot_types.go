@@ -10,16 +10,29 @@ import (
 
 // WorkspaceSpec defines the desired state of Workspace
 type SnapshotSpec struct {
+	// +kubebuilder:validation:Required
+	NodeName string `json:"nodeName"`
+
+	// +kubebuilder:validation:Required
+	WorkspaceID string `json:"workspaceID"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace
 type SnapshotStatus struct {
-	// +kubebuilder:validation:Optional
-	Conditions []metav1.Condition `json:"conditions"`
+	// // +kubebuilder:validation:Optional
+	// Conditions []metav1.Condition `json:"conditions"`
 
-	// Snapshot contains a snapshot URL if a snapshot was produced prior to shutting the workspace down. This condition is only used for headless workspaces.
+	// Erorr is the error observed during snapshot creation if any
 	// +kubebuilder:validation:Optional
-	Snapshot string `json:"snapshot,omitempty"`
+	Error string `json:"error,omitempty"`
+
+	// URL contains the url of the snapshot
+	// +kubebuilder:validation:Optional
+	URL string `json:"url,omitempty"`
+
+	// Completed indicates if the snapshot operation has completed either by taking the snapshot or through failure
+	// +kubebuilder:validation:Required
+	Completed bool `json:"completed"`
 }
 
 //+kubebuilder:object:root=true
