@@ -16,7 +16,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/rabbitmq"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/slowserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/spicedb"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/toxiproxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
@@ -32,7 +31,6 @@ var Objects = common.CompositeRenderFunc(
 	proxy.Objects,
 	rabbitmq.Objects,
 	server.Objects,
-	slowserver.Objects,
 	wsmanagerbridge.Objects,
 	public_api_server.Objects,
 	usage.Objects,
