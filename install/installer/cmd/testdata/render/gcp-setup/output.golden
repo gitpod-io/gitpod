@@ -785,18 +785,6 @@ metadata:
   name: cloudsqlproxy
   namespace: default
 ---
-# v1/ServiceAccount cloudsqlproxy-global
-apiVersion: v1
-automountServiceAccountToken: true
-kind: ServiceAccount
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: cloudsqlproxy-global
-  name: cloudsqlproxy-global
-  namespace: default
----
 # v1/ServiceAccount content-service
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1365,11 +1353,6 @@ data:
         serviceAccount:
           kind: secret
           name: gcp-database
-      cloudSQLGlobal:
-        instance: gcp-global-db-instance
-        serviceAccount:
-          kind: secret
-          name: gcp-global-database
       inCluster: false
     disableDefinitelyGp: true
     domain: gitpod.example.com
@@ -2250,47 +2233,6 @@ data:
         component: cloudsqlproxy
         kind: service
       name: cloudsqlproxy
-      namespace: default
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: cloudsqlproxy-global
-      name: cloudsqlproxy-global-cloud-sql-proxy
-      namespace: default
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: cloudsqlproxy-global
-      name: cloudsqlproxy-global
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: cloudsqlproxy-global
-      name: cloudsqlproxy-global
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: cloudsqlproxy-global
-        kind: service
-      name: cloudsqlproxy-global
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
@@ -6105,24 +6047,6 @@ subjects:
 - kind: ServiceAccount
   name: cloudsqlproxy
 ---
-# rbac.authorization.k8s.io/v1/RoleBinding cloudsqlproxy-global
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: cloudsqlproxy-global
-  name: cloudsqlproxy-global
-  namespace: default
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: default-ns-psp:restricted-root-user
-subjects:
-- kind: ServiceAccount
-  name: cloudsqlproxy-global
----
 # rbac.authorization.k8s.io/v1/RoleBinding content-service
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -6599,30 +6523,6 @@ spec:
   selector:
     app: gitpod
     component: cloudsqlproxy
-  type: ClusterIP
-status:
-  loadBalancer: {}
----
-# v1/Service cloudsqlproxy-global
-apiVersion: v1
-kind: Service
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: cloudsqlproxy-global
-    kind: service
-  name: cloudsqlproxy-global
-  namespace: default
-spec:
-  ports:
-  - name: cloudsqlproxy-global
-    port: 3306
-    protocol: TCP
-    targetPort: 3306
-  selector:
-    app: gitpod
-    component: cloudsqlproxy-global
   type: ClusterIP
 status:
   loadBalancer: {}
@@ -8301,76 +8201,6 @@ spec:
       - name: gcloud-sql-token
         secret:
           secretName: gcp-database
-status: {}
----
-# apps/v1/Deployment cloudsqlproxy-global-cloud-sql-proxy
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: cloudsqlproxy-global
-  name: cloudsqlproxy-global-cloud-sql-proxy
-  namespace: default
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: gitpod
-      component: cloudsqlproxy-global
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-    type: RollingUpdate
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: cloudsqlproxy-global
-      name: cloudsqlproxy-global
-      namespace: default
-    spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: gitpod.io/workload_meta
-                operator: Exists
-      containers:
-      - command:
-        - /cloud_sql_proxy
-        - -dir=/cloudsql
-        - -instances=gcp-global-db-instance=tcp:0.0.0.0:3306
-        - -credential_file=/credentials/credentials.json
-        image: b.gcr.io/cloudsql-docker/gce-proxy:1.11
-        name: cloud-sql-proxy
-        ports:
-        - containerPort: 3306
-        resources: {}
-        securityContext:
-          allowPrivilegeEscalation: false
-          privileged: false
-          runAsNonRoot: false
-        volumeMounts:
-        - mountPath: /cloudsql
-          name: cloudsql
-        - mountPath: /credentials
-          name: gcloud-sql-token
-      dnsPolicy: ClusterFirst
-      enableServiceLinks: false
-      restartPolicy: Always
-      serviceAccountName: cloudsqlproxy-global
-      terminationGracePeriodSeconds: 30
-      volumes:
-      - emptyDir: {}
-        name: cloudsql
-      - name: gcloud-sql-token
-        secret:
-          secretName: gcp-global-database
 status: {}
 ---
 # apps/v1/Deployment content-service
