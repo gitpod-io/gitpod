@@ -21,7 +21,18 @@ spec:
     singular: snapshot
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.workspaceID
+      name: Workspace
+      type: string
+    - jsonPath: .status.url
+      name: URL
+      priority: 10
+      type: string
+    - jsonPath: .status.completed
+      name: Completed
+      type: boolean
+    name: v1
     schema:
       openAPIV3Schema:
         description: Snapshot is the Schema for the snapshot API

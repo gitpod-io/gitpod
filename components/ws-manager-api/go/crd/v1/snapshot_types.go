@@ -38,6 +38,12 @@ type SnapshotStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:shortName=snapshot
+// Custom print columns on the Custom Resource Definition. These are the columns
+// showing up when doing e.g. `kubectl get snapshots`.
+// Columns with priority > 0 will only show up with `-o wide`.
+//+kubebuilder:printcolumn:name="Workspace",type="string",JSONPath=".spec.workspaceID"
+//+kubebuilder:printcolumn:name="URL",type="string",JSONPath=".status.url",priority=10
+//+kubebuilder:printcolumn:name="Completed",type="boolean",JSONPath=".status.completed"
 
 // Snapshot is the Schema for the snapshot API
 type Snapshot struct {
