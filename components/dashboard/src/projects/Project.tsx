@@ -16,6 +16,7 @@ import NoAccess from "../icons/NoAccess.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { useNewCreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { useCurrentProject } from "./project-context";
@@ -38,6 +39,8 @@ export default function ProjectsPage() {
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
 
     const [showAuthBanner, setShowAuthBanner] = useState<{ host: string } | undefined>(undefined);
+
+    const isNewCreateWsPage = useNewCreateWorkspacePage();
 
     useEffect(() => {
         // project changed, reset state
@@ -375,15 +378,19 @@ export default function ProjectsPage() {
                                                     <ItemFieldContextMenu
                                                         className="py-0.5"
                                                         menuEntries={[
-                                                            {
-                                                                title: "New Workspace ...",
-                                                                onClick: () =>
-                                                                    setStartWorkspaceModalProps({
-                                                                        contextUrl: branch.url,
-                                                                        allowContextUrlChange: true,
-                                                                    }),
-                                                                separator: true,
-                                                            },
+                                                            ...(isNewCreateWsPage
+                                                                ? []
+                                                                : [
+                                                                      {
+                                                                          title: "New Workspace ...",
+                                                                          onClick: () =>
+                                                                              setStartWorkspaceModalProps({
+                                                                                  contextUrl: branch.url,
+                                                                                  allowContextUrlChange: true,
+                                                                              }),
+                                                                          separator: true,
+                                                                      },
+                                                                  ]),
                                                             prebuild?.status === "queued" ||
                                                             prebuild?.status === "building"
                                                                 ? {

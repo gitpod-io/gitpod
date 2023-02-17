@@ -15,6 +15,7 @@ interface FeatureFlagConfig {
 }
 
 const FeatureFlagContext = createContext<{
+    startWithOptions: boolean;
     showUsageView: boolean;
     isUsageBasedBillingEnabled: boolean;
     showUseLastSuccessfulPrebuild: boolean;
@@ -23,6 +24,7 @@ const FeatureFlagContext = createContext<{
     oidcServiceEnabled: boolean;
     orgGitAuthProviders: boolean;
 }>({
+    startWithOptions: false,
     showUsageView: false,
     isUsageBasedBillingEnabled: false,
     showUseLastSuccessfulPrebuild: false,
@@ -37,6 +39,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const teams = useTeams();
     const { project } = useContext(ProjectContext);
     const team = useCurrentTeam();
+    const [startWithOptions, setStartWithOptions] = useState<boolean>(false);
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
     const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
@@ -49,6 +52,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         if (!user) return;
         (async () => {
             const featureFlags: FeatureFlagConfig = {
+                start_with_options: { defaultValue: false, setter: setStartWithOptions },
                 usage_view: { defaultValue: false, setter: setShowUsageView },
                 isUsageBasedBillingEnabled: { defaultValue: false, setter: setIsUsageBasedBillingEnabled },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
@@ -98,6 +102,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     return (
         <FeatureFlagContext.Provider
             value={{
+                startWithOptions,
                 showUsageView,
                 isUsageBasedBillingEnabled,
                 showUseLastSuccessfulPrebuild,
