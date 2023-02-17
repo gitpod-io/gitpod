@@ -1417,6 +1417,7 @@ export interface AuthProviderInfo {
     readonly authProviderType: string;
     readonly host: string;
     readonly ownerId?: string;
+    readonly organizationId?: string;
     readonly verified: boolean;
     readonly isReadonly?: boolean;
     readonly hiddenOnDashboard?: boolean;

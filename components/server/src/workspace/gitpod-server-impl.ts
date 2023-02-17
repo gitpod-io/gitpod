@@ -542,6 +542,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const isBuiltIn = (info: AuthProviderInfo) => !info.ownerId;
         const isNotHidden = (info: AuthProviderInfo) => !info.hiddenOnDashboard;
         const isVerified = (info: AuthProviderInfo) => info.verified;
+        const isNotOrgProvider = (info: AuthProviderInfo) => !info.organizationId;
 
         // if no user session is available, compute public information only
         if (!this.user) {
@@ -554,7 +555,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     icon: info.icon,
                     description: info.description,
                 };
-            let result = authProviders.filter(isNotHidden).filter(isVerified);
+            let result = authProviders.filter(isNotHidden).filter(isVerified).filter(isNotOrgProvider);
             if (builtinAuthProvidersConfigured) {
                 result = result.filter(isBuiltIn);
             }
