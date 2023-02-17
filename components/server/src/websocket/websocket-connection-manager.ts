@@ -428,21 +428,37 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             observeAPICallsDuration(method, 200, timer());
             return result;
         } catch (e) {
+            const traceID = span.context().toTraceId();
+
             if (e instanceof ResponseError) {
                 increaseApiCallCounter(method, e.code);
                 observeAPICallsDuration(method, e.code, timer());
                 TraceContext.setJsonRPCError(ctx, method, e);
 
-                log.info({ userId }, `Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
+                const severityLogger = ErrorCodes.isUserError(e.code) ? log.info : log.error;
+                severityLogger(
+                    { userId },
+                    `JSON RPC Request ${method} failed with user error: ${e.code}/"${e.message}"`,
+                    {
+                        method,
+                        args,
+                        code: e.code,
+                        message: e.message,
+                    },
+                );
             } else {
                 TraceContext.setError(ctx, e); // this is a "real" error
 
-                const err = new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "internal server error");
+                const err = new ResponseError(
+                    ErrorCodes.INTERNAL_SERVER_ERROR,
+                    `Internal server error. Please quote trace ID: '${traceID}' when reaching to Gitpod Support`,
+                );
                 increaseApiCallCounter(method, err.code);
                 observeAPICallsDuration(method, err.code, timer());
                 TraceContext.setJsonRPCError(ctx, method, err, true);
 
-                log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
+                log.error({ userId }, `JSON RPC Request ${method} failed with internal error`, e, { method, args });
+                e = err;
             }
             throw e;
         } finally {
