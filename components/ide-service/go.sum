@@ -63,8 +63,8 @@ github.com/cncf/xds/go v0.0.0-20211001041855-01bcc9b48dfe/go.mod h1:eXthEFrGJvWH
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/configcat/go-sdk/v7 v7.6.0 h1:CthQJ7DMz4bvUrpc8aek6VouJjisCvZCfuTG2gyNzL4=
 github.com/configcat/go-sdk/v7 v7.6.0/go.mod h1:2245V6Igy1Xz6GXvcYuK5z996Ct0VyzyuI470XS6aTw=
-github.com/containerd/containerd v1.6.16 h1:0H5xH6ABsN7XTrxIAKxFpBkFCBtrZ/OSORhCpUnHjrc=
-github.com/containerd/containerd v1.6.16/go.mod h1:1RdCUu95+gc2v9t3IL+zIlpClSmew7/0YS8O5eQZrOw=
+github.com/containerd/containerd v1.6.18 h1:qZbsLvmyu+Vlty0/Ex5xc0z2YtKpIsb5n45mAMI+2Ns=
+github.com/containerd/containerd v1.6.18/go.mod h1:1RdCUu95+gc2v9t3IL+zIlpClSmew7/0YS8O5eQZrOw=
 github.com/cpuguy83/go-md2man/v2 v2.0.1/go.mod h1:tgQtvFlXSQOSOSIRvRPT7W67SCa46tRHOmNcaadrF8o=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

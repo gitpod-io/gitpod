@@ -97,7 +97,7 @@ require (
 	github.com/cilium/ebpf v0.7.0 // indirect
 	github.com/configcat/go-sdk/v7 v7.6.0 // indirect
 	github.com/containerd/cgroups v1.0.4 // indirect
-	github.com/containerd/containerd v1.6.16 // indirect
+	github.com/containerd/containerd v1.6.18 // indirect
 	github.com/containerd/continuity v0.3.0 // indirect
 	github.com/containerd/fifo v1.0.0 // indirect
 	github.com/containerd/ttrpc v1.1.0 // indirect
