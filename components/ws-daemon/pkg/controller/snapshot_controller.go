@@ -85,13 +85,13 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	snapshotURL, snapshotErr := ssc.operations.SnapshotURL(snapshot.Name)
+	snapshotURL, snapshotErr := ssc.operations.SnapshotURL(snapshot.Spec.WorkspaceID)
 	if snapshotErr != nil {
 		return ctrl.Result{}, snapshotErr
 	}
 
 	log.Info("got snapshot url")
-	retry.RetryOnConflict(retryParams, func() error {
+	err := retry.RetryOnConflict(retryParams, func() error {
 		err := ssc.Client.Get(ctx, req.NamespacedName, &snapshot)
 		if err != nil {
 			return err
@@ -101,9 +101,14 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ssc.Client.Status().Update(ctx, &snapshot)
 	})
 
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+
 	log.Info("updated snapshot url")
-	snapshotErr = ssc.operations.TakeSnapshot(ctx, snapshot.Name)
-	err := retry.RetryOnConflict(retryParams, func() error {
+	snapshotErr = ssc.operations.TakeSnapshot(ctx, snapshot.Spec.WorkspaceID, snapshotURL)
+	log.Info("took snapshot")
+	err = retry.RetryOnConflict(retryParams, func() error {
 		err := ssc.Client.Get(ctx, req.NamespacedName, &snapshot)
 		if err != nil {
 			return err

@@ -540,10 +540,10 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 	}
 
 	var sso workspacev1.Snapshot
-	err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, func(c context.Context) (done bool, err error) {
-		err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: ws.Name}, &sso)
+	err = wait.PollWithContext(ctx, 100*time.Millisecond, 10*time.Second, func(c context.Context) (done bool, err error) {
+		err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: snapshot.Name}, &sso)
 		if err != nil {
-			return false, nil
+			return false, err
 		}
 
 		if sso.Status.URL != "" && sso.Status.Error == "" {
@@ -554,7 +554,7 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 	})
 
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot wait for snapshot URL")
+		return nil, status.Errorf(codes.Internal, "cannot wait for snapshot URL: %v", err)
 	}
 
 	if !req.ReturnImmediately {
@@ -579,6 +579,8 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 			return nil, status.Errorf(codes.Internal, "cannot take snapshot: %q", sso.Status.Error)
 		}
 	}
+
+	log.Info("return url")
 
 	return &wsmanapi.TakeSnapshotResponse{
 		Url: sso.Status.URL,

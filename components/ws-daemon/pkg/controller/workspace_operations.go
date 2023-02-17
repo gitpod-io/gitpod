@@ -246,7 +246,7 @@ func (wso *WorkspaceOperations) SnapshotURL(workspaceID string) (string, error) 
 	return rs.Qualify(backupName), nil
 }
 
-func (wso *WorkspaceOperations) TakeSnapshot(ctx context.Context, workspaceID string) (err error) {
+func (wso *WorkspaceOperations) TakeSnapshot(ctx context.Context, workspaceID, snapshotName string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "TakeSnapshot")
 	span.SetTag("workspace", workspaceID)
@@ -265,10 +265,10 @@ func (wso *WorkspaceOperations) TakeSnapshot(ctx context.Context, workspaceID st
 		return fmt.Errorf("workspace has no remote storage")
 	}
 
-	snapshotName, err := wso.SnapshotURL(workspaceID)
-	if err != nil {
-		return err
-	}
+	// snapshotName, err := wso.SnapshotURL(workspaceID)
+	// if err != nil {
+	// 	return err
+	// }
 
 	err = wso.uploadWorkspaceContent(ctx, sess, snapshotName)
 	if err != nil {

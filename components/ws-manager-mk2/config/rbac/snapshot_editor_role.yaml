@@ -32,4 +32,10 @@ rules:
   resources:
   - snapshots/status
   verbs:
-  - get
+   - create
+   - delete
+   - get
+   - list
+   - patch
+   - update
+   - watch
