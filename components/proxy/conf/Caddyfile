@@ -285,7 +285,18 @@ https://{$GITPOD_DOMAIN} {
 	handle @to_server {
 		import compression
 
-		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+		forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			uri /feature-flags/slow-database
+			copy_headers X-Gitpod-Slow-Database
+		}
+
+		import slow_fast_matchers
+
+		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_connection
+		}
+
+		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_connection
 		}
 	}
