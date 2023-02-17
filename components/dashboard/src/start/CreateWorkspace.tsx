@@ -325,7 +325,7 @@ export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
     );
 }
 
-function SelectCostCenterModal(props: { onSelected?: () => void }) {
+export function SelectCostCenterModal(props: { onSelected?: () => void }) {
     return (
         <Modal visible={true} closeable={false} onClose={() => {}}>
             <h3>Choose Billing Organization</h3>
@@ -334,7 +334,7 @@ function SelectCostCenterModal(props: { onSelected?: () => void }) {
     );
 }
 
-function LimitReachedModal(p: { children: React.ReactNode }) {
+export function LimitReachedModal(p: { children: React.ReactNode }) {
     const { user } = useContext(UserContext);
     return (
         // TODO: Use title and buttons props
@@ -358,7 +358,7 @@ function LimitReachedModal(p: { children: React.ReactNode }) {
     );
 }
 
-function LimitReachedParallelWorkspacesModal() {
+export function LimitReachedParallelWorkspacesModal() {
     return (
         <LimitReachedModal>
             <p className="mt-1 mb-2 text-base dark:text-gray-400">
@@ -369,7 +369,7 @@ function LimitReachedParallelWorkspacesModal() {
     );
 }
 
-function LimitReachedOutOfHours() {
+export function LimitReachedOutOfHours() {
     return (
         <LimitReachedModal>
             <p className="mt-1 mb-2 text-base dark:text-gray-400">
@@ -380,7 +380,7 @@ function LimitReachedOutOfHours() {
     );
 }
 
-function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
+export function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
     const [statusMessage, setStatusMessage] = useState<React.ReactNode>();
     const { host, owner, repoName, userIsOwner, userScopes, lastUpdate } = p.error.data;
     const repoFullName = owner && repoName ? `${owner}/${repoName}` : "";

@@ -17,6 +17,7 @@ import Alert from "../components/Alert";
 import { ProjectListItem } from "./ProjectListItem";
 import { SpinnerLoader } from "../components/Loader";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
+import { projectsPathNew } from "./projects.routes";
 
 export default function ProjectsPage() {
     const history = useHistory();
@@ -24,11 +25,10 @@ export default function ProjectsPage() {
     const { data, isLoading, isError, refetch } = useListProjectsQuery();
     const { isDark } = useContext(ThemeContext);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
-    const newProjectUrl = `/new`;
 
     const onNewProject = useCallback(() => {
-        history.push(newProjectUrl);
-    }, [history, newProjectUrl]);
+        history.push(projectsPathNew);
+    }, [history]);
 
     const filteredProjects = useMemo(() => {
         const filter = (project: Project) => {
@@ -80,7 +80,7 @@ export default function ProjectsPage() {
                         </a>
                     </p>
                     <div className="flex space-x-2 justify-center mt-7">
-                        <Link to={newProjectUrl}>
+                        <Link to={projectsPathNew}>
                             <button>New Project</button>
                         </Link>
                         {team && (
@@ -135,7 +135,7 @@ export default function ProjectsPage() {
                                 key="new-project"
                                 className="h-52 border-dashed border-2 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group"
                             >
-                                <Link to={newProjectUrl} data-analytics='{"button_type":"card"}'>
+                                <Link to={projectsPathNew} data-analytics='{"button_type":"card"}'>
                                     <div className="flex h-full">
                                         <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
                                     </div>

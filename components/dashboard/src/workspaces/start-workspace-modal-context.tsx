@@ -5,6 +5,8 @@
  */
 
 import React, { createContext, useEffect, useState } from "react";
+import { useHistory } from "react-router";
+import { useNewCreateWorkspacePage } from "./CreateWorkspacePage";
 import { StartWorkspaceModalProps } from "./StartWorkspaceModal";
 
 export const StartWorkspaceModalContext = createContext<{
@@ -18,11 +20,17 @@ export const StartWorkspaceModalContextProvider: React.FC = ({ children }) => {
     const [startWorkspaceModalProps, setStartWorkspaceModalProps] = useState<StartWorkspaceModalProps | undefined>(
         undefined,
     );
+    const isNewCreateWorkspacePage = useNewCreateWorkspacePage();
+    const history = useHistory();
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if ((event.metaKey || event.ctrlKey) && event.key === "o") {
                 event.preventDefault();
+                if (isNewCreateWorkspacePage) {
+                    history.push("/new");
+                    return;
+                }
                 setStartWorkspaceModalProps({
                     onClose: () => setStartWorkspaceModalProps(undefined),
                 });
@@ -32,7 +40,7 @@ export const StartWorkspaceModalContextProvider: React.FC = ({ children }) => {
         return () => {
             window.removeEventListener("keydown", onKeyDown);
         };
-    }, []);
+    }, [history, isNewCreateWorkspacePage]);
 
     return (
         <StartWorkspaceModalContext.Provider value={{ startWorkspaceModalProps, setStartWorkspaceModalProps }}>

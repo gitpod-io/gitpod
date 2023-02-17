@@ -15,6 +15,7 @@ import { prebuildStatusIcon } from "./Prebuilds";
 import { gitpodHostUrl } from "../service/service";
 import { useLatestProjectPrebuildQuery } from "../data/prebuilds/latest-project-prebuild-query";
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
+import { useNewCreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 
 type ProjectListItemProps = {
     project: Project;
@@ -25,6 +26,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
     const [showRemoveModal, setShowRemoveModal] = useState(false);
     const { data: prebuild, isLoading } = useLatestProjectPrebuildQuery({ projectId: project.id });
     const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
+    const isNewCreateWsPage = useNewCreateWorkspacePage();
 
     return (
         <div key={`project-${project.id}`} className="h-52">
@@ -41,15 +43,19 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                         href: gitpodHostUrl.withContext(`${project.cloneUrl}`).toString(),
                                         separator: true,
                                     },
-                                    {
-                                        title: "New Workspace ...",
-                                        onClick: () =>
-                                            setStartWorkspaceModalProps({
-                                                contextUrl: project.cloneUrl,
-                                                allowContextUrlChange: true,
-                                            }),
-                                        separator: true,
-                                    },
+                                    ...(isNewCreateWsPage
+                                        ? []
+                                        : [
+                                              {
+                                                  title: "New Workspace ...",
+                                                  onClick: () =>
+                                                      setStartWorkspaceModalProps({
+                                                          contextUrl: project.cloneUrl,
+                                                          allowContextUrlChange: true,
+                                                      }),
+                                                  separator: true,
+                                              },
+                                          ]),
                                     {
                                         title: "Remove Project",
                                         customFontStyle:

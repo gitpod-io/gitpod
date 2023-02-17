@@ -4,46 +4,47 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { ContextURL, Team, User } from "@gitpod/gitpod-protocol";
 import React, { FunctionComponent, useContext, useState } from "react";
-import { ContextURL, User, Team } from "@gitpod/gitpod-protocol";
-import SelectIDEModal from "../user-settings/SelectIDEModal";
-import { StartPage, StartPhase } from "../start/StartPage";
-import { getURLHash, isGitpodIo, isLocalPreview } from "../utils";
-import { shouldSeeWhatsNew, WhatsNew } from "../whatsnew/WhatsNew";
-import { Redirect, Route, Switch } from "react-router";
-import Menu from "../menu/Menu";
-import { parseProps } from "../start/StartWorkspace";
+import { Redirect, Route, Switch, useLocation } from "react-router";
 import { AppNotifications } from "../AppNotifications";
-import { AdminRoute } from "./AdminRoute";
-import { StartWorkspaceModal } from "../workspaces/StartWorkspaceModal";
+import Menu from "../menu/Menu";
+import OAuthClientApproval from "../OauthClientApproval";
+import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/projects.routes";
+import { StartPage, StartPhase } from "../start/StartPage";
+import { parseProps } from "../start/StartWorkspace";
+import SelectIDEModal from "../user-settings/SelectIDEModal";
 import {
     settingsPathAccount,
     settingsPathBilling,
     settingsPathIntegrations,
     settingsPathMain,
     settingsPathNotifications,
-    settingsPathPlans,
-    settingsPathPreferences,
-    settingsPathVariables,
-    settingsPathSSHKeys,
-    usagePathMain,
-    settingsPathPersonalAccessTokens,
     settingsPathPersonalAccessTokenCreate,
     settingsPathPersonalAccessTokenEdit,
+    settingsPathPersonalAccessTokens,
+    settingsPathPlans,
+    settingsPathPreferences,
+    settingsPathSSHKeys,
+    settingsPathVariables,
+    usagePathMain,
 } from "../user-settings/settings.routes";
-import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/projects.routes";
+import { getURLHash, isGitpodIo, isLocalPreview } from "../utils";
+import { shouldSeeWhatsNew, WhatsNew } from "../whatsnew/WhatsNew";
+import { StartWorkspaceModal } from "../workspaces/StartWorkspaceModal";
 import { workspacesPathMain } from "../workspaces/workspaces.routes";
-import { LocalPreviewAlert } from "./LocalPreviewAlert";
-import OAuthClientApproval from "../OauthClientApproval";
+import { AdminRoute } from "./AdminRoute";
 import { Blocked } from "./Blocked";
+import { LocalPreviewAlert } from "./LocalPreviewAlert";
 
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
 import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokensCreateView";
+import { CreateWorkspacePage, useNewCreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
-import { StartWorkspaceOptions } from "../start/start-workspace-options";
-import { WebsocketClients } from "./WebsocketClients";
 import { OrgRequiredRoute } from "./OrgRequiredRoute";
+import { WebsocketClients } from "./WebsocketClients";
+import { StartWorkspaceOptions } from "../start/start-workspace-options";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -61,7 +62,6 @@ const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ "../user
 const PersonalAccessTokens = React.lazy(
     () => import(/* webpackPrefetch: true */ "../user-settings/PersonalAccessTokens"),
 );
-const Open = React.lazy(() => import(/* webpackPrefetch: true */ "../start/Open"));
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "../start/StartWorkspace"));
 const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "../start/CreateWorkspace"));
 const NewTeam = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/NewTeam"));
@@ -97,6 +97,8 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     const hash = getURLHash();
     const { startWorkspaceModalProps, setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
+    const newCreateWsPage = useNewCreateWorkspacePage();
+    const location = useLocation();
 
     // Prefix with `/#referrer` will specify an IDE for workspace
     // We don't need to show IDE preference in this case
@@ -105,12 +107,12 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     );
 
     // TODO: Add a Route for this instead of inspecting location manually
-    if (window.location.pathname.startsWith("/blocked")) {
+    if (location.pathname.startsWith("/blocked")) {
         return <Blocked />;
     }
 
     // TODO: Add a Route for this instead of inspecting location manually
-    if (window.location.pathname.startsWith("/oauth-approval")) {
+    if (location.pathname.startsWith("/oauth-approval")) {
         return <OAuthClientApproval />;
     }
 
@@ -119,7 +121,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     }
 
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)
-    const isCreation = window.location.pathname === "/" && hash !== "";
+    const isCreation = location.pathname === "/" && hash !== "";
     if (isCreation) {
         if (showUserIdePreference) {
             return (
@@ -127,19 +129,8 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <SelectIDEModal location="workspace_start" onClose={() => setShowUserIdePreference(false)} />
                 </StartPage>
             );
-        } else if (new URLSearchParams(window.location.search).has("showOptions")) {
-            const props = StartWorkspaceOptions.parseSearchParams(window.location.search);
-            return (
-                <StartWorkspaceModal
-                    {...{
-                        contextUrl: hash,
-                        ide: props?.ideSettings?.defaultIde,
-                        uselatestIde: props?.ideSettings?.useLatestVersion,
-                        workspaceClass: props.workspaceClass,
-                        onClose: undefined,
-                    }}
-                />
-            );
+        } else if (new URLSearchParams(location.search).has("showOptions") || newCreateWsPage) {
+            return <Redirect to={"/new" + location.pathname + location.search + location.hash} />;
         } else {
             return <CreateWorkspace contextUrl={hash} />;
         }
@@ -160,6 +151,19 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
         return <div></div>;
     }
 
+    if (newCreateWsPage && startWorkspaceModalProps) {
+        const search = StartWorkspaceOptions.toSearchParams({
+            ideSettings: {
+                defaultIde: startWorkspaceModalProps.ide,
+                useLatestVersion: startWorkspaceModalProps.uselatestIde,
+            },
+            workspaceClass: startWorkspaceModalProps.workspaceClass,
+        });
+        const hash = startWorkspaceModalProps.contextUrl ? "#" + startWorkspaceModalProps.contextUrl : "";
+        setStartWorkspaceModalProps(undefined);
+        return <Redirect to={"/new/" + search + hash} />;
+    }
+
     return (
         <Route>
             <div className="container">
@@ -167,8 +171,11 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                 {isLocalPreview() && <LocalPreviewAlert />}
                 <AppNotifications />
                 <Switch>
+                    <Route path="/new" exact component={CreateWorkspacePage} />
                     <Route path={projectsPathNew} exact component={NewProject} />
-                    <Route path="/open" exact component={Open} />
+                    <Route path="/open">
+                        <Redirect to="/new" />
+                    </Route>
                     <Route path="/setup" exact component={Setup} />
                     <Route path={workspacesPathMain} exact component={Workspaces} />
                     <Route path={settingsPathAccount} exact component={Account} />
@@ -297,7 +304,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                         }}
                     ></Route>
                 </Switch>
-                {startWorkspaceModalProps && (
+                {startWorkspaceModalProps && !newCreateWsPage && (
                     <StartWorkspaceModal
                         {...startWorkspaceModalProps}
                         onClose={startWorkspaceModalProps.onClose || (() => setStartWorkspaceModalProps(undefined))}

@@ -80,7 +80,7 @@ class TestFileProvider {
                         path: `test_project_${i}`,
                         namespace_id: 57982169,
                         initialize_with_readme: true,
-                        description: "generated project to test pagination in gitpod.io/new",
+                        description: "generated project to test pagination",
                     }),
                 );
                 if (GitLab.ApiError.is(project)) {

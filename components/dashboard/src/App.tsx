@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { FunctionComponent, Suspense } from "react";
+import React, { FunctionComponent, Suspense, useEffect } from "react";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { Login } from "./Login";
 import { isGitpodIo } from "./utils";
@@ -13,6 +13,7 @@ import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 import { AppLoading } from "./app/AppLoading";
 import { AppRoutes } from "./app/AppRoutes";
 import { useCurrentTeam } from "./teams/teams-context";
+import { useHistory } from "react-router";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 
@@ -20,6 +21,12 @@ const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 const App: FunctionComponent = () => {
     const { user, teams, isSetupRequired, loading } = useUserAndTeamsLoader();
     const currentOrg = useCurrentTeam();
+    const history = useHistory();
+    useEffect(() => {
+        return history.listen((location, action) => {
+            console.log(location, action);
+        });
+    }, [history]);
 
     // Setup analytics/tracking
     useAnalyticsTracking();
