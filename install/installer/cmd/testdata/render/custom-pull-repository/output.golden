@@ -731,7 +731,7 @@ metadata:
 spec:
   maxUnavailable: 1
   selector:
-    matchLabels:
+    matchLabels: 
       app.kubernetes.io/name: rabbitmq
       app.kubernetes.io/instance: rabbitmq
 ---
@@ -1567,9 +1567,6 @@ data:
             "version": "test"
           },
           "serviceWaiter": {
-            "version": "test"
-          },
-          "toxic-config": {
             "version": "test"
           },
           "usage": {
@@ -4967,13 +4964,13 @@ data:
     slow_query_log=0
     slow_query_log_file=/opt/bitnami/mysql/logs/mysqld.log
     long_query_time=10.0
-
+    
     [client]
     port=3306
     socket=/opt/bitnami/mysql/tmp/mysql.sock
     default-character-set=UTF8
     plugin_dir=/opt/bitnami/mysql/lib/plugin
-
+    
     [manager]
     port=3306
     socket=/opt/bitnami/mysql/tmp/mysql.sock
@@ -7167,7 +7164,7 @@ spec:
       port: 9419
       targetPort: metrics
       nodePort: null
-  selector:
+  selector: 
     app.kubernetes.io/name: rabbitmq
     app.kubernetes.io/instance: rabbitmq
 ---
@@ -7201,7 +7198,7 @@ spec:
     - name: http-stats
       port: 15672
       targetPort: stats
-  selector:
+  selector: 
     app.kubernetes.io/name: rabbitmq
     app.kubernetes.io/instance: rabbitmq
   publishNotReadyAddresses: true
@@ -7256,7 +7253,7 @@ spec:
       protocol: TCP
       targetPort: mysql
       nodePort: null
-  selector:
+  selector: 
     app.kubernetes.io/name: mysql
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/component: primary
@@ -7282,7 +7279,7 @@ spec:
     - name: mysql
       port: 3306
       targetPort: mysql
-  selector:
+  selector: 
     app.kubernetes.io/name: mysql
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/component: primary
@@ -8213,7 +8210,7 @@ spec:
         prometheus.io/port: '9419'
         prometheus.io/scrape: "true"
     spec:
-
+      
       serviceAccountName: rabbitmq
       affinity:
         nodeAffinity:
@@ -8222,7 +8219,7 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
-
+        
       securityContext:
         fsGroup: 1001
       terminationGracePeriodSeconds: 120
@@ -8245,7 +8242,7 @@ spec:
             name: load-definition-volume
           - mountPath: /gitpod-config
             name: shared-data
-
+        
       containers:
         - name: rabbitmq
           image: registry.mydomain.com/namespace/bitnami/rabbitmq:3.11.5-debian-11-r2
@@ -8373,7 +8370,7 @@ spec:
               readOnly: true
             - mountPath: /gitpod-config
               name: shared-data
-
+            
       volumes:
         - name: certs
           secret:
@@ -8395,7 +8392,7 @@ spec:
             secretName: "load-definition"
         - emptyDir: {}
           name: shared-data
-
+        
         - name: data
           emptyDir: {}
 ---
@@ -8416,7 +8413,7 @@ spec:
   replicas: 1
   podManagementPolicy: ""
   selector:
-    matchLabels:
+    matchLabels: 
       app.kubernetes.io/name: mysql
       app.kubernetes.io/instance: mysql
       app.kubernetes.io/component: primary
@@ -8435,7 +8432,7 @@ spec:
         app.kubernetes.io/component: primary
     spec:
       serviceAccountName: db
-
+      
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -8443,7 +8440,7 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
-
+        
       securityContext:
         fsGroup: 1001
       initContainers:
@@ -8524,7 +8521,7 @@ spec:
                       password_aux=$(cat "$MYSQL_ROOT_PASSWORD_FILE")
                   fi
                   mysqladmin status -uroot -p"${password_aux}"
-          resources:
+          resources: 
             limits: {}
             requests:
               memory: 128Mi
@@ -8546,7 +8543,7 @@ spec:
   volumeClaimTemplates:
     - metadata:
         name: data
-        labels:
+        labels: 
           app.kubernetes.io/name: mysql
           app.kubernetes.io/instance: mysql
           app.kubernetes.io/component: primary
@@ -9556,7 +9553,7 @@ spec:
       annotations:
         checksum/credentials-secret: 0f3ceb92b9779df4ce0927f6faeb23e9116b85e0eabe095d903e46a2770cde42
     spec:
-
+      
       serviceAccountName: minio
       affinity:
         nodeAffinity:
@@ -9565,7 +9562,7 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
-
+        
       securityContext:
         fsGroup: 1001
       containers:
@@ -10122,7 +10119,7 @@ spec:
       annotations:
         checksum/config: 699dd382179068f3354c330fcce38625e2861d97b962074b4f57005d40497b00
         checksum/secret: 450f59aeda22415409a87a1abd2c033c08ebd5fb54fe24d3c56560e92b0218f6
-
+        
         gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
     spec:
       serviceAccountName: docker-registry
@@ -10149,9 +10146,9 @@ spec:
               scheme: HTTPS
               path: /
               port: 5000
-          resources:
+          resources: 
             {}
-          env:
+          env: 
             - name: REGISTRY_HTTP_SECRET
               valueFrom:
                 secretKeyRef:
@@ -10163,7 +10160,7 @@ spec:
               value: /etc/ssl/docker/tls.key
             - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
               value: "/var/lib/registry"
-          volumeMounts:
+          volumeMounts: 
             - name: "registry-config"
               mountPath: "/etc/docker/registry"
             - name: data
@@ -10171,7 +10168,7 @@ spec:
             - mountPath: /etc/ssl/docker
               name: tls-cert
               readOnly: true
-      volumes:
+      volumes: 
         - name: registry-config
           configMap:
             name: registry-config

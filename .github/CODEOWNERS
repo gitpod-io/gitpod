@@ -30,7 +30,6 @@
 /components/image-builder-mk3 @gitpod-io/engineering-workspace
 /components/installation-telemetry @gitpod-io/engineering-security-infrastructure-and-delivery
 /components/kots-config-check @gitpod-io/engineering-security-infrastructure-and-delivery
-/components/toxic-config @gitpod-io/engineering-webapp
 /install @gitpod-io/engineering-security-infrastructure-and-delivery
 /install/installer @gitpod-io/engineering-security-infrastructure-and-delivery
 # For testdata a single review from anyone who is allowed to review PRs is sufficent.
@@ -56,7 +55,6 @@
 /install/installer/pkg/components/server @gitpod-io/engineering-webapp
 /install/installer/pkg/components/server/ide @gitpod-io/engineering-ide
 /install/installer/pkg/components/usage @gitpod-io/engineering-webapp
-/install/installer/pkg/components/toxiproxy @gitpod-io/engineering-webapp
 /install/installer/pkg/components/usage-api @gitpod-io/engineering-webapp
 /install/installer/pkg/components/workspace @gitpod-io/engineering-workspace
 /install/installer/pkg/components/workspace/ide @gitpod-io/engineering-ide
