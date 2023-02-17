@@ -233,6 +233,19 @@ export class Authenticator {
             return;
         }
 
+        // Ensure user is a member of the org
+        if (authProvider.info.organizationId) {
+            const member = await this.teamDb.findTeamMembership(user.id, authProvider.info.organizationId);
+            if (!member) {
+                log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, {
+                    "authorize-flow": true,
+                    ap: authProvider.info,
+                });
+                res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
+                return;
+            }
+        }
+
         // prepare session
         await AuthFlow.attach(req.session, { host, returnTo, overrideScopes: override });
         let wantedScopes = scopes
