@@ -254,6 +254,16 @@ export interface ProfileDetails {
     companyName?: string;
     // the user's email
     emailAddress?: string;
+    // the user's company website
+    companyWebsite?: string;
+    // type of role user has in their job
+    jobRole?: string;
+    // freeform entry for job role user works in (when jobRole is "other")
+    jobRoleOther?: string;
+    // what user hopes to accomplish when they signed up
+    signupGoals?: string;
+    // freeform entry for signup goals (when signupGoals is "other")
+    signupGoalsOther?: string;
 }
 
 export interface EmailNotificationSettings {
