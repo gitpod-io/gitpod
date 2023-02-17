@@ -230,8 +230,13 @@ LoadingFrame.load().then(async (loading) => {
 
         //#region heart-beat
         heartBeat.track(window);
+        let isOwner = false;
+        supervisorServiceClient.getWorkspaceInfoPromise.then((info) => {
+            isOwner = frontendDashboardServiceClient.latestInfo.loggedUserId === info.ownerId;
+            updateHeartBeat();
+        });
         const updateHeartBeat = () => {
-            if (frontendDashboardServiceClient.latestInfo?.statusPhase === "running") {
+            if (frontendDashboardServiceClient.latestInfo?.statusPhase === "running" && isOwner) {
                 heartBeat.schedule(frontendDashboardServiceClient);
             } else {
                 heartBeat.cancel();
