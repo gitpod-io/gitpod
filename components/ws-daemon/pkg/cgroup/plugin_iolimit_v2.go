@@ -146,7 +146,7 @@ func buildV2Limits(writeBytesPerSecond, readBytesPerSecond, writeIOPs, readIOPs 
 }
 
 // TODO: enable custom configuration
-var blockDevices = []string{"dm*", "sd*", "md*", "nvme0n*"}
+var blockDevices = []string{"dm*", "sd*", "md*", "nvme*"}
 
 func buildDevices() []string {
 	var devices []string
