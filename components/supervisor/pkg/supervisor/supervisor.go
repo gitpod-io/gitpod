@@ -400,7 +400,7 @@ func Run(options ...RunOption) {
 
 	if !opts.RunGP && !cfg.isDebugWorkspace() {
 		wg.Add(1)
-		go socketActivationForDocker(ctx, &wg, termMux)
+		go socketActivationForDocker(ctx, &wg, termMux, cfg, telemetry)
 	}
 
 	if cfg.isHeadless() {
@@ -1499,7 +1499,7 @@ func recordInitializerMetrics(path string, metrics *metrics.SupervisorMetrics) {
 	}
 }
 
-func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *terminal.Mux) {
+func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *terminal.Mux, cfg *Config, w analytics.Writer) {
 	defer wg.Done()
 
 	fn := "/var/run/docker.sock"
@@ -1526,6 +1526,20 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 					"gitpod.supervisor": "true",
 				},
 				LogToStdout: true,
+			})
+			outcome := "success"
+			if err != nil {
+				outcome = "failure"
+			}
+			w.Track(analytics.TrackMessage{
+				Identity: analytics.Identity{UserID: cfg.OwnerId},
+				Event:    "gitpod_activate_docker",
+				Properties: map[string]interface{}{
+					"instanceId":     cfg.WorkspaceInstanceID,
+					"workspaceId":    cfg.WorkspaceID,
+					"outcome":        outcome,
+					"debugWorkspace": cfg.isDebugWorkspace(),
+				},
 			})
 			if err != nil {
 				return err
