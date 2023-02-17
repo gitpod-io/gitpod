@@ -12,6 +12,7 @@ import (
 
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,6 +23,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
@@ -48,7 +50,24 @@ func init() {
 }
 
 // NewDaemon produces a new daemon
-func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
+func NewDaemon(config Config) (*Daemon, error) {
+	// Use the metrics registry from the controller manager. The manager's registry
+	// isn't configurable so we use this instead of the baseserver's default registry.
+	// Hack: cast the registry as a *prometheus.Registry, as that's the type required
+	// by baseserver.
+	registry, ok := metrics.Registry.(*prometheus.Registry)
+	if ok {
+		// These collectors are also registered by baseserver. Use the ones from baseserver
+		// and remove the collectors registered by controller-manager, to prevent an error
+		// for duplicate collectors.
+		registry.Unregister(collectors.NewGoCollector())
+		registry.Unregister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+	} else {
+		log.Error("failed to use controller-runtime metrics registry, not of expected type. Using default registry instead, but will not collect controller metrics...")
+		registry = prometheus.NewRegistry()
+	}
+	wrappedReg := prometheus.WrapRegistererWithPrefix("gitpod_ws_daemon_", registry)
+
 	restCfg, err := newClientConfig(config.Runtime.Kubeconfig)
 	if err != nil {
 		return nil, err
@@ -71,7 +90,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("NODENAME env var isn't set")
 	}
 
-	markUnmountFallback, err := NewMarkUnmountFallback(reg)
+	markUnmountFallback, err := NewMarkUnmountFallback(wrappedReg)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +130,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 			},
 		},
 		procV2Plugin,
-		cgroup.NewPSIMetrics(reg),
+		cgroup.NewPSIMetrics(wrappedReg),
 	)
 	if err != nil {
 		return nil, err
@@ -121,18 +140,18 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("only cgroup v2 is supported")
 	}
 
-	err = reg.Register(cgroupPlugins)
+	err = wrappedReg.Register(cgroupPlugins)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot register cgroup plugin metrics: %w", err)
 	}
 
 	listener := []dispatch.Listener{
-		cpulimit.NewDispatchListener(&config.CPULimit, reg),
+		cpulimit.NewDispatchListener(&config.CPULimit, wrappedReg),
 		markUnmountFallback,
 		cgroupPlugins,
 	}
 
-	netlimiter := netlimit.NewConnLimiter(config.NetLimit, reg)
+	netlimiter := netlimit.NewConnLimiter(config.NetLimit, wrappedReg)
 	if config.NetLimit.Enabled {
 		listener = append(listener, netlimiter)
 	}
@@ -154,7 +173,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 			Port:                   9443,
 			Namespace:              config.Runtime.KubernetesNamespace,
 			HealthProbeBindAddress: "0",
-			MetricsBindAddress:     "0",
+			MetricsBindAddress:     "0", // Metrics are exposed through baseserver.
 		})
 		if err != nil {
 			return nil, err
@@ -172,7 +191,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 			UIDMapperConfig:  config.Uidmapper,
 			ContainerRuntime: containerRuntime,
 			CGroupMountPoint: config.CPULimit.CGroupBasePath,
-			MetricsRegistry:  reg,
+			MetricsRegistry:  wrappedReg,
 		})
 		if err != nil {
 			return nil, err
@@ -195,7 +214,7 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		dsptch.WorkspaceExistsOnNode,
 		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
 		config.CPULimit.CGroupBasePath,
-		reg,
+		wrappedReg,
 	)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create content service: %w", err)
@@ -209,13 +228,14 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	}
 
 	return &Daemon{
-		Config:         config,
-		dispatch:       dsptch,
-		content:        contentService,
-		diskGuards:     dsk,
-		hosts:          hsts,
-		configReloader: configReloader,
-		mgr:            mgr,
+		Config:          config,
+		dispatch:        dsptch,
+		content:         contentService,
+		diskGuards:      dsk,
+		hosts:           hsts,
+		configReloader:  configReloader,
+		mgr:             mgr,
+		metricsRegistry: registry,
 	}, nil
 }
 
@@ -231,12 +251,13 @@ func newClientConfig(kubeconfig string) (*rest.Config, error) {
 type Daemon struct {
 	Config Config
 
-	dispatch       *dispatch.Dispatch
-	content        *content.WorkspaceService
-	diskGuards     []*diskguard.Guard
-	hosts          hosts.Controller
-	configReloader ConfigReloader
-	mgr            ctrl.Manager
+	dispatch        *dispatch.Dispatch
+	content         *content.WorkspaceService
+	diskGuards      []*diskguard.Guard
+	hosts           hosts.Controller
+	configReloader  ConfigReloader
+	mgr             ctrl.Manager
+	metricsRegistry *prometheus.Registry
 
 	cancel context.CancelFunc
 }
@@ -324,4 +345,8 @@ func (d *Daemon) ReadinessProbe() func() error {
 
 		return nil
 	}
+}
+
+func (d *Daemon) MetricsRegistry() *prometheus.Registry {
+	return d.metricsRegistry
 }
