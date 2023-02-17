@@ -7,7 +7,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"strconv"
 	"sync"
 	"time"
@@ -22,13 +21,11 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -148,7 +145,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	ports := make([]workspacev1.PortSpec, 0, len(req.Spec.Ports))
 	for _, p := range req.Spec.Ports {
 		v := workspacev1.AdmissionLevelOwner
-		if p.Visibility == api.PortVisibility_PORT_VISIBILITY_PUBLIC {
+		if p.Visibility == wsmanapi.PortVisibility_PORT_VISIBILITY_PUBLIC {
 			v = workspacev1.AdmissionLevelEveryone
 		}
 		ports = append(ports, workspacev1.PortSpec{
@@ -169,23 +166,23 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 
 	for _, feature := range req.Spec.FeatureFlags {
 		switch feature {
-		case api.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
+		case wsmanapi.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
 			limits := class.Container.Limits
 			if limits != nil && limits.CPU != nil {
 				if limits.CPU.MinLimit != "" {
-					annotations[kubernetes.WorkspaceCpuMinLimitAnnotation] = limits.CPU.MinLimit
+					annotations[wsk8s.WorkspaceCpuMinLimitAnnotation] = limits.CPU.MinLimit
 				}
 
 				if limits.CPU.BurstLimit != "" {
-					annotations[kubernetes.WorkspaceCpuBurstLimitAnnotation] = limits.CPU.BurstLimit
+					annotations[wsk8s.WorkspaceCpuBurstLimitAnnotation] = limits.CPU.BurstLimit
 				}
 			}
 
-		case api.WorkspaceFeatureFlag_WORKSPACE_CONNECTION_LIMITING:
-			annotations[kubernetes.WorkspaceNetConnLimitAnnotation] = util.BooleanTrueString
+		case wsmanapi.WorkspaceFeatureFlag_WORKSPACE_CONNECTION_LIMITING:
+			annotations[wsk8s.WorkspaceNetConnLimitAnnotation] = util.BooleanTrueString
 
-		case api.WorkspaceFeatureFlag_WORKSPACE_PSI:
-			annotations[kubernetes.WorkspacePressureStallInfoAnnotation] = util.BooleanTrueString
+		case wsmanapi.WorkspaceFeatureFlag_WORKSPACE_PSI:
+			annotations[wsk8s.WorkspacePressureStallInfoAnnotation] = util.BooleanTrueString
 		}
 	}
 
@@ -274,10 +271,10 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 	defer tracing.FinishSpan(span, &err)
 
 	gracePeriod := stopWorkspaceNormallyGracePeriod
-	if req.Policy == api.StopWorkspacePolicy_IMMEDIATELY {
+	if req.Policy == wsmanapi.StopWorkspacePolicy_IMMEDIATELY {
 		span.LogKV("policy", "immediately")
 		gracePeriod = stopWorkspaceImmediatelyGracePeriod
-	} else if req.Policy == api.StopWorkspacePolicy_ABORT {
+	} else if req.Policy == wsmanapi.StopWorkspacePolicy_ABORT {
 		span.LogKV("policy", "abort")
 		gracePeriod = stopWorkspaceImmediatelyGracePeriod
 		if err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
@@ -356,7 +353,7 @@ func (wsm *WorkspaceManagerServer) DescribeWorkspace(ctx context.Context, req *w
 }
 
 // Subscribe streams all status updates to a client
-func (m *WorkspaceManagerServer) Subscribe(req *api.SubscribeRequest, srv api.WorkspaceManager_SubscribeServer) (err error) {
+func (m *WorkspaceManagerServer) Subscribe(req *wsmanapi.SubscribeRequest, srv wsmanapi.WorkspaceManager_SubscribeServer) (err error) {
 	var sub subscriber = srv
 	if req.MustMatch != nil {
 		sub = &filteringSubscriber{srv, req.MustMatch}
@@ -390,7 +387,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 
 	// if user already mark workspace as active and this request has IgnoreIfActive flag, just simple ignore it
 	if firstUserActivity != nil && req.IgnoreIfActive {
-		return &api.MarkActiveResponse{}, nil
+		return &wsmanapi.MarkActiveResponse{}, nil
 	}
 
 	// We do not keep the last activity in the workspace resource to limit the load we're placing
@@ -447,7 +444,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 		}
 	}
 
-	return &api.MarkActiveResponse{}, nil
+	return &wsmanapi.MarkActiveResponse{}, nil
 }
 
 func (wsm *WorkspaceManagerServer) SetTimeout(ctx context.Context, req *wsmanapi.SetTimeoutRequest) (*wsmanapi.SetTimeoutResponse, error) {
@@ -485,7 +482,7 @@ func (wsm *WorkspaceManagerServer) ControlPort(ctx context.Context, req *wsmanap
 
 		if req.Expose {
 			visibility := workspacev1.AdmissionLevelOwner
-			if req.Spec.Visibility == api.PortVisibility_PORT_VISIBILITY_PUBLIC {
+			if req.Spec.Visibility == wsmanapi.PortVisibility_PORT_VISIBILITY_PUBLIC {
 				visibility = workspacev1.AdmissionLevelEveryone
 			}
 			ws.Spec.Ports = append(ws.Spec.Ports, workspacev1.PortSpec{
@@ -513,7 +510,7 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 		return nil, status.Errorf(codes.NotFound, "workspace %s not found", req.Id)
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "cannot lookup workspace: %w", err)
+		return nil, status.Errorf(codes.Internal, "cannot lookup workspace: %v", err)
 	}
 
 	if ws.Status.Phase != workspacev1.WorkspacePhaseRunning {
@@ -677,7 +674,7 @@ func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id strin
 // }
 
 // validateStartWorkspaceRequest ensures that acting on this request will not leave the system in an invalid state
-func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
+func validateStartWorkspaceRequest(req *wsmanapi.StartWorkspaceRequest) error {
 	err := validation.ValidateStruct(req.Spec,
 		validation.Field(&req.Spec.WorkspaceImage, validation.Required),
 		validation.Field(&req.Spec.WorkspaceLocation, validation.Required),
@@ -693,7 +690,7 @@ func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
 	rules = append(rules, validation.Field(&req.Id, validation.Required))
 	rules = append(rules, validation.Field(&req.Spec, validation.Required))
 	rules = append(rules, validation.Field(&req.Type, validation.By(isValidWorkspaceType)))
-	if req.Type == api.WorkspaceType_REGULAR {
+	if req.Type == wsmanapi.WorkspaceType_REGULAR {
 		rules = append(rules, validation.Field(&req.ServicePrefix, validation.Required))
 	}
 	err = validation.ValidateStruct(req, rules...)
@@ -705,12 +702,12 @@ func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
 }
 
 func isValidWorkspaceType(value interface{}) error {
-	s, ok := value.(api.WorkspaceType)
+	s, ok := value.(wsmanapi.WorkspaceType)
 	if !ok {
 		return xerrors.Errorf("value is not a workspace type")
 	}
 
-	_, ok = api.WorkspaceType_name[int32(s)]
+	_, ok = wsmanapi.WorkspaceType_name[int32(s)]
 	if !ok {
 		return xerrors.Errorf("value %d is out of range", s)
 	}
@@ -719,7 +716,7 @@ func isValidWorkspaceType(value interface{}) error {
 }
 
 func areValidPorts(value interface{}) error {
-	s, ok := value.([]*api.PortSpec)
+	s, ok := value.([]*wsmanapi.PortSpec)
 	if !ok {
 		return xerrors.Errorf("value is not a port spec list")
 	}
@@ -740,12 +737,12 @@ func areValidPorts(value interface{}) error {
 }
 
 func areValidFeatureFlags(value interface{}) error {
-	s, ok := value.([]api.WorkspaceFeatureFlag)
+	s, ok := value.([]wsmanapi.WorkspaceFeatureFlag)
 	if !ok {
 		return xerrors.Errorf("value not a feature flag list")
 	}
 
-	idx := make(map[api.WorkspaceFeatureFlag]struct{}, len(s))
+	idx := make(map[wsmanapi.WorkspaceFeatureFlag]struct{}, len(s))
 	for _, k := range s {
 		idx[k] = struct{}{}
 	}
@@ -939,10 +936,10 @@ func metadataFilterToLabelSelector(filter *wsmanapi.MetadataFilter) (labels.Sele
 
 type filteringSubscriber struct {
 	Sub    subscriber
-	Filter *api.MetadataFilter
+	Filter *wsmanapi.MetadataFilter
 }
 
-func matchesMetadataFilter(filter *api.MetadataFilter, md *api.WorkspaceMetadata) bool {
+func matchesMetadataFilter(filter *wsmanapi.MetadataFilter, md *wsmanapi.WorkspaceMetadata) bool {
 	if filter == nil {
 		return true
 	}
@@ -962,8 +959,8 @@ func matchesMetadataFilter(filter *api.MetadataFilter, md *api.WorkspaceMetadata
 	return true
 }
 
-func (f *filteringSubscriber) Send(resp *api.SubscribeResponse) error {
-	var md *api.WorkspaceMetadata
+func (f *filteringSubscriber) Send(resp *wsmanapi.SubscribeResponse) error {
+	var md *wsmanapi.WorkspaceMetadata
 	if sts := resp.GetStatus(); sts != nil {
 		md = sts.Metadata
 	}
@@ -979,7 +976,7 @@ func (f *filteringSubscriber) Send(resp *api.SubscribeResponse) error {
 }
 
 type subscriber interface {
-	Send(*api.SubscribeResponse) error
+	Send(*wsmanapi.SubscribeResponse) error
 }
 
 type subscriptions struct {
@@ -988,7 +985,7 @@ type subscriptions struct {
 }
 
 func (subs *subscriptions) Subscribe(ctx context.Context, recv subscriber) (err error) {
-	incoming := make(chan *api.SubscribeResponse, 250)
+	incoming := make(chan *wsmanapi.SubscribeResponse, 250)
 
 	var key string
 	peer, ok := peer.FromContext(ctx)
@@ -1013,7 +1010,7 @@ func (subs *subscriptions) Subscribe(ctx context.Context, recv subscriber) (err 
 	}()
 
 	for {
-		var inc *api.SubscribeResponse
+		var inc *wsmanapi.SubscribeResponse
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -1033,7 +1030,7 @@ func (subs *subscriptions) Subscribe(ctx context.Context, recv subscriber) (err 
 	}
 }
 
-func (subs *subscriptions) PublishToSubscribers(ctx context.Context, update *api.SubscribeResponse) {
+func (subs *subscriptions) PublishToSubscribers(ctx context.Context, update *wsmanapi.SubscribeResponse) {
 	subs.mu.RLock()
 	var dropouts []string
 	for k, sub := range subs.subscribers {
@@ -1081,7 +1078,7 @@ func (subs *subscriptions) DropSubscriber(dropouts []string) {
 }
 
 // onChange is the default OnChange implementation which publishes workspace status updates to subscribers
-func (subs *subscriptions) OnChange(ctx context.Context, status *api.WorkspaceStatus) {
+func (subs *subscriptions) OnChange(ctx context.Context, status *wsmanapi.WorkspaceStatus) {
 	log := log.WithFields(log.OWI(status.Metadata.Owner, status.Metadata.MetaId, status.Id))
 
 	header := make(map[string]string)
@@ -1105,7 +1102,7 @@ func (subs *subscriptions) OnChange(ctx context.Context, status *api.WorkspaceSt
 		}
 	}
 
-	subs.PublishToSubscribers(ctx, &api.SubscribeResponse{
+	subs.PublishToSubscribers(ctx, &wsmanapi.SubscribeResponse{
 		Status: status,
 		Header: header,
 	})
