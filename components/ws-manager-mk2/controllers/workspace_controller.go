@@ -333,6 +333,7 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("workspace").
 		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
 		Complete(r)
