@@ -73,24 +73,21 @@ func snapshotEventFilter(nodeName string) predicate.Predicate {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.1/pkg/reconcile
 func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
-	log.Info("Reconciling snapshot")
 
 	var snapshot workspacev1.Snapshot
 	if err := ssc.Client.Get(ctx, req.NamespacedName, &snapshot); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log.Info("got snapshot")
 	if snapshot.Status.Completed {
 		return ctrl.Result{}, nil
 	}
 
-	snapshotURL, snapshotErr := ssc.operations.SnapshotURL(snapshot.Spec.WorkspaceID)
+	snapshotURL, snapshotName, snapshotErr := ssc.operations.SnapshotIDs(snapshot.Spec.WorkspaceID)
 	if snapshotErr != nil {
 		return ctrl.Result{}, snapshotErr
 	}
 
-	log.Info("got snapshot url")
 	err := retry.RetryOnConflict(retryParams, func() error {
 		err := ssc.Client.Get(ctx, req.NamespacedName, &snapshot)
 		if err != nil {
@@ -102,12 +99,11 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	})
 
 	if err != nil {
+		log.Error(err, "could not set snapshot url", "workspace", snapshot.Spec.WorkspaceID)
 		return ctrl.Result{}, err
 	}
 
-	log.Info("updated snapshot url")
-	snapshotErr = ssc.operations.TakeSnapshot(ctx, snapshot.Spec.WorkspaceID, snapshotURL)
-	log.Info("took snapshot")
+	snapshotErr = ssc.operations.TakeSnapshot(ctx, snapshot.Spec.WorkspaceID, snapshotName)
 	err = retry.RetryOnConflict(retryParams, func() error {
 		err := ssc.Client.Get(ctx, req.NamespacedName, &snapshot)
 		if err != nil {
@@ -119,12 +115,17 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			snapshot.Status.Error = fmt.Errorf("could not take snapshot: %w", snapshotErr).Error()
 		}
 
-		return ssc.Status().Update(ctx, &snapshot)
+		err = ssc.Status().Update(ctx, &snapshot)
+		if err != nil {
+			return err
+		}
+
+		return ssc.Client.Delete(ctx, &snapshot)
 	})
+
+	if err != nil {
+		log.Error(err, "could not set completion status for snapshot", "workspace", snapshot.Spec.WorkspaceID)
+	}
 
 	return ctrl.Result{}, err
 }
-
-// func modifySnapshot() error {
-// 	return nil
-// }

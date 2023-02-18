@@ -227,23 +227,21 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 	return false, repo, nil
 }
 
-func (wso *WorkspaceOperations) SnapshotURL(workspaceID string) (string, error) {
+func (wso *WorkspaceOperations) SnapshotIDs(workspaceID string) (snapshotUrl, snapshotName string, err error) {
 	sess := wso.store.Get(workspaceID)
 	if sess == nil {
-		return "", fmt.Errorf("cannot find workspace %s during SnapshotName", workspaceID)
+		return "", "", fmt.Errorf("cannot find workspace %s during SnapshotName", workspaceID)
 	}
 
-	var (
-		baseName   = fmt.Sprintf("snapshot-%d", time.Now().UnixNano())
-		backupName = baseName + ".tar"
-	)
+	baseName := fmt.Sprintf("snapshot-%d", time.Now().UnixNano())
+	snapshotName = baseName + ".tar"
 
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
-		return "", fmt.Errorf("no remote storage configured")
+		return "", "", fmt.Errorf("no remote storage configured")
 	}
 
-	return rs.Qualify(backupName), nil
+	return rs.Qualify(snapshotName), snapshotName, nil
 }
 
 func (wso *WorkspaceOperations) TakeSnapshot(ctx context.Context, workspaceID, snapshotName string) (err error) {
@@ -264,11 +262,6 @@ func (wso *WorkspaceOperations) TakeSnapshot(ctx context.Context, workspaceID, s
 	if sess.RemoteStorageDisabled {
 		return fmt.Errorf("workspace has no remote storage")
 	}
-
-	// snapshotName, err := wso.SnapshotURL(workspaceID)
-	// if err != nil {
-	// 	return err
-	// }
 
 	err = wso.uploadWorkspaceContent(ctx, sess, snapshotName)
 	if err != nil {
