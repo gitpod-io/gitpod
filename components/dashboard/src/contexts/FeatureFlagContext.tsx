@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
 import { getExperimentsClient } from "../experiments/client";
 import { ProjectContext } from "../projects/project-context";
 import { useCurrentTeam, useTeams } from "../teams/teams-context";
@@ -14,17 +14,11 @@ interface FeatureFlagConfig {
     [flagName: string]: { defaultValue: boolean; setter: React.Dispatch<React.SetStateAction<boolean>> };
 }
 
-const FeatureFlagContext = createContext<{
-    startWithOptions: boolean;
-    showUsageView: boolean;
-    isUsageBasedBillingEnabled: boolean;
-    showUseLastSuccessfulPrebuild: boolean;
-    usePublicApiWorkspacesService: boolean;
-    enablePersonalAccessTokens: boolean;
-    oidcServiceEnabled: boolean;
-    orgGitAuthProviders: boolean;
-    switchToPAYG: boolean;
-}>({
+type FeatureFlagsType = {
+    [k in keyof typeof defaultFeatureFlags]: boolean;
+};
+
+const defaultFeatureFlags = {
     startWithOptions: false,
     showUsageView: false,
     isUsageBasedBillingEnabled: false,
@@ -34,7 +28,10 @@ const FeatureFlagContext = createContext<{
     oidcServiceEnabled: false,
     orgGitAuthProviders: false,
     switchToPAYG: false,
-});
+    newSignupFlow: false,
+};
+
+const FeatureFlagContext = createContext<FeatureFlagsType>(defaultFeatureFlags);
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const { user } = useContext(UserContext);
@@ -50,6 +47,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [oidcServiceEnabled, setOidcServiceEnabled] = useState<boolean>(false);
     const [orgGitAuthProviders, setOrgGitAuthProviders] = useState<boolean>(false);
     const [switchToPAYG, setSwitchToPAYG] = useState<boolean>(false);
+    const [newSignupFlow, setNewSignupFlow] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -67,6 +65,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 oidcServiceEnabled: { defaultValue: false, setter: setOidcServiceEnabled },
                 orgGitAuthProviders: { defaultValue: false, setter: setOrgGitAuthProviders },
                 switchToPAYG: { defaultValue: false, setter: setSwitchToPAYG },
+                newSignupFlow: { defaultValue: false, setter: setNewSignupFlow },
             };
 
             for (const [flagName, config] of Object.entries(featureFlags)) {
@@ -103,23 +102,33 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         })();
     }, [user, teams, team, project]);
 
-    return (
-        <FeatureFlagContext.Provider
-            value={{
-                startWithOptions,
-                showUsageView,
-                isUsageBasedBillingEnabled,
-                showUseLastSuccessfulPrebuild,
-                enablePersonalAccessTokens,
-                usePublicApiWorkspacesService,
-                oidcServiceEnabled,
-                orgGitAuthProviders,
-                switchToPAYG,
-            }}
-        >
-            {children}
-        </FeatureFlagContext.Provider>
-    );
+    const flags = useMemo(() => {
+        return {
+            startWithOptions,
+            showUsageView,
+            isUsageBasedBillingEnabled,
+            showUseLastSuccessfulPrebuild,
+            enablePersonalAccessTokens,
+            usePublicApiWorkspacesService,
+            oidcServiceEnabled,
+            orgGitAuthProviders,
+            newSignupFlow,
+            switchToPAYG,
+        };
+    }, [
+        enablePersonalAccessTokens,
+        isUsageBasedBillingEnabled,
+        newSignupFlow,
+        oidcServiceEnabled,
+        orgGitAuthProviders,
+        showUsageView,
+        showUseLastSuccessfulPrebuild,
+        startWithOptions,
+        switchToPAYG,
+        usePublicApiWorkspacesService,
+    ]);
+
+    return <FeatureFlagContext.Provider value={flags}>{children}</FeatureFlagContext.Provider>;
 };
 
 export { FeatureFlagContext, FeatureFlagContextProvider };
