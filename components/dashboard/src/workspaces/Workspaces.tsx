@@ -19,6 +19,7 @@ import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
 import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 
 const WorkspacesPage: FunctionComponent = () => {
     const user = useCurrentUser();
@@ -29,6 +30,7 @@ const WorkspacesPage: FunctionComponent = () => {
     const { data, isLoading } = useListWorkspacesQuery({ limit });
     const isOnboardingUser = useMemo(() => user && User.isOnboardingUser(user), [user]);
     const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
+    const { newSignupFlow } = useFeatureFlags();
 
     // Sort workspaces into active/inactive groups
     const { activeWorkspaces, inactiveWorkspaces } = useMemo(() => {
@@ -94,12 +96,9 @@ const WorkspacesPage: FunctionComponent = () => {
                 />
             )}
 
-            {isOnboardingUser ? (
-                <SelectIDEModal location={"workspace_list"} />
-            ) : (
-                // modal hides itself
-                <ProfileState.NudgeForProfileUpdateModal />
-            )}
+            {isOnboardingUser && !newSignupFlow && <SelectIDEModal location={"workspace_list"} />}
+
+            {!isOnboardingUser && !newSignupFlow && <ProfileState.NudgeForProfileUpdateModal />}
 
             {!isLoading &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
