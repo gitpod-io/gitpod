@@ -45,6 +45,7 @@ import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-
 import { OrgRequiredRoute } from "./OrgRequiredRoute";
 import { WebsocketClients } from "./WebsocketClients";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -88,6 +89,7 @@ const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../a
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/TeamsSearch"));
 const License = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/License"));
 const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
+const UserOnboarding = React.lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
 
 type AppRoutesProps = {
     user: User;
@@ -99,6 +101,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
     const newCreateWsPage = useNewCreateWorkspacePage();
     const location = useLocation();
+    const { newSignupFlow } = useFeatureFlags();
 
     // Prefix with `/#referrer` will specify an IDE for workspace
     // We don't need to show IDE preference in this case
@@ -120,12 +123,18 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
         return <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     }
 
+    // Placeholder for new signup flow
+    if (newSignupFlow && User.isOnboardingUser(user)) {
+        return <UserOnboarding user={user} />;
+    }
+
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)
     const isCreation = location.pathname === "/" && hash !== "";
     if (isCreation) {
         if (showUserIdePreference) {
             return (
                 <StartPage phase={StartPhase.Checking}>
+                    {/* TODO: ensure we don't show this after new onboarding flow */}
                     <SelectIDEModal location="workspace_start" onClose={() => setShowUserIdePreference(false)} />
                 </StartPage>
             );
