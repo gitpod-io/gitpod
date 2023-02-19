@@ -12,10 +12,17 @@ package kubernetes
 import (
 	"context"
 	"math"
+	"reflect"
 
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
@@ -194,4 +201,37 @@ func ConditionWithStatusAndReason(cond []metav1.Condition, tpe string, status bo
 		}
 	}
 	return false
+}
+
+func ModifyObject[obj client.Object](ctx context.Context, client client.Client, namespace, objectID string, updateStatus bool, mod func(o obj) error) error {
+	var object obj
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		err := client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: objectID}, object)
+		if err != nil {
+			return err
+		}
+
+		err = mod(object)
+		if err != nil {
+			return err
+		}
+
+		if updateStatus {
+			err = client.Status().Update(ctx, object)
+		} else {
+			err = client.Update(ctx, object)
+
+		}
+		return err
+	})
+	if errors.IsNotFound(err) {
+		return status.Errorf(codes.NotFound, "%s %s not found", reflect.TypeOf(object).String(), objectID)
+	}
+	if c := status.Code(err); c != codes.Unknown && c != codes.OK {
+		return err
+	}
+	if err != nil {
+		return status.Errorf(codes.Internal, "cannot modify %s %s: %v", reflect.TypeOf(object).String(), objectID, err)
+	}
+	return nil
 }
