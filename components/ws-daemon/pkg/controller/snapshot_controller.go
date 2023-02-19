@@ -115,12 +115,7 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			snapshot.Status.Error = fmt.Errorf("could not take snapshot: %w", snapshotErr).Error()
 		}
 
-		err = ssc.Status().Update(ctx, &snapshot)
-		if err != nil {
-			return err
-		}
-
-		return ssc.Client.Delete(ctx, &snapshot)
+		return ssc.Status().Update(ctx, &snapshot)
 	})
 
 	if err != nil {
