@@ -38,7 +38,6 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/client-go/util/retry"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -277,7 +276,7 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 	} else if req.Policy == wsmanapi.StopWorkspacePolicy_ABORT {
 		span.LogKV("policy", "abort")
 		gracePeriod = stopWorkspaceImmediatelyGracePeriod
-		if err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+		if err = wsk8s.ModifyObject(ctx, wsm.Client, wsm.Config.Namespace, req.Id, true, func(ws *workspacev1.Workspace) error {
 			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionAborted),
 				Status:             metav1.ConditionTrue,
@@ -289,7 +288,7 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 			log.Error(err, "failed to add Aborted condition to workspace")
 		}
 	}
-	err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+	err = wsk8s.ModifyObject(ctx, wsm.Client, wsm.Config.Namespace, req.Id, true, func(ws *workspacev1.Workspace) error {
 		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
 			Status:             metav1.ConditionTrue,
@@ -399,7 +398,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 	// very often and provides a better UX if it persists across ws-manager restarts.
 	isMarkedClosed := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed))
 	if req.Closed && !isMarkedClosed {
-		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+		err = wsk8s.ModifyObject(ctx, wsm.Client, wsm.Config.Namespace, req.Id, true, func(ws *workspacev1.Workspace) error {
 			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionClosed),
 				Status:             metav1.ConditionTrue,
@@ -409,7 +408,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 			return nil
 		})
 	} else if !req.Closed && isMarkedClosed {
-		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+		err = wsk8s.ModifyObject(ctx, wsm.Client, wsm.Config.Namespace, req.Id, true, func(ws *workspacev1.Workspace) error {
 			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionClosed),
 				Status:             metav1.ConditionFalse,
@@ -429,7 +428,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 
 	// If it's the first call: Mark the pod with FirstUserActivity condition.
 	if firstUserActivity == nil {
-		err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+		err := wsk8s.ModifyObject(ctx, wsm.Client, wsm.Config.Namespace, req.Id, true, func(ws *workspacev1.Workspace) error {
 			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 				Type:               string(workspacev1.WorkspaceConditionFirstUserActivity),
 				Status:             metav1.ConditionTrue,
@@ -453,7 +452,7 @@ func (wsm *WorkspaceManagerServer) SetTimeout(ctx context.Context, req *wsmanapi
 		return nil, status.Errorf(codes.InvalidArgument, "invalid duration: %v", err)
 	}
 
-	err = wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
+	err = wsk8s.ModifyObject(ctx, wsm.Client, wsm.Config.Namespace, req.Id, false, func(ws *workspacev1.Workspace) error {
 		ws.Spec.Timeout.Time = &metav1.Duration{Duration: duration}
 		return nil
 	})
@@ -470,7 +469,7 @@ func (wsm *WorkspaceManagerServer) ControlPort(ctx context.Context, req *wsmanap
 	}
 
 	port := req.Spec.Port
-	err := wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
+	err := wsk8s.ModifyObject(ctx, wsm.Client, wsm.Config.Namespace, req.Id, false, func(ws *workspacev1.Workspace) error {
 		n := 0
 		for _, x := range ws.Spec.Ports {
 			if x.Port != port {
@@ -589,7 +588,7 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 }
 
 func (wsm *WorkspaceManagerServer) ControlAdmission(ctx context.Context, req *wsmanapi.ControlAdmissionRequest) (*wsmanapi.ControlAdmissionResponse, error) {
-	err := wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
+	err := wsk8s.ModifyObject(ctx, wsm.Client, wsm.Config.Namespace, req.Id, false, func(ws *workspacev1.Workspace) error {
 		switch req.Level {
 		case wsmanapi.AdmissionLevel_ADMIT_EVERYONE:
 			ws.Spec.Admission.Level = workspacev1.AdmissionLevelEveryone
@@ -605,74 +604,6 @@ func (wsm *WorkspaceManagerServer) ControlAdmission(ctx context.Context, req *ws
 	}
 	return &wsmanapi.ControlAdmissionResponse{}, nil
 }
-
-// modifyWorkspace modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
-// is returned directly. If mod returns a non-gRPC error it is turned into one.
-func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id string, updateStatus bool, mod func(ws *workspacev1.Workspace) error) error {
-	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		var ws workspacev1.Workspace
-		err := wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: id}, &ws)
-		if err != nil {
-			return err
-		}
-
-		err = mod(&ws)
-		if err != nil {
-			return err
-		}
-
-		if updateStatus {
-			err = wsm.Client.Status().Update(ctx, &ws)
-		} else {
-			err = wsm.Client.Update(ctx, &ws)
-
-		}
-		return err
-	})
-	if errors.IsNotFound(err) {
-		return status.Errorf(codes.NotFound, "workspace %s not found", id)
-	}
-	if c := status.Code(err); c != codes.Unknown && c != codes.OK {
-		return err
-	}
-	if err != nil {
-		return status.Errorf(codes.Internal, "cannot modify workspace: %v", err)
-	}
-	return nil
-}
-
-// func modifyObject[obj client.Object](ctx context.Context, client client.Client, namespace, id string, updateStatus bool, mod func(o obj) error) error {
-// 	var ws obj
-// 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-// 		err := client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: id}, ws)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		err = mod(ws)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if updateStatus {
-// 			err = client.Status().Update(ctx, ws)
-// 		} else {
-// 			err = client.Update(ctx, ws)
-
-// 		}
-// 		return err
-// 	})
-// 	if errors.IsNotFound(err) {
-// 		return status.Errorf(codes.NotFound, "%s %s not found", reflect.TypeOf(ws).String(), id)
-// 	}
-// 	if c := status.Code(err); c != codes.Unknown && c != codes.OK {
-// 		return err
-// 	}
-// 	if err != nil {
-// 		return status.Errorf(codes.Internal, "cannot modify %s: %v", reflect.TypeOf(ws).String(), err)
-// 	}
-// 	return nil
-// }
 
 // validateStartWorkspaceRequest ensures that acting on this request will not leave the system in an invalid state
 func validateStartWorkspaceRequest(req *wsmanapi.StartWorkspaceRequest) error {
