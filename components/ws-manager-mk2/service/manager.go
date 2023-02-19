@@ -522,16 +522,19 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 			APIVersion: workspacev1.GroupVersion.String(),
 			Kind:       "Snapshot",
 		},
-
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-%d", req.Id, time.Now().UnixNano()),
 			Namespace: wsm.Config.Namespace,
-			Labels:    map[string]string{},
 		},
 		Spec: workspacev1.SnapshotSpec{
 			NodeName:    ws.Status.Runtime.NodeName,
 			WorkspaceID: ws.Name,
 		},
+	}
+
+	err = controllerutil.SetOwnerReference(&ws, &snapshot, wsm.Client.Scheme())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "cannot set owner for snapshot: %q", err)
 	}
 
 	err = wsm.Client.Create(ctx, &snapshot)
@@ -579,8 +582,6 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 			return nil, status.Errorf(codes.Internal, "cannot take snapshot: %q", sso.Status.Error)
 		}
 	}
-
-	log.Info("return url")
 
 	return &wsmanapi.TakeSnapshotResponse{
 		Url: sso.Status.URL,
