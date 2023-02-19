@@ -75,6 +75,24 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"update",
 					},
 				},
+				rbacv1.PolicyRule{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"snapshots"},
+					Verbs: []string{
+						"get",
+						"list",
+						"watch",
+					},
+				},
+				rbacv1.PolicyRule{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"snapshots/status"},
+					Verbs: []string{
+						"get",
+						"patch",
+						"update",
+					},
+				},
 			),
 		},
 	}, nil

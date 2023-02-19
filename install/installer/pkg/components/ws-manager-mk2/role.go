@@ -69,6 +69,28 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"update",
 					},
 				},
+				{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"snapshots"},
+					Verbs: []string{
+						"create",
+						"delete",
+						"get",
+						"list",
+						"patch",
+						"update",
+						"watch",
+					},
+				},
+				{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"snapshots/status"},
+					Verbs: []string{
+						"get",
+						"patch",
+						"update",
+					},
+				},
 				// ConfigMap, Leases, and Events access is required for leader-election.
 				{
 					APIGroups: []string{""},
