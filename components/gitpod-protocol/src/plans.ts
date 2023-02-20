@@ -490,6 +490,22 @@ export namespace Plans {
         return chargebeeId === Plans.FREE_OPEN_SOURCE.chargebeeId;
     }
 
+    export function isPersonalPlan(planId: string | undefined): boolean {
+        const plan = Plans.getById(planId);
+        if (!plan) {
+            return false;
+        }
+        return !plan.team;
+    }
+
+    export function isTeamPlan(planId: string | undefined): boolean {
+        const plan = Plans.getById(planId);
+        if (!plan) {
+            return false;
+        }
+        return !!plan.team;
+    }
+
     export function getHoursPerMonth(plan: Plan): number {
         return plan.hoursPerMonth == "unlimited" ? ABSOLUTE_MAX_USAGE : plan.hoursPerMonth;
     }

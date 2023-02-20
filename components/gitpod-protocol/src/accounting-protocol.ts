@@ -5,6 +5,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
+import { Plans } from "./plans";
 import { User } from "./protocol";
 import { oneMonthLater } from "./util/timeutil";
 
@@ -212,6 +213,14 @@ export namespace Subscription {
             nextStartDate = oneMonthLater(startDate, new Date(startDate).getDate());
         } while (nextStartDate < now.toISOString());
         return { startDate, endDate: nextStartDate };
+    }
+
+    export function isOldTeamSubscription(s: Subscription): boolean {
+        return Plans.isTeamPlan(s.planId) && !s.teamMembershipId;
+    }
+
+    export function isTeamSubscription2(s: Subscription): boolean {
+        return Plans.isTeamPlan(s.planId) && !!s.teamMembershipId;
     }
 }
 

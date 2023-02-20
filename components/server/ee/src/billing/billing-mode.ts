@@ -118,20 +118,10 @@ export class BillingModesImpl implements BillingModes {
 
         // 2. Any personal subscriptions?
         // Chargebee takes precedence
-        function isPersonalSubscription(s: Subscription): boolean {
-            return !Plans.getById(s.planId)?.team;
-        }
-        function isOldTeamSubscription(s: Subscription): boolean {
-            return !!Plans.getById(s.planId)?.team && !s.teamMembershipId;
-        }
         const cbSubscriptions = await this.subscriptionSvc.getActivePaidSubscription(user.id, now);
-        const cbTeamSubscriptions = cbSubscriptions.filter((s) => isOldTeamSubscription(s));
+        const cbTeamSubscriptions = cbSubscriptions.filter((s) => Subscription.isOldTeamSubscription(s));
         const cbPersonalSubscriptions = cbSubscriptions.filter(
-            (s) =>
-                isPersonalSubscription(s) &&
-                ![Plans.FREE_OPEN_SOURCE.chargebeeId, Plans.FREE.chargebeeId, Plans.FREE_50.chargebeeId].includes(
-                    s.planId!,
-                ),
+            (s) => Plans.isPersonalPlan(s.planId) && !Plans.isFreePlan(s.planId),
         );
         const cbOwnedTeamSubscriptions = (
             await this.teamSubscriptionDb.findTeamSubscriptions({ userId: user.id })
