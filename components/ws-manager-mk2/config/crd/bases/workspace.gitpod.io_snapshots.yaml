@@ -50,7 +50,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: WorkspaceSpec defines the desired state of Workspace
+            description: SnapshotSpec defines the desired state of the snapshot
             properties:
               nodeName:
                 type: string
@@ -61,7 +61,7 @@ spec:
             - workspaceID
             type: object
           status:
-            description: WorkspaceStatus defines the observed state of Workspace
+            description: SnapshotStatus defines the observed state of the snapshot
             properties:
               completed:
                 description: Completed indicates if the snapshot operation has completed
