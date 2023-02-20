@@ -6,6 +6,9 @@ set -euo pipefail
 
 SCRIPT_PATH=$(realpath "$(dirname "$0")")
 
+# Ensure components/gitpod-db:dbtest-init works
+export DB_HOST="${DB_HOST:-127.0.0.1}"
+
 # shellcheck source=../lib/common.sh
 source "$(realpath "${SCRIPT_PATH}/../lib/common.sh")"
 
