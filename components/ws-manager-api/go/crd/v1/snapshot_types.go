@@ -8,7 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// WorkspaceSpec defines the desired state of Workspace
+// SnapshotSpec defines the desired state of the snapshot
 type SnapshotSpec struct {
 	// +kubebuilder:validation:Required
 	NodeName string `json:"nodeName"`
@@ -17,7 +17,7 @@ type SnapshotSpec struct {
 	WorkspaceID string `json:"workspaceID"`
 }
 
-// WorkspaceStatus defines the observed state of Workspace
+// SnapshotStatus defines the observed state of the snapshot
 type SnapshotStatus struct {
 	// // +kubebuilder:validation:Optional
 	// Conditions []metav1.Condition `json:"conditions"`
