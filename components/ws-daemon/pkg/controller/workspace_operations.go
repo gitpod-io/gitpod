@@ -86,7 +86,7 @@ func NewWorkspaceOperations(config content.Config, store *session.Store, reg pro
 func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, options InitContentOptions) (bool, string, error) {
 	res, err := wso.store.NewWorkspace(
 		ctx, options.Meta.InstanceId, filepath.Join(wso.store.Location, options.Meta.InstanceId),
-		wso.creator(options.Meta.Owner, options.Meta.WorkspaceId, options.Meta.InstanceId, options.Initializer, options.Headless))
+		wso.creator(options.Meta.Owner, options.Meta.WorkspaceId, options.Meta.InstanceId, options.Initializer, false))
 	if errors.Is(err, storage.ErrNotFound) {
 		return false, "", nil
 	}
