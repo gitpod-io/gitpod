@@ -1,6 +1,15 @@
 # Change Log
 
 ## February 2023
+- New workspace creation page ([#16391](https://github.com/gitpod-io/gitpod/pull/16391)) - [@svenefftinge](https://github.com/svenefftinge)
+- Update the Settings and License page layouts for the admin dashboard ([#16427](https://github.com/gitpod-io/gitpod/pull/16427)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
+- Update context dropdown element height ([#16208](https://github.com/gitpod-io/gitpod/pull/16208)) - [@gtsiolis](https://github.com/gtsiolis)
+- Several links, such as Members, Usage and Settings have been moved into the organization selector in the top left of the Dashboard. ([#16353](https://github.com/gitpod-io/gitpod/pull/16353)) - [@selfcontained](https://github.com/selfcontained)
+- Update spacing layout for user, workspace, project, and organization in the admin dashboard ([#16415](https://github.com/gitpod-io/gitpod/pull/16415)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
+- Replace loading SVG icon with the Loader component ([#16002](https://github.com/gitpod-io/gitpod/pull/16002)) - [@gtsiolis](https://github.com/gtsiolis)
+- Update page layout and navigation for the admin dashboard ([#16307](https://github.com/gitpod-io/gitpod/pull/16307)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
+- [dashboard] Fix Dashboard lint errors for Login.tsx ([#16158](https://github.com/gitpod-io/gitpod/pull/16158)) - [@Palanikannan1437](https://github.com/Palanikannan1437)
+- Added Environment Variable Entry Component and associated it with Item List Context Menu, with ChangeMenuState Function, to keep the hovered effect ([#16258](https://github.com/gitpod-io/gitpod/pull/16258)) - [@henit-chobisa](https://github.com/henit-chobisa)
 - Allow user custom workspace timeout in vscode. ([#16220](https://github.com/gitpod-io/gitpod/pull/16220)) - [@iQQBot](https://github.com/iQQBot)
 - Always show all navigation menu items ([#16308](https://github.com/gitpod-io/gitpod/pull/16308)) - [@gtsiolis](https://github.com/gtsiolis)
 - Improve prompt for `Gitpod: Open in VS Code` action in Browser Code ([#16321](https://github.com/gitpod-io/gitpod/pull/16321)) - [@mustard-mh](https://github.com/mustard-mh)
