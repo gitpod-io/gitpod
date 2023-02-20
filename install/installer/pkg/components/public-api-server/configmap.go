@@ -50,6 +50,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	_, _, databaseSecretMountPath := common.DatabaseEnvSecret(ctx.Config)
 
 	cfg := config.Configuration{
+		PublicURL:                         fmt.Sprintf("https://api.%s", ctx.Config.Domain),
 		GitpodServiceURL:                  fmt.Sprintf("ws://%s.%s.svc.cluster.local:%d", server.Component, ctx.Namespace, server.ContainerPort),
 		OIDCClientJWTSigningSecretPath:    oidcClientJWTSigningSecretPath,
 		StripeWebhookSigningSecretPath:    stripeSecretPath,

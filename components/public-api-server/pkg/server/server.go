@@ -27,6 +27,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/idp"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/oidc"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/origin"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
@@ -114,6 +115,8 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, stateJWT)
 
+	idpService := idp.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", []byte("change this value"))
+
 	if registerErr := register(srv, &registerDependencies{
 		connPool:    connPool,
 		expClient:   expClient,
@@ -121,6 +124,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		signer:      signer,
 		cipher:      cipherSet,
 		oidcService: oidcService,
+		idpService:  idpService,
 	}); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
@@ -139,6 +143,7 @@ type registerDependencies struct {
 	signer      auth.Signer
 	cipher      db.Cipher
 	oidcService *oidc.Service
+	idpService  *idp.Service
 }
 
 func register(srv *baseserver.Server, deps *registerDependencies) error {
@@ -186,6 +191,12 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 
 	// OIDC sign-in handlers
 	rootHandler.Mount("/oidc", oidc.Router(deps.oidcService))
+
+	idpRoute, idpServiceHandler := v1connect.NewIDPServiceHandler(apiv1.NewIDPService(deps.connPool, deps.idpService), handlerOptions...)
+	rootHandler.Mount(idpRoute, idpServiceHandler)
+
+	// IDP well-known and keys routes
+	rootHandler.Mount("/idp", deps.idpService.Router())
 
 	// All requests are handled by our root router
 	srv.HTTPMux().Handle("/", rootHandler)

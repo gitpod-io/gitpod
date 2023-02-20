@@ -2685,7 +2685,7 @@ data:
     kind: Deployment
     metadata:
       annotations:
-        gitpod.io/checksum_config: d1a06645ff1ca1ad25691a8a88a60eafcc6b87a15cf630ea5b8518026619656d
+        gitpod.io/checksum_config: 2ef7f9affd5113b009049dee2e4381b5dbaffc0f993084e4eb50776b75b161db
       creationTimestamp: null
       labels:
         app: gitpod
@@ -5107,6 +5107,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
+      "publicURL": "https://api.gitpod.example.com",
       "gitpodServiceUrl": "ws://server.default.svc.cluster.local:3000",
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "sessionServiceAddress": "server.default.svc.cluster.local:9876",
@@ -9833,7 +9834,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    gitpod.io/checksum_config: d1a06645ff1ca1ad25691a8a88a60eafcc6b87a15cf630ea5b8518026619656d
+    gitpod.io/checksum_config: 2ef7f9affd5113b009049dee2e4381b5dbaffc0f993084e4eb50776b75b161db
   creationTimestamp: null
   labels:
     app: gitpod

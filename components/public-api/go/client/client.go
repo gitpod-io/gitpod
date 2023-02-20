@@ -7,9 +7,10 @@ package client
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/bufbuild/connect-go"
 	gitpod_experimental_v1connect "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
-	"net/http"
 )
 
 type Gitpod struct {
@@ -19,6 +20,7 @@ type Gitpod struct {
 	Teams                gitpod_experimental_v1connect.TeamsServiceClient
 	Projects             gitpod_experimental_v1connect.ProjectsServiceClient
 	PersonalAccessTokens gitpod_experimental_v1connect.TokensServiceClient
+	IDP                  gitpod_experimental_v1connect.IDPServiceClient
 }
 
 func New(options ...Option) (*Gitpod, error) {
@@ -44,6 +46,7 @@ func New(options ...Option) (*Gitpod, error) {
 	projects := gitpod_experimental_v1connect.NewProjectsServiceClient(client, url, serviceOpts...)
 	tokens := gitpod_experimental_v1connect.NewTokensServiceClient(client, url, serviceOpts...)
 	workspaces := gitpod_experimental_v1connect.NewWorkspacesServiceClient(client, url, serviceOpts...)
+	idp := gitpod_experimental_v1connect.NewIDPServiceClient(client, url, serviceOpts...)
 
 	return &Gitpod{
 		cfg:                  opts,
@@ -51,6 +54,7 @@ func New(options ...Option) (*Gitpod, error) {
 		Projects:             projects,
 		PersonalAccessTokens: tokens,
 		Workspaces:           workspaces,
+		IDP:                  idp,
 	}, nil
 }
 
