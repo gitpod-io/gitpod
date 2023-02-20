@@ -344,19 +344,6 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 			resp.IdeImageLayers = append(resp.IdeImageLayers, desktopImageLayer)
 			resp.IdeImageLayers = append(resp.IdeImageLayers, desktopUserImageLayers...)
 		}
-
-		if ideConfig.GpRunImage != "" {
-			featureFlagAttrs := experiments.Attributes{
-				UserID:    req.User.Id,
-				UserEmail: req.User.GetEmail(),
-			}
-			useRunGp := s.experiemntsClient.GetBoolValue(ctx, "ide_service_experimental_rungp", false, featureFlagAttrs)
-			log.WithField("featureFlagAttrs", featureFlagAttrs).WithField("useRunGp", useRunGp).Debug("calling configcat to check ide_service_experimental_rungp")
-			if useRunGp {
-				resp.IdeImageLayers = append(resp.IdeImageLayers, ideConfig.GpRunImage)
-				log.Debug("adding gp-run layer")
-			}
-		}
 	}
 
 	jbGW, ok := ideConfig.IdeOptions.Clients["jetbrains-gateway"]
