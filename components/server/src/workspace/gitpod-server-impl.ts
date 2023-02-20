@@ -78,6 +78,7 @@ import {
     SSHPublicKeyValue,
     UserSSHPublicKeyValue,
     PrebuildEvent,
+    AppNotification,
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -3564,7 +3565,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.imagebuilderClientProvider.getClient(this.config.installationShortname, user, workspace, instance);
     }
 
-    async getNotifications(ctx: TraceContext): Promise<string[]> {
+    async getNotifications(ctx: TraceContext): Promise<AppNotification[]> {
         this.checkAndBlockUser("getNotifications");
         return [];
     }

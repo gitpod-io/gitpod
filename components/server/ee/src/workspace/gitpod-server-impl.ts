@@ -46,6 +46,7 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     PrebuildEvent,
     OpenPrebuildContext,
+    AppNotification,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -2379,7 +2380,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
     }
 
-    async getNotifications(ctx: TraceContext): Promise<string[]> {
+    async getNotifications(ctx: TraceContext): Promise<AppNotification[]> {
         const result = await super.getNotifications(ctx);
         const user = this.checkAndBlockUser("getNotifications");
 
@@ -2396,9 +2397,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 switch (limit.attributionId.kind) {
                     case "user": {
                         if (limit.reached) {
-                            result.unshift(`You have reached your usage limit.`);
+                            result.unshift({
+                                message: `You have reached your usage limit.`,
+                                action: {
+                                    url: "/user/billing",
+                                    label: "Extend usage limit",
+                                },
+                            });
                         } else if (limit.almostReached) {
-                            result.unshift(`You have reached 80% or more of your usage limit.`);
+                            result.unshift({
+                                message: `You have reached 80% or more of your usage limit.`,
+                                action: {
+                                    url: "/user/billing",
+                                    label: "Extend usage limit",
+                                },
+                            });
                         }
                         break;
                     }
@@ -2406,13 +2419,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                         const teamOrUser = await this.teamDB.findTeamById(limit.attributionId.teamId);
                         if (teamOrUser) {
                             if (limit.reached) {
-                                result.push(teamOrUser?.name);
-                                result.unshift(`Your team '${teamOrUser?.name}' has reached its usage limit.`);
+                                result.unshift({
+                                    message: `Your team '${teamOrUser?.name}' has reached its usage limit.`,
+                                    action: {
+                                        url: "/billing",
+                                        label: "Extend usage limit",
+                                    },
+                                });
                             } else if (limit.almostReached) {
-                                result.push(teamOrUser?.name);
-                                result.unshift(
-                                    `Your team '${teamOrUser?.name}' has reached 80% or more of its usage limit.`,
-                                );
+                                result.unshift({
+                                    message: `Your team '${teamOrUser?.name}' has reached 80% or more of its usage limit.`,
+                                    action: {
+                                        url: "/billing",
+                                        label: "Extend usage limit",
+                                    },
+                                });
                             }
                         }
                         break;

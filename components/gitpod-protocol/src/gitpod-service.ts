@@ -309,9 +309,22 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     /**
      * Frontend notifications
      */
-    getNotifications(): Promise<string[]>;
+    getNotifications(): Promise<AppNotification[]>;
 
     getSupportedWorkspaceClasses(): Promise<SupportedWorkspaceClass[]>;
+}
+
+export interface AppNotification {
+    message: string;
+    action?: {
+        url: string;
+        label: string;
+    };
+}
+export namespace AppNotification {
+    export function is(data: any): data is AppNotification {
+        return data && typeof data === "object" && data.hasOwnProperty("message");
+    }
 }
 
 export interface RateLimiterError {

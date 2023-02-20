@@ -4,19 +4,21 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { AppNotification } from "@gitpod/gitpod-protocol";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Alert from "./components/Alert";
 import { getGitpodService } from "./service/service";
 
 const KEY_APP_NOTIFICATIONS = "gitpod-app-notifications";
 
 export function AppNotifications() {
-    const [notifications, setNotifications] = useState<string[]>([]);
+    const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
     useEffect(() => {
         let localState = getLocalStorageObject(KEY_APP_NOTIFICATIONS);
         if (Array.isArray(localState)) {
-            setNotifications(localState);
+            setNotifications(convertToAppNotification(localState));
             return;
         }
         reloadNotifications().catch(console.error);
@@ -27,7 +29,7 @@ export function AppNotifications() {
     }, []);
 
     const reloadNotifications = async () => {
-        const serverState = await getGitpodService().server.getNotifications();
+        const serverState = convertToAppNotification(await getGitpodService().server.getNotifications());
         setNotifications(serverState);
         removeLocalStorageObject(KEY_APP_NOTIFICATIONS);
         if (serverState.length > 0) {
@@ -46,25 +48,6 @@ export function AppNotifications() {
         setNotifications([]);
     };
 
-    const getManageBilling = () => {
-        let href;
-        if (notifications.length === 1) {
-            href = "/user/billing";
-        } else if (notifications.length === 2) {
-            href = `/billing`;
-        }
-        return (
-            <span>
-                {" "}
-                Manage
-                <a className="gp-link hover:text-gray-600" href={href}>
-                    {" "}
-                    billing.
-                </a>
-            </span>
-        );
-    };
-
     return (
         <div className="app-container pt-2">
             <Alert
@@ -74,8 +57,12 @@ export function AppNotifications() {
                 showIcon={true}
                 className="flex rounded mb-2 w-full"
             >
-                {topNotification}
-                {getManageBilling()}
+                {topNotification.message}
+                {topNotification.action && (
+                    <Link to={topNotification.action.url}>
+                        <button className="ml-2">{topNotification.action.label}</button>
+                    </Link>
+                )}
             </Alert>
         </div>
     );
@@ -85,7 +72,7 @@ function getLocalStorageObject(key: string): any {
     try {
         const string = window.localStorage.getItem(key);
         if (!string) {
-            return;
+            return undefined;
         }
         const stored = JSON.parse(string);
         if (Date.now() > stored.expirationTime) {
@@ -95,6 +82,7 @@ function getLocalStorageObject(key: string): any {
         return stored.value;
     } catch (error) {
         window.localStorage.removeItem(key);
+        return undefined;
     }
 }
 
@@ -111,4 +99,21 @@ function setLocalStorageObject(key: string, object: Object, expiresInSeconds: nu
     } catch (error) {
         console.error("Setting localstorage item failed", key, object, error);
     }
+}
+
+// Required to guarantee smooth rollout
+function convertToAppNotification(array: string[] | AppNotification[] | any): AppNotification[] {
+    if (!array || !Array.isArray(array)) {
+        return [];
+    }
+
+    const notifications: AppNotification[] = [];
+    for (const a of array) {
+        if (typeof a === "string") {
+            notifications.push({ message: a });
+        } else if (AppNotification.is(a)) {
+            notifications.push(a);
+        }
+    }
+    return notifications;
 }
