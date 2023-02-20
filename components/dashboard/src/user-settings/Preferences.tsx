@@ -11,6 +11,8 @@ import { trackEvent } from "../Analytics";
 import SelectIDE from "./SelectIDE";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
+import CheckBox from "../components/CheckBox";
+import { WorkspaceTimeoutDuration } from "@gitpod/gitpod-protocol";
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
@@ -26,6 +28,32 @@ export default function Preferences() {
                 previous: prevDotfileRepo,
                 current: value,
             });
+        }
+    };
+
+    const [disabledClosedTimeout, setDisabledClosedTimeout] = useState<boolean>(
+        user?.additionalData?.disabledClosedTimeout ?? false,
+    );
+    const actuallySetDisabledClosedTimeout = async (value: boolean) => {
+        try {
+            const additionalData = user?.additionalData || {};
+            additionalData.disabledClosedTimeout = value;
+            await getGitpodService().server.updateLoggedInUser({ additionalData });
+            setDisabledClosedTimeout(value);
+        } catch (e) {
+            alert("Cannot set custom workspace timeout: " + e.message);
+        }
+    };
+
+    const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
+    const actuallySetWorkspaceTimeout = async (value: string) => {
+        try {
+            const timeout = WorkspaceTimeoutDuration.validate(value);
+            const additionalData = user?.additionalData || {};
+            additionalData.workspaceTimeout = timeout;
+            await getGitpodService().server.updateLoggedInUser({ additionalData });
+        } catch (e) {
+            alert("Cannot set custom workspace timeout: " + e.message);
         }
     };
 
@@ -71,6 +99,42 @@ export default function Preferences() {
                             clone and install your dotfiles for every new workspace.
                         </p>
                     </div>
+                </div>
+
+                <h3 className="mt-12">Inactivity Timeout </h3>
+                <p className="text-base text-gray-500 dark:text-gray-400">
+                    By default, workspaces stop following 30 minutes without user input (e.g. keystrokes or terminal
+                    input commands). You can increase the workspace timeout up to a maximum of 24 hours.
+                </p>
+                <div className="mt-4 max-w-xl">
+                    <h4>Default Inactivity Timeout</h4>
+                    <span className="flex">
+                        <input
+                            type="text"
+                            className="w-96 h-9"
+                            value={workspaceTimeout}
+                            placeholder="timeout time, such as 30m, 1h, max 24h"
+                            onChange={(e) => setWorkspaceTimeout(e.target.value)}
+                        />
+                        <button
+                            className="secondary ml-2"
+                            onClick={() => actuallySetWorkspaceTimeout(workspaceTimeout)}
+                        >
+                            Save Changes
+                        </button>
+                    </span>
+                    <div className="mt-1">
+                        <p className="text-gray-500 dark:text-gray-400">
+                            Use minutes or hours, like <strong>30m</strong> or <strong>2h</strong>.
+                        </p>
+                    </div>
+
+                    <CheckBox
+                        title="Stop workspace when no active editor connection"
+                        desc={<span>Don't change workspace inactivity timeout when closing the editor.</span>}
+                        checked={disabledClosedTimeout}
+                        onChange={(e) => actuallySetDisabledClosedTimeout(e.target.checked)}
+                    />
                 </div>
             </PageWithSettingsSubMenu>
         </div>

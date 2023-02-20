@@ -254,6 +254,9 @@ export interface AdditionalUserData {
     // whether the user has been migrated to team attribution.
     // a corresponding feature flag (team_only_attribution) triggers the migration.
     isMigratedToTeamOnlyAttribution?: boolean;
+    // user globol workspace timeout
+    workspaceTimeout?: string;
+    disabledClosedTimeout?: boolean;
 }
 export namespace AdditionalUserData {
     export function set(user: User, partialData: Partial<AdditionalUserData>): User {
