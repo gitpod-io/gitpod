@@ -118,6 +118,10 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 		return nil, err
 	}
 
+	if cgroupPlugins.CGroupVersion != cgroup.Version2 {
+		return nil, xerrors.Errorf("only cgroup v2 is supported")
+	}
+
 	err = reg.Register(cgroupPlugins)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot register cgroup plugin metrics: %w", err)
