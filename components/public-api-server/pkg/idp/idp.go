@@ -5,14 +5,11 @@
 package idp
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -22,19 +19,18 @@ import (
 	"gopkg.in/square/go-jose.v2"
 )
 
-func NewService(issuerBaseURL string, tokenEncryptionCode []byte) *Service {
+func NewService(issuerBaseURL string, tokenEncryptionCode []byte, keyCache KeyCache) *Service {
 	return &Service{
 		IssuerBaseURL:       issuerBaseURL,
 		TokenEncryptionCode: tokenEncryptionCode,
-		keys:                make(map[string]*rsa.PrivateKey),
+		keys:                keyCache,
 	}
 }
 
 type Service struct {
 	IssuerBaseURL       string
 	TokenEncryptionCode []byte
-	keys                map[string]*rsa.PrivateKey
-	mu                  sync.Mutex
+	keys                KeyCache
 }
 
 func (kp *Service) Router() http.Handler {
@@ -116,18 +112,13 @@ func (kp *Service) Router() http.Handler {
 		}
 	}))
 	mux.Handle("/keys", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := kp.organisationKey("")
-		keys := &jose.JSONWebKeySet{
-			Keys: []jose.JSONWebKey{
-				{
-					KeyID:     "id",
-					Algorithm: "RS256",
-					Use:       oidc.KeyUseSignature,
-					Key:       &key.PublicKey,
-				},
-			},
+		keys, err := kp.keys.PublicKeys()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
-		err := json.NewEncoder(w).Encode(keys)
+
+		err = json.NewEncoder(w).Encode(keys)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -141,34 +132,16 @@ func (kp *Service) IDToken(org string, audience []string, subject string, user o
 	claims := oidc.NewIDTokenClaims(kp.IssuerBaseURL, subject, audience, time.Now().Add(60*time.Minute), time.Now(), "", "", nil, audience[0], 0)
 	claims.SetUserinfo(user)
 
-	codeHash, err := oidc.ClaimHash(string(kp.TokenEncryptionCode), "RS256")
+	codeHash, err := oidc.ClaimHash(string(kp.TokenEncryptionCode), jose.RS256)
 	if err != nil {
 		return "", err
 	}
 	claims.SetCodeHash(codeHash)
 
-	signer, err := jose.NewSigner(jose.SigningKey{
-		Algorithm: "RS256",
-		Key:       kp.organisationKey(org),
-	}, &jose.SignerOptions{})
+	signer, err := kp.keys.Signer()
 	if err != nil {
 		return "", err
 	}
 
 	return crypto.Sign(claims, signer)
-}
-
-func (kp *Service) organisationKey(org string) *rsa.PrivateKey {
-	kp.mu.Lock()
-	defer kp.mu.Unlock()
-
-	res, ok := kp.keys[org]
-	if ok {
-		return res
-	}
-
-	key, _ := rsa.GenerateKey(rand.Reader, 2048)
-	kp.keys[org] = key
-
-	return key
 }

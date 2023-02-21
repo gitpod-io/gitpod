@@ -115,7 +115,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, stateJWT)
 
-	idpService := idp.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", []byte("change this value"))
+	idpService := idp.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", []byte("change this value"), idp.NewInMemoryCache())
 
 	if registerErr := register(srv, &registerDependencies{
 		connPool:    connPool,
