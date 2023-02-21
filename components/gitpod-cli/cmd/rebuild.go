@@ -83,6 +83,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 
 	var image string
 	var dockerfilePath string
+	var dockerContext string
 	switch img := gitpodConfig.Image.(type) {
 	case nil:
 		image = "gitpod/workspace-full:latest"
@@ -90,9 +91,17 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		image = img
 	case map[interface{}]interface{}:
 		dockerfilePath = filepath.Join(checkoutLocation, img["file"].(string))
+		dockerContext = checkoutLocation
+		if context, ok := img["context"].(string); ok {
+			dockerContext = filepath.Join(checkoutLocation, context)
+		}
 
 		if _, err := os.Stat(dockerfilePath); os.IsNotExist(err) {
 			fmt.Println("Your .gitpod.yml points to a Dockerfile that doesn't exist: " + dockerfilePath)
+			return GpError{Err: err, OutCome: utils.Outcome_UserErr, Silence: true}
+		}
+		if _, err := os.Stat(dockerContext); os.IsNotExist(err) {
+			fmt.Println("Your image context doesn't exist: " + dockerContext)
 			return GpError{Err: err, OutCome: utils.Outcome_UserErr, Silence: true}
 		}
 		dockerfile, err := os.ReadFile(dockerfilePath)
@@ -141,7 +150,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		}
 	} else {
 		image = "gp-rebuild-temp-build"
-		dockerCmd = exec.CommandContext(ctx, dockerPath, "build", "-t", image, "-f", dockerfilePath, checkoutLocation)
+		dockerCmd = exec.CommandContext(ctx, dockerPath, "build", "-t", image, "-f", dockerfilePath, dockerContext)
 	}
 	if dockerCmd != nil {
 		dockerCmd.Stdout = os.Stdout
