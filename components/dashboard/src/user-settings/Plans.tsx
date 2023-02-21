@@ -636,20 +636,6 @@ export default function PlansPage() {
     return (
         <div>
             <PageWithSettingsSubMenu>
-                {isUsageBasedBillingEnabled && (
-                    <Alert type="message" className="mb-4">
-                        To access{" "}
-                        <a className="gp-link" href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes">
-                            large workspaces
-                        </a>{" "}
-                        and{" "}
-                        <a className="gp-link" href="https://www.gitpod.io/docs/configure/billing/pay-as-you-go">
-                            pay-as-you-go
-                        </a>
-                        , first cancel your existing plan. Existing plans will keep working until the end of March,
-                        2023.
-                    </Alert>
-                )}
                 <div className="w-full text-center">
                     <p className="text-xl text-gray-500">
                         You are currently using the{" "}
