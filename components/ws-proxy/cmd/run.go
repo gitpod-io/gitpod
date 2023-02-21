@@ -80,7 +80,7 @@ var runCmd = &cobra.Command{
 		infoprov = append(infoprov, podInfoProv)
 
 		if cfg.EnableWorkspaceCRD {
-			crdInfoProv, err := proxy.NewCRDWorkspaceInfoProvider(context.TODO(), mgr.GetClient(), mgr.GetScheme())
+			crdInfoProv, err := proxy.NewCRDWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
 			if err == nil {
 				if err = crdInfoProv.SetupWithManager(mgr); err != nil {
 					log.WithError(err).Warn(err, "unable to create CRD-based info provider", "controller", "Workspace")

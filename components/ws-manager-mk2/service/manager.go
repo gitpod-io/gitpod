@@ -239,7 +239,8 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			Admission: workspacev1.AdmissionSpec{
 				Level: admissionLevel,
 			},
-			Ports: ports,
+			Ports:         ports,
+			SshPublicKeys: req.Spec.SshPublicKeys,
 		},
 	}
 	controllerutil.AddFinalizer(&ws, workspacev1.GitpodFinalizerName)
@@ -669,6 +670,23 @@ func (wsm *WorkspaceManagerServer) ControlAdmission(ctx context.Context, req *ws
 	return &wsmanapi.ControlAdmissionResponse{}, nil
 }
 
+func (wsm *WorkspaceManagerServer) UpdateSSHKey(ctx context.Context, req *wsmanapi.UpdateSSHKeyRequest) (res *wsmanapi.UpdateSSHKeyResponse, err error) {
+	span, ctx := tracing.FromContext(ctx, "UpdateSSHKey")
+	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
+	defer tracing.FinishSpan(span, &err)
+
+	if err = validateUpdateSSHKeyRequest(req); err != nil {
+		return &wsmanapi.UpdateSSHKeyResponse{}, err
+	}
+
+	err = wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
+		ws.Spec.SshPublicKeys = req.Keys
+		return nil
+	})
+
+	return &wsmanapi.UpdateSSHKeyResponse{}, err
+}
+
 // modifyWorkspace modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
 // is returned directly. If mod returns a non-gRPC error it is turned into one.
 func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id string, updateStatus bool, mod func(ws *workspacev1.Workspace) error) error {
@@ -725,6 +743,19 @@ func validateStartWorkspaceRequest(req *wsmanapi.StartWorkspaceRequest) error {
 		rules = append(rules, validation.Field(&req.ServicePrefix, validation.Required))
 	}
 	err = validation.ValidateStruct(req, rules...)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
+	}
+
+	return nil
+}
+
+func validateUpdateSSHKeyRequest(req *wsmanapi.UpdateSSHKeyRequest) error {
+	err := validation.ValidateStruct(req,
+		validation.Field(&req.Id, validation.Required),
+		validation.Field(&req.Keys, validation.Required),
+	)
+
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "invalid request: %v", err)
 	}

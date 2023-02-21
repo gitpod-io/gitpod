@@ -45,6 +45,8 @@ type WorkspaceSpec struct {
 
 	// +kubebuilder:validation:MinItems=0
 	Ports []PortSpec `json:"ports"`
+
+	SshPublicKeys []string `json:"sshPublicKeys,omitempty"`
 }
 
 type Ownership struct {
