@@ -124,7 +124,9 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     }
 
     // Placeholder for new signup flow
-    if (newSignupFlow && User.isOnboardingUser(user)) {
+    // if (newSignupFlow && User.isOnboardingUserNew(user)) {
+    if (User.isOnboardingUserNew(user)) {
+        console.log("newSignupFlow", newSignupFlow);
         return <UserOnboarding user={user} />;
     }
 
