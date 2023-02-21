@@ -51,17 +51,22 @@ export function AppNotifications() {
     return (
         <div className="app-container pt-2">
             <Alert
-                type={"warning"}
-                closable={true}
+                type={"message"}
+                closable={!topNotification.notClosable}
                 onClose={() => dismissNotification()}
                 showIcon={true}
                 className="flex rounded mb-2 w-full"
             >
                 {topNotification.message}
                 {topNotification.action && (
-                    <Link to={topNotification.action.url}>
-                        <button className="ml-2">{topNotification.action.label}</button>
-                    </Link>
+                    <>
+                        {" "}
+                        <Link to={topNotification.action.url}>
+                            <a className="gp-link" href={topNotification.action.url}>
+                                {topNotification.action.label}
+                            </a>
+                        </Link>
+                    </>
                 )}
             </Alert>
         </div>

@@ -316,6 +316,7 @@ export interface AppNotification {
         url: string;
         label: string;
     };
+    notClosable?: boolean;
 }
 export namespace AppNotification {
     export function is(data: any): data is AppNotification {
