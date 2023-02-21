@@ -398,7 +398,7 @@ func Run(options ...RunOption) {
 	tasksSuccessChan := make(chan taskSuccess, 1)
 	go taskManager.Run(ctx, &wg, tasksSuccessChan)
 
-	if !opts.RunGP && !cfg.isDebugWorkspace() {
+	if !opts.RunGP {
 		wg.Add(1)
 		go socketActivationForDocker(ctx, &wg, termMux, cfg, telemetry)
 	}

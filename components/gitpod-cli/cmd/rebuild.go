@@ -241,10 +241,28 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		return err
 	}
 
-	// we don't pass context on purporse to handle graceful shutdown
-	// and output all logs properly below
-	runCmd := exec.Command(
-		dockerPath,
+	type mnte struct {
+		IsFile     bool
+		Target     string
+		Source     string
+		Permission os.FileMode
+	}
+
+	prepareFS := []mnte{
+		{Source: "/workspace"},
+		{Source: "/.supervisor"},
+		{Source: "/ide"},
+		{Source: "/workspace/.gitpod-debug/.docker-root", Target: "/workspace/.docker-root", Permission: 0710},
+		{Source: "/workspace/.gitpod-debug/.gitpod", Target: "/workspace/.gitpod", Permission: 0751},
+		{Source: "/workspace/.gitpod-debug/.vscode-remote", Target: "/workspace/.vscode-remote", Permission: 0751},
+		{Source: "/workspace/.gitpod-debug/.cache", Target: "/workspace/.cache", Permission: 0751},
+		{Source: "/workspace/.gitpod-debug/.config", Target: "/workspace/.config", Permission: 0751},
+		{Source: "/usr/bin/docker-up", IsFile: true},
+		{Source: "/usr/bin/runc-facade", IsFile: true},
+		{Source: "/usr/local/bin/docker-compose", IsFile: true},
+	}
+
+	dockerArgs := []string{
 		"run",
 		"--rm",
 		"--user", "root",
@@ -258,17 +276,42 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		"-p", "25001:23001", // SSH
 		// 23002 dekstop IDE port, but it is covered by debug workspace proxy
 		"-p", "25003:23003", // debug workspace proxy
+	}
 
-		// volumes
-		"-v", "/workspace:/workspace",
-		"-v", "/.supervisor:/.supervisor",
-		"-v", "/var/run/docker.sock:/var/run/docker.sock",
-		"-v", "/ide:/ide",
-		// "-v", "/ide-desktop:/ide-desktop", // TODO fix desktop IDEs later
-		// "-v", "/ide-desktop-plugins:/ide-desktop-plugins", // TODO refactor to keep all IDE deps under ide or ide-desktop
+	for _, mnt := range prepareFS {
+		fd, err := os.Stat(mnt.Source)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return err
+			}
+			if mnt.IsFile {
+				return err
+			}
+			err = os.MkdirAll(mnt.Source, mnt.Permission)
+			if err != nil {
+				return err
+			}
+			fd, err = os.Stat(mnt.Source)
+			if err != nil {
+				return err
+			}
+		}
+		if fd.IsDir() != !mnt.IsFile {
+			return xerrors.Errorf("invalid file type for %s", mnt.Source)
+		}
+		if mnt.Target == "" {
+			mnt.Target = mnt.Source
+		}
+		dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s:%s", mnt.Source, mnt.Target))
+	}
 
-		image,
-		"/.supervisor/supervisor", "init",
+	dockerArgs = append(dockerArgs, image, "/.supervisor/supervisor", "init")
+
+	// we don't pass context on purporse to handle graceful shutdown
+	// and output all logs properly below
+	runCmd := exec.Command(
+		dockerPath,
+		dockerArgs...,
 	)
 
 	debugSupervisor, err := supervisor.New(ctx, &supervisor.SupervisorClientOption{
