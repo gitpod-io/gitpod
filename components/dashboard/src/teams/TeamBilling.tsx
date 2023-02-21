@@ -9,14 +9,12 @@ import { Currency, Plan, Plans, PlanType } from "@gitpod/gitpod-protocol/lib/pla
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import React, { FunctionComponent, useCallback, useContext, useEffect, useState } from "react";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
-import Alert from "../components/Alert";
 import Card from "../components/Card";
 import DropDown from "../components/DropDown";
 import PillLabel from "../components/PillLabel";
 import SolidCard from "../components/SolidCard";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useOrgMembers } from "../data/organizations/org-members-query";
-import { getExperimentsClient } from "../experiments/client";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as CheckSvg } from "../images/check.svg";
 import { PaymentContext } from "../payment-context";
@@ -43,7 +41,6 @@ const TeamBilling: FunctionComponent = () => {
     const { data: members, isLoading: membersLoading } = useOrgMembers();
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
     const { currency, setCurrency } = useContext(PaymentContext);
-    const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
     const [pollTeamSubscriptionTimeout, setPollTeamSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
 
@@ -106,20 +103,6 @@ const TeamBilling: FunctionComponent = () => {
         };
     }, [pendingTeamPlan, pollTeamSubscriptionTimeout, team, teamSubscription]);
 
-    useEffect(() => {
-        if (!team || !user) {
-            return;
-        }
-        (async () => {
-            const isEnabled = await getExperimentsClient().getValueAsync("isUsageBasedBillingEnabled", false, {
-                user,
-                teamId: team.id,
-                teamName: team.name,
-            });
-            setIsUsageBasedBillingEnabled(isEnabled);
-        })();
-    }, [team, user]);
-
     const availableTeamPlans = Plans.getAvailableTeamPlans(currency || "USD").filter((p) => p.type !== "student");
 
     const checkout = useCallback(
@@ -166,20 +149,6 @@ const TeamBilling: FunctionComponent = () => {
     function renderTeamBilling(): JSX.Element {
         return (
             <>
-                {isUsageBasedBillingEnabled && (
-                    <Alert type="message" className="mb-4">
-                        To access{" "}
-                        <a className="gp-link" href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes">
-                            large workspaces
-                        </a>{" "}
-                        and{" "}
-                        <a className="gp-link" href="https://www.gitpod.io/docs/configure/billing/pay-as-you-go">
-                            pay-as-you-go
-                        </a>
-                        , first cancel your existing plan. Existing plans will keep working until the end of March,
-                        2023.
-                    </Alert>
-                )}
                 <h3>{!teamPlan ? "Select Plan" : "Current Plan"}</h3>
                 <h2 className="text-gray-500">
                     {!teamPlan ? (

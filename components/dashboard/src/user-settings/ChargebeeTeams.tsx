@@ -454,19 +454,6 @@ function AllTeams() {
 
     return (
         <div>
-            {isUsageBasedBillingEnabled && (
-                <Alert type="message" className="mb-4">
-                    To access{" "}
-                    <a className="gp-link" href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes">
-                        large workspaces
-                    </a>{" "}
-                    and{" "}
-                    <a className="gp-link" href="https://www.gitpod.io/docs/configure/billing/pay-as-you-go">
-                        pay-as-you-go
-                    </a>
-                    , first cancel your existing plan. Existing plans will keep working until the end of March, 2023.
-                </Alert>
-            )}
             <div className="flex flex-row">
                 <div className="flex-grow ">
                     <h3 className="self-center">All Team Plans</h3>
