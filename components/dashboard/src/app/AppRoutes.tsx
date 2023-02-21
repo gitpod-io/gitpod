@@ -123,10 +123,8 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
         return <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     }
 
-    // Placeholder for new signup flow
-    // if (newSignupFlow && User.isOnboardingUserNew(user)) {
-    if (User.isOnboardingUserNew(user)) {
-        console.log("newSignupFlow", newSignupFlow);
+    // Placeholder for new signup flow - check we make here tbd still
+    if (newSignupFlow && User.isOnboardingUserNew(user)) {
         return <UserOnboarding user={user} />;
     }
 

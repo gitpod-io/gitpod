@@ -123,9 +123,9 @@ export namespace User {
         return !hasPreferredIde(user);
     }
 
-    // TODO: Remove this - just a test
+    // TODO: Determine how we want to handle who we show new onboarding flow to, and fix this fn name
     export function isOnboardingUserNew(user: User) {
-        return true;
+        return !hasPreferredIde(user) && !user.additionalData?.profile?.jobRole;
     }
 
     export function migrationIDESettings(user: User) {

@@ -6,7 +6,10 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useReducer } from "react";
+import { Link } from "react-router-dom";
 import { OnboardingForm, OnboardingProfileDetails } from "./OnboardingForm";
+import gitpodIcon from "../icons/gitpod.svg";
+import Separator from "../components/Separator";
 
 type Props = {
     user: User;
@@ -30,10 +33,28 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
 
     return (
         <div className="container">
-            <h1>Welcome</h1>
+            <div className="app-container">
+                <div className="flex items-center justify-center py-3">
+                    <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
+                </div>
+                <Separator />
+                <div className="flex flex-col items-center w-max-lg mt-8">
+                    <h1>Welcome to Gitpod</h1>
 
-            <p>Help us get to know you a bit better</p>
-            <OnboardingForm profile={profile} onUpdate={dispatch} onSubmit={handleSubmit} />
+                    <p>Tell us more about your organization</p>
+
+                    {user.avatarUrl && (
+                        <div className="mt-4">
+                            <img
+                                className="rounded-full w-24 h-24"
+                                src={user.avatarUrl}
+                                alt={user.fullName || user.name}
+                            />
+                        </div>
+                    )}
+                    <OnboardingForm profile={profile} onUpdate={dispatch} onSubmit={handleSubmit} />
+                </div>
+            </div>
         </div>
     );
 };

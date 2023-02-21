@@ -84,13 +84,6 @@ export const OnboardingForm: FunctionComponent<Props> = ({ profile, onUpdate, on
                 onChange={(val) => onUpdate({ emailAddress: val })}
             />
 
-            <TextInputField
-                value={profile.companyWebsite}
-                label="Company Website"
-                type="url"
-                onChange={(val) => onUpdate({ companyWebsite: val })}
-            />
-
             <SelectInputField
                 value={profile.jobRole}
                 label="I work in..."
@@ -117,7 +110,6 @@ export const OnboardingForm: FunctionComponent<Props> = ({ profile, onUpdate, on
 
             <SelectInputField
                 label="What do you wish to accomplish with Gitpod?"
-                multiple
                 onChange={(val) => onUpdate({ signupGoalsOther: val })}
                 hint="Select all that apply"
             >
@@ -135,6 +127,13 @@ export const OnboardingForm: FunctionComponent<Props> = ({ profile, onUpdate, on
                 />
             )}
 
+            <TextInputField
+                value={profile.companyWebsite}
+                label="Organization Website (optional)"
+                type="url"
+                onChange={(val) => onUpdate({ companyWebsite: val })}
+            />
+
             <InputField label="Select your preferred IDE" className="w-full max-w-lg">
                 <SelectIDEComponent
                     onSelectionChange={(ide, latest) => {
@@ -147,7 +146,7 @@ export const OnboardingForm: FunctionComponent<Props> = ({ profile, onUpdate, on
                 />
             </InputField>
 
-            <div className="mt-6">
+            <div className="mt-6 flex justify-end">
                 <button>Save</button>
             </div>
         </form>
