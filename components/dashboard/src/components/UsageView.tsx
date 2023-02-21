@@ -47,12 +47,17 @@ function UsageView({ attributionId }: UsageViewProps) {
     useEffect(() => {
         const match = /#(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})/.exec(location.hash);
         if (match) {
-            try {
-                setStartDate(dayjs(match[1], "YYYY-MM-DD"));
-                setEndDate(dayjs(match[2], "YYYY-MM-DD"));
-            } catch (e) {
-                console.error(e);
-            }
+           try {                 
+                    const today = new Date();
+                    const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+                    const todayStr = today.toISOString().slice(0, 10);
+                    const prevMonthStr = prevMonth.toISOString().slice(0, 10);
+                    setStartDate(dayjs(prevMonthStr));
+                    setEndDate(dayjs(todayStr));
+                } catch (e) {
+                    // Catches the Error 
+                    console.error(e);
+                }
         }
         (async () => {
             const classes = await getGitpodService().server.getSupportedWorkspaceClasses();
