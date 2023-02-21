@@ -23,6 +23,7 @@ const FeatureFlagContext = createContext<{
     enablePersonalAccessTokens: boolean;
     oidcServiceEnabled: boolean;
     orgGitAuthProviders: boolean;
+    switchToPAYG: boolean;
 }>({
     startWithOptions: false,
     showUsageView: false,
@@ -32,6 +33,7 @@ const FeatureFlagContext = createContext<{
     enablePersonalAccessTokens: false,
     oidcServiceEnabled: false,
     orgGitAuthProviders: false,
+    switchToPAYG: false,
 });
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
@@ -47,6 +49,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [usePublicApiWorkspacesService, setUsePublicApiWorkspacesService] = useState<boolean>(false);
     const [oidcServiceEnabled, setOidcServiceEnabled] = useState<boolean>(false);
     const [orgGitAuthProviders, setOrgGitAuthProviders] = useState<boolean>(false);
+    const [switchToPAYG, setSwitchToPAYG] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -63,6 +66,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 },
                 oidcServiceEnabled: { defaultValue: false, setter: setOidcServiceEnabled },
                 orgGitAuthProviders: { defaultValue: false, setter: setOrgGitAuthProviders },
+                switchToPAYG: { defaultValue: false, setter: setSwitchToPAYG },
             };
 
             for (const [flagName, config] of Object.entries(featureFlags)) {
@@ -110,6 +114,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 usePublicApiWorkspacesService,
                 oidcServiceEnabled,
                 orgGitAuthProviders,
+                switchToPAYG,
             }}
         >
             {children}
