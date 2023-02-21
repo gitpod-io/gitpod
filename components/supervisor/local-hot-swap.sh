@@ -14,6 +14,6 @@ component=${PWD##*/}
 go build .
 echo "$component built"
 
-sudo rm /.supervisor/supervisor
+sudo rm /.supervisor/supervisor && true
 sudo mv ./"$component" /.supervisor
 echo "Local Swap complete"

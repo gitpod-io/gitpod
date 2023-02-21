@@ -808,9 +808,9 @@ func (c *ControlService) CreateDebugEnv(ctx context.Context, req *api.CreateDebu
 	envs = append(envs, fmt.Sprintf("LOG_LEVEL=%s", req.GetLogLevel()))
 	envs = append(envs, fmt.Sprintf("GITPOD_TASKS=%s", req.GetTasks()))
 	envs = append(envs, fmt.Sprintf("GITPOD_WORKSPACE_URL=%s", req.GetWorkspaceUrl()))
-	envs = append(envs, fmt.Sprintf("GITPOD_REPO_ROOT=%s", req.GetWorkspaceLocation()))
-	envs = append(envs, fmt.Sprintf("GITPOD_REPO_ROOTS=%s", req.GetWorkspaceLocation()))
-	envs = append(envs, fmt.Sprintf("THEIA_WORKSPACE_ROOT=%s", req.GetCheckoutLocation()))
+	envs = append(envs, fmt.Sprintf("GITPOD_REPO_ROOT=%s", req.GetCheckoutLocation()))
+	envs = append(envs, fmt.Sprintf("GITPOD_REPO_ROOTS=%s", req.GetCheckoutLocation()))
+	envs = append(envs, fmt.Sprintf("THEIA_WORKSPACE_ROOT=%s", req.GetWorkspaceLocation()))
 	envs = append(envs, fmt.Sprintf("GITPOD_PREVENT_METADATA_ACCESS=%s", "false"))
 	return &api.CreateDebugEnvResponse{
 		Envs: envs,
