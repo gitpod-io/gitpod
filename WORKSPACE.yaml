@@ -23,7 +23,7 @@ defaultArgs:
   REPLICATED_API_TOKEN: ""
   REPLICATED_APP: ""
   dockerVersion: 20.10.17
-  dockerComposeVersion: "2.10.0-gitpod.1"
+  dockerComposeVersion: "2.16.0-gitpod.0"
 provenance:
   enabled: true
   slsa: true
