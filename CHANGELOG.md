@@ -1,6 +1,7 @@
 # Change Log
 
 ## February 2023
+- `gp env` reflects workspace env vars, not only user env vars, i.e. as well coming from projects and context URL. ([#16414](https://github.com/gitpod-io/gitpod/pull/16414)) - [@akosyakov](https://github.com/akosyakov)
 - New workspace creation page ([#16391](https://github.com/gitpod-io/gitpod/pull/16391)) - [@svenefftinge](https://github.com/svenefftinge)
 - Update the Settings and License page layouts for the admin dashboard ([#16427](https://github.com/gitpod-io/gitpod/pull/16427)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
 - Update context dropdown element height ([#16208](https://github.com/gitpod-io/gitpod/pull/16208)) - [@gtsiolis](https://github.com/gtsiolis)
