@@ -273,7 +273,7 @@ func Run(options ...RunOption) {
 	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
-	gitpodConfigService := config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
+	gitpodConfigService := config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady())
 	go gitpodConfigService.Watch(ctx)
 
 	var exposedPorts ports.ExposedPortsInterface
@@ -1623,9 +1623,49 @@ func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, 
 	}
 }
 
+func analyzeImageFileChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface, debounceDuration time.Duration) {
+	var (
+		timer *time.Timer
+		mu    sync.Mutex
+	)
+	changes := cfgobs.ObserveImageFile(ctx)
+	for {
+		select {
+		case change, ok := <-changes:
+			if !ok {
+				return
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			if timer != nil && !timer.Stop() {
+				<-timer.C
+			}
+			timer = time.AfterFunc(debounceDuration, func() {
+				mu.Lock()
+				defer mu.Unlock()
+				w.Track(analytics.TrackMessage{
+					Identity: analytics.Identity{UserID: wscfg.OwnerId},
+					Event:    "gitpod_image_file_changed",
+					Properties: map[string]interface{}{
+						"instanceId":  wscfg.WorkspaceInstanceID,
+						"workspaceId": wscfg.WorkspaceID,
+						"exists":      change != nil,
+					},
+				})
+				timer = nil
+			})
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface) {
 	var analyzer *config.ConfigAnalyzer
 	log.Debug("gitpod config analytics: watching...")
+
+	debounceDuration := 5 * time.Second
+	go analyzeImageFileChanges(ctx, wscfg, w, cfgobs, debounceDuration)
 
 	cfgs := cfgobs.Observe(ctx)
 	for {
@@ -1637,7 +1677,7 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 			if analyzer != nil {
 				analyzer.Analyse(cfg)
 			} else {
-				analyzer = config.NewConfigAnalyzer(log.Log, 5*time.Second, func(field string) {
+				analyzer = config.NewConfigAnalyzer(log.Log, debounceDuration, func(field string) {
 					w.Track(analytics.TrackMessage{
 						Identity: analytics.Identity{UserID: wscfg.OwnerId},
 						Event:    "gitpod_config_changed",

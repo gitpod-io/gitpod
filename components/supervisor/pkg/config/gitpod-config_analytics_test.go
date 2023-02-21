@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
@@ -65,7 +66,7 @@ func TestAnalyzeGitpodConfig(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
 			var fields []string
-			analyzer := NewConfigAnalyzer(log, 100*time.Millisecond, func(field string) {
+			analyzer := NewConfigAnalyzer(log.Log, 100*time.Millisecond, func(field string) {
 				fields = append(fields, field)
 			}, test.Prev)
 			<-analyzer.Analyse(test.Current)
