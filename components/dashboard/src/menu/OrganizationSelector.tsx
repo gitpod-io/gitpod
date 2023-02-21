@@ -251,8 +251,36 @@ const CurrentOrgEntry: FunctionComponent<CurrentOrgEntryProps> = ({ title, subti
                 <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
                 <span>{subtitle}</span>
             </div>
-            {/* TODO: Replace this with an SVG icon */}
-            <div className="pl-1 font-semibold">&#x2713;</div>
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" className="dark:hidden" fill="none">
+                <path
+                    fill="#78716C"
+                    fill-rule="evenodd"
+                    d="M18.2348 5.8867 7.88699 16.2345l-2.12132-2.1213L16.1135 3.76538l2.1213 2.12132Z"
+                    clip-rule="evenodd"
+                />
+                <path
+                    fill="#78716C"
+                    fill-rule="evenodd"
+                    d="m3.88695 8.06069 5.00004 5.00001-2.12132 2.1214-5.00005-5.0001 2.12133-2.12131Z"
+                    clip-rule="evenodd"
+                />
+            </svg>
+
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" className="hidden dark:block" fill="none">
+                <path
+                    fill="#E7E5E4"
+                    fill-rule="evenodd"
+                    d="M18.2348 5.8867 7.88699 16.2345l-2.12132-2.1213L16.1135 3.76538l2.1213 2.12132Z"
+                    clip-rule="evenodd"
+                />
+                <path
+                    fill="#E7E5E4"
+                    fill-rule="evenodd"
+                    d="m3.88695 8.06069 5.00004 5.00001-2.12132 2.1214-5.00005-5.0001 2.12133-2.12131Z"
+                    clip-rule="evenodd"
+                />
+            </svg>
         </div>
     );
 };
