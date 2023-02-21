@@ -13,6 +13,7 @@ import (
 	glog "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
@@ -212,6 +213,15 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	}
 
 	disposeStart := time.Now()
+	var snapshotName string
+	if ws.Spec.Type == workspacev1.WorkspaceTypeRegular {
+		snapshotName = storage.DefaultBackup
+	} else {
+		_, snapshotName, err = wsc.operations.SnapshotIDs(ws.Name)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
 		Meta: WorkspaceMeta{
 			Owner:       ws.Spec.Ownership.Owner,
@@ -219,7 +229,9 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 			InstanceId:  ws.Name,
 		},
 		WorkspaceLocation: ws.Spec.WorkspaceLocation,
+		SnapshotName:      snapshotName,
 		BackupLogs:        ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
+		UpdateGitStatus:   ws.Spec.Type == workspacev1.WorkspaceTypeRegular,
 	})
 
 	if alreadyDisposing {

@@ -63,6 +63,8 @@ type DisposeOptions struct {
 	Meta              WorkspaceMeta
 	WorkspaceLocation string
 	BackupLogs        bool
+	UpdateGitStatus   bool
+	SnapshotName      string
 }
 
 func NewWorkspaceOperations(config content.Config, store *session.Store, reg prometheus.Registerer) (*WorkspaceOperations, error) {
@@ -200,19 +202,21 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		}
 	}
 
-	err = wso.uploadWorkspaceContent(ctx, sess, storage.DefaultBackup)
+	err = wso.uploadWorkspaceContent(ctx, sess, opts.SnapshotName)
 	if err != nil {
 		return false, nil, xerrors.Errorf("final backup failed for workspace %s", opts.Meta.InstanceId)
 	}
 
-	// Update the git status prior to deleting the workspace
-	repo, err = sess.UpdateGitStatus(ctx, false)
-	if err != nil {
-		// do not fail workspace because we were unable to get git status
-		// which can happen for various reasons, including user corrupting his .git folder somehow
-		// instead we log the error and continue cleaning up workspace
-		// todo(pavel): it would be great if we can somehow bubble this up to user without failing workspace
-		glog.WithError(err).Warn("cannot get git status")
+	if opts.UpdateGitStatus {
+		// Update the git status prior to deleting the workspace
+		repo, err = sess.UpdateGitStatus(ctx, false)
+		if err != nil {
+			// do not fail workspace because we were unable to get git status
+			// which can happen for various reasons, including user corrupting his .git folder somehow
+			// instead we log the error and continue cleaning up workspace
+			// todo(pavel): it would be great if we can somehow bubble this up to user without failing workspace
+			glog.WithError(err).Warn("cannot get git status")
+		}
 	}
 
 	if err = sess.Dispose(ctx); err != nil {
