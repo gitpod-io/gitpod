@@ -334,7 +334,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
     );
 }
 
-function BillingSetupModal(props: { attributionId: string; onClose: () => void }) {
+export function BillingSetupModal(props: { attributionId: string; onClose: () => void }) {
     const { isDark } = useContext(ThemeContext);
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
     const [stripeSetupIntentClientSecret, setStripeSetupIntentClientSecret] = useState<string | undefined>();
