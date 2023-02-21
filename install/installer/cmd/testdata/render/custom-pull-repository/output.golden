@@ -3710,11 +3710,11 @@ data:
             "image": "registry.mydomain.com/namespace/ide/code:commit-b83d82b9ee293b0559f11d09977d0e8e914d73f5",
             "latestImage": "registry.mydomain.com/namespace/ide/code:nightly",
             "imageLayers": [
-              "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-b513e548113c7cddeb2d12e8e1a20f56245a8224",
+              "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-8612f777fb5c44227ca6f2b91f40fa0929637e22",
               "registry.mydomain.com/namespace/ide/code-codehelper:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-b513e548113c7cddeb2d12e8e1a20f56245a8224",
+              "registry.mydomain.com/namespace/ide/gitpod-code-web:commit-8612f777fb5c44227ca6f2b91f40fa0929637e22",
               "registry.mydomain.com/namespace/ide/code-codehelper:test"
             ]
           },
