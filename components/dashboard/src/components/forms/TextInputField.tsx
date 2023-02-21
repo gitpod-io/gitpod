@@ -9,8 +9,10 @@ import { FunctionComponent, memo, ReactNode, useCallback } from "react";
 import { useId } from "../../hooks/useId";
 import { InputField } from "./InputField";
 
+type TextInputFieldTypes = "text" | "password" | "email" | "url";
+
 type Props = {
-    type?: "text" | "password";
+    type?: TextInputFieldTypes;
     label: ReactNode;
     value: string;
     id?: string;
@@ -19,6 +21,7 @@ type Props = {
     placeholder?: string;
     disabled?: boolean;
     required?: boolean;
+    containerClassName?: string;
     onChange: (newValue: string) => void;
     onBlur?: () => void;
 };
@@ -34,6 +37,7 @@ export const TextInputField: FunctionComponent<Props> = memo(
         error,
         disabled = false,
         required = false,
+        containerClassName,
         onChange,
         onBlur,
     }) => {
@@ -41,7 +45,7 @@ export const TextInputField: FunctionComponent<Props> = memo(
         const elementId = id || maybeId;
 
         return (
-            <InputField id={elementId} label={label} hint={hint} error={error}>
+            <InputField id={elementId} label={label} hint={hint} error={error} className={containerClassName}>
                 <TextInput
                     id={elementId}
                     value={value}
@@ -49,7 +53,7 @@ export const TextInputField: FunctionComponent<Props> = memo(
                     placeholder={placeholder}
                     disabled={disabled}
                     required={required}
-                    className={error ? "border-red-500" : ""}
+                    className={error ? "error" : ""}
                     onChange={onChange}
                     onBlur={onBlur}
                 />
@@ -59,7 +63,7 @@ export const TextInputField: FunctionComponent<Props> = memo(
 );
 
 type TextInputProps = {
-    type?: "text" | "password";
+    type?: TextInputFieldTypes;
     value: string;
     className?: string;
     id?: string;

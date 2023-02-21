@@ -11,7 +11,9 @@ import { InputField } from "./InputField";
 
 type Props = {
     label: ReactNode;
-    value: string;
+    value?: string;
+    multiple?: boolean;
+    size?: number;
     id?: string;
     hint?: ReactNode;
     error?: ReactNode;
@@ -22,7 +24,20 @@ type Props = {
 };
 
 export const SelectInputField: FunctionComponent<Props> = memo(
-    ({ label, value, id, hint, error, disabled = false, required = false, children, onChange, onBlur }) => {
+    ({
+        label,
+        value,
+        multiple,
+        size,
+        id,
+        hint,
+        error,
+        disabled = false,
+        required = false,
+        children,
+        onChange,
+        onBlur,
+    }) => {
         const maybeId = useId();
         const elementId = id || maybeId;
 
@@ -31,6 +46,9 @@ export const SelectInputField: FunctionComponent<Props> = memo(
                 <SelectInput
                     id={elementId}
                     value={value}
+                    multiple={multiple}
+                    size={size}
+                    className={error ? "error" : ""}
                     onChange={onChange}
                     disabled={disabled}
                     required={required}
@@ -44,7 +62,9 @@ export const SelectInputField: FunctionComponent<Props> = memo(
 );
 
 type SelectInputProps = {
-    value: string;
+    value?: string;
+    multiple?: boolean;
+    size?: number;
     className?: string;
     id?: string;
     disabled?: boolean;
@@ -54,7 +74,18 @@ type SelectInputProps = {
 };
 
 export const SelectInput: FunctionComponent<SelectInputProps> = memo(
-    ({ value, className, id, disabled = false, required = false, children, onChange, onBlur }) => {
+    ({
+        value,
+        multiple = false,
+        size,
+        className,
+        id,
+        disabled = false,
+        required = false,
+        children,
+        onChange,
+        onBlur,
+    }) => {
         const handleChange = useCallback(
             (e) => {
                 onChange && onChange(e.target.value);
@@ -69,6 +100,8 @@ export const SelectInput: FunctionComponent<SelectInputProps> = memo(
                 id={id}
                 className={classNames("w-full max-w-lg", className)}
                 value={value}
+                multiple={multiple}
+                size={size}
                 disabled={disabled}
                 required={required}
                 onChange={handleChange}

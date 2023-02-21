@@ -12,11 +12,12 @@ type Props = {
     id?: string;
     hint?: ReactNode;
     error?: ReactNode;
+    className?: string;
 };
 
-export const InputField: FunctionComponent<Props> = memo(({ label, id, hint, error, children }) => {
+export const InputField: FunctionComponent<Props> = memo(({ label, id, hint, error, className, children }) => {
     return (
-        <div className="mt-4 flex flex-col space-y-2">
+        <div className={classNames("mt-4 flex flex-col space-y-2", className)}>
             <label
                 className={classNames(
                     "text-sm font-semibold dark:text-gray-400",
