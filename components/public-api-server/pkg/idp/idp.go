@@ -48,25 +48,20 @@ func (kp *Service) Router() http.Handler {
 		})
 	})
 
-	mux.Handle("/{org}"+oidc.DiscoveryEndpoint, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		issuer, err := kp.issuer(chi.URLParam(r, "org"))
+	mux.Handle(oidc.DiscoveryEndpoint, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		keysURL, err := url.JoinPath(kp.IssuerBaseURL, "keys")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		keysURL, err := url.JoinPath(issuer, "keys")
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		notSupported, err := url.JoinPath(issuer, "not-supported")
+		notSupported, err := url.JoinPath(kp.IssuerBaseURL, "not-supported")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		cfg := oidc.DiscoveryConfiguration{
-			Issuer:          issuer,
+			Issuer:          kp.IssuerBaseURL,
 			ScopesSupported: op.DefaultSupportedScopes,
 			ResponseTypesSupported: []string{
 				string(oidc.ResponseTypeCode),
@@ -120,8 +115,8 @@ func (kp *Service) Router() http.Handler {
 			return
 		}
 	}))
-	mux.Handle("/{org}/keys", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := kp.organisationKey(chi.URLParam(r, "org"))
+	mux.Handle("/keys", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key := kp.organisationKey("")
 		keys := &jose.JSONWebKeySet{
 			Keys: []jose.JSONWebKey{
 				{
@@ -142,16 +137,8 @@ func (kp *Service) Router() http.Handler {
 	return mux
 }
 
-func (kp *Service) issuer(org string) (string, error) {
-	return url.JoinPath(kp.IssuerBaseURL, org)
-}
-
 func (kp *Service) IDToken(org string, audience []string, subject string, user oidc.UserInfo) (string, error) {
-	issuer, err := kp.issuer(org)
-	if err != nil {
-		return "", err
-	}
-	claims := oidc.NewIDTokenClaims(issuer, subject, audience, time.Now().Add(60*time.Minute), time.Now(), "", "", nil, audience[0], 0)
+	claims := oidc.NewIDTokenClaims(kp.IssuerBaseURL, subject, audience, time.Now().Add(60*time.Minute), time.Now(), "", "", nil, audience[0], 0)
 	claims.SetUserinfo(user)
 
 	codeHash, err := oidc.ClaimHash(string(kp.TokenEncryptionCode), "RS256")
