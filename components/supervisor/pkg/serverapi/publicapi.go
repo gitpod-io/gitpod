@@ -16,11 +16,11 @@ import (
 
 	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
@@ -65,7 +65,7 @@ type Service struct {
 	gitpodService gitpod.APIInterface
 	// publicAPIConn public API publicAPIConn
 	publicAPIConn    *grpc.ClientConn
-	publicApiMetrics *grpc_prometheus.ClientMetrics
+	publicApiMetrics prometheus.Collector
 
 	// usingPublicAPI is using atomic type to avoid reconnect when configcat value change
 	usingPublicAPI atomic.Bool
@@ -109,20 +109,21 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 		return nil
 	}
 
+	publicApiMetrics := grpc_prometheus.NewClientMetrics()
+	publicApiMetrics.EnableClientHandlingTimeHistogram(
+		// it should be aligned with https://github.com/gitpod-io/gitpod/blob/84ed1a0672d91446ba33cb7b504cfada769271a8/install/installer/pkg/components/ide-metrics/configmap.go#L315
+		grpc_prometheus.WithHistogramBuckets([]float64{0.1, 0.2, 0.5, 1, 2, 5, 10}),
+	)
+
 	service := &Service{
 		token:            tknres.Token,
 		gitpodService:    gitpodService,
 		cfg:              cfg,
 		experiments:      experiments.NewClient(),
-		publicApiMetrics: grpc_prometheus.NewClientMetrics(),
+		publicApiMetrics: publicApiMetrics,
 		onUsingPublicAPI: make(chan struct{}),
 		subs:             make(map[chan *gitpod.WorkspaceInstance]struct{}),
 	}
-
-	service.publicApiMetrics.EnableClientHandlingTimeHistogram(
-		// it should be aligned with https://github.com/gitpod-io/gitpod/blob/84ed1a0672d91446ba33cb7b504cfada769271a8/install/installer/pkg/components/ide-metrics/configmap.go#L315
-		grpc_prometheus.WithHistogramBuckets([]float64{0.1, 0.2, 0.5, 1, 2, 5, 10}),
-	)
 
 	// public api
 	service.tryConnToPublicAPI()
@@ -138,25 +139,24 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 }
 
 func (s *Service) tryConnToPublicAPI() {
+	common_grpc.SetupLogging()
 	endpoint := fmt.Sprintf("api.%s:443", s.cfg.Host)
 	log.WithField("endpoint", endpoint).Info("connecting to PublicAPI...")
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})),
-		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient([]grpc.StreamClientInterceptor{
-			s.publicApiMetrics.StreamClientInterceptor(),
+	s.publicApiMetrics = common_grpc.ClientMetrics()
+	opts := common_grpc.ClientOptionsWithInterceptors(
+		[]grpc.StreamClientInterceptor{
 			func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 				withAuth := metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+s.token)
 				return streamer(withAuth, desc, cc, method, opts...)
 			},
-		}...)),
-		grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient([]grpc.UnaryClientInterceptor{
-			s.publicApiMetrics.UnaryClientInterceptor(),
+		},
+		[]grpc.UnaryClientInterceptor{
 			func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 				withAuth := metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+s.token)
 				return invoker(withAuth, method, req, reply, cc, opts...)
 			},
-		}...)),
-	}
+		})
+	opts = append(opts, grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})))
 	if conn, err := grpc.Dial(endpoint, opts...); err != nil {
 		log.WithError(err).Errorf("failed to dial public api %s", endpoint)
 	} else {

@@ -48,6 +48,12 @@ func ClientMetrics() prometheus.Collector {
 
 // DefaultClientOptions returns the default grpc client connection options
 func DefaultClientOptions() []grpc.DialOption {
+	return ClientOptionsWithInterceptors(nil, nil)
+}
+
+// ClientOptionsWithInterceptors returns the default ClientOption sets options for internal components with additional interceptors.
+func ClientOptionsWithInterceptors(stream []grpc.StreamClientInterceptor, unary []grpc.UnaryClientInterceptor) []grpc.DialOption {
+
 	bfConf := backoff.DefaultConfig
 	bfConf.MaxDelay = 5 * time.Second
 
@@ -63,6 +69,9 @@ func DefaultClientOptions() []grpc.DialOption {
 		unaryInterceptor = append(unaryInterceptor, defaultClientOptionsConfig.Metrics.UnaryClientInterceptor())
 		streamInterceptor = append(streamInterceptor, defaultClientOptionsConfig.Metrics.StreamClientInterceptor())
 	}
+
+	unaryInterceptor = append(unaryInterceptor, unary...)
+	streamInterceptor = append(streamInterceptor, stream...)
 
 	res := []grpc.DialOption{
 		grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient(unaryInterceptor...)),
