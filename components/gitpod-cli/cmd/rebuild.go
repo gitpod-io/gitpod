@@ -222,9 +222,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		return err
 	}
 
-	// TODO project? - should not it be covered by gp env?
-	// Should we allow to provide additiona envs to test such, i.e. gp rebuild -e foo=bar
-	userEnvs, err := exec.CommandContext(ctx, "gp", "env").CombinedOutput()
+	workspaceEnvs, err := exec.CommandContext(ctx, "gp", "env").CombinedOutput()
 	if err != nil {
 		return err
 	}
@@ -233,7 +231,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	for _, env := range debugEnvs.Envs {
 		envs += env + "\n"
 	}
-	envs += string(userEnvs)
+	envs += string(workspaceEnvs)
 
 	envFile := filepath.Join(tmpDir, ".env")
 	err = os.WriteFile(envFile, []byte(envs), 0644)
