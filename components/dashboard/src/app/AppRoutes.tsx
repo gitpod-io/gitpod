@@ -27,6 +27,7 @@ import {
     settingsPathPreferences,
     settingsPathSSHKeys,
     settingsPathVariables,
+    switchToPAYGPathMain,
     usagePathMain,
 } from "../user-settings/settings.routes";
 import { getURLHash, isGitpodIo, isLocalPreview } from "../utils";
@@ -90,6 +91,7 @@ const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admi
 const License = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/License"));
 const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
 const UserOnboarding = React.lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
+const SwitchToPAYG = React.lazy(() => import(/* webpackPrefetch: true */ "../SwitchToPAYG"));
 
 type AppRoutesProps = {
     user: User;
@@ -189,6 +191,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     <Route path={workspacesPathMain} exact component={Workspaces} />
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={usagePathMain} exact component={Usage} />
+                    <Route path={switchToPAYGPathMain} exact component={SwitchToPAYG} />
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
                     <Route path={settingsPathNotifications} exact component={Notifications} />
                     <Route path={settingsPathBilling} exact component={Billing} />
