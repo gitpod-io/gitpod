@@ -6,7 +6,6 @@
 
 import { AppNotification } from "@gitpod/gitpod-protocol";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import Alert from "./components/Alert";
 import { getGitpodService } from "./service/service";
 
@@ -61,11 +60,9 @@ export function AppNotifications() {
                 {topNotification.action && (
                     <>
                         {" "}
-                        <Link to={topNotification.action.url}>
-                            <a className="gp-link" href={topNotification.action.url}>
-                                {topNotification.action.label}
-                            </a>
-                        </Link>
+                        <a className="gp-link" href={topNotification.action.url}>
+                            {topNotification.action.label}
+                        </a>
                     </>
                 )}
             </Alert>
