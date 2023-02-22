@@ -26,6 +26,8 @@ export const useOrgMembers = () => {
 
             return publicApiTeamMembersToProtocol(resp.team?.members || []);
         },
+        // If no current org is set, disable query
+        enabled: !!organization,
     });
 };
 
