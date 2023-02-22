@@ -1,6 +1,9 @@
 # Change Log
 
 ## February 2023
+- Improve the checkmark icon for the selected organization in the org selector ([#16495](https://github.com/gitpod-io/gitpod/pull/16495)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
+- [gitpod-cli] gp rebuild respect image context ([#16496](https://github.com/gitpod-io/gitpod/pull/16496)) - [@iQQBot](https://github.com/iQQBot)
+- `gp env` reflects workspace env vars, not only user env vars, i.e. as well coming from projects and context URL. ([#16414](https://github.com/gitpod-io/gitpod/pull/16414)) - [@akosyakov](https://github.com/akosyakov)
 - New workspace creation page ([#16391](https://github.com/gitpod-io/gitpod/pull/16391)) - [@svenefftinge](https://github.com/svenefftinge)
 - Update the Settings and License page layouts for the admin dashboard ([#16427](https://github.com/gitpod-io/gitpod/pull/16427)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
 - Update context dropdown element height ([#16208](https://github.com/gitpod-io/gitpod/pull/16208)) - [@gtsiolis](https://github.com/gtsiolis)
