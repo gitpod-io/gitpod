@@ -224,7 +224,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				Ports: []corev1.ContainerPort{{
 					Name:          "rpc",
-					HostPort:      ServicePort,
 					ContainerPort: ServicePort,
 				}},
 				Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(

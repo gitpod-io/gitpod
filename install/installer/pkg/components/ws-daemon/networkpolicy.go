@@ -33,6 +33,10 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Protocol: common.TCPProtocol,
 								Port:     &intstr.IntOrString{IntVal: ServicePort},
 							},
+							{
+								Protocol: common.TCPProtocol,
+								Port:     &intstr.IntOrString{IntVal: NodePort},
+							},
 						},
 						From: []networkingv1.NetworkPolicyPeer{
 							{

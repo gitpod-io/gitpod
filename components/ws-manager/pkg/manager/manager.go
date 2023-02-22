@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -1526,7 +1527,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	// find the ws-daemon on this node
 	var hostIP string
 
-	waitErr := wait.PollImmediate(1*time.Second, 30*time.Second, func() (bool, error) {
+	waitErr := wait.PollImmediate(1*time.Second, 1*time.Minute, func() (bool, error) {
 		var podList corev1.PodList
 		err := m.Clientset.List(ctx, &podList,
 			&client.ListOptions{
@@ -1558,7 +1559,12 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 				return false, nil
 			}
 
-			hostIP = pod.Status.PodIP
+			err = waitForTCPPortToBeReachable(pod.Status.HostIP, "31740", 5*time.Second)
+			if err != nil {
+				return false, nil
+			}
+
+			hostIP = pod.Status.HostIP
 			break
 		}
 
@@ -1584,6 +1590,33 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	}
 
 	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
+}
+
+func waitForTCPPortToBeReachable(host string, port string, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return xerrors.Errorf("port %v on host %v never reachable", port, host)
+		case <-ticker.C:
+			conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+			if err != nil {
+				continue
+			}
+
+			if conn != nil {
+				conn.Close()
+				return nil
+			}
+
+			continue
+		}
+	}
 }
 
 func (m *Manager) createWorkspaceSnapshotFromPVC(ctx context.Context, pvcName string, pvcVolumeSnapshotName string, pvcVolumeSnapshotClassName string, workspaceID string, labels map[string]string) error {
