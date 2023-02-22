@@ -30,7 +30,6 @@ import (
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
-	"github.com/vishvananda/netlink"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 )
@@ -59,7 +58,6 @@ var aptUpdated = false
 const (
 	dockerSocketFN = "/var/run/docker.sock"
 	gitpodUserId   = 33333
-	containerIf    = "eth0"
 )
 
 func main() {
@@ -135,15 +133,6 @@ func runWithinNetns() (err error) {
 		return xerrors.Errorf("cannot add user supplied docker args: %w", err)
 	}
 	args = append(args, userArgs...)
-
-	netIface, err := netlink.LinkByName(containerIf)
-	if err != nil {
-		return xerrors.Errorf("cannot get container network device %s: %w", containerIf, err)
-	}
-
-	args = append(args, fmt.Sprintf("--mtu=%v", netIface.Attrs().MTU))
-	// configure docker0 MTU (used as control plane, not related to containers)
-	args = append(args, fmt.Sprintf("--network-control-plane-mtu=%v", netIface.Attrs().MTU))
 
 	if listenFDs > 0 {
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))

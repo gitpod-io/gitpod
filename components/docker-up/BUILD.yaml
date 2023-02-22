@@ -46,15 +46,12 @@ packages:
     config:
       commands:
         - ["mv", "components-docker-up--bin-docker-up/docker-up", "docker-up"]
-        - ["mv", "components-docker-up--bin-docker-up/checksums.txt", "checksums.txt"]
         - ["mv", "components-docker-up--bin-docker-up/docker-compose", "docker-compose-linux-x86_64"]
         - ["rm", "-r", "components-docker-up--bin-docker-up"]
         - ["mv", "components-docker-up--bin-runc-facade/docker-up", "runc-facade"]
         - ["rm", "-r", "components-docker-up--bin-runc-facade"]
-        - ["sha256sum", "-c", "checksums.txt"]
         - ["mv", "docker-compose-linux-x86_64", "docker-compose"]
         - ["chmod", "+x", "docker-compose"]
-        - ["rm", "checksums.txt"]
   - name: docker
     type: docker
     deps:
