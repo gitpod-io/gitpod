@@ -35,7 +35,6 @@ export const OnboardingStep: FC<Props> = ({ title, subtitle, isValid, children, 
     );
 
     return (
-        // flex classes here to account for an upcoming image on the right
         <div className="flex flex-col items-center justify-center max-w-full">
             <h1>{title}</h1>
             <p>{subtitle}</p>
