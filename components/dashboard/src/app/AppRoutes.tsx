@@ -6,7 +6,7 @@
 
 import { ContextURL, Team, User } from "@gitpod/gitpod-protocol";
 import React, { FunctionComponent, useContext, useState } from "react";
-import { Redirect, Route, Switch, useLocation } from "react-router";
+import { Redirect, Route, Switch, useLocation, useParams } from "react-router";
 import { AppNotifications } from "../AppNotifications";
 import Menu from "../menu/Menu";
 import OAuthClientApproval from "../OauthClientApproval";
@@ -102,6 +102,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     const newCreateWsPage = useNewCreateWorkspacePage();
     const location = useLocation();
     const { newSignupFlow } = useFeatureFlags();
+    const search = new URLSearchParams(location.search);
 
     // Prefix with `/#referrer` will specify an IDE for workspace
     // We don't need to show IDE preference in this case
@@ -124,7 +125,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     }
 
     // Placeholder for new signup flow - check we make here tbd still
-    if (newSignupFlow && User.isOnboardingUserNew(user)) {
+    if (newSignupFlow && search.get("onboarding") === "1") {
         return <UserOnboarding user={user} />;
     }
 

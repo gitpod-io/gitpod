@@ -5,31 +5,46 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { FunctionComponent, useCallback, useReducer } from "react";
-import { Link } from "react-router-dom";
+import { FunctionComponent, useCallback, useContext, useReducer, useState } from "react";
 import { OnboardingForm, OnboardingProfileDetails } from "./OnboardingForm";
 import gitpodIcon from "../icons/gitpod.svg";
 import Separator from "../components/Separator";
+import { useHistory } from "react-router";
+import { StepUserInfo } from "./StepUserInfo";
+import { UserContext } from "../user-context";
+import { StepOrgInfo } from "./StepOrgInfo";
 
+const STEPS = {
+    ONE: "one",
+    TWO: "two",
+    THREE: "three",
+};
 type Props = {
     user: User;
 };
 const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
-    // Placeholder UI to start stubbing out new flow
+    const history = useHistory();
+    const [step, setStep] = useState(STEPS.ONE);
+    // TODO: Remove this once current user is behind react-query
+    const { setUser } = useContext(UserContext);
+    // const [profile, dispatch] = useReducer(
+    //     (state: OnboardingProfileDetails, action: Partial<OnboardingProfileDetails>) => {
+    //         return {
+    //             ...state,
+    //             ...action,
+    //         };
+    //     },
+    //     getInitialProfileState(user),
+    // );
 
-    const [profile, dispatch] = useReducer(
-        (state: OnboardingProfileDetails, action: Partial<OnboardingProfileDetails>) => {
-            return {
-                ...state,
-                ...action,
-            };
-        },
-        getInitialProfileState(user),
-    );
+    // const handleSubmit = useCallback(() => {
+    //     console.log("Saving profile updates", profile);
+    //     // TODO: add api calls to update profile
 
-    const handleSubmit = useCallback(() => {
-        console.log("Saving profile updates", profile);
-    }, [profile]);
+    //     // For now, send to workspaces once done
+    //     // This will get updated though so we don't need to redirect and can leave them on their current page once complete
+    //     history.push("/workspaces");
+    // }, [history, profile]);
 
     return (
         <div className="container">
@@ -38,12 +53,29 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                     <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
                 </div>
                 <Separator />
-                <div className="flex flex-col items-center w-max-lg mt-8">
-                    <h1>Welcome to Gitpod</h1>
+                <div className="mt-24">
+                    {step === STEPS.ONE && (
+                        <StepUserInfo
+                            user={user}
+                            onComplete={(updatedUser) => {
+                                setUser(updatedUser);
+                                setStep(STEPS.TWO);
+                                // history.push("/workspaces");
+                            }}
+                        />
+                    )}
+                    {step === STEPS.TWO && (
+                        <StepOrgInfo
+                            user={user}
+                            onComplete={(updatedUser) => {
+                                setUser(updatedUser);
+                                // setStep(STEPS.THREE);
+                                history.push("/workspaces");
+                            }}
+                        />
+                    )}
 
-                    <p>Tell us more about your organization</p>
-
-                    {user.avatarUrl && (
+                    {/* {user.avatarUrl && (
                         <div className="mt-4">
                             <img
                                 className="rounded-full w-24 h-24"
@@ -52,7 +84,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                             />
                         </div>
                     )}
-                    <OnboardingForm profile={profile} onUpdate={dispatch} onSubmit={handleSubmit} />
+                    <OnboardingForm profile={profile} onUpdate={dispatch} onSubmit={handleSubmit} /> */}
                 </div>
             </div>
         </div>
@@ -60,31 +92,31 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
 };
 export default UserOnboarding;
 
-const getInitialNameParts = (user: User) => {
-    const name = user.fullName || user.name || "";
-    let firstName = name;
-    let lastName = "";
+// const getInitialNameParts = (user: User) => {
+//     const name = user.fullName || user.name || "";
+//     let firstName = name;
+//     let lastName = "";
 
-    const parts = name.split(" ");
-    if (parts.length > 1) {
-        firstName = parts.shift() || "";
-        lastName = parts.join(" ");
-    }
+//     const parts = name.split(" ");
+//     if (parts.length > 1) {
+//         firstName = parts.shift() || "";
+//         lastName = parts.join(" ");
+//     }
 
-    return { firstName, lastName };
-};
+//     return { firstName, lastName };
+// };
 
-const getInitialProfileState = (user: User): OnboardingProfileDetails => {
-    const { firstName, lastName } = getInitialNameParts(user);
+// const getInitialProfileState = (user: User): OnboardingProfileDetails => {
+//     const { firstName, lastName } = getInitialNameParts(user);
 
-    return {
-        firstName,
-        lastName,
-        emailAddress: user.additionalData?.profile?.emailAddress ?? "",
-        companyWebsite: user.additionalData?.profile?.companyWebsite ?? "",
-        jobRole: user.additionalData?.profile?.jobRole ?? "",
-        jobRoleOther: user.additionalData?.profile?.jobRoleOther ?? "",
-        signupGoals: user.additionalData?.profile?.signupGoals || [],
-        signupGoalsOther: user.additionalData?.profile?.signupGoalsOther ?? "",
-    };
-};
+//     return {
+//         firstName,
+//         lastName,
+//         emailAddress: user.additionalData?.profile?.emailAddress ?? "",
+//         companyWebsite: user.additionalData?.profile?.companyWebsite ?? "",
+//         jobRole: user.additionalData?.profile?.jobRole ?? "",
+//         jobRoleOther: user.additionalData?.profile?.jobRoleOther ?? "",
+//         signupGoals: user.additionalData?.profile?.signupGoals || "",
+//         signupGoalsOther: user.additionalData?.profile?.signupGoalsOther ?? "",
+//     };
+// };
