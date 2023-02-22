@@ -12,13 +12,10 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
-
-var log = logrus.NewEntry(logrus.StandardLogger())
 
 func TestGitpodConfig(t *testing.T) {
 	tests := []struct {
@@ -89,7 +86,7 @@ vscode:
 			defer os.RemoveAll(tempDir)
 
 			locationReady := make(chan struct{})
-			configService := NewConfigService(tempDir+"/.gitpod.yml", locationReady, log)
+			configService := NewConfigService(tempDir+"/.gitpod.yml", locationReady)
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			close(locationReady)
@@ -118,7 +115,7 @@ vscode:
 					t.Fatal(err)
 				}
 
-				err = os.WriteFile(configService.location, []byte(test.Content), 0o600)
+				err = os.WriteFile(configService.configLocation, []byte(test.Content), 0o600)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -139,7 +136,7 @@ vscode:
 					t.Fatal(err)
 				}
 
-				err = os.Remove(configService.location)
+				err = os.Remove(configService.configLocation)
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -156,7 +153,7 @@ func TestInvalidGitpodConfig(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	locationReady := make(chan struct{})
-	configService := NewConfigService(tempDir+"/.gitpod.yml", locationReady, log)
+	configService := NewConfigService(tempDir+"/.gitpod.yml", locationReady)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	close(locationReady)
@@ -170,7 +167,7 @@ func TestInvalidGitpodConfig(t *testing.T) {
 		t.Errorf("unexpected output (-want +got):\n%s", diff)
 	}
 
-	err = os.WriteFile(configService.location, []byte(`
+	err = os.WriteFile(configService.configLocation, []byte(`
 ports:
   - port: 8080
 
@@ -194,7 +191,7 @@ vscode:
 		t.Errorf("unexpected output (-want +got):\n%s", diff)
 	}
 
-	err = os.WriteFile(configService.location, []byte(`
+	err = os.WriteFile(configService.configLocation, []byte(`
 ports:
   - port:
 	visibility: private
@@ -212,9 +209,9 @@ vscode:
 		t.Fatal(err)
 	}
 
-	time.Sleep(configService.debounceDuration * 10)
+	time.Sleep(configService.configWatcher.debounceDuration * 10)
 
-	err = os.WriteFile(configService.location, []byte(`
+	err = os.WriteFile(configService.configLocation, []byte(`
 ports:
   - port: 8081
 `), 0o600)
@@ -226,6 +223,87 @@ ports:
 	if diff := cmp.Diff(&gitpod.GitpodConfig{
 		Ports: []*gitpod.PortsItems{{Port: 8081}},
 	}, config); diff != "" {
+		t.Errorf("unexpected output (-want +got):\n%s", diff)
+	}
+}
+
+func TestWatchImageFile(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "test-gitpod-config-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	locationReady := make(chan struct{})
+	configService := NewConfigService(tempDir+"/.gitpod.yml", locationReady)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	close(locationReady)
+
+	go configService.Watch(ctx)
+
+	listener := configService.ObserveImageFile(ctx)
+
+	err = os.WriteFile(configService.configLocation, []byte(`
+image:
+  file: Dockerfile
+`), 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	changes := <-listener
+	if diff := cmp.Diff((*struct{})(nil), changes); diff != "" {
+		t.Errorf("unexpected output (-want +got):\n%s", diff)
+	}
+
+	imageLocation := tempDir + "/Dockerfile"
+	err = os.WriteFile(imageLocation, []byte(`
+FROM ubuntu
+`), 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	changes = <-listener
+	if diff := cmp.Diff(&struct{}{}, changes); diff != "" {
+		t.Errorf("unexpected output (-want +got):\n%s", diff)
+	}
+
+	err = os.WriteFile(configService.configLocation, []byte(`
+image: ubuntu
+`), 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	changes = <-listener
+	if diff := cmp.Diff((*struct{})(nil), changes); diff != "" {
+		t.Errorf("unexpected output (-want +got):\n%s", diff)
+	}
+
+	err = os.WriteFile(configService.configLocation, []byte(`
+image:
+  file: Dockerfile
+`), 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	changes = <-listener
+	if diff := cmp.Diff(&struct{}{}, changes); diff != "" {
+		t.Errorf("unexpected output (-want +got):\n%s", diff)
+	}
+
+	err = os.WriteFile(imageLocation, []byte(`
+FROM node
+`), 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	changes = <-listener
+	if diff := cmp.Diff(&struct{}{}, changes); diff != "" {
 		t.Errorf("unexpected output (-want +got):\n%s", diff)
 	}
 }
