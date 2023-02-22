@@ -20,7 +20,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
 
     const [firstName, setFirstName] = useState(first);
     const [lastName, setLastName] = useState(last);
-    const [emailAddress, setEmailAddress] = useState(user.additionalData?.profile?.emailAddress ?? "");
+    const [emailAddress, setEmailAddress] = useState(User.getPrimaryEmail(user) ?? "");
 
     const prepareUpdates = useCallback(() => {
         const additionalData = user.additionalData || {};
@@ -86,6 +86,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
     );
 };
 
+// Intentionally not using User.getName() here to avoid relying on identity.authName (likely not user's real name)
 const getInitialNameParts = (user: User) => {
     const name = user.fullName || user.name || "";
     let first = name;
