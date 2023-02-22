@@ -19,6 +19,7 @@ import {
     isDateSmallerOrEqual,
     durationInMillis,
     addMillis,
+    daysBefore,
 } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import {
     AccountEntry,
@@ -180,7 +181,8 @@ export class AccountServiceImpl implements AccountService {
      */
     public async getAccountStatement(userId: string, endDate: string): Promise<AccountStatement> {
         const userCreationDate = await this.getUserCreationDate(userId);
-        const startDate = userCreationDate; // TODO persistence: Fetch from Accounting DB!
+        const upperBoundaryForStartDate = daysBefore(new Date().toISOString(), 180); // gpl: Let's not account for usage older than half a year to smoothen people's transition to Pay-as-you-go
+        const startDate = earliest(userCreationDate, upperBoundaryForStartDate); // TODO persistence: Fetch from Accounting DB!
         const unorderedOpenCredits = await this.projectCreditSources(userId, userCreationDate, startDate, endDate);
         const openCredits = new SortedArray<OpenCredit>(unorderedOpenCredits, orderByExpiryDateDesc);
         const openDebits = new SortedArray<OpenDebit>(
