@@ -5,14 +5,14 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { FunctionComponent, useCallback, useContext, useReducer, useState } from "react";
-import { OnboardingForm, OnboardingProfileDetails } from "./OnboardingForm";
+import { FunctionComponent, useContext, useState } from "react";
 import gitpodIcon from "../icons/gitpod.svg";
 import Separator from "../components/Separator";
 import { useHistory } from "react-router";
 import { StepUserInfo } from "./StepUserInfo";
 import { UserContext } from "../user-context";
 import { StepOrgInfo } from "./StepOrgInfo";
+import { StepPersonalize } from "./StepPersonalize";
 
 const STEPS = {
     ONE: "one",
@@ -54,7 +54,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                 </div>
                 <Separator />
                 <div className="mt-24">
-                    {step === STEPS.ONE && (
+                    {step === STEPS.TWO && (
                         <StepUserInfo
                             user={user}
                             onComplete={(updatedUser) => {
@@ -66,6 +66,16 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                     )}
                     {step === STEPS.TWO && (
                         <StepOrgInfo
+                            user={user}
+                            onComplete={(updatedUser) => {
+                                setUser(updatedUser);
+                                setStep(STEPS.THREE);
+                                history.push("/workspaces");
+                            }}
+                        />
+                    )}
+                    {step === STEPS.ONE && (
+                        <StepPersonalize
                             user={user}
                             onComplete={(updatedUser) => {
                                 setUser(updatedUser);

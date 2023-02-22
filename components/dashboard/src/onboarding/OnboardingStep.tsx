@@ -36,24 +36,22 @@ export const OnboardingStep: FC<Props> = ({ title, subtitle, isValid, children, 
 
     return (
         // flex classes here to account for an upcoming image on the right
-        <div className="flex flex-col md:flex-row items-center justify-center">
-            <div className="max-w-full md:min-w-max">
-                <h3>{title}</h3>
-                <p>{subtitle}</p>
+        <div className="flex flex-col items-center justify-center max-w-full">
+            <h1>{title}</h1>
+            <p>{subtitle}</p>
 
-                <form onSubmit={handleSubmit} className="max-w-md">
-                    {/* Form contents provided as children */}
-                    {children}
+            <form className="mt-8 max-w-md" onSubmit={handleSubmit}>
+                {/* Form contents provided as children */}
+                {children}
 
-                    {updateUser.isError && <Alert type="error">There was a problem updating your profile</Alert>}
+                {updateUser.isError && <Alert type="error">There was a problem updating your profile</Alert>}
 
-                    <div>
-                        <button disabled={!isValid || updateUser.isLoading} className="w-full mt-8">
-                            Continue
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div>
+                    <button disabled={!isValid || updateUser.isLoading} className="w-full mt-8">
+                        Continue
+                    </button>
+                </div>
+            </form>
         </div>
     );
 };
