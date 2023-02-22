@@ -6,8 +6,10 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -25,6 +27,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/common-go/util"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -233,6 +236,18 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	}
 	controllerutil.AddFinalizer(&ws, workspacev1.GitpodFinalizerName)
 
+	envData, _ := extractWorkspaceEnvData(req.Spec)
+	err = wsm.createWorkspaceSecret(ctx, &ws, fmt.Sprintf("%s-%s", req.Id, "env"), wsm.Config.Namespace, envData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create env secret for workspace %s: %w", req.Id, err)
+	}
+
+	tokenData, _ := extractWorkspaceTokenData(req.Spec)
+	err = wsm.createWorkspaceSecret(ctx, &ws, fmt.Sprintf("%s-%s", req.Id, "tokens"), wsm.Config.Namespace, tokenData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token secret for workspace %s: %w", req.Id, err)
+	}
+
 	wsm.metrics.recordWorkspaceStart(&ws)
 	err = wsm.Client.Create(ctx, &ws)
 	if err != nil {
@@ -261,6 +276,97 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		Url:        wsr.Status.URL,
 		OwnerToken: wsr.Status.OwnerToken,
 	}, nil
+}
+
+func extractWorkspaceEnvData(spec *wsmanapi.StartWorkspaceSpec) (secrets map[string]string, secretsLen int) {
+	secrets = make(map[string]string)
+	for _, env := range spec.Envvars {
+		if env.Secret != nil {
+			continue
+		}
+		if !isProtectedEnvVar(env.Name, spec.SysEnvvars) {
+			continue
+		}
+
+		name := fmt.Sprintf("%x", sha256.Sum256([]byte(env.Name)))
+		secrets[name] = env.Value
+		secretsLen += len(env.Value)
+	}
+
+	return secrets, secretsLen
+}
+
+func isProtectedEnvVar(name string, sysEnvvars []*wsmanapi.EnvironmentVariable) bool {
+	switch name {
+	case "THEIA_SUPERVISOR_TOKENS":
+		return true
+	default:
+		if isGitpodInternalEnvVar(name) {
+			return false
+		}
+		for _, env := range sysEnvvars {
+			if env.Name == name {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func isGitpodInternalEnvVar(name string) bool {
+	return strings.HasPrefix(name, "GITPOD_") ||
+		strings.HasPrefix(name, "SUPERVISOR_") ||
+		strings.HasPrefix(name, "BOB_") ||
+		strings.HasPrefix(name, "THEIA_") ||
+		name == "NODE_EXTRA_CA_CERTS"
+}
+
+func extractWorkspaceTokenData(spec *wsmanapi.StartWorkspaceSpec) (secrets map[string]string, secretsLen int) {
+	secrets = make(map[string]string)
+	for k, v := range csapi.GatherSecretsFromInitializer(spec.Initializer) {
+		secrets[k] = v
+		secretsLen += len(v)
+	}
+	return secrets, secretsLen
+}
+
+func (wsm *WorkspaceManagerServer) createWorkspaceSecret(ctx context.Context, owner client.Object, name, namespace string, data map[string]string) error {
+	secret := corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		StringData: data,
+	}
+	err := controllerutil.SetOwnerReference(owner, &secret, wsm.Client.Scheme())
+	if err != nil {
+		return err
+	}
+
+	err = wsm.Client.Create(ctx, &secret)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+
+	err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, func(c context.Context) (done bool, err error) {
+		var secret corev1.Secret
+		err = wsm.Client.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, &secret)
+		if errors.IsNotFound(err) {
+			return false, nil
+		}
+
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsmanapi.StopWorkspaceRequest) (res *wsmanapi.StopWorkspaceResponse, err error) {
