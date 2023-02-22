@@ -12,8 +12,8 @@ set -euo pipefail
 NODE_POOL_INDEX=0
 
 # These were previously using "findLastPort" etc. but in harvester-based preview environments they can be stable
-REG_DAEMON_PORT="30000"
-WS_DAEMON_PORT="10000"
+REG_DAEMON_PORT="31750"
+WS_DAEMON_PORT="31740"
 
 # Required params
 DEV_BRANCH=$1
