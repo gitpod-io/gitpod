@@ -20,6 +20,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
 	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	supervisorapi "github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -82,16 +83,33 @@ type connectToServerResult struct {
 	useDeprecatedGetEnvVar bool
 }
 
-func connectToServer(ctx context.Context) (*connectToServerResult, error) {
-	supervisorClient, err := supervisor.New(ctx)
-	if err != nil {
-		return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
-	}
-	defer supervisorClient.Close()
+type connectToServerOptions struct {
+	supervisorClient *supervisor.SupervisorClient
+	wsInfo           *api.WorkspaceInfoResponse
+	log              *log.Entry
+}
 
-	wsinfo, err := supervisorClient.Info.WorkspaceInfo(ctx, &supervisorapi.WorkspaceInfoRequest{})
-	if err != nil {
-		return nil, xerrors.Errorf("failed getting workspace info from supervisor: %w", err)
+func connectToServer(ctx context.Context, options *connectToServerOptions) (*connectToServerResult, error) {
+	var err error
+	var supervisorClient *supervisor.SupervisorClient
+	if options != nil && options.supervisorClient != nil {
+		supervisorClient = options.supervisorClient
+	} else {
+		supervisorClient, err = supervisor.New(ctx)
+		if err != nil {
+			return nil, xerrors.Errorf("failed connecting to supervisor: %w", err)
+		}
+		defer supervisorClient.Close()
+	}
+
+	var wsinfo *api.WorkspaceInfoResponse
+	if options != nil && options.wsInfo != nil {
+		wsinfo = options.wsInfo
+	} else {
+		wsinfo, err = supervisorClient.Info.WorkspaceInfo(ctx, &supervisorapi.WorkspaceInfoRequest{})
+		if err != nil {
+			return nil, xerrors.Errorf("failed getting workspace info from supervisor: %w", err)
+		}
 	}
 	if wsinfo.Repository == nil {
 		return nil, xerrors.New("workspace info is missing repository")
@@ -132,10 +150,16 @@ func connectToServer(ctx context.Context) (*connectToServerResult, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("failed getting token from supervisor: %w", err)
 	}
+	var serverLog *log.Entry
+	if options != nil && options.log != nil {
+		serverLog = options.log
+	} else {
+		serverLog = log.NewEntry(log.StandardLogger())
+	}
 	client, err := serverapi.ConnectToServer(wsinfo.GitpodApi.Endpoint, serverapi.ConnectToServerOpts{
 		Token:   clientToken.Token,
 		Context: ctx,
-		Log:     log.NewEntry(log.StandardLogger()),
+		Log:     serverLog,
 	})
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to server: %w", err)
@@ -143,19 +167,21 @@ func connectToServer(ctx context.Context) (*connectToServerResult, error) {
 	return &connectToServerResult{repositoryPattern, wsinfo, client, useDeprecatedGetEnvVar}, nil
 }
 
-func getEnvs(ctx context.Context) error {
-	result, err := connectToServer(ctx)
+func getWorkspaceEnvs(ctx context.Context, options *connectToServerOptions) ([]*serverapi.EnvVar, error) {
+	result, err := connectToServer(ctx, options)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer result.client.Close()
 
-	var vars []*serverapi.EnvVar
 	if !result.useDeprecatedGetEnvVar {
-		vars, err = result.client.GetWorkspaceEnvVars(ctx, result.wsInfo.WorkspaceId)
-	} else {
-		vars, err = result.client.GetEnvVars(ctx)
+		return result.client.GetWorkspaceEnvVars(ctx, result.wsInfo.WorkspaceId)
 	}
+	return result.client.GetEnvVars(ctx)
+}
+
+func getEnvs(ctx context.Context) error {
+	vars, err := getWorkspaceEnvs(ctx, nil)
 	if err != nil {
 		return xerrors.Errorf("failed to fetch env vars from server: %w", err)
 	}
@@ -168,7 +194,7 @@ func getEnvs(ctx context.Context) error {
 }
 
 func setEnvs(ctx context.Context, args []string) error {
-	result, err := connectToServer(ctx)
+	result, err := connectToServer(ctx, nil)
 	if err != nil {
 		return err
 	}
@@ -195,7 +221,7 @@ func setEnvs(ctx context.Context, args []string) error {
 }
 
 func deleteEnvs(ctx context.Context, args []string) error {
-	result, err := connectToServer(ctx)
+	result, err := connectToServer(ctx, nil)
 	if err != nil {
 		return err
 	}

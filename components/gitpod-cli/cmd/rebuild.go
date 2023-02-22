@@ -172,12 +172,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	fmt.Println("")
 	runLog := log.New()
 	runLog.Logger.SetLevel(logrus.TraceLevel)
-	runLog.Logger.SetFormatter(&prefixed.TextFormatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-		FullTimestamp:   true,
-		ForceFormatting: true,
-		ForceColors:     true,
-	})
+	setLoggerFormatter(runLog.Logger)
 	runLog.Logger.SetOutput(os.Stdout)
 	runLog.Info("Starting the debug workspace...")
 
@@ -231,7 +226,10 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		return err
 	}
 
-	workspaceEnvs, err := exec.CommandContext(ctx, "gp", "env").CombinedOutput()
+	serverLog := logrus.NewEntry(logrus.New())
+	serverLog.Logger.SetLevel(logLevel)
+	setLoggerFormatter(serverLog.Logger)
+	workspaceEnvs, err := getWorkspaceEnvs(ctx, &connectToServerOptions{supervisorClient, wsInfo, serverLog})
 	if err != nil {
 		return err
 	}
@@ -240,7 +238,9 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	for _, env := range debugEnvs.Envs {
 		envs += env + "\n"
 	}
-	envs += string(workspaceEnvs)
+	for _, env := range workspaceEnvs {
+		envs += fmt.Sprintf("%s=%s\n", env.Name, env.Value)
+	}
 
 	envFile := filepath.Join(tmpDir, ".env")
 	err = os.WriteFile(envFile, []byte(envs), 0644)
@@ -394,6 +394,15 @@ Connect using SSH keys (https://gitpod.io/keys):
 	}
 
 	return nil
+}
+
+func setLoggerFormatter(logger *logrus.Logger) {
+	logger.SetFormatter(&prefixed.TextFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+		FullTimestamp:   true,
+		ForceFormatting: true,
+		ForceColors:     true,
+	})
 }
 
 func notify(ctx context.Context, supervisorClient *supervisor.SupervisorClient, workspaceUrl, message string) error {
