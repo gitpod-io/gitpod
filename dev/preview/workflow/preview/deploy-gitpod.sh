@@ -135,35 +135,16 @@ EOF
 }
 
 function installRookCeph {
-  kubectl \
-    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    apply -f "$ROOT/.werft/vm/manifests/rook-ceph/crds.yaml" --server-side --force-conflicts
+  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$ROOT/.werft/vm/manifests/rook-ceph/crds.yaml"
 
   kubectl \
     --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
     --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
     wait --for condition=established --timeout=120s crd/cephclusters.ceph.rook.io
 
-  kubectl \
-    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    apply -f "$ROOT/.werft/vm/manifests/rook-ceph/common.yaml" -f "$ROOT/.werft/vm/manifests/rook-ceph/operator.yaml"
-
-  kubectl \
-    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    apply -f "$ROOT/.werft/vm/manifests/rook-ceph/cluster-test.yaml"
-
-  kubectl \
-    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    apply -f "$ROOT/.werft/vm/manifests/rook-ceph/storageclass-test.yaml"
-
-  kubectl \
-    --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-    --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    apply -f "$ROOT/.werft/vm/manifests/rook-ceph/snapshotclass.yaml"
+  for file in common operator cluster-test storageclass-test snapshotclass;do
+      diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "$ROOT/.werft/vm/manifests/rook-ceph/$file.yaml"
+  done
 }
 
 # Install Fluent-Bit sending logs to GCP
@@ -376,7 +357,7 @@ then
   yq d -i admin-login-secret.yaml metadata.creationTimestamp
   yq d -i admin-login-secret.yaml metadata.uid
   yq d -i admin-login-secret.yaml metadata.resourceVersion
-  kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f admin-login-secret.yaml
+  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" admin-login-secret.yaml
   rm -f admin-login-secret.yaml
 
   yq w -i "${INSTALLER_CONFIG_PATH}" adminLoginSecret.kind "secret"
@@ -391,7 +372,7 @@ yq w -i stripe-api-keys.secret.yaml metadata.namespace "default"
 yq d -i stripe-api-keys.secret.yaml metadata.creationTimestamp
 yq d -i stripe-api-keys.secret.yaml metadata.uid
 yq d -i stripe-api-keys.secret.yaml metadata.resourceVersion
-kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f stripe-api-keys.secret.yaml
+diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" stripe-api-keys.secret.yaml
 rm -f stripe-api-keys.secret.yaml
 
 #
@@ -401,8 +382,9 @@ kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" --namesp
 | yq w - metadata.namespace ${PREVIEW_NAMESPACE} \
 | yq d - metadata.uid \
 | yq d - metadata.resourceVersion \
-| yq d - metadata.creationTimestamp \
-| kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f -
+| yq d - metadata.creationTimestamp > host-key.yaml
+diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" host-key.yaml
+rm -f host-key.yaml
 
 yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayHostKey.kind "secret"
 yq w -i "${INSTALLER_CONFIG_PATH}" sshGatewayHostKey.name "host-key"
@@ -524,7 +506,7 @@ yq w -i spicedb-secret.yaml metadata.namespace "default"
 yq d -i spicedb-secret.yaml metadata.creationTimestamp
 yq d -i spicedb-secret.yaml metadata.uid
 yq d -i spicedb-secret.yaml metadata.resourceVersion
-kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f spicedb-secret.yaml
+diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" spicedb-secret.yaml
 rm -f spicedb-secret.yaml
 
 #
@@ -626,7 +608,18 @@ rm -f /tmp/public-api
 log_info "Applying manifests (installing)"
 
 kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" delete -n "${PREVIEW_NAMESPACE}" job migrations || true
-kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f "${INSTALLER_RENDER_PATH}"
+# export the function so we can use it in xargs
+export -f diff-apply
+mkdir temp-installer || true
+pushd temp-installer
+# this will split the big yaml produced by the installer, so we can diff individual parts of it and run them in parallel
+yq4 -s '.kind + "_" + .metadata.name' "../${INSTALLER_RENDER_PATH}"
+rm .yml || true # this one is a leftover from the split
+# shellcheck disable=SC2038
+find . | xargs -n 1 -I {} -P 5 bash -c "diff-apply ${PREVIEW_K3S_KUBE_CONTEXT} {}"
+log_info "Applied all"
+popd
+rm -rf temp-installer
 rm -f "${INSTALLER_RENDER_PATH}"
 
 # =========================
