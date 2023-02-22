@@ -15,12 +15,24 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { getGitpodService } from "./service/service";
 import Alert from "./components/Alert";
 
+/**
+ * Keys of known page params
+ */
 const KEY_PERSONAL_SUB = "personalSubscription";
 const KEY_TEAM1_SUB = "teamSubscription";
 const KEY_TEAM2_SUB = "teamSubscription2";
+const KEY_ATTRIBUTION_ID = "attributionId";
+//
+const KEY_STRIPE_SETUP_INTENT = "setup_intent";
+const KEY_STRIPE_IGNORED = "setup_intent_client_secret";
+const KEY_STRIPE_REDIRECT_STATUS = "redirect_status";
 
 type SubscriptionType = typeof KEY_PERSONAL_SUB | typeof KEY_TEAM1_SUB | typeof KEY_TEAM2_SUB;
-type Params = { id: string; type: SubscriptionType };
+type PageParams = {
+    id: string;
+    type: SubscriptionType;
+    attributionId?: string;
+};
 
 function SwitchToPAYG() {
     const { switchToPAYG } = useContext(FeatureFlagContext);
@@ -31,7 +43,7 @@ function SwitchToPAYG() {
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
-    const [attributionId, setAttributionId] = useState<string>("");
+    const [attributionId, setAttributionId] = useState(params?.attributionId);
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<boolean>(false);
 
     useEffect(() => {
@@ -39,52 +51,67 @@ function SwitchToPAYG() {
             return;
         }
         const params = new URLSearchParams(location.search);
-        if (!params.get("setup_intent") || params.get("redirect_status") !== "succeeded") {
+        if (!params.get(KEY_STRIPE_SETUP_INTENT) || params.get(KEY_STRIPE_REDIRECT_STATUS) !== "succeeded") {
             return;
         }
-        const setupIntentId = params.get("setup_intent")!;
-        window.history.replaceState({}, "", location.pathname);
+        const setupIntentId = params.get(KEY_STRIPE_SETUP_INTENT)!;
+
+        // remove
+        [KEY_STRIPE_SETUP_INTENT, KEY_STRIPE_REDIRECT_STATUS, KEY_STRIPE_IGNORED].forEach((p) => params.delete(p));
+        window.history.replaceState({}, "", `${location.pathname}?${params.toString()}`);
+
         (async () => {
+            setPendingStripeSubscription(true);
             try {
-                setPendingStripeSubscription(true);
                 const limit = 1000;
                 await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
             } catch (error) {
-                console.error("Could not subscribe to Stripe", error);
-                setPendingStripeSubscription(false);
                 setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
+                setPendingStripeSubscription(false);
                 return;
             }
 
             // unfortunately, we need to poll for the subscription
-            const interval = setInterval(async () => {
+            for (let i = 1; i <= 10; i++) {
                 try {
                     const subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
                     setStripeSubscriptionId(subscriptionId);
-                    clearInterval(interval);
                     setPendingStripeSubscription(false);
-                    return subscriptionId;
                 } catch (error) {
                     console.error("Could not find a subscription to be created", error);
                 }
-            }, 1000);
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+            setErrorMessage(`Could not find the subscription.`);
         })();
     }, [attributionId, location.pathname, location.search]);
 
-    const onUpgradePlan = useCallback(() => {
+    const onUpgradePlan = useCallback(async () => {
+        if (!user || !params?.type) {
+            return;
+        }
         setShowBillingSetupModal(true);
 
-        // TODO(at) select/create Org based on `params.type` and convert to AttributionId
-        // for now always create new dummy Org
-        (async () => {
+        let attributionId: string;
+        if (params.type === "personalSubscription") {
+            attributionId = AttributionId.render({ kind: "user", userId: user.id });
+        } else {
+            // TODO(at) orgs should be selectable eventually.
+            // for now always create new dummy Org
             const response = await teamsService.createTeam({ name: `${user?.name || "Unknown"}'s Org` });
             const teamId = response.team?.id;
             if (!teamId) {
                 return;
             }
-            setAttributionId(AttributionId.render({ kind: "team", teamId }));
-        })();
-    }, [user]);
+            attributionId = AttributionId.render({ kind: "team", teamId });
+        }
+        setAttributionId(attributionId);
+
+        // HINT: the `attributionId` needs to be preserved for the follow-up step of the subscription process
+        const newURL = new URL(window.location.href);
+        newURL.searchParams.set(KEY_ATTRIBUTION_ID, attributionId);
+        window.history.pushState({ path: newURL.toString() }, "", newURL.toString());
+    }, [params?.type, user]);
 
     if (!switchToPAYG || !user || !params) {
         return (
@@ -101,9 +128,10 @@ function SwitchToPAYG() {
         <div className="flex flex-col mt-32 mx-auto ">
             <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full">
                 <h1>Switch to Pay-as-you-go</h1>
-                <div className="text-gray-500 text-center text-base">Pay-as-you-go has several clear benefits. ...</div>
-                <div className="text-gray-500 text-center text-base">How do you get started?</div>
-                <div className="-mx-6 px-6 mt-6 w-full">{JSON.stringify(params)}</div>
+                <div className="mt-6 text-gray-500 text-center text-base">
+                    Pay-as-you-go has several clear benefits ...
+                </div>
+                <div className="mt-6 w-full">{params.type}</div>
                 {errorMessage && (
                     <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">
                         {errorMessage}
@@ -111,7 +139,6 @@ function SwitchToPAYG() {
                 )}
                 {pendingStripeSubscription && (
                     <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                        <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
                         <SpinnerLoader small={false} />
                     </div>
                 )}
@@ -120,7 +147,7 @@ function SwitchToPAYG() {
                         {stripeSubscriptionId} 🎉
                     </Alert>
                 )}
-                <div className="w-full flex justify-end mt-6 space-x-2 px-6">
+                <div className="w-full flex justify-center mt-6 space-x-2 px-6">
                     <button onClick={onUpgradePlan} disabled={showBillingSetupModal}>
                         Upgrade Plan
                     </button>
@@ -140,7 +167,7 @@ function SwitchToPAYG() {
     );
 }
 
-function parseSearchParams(search: string): Params | undefined {
+function parseSearchParams(search: string): PageParams | undefined {
     const params = new URLSearchParams(search);
     for (const key of [KEY_TEAM1_SUB, KEY_TEAM2_SUB, KEY_PERSONAL_SUB]) {
         let id = params.get(key);
@@ -148,6 +175,7 @@ function parseSearchParams(search: string): Params | undefined {
             return {
                 type: key as any,
                 id,
+                attributionId: params.get(KEY_ATTRIBUTION_ID) || undefined,
             };
         }
     }
