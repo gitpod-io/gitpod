@@ -460,42 +460,6 @@ spec:
     - Egress
 
 ---
-# networking.k8s.io/v1/NetworkPolicy ws-daemon
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ws-daemon
-  name: ws-daemon
-  namespace: default
-spec:
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app: gitpod
-              component: ws-manager
-      ports:
-        - port: 8080
-          protocol: TCP
-    - from:
-        - podSelector:
-            matchLabels:
-              app: prometheus
-              component: server
-      ports:
-        - port: 9500
-          protocol: TCP
-  podSelector:
-    matchLabels:
-      app: gitpod
-      component: ws-daemon
-  policyTypes:
-    - Ingress
-
----
 # networking.k8s.io/v1/NetworkPolicy ws-manager
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -2919,16 +2883,6 @@ data:
       name: ws-daemon
       namespace: default
     ---
-    apiVersion: networking.k8s.io/v1
-    kind: NetworkPolicy
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ws-daemon
-      name: ws-daemon
-      namespace: default
-    ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
     metadata:
@@ -5208,7 +5162,7 @@ data:
             "key": "/ws-daemon-tls-certs/tls.key"
           }
         },
-        "registryFacadeHost": "reg.gitpod.example.com:20000",
+        "registryFacadeHost": "reg.gitpod.example.com:31750",
         "workspaceClusterHost": "ws.gitpod.example.com",
         "workspaceClass": {
           "default": {
@@ -6996,15 +6950,18 @@ metadata:
   name: registry-facade
   namespace: default
 spec:
+  externalTrafficPolicy: Local
+  internalTrafficPolicy: Local
   ports:
   - name: registry
-    port: 20000
+    nodePort: 31750
+    port: 31750
     protocol: TCP
     targetPort: 32223
   selector:
     app: gitpod
     component: registry-facade
-  type: ClusterIP
+  type: NodePort
 status:
   loadBalancer: {}
 ---
@@ -7064,7 +7021,11 @@ metadata:
   name: ws-daemon
   namespace: default
 spec:
-  clusterIP: None
+  ports:
+  - name: rpc
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
   selector:
     app: gitpod
     component: ws-daemon
@@ -7327,7 +7288,6 @@ spec:
         name: registry-facade
         ports:
         - containerPort: 32223
-          hostPort: 20000
           name: registry
         readinessProbe:
           failureThreshold: 5
@@ -7542,7 +7502,6 @@ spec:
         name: ws-daemon
         ports:
         - containerPort: 8080
-          hostPort: 8080
           name: rpc
         readinessProbe:
           failureThreshold: 5
@@ -9794,7 +9753,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: cb9fc88be6ff1bc54f6c0ef99de1bdbd6df5916cdb00b455677da2db540f116e
+        gitpod.io/checksum_config: e2866e24a01f026d164c591d5c649a0a5589feea38a0d90d785d1167483cd02e
       creationTimestamp: null
       labels:
         app: gitpod

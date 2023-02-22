@@ -13,7 +13,6 @@ var Objects = common.CompositeRenderFunc(
 	configmap,
 	common.DefaultServiceAccount(Component),
 	daemonset,
-	networkpolicy,
 	rolebinding,
 	common.GenerateService(Component, []common.ServicePort{
 		{
