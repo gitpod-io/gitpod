@@ -17,7 +17,6 @@ import { AccountService } from "./account-service";
 import { AccountServiceImpl } from "./account-service-impl";
 import { DBSubscription } from "@gitpod/gitpod-db/lib/typeorm/entity/db-subscription";
 import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
-import { AccountingServer } from "./accounting-server";
 import { SubscriptionService } from "./subscription-service";
 
 const expect = chai.expect;
@@ -806,6 +805,5 @@ const localTestContainer = testContainer.createChild();
 localTestContainer.bind(AccountServiceSpec).toSelf().inSingletonScope();
 localTestContainer.bind(AccountServiceImpl).toSelf().inSingletonScope();
 localTestContainer.bind(AccountService).toService(AccountServiceImpl);
-localTestContainer.bind(AccountingServer).toSelf().inSingletonScope();
 localTestContainer.bind(SubscriptionService).toSelf().inSingletonScope();
 module.exports = new AccountServiceSpec();

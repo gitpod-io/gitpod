@@ -15,14 +15,10 @@ import {
     TeamSubscriptionSlotDeactivated,
     TeamSubscriptionSlotResolved,
 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import {
-    Subscription,
-    AssignedTeamSubscription,
-    CreditDescription,
-} from "@gitpod/gitpod-protocol/lib/accounting-protocol";
+import { Subscription, AssignedTeamSubscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { TeamSubscriptionDB } from "@gitpod/gitpod-db/lib/team-subscription-db";
 import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
-import { ABSOLUTE_MAX_USAGE, Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { SubscriptionModel } from "./subscription-model";
 import { SubscriptionService } from "./subscription-service";
 import { AccountService } from "./account-service";
@@ -302,36 +298,10 @@ export class TeamSubscriptionService {
         now: string,
         hoursPerMonth: number,
     ) {
-        const oldSlotSubscriptionsActiveThisPeriod = (
-            await db.findSubscriptionsByTeamSubscriptionSlotId(slot.id)
-        ).filter((ts) => Subscription.isActive(ts, currentPeriodStartDate));
-        if (oldSlotSubscriptionsActiveThisPeriod.some((s) => Plans.getById(s.planId)?.hoursPerMonth === "unlimited")) {
-            return ABSOLUTE_MAX_USAGE;
-        }
-        const userMap = this.groupByUser(oldSlotSubscriptionsActiveThisPeriod);
-        const calcTotalUsage = async (subscriptions: Subscription[], userId: string) => {
-            const statement = await this.accountService.getAccountStatement(userId, now);
-            return (
-                statement.credits
-                    // Find all credits resulting from the subscriptions above
-                    .filter(
-                        (c) =>
-                            CreditDescription.is(c.description) &&
-                            subscriptions.some((s) => s.uid === (c.description as CreditDescription).subscriptionId),
-                    )
-                    // Cumulate usage (total - remaining)
-                    .reduce((cum, e) => (!e.remainingAmount ? cum : cum + (e.amount - e.remainingAmount)), 0)
-            );
-        };
-
-        const totalUsagesPerUser: Promise<number>[] = [];
-        userMap.forEach((subscriptions, userId) => {
-            totalUsagesPerUser.push(calcTotalUsage(subscriptions, userId));
-        });
-
-        const totalUsage = (await Promise.all(totalUsagesPerUser)).reduce((prev, cur) => prev + cur, 0);
-        const usageHoursThisPeriod = Math.max(0, totalUsage);
-        return Math.max(0, hoursPerMonth - usageHoursThisPeriod);
+        // We did complicated and expensive stuff here beforehand, just to mitigate risk of "abuse" by people cheating
+        // our system by reassigning slots multiple times per billing cycle.
+        // This does not make sense anymore with only team plans coming with "unlimited" hours.
+        return hoursPerMonth;
     }
 
     protected groupByUser(subscriptions: Subscription[]): Map<string, Subscription[]> {
