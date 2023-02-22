@@ -7,6 +7,7 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useState } from "react";
 import { TextInputField } from "../components/forms/TextInputField";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { OnboardingStep } from "./OnboardingStep";
 
@@ -15,6 +16,7 @@ type Props = {
     onComplete(user: User): void;
 };
 export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
+    const updateUser = useUpdateCurrentUserMutation();
     // attempt to split provided name for default input values
     const { first, last } = getInitialNameParts(user);
 
@@ -22,11 +24,11 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
     const [lastName, setLastName] = useState(last);
     const [emailAddress, setEmailAddress] = useState(User.getPrimaryEmail(user) ?? "");
 
-    const prepareUpdates = useCallback(() => {
+    const handleSubmit = useCallback(async () => {
         const additionalData = user.additionalData || {};
         const profile = additionalData.profile || {};
 
-        return {
+        const updates = {
             // we only split these out currently for form collection, but combine in the db
             fullName: `${firstName} ${lastName}`,
             additionalData: {
@@ -34,10 +36,18 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
                 profile: {
                     ...profile,
                     emailAddress,
+                    lastUpdatedDetailsNudge: new Date().toISOString(),
                 },
             },
         };
-    }, [emailAddress, firstName, lastName, user.additionalData]);
+
+        try {
+            const updatedUser = await updateUser.mutateAsync(updates);
+            onComplete(updatedUser);
+        } catch (e) {
+            console.error(e);
+        }
+    }, [emailAddress, firstName, lastName, onComplete, updateUser, user.additionalData]);
 
     const firstNameError = useOnBlurError("Please enter a value", !!firstName);
     const lastNameError = useOnBlurError("Please enter a value", !!lastName);
@@ -49,9 +59,10 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
         <OnboardingStep
             title="Get started with Gitpod"
             subtitle="Fill in the name and email you want to use to author commits."
+            error={updateUser.isError ? "There was a problem updating your profile" : undefined}
             isValid={isValid}
-            prepareUpdates={prepareUpdates}
-            onUpdated={onComplete}
+            isLoading={updateUser.isLoading}
+            onSubmit={handleSubmit}
         >
             <div className="flex justify-between space-x-2 w-full">
                 <TextInputField

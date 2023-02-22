@@ -96,8 +96,10 @@ const WorkspacesPage: FunctionComponent = () => {
                 />
             )}
 
+            {/* TODO: can remove this once newSignupFlow flag is enabled */}
             {isOnboardingUser && !newSignupFlow && <SelectIDEModal location={"workspace_list"} />}
 
+            {/* TODO: can remove this once newSignupFlow flag is enabled */}
             {!isOnboardingUser && !newSignupFlow && <ProfileState.NudgeForProfileUpdateModal />}
 
             {!isLoading &&

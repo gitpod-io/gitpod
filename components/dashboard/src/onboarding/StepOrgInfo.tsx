@@ -8,6 +8,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useMemo, useState } from "react";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import { TextInputField } from "../components/forms/TextInputField";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { OnboardingStep } from "./OnboardingStep";
 
@@ -16,6 +17,7 @@ type Props = {
     onComplete(user: User): void;
 };
 export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
+    const updateUser = useUpdateCurrentUserMutation();
     const jobRoleOptions = useMemo(getJobRoleOptions, []);
     const signupGoalsOptions = useMemo(getSignupGoalsOptions, []);
 
@@ -25,11 +27,11 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     const [signupGoalsOther, setSignupGoalsOther] = useState(user.additionalData?.profile?.signupGoalsOther ?? "");
     const [companyWebsite, setCompanyWebsite] = useState(user.additionalData?.profile?.companyWebsite ?? "");
 
-    const prepareUpdates = useCallback(() => {
+    const handleSubmit = useCallback(async () => {
         const additionalData = user.additionalData || {};
         const profile = additionalData.profile || {};
 
-        return {
+        const updates = {
             additionalData: {
                 ...additionalData,
                 profile: {
@@ -42,7 +44,23 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 },
             },
         };
-    }, [companyWebsite, jobRole, jobRoleOther, signupGoals, signupGoalsOther, user.additionalData]);
+
+        try {
+            const updatedUser = await updateUser.mutateAsync(updates);
+            onComplete(updatedUser);
+        } catch (e) {
+            console.error(e);
+        }
+    }, [
+        companyWebsite,
+        jobRole,
+        jobRoleOther,
+        onComplete,
+        signupGoals,
+        signupGoalsOther,
+        updateUser,
+        user.additionalData,
+    ]);
 
     const jobRoleError = useOnBlurError("Please select one", !!jobRole);
     const jobRoleOtherError = useOnBlurError(
@@ -61,9 +79,10 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         <OnboardingStep
             title="Tell us more about you"
             subtitle="Let us know what brought you here."
+            error={updateUser.isError ? "There was a problem saving your answers" : ""}
             isValid={isValid}
-            prepareUpdates={prepareUpdates}
-            onUpdated={onComplete}
+            isLoading={updateUser.isLoading}
+            onSubmit={handleSubmit}
         >
             <SelectInputField
                 value={jobRole}

@@ -264,6 +264,8 @@ export interface ProfileDetails {
     signupGoals?: string;
     // freeform entry for signup goals (when signupGoals is "other")
     signupGoalsOther?: string;
+    // Set after a user completes the onboarding flow
+    onboardedTimestamp?: string;
 }
 
 export interface EmailNotificationSettings {

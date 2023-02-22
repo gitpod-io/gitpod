@@ -8,32 +8,21 @@ import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useState } from "react";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import { ThemeSelector } from "../components/ThemeSelector";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { OnboardingStep } from "./OnboardingStep";
 
 type Props = {
     user: User;
-    onComplete(user: User): void;
+    onComplete(ide: string, useLatest: boolean): void;
 };
 export const StepPersonalize: FC<Props> = ({ user, onComplete }) => {
     const [ide, setIDE] = useState(user?.additionalData?.ideSettings?.defaultIde || "code");
     const [useLatest, setUseLatest] = useState(user?.additionalData?.ideSettings?.useLatestVersion ?? false);
 
-    const prepareUpdates = useCallback(() => {
-        const additionalData = user.additionalData || {};
-        const ideSettings = additionalData.ideSettings || {};
-
-        return {
-            additionalData: {
-                ...additionalData,
-                ideSettings: {
-                    ...ideSettings,
-                    settingVersion: "2.0",
-                    defaultIde: ide,
-                    useLatestVersion: useLatest,
-                },
-            },
-        };
-    }, [ide, useLatest, user.additionalData]);
+    // This step doesn't save the ide selection yet (happens at the end), just passes them along
+    const handleSubmitted = useCallback(() => {
+        onComplete(ide, useLatest);
+    }, [ide, onComplete, useLatest]);
 
     const isValid = !!ide;
 
@@ -42,8 +31,7 @@ export const StepPersonalize: FC<Props> = ({ user, onComplete }) => {
             title="Personalize Gitpod"
             subtitle="Cusomize your experience"
             isValid={isValid}
-            prepareUpdates={prepareUpdates}
-            onUpdated={onComplete}
+            onSubmit={handleSubmitted}
         >
             <h3>Choose an editor</h3>
             <p>You can change this later in your user preferences.</p>
