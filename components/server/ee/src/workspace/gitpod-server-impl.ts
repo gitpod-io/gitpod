@@ -2444,90 +2444,104 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             log.warn({ userId: user.id }, "Could not get usage-based notifications for user", { error });
         }
 
-        // Calculates Pay-as-you-go nudges
         try {
-            const now = new Date();
-            const cbSubscriptions = await this.subscriptionService.getActivePaidSubscription(user.id, now);
-            // Personal subscription
-            const cbPersonalSubscriptions = cbSubscriptions.filter(
-                (s) => Plans.isPersonalPlan(s.planId) && !Plans.isFreePlan(s.planId),
-            );
-
-            // Old "Team Subscription"
-            const cbOwnedTeamSubscriptions = (
-                await this.teamSubscriptionDB.findTeamSubscriptions({ userId: user.id })
-            ).filter((ts) => TeamSubscription.isActive(ts, now.toISOString()));
-
-            // "Team Subscription 2" (already attached to an Organization)
-            const cbOwnedTeamSubscriptions2 = [];
-            const teams = await this.teamDB.findTeamsByUser(user.id);
-            for (const team of teams) {
-                const ts2 = await this.teamSubscription2DB.findForTeam(team.id, now.toISOString());
-                if (
-                    !ts2 ||
-                    !TeamSubscription2.isActive(ts2, now.toISOString()) ||
-                    TeamSubscription2.isCancelled(ts2, now.toISOString())
-                ) {
-                    // We only care about existing, active, not-yet-cancelled subs
-                    continue;
-                }
-
-                const teamMembership = await this.teamDB.findTeamMembership(user.id, team.id);
-                if (!teamMembership || teamMembership.deleted || teamMembership.role !== "owner") {
-                    // We only care about subscriptions owned by this user
-                    continue;
-                }
-                cbOwnedTeamSubscriptions2.push({
-                    ownedTeamSubscription2: ts2,
-                    team,
-                });
-            }
-
-            // Add nudges, last has highest priority
-            for (const personalSubscription of cbPersonalSubscriptions) {
-                const plan = Plans.getById(personalSubscription.planId);
-                if (!plan) {
-                    continue;
-                }
-                result.unshift({
-                    message: `Your old subscription '${plan.name}' will be deprecated end of March.`,
-                    action: {
-                        url: "https://www.gitpod.io/docs/configure/billing#configure-personal-billing",
-                        label: "Switch to pay-as-you-go",
-                    },
-                    notClosable: true,
-                });
-            }
-            for (const ownedTeamSubscription of cbOwnedTeamSubscriptions) {
-                const plan = Plans.getById(ownedTeamSubscription.planId);
-                if (!plan) {
-                    continue;
-                }
-                result.unshift({
-                    message: `Your old Team Subscription '${plan.name}' will be deprecated soon.`,
-                    action: {
-                        url: "https://www.gitpod.io/docs/configure/billing/org-plans",
-                        label: "Switch to pay-as-you-go",
-                    },
-                    notClosable: true,
-                });
-            }
-            for (const { ownedTeamSubscription2, team } of cbOwnedTeamSubscriptions2) {
-                const plan = Plans.getById(ownedTeamSubscription2.planId);
-                if (!plan) {
-                    continue;
-                }
-                result.unshift({
-                    message: `The subscription '${plan.name}' for team '${team.name}' will be deprecated soon.`,
-                    action: {
-                        url: "https://www.gitpod.io/docs/configure/billing#configure-organization-billing",
-                        label: "Switch to pay-as-you-go",
-                    },
-                    notClosable: true,
-                });
-            }
+            const paygNotifications = await this.calculatePayAsYouGoNotifications(user);
+            result.unshift(...paygNotifications);
         } catch (err) {
             log.warn({ userId: user.id }, "Could not calculate PAYG nudges for user", err);
+        }
+
+        return result;
+    }
+
+    protected async calculatePayAsYouGoNotifications(user: User): Promise<AppNotification[]> {
+        const isEnabled = await this.configCatClientFactory().getValueAsync("showPaygNotifications", false, {
+            user: this.user,
+        });
+        if (!isEnabled) {
+            return [];
+        }
+
+        const result: AppNotification[] = [];
+        const now = new Date();
+        const cbSubscriptions = await this.subscriptionService.getActivePaidSubscription(user.id, now);
+        // Personal subscription
+        const cbPersonalSubscriptions = cbSubscriptions.filter(
+            (s) => Plans.isPersonalPlan(s.planId) && !Plans.isFreePlan(s.planId),
+        );
+
+        // Old "Team Subscription"
+        const cbOwnedTeamSubscriptions = (
+            await this.teamSubscriptionDB.findTeamSubscriptions({ userId: user.id })
+        ).filter((ts) => TeamSubscription.isActive(ts, now.toISOString()));
+
+        // "Team Subscription 2" (already attached to an Organization)
+        const cbOwnedTeamSubscriptions2 = [];
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        for (const team of teams) {
+            const ts2 = await this.teamSubscription2DB.findForTeam(team.id, now.toISOString());
+            if (
+                !ts2 ||
+                !TeamSubscription2.isActive(ts2, now.toISOString()) ||
+                TeamSubscription2.isCancelled(ts2, now.toISOString())
+            ) {
+                // We only care about existing, active, not-yet-cancelled subs
+                continue;
+            }
+
+            const teamMembership = await this.teamDB.findTeamMembership(user.id, team.id);
+            if (!teamMembership || teamMembership.deleted || teamMembership.role !== "owner") {
+                // We only care about subscriptions owned by this user
+                continue;
+            }
+            cbOwnedTeamSubscriptions2.push({
+                ownedTeamSubscription2: ts2,
+                team,
+            });
+        }
+
+        // Add nudges, last has highest priority
+        for (const personalSubscription of cbPersonalSubscriptions) {
+            const plan = Plans.getById(personalSubscription.planId);
+            if (!plan) {
+                continue;
+            }
+            result.unshift({
+                message: `Your old subscription '${plan.name}' will be deprecated end of March.`,
+                action: {
+                    url: "https://www.gitpod.io/docs/configure/billing#configure-personal-billing",
+                    label: "Switch to pay-as-you-go",
+                },
+                notClosable: true,
+            });
+        }
+        for (const ownedTeamSubscription of cbOwnedTeamSubscriptions) {
+            const plan = Plans.getById(ownedTeamSubscription.planId);
+            if (!plan) {
+                continue;
+            }
+            result.unshift({
+                message: `Your old Team Subscription '${plan.name}' will be deprecated soon.`,
+                action: {
+                    url: "https://www.gitpod.io/docs/configure/billing/org-plans",
+                    label: "Switch to pay-as-you-go",
+                },
+                notClosable: true,
+            });
+        }
+        for (const { ownedTeamSubscription2, team } of cbOwnedTeamSubscriptions2) {
+            const plan = Plans.getById(ownedTeamSubscription2.planId);
+            if (!plan) {
+                continue;
+            }
+            result.unshift({
+                message: `The subscription '${plan.name}' for team '${team.name}' will be deprecated soon.`,
+                action: {
+                    url: "https://www.gitpod.io/docs/configure/billing#configure-organization-billing",
+                    label: "Switch to pay-as-you-go",
+                },
+                notClosable: true,
+            });
         }
 
         return result;
