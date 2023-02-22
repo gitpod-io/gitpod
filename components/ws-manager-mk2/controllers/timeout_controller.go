@@ -243,6 +243,7 @@ func (r *TimeoutReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("timeout").
 		WithOptions(controller.Options{MaxConcurrentReconciles: maxConcurrentReconciles}).
 		For(&workspacev1.Workspace{}).
 		Complete(r)

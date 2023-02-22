@@ -93,6 +93,7 @@ func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*Wor
 // SetupWithManager sets up the controller with the Manager.
 func (wsc *WorkspaceController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("workspace").
 		For(&workspacev1.Workspace{}).
 		WithEventFilter(eventFilter(wsc.NodeName)).
 		Complete(wsc)

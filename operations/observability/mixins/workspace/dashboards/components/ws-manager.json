@@ -2772,7 +2772,7 @@
         "allValue": null,
         "current": {},
         "datasource": "$datasource",
-        "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"ws-manager-.*\", pod!~\"ws-manager-bridge.*\"}, node)",
+        "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"ws-manager-.*\", pod!~\"ws-manager-bridge.*\", pod!~\"ws-manager-mk2.*\"}, node)",
         "description": null,
         "error": null,
         "hide": 0,
@@ -2782,7 +2782,7 @@
         "name": "node",
         "options": [],
         "query": {
-          "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"ws-manager-.*\", pod!~\"ws-manager-bridge.*\"}, node)",
+          "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"ws-manager-.*\", pod!~\"ws-manager-bridge.*\", pod!~\"ws-manager-mk2.*\"}, node)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
@@ -2798,7 +2798,7 @@
         "allValue": null,
         "current": {},
         "datasource": "$datasource",
-        "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"ws-manager-.*\", pod!~\"ws-manager-bridge.*\"}, pod)",
+        "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"ws-manager-.*\", pod!~\"ws-manager-bridge.*\", pod!~\"ws-manager-mk2.*\"}, pod)",
         "description": null,
         "error": null,
         "hide": 0,
@@ -2808,7 +2808,7 @@
         "name": "pod",
         "options": [],
         "query": {
-          "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"ws-manager-.*\", pod!~\"ws-manager-bridge.*\"}, pod)",
+          "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"ws-manager-.*\", pod!~\"ws-manager-bridge.*\", pod!~\"ws-manager-mk2.*\"}, pod)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
