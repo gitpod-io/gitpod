@@ -68,12 +68,13 @@ func main() {
 		log.Fatalf("Unexpected error: %v", err)
 	}
 
-	if opts.Shutdown {
-		err = updateLabel(opts.Label, false, nodeName, client)
-		if err != nil {
-			log.Fatalf("Unexpected error removing node label: %v", err)
-		}
+	// while we wait for the readiness probe, ensure the node does not have the label
+	err = updateLabel(opts.Label, false, nodeName, client)
+	if err != nil {
+		log.Fatalf("Unexpected error removing node label: %v", err)
+	}
 
+	if opts.Shutdown {
 		return
 	}
 
