@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/utils/pointer"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -17,7 +16,6 @@ import (
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 )
 
@@ -75,53 +73,6 @@ func TestServerDeployment_DbWaiterUsesToxiproxyDbHost(t *testing.T) {
 	for _, e := range waiterContainer.Env {
 		if e.Name == "DB_HOST" {
 			require.Equal(t, slowDbHost, e.Value)
-		}
-	}
-}
-
-func TestSlowServerDeployment_UsesServerReplicaCountAndResources(t *testing.T) {
-	resources := map[string]*v1.ResourceRequirements{
-		common.ServerComponent: {
-			Limits: corev1.ResourceList{
-				"cpu":    resource.MustParse("300m"),
-				"memory": resource.MustParse("300Mi"),
-			},
-			Requests: corev1.ResourceList{
-				"cpu":    resource.MustParse("200m"),
-				"memory": resource.MustParse("200Mi"),
-			},
-		},
-	}
-
-	podConfig := map[string]*config.PodConfig{
-		common.ServerComponent: {
-			Replicas:  pointer.Int32(5),
-			Resources: resources,
-		},
-	}
-
-	slowDbHost := toxiproxy.Component
-	ctx := renderContext(t, podConfig, slowDbHost)
-
-	objects, err := deployment(ctx)
-	require.NoError(t, err)
-
-	require.Len(t, objects, 1, "must render only one object")
-
-	deployment := objects[0].(*appsv1.Deployment)
-
-	require.NotNil(t, deployment.Spec.Replicas, "replica count must be specified")
-	require.Equal(t, int32(5), *deployment.Spec.Replicas, "unexpected number of replicas")
-
-	for _, c := range deployment.Spec.Template.Spec.Containers {
-		if c.Name == Component {
-			expectedResources := *resources[common.ServerComponent]
-			actualResources := c.Resources
-
-			require.Equal(t, expectedResources.Limits["cpu"], actualResources.Limits["cpu"], "cpu limit not set correctly")
-			require.Equal(t, expectedResources.Limits["memory"], actualResources.Limits["memory"], "memory limit not set correctly")
-			require.Equal(t, expectedResources.Requests["cpu"], actualResources.Requests["cpu"], "cpu request not set correctly")
-			require.Equal(t, expectedResources.Requests["memory"], actualResources.Requests["memory"], "memory request not set correctly")
 		}
 	}
 }
