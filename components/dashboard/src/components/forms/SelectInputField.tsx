@@ -10,7 +10,7 @@ import { useId } from "../../hooks/useId";
 import { InputField } from "./InputField";
 
 type Props = {
-    label: ReactNode;
+    label?: ReactNode;
     value: string;
     id?: string;
     hint?: ReactNode;
@@ -31,6 +31,7 @@ export const SelectInputField: FunctionComponent<Props> = memo(
                 <SelectInput
                     id={elementId}
                     value={value}
+                    className={error ? "error" : ""}
                     onChange={onChange}
                     disabled={disabled}
                     required={required}

@@ -6,7 +6,7 @@
 
 import { ContextURL, Team, User } from "@gitpod/gitpod-protocol";
 import React, { FunctionComponent, useContext, useState } from "react";
-import { Redirect, Route, Switch, useLocation } from "react-router";
+import { Redirect, Route, Switch, useLocation, useParams } from "react-router";
 import { AppNotifications } from "../AppNotifications";
 import Menu from "../menu/Menu";
 import OAuthClientApproval from "../OauthClientApproval";
@@ -46,6 +46,7 @@ import { OrgRequiredRoute } from "./OrgRequiredRoute";
 import { WebsocketClients } from "./WebsocketClients";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
+import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "../onboarding/UserOnboarding";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -102,12 +103,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
     const newCreateWsPage = useNewCreateWorkspacePage();
     const location = useLocation();
     const { newSignupFlow } = useFeatureFlags();
-
-    // Prefix with `/#referrer` will specify an IDE for workspace
-    // We don't need to show IDE preference in this case
-    const [showUserIdePreference, setShowUserIdePreference] = useState(
-        User.isOnboardingUser(user) && !hash.startsWith(ContextURL.REFERRER_PREFIX),
-    );
+    const search = new URLSearchParams(location.search);
 
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/blocked")) {
@@ -123,19 +119,26 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
         return <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     }
 
-    // Placeholder for new signup flow
-    if (newSignupFlow && User.isOnboardingUser(user)) {
+    // Show new signup flow if:
+    // * feature flag enabled
+    // * User is onboarding (no ide selected yet) OR query param `onboarding=force` is set
+    const showNewSignupFlow =
+        newSignupFlow &&
+        (User.isOnboardingUser(user) || search.get(FORCE_ONBOARDING_PARAM) === FORCE_ONBOARDING_PARAM_VALUE);
+    if (showNewSignupFlow) {
         return <UserOnboarding user={user} />;
     }
 
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)
     const isCreation = location.pathname === "/" && hash !== "";
     if (isCreation) {
-        if (showUserIdePreference) {
+        // Prefix with `/#referrer` will specify an IDE for workspace
+        // After selection is saved, user will be updated, and this condition will be false
+        const showIDESelection = User.isOnboardingUser(user) && !hash.startsWith(ContextURL.REFERRER_PREFIX);
+        if (showIDESelection) {
             return (
                 <StartPage phase={StartPhase.Checking}>
-                    {/* TODO: ensure we don't show this after new onboarding flow */}
-                    <SelectIDEModal location="workspace_start" onClose={() => setShowUserIdePreference(false)} />
+                    <SelectIDEModal location="workspace_start" />
                 </StartPage>
             );
         } else if (new URLSearchParams(location.search).has("showOptions") || newCreateWsPage) {
