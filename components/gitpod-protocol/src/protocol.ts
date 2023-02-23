@@ -261,7 +261,7 @@ export interface ProfileDetails {
     // freeform entry for job role user works in (when jobRole is "other")
     jobRoleOther?: string;
     // what user hopes to accomplish when they signed up
-    signupGoals?: string;
+    signupGoals?: string[];
     // freeform entry for signup goals (when signupGoals is "other")
     signupGoalsOther?: string;
     // Set after a user completes the onboarding flow

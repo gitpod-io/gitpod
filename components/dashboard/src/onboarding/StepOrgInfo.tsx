@@ -6,11 +6,14 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useMemo, useState } from "react";
+import { InputField } from "../components/forms/InputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
+import { getJobRoleOptions, JOB_ROLE_OTHER } from "./job-roles";
 import { OnboardingStep } from "./OnboardingStep";
+import { getSignupGoalsOptions, SIGNUP_GOALS_OTHER } from "./signup-goals";
 
 type Props = {
     user: User;
@@ -23,9 +26,34 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
 
     const [jobRole, setJobRole] = useState(user.additionalData?.profile?.jobRole ?? "");
     const [jobRoleOther, setJobRoleOther] = useState(user.additionalData?.profile?.jobRoleOther ?? "");
-    const [signupGoals, setSignupGoals] = useState(user.additionalData?.profile?.signupGoals ?? "");
+    const [signupGoals, setSignupGoals] = useState<string[]>(user.additionalData?.profile?.signupGoals ?? []);
     const [signupGoalsOther, setSignupGoalsOther] = useState(user.additionalData?.profile?.signupGoalsOther ?? "");
     const [companyWebsite, setCompanyWebsite] = useState(user.additionalData?.profile?.companyWebsite ?? "");
+
+    const addSignupGoal = useCallback(
+        (goal: string) => {
+            if (!signupGoals.includes(goal)) {
+                setSignupGoals([...signupGoals, goal]);
+            }
+        },
+        [signupGoals],
+    );
+
+    const removeSignupGoal = useCallback(
+        (goal: string) => {
+            if (signupGoals.includes(goal)) {
+                const idx = signupGoals.indexOf(goal);
+                const newGoals = [...signupGoals];
+                newGoals.splice(idx, 1);
+                setSignupGoals(newGoals);
+            }
+            // clear out freeform other if removing option
+            if (goal === SIGNUP_GOALS_OTHER) {
+                setSignupGoalsOther("");
+            }
+        },
+        [signupGoals],
+    );
 
     const handleSubmit = useCallback(async () => {
         const additionalData = user.additionalData || {};
@@ -38,7 +66,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                     ...profile,
                     jobRole,
                     jobRoleOther,
-                    signupGoals,
+                    signupGoals: signupGoals.filter(Boolean),
                     signupGoalsOther,
                     companyWebsite,
                 },
@@ -63,17 +91,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     ]);
 
     const jobRoleError = useOnBlurError("Please select one", !!jobRole);
-    const jobRoleOtherError = useOnBlurError(
-        "Please provide a description",
-        (jobRole === "other" && !!jobRoleOther) || jobRole !== "other",
-    );
-    const goalsError = useOnBlurError("Please select one", !!signupGoals);
-    const goalsOtherError = useOnBlurError(
-        "Please provide a description",
-        (signupGoals === "other" && !!signupGoalsOther) || signupGoals !== "other",
-    );
-
-    const isValid = [jobRoleError, jobRoleOtherError, goalsError, goalsOtherError].every((e) => e.isValid);
+    const isValid = jobRoleError.isValid && signupGoals.length > 0;
 
     return (
         <OnboardingStep
@@ -87,8 +105,17 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
             <SelectInputField
                 value={jobRole}
                 label="I work in..."
-                onChange={setJobRole}
-                hint="Please select the role that best describes the type of work you'll use Gitpod for"
+                onChange={(val) => {
+                    if (val !== "other") {
+                        setJobRoleOther("");
+                    }
+                    setJobRole(val);
+                }}
+                hint={
+                    jobRole !== JOB_ROLE_OTHER
+                        ? "Please select the role that best describes the type of work you'll use Gitpod for"
+                        : ""
+                }
                 error={jobRoleError.message}
                 onBlur={jobRoleError.onBlur}
             >
@@ -99,78 +126,55 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 ))}
             </SelectInputField>
 
-            {jobRole === "other" && (
+            {jobRole === JOB_ROLE_OTHER && (
                 <TextInputField
                     value={jobRoleOther}
-                    label="Other"
-                    error={jobRoleOtherError.message}
-                    onBlur={jobRoleOtherError.onBlur}
                     onChange={setJobRoleOther}
+                    placeholder="Please specify"
+                    hint={
+                        jobRole === JOB_ROLE_OTHER
+                            ? "Please select the role that best describes the type of work you'll use Gitpod for"
+                            : ""
+                    }
                 />
-            )}
-
-            <SelectInputField
-                label="What do you wish to accomplish with Gitpod?"
-                value={signupGoals}
-                onChange={setSignupGoals}
-                hint="Select all that apply"
-                error={goalsError.message}
-                onBlur={goalsError.onBlur}
-            >
-                {signupGoalsOptions.map((o) => (
-                    <option key={o.value} value={o.value}>
-                        {o.label}
-                    </option>
-                ))}
-            </SelectInputField>
-            {signupGoals === "other" && (
-                <TextInputField value={signupGoalsOther} label="Other" onChange={setSignupGoalsOther} />
             )}
 
             <TextInputField
                 value={companyWebsite}
                 label="Organization Website (optional)"
                 type="url"
+                placeholder="https://"
                 onChange={setCompanyWebsite}
             />
+
+            <InputField label="I'm signing up for Gitpod to..." />
+            <div className="mt-4 ml-2 space-y-2">
+                {signupGoalsOptions.map((o) => (
+                    <div key={o.value} className="flex space-x-2 justify-start items-center">
+                        <input
+                            type="checkbox"
+                            className="rounded"
+                            value={o.value}
+                            id={`goals_${o.value}`}
+                            checked={signupGoals.includes(o.value)}
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    addSignupGoal(o.value);
+                                } else {
+                                    removeSignupGoal(o.value);
+                                }
+                            }}
+                        />
+                        <label className="text-sm dark:text-gray-400 text-gray-600" htmlFor={`goals_${o.value}`}>
+                            {o.label}
+                        </label>
+                    </div>
+                ))}
+            </div>
+
+            {signupGoals.includes(SIGNUP_GOALS_OTHER) && (
+                <TextInputField value={signupGoalsOther} placeholder="Please specify" onChange={setSignupGoalsOther} />
+            )}
         </OnboardingStep>
     );
-};
-
-// TODO: pull values into constants
-const getJobRoleOptions = () => {
-    return [
-        { label: "Please select one", value: "" },
-        { label: "Backend", value: "backend" },
-        { label: "Frontend", value: "frontend" },
-        { label: "Fullstack", value: "fullstack" },
-        { label: "Data / analytics", value: "data / analytics" },
-        { label: "DevOps / devX / platform", value: "devops / devx / platform" },
-        { label: "Product / design", value: "product / design" },
-        { label: "Customer engineering", value: "customer engineering" },
-        { label: "DevRel", value: "devrel" },
-        { label: "Open source", value: "open source" },
-        { label: "Academia / student", value: "academia / student" },
-        { label: "Other / prefer not to say: please specify", value: "other" },
-    ];
-};
-
-const getSignupGoalsOptions = () => {
-    return [
-        { label: "Please select one", value: "" },
-        {
-            label: "Replace remote/containerized development (VDI, VM based, Docker Desktop..)",
-            value: "replace remote/containerized development (vdi, vm based, docker desktop..)",
-        },
-        { label: "More powerful dev resources", value: "more powerful dev resources" },
-        { label: "Just exploring CDEs", value: "just exploring cdes" },
-        { label: "Faster onboarding", value: "faster onboarding" },
-        { label: "More secure dev process", value: "more secure dev process" },
-        { label: "Dev efficiency & collaboration", value: "dev efficiency & collaboration" },
-        { label: "Contribute to open source", value: "contribute to open source" },
-        { label: "Work from any device (iPad,…)", value: "work from any device (ipad,…)" },
-        { label: "Solve “works on my machine issue”", value: "solve “works on my machine issue”" },
-        { label: "Work on hobby projects", value: "work on hobby projects" },
-        { label: "other / prefer not to say: please specify", value: "other" },
-    ];
 };

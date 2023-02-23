@@ -38,7 +38,7 @@ export const OnboardingStep: FC<Props> = ({
             <h1>{title}</h1>
             <p>{subtitle}</p>
 
-            <form className="mt-8 max-w-lg" onSubmit={handleSubmit}>
+            <form className="my-8 max-w-lg" onSubmit={handleSubmit}>
                 {/* Form contents provided as children */}
                 {children}
 
