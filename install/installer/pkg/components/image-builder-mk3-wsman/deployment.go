@@ -12,7 +12,8 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
-	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	imagebuildermk3 "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
+	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -73,7 +74,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name: "wsman-tls-certs",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: wsmanager.TLSSecretNameClient,
+					SecretName: wsmanagermk2.TLSSecretNameClient,
 				},
 			},
 		},
@@ -167,7 +168,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 					Containers: []corev1.Container{{
 						Name:            Component,
-						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
+						Image:           ctx.ImageName(ctx.Config.Repository, imagebuildermk3.Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Args: []string{
 							"run",
