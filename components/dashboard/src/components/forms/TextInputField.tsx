@@ -13,7 +13,7 @@ type TextInputFieldTypes = "text" | "password" | "email" | "url";
 
 type Props = {
     type?: TextInputFieldTypes;
-    label: ReactNode;
+    label?: ReactNode;
     value: string;
     id?: string;
     hint?: ReactNode;

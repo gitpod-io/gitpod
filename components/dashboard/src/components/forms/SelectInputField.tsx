@@ -10,7 +10,7 @@ import { useId } from "../../hooks/useId";
 import { InputField } from "./InputField";
 
 type Props = {
-    label: ReactNode;
+    label?: ReactNode;
     value: string;
     id?: string;
     hint?: ReactNode;

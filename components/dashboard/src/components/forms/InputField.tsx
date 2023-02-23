@@ -8,7 +8,7 @@ import classNames from "classnames";
 import { FunctionComponent, memo, ReactNode } from "react";
 
 type Props = {
-    label: ReactNode;
+    label?: ReactNode;
     id?: string;
     hint?: ReactNode;
     error?: ReactNode;
@@ -18,15 +18,17 @@ type Props = {
 export const InputField: FunctionComponent<Props> = memo(({ label, id, hint, error, className, children }) => {
     return (
         <div className={classNames("mt-4 flex flex-col space-y-2", className)}>
-            <label
-                className={classNames(
-                    "text-sm font-semibold dark:text-gray-400",
-                    error ? "text-red-600" : "text-gray-600",
-                )}
-                htmlFor={id}
-            >
-                {label}
-            </label>
+            {label && (
+                <label
+                    className={classNames(
+                        "text-sm font-semibold dark:text-gray-400",
+                        error ? "text-red-600" : "text-gray-600",
+                    )}
+                    htmlFor={id}
+                >
+                    {label}
+                </label>
+            )}
             {children}
             {error && <span className="text-red-500 text-sm">{error}</span>}
             {hint && <span className="text-gray-500 text-sm">{hint}</span>}
