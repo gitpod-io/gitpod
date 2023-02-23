@@ -153,12 +153,20 @@ export namespace User {
         user.additionalData.ideSettings = newIDESettings;
     }
 
+    // TODO: make it more explicit that these field names are relied for our tracking purposes
+    // and decouple frontend from relying on them - instead use user.additionalData.profile object directly in FE
     export function getProfile(user: User): Profile {
         return {
             name: User.getName(user!) || "",
             email: User.getPrimaryEmail(user!) || "",
             company: user?.additionalData?.profile?.companyName,
             avatarURL: user?.avatarUrl,
+            companyWebsite: user?.additionalData?.profile?.companyName,
+            jobRole: user?.additionalData?.profile?.jobRole,
+            jobRoleOther: user?.additionalData?.profile?.jobRoleOther,
+            signupGoals: user?.additionalData?.profile?.signupGoals,
+            signupGoalsOther: user?.additionalData?.profile?.signupGoalsOther,
+            onboardedTimestamp: user?.additionalData?.profile?.onboardedTimestamp,
         };
     }
 
@@ -190,12 +198,20 @@ export namespace User {
         return AttributionId.create(user);
     }
 
+    // TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
+    // Let other places rely on the ProfileDetails type since that's what we store
     // The actual Profile of a User
     export interface Profile {
         name: string;
         email: string;
         company?: string;
         avatarURL?: string;
+        companyWebsite?: string;
+        jobRole?: string;
+        jobRoleOther?: string;
+        signupGoals?: string[];
+        signupGoalsOther?: string;
+        onboardedTimestamp?: string;
     }
     export namespace Profile {
         export function hasChanges(before: Profile, after: Profile) {
@@ -203,7 +219,13 @@ export namespace User {
                 before.name !== after.name ||
                 before.email !== after.email ||
                 before.company !== after.company ||
-                before.avatarURL !== after.avatarURL
+                before.avatarURL !== after.avatarURL ||
+                before.companyWebsite !== after.companyWebsite ||
+                before.jobRole !== after.jobRole ||
+                before.jobRoleOther !== after.jobRoleOther ||
+                before.signupGoals !== after.signupGoals ||
+                before.signupGoalsOther !== after.signupGoalsOther ||
+                before.onboardedTimestamp !== after.onboardedTimestamp
             );
         }
     }
