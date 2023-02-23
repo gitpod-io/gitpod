@@ -84,10 +84,6 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		workspace.Status.Runtime.PodName = pod.Name
 	}
 
-	if workspace.Spec.Type != workspacev1.WorkspaceTypeRegular {
-		workspace.Status.Headless = true
-	}
-
 	if workspace.Status.URL == "" {
 		url, err := config.RenderWorkspaceURL(cfg.WorkspaceURLTemplate, workspace.Name, workspace.Spec.Ownership.WorkspaceID, cfg.GitpodHostURL)
 		if err != nil {
@@ -172,7 +168,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			workspace.Status.Phase = workspacev1.WorkspacePhaseInitializing
 		}
 
-	case workspace.Status.Headless && (pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed):
+	case workspace.IsHeadless() && (pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed):
 		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 
 	case pod.Status.Phase == corev1.PodUnknown:
@@ -249,7 +245,7 @@ func extractFailure(ws *workspacev1.Workspace, pod *corev1.Pod) (string, *worksp
 					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), &phase
 				}
 			} else if terminationState.Reason == "Completed" && !isPodBeingDeleted(pod) {
-				if ws.Status.Headless {
+				if ws.IsHeadless() {
 					// headless workspaces are expected to finish
 					return "", nil
 				}

@@ -54,7 +54,6 @@ var _ = Describe("WorkspaceController", func() {
 				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
 				g.Expect(ws.Status.OwnerToken).ToNot(BeEmpty())
 				g.Expect(ws.Status.URL).ToNot(BeEmpty())
-				g.Expect(ws.Status.Headless).To(BeFalse())
 			}, timeout, interval).Should(Succeed())
 
 			// TODO(wv): Once implemented, expect EverReady condition.
@@ -196,14 +195,8 @@ var _ = Describe("WorkspaceController", func() {
 			ws.Spec.Type = workspacev1.WorkspaceTypePrebuild
 			pod = createWorkspaceExpectPod(ws)
 
-			// Expect headless status to be reported.
-			Eventually(func() (bool, error) {
-				err := k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)
-				if err != nil {
-					return false, err
-				}
-				return ws.Status.Headless, nil
-			}, timeout, interval).Should(BeTrue())
+			// Expect headless.
+			Expect(ws.IsHeadless()).To(BeTrue())
 
 			// Expect runtime status also gets reported for headless workspaces.
 			expectRuntimeStatus(ws, pod)

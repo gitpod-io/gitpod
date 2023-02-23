@@ -819,7 +819,7 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 				SupervisorRef: ws.Spec.Image.IDE.Supervisor,
 			},
 			IdeImageLayers: ws.Spec.Image.IDE.Refs,
-			Headless:       ws.Status.Headless,
+			Headless:       ws.IsHeadless(),
 			Url:            ws.Status.URL,
 			Type:           tpe,
 			Timeout:        timeout,

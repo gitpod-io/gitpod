@@ -147,7 +147,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 				InstanceId:  ws.Name,
 			},
 			Initializer: &init,
-			Headless:    ws.Status.Headless,
+			Headless:    ws.IsHeadless(),
 		})
 
 		if alreadyInit {

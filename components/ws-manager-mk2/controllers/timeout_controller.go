@@ -182,7 +182,7 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 			timeout = util.Duration(customTimeout.Duration)
 		}
 		activity := activityNone
-		if ws.Status.Headless {
+		if ws.IsHeadless() {
 			timeout = timeouts.HeadlessWorkspace
 			lastActivity = &start
 			activity = activityRunningHeadless

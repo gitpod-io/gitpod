@@ -44,6 +44,7 @@ var _ = Describe("TimeoutController", func() {
 			lastActivityAgo   *time.Duration
 			age               time.Duration
 			customTimeout     *time.Duration
+			update            func(ws *workspacev1.Workspace)
 			updateStatus      func(ws *workspacev1.Workspace)
 			controllerRestart time.Time
 			expectTimeout     bool
@@ -59,11 +60,14 @@ var _ = Describe("TimeoutController", func() {
 					r.activity.Store(ws.Name, now.Add(-*tc.lastActivityAgo))
 				}
 
-				if tc.customTimeout != nil {
-					updateObjWithRetries(fakeClient, ws, false, func(ws *workspacev1.Workspace) {
+				updateObjWithRetries(fakeClient, ws, false, func(ws *workspacev1.Workspace) {
+					if tc.customTimeout != nil {
 						ws.Spec.Timeout.Time = &metav1.Duration{Duration: *tc.customTimeout}
-					})
-				}
+					}
+					if tc.update != nil {
+						tc.update(ws)
+					}
+				})
 				updateObjWithRetries(fakeClient, ws, true, func(ws *workspacev1.Workspace) {
 					ws.Status.Phase = tc.phase
 					if tc.updateStatus != nil {
@@ -131,8 +135,8 @@ var _ = Describe("TimeoutController", func() {
 			}),
 			Entry("should timeout headless workspace", testCase{
 				phase: workspacev1.WorkspacePhaseRunning,
-				updateStatus: func(ws *workspacev1.Workspace) {
-					ws.Status.Headless = true
+				update: func(ws *workspacev1.Workspace) {
+					ws.Spec.Type = workspacev1.WorkspaceTypePrebuild
 				},
 				age:             2 * time.Hour,
 				lastActivityAgo: nil,
