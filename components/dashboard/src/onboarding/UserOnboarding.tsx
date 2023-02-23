@@ -35,7 +35,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
     const location = useLocation();
     const { setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
-    const { showConfetti } = useConfetti();
+    const { dropConfetti } = useConfetti();
 
     const [step, setStep] = useState(STEPS.ONE);
     const [completingError, setCompletingError] = useState("");
@@ -75,7 +75,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
 
                 try {
                     const onboardedUser = await updateUser.mutateAsync(updates);
-                    showConfetti();
+                    dropConfetti();
                     setUser(onboardedUser);
 
                     // Look for the `onboarding=force` query param, and remove if present
@@ -104,7 +104,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
             location.pathname,
             location.search,
             setUser,
-            showConfetti,
+            dropConfetti,
             updateUser,
         ],
     );

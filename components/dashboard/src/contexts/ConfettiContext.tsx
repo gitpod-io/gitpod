@@ -9,31 +9,31 @@ import { lazy, createContext, FC, useMemo, useState, useContext } from "react";
 const Confetti = lazy(() => import(/* webpackPrefetch: true */ "react-confetti"));
 
 type ConfettiContextType = {
-    isConfettiShowing: boolean;
-    showConfetti(): void;
+    isConfettiDropping: boolean;
+    dropConfetti(): void;
     hideConfetti(): void;
 };
 const ConfettiContext = createContext<ConfettiContextType>({
-    isConfettiShowing: false,
-    showConfetti: () => undefined,
+    isConfettiDropping: false,
+    dropConfetti: () => undefined,
     hideConfetti: () => undefined,
 });
 
 export const ConfettiContextProvider: FC = ({ children }) => {
-    const [showConfetti, setShowConfetti] = useState(false);
+    const [isConfettiDropping, setIsConfettiDropping] = useState(false);
     const value = useMemo(() => {
         return {
-            isConfettiShowing: showConfetti,
-            showConfetti: () => setShowConfetti(true),
-            hideConfetti: () => setShowConfetti(false),
+            isConfettiDropping: isConfettiDropping,
+            dropConfetti: () => setIsConfettiDropping(true),
+            hideConfetti: () => setIsConfettiDropping(false),
         };
-    }, [showConfetti]);
+    }, [isConfettiDropping]);
 
     return (
         <ConfettiContext.Provider value={value}>
             {children}
-            {showConfetti && (
-                <Confetti recycle={false} numberOfPieces={300} onConfettiComplete={() => setShowConfetti(false)} />
+            {isConfettiDropping && (
+                <Confetti recycle={false} numberOfPieces={300} onConfettiComplete={value.hideConfetti} />
             )}
         </ConfettiContext.Provider>
     );
