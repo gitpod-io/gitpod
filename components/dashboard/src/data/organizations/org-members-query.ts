@@ -26,7 +26,11 @@ export const useOrgMembers = () => {
 
             return publicApiTeamMembersToProtocol(resp.team?.members || []);
         },
-        // If no current org is set, disable query
+        /**
+         * If no current org is set, disable query
+         * This is to prevent making a request to the API when there is no organization selected.
+         * This happens if the user has their personal account selected, or when first loggin in
+         */
         enabled: !!organization,
     });
 };
