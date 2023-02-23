@@ -2462,6 +2462,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             return [];
         }
 
+        // The "switchToPAYG" flag guards the new UI in Dashboard
+        const switchToPAYG = await this.configCatClientFactory().getValueAsync("switchToPAYG", false, {
+            user: this.user,
+        });
+
         const result: AppNotification[] = [];
         const now = new Date();
         const cbSubscriptions = await this.subscriptionService.getActivePaidSubscription(user.id, now);
@@ -2506,10 +2511,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             if (!plan) {
                 continue;
             }
+            const url = switchToPAYG
+                ? `/switch-to-payg?personalSubscription=${personalSubscription.uid}`
+                : "https://www.gitpod.io/docs/configure/billing#configure-personal-billing";
             result.unshift({
                 message: `Your old subscription '${plan.name}' will be deprecated end of March.`,
                 action: {
-                    url: "https://www.gitpod.io/docs/configure/billing#configure-personal-billing",
+                    url,
                     label: "Switch to pay-as-you-go",
                 },
                 notClosable: true,
@@ -2520,10 +2528,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             if (!plan) {
                 continue;
             }
+            const url = switchToPAYG
+                ? `/switch-to-payg?teamSubscription=${ownedTeamSubscription.id}`
+                : "https://www.gitpod.io/docs/configure/billing/org-plans";
             result.unshift({
                 message: `Your old Team Subscription '${plan.name}' will be deprecated soon.`,
                 action: {
-                    url: "https://www.gitpod.io/docs/configure/billing/org-plans",
+                    url,
                     label: "Switch to pay-as-you-go",
                 },
                 notClosable: true,
@@ -2534,10 +2545,13 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             if (!plan) {
                 continue;
             }
+            const url = switchToPAYG
+                ? `/switch-to-payg?teamSubscription2=${ownedTeamSubscription2.id}`
+                : "https://www.gitpod.io/docs/configure/billing#configure-organization-billing";
             result.unshift({
                 message: `The subscription '${plan.name}' for team '${team.name}' will be deprecated soon.`,
                 action: {
-                    url: "https://www.gitpod.io/docs/configure/billing#configure-organization-billing",
+                    url,
                     label: "Switch to pay-as-you-go",
                 },
                 notClosable: true,
