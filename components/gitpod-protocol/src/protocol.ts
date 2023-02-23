@@ -164,6 +164,7 @@ export namespace User {
             companyWebsite: user?.additionalData?.profile?.companyName,
             jobRole: user?.additionalData?.profile?.jobRole,
             jobRoleOther: user?.additionalData?.profile?.jobRoleOther,
+            explorationReasons: user?.additionalData?.profile?.explorationReasons,
             signupGoals: user?.additionalData?.profile?.signupGoals,
             signupGoalsOther: user?.additionalData?.profile?.signupGoalsOther,
             onboardedTimestamp: user?.additionalData?.profile?.onboardedTimestamp,
@@ -209,6 +210,7 @@ export namespace User {
         companyWebsite?: string;
         jobRole?: string;
         jobRoleOther?: string;
+        explorationReasons?: string[];
         signupGoals?: string[];
         signupGoalsOther?: string;
         onboardedTimestamp?: string;
@@ -223,7 +225,7 @@ export namespace User {
                 before.companyWebsite !== after.companyWebsite ||
                 before.jobRole !== after.jobRole ||
                 before.jobRoleOther !== after.jobRoleOther ||
-                // not checking signupGoals atm as it's an array - need to check deep equality
+                // not checking explorationReasons or signupGoals atm as it's an array - need to check deep equality
                 before.signupGoalsOther !== after.signupGoalsOther ||
                 before.onboardedTimestamp !== after.onboardedTimestamp
             );
@@ -282,6 +284,8 @@ export interface ProfileDetails {
     jobRole?: string;
     // freeform entry for job role user works in (when jobRole is "other")
     jobRoleOther?: string;
+    // Reasons user is exploring Gitpod when they signed up
+    explorationReasons?: string[];
     // what user hopes to accomplish when they signed up
     signupGoals?: string[];
     // freeform entry for signup goals (when signupGoals is "other")

@@ -11,6 +11,7 @@ import { SelectInputField } from "../components/forms/SelectInputField";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
+import { getExplorationReasons } from "./exploration-reasons";
 import { getJobRoleOptions, JOB_ROLE_OTHER } from "./job-roles";
 import { OnboardingStep } from "./OnboardingStep";
 import { getSignupGoalsOptions, SIGNUP_GOALS_OTHER } from "./signup-goals";
@@ -22,10 +23,14 @@ type Props = {
 export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     const updateUser = useUpdateCurrentUserMutation();
     const jobRoleOptions = useMemo(getJobRoleOptions, []);
+    const explorationReasonsOptions = useMemo(getExplorationReasons, []);
     const signupGoalsOptions = useMemo(getSignupGoalsOptions, []);
 
     const [jobRole, setJobRole] = useState(user.additionalData?.profile?.jobRole ?? "");
     const [jobRoleOther, setJobRoleOther] = useState(user.additionalData?.profile?.jobRoleOther ?? "");
+    const [explorationReasons, setExplorationReasons] = useState<string[]>(
+        user.additionalData?.profile?.explorationReasons ?? [],
+    );
     const [signupGoals, setSignupGoals] = useState<string[]>(user.additionalData?.profile?.signupGoals ?? []);
     const [signupGoalsOther, setSignupGoalsOther] = useState(user.additionalData?.profile?.signupGoalsOther ?? "");
     const [companyWebsite, setCompanyWebsite] = useState(user.additionalData?.profile?.companyWebsite ?? "");
@@ -55,9 +60,36 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         [signupGoals],
     );
 
+    const addExplorationReason = useCallback(
+        (reason: string) => {
+            if (!explorationReasons.includes(reason)) {
+                setExplorationReasons([...explorationReasons, reason]);
+            }
+        },
+        [explorationReasons],
+    );
+
+    const removeExplorationReason = useCallback(
+        (reason: string) => {
+            if (explorationReasons.includes(reason)) {
+                const idx = explorationReasons.indexOf(reason);
+                const newReasons = [...explorationReasons];
+                newReasons.splice(idx, 1);
+                setExplorationReasons(newReasons);
+            }
+        },
+        [explorationReasons],
+    );
+
     const handleSubmit = useCallback(async () => {
         const additionalData = user.additionalData || {};
         const profile = additionalData.profile || {};
+
+        // Filter out any values not present in options
+        const filteredReasons = explorationReasons.filter((val) =>
+            explorationReasonsOptions.find((o) => o.value === val),
+        );
+        const filteredGoals = signupGoals.filter((val) => signupGoalsOptions.find((o) => o.value === val));
 
         const updates = {
             additionalData: {
@@ -66,7 +98,8 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                     ...profile,
                     jobRole,
                     jobRoleOther,
-                    signupGoals: signupGoals.filter(Boolean),
+                    explorationReasons: filteredReasons,
+                    signupGoals: filteredGoals,
                     signupGoalsOther,
                     companyWebsite,
                 },
@@ -81,10 +114,13 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         }
     }, [
         companyWebsite,
+        explorationReasons,
+        explorationReasonsOptions,
         jobRole,
         jobRoleOther,
         onComplete,
         signupGoals,
+        signupGoalsOptions,
         signupGoalsOther,
         updateUser,
         user.additionalData,
@@ -146,6 +182,31 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 placeholder="https://"
                 onChange={setCompanyWebsite}
             />
+
+            <InputField label="I'm exploring Gitpod..." />
+            <div className="mt-4 ml-2 space-y-2">
+                {explorationReasonsOptions.map((o) => (
+                    <div key={o.value} className="flex space-x-2 justify-start items-center">
+                        <input
+                            type="checkbox"
+                            className="rounded"
+                            value={o.value}
+                            id={`explore_${o.value}`}
+                            checked={explorationReasons.includes(o.value)}
+                            onChange={(e) => {
+                                if (e.target.checked) {
+                                    addExplorationReason(o.value);
+                                } else {
+                                    removeExplorationReason(o.value);
+                                }
+                            }}
+                        />
+                        <label className="text-sm dark:text-gray-400 text-gray-600" htmlFor={`explore_${o.value}`}>
+                            {o.label}
+                        </label>
+                    </div>
+                ))}
+            </div>
 
             <InputField label="I'm signing up for Gitpod to..." />
             <div className="mt-4 ml-2 space-y-2">
