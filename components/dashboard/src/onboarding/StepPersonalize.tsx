@@ -8,7 +8,6 @@ import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useState } from "react";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import { ThemeSelector } from "../components/ThemeSelector";
-import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { OnboardingStep } from "./OnboardingStep";
 
 type Props = {
@@ -29,7 +28,7 @@ export const StepPersonalize: FC<Props> = ({ user, onComplete }) => {
     return (
         <OnboardingStep
             title="Personalize Gitpod"
-            subtitle="Cusomize your experience"
+            subtitle="Customize your experience"
             isValid={isValid}
             onSubmit={handleSubmitted}
         >
