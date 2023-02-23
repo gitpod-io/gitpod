@@ -250,6 +250,15 @@ type WorkspaceList struct {
 	Items           []Workspace `json:"items"`
 }
 
+// IsHeadless returns whether the workspace is a headless type.
+// This is added as a function on the workspace, instead of a field
+// in the status, to make it easier to consume and not e.g. have to
+// wait for the first reconcile of a workspace to set the status
+// resource.
+func (w *Workspace) IsHeadless() bool {
+	return w.Spec.Type != WorkspaceTypeRegular
+}
+
 func init() {
 	SchemeBuilder.Register(&Workspace{}, &WorkspaceList{})
 }
