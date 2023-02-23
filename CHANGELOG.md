@@ -1,6 +1,8 @@
 # Change Log
 
 ## February 2023
+- Run solely on cgroup v2 systems ([#16500](https://github.com/gitpod-io/gitpod/pull/16500)) - [@csweichel](https://github.com/csweichel)
+- add app-level notifications for switching to Pay-as-you-go ([#16490](https://github.com/gitpod-io/gitpod/pull/16490)) - [@geropl](https://github.com/geropl)
 - Improve the checkmark icon for the selected organization in the org selector ([#16495](https://github.com/gitpod-io/gitpod/pull/16495)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
 - [gitpod-cli] gp rebuild respect image context ([#16496](https://github.com/gitpod-io/gitpod/pull/16496)) - [@iQQBot](https://github.com/iQQBot)
 - `gp env` reflects workspace env vars, not only user env vars, i.e. as well coming from projects and context URL. ([#16414](https://github.com/gitpod-io/gitpod/pull/16414)) - [@akosyakov](https://github.com/akosyakov)
