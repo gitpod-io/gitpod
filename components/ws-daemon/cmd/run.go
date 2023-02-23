@@ -17,7 +17,6 @@ import (
 
 	"github.com/bombsimon/logrusr/v2"
 	"github.com/heptiolabs/healthcheck"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -49,19 +48,20 @@ var runCmd = &cobra.Command{
 
 		ctrl.SetLogger(logrusr.New(log.Log))
 
+		dmn, err := daemon.NewDaemon(cfg.Daemon)
+		if err != nil {
+			log.WithError(err).Fatal("Cannot create daemon.")
+		}
+
 		health := healthcheck.NewHandler()
 		srv, err := baseserver.New(grpcServerName,
 			baseserver.WithGRPC(&cfg.Service),
 			baseserver.WithHealthHandler(health),
+			baseserver.WithMetricsRegistry(dmn.MetricsRegistry()),
 			baseserver.WithVersion(Version),
 		)
 		if err != nil {
 			log.WithError(err).Fatal("Cannot set up server.")
-		}
-
-		dmn, err := daemon.NewDaemon(cfg.Daemon, prometheus.WrapRegistererWithPrefix("gitpod_ws_daemon_", srv.MetricsRegistry()))
-		if err != nil {
-			log.WithError(err).Fatal("Cannot create daemon.")
 		}
 
 		health.AddReadinessCheck("grpc-server", grpcProbe(cfg.Service))
