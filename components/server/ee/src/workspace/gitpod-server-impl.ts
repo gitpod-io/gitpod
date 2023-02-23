@@ -1700,6 +1700,32 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
     }
 
+    async tsCancel(ctx: TraceContext, teamSubscriptionId: string): Promise<void> {
+        traceAPIParams(ctx, { teamSubscriptionId });
+        const user = this.checkUser("tsCancel");
+
+        try {
+            const allTS = await this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
+            if (!allTS.find((ts) => ts.id === teamSubscriptionId)) {
+                log.error({ userId: user.id }, "Cannot cancel: unknown Team Subscription (legacy)", {
+                    teamSubscriptionId,
+                });
+                return;
+            }
+
+            await this.chargebeeService.cancelSubscription(
+                teamSubscriptionId,
+                {},
+                {
+                    teamSubscriptionId,
+                    kind: "Team Subscription (legacy)",
+                },
+            );
+        } catch (err) {
+            throw new ResponseError(ErrorCodes.PAYMENT_ERROR, `${err.api_error_code}: ${err.message}`);
+        }
+    }
+
     async tsGetSlots(ctx: TraceContext): Promise<TeamSubscriptionSlotResolved[]> {
         const user = this.checkUser("tsGetSlots");
         return this.teamSubscriptionService.findTeamSubscriptionSlotsBy(user.id, new Date());

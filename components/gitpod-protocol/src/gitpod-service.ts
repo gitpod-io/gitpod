@@ -265,6 +265,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     subscriptionCancelDowngrade(subscriptionId: string): Promise<void>;
 
     getTeamSubscription(teamId: string): Promise<TeamSubscription2 | undefined>;
+    tsCancel(teamSubscriptionId: string): Promise<void>;
     tsGet(): Promise<TeamSubscription[]>;
     tsGetSlots(): Promise<TeamSubscriptionSlotResolved[]>;
     tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined>;
