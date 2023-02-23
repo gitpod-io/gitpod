@@ -161,7 +161,7 @@ import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { PartialProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
-import { ClientMetadata, traceClientMetadata } from "../websocket/websocket-connection-manager";
+import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ConfigurationService } from "../config/configuration-service";
 import { EnvVarWithValue, ProjectEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
 import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
@@ -334,16 +334,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     protected forwardInstanceUpdateToClient(ctx: TraceContext, instance: WorkspaceInstance) {
-        TraceContext.withSpan(
-            "forwardInstanceUpdateToClient",
-            (ctx) => {
-                traceClientMetadata(ctx, this.clientMetadata);
-                TraceContext.setJsonRPCMetadata(ctx, "onInstanceUpdate");
-
-                this.client?.onInstanceUpdate(this.censorInstance(instance));
-            },
-            ctx,
-        );
+        // gpl: We decided against tracing updates here, because it create far too much noise (cmp. history)
+        this.client?.onInstanceUpdate(this.censorInstance(instance));
     }
 
     setClient(ctx: TraceContext, client: GitpodApiClient | undefined): void {
