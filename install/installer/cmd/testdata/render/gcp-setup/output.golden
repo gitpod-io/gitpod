@@ -7478,7 +7478,7 @@ spec:
       initContainers:
       containers:
         - name: rabbitmq
-          image: docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
+          image: /docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -8995,11 +8995,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD
-        gitpod.io/checksum_config: 4a901771b5b3705a7421e896ee40c283adfb4544d9064cda701458972bcaec85
-=======
-        gitpod.io/checksum_config: 09e70c56b73dd1d83f59a85cec7dc6dd2cdd18982612e885a72dde8132a61ddf
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
+        gitpod.io/checksum_config: 4866a04372a0dd35779a6c9182982f252531c1096144065e0416e825055a24d3
       creationTimestamp: null
       labels:
         app: gitpod

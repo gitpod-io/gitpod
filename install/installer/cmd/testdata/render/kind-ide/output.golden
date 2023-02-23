@@ -3114,11 +3114,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD
-        gitpod.io/checksum_config: a93d22be9b0695e0bd3211bfd5e023b09c08a8cea026a41f080346023887bd74
-=======
-        gitpod.io/checksum_config: 0d9d1c68723466a253996f0a96bf0682ce57b89ebcb4ae1e4a643dd788ef1cab
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
+        gitpod.io/checksum_config: 67fa54d8988cda6a3f47a3cbc820d0a2cfca992bb010cf1687dd0b262679e89a
       creationTimestamp: null
       labels:
         app: gitpod
@@ -3580,19 +3576,10 @@ spec:
         app: docker-registry
         release: docker-registry
       annotations:
-<<<<<<< HEAD
-        checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
-<<<<<<< HEAD
-        gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
-=======
         checksum/config: 699dd382179068f3354c330fcce38625e2861d97b962074b4f57005d40497b00
         checksum/secret: 6fe5d819b2ea20bf72ad31384d4886d6f64dd1f0d237703ac3aff11c1e0737fd
         
         gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions)
-=======
-        gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
     spec:
       serviceAccountName: docker-registry
       securityContext:

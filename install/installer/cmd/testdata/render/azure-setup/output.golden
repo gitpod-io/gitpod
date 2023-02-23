@@ -7498,7 +7498,7 @@ spec:
       initContainers:
       containers:
         - name: rabbitmq
-          image: docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
+          image: /docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -8621,15 +8621,7 @@ spec:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
       annotations:
-<<<<<<< HEAD
-<<<<<<< HEAD
-        checksum/credentials-secret: c1cd36703ad730b3d641029a684127a2da119d23e4838caa5c0e21553887c478
-=======
         checksum/credentials-secret: dc0c118ec7ab833ae492735c24173ba43d98921c390f862db14fadbb0b26ac94
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions)
-=======
-        checksum/credentials-secret: 31ca5e20dec5cc79ce6a424f6bad5283e868082022f029ebfaf8c621768eed34
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
     spec:
       
       serviceAccountName: minio
@@ -8651,7 +8643,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: minio
-          image: docker.io/bitnami/minio:2022.4.29-debian-10-r0
+          image: /docker.io/bitnami/minio:2022.4.29-debian-10-r0
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -9084,11 +9076,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD
-        gitpod.io/checksum_config: de38b07ebe2e745c59774ddd2d9028db11d63b18ffb37dc0e6dbd08eeb2e4cc4
-=======
-        gitpod.io/checksum_config: 8c05f78bde8894a461a3d382e567b6d00d34026fa916c9e7baf2c1e81e43b239
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
+        gitpod.io/checksum_config: 0db7ccaf6abc9f3d25bb5e7e0bf689dd56fa1a7ea80c31a4e314852306afcde1
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9363,11 +9351,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD
-        gitpod.io/checksum_config: cd4b2686fe34e3488f453e58aabb2197bd886fb64b6e6fc3ab840694d09b6391
-=======
-        gitpod.io/checksum_config: 21c3b53bac44cf0f98bc57e43353e3136dc5806409951038c2ba36aea69dd218
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
+        gitpod.io/checksum_config: 22979d0ffb604af37a05d6b31fc23c390a9e03af13ed8a23be98e2e76431b145
       creationTimestamp: null
       labels:
         app: gitpod
