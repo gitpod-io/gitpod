@@ -38,10 +38,11 @@ export const OnboardingStep: FC<Props> = ({
 
     return (
         <div className="flex flex-col items-center justify-center max-w-full">
-            <h1>{title}</h1>
-            <p>{subtitle}</p>
+            {/* TODO: Fix our base heading styles so we don't have to override */}
+            <h2 className="text-3xl text-gray-900 dark:text-gray-100 font-bold">{title}</h2>
+            <p className="text-base text-gray-500 dark:text-gray-400">{subtitle}</p>
 
-            <form className="my-8 max-w-lg" onSubmit={handleSubmit}>
+            <form className="mt-8 mb-14 max-w-lg" onSubmit={handleSubmit}>
                 {/* Form contents provided as children */}
                 {children}
 

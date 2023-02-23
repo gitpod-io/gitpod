@@ -27,8 +27,8 @@ export const StepPersonalize: FC<Props> = ({ user, onComplete }) => {
 
     return (
         <OnboardingStep
-            title="Personalize Gitpod"
-            subtitle="Customize your experience"
+            title="How are you going to use Gitpod?"
+            subtitle="We will tailor your experience based on your preferences."
             isValid={isValid}
             onSubmit={handleSubmitted}
         >

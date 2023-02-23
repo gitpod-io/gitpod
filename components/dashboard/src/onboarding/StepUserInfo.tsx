@@ -57,13 +57,19 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
 
     return (
         <OnboardingStep
-            title="Get started with Gitpod"
-            subtitle="Fill in the name and email you want to use to author commits."
+            title="Welcome to Gitpod"
+            subtitle="You are one step away from shipping software faster."
             error={updateUser.isError ? "There was a problem updating your profile" : undefined}
             isValid={isValid}
             isSaving={updateUser.isLoading}
             onSubmit={handleSubmit}
         >
+            {user.avatarUrl && (
+                <div className="my-4 flex justify-center">
+                    <img className="rounded-full w-24 h-24" src={user.avatarUrl} alt={user.fullName || user.name} />
+                </div>
+            )}
+
             <div className="flex justify-between space-x-2 w-full">
                 <TextInputField
                     containerClassName="w-1/2"
@@ -90,7 +96,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
                 value={emailAddress}
                 label="Email"
                 type="email"
-                hint="We suggest using your work email"
+                hint="We recommend using a work email address."
                 error={emailError.message}
                 onBlur={emailError.onBlur}
                 onChange={setEmailAddress}
