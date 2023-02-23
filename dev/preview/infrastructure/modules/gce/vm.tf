@@ -13,6 +13,7 @@ resource "google_compute_instance" "default" {
   boot_disk {
     initialize_params {
       image = "projects/workspace-clusters/global/images/${var.vm_image}"
+      type  = "pd-ssd"
     }
   }
 
