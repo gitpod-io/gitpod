@@ -17,10 +17,6 @@ write_files:
 
       set -eo pipefail
 
-      # disables a service that pulls a few GBs of workspace images on every machine start
-      sudo systemctl disable load-workspace-full.service &
-      sudo systemctl stop load-workspace-full.service &
-
       cat <<'EOF' >> /etc/containerd/config.toml
       [plugins."io.containerd.grpc.v1.cri".registry.configs."registry-1.docker.io".auth]
         username = "${dockerhub_user}"
