@@ -1525,7 +1525,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	}
 
 	// find the ws-daemon on this node
-	var hostIP string
+	var podIP string
 
 	waitErr := wait.PollImmediate(1*time.Second, 1*time.Minute, func() (bool, error) {
 		var podList corev1.PodList
@@ -1559,16 +1559,16 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 				return false, nil
 			}
 
-			err = waitForTCPPortToBeReachable(pod.Status.HostIP, "31740", 5*time.Second)
+			err = waitForTCPPortToBeReachable(pod.Status.PodIP, "8080", 5*time.Second)
 			if err != nil {
 				return false, nil
 			}
 
-			hostIP = pod.Status.HostIP
+			podIP = pod.Status.PodIP
 			break
 		}
 
-		if hostIP == "" {
+		if podIP == "" {
 			return false, nil
 		}
 
@@ -1581,10 +1581,10 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 		return nil, xerrors.Errorf("cannot connect to Gitpod ws-daemon")
 	}
 
-	if hostIP == "" {
+	if podIP == "" {
 		return nil, xerrors.Errorf("no running ws-daemon pod found")
 	}
-	conn, err := m.wsdaemonPool.Get(hostIP)
+	conn, err := m.wsdaemonPool.Get(podIP)
 	if err != nil {
 		return nil, xerrors.Errorf("unexpected error creating connection to Gitpod ws-daemon: %w", err)
 	}
