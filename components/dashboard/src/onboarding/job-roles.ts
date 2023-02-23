@@ -11,7 +11,7 @@ export const getJobRoleOptions = () => {
         { label: "Please select one", value: "" },
         { label: "Backend", value: "backend" },
         { label: "Frontend", value: "frontend" },
-        { label: "Fullstack", value: "fullstack" },
+        { label: "Full Stack", value: "fullstack" },
         { label: "Data / analytics", value: "data_analytics" },
         { label: "DevOps / devX / platform", value: "devops_devx_platform" },
         { label: "Product / design", value: "product_design" },

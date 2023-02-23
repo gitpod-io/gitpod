@@ -19,7 +19,7 @@ export const getSignupGoalsOptions = () => {
         { label: "Dev efficiency & collaboration", value: "dev_efficiency_collaboration" },
         { label: "Contribute to open source", value: "open_source" },
         { label: "Work from any device (iPad,…)", value: "work_from_any_device" },
-        { label: "Solve “works on my machine issue”", value: "works_on_my_machine" },
+        { label: `Solve "works on my machine issue"`, value: "works_on_my_machine" },
         { label: "Work on hobby projects", value: "hobby" },
         { label: "Other / prefer not to say", value: SIGNUP_GOALS_OTHER },
     ];
