@@ -79,6 +79,11 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
     werft.phase(phases.DEPLOY, "Deploying Gitpod and Observability Stack");
 
     const installMonitoringSatellite = (async () => {
+        if (!jobConfig.withObservability) {
+            werft.log(installerSlices.INSTALL, "skipping installation of Observability Stack");
+            return;
+        }
+
         const sliceID = "Install monitoring satellite";
         const monitoringSatelliteInstaller = new MonitoringSatelliteInstaller({
             branch: jobConfig.observability.branch,
