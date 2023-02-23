@@ -272,10 +272,16 @@ func (s *Service) onInstanceUpdates(ctx context.Context) {
 		defer func() {
 			cancel()
 		}()
+		// force reconnect after 7m to avoid unexpected 10m reconnection (internal error)
+		ticker := time.NewTicker(7 * time.Minute)
 		for {
 			select {
 			case <-ctx.Done():
+				ticker.Stop()
 				return
+			case <-ticker.C:
+				cancel()
+				cancel = processUpdate(s.usePublicAPI(ctx))
 			case <-s.onUsingPublicAPI:
 				cancel()
 				cancel = processUpdate(s.usePublicAPI(ctx))
@@ -336,7 +342,6 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan erro
 		errChan <- err
 		return
 	}
-	log.WithField("method", "StreamWorkspaceStatus").Info("start to listen on publicAPI instanceUpdates")
 	for {
 		resp, err := resp.Recv()
 		if err != nil {
@@ -376,7 +381,6 @@ func (s *Service) serverInstanceUpdate(ctx context.Context, errChan chan error) 
 		errChan <- err
 		return
 	}
-	log.WithField("method", "InstanceUpdates").WithField("instanceID", instanceID).Info("start to listen on serverAPI instanceUpdates")
 	for update := range ch {
 		s.subMutex.Lock()
 		for sub := range s.subs {
