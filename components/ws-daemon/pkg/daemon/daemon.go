@@ -35,8 +35,10 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 )
 
 var (
@@ -185,18 +187,38 @@ func NewDaemon(config Config) (*Daemon, error) {
 		contentCfg.WorkingArea += config.WorkspaceController.WorkingAreaSuffix
 		contentCfg.WorkingAreaNode += config.WorkspaceController.WorkingAreaSuffix
 
-		wsctrl, err := controller.NewWorkspaceController(mgr.GetClient(), controller.WorkspaceControllerOpts{
-			NodeName:         nodename,
-			ContentConfig:    contentCfg,
-			UIDMapperConfig:  config.Uidmapper,
-			ContainerRuntime: containerRuntime,
-			CGroupMountPoint: config.CPULimit.CGroupBasePath,
-			MetricsRegistry:  wrappedReg,
-		})
+		xfs, err := quota.NewXFS(contentCfg.WorkingArea)
+		if err != nil {
+			return nil, err
+		}
+
+		store, err := session.NewStore(context.Background(), contentCfg.WorkingArea, content.WorkspaceLifecycleHooks(
+			contentCfg,
+			func(instanceID string) bool { return true },
+			&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+			xfs,
+			config.CPULimit.CGroupBasePath,
+		))
+		if err != nil {
+			return nil, err
+		}
+
+		workspaceOps, err := controller.NewWorkspaceOperations(contentCfg, store, wrappedReg)
+		if err != nil {
+			return nil, err
+		}
+
+		wsctrl, err := controller.NewWorkspaceController(mgr.GetClient(), nodename, workspaceOps, wrappedReg)
 		if err != nil {
 			return nil, err
 		}
 		err = wsctrl.SetupWithManager(mgr)
+		if err != nil {
+			return nil, err
+		}
+
+		ssctrl := controller.NewSnapshotController(mgr.GetClient(), nodename, workspaceOps)
+		err = ssctrl.SetupWithManager(mgr)
 		if err != nil {
 			return nil, err
 		}

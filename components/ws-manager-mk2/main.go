@@ -34,13 +34,14 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
+	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	imgproxy "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
-	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
-	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -128,6 +129,7 @@ func main() {
 	// 	setupLog.Error(err, "unable to create webhook", "webhook", "Workspace")
 	// 	os.Exit(1)
 	// }
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

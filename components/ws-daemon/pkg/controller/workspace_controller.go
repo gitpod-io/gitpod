@@ -15,9 +15,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -52,40 +50,18 @@ type WorkspaceControllerOpts struct {
 type WorkspaceController struct {
 	client.Client
 	NodeName   string
-	opts       *WorkspaceControllerOpts
-	operations WorkspaceOperations
+	operations *WorkspaceOperations
 	metrics    *workspaceMetrics
 }
 
-func NewWorkspaceController(c client.Client, opts WorkspaceControllerOpts) (*WorkspaceController, error) {
-	xfs, err := quota.NewXFS(opts.ContentConfig.WorkingArea)
-	if err != nil {
-		return nil, err
-	}
-	store, err := session.NewStore(context.Background(), opts.ContentConfig.WorkingArea, content.WorkspaceLifecycleHooks(
-		opts.ContentConfig,
-		func(instanceID string) bool { return true },
-		&iws.Uidmapper{Config: opts.UIDMapperConfig, Runtime: opts.ContainerRuntime},
-		xfs,
-		opts.CGroupMountPoint,
-	))
-	if err != nil {
-		return nil, err
-	}
-
+func NewWorkspaceController(c client.Client, nodeName string, ops *WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
 	metrics := newWorkspaceMetrics()
-	opts.MetricsRegistry.Register(metrics)
-
-	ops, err := NewWorkspaceOperations(opts.ContentConfig, store, opts.MetricsRegistry)
-	if err != nil {
-		return nil, err
-	}
+	reg.Register(metrics)
 
 	return &WorkspaceController{
 		Client:     c,
-		NodeName:   opts.NodeName,
-		opts:       &opts,
-		operations: *ops,
+		NodeName:   nodeName,
+		operations: ops,
 		metrics:    metrics,
 	}, nil
 }
