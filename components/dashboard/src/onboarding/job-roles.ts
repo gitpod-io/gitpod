@@ -8,17 +8,14 @@ export const JOB_ROLE_OTHER = "other";
 
 export const getJobRoleOptions = () => {
     return [
-        { label: "Please select one", value: "" },
-        { label: "Backend", value: "backend" },
-        { label: "Frontend", value: "frontend" },
-        { label: "Full Stack", value: "fullstack" },
-        { label: "Data / analytics", value: "data_analytics" },
-        { label: "DevOps / devX / platform", value: "devops_devx_platform" },
-        { label: "Product / design", value: "product_design" },
-        { label: "Customer engineering", value: "customer_engineering" },
-        { label: "DevRel", value: "devrel" },
-        { label: "Open source", value: "open_source" },
-        { label: "Academia / student", value: "academia" },
-        { label: "Other / prefer not to say", value: JOB_ROLE_OTHER },
+        { value: "", label: "Please select one" },
+        { value: "software-eng", label: "Software Engineer" },
+        { value: "data", label: "Data / Analytics" },
+        { value: "academics", label: "Academic (Student, Researcher)" },
+        { value: "enabling", label: "Enabling team (Platform, Developer Experience)" },
+        { value: "team-lead", label: "Team / Function Lead" },
+        { value: "devrel", label: "DevRel" },
+        { value: "product-design", label: "Product (PM, Designer)" },
+        { value: JOB_ROLE_OTHER, label: "Other - please specify / prefer not to say" },
     ];
 };
