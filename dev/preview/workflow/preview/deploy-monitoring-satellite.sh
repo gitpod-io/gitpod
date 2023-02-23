@@ -85,7 +85,6 @@ kubectl \
 
 echo "Applying generated manifests"
 for f in "${manifests_dir}"/*.yaml; do
-    echo "Applying $f"
     diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "${f}"
 done
 
