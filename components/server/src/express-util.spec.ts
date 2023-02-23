@@ -15,6 +15,7 @@ describe("express-util", function () {
             const result = isAllowedWebsocketDomain(
                 "http://3000-moccasin-ferret-155799b3.ws-eu.gpl-2732-ws-csrf.staging.gitpod.io",
                 HOSTURL_HOSTNAME,
+                false,
             );
             expect(result).to.be.false;
         });
@@ -23,12 +24,43 @@ describe("express-util", function () {
             const result = isAllowedWebsocketDomain(
                 "http://moccasin-ferret-155799b3.ws-eu.gpl-2732-ws-csrf.staging.gitpod.io",
                 HOSTURL_HOSTNAME,
+                false,
             );
             expect(result).to.be.true;
         });
 
         it("should return true for dashboard", function () {
-            const result = isAllowedWebsocketDomain("http://gpl-2732-ws-csrf.staging.gitpod.io", HOSTURL_HOSTNAME);
+            const result = isAllowedWebsocketDomain(
+                "http://gpl-2732-ws-csrf.staging.gitpod.io",
+                HOSTURL_HOSTNAME,
+                false,
+            );
+            expect(result).to.be.true;
+        });
+        it("should return false for workspace-port locations (strict)", function () {
+            const result = isAllowedWebsocketDomain(
+                "http://3000-moccasin-ferret-155799b3.ws-eu.gpl-2732-ws-csrf.staging.gitpod.io",
+                HOSTURL_HOSTNAME,
+                true,
+            );
+            expect(result).to.be.false;
+        });
+
+        it("should return true for workspace locations (strict)", function () {
+            const result = isAllowedWebsocketDomain(
+                "http://moccasin-ferret-155799b3.ws-eu.gpl-2732-ws-csrf.staging.gitpod.io",
+                HOSTURL_HOSTNAME,
+                true,
+            );
+            expect(result).to.be.false;
+        });
+
+        it("should return true for dashboard (strict)", function () {
+            const result = isAllowedWebsocketDomain(
+                "http://gpl-2732-ws-csrf.staging.gitpod.io",
+                HOSTURL_HOSTNAME,
+                true,
+            );
             expect(result).to.be.true;
         });
     });
@@ -38,12 +70,34 @@ describe("express-util", function () {
             const result = isAllowedWebsocketDomain(
                 "https://8000-black-capybara-dy6e3fgz.ws-eu08.gitpod.io",
                 HOSTURL_HOSTNAME,
+                false,
             );
             expect(result).to.be.false;
         });
 
         it("should return true for workspace locations", function () {
-            const result = isAllowedWebsocketDomain("https://bronze-bird-p2q226d8.ws-eu08.gitpod.io", HOSTURL_HOSTNAME);
+            const result = isAllowedWebsocketDomain(
+                "https://bronze-bird-p2q226d8.ws-eu08.gitpod.io",
+                HOSTURL_HOSTNAME,
+                false,
+            );
+            expect(result).to.be.true;
+        });
+        it("should return false for workspace-port locations (strict)", function () {
+            const result = isAllowedWebsocketDomain(
+                "https://8000-black-capybara-dy6e3fgz.ws-eu08.gitpod.io",
+                HOSTURL_HOSTNAME,
+                true,
+            );
+            expect(result).to.be.false;
+        });
+
+        it("should return false for workspace locations (strict)", function () {
+            const result = isAllowedWebsocketDomain(
+                "https://bronze-bird-p2q226d8.ws-eu08.gitpod.io",
+                HOSTURL_HOSTNAME,
+                true,
+            );
             expect(result).to.be.true;
         });
     });

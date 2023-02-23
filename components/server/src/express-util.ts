@@ -7,8 +7,9 @@
 import { URL } from "url";
 import * as express from "express";
 import * as crypto from "crypto";
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import * as session from "express-session";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -17,23 +18,29 @@ export const query = (...tuples: [string, string][]) => {
     return "?" + tuples.map((t) => `${t[0]}=${encodeURIComponent(t[1])}`).join("&");
 };
 
-// We do not precise UUID parsing here, we just want to distinguish three cases:
-//  - the base domain
-//  - a frontend domain (workspace domain)
-//  - a workspace port domain
-// We control all of those values and the base domain, so we don't need to much effort
-export const isAllowedWebsocketDomain = (originHeader: any, gitpodHostName: string): boolean => {
+// Strict: We only allow connections from the base domain, so disallow connections from all other Origins
+//      Only (current) exception: If no Origin header is set, skip the check!
+// Non-Strict: "rely" on subdomain parsing (do we still need this?)
+export const isAllowedWebsocketDomain = (originHeader: string, gitpodHostName: string, strict: boolean): boolean => {
     if (!originHeader || typeof originHeader !== "string") {
+        // TODO(gpl) Can we get rid of this dependency alltogether?
+        log.warn("Origin header check not applied because of empty Origin header!");
         return false;
     }
 
-    var originHostname = "";
     try {
         const originUrl = new URL(originHeader);
-        originHostname = originUrl.hostname;
+        const originHostname = originUrl.hostname;
         if (originHostname === gitpodHostName) {
             return true;
         }
+
+        if (strict) {
+            return false;
+        }
+        // TODO(gpl) This is only used for Bearer-Token authentication.
+        // Does this restriction help at all, or can we remove it entirely?
+        log.warn("Origin header check based on looksLikeWorkspaceHostname");
         if (looksLikeWorkspaceHostname(originUrl, gitpodHostName)) {
             return true;
         } else {
