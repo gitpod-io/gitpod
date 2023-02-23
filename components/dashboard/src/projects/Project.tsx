@@ -197,7 +197,7 @@ export default function ProjectsPage() {
                 subtitle={
                     <h2 className="tracking-wide">
                         View recent active branches for{" "}
-                        <a className="gp-link" href={project?.cloneUrl!}>
+                        <a target="_blank" rel="noreferrer noopener" className="gp-link" href={project?.cloneUrl!}>
                             {toRemoteURL(project?.cloneUrl || "")}
                         </a>
                         .

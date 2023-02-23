@@ -66,7 +66,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                             />
                         </div>
                     </div>
-                    <a href={project.cloneUrl.replace(/\.git$/, "")}>
+                    <a target="_blank" rel="noreferrer noopener" href={project.cloneUrl.replace(/\.git$/, "")}>
                         <p className="hover:text-gray-600 dark:hover:text-gray-400 dark:text-gray-500 pr-10 truncate">
                             {toRemoteURL(project.cloneUrl)}
                         </p>
