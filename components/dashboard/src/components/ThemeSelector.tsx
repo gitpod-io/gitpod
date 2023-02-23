@@ -39,7 +39,7 @@ export const ThemeSelector: FC<Props> = ({ className }) => {
         <div className={classNames(className)}>
             <h3>Theme</h3>
             <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
-            <div className="mt-4 flex items-center justify-between flex-wrap">
+            <div className="mt-4 flex items-center flex-wrap">
                 <SelectableCardSolid
                     className="w-36 h-32 m-1"
                     title="Light"
