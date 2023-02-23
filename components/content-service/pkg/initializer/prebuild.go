@@ -111,7 +111,7 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 
 	if fsErr == nil {
 		currentSize, fsErr := getFsUsage()
-		if err != nil {
+		if fsErr != nil {
 			log.WithError(fsErr).Error("could not get disk usage")
 		}
 

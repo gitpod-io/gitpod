@@ -55,7 +55,7 @@ func (s *SnapshotInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 
 	if fsErr == nil {
 		currentSize, fsErr := getFsUsage()
-		if fsErr == nil {
+		if fsErr != nil {
 			log.WithError(fsErr).Error("could not get disk usage")
 		}
 
