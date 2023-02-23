@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { lazy, createContext, FC, useMemo, useState, useContext } from "react";
+import { lazy, createContext, FC, useMemo, useState, useContext, Suspense } from "react";
 
 const Confetti = lazy(() => import(/* webpackPrefetch: true */ "react-confetti"));
 
@@ -33,7 +33,9 @@ export const ConfettiContextProvider: FC = ({ children }) => {
         <ConfettiContext.Provider value={value}>
             {children}
             {isConfettiDropping && (
-                <Confetti recycle={false} numberOfPieces={300} onConfettiComplete={value.hideConfetti} />
+                <Suspense fallback={<></>}>
+                    <Confetti recycle={false} numberOfPieces={300} onConfettiComplete={value.hideConfetti} />
+                </Suspense>
             )}
         </ConfettiContext.Provider>
     );

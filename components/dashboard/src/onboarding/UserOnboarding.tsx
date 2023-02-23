@@ -89,6 +89,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                         });
                     }
                 } catch (e) {
+                    console.log("error caught", e);
                     console.error(e);
                     setCompletingError("There was a problem completing your onboarding");
                 }
