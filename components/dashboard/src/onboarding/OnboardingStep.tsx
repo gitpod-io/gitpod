@@ -27,13 +27,13 @@ export const OnboardingStep: FC<Props> = ({
     const handleSubmit = useCallback(
         async (e: FormEvent<HTMLFormElement>) => {
             e.preventDefault();
-            if (isSaving) {
+            if (isSaving || !isValid) {
                 return;
             }
 
             onSubmit();
         },
-        [isSaving, onSubmit],
+        [isSaving, isValid, onSubmit],
     );
 
     return (
@@ -48,7 +48,7 @@ export const OnboardingStep: FC<Props> = ({
                 {error && <Alert type="error">{error}</Alert>}
 
                 <div>
-                    <button disabled={!isValid || isSaving} className="w-full mt-8">
+                    <button type="submit" disabled={!isValid || isSaving} className="w-full mt-8">
                         Continue
                     </button>
                 </div>
