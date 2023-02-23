@@ -174,10 +174,10 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	runLog.Logger.SetLevel(logrus.TraceLevel)
 	setLoggerFormatter(runLog.Logger)
 	runLog.Logger.SetOutput(os.Stdout)
-	runLog.Info("Starting the debug workspace...")
+	runLog.Info("Starting the workspace...")
 
 	if wsInfo.DebugWorkspaceType != api.DebugWorkspaceType_noDebug {
-		runLog.Error("It is not possible to restart the debug workspace while you are currently inside it.")
+		runLog.Error("It is not possible to restart the workspace while you are currently inside it.")
 		return GpError{Err: err, OutCome: utils.Outcome_UserErr, ErrorCode: utils.RebuildErrorCode_AlreadyInDebug, Silence: true}
 	}
 	stopDebugContainer(ctx, dockerPath)
@@ -293,7 +293,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 
 		ssh := "ssh 'debug-" + wsInfo.WorkspaceId + "@" + workspaceUrl.Host + ".ssh." + wsInfo.WorkspaceClusterHost + "'"
 		sep := strings.Repeat("=", len(ssh))
-		runLog.Infof(`The Debug Workspace is UP!
+		runLog.Infof(`The workspace is UP!
 %s
 
 Open in Browser at:
@@ -303,7 +303,7 @@ Connect using SSH keys (https://gitpod.io/keys):
 %s
 
 %s`, sep, workspaceUrl, ssh, sep)
-		err := notify(ctx, supervisorClient, workspaceUrl.String(), "The Debug Workspace is UP.")
+		err := notify(ctx, supervisorClient, workspaceUrl.String(), "The workspace is UP.")
 		if err != nil && ctx.Err() == nil {
 			log.WithError(err).Error("failed to notify")
 		}
@@ -375,7 +375,7 @@ Connect using SSH keys (https://gitpod.io/keys):
 
 	err = runCmd.Start()
 	if err != nil {
-		fmt.Println("Failed to run a debug workspace")
+		fmt.Println("Failed to run a workspace")
 		return GpError{Err: err, OutCome: utils.Outcome_UserErr, ErrorCode: utils.RebuildErrorCode_DockerRunFailed, Silence: true}
 	}
 
@@ -388,7 +388,7 @@ Connect using SSH keys (https://gitpod.io/keys):
 	select {
 	case <-ctx.Done():
 		fmt.Println("")
-		logrus.Info("Gracefully stopping the debug workspace...")
+		logrus.Info("Gracefully stopping the workspace...")
 		stopDebugContainer(context.Background(), dockerPath)
 	case <-stopped:
 	}
