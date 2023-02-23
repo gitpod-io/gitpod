@@ -7498,7 +7498,7 @@ spec:
       initContainers:
       containers:
         - name: rabbitmq
-          image: /docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
+          image: docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -8643,7 +8643,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: minio
-          image: /docker.io/bitnami/minio:2022.4.29-debian-10-r0
+          image: docker.io/bitnami/minio:2022.4.29-debian-10-r0
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true

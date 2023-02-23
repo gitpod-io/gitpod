@@ -3242,7 +3242,7 @@ spec:
       initContainers:
       containers:
         - name: rabbitmq
-          image: /docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
+          image: docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -3436,7 +3436,7 @@ spec:
         fsGroup: 1001
       initContainers:
         - name: volume-permissions
-          image: /docker.io/bitnami/bitnami-shell:11-debian-11-r60
+          image: docker.io/bitnami/bitnami-shell:11-debian-11-r60
           imagePullPolicy: "IfNotPresent"
           command:
             - /bin/bash
@@ -3452,7 +3452,7 @@ spec:
               mountPath: /bitnami/mysql
       containers:
         - name: mysql
-          image: /docker.io/bitnami/mysql:5.7.34-debian-10-r55
+          image: docker.io/bitnami/mysql:5.7.34-debian-10-r55
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -3789,7 +3789,7 @@ spec:
         fsGroup: 1001
       containers:
         - name: minio
-          image: /docker.io/bitnami/minio:2022.12.12-debian-11-r0
+          image: docker.io/bitnami/minio:2022.12.12-debian-11-r0
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
