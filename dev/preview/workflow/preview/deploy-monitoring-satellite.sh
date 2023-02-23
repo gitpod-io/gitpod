@@ -86,10 +86,7 @@ kubectl \
 echo "Applying generated manifests"
 for f in "${manifests_dir}"/*.yaml; do
     echo "Applying $f"
-    kubectl \
-        --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-        --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-        apply --server-side -f "${f}"
+    diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" "${f}"
 done
 
 echo "Patching grafana deployment"
