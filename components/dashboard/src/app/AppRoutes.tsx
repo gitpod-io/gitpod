@@ -6,7 +6,7 @@
 
 import { ContextURL, Team, User } from "@gitpod/gitpod-protocol";
 import React, { FunctionComponent, useContext, useState } from "react";
-import { Redirect, Route, Switch, useLocation, useParams } from "react-router";
+import { Redirect, Route, Switch, useLocation } from "react-router";
 import { AppNotifications } from "../AppNotifications";
 import Menu from "../menu/Menu";
 import OAuthClientApproval from "../OauthClientApproval";
