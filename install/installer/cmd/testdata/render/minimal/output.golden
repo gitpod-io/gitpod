@@ -170,6 +170,39 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy image-builder-mk3-wsman
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3-wsman
+  name: image-builder-mk3-wsman
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: server
+        - podSelector:
+            matchLabels:
+              component: slow-server
+        - podSelector:
+            matchLabels:
+              component: ws-manager
+        - podSelector:
+            matchLabels:
+              component: ws-manager-mk2
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: image-builder-mk3-wsman
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy messagebus
 # Source: rabbitmq/charts/rabbitmq/templates/networkpolicy.yaml
 kind: NetworkPolicy
@@ -865,6 +898,18 @@ metadata:
     app: gitpod
     component: image-builder-mk3
   name: image-builder-mk3
+  namespace: default
+---
+# v1/ServiceAccount image-builder-mk3-wsman
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3-wsman
+  name: image-builder-mk3-wsman
   namespace: default
 ---
 # v1/ServiceAccount migrations
@@ -3325,6 +3370,76 @@ data:
       namespace: default
     ---
     apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3-wsman
+      name: image-builder-mk3-wsman-config
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3-wsman
+      name: image-builder-mk3-wsman
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3-wsman
+      name: image-builder-mk3-wsman
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3-wsman
+      name: image-builder-mk3-wsman
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3-wsman
+      name: default-image-builder-mk3-wsman-proxy-kube-rbac-proxy
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3-wsman
+        kind: service
+      name: image-builder-mk3-wsman
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3-wsman
+      name: image-builder-mk3-wsman
+      namespace: default
+    ---
+    apiVersion: v1
     kind: Secret
     metadata:
       creationTimestamp: null
@@ -4930,6 +5045,49 @@ metadata:
   name: image-builder-mk3-config
   namespace: default
 ---
+# v1/ConfigMap image-builder-mk3-wsman-config
+apiVersion: v1
+data:
+  image-builder.json: |-
+    {
+      "orchestrator": {
+        "wsman": {
+          "address": "ws-manager-mk2:8080",
+          "tls": {
+            "ca": "/wsman-certs/ca.crt",
+            "crt": "/wsman-certs/tls.crt",
+            "key": "/wsman-certs/tls.key"
+          }
+        },
+        "pullSecret": "builtin-registry-auth",
+        "pullSecretFile": "/config/pull-secret/pull-secret.json",
+        "baseImageRepository": "registry.gitpod.example.com/base-images",
+        "workspaceImageRepository": "registry.gitpod.example.com/workspace-images",
+        "builderImage": "eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:test"
+      },
+      "refCache": {
+        "interval": "6h0m0s",
+        "refs": [
+          "docker.io/gitpod/workspace-full:latest"
+        ]
+      },
+      "server": {
+        "services": {
+          "grpc": {
+            "address": "0.0.0.0:8080"
+          }
+        }
+      }
+    }
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3-wsman
+  name: image-builder-mk3-wsman-config
+  namespace: default
+---
 # v1/ConfigMap mysql
 # Source: mysql/charts/mysql/templates/primary/configmap.yaml
 apiVersion: v1
@@ -6033,6 +6191,24 @@ subjects:
   name: image-builder-mk3
   namespace: default
 ---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-image-builder-mk3-wsman-proxy-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3-wsman
+  name: default-image-builder-mk3-wsman-proxy-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: image-builder-mk3-wsman
+  namespace: default
+---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-openvsx-proxy-kube-rbac-proxy
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -6647,6 +6823,24 @@ subjects:
 - kind: ServiceAccount
   name: image-builder-mk3
 ---
+# rbac.authorization.k8s.io/v1/RoleBinding image-builder-mk3-wsman
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3-wsman
+  name: image-builder-mk3-wsman
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-ns-image-builder-mk3-wsman
+subjects:
+- kind: ServiceAccount
+  name: image-builder-mk3-wsman
+---
 # rbac.authorization.k8s.io/v1/RoleBinding messagebus-endpoint-reader
 # Source: rabbitmq/charts/rabbitmq/templates/rolebinding.yaml
 kind: RoleBinding
@@ -7108,6 +7302,30 @@ spec:
   selector:
     app: gitpod
     component: image-builder-mk3
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+# v1/Service image-builder-mk3-wsman
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3-wsman
+    kind: service
+  name: image-builder-mk3-wsman
+  namespace: default
+spec:
+  ports:
+  - name: service
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: gitpod
+    component: image-builder-mk3-wsman
   type: ClusterIP
 status:
   loadBalancer: {}
@@ -9523,6 +9741,156 @@ spec:
       - name: wsman-tls-certs
         secret:
           secretName: ws-manager-client-tls
+      - name: pull-secret
+        secret:
+          items:
+          - key: .dockerconfigjson
+            path: pull-secret.json
+          secretName: builtin-registry-auth
+      - emptyDir: {}
+        name: gitpod-ca-certificate
+      - emptyDir: {}
+        name: cacerts
+status: {}
+---
+# apps/v1/Deployment image-builder-mk3-wsman
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: image-builder-mk3-wsman
+  name: image-builder-mk3-wsman
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod
+      component: image-builder-mk3-wsman
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        gitpod.io/checksum_config: 54f5c03462ee617b3033b44c727daab94444ffb60cc8b22e3441e0e7334b9bcb
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: image-builder-mk3-wsman
+      name: image-builder-mk3-wsman
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_meta
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --config
+        - /config/image-builder.json
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        - name: JAEGER_DISABLED
+          value: "true"
+        image: eu.gcr.io/gitpod-core-dev/build/image-builder-mk3-wsman:test
+        imagePullPolicy: IfNotPresent
+        name: image-builder-mk3-wsman
+        ports:
+        - containerPort: 8080
+          name: service
+        resources:
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          runAsUser: 33333
+        volumeMounts:
+        - mountPath: /config/image-builder.json
+          name: configuration
+          subPath: image-builder.json
+        - mountPath: /wsman-certs
+          name: wsman-tls-certs
+          readOnly: true
+        - mountPath: /config/pull-secret
+          name: pull-secret
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      dnsPolicy: ClusterFirst
+      enableServiceLinks: false
+      initContainers:
+      - command:
+        - bash
+        - -c
+        - set -e; update-ca-certificates -f; cp /etc/ssl/certs/* /ssl-certs; echo
+          'OK'
+        image: eu.gcr.io/gitpod-core-dev/build/ca-updater:test
+        imagePullPolicy: IfNotPresent
+        name: update-ca-certificates
+        resources: {}
+        volumeMounts:
+        - mountPath: /ssl-certs
+          name: cacerts
+        - mountPath: /usr/local/share/ca-certificates/gitpod-ca.crt
+          name: gitpod-ca-certificate
+          subPath: ca.crt
+      restartPolicy: Always
+      serviceAccountName: image-builder-mk3-wsman
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          name: image-builder-mk3-wsman-config
+        name: configuration
+      - name: wsman-tls-certs
+        secret:
+          secretName: ws-manager-mk2-client-tls
       - name: pull-secret
         secret:
           items:

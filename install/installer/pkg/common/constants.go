@@ -48,6 +48,7 @@ const (
 	WSManagerBridgeComponent    = "ws-manager-bridge"
 	WSProxyComponent            = "ws-proxy"
 	ImageBuilderComponent       = "image-builder-mk3"
+	ImageBuilderComponentWsman  = "image-builder-mk3-wsman"
 	ImageBuilderRPCPort         = 8080
 	ImageBuilderTLSSecret       = "image-builder-mk3-tls"
 	ImageBuilderVolumeTLSCerts  = "image-builder-mk3-tls-certs"

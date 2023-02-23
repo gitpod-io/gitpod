@@ -16,7 +16,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
-	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
+	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -42,7 +42,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	orchestrator := config.Configuration{
 		WorkspaceManager: config.WorkspaceManagerConfig{
-			Address: fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort),
+			Address: fmt.Sprintf("%s:%d", wsmanagermk2.Component, wsmanagermk2.RPCPort),
 			TLS: config.TLS{
 				Authority:   "/wsman-certs/ca.crt",
 				Certificate: "/wsman-certs/tls.crt",
