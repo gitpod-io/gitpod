@@ -3429,11 +3429,11 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-b83d82b9ee293b0559f11d09977d0e8e914d73f5",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly",
             "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-b513e548113c7cddeb2d12e8e1a20f56245a8224",
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-8612f777fb5c44227ca6f2b91f40fa0929637e22",
               "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
             ],
             "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-b513e548113c7cddeb2d12e8e1a20f56245a8224",
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-8612f777fb5c44227ca6f2b91f40fa0929637e22",
               "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
             ]
           },
