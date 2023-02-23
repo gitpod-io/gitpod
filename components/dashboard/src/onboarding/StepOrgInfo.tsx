@@ -141,7 +141,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
 
             <TextInputField
                 value={companyWebsite}
-                label="Organization Website (optional)"
+                label="Company Website (optional)"
                 type="url"
                 placeholder="https://"
                 onChange={setCompanyWebsite}
