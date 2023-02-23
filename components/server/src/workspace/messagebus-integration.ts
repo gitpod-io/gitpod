@@ -18,7 +18,6 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { Channel, Message } from "amqplib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import * as opentracing from "opentracing";
 import { CancellationTokenSource } from "vscode-ws-jsonrpc";
 import { increaseMessagebusTopicReads } from "../prometheus-metrics";
 import { CreditAlert } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
@@ -108,15 +107,7 @@ export class PrebuildUpdatableQueueListener implements MessagebusListener {
             this.channel.ack(message);
         }
 
-        const spanCtx = opentracing.globalTracer().extract(opentracing.FORMAT_HTTP_HEADERS, message.properties.headers);
-        let span;
-        if (!!spanCtx && !!spanCtx.toTraceId()) {
-            span = opentracing
-                .globalTracer()
-                .startSpan(`/messagebus/${MessageBusHelperImpl.PREBUILD_UPDATABLE_QUEUE}`, {
-                    references: [opentracing.childOf(spanCtx!)],
-                });
-        }
+        // gpl: We decided against tracing here because of the low signal/noise ratio (see history)
 
         let msg: any | undefined;
         try {
@@ -129,13 +120,10 @@ export class PrebuildUpdatableQueueListener implements MessagebusListener {
 
         if (msg) {
             try {
-                this.callback({ span }, msg);
+                this.callback({}, msg);
             } catch (e) {
                 log.error("Error while executing message handler", e, { message });
             } finally {
-                if (span) {
-                    span.finish();
-                }
             }
         }
     }
