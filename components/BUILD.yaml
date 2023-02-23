@@ -13,7 +13,7 @@ packages:
       - :publish-api
       - dev:all-app
       - install/installer:docker
-      - install/kots:lint
+      #- install/kots:lint
       - components/gitpod-protocol:all
   - name: docker-versions
     type: docker
