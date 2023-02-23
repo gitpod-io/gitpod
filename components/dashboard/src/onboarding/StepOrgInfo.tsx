@@ -15,6 +15,7 @@ import { getExplorationReasons } from "./exploration-reasons";
 import { getJobRoleOptions, JOB_ROLE_OTHER } from "./job-roles";
 import { OnboardingStep } from "./OnboardingStep";
 import { getSignupGoalsOptions, SIGNUP_GOALS_OTHER } from "./signup-goals";
+import isURL from "validator/lib/isURL";
 
 type Props = {
     user: User;
@@ -127,7 +128,9 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     ]);
 
     const jobRoleError = useOnBlurError("Please select one", !!jobRole);
-    const isValid = jobRoleError.isValid && signupGoals.length > 0;
+    const websiteError = useOnBlurError("Please enter a valid url", !companyWebsite || isURL(companyWebsite));
+    const isValid =
+        jobRoleError.isValid && websiteError.isValid && signupGoals.length > 0 && explorationReasons.length > 0;
 
     return (
         <OnboardingStep
@@ -178,9 +181,10 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
             <TextInputField
                 value={companyWebsite}
                 label="Company Website (optional)"
-                type="url"
-                placeholder="https://"
+                placeholder="example.com"
+                error={websiteError.message}
                 onChange={setCompanyWebsite}
+                onBlur={websiteError.onBlur}
             />
 
             <InputField label="I'm exploring Gitpod..." />
