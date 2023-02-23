@@ -11,7 +11,7 @@ type Props = {
     title: string;
     subtitle: string;
     isValid: boolean;
-    isLoading?: boolean;
+    isSaving?: boolean;
     error?: string;
     onSubmit(): void;
 };
@@ -19,7 +19,7 @@ export const OnboardingStep: FC<Props> = ({
     title,
     subtitle,
     isValid,
-    isLoading = false,
+    isSaving = false,
     error,
     children,
     onSubmit,
@@ -27,10 +27,13 @@ export const OnboardingStep: FC<Props> = ({
     const handleSubmit = useCallback(
         async (e: FormEvent<HTMLFormElement>) => {
             e.preventDefault();
+            if (isSaving) {
+                return;
+            }
 
             onSubmit();
         },
-        [onSubmit],
+        [isSaving, onSubmit],
     );
 
     return (
@@ -45,7 +48,7 @@ export const OnboardingStep: FC<Props> = ({
                 {error && <Alert type="error">{error}</Alert>}
 
                 <div>
-                    <button disabled={!isValid || isLoading} className="w-full mt-8">
+                    <button disabled={!isValid || isSaving} className="w-full mt-8">
                         Continue
                     </button>
                 </div>

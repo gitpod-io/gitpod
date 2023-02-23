@@ -99,7 +99,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
             subtitle="Let us know what brought you here."
             error={updateUser.isError ? "There was a problem saving your answers" : ""}
             isValid={isValid}
-            isLoading={updateUser.isLoading}
+            isSaving={updateUser.isLoading}
             onSubmit={handleSubmit}
         >
             <SelectInputField

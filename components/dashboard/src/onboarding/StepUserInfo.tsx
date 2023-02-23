@@ -61,7 +61,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
             subtitle="Fill in the name and email you want to use to author commits."
             error={updateUser.isError ? "There was a problem updating your profile" : undefined}
             isValid={isValid}
-            isLoading={updateUser.isLoading}
+            isSaving={updateUser.isLoading}
             onSubmit={handleSubmit}
         >
             <div className="flex justify-between space-x-2 w-full">
