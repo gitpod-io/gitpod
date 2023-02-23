@@ -223,7 +223,7 @@ export namespace User {
                 before.companyWebsite !== after.companyWebsite ||
                 before.jobRole !== after.jobRole ||
                 before.jobRoleOther !== after.jobRoleOther ||
-                before.signupGoals !== after.signupGoals ||
+                // not checking signupGoals atm as it's an array - need to check deep equality
                 before.signupGoalsOther !== after.signupGoalsOther ||
                 before.onboardedTimestamp !== after.onboardedTimestamp
             );
