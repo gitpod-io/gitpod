@@ -77,8 +77,6 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"delete",
 						"get",
 						"list",
-						"patch",
-						"update",
 						"watch",
 					},
 				},
@@ -87,8 +85,6 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Resources: []string{"snapshots/status"},
 					Verbs: []string{
 						"get",
-						"patch",
-						"update",
 					},
 				},
 				// ConfigMap, Leases, and Events access is required for leader-election.

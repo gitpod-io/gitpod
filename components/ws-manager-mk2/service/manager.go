@@ -549,7 +549,11 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 			return false, err
 		}
 
-		if sso.Status.URL != "" && sso.Status.Error == "" {
+		if sso.Status.Error != "" {
+			return true, fmt.Errorf(sso.Status.Error)
+		}
+
+		if sso.Status.URL != "" {
 			return true, nil
 		}
 
@@ -640,39 +644,6 @@ func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id strin
 	}
 	return nil
 }
-
-// func modifyObject[obj client.Object](ctx context.Context, client client.Client, namespace, id string, updateStatus bool, mod func(o obj) error) error {
-// 	var ws obj
-// 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-// 		err := client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: id}, ws)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		err = mod(ws)
-// 		if err != nil {
-// 			return err
-// 		}
-
-// 		if updateStatus {
-// 			err = client.Status().Update(ctx, ws)
-// 		} else {
-// 			err = client.Update(ctx, ws)
-
-// 		}
-// 		return err
-// 	})
-// 	if errors.IsNotFound(err) {
-// 		return status.Errorf(codes.NotFound, "%s %s not found", reflect.TypeOf(ws).String(), id)
-// 	}
-// 	if c := status.Code(err); c != codes.Unknown && c != codes.OK {
-// 		return err
-// 	}
-// 	if err != nil {
-// 		return status.Errorf(codes.Internal, "cannot modify %s: %v", reflect.TypeOf(ws).String(), err)
-// 	}
-// 	return nil
-// }
 
 // validateStartWorkspaceRequest ensures that acting on this request will not leave the system in an invalid state
 func validateStartWorkspaceRequest(req *wsmanapi.StartWorkspaceRequest) error {
