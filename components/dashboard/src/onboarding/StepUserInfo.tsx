@@ -72,6 +72,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
                     error={firstNameError.message}
                     onBlur={firstNameError.onBlur}
                     onChange={setFirstName}
+                    required
                 />
 
                 <TextInputField
@@ -81,6 +82,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
                     error={lastNameError.message}
                     onBlur={lastNameError.onBlur}
                     onChange={setLastName}
+                    required
                 />
             </div>
 
@@ -92,6 +94,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
                 error={emailError.message}
                 onBlur={emailError.onBlur}
                 onChange={setEmailAddress}
+                required
             />
         </OnboardingStep>
     );
