@@ -834,7 +834,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(rate(workqueue_adds_total{job=\"ws-manager-mk2\", pod=~\"$pod\"}[5m])) by (pod, name)",
+          "expr": "sum(workqueue_depth{job=\"ws-manager-mk2\", pod=~\"$pod\"}) by (pod, name)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{pod}} {{name}}",
@@ -844,7 +844,7 @@
       ],
       "thresholds": [],
       "timeRegions": [],
-      "title": "Work Queue Add Rate",
+      "title": "Work Queue Depth",
       "tooltip": {
         "shared": false,
         "sort": 0,
@@ -859,8 +859,9 @@
       "yaxes": [
         {
           "$$hashKey": "object:123",
-          "format": "ops",
+          "format": "none",
           "logBase": 1,
+          "min": "0",
           "show": true
         },
         {
@@ -990,8 +991,8 @@
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 8,
-        "w": 12,
+        "h": 9,
+        "w": 8,
         "x": 0,
         "y": 31
       },
@@ -1213,9 +1214,9 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
+        "h": 9,
+        "w": 8,
+        "x": 8,
         "y": 31
       },
       "id": 112,
@@ -1253,6 +1254,104 @@
       "type": "timeseries"
     },
     {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "links": []
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 31
+      },
+      "hiddenSeries": false,
+      "id": 158,
+      "legend": {
+        "alignAsTable": true,
+        "avg": false,
+        "current": true,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "total": false,
+        "values": true
+      },
+      "lines": true,
+      "linewidth": 1,
+      "links": [],
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "9.3.6",
+      "pointradius": 5,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "datasource": {
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, sum(rate(workqueue_work_duration_seconds_bucket{job=\"ws-manager-mk2\", pod=~\"$pod\"}[5m])) by (pod, name, le))",
+          "format": "time_series",
+          "intervalFactor": 2,
+          "legendFormat": "{{pod}} {{name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeRegions": [],
+      "title": "Reconcile Work Duration",
+      "tooltip": {
+        "shared": false,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "mode": "time",
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "$$hashKey": "object:463",
+          "format": "s",
+          "logBase": 1,
+          "show": true
+        },
+        {
+          "$$hashKey": "object:464",
+          "format": "s",
+          "logBase": 1,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false
+      }
+    },
+    {
       "collapsed": false,
       "datasource": {
         "type": "datasource",
@@ -1262,7 +1361,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 39
+        "y": 40
       },
       "id": 65,
       "panels": [],
@@ -1300,7 +1399,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 40
+        "y": 41
       },
       "hiddenSeries": false,
       "id": 66,
@@ -1401,7 +1500,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 40
+        "y": 41
       },
       "hiddenSeries": false,
       "id": 67,
@@ -1515,7 +1614,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 49
+        "y": 50
       },
       "hiddenSeries": false,
       "id": 68,
@@ -1642,7 +1741,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 103
+        "y": 104
       },
       "id": 16,
       "panels": [],
@@ -1718,7 +1817,7 @@
         "h": 7,
         "w": 10,
         "x": 0,
-        "y": 104
+        "y": 105
       },
       "id": 76,
       "options": {
@@ -1766,7 +1865,7 @@
         "h": 7,
         "w": 7,
         "x": 10,
-        "y": 104
+        "y": 105
       },
       "hiddenSeries": false,
       "id": 2,
@@ -1858,7 +1957,7 @@
         "h": 7,
         "w": 7,
         "x": 17,
-        "y": 104
+        "y": 105
       },
       "hiddenSeries": false,
       "id": 4,
@@ -1962,7 +2061,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 111
+        "y": 112
       },
       "hiddenSeries": false,
       "id": 6,
@@ -2052,7 +2151,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 111
+        "y": 112
       },
       "hiddenSeries": false,
       "id": 8,
@@ -2141,7 +2240,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 118
+        "y": 119
       },
       "hiddenSeries": false,
       "id": 10,
@@ -2239,7 +2338,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 118
+        "y": 119
       },
       "hiddenSeries": false,
       "id": 57,
@@ -2337,7 +2436,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 118
+        "y": 119
       },
       "hiddenSeries": false,
       "id": 59,
@@ -2436,7 +2535,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 125
+        "y": 126
       },
       "hiddenSeries": false,
       "id": 36,
@@ -2527,7 +2626,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 125
+        "y": 126
       },
       "hiddenSeries": false,
       "id": 55,
@@ -2637,7 +2736,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 125
+        "y": 126
       },
       "hiddenSeries": false,
       "id": 40,
@@ -2747,7 +2846,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 134
+        "y": 135
       },
       "id": 22,
       "panels": [],
@@ -2778,7 +2877,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 135
+        "y": 136
       },
       "hiddenSeries": false,
       "id": 32,
@@ -2872,7 +2971,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 135
+        "y": 136
       },
       "hiddenSeries": false,
       "id": 34,
@@ -2972,7 +3071,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 144
+        "y": 145
       },
       "hiddenSeries": false,
       "id": 26,
@@ -3069,7 +3168,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 144
+        "y": 145
       },
       "hiddenSeries": false,
       "id": 61,
@@ -3166,7 +3265,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 153
+        "y": 154
       },
       "hiddenSeries": false,
       "id": 24,
@@ -3257,7 +3356,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 153
+        "y": 154
       },
       "hiddenSeries": false,
       "id": 63,
