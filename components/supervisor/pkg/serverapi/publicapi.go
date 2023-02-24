@@ -125,7 +125,7 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 	)
 
 	// public api
-	service.tryConnToPublicAPI()
+	service.tryConnToPublicAPI(ctx)
 
 	service.usingPublicAPI.Store(experiments.SupervisorUsePublicAPI(ctx, service.experiments, experiments.Attributes{
 		UserID: cfg.OwnerID,
@@ -137,7 +137,7 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 	return service
 }
 
-func (s *Service) tryConnToPublicAPI() {
+func (s *Service) tryConnToPublicAPI(ctx context.Context) {
 	endpoint := fmt.Sprintf("api.%s:443", s.cfg.Host)
 	log.WithField("endpoint", endpoint).Info("connecting to PublicAPI...")
 	opts := []grpc.DialOption{
@@ -161,6 +161,10 @@ func (s *Service) tryConnToPublicAPI() {
 		log.WithError(err).Errorf("failed to dial public api %s", endpoint)
 	} else {
 		s.publicAPIConn = conn
+		go func() {
+			<-ctx.Done()
+			s.publicAPIConn.Close()
+		}()
 	}
 }
 
@@ -289,9 +293,7 @@ func (s *Service) onInstanceUpdates(ctx context.Context) {
 				if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) {
 					continue
 				}
-				if status.Code(err) != codes.Unavailable {
-					log.WithField("method", "InstanceUpdates").WithError(err).Error("failed to listen")
-				}
+				log.WithField("method", "InstanceUpdates").WithError(err).Error("failed to listen")
 				cancel()
 				time.Sleep(time.Second * 2)
 				cancel = processUpdate(s.usePublicAPI(ctx))
@@ -346,7 +348,7 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan erro
 		resp, err := resp.Recv()
 		if err != nil {
 			code := status.Code(err)
-			if err != io.EOF && ctx.Err() == nil && code != codes.Unavailable && code != codes.Canceled {
+			if err != io.EOF && ctx.Err() == nil && code != codes.Canceled {
 				log.WithField("method", "StreamWorkspaceStatus").WithError(err).Error("failed to receive status update")
 			}
 			if ctx.Err() != nil || code == codes.Canceled {
