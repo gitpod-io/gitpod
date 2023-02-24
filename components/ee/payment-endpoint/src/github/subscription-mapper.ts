@@ -75,6 +75,12 @@ export class GithubSubscriptionMapper {
         plan: Plan,
         model: SubscriptionModel,
     ) {
+        if (Plans.isFreePlan(plan.chargebeeId)) {
+            // don't sync free plans, as we cover those explicitly
+            log.debug({ userId: user.id }, "skip syncing purchased free plan", { plan });
+            return;
+        }
+
         model.add(
             Subscription.create({
                 userId: user.id,
@@ -119,13 +125,13 @@ export class GithubSubscriptionMapper {
     public mapSubscriptionChange(user: User, context: ChangeContext, model: SubscriptionModel) {
         const { prevPlan, oldSubscription, newAmount, newStartDate, newPlan } = context;
 
-        if (prevPlan.type == "free") {
+        if (Plans.isFreePlan(prevPlan.type)) {
             // we've changed from the free plan which means we've purchased a new subscription
             log.debug({ userId: user.id }, "upgrading from free plan");
             this.mapSubscriptionPurchase(user, context.accountID, context.effectiveDate, newPlan, model);
             return;
         }
-        if (newPlan.type == "free") {
+        if (Plans.isFreePlan(newPlan.type)) {
             // we've changed to the free plan which means we're canceling the current subscription
             log.debug({ userId: user.id }, "downgrading to free plan");
             this.mapSubscriptionCancel(user.id, new Date().toISOString(), model);
