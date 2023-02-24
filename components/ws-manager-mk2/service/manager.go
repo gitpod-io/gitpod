@@ -154,7 +154,15 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		})
 	}
 
-	class, ok := wsm.Config.WorkspaceClasses[req.Spec.Class]
+	var classID string
+	_, ok := wsm.Config.WorkspaceClasses[req.Spec.Class]
+	if !ok {
+		classID = config.DefaultWorkspaceClass
+	} else {
+		classID = req.Spec.Class
+	}
+
+	class, ok := wsm.Config.WorkspaceClasses[classID]
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument, "workspace class \"%s\" is unknown", req.Spec.Class)
 	}
@@ -206,7 +214,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 				WorkspaceID: req.Metadata.MetaId,
 			},
 			Type:  workspaceType,
-			Class: req.Spec.Class,
+			Class: classID,
 			Image: workspacev1.WorkspaceImages{
 				Workspace: workspacev1.WorkspaceImage{
 					Ref: pointer.String(req.Spec.WorkspaceImage),
@@ -254,7 +262,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return false, nil
 	})
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "cannot wait for workspace URL")
+		return nil, status.Errorf(codes.FailedPrecondition, "cannot wait for workspace URL: %q", err)
 	}
 
 	return &wsmanapi.StartWorkspaceResponse{
