@@ -1,6 +1,7 @@
 # Change Log
 
 ## February 2023
+- We've introduced a new onboarding flow to help user's customize Gitpod and get to know their needs better. ([#16501](https://github.com/gitpod-io/gitpod/pull/16501)) - [@selfcontained](https://github.com/selfcontained)
 - Run solely on cgroup v2 systems ([#16500](https://github.com/gitpod-io/gitpod/pull/16500)) - [@csweichel](https://github.com/csweichel)
 - add app-level notifications for switching to Pay-as-you-go ([#16490](https://github.com/gitpod-io/gitpod/pull/16490)) - [@geropl](https://github.com/geropl)
 - Improve the checkmark icon for the selected organization in the org selector ([#16495](https://github.com/gitpod-io/gitpod/pull/16495)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
