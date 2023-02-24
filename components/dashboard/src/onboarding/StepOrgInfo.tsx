@@ -6,6 +6,7 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useMemo, useState } from "react";
+import { CheckboxInput } from "../components/forms/CheckboxInput";
 import { InputField } from "../components/forms/InputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import { TextInputField } from "../components/forms/TextInputField";
@@ -190,50 +191,38 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
             <InputField label="I'm exploring Gitpod..." />
             <div className="mt-4 ml-2 space-y-2">
                 {explorationReasonsOptions.map((o) => (
-                    <div key={o.value} className="flex space-x-2 justify-start items-center">
-                        <input
-                            type="checkbox"
-                            className="rounded"
-                            value={o.value}
-                            id={`explore_${o.value}`}
-                            checked={explorationReasons.includes(o.value)}
-                            onChange={(e) => {
-                                if (e.target.checked) {
-                                    addExplorationReason(o.value);
-                                } else {
-                                    removeExplorationReason(o.value);
-                                }
-                            }}
-                        />
-                        <label className="text-sm dark:text-gray-400 text-gray-600" htmlFor={`explore_${o.value}`}>
-                            {o.label}
-                        </label>
-                    </div>
+                    <CheckboxInput
+                        key={o.value}
+                        value={o.value}
+                        label={o.label}
+                        checked={explorationReasons.includes(o.value)}
+                        onChange={(checked) => {
+                            if (checked) {
+                                addExplorationReason(o.value);
+                            } else {
+                                removeExplorationReason(o.value);
+                            }
+                        }}
+                    />
                 ))}
             </div>
 
             <InputField label="I'm signing up for Gitpod to..." />
             <div className="mt-4 ml-2 space-y-2">
                 {signupGoalsOptions.map((o) => (
-                    <div key={o.value} className="flex space-x-2 justify-start items-center">
-                        <input
-                            type="checkbox"
-                            className="rounded"
-                            value={o.value}
-                            id={`goals_${o.value}`}
-                            checked={signupGoals.includes(o.value)}
-                            onChange={(e) => {
-                                if (e.target.checked) {
-                                    addSignupGoal(o.value);
-                                } else {
-                                    removeSignupGoal(o.value);
-                                }
-                            }}
-                        />
-                        <label className="text-sm dark:text-gray-400 text-gray-600" htmlFor={`goals_${o.value}`}>
-                            {o.label}
-                        </label>
-                    </div>
+                    <CheckboxInput
+                        key={o.value}
+                        value={o.value}
+                        label={o.label}
+                        checked={signupGoals.includes(o.value)}
+                        onChange={(checked) => {
+                            if (checked) {
+                                addSignupGoal(o.value);
+                            } else {
+                                removeSignupGoal(o.value);
+                            }
+                        }}
+                    />
                 ))}
             </div>
 
