@@ -15,6 +15,7 @@ import { StepOrgInfo } from "./StepOrgInfo";
 import { StepPersonalize } from "./StepPersonalize";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import Alert from "../components/Alert";
+import { useConfetti } from "../contexts/ConfettiContext";
 
 // This param is optionally present to force an onboarding flow
 // Can be used if other conditions aren't true, i.e. if user has already onboarded, but we want to force the flow again
@@ -34,6 +35,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
     const location = useLocation();
     const { setUser } = useContext(UserContext);
     const updateUser = useUpdateCurrentUserMutation();
+    const { dropConfetti } = useConfetti();
 
     const [step, setStep] = useState(STEPS.ONE);
     const [completingError, setCompletingError] = useState("");
@@ -73,6 +75,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
 
                 try {
                     const onboardedUser = await updateUser.mutateAsync(updates);
+                    dropConfetti();
                     setUser(onboardedUser);
 
                     // Look for the `onboarding=force` query param, and remove if present
@@ -86,6 +89,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                         });
                     }
                 } catch (e) {
+                    console.log("error caught", e);
                     console.error(e);
                     setCompletingError("There was a problem completing your onboarding");
                 }
@@ -101,6 +105,7 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
             location.pathname,
             location.search,
             setUser,
+            dropConfetti,
             updateUser,
         ],
     );
