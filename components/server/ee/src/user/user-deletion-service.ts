@@ -77,11 +77,12 @@ export class UserDeletionServiceEE extends UserDeletionService {
                     });
                 }
             }
-            // Also cancel any usage-based (Stripe) subscription
-            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
-                AttributionId.render({ kind: "user", userId: user.id }),
-            );
+            let subscriptionId;
             try {
+                // Also cancel any usage-based (Stripe) subscription
+                subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
+                    AttributionId.render({ kind: "user", userId: user.id }),
+                );
                 if (subscriptionId) {
                     await this.stripeService.cancelSubscription(subscriptionId);
                 }
@@ -91,9 +92,9 @@ export class UserDeletionServiceEE extends UserDeletionService {
             }
         }
 
-        await super.deleteUser(id);
         if (errors.length > 0) {
             throw new Error(errors.join("\n"));
         }
+        await super.deleteUser(id);
     }
 }
