@@ -256,6 +256,7 @@ export interface AdditionalUserData {
     isMigratedToTeamOnlyAttribution?: boolean;
     // user globol workspace timeout
     workspaceTimeout?: string;
+    // control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
     disabledClosedTimeout?: boolean;
 }
 export namespace AdditionalUserData {
