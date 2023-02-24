@@ -10,7 +10,6 @@ import {
     ContentStatusResponse,
 } from "@gitpod/supervisor-api-grpc/lib/status_pb";
 import { WorkspaceInfoResponse } from "@gitpod/supervisor-api-grpc/lib/info_pb";
-
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 export class SupervisorServiceClient {
@@ -26,10 +25,46 @@ export class SupervisorServiceClient {
     readonly ideReady = this.supervisorReady.then(() => this.checkReady("ide"));
     readonly contentReady = Promise.all([this.supervisorReady]).then(() => this.checkReady("content"));
     readonly getWorkspaceInfoPromise = this.supervisorReady.then(() => this.getWorkspaceInfo());
+    readonly supervisorWillShutdown = this.supervisorReady.then(() => this.checkWillShutdown());
 
     private constructor() {}
 
-    private async checkReady(kind: "content" | "ide" | "supervisor", delay?: boolean): Promise<any> {
+    private async checkWillShutdown(delay = false): Promise<void> {
+        if (delay) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        try {
+            const wsSupervisorStatusUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href).with((url) => {
+                return {
+                    pathname: "/_supervisor/v1/status/supervisor/willShutdown/true",
+                };
+            });
+            const response = await fetch(wsSupervisorStatusUrl.toString(), { credentials: "include" });
+            let result;
+            if (response.ok) {
+                result = await response.json();
+                if ((result as SupervisorStatusResponse.AsObject).ok) {
+                    return;
+                }
+            }
+            if (response.status === 502) {
+                // bad gateway, supervisor is gone
+                return
+            }
+            console.debug(
+                `failed to check whether is about to shutdown, trying again...`,
+                response.status,
+                response.statusText,
+                JSON.stringify(result, undefined, 2),
+            );
+        } catch (e) {
+            // network errors
+            console.debug(`failed to check whether is about to shutdown, trying again...`, e);
+        }
+        await this.checkWillShutdown(true);
+    }
+
+    private async checkReady(kind: "content" | "ide" | "supervisor" , delay?: boolean): Promise<any> {
         if (delay) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }

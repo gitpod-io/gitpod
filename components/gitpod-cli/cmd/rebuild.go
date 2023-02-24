@@ -306,9 +306,9 @@ Connect using SSH keys (https://gitpod.io/keys):
 %s
 
 %s`, sep, workspaceUrl, ssh, sep)
-		err := notify(ctx, supervisorClient, workspaceUrl.String(), "The workspace is UP.")
+		err := openWindow(ctx, workspaceUrl.String())
 		if err != nil && ctx.Err() == nil {
-			log.WithError(err).Error("failed to notify")
+			log.WithError(err).Error("failed to open window")
 		}
 	}()
 
@@ -408,26 +408,15 @@ func setLoggerFormatter(logger *logrus.Logger) {
 	})
 }
 
-func notify(ctx context.Context, supervisorClient *supervisor.SupervisorClient, workspaceUrl, message string) error {
-	response, err := supervisorClient.Notification.Notify(ctx, &api.NotifyRequest{
-		Level:   api.NotifyRequest_INFO,
-		Message: message,
-		Actions: []string{"Open"},
-	})
+func openWindow(ctx context.Context, workspaceUrl string) error {
+	gpPath, err := exec.LookPath("gp")
 	if err != nil {
 		return err
 	}
-	if response.Action == "Open" {
-		gpPath, err := exec.LookPath("gp")
-		if err != nil {
-			return err
-		}
-		gpCmd := exec.CommandContext(ctx, gpPath, "preview", "--external", workspaceUrl)
-		gpCmd.Stdout = os.Stdout
-		gpCmd.Stderr = os.Stderr
-		return gpCmd.Run()
-	}
-	return nil
+	gpCmd := exec.CommandContext(ctx, gpPath, "preview", "--external", workspaceUrl)
+	gpCmd.Stdout = os.Stdout
+	gpCmd.Stderr = os.Stderr
+	return gpCmd.Run()
 }
 
 var rebuildOpts struct {

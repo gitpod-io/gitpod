@@ -55,6 +55,7 @@ import * as IDEWorker from "./ide/ide-worker";
 import * as IDEWebSocket from "./ide/ide-web-socket";
 import { SupervisorServiceClient } from "./ide/supervisor-service-client";
 import * as LoadingFrame from "./shared/loading-frame";
+import { workspaceUrl } from "./shared/urls";
 
 window.gitpod = {} as any;
 IDEWorker.install();
@@ -248,11 +249,15 @@ LoadingFrame.load().then(async (loading) => {
     })();
 
     (async () => {
+        const debugWorkspace = workspaceUrl.debugWorkspace;
         //#region ide lifecycle
         function isWorkspaceInstancePhase(phase: WorkspaceInstancePhase): boolean {
             return frontendDashboardServiceClient.latestInfo?.statusPhase === phase;
         }
         if (!isWorkspaceInstancePhase("running")) {
+            if (debugWorkspace && frontendDashboardServiceClient.latestInfo) {
+                window.open('', '_self')?.close()
+            }
             await new Promise<void>((resolve) => {
                 frontendDashboardServiceClient.onInfoUpdate((status) => {
                     if (status.statusPhase === "running") {
@@ -262,6 +267,11 @@ LoadingFrame.load().then(async (loading) => {
             });
         }
         const supervisorServiceClient = SupervisorServiceClient.get();
+        if (debugWorkspace) {
+            supervisorServiceClient.supervisorWillShutdown.then(() => {
+                window.open('', '_self')?.close()
+            })
+        }
         const [ideStatus] = await Promise.all([
             supervisorServiceClient.ideReady,
             supervisorServiceClient.contentReady,
