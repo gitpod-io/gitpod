@@ -22,7 +22,7 @@ export const InputField: FunctionComponent<Props> = memo(({ label, id, hint, err
             {label && (
                 <label
                     className={classNames(
-                        "text-md font-bold dark:text-gray-400",
+                        "text-md font-semibold dark:text-gray-400",
                         error ? "text-red-600" : "text-gray-600",
                     )}
                     htmlFor={id}
