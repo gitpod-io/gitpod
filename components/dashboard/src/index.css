@@ -85,6 +85,8 @@
     input[type="tel"],
     input[type="number"],
     input[type="password"],
+    input[type="email"],
+    input[type="url"],
     select {
         @apply block w-56 text-gray-600 dark:text-gray-400 dark:bg-gray-800 bg-white rounded-md border border-gray-300 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400 focus:ring-0;
     }
@@ -93,7 +95,9 @@
     input[type="tel"]::placeholder,
     input[type="number"]::placeholder,
     input[type="search"]::placeholder,
-    input[type="password"]::placeholder {
+    input[type="password"]::placeholder,
+    input[type="email"]::placeholder,
+    input[type="url"]::placeholder {
         @apply text-gray-400 dark:text-gray-500;
     }
     input[type="text"].error,
@@ -101,6 +105,8 @@
     input[type="number"].error,
     input[type="search"].error,
     input[type="password"].error,
+    input[type="email"].error,
+    input[type="url"].error,
     select.error {
         @apply border-gitpod-red dark:border-gitpod-red focus:border-gitpod-red dark:focus:border-gitpod-red;
     }

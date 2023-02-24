@@ -238,6 +238,9 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	for _, env := range debugEnvs.Envs {
 		envs += env + "\n"
 	}
+	for _, env := range rebuildOpts.GitpodEnvs {
+		envs += env + "\n"
+	}
 	for _, env := range workspaceEnvs {
 		envs += fmt.Sprintf("%s=%s\n", env.Name, env.Value)
 	}
@@ -303,9 +306,9 @@ Connect using SSH keys (https://gitpod.io/keys):
 %s
 
 %s`, sep, workspaceUrl, ssh, sep)
-		err := notify(ctx, supervisorClient, workspaceUrl.String(), "The workspace is UP.")
+		err := openWindow(ctx, workspaceUrl.String())
 		if err != nil && ctx.Err() == nil {
-			log.WithError(err).Error("failed to notify")
+			log.WithError(err).Error("failed to open window")
 		}
 	}()
 
@@ -405,26 +408,15 @@ func setLoggerFormatter(logger *logrus.Logger) {
 	})
 }
 
-func notify(ctx context.Context, supervisorClient *supervisor.SupervisorClient, workspaceUrl, message string) error {
-	response, err := supervisorClient.Notification.Notify(ctx, &api.NotifyRequest{
-		Level:   api.NotifyRequest_INFO,
-		Message: message,
-		Actions: []string{"Open"},
-	})
+func openWindow(ctx context.Context, workspaceUrl string) error {
+	gpPath, err := exec.LookPath("gp")
 	if err != nil {
 		return err
 	}
-	if response.Action == "Open" {
-		gpPath, err := exec.LookPath("gp")
-		if err != nil {
-			return err
-		}
-		gpCmd := exec.CommandContext(ctx, gpPath, "preview", "--external", workspaceUrl)
-		gpCmd.Stdout = os.Stdout
-		gpCmd.Stderr = os.Stderr
-		return gpCmd.Run()
-	}
-	return nil
+	gpCmd := exec.CommandContext(ctx, gpPath, "preview", "--external", workspaceUrl)
+	gpCmd.Stdout = os.Stdout
+	gpCmd.Stderr = os.Stderr
+	return gpCmd.Run()
 }
 
 var rebuildOpts struct {
@@ -432,6 +424,9 @@ var rebuildOpts struct {
 	LogLevel        string
 	From            string
 	Prebuild        bool
+
+	// internal
+	GitpodEnvs []string
 }
 
 var rebuildCmd = &cobra.Command{
@@ -467,4 +462,8 @@ func init() {
 	rebuildCmd.PersistentFlags().StringVarP(&rebuildOpts.LogLevel, "log", "", "error", "Log level to use. Allowed values are 'error', 'warn', 'info', 'debug', 'trace'.")
 	rebuildCmd.PersistentFlags().StringVarP(&rebuildOpts.From, "from", "", "", "Starts from 'prebuild' or 'snapshot'.")
 	rebuildCmd.PersistentFlags().BoolVarP(&rebuildOpts.Prebuild, "prebuild", "", false, "starts as a prebuild workspace (--from is ignored).")
+
+	// internal
+	rebuildCmd.PersistentFlags().StringArrayVarP(&rebuildOpts.GitpodEnvs, "gitpod-env", "", nil, "")
+	rebuildCmd.PersistentFlags().MarkHidden("gitpod-env")
 }

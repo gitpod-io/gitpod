@@ -3397,6 +3397,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+    async tsCancel(ctx: TraceContext, teamSubscriptionId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
     async tsGetSlots(ctx: TraceContext): Promise<TeamSubscriptionSlotResolved[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }

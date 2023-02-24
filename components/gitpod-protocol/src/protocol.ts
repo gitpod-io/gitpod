@@ -153,12 +153,21 @@ export namespace User {
         user.additionalData.ideSettings = newIDESettings;
     }
 
+    // TODO: make it more explicit that these field names are relied for our tracking purposes
+    // and decouple frontend from relying on them - instead use user.additionalData.profile object directly in FE
     export function getProfile(user: User): Profile {
         return {
             name: User.getName(user!) || "",
             email: User.getPrimaryEmail(user!) || "",
             company: user?.additionalData?.profile?.companyName,
             avatarURL: user?.avatarUrl,
+            companyWebsite: user?.additionalData?.profile?.companyWebsite,
+            jobRole: user?.additionalData?.profile?.jobRole,
+            jobRoleOther: user?.additionalData?.profile?.jobRoleOther,
+            explorationReasons: user?.additionalData?.profile?.explorationReasons,
+            signupGoals: user?.additionalData?.profile?.signupGoals,
+            signupGoalsOther: user?.additionalData?.profile?.signupGoalsOther,
+            onboardedTimestamp: user?.additionalData?.profile?.onboardedTimestamp,
         };
     }
 
@@ -190,12 +199,21 @@ export namespace User {
         return AttributionId.create(user);
     }
 
+    // TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
+    // Let other places rely on the ProfileDetails type since that's what we store
     // The actual Profile of a User
     export interface Profile {
         name: string;
         email: string;
         company?: string;
         avatarURL?: string;
+        companyWebsite?: string;
+        jobRole?: string;
+        jobRoleOther?: string;
+        explorationReasons?: string[];
+        signupGoals?: string[];
+        signupGoalsOther?: string;
+        onboardedTimestamp?: string;
     }
     export namespace Profile {
         export function hasChanges(before: Profile, after: Profile) {
@@ -203,7 +221,13 @@ export namespace User {
                 before.name !== after.name ||
                 before.email !== after.email ||
                 before.company !== after.company ||
-                before.avatarURL !== after.avatarURL
+                before.avatarURL !== after.avatarURL ||
+                before.companyWebsite !== after.companyWebsite ||
+                before.jobRole !== after.jobRole ||
+                before.jobRoleOther !== after.jobRoleOther ||
+                // not checking explorationReasons or signupGoals atm as it's an array - need to check deep equality
+                before.signupGoalsOther !== after.signupGoalsOther ||
+                before.onboardedTimestamp !== after.onboardedTimestamp
             );
         }
     }
@@ -260,10 +284,14 @@ export interface ProfileDetails {
     jobRole?: string;
     // freeform entry for job role user works in (when jobRole is "other")
     jobRoleOther?: string;
+    // Reasons user is exploring Gitpod when they signed up
+    explorationReasons?: string[];
     // what user hopes to accomplish when they signed up
-    signupGoals?: string;
+    signupGoals?: string[];
     // freeform entry for signup goals (when signupGoals is "other")
     signupGoalsOther?: string;
+    // Set after a user completes the onboarding flow
+    onboardedTimestamp?: string;
 }
 
 export interface EmailNotificationSettings {

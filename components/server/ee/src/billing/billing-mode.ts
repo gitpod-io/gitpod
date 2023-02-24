@@ -102,21 +102,21 @@ export class BillingModesImpl implements BillingModes {
             );
         }
 
-        // Stripe: Active personal subsciption?
+        // 1.1 Gather data: Stripe: Active personal subsciption?
         let hasUbbPersonal = false;
         const billingStrategy = await this.usageService.getCurrentBillingStategy({ kind: "user", userId: user.id });
         if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
             hasUbbPersonal = true;
         }
 
-        // 1. UBB enabled?
+        // 1.2 UBB enabled?
         if (!isUsageBasedBillingEnabled && !hasUbbPersonal) {
             // UBB is not enabled: definitely chargebee
             // EXCEPT we're doing a rollback
             return { mode: "chargebee" };
         }
 
-        // 2. Any personal subscriptions?
+        // 2.1 Gather data: Chargebee personal
         // Chargebee takes precedence
         const cbSubscriptions = await this.subscriptionSvc.getActivePaidSubscription(user.id, now);
         const cbTeamSubscriptions = cbSubscriptions.filter((s) => Subscription.isOldTeamSubscription(s));
@@ -127,20 +127,7 @@ export class BillingModesImpl implements BillingModes {
             await this.teamSubscriptionDb.findTeamSubscriptions({ userId: user.id })
         ).filter((ts) => TeamSubscription.isActive(ts, now.toISOString()));
 
-        let canUpgradeToUBB: boolean | undefined = undefined;
-        if (cbPersonalSubscriptions.length > 0) {
-            if (cbPersonalSubscriptions.every((s) => Subscription.isCancelled(s, now.toISOString()))) {
-                // The user has one or more paid subscriptions, but all of them have already been cancelled
-                canUpgradeToUBB = true;
-            } else {
-                // The user has at least one paid personal subscription
-                return {
-                    mode: "chargebee",
-                };
-            }
-        }
-
-        // 3. Check team memberships/plans
+        // 2.2 Gather data: Chargebee team memberships/plans
         // UBB overrides wins if there is _any_. But if there is none, use the existing Chargebee subscription.
         const teamsModes = await Promise.all(teams.map((t) => this.getBillingModeForTeam(t, now)));
         const hasUbbPaidTeamMembership = teamsModes.some((tm) => tm.mode === "usage-based" && !!tm.paid);
@@ -159,10 +146,33 @@ export class BillingModesImpl implements BillingModes {
             return result;
         }
 
-        if (hasUbbPaidTeamMembership || hasUbbPersonal) {
+        // 3.1: Personal UBB overrules everything
+        if (hasUbbPersonal) {
             // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
             return usageBased();
         }
+
+        // 3.2: Personal CB takes 2nd precedence
+        let canUpgradeToUBB: boolean | undefined = undefined;
+        if (cbPersonalSubscriptions.length > 0) {
+            if (cbPersonalSubscriptions.every((s) => Subscription.isCancelled(s, now.toISOString()))) {
+                // The user has one or more paid subscriptions, but all of them have already been cancelled
+                canUpgradeToUBB = true;
+            } else {
+                // The user has at least one paid personal subscription
+                return {
+                    mode: "chargebee",
+                };
+            }
+        }
+
+        // 3.3: 3rd is UBB membership
+        if (hasUbbPaidTeamMembership) {
+            // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
+            return usageBased();
+        }
+
+        // 3.4: 4th (fallback): Any CB seat/membership get's the rest
         if (hasCbPaidTeamMembership || hasCbPaidTeamSeat) {
             // Q: How to test the free-tier, then? A: Make sure you have no CB paid seats anymore
             // For that we lists all Team Subscriptions/Team Memberships that are "blocking" you, and display them in the UI somewhere.

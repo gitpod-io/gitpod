@@ -521,6 +521,8 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         periodStart: string,
         periodEnd: string,
     ): Promise<WorkspaceInstanceSessionWithWorkspace[]> {
+        // This is an optinmization, which also matches rules elsewhere. This is old code that's heading for the trash, so no need to couple it properly. :-)
+        const workspaceType: Workspace["type"] = "regular";
         const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
         // The query basically selects all workspace instances for the given owner, whose startDate is within the period, and which are either:
         //  - not stopped yet, or
@@ -538,11 +540,12 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                     FROM d_b_workspace_instance AS wsi
                     INNER JOIN d_b_workspace AS ws ON wsi.workspaceId = ws.id
                     WHERE ws.ownerId = ?
+                        AND ws.type = ?
                         AND wsi.startedTime < ?
                         AND (wsi.stoppedTime IS NULL OR wsi.stoppedTime = '' OR wsi.stoppedTime >= ? OR wsi.stoppingTime >= ?)
                     ORDER BY wsi.creationTime ASC;
             `,
-            [userId, periodEnd, periodStart, periodStart],
+            [userId, workspaceType, periodEnd, periodStart, periodStart],
         );
 
         const resultSessions: WorkspaceInstanceSessionWithWorkspace[] = [];

@@ -132,10 +132,13 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: test
           MYSQL_TCP_PORT: 23306
+        ports:
+          - 23306:23306
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
       env:
-        DB_HOST: mysql
+        DB_HOST: "mysql"
+        DB_PORT: "23306"
     steps:
       - uses: actions/checkout@v3
       - name: Configure workspace
@@ -196,6 +199,8 @@ jobs:
         shell: bash
         working-directory: /workspace/gitpod
         env:
+          DB_HOST: "mysql"
+          DB_PORT: "23306"
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
           SEGMENT_IO_TOKEN: '${{ steps.secrets.outputs.segment-io-token }}'

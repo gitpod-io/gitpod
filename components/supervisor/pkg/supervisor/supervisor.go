@@ -273,7 +273,7 @@ func Run(options ...RunOption) {
 	}
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
-	gitpodConfigService := config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
+	gitpodConfigService := config.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady())
 	go gitpodConfigService.Watch(ctx)
 
 	var exposedPorts ports.ExposedPortsInterface
@@ -297,7 +297,7 @@ func Run(options ...RunOption) {
 		topService.Observe(ctx)
 	}
 
-	if !cfg.isHeadless() && !opts.RunGP && !cfg.isDebugWorkspace() {
+	if !cfg.isHeadless() && !opts.RunGP {
 		go analyseConfigChanges(ctx, cfg, telemetry, gitpodConfigService)
 		go analysePerfChanges(ctx, cfg, telemetry, topService)
 	}
@@ -342,8 +342,10 @@ func Run(options ...RunOption) {
 
 	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil, ideReady, desktopIdeReady)
 
+	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
 	apiServices := []RegisterableService{
 		&statusService{
+			willShutdownCtx: willShutdownCtx,
 			ContentState:    cstate,
 			Ports:           portMgmt,
 			Tasks:           taskManager,
@@ -459,6 +461,7 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM (or shutdown) - tearing down")
+	fireWillShutdown()
 	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 	defer cancelTermination()
 	cancel()
@@ -1592,17 +1595,20 @@ func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, 
 		if !analyzer.analyze(used) {
 			return
 		}
-		log.WithField("buckets", analyzer.buckets).WithField("used", used).WithField("label", analyzer.label).Debug("gitpod perf analytics: changed")
-		w.Track(analytics.TrackMessage{
-			Identity: analytics.Identity{UserID: wscfg.OwnerId},
-			Event:    "gitpod_" + analyzer.label + "_changed",
-			Properties: map[string]interface{}{
-				"used":        used,
-				"buckets":     analyzer.buckets,
-				"instanceId":  wscfg.WorkspaceInstanceID,
-				"workspaceId": wscfg.WorkspaceID,
-			},
-		})
+		if wscfg.isDebugWorkspace() {
+			log.WithField("buckets", analyzer.buckets).WithField("used", used).WithField("label", analyzer.label).Info("gitpod perf analytics: changed")
+		} else {
+			w.Track(analytics.TrackMessage{
+				Identity: analytics.Identity{UserID: wscfg.OwnerId},
+				Event:    "gitpod_" + analyzer.label + "_changed",
+				Properties: map[string]interface{}{
+					"used":        used,
+					"buckets":     analyzer.buckets,
+					"instanceId":  wscfg.WorkspaceInstanceID,
+					"workspaceId": wscfg.WorkspaceID,
+				},
+			})
+		}
 	}
 
 	cpuAnalyzer := &PerfAnalyzer{label: "cpu", defs: []int{1, 2, 3, 4, 5, 6, 7, 8}}
@@ -1623,9 +1629,63 @@ func analysePerfChanges(ctx context.Context, wscfg *Config, w analytics.Writer, 
 	}
 }
 
+func analyzeImageFileChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface, debounceDuration time.Duration) {
+	var (
+		timer *time.Timer
+		mu    sync.Mutex
+	)
+	analyze := func(change *struct{}) {
+		mu.Lock()
+		defer mu.Unlock()
+		if timer != nil && !timer.Stop() {
+			<-timer.C
+		}
+		timer = time.AfterFunc(debounceDuration, func() {
+			mu.Lock()
+			defer mu.Unlock()
+			timer = nil
+			msg := analytics.TrackMessage{
+				Identity: analytics.Identity{UserID: wscfg.OwnerId},
+				Event:    "gitpod_image_file_changed",
+				Properties: map[string]interface{}{
+					"instanceId":  wscfg.WorkspaceInstanceID,
+					"workspaceId": wscfg.WorkspaceID,
+					"exists":      change != nil,
+				},
+			}
+			if !wscfg.isDebugWorkspace() {
+				w.Track(msg)
+			} else {
+				log.WithField("msg", msg).Info("gitpod config analytics: image file changed")
+			}
+		})
+	}
+	changes := cfgobs.ObserveImageFile(ctx)
+	initial := true
+	for {
+		select {
+		case change, ok := <-changes:
+			if !ok {
+				return
+			}
+			if initial {
+				// only report changes, not initial state
+				initial = false
+			} else {
+				analyze(change)
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer, cfgobs config.ConfigInterface) {
 	var analyzer *config.ConfigAnalyzer
 	log.Debug("gitpod config analytics: watching...")
+
+	debounceDuration := 5 * time.Second
+	go analyzeImageFileChanges(ctx, wscfg, w, cfgobs, debounceDuration)
 
 	cfgs := cfgobs.Observe(ctx)
 	for {
@@ -1637,8 +1697,8 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 			if analyzer != nil {
 				analyzer.Analyse(cfg)
 			} else {
-				analyzer = config.NewConfigAnalyzer(log.Log, 5*time.Second, func(field string) {
-					w.Track(analytics.TrackMessage{
+				analyzer = config.NewConfigAnalyzer(log.Log, debounceDuration, func(field string) {
+					msg := analytics.TrackMessage{
 						Identity: analytics.Identity{UserID: wscfg.OwnerId},
 						Event:    "gitpod_config_changed",
 						Properties: map[string]interface{}{
@@ -1646,7 +1706,12 @@ func analyseConfigChanges(ctx context.Context, wscfg *Config, w analytics.Writer
 							"instanceId":  wscfg.WorkspaceInstanceID,
 							"workspaceId": wscfg.WorkspaceID,
 						},
-					})
+					}
+					if !wscfg.isDebugWorkspace() {
+						w.Track(msg)
+					} else {
+						log.WithField("msg", msg).Info("gitpod config analytics: config changed")
+					}
 				}, cfg)
 			}
 

@@ -25,6 +25,7 @@ import { isWebsiteSlug } from "./utils";
 
 import "./index.css";
 import { setupQueryClientProvider } from "./data/setup";
+import { ConfettiContextProvider } from "./contexts/ConfettiContext";
 
 const bootApp = () => {
     // gitpod.io specific boot logic
@@ -57,27 +58,29 @@ const bootApp = () => {
     ReactDOM.render(
         <React.StrictMode>
             <GitpodQueryClientProvider>
-                <UserContextProvider>
-                    <AdminContextProvider>
-                        <PaymentContextProvider>
-                            <LicenseContextProvider>
-                                <TeamsContextProvider>
-                                    <ProjectContextProvider>
-                                        <ThemeContextProvider>
-                                            <StartWorkspaceModalContextProvider>
-                                                <BrowserRouter>
-                                                    <FeatureFlagContextProvider>
-                                                        <App />
-                                                    </FeatureFlagContextProvider>
-                                                </BrowserRouter>
-                                            </StartWorkspaceModalContextProvider>
-                                        </ThemeContextProvider>
-                                    </ProjectContextProvider>
-                                </TeamsContextProvider>
-                            </LicenseContextProvider>
-                        </PaymentContextProvider>
-                    </AdminContextProvider>
-                </UserContextProvider>
+                <ConfettiContextProvider>
+                    <UserContextProvider>
+                        <AdminContextProvider>
+                            <PaymentContextProvider>
+                                <LicenseContextProvider>
+                                    <TeamsContextProvider>
+                                        <ProjectContextProvider>
+                                            <ThemeContextProvider>
+                                                <StartWorkspaceModalContextProvider>
+                                                    <BrowserRouter>
+                                                        <FeatureFlagContextProvider>
+                                                            <App />
+                                                        </FeatureFlagContextProvider>
+                                                    </BrowserRouter>
+                                                </StartWorkspaceModalContextProvider>
+                                            </ThemeContextProvider>
+                                        </ProjectContextProvider>
+                                    </TeamsContextProvider>
+                                </LicenseContextProvider>
+                            </PaymentContextProvider>
+                        </AdminContextProvider>
+                    </UserContextProvider>
+                </ConfettiContextProvider>
             </GitpodQueryClientProvider>
         </React.StrictMode>,
         document.getElementById("root"),

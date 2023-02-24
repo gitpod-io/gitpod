@@ -31,6 +31,10 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     const proxy = connectionProvider.createProxy<S>(host.toString(), undefined, {
         onerror: (event: any) => {
             log.error(event);
+            // don't show alert if dashboard is inside iframe (workspace origin)
+            if (window.top !== window.self && process.env.NODE_ENV === "production") {
+                return;
+            }
             if (numberOfErrors++ === 5) {
                 alert(
                     "We are having trouble connecting to the server.\nEither you are offline or websocket connections are blocked.",

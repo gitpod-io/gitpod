@@ -3893,11 +3893,11 @@ data:
             "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-b83d82b9ee293b0559f11d09977d0e8e914d73f5",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly",
             "imageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-8612f777fb5c44227ca6f2b91f40fa0929637e22",
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-266edb36ec96f3f0613715c6967fd4591fdd0569",
               "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
             ],
             "latestImageLayers": [
-              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-8612f777fb5c44227ca6f2b91f40fa0929637e22",
+              "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-266edb36ec96f3f0613715c6967fd4591fdd0569",
               "eu.gcr.io/gitpod-core-dev/build/ide/code-codehelper:test"
             ]
           },

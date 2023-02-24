@@ -19,6 +19,9 @@ service StatusService {
     rpc SupervisorStatus(SupervisorStatusRequest) returns (SupervisorStatusResponse) {
         option (google.api.http) = {
             get: "/v1/status/supervisor"
+            additional_bindings {
+                get: "/v1/status/supervisor/willShutdown/{willShutdown=true}",
+            }
         };
     }
 
@@ -81,7 +84,10 @@ service StatusService {
 
 }
 
-message SupervisorStatusRequest {}
+message SupervisorStatusRequest {
+    // if true this request will return either when it times out or when the supervisor is about to shutdown.
+    bool willShutdown = 1;
+}
 message SupervisorStatusResponse {
     bool ok = 1;
 }
