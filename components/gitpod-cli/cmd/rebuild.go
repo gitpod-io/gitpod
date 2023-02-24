@@ -238,6 +238,9 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	for _, env := range debugEnvs.Envs {
 		envs += env + "\n"
 	}
+	for _, env := range rebuildOpts.GitpodEnvs {
+		envs += env + "\n"
+	}
 	for _, env := range workspaceEnvs {
 		envs += fmt.Sprintf("%s=%s\n", env.Name, env.Value)
 	}
@@ -432,6 +435,9 @@ var rebuildOpts struct {
 	LogLevel        string
 	From            string
 	Prebuild        bool
+
+	// internal
+	GitpodEnvs []string
 }
 
 var rebuildCmd = &cobra.Command{
@@ -467,4 +473,8 @@ func init() {
 	rebuildCmd.PersistentFlags().StringVarP(&rebuildOpts.LogLevel, "log", "", "error", "Log level to use. Allowed values are 'error', 'warn', 'info', 'debug', 'trace'.")
 	rebuildCmd.PersistentFlags().StringVarP(&rebuildOpts.From, "from", "", "", "Starts from 'prebuild' or 'snapshot'.")
 	rebuildCmd.PersistentFlags().BoolVarP(&rebuildOpts.Prebuild, "prebuild", "", false, "starts as a prebuild workspace (--from is ignored).")
+
+	// internal
+	rebuildCmd.PersistentFlags().StringArrayVarP(&rebuildOpts.GitpodEnvs, "gitpod-env", "", nil, "")
+	rebuildCmd.PersistentFlags().MarkHidden("gitpod-env")
 }

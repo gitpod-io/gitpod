@@ -83,8 +83,10 @@ func TestPortsConfig(t *testing.T) {
 		t.Run(test.Desc, func(t *testing.T) {
 			configService := &testGitpodConfigService{
 				configs: make(chan *gitpod.GitpodConfig),
+				changes: make(chan *struct{}),
 			}
 			defer close(configService.configs)
+			defer close(configService.changes)
 
 			context, cancel := context.WithCancel(context.Background())
 			defer cancel()
@@ -128,6 +130,7 @@ type PortConfigTestExpectations struct {
 
 type testGitpodConfigService struct {
 	configs chan *gitpod.GitpodConfig
+	changes chan *struct{}
 }
 
 func (service *testGitpodConfigService) Watch(ctx context.Context) {
@@ -135,4 +138,8 @@ func (service *testGitpodConfigService) Watch(ctx context.Context) {
 
 func (service *testGitpodConfigService) Observe(ctx context.Context) <-chan *gitpod.GitpodConfig {
 	return service.configs
+}
+
+func (service *testGitpodConfigService) ObserveImageFile(ctx context.Context) <-chan *struct{} {
+	return service.changes
 }
