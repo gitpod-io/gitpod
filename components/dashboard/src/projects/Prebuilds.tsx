@@ -22,6 +22,7 @@ import { Link, Redirect } from "react-router-dom";
 import { Disposable } from "vscode-jsonrpc";
 import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
+import search from "../icons/search.svg";
 
 export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
     const currentProject = useCurrentProject();
@@ -142,23 +143,16 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                 />
             )}
             <div className={props.isAdminDashboard ? "" : "app-container"}>
-                <div className={props.isAdminDashboard ? "flex" : "flex mt-8"}>
-                    <div className="flex">
-                        <div className="py-4">
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 16 16"
-                                width="16"
-                                height="16"
-                            >
-                                <path
-                                    fill="#A8A29E"
-                                    d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"
-                                />
-                            </svg>
-                        </div>
+                <div className={props.isAdminDashboard ? "flex" : "flex mt-3 pb-3"}>
+                    <div className="flex relative h-10 my-auto">
+                        <img
+                            src={search}
+                            title="Search"
+                            className="filter-grayscale absolute top-3 left-3"
+                            alt="search icon"
+                        />
                         <input
+                            className="w-64 pl-9 border-0"
                             type="search"
                             placeholder="Search Prebuilds"
                             onChange={(e) => setSearchFilter(e.target.value)}
