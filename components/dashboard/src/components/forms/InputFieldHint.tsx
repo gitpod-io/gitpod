@@ -4,8 +4,21 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import classNames from "classnames";
 import { FC } from "react";
 
-export const InputFieldHint: FC = ({ children }) => {
-    return <span className="text-gray-500 dark:text-gray-400 text-sm">{children}</span>;
+type Props = {
+    disabled?: boolean;
+};
+export const InputFieldHint: FC<Props> = ({ disabled = false, children }) => {
+    return (
+        <span
+            className={classNames(
+                "text-sm",
+                disabled ? "text-gray-400 dark:text-gray-400" : "text-gray-500 dark:text-gray-400",
+            )}
+        >
+            {children}
+        </span>
+    );
 };

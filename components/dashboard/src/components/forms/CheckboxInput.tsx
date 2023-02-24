@@ -5,11 +5,25 @@
  */
 
 import classNames from "classnames";
-import { FC, useCallback } from "react";
+import { FC, ReactNode, useCallback } from "react";
 import { useId } from "../../hooks/useId";
+import { InputField } from "./InputField";
 import { InputFieldHint } from "./InputFieldHint";
 
-type Props = {
+type CheckboxInputFieldProps = {
+    label: string;
+    error?: ReactNode;
+    className?: string;
+};
+export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({ label, error, className, children }) => {
+    return (
+        <InputField label={label} className={className} error={error}>
+            <div className="space-y-2 ml-2">{children}</div>
+        </InputField>
+    );
+};
+
+type CheckboxInputProps = {
     id?: string;
     value: string;
     checked: boolean;
@@ -18,7 +32,15 @@ type Props = {
     hint?: string;
     onChange: (checked: boolean) => void;
 };
-export const CheckboxInput: FC<Props> = ({ id, value, label, hint, checked, disabled = false, onChange }) => {
+export const CheckboxInput: FC<CheckboxInputProps> = ({
+    id,
+    value,
+    label,
+    hint,
+    checked,
+    disabled = false,
+    onChange,
+}) => {
     const maybeId = useId();
     const elementId = id || maybeId;
 
@@ -33,9 +55,10 @@ export const CheckboxInput: FC<Props> = ({ id, value, label, hint, checked, disa
         <label className="flex space-x-2 justify-start items-start" htmlFor={elementId}>
             <input
                 type="checkbox"
-                // className="rounded border-2 mt-0.5 text-gray-600"
                 className={classNames(
-                    "h-4 w-4 focus:ring-0 mt-0.5 rounded cursor-pointer bg-transparent border-2 dark:filter-invert border-gray-600 dark:border-gray-900 focus:border-gray-900 dark:focus:border-gray-800",
+                    "h-4 w-4 mt-0.5 rounded cursor-pointer border-2 dark:filter-invert",
+                    "focus:ring-2 focus:border-gray-900 ring-blue-400 dark:focus:border-gray-800",
+                    "border-gray-600 dark:border-gray-900 bg-transparent",
                     { "bg-gray-600 dark:bg-gray-900": checked },
                 )}
                 value={value}
@@ -46,16 +69,15 @@ export const CheckboxInput: FC<Props> = ({ id, value, label, hint, checked, disa
             />
             <div className="flex flex-col">
                 <span
-                    // className="text-gray-600 dark:text-gray-400 text-sm"
                     className={classNames(
-                        "text-md font-semibold cursor-pointer tracking-wide",
+                        "text-sm font-semibold cursor-pointer",
                         disabled ? "text-gray-400 dark:text-gray-400" : "text-gray-600 dark:text-gray-100",
                     )}
                 >
                     {label}
                 </span>
 
-                {hint && <InputFieldHint>{hint}</InputFieldHint>}
+                {hint && <InputFieldHint disabled={disabled}>{hint}</InputFieldHint>}
             </div>
         </label>
     );

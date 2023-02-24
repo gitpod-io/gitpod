@@ -6,8 +6,7 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useMemo, useState } from "react";
-import { CheckboxInput } from "../components/forms/CheckboxInput";
-import { InputField } from "../components/forms/InputField";
+import { CheckboxInput, CheckboxInputField } from "../components/forms/CheckboxInput";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
@@ -188,8 +187,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 onBlur={websiteError.onBlur}
             />
 
-            <InputField label="I'm exploring Gitpod..." />
-            <div className="mt-4 ml-2 space-y-2">
+            <CheckboxInputField label="I'm exploring Gitpod...">
                 {explorationReasonsOptions.map((o) => (
                     <CheckboxInput
                         key={o.value}
@@ -205,17 +203,14 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                         }}
                     />
                 ))}
-            </div>
+            </CheckboxInputField>
 
-            <InputField label="I'm signing up for Gitpod to..." />
-            <div className="mt-4 ml-2 space-y-2">
+            <CheckboxInputField label="I'm signing up for Gitpod to...">
                 {signupGoalsOptions.map((o) => (
                     <CheckboxInput
                         key={o.value}
                         value={o.value}
                         label={o.label}
-                        disabled
-                        hint="this is just a test"
                         checked={signupGoals.includes(o.value)}
                         onChange={(checked) => {
                             if (checked) {
@@ -226,7 +221,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                         }}
                     />
                 ))}
-            </div>
+            </CheckboxInputField>
 
             {signupGoals.includes(SIGNUP_GOALS_OTHER) && (
                 <TextInputField value={signupGoalsOther} placeholder="Please specify" onChange={setSignupGoalsOther} />
