@@ -214,6 +214,8 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                         key={o.value}
                         value={o.value}
                         label={o.label}
+                        disabled
+                        hint="this is just a test"
                         checked={signupGoals.includes(o.value)}
                         onChange={(checked) => {
                             if (checked) {

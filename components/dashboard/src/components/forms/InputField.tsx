@@ -6,6 +6,7 @@
 
 import classNames from "classnames";
 import { FunctionComponent, memo, ReactNode } from "react";
+import { InputFieldHint } from "./InputFieldHint";
 
 type Props = {
     label?: ReactNode;
@@ -31,7 +32,7 @@ export const InputField: FunctionComponent<Props> = memo(({ label, id, hint, err
             )}
             {children}
             {error && <span className="text-red-500 text-sm">{error}</span>}
-            {hint && <span className="text-gray-500 text-sm">{hint}</span>}
+            {hint && <InputFieldHint>{hint}</InputFieldHint>}
         </div>
     );
 });
