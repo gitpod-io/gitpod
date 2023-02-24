@@ -169,7 +169,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 <TextInputField
                     value={jobRoleOther}
                     onChange={setJobRoleOther}
-                    placeholder="Please specify"
+                    placeholder="Please share (optional)"
                     hint={
                         jobRole === JOB_ROLE_OTHER
                             ? "Please select the role that best describes the type of work you'll use Gitpod for"
@@ -205,7 +205,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 ))}
             </CheckboxInputField>
 
-            <CheckboxInputField label="I'm signing up for Gitpod to...">
+            <CheckboxInputField label="I'm signing up for Gitpod for...">
                 {signupGoalsOptions.map((o) => (
                     <CheckboxInput
                         key={o.value}
@@ -224,7 +224,11 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
             </CheckboxInputField>
 
             {signupGoals.includes(SIGNUP_GOALS_OTHER) && (
-                <TextInputField value={signupGoalsOther} placeholder="Please specify" onChange={setSignupGoalsOther} />
+                <TextInputField
+                    value={signupGoalsOther}
+                    placeholder="Please share (optional)"
+                    onChange={setSignupGoalsOther}
+                />
             )}
         </OnboardingStep>
     );
