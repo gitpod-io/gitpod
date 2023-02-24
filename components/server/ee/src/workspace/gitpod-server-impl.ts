@@ -1700,6 +1700,32 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
     }
 
+    async tsCancel(ctx: TraceContext, teamSubscriptionId: string): Promise<void> {
+        traceAPIParams(ctx, { teamSubscriptionId });
+        const user = this.checkUser("tsCancel");
+
+        try {
+            const allTS = await this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
+            if (!allTS.find((ts) => ts.id === teamSubscriptionId)) {
+                log.error({ userId: user.id }, "Cannot cancel: unknown Team Subscription (legacy)", {
+                    teamSubscriptionId,
+                });
+                return;
+            }
+
+            await this.chargebeeService.cancelSubscription(
+                teamSubscriptionId,
+                {},
+                {
+                    teamSubscriptionId,
+                    kind: "Team Subscription (legacy)",
+                },
+            );
+        } catch (err) {
+            throw new ResponseError(ErrorCodes.PAYMENT_ERROR, `${err.api_error_code}: ${err.message}`);
+        }
+    }
+
     async tsGetSlots(ctx: TraceContext): Promise<TeamSubscriptionSlotResolved[]> {
         const user = this.checkUser("tsGetSlots");
         return this.teamSubscriptionService.findTeamSubscriptionSlotsBy(user.id, new Date());
@@ -2178,10 +2204,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!attrId) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
+
+        const switchToPAYG = await this.isEnabledSwitchToPAYG(user);
+
         let team: Team | undefined;
         if (attrId.kind === "team") {
             team = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
-            await this.ensureStripeApiIsAllowed({ team });
+            if (!switchToPAYG) {
+                await this.ensureStripeApiIsAllowed({ team });
+            }
         } else {
             if (attrId.userId !== user.id) {
                 throw new ResponseError(
@@ -2189,7 +2220,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                     "Cannot create Stripe customer profile for another user",
                 );
             }
-            await this.ensureStripeApiIsAllowed({ user });
+            if (!switchToPAYG) {
+                await this.ensureStripeApiIsAllowed({ user });
+            }
         }
 
         const billingEmail = User.getPrimaryEmail(user);
@@ -2246,14 +2279,19 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         const user = this.checkAndBlockUser("subscribeToStripe");
+        const switchToPAYG = await this.isEnabledSwitchToPAYG(user);
 
         let team: Team | undefined;
         try {
             if (attrId.kind === "team") {
                 team = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
-                await this.ensureStripeApiIsAllowed({ team });
+                if (!switchToPAYG) {
+                    await this.ensureStripeApiIsAllowed({ team });
+                }
             } else {
-                await this.ensureStripeApiIsAllowed({ user });
+                if (!switchToPAYG) {
+                    await this.ensureStripeApiIsAllowed({ user });
+                }
             }
             const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
             if (!customerId) {
@@ -2454,6 +2492,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
+    /**
+     * The "switchToPAYG" flag controls the nudge of subscribers to switch to PAYG.
+     */
+    protected async isEnabledSwitchToPAYG(user: User | undefined) {
+        return await this.configCatClientFactory().getValueAsync("switchToPAYG", false, {
+            user,
+        });
+    }
+
     protected async calculatePayAsYouGoNotifications(user: User): Promise<AppNotification[]> {
         const isEnabled = await this.configCatClientFactory().getValueAsync("showPaygNotifications", false, {
             user: this.user,
@@ -2462,10 +2509,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             return [];
         }
 
-        // The "switchToPAYG" flag guards the new UI in Dashboard
-        const switchToPAYG = await this.configCatClientFactory().getValueAsync("switchToPAYG", false, {
-            user: this.user,
-        });
+        const switchToPAYG = await this.isEnabledSwitchToPAYG(this.user);
 
         const result: AppNotification[] = [];
         const now = new Date();

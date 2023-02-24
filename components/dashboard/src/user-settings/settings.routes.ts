@@ -6,6 +6,7 @@
 
 export const settingsPathMain = "/user/settings";
 export const usagePathMain = "/usage";
+export const switchToPAYGPathMain = "/switch-to-payg";
 
 export const settingsPathAccount = "/user/account";
 export const settingsPathIntegrations = "/user/integrations";

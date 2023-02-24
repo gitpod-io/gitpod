@@ -206,6 +206,7 @@ const defaultFunctions: FunctionsConfig = {
     tsDeactivateSlot: { group: "default", points: 1 },
     getTeamSubscription: { group: "default", points: 1 },
     tsGet: { group: "default", points: 1 },
+    tsCancel: { group: "default", points: 1 },
     tsGetSlots: { group: "default", points: 1 },
     tsGetUnassignedSlot: { group: "default", points: 1 },
     tsReactivateSlot: { group: "default", points: 1 },
