@@ -10660,7 +10660,7 @@ spec:
           value: info
         - name: JAEGER_DISABLED
           value: "true"
-        image: eu.gcr.io/gitpod-core-dev/build/image-builder-mk3-wsman:test
+        image: eu.gcr.io/gitpod-core-dev/build/image-builder-mk3:test
         imagePullPolicy: IfNotPresent
         name: image-builder-mk3-wsman
         ports:
