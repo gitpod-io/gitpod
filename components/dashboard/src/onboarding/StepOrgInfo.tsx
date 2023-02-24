@@ -6,7 +6,7 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useMemo, useState } from "react";
-import { CheckboxInput, CheckboxInputField } from "../components/forms/CheckboxInput";
+import { CheckboxInput, CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
