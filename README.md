@@ -3,7 +3,7 @@
     <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/src/icons/gitpod.svg" alt="Gitpod Logo" height="60" />
     <br />
     <strong>Gitpod</strong>
-  </a>
+  </a>1
   <br />
   <span>Always ready-to-code.</span>
 </p>
