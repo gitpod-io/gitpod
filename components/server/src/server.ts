@@ -166,7 +166,17 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
              */
             const verifyClient: ws.VerifyClientCallbackAsync = async (info, callback) => {
                 let authenticatedUsingBearerToken = false;
-                if (info.req.url === "/v1") {
+
+                try {
+                    await this.bearerAuth.auth(info.req as express.Request);
+                    authenticatedUsingBearerToken = true;
+                } catch (e) {
+                    authenticatedUsingBearerToken = false;
+                }
+
+                log.warn("authenticatedUsingBearerToken: " + authenticatedUsingBearerToken);
+
+                if (authenticatedUsingBearerToken || info.req.url === "/v1") {
                     // Connection attempt with Bearer-Token: be less strict for now
                     if (!verifyOrigin(info.origin, false)) {
                         log.warn("Websocket connection attempt with non-matching Origin header: " + info.origin);
