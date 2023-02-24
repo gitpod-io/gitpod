@@ -93,6 +93,7 @@ func (service *ideReadyState) Set(ready bool, info *DesktopIDEStatus) {
 }
 
 type statusService struct {
+	willShutdownCtx context.Context
 	ContentState    ContentState
 	Ports           *ports.Manager
 	Tasks           *tasksManager
@@ -111,7 +112,21 @@ func (s *statusService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string)
 	return api.RegisterStatusServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
 }
 
-func (s *statusService) SupervisorStatus(context.Context, *api.SupervisorStatusRequest) (*api.SupervisorStatusResponse, error) {
+func (s *statusService) SupervisorStatus(ctx context.Context, req *api.SupervisorStatusRequest) (*api.SupervisorStatusResponse, error) {
+	if req.WillShutdown {
+		if s.willShutdownCtx.Err() != nil {
+			return &api.SupervisorStatusResponse{Ok: true}, nil
+		}
+		select {
+		case <-ctx.Done():
+			if errors.Is(ctx.Err(), context.Canceled) {
+				return nil, status.Error(codes.Canceled, "execution canceled")
+			}
+			return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
+		case <-s.willShutdownCtx.Done():
+			return &api.SupervisorStatusResponse{Ok: true}, nil
+		}
+	}
 	return &api.SupervisorStatusResponse{Ok: true}, nil
 }
 

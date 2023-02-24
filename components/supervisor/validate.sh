@@ -20,4 +20,10 @@ sudo rm -rf "/.supervisor/$COMPONENT" && true
 sudo mv ./"$COMPONENT" /.supervisor
 echo "$COMPONENT in /.supervisor replaced"
 
+yarn --cwd "$DIR/frontend" run build
+
+sudo rm -rf /.supervisor/frontend && true
+sudo ln -s "$DIR/frontend/dist" /.supervisor/frontend
+echo "$DIR/frontend/dist linked in /.supervisor/frontend"
+
 gp rebuild --workspace-folder="$ROOT_DIR/dev/ide/example/workspace" --gitpod-env "GITPOD_ANALYTICS_SEGMENT_KEY=YErmvd89wPsrCuGcVnF2XAl846W9WIGl" "$@"

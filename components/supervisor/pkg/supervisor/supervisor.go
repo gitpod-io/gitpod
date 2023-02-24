@@ -342,8 +342,10 @@ func Run(options ...RunOption) {
 
 	taskManager := newTasksManager(cfg, termMuxSrv, cstate, nil, ideReady, desktopIdeReady)
 
+	willShutdownCtx, fireWillShutdown := context.WithCancel(ctx)
 	apiServices := []RegisterableService{
 		&statusService{
+			willShutdownCtx: willShutdownCtx,
 			ContentState:    cstate,
 			Ports:           portMgmt,
 			Tasks:           taskManager,
@@ -459,6 +461,7 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM (or shutdown) - tearing down")
+	fireWillShutdown()
 	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 	defer cancelTermination()
 	cancel()
