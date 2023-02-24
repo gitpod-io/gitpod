@@ -72,6 +72,68 @@ spec:
   - eu.gcr.io/gitpod-core-dev/build/ws-manager:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
   - eu.gcr.io/gitpod-core-dev/build/ws-proxy:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
   - quay.io/brancz/kube-rbac-proxy:v0.12.0
+  - b.gcr.io/cloudsql-docker/gce-proxy:1.11
+  - docker.io/bitnami/bitnami-shell:11-debian-11-r60
+  - docker.io/bitnami/minio:2022.12.12-debian-11-r0
+  - docker.io/bitnami/minio:2022.4.29-debian-10-r0
+  - docker.io/bitnami/mysql:5.7.34-debian-10-r55
+  - docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
+  - docker.io/gitpod/workspace-full:latest
+  - docker.io/library/alpine:3.16
+  - docker.io/library/mysql:5.7.34
+  - docker.io/library/redis:6.2
+  - docker.io/library/registry:2.8.1
+  - docker.io/library/ubuntu:20.04
+  - eu.gcr.io/gitpod-core-dev/build/agent-smith:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/blobserve:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ca-updater:commit-2529db484939a3e73ed6f129dd0add0f767ce394
+  - eu.gcr.io/gitpod-core-dev/build/content-service:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/dashboard:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/db-migrations:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/docker-up:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide-metrics:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide-proxy:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide-service:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/clion:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/clion:latest
+  - eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/code:commit-ca9338036dd429af37246cb3bfac8062591db66b
+  - eu.gcr.io/gitpod-core-dev/build/ide/code:nightly
+  - eu.gcr.io/gitpod-core-dev/build/ide/goland:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/goland:latest
+  - eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/intellij:latest
+  - eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/jb-backend-plugin:latest
+  - eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:latest
+  - eu.gcr.io/gitpod-core-dev/build/ide/pycharm:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/pycharm:latest
+  - eu.gcr.io/gitpod-core-dev/build/ide/rider:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/rider:latest
+  - eu.gcr.io/gitpod-core-dev/build/ide/rubymine:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/rubymine:latest
+  - eu.gcr.io/gitpod-core-dev/build/ide/webstorm:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ide/webstorm:latest
+  - eu.gcr.io/gitpod-core-dev/build/image-builder-mk3/bob:668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/image-builder-mk3:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/installation-telemetry:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/openvsx-proxy:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/proxy:commit-2529db484939a3e73ed6f129dd0add0f767ce394
+  - eu.gcr.io/gitpod-core-dev/build/public-api-server:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/registry-facade:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/seccomp-profile-installer:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/server:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/service-waiter:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/shiftfs-module-loader:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/supervisor:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/workspacekit:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ws-daemon:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ws-manager-bridge:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ws-manager:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - eu.gcr.io/gitpod-core-dev/build/ws-proxy:commit-668e50f9f635342acb4eb52115be71fa0dee2a51
+  - quay.io/brancz/kube-rbac-proxy:v0.12.0
   allowRollback: true
   graphs:
   - queries:
