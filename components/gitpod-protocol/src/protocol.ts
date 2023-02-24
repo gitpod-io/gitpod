@@ -161,7 +161,7 @@ export namespace User {
             email: User.getPrimaryEmail(user!) || "",
             company: user?.additionalData?.profile?.companyName,
             avatarURL: user?.avatarUrl,
-            companyWebsite: user?.additionalData?.profile?.companyName,
+            companyWebsite: user?.additionalData?.profile?.companyWebsite,
             jobRole: user?.additionalData?.profile?.jobRole,
             jobRoleOther: user?.additionalData?.profile?.jobRoleOther,
             explorationReasons: user?.additionalData?.profile?.explorationReasons,
