@@ -6,7 +6,6 @@ package wsdaemon
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	corev1 "k8s.io/api/core/v1"
 )
 
 var Objects = common.CompositeRenderFunc(
@@ -14,10 +13,13 @@ var Objects = common.CompositeRenderFunc(
 	configmap,
 	common.DefaultServiceAccount(Component),
 	daemonset,
-	networkpolicy,
 	rolebinding,
-	common.GenerateService(Component, nil, func(service *corev1.Service) {
-		service.Spec.ClusterIP = "None"
+	common.GenerateService(Component, []common.ServicePort{
+		{
+			Name:          "rpc",
+			ContainerPort: ServicePort,
+			ServicePort:   ServicePort,
+		},
 	}),
 	tlssecret,
 )

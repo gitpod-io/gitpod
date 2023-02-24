@@ -247,7 +247,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Ports: []corev1.ContainerPort{{
 							Name:          ContainerPortName,
 							ContainerPort: ContainerPort,
-							HostPort:      ServicePort,
 						}},
 						SecurityContext: &corev1.SecurityContext{
 							Privileged:               pointer.Bool(false),

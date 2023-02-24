@@ -35,7 +35,7 @@ const (
 	RegistryAuthSecret          = "builtin-registry-auth"
 	RegistryTLSCertSecret       = "builtin-registry-certs"
 	RegistryFacadeComponent     = "registry-facade"
-	RegistryFacadeServicePort   = 20000
+	RegistryFacadeServicePort   = 31750
 	RegistryFacadeTLSCertSecret = "builtin-registry-facade-cert"
 	ServerComponent             = "server"
 	SlowServerComponent         = "slow-server"
