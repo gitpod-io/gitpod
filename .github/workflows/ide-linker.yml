@@ -22,6 +22,7 @@ jobs:
           node-version: '18'
       - run: yarn --cwd scripts/gitpod-code-linker
       - run: npm i -g @vercel/ncc
+      - run: go install github.com/csweichel/oci-tool@latest
       - run: ncc run index.ts
         working-directory: scripts/gitpod-code-linker
         env:
