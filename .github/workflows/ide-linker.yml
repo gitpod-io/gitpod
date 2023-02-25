@@ -1,0 +1,22 @@
+name: Code Linker
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: gitpod-io/openvscode-releases
+          ref: 'ft/ide-linker'
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      - run: yarn --cwd scripts/gitpod-code-linker
+      - run: npm i -g @vercel/ncc
+      - run: ncc run index.ts
+        working-directory: scripts/gitpod-code-linker
