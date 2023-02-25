@@ -24,3 +24,5 @@ jobs:
       - run: npm i -g @vercel/ncc
       - run: ncc run index.ts
         working-directory: scripts/gitpod-code-linker
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
