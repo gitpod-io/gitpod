@@ -18,11 +18,6 @@ database:
     serviceAccount:
       kind: secret
       name: gcp-database
-  cloudSQLGlobal:
-    instance: gcp-global-db-instance
-    serviceAccount:
-      kind: secret
-      name: gcp-global-database
 metadata:
   region: europe-west2
 objectStorage:

@@ -12,7 +12,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/database/cloudsql"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -173,35 +172,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 }
 
 func dbEnvVars(ctx *common.RenderContext) []corev1.EnvVar {
-	containerEnvVars := common.DatabaseEnv(&ctx.Config)
-
-	if ctx.Config.Database.CloudSQLGlobal != nil {
-		withoutDBHost := filterOutEnvVars("DB_HOST", containerEnvVars)
-		withoutDBHost = append(withoutDBHost,
-			// Override the DB host to point to global cloudsql
-			corev1.EnvVar{
-				Name:  "DB_HOST",
-				Value: cloudsql.ComponentGlobal,
-			},
-		)
-
-		containerEnvVars = withoutDBHost
-	}
-
-	return containerEnvVars
-}
-
-func filterOutEnvVars(name string, vars []corev1.EnvVar) []corev1.EnvVar {
-	var filtered []corev1.EnvVar
-	for _, v := range vars {
-		if v.Name == name {
-			continue
-		}
-
-		filtered = append(filtered, v)
-	}
-
-	return filtered
+	return common.DatabaseEnv(&ctx.Config)
 }
 
 func dbWaiter(ctx *common.RenderContext) v1.Container {
