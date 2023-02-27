@@ -190,7 +190,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	userEnvVars, envData := extractWorkspaceUserEnv(envSecretName, req.Spec.Envvars, req.Spec.SysEnvvars)
 	sysEnvVars := extractWorkspaceSysEnv(req.Spec.SysEnvvars)
 
-	tokenData, _ := extractWorkspaceTokenData(req.Spec)
+	_, _ = extractWorkspaceTokenData(req.Spec)
 
 	ws := workspacev1.Workspace{
 		TypeMeta: metav1.TypeMeta{
@@ -244,10 +244,10 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return nil, fmt.Errorf("cannot create env secret for workspace %s: %w", req.Id, err)
 	}
 
-	err = wsm.createWorkspaceSecret(ctx, &ws, fmt.Sprintf("%s-%s", req.Id, "tokens"), wsm.Config.WorkspaceSecretNamespace, tokenData)
-	if err != nil {
-		return nil, fmt.Errorf("cannot create token secret for workspace %s: %w", req.Id, err)
-	}
+	// err = wsm.createWorkspaceSecret(ctx, &ws, fmt.Sprintf("%s-%s", req.Id, "tokens"), wsm.Config.WorkspaceSecretNamespace, tokenData)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("cannot create token secret for workspace %s: %w", req.Id, err)
+	// }
 
 	wsm.metrics.recordWorkspaceStart(&ws)
 	err = wsm.Client.Create(ctx, &ws)
@@ -321,16 +321,17 @@ func (wsm *WorkspaceManagerServer) createWorkspaceSecret(ctx context.Context, ow
 		},
 		StringData: data,
 	}
-	err := controllerutil.SetOwnerReference(owner, &secret, wsm.Client.Scheme())
-	if err != nil {
-		return err
-	}
+	// err := controllerutil.SetOwnerReference(owner, &secret, wsm.Client.Scheme())
+	// if err != nil {
+	// 	return err
+	// }
 
-	err = wsm.Client.Create(ctx, &secret)
+	err := wsm.Client.Create(ctx, &secret)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return err
 	}
 
+	log.Infof("POLLING %s %s", namespace, name)
 	err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, func(c context.Context) (done bool, err error) {
 		var secret corev1.Secret
 		err = wsm.Client.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, &secret)
@@ -840,7 +841,7 @@ func extractWorkspaceUserEnv(secretName string, userEnvs, sysEnvs []*wsmanapi.En
 		default:
 			name := fmt.Sprintf("%x", sha256.Sum256([]byte(e.Name)))
 			protectedEnv := corev1.EnvVar{
-				Name: name,
+				Name: e.Name,
 				ValueFrom: &corev1.EnvVarSource{
 					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{Name: secretName},
