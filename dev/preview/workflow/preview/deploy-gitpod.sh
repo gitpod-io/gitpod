@@ -384,11 +384,6 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.baseUrl "
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.configcat.pollInterval "1m"
 
 #
-# configurePublicAPI
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.publicApi.personalAccessTokenSigningKeySecretName "personal-access-token-signing-key"
-
-#
 # configureDefaultTemplate
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers[+].name' "workspace"
