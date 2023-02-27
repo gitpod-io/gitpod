@@ -17,7 +17,6 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/spicedb"
-	"github.com/gitpod-io/gitpod/installer/pkg/components/toxiproxy"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	wsmanagerbridge "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-bridge"
 )
@@ -34,7 +33,6 @@ var Objects = common.CompositeRenderFunc(
 	wsmanagerbridge.Objects,
 	public_api_server.Objects,
 	usage.Objects,
-	toxiproxy.Objects,
 	spicedb.Objects,
 	redis.Objects,
 )

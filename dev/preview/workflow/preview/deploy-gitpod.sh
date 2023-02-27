@@ -439,14 +439,6 @@ yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templat
 yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
 
 #
-# configureSlowDatabase
-#
-if [[ "${GITPOD_WITH_SLOW_DATABASE}" == "true" ]]
-then
-  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.slowDatabase" "toxiproxy"
-fi
-
-#
 # includeAnalytics
 #
 if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
