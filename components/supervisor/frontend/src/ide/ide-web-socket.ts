@@ -4,8 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import ReconnectingWebSocket from 'reconnecting-websocket';
-import { Disposable } from '@gitpod/gitpod-protocol/lib/util/disposable';
+import ReconnectingWebSocket from "reconnecting-websocket";
+import { Disposable } from "@gitpod/gitpod-protocol/lib/util/disposable";
 
 let connected = false;
 const workspaceSockets = new Set<IDEWebSocket>();
@@ -29,11 +29,11 @@ class IDEWebSocket extends ReconnectingWebSocket {
             WebSocket,
             startClosed: isWorkspaceOrigin(url) && !connected,
             maxRetries: 0,
-            connectionTimeout: 2147483647 // disable connection timeout, clients should handle it
+            connectionTimeout: 2147483647, // disable connection timeout, clients should handle it
         });
         if (isWorkspaceOrigin(url)) {
             workspaceSockets.add(this);
-            this.addEventListener('close', () => {
+            this.addEventListener("close", () => {
                 workspaceSockets.delete(this);
             });
         }
