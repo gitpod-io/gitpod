@@ -4,8 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ResponseError } from "vscode-jsonrpc";
-
 export namespace ErrorCodes {
     // 400 Unauthorized
     export const BAD_REQUEST = 400;
