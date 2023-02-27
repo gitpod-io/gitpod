@@ -125,16 +125,6 @@
 	}
 }
 
-(slow_fast_matchers) {
-	@slow {
-		header X-Gitpod-Slow-Database "true"
-	}
-
-	@fast {
-		not header X-Gitpod-Slow-Database "true"
-	}
-}
-
 # Kubernetes health-check
 :8003 {
 	respond /live 200
@@ -228,24 +218,9 @@ https://{$GITPOD_DOMAIN} {
 
 		gitpod.sec_websocket_key
 
-		forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			uri /feature-flags/slow-database
-
-			header_up -Connection
-			header_up -Upgrade
-
-			copy_headers X-Gitpod-Slow-Database
-		}
-
-		import slow_fast_matchers
-
 		uri strip_prefix /api
 
-		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_connection
-		}
-
-		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_connection
 		}
 	}
@@ -256,23 +231,9 @@ https://{$GITPOD_DOMAIN} {
 			base_domain {$GITPOD_DOMAIN}
 		}
 
-		forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			uri /feature-flags/slow-database
-			copy_headers X-Gitpod-Slow-Database
-		}
-
-		import slow_fast_matchers
-
 		uri strip_prefix /api
 
-		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_connection
-
-			# required for smooth streaming of terminal logs
-			flush_interval -1
-		}
-
-		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_connection
 
 			# required for smooth streaming of terminal logs
@@ -324,18 +285,7 @@ https://{$GITPOD_DOMAIN} {
 	handle @to_server {
 		import compression
 
-		forward_auth server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			uri /feature-flags/slow-database
-			copy_headers X-Gitpod-Slow-Database
-		}
-
-		import slow_fast_matchers
-
-		reverse_proxy @fast server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_connection
-		}
-
-		reverse_proxy @slow slow-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_connection
 		}
 	}
