@@ -360,7 +360,7 @@ spec:
       component: image-builder-mk3
 status: {}
 ---
-# cert-manager.io/v1/Certificate image-builder-mk3-tls
+# cert-manager.io/v1/Certificate image-builder-mk3-wsman-tls
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -368,20 +368,20 @@ metadata:
   labels:
     app: gitpod
     component: image-builder-mk3-wsman
-  name: image-builder-mk3-tls
+  name: image-builder-mk3-wsman-tls
   namespace: default
 spec:
   dnsNames:
-  - image-builder-mk3-wsman.default.svc
-  - image-builder-mk3-wsman.default.svc.cluster.local
-  - image-builder-mk3-wsman
-  - image-builder-mk3-wsman-dev
+  - image-builder-mk3.default.svc
+  - image-builder-mk3.default.svc.cluster.local
+  - image-builder-mk3
+  - image-builder-mk3-dev
   duration: 2160h0m0s
   issuerRef:
     group: cert-manager.io
     kind: Issuer
     name: ca-issuer
-  secretName: image-builder-mk3-tls
+  secretName: image-builder-mk3-wsman-tls
   secretTemplate:
     labels:
       app: gitpod
@@ -1701,7 +1701,7 @@ data:
       labels:
         app: gitpod
         component: image-builder-mk3-wsman
-      name: image-builder-mk3-tls
+      name: image-builder-mk3-wsman-tls
       namespace: default
     ---
     apiVersion: v1
@@ -3972,7 +3972,7 @@ spec:
         - mountPath: /config/pull-secret
           name: pull-secret
         - mountPath: /certs
-          name: image-builder-mk3-tls-certs
+          name: image-builder-mk3-wsman-tls-certs
           readOnly: true
       - args:
         - --logtostderr
@@ -4036,9 +4036,9 @@ spec:
         name: gitpod-ca-certificate
       - emptyDir: {}
         name: cacerts
-      - name: image-builder-mk3-tls-certs
+      - name: image-builder-mk3-wsman-tls-certs
         secret:
-          secretName: image-builder-mk3-tls
+          secretName: image-builder-mk3-wsman-tls
 status: {}
 ---
 # apps/v1/Deployment registry

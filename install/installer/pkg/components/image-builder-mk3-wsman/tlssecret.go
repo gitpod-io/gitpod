@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	imgbuilder "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
@@ -25,23 +26,23 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	serverAltNames := []string{
-		fmt.Sprintf("%s.%s.svc", Component, ctx.Namespace),
-		fmt.Sprintf("%s.%s.svc.cluster.local", Component, ctx.Namespace),
-		Component,
-		fmt.Sprintf("%s-dev", Component),
+		fmt.Sprintf("%s.%s.svc", imgbuilder.Component, ctx.Namespace),
+		fmt.Sprintf("%s.%s.svc.cluster.local", imgbuilder.Component, ctx.Namespace),
+		imgbuilder.Component,
+		fmt.Sprintf("%s-dev", imgbuilder.Component),
 	}
 
 	return []runtime.Object{
 		&certmanagerv1.Certificate{
 			TypeMeta: common.TypeMetaCertificate,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      TLSSecretName,
+				Name:      TLSSecretNameWsman,
 				Namespace: ctx.Namespace,
 				Labels:    common.DefaultLabels(Component),
 			},
 			Spec: certmanagerv1.CertificateSpec{
 				Duration:   common.InternalCertDuration,
-				SecretName: TLSSecretName,
+				SecretName: TLSSecretNameWsman,
 				DNSNames:   serverAltNames,
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  common.CertManagerCAIssuer,

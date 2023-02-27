@@ -115,13 +115,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		// once image-builder-mk3 has been removed from application clusters
 		// (https://github.com/gitpod-io/gitpod/issues/7845).
 		volumes = append(volumes, corev1.Volume{
-			Name: VolumeTLSCerts,
+			Name: VolumeTLSCertsWsman,
 			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretName},
+				Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretNameWsman},
 			},
 		})
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      VolumeTLSCerts,
+			Name:      VolumeTLSCertsWsman,
 			MountPath: "/certs",
 			ReadOnly:  true,
 		})

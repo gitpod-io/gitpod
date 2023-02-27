@@ -6,8 +6,9 @@ package cmd
 
 import (
 	"context"
-	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/image-builder/api"
