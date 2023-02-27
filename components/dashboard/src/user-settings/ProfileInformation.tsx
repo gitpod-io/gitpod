@@ -154,14 +154,6 @@ export default function ProfileInformation(props: {
                             onChange={(e) => props.setProfileState({ ...props.profileState, email: e.target.value })}
                         />
                     </div>
-                    <div className="mt-4">
-                        <h4>Company</h4>
-                        <input
-                            type="text"
-                            value={props.profileState.company}
-                            onChange={(e) => props.setProfileState({ ...props.profileState, company: e.target.value })}
-                        />
-                    </div>
                 </div>
                 <div className="lg:pl-14">
                     <div className="mt-4">
