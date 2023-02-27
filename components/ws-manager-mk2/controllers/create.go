@@ -715,7 +715,8 @@ func newStartWorkspaceContext(ctx context.Context, cfg *config.Configuration, ws
 		Labels: map[string]string{
 			"app":                  "gitpod",
 			"component":            "workspace",
-			wsk8s.WorkspaceIDLabel: ws.Spec.Ownership.WorkspaceID,
+			wsk8s.MetaIDLabel:      ws.Spec.Ownership.WorkspaceID,
+			wsk8s.WorkspaceIDLabel: ws.Name,
 			wsk8s.OwnerLabel:       ws.Spec.Ownership.Owner,
 			wsk8s.TypeLabel:        strings.ToLower(string(ws.Spec.Type)),
 			instanceIDLabel:        ws.Name,
