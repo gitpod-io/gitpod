@@ -94,9 +94,8 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
 
             <TextInputField
                 value={emailAddress}
-                label="Email"
+                label="Work Email"
                 type="email"
-                hint="We recommend using a work email address."
                 error={emailError.message}
                 onBlur={emailError.onBlur}
                 onChange={setEmailAddress}
