@@ -52,9 +52,9 @@ You can always go to your account settings and edit the scope for each variable 
 # Use "gitpod.io" for the SaaS version of Gitpod, or specify the host of your self-hosted gitpod
 GP_DEV_HOST=gitpod.io
 
-# Notice the cookie name (_gitpod_io_) may be different if self-hosted.
+# Notice the cookie name (_gitpod_io_v2_) may be different if self-hosted.
 # Read below for how to get the actual value to use instead of "AUTHENTICATION_COOKIE_VALUE"
-GP_DEV_COOKIE="_gitpod_io_=AUTHENTICATION_COOKIE_VALUE"
+GP_DEV_COOKIE="_gitpod_io_v2_=AUTHENTICATION_COOKIE_VALUE"
 ```
 
 Replace `AUTHENTICATION_COOKIE_VALUE` with the value of your auth cookie taken from your browser's dev tools while visiting your target Gitpod host (e.g. `s%3Axxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx.XXXXXXXXXXXXXXX`).
