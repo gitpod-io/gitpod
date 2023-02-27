@@ -5,15 +5,17 @@
  */
 
 import classNames from "classnames";
-import { FC } from "react";
+import { FC, RefObject } from "react";
 import Spinner from "../icons/Spinner.svg";
 
 type Props = {
-    type?: "primary" | "secondary" | "danger";
-    className?: string;
+    type?: "primary" | "secondary" | "danger" | "danger.secondary";
+    size?: "small" | "medium" | "block";
     disabled?: boolean;
     loading?: boolean;
-    size?: "small" | "medium" | "block";
+    className?: string;
+    autoFocus?: boolean;
+    ref?: RefObject<HTMLButtonElement>;
     htmlType?: "button" | "submit" | "reset";
     onClick?: ButtonOnClickHandler;
 };
@@ -27,6 +29,8 @@ export const Button: FC<Props> = ({
     htmlType,
     disabled = false,
     loading = false,
+    autoFocus = false,
+    ref,
     size,
     children,
     onClick,
@@ -51,13 +55,21 @@ export const Button: FC<Props> = ({
                       ]
                     : null,
                 type === "danger" ? ["bg-red-600 hover:bg-red-700", "text-gray-100 dark:text-red-100"] : null,
+                type === "danger.secondary"
+                    ? [
+                          "bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200",
+                          "text-red-600 hover:text-red-700",
+                      ]
+                    : null,
                 {
                     "w-full": size === "block",
                     "cursor-default opacity-50 pointer-events-none": disabled || loading,
                 },
                 className,
             )}
+            ref={ref}
             disabled={disabled}
+            autoFocus={autoFocus}
             onClick={onClick}
         >
             <ButtonContent loading={loading}>{children}</ButtonContent>
