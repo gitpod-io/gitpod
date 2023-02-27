@@ -457,8 +457,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 observeAPICallsDuration(method, err.code, timer());
                 TraceContext.setJsonRPCError(ctx, method, err, true);
 
-                log.error({ userId }, `JSON RPC Request ${method} failed with internal error`, e, { method, args });
-                e = err;
+                log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
             }
             throw e;
         } finally {
