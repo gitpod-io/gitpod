@@ -6,6 +6,7 @@
 
 import { FC, FormEvent, useCallback } from "react";
 import Alert from "../components/Alert";
+import { Button } from "../components/Button";
 
 type Props = {
     title: string;
@@ -48,10 +49,10 @@ export const OnboardingStep: FC<Props> = ({
 
                 {error && <Alert type="error">{error}</Alert>}
 
-                <div>
-                    <button type="submit" disabled={!isValid || isSaving} className="w-full mt-8">
+                <div className="mt-8">
+                    <Button htmlType="submit" disabled={!isValid || isSaving} size="block">
                         Continue
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>
