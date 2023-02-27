@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -18,6 +18,123 @@ public final class Info {
     registerAllExtensions(
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
+  /**
+   * Protobuf enum {@code supervisor.DebugWorkspaceType}
+   */
+  public enum DebugWorkspaceType
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>noDebug = 0;</code>
+     */
+    noDebug(0),
+    /**
+     * <code>regular = 1;</code>
+     */
+    regular(1),
+    /**
+     * <code>prebuild = 2;</code>
+     */
+    prebuild(2),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>noDebug = 0;</code>
+     */
+    public static final int noDebug_VALUE = 0;
+    /**
+     * <code>regular = 1;</code>
+     */
+    public static final int regular_VALUE = 1;
+    /**
+     * <code>prebuild = 2;</code>
+     */
+    public static final int prebuild_VALUE = 2;
+
+
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static DebugWorkspaceType valueOf(int value) {
+      return forNumber(value);
+    }
+
+    /**
+     * @param value The numeric wire value of the corresponding enum entry.
+     * @return The enum associated with the given numeric wire value.
+     */
+    public static DebugWorkspaceType forNumber(int value) {
+      switch (value) {
+        case 0: return noDebug;
+        case 1: return regular;
+        case 2: return prebuild;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<DebugWorkspaceType>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        DebugWorkspaceType> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<DebugWorkspaceType>() {
+            public DebugWorkspaceType findValueByNumber(int number) {
+              return DebugWorkspaceType.forNumber(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalStateException(
+            "Can't get the descriptor of an unrecognized enum value.");
+      }
+      return getDescriptor().getValues().get(ordinal());
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return io.gitpod.supervisor.api.Info.getDescriptor().getEnumTypes().get(0);
+    }
+
+    private static final DebugWorkspaceType[] VALUES = values();
+
+    public static DebugWorkspaceType valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int value;
+
+    private DebugWorkspaceType(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:supervisor.DebugWorkspaceType)
+  }
+
   public interface WorkspaceInfoRequestOrBuilder extends
       // @@protoc_insertion_point(interface_extends:supervisor.WorkspaceInfoRequest)
       com.google.protobuf.MessageOrBuilder {
@@ -771,6 +888,45 @@ public final class Info {
      */
     io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceClassOrBuilder getWorkspaceClassOrBuilder();
 
+    /**
+     * <pre>
+     * owner_id is user id who owns the workspace
+     * </pre>
+     *
+     * <code>string owner_id = 16;</code>
+     * @return The ownerId.
+     */
+    java.lang.String getOwnerId();
+    /**
+     * <pre>
+     * owner_id is user id who owns the workspace
+     * </pre>
+     *
+     * <code>string owner_id = 16;</code>
+     * @return The bytes for ownerId.
+     */
+    com.google.protobuf.ByteString
+        getOwnerIdBytes();
+
+    /**
+     * <pre>
+     * debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+     * </pre>
+     *
+     * <code>.supervisor.DebugWorkspaceType debug_workspace_type = 17;</code>
+     * @return The enum numeric value on the wire for debugWorkspaceType.
+     */
+    int getDebugWorkspaceTypeValue();
+    /**
+     * <pre>
+     * debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+     * </pre>
+     *
+     * <code>.supervisor.DebugWorkspaceType debug_workspace_type = 17;</code>
+     * @return The debugWorkspaceType.
+     */
+    io.gitpod.supervisor.api.Info.DebugWorkspaceType getDebugWorkspaceType();
+
     public io.gitpod.supervisor.api.Info.WorkspaceInfoResponse.WorkspaceLocationCase getWorkspaceLocationCase();
   }
   /**
@@ -795,6 +951,8 @@ public final class Info {
       workspaceClusterHost_ = "";
       workspaceUrl_ = "";
       ideAlias_ = "";
+      ownerId_ = "";
+      debugWorkspaceType_ = 0;
     }
 
     @java.lang.Override
@@ -935,6 +1093,18 @@ public final class Info {
                 workspaceClass_ = subBuilder.buildPartial();
               }
 
+              break;
+            }
+            case 130: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              ownerId_ = s;
+              break;
+            }
+            case 136: {
+              int rawValue = input.readEnum();
+
+              debugWorkspaceType_ = rawValue;
               break;
             }
             default: {
@@ -4245,6 +4415,79 @@ public final class Info {
       return getWorkspaceClass();
     }
 
+    public static final int OWNER_ID_FIELD_NUMBER = 16;
+    private volatile java.lang.Object ownerId_;
+    /**
+     * <pre>
+     * owner_id is user id who owns the workspace
+     * </pre>
+     *
+     * <code>string owner_id = 16;</code>
+     * @return The ownerId.
+     */
+    @java.lang.Override
+    public java.lang.String getOwnerId() {
+      java.lang.Object ref = ownerId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs =
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        ownerId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <pre>
+     * owner_id is user id who owns the workspace
+     * </pre>
+     *
+     * <code>string owner_id = 16;</code>
+     * @return The bytes for ownerId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getOwnerIdBytes() {
+      java.lang.Object ref = ownerId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b =
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        ownerId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int DEBUG_WORKSPACE_TYPE_FIELD_NUMBER = 17;
+    private int debugWorkspaceType_;
+    /**
+     * <pre>
+     * debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+     * </pre>
+     *
+     * <code>.supervisor.DebugWorkspaceType debug_workspace_type = 17;</code>
+     * @return The enum numeric value on the wire for debugWorkspaceType.
+     */
+    @java.lang.Override public int getDebugWorkspaceTypeValue() {
+      return debugWorkspaceType_;
+    }
+    /**
+     * <pre>
+     * debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+     * </pre>
+     *
+     * <code>.supervisor.DebugWorkspaceType debug_workspace_type = 17;</code>
+     * @return The debugWorkspaceType.
+     */
+    @java.lang.Override public io.gitpod.supervisor.api.Info.DebugWorkspaceType getDebugWorkspaceType() {
+      @SuppressWarnings("deprecation")
+      io.gitpod.supervisor.api.Info.DebugWorkspaceType result = io.gitpod.supervisor.api.Info.DebugWorkspaceType.valueOf(debugWorkspaceType_);
+      return result == null ? io.gitpod.supervisor.api.Info.DebugWorkspaceType.UNRECOGNIZED : result;
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -4304,6 +4547,12 @@ public final class Info {
       if (workspaceClass_ != null) {
         output.writeMessage(15, getWorkspaceClass());
       }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(ownerId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 16, ownerId_);
+      }
+      if (debugWorkspaceType_ != io.gitpod.supervisor.api.Info.DebugWorkspaceType.noDebug.getNumber()) {
+        output.writeEnum(17, debugWorkspaceType_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -4362,6 +4611,13 @@ public final class Info {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(15, getWorkspaceClass());
       }
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(ownerId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(16, ownerId_);
+      }
+      if (debugWorkspaceType_ != io.gitpod.supervisor.api.Info.DebugWorkspaceType.noDebug.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(17, debugWorkspaceType_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -4412,6 +4668,9 @@ public final class Info {
         if (!getWorkspaceClass()
             .equals(other.getWorkspaceClass())) return false;
       }
+      if (!getOwnerId()
+          .equals(other.getOwnerId())) return false;
+      if (debugWorkspaceType_ != other.debugWorkspaceType_) return false;
       if (!getWorkspaceLocationCase().equals(other.getWorkspaceLocationCase())) return false;
       switch (workspaceLocationCase_) {
         case 4:
@@ -4468,6 +4727,10 @@ public final class Info {
         hash = (37 * hash) + WORKSPACE_CLASS_FIELD_NUMBER;
         hash = (53 * hash) + getWorkspaceClass().hashCode();
       }
+      hash = (37 * hash) + OWNER_ID_FIELD_NUMBER;
+      hash = (53 * hash) + getOwnerId().hashCode();
+      hash = (37 * hash) + DEBUG_WORKSPACE_TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + debugWorkspaceType_;
       switch (workspaceLocationCase_) {
         case 4:
           hash = (37 * hash) + WORKSPACE_LOCATION_FILE_FIELD_NUMBER;
@@ -4651,6 +4914,10 @@ public final class Info {
           workspaceClass_ = null;
           workspaceClassBuilder_ = null;
         }
+        ownerId_ = "";
+
+        debugWorkspaceType_ = 0;
+
         workspaceLocationCase_ = 0;
         workspaceLocation_ = null;
         return this;
@@ -4710,6 +4977,8 @@ public final class Info {
         } else {
           result.workspaceClass_ = workspaceClassBuilder_.build();
         }
+        result.ownerId_ = ownerId_;
+        result.debugWorkspaceType_ = debugWorkspaceType_;
         result.workspaceLocationCase_ = workspaceLocationCase_;
         onBuilt();
         return result;
@@ -4806,6 +5075,13 @@ public final class Info {
         }
         if (other.hasWorkspaceClass()) {
           mergeWorkspaceClass(other.getWorkspaceClass());
+        }
+        if (!other.getOwnerId().isEmpty()) {
+          ownerId_ = other.ownerId_;
+          onChanged();
+        }
+        if (other.debugWorkspaceType_ != 0) {
+          setDebugWorkspaceTypeValue(other.getDebugWorkspaceTypeValue());
         }
         switch (other.getWorkspaceLocationCase()) {
           case WORKSPACE_LOCATION_FILE: {
@@ -6481,6 +6757,176 @@ public final class Info {
         }
         return workspaceClassBuilder_;
       }
+
+      private java.lang.Object ownerId_ = "";
+      /**
+       * <pre>
+       * owner_id is user id who owns the workspace
+       * </pre>
+       *
+       * <code>string owner_id = 16;</code>
+       * @return The ownerId.
+       */
+      public java.lang.String getOwnerId() {
+        java.lang.Object ref = ownerId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          ownerId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <pre>
+       * owner_id is user id who owns the workspace
+       * </pre>
+       *
+       * <code>string owner_id = 16;</code>
+       * @return The bytes for ownerId.
+       */
+      public com.google.protobuf.ByteString
+          getOwnerIdBytes() {
+        java.lang.Object ref = ownerId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b =
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          ownerId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <pre>
+       * owner_id is user id who owns the workspace
+       * </pre>
+       *
+       * <code>string owner_id = 16;</code>
+       * @param value The ownerId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOwnerId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+
+        ownerId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * owner_id is user id who owns the workspace
+       * </pre>
+       *
+       * <code>string owner_id = 16;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearOwnerId() {
+
+        ownerId_ = getDefaultInstance().getOwnerId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * owner_id is user id who owns the workspace
+       * </pre>
+       *
+       * <code>string owner_id = 16;</code>
+       * @param value The bytes for ownerId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setOwnerIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+
+        ownerId_ = value;
+        onChanged();
+        return this;
+      }
+
+      private int debugWorkspaceType_ = 0;
+      /**
+       * <pre>
+       * debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+       * </pre>
+       *
+       * <code>.supervisor.DebugWorkspaceType debug_workspace_type = 17;</code>
+       * @return The enum numeric value on the wire for debugWorkspaceType.
+       */
+      @java.lang.Override public int getDebugWorkspaceTypeValue() {
+        return debugWorkspaceType_;
+      }
+      /**
+       * <pre>
+       * debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+       * </pre>
+       *
+       * <code>.supervisor.DebugWorkspaceType debug_workspace_type = 17;</code>
+       * @param value The enum numeric value on the wire for debugWorkspaceType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDebugWorkspaceTypeValue(int value) {
+
+        debugWorkspaceType_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+       * </pre>
+       *
+       * <code>.supervisor.DebugWorkspaceType debug_workspace_type = 17;</code>
+       * @return The debugWorkspaceType.
+       */
+      @java.lang.Override
+      public io.gitpod.supervisor.api.Info.DebugWorkspaceType getDebugWorkspaceType() {
+        @SuppressWarnings("deprecation")
+        io.gitpod.supervisor.api.Info.DebugWorkspaceType result = io.gitpod.supervisor.api.Info.DebugWorkspaceType.valueOf(debugWorkspaceType_);
+        return result == null ? io.gitpod.supervisor.api.Info.DebugWorkspaceType.UNRECOGNIZED : result;
+      }
+      /**
+       * <pre>
+       * debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+       * </pre>
+       *
+       * <code>.supervisor.DebugWorkspaceType debug_workspace_type = 17;</code>
+       * @param value The debugWorkspaceType to set.
+       * @return This builder for chaining.
+       */
+      public Builder setDebugWorkspaceType(io.gitpod.supervisor.api.Info.DebugWorkspaceType value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+
+        debugWorkspaceType_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <pre>
+       * debug_workspace_type indicates whether it is a regular or prebuild debug workspace
+       * </pre>
+       *
+       * <code>.supervisor.DebugWorkspaceType debug_workspace_type = 17;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearDebugWorkspaceType() {
+
+        debugWorkspaceType_ = 0;
+        onChanged();
+        return this;
+      }
       @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
@@ -6569,8 +7015,8 @@ public final class Info {
   static {
     java.lang.String[] descriptorData = {
       "\n\ninfo.proto\022\nsupervisor\032\034google/api/ann" +
-      "otations.proto\"\026\n\024WorkspaceInfoRequest\"\315" +
-      "\005\n\025WorkspaceInfoResponse\022\024\n\014workspace_id" +
+      "otations.proto\"\026\n\024WorkspaceInfoRequest\"\235" +
+      "\006\n\025WorkspaceInfoResponse\022\024\n\014workspace_id" +
       "\030\001 \001(\t\022\023\n\013instance_id\030\002 \001(\t\022\031\n\021checkout_" +
       "location\030\003 \001(\t\022!\n\027workspace_location_fil" +
       "e\030\004 \001(\tH\000\022#\n\031workspace_location_folder\030\005" +
@@ -6583,17 +7029,20 @@ public final class Info {
       "\022\025\n\rworkspace_url\030\014 \001(\t\022\021\n\tide_alias\030\r \001" +
       "(\t\022\020\n\010ide_port\030\016 \001(\r\022I\n\017workspace_class\030" +
       "\017 \001(\01320.supervisor.WorkspaceInfoResponse" +
-      ".WorkspaceClass\032+\n\tGitpodAPI\022\020\n\010endpoint" +
+      ".WorkspaceClass\022\020\n\010owner_id\030\020 \001(\t\022<\n\024deb" +
+      "ug_workspace_type\030\021 \001(\0162\036.supervisor.Deb" +
+      "ugWorkspaceType\032+\n\tGitpodAPI\022\020\n\010endpoint" +
       "\030\001 \001(\t\022\014\n\004host\030\002 \001(\t\032)\n\nRepository\022\r\n\005ow" +
       "ner\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\032G\n\016WorkspaceClas" +
       "s\022\n\n\002id\030\001 \001(\t\022\024\n\014display_name\030\002 \001(\t\022\023\n\013d" +
-      "escription\030\003 \001(\tB\024\n\022workspace_location2\177" +
-      "\n\013InfoService\022p\n\rWorkspaceInfo\022 .supervi" +
-      "sor.WorkspaceInfoRequest\032!.supervisor.Wo" +
-      "rkspaceInfoResponse\"\032\202\323\344\223\002\024\022\022/v1/info/wo" +
-      "rkspaceBF\n\030io.gitpod.supervisor.apiZ*git" +
-      "hub.com/gitpod-io/gitpod/supervisor/apib" +
-      "\006proto3"
+      "escription\030\003 \001(\tB\024\n\022workspace_location*<" +
+      "\n\022DebugWorkspaceType\022\013\n\007noDebug\020\000\022\013\n\007reg" +
+      "ular\020\001\022\014\n\010prebuild\020\0022\177\n\013InfoService\022p\n\rW" +
+      "orkspaceInfo\022 .supervisor.WorkspaceInfoR" +
+      "equest\032!.supervisor.WorkspaceInfoRespons" +
+      "e\"\032\202\323\344\223\002\024\022\022/v1/info/workspaceBF\n\030io.gitp" +
+      "od.supervisor.apiZ*github.com/gitpod-io/" +
+      "gitpod/supervisor/apib\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -6611,7 +7060,7 @@ public final class Info {
     internal_static_supervisor_WorkspaceInfoResponse_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_supervisor_WorkspaceInfoResponse_descriptor,
-        new java.lang.String[] { "WorkspaceId", "InstanceId", "CheckoutLocation", "WorkspaceLocationFile", "WorkspaceLocationFolder", "UserHome", "GitpodApi", "GitpodHost", "WorkspaceContextUrl", "Repository", "WorkspaceClusterHost", "WorkspaceUrl", "IdeAlias", "IdePort", "WorkspaceClass", "WorkspaceLocation", });
+        new java.lang.String[] { "WorkspaceId", "InstanceId", "CheckoutLocation", "WorkspaceLocationFile", "WorkspaceLocationFolder", "UserHome", "GitpodApi", "GitpodHost", "WorkspaceContextUrl", "Repository", "WorkspaceClusterHost", "WorkspaceUrl", "IdeAlias", "IdePort", "WorkspaceClass", "OwnerId", "DebugWorkspaceType", "WorkspaceLocation", });
     internal_static_supervisor_WorkspaceInfoResponse_GitpodAPI_descriptor =
       internal_static_supervisor_WorkspaceInfoResponse_descriptor.getNestedTypes().get(0);
     internal_static_supervisor_WorkspaceInfoResponse_GitpodAPI_fieldAccessorTable = new
