@@ -11,6 +11,7 @@ import { UserContext } from "../user-context";
 import ConfirmationModal from "../components/ConfirmationModal";
 import ProfileInformation, { ProfileState } from "./ProfileInformation";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
+import { Button } from "../components/Button";
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
@@ -84,9 +85,7 @@ export default function Account() {
                         updated={updated}
                     >
                         <div className="flex flex-row mt-8">
-                            <button className="primary" onClick={saveProfileState}>
-                                Update Profile
-                            </button>
+                            <Button onClick={saveProfileState}>Update Profile</Button>
                         </div>
                     </ProfileInformation>
                 </form>
@@ -94,9 +93,9 @@ export default function Account() {
                 <p className="text-base text-gray-500 pb-4">
                     This action will remove all the data associated with your account in Gitpod.
                 </p>
-                <button className="danger secondary" onClick={() => setModal(true)}>
+                <Button type="danger.secondary" onClick={() => setModal(true)}>
                     Delete Account
-                </button>
+                </Button>
             </PageWithSettingsSubMenu>
         </div>
     );

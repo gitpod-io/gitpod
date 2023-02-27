@@ -7,6 +7,7 @@
 import Alert from "./Alert";
 import Modal from "./Modal";
 import { useRef, useEffect } from "react";
+import { Button } from "./Button";
 
 export default function ConfirmationModal(props: {
     title?: string;
@@ -23,12 +24,12 @@ export default function ConfirmationModal(props: {
     const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
     const buttons = [
-        <button className="secondary" onClick={props.onClose} autoFocus ref={cancelButtonRef}>
+        <Button type="secondary" onClick={props.onClose} autoFocus ref={cancelButtonRef}>
             Cancel
-        </button>,
-        <button className="ml-2 danger" onClick={props.onConfirm} disabled={props.buttonDisabled}>
+        </Button>,
+        <Button type="danger" className="ml-2" onClick={props.onConfirm} disabled={props.buttonDisabled}>
             {props.buttonText || "Yes, I'm Sure"}
-        </button>,
+        </Button>,
     ];
 
     const buttonDisabled = useRef(props.buttonDisabled);
