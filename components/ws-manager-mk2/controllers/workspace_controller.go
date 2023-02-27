@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -229,6 +230,19 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			return ctrl.Result{Requeue: true}, err
 		}
 
+	case workspace.Status.Phase == workspacev1.WorkspacePhaseRunning:
+		// if a secret cannot be deleted we do not return early because we want to attempt
+		// the deletion of the remaining secrets
+		err := r.deleteWorkspaceSecret(ctx, fmt.Sprintf("%s-%s", workspace.Name, "env"), r.Config.Namespace)
+		if err != nil {
+			log.Error(err, "could not delete environment secret", "workspace", workspace.Name)
+		}
+
+		err = r.deleteWorkspaceSecret(ctx, fmt.Sprintf("%s-%s", workspace.Name, "tokens"), r.Config.WorkspaceSecretNamespace)
+		if err != nil {
+			log.Error(err, "could not delete token secret", "workspace", workspace.Name)
+		}
+
 	// we've disposed already - try to remove the finalizer and call it a day
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
 		hadFinalizer := controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName)
@@ -307,6 +321,26 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *WorkspaceReconciler) deleteWorkspaceSecret(ctx context.Context, name, namespace string) error {
+	var envSecret corev1.Secret
+	err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &envSecret)
+	if errors.IsNotFound(err) {
+		// nothing to delete
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("could not retrieve secret %s: %w", name, err)
+	}
+
+	err = r.Client.Delete(ctx, &envSecret)
+	if err != nil && !errors.IsNotFound(err) {
+		return fmt.Errorf("could not delete secret %s: %w", name, err)
+	}
+
+	return nil
 }
 
 var (
