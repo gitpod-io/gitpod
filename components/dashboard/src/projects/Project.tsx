@@ -382,7 +382,7 @@ export default function ProjectsPage() {
                                                                 ? []
                                                                 : [
                                                                       {
-                                                                          title: "New Workspace ...",
+                                                                          title: "New Workspace with ...",
                                                                           onClick: () =>
                                                                               setStartWorkspaceModalProps({
                                                                                   contextUrl: branch.url,
