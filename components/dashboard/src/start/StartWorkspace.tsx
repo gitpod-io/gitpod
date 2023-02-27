@@ -25,7 +25,7 @@ import Arrow from "../components/Arrow";
 import ContextMenu from "../components/ContextMenu";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import PrebuildLogs from "../components/PrebuildLogs";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { getGitpodService, gitpodHostUrl, getIDEFrontendService, IDEFrontendService } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
@@ -99,6 +99,8 @@ export interface StartWorkspaceState {
 }
 
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
+    private ideFrontendService: IDEFrontendService | undefined;
+
     constructor(props: StartWorkspaceProps) {
         super(props);
         this.state = {};
@@ -107,35 +109,21 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     private readonly toDispose = new DisposableCollection();
     componentWillMount() {
         if (this.props.runsInIFrame) {
-            window.parent.postMessage({ type: "$setSessionId", sessionId }, "*");
-            const setStateEventListener = (event: MessageEvent) => {
-                if (
-                    event.data.type === "setState" &&
-                    "state" in event.data &&
-                    typeof event.data["state"] === "object"
-                ) {
-                    if (event.data.state.ideFrontendFailureCause) {
-                        const error = { message: event.data.state.ideFrontendFailureCause };
+            this.ideFrontendService = getIDEFrontendService(this.props.workspaceId, sessionId, getGitpodService());
+            this.toDispose.push(
+                this.ideFrontendService.onSetState((data) => {
+                    if (data.ideFrontendFailureCause) {
+                        const error = { message: data.ideFrontendFailureCause };
                         this.setState({ error });
                     }
-                    if (event.data.state.desktopIdeLink) {
-                        const label = event.data.state.desktopIdeLabel || "Open Desktop IDE";
-                        const clientID = event.data.state.desktopIdeClientID;
-                        this.setState({ desktopIde: { link: event.data.state.desktopIdeLink, label, clientID } });
+                    if (data.desktopIDE?.link) {
+                        const label = data.desktopIDE.label || "Open Desktop IDE";
+                        const clientID = data.desktopIDE.clientID;
+                        const link = data.desktopIDE?.link;
+                        this.setState({ desktopIde: { link, label, clientID } });
                     }
-                }
-                if (
-                    event.data.type === "$openDesktopLink" &&
-                    "link" in event.data &&
-                    typeof event.data["link"] === "string"
-                ) {
-                    this.openDesktopLink(event.data["link"] as string);
-                }
-            };
-            window.addEventListener("message", setStateEventListener, false);
-            this.toDispose.push({
-                dispose: () => window.removeEventListener("message", setStateEventListener),
-            });
+                }),
+            );
         }
 
         try {
@@ -217,7 +205,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // redirect to workspaceURL if we are not yet running in an iframe
             if (!this.props.runsInIFrame && result.workspaceURL) {
                 // before redirect, make sure we actually have the auth cookie set!
-                await this.ensureWorkspaceAuth(result.instanceID);
+                await this.ensureWorkspaceAuth(result.instanceID, true);
                 this.redirectTo(result.workspaceURL);
                 return;
             }
@@ -225,15 +213,14 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
             this.fetchWorkspaceInfo(result.instanceID);
         } catch (error) {
-            console.error(error);
-            if (typeof error === "string") {
-                error = { message: error };
-            }
-            if (error?.code === ErrorCodes.USER_BLOCKED) {
+            const normalizedError = typeof error === "string" ? { message: error } : error;
+            console.error(normalizedError);
+
+            if (normalizedError?.code === ErrorCodes.USER_BLOCKED) {
                 this.redirectTo(gitpodHostUrl.with({ pathname: "/blocked" }).toString());
                 return;
             }
-            this.setState({ error });
+            this.setState({ error: normalizedError });
         }
     }
 
@@ -337,7 +324,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             this.fetchIDEOptions();
         }
 
-        await this.ensureWorkspaceAuth(workspaceInstance.id);
+        await this.ensureWorkspaceAuth(workspaceInstance.id, false); // Don't block the workspace auth retrieval, as it's guaranteed to get a seconds chance later on!
 
         // Redirect to workspaceURL if we are not yet running in an iframe.
         // It happens this late if we were waiting for a docker build.
@@ -346,11 +333,17 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             workspaceInstance.ideUrl &&
             (!this.props.dontAutostart || workspaceInstance.status.phase === "running")
         ) {
-            this.redirectTo(workspaceInstance.ideUrl);
+            (async () => {
+                // At this point we cannot be certain that we already have the relevant cookie in multi-cluster
+                // scenarios with distributed workspace bridges (control loops): We might receive the update, but the backend might not have the token, yet.
+                // So we have to ask again, and wait until we're actually successful (it returns immediately on the happy path)
+                await this.ensureWorkspaceAuth(workspaceInstance.id, true);
+                this.redirectTo(workspaceInstance.ideUrl);
+            })().catch(console.error);
             return;
         }
 
-        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase == "preparing") {
+        if (workspaceInstance.status.phase === "building" || workspaceInstance.status.phase === "preparing") {
             this.setState({ hasImageBuildLogs: true });
         }
 
@@ -373,45 +366,78 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         this.setState({ workspaceInstance, error });
     }
 
-    async ensureWorkspaceAuth(instanceID: string) {
-        if (!document.cookie.includes(`${instanceID}_owner_`)) {
-            const authURL = gitpodHostUrl.asWorkspaceAuth(instanceID);
-            const response = await fetch(authURL.toString());
-            if (response.redirected) {
-                this.redirectTo(response.url);
+    async ensureWorkspaceAuth(instanceID: string, retry: boolean) {
+        if (document.cookie.includes(`${instanceID}_owner_`)) {
+            // Cookie already present
+            return;
+        }
+
+        // TODO(gpl) Would be nice to track # of attempts once we have frontend error monitoring
+        const MAX_ATTEMPTS = 10;
+        const ATTEMPT_INTERVAL_MS = 2000;
+        let attempt = 0;
+        let fetchError: Error | undefined = undefined;
+        while (attempt <= MAX_ATTEMPTS) {
+            attempt++;
+
+            let code: number | undefined = undefined;
+            fetchError = undefined;
+            try {
+                const authURL = gitpodHostUrl.asWorkspaceAuth(instanceID);
+                const response = await fetch(authURL.toString());
+                code = response.status;
+            } catch (err) {
+                fetchError = err;
+            }
+
+            if (retry) {
+                if (code === 404 && !fetchError) {
+                    fetchError = new Error("Unable to retrieve workspace-auth cookie (code: 404)");
+                }
+                if (fetchError) {
+                    console.warn("Unable to retrieve workspace-auth cookie! Retrying shortly...", fetchError, {
+                        instanceID,
+                        code,
+                        attempt,
+                    });
+                    // If the token is not there, we assume it will appear, soon: Retry a couple of times.
+                    await new Promise((resolve) => setTimeout(resolve, ATTEMPT_INTERVAL_MS));
+                    continue;
+                }
+            }
+            if (code !== 200) {
+                // getting workspace auth didn't work as planned
+                console.error("Unable to retrieve workspace-auth cookie! Quitting.", {
+                    instanceID,
+                    code,
+                    attempt,
+                });
                 return;
             }
-            if (!response.ok) {
-                // getting workspace auth didn't work as planned - redirect
-                this.redirectTo(authURL.asWorkspaceAuth(instanceID, true).toString());
-                return;
-            }
+
+            // Response code is 200 at this point: done!
+            console.info("Retrieved workspace-auth cookie.", { instanceID, code, attempt });
+            return;
+        }
+
+        console.error("Unable to retrieve workspace-auth cookie! Giving up.", { instanceID, attempt });
+
+        if (fetchError) {
+            // To maintain prior behavior we bubble up this error to callers
+            throw fetchError;
         }
     }
 
     redirectTo(url: string) {
         if (this.props.runsInIFrame) {
-            window.parent.postMessage({ type: "relocate", url }, "*");
+            this.ideFrontendService?.relocate(url);
         } else {
             window.location.href = url;
         }
     }
 
     private openDesktopLink(link: string) {
-        let redirect = false;
-        try {
-            const desktopLink = new URL(link);
-            redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
-        } catch (e) {
-            console.error("invalid desktop link:", e);
-        }
-        // redirect only if points to desktop application
-        // don't navigate browser to another page
-        if (redirect) {
-            window.location.href = link;
-        } else {
-            window.open(link, "_blank", "noopener");
-        }
+        this.ideFrontendService?.openDesktopIDE(link);
     }
 
     render() {
@@ -432,8 +458,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             // Preparing means that we haven't actually started the workspace instance just yet, but rather
             // are still preparing for launch.
             case "preparing":
-            // Building means we're building the Docker image for the workspace.
+            // falls through
             case "building":
+                // Building means we're building the Docker image for the workspace.
                 return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
 
             // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
@@ -490,6 +517,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                             {client.installationSteps.map((step) => (
                                 <div
                                     dangerouslySetInnerHTML={{
+                                        // eslint-disable-next-line no-template-curly-in-string
                                         __html: step.replaceAll("${OPEN_LINK_LABEL}", openLinkLabel),
                                     }}
                                 />
@@ -518,7 +546,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                     menuEntries={[
                                         {
                                             title: "Open in Browser",
-                                            onClick: () => window.parent.postMessage({ type: "openBrowserIde" }, "*"),
+                                            onClick: () => {
+                                                this.ideFrontendService?.openBrowserIDE();
+                                            },
                                         },
                                         {
                                             title: "Stop Workspace",
@@ -554,6 +584,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                     <a
                                         className="gp-link"
                                         target="_blank"
+                                        rel="noreferrer"
                                         href={gitpodHostUrl.asPreferences().toString()}
                                     >
                                         user preferences
@@ -727,6 +758,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
         return function cleanup() {
             toDispose.dispose();
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

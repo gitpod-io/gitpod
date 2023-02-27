@@ -5,8 +5,11 @@
  */
 
 interface Window {
+    // gitpod is used by supervisor/frontend and vscode browser https://github.com/gitpod-io/openvscode-server/blob/dadd40deda5959c0efdaa0c7d02ab64b6f8b5ad0/src/vs/gitpod/browser/workbench/workbench.ts#L7
     gitpod: {
-        service: import("../gitpod-service").GitpodService;
         ideService?: import("../ide-frontend-service").IDEFrontendService;
+        loggedUserID?: string;
+
+        openDesktopIDE(url: string): void;
     };
 }
