@@ -188,12 +188,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	switch {
 	// if there is a pod, and it's failed, delete it
 	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) && !isPodBeingDeleted(pod):
-		err := r.Client.Delete(ctx, pod)
-		if errors.IsNotFound(err) {
-			// pod is gone - nothing to do here
-		} else {
-			return ctrl.Result{Requeue: true}, err
-		}
+		return r.deleteWorkspacePod(ctx, pod, "workspace failed")
 
 	// if the pod was stopped by request, delete it
 	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)) && !isPodBeingDeleted(pod):
@@ -215,31 +210,14 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 	// if the workspace timed out, delete it
 	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) && !isPodBeingDeleted(pod):
-		err := r.Client.Delete(ctx, pod)
-		if errors.IsNotFound(err) {
-			// pod is gone - nothing to do here
-		} else {
-			return ctrl.Result{Requeue: true}, err
-		}
+		return r.deleteWorkspacePod(ctx, pod, "timed out")
 
 	// if the content initialization failed, delete the pod
 	case wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") && !isPodBeingDeleted(pod):
-		err := r.Client.Delete(ctx, pod)
-		if errors.IsNotFound(err) {
-			// pod is gone - nothing to do here
-		} else {
-			return ctrl.Result{Requeue: true}, err
-		}
+		return r.deleteWorkspacePod(ctx, pod, "init failed")
 
 	case isWorkspaceBeingDeleted(workspace) && !isPodBeingDeleted(pod):
-		// Workspace was requested to be deleted, propagate by deleting the Pod.
-		// The Pod deletion will then trigger workspace disposal steps.
-		err := r.Client.Delete(ctx, pod)
-		if errors.IsNotFound(err) {
-			// pod is gone - nothing to do here
-		} else {
-			return ctrl.Result{Requeue: true}, err
-		}
+		return r.deleteWorkspacePod(ctx, pod, "workspace deleted")
 
 	case workspace.Status.Headless && workspace.Status.Phase == workspacev1.WorkspacePhaseStopped && !isPodBeingDeleted(pod):
 		// Workspace was requested to be deleted, propagate by deleting the Pod.
@@ -313,6 +291,22 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	}
 
 	r.metrics.rememberWorkspace(workspace)
+}
+
+func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev1.Pod, reason string) (ctrl.Result, error) {
+	log := log.FromContext(ctx).WithValues("workspace", pod.Name, "reason", reason)
+	log.V(1).Info("deleting workspace pod")
+
+	// Workspace was requested to be deleted, propagate by deleting the Pod.
+	// The Pod deletion will then trigger workspace disposal steps.
+	err := r.Client.Delete(ctx, pod)
+	if errors.IsNotFound(err) {
+		// pod is gone - nothing to do here
+	} else {
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	return ctrl.Result{}, nil
 }
 
 var (
