@@ -184,9 +184,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	wsmcfg := config.ServiceConfiguration{
 		Manager: config.Configuration{
-			Namespace:      ctx.Namespace,
-			SchedulerName:  schedulerName,
-			SeccompProfile: fmt.Sprintf("workspace_default_%s.json", ctx.VersionManifest.Version),
+			Namespace:                ctx.Namespace,
+			WorkspaceNamespace:       "workspaces",
+			WorkspaceSecretNamespace: "workspace-secrets",
+			SchedulerName:            schedulerName,
+			SeccompProfile:           fmt.Sprintf("workspace_default_%s.json", ctx.VersionManifest.Version),
 			WorkspaceDaemon: config.WorkspaceDaemonConfiguration{
 				Port: 8080,
 				TLS: struct {
