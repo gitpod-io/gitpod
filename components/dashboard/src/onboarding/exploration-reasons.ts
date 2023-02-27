@@ -7,10 +7,10 @@
 export const getExplorationReasons = () => {
     return [
         { value: "explore-professional", label: "For work" },
-        { value: "explore-personal", label: "For personal projects, or open-source" },
+        { value: "explore-personal", label: "For personal projects or open-source" },
         {
             value: "replace-remote-dev",
-            label: "To replace remote/containerized development (VDI, VM based, Docker Desktop,...)",
+            label: "To replace remote/containerized development (VDI, VM, Docker Desktop)",
         },
     ];
 };

@@ -12,6 +12,6 @@ export const getSignupGoalsOptions = () => {
         { value: "onboarding", label: "Faster onboarding" },
         { value: "powerful-resources", label: "More powerful dev resources" },
         { value: "security", label: "More secure dev process" },
-        { value: SIGNUP_GOALS_OTHER, label: "Other - please specify / prefer not to say" },
+        { value: SIGNUP_GOALS_OTHER, label: "Other" },
     ];
 };
