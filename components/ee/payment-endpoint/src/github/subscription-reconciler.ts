@@ -85,6 +85,7 @@ export class GithubSubscriptionReconciler {
         await Promise.all(
             Plans.getAvailablePlans("USD")
                 .filter((p) => !!p.githubId)
+                .filter((p) => !Plans.isFreePlan(p.chargebeeId)) // don't sync free plans, as we cover those explicitly
                 .map((p) => this.reconcilePlan(p, token)),
         );
     }
