@@ -11,7 +11,6 @@
     // 'my-new-dashboard.json': (import 'dashboards/components/new-component.json'),
     'gitpod-component-dashboard.json': (import 'dashboards/components/dashboard.json'),
     'gitpod-component-db.json': (import 'dashboards/components/db.json'),
-    'gitpod-component-db-sync.json': (import 'dashboards/components/db-sync.json'),
     'gitpod-component-messagebus.json': (import 'dashboards/components/messagebus.json'),
     'gitpod-component-ws-manager-bridge.json': (import 'dashboards/components/ws-manager-bridge.json'),
     'gitpod-component-proxy.json': (import 'dashboards/components/proxy.json'),
