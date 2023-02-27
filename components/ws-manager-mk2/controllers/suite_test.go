@@ -50,6 +50,7 @@ var (
 	ctx        context.Context
 	cancel     context.CancelFunc
 	wsActivity *activity.WorkspaceActivity
+	wsMetrics  *controllerMetrics
 )
 
 var _ = BeforeSuite(func() {
@@ -102,6 +103,7 @@ var _ = BeforeSuite(func() {
 
 	conf := newTestConfig()
 	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), &conf, metrics.Registry)
+	wsMetrics = wsReconciler.metrics
 	Expect(err).ToNot(HaveOccurred())
 	Expect(wsReconciler.SetupWithManager(k8sManager)).To(Succeed())
 

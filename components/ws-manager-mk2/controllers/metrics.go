@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/go-logr/logr"
 	lru "github.com/hashicorp/golang-lru"
@@ -185,22 +186,54 @@ func (m *controllerMetrics) countTotalRestoreFailures(log *logr.Logger, ws *work
 	counter.Inc()
 }
 
-func (m *controllerMetrics) rememberWorkspace(ws *workspacev1.Workspace) {
-	m.cache.Add(ws.Name, ws.Status.Phase)
+func (m *controllerMetrics) rememberWorkspace(ws *workspacev1.Workspace, state *metricState) {
+	var s metricState
+	if state != nil {
+		s = *state
+	} else {
+		s = newMetricState(ws)
+	}
+	m.cache.Add(ws.Name, s)
 }
 
 func (m *controllerMetrics) forgetWorkspace(ws *workspacev1.Workspace) {
 	m.cache.Remove(ws.Name)
 }
 
-func (m *controllerMetrics) shouldUpdate(log *logr.Logger, ws *workspacev1.Workspace) bool {
-	p, ok := m.cache.Get(ws.Name)
+// metricState is used to track which metrics have been recorded for a workspace.
+type metricState struct {
+	phase                   workspacev1.WorkspacePhase
+	recordedStartTime       bool
+	recordedInitFailure     bool
+	recordedStartFailure    bool
+	recordedContentReady    bool
+	recordedBackupFailed    bool
+	recordedBackupCompleted bool
+}
+
+func newMetricState(ws *workspacev1.Workspace) metricState {
+	return metricState{
+		phase: ws.Status.Phase,
+		// Here we assume that we've recorded metrics for the following states already if their conditions already exist.
+		// This is to prevent these from being re-recorded after the controller restarts and clears the metric state for
+		// each workspace.
+		recordedStartTime:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
+		recordedInitFailure:     wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure"),
+		recordedStartFailure:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)),
+		recordedContentReady:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)),
+		recordedBackupFailed:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)),
+		recordedBackupCompleted: wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)),
+	}
+}
+
+// getWorkspace returns the last recorded metric state for that workspace.
+func (m *controllerMetrics) getWorkspace(log *logr.Logger, ws *workspacev1.Workspace) (bool, metricState) {
+	s, ok := m.cache.Get(ws.Name)
 	if !ok {
-		return false
+		return false, metricState{}
 	}
 
-	phase := p.(workspacev1.WorkspacePhase)
-	return phase != ws.Status.Phase
+	return true, s.(metricState)
 }
 
 // Describe implements Collector. It will send exactly one Desc to the provided channel.
