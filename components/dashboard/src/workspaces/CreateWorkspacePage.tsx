@@ -10,7 +10,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { FunctionComponent, useCallback, useState } from "react";
 import { useHistory, useLocation } from "react-router";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
@@ -308,8 +308,8 @@ const ExistingWorkspaceModal: FunctionComponent<ExistingWorkspaceModalProps> = (
 }) => {
     return (
         <Modal visible={true} closeable={true} onClose={onClose}>
-            <h3>Running Workspaces</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
+            <ModalHeader>Running Workspaces</ModalHeader>
+            <ModalBody>
                 <p className="mt-1 mb-2 text-base">
                     You already have running workspaces with the same context. You can open an existing one or open a
                     new workspace.
@@ -336,12 +336,15 @@ const ExistingWorkspaceModal: FunctionComponent<ExistingWorkspaceModalProps> = (
                         );
                     })}
                 </>
-            </div>
-            <div className="flex justify-end mt-6">
+            </ModalBody>
+            <ModalFooter>
+                <button className="secondary" onClick={onClose}>
+                    Cancel
+                </button>
                 <button onClick={() => createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}>
                     New Workspace
                 </button>
-            </div>
+            </ModalFooter>
         </Modal>
     );
 };
