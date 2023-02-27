@@ -166,6 +166,13 @@ https://{$GITPOD_DOMAIN} {
 	import ssl_configuration
 	import security_headers
 
+	@proxy_public_api path /public-api*
+	handle @proxy_public_api {
+		uri strip_prefix /public-api
+
+		reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
+	}
+
 	@workspace_download path /workspace-download*
 	handle @workspace_download {
 		import google_storage_headers
