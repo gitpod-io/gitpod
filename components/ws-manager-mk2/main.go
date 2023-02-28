@@ -24,6 +24,7 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -89,7 +90,7 @@ func main() {
 		HealthProbeBindAddress: cfg.Health.Addr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "ws-manager-mk2-leader.gitpod.io",
-		Namespace:              cfg.Manager.Namespace,
+		NewCache:               cache.MultiNamespacedCacheBuilder([]string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
