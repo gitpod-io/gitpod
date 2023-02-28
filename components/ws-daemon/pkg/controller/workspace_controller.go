@@ -26,6 +26,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -49,20 +50,22 @@ type WorkspaceControllerOpts struct {
 
 type WorkspaceController struct {
 	client.Client
-	NodeName   string
-	operations *WorkspaceOperations
-	metrics    *workspaceMetrics
+	NodeName                string
+	maxConcurrentReconciles int
+	operations              *WorkspaceOperations
+	metrics                 *workspaceMetrics
 }
 
-func NewWorkspaceController(c client.Client, nodeName string, ops *WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
+func NewWorkspaceController(c client.Client, nodeName string, maxConcurrentReconciles int, ops *WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
 	metrics := newWorkspaceMetrics()
 	reg.Register(metrics)
 
 	return &WorkspaceController{
-		Client:     c,
-		NodeName:   nodeName,
-		operations: ops,
-		metrics:    metrics,
+		Client:                  c,
+		NodeName:                nodeName,
+		maxConcurrentReconciles: maxConcurrentReconciles,
+		operations:              ops,
+		metrics:                 metrics,
 	}, nil
 }
 
@@ -70,6 +73,9 @@ func NewWorkspaceController(c client.Client, nodeName string, ops *WorkspaceOper
 func (wsc *WorkspaceController) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("workspace").
+		WithOptions(controller.Options{
+			MaxConcurrentReconciles: wsc.maxConcurrentReconciles,
+		}).
 		For(&workspacev1.Workspace{}).
 		WithEventFilter(eventFilter(wsc.NodeName)).
 		Complete(wsc)

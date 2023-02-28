@@ -5636,7 +5636,8 @@ data:
         },
         "workspaceController": {
           "enabled": false,
-          "workingAreaSuffix": ""
+          "workingAreaSuffix": "",
+          "MaxConcurrentReconciles": 0
         }
       },
       "service": {
@@ -5726,7 +5727,8 @@ data:
               "snapshotClass": ""
             }
           }
-        }
+        },
+        "WorkspaceMaxConcurrentReconciles": 0
       },
       "content": {
         "storage": {
@@ -8154,7 +8156,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: d78571b1e710efaaec72a70727b26bd4e0906743ef9d7c8fc019ad773f0a3d7e
+        gitpod.io/checksum_config: 10d7ed857e24154282ba0982f7bdc180beff81db9a106d74b189c9528b54baaa
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10855,7 +10857,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 6bccb0af0666fedca427bf7e904bb6ad0760871f8272d37c095015b1917a8a3b
+        gitpod.io/checksum_config: f4417e15d7879637706cb5202d401795027ae221cf6e6f13e046e933a5cedce9
       creationTimestamp: null
       labels:
         app: gitpod

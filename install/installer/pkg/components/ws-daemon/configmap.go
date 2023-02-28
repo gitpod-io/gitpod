@@ -103,6 +103,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 		wscontroller.Enabled = ucfg.Workspace.UseWsmanagerMk2
 		wscontroller.WorkingAreaSuffix = "-mk2"
+		wscontroller.MaxConcurrentReconciles = 15
 
 		return nil
 	})
