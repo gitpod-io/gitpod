@@ -31,6 +31,7 @@ const WorkspacesPage: FunctionComponent = () => {
     const isOnboardingUser = useMemo(() => user && User.isOnboardingUser(user), [user]);
     const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
     const { newSignupFlow } = useFeatureFlags();
+    const [testError, setTestError] = useState(false);
 
     // Sort workspaces into active/inactive groups
     const { activeWorkspaces, inactiveWorkspaces } = useMemo(() => {
@@ -81,10 +82,19 @@ const WorkspacesPage: FunctionComponent = () => {
         setDeleteModalVisible(false);
     }, [deleteInactiveWorkspaces, inactiveWorkspaces]);
 
+    if (testError) {
+        throw new Error();
+    }
     return (
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
-
+            <button
+                onClick={() => {
+                    setTestError(true);
+                }}
+            >
+                error
+            </button>
             {deleteModalVisible && (
                 <ConfirmationModal
                     title="Delete Inactive Workspaces"

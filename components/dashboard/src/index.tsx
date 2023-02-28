@@ -22,10 +22,10 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
 import { getURLHash, isGitpodIo } from "./utils";
 import { isWebsiteSlug } from "./utils";
-
-import "./index.css";
 import { setupQueryClientProvider } from "./data/setup";
 import { ConfettiContextProvider } from "./contexts/ConfettiContext";
+import { GitpodErrorBoundary } from "./components/ErrorBoundary";
+import "./index.css";
 
 const bootApp = () => {
     // gitpod.io specific boot logic
@@ -57,31 +57,33 @@ const bootApp = () => {
     // Render the App
     ReactDOM.render(
         <React.StrictMode>
-            <GitpodQueryClientProvider>
-                <ConfettiContextProvider>
-                    <UserContextProvider>
-                        <AdminContextProvider>
-                            <PaymentContextProvider>
-                                <LicenseContextProvider>
-                                    <TeamsContextProvider>
-                                        <ProjectContextProvider>
-                                            <ThemeContextProvider>
-                                                <StartWorkspaceModalContextProvider>
-                                                    <BrowserRouter>
-                                                        <FeatureFlagContextProvider>
-                                                            <App />
-                                                        </FeatureFlagContextProvider>
-                                                    </BrowserRouter>
-                                                </StartWorkspaceModalContextProvider>
-                                            </ThemeContextProvider>
-                                        </ProjectContextProvider>
-                                    </TeamsContextProvider>
-                                </LicenseContextProvider>
-                            </PaymentContextProvider>
-                        </AdminContextProvider>
-                    </UserContextProvider>
-                </ConfettiContextProvider>
-            </GitpodQueryClientProvider>
+            <GitpodErrorBoundary>
+                <GitpodQueryClientProvider>
+                    <ConfettiContextProvider>
+                        <UserContextProvider>
+                            <AdminContextProvider>
+                                <PaymentContextProvider>
+                                    <LicenseContextProvider>
+                                        <TeamsContextProvider>
+                                            <ProjectContextProvider>
+                                                <ThemeContextProvider>
+                                                    <StartWorkspaceModalContextProvider>
+                                                        <BrowserRouter>
+                                                            <FeatureFlagContextProvider>
+                                                                <App />
+                                                            </FeatureFlagContextProvider>
+                                                        </BrowserRouter>
+                                                    </StartWorkspaceModalContextProvider>
+                                                </ThemeContextProvider>
+                                            </ProjectContextProvider>
+                                        </TeamsContextProvider>
+                                    </LicenseContextProvider>
+                                </PaymentContextProvider>
+                            </AdminContextProvider>
+                        </UserContextProvider>
+                    </ConfettiContextProvider>
+                </GitpodQueryClientProvider>
+            </GitpodErrorBoundary>
         </React.StrictMode>,
         document.getElementById("root"),
     );

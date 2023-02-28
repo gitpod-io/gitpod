@@ -26,6 +26,7 @@
     "react-confetti": "^6.1.0",
     "react-datepicker": "^4.8.0",
     "react-dom": "^17.0.1",
+    "react-error-boundary": "^3.1.4",
     "react-intl-tel-input": "^8.2.0",
     "react-popper": "^2.3.0",
     "react-portal": "^4.2.2",
