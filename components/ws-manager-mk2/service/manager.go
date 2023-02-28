@@ -32,6 +32,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -189,6 +190,8 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	userEnvVars, envData := extractWorkspaceUserEnv(envSecretName, req.Spec.Envvars, req.Spec.SysEnvvars)
 	sysEnvVars := extractWorkspaceSysEnv(req.Spec.SysEnvvars)
 
+	tokenData, _ := extractWorkspaceTokenData(req.Spec)
+
 	ws := workspacev1.Workspace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: workspacev1.GroupVersion.String(),
@@ -239,6 +242,11 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	err = wsm.createWorkspaceSecret(ctx, &ws, envSecretName, wsm.Config.Namespace, envData)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create env secret for workspace %s: %w", req.Id, err)
+	}
+
+	err = wsm.createWorkspaceSecret(ctx, &ws, fmt.Sprintf("%s-%s", req.Id, "tokens"), wsm.Config.SecretsNamespace, tokenData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token secret for workspace %s: %w", req.Id, err)
 	}
 
 	wsm.metrics.recordWorkspaceStart(&ws)
@@ -850,6 +858,15 @@ func extractWorkspaceSysEnv(sysEnvs []*wsmanapi.EnvironmentVariable) []corev1.En
 	}
 
 	return envs
+}
+
+func extractWorkspaceTokenData(spec *wsmanapi.StartWorkspaceSpec) (secrets map[string]string, secretsLen int) {
+	secrets = make(map[string]string)
+	for k, v := range csapi.GatherSecretsFromInitializer(spec.Initializer) {
+		secrets[k] = v
+		secretsLen += len(v)
+	}
+	return secrets, secretsLen
 }
 
 func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus {

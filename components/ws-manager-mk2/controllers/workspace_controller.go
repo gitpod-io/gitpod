@@ -324,6 +324,11 @@ func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *wo
 	if err != nil {
 		log.Error(err, "could not delete environment secret", "workspace", ws.Name)
 	}
+
+	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "tokens"), r.Config.SecretsNamespace)
+	if err != nil {
+		log.Error(err, "could not delete token secret", "workspace", ws.Name)
+	}
 }
 
 func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace string) error {
