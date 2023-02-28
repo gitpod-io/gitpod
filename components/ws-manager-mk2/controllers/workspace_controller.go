@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -170,6 +171,8 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				}
 			}
 
+			r.deleteWorkspaceSecrets(ctx, workspace)
+
 			// Workspace might have already been in a deleting state,
 			// but not guaranteed, so try deleting anyway.
 			err := r.Client.Delete(ctx, workspace)
@@ -228,6 +231,9 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		} else {
 			return ctrl.Result{Requeue: true}, err
 		}
+
+	case workspace.Status.Phase == workspacev1.WorkspacePhaseRunning:
+		r.deleteWorkspaceSecrets(ctx, workspace)
 
 	// we've disposed already - try to remove the finalizer and call it a day
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
@@ -307,6 +313,37 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) {
+	log := log.FromContext(ctx)
+
+	// if a secret cannot be deleted we do not return early because we want to attempt
+	// the deletion of the remaining secrets
+	err := r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace)
+	if err != nil {
+		log.Error(err, "could not delete environment secret", "workspace", ws.Name)
+	}
+}
+
+func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace string) error {
+	var envSecret corev1.Secret
+	err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &envSecret)
+	if errors.IsNotFound(err) {
+		// nothing to delete
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("could not retrieve secret %s: %w", name, err)
+	}
+
+	err = r.Client.Delete(ctx, &envSecret)
+	if err != nil && !errors.IsNotFound(err) {
+		return fmt.Errorf("could not delete secret %s: %w", name, err)
+	}
+
+	return nil
 }
 
 var (
