@@ -190,7 +190,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	userEnvVars, envData := extractWorkspaceUserEnv(envSecretName, req.Spec.Envvars, req.Spec.SysEnvvars)
 	sysEnvVars := extractWorkspaceSysEnv(req.Spec.SysEnvvars)
 
-	_, _ = extractWorkspaceTokenData(req.Spec)
+	tokenData, _ := extractWorkspaceTokenData(req.Spec)
 
 	ws := workspacev1.Workspace{
 		TypeMeta: metav1.TypeMeta{
@@ -244,10 +244,10 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return nil, fmt.Errorf("cannot create env secret for workspace %s: %w", req.Id, err)
 	}
 
-	// err = wsm.createWorkspaceSecret(ctx, &ws, fmt.Sprintf("%s-%s", req.Id, "tokens"), wsm.Config.WorkspaceSecretNamespace, tokenData)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("cannot create token secret for workspace %s: %w", req.Id, err)
-	// }
+	err = wsm.createWorkspaceSecret(ctx, &ws, fmt.Sprintf("%s-%s", req.Id, "tokens"), wsm.Config.SecretsNamespace, tokenData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create token secret for workspace %s: %w", req.Id, err)
+	}
 
 	wsm.metrics.recordWorkspaceStart(&ws)
 	err = wsm.Client.Create(ctx, &ws)
@@ -301,7 +301,8 @@ func isGitpodInternalEnvVar(name string) bool {
 		strings.HasPrefix(name, "SUPERVISOR_") ||
 		strings.HasPrefix(name, "BOB_") ||
 		strings.HasPrefix(name, "THEIA_") ||
-		name == "NODE_EXTRA_CA_CERTS"
+		name == "NODE_EXTRA_CA_CERTS" ||
+		name == "VSX_REGISTRY_URL"
 }
 
 func extractWorkspaceTokenData(spec *wsmanapi.StartWorkspaceSpec) (secrets map[string]string, secretsLen int) {
@@ -829,6 +830,9 @@ func extractWorkspaceUserEnv(secretName string, userEnvs, sysEnvs []*wsmanapi.En
 			}
 
 			envVars = append(envVars, securedEnv)
+
+		case e.Value == "":
+			continue
 
 		case !isProtectedEnvVar(e.Name, sysEnvs):
 			unprotectedEnv := corev1.EnvVar{
