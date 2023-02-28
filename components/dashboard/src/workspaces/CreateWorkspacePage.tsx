@@ -10,13 +10,13 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { FunctionComponent, useCallback, useState } from "react";
 import { useHistory, useLocation } from "react-router";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { openAuthorizeWindow } from "../provider-utils";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { gitpodHostUrl } from "../service/service";
 import { LimitReachedOutOfHours, LimitReachedParallelWorkspacesModal } from "../start/CreateWorkspace";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { StartWorkspaceError } from "../start/StartPage";
@@ -25,6 +25,7 @@ import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import Spinner from "../icons/Spinner.svg";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { useCurrentTeam } from "../teams/teams-context";
+import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 
 export const useNewCreateWorkspacePage = () => {
     const { startWithOptions } = useFeatureFlags();
@@ -38,6 +39,7 @@ export function CreateWorkspacePage() {
     const location = useLocation();
     const history = useHistory();
     const props = StartWorkspaceOptions.parseSearchParams(location.search);
+    const createWorkspaceMutation = useCreateWorkspaceMutation();
 
     const [useLatestIde, setUseLatestIde] = useState(
         props.ideSettings?.useLatestVersion !== undefined
@@ -60,10 +62,8 @@ export function CreateWorkspacePage() {
         [setSelectedIde, setUseLatestIde],
     );
     const [errorIde, setErrorIde] = useState<string | undefined>(undefined);
-    const [creating, setCreating] = useState(false);
 
     const [existingWorkspaces, setExistingWorkspaces] = useState<WorkspaceInfo[]>([]);
-    const [createError, setCreateError] = useState<StartWorkspaceError | undefined>(undefined);
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload | undefined>(undefined);
 
     const createWorkspace = useCallback(
@@ -85,8 +85,7 @@ export function CreateWorkspacePage() {
             }
 
             try {
-                setCreating(true);
-                const result = await getGitpodService().server.createWorkspace({
+                const result = await createWorkspaceMutation.mutateAsync({
                     contextUrl: repo,
                     organizationId: team?.id,
                     ...opts,
@@ -99,12 +98,10 @@ export function CreateWorkspacePage() {
                     setExistingWorkspaces(result.existingWorkspaces);
                 }
             } catch (error) {
-                setCreateError(error);
-            } finally {
-                setCreating(false);
+                console.log(error);
             }
         },
-        [history, repo, selectedIde, selectedWsClass, team?.id, useLatestIde],
+        [createWorkspaceMutation, history, repo, selectedIde, selectedWsClass, team?.id, useLatestIde],
     );
 
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
@@ -116,15 +113,6 @@ export function CreateWorkspacePage() {
                 close={() => {
                     window.location.href = gitpodHostUrl.asAccessControl().toString();
                 }}
-            />
-        );
-    }
-    if (existingWorkspaces.length > 0) {
-        return (
-            <ExistingWorkspaceModal
-                existingWorkspaces={existingWorkspaces}
-                createWorkspace={createWorkspace}
-                onClose={() => {}}
             />
         );
     }
@@ -161,9 +149,15 @@ export function CreateWorkspacePage() {
                 <div className="w-full flex justify-end mt-6 space-x-2 px-6">
                     <button
                         onClick={onClickCreate}
-                        disabled={creating || !repo || repo.length === 0 || !!errorIde || !!errorWsClass}
+                        disabled={
+                            createWorkspaceMutation.isLoading ||
+                            !repo ||
+                            repo.length === 0 ||
+                            !!errorIde ||
+                            !!errorWsClass
+                        }
                     >
-                        {creating ? (
+                        {createWorkspaceMutation.isLoading ? (
                             <div className="flex">
                                 <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
                                 <span className="pl-2">Creating Workspace ...</span>
@@ -175,12 +169,19 @@ export function CreateWorkspacePage() {
                 </div>
                 <div>
                     <StatusMessage
-                        error={createError}
+                        error={createWorkspaceMutation.error as StartWorkspaceError}
                         setSelectAccountError={setSelectAccountError}
                         createWorkspace={createWorkspace}
                     />
                 </div>
             </div>
+            {existingWorkspaces.length > 0 && (
+                <ExistingWorkspaceModal
+                    existingWorkspaces={existingWorkspaces}
+                    createWorkspace={createWorkspace}
+                    onClose={() => setExistingWorkspaces([])}
+                />
+            )}
         </div>
     );
 }
@@ -307,8 +308,8 @@ const ExistingWorkspaceModal: FunctionComponent<ExistingWorkspaceModalProps> = (
 }) => {
     return (
         <Modal visible={true} closeable={true} onClose={onClose}>
-            <h3>Running Workspaces</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
+            <ModalHeader>Running Workspaces</ModalHeader>
+            <ModalBody>
                 <p className="mt-1 mb-2 text-base">
                     You already have running workspaces with the same context. You can open an existing one or open a
                     new workspace.
@@ -335,12 +336,15 @@ const ExistingWorkspaceModal: FunctionComponent<ExistingWorkspaceModalProps> = (
                         );
                     })}
                 </>
-            </div>
-            <div className="flex justify-end mt-6">
+            </ModalBody>
+            <ModalFooter>
+                <button className="secondary" onClick={onClose}>
+                    Cancel
+                </button>
                 <button onClick={() => createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}>
                     New Workspace
                 </button>
-            </div>
+            </ModalFooter>
         </Modal>
     );
 };
