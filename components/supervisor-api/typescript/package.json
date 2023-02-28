@@ -1,5 +1,4 @@
 {
-    "private": true,
     "name": "@gitpod/supervisor-api",
     "version": "0.1.5",
     "license": "UNLICENSED",
