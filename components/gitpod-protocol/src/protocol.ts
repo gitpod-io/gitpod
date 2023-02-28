@@ -201,7 +201,7 @@ export namespace User {
 
     // TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
     // Let other places rely on the ProfileDetails type since that's what we store
-    // The actual Profile of a User
+    // This is the profile data we send to our Segment analytics tracking pipeline
     export interface Profile {
         name: string;
         email: string;
@@ -214,6 +214,7 @@ export namespace User {
         signupGoals?: string[];
         signupGoalsOther?: string;
         onboardedTimestamp?: string;
+        companySize?: string;
     }
     export namespace Profile {
         export function hasChanges(before: Profile, after: Profile) {
@@ -227,7 +228,8 @@ export namespace User {
                 before.jobRoleOther !== after.jobRoleOther ||
                 // not checking explorationReasons or signupGoals atm as it's an array - need to check deep equality
                 before.signupGoalsOther !== after.signupGoalsOther ||
-                before.onboardedTimestamp !== after.onboardedTimestamp
+                before.onboardedTimestamp !== after.onboardedTimestamp ||
+                before.companySize !== after.companySize
             );
         }
     }
@@ -292,6 +294,8 @@ export interface ProfileDetails {
     signupGoalsOther?: string;
     // Set after a user completes the onboarding flow
     onboardedTimestamp?: string;
+    // Onboarding question about a user's company size
+    companySize?: string;
 }
 
 export interface EmailNotificationSettings {
