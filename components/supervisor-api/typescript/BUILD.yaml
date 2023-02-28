@@ -2,7 +2,7 @@ packages:
   - name: lib
     type: yarn
     srcs:
-      - "src/**.ts"
+      - "src/**/*.ts"
       - package.json
       - tsconfig.json
     config:
@@ -12,3 +12,15 @@ packages:
         build: ["yarn", "build"]
       yarnLock: ${coreYarnLockBase}/../yarn.lock
       tsconfig: tsconfig.json
+  - name: publish
+    type: generic
+    env:
+      - DO_PUBLISH=${publishToNPM}
+    argdeps:
+      - npmPublishTrigger
+    deps:
+      - :lib
+      - components/gitpod-protocol:scripts
+    config:
+      commands:
+        - ["node", "components-gitpod-protocol--scripts/publish.js", "${version}", "components-supervisor-api-typescript--lib/package"]

@@ -106,6 +106,7 @@ packages:
       - components/local-app-api/typescript-grpcweb:publish
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor-api/typescript-grpcweb:publish
+      - components/supervisor-api/typescript:publish
       - components/ide/jetbrains/gateway-plugin:publish-stable
       - components/ide/jetbrains/gateway-plugin:publish-latest
       - components/public-api/typescript:publish
