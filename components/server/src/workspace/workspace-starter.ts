@@ -1521,6 +1521,7 @@ export class WorkspaceStarter {
             "function:getTeams",
             "function:trackEvent",
             "function:getSupportedWorkspaceClasses",
+            "function:getIDToken",
 
             "resource:" +
                 ScopedResourceGuard.marshalResourceScope({

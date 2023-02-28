@@ -54,7 +54,12 @@ func (srv *IDPService) GetIDToken(ctx context.Context, req *connect.Request[v1.G
 		return nil, err
 	}
 
-	// We use GetWorkspace as standin for the IDP operation authorisation until we have a better way of handling this
+	// We use GetIDToken as standin for the IDP operation authorisation until we have a better way of handling this
+	err = conn.GetIDToken(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	workspace, err := conn.GetWorkspace(ctx, workspaceID)
 	if err != nil {
 		logger.WithError(err).Error("Failed to get workspace.")

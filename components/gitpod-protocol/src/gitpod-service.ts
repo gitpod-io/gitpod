@@ -317,6 +317,11 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getSupportedWorkspaceClasses(): Promise<SupportedWorkspaceClass[]>;
     maySetTimeout(): Promise<boolean>;
     updateWorkspaceTimeoutSetting(setting: Partial<WorkspaceTimeoutSetting>): Promise<void>;
+
+    /**
+     * getIDToken - doesn't actually do anything, just used to authenticat/authorise
+     */
+    getIDToken(): Promise<void>;
 }
 
 export interface AppNotification {

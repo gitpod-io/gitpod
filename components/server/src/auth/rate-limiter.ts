@@ -236,6 +236,8 @@ const defaultFunctions: FunctionsConfig = {
     getSupportedWorkspaceClasses: { group: "default", points: 1 },
     maySetTimeout: { group: "default", points: 1 },
     updateWorkspaceTimeoutSetting: { group: "default", points: 1 },
+
+    getIDToken: { group: "default", points: 1 },
 };
 
 function getConfig(config: RateLimiterConfig): RateLimiterConfig {

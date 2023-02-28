@@ -357,15 +357,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetContentBlobUploadURL(ctx, name interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentBlobUploadURL", reflect.TypeOf((*MockAPIInterface)(nil).GetContentBlobUploadURL), ctx, name)
 }
 
-// GetWorkspaceEnvVars mocks base method.
-func (m *MockAPIInterface) GetWorkspaceEnvVars(ctx context.Context, workspaceID string) ([]*EnvVar, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetWorkspaceEnvVars", ctx, workspaceID)
-	ret0, _ := ret[0].([]*EnvVar)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
 // GetEnvVars mocks base method.
 func (m *MockAPIInterface) GetEnvVars(ctx context.Context) ([]*EnvVar, error) {
 	m.ctrl.T.Helper()
@@ -439,6 +430,20 @@ func (m *MockAPIInterface) GetGitpodTokens(ctx context.Context) ([]*APIToken, er
 func (mr *MockAPIInterfaceMockRecorder) GetGitpodTokens(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitpodTokens", reflect.TypeOf((*MockAPIInterface)(nil).GetGitpodTokens), ctx)
+}
+
+// GetIDToken mocks base method.
+func (m *MockAPIInterface) GetIDToken(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetIDToken", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetIDToken indicates an expected call of GetIDToken.
+func (mr *MockAPIInterfaceMockRecorder) GetIDToken(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIDToken", reflect.TypeOf((*MockAPIInterface)(nil).GetIDToken), ctx)
 }
 
 // GetLoggedInUser mocks base method.
@@ -679,6 +684,21 @@ func (m *MockAPIInterface) GetWorkspace(ctx context.Context, id string) (*Worksp
 func (mr *MockAPIInterfaceMockRecorder) GetWorkspace(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkspace", reflect.TypeOf((*MockAPIInterface)(nil).GetWorkspace), ctx, id)
+}
+
+// GetWorkspaceEnvVars mocks base method.
+func (m *MockAPIInterface) GetWorkspaceEnvVars(ctx context.Context, workspaceID string) ([]*EnvVar, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWorkspaceEnvVars", ctx, workspaceID)
+	ret0, _ := ret[0].([]*EnvVar)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkspaceEnvVars indicates an expected call of GetWorkspaceEnvVars.
+func (mr *MockAPIInterfaceMockRecorder) GetWorkspaceEnvVars(ctx, workspaceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkspaceEnvVars", reflect.TypeOf((*MockAPIInterface)(nil).GetWorkspaceEnvVars), ctx, workspaceID)
 }
 
 // GetWorkspaceOwner mocks base method.
