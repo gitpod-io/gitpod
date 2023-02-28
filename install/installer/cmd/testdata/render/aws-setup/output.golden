@@ -5046,6 +5046,7 @@ data:
     {
       "manager": {
         "namespace": "default",
+        "secretsNamespace": "",
         "schedulerName": "",
         "seccompProfile": "workspace_default_pd-ide-metrics.23.json",
         "timeouts": {
@@ -9472,7 +9473,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: b7da41879471e13b5f45ca5d34265974ed68c3c77c93f8d9b6c0d188ac9724e5
+        gitpod.io/checksum_config: 9e4ebf60455939d2a4b5781c2c4e3b84c9029ee7f841dfcb5f3ccc8f7179599e
       creationTimestamp: null
       labels:
         app: gitpod

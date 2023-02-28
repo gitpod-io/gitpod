@@ -5,6 +5,8 @@
 package wsmanagermk2
 
 import (
+	"fmt"
+
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -131,6 +133,86 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"get",
 						"list",
 						"watch",
+					},
+				},
+			},
+		},
+
+		&rbacv1.Role{
+			TypeMeta: common.TypeMetaRole,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-secrets", Component),
+				Namespace: SecretsNamespace,
+				Labels:    labels,
+			},
+			Rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{""},
+					Resources: []string{"secrets"},
+					Verbs: []string{
+						"create",
+						"delete",
+						"get",
+						"list",
+						"watch",
+					},
+				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"pods"},
+					Verbs: []string{
+						"create",
+						"delete",
+						"get",
+						"list",
+						"patch",
+						"update",
+						"watch",
+					},
+				},
+				{
+					Verbs:     []string{"get"},
+					APIGroups: []string{""},
+					Resources: []string{"pod/status"},
+				},
+				{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"workspaces"},
+					Verbs: []string{
+						"create",
+						"delete",
+						"get",
+						"list",
+						"patch",
+						"update",
+						"watch",
+					},
+				},
+				{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"workspaces/status"},
+					Verbs: []string{
+						"get",
+						"patch",
+						"update",
+					},
+				},
+				{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"snapshots"},
+					Verbs: []string{
+						"create",
+						"delete",
+						"get",
+						"list",
+						"watch",
+					},
+				},
+				{
+					APIGroups: []string{"workspace.gitpod.io"},
+					Resources: []string{"snapshots/status"},
+					Verbs: []string{
+						"get",
 					},
 				},
 			},

@@ -77,6 +77,8 @@ type ServiceConfiguration struct {
 type Configuration struct {
 	// Namespace is the kubernetes namespace the workspace manager operates in
 	Namespace string `json:"namespace"`
+	// SecretsNamespace is the kubernetes namespace
+	SecretsNamespace string `json:"secretsNamespace"`
 	// SchedulerName is the name of the workspace scheduler all pods are created with
 	SchedulerName string `json:"schedulerName"`
 	// SeccompProfile names the seccomp profile workspaces will use

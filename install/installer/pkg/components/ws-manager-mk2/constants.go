@@ -18,4 +18,6 @@ const (
 	VolumeWorkspaceTemplate    = "workspace-template"
 	WorkspaceTemplatePath      = "/workspace-templates"
 	WorkspaceTemplateConfigMap = "workspace-templates"
+	SecretsNamespace           = "workspace-secrets"
+	WorkspaceNamespace         = "workspaces"
 )

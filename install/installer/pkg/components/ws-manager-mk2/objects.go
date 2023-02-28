@@ -23,6 +23,7 @@ var Objects common.RenderFunc = func(cfg *common.RenderContext) ([]runtime.Objec
 	}
 
 	return common.CompositeRenderFunc(
+		namespace,
 		crd,
 		configmap,
 		deployment,
