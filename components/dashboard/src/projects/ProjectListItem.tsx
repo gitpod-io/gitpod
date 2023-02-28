@@ -47,7 +47,7 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                         ? []
                                         : [
                                               {
-                                                  title: "New Workspace ...",
+                                                  title: "New Workspace with ...",
                                                   onClick: () =>
                                                       setStartWorkspaceModalProps({
                                                           contextUrl: project.cloneUrl,
@@ -56,6 +56,11 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                                   separator: true,
                                               },
                                           ]),
+                                    {
+                                        title: "Settings",
+                                        link: `/projects/${Project.slug(project)}/settings`,
+                                        separator: true,
+                                    },
                                     {
                                         title: "Remove Project",
                                         customFontStyle:
