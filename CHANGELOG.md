@@ -1,6 +1,8 @@
 # Change Log
 
 ## February 2023
+- Revert ":wrench: Ambiguity of `New Workspace` option & :rocket: new `Settings` option " ([#16588](https://github.com/gitpod-io/gitpod/pull/16588)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
+- Access Project Settings directly from Projects Page on Project Menu Items ([#16540](https://github.com/gitpod-io/gitpod/pull/16540)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 - [inner-loop] run Isolated docker in debug workspace ([#16363](https://github.com/gitpod-io/gitpod/pull/16363)) - [@iQQBot](https://github.com/iQQBot)
 - Update JetBrains IDE images to most recent stable version. ([#16065](https://github.com/gitpod-io/gitpod/pull/16065)) - [@roboquat](https://github.com/roboquat)
 - We've introduced a new onboarding flow to help user's customize Gitpod and get to know their needs better. ([#16501](https://github.com/gitpod-io/gitpod/pull/16501)) - [@selfcontained](https://github.com/selfcontained)
