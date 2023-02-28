@@ -166,9 +166,32 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	regHostname := fmt.Sprintf("reg.%s", ctx.Config.Domain)
+
 	initContainers := []corev1.Container{
 		*common.InternalCAContainer(ctx),
+		{
+			Name:            "update-hosts-file",
+			Image:           ctx.ImageName(ctx.Config.Repository, "ca-updater", ctx.VersionManifest.Components.CAUpdater.Version),
+			ImagePullPolicy: corev1.PullIfNotPresent,
+			Command: []string{
+				"bash", "-c", "$(HOSTS_SCRIPT)",
+			},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "hostfs",
+					MountPath: "/mnt/dst",
+				},
+			},
+			Env: []corev1.EnvVar{
+				{
+					Name:  "HOSTS_SCRIPT",
+					Value: fmt.Sprintf(`if [ -n "$(grep -P "%v" /mnt/dst/etc/hosts)" ];then echo "file /etc/hosts/ already up to date"; else echo "127.0.0.1 %v" >>/mnt/dst/etc/hosts && echo "OK";fi`, regHostname, regHostname),
+				},
+			},
+		},
 	}
+
 	// Load `customCACert` into Kubelet's only if its self-signed
 	if ctx.Config.CustomCACert != nil && ctx.Config.CustomCACert.Name != "" {
 		initContainers = append(initContainers,
