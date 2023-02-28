@@ -9,7 +9,9 @@ import { FC, RefObject } from "react";
 import Spinner from "../icons/Spinner.svg";
 
 type Props = {
+    // TODO: determine if we want danger.secondary
     type?: "primary" | "secondary" | "danger" | "danger.secondary";
+    // TODO: determine how to handle small/medium (block does w-full atm)
     size?: "small" | "medium" | "block";
     disabled?: boolean;
     loading?: boolean;
@@ -77,6 +79,7 @@ export const Button: FC<Props> = ({
     );
 };
 
+// TODO: Consider making this a LoadingButton variant instead
 type ButtonContentProps = {
     loading: boolean;
 };
@@ -87,10 +90,9 @@ const ButtonContent: FC<ButtonContentProps> = ({ loading, children }) => {
 
     return (
         <div className="flex items-center justify-center space-x-2">
+            {/* TODO: This spinner doesn't look right - use a solid white instead? */}
             <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
             <span>{children}</span>
         </div>
     );
 };
-
-// React.MouseEvent<HTMLButtonElement, MouseEvent>;
