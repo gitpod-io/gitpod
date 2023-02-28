@@ -21,7 +21,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
 
@@ -155,16 +154,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ProcLimit: procLimit,
 			NetLimit:  networkLimitConfig,
 			OOMScores: oomScoreAdjConfig,
-			Hosts: hosts.Config{
-				Enabled:       true,
-				NodeHostsFile: "/mnt/hosts",
-				FixedHosts: map[string][]hosts.Host{
-					"registryFacade": {{
-						Name: fmt.Sprintf("reg.%s", ctx.Config.Domain),
-						Addr: "127.0.0.1",
-					}},
-				},
-			},
 			DiskSpaceGuard: diskguard.Config{
 				Enabled:  true,
 				Interval: util.Duration(5 * time.Minute),
