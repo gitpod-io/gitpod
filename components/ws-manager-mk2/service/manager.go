@@ -6,8 +6,10 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -112,9 +114,6 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return nil, status.Errorf(codes.InvalidArgument, "cannot serialise content initializer: %v", err)
 	}
 
-	userEnvVars := setEnvironment(req.Spec.Envvars)
-	sysEnvVars := setEnvironment(req.Spec.SysEnvvars)
-
 	var git *workspacev1.GitSpec
 	if req.Spec.Git != nil {
 		git = &workspacev1.GitSpec{
@@ -194,6 +193,10 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		}
 	}
 
+	envSecretName := fmt.Sprintf("%s-%s", req.Id, "env")
+	userEnvVars, envData := extractWorkspaceUserEnv(envSecretName, req.Spec.Envvars, req.Spec.SysEnvvars)
+	sysEnvVars := extractWorkspaceSysEnv(req.Spec.SysEnvvars)
+
 	ws := workspacev1.Workspace{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: workspacev1.GroupVersion.String(),
@@ -241,6 +244,11 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	}
 	controllerutil.AddFinalizer(&ws, workspacev1.GitpodFinalizerName)
 
+	err = wsm.createWorkspaceSecret(ctx, &ws, envSecretName, wsm.Config.Namespace, envData)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create env secret for workspace %s: %w", req.Id, err)
+	}
+
 	wsm.metrics.recordWorkspaceStart(&ws)
 	err = wsm.Client.Create(ctx, &ws)
 	if err != nil {
@@ -269,6 +277,67 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		Url:        wsr.Status.URL,
 		OwnerToken: wsr.Status.OwnerToken,
 	}, nil
+}
+
+func isProtectedEnvVar(name string, sysEnvvars []*wsmanapi.EnvironmentVariable) bool {
+	switch name {
+	case "THEIA_SUPERVISOR_TOKENS":
+		return true
+	default:
+		if isGitpodInternalEnvVar(name) {
+			return false
+		}
+		for _, env := range sysEnvvars {
+			if env.Name == name {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func isGitpodInternalEnvVar(name string) bool {
+	return strings.HasPrefix(name, "GITPOD_") ||
+		strings.HasPrefix(name, "SUPERVISOR_") ||
+		strings.HasPrefix(name, "BOB_") ||
+		strings.HasPrefix(name, "THEIA_") ||
+		name == "NODE_EXTRA_CA_CERTS" ||
+		name == "VSX_REGISTRY_URL"
+}
+
+func (wsm *WorkspaceManagerServer) createWorkspaceSecret(ctx context.Context, owner client.Object, name, namespace string, data map[string]string) error {
+	secret := corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		StringData: data,
+	}
+
+	err := wsm.Client.Create(ctx, &secret)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+
+	err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, func(c context.Context) (done bool, err error) {
+		var secret corev1.Secret
+		err = wsm.Client.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, &secret)
+		if errors.IsNotFound(err) {
+			return false, nil
+		}
+
+		if err != nil {
+			return false, err
+		}
+
+		return true, nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsmanapi.StopWorkspaceRequest) (res *wsmanapi.StopWorkspaceResponse, err error) {
@@ -730,22 +799,65 @@ func areValidFeatureFlags(value interface{}) error {
 	return nil
 }
 
-func setEnvironment(envs []*wsmanapi.EnvironmentVariable) []corev1.EnvVar {
-	envVars := make([]corev1.EnvVar, 0, len(envs))
-	for _, e := range envs {
-		env := corev1.EnvVar{Name: e.Name, Value: e.Value}
-		if len(e.Value) == 0 && e.Secret != nil {
-			env.ValueFrom = &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{Name: e.Secret.SecretName},
-					Key:                  e.Secret.Key,
+func extractWorkspaceUserEnv(secretName string, userEnvs, sysEnvs []*wsmanapi.EnvironmentVariable) ([]corev1.EnvVar, map[string]string) {
+	envVars := make([]corev1.EnvVar, 0, len(userEnvs))
+	secrets := make(map[string]string)
+	for _, e := range userEnvs {
+		switch {
+		case e.Secret != nil:
+			securedEnv := corev1.EnvVar{
+				Name: e.Name,
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{Name: e.Secret.SecretName},
+						Key:                  e.Secret.Key,
+					},
 				},
 			}
+
+			envVars = append(envVars, securedEnv)
+
+		case e.Value == "":
+			continue
+
+		case !isProtectedEnvVar(e.Name, sysEnvs):
+			unprotectedEnv := corev1.EnvVar{
+				Name:  e.Name,
+				Value: e.Value,
+			}
+
+			envVars = append(envVars, unprotectedEnv)
+
+		default:
+			name := fmt.Sprintf("%x", sha256.Sum256([]byte(e.Name)))
+			protectedEnv := corev1.EnvVar{
+				Name: e.Name,
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{Name: secretName},
+						Key:                  name,
+					},
+				},
+			}
+
+			envVars = append(envVars, protectedEnv)
+			secrets[name] = e.Value
 		}
-		envVars = append(envVars, env)
 	}
 
-	return envVars
+	return envVars, secrets
+}
+
+func extractWorkspaceSysEnv(sysEnvs []*wsmanapi.EnvironmentVariable) []corev1.EnvVar {
+	envs := make([]corev1.EnvVar, 0, len(sysEnvs))
+	for _, e := range sysEnvs {
+		envs = append(envs, corev1.EnvVar{
+			Name:  e.Name,
+			Value: e.Value,
+		})
+	}
+
+	return envs
 }
 
 func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus {
