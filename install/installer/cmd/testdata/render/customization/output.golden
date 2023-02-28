@@ -6063,18 +6063,6 @@ data:
           "tier1": 0,
           "tier2": 0
         },
-        "hosts": {
-          "enabled": true,
-          "nodeHostsFile": "/mnt/hosts",
-          "fixedHosts": {
-            "registryFacade": [
-              {
-                "addr": "127.0.0.1",
-                "name": "reg.gitpod.example.com"
-              }
-            ]
-          }
-        },
         "disk": {
           "enabled": true,
           "interval": "5m0s",
@@ -8596,6 +8584,22 @@ spec:
         - mountPath: /usr/local/share/ca-certificates/gitpod-ca.crt
           name: gitpod-ca-certificate
           subPath: ca.crt
+      - command:
+        - bash
+        - -c
+        - $(HOSTS_SCRIPT)
+        env:
+        - name: HOSTS_SCRIPT
+          value: if [ -n "$(grep -P "reg.gitpod.example.com" /mnt/dst/etc/hosts)"
+            ];then echo "file /etc/hosts/ already up to date"; else echo "127.0.0.1
+            reg.gitpod.example.com" >>/mnt/dst/etc/hosts && echo "OK";fi
+        image: eu.gcr.io/gitpod-core-dev/build/ca-updater:test
+        imagePullPolicy: IfNotPresent
+        name: update-hosts-file
+        resources: {}
+        volumeMounts:
+        - mountPath: /mnt/dst
+          name: hostfs
       priorityClassName: system-node-critical
       restartPolicy: Always
       serviceAccountName: registry-facade
@@ -8656,7 +8660,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 4b44521d9640a95b75fae26ffff32c8913fe96d1cc87dd4383d457b64b1ea9e1
+        gitpod.io/checksum_config: be72c62763153fb9c55d26e0670331729facf447fb5420478d96fb82dfa997bf
         hello: world
       creationTimestamp: null
       labels:
