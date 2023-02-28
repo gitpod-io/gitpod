@@ -34,7 +34,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
@@ -244,17 +243,11 @@ func NewDaemon(config Config) (*Daemon, error) {
 
 	dsk := diskguard.FromConfig(config.DiskSpaceGuard, clientset, nodename)
 
-	hsts, err := hosts.FromConfig(config.Hosts, clientset, config.Runtime.KubernetesNamespace)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Daemon{
 		Config:          config,
 		dispatch:        dsptch,
 		content:         contentService,
 		diskGuards:      dsk,
-		hosts:           hsts,
 		configReloader:  configReloader,
 		mgr:             mgr,
 		metricsRegistry: registry,
@@ -276,7 +269,6 @@ type Daemon struct {
 	dispatch        *dispatch.Dispatch
 	content         *content.WorkspaceService
 	diskGuards      []*diskguard.Guard
-	hosts           hosts.Controller
 	configReloader  ConfigReloader
 	mgr             ctrl.Manager
 	metricsRegistry *prometheus.Registry
@@ -299,8 +291,6 @@ func (d *Daemon) Start() error {
 	for _, dsk := range d.diskGuards {
 		go dsk.Start()
 	}
-
-	go d.hosts.Start()
 
 	var ctx context.Context
 	ctx, d.cancel = context.WithCancel(context.Background())
@@ -331,8 +321,6 @@ func (d *Daemon) Stop() error {
 	errs = append(errs, d.dispatch.Close())
 	errs = append(errs, d.content.Close())
 
-	errs = append(errs, d.hosts.Close())
-
 	for _, err := range errs {
 		if err != nil {
 			return err
@@ -344,12 +332,6 @@ func (d *Daemon) Stop() error {
 
 func (d *Daemon) ReadinessProbe() func() error {
 	return func() error {
-		if !d.hosts.DidUpdate() {
-			err := fmt.Errorf("host controller not ready yet")
-			log.WithError(err).Errorf("readiness probe failure")
-			return err
-		}
-
 		// use 2 second timeout to ensure that IsContainerdReady() will not block indefinetely
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(2*time.Second))
 		defer cancel()

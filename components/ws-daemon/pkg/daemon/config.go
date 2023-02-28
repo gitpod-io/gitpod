@@ -12,7 +12,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -29,7 +28,6 @@ type Config struct {
 	ProcLimit           int64                     `json:"procLimit"`
 	NetLimit            netlimit.Config           `json:"netlimit"`
 	OOMScores           cgroup.OOMScoreAdjConfig  `json:"oomScores"`
-	Hosts               hosts.Config              `json:"hosts"`
 	DiskSpaceGuard      diskguard.Config          `json:"disk"`
 	WorkspaceController WorkspaceControllerConfig `json:"workspaceController"`
 }
