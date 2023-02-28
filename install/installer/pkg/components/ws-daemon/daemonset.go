@@ -210,6 +210,26 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	tolerations := []corev1.Toleration{
+		{
+			Key:      "node.kubernetes.io/disk-pressure",
+			Operator: "Exists",
+			Effect:   "NoExecute",
+		},
+		{
+			Key:      "node.kubernetes.io/memory-pressure",
+			Operator: "Exists",
+			Effect:   "NoExecute",
+		},
+		{
+			Key:      "node.kubernetes.io/out-of-disk",
+			Operator: "Exists",
+			Effect:   "NoExecute",
+		},
+	}
+
+	tolerations = append(tolerations, common.GPUToleration()...)
+
 	podSpec := corev1.PodSpec{
 		Volumes:        volumes,
 		InitContainers: initContainers,
@@ -316,25 +336,9 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ServiceAccountName:            Component,
 		HostPID:                       true,
 		Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
-		Tolerations: []corev1.Toleration{
-			{
-				Key:      "node.kubernetes.io/disk-pressure",
-				Operator: "Exists",
-				Effect:   "NoExecute",
-			},
-			{
-				Key:      "node.kubernetes.io/memory-pressure",
-				Operator: "Exists",
-				Effect:   "NoExecute",
-			},
-			{
-				Key:      "node.kubernetes.io/out-of-disk",
-				Operator: "Exists",
-				Effect:   "NoExecute",
-			},
-		},
-		PriorityClassName:  common.SystemNodeCritical,
-		EnableServiceLinks: pointer.Bool(false),
+		Tolerations:                   tolerations,
+		PriorityClassName:             common.SystemNodeCritical,
+		EnableServiceLinks:            pointer.Bool(false),
 	}
 
 	err = common.AddStorageMounts(ctx, &podSpec, Component)
