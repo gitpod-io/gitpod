@@ -116,7 +116,6 @@ type PortSpec struct {
 // WorkspaceStatus defines the observed state of Workspace
 type WorkspaceStatus struct {
 	PodStarts  int    `json:"podStarts"`
-	Headless   bool   `json:"headless"`
 	URL        string `json:"url,omitempty"`
 	OwnerToken string `json:"ownerToken,omitempty"`
 

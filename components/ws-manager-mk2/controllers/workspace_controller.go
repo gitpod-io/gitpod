@@ -219,7 +219,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 	case isWorkspaceBeingDeleted(workspace) && !isPodBeingDeleted(pod):
 		return r.deleteWorkspacePod(ctx, pod, "workspace deleted")
 
-	case workspace.Status.Headless && workspace.Status.Phase == workspacev1.WorkspacePhaseStopped && !isPodBeingDeleted(pod):
+	case workspace.IsHeadless() && workspace.Status.Phase == workspacev1.WorkspacePhaseStopped && !isPodBeingDeleted(pod):
 		// Workspace was requested to be deleted, propagate by deleting the Pod.
 		// The Pod deletion will then trigger workspace disposal steps.
 		err := r.Client.Delete(ctx, pod)

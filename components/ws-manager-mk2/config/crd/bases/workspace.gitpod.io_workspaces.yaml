@@ -501,8 +501,6 @@ spec:
                       type: string
                     type: array
                 type: object
-              headless:
-                type: boolean
               ownerToken:
                 type: string
               phase:
@@ -538,7 +536,6 @@ spec:
               url:
                 type: string
             required:
-            - headless
             - podStarts
             type: object
         type: object
