@@ -49,7 +49,7 @@ export interface WorkspaceInstance {
     //         values here.
     configuration?: WorkspaceInstanceConfiguration;
 
-    // instance is hard-deleted on the database and about to be collected by db-sync
+    // instance is hard-deleted on the database and about to be collected by periodic deleter
     readonly deleted?: boolean;
 
     /**

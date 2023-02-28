@@ -246,7 +246,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 this.prometheusExporter.statusUpdateReceived(this.cluster.name, true);
             } else {
                 // This scenario happens when the update for a WorkspaceInstance is picked up by a ws-manager-bridge in a different region,
-                // before db-sync finished running. This is because all ws-manager-bridge instances receive updates from all WorkspaceClusters.
+                // before periodic deleter finished running. This is because all ws-manager-bridge instances receive updates from all WorkspaceClusters.
                 // We ignore this update because we do not have anything to reconcile this update against, but also because we assume it is handled
                 // by another instance of ws-manager-bridge that is in the region where the WorkspaceInstance record was created.
                 this.prometheusExporter.statusUpdateReceived(this.cluster.name, false);

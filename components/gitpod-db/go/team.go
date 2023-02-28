@@ -20,7 +20,7 @@ type Team struct {
 
 	MarkedDeleted bool `gorm:"column:markedDeleted;type:tinyint;default:0;" json:"marked_deleted"`
 
-	// deleted is reserved for use by db-sync.
+	// deleted is reserved for use by periodic deleter
 	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 

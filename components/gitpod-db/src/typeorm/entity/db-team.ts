@@ -31,7 +31,7 @@ export class DBTeam implements Team {
     @Column()
     markedDeleted?: boolean;
 
-    // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
+    // This column triggers the periodic deleter deletion mechanism. It's not intended for public consumption.
     @Column()
     deleted: boolean;
 }

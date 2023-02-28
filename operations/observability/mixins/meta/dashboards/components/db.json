@@ -1179,7 +1179,7 @@
         "allValue": null,
         "current": {},
         "datasource": "$datasource",
-        "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"db.*\", pod!~\"db-sync.*\"}, node)",
+        "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"db.*\"}, node)",
         "description": null,
         "error": null,
         "hide": 0,
@@ -1189,7 +1189,7 @@
         "name": "node",
         "options": [],
         "query": {
-          "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"db.*\", pod!~\"db-sync.*\"}, node)",
+          "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", pod=~\"db.*\"}, node)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,
@@ -1205,7 +1205,7 @@
         "allValue": null,
         "current": {},
         "datasource": "$datasource",
-        "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"db.*\", pod!~\"db-sync.*\"}, pod)",
+        "definition": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"db.*\"}, pod)",
         "description": null,
         "error": null,
         "hide": 0,
@@ -1215,7 +1215,7 @@
         "name": "pod",
         "options": [],
         "query": {
-          "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"db.*\", pod!~\"db-sync.*\"}, pod)",
+          "query": "label_values(container_cpu_usage_seconds_total{cluster=~\"$cluster\", node=~\"$node\", pod=~\"db.*\"}, pod)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 1,

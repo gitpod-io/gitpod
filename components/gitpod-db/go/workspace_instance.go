@@ -44,7 +44,7 @@ type WorkspaceInstance struct {
 	Phase          sql.NullString `gorm:"->:column:phase;type:char;size:32;" json:"phase"`
 	PhasePersisted string         `gorm:"column:phasePersisted;type:char;size:32;" json:"phasePersisted"`
 
-	// deleted is restricted for use by db-sync
+	// deleted is restricted for use by periodic deleter
 	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
