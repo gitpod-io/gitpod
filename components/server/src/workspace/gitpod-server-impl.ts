@@ -163,7 +163,12 @@ import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { PartialProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ConfigurationService } from "../config/configuration-service";
-import { EnvVarWithValue, ProjectEnvVar } from "@gitpod/gitpod-protocol/lib/protocol";
+import {
+    AdditionalUserData,
+    EnvVarWithValue,
+    ProjectEnvVar,
+    WorkspaceTimeoutSetting,
+} from "@gitpod/gitpod-protocol/lib/protocol";
 import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
@@ -492,6 +497,33 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         return user;
+    }
+
+    public async supportConfigureWorkspaceTimeout(ctx: TraceContext): Promise<boolean> {
+        const user = this.checkUser("supportConfigureWorkspaceTimeout");
+        await this.guardAccess({ kind: "user", subject: user }, "get");
+
+        return await this.entitlementService.maySetTimeout(user, new Date());
+    }
+
+    public async updateWorkspaceTimeoutSetting(
+        ctx: TraceContext,
+        setting: Partial<WorkspaceTimeoutSetting>,
+    ): Promise<void> {
+        traceAPIParams(ctx, { setting });
+        if (setting.workspaceTimeout) {
+            WorkspaceTimeoutDuration.validate(setting.workspaceTimeout);
+        }
+
+        const user = this.checkUser("updateWorkspaceTimeoutSetting");
+        await this.guardAccess({ kind: "user", subject: user }, "update");
+
+        if (!(await this.entitlementService.maySetTimeout(user, new Date()))) {
+            throw new Error("configure workspace timeout only available for paid user.");
+        }
+
+        AdditionalUserData.set(user, setting);
+        await this.userDB.updateUserPartial(user);
     }
 
     public async sendPhoneNumberVerificationToken(ctx: TraceContext, rawPhoneNumber: string): Promise<void> {

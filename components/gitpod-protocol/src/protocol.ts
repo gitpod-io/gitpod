@@ -233,7 +233,14 @@ export namespace User {
     }
 }
 
-export interface AdditionalUserData {
+export interface WorkspaceTimeoutSetting {
+    // user globol workspace timeout
+    workspaceTimeout: string;
+    // control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
+    disabledClosedTimeout: boolean;
+}
+
+export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     platforms?: UserPlatform[];
     emailNotificationSettings?: EmailNotificationSettings;
     featurePreview?: boolean;
@@ -254,10 +261,6 @@ export interface AdditionalUserData {
     // whether the user has been migrated to team attribution.
     // a corresponding feature flag (team_only_attribution) triggers the migration.
     isMigratedToTeamOnlyAttribution?: boolean;
-    // user globol workspace timeout
-    workspaceTimeout?: string;
-    // control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
-    disabledClosedTimeout?: boolean;
 }
 export namespace AdditionalUserData {
     export function set(user: User, partialData: Partial<AdditionalUserData>): User {
