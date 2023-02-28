@@ -45,5 +45,6 @@ go_protoc_gateway() {
 install_dependencies
 local_go_protoc "$COMPONENTS_DIR"
 go_protoc_gateway "$COMPONENTS_DIR"
+typescript_ts_protoc_tp "$COMPONENTS_DIR" "$THIRD_PARTY_INCLUDES"
 ./generate-java.sh
 update_license

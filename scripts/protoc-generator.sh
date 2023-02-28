@@ -75,6 +75,40 @@ typescript_ts_protoc() {
 popd > /dev/null || exit
 }
 
+
+
+typescript_ts_protoc_tp() {
+    local ROOT_DIR=$1
+    local THIRD_PARTY_INCLUDES=$2
+    local PROTO_DIR=${3:-.}
+    local MODULE_DIR
+    # Assigning external program output directly
+    # after the `local` keyword masks the return value (Could be an error).
+    # Should be done in a separate line.
+    MODULE_DIR=$(pwd)
+    TARGET_DIR="$MODULE_DIR"/typescript/src
+
+    pushd typescript > /dev/null || exit
+
+    yarn install
+
+    rm -rf "$TARGET_DIR"
+    mkdir -p "$TARGET_DIR"
+
+    echo "[protoc] Generating TypeScript files"
+    protoc --plugin="$MODULE_DIR"/typescript/node_modules/.bin/protoc-gen-ts_proto \
+            --ts_proto_opt=context=true \
+            --ts_proto_opt=lowerCaseServiceMethods=true \
+            --ts_proto_opt=stringEnums=true \
+            --ts_proto_out="$TARGET_DIR" \
+            --ts_proto_opt=fileSuffix=.pb \
+            --ts_proto_opt=outputServices=nice-grpc,outputServices=generic-definitions,useExactTypes=false \
+            -I /usr/lib/protoc/include -I"$ROOT_DIR" -I.. -I"../$PROTO_DIR" -I"$THIRD_PARTY_INCLUDES" \
+            "../$PROTO_DIR"/*.proto
+
+popd > /dev/null || exit
+}
+
 typescript_protoc() {
     local ROOT_DIR=$1
     local PROTO_DIR=${2:-.}
