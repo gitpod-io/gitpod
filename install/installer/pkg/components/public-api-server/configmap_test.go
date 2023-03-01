@@ -54,7 +54,7 @@ func TestConfigMap(t *testing.T) {
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
 		DatabaseConfigPath:                "/secrets/database-config",
-		RedisAddress:                      fmt.Sprint("%s:%d", redis.Component, redis.Port),
+		RedisAddress:                      fmt.Sprintf("%s:%d", redis.Component, redis.Port),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{
