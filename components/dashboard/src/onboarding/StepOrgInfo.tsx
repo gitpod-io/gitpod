@@ -11,11 +11,12 @@ import { SelectInputField } from "../components/forms/SelectInputField";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
-import { getExplorationReasons } from "./exploration-reasons";
+import { EXPLORE_REASON_WORK, getExplorationReasons } from "./exploration-reasons";
 import { getJobRoleOptions, JOB_ROLE_OTHER } from "./job-roles";
 import { OnboardingStep } from "./OnboardingStep";
 import { getSignupGoalsOptions, SIGNUP_GOALS_OTHER } from "./signup-goals";
 import isURL from "validator/lib/isURL";
+import { getCompanySizeOptions } from "./company-size";
 
 type Props = {
     user: User;
@@ -26,6 +27,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     const jobRoleOptions = useMemo(getJobRoleOptions, []);
     const explorationReasonsOptions = useMemo(getExplorationReasons, []);
     const signupGoalsOptions = useMemo(getSignupGoalsOptions, []);
+    const companySizeOptions = useMemo(getCompanySizeOptions, []);
 
     const [jobRole, setJobRole] = useState(user.additionalData?.profile?.jobRole ?? "");
     const [jobRoleOther, setJobRoleOther] = useState(user.additionalData?.profile?.jobRoleOther ?? "");
@@ -35,6 +37,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     const [signupGoals, setSignupGoals] = useState<string[]>(user.additionalData?.profile?.signupGoals ?? []);
     const [signupGoalsOther, setSignupGoalsOther] = useState(user.additionalData?.profile?.signupGoalsOther ?? "");
     const [companyWebsite, setCompanyWebsite] = useState(user.additionalData?.profile?.companyWebsite ?? "");
+    const [companySize, setCompanySize] = useState(user.additionalData?.profile?.companySize ?? "");
 
     const addSignupGoal = useCallback(
         (goal: string) => {
@@ -78,6 +81,9 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 newReasons.splice(idx, 1);
                 setExplorationReasons(newReasons);
             }
+            if (reason === EXPLORE_REASON_WORK) {
+                setCompanySize("");
+            }
         },
         [explorationReasons],
     );
@@ -103,6 +109,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                     signupGoals: filteredGoals,
                     signupGoalsOther,
                     companyWebsite,
+                    companySize,
                 },
             },
         };
@@ -114,6 +121,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
             console.error(e);
         }
     }, [
+        companySize,
         companyWebsite,
         explorationReasons,
         explorationReasonsOptions,
@@ -129,8 +137,16 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
 
     const jobRoleError = useOnBlurError("Please select one", !!jobRole);
     const websiteError = useOnBlurError("Please enter a valid url", !companyWebsite || isURL(companyWebsite));
+    const companySizeError = useOnBlurError(
+        "Please select one",
+        !explorationReasons.includes(EXPLORE_REASON_WORK) || !!companySize,
+    );
     const isValid =
-        jobRoleError.isValid && websiteError.isValid && signupGoals.length > 0 && explorationReasons.length > 0;
+        jobRoleError.isValid &&
+        websiteError.isValid &&
+        companySizeError.isValid &&
+        signupGoals.length > 0 &&
+        explorationReasons.length > 0;
 
     return (
         <OnboardingStep
@@ -190,6 +206,22 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                     />
                 ))}
             </CheckboxInputField>
+
+            {explorationReasons.includes(EXPLORE_REASON_WORK) && (
+                <SelectInputField
+                    value={companySize}
+                    label="Company size"
+                    onChange={setCompanySize}
+                    error={companySizeError.message}
+                    onBlur={companySizeError.onBlur}
+                >
+                    {companySizeOptions.map((o) => (
+                        <option key={o.value} value={o.value}>
+                            {o.label}
+                        </option>
+                    ))}
+                </SelectInputField>
+            )}
 
             <CheckboxInputField label="I'm signing up for Gitpod for...">
                 {signupGoalsOptions.map((o) => (
