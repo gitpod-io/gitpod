@@ -6,7 +6,7 @@
 
 import classNames from "classnames";
 import { FC, RefObject } from "react";
-import Spinner from "../icons/Spinner.svg";
+import SpinnerWhite from "../icons/SpinnerWhite.svg";
 
 type Props = {
     // TODO: determine if we want danger.secondary
@@ -91,7 +91,7 @@ const ButtonContent: FC<ButtonContentProps> = ({ loading, children }) => {
     return (
         <div className="flex items-center justify-center space-x-2">
             {/* TODO: This spinner doesn't look right - use a solid white instead? */}
-            <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
+            <img className="h-4 w-4 animate-spin" src={SpinnerWhite} alt="loading spinner" />
             <span>{children}</span>
         </div>
     );
