@@ -13,6 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -157,7 +159,27 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			} else {
 				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
 				//			 need to be deleted and re-created
-				workspace.Status.PodStarts++
+				// Must increment and persist the pod starts, and ensure we retry on conflict.
+				// If we fail to persist this value, it's possible that the Pod gets recreated
+				// when the workspace stops, due to PodStarts still being 0 when the original Pod
+				// disappears.
+				newStarts := workspace.Status.PodStarts + 1
+				if err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+					err := r.Get(ctx, types.NamespacedName{Name: workspace.Name, Namespace: workspace.Namespace}, workspace)
+					if err != nil {
+						return err
+					}
+					workspace.Status.PodStarts = newStarts
+
+					// If nil, the update returns an error that the conditions field is of an invalid "null" value.
+					if workspace.Status.Conditions == nil {
+						workspace.Status.Conditions = []metav1.Condition{}
+					}
+					return r.Status().Update(ctx, workspace)
+				}); err != nil {
+					log.Error(err, "Failed to update PodStarts in workspace status")
+					return ctrl.Result{}, err
+				}
 			}
 			r.metrics.rememberWorkspace(workspace, nil)
 

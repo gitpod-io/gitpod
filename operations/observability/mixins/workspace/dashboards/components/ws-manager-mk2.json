@@ -3485,7 +3485,7 @@
       }
     }
   ],
-  "refresh": "5s",
+  "refresh": "30s",
   "schemaVersion": 37,
   "style": "dark",
   "tags": [
@@ -3497,10 +3497,10 @@
         "current": {
           "selected": true,
           "text": [
-            "ephemeral-wv"
+            "All"
           ],
           "value": [
-            "ephemeral-wv"
+            "$__all"
           ]
         },
         "datasource": {
