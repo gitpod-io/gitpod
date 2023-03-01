@@ -9060,15 +9060,7 @@ spec:
         app.kubernetes.io/instance: minio
         app.kubernetes.io/managed-by: Helm
       annotations:
-<<<<<<< HEAD
-<<<<<<< HEAD
-        checksum/credentials-secret: 0a5790906818b3f8eeee0bd3b3e990b3ad02d79bb23c62c0d91a4ca010fb5579
-=======
         checksum/credentials-secret: 0f3ceb92b9779df4ce0927f6faeb23e9116b85e0eabe095d903e46a2770cde42
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions)
-=======
-        checksum/credentials-secret: 094325f216720012cacde9f52fd71c7e8b06dd6386492f6980e0f3588f1b1e7c
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
     spec:
       
       serviceAccountName: minio
@@ -9511,11 +9503,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD
-        gitpod.io/checksum_config: 3d98dffb48bebba57afb1ffd2b059e4a1a95bb679d843bee0158e5d4b1814914
-=======
-        gitpod.io/checksum_config: f52ae23eddcf2fe15c87ec92cc3d998045c5ff491d52caed0f23a6fccc020134
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
+        gitpod.io/checksum_config: 836656ee9ad02f5f26c23b6512e01e92296112b6fe1e3eed250cb2d16913ddd2
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9790,11 +9778,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD
-        gitpod.io/checksum_config: cd4b2686fe34e3488f453e58aabb2197bd886fb64b6e6fc3ab840694d09b6391
-=======
-        gitpod.io/checksum_config: 21c3b53bac44cf0f98bc57e43353e3136dc5806409951038c2ba36aea69dd218
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms)
+        gitpod.io/checksum_config: 22979d0ffb604af37a05d6b31fc23c390a9e03af13ed8a23be98e2e76431b145
       creationTimestamp: null
       labels:
         app: gitpod

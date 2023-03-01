@@ -896,25 +896,6 @@ metadata:
   name: migrations
   namespace: default
 ---
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-=======
-# v1/ServiceAccount minio
-# Source: minio/charts/minio/templates/serviceaccount.yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: minio
-  namespace: "default"
-  labels:
-    app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.10.24
-    app.kubernetes.io/instance: minio
-    app.kubernetes.io/managed-by: Helm
-automountServiceAccountToken: true
-secrets:
-  - name: minio
----
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
 # v1/ServiceAccount nobody
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1170,27 +1151,6 @@ metadata:
   name: messagebus-erlang-cookie
   namespace: default
 ---
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-=======
-# v1/Secret minio
-# Source: minio/charts/minio/templates/secrets.yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: minio
-  namespace: "default"
-  labels:
-    app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.10.24
-    app.kubernetes.io/instance: minio
-    app.kubernetes.io/managed-by: Helm
-type: Opaque
-data:
-  root-user: "UkJqaTZSMGJHRzgxZ3lFeWUyNVA="
-  root-password: "dFg2TUw4Z0NXMzFtaXcwVDhRTUk="
-  key.json: ""
----
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
 # v1/Secret mysql
 apiVersion: v1
 data:
@@ -1382,19 +1342,11 @@ data:
           "projectId": ""
         },
         "minio": {
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
           "endpoint": "s3-provider.com",
           "accessKey": "",
           "accessKeyFile": "/mnt/secrets/storage/accessKeyId",
           "secretKey": "",
           "secretKeyFile": "/mnt/secrets/storage/secretAccessKey",
-=======
-          "endpoint": "minio.default.svc.cluster.local:9000",
-          "accessKey": "RBji6R0bGG81gyEye25P",
-          "accessKeyFile": "",
-          "secretKey": "tX6ML8gCW31miw0T8QMI",
-          "secretKeyFile": "",
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
           "region": "local",
           "parallelUpload": 100,
           "bucket": "s3-bucket"
@@ -3425,69 +3377,6 @@ data:
       name: mysql
       namespace: default
     ---
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-=======
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: minio
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.10.24
-      name: minio
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: minio
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.10.24
-      name: minio
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: minio
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.10.24
-      name: minio
-      namespace: default
-    ---
-    apiVersion: v1
-    kind: Service
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: minio
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.10.24
-      name: minio
-      namespace: default
-    ---
-    apiVersion: apps/v1
-    kind: Deployment
-    metadata:
-      creationTimestamp: null
-      labels:
-        app.kubernetes.io/instance: minio
-        app.kubernetes.io/managed-by: Helm
-        app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.10.24
-      name: minio
-      namespace: default
-    ---
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
     apiVersion: networking.k8s.io/v1
     kind: NetworkPolicy
     metadata:
@@ -5347,19 +5236,11 @@ data:
               "projectId": ""
             },
             "minio": {
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
               "endpoint": "s3-provider.com",
               "accessKey": "",
               "accessKeyFile": "/mnt/secrets/storage/accessKeyId",
               "secretKey": "",
               "secretKeyFile": "/mnt/secrets/storage/secretAccessKey",
-=======
-              "endpoint": "minio.default.svc.cluster.local:9000",
-              "accessKey": "RBji6R0bGG81gyEye25P",
-              "accessKeyFile": "",
-              "secretKey": "tX6ML8gCW31miw0T8QMI",
-              "secretKeyFile": "",
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
               "region": "local",
               "parallelUpload": 100,
               "bucket": "s3-bucket"
@@ -5540,19 +5421,11 @@ data:
             "projectId": ""
           },
           "minio": {
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
             "endpoint": "s3-provider.com",
             "accessKey": "",
             "accessKeyFile": "/mnt/secrets/storage/accessKeyId",
             "secretKey": "",
             "secretKeyFile": "/mnt/secrets/storage/secretAccessKey",
-=======
-            "endpoint": "minio.default.svc.cluster.local:9000",
-            "accessKey": "RBji6R0bGG81gyEye25P",
-            "accessKeyFile": "",
-            "secretKey": "tX6ML8gCW31miw0T8QMI",
-            "secretKeyFile": "",
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
             "region": "local",
             "parallelUpload": 100,
             "bucket": "s3-bucket"
@@ -5700,28 +5573,6 @@ metadata:
   name: ws-proxy
   namespace: default
 ---
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-=======
-# v1/PersistentVolumeClaim minio
-# Source: minio/charts/minio/templates/pvc.yaml
-kind: PersistentVolumeClaim
-apiVersion: v1
-metadata:
-  name: minio
-  namespace: "default"
-  labels:
-    app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.10.24
-    app.kubernetes.io/instance: minio
-    app.kubernetes.io/managed-by: Helm
-spec:
-  accessModes:
-    - "ReadWriteOnce"
-  resources:
-    requests:
-      storage: "8Gi"
----
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
 # v1/PersistentVolumeClaim registry
 # Source: docker-registry/charts/docker-registry/templates/pvc.yaml
 kind: PersistentVolumeClaim
@@ -7118,36 +6969,6 @@ spec:
     app.kubernetes.io/instance: rabbitmq
   publishNotReadyAddresses: true
 ---
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-=======
-# v1/Service minio
-# Source: minio/charts/minio/templates/service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: minio
-  namespace: "default"
-  labels:
-    app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.10.24
-    app.kubernetes.io/instance: minio
-    app.kubernetes.io/managed-by: Helm
-spec:
-  type: ClusterIP
-  ports:
-    - name: minio-api
-      port: 9000
-      targetPort: minio-api
-      nodePort: null
-    - name: minio-console
-      port: 9001
-      targetPort: minio-console
-      nodePort: null
-  selector:
-    app.kubernetes.io/name: minio
-    app.kubernetes.io/instance: minio
----
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
 # v1/Service mysql
 # Source: mysql/charts/mysql/templates/primary/svc.yaml
 apiVersion: v1
@@ -7594,11 +7415,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-        gitpod.io/checksum_config: 1568539df3f78cad79c3dd7b7e3ae3f5cf4fa74ad7263936762f004a8a6af77c
-=======
-        gitpod.io/checksum_config: c89ca2c9729c189ef1739d1bfc113c8c52bc46f8155c4a9b195ccd4de910a23b
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
+        gitpod.io/checksum_config: 5989e564c9723c4b3fecb512abcdf42a7b07d204d5f8f6ee15ef8b1d6b47c974
       creationTimestamp: null
       labels:
         app: gitpod
@@ -7802,11 +7619,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: c95be35e9c1c3f3bafde5c5e0cc5e97ab493e5624093809d7fa7680d0190da25
-=======
-        gitpod.io/checksum_config: 2a29ef265c219405bda658cb21613f40ad5e692590d2779476a3ff90917ed6fb
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
       creationTimestamp: null
       labels:
@@ -8122,11 +7935,7 @@ spec:
       initContainers:
       containers:
         - name: rabbitmq
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-          image: docker.io/bitnami/rabbitmq:3.10.2-debian-10-r7
-=======
-          image: registry.mydomain.com/namespace/bitnami/rabbitmq:3.11.5-debian-11-r2
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
+          image: docker.io/bitnami/rabbitmq:3.11.5-debian-11-r2
           imagePullPolicy: "IfNotPresent"
           securityContext:
             runAsNonRoot: true
@@ -8320,11 +8129,7 @@ spec:
         fsGroup: 1001
       initContainers:
         - name: volume-permissions
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-          image: docker.io/bitnami/bitnami-shell:10-debian-10-r431
-=======
-          image: registry.mydomain.com/namespace/bitnami/bitnami-shell:11-debian-11-r60
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
+          image: docker.io/bitnami/bitnami-shell:11-debian-11-r60
           imagePullPolicy: "IfNotPresent"
           command:
             - /bin/bash
@@ -8601,11 +8406,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-        gitpod.io/checksum_config: a93d22be9b0695e0bd3211bfd5e023b09c08a8cea026a41f080346023887bd74
-=======
-        gitpod.io/checksum_config: ca8305ae7d44552aace863e8af17bbdef1c57b0259ee7bdc20a7ab9061d2fb9f
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
+        gitpod.io/checksum_config: 67fa54d8988cda6a3f47a3cbc820d0a2cfca992bb010cf1687dd0b262679e89a
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8743,11 +8544,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: 55b82a9f4f41ab5582209c883bcb86b8305411fc9f2489a2f41fd576bfc5ccf9
-=======
-        gitpod.io/checksum_config: 21ad538d4c7daef6619e5dda6fd71a49a5e5b551f0fc1365d3b7db1d1f38f9ce
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9276,11 +9073,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-        gitpod.io/checksum_config: 6b82d310231a10f059f0a9efebcf1422f6b2e72eacb55b1ac68f283695b1a167
-=======
-        gitpod.io/checksum_config: dcca6a2e85fae554d69e6fe11a64ea7cc27c5bb94968d368599896acf6d9e829
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
+        gitpod.io/checksum_config: b3e2890f6cd0180dc63f78043191147c5235e8859508ce4070a9681d4f0a9890
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9402,124 +9195,6 @@ spec:
         name: cacerts
 status: {}
 ---
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-=======
-# apps/v1/Deployment minio
-# Source: minio/charts/minio/templates/standalone/deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: minio
-  namespace: "default"
-  labels:
-    app.kubernetes.io/name: minio
-    helm.sh/chart: minio-11.10.24
-    app.kubernetes.io/instance: minio
-    app.kubernetes.io/managed-by: Helm
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: minio
-      app.kubernetes.io/instance: minio
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: minio
-        helm.sh/chart: minio-11.10.24
-        app.kubernetes.io/instance: minio
-        app.kubernetes.io/managed-by: Helm
-      annotations:
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-        checksum/credentials-secret: 0f3ceb92b9779df4ce0927f6faeb23e9116b85e0eabe095d903e46a2770cde42
-=======
-        checksum/credentials-secret: 094325f216720012cacde9f52fd71c7e8b06dd6386492f6980e0f3588f1b1e7c
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
-    spec:
-      
-      serviceAccountName: minio
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: gitpod.io/workload_meta
-                operator: Exists
-        
-      securityContext:
-        fsGroup: 1001
-      containers:
-        - name: minio
-          image: registry.mydomain.com/namespace/bitnami/minio:2022.12.12-debian-11-r0
-          imagePullPolicy: "IfNotPresent"
-          securityContext:
-            runAsNonRoot: true
-            runAsUser: 1001
-          env:
-            - name: BITNAMI_DEBUG
-              value: "false"
-            - name: MINIO_SCHEME
-              value: "http"
-            - name: MINIO_FORCE_NEW_KEYS
-              value: "no"
-            - name: MINIO_ROOT_USER
-              valueFrom:
-                secretKeyRef:
-                  name: minio
-                  key: root-user
-            - name: MINIO_ROOT_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: minio
-                  key: root-password
-            - name: MINIO_BROWSER
-              value: "on"
-            - name: MINIO_PROMETHEUS_AUTH_TYPE
-              value: "public"
-            - name: MINIO_CONSOLE_PORT_NUMBER
-              value: "9001"
-            - name: MINIO_SKIP_CLIENT
-              value: "yes"
-          envFrom:
-          ports:
-            - name: minio-api
-              containerPort: 9000
-              protocol: TCP
-            - name: minio-console
-              containerPort: 9001
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /minio/health/live
-              port: minio-api
-              scheme: "HTTP"
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 5
-          readinessProbe:
-            tcpSocket:
-              port: minio-api
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 1
-            successThreshold: 1
-            failureThreshold: 5
-          resources:
-            limits: {}
-            requests:
-              memory: 2Gi
-          volumeMounts:
-            - name: data
-              mountPath: /data
-      volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: minio
----
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
 # apps/v1/Deployment proxy
 apiVersion: apps/v1
 kind: Deployment
@@ -9890,19 +9565,10 @@ spec:
         app: docker-registry
         release: docker-registry
       annotations:
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-        checksum/config: 1d22b82e19bbc654e029029c4fb86ad02dc13422dc3ac52f8175ad190e52a0bb
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-        gitpod.io/checksum_config: 0ce55d51677cd683df3c7a244542c6aeaaf5dd6dca0f0458e8053a713228f535
-=======
         checksum/config: 699dd382179068f3354c330fcce38625e2861d97b962074b4f57005d40497b00
         checksum/secret: 450f59aeda22415409a87a1abd2c033c08ebd5fb54fe24d3c56560e92b0218f6
         
         gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
-=======
-        gitpod.io/checksum_config: 1c66f4ccdb7f6331da2edaecefcb40f6c1b6315c9277eb0418fef3cc584a28bd
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
     spec:
       serviceAccountName: docker-registry
       securityContext:
@@ -9910,11 +9576,7 @@ spec:
         runAsUser: 1000
       containers:
         - name: docker-registry
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-          image: "docker.io/library/registry:2.7.1"
-=======
-          image: "registry.mydomain.com/namespace/library/registry:2.8.1"
->>>>>>> a706c90b0 ([installer]: update helm dependencies to latest versions):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
+          image: "docker.io/library/registry:2.8.1"
           imagePullPolicy: IfNotPresent
           command:
           - /bin/registry
@@ -9989,11 +9651,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
-        gitpod.io/checksum_config: 3d98dffb48bebba57afb1ffd2b059e4a1a95bb679d843bee0158e5d4b1814914
-=======
-        gitpod.io/checksum_config: 4b4c3a473e5569c39bda206c756538858ff6f5495b563c523705666ba3ec4930
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
+        gitpod.io/checksum_config: 836656ee9ad02f5f26c23b6512e01e92296112b6fe1e3eed250cb2d16913ddd2
       creationTimestamp: null
       labels:
         app: gitpod
@@ -10268,11 +9926,7 @@ spec:
   template:
     metadata:
       annotations:
-<<<<<<< HEAD:install/installer/cmd/testdata/render/insecure-s3-setup/output.golden
         gitpod.io/checksum_config: 7aa5b741d1192fb626ba05a2e819c40f92db4b21176f9d60badf08be2dc0e2b8
-=======
-        gitpod.io/checksum_config: 21c3b53bac44cf0f98bc57e43353e3136dc5806409951038c2ba36aea69dd218
->>>>>>> 47843e722 ([installer]: increase random string length for seeded randoms):install/installer/cmd/testdata/render/custom-pull-repository/output.golden
       creationTimestamp: null
       labels:
         app: gitpod
