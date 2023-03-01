@@ -12,7 +12,7 @@ import { getGitpodService } from "../service/service";
 import { useCurrentTeam } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
-import { ProjectContext } from "./project-context";
+import { ProjectContext, useCurrentProject } from "./project-context";
 import SelectWorkspaceClass from "../user-settings/selectClass";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import Alert from "../components/Alert";
@@ -24,7 +24,7 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
     return (
         <PageWithSubMenu
             subMenu={getProjectSettingsMenu(props.project)}
-            title={props.project?.name || "Unknown project"}
+            title={props.project?.name || "Loading..."}
             subtitle="Manage project settings and configuration"
             tabs={getProjectTabs(props.project)}
         >
@@ -34,7 +34,8 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
 }
 
 export default function ProjectSettingsView() {
-    const { project, setProject } = useContext(ProjectContext);
+    const { setProject } = useContext(ProjectContext);
+    const { project } = useCurrentProject();
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [showRemoveModal, setShowRemoveModal] = useState(false);
     const team = useCurrentTeam();
