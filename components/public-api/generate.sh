@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# if [ -n "$DEBUG" ]; then
+if [ -n "$DEBUG" ]; then
   set -x
-# fi
+fi
 
 set -o errexit
 set -o nounset
