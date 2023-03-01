@@ -5,8 +5,6 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"path"
 
 	"google.golang.org/protobuf/compiler/protogen"
@@ -15,17 +13,12 @@ import (
 
 const (
 	contextPackage = protogen.GoImportPath("context")
-	errorsPackage  = protogen.GoImportPath("errors")
-	httpPackage    = protogen.GoImportPath("net/http")
-	stringsPackage = protogen.GoImportPath("strings")
 	connectPackage = protogen.GoImportPath("github.com/bufbuild/connect-go")
 )
 
 func main() {
 	protogen.Options{}.Run(func(gen *protogen.Plugin) error {
 		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
-
-		fmt.Fprintf(os.Stderr, "%v", gen.Files)
 
 		for _, f := range gen.Files {
 			if !f.Generate {
@@ -37,7 +30,6 @@ func main() {
 	})
 }
 
-// generateFile generates a _ascii.pb.go file containing gRPC service definitions.
 func generateFile(gen *protogen.Plugin, file *protogen.File) {
 
 	dir := path.Dir(file.GeneratedFilenamePrefix)
