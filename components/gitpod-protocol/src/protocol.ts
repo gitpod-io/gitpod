@@ -167,6 +167,7 @@ export namespace User {
             explorationReasons: user?.additionalData?.profile?.explorationReasons,
             signupGoals: user?.additionalData?.profile?.signupGoals,
             signupGoalsOther: user?.additionalData?.profile?.signupGoalsOther,
+            companySize: user?.additionalData?.profile?.companySize,
             onboardedTimestamp: user?.additionalData?.profile?.onboardedTimestamp,
         };
     }
