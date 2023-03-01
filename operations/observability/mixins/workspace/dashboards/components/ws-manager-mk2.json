@@ -177,59 +177,108 @@
       }
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "decimals": 2,
       "fieldConfig": {
         "defaults": {
-          "links": []
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "Failures: .*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 11,
         "w": 8,
         "x": 8,
         "y": 1
       },
-      "hiddenSeries": false,
       "id": 48,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "max": true,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
-      "percentage": false,
       "pluginVersion": "9.3.6",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
       "repeatDirection": "h",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": true,
       "targets": [
         {
           "datasource": {
@@ -242,41 +291,22 @@
           "legendFormat": "{{cluster}} - {{type}}",
           "range": true,
           "refId": "B"
-        }
-      ],
-      "thresholds": [],
-      "timeRegions": [],
-      "title": "Workspace Starts",
-      "tooltip": {
-        "shared": true,
-        "sort": 2,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "mode": "time",
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:198",
-          "decimals": 2,
-          "format": "ops",
-          "logBase": 1,
-          "min": "0",
-          "show": true
         },
         {
-          "$$hashKey": "object:199",
-          "format": "reqps",
-          "logBase": 1,
-          "show": true
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(gitpod_ws_manager_mk2_workspace_starts_failure_total{cluster=~\"$cluster\"}[1m])) by (cluster, type)",
+          "hide": false,
+          "legendFormat": "Failures: {{cluster}} - {{type}}",
+          "range": true,
+          "refId": "A"
         }
       ],
-      "yaxis": {
-        "align": false
-      }
+      "title": "Workspace Starts",
+      "type": "timeseries"
     },
     {
       "aliasColors": {},
@@ -1741,7 +1771,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 104
+        "y": 77
       },
       "id": 16,
       "panels": [],
@@ -1802,7 +1832,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1817,7 +1848,7 @@
         "h": 7,
         "w": 10,
         "x": 0,
-        "y": 105
+        "y": 78
       },
       "id": 76,
       "options": {
@@ -1865,7 +1896,7 @@
         "h": 7,
         "w": 7,
         "x": 10,
-        "y": 105
+        "y": 78
       },
       "hiddenSeries": false,
       "id": 2,
@@ -1957,7 +1988,7 @@
         "h": 7,
         "w": 7,
         "x": 17,
-        "y": 105
+        "y": 78
       },
       "hiddenSeries": false,
       "id": 4,
@@ -2061,7 +2092,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 112
+        "y": 85
       },
       "hiddenSeries": false,
       "id": 6,
@@ -2151,7 +2182,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 112
+        "y": 85
       },
       "hiddenSeries": false,
       "id": 8,
@@ -2240,7 +2271,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 119
+        "y": 92
       },
       "hiddenSeries": false,
       "id": 10,
@@ -2338,7 +2369,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 119
+        "y": 92
       },
       "hiddenSeries": false,
       "id": 57,
@@ -2436,7 +2467,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 119
+        "y": 92
       },
       "hiddenSeries": false,
       "id": 59,
@@ -2535,7 +2566,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 126
+        "y": 99
       },
       "hiddenSeries": false,
       "id": 36,
@@ -2626,7 +2657,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 126
+        "y": 99
       },
       "hiddenSeries": false,
       "id": 55,
@@ -2736,7 +2767,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 126
+        "y": 99
       },
       "hiddenSeries": false,
       "id": 40,
@@ -2846,7 +2877,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 135
+        "y": 108
       },
       "id": 22,
       "panels": [],
@@ -2877,7 +2908,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 136
+        "y": 109
       },
       "hiddenSeries": false,
       "id": 32,
@@ -2971,7 +3002,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 136
+        "y": 109
       },
       "hiddenSeries": false,
       "id": 34,
@@ -3071,7 +3102,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 145
+        "y": 118
       },
       "hiddenSeries": false,
       "id": 26,
@@ -3168,7 +3199,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 145
+        "y": 118
       },
       "hiddenSeries": false,
       "id": 61,
@@ -3265,7 +3296,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 154
+        "y": 127
       },
       "hiddenSeries": false,
       "id": 24,
@@ -3356,7 +3387,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 154
+        "y": 127
       },
       "hiddenSeries": false,
       "id": 63,
@@ -3454,7 +3485,7 @@
       }
     }
   ],
-  "refresh": "30s",
+  "refresh": "5s",
   "schemaVersion": 37,
   "style": "dark",
   "tags": [
@@ -3464,9 +3495,13 @@
     "list": [
       {
         "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "selected": true,
+          "text": [
+            "ephemeral-wv"
+          ],
+          "value": [
+            "ephemeral-wv"
+          ]
         },
         "datasource": {
           "type": "prometheus",
@@ -3494,9 +3529,13 @@
       },
       {
         "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": {
           "type": "prometheus",
@@ -3524,9 +3563,13 @@
       },
       {
         "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": {
           "type": "prometheus",
@@ -3554,9 +3597,13 @@
       },
       {
         "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": {
           "type": "prometheus",
