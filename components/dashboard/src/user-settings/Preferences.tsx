@@ -11,6 +11,8 @@ import { trackEvent } from "../Analytics";
 import SelectIDE from "./SelectIDE";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
+import CheckBox from "../components/CheckBox";
+import { WorkspaceTimeoutDuration } from "@gitpod/gitpod-protocol";
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
@@ -26,6 +28,18 @@ export default function Preferences() {
                 previous: prevDotfileRepo,
                 current: value,
             });
+        }
+    };
+
+    const [disabledClosedTimeout, setDisabledClosedTimeout] = useState<boolean>(
+        user?.additionalData?.disabledClosedTimeout ?? false,
+    );
+    const actuallySetDisabledClosedTimeout = async (value: boolean) => {
+        try {
+            await getGitpodService().server.updateWorkspaceTimeoutSetting({ disabledClosedTimeout: value });
+            setDisabledClosedTimeout(value);
+        } catch (e) {
+            alert("Cannot set custom workspace timeout: " + e.message);
         }
     };
 
@@ -118,6 +132,13 @@ export default function Preferences() {
                             Use minutes or hours, like <strong>30m</strong> or <strong>2h</strong>.
                         </p>
                     </div>
+
+                    <CheckBox
+                        title="Stop workspace when no active editor connection"
+                        desc={<span>Don't change workspace inactivity timeout when closing the editor.</span>}
+                        checked={disabledClosedTimeout}
+                        onChange={(e) => actuallySetDisabledClosedTimeout(e.target.checked)}
+                    />
                 </div>
             </PageWithSettingsSubMenu>
         </div>
