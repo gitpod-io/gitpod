@@ -293,6 +293,10 @@ func (s *Service) onInstanceUpdates(ctx context.Context) {
 				if errors.Is(err, context.Canceled) || errors.Is(err, io.EOF) {
 					continue
 				}
+				code := status.Code(err)
+				if code == codes.PermissionDenied {
+					log.WithError(err).Fatalf("failed to on instance update: have no permission")
+				}
 				log.WithField("method", "InstanceUpdates").WithError(err).Error("failed to listen")
 				cancel()
 				time.Sleep(time.Second * 2)
