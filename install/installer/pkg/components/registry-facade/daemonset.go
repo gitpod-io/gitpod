@@ -410,6 +410,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						*common.InternalCAVolume(),
 						*common.NewEmptyDirVolume("cacerts"),
 					}, volumes...),
+					Tolerations: common.GPUToleration(),
 				},
 			},
 		},

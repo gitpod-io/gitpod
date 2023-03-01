@@ -8326,6 +8326,10 @@ spec:
       restartPolicy: Always
       serviceAccountName: registry-facade
       terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoSchedule
+        key: nvidia.com/gpu
+        operator: Exists
       volumes:
       - emptyDir: {}
         name: cache
@@ -8570,6 +8574,9 @@ spec:
         operator: Exists
       - effect: NoExecute
         key: node.kubernetes.io/out-of-disk
+        operator: Exists
+      - effect: NoSchedule
+        key: nvidia.com/gpu
         operator: Exists
       volumes:
       - hostPath:
