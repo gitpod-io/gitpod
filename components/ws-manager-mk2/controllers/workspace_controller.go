@@ -150,9 +150,11 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				return ctrl.Result{}, err
 			}
 
+			log.Info("creating workspace Pod for Workspace")
 			err = r.Create(ctx, pod)
 			if errors.IsAlreadyExists(err) {
 				// pod exists, we're good
+				log.Info("Workspace Pod already exists")
 			} else if err != nil {
 				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
 				return ctrl.Result{Requeue: true}, err
