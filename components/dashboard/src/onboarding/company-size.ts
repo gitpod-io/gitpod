@@ -7,9 +7,9 @@
 export const getCompanySizeOptions = () => {
     return [
         { label: "Please select one", value: "" },
-        { label: "less than 50", value: "less_than_50" },
-        { label: "51 - 250", value: "51_to_250" },
-        { label: "251 - 1000", value: "251_to_1000" },
-        { label: "more than 1000", value: "more_than_1000" },
+        { label: "1-50", value: "1_to_50" },
+        { label: "51-250", value: "51_to_250" },
+        { label: "251-1000", value: "251_to_1000" },
+        { label: "1000+", value: "more_than_1000" },
     ];
 };
