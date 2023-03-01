@@ -14,6 +14,9 @@ import (
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -30,6 +33,7 @@ var _ = Describe("WorkspaceController", func() {
 	Context("with regular workspaces", func() {
 		It("should handle successful workspace creation and stop request", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
 			Expect(controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName)).To(BeTrue())
@@ -56,7 +60,19 @@ var _ = Describe("WorkspaceController", func() {
 				g.Expect(ws.Status.URL).ToNot(BeEmpty())
 			}, timeout, interval).Should(Succeed())
 
-			// TODO(wv): Once implemented, expect EverReady condition.
+			// Transition Pod to running, and expect workspace to reach Running phase.
+			// This should also cause e.g. startup time metrics to be recorded.
+			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
+				pod.Status.Phase = corev1.PodRunning
+				pod.Status.ContainerStatuses = []corev1.ContainerStatus{{
+					Name:  "workspace",
+					Ready: true,
+				}}
+			})
+
+			expectPhaseEventually(ws, workspacev1.WorkspacePhaseRunning)
+
+			markContentReady(ws)
 
 			requestStop(ws)
 
@@ -68,10 +84,18 @@ var _ = Describe("WorkspaceController", func() {
 			Consistently(func() error {
 				return checkNotFound(pod)
 			}, duration, interval).Should(Succeed(), "pod came back")
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				starts:   1,
+				restores: 1,
+				stops:    1,
+				backups:  1,
+			})
 		})
 
 		It("should handle content init failure", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
 			By("adding ws init failure condition")
@@ -87,10 +111,17 @@ var _ = Describe("WorkspaceController", func() {
 
 			// On init failure, expect workspace cleans up without a backup.
 			expectWorkspaceCleanup(ws, pod)
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				startFailures:   1,
+				restoreFailures: 1,
+				stops:           1,
+			})
 		})
 
 		It("should handle backup failure", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
 			// Stop the workspace.
@@ -101,10 +132,17 @@ var _ = Describe("WorkspaceController", func() {
 
 			// Workspace should get cleaned up.
 			expectWorkspaceCleanup(ws, pod)
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				backups:        1,
+				backupFailures: 1,
+				stops:          1,
+			})
 		})
 
 		It("should handle workspace failure", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
 			// Update Pod with failed exit status.
@@ -125,10 +163,17 @@ var _ = Describe("WorkspaceController", func() {
 			expectFinalizerAndMarkBackupCompleted(ws, pod)
 
 			expectWorkspaceCleanup(ws, pod)
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				startFailures: 1,
+				stops:         1,
+				backups:       1,
+			})
 		})
 
 		It("should clean up timed out workspaces", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
 			By("adding Timeout condition")
@@ -143,10 +188,16 @@ var _ = Describe("WorkspaceController", func() {
 			expectFinalizerAndMarkBackupCompleted(ws, pod)
 
 			expectWorkspaceCleanup(ws, pod)
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				stops:   1,
+				backups: 1,
+			})
 		})
 
 		It("should handle workspace abort", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
 			// Update Pod with stop and abort conditions.
@@ -165,10 +216,15 @@ var _ = Describe("WorkspaceController", func() {
 
 			// Expect cleanup without a backup.
 			expectWorkspaceCleanup(ws, pod)
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				stops: 1,
+			})
 		})
 
 		It("deleting workspace resource should gracefully clean up", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
 			Expect(k8sClient.Delete(ctx, ws)).To(Succeed())
@@ -178,6 +234,11 @@ var _ = Describe("WorkspaceController", func() {
 			expectFinalizerAndMarkBackupCompleted(ws, pod)
 
 			expectWorkspaceCleanup(ws, pod)
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				stops:   1,
+				backups: 1,
+			})
 		})
 	})
 
@@ -329,6 +390,19 @@ func requestStop(ws *workspacev1.Workspace) {
 	})
 }
 
+func markContentReady(ws *workspacev1.Workspace) {
+	GinkgoHelper()
+	By("adding content ready condition")
+	updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
+		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
+			Type:               string(workspacev1.WorkspaceConditionContentReady),
+			Status:             metav1.ConditionTrue,
+			Reason:             "InitializationSuccess",
+			LastTransitionTime: metav1.Now(),
+		})
+	})
+}
+
 func expectFinalizerAndMarkBackupCompleted(ws *workspacev1.Workspace, pod *corev1.Pod) {
 	GinkgoHelper()
 	// Checking for the finalizer enforces our expectation that the workspace
@@ -475,4 +549,50 @@ func newWorkspace(name, namespace string) *workspacev1.Workspace {
 			},
 		},
 	}
+}
+
+type metricCounts struct {
+	starts          int
+	startFailures   int
+	stops           int
+	backups         int
+	backupFailures  int
+	restores        int
+	restoreFailures int
+}
+
+// collectHistCount is a hack to get the value of the histogram's sample count.
+// testutil.ToFloat64() does not accept histograms.
+func collectHistCount(h prometheus.Histogram) uint64 {
+	GinkgoHelper()
+	pb := &dto.Metric{}
+	Expect(h.Write(pb)).To(Succeed())
+	return pb.Histogram.GetSampleCount()
+}
+
+func collectMetricCounts(wsMetrics *controllerMetrics, ws *workspacev1.Workspace) metricCounts {
+	tpe := string(ws.Spec.Type)
+	cls := ws.Spec.Class
+	startHist := wsMetrics.startupTimeHistVec.WithLabelValues(tpe, cls).(prometheus.Histogram)
+	return metricCounts{
+		starts:          int(collectHistCount(startHist)),
+		startFailures:   int(testutil.ToFloat64(wsMetrics.totalStartsFailureCounterVec.WithLabelValues(tpe, cls))),
+		stops:           int(testutil.ToFloat64(wsMetrics.totalStopsCounterVec.WithLabelValues("unknown", tpe, cls))),
+		backups:         int(testutil.ToFloat64(wsMetrics.totalBackupCounterVec.WithLabelValues(tpe, cls))),
+		backupFailures:  int(testutil.ToFloat64(wsMetrics.totalBackupFailureCounterVec.WithLabelValues(tpe, cls))),
+		restores:        int(testutil.ToFloat64(wsMetrics.totalRestoreCounterVec.WithLabelValues(tpe, cls))),
+		restoreFailures: int(testutil.ToFloat64(wsMetrics.totalRestoreFailureCounterVec.WithLabelValues(tpe, cls))),
+	}
+}
+
+func expectMetricsDelta(initial metricCounts, cur metricCounts, expectedDelta metricCounts) {
+	GinkgoHelper()
+	By("checking metrics have been recorded")
+	Expect(cur.starts-initial.starts).To(Equal(expectedDelta.starts), "expected metric count delta for starts")
+	Expect(cur.startFailures-initial.startFailures).To(Equal(expectedDelta.startFailures), "expected metric count delta for startFailures")
+	Expect(cur.stops-initial.stops).To(Equal(expectedDelta.stops), "expected metric count delta for stops")
+	Expect(cur.backups-initial.backups).To(Equal(expectedDelta.backups), "expected metric count delta for backups")
+	Expect(cur.backupFailures-initial.backupFailures).To(Equal(expectedDelta.backupFailures), "expected metric count delta for backupFailures")
+	Expect(cur.restores-initial.restores).To(Equal(expectedDelta.restores), "expected metric count delta for restores")
+	Expect(cur.restoreFailures-initial.restoreFailures).To(Equal(expectedDelta.restoreFailures), "expected metric count delta for restoreFailures")
 }

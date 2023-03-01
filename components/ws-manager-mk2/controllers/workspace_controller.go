@@ -159,7 +159,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				//			 need to be deleted and re-created
 				workspace.Status.PodStarts++
 			}
-			r.metrics.rememberWorkspace(workspace)
+			r.metrics.rememberWorkspace(workspace, nil)
 
 		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
 			// Done stopping workspace - remove finalizer.
@@ -249,48 +249,58 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *workspacev1.Workspace) {
 	log := log.FromContext(ctx)
 
-	phase := workspace.Status.Phase
-
-	if !r.metrics.shouldUpdate(&log, workspace) {
+	ok, lastState := r.metrics.getWorkspace(&log, workspace)
+	if !ok {
 		return
 	}
 
-	switch {
-	case phase == workspacev1.WorkspacePhasePending ||
-		phase == workspacev1.WorkspacePhaseCreating ||
-		phase == workspacev1.WorkspacePhaseInitializing:
+	if !lastState.recordedInitFailure && wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
+		r.metrics.countTotalRestoreFailures(&log, workspace)
+		lastState.recordedInitFailure = true
 
-		if wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
-			r.metrics.countTotalRestoreFailures(&log, workspace)
+		if !lastState.recordedStartFailure {
 			r.metrics.countWorkspaceStartFailures(&log, workspace)
+			lastState.recordedStartFailure = true
 		}
+	}
 
-		if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
-			r.metrics.countWorkspaceStartFailures(&log, workspace)
-		}
+	if !lastState.recordedStartFailure && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
+		// Only record if there was no other start failure recorded yet, to ensure max one
+		// start failure gets recorded per workspace.
+		r.metrics.countWorkspaceStartFailures(&log, workspace)
+		lastState.recordedStartFailure = true
+	}
 
-	case phase == workspacev1.WorkspacePhaseRunning:
+	if !lastState.recordedContentReady && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) {
+		r.metrics.countTotalRestores(&log, workspace)
+		lastState.recordedContentReady = true
+	}
+
+	if !lastState.recordedBackupFailed && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
+		r.metrics.countTotalBackups(&log, workspace)
+		r.metrics.countTotalBackupFailures(&log, workspace)
+		lastState.recordedBackupFailed = true
+	}
+
+	if !lastState.recordedBackupCompleted && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
+		r.metrics.countTotalBackups(&log, workspace)
+		lastState.recordedBackupCompleted = true
+	}
+
+	if !lastState.recordedStartTime && workspace.Status.Phase == workspacev1.WorkspacePhaseRunning {
 		r.metrics.recordWorkspaceStartupTime(&log, workspace)
-		if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) {
-			r.metrics.countTotalRestores(&log, workspace)
-		}
+		lastState.recordedStartTime = true
+	}
 
-	case phase == workspacev1.WorkspacePhaseStopped:
-		if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
-			r.metrics.countTotalBackups(&log, workspace)
-			r.metrics.countTotalBackupFailures(&log, workspace)
-		}
-
-		if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
-			r.metrics.countTotalBackups(&log, workspace)
-		}
-
+	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopped {
 		r.metrics.countWorkspaceStop(&log, workspace)
+
+		// Forget about this workspace, no more state updates will be recorded after this.
 		r.metrics.forgetWorkspace(workspace)
 		return
 	}
 
-	r.metrics.rememberWorkspace(workspace)
+	r.metrics.rememberWorkspace(workspace, &lastState)
 }
 
 func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev1.Pod, reason string) (ctrl.Result, error) {
