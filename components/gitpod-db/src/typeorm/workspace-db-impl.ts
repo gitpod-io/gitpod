@@ -914,8 +914,8 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     }
 
     /**
-     * This *hard deletes* the workspace entry and all corresponding workspace-instances, by triggering a db-sync mechanism that purges it from the DB.
-     * Note: when this function returns that doesn't mean that the entries are actually gone yet, that might still take a short while until db-sync comes
+     * This *hard deletes* the workspace entry and all corresponding workspace-instances, by triggering a periodic deleter mechanism that purges it from the DB.
+     * Note: when this function returns that doesn't mean that the entries are actually gone yet, that might still take a short while until periodic deleter comes
      *       around to deleting them.
      */
     public async hardDeleteWorkspace(workspaceId: string): Promise<void> {

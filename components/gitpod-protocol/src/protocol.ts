@@ -597,7 +597,7 @@ export interface GitpodToken {
     /** Created timestamp */
     created: string;
 
-    // token is deleted on the database and about to be collected by db-sync
+    // token is deleted on the database and about to be collected by periodic deleter
     deleted?: boolean;
 }
 
@@ -748,7 +748,7 @@ export interface Workspace {
     shareable?: boolean;
     pinned?: boolean;
 
-    // workspace is hard-deleted on the database and about to be collected by db-sync
+    // workspace is hard-deleted on the database and about to be collected by periodic deleter
     readonly deleted?: boolean;
 
     /**

@@ -25,7 +25,7 @@ type TeamMembership struct {
 	// Read-only (-> property).
 	LastModified time.Time `gorm:"->:column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 
-	// deleted column is reserved for use by db-sync
+	// deleted column is reserved for use by periodic deleter
 	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 

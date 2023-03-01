@@ -398,7 +398,6 @@
             "content-service",
             "dashboard",
             "db",
-            "db-sync",
             "messagebus",
             "payment-endpoint",
             "proxy",
@@ -409,7 +408,6 @@
             "content-service",
             "dashboard",
             "db",
-            "db-sync",
             "messagebus",
             "payment-endpoint",
             "proxy",
@@ -447,11 +445,6 @@
           },
           {
             "selected": true,
-            "text": "db-sync",
-            "value": "db-sync"
-          },
-          {
-            "selected": true,
             "text": "messagebus",
             "value": "messagebus"
           },
@@ -486,7 +479,7 @@
             "value": "image-builder-mk3"
           }
         ],
-        "query": "content-service, dashboard, db, db-sync, messagebus, payment-endpoint, proxy, server, ws-manager-bridge, image-builder, image-builder-mk3",
+        "query": "content-service, dashboard, db, messagebus, payment-endpoint, proxy, server, ws-manager-bridge, image-builder, image-builder-mk3",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"

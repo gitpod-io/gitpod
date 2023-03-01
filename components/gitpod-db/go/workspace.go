@@ -46,7 +46,7 @@ type Workspace struct {
 	SoftDeleted sql.NullString `gorm:"column:softDeleted;type:char;size:4;" json:"softDeleted"`
 	Pinned      bool           `gorm:"column:pinned;type:tinyint;default:0;" json:"pinned"`
 
-	// deleted is reserved for use by db-sync
+	// deleted is reserved for use by periodic deleter
 	_ int32 `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
