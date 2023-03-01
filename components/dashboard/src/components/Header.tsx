@@ -6,7 +6,7 @@
 
 import { useEffect } from "react";
 import { useLocation } from "react-router";
-import Separator from "./Separator";
+import { Separator } from "./Separator";
 import TabMenuItem from "./TabMenuItem";
 
 export interface HeaderProps {
