@@ -15,12 +15,12 @@ import (
 var _ TokensServiceHandler = (*ProxyTokensServiceHandler)(nil)
 
 type ProxyTokensServiceHandler struct {
-	client v1.TokensServiceClient
+	Client v1.TokensServiceClient
 	UnimplementedTokensServiceHandler
 }
 
 func (s *ProxyTokensServiceHandler) CreatePersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.CreatePersonalAccessTokenRequest]) (*connect_go.Response[v1.CreatePersonalAccessTokenResponse], error) {
-	resp, err := s.client.CreatePersonalAccessToken(ctx, req.Msg)
+	resp, err := s.Client.CreatePersonalAccessToken(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -31,7 +31,7 @@ func (s *ProxyTokensServiceHandler) CreatePersonalAccessToken(ctx context.Contex
 }
 
 func (s *ProxyTokensServiceHandler) GetPersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.GetPersonalAccessTokenRequest]) (*connect_go.Response[v1.GetPersonalAccessTokenResponse], error) {
-	resp, err := s.client.GetPersonalAccessToken(ctx, req.Msg)
+	resp, err := s.Client.GetPersonalAccessToken(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -42,7 +42,7 @@ func (s *ProxyTokensServiceHandler) GetPersonalAccessToken(ctx context.Context, 
 }
 
 func (s *ProxyTokensServiceHandler) ListPersonalAccessTokens(ctx context.Context, req *connect_go.Request[v1.ListPersonalAccessTokensRequest]) (*connect_go.Response[v1.ListPersonalAccessTokensResponse], error) {
-	resp, err := s.client.ListPersonalAccessTokens(ctx, req.Msg)
+	resp, err := s.Client.ListPersonalAccessTokens(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -53,7 +53,7 @@ func (s *ProxyTokensServiceHandler) ListPersonalAccessTokens(ctx context.Context
 }
 
 func (s *ProxyTokensServiceHandler) RegeneratePersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.RegeneratePersonalAccessTokenRequest]) (*connect_go.Response[v1.RegeneratePersonalAccessTokenResponse], error) {
-	resp, err := s.client.RegeneratePersonalAccessToken(ctx, req.Msg)
+	resp, err := s.Client.RegeneratePersonalAccessToken(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -64,7 +64,7 @@ func (s *ProxyTokensServiceHandler) RegeneratePersonalAccessToken(ctx context.Co
 }
 
 func (s *ProxyTokensServiceHandler) UpdatePersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.UpdatePersonalAccessTokenRequest]) (*connect_go.Response[v1.UpdatePersonalAccessTokenResponse], error) {
-	resp, err := s.client.UpdatePersonalAccessToken(ctx, req.Msg)
+	resp, err := s.Client.UpdatePersonalAccessToken(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -75,7 +75,7 @@ func (s *ProxyTokensServiceHandler) UpdatePersonalAccessToken(ctx context.Contex
 }
 
 func (s *ProxyTokensServiceHandler) DeletePersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.DeletePersonalAccessTokenRequest]) (*connect_go.Response[v1.DeletePersonalAccessTokenResponse], error) {
-	resp, err := s.client.DeletePersonalAccessToken(ctx, req.Msg)
+	resp, err := s.Client.DeletePersonalAccessToken(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err

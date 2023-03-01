@@ -15,12 +15,12 @@ import (
 var _ OIDCServiceHandler = (*ProxyOIDCServiceHandler)(nil)
 
 type ProxyOIDCServiceHandler struct {
-	client v1.OIDCServiceClient
+	Client v1.OIDCServiceClient
 	UnimplementedOIDCServiceHandler
 }
 
 func (s *ProxyOIDCServiceHandler) CreateClientConfig(ctx context.Context, req *connect_go.Request[v1.CreateClientConfigRequest]) (*connect_go.Response[v1.CreateClientConfigResponse], error) {
-	resp, err := s.client.CreateClientConfig(ctx, req.Msg)
+	resp, err := s.Client.CreateClientConfig(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -31,7 +31,7 @@ func (s *ProxyOIDCServiceHandler) CreateClientConfig(ctx context.Context, req *c
 }
 
 func (s *ProxyOIDCServiceHandler) GetClientConfig(ctx context.Context, req *connect_go.Request[v1.GetClientConfigRequest]) (*connect_go.Response[v1.GetClientConfigResponse], error) {
-	resp, err := s.client.GetClientConfig(ctx, req.Msg)
+	resp, err := s.Client.GetClientConfig(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -42,7 +42,7 @@ func (s *ProxyOIDCServiceHandler) GetClientConfig(ctx context.Context, req *conn
 }
 
 func (s *ProxyOIDCServiceHandler) ListClientConfigs(ctx context.Context, req *connect_go.Request[v1.ListClientConfigsRequest]) (*connect_go.Response[v1.ListClientConfigsResponse], error) {
-	resp, err := s.client.ListClientConfigs(ctx, req.Msg)
+	resp, err := s.Client.ListClientConfigs(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -53,7 +53,7 @@ func (s *ProxyOIDCServiceHandler) ListClientConfigs(ctx context.Context, req *co
 }
 
 func (s *ProxyOIDCServiceHandler) UpdateClientConfig(ctx context.Context, req *connect_go.Request[v1.UpdateClientConfigRequest]) (*connect_go.Response[v1.UpdateClientConfigResponse], error) {
-	resp, err := s.client.UpdateClientConfig(ctx, req.Msg)
+	resp, err := s.Client.UpdateClientConfig(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -64,7 +64,7 @@ func (s *ProxyOIDCServiceHandler) UpdateClientConfig(ctx context.Context, req *c
 }
 
 func (s *ProxyOIDCServiceHandler) DeleteClientConfig(ctx context.Context, req *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error) {
-	resp, err := s.client.DeleteClientConfig(ctx, req.Msg)
+	resp, err := s.Client.DeleteClientConfig(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err

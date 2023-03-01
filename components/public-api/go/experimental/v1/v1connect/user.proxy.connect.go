@@ -15,12 +15,12 @@ import (
 var _ UserServiceHandler = (*ProxyUserServiceHandler)(nil)
 
 type ProxyUserServiceHandler struct {
-	client v1.UserServiceClient
+	Client v1.UserServiceClient
 	UnimplementedUserServiceHandler
 }
 
 func (s *ProxyUserServiceHandler) GetAuthenticatedUser(ctx context.Context, req *connect_go.Request[v1.GetAuthenticatedUserRequest]) (*connect_go.Response[v1.GetAuthenticatedUserResponse], error) {
-	resp, err := s.client.GetAuthenticatedUser(ctx, req.Msg)
+	resp, err := s.Client.GetAuthenticatedUser(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -31,7 +31,7 @@ func (s *ProxyUserServiceHandler) GetAuthenticatedUser(ctx context.Context, req 
 }
 
 func (s *ProxyUserServiceHandler) ListSSHKeys(ctx context.Context, req *connect_go.Request[v1.ListSSHKeysRequest]) (*connect_go.Response[v1.ListSSHKeysResponse], error) {
-	resp, err := s.client.ListSSHKeys(ctx, req.Msg)
+	resp, err := s.Client.ListSSHKeys(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -42,7 +42,7 @@ func (s *ProxyUserServiceHandler) ListSSHKeys(ctx context.Context, req *connect_
 }
 
 func (s *ProxyUserServiceHandler) CreateSSHKey(ctx context.Context, req *connect_go.Request[v1.CreateSSHKeyRequest]) (*connect_go.Response[v1.CreateSSHKeyResponse], error) {
-	resp, err := s.client.CreateSSHKey(ctx, req.Msg)
+	resp, err := s.Client.CreateSSHKey(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -53,7 +53,7 @@ func (s *ProxyUserServiceHandler) CreateSSHKey(ctx context.Context, req *connect
 }
 
 func (s *ProxyUserServiceHandler) GetSSHKey(ctx context.Context, req *connect_go.Request[v1.GetSSHKeyRequest]) (*connect_go.Response[v1.GetSSHKeyResponse], error) {
-	resp, err := s.client.GetSSHKey(ctx, req.Msg)
+	resp, err := s.Client.GetSSHKey(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -64,7 +64,7 @@ func (s *ProxyUserServiceHandler) GetSSHKey(ctx context.Context, req *connect_go
 }
 
 func (s *ProxyUserServiceHandler) DeleteSSHKey(ctx context.Context, req *connect_go.Request[v1.DeleteSSHKeyRequest]) (*connect_go.Response[v1.DeleteSSHKeyResponse], error) {
-	resp, err := s.client.DeleteSSHKey(ctx, req.Msg)
+	resp, err := s.Client.DeleteSSHKey(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -75,7 +75,7 @@ func (s *ProxyUserServiceHandler) DeleteSSHKey(ctx context.Context, req *connect
 }
 
 func (s *ProxyUserServiceHandler) GetGitToken(ctx context.Context, req *connect_go.Request[v1.GetGitTokenRequest]) (*connect_go.Response[v1.GetGitTokenResponse], error) {
-	resp, err := s.client.GetGitToken(ctx, req.Msg)
+	resp, err := s.Client.GetGitToken(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err

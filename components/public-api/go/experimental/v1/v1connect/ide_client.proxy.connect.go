@@ -15,12 +15,12 @@ import (
 var _ IDEClientServiceHandler = (*ProxyIDEClientServiceHandler)(nil)
 
 type ProxyIDEClientServiceHandler struct {
-	client v1.IDEClientServiceClient
+	Client v1.IDEClientServiceClient
 	UnimplementedIDEClientServiceHandler
 }
 
 func (s *ProxyIDEClientServiceHandler) SendHeartbeat(ctx context.Context, req *connect_go.Request[v1.SendHeartbeatRequest]) (*connect_go.Response[v1.SendHeartbeatResponse], error) {
-	resp, err := s.client.SendHeartbeat(ctx, req.Msg)
+	resp, err := s.Client.SendHeartbeat(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -31,7 +31,7 @@ func (s *ProxyIDEClientServiceHandler) SendHeartbeat(ctx context.Context, req *c
 }
 
 func (s *ProxyIDEClientServiceHandler) SendDidClose(ctx context.Context, req *connect_go.Request[v1.SendDidCloseRequest]) (*connect_go.Response[v1.SendDidCloseResponse], error) {
-	resp, err := s.client.SendDidClose(ctx, req.Msg)
+	resp, err := s.Client.SendDidClose(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err

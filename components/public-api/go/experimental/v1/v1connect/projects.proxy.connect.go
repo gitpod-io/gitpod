@@ -15,12 +15,12 @@ import (
 var _ ProjectsServiceHandler = (*ProxyProjectsServiceHandler)(nil)
 
 type ProxyProjectsServiceHandler struct {
-	client v1.ProjectsServiceClient
+	Client v1.ProjectsServiceClient
 	UnimplementedProjectsServiceHandler
 }
 
 func (s *ProxyProjectsServiceHandler) CreateProject(ctx context.Context, req *connect_go.Request[v1.CreateProjectRequest]) (*connect_go.Response[v1.CreateProjectResponse], error) {
-	resp, err := s.client.CreateProject(ctx, req.Msg)
+	resp, err := s.Client.CreateProject(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -31,7 +31,7 @@ func (s *ProxyProjectsServiceHandler) CreateProject(ctx context.Context, req *co
 }
 
 func (s *ProxyProjectsServiceHandler) GetProject(ctx context.Context, req *connect_go.Request[v1.GetProjectRequest]) (*connect_go.Response[v1.GetProjectResponse], error) {
-	resp, err := s.client.GetProject(ctx, req.Msg)
+	resp, err := s.Client.GetProject(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -42,7 +42,7 @@ func (s *ProxyProjectsServiceHandler) GetProject(ctx context.Context, req *conne
 }
 
 func (s *ProxyProjectsServiceHandler) ListProjects(ctx context.Context, req *connect_go.Request[v1.ListProjectsRequest]) (*connect_go.Response[v1.ListProjectsResponse], error) {
-	resp, err := s.client.ListProjects(ctx, req.Msg)
+	resp, err := s.Client.ListProjects(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -53,7 +53,7 @@ func (s *ProxyProjectsServiceHandler) ListProjects(ctx context.Context, req *con
 }
 
 func (s *ProxyProjectsServiceHandler) DeleteProject(ctx context.Context, req *connect_go.Request[v1.DeleteProjectRequest]) (*connect_go.Response[v1.DeleteProjectResponse], error) {
-	resp, err := s.client.DeleteProject(ctx, req.Msg)
+	resp, err := s.Client.DeleteProject(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err

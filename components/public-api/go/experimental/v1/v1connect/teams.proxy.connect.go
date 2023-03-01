@@ -15,12 +15,12 @@ import (
 var _ TeamsServiceHandler = (*ProxyTeamsServiceHandler)(nil)
 
 type ProxyTeamsServiceHandler struct {
-	client v1.TeamsServiceClient
+	Client v1.TeamsServiceClient
 	UnimplementedTeamsServiceHandler
 }
 
 func (s *ProxyTeamsServiceHandler) CreateTeam(ctx context.Context, req *connect_go.Request[v1.CreateTeamRequest]) (*connect_go.Response[v1.CreateTeamResponse], error) {
-	resp, err := s.client.CreateTeam(ctx, req.Msg)
+	resp, err := s.Client.CreateTeam(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -31,7 +31,7 @@ func (s *ProxyTeamsServiceHandler) CreateTeam(ctx context.Context, req *connect_
 }
 
 func (s *ProxyTeamsServiceHandler) GetTeam(ctx context.Context, req *connect_go.Request[v1.GetTeamRequest]) (*connect_go.Response[v1.GetTeamResponse], error) {
-	resp, err := s.client.GetTeam(ctx, req.Msg)
+	resp, err := s.Client.GetTeam(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -42,7 +42,7 @@ func (s *ProxyTeamsServiceHandler) GetTeam(ctx context.Context, req *connect_go.
 }
 
 func (s *ProxyTeamsServiceHandler) ListTeams(ctx context.Context, req *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error) {
-	resp, err := s.client.ListTeams(ctx, req.Msg)
+	resp, err := s.Client.ListTeams(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -53,7 +53,7 @@ func (s *ProxyTeamsServiceHandler) ListTeams(ctx context.Context, req *connect_g
 }
 
 func (s *ProxyTeamsServiceHandler) DeleteTeam(ctx context.Context, req *connect_go.Request[v1.DeleteTeamRequest]) (*connect_go.Response[v1.DeleteTeamResponse], error) {
-	resp, err := s.client.DeleteTeam(ctx, req.Msg)
+	resp, err := s.Client.DeleteTeam(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -64,7 +64,7 @@ func (s *ProxyTeamsServiceHandler) DeleteTeam(ctx context.Context, req *connect_
 }
 
 func (s *ProxyTeamsServiceHandler) JoinTeam(ctx context.Context, req *connect_go.Request[v1.JoinTeamRequest]) (*connect_go.Response[v1.JoinTeamResponse], error) {
-	resp, err := s.client.JoinTeam(ctx, req.Msg)
+	resp, err := s.Client.JoinTeam(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -75,7 +75,7 @@ func (s *ProxyTeamsServiceHandler) JoinTeam(ctx context.Context, req *connect_go
 }
 
 func (s *ProxyTeamsServiceHandler) ResetTeamInvitation(ctx context.Context, req *connect_go.Request[v1.ResetTeamInvitationRequest]) (*connect_go.Response[v1.ResetTeamInvitationResponse], error) {
-	resp, err := s.client.ResetTeamInvitation(ctx, req.Msg)
+	resp, err := s.Client.ResetTeamInvitation(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -86,7 +86,7 @@ func (s *ProxyTeamsServiceHandler) ResetTeamInvitation(ctx context.Context, req 
 }
 
 func (s *ProxyTeamsServiceHandler) UpdateTeamMember(ctx context.Context, req *connect_go.Request[v1.UpdateTeamMemberRequest]) (*connect_go.Response[v1.UpdateTeamMemberResponse], error) {
-	resp, err := s.client.UpdateTeamMember(ctx, req.Msg)
+	resp, err := s.Client.UpdateTeamMember(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
@@ -97,7 +97,7 @@ func (s *ProxyTeamsServiceHandler) UpdateTeamMember(ctx context.Context, req *co
 }
 
 func (s *ProxyTeamsServiceHandler) DeleteTeamMember(ctx context.Context, req *connect_go.Request[v1.DeleteTeamMemberRequest]) (*connect_go.Response[v1.DeleteTeamMemberResponse], error) {
-	resp, err := s.client.DeleteTeamMember(ctx, req.Msg)
+	resp, err := s.Client.DeleteTeamMember(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
