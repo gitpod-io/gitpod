@@ -22,10 +22,9 @@ export const query = (...tuples: [string, string][]) => {
 //      Only (current) exception: If no Origin header is set, skip the check!
 // Non-Strict: "rely" on subdomain parsing (do we still need this?)
 export const isAllowedWebsocketDomain = (originHeader: string, gitpodHostName: string, strict: boolean): boolean => {
-    if (!originHeader || typeof originHeader !== "string") {
-        // TODO(gpl) Can we get rid of this dependency alltogether?
+    if (!originHeader) {
         log.warn("Origin header check not applied because of empty Origin header!");
-        return false;
+        return true;
     }
 
     try {
