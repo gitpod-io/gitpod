@@ -210,7 +210,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
             {explorationReasons.includes(EXPLORE_REASON_WORK) && (
                 <SelectInputField
                     value={companySize}
-                    label="Company size"
+                    label="How large is your engineering organization?"
                     onChange={setCompanySize}
                     error={companySizeError.message}
                     onBlur={companySizeError.onBlur}
