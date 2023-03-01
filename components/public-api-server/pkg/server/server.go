@@ -5,17 +5,20 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/go-chi/chi/v5"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
@@ -56,6 +59,19 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	cipherSet, err := db.NewCipherSetFromKeysInFile(filepath.Join(cfg.DatabaseConfigPath, "encryptionKeys"))
 	if err != nil {
 		return fmt.Errorf("failed to read cipherset from file: %w", err)
+	}
+
+	var redisClient *redis.Client
+	if cfg.RedisAddress != "" {
+		redisClient = redis.NewClient(&redis.Options{
+			Addr: cfg.RedisAddress,
+		})
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		err := redisClient.Ping(ctx).Err()
+		if err != nil {
+			return fmt.Errorf("redis is unavailable at %s", cfg.RedisAddress)
+		}
 	}
 
 	expClient := experiments.NewClient()
@@ -115,7 +131,17 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, stateJWT)
 
-	idpService := idp.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", []byte("change this value"), idp.NewInMemoryCache())
+	var idpCache idp.KeyCache
+	if redisClient == nil {
+		log.Info("No Redis cache configured - caching IDP public keys in memory.")
+		idpCache = idp.NewInMemoryCache()
+	} else {
+		idpCache = idp.NewRedisCache(redisClient)
+	}
+	idpService, err := idp.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", idpCache)
+	if err != nil {
+		return err
+	}
 
 	if registerErr := register(srv, &registerDependencies{
 		connPool:    connPool,

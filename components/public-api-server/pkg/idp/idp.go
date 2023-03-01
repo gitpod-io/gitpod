@@ -5,10 +5,13 @@
 package idp
 
 import (
+	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"time"
 
@@ -19,12 +22,27 @@ import (
 	"gopkg.in/square/go-jose.v2"
 )
 
-func NewService(issuerBaseURL string, tokenEncryptionCode []byte, keyCache KeyCache) *Service {
+func NewService(issuerBaseURL string, keyCache KeyCache) (*Service, error) {
+	idpKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, fmt.Errorf("cannot produce IDP private key: %w", err)
+	}
+	err = keyCache.Set(context.Background(), idpKey)
+	if err != nil {
+		return nil, fmt.Errorf("cannot cache IDP key: %w", err)
+	}
+
+	tokenEncryptionCode := make([]byte, 128)
+	_, err = io.ReadFull(rand.Reader, tokenEncryptionCode)
+	if err != nil {
+		return nil, fmt.Errorf("cannot produce random token encryption code: %w", err)
+	}
+
 	return &Service{
 		IssuerBaseURL:       issuerBaseURL,
 		TokenEncryptionCode: tokenEncryptionCode,
 		keys:                keyCache,
-	}
+	}, nil
 }
 
 type Service struct {
@@ -35,15 +53,6 @@ type Service struct {
 
 func (kp *Service) Router() http.Handler {
 	mux := chi.NewRouter()
-	mux.Use(func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			req, _ := httputil.DumpRequest(r, false)
-			fmt.Println()
-			fmt.Println(string(req))
-			next.ServeHTTP(w, r)
-		})
-	})
-
 	mux.Handle(oidc.DiscoveryEndpoint, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		keysURL, err := url.JoinPath(kp.IssuerBaseURL, "keys")
 		if err != nil {
@@ -112,17 +121,12 @@ func (kp *Service) Router() http.Handler {
 		}
 	}))
 	mux.Handle("/keys", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		keys, err := kp.keys.PublicKeys()
+		keys, err := kp.keys.PublicKeys(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		err = json.NewEncoder(w).Encode(keys)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+		_, _ = w.Write(keys)
 	}))
 
 	return mux

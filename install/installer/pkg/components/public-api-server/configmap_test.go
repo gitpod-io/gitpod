@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/google/go-cmp/cmp"
 
@@ -53,6 +54,7 @@ func TestConfigMap(t *testing.T) {
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
 		DatabaseConfigPath:                "/secrets/database-config",
+		RedisAddress:                      fmt.Sprint("%s:%d", redis.Component, redis.Port),
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

@@ -5,12 +5,15 @@
 package idp
 
 import (
+	"context"
 	"crypto/rsa"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"sync"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"gopkg.in/square/go-jose.v2"
 )
 
@@ -20,13 +23,15 @@ import (
 // PoC Note: in production this cache would likely be implemted using Redis or the database.
 type KeyCache interface {
 	// Set rotates the current key
-	Set(current *rsa.PrivateKey) error
+	Set(ctx context.Context, current *rsa.PrivateKey) error
 
 	// Signer produces a new key signer or nil if Set() hasn't been called yet
 	Signer() (jose.Signer, error)
 
-	// PublicKeys returns all un-expired public keys
-	PublicKeys() (*jose.JSONWebKeySet, error)
+	// PublicKeys returns all un-expired public keys as JSON-encoded *jose.JSONWebKeySet.
+	// This function returns the JSON-encoded form directly instead of the *jose.JSONWebKeySet
+	// to allow for persisted JSON implementations of this interface.
+	PublicKeys(ctx context.Context) ([]byte, error)
 }
 
 type inMemoryKey struct {
@@ -50,7 +55,7 @@ type InMemoryCache struct {
 }
 
 // Set rotates the current key
-func (imc *InMemoryCache) Set(current *rsa.PrivateKey) error {
+func (imc *InMemoryCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
 	imc.mu.Lock()
 	defer imc.mu.Unlock()
 
@@ -78,18 +83,98 @@ func (imc *InMemoryCache) Signer() (jose.Signer, error) {
 }
 
 // PublicKeys returns all un-expired public keys
-func (imc *InMemoryCache) PublicKeys() (*jose.JSONWebKeySet, error) {
+func (imc *InMemoryCache) PublicKeys(ctx context.Context) ([]byte, error) {
 	imc.mu.RLock()
 	defer imc.mu.RUnlock()
 
-	var res jose.JSONWebKeySet
+	var jwks jose.JSONWebKeySet
 	for _, key := range imc.keys {
-		res.Keys = append(res.Keys, jose.JSONWebKey{
+		jwks.Keys = append(jwks.Keys, jose.JSONWebKey{
 			Key:       key.Key,
 			KeyID:     key.ID,
 			Algorithm: string(jose.RS256),
 		})
 	}
 
-	return &res, nil
+	return json.Marshal(jwks)
 }
+
+const (
+	redisCacheDefaultTTL = 1 * time.Hour
+	redisIDPKeyPrefix    = "idp:keys:"
+)
+
+func NewRedisCache(client *redis.Client) *RedisCache {
+	return &RedisCache{Client: client}
+}
+
+type RedisCache struct {
+	Client *redis.Client
+
+	mu        sync.RWMutex
+	current   *rsa.PrivateKey
+	currentID string
+}
+
+// PublicKeys implements KeyCache
+func (rc *RedisCache) PublicKeys(ctx context.Context) ([]byte, error) {
+	var (
+		res   = []byte("{\"keys\":[")
+		first bool
+	)
+
+	iter := rc.Client.Scan(ctx, 0, redisIDPKeyPrefix+"*", 0).Iterator()
+	for iter.Next(ctx) {
+		res = append(res, []byte(iter.Val())...)
+		if !first {
+			res = append(res, []byte(",")...)
+		}
+		first = false
+	}
+	if err := iter.Err(); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// Set implements KeyCache
+func (rc *RedisCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+
+	id := fmt.Sprintf("id-%d-%d", time.Now().UnixMicro(), rand.Int())
+
+	publicKey := jose.JSONWebKey{
+		Key:       &current.PublicKey,
+		KeyID:     id,
+		Algorithm: string(jose.RS256),
+	}
+	publicKeyJSON, err := json.Marshal(publicKey)
+	if err != nil {
+		return err
+	}
+
+	redisKey := fmt.Sprintf("%s%s", redisIDPKeyPrefix, id)
+	err = rc.Client.Set(ctx, redisKey, string(publicKeyJSON), redisCacheDefaultTTL).Err()
+	if err != nil {
+		return err
+	}
+	rc.currentID = id
+	rc.current = current
+
+	return nil
+}
+
+// Signer implements KeyCache
+func (rc *RedisCache) Signer() (jose.Signer, error) {
+	if rc.current == nil {
+		return nil, nil
+	}
+
+	return jose.NewSigner(jose.SigningKey{
+		Algorithm: jose.RS256,
+		Key:       rc.current,
+	}, nil)
+}
+
+var _ KeyCache = ((*RedisCache)(nil))

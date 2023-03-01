@@ -3061,7 +3061,7 @@ data:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: b76ac2150300faaae5bbde13efbb141a099fa4f2ad49b7ef0445c04c729412c1
+        gitpod.io/checksum_config: aee046256dbaa96a449b075538af1ef47df7936998ca13302cb844198f250d74
         hello: world
       creationTimestamp: null
       labels:
@@ -5681,6 +5681,7 @@ data:
       "oidcClientJWTSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
       "databaseConfigPath": "/secrets/database-config",
+      "redisAddress": "redis:6379",
       "server": {
         "services": {
           "grpc": {
@@ -10627,7 +10628,7 @@ kind: Deployment
 metadata:
   annotations:
     gitpod.io: hello
-    gitpod.io/checksum_config: b76ac2150300faaae5bbde13efbb141a099fa4f2ad49b7ef0445c04c729412c1
+    gitpod.io/checksum_config: aee046256dbaa96a449b075538af1ef47df7936998ca13302cb844198f250d74
     hello: world
   creationTimestamp: null
   labels:
