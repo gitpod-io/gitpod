@@ -12,8 +12,11 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
+var _ TokensServiceHandler = (*ProxyTokensServiceHandler)(nil)
+
 type ProxyTokensServiceHandler struct {
 	client v1.TokensServiceClient
+	UnimplementedTokensServiceHandler
 }
 
 func (s *ProxyTokensServiceHandler) CreatePersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.CreatePersonalAccessTokenRequest]) (*connect_go.Response[v1.CreatePersonalAccessTokenResponse], error) {

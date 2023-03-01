@@ -12,8 +12,11 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
+var _ ProjectsServiceHandler = (*ProxyProjectsServiceHandler)(nil)
+
 type ProxyProjectsServiceHandler struct {
 	client v1.ProjectsServiceClient
+	UnimplementedProjectsServiceHandler
 }
 
 func (s *ProxyProjectsServiceHandler) CreateProject(ctx context.Context, req *connect_go.Request[v1.CreateProjectRequest]) (*connect_go.Response[v1.CreateProjectResponse], error) {

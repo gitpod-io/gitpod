@@ -12,8 +12,11 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
+var _ OIDCServiceHandler = (*ProxyOIDCServiceHandler)(nil)
+
 type ProxyOIDCServiceHandler struct {
 	client v1.OIDCServiceClient
+	UnimplementedOIDCServiceHandler
 }
 
 func (s *ProxyOIDCServiceHandler) CreateClientConfig(ctx context.Context, req *connect_go.Request[v1.CreateClientConfigRequest]) (*connect_go.Response[v1.CreateClientConfigResponse], error) {

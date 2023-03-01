@@ -72,9 +72,14 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	for _, service := range file.Services {
 		// generate struct definition
 		structName := "Proxy" + service.GoName + "Handler"
+
+		g.P("var _ " + service.GoName + "Handler" + " = (*" + structName + ")(nil)")
+
 		g.Annotate(structName, service.Location)
+
 		g.P("type " + structName + " struct {")
-		g.P("	client " + g.QualifiedGoIdent(file.GoImportPath.Ident(service.GoName+"Client")))
+		g.P("	Client " + g.QualifiedGoIdent(file.GoImportPath.Ident(service.GoName+"Client")))
+		g.P("	Unimplemented" + service.GoName + "Handler")
 		g.P("}")
 		g.P()
 		for _, method := range service.Methods {
@@ -83,7 +88,7 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 				g.QualifiedGoIdent(method.Input.GoIdent) + "])" + "(*" + g.QualifiedGoIdent(connectPackage.Ident("Response")) + "[" + g.QualifiedGoIdent(method.Output.GoIdent) + "], error)" + "{")
 
 			// method implementation
-			g.P("	resp, err := s.client." + method.GoName + "(ctx, req.Msg)")
+			g.P("	resp, err := s.Client." + method.GoName + "(ctx, req.Msg)")
 			g.P("	if err != nil {")
 			g.P("		// TODO(milan): Convert to correct status code")
 			g.P("		return nil, err")

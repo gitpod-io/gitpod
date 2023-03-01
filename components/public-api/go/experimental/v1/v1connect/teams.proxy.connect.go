@@ -12,8 +12,11 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
+var _ TeamsServiceHandler = (*ProxyTeamsServiceHandler)(nil)
+
 type ProxyTeamsServiceHandler struct {
 	client v1.TeamsServiceClient
+	UnimplementedTeamsServiceHandler
 }
 
 func (s *ProxyTeamsServiceHandler) CreateTeam(ctx context.Context, req *connect_go.Request[v1.CreateTeamRequest]) (*connect_go.Response[v1.CreateTeamResponse], error) {

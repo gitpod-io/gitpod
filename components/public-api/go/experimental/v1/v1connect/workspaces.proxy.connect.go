@@ -12,8 +12,11 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
+var _ WorkspacesServiceHandler = (*ProxyWorkspacesServiceHandler)(nil)
+
 type ProxyWorkspacesServiceHandler struct {
 	client v1.WorkspacesServiceClient
+	UnimplementedWorkspacesServiceHandler
 }
 
 func (s *ProxyWorkspacesServiceHandler) ListWorkspaces(ctx context.Context, req *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error) {

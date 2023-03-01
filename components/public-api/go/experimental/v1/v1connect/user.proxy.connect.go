@@ -12,8 +12,11 @@ import (
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 )
 
+var _ UserServiceHandler = (*ProxyUserServiceHandler)(nil)
+
 type ProxyUserServiceHandler struct {
 	client v1.UserServiceClient
+	UnimplementedUserServiceHandler
 }
 
 func (s *ProxyUserServiceHandler) GetAuthenticatedUser(ctx context.Context, req *connect_go.Request[v1.GetAuthenticatedUserRequest]) (*connect_go.Response[v1.GetAuthenticatedUserResponse], error) {
