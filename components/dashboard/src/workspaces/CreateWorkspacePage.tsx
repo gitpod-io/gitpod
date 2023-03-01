@@ -104,6 +104,9 @@ export function CreateWorkspacePage() {
         [createWorkspaceMutation, history, repo, selectedIde, selectedWsClass, team?.id, useLatestIde],
     );
 
+    // Need a wrapper here so we call createWorkspace w/o any arguments
+    const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
+
     if (SelectAccountPayload.is(selectAccountError)) {
         return (
             <SelectAccountModal
@@ -146,7 +149,7 @@ export function CreateWorkspacePage() {
                 </div>
                 <div className="w-full flex justify-end mt-6 space-x-2 px-6">
                     <Button
-                        onClick={createWorkspace}
+                        onClick={onClickCreate}
                         loading={createWorkspaceMutation.isLoading}
                         disabled={!repo || repo.length === 0 || !!errorIde || !!errorWsClass}
                     >
