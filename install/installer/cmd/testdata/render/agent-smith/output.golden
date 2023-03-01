@@ -10262,7 +10262,7 @@ spec:
             command:
             - sh
             - -c
-            - /health/ping_readiness_local.sh 1
+            - redis-cli ping | grep pong
           failureThreshold: 5
           initialDelaySeconds: 5
           periodSeconds: 30
