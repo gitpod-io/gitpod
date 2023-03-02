@@ -708,9 +708,6 @@ func newStartWorkspaceContext(ctx context.Context, cfg *config.Configuration, ws
 	span, _ := tracing.FromContext(ctx, "newStartWorkspaceContext")
 	defer tracing.FinishSpan(span, &err)
 
-	// Can't read ws.Status yet at this point (to e.g. get the headless status),
-	// as it very likely hasn't been set yet by the controller.
-	isHeadless := ws.Spec.Type != workspacev1.WorkspaceTypeRegular
 	return &startWorkspaceContext{
 		Labels: map[string]string{
 			"app":                  "gitpod",
@@ -720,13 +717,13 @@ func newStartWorkspaceContext(ctx context.Context, cfg *config.Configuration, ws
 			wsk8s.OwnerLabel:       ws.Spec.Ownership.Owner,
 			wsk8s.TypeLabel:        strings.ToLower(string(ws.Spec.Type)),
 			instanceIDLabel:        ws.Name,
-			headlessLabel:          strconv.FormatBool(isHeadless),
+			headlessLabel:          strconv.FormatBool(ws.IsHeadless()),
 		},
 		Config:         cfg,
 		Workspace:      ws,
 		IDEPort:        23000,
 		SupervisorPort: 22999,
-		Headless:       isHeadless,
+		Headless:       ws.IsHeadless(),
 	}, nil
 }
 

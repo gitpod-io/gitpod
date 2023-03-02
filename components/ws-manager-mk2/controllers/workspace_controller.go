@@ -107,15 +107,15 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	r.updateMetrics(ctx, &workspace)
 
-	result, err := r.actOnStatus(ctx, &workspace, workspacePods)
-	if err != nil {
-		return result, err
-	}
-
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
 		// log.WithValues("status", workspace).Error(err, "unable to update workspace status")
 		return ctrl.Result{Requeue: true}, err
+	}
+
+	result, err := r.actOnStatus(ctx, &workspace, workspacePods)
+	if err != nil {
+		return result, err
 	}
 
 	if r.OnReconcile != nil {
@@ -148,16 +148,28 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				return ctrl.Result{}, err
 			}
 
+			log.Info("creating workspace Pod for Workspace")
 			err = r.Create(ctx, pod)
 			if errors.IsAlreadyExists(err) {
 				// pod exists, we're good
+				log.Info("Workspace Pod already exists")
 			} else if err != nil {
 				log.Error(err, "unable to create Pod for Workspace", "pod", pod)
 				return ctrl.Result{Requeue: true}, err
 			} else {
 				// TODO(cw): replicate the startup mechanism where pods can fail to be scheduled,
 				//			 need to be deleted and re-created
+				// Must increment and persist the pod starts, and ensure we retry on conflict.
+				// If we fail to persist this value, it's possible that the Pod gets recreated
+				// when the workspace stops, due to PodStarts still being 0 when the original Pod
+				// disappears.
+				// Use a Patch instead of an Update, to prevent conflicts.
+				patch := client.MergeFrom(workspace.DeepCopy())
 				workspace.Status.PodStarts++
+				if err := r.Status().Patch(ctx, workspace, patch); err != nil {
+					log.Error(err, "Failed to patch PodStarts in workspace status")
+					return ctrl.Result{}, err
+				}
 			}
 			r.metrics.rememberWorkspace(workspace, nil)
 
