@@ -38,7 +38,8 @@ import { asyncHandler } from "../../../src/express-util";
 import { ContextParser } from "../../../src/workspace/context-parser-service";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { RepoURL } from "../../../src/repohost";
-import { ErrorCodes, ResponseError } from "vscode-ws-jsonrpc";
+import { ResponseError } from "vscode-ws-jsonrpc";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 /**
  * GitHub app urls:
