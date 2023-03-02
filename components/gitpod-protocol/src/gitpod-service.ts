@@ -278,6 +278,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     tsReassignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void>;
     tsDeactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
     tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
+    tsAddMembersToOrg(teamSubscriptionId: string, organizationId: string): Promise<void>;
 
     getGithubUpgradeUrls(): Promise<GithubUpgradeURL[]>;
 

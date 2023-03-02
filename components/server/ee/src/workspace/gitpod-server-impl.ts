@@ -1731,6 +1731,45 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.teamSubscriptionService.findTeamSubscriptionSlotsBy(user.id, new Date());
     }
 
+    async tsAddMembersToOrg(ctx: TraceContext, teamSubscriptionId: string, organizationId: string): Promise<void> {
+        const user = this.checkUser("tsAddMembersToOrg");
+
+        // Add logging to help us identify trouble with this operation very easily
+        try {
+            log.info({ userId: user.id }, "tsAddMembersToOrg: Started", { teamSubscriptionId, organizationId });
+
+            // TeamSubscription
+            const ts = await this.teamSubscriptionDB.findTeamSubscriptionById(teamSubscriptionId);
+            if (!ts || ts.userId !== user.id) {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, "Cannot find TeamSubscription");
+            }
+
+            // Organization
+            const { team, members } = await this.guardTeamOperation(organizationId, "update", "org_write");
+            const teamOwner = members.find((m) => m.userId === user.id && m.role === "owner");
+            if (!teamOwner) {
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "You are not an owner of this Organization");
+            }
+
+            // Take all slots, identify the members, and add to the Organization
+            const slots = await this.teamSubscriptionDB.findSlotsByTeamSubscriptionId(teamSubscriptionId);
+            const adds = [];
+            for (const slot of slots) {
+                if (!slot.assigneeId) {
+                    // Totally ok, it's just not assigned atm.
+                    continue;
+                }
+                adds.push(this.teamDB.addMemberToTeam(slot.assigneeId, team.id));
+            }
+            await Promise.all(adds);
+
+            log.info({ userId: user.id }, "tsAddMembersToOrg: DONE", { teamSubscriptionId, organizationId });
+        } catch (err) {
+            log.error({ userId: user.id }, "tsAddMembersToOrg: ERROR", err, { teamSubscriptionId, organizationId });
+            throw err;
+        }
+    }
+
     async tsGetUnassignedSlot(
         ctx: TraceContext,
         teamSubscriptionId: string,
