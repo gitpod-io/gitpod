@@ -1243,6 +1243,11 @@
   resolved "https://registry.yarnpkg.com/@bufbuild/connect-web/-/connect-web-0.2.1.tgz#a7ee2914bf1b77d640fc4ee3c3a89d626f3015fa"
   integrity sha512-L580cL9VZCXcjwXMCvIvdFBqdQofVBQcL+jmSis7m8ZxPj5NQ4p7fUhQRTsZMWHkyWINdlZnr7WsHQL0BT7wPQ==
 
+"@bufbuild/connect@^0.8.1":
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/connect/-/connect-0.8.1.tgz#71afa90bf56bb833a7f3e2a492e6f9f83c2bebeb"
+  integrity sha512-cQA0jstYcLknJecTE7KbU4ePNBqiCNviBEcUCbFLve3x+vcSmtoH6jb8z39MeBqFy42ZoWhTGGc3RNCeOx2QUA==
+
 "@bufbuild/protobuf@0.1.1", "@bufbuild/protobuf@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-0.1.1.tgz#163dee03af49e82d300dfa2bf60c8c0f04c80b4c"
