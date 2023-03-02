@@ -3403,6 +3403,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async tsGetSlots(ctx: TraceContext): Promise<TeamSubscriptionSlotResolved[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+    async tsAddMembersToOrg(ctx: TraceContext, teamSubscriptionId: string, organizationId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
     async tsGetUnassignedSlot(
         ctx: TraceContext,
         teamSubscriptionId: string,
