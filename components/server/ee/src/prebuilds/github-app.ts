@@ -38,6 +38,7 @@ import { asyncHandler } from "../../../src/express-util";
 import { ContextParser } from "../../../src/workspace/context-parser-service";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { RepoURL } from "../../../src/repohost";
+import { ErrorCodes, ResponseError } from "vscode-ws-jsonrpc";
 
 /**
  * GitHub app urls:
@@ -674,7 +675,14 @@ export class GithubApp {
 }
 
 function catchError<R>(p: Promise<R>): void {
-    p.catch((err) => log.warn("Failed to handle github event", err));
+    p.catch((err) => {
+        let logger = log.error;
+        if (err instanceof ResponseError) {
+            logger = ErrorCodes.isUserError(err.code) ? log.info : log.error;
+        }
+
+        logger("Failed to handle github event", err);
+    });
 }
 
 export namespace GithubApp {
