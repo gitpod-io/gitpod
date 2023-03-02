@@ -188,12 +188,11 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 }
 
 func isDisposalFinished(ws *workspacev1.Workspace) bool {
-	c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady))
-	noContentInit := c == nil || c.Status == metav1.ConditionFalse
 	return wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
 		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
 		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) ||
-		noContentInit
+		// Nothing to dispose if content wasn't ready.
+		!wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady))
 }
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then
