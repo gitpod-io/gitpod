@@ -349,8 +349,8 @@ func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *wo
 }
 
 func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace string) error {
-	var envSecret corev1.Secret
-	err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &envSecret)
+	var secret corev1.Secret
+	err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret)
 	if errors.IsNotFound(err) {
 		// nothing to delete
 		return nil
@@ -360,7 +360,7 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 		return fmt.Errorf("could not retrieve secret %s: %w", name, err)
 	}
 
-	err = r.Client.Delete(ctx, &envSecret)
+	err = r.Client.Delete(ctx, &secret)
 	if err != nil && !errors.IsNotFound(err) {
 		return fmt.Errorf("could not delete secret %s: %w", name, err)
 	}
