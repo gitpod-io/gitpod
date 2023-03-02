@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable, interfaces } from "inversify";
+import { inject, injectable } from "inversify";
 import { MessageBusIntegration } from "./messagebus-integration";
 import {
     Disposable,
