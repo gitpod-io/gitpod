@@ -85,6 +85,8 @@ func main() {
 		log.Fatalf("Unexpected error waiting for probe URL: %v", err)
 	}
 
+	time.Sleep(5 * time.Second)
+
 	err = updateLabel(opts.Label, true, nodeName, client)
 	if err != nil {
 		log.Fatalf("Unexpected error while trying to add the label: %v", err)
