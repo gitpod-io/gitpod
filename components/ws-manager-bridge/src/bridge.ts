@@ -29,7 +29,6 @@ import { ClientProvider, WsmanSubscriber } from "./wsman-subscriber";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Configuration } from "./config";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { PreparingUpdateEmulator, PreparingUpdateEmulatorFactory } from "./preparing-update-emulator";
 import { performance } from "perf_hooks";
 import { PrebuildUpdater } from "./prebuild-updater";
 import { WorkspaceInstanceController } from "./workspace-instance-controller";
@@ -44,7 +43,7 @@ function toBool(b: WorkspaceConditionBool | undefined): boolean | undefined {
     return b === WorkspaceConditionBool.TRUE;
 }
 
-export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url" | "govern">;
+export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url">;
 
 @injectable()
 export class WorkspaceManagerBridge implements Disposable {
@@ -59,9 +58,6 @@ export class WorkspaceManagerBridge implements Disposable {
 
     @inject(Configuration)
     protected readonly config: Configuration;
-
-    @inject(PreparingUpdateEmulatorFactory)
-    protected readonly preparingUpdateEmulatorFactory: interfaces.Factory<PreparingUpdateEmulator>;
 
     @inject(IAnalyticsWriter)
     protected readonly analytics: IAnalyticsWriter;
@@ -78,45 +74,35 @@ export class WorkspaceManagerBridge implements Disposable {
     protected cluster: WorkspaceClusterInfo;
 
     public start(cluster: WorkspaceClusterInfo, clientProvider: ClientProvider) {
-        const logPayload = { name: cluster.name, url: cluster.url, govern: cluster.govern };
+        const logPayload = { name: cluster.name, url: cluster.url };
         log.info(`Starting bridge to cluster...`, logPayload);
         this.cluster = cluster;
 
-        const startStatusUpdateHandler = (writeToDB: boolean) => {
+        const startStatusUpdateHandler = () => {
             log.debug(`Starting status update handler: ${cluster.name}`, logPayload);
-            /* no await */ this.startStatusUpdateHandler(clientProvider, writeToDB, logPayload)
+            /* no await */ this.startStatusUpdateHandler(clientProvider, logPayload)
                 // this is a mere safe-guard: we do not expect the code inside to fail
                 .catch((err) => log.error("Cannot start status update handler", err));
         };
 
-        if (cluster.govern) {
-            // notify servers and _update the DB_
-            startStatusUpdateHandler(true);
+        // notify servers and _update the DB_
+        startStatusUpdateHandler();
 
-            // the actual "governing" part
-            const controllerIntervalSeconds = this.config.controllerIntervalSeconds;
-            if (controllerIntervalSeconds <= 0) {
-                throw new Error("controllerIntervalSeconds <= 0!");
-            }
-
-            log.debug(`Starting controller: ${cluster.name}`, logPayload);
-            // Control all workspace instances, either against ws-manager or configured timeouts
-            this.workspaceInstanceController.start(
-                cluster.name,
-                clientProvider,
-                controllerIntervalSeconds,
-                this.config.controllerMaxDisconnectSeconds,
-            );
-        } else {
-            // _DO NOT_ update the DB (another bridge is responsible for that)
-            // Still, listen to all updates, generate/derive new state and distribute it locally!
-            startStatusUpdateHandler(false);
-
-            // emulate WorkspaceInstance updates for all Workspaces in the  "preparing" or "building" phase in this cluster
-            const updateEmulator = this.preparingUpdateEmulatorFactory() as PreparingUpdateEmulator;
-            this.disposables.push(updateEmulator);
-            updateEmulator.start(cluster.name);
+        // the actual "governing" part
+        const controllerIntervalSeconds = this.config.controllerIntervalSeconds;
+        if (controllerIntervalSeconds <= 0) {
+            throw new Error("controllerIntervalSeconds <= 0!");
         }
+
+        log.debug(`Starting controller: ${cluster.name}`, logPayload);
+        // Control all workspace instances, either against ws-manager or configured timeouts
+        this.workspaceInstanceController.start(
+            cluster.name,
+            clientProvider,
+            controllerIntervalSeconds,
+            this.config.controllerMaxDisconnectSeconds,
+        );
+
         log.info(`Started bridge to cluster.`, logPayload);
     }
 
@@ -124,11 +110,7 @@ export class WorkspaceManagerBridge implements Disposable {
         this.dispose();
     }
 
-    protected async startStatusUpdateHandler(
-        clientProvider: ClientProvider,
-        writeToDB: boolean,
-        logPayload: {},
-    ): Promise<void> {
+    protected async startStatusUpdateHandler(clientProvider: ClientProvider, logPayload: {}): Promise<void> {
         const subscriber = new WsmanSubscriber(clientProvider);
         this.disposables.push(subscriber);
 
@@ -138,7 +120,7 @@ export class WorkspaceManagerBridge implements Disposable {
                     ctx,
                     sx,
                     (m) => m.getId(),
-                    (ctx, msg) => this.handleStatusUpdate(ctx, msg, writeToDB),
+                    (ctx, msg) => this.handleStatusUpdate(ctx, msg),
                 ),
             );
         };
@@ -147,7 +129,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 ctx,
                 s,
                 (msg) => msg.getId(),
-                (ctx, s) => this.handleStatusUpdate(ctx, s, writeToDB),
+                (ctx, s) => this.handleStatusUpdate(ctx, s),
             );
         };
         await subscriber.subscribe({ onReconnect, onStatusUpdate }, logPayload);
@@ -172,7 +154,7 @@ export class WorkspaceManagerBridge implements Disposable {
         this.queues.set(instanceId, q);
     }
 
-    protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
+    protected async handleStatusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus) {
         const start = performance.now();
         const status = rawStatus.toObject();
         log.info("Handling WorkspaceStatus update", filterStatus(status));
@@ -189,17 +171,12 @@ export class WorkspaceManagerBridge implements Disposable {
         };
 
         try {
-            this.prometheusExporter.reportWorkspaceInstanceUpdateStarted(
-                writeToDB,
-                this.cluster.name,
-                status.spec.type,
-            );
-            await this.statusUpdate(ctx, rawStatus, writeToDB);
+            this.prometheusExporter.reportWorkspaceInstanceUpdateStarted(this.cluster.name, status.spec.type);
+            await this.statusUpdate(ctx, rawStatus);
         } catch (e) {
             const durationMs = performance.now() - start;
             this.prometheusExporter.reportWorkspaceInstanceUpdateCompleted(
                 durationMs / 1000,
-                writeToDB,
                 this.cluster.name,
                 status.spec.type,
                 e,
@@ -210,14 +187,13 @@ export class WorkspaceManagerBridge implements Disposable {
         const durationMs = performance.now() - start;
         this.prometheusExporter.reportWorkspaceInstanceUpdateCompleted(
             durationMs / 1000,
-            writeToDB,
             this.cluster.name,
             status.spec.type,
         );
         log.info(logCtx, "Successfully completed WorkspaceInstance status update");
     }
 
-    private async statusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus, writeToDB: boolean) {
+    private async statusUpdate(ctx: TraceContext, rawStatus: WorkspaceStatus) {
         const status = rawStatus.toObject();
 
         if (!status.spec || !status.metadata || !status.conditions) {
@@ -226,7 +202,6 @@ export class WorkspaceManagerBridge implements Disposable {
 
         const span = TraceContext.startSpan("handleStatusUpdate", ctx);
         span.setTag("status", JSON.stringify(filterStatus(status)));
-        span.setTag("writeToDB", writeToDB);
         span.setTag("statusVersion", status.statusVersion);
         try {
             // Beware of the ID mapping here: What's a workspace to the ws-manager is a workspace instance to the rest of the system.
@@ -388,16 +363,14 @@ export class WorkspaceManagerBridge implements Disposable {
             span.setTag("after", JSON.stringify(instance));
 
             // now notify all prebuild listeners about updates - and update DB if needed
-            await this.prebuildUpdater.updatePrebuiltWorkspace({ span }, userId, status, writeToDB);
+            await this.prebuildUpdater.updatePrebuiltWorkspace({ span }, userId, status);
 
-            if (writeToDB) {
-                await this.workspaceDB.trace(ctx).storeInstance(instance);
+            await this.workspaceDB.trace(ctx).storeInstance(instance);
 
-                // cleanup
-                // important: call this after the DB update
-                if (!!lifecycleHandler) {
-                    await lifecycleHandler();
-                }
+            // cleanup
+            // important: call this after the DB update
+            if (!!lifecycleHandler) {
+                await lifecycleHandler();
             }
             await this.messagebus.notifyOnInstanceUpdate(ctx, userId, instance);
         } catch (e) {
