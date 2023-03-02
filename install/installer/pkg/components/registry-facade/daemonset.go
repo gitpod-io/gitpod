@@ -166,65 +166,30 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	regHostname := fmt.Sprintf("reg.%s", ctx.Config.Domain)
-
 	initContainers := []corev1.Container{
-		*common.InternalCAContainer(ctx),
 		{
-			Name:            "update-hosts-file",
-			Image:           ctx.ImageName(ctx.Config.Repository, "ca-updater", ctx.VersionManifest.Components.CAUpdater.Version),
-			ImagePullPolicy: corev1.PullIfNotPresent,
-			Command: []string{
-				"bash", "-c", "$(HOSTS_SCRIPT)",
+			Name:  "setup",
+			Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version), ImagePullPolicy: corev1.PullIfNotPresent,
+			Args: []string{
+				"setup",
+				"--hostfs=/mnt/dst",
+				fmt.Sprintf("--hostname=reg.%s", ctx.Config.Domain),
+				fmt.Sprintf("--port=%v", ServicePort),
 			},
+			SecurityContext: &corev1.SecurityContext{RunAsUser: pointer.Int64(0)},
 			VolumeMounts: []corev1.VolumeMount{
 				{
 					Name:      "hostfs",
 					MountPath: "/mnt/dst",
 				},
-			},
-			Env: []corev1.EnvVar{
 				{
-					Name:  "HOSTS_SCRIPT",
-					Value: fmt.Sprintf(`if [ -n "$(grep -P "%v" /mnt/dst/etc/hosts)" ];then echo "file /etc/hosts/ already up to date"; else echo "127.0.0.1 %v" >>/mnt/dst/etc/hosts && echo "OK";fi`, regHostname, regHostname),
+					Name:      "gitpod-ca-certificate",
+					SubPath:   "ca.crt",
+					MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
 				},
 			},
+			Env: common.ProxyEnv(&ctx.Config),
 		},
-	}
-
-	// Load `customCACert` into Kubelet's only if its self-signed
-	if ctx.Config.CustomCACert != nil && ctx.Config.CustomCACert.Name != "" {
-		initContainers = append(initContainers,
-			*common.InternalCAContainer(ctx, func(c *corev1.Container) {
-				c.Name = "update-containerd-certificates"
-				c.Env = append(c.Env,
-					corev1.EnvVar{
-						Name: "GITPOD_CA_CERT",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								Key: "ca.crt",
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: ctx.Config.CustomCACert.Name,
-								},
-							},
-						},
-					},
-					corev1.EnvVar{
-						// Install gitpod ca.crt in containerd to allow pulls from the host
-						// https://github.com/containerd/containerd/blob/main/docs/hosts.md
-						Name:  "SETUP_SCRIPT",
-						Value: fmt.Sprintf(`TARGETS="docker containerd";for TARGET in $TARGETS;do mkdir -p /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v && echo "$GITPOD_CA_CERT" > /mnt/dst/etc/$TARGET/certs.d/reg.%s:%v/ca.crt && echo "OK";done`, ctx.Config.Domain, ServicePort, ctx.Config.Domain, ServicePort),
-					},
-				)
-				c.VolumeMounts = append(c.VolumeMounts,
-					corev1.VolumeMount{
-						Name:      "hostfs",
-						MountPath: "/mnt/dst",
-					},
-				)
-				c.Command = []string{"sh", "-c", "$(SETUP_SCRIPT)"}
-			}),
-		)
 	}
 
 	return []runtime.Object{&appsv1.DaemonSet{
@@ -269,7 +234,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}),
 						Ports: []corev1.ContainerPort{{
 							Name:          ContainerPortName,
-							ContainerPort: ContainerPort,
+							ContainerPort: ServicePort,
 						}},
 						SecurityContext: &corev1.SecurityContext{
 							Privileged:               pointer.Bool(false),
@@ -285,7 +250,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Value: "on",
 								},
 							},
-							common.NodeNameEnv(ctx),
 							envvars,
 						)),
 						VolumeMounts: append(
@@ -407,8 +371,17 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Path: "/",
 						}},
 					},
-						*common.InternalCAVolume(),
-						*common.NewEmptyDirVolume("cacerts"),
+						{
+							Name: "gitpod-ca-certificate",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: "builtin-registry-facade-cert",
+									Items: []corev1.KeyToPath{
+										{Key: "ca.crt", Path: "ca.crt"},
+									},
+								},
+							},
+						},
 					}, volumes...),
 					Tolerations: common.GPUToleration(),
 				},
