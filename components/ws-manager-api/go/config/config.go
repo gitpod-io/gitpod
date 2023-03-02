@@ -127,7 +127,7 @@ type Configuration struct {
 	DebugWorkspacePod bool `json:"debugWorkspacePod,omitempty"`
 	// WorkspaceMaxConcurrentReconciles configures the max amount of concurrent workspace reconciliations on
 	// the workspace controller.
-	WorkspaceMaxConcurrentReconciles int `json:workspaceMaxConcurrentReconciles,omitempty`
+	WorkspaceMaxConcurrentReconciles int `json:"workspaceMaxConcurrentReconciles,omitempty"`
 	// TimeoutMaxConcurrentReconciles configures the max amount of concurrent workspace reconciliations on
 	// the timeout controller.
 	TimeoutMaxConcurrentReconciles int `json:"timeoutMaxConcurrentReconciles,omitempty"`
