@@ -125,14 +125,6 @@ var clustersRegisterCmd = &cobra.Command{
 			request.Hints.Cordoned = cordoned
 		}
 
-		govern, err := cmd.Flags().GetBool("hint-govern")
-		if err != nil {
-			log.Fatal(err)
-		}
-		if cmd.Flags().Changed("hint-govern") {
-			request.Hints.Govern = govern
-		}
-
 		preferability, err := cmd.Flags().GetString("hint-preferability")
 		if err != nil {
 			log.Fatal(err)
@@ -166,7 +158,6 @@ func init() {
 	clustersRegisterCmd.Flags().String("url", "", "cluster url")
 	clustersRegisterCmd.Flags().String("tls-path", "", "folder containing the ws cluster's ca.crt, tls.crt and tls.key")
 	clustersRegisterCmd.Flags().Bool("hint-cordoned", false, "sets hint cordoned")
-	clustersRegisterCmd.Flags().Bool("hint-govern", false, "sets hint govern")
 	clustersRegisterCmd.Flags().String("hint-preferability", "none", "sets hint preferability, one of: 'none', 'prefer', 'dontschedule'")
 
 	clustersRegisterCmd.Flags().String("from-file", "", "reads request from JSON file, '-' for stdin")
