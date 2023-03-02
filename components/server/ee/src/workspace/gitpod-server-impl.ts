@@ -2516,13 +2516,20 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const cbSubscriptions = await this.subscriptionService.getActivePaidSubscription(user.id, now);
         // Personal subscription
         const cbPersonalSubscriptions = cbSubscriptions.filter(
-            (s) => Plans.isPersonalPlan(s.planId) && !Plans.isFreePlan(s.planId),
+            (s) =>
+                Plans.isPersonalPlan(s.planId) &&
+                !Plans.isFreePlan(s.planId) &&
+                !Subscription.isCancelled(s, now.toISOString()), // We only care about existing, active, not-yet-cancelled subs
         );
 
         // Old "Team Subscription"
         const cbOwnedTeamSubscriptions = (
             await this.teamSubscriptionDB.findTeamSubscriptions({ userId: user.id })
-        ).filter((ts) => TeamSubscription.isActive(ts, now.toISOString()));
+        ).filter(
+            (ts) =>
+                TeamSubscription.isActive(ts, now.toISOString()) &&
+                !TeamSubscription.isCancelled(ts, now.toISOString()),
+        );
 
         // "Team Subscription 2" (already attached to an Organization)
         const cbOwnedTeamSubscriptions2 = [];
