@@ -46,6 +46,7 @@
 /install/installer/pkg/components/ide-service @gitpod-io/engineering-ide
 /install/installer/pkg/components/ide-proxy @gitpod-io/engineering-ide
 /install/installer/pkg/components/image-builder-mk3 @gitpod-io/engineering-workspace
+/install/installer/pkg/components/image-builder-mk3-wsman @gitpod-io/engineering-workspace
 /install/installer/pkg/components/openvsx-proxy @gitpod-io/engineering-ide
 /install/installer/pkg/components/proxy @gitpod-io/engineering-webapp
 /install/installer/pkg/components/registry-facade @gitpod-io/engineering-workspace
