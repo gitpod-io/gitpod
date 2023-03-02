@@ -499,8 +499,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return user;
     }
 
-    public async supportConfigureWorkspaceTimeout(ctx: TraceContext): Promise<boolean> {
-        const user = this.checkUser("supportConfigureWorkspaceTimeout");
+    public async maySetTimeout(ctx: TraceContext): Promise<boolean> {
+        const user = this.checkUser("maySetTimeout");
         await this.guardAccess({ kind: "user", subject: user }, "get");
 
         return await this.entitlementService.maySetTimeout(user, new Date());
@@ -515,7 +515,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             WorkspaceTimeoutDuration.validate(setting.workspaceTimeout);
         }
 
-        const user = this.checkUser("updateWorkspaceTimeoutSetting");
+        const user = this.checkAndBlockUser("updateWorkspaceTimeoutSetting");
         await this.guardAccess({ kind: "user", subject: user }, "update");
 
         if (!(await this.entitlementService.maySetTimeout(user, new Date()))) {

@@ -232,7 +232,7 @@ const defaultFunctions: FunctionsConfig = {
     setUsageLimit: { group: "default", points: 1 },
     getNotifications: { group: "default", points: 1 },
     getSupportedWorkspaceClasses: { group: "default", points: 1 },
-    supportConfigureWorkspaceTimeout: { group: "default", points: 1 },
+    maySetTimeout: { group: "default", points: 1 },
     updateWorkspaceTimeoutSetting: { group: "default", points: 1 },
 };
 

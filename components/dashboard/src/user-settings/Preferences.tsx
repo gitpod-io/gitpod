@@ -43,7 +43,7 @@ export default function Preferences() {
     const [allowConfigureWorkspaceTimeout, setAllowConfigureWorkspaceTimeout] = useState<boolean>(false);
     useEffect(() => {
         getGitpodService()
-            .server.supportConfigureWorkspaceTimeout()
+            .server.maySetTimeout()
             .then((r) => setAllowConfigureWorkspaceTimeout(r));
     }, []);
 

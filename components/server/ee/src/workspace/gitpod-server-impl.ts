@@ -411,7 +411,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.requireEELicense(Feature.FeatureSetTimeout);
         const user = this.checkUser("setWorkspaceTimeout");
 
-        if (!(await this.maySetTimeout(user))) {
+        if (!(await this.entitlementService.maySetTimeout(user, new Date()))) {
             throw new ResponseError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
         }
 
@@ -455,7 +455,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const user = this.checkUser("getWorkspaceTimeout");
 
-        const canChange = await this.maySetTimeout(user);
+        const canChange = await this.entitlementService.maySetTimeout(user, new Date());
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
@@ -492,13 +492,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         return PrebuiltWorkspace.isDone(pws);
-    }
-
-    /**
-     * gitpod.io Extension point for implementing eligibility checks. Throws a ResponseError if not eligible.
-     */
-    protected async maySetTimeout(user: User): Promise<boolean> {
-        return this.entitlementService.maySetTimeout(user, new Date());
     }
 
     public async controlAdmission(ctx: TraceContext, workspaceId: string, level: "owner" | "everyone"): Promise<void> {

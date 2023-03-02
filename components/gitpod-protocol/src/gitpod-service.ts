@@ -313,7 +313,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getNotifications(): Promise<AppNotification[]>;
 
     getSupportedWorkspaceClasses(): Promise<SupportedWorkspaceClass[]>;
-    supportConfigureWorkspaceTimeout(): Promise<boolean>;
+    maySetTimeout(): Promise<boolean>;
     updateWorkspaceTimeoutSetting(setting: Partial<WorkspaceTimeoutSetting>): Promise<void>;
 }
 
