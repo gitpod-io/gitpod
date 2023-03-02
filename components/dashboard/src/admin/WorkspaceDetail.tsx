@@ -12,7 +12,6 @@ import { Link } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { getProjectPath } from "../workspaces/WorkspaceEntry";
 import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
-import { getAdminLinks } from "./gcp-info";
 import Property from "./Property";
 
 export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance }) {
@@ -44,17 +43,6 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
         }
     };
 
-    const adminLinks = getAdminLinks(workspace);
-    const adminLink = (i: number) => (
-        <Property key={"admin-" + i} name={adminLinks[i]?.name || ""}>
-            <a
-                className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
-                href={adminLinks[i]?.url}
-            >
-                {adminLinks[i]?.title || ""}
-            </a>
-        </Property>
-    );
     return (
         <>
             <div className="app-container">
@@ -154,8 +142,6 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                                 <div>{workspace.workspaceClass ?? "unknown"}</div>
                             </Property>
                         </div>
-                        <div className="flex w-full mt-6">{[0, 1, 2].map(adminLink)}</div>
-                        <div className="flex w-full mt-6">{[3, 4, 5].map(adminLink)}</div>
                     </div>
                 </div>
             </div>
