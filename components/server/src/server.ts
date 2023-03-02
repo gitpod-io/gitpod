@@ -52,6 +52,8 @@ import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-c
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
+import { expressConnectMiddleware } from "@bufbuild/connect-express";
+import { Router } from "./api/server";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -92,6 +94,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(IamSessionApp) protected readonly iamSessionAppCreator: IamSessionApp;
     protected iamSessionApp?: express.Application;
     protected iamSessionAppServer?: http.Server;
+
+    @inject(Router) protected readonly apiRouter: Router;
 
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;

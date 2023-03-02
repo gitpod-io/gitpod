@@ -25,6 +25,7 @@
         { "path": "components/ws-proxy" },
         { "path": "components/public-api" },
         { "path": "components/public-api-server" },
+        { "path": "components/public-api/typescript" },
         { "path": "components/gitpod-db" },
         { "path": "test" },
         { "path": "dev/blowtorch" },
