@@ -12,6 +12,7 @@ import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal"
 import { getGitpodService } from "../service/service";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { EnvironmentVariableEntry } from "./EnvironmentVariableEntry";
+import { Button } from "../components/Button";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -101,12 +102,10 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 </div>
             </ModalBody>
             <ModalFooter>
-                <button className="secondary" onClick={p.onClose}>
+                <Button type="secondary" onClick={p.onClose}>
                     Cancel
-                </button>
-                <button className="ml-2" onClick={save}>
-                    {isNew ? "Add" : "Update"} Variable
-                </button>
+                </Button>
+                <Button onClick={save}>{isNew ? "Add" : "Update"} Variable</Button>
             </ModalFooter>
         </Modal>
     );

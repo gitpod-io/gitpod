@@ -22,10 +22,10 @@ import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { StartWorkspaceError } from "../start/StartPage";
 import { useCurrentUser } from "../user-context";
 import { SelectAccountModal } from "../user-settings/SelectAccountModal";
-import Spinner from "../icons/Spinner.svg";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { useCurrentTeam } from "../teams/teams-context";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
+import { Button } from "../components/Button";
 
 export const useNewCreateWorkspacePage = () => {
     const { startWithOptions } = useFeatureFlags();
@@ -104,6 +104,7 @@ export function CreateWorkspacePage() {
         [createWorkspaceMutation, history, repo, selectedIde, selectedWsClass, team?.id, useLatestIde],
     );
 
+    // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
 
     if (SelectAccountPayload.is(selectAccountError)) {
@@ -147,25 +148,13 @@ export function CreateWorkspacePage() {
                     </div>
                 </div>
                 <div className="w-full flex justify-end mt-6 space-x-2 px-6">
-                    <button
+                    <Button
                         onClick={onClickCreate}
-                        disabled={
-                            createWorkspaceMutation.isLoading ||
-                            !repo ||
-                            repo.length === 0 ||
-                            !!errorIde ||
-                            !!errorWsClass
-                        }
+                        loading={createWorkspaceMutation.isLoading}
+                        disabled={!repo || repo.length === 0 || !!errorIde || !!errorWsClass}
                     >
-                        {createWorkspaceMutation.isLoading ? (
-                            <div className="flex">
-                                <img className="h-4 w-4 animate-spin" src={Spinner} alt="loading spinner" />
-                                <span className="pl-2">Creating Workspace ...</span>
-                            </div>
-                        ) : (
-                            "New Workspace"
-                        )}
-                    </button>
+                        {createWorkspaceMutation.isLoading ? "Creating Workspace ..." : "New Workspace"}
+                    </Button>
                 </div>
                 <div>
                     <StatusMessage

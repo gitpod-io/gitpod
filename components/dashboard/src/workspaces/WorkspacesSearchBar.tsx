@@ -8,6 +8,7 @@ import { FunctionComponent, useContext } from "react";
 import DropDown from "../components/DropDown";
 import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./start-workspace-modal-context";
 import search from "../icons/search.svg";
+import { Button } from "../components/Button";
 
 type WorkspacesSearchBarProps = {
     searchTerm: string;
@@ -67,9 +68,9 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
                     ]}
                 />
             </div>
-            <button onClick={() => setStartWorkspaceModalProps({})} className="ml-2">
+            <Button onClick={() => setStartWorkspaceModalProps({})} className="ml-2">
                 New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
-            </button>
+            </Button>
         </div>
     );
 };
