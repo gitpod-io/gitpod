@@ -54,30 +54,38 @@ export class GithubFileProvider implements FileProvider {
             return undefined;
         }
 
+        const params = {
+            owner: commit.repository.owner,
+            repo: commit.repository.name,
+            path,
+            ref: commit.revision,
+            headers: {
+                accept: "application/vnd.github.VERSION.raw",
+            },
+        };
+
         try {
-            const response = await this.githubApi.run(user, (api) =>
-                api.repos.getContent({
-                    owner: commit.repository.owner,
-                    repo: commit.repository.name,
-                    path,
-                    ref: commit.revision,
-                    headers: {
-                        accept: "application/vnd.github.VERSION.raw",
-                    },
-                }),
-            );
+            const response = await this.githubApi.run(user, (api) => api.repos.getContent(params));
             if (response.status === 200) {
                 if (typeof response.data === "string") {
                     return response.data;
                 }
-                console.warn("GithubFileProvider.getFileContent – unexpected response type.", {
-                    headers: response.headers,
-                    type: typeof response.data,
+                log.warn("GithubFileProvider.getFileContent – unexpected response type.", {
+                    request: params,
+                    response: {
+                        headers: {
+                            "content-encoding": response.headers["content-encoding"],
+                            "content-type": response.headers["content-type"],
+                        },
+                        type: typeof response.data,
+                    },
                 });
             }
             return undefined;
         } catch (err) {
-            log.debug(err);
+            log.warn("Failed to get Github file content", err, {
+                request: params,
+            });
         }
     }
 }
