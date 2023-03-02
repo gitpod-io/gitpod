@@ -141,8 +141,15 @@ func (kp *Service) Router() http.Handler {
 	return mux
 }
 
-func (kp *Service) IDToken(ctx context.Context, org string, audience []string, subject string, user oidc.UserInfo) (string, error) {
-	claims := oidc.NewIDTokenClaims(kp.IssuerBaseURL, subject, audience, time.Now().Add(60*time.Minute), time.Now(), "", "", nil, audience[0], 0)
+func (kp *Service) IDToken(ctx context.Context, org string, audience []string, user oidc.UserInfo) (string, error) {
+	if len(audience) == 0 {
+		return "", fmt.Errorf("audience cannot be empty")
+	}
+	if user == nil {
+		return "", fmt.Errorf("user info cannot be nil")
+	}
+
+	claims := oidc.NewIDTokenClaims(kp.IssuerBaseURL, user.GetSubject(), audience, time.Now().Add(60*time.Minute), time.Now(), "", "", nil, audience[0], 0)
 	claims.SetUserinfo(user)
 
 	codeHash, err := oidc.ClaimHash(string(kp.TokenEncryptionCode), jose.RS256)

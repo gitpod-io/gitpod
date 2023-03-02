@@ -106,12 +106,20 @@ const (
 )
 
 func NewRedisCache(client *redis.Client) *RedisCache {
-	return &RedisCache{Client: client}
+	return &RedisCache{
+		Client: client,
+		keyID:  defaultKeyID,
+	}
+}
+
+func defaultKeyID(current *rsa.PrivateKey) string {
+	return fmt.Sprintf("id-%d-%d", time.Now().UnixMicro(), rand.Int())
 }
 
 type RedisCache struct {
 	Client *redis.Client
 
+	keyID     func(current *rsa.PrivateKey) string
 	mu        sync.RWMutex
 	current   *rsa.PrivateKey
 	currentID string
@@ -149,7 +157,7 @@ func (rc *RedisCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
 
-	id := fmt.Sprintf("id-%d-%d", time.Now().UnixMicro(), rand.Int())
+	id := rc.keyID(current)
 
 	publicKey := jose.JSONWebKey{
 		Key:       &current.PublicKey,

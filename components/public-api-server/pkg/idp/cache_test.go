@@ -1,0 +1,164 @@
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
+
+package idp
+
+import (
+	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"encoding/base64"
+	"encoding/json"
+	"sort"
+	"testing"
+
+	"github.com/alicebob/miniredis/v2"
+	"github.com/google/go-cmp/cmp"
+	"github.com/redis/go-redis/v9"
+	"gopkg.in/square/go-jose.v2"
+)
+
+func testKeyID(k *rsa.PrivateKey) string {
+	return base64.RawURLEncoding.EncodeToString(k.PublicKey.N.Bytes())[0:12]
+}
+
+func sortKeys(jwks *jose.JSONWebKeySet) {
+	sort.Slice(jwks.Keys, func(i, j int) bool {
+		var (
+			ki = jwks.Keys[i]
+			kj = jwks.Keys[j]
+		)
+		return ki.KeyID < kj.KeyID
+	})
+}
+
+func TestRedisCachePublicKeys(t *testing.T) {
+	type Expectation struct {
+		Error    string
+		Response []byte
+	}
+	type Test struct {
+		Name        string
+		Keys        []*rsa.PrivateKey
+		Expectation Expectation
+	}
+	tests := []Test{
+		{
+			Name: "no keys",
+			Expectation: Expectation{
+				Response: []byte(`{"keys":[]}`),
+			},
+		},
+		func() Test {
+			var (
+				jwks jose.JSONWebKeySet
+				keys []*rsa.PrivateKey
+			)
+			for i := 0; i < 3; i++ {
+				key, err := rsa.GenerateKey(rand.Reader, 2048)
+				if err != nil {
+					panic(err)
+				}
+				keys = append(keys, key)
+				jwks.Keys = append(jwks.Keys, jose.JSONWebKey{
+					Key:       &key.PublicKey,
+					Algorithm: string(jose.RS256),
+					KeyID:     testKeyID(key),
+				})
+			}
+			sortKeys(&jwks)
+			exp, err := json.Marshal(jwks)
+			if err != nil {
+				panic(err)
+			}
+			return Test{
+				Name: "multiple keys",
+				Keys: keys,
+				Expectation: Expectation{
+					Response: exp,
+				},
+			}
+		}(),
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			s := miniredis.RunT(t)
+			client := redis.NewClient(&redis.Options{Addr: s.Addr()})
+			cache := NewRedisCache(client)
+			cache.keyID = testKeyID
+			for _, key := range test.Keys {
+				err := cache.Set(context.Background(), key)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			var (
+				act Expectation
+				err error
+			)
+			fc, err := cache.PublicKeys(context.Background())
+			if err != nil {
+				act.Error = err.Error()
+			}
+			if len(fc) > 0 {
+				var res jose.JSONWebKeySet
+				err = json.Unmarshal(fc, &res)
+				if err != nil {
+					t.Fatal(err)
+				}
+				sortKeys(&res)
+				act.Response, err = json.Marshal(&res)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("PublicKeys() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestRedisCacheSigner(t *testing.T) {
+	s := miniredis.RunT(t)
+	client := redis.NewClient(&redis.Options{Addr: s.Addr()})
+	cache := NewRedisCache(client)
+
+	sig, err := cache.Signer(context.Background())
+	if sig != nil {
+		t.Error("Signer() returned a signer despite having no key set")
+	}
+	if err != nil {
+		t.Errorf("Signer() returned an despite having no key set: %v", err)
+	}
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = cache.Set(context.Background(), key)
+	if err != nil {
+		t.Fatalf("RedisCache failed to Set current key but shouldn't have: %v", err)
+	}
+
+	sig, err = cache.Signer(context.Background())
+	if sig == nil {
+		t.Error("Signer() returned nil even though a key was set")
+	}
+	if err != nil {
+		t.Error("Signer() returned an error even though a key was set")
+	}
+
+	signature, err := sig.Sign([]byte("foo"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = signature.Verify(&key.PublicKey)
+	if err != nil {
+		t.Errorf("Returned signer does not sign with currently set key")
+	}
+}
