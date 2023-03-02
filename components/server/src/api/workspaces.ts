@@ -4,7 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ServiceImpl } from "@bufbuild/connect";
+import { ServiceImpl, ConnectError, Code } from "@bufbuild/connect";
 import { experimental } from "@gitpod/public-api";
 
-export class WorkspacesService implements ServiceImpl<typeof experimental.WorkspacesService> {}
+export class WorkspacesService implements ServiceImpl<typeof experimental.WorkspacesService> {
+    async createWorkspace(req: experimental.CreateWorkspaceRequest): Promise<experimental.CreateWorkspaceResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+}
