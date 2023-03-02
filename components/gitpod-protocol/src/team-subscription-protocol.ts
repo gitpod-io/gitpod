@@ -31,6 +31,9 @@ export namespace TeamSubscription {
     export const isActive = (ts: TeamSubscription, date: string): boolean => {
         return ts.startDate <= date && (ts.endDate === undefined || date < ts.endDate);
     };
+    export function isCancelled(s: TeamSubscription, date: string): boolean {
+        return (!!s.cancellationDate && s.cancellationDate < date) || (!!s.endDate && s.endDate < date); // This edge case is meant to handle bad data: If for whatever reason cancellationDate has not been set: treat endDate as such
+    }
 }
 
 export interface TeamSubscription2 {
