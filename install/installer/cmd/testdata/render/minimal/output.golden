@@ -3767,7 +3767,7 @@ data:
             "type": "browser",
             "logo": "https://ide.gitpod.example.com/image/ide-logo/vscode.svg",
             "label": "Browser",
-            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-b83d82b9ee293b0559f11d09977d0e8e914d73f5",
+            "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0f3f6b068fc5aba9abdf02af45a8cfda067cb6d0",
             "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:nightly",
             "imageLayers": [
               "eu.gcr.io/gitpod-core-dev/build/ide/gitpod-code-web:commit-266edb36ec96f3f0613715c6967fd4591fdd0569",
