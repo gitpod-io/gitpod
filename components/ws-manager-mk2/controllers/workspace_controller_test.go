@@ -119,10 +119,27 @@ var _ = Describe("WorkspaceController", func() {
 			})
 		})
 
+		It("should not take a backup if content init did not happen", func() {
+			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
+			pod := createWorkspaceExpectPod(ws)
+
+			requestStop(ws)
+
+			// No content init, expect cleanup without backup.
+			expectWorkspaceCleanup(ws, pod)
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				stops: 1,
+			})
+		})
+
 		It("should handle backup failure", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
+
+			markContentReady(ws)
 
 			// Stop the workspace.
 			requestStop(ws)
@@ -134,6 +151,7 @@ var _ = Describe("WorkspaceController", func() {
 			expectWorkspaceCleanup(ws, pod)
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:       1,
 				backups:        1,
 				backupFailures: 1,
 				stops:          1,
@@ -144,6 +162,8 @@ var _ = Describe("WorkspaceController", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
+
+			markContentReady(ws)
 
 			// Update Pod with failed exit status.
 			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
@@ -165,6 +185,7 @@ var _ = Describe("WorkspaceController", func() {
 			expectWorkspaceCleanup(ws, pod)
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:      1,
 				startFailures: 1,
 				stops:         1,
 				backups:       1,
@@ -175,6 +196,8 @@ var _ = Describe("WorkspaceController", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
+
+			markContentReady(ws)
 
 			By("adding Timeout condition")
 			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
@@ -190,8 +213,9 @@ var _ = Describe("WorkspaceController", func() {
 			expectWorkspaceCleanup(ws, pod)
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
-				stops:   1,
-				backups: 1,
+				restores: 1,
+				stops:    1,
+				backups:  1,
 			})
 		})
 
@@ -199,6 +223,8 @@ var _ = Describe("WorkspaceController", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
+
+			markContentReady(ws)
 
 			// Update Pod with stop and abort conditions.
 			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
@@ -218,7 +244,8 @@ var _ = Describe("WorkspaceController", func() {
 			expectWorkspaceCleanup(ws, pod)
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
-				stops: 1,
+				restores: 1,
+				stops:    1,
 			})
 		})
 
@@ -226,6 +253,8 @@ var _ = Describe("WorkspaceController", func() {
 			ws := newWorkspace(uuid.NewString(), "default")
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
+
+			markContentReady(ws)
 
 			Expect(k8sClient.Delete(ctx, ws)).To(Succeed())
 
@@ -236,8 +265,9 @@ var _ = Describe("WorkspaceController", func() {
 			expectWorkspaceCleanup(ws, pod)
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
-				stops:   1,
-				backups: 1,
+				restores: 1,
+				stops:    1,
+				backups:  1,
 			})
 		})
 	})
