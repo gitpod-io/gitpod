@@ -48,7 +48,7 @@ message TlsConfig {
 message RegistrationHints {
   Preferability perfereability = 1;
   bool cordoned = 2;
-  bool govern = 3;
+  reserved 3; // bool govern = 3;
 }
 
 message AdmissionConstraint {
