@@ -20,6 +20,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -32,6 +33,7 @@ import (
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
@@ -71,6 +73,19 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	promrep := &tracing.PromReporter{
+		Operations: map[string]tracing.SpanMetricMapping{
+			"StartWorkspace": {
+				Name:    "wsman_start_workspace",
+				Help:    "time it takes to service a StartWorkspace request",
+				Buckets: prometheus.LinearBuckets(0, 500, 10), // 10 buckets, each 500ms wide
+			},
+		},
+	}
+	closer := tracing.Init("ws-manager-mk2", tracing.WithPrometheusReporter(promrep))
+	if closer != nil {
+		defer closer.Close()
+	}
 
 	cfg, err := getConfig(configFN)
 	if err != nil {
