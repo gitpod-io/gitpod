@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/redis/go-redis/v9"
 	"gopkg.in/square/go-jose.v2"
 )
@@ -26,7 +27,7 @@ type KeyCache interface {
 	Set(ctx context.Context, current *rsa.PrivateKey) error
 
 	// Signer produces a new key signer or nil if Set() hasn't been called yet
-	Signer() (jose.Signer, error)
+	Signer(ctx context.Context) (jose.Signer, error)
 
 	// PublicKeys returns all un-expired public keys as JSON-encoded *jose.JSONWebKeySet.
 	// This function returns the JSON-encoded form directly instead of the *jose.JSONWebKeySet
@@ -71,7 +72,7 @@ func (imc *InMemoryCache) Set(ctx context.Context, current *rsa.PrivateKey) erro
 }
 
 // Signer produces a new key signer or nil if Set() hasn't been called yet
-func (imc *InMemoryCache) Signer() (jose.Signer, error) {
+func (imc *InMemoryCache) Signer(ctx context.Context) (jose.Signer, error) {
 	if imc.current == nil {
 		return nil, nil
 	}
@@ -120,20 +121,26 @@ type RedisCache struct {
 func (rc *RedisCache) PublicKeys(ctx context.Context) ([]byte, error) {
 	var (
 		res   = []byte("{\"keys\":[")
-		first bool
+		first = true
 	)
 
 	iter := rc.Client.Scan(ctx, 0, redisIDPKeyPrefix+"*", 0).Iterator()
 	for iter.Next(ctx) {
-		res = append(res, []byte(iter.Val())...)
+		key, err := rc.Client.Get(ctx, iter.Val()).Result()
+		if err != nil {
+			return nil, err
+		}
+
 		if !first {
 			res = append(res, []byte(",")...)
 		}
+		res = append(res, []byte(key)...)
 		first = false
 	}
 	if err := iter.Err(); err != nil {
 		return nil, err
 	}
+	res = append(res, []byte("]}")...)
 	return res, nil
 }
 
@@ -166,15 +173,24 @@ func (rc *RedisCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
 }
 
 // Signer implements KeyCache
-func (rc *RedisCache) Signer() (jose.Signer, error) {
+func (rc *RedisCache) Signer(ctx context.Context) (jose.Signer, error) {
 	if rc.current == nil {
 		return nil, nil
+	}
+
+	err := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, redisCacheDefaultTTL).Err()
+	if err != nil {
+		log.WithField("keyID", rc.currentID).WithError(err).Warn("cannot extend cached IDP public key TTL")
 	}
 
 	return jose.NewSigner(jose.SigningKey{
 		Algorithm: jose.RS256,
 		Key:       rc.current,
-	}, nil)
+	}, &jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{
+			jose.HeaderKey("kid"): rc.currentID,
+		},
+	})
 }
 
 var _ KeyCache = ((*RedisCache)(nil))

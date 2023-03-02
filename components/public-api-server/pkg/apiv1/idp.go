@@ -17,7 +17,7 @@ import (
 )
 
 type IDTokenSource interface {
-	IDToken(org string, audience []string, subject string, userInfo oidc.UserInfo) (string, error)
+	IDToken(ctx context.Context, org string, audience []string, subject string, userInfo oidc.UserInfo) (string, error)
 }
 
 func NewIDPService(serverConnPool proxy.ServerConnectionPool, source IDTokenSource) *IDPService {
@@ -77,7 +77,7 @@ func (srv *IDPService) GetIDToken(ctx context.Context, req *connect.Request[v1.G
 	userInfo.SetName(user.Name)
 	userInfo.SetSubject(subject)
 
-	token, err := srv.idTokenSource.IDToken("gitpod", req.Msg.Audience, subject, userInfo)
+	token, err := srv.idTokenSource.IDToken(ctx, "gitpod", req.Msg.Audience, subject, userInfo)
 	if err != nil {
 		logger.WithError(err).Error("Failed to produce ID token.")
 		return nil, proxy.ConvertError(err)
