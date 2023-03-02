@@ -258,7 +258,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				PrivateKey  string `json:"key"`
 			} `json:"tls"`
 		}{
-			TargetAddr: fmt.Sprintf("%s.%s.svc.cluster.local:%d", common.ImageBuilderComponent, ctx.Namespace, common.ImageBuilderRPCPort),
+			TargetAddr: fmt.Sprintf("%s.%s.svc.cluster.local:%d", common.ImageBuilderComponentWsman, ctx.Namespace, common.ImageBuilderRPCPort),
 			TLS:        imageBuilderTLS,
 		},
 		PProf: struct {
