@@ -12,9 +12,9 @@ plugins:
     out: go
     opt:
      - module=github.com/gitpod-io/gitpod/components/public-api/go
-  - name: protoc-server-proxy-gen
+  - name: protoc-proxy-gen
     out: go
-    path: /workspace/go/bin/protoc-server-proxy-gen
+    path: /workspace/go/bin/protoc-proxy-gen
     opt:
      - module=github.com/gitpod-io/gitpod/components/public-api/go
 
