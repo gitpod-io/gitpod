@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strings"
 	"sync"
 	"time"
 
@@ -128,13 +129,29 @@ type RedisCache struct {
 // PublicKeys implements KeyCache
 func (rc *RedisCache) PublicKeys(ctx context.Context) ([]byte, error) {
 	var (
-		res   = []byte("{\"keys\":[")
-		first = true
+		res           = []byte("{\"keys\":[")
+		first         = true
+		hasCurrentKey = false
 	)
+
+	if rc.current != nil && rc.currentID != "" {
+		hasCurrentKey = true
+		fc, err := serializePublicKeyAsJSONWebKey(rc.currentID, &rc.current.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, fc...)
+		first = false
+	}
 
 	iter := rc.Client.Scan(ctx, 0, redisIDPKeyPrefix+"*", 0).Iterator()
 	for iter.Next(ctx) {
-		key, err := rc.Client.Get(ctx, iter.Val()).Result()
+		idx := iter.Val()
+		if hasCurrentKey && strings.HasSuffix(idx, rc.currentID) {
+			// We've already added the public key we hold in memory
+			continue
+		}
+		key, err := rc.Client.Get(ctx, idx).Result()
 		if err != nil {
 			return nil, err
 		}
@@ -152,6 +169,15 @@ func (rc *RedisCache) PublicKeys(ctx context.Context) ([]byte, error) {
 	return res, nil
 }
 
+func serializePublicKeyAsJSONWebKey(keyID string, key *rsa.PublicKey) ([]byte, error) {
+	publicKey := jose.JSONWebKey{
+		Key:       key,
+		KeyID:     keyID,
+		Algorithm: string(jose.RS256),
+	}
+	return json.Marshal(publicKey)
+}
+
 // Set implements KeyCache
 func (rc *RedisCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
 	rc.mu.Lock()
@@ -159,12 +185,7 @@ func (rc *RedisCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
 
 	id := rc.keyID(current)
 
-	publicKey := jose.JSONWebKey{
-		Key:       &current.PublicKey,
-		KeyID:     id,
-		Algorithm: string(jose.RS256),
-	}
-	publicKeyJSON, err := json.Marshal(publicKey)
+	publicKeyJSON, err := serializePublicKeyAsJSONWebKey(id, &current.PublicKey)
 	if err != nil {
 		return err
 	}

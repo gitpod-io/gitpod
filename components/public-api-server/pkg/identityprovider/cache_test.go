@@ -34,6 +34,28 @@ func sortKeys(jwks *jose.JSONWebKeySet) {
 }
 
 func TestRedisCachePublicKeys(t *testing.T) {
+	var (
+		jwks      jose.JSONWebKeySet
+		threeKeys []*rsa.PrivateKey
+	)
+	for i := 0; i < 3; i++ {
+		key, err := rsa.GenerateKey(rand.Reader, 2048)
+		if err != nil {
+			panic(err)
+		}
+		threeKeys = append(threeKeys, key)
+		jwks.Keys = append(jwks.Keys, jose.JSONWebKey{
+			Key:       &key.PublicKey,
+			Algorithm: string(jose.RS256),
+			KeyID:     testKeyID(key),
+		})
+	}
+	sortKeys(&jwks)
+	threeKeysExpectation, err := json.Marshal(jwks)
+	if err != nil {
+		panic(err)
+	}
+
 	type Expectation struct {
 		Error    string
 		Response []byte
@@ -41,45 +63,48 @@ func TestRedisCachePublicKeys(t *testing.T) {
 	type Test struct {
 		Name        string
 		Keys        []*rsa.PrivateKey
+		StateMod    func(*redis.Client) error
 		Expectation Expectation
 	}
 	tests := []Test{
+		{
+			Name: "redis down",
+			Keys: threeKeys,
+			StateMod: func(c *redis.Client) error {
+				return c.FlushAll(context.Background()).Err()
+			},
+			Expectation: Expectation{
+				Response: func() []byte {
+					fc, err := serializePublicKeyAsJSONWebKey(testKeyID(threeKeys[2]), &threeKeys[2].PublicKey)
+					if err != nil {
+						panic(err)
+					}
+					return []byte(`{"keys":[` + string(fc) + `]}`)
+				}(),
+			},
+		},
 		{
 			Name: "no keys",
 			Expectation: Expectation{
 				Response: []byte(`{"keys":[]}`),
 			},
 		},
-		func() Test {
-			var (
-				jwks jose.JSONWebKeySet
-				keys []*rsa.PrivateKey
-			)
-			for i := 0; i < 3; i++ {
-				key, err := rsa.GenerateKey(rand.Reader, 2048)
-				if err != nil {
-					panic(err)
-				}
-				keys = append(keys, key)
-				jwks.Keys = append(jwks.Keys, jose.JSONWebKey{
-					Key:       &key.PublicKey,
-					Algorithm: string(jose.RS256),
-					KeyID:     testKeyID(key),
-				})
-			}
-			sortKeys(&jwks)
-			exp, err := json.Marshal(jwks)
-			if err != nil {
-				panic(err)
-			}
-			return Test{
-				Name: "multiple keys",
-				Keys: keys,
-				Expectation: Expectation{
-					Response: exp,
-				},
-			}
-		}(),
+		{
+			Name: "no key in memory",
+			StateMod: func(c *redis.Client) error {
+				return c.Set(context.Background(), redisIDPKeyPrefix+"foo", `{"kty":"RSA","kid":"fpp","alg":"RS256","n":"VGVsbCBDaHJpcyB5b3UgZm91bmQgdGhpcyAtIGRyaW5rJ3Mgb24gbWU","e":"AQAB"}`, 0).Err()
+			},
+			Expectation: Expectation{
+				Response: []byte(`{"keys":[{"kty":"RSA","kid":"fpp","alg":"RS256","n":"VGVsbCBDaHJpcyB5b3UgZm91bmQgdGhpcyAtIGRyaW5rJ3Mgb24gbWU","e":"AQAB"}]}`),
+			},
+		},
+		{
+			Name: "multiple keys",
+			Keys: threeKeys,
+			Expectation: Expectation{
+				Response: threeKeysExpectation,
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -90,6 +115,12 @@ func TestRedisCachePublicKeys(t *testing.T) {
 			cache.keyID = testKeyID
 			for _, key := range test.Keys {
 				err := cache.Set(context.Background(), key)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			if test.StateMod != nil {
+				err := test.StateMod(client)
 				if err != nil {
 					t.Fatal(err)
 				}
