@@ -13,7 +13,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
