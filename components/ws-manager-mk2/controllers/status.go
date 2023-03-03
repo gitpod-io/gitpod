@@ -40,7 +40,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			workspace.Status.Phase = workspacev1.WorkspacePhasePending
 		}
 
-		if isDisposalFinished(workspace) {
+		if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping && isDisposalFinished(workspace) {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		}
 		return nil

@@ -257,7 +257,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	}
 
 	var wsr workspacev1.Workspace
-	err = wait.PollWithContext(ctx, 100*time.Millisecond, 15*time.Second, func(c context.Context) (done bool, err error) {
+	err = wait.PollWithContext(ctx, 100*time.Millisecond, 30*time.Second, func(c context.Context) (done bool, err error) {
 		err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: ws.Name}, &wsr)
 		if err != nil {
 			return false, nil
