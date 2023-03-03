@@ -12,7 +12,7 @@ import CheckBox from "../components/CheckBox";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import InfoBox from "../components/InfoBox";
-import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
+import { ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalHeader, ModalFooter } from "../components/Modal";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
@@ -20,6 +20,8 @@ import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { isGitpodIo } from "../utils";
+import { AuthEntryItem } from "./AuthEntryItem";
+import { IntegrationEntryItem } from "./IntegrationItemEntry";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { SelectAccountModal } from "./SelectAccountModal";
 
@@ -336,39 +338,13 @@ function GitProviders() {
             <ItemsList className="pt-6">
                 {authProviders &&
                     authProviders.map((ap) => (
-                        <Item key={"ap-" + ap.authProviderId} className="h-16">
-                            <ItemFieldIcon>
-                                <div
-                                    className={
-                                        "rounded-full w-3 h-3 text-sm align-middle m-auto " +
-                                        (isConnected(ap.authProviderId) ? "bg-green-500" : "bg-gray-400")
-                                    }
-                                >
-                                    &nbsp;
-                                </div>
-                            </ItemFieldIcon>
-                            <ItemField className="w-4/12 xl:w-3/12 flex flex-col my-auto">
-                                <span className="my-auto font-medium truncate overflow-ellipsis">
-                                    {ap.authProviderType}
-                                </span>
-                                <span className="text-sm my-auto text-gray-400 truncate overflow-ellipsis dark:text-gray-500">
-                                    {ap.host}
-                                </span>
-                            </ItemField>
-                            <ItemField className="w-6/12 xl:w-3/12 flex flex-col my-auto">
-                                <span className="my-auto truncate text-gray-500 overflow-ellipsis dark:text-gray-400">
-                                    {getUsername(ap.authProviderId) || "–"}
-                                </span>
-                                <span className="text-sm my-auto text-gray-400 dark:text-gray-500">Username</span>
-                            </ItemField>
-                            <ItemField className="hidden xl:w-5/12 xl:flex xl:flex-col my-auto">
-                                <span className="my-auto truncate text-gray-500 overflow-ellipsis dark:text-gray-400">
-                                    {getPermissions(ap.authProviderId)?.join(", ") || "–"}
-                                </span>
-                                <span className="text-sm my-auto text-gray-400 dark:text-gray-500">Permissions</span>
-                            </ItemField>
-                            <ItemFieldContextMenu menuEntries={gitProviderMenu(ap)} />
-                        </Item>
+                        <AuthEntryItem
+                            isConnected={isConnected}
+                            gitProviderMenu={gitProviderMenu}
+                            getUsername={getUsername}
+                            getPermissions={getPermissions}
+                            ap={ap}
+                        />
                     ))}
             </ItemsList>
         </div>
@@ -482,28 +458,7 @@ function GitIntegrations() {
                 </div>
             )}
             <ItemsList className="pt-6">
-                {providers &&
-                    providers.map((ap) => (
-                        <Item key={"ap-" + ap.id} className="h-16">
-                            <ItemFieldIcon>
-                                <div
-                                    className={
-                                        "rounded-full w-3 h-3 text-sm align-middle m-auto " +
-                                        (ap.status === "verified" ? "bg-green-500" : "bg-gray-400")
-                                    }
-                                >
-                                    &nbsp;
-                                </div>
-                            </ItemFieldIcon>
-                            <ItemField className="w-3/12 flex flex-col my-auto">
-                                <span className="font-medium truncate overflow-ellipsis">{ap.type}</span>
-                            </ItemField>
-                            <ItemField className="w-7/12 flex flex-col my-auto">
-                                <span className="my-auto truncate text-gray-500 overflow-ellipsis">{ap.host}</span>
-                            </ItemField>
-                            <ItemFieldContextMenu menuEntries={gitProviderMenu(ap)} />
-                        </Item>
-                    ))}
+                {providers && providers.map((ap) => <IntegrationEntryItem ap={ap} gitProviderMenu={gitProviderMenu} />)}
             </ItemsList>
         </div>
     );
