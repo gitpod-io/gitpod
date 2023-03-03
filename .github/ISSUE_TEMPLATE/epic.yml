@@ -43,7 +43,7 @@ body:
   attributes:
     label: Persona(s)
     description: Optionally specifiy which user will be impacted by this change? 
-    placeholder: [Developer/Installer/Project Configurer/Customer/Security Reviewer] (optionally the ecosystem persona e.g. Python Developers)
+    placeholder: Developer/Installer/Project Configurer/Customer/Security Reviewer - optionally the ecosystem persona e.g. Python Developers
   validations:
     required: false
 - type: textarea
