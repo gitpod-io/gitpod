@@ -5,28 +5,27 @@
 package middleware
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 )
 
 type Middleware func(handler http.Handler) http.Handler
 
-func NewLoggingMiddleware(l *logrus.Entry) Middleware {
-
+func NewLoggingMiddleware() Middleware {
 	return func(next http.Handler) http.Handler {
 		logging := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			uri := r.RequestURI
-			method := r.Method
-			duration := time.Since(start)
 			next.ServeHTTP(w, r)
+			duration := time.Since(start)
 
-			l.WithFields(logrus.Fields{
-				"uri":      uri,
-				"method":   method,
+			log.WithFields(logrus.Fields{
+				"uri":      r.RequestURI,
+				"method":   r.Method,
 				"duration": duration,
-			}).Infof("Handled HTTP request %s %s", method, uri)
+			}).Debug("Handled HTTP request")
 		})
 
 		return logging

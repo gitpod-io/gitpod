@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httputil"
 	"net/url"
 	"time"
 
@@ -55,13 +54,6 @@ type Service struct {
 
 func (kp *Service) Router() http.Handler {
 	mux := chi.NewRouter()
-	mux.Use(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			c, _ := httputil.DumpRequest(r, false)
-			log.WithField("req", string(c)).Debug("IDP request")
-			h.ServeHTTP(w, r)
-		})
-	})
 	mux.Get(oidc.DiscoveryEndpoint, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		keysURL, err := url.JoinPath(kp.IssuerBaseURL, "keys")
 		if err != nil {

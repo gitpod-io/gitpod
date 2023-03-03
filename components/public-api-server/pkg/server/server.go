@@ -27,6 +27,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	"github.com/gitpod-io/gitpod/public-api-server/middleware"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
@@ -175,6 +176,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	}
 
 	rootHandler := chi.NewRouter()
+	rootHandler.Use(middleware.NewLoggingMiddleware())
 
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
