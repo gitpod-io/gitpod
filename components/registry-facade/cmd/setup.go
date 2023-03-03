@@ -28,13 +28,31 @@ var setupCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		{
 			log.Info("Creating containerd registry directory...")
-			regPath := filepath.Join(hostfs, fmt.Sprintf("/etc/containerd/certs.d/%v:%v", hostname, port))
-			err := os.MkdirAll(regPath, 0644)
+			regDirectory := fmt.Sprintf("/etc/containerd/certs.d/%v:%v", hostname, port)
+
+			fakeRegPath := filepath.Join(hostfs, regDirectory)
+			err := os.MkdirAll(fakeRegPath, 0644)
 			if err != nil {
 				log.Fatalf("cannot create containerd cert directory: %v", err)
 			}
 
-			err = copyFile("/usr/local/share/ca-certificates/gitpod-ca.crt", filepath.Join(regPath, "ca.crt"))
+			caPath := filepath.Join(fakeRegPath, "ca.crt")
+			err = copyFile("/usr/local/share/ca-certificates/gitpod-ca.crt", caPath)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// https://github.com/containerd/containerd/blob/main/docs/cri/config.md#registry-configuration
+			hostsToml := fmt.Sprintf(`
+server = "https://%v:%v"
+
+[host."https://%v:%v"]
+    capabilities = ["pull", "resolve"]
+    ca = "%v"
+    #skip_verify = true
+`, hostname, port, hostname, port, filepath.Join(regDirectory, "ca.crt"))
+
+			err = os.WriteFile(filepath.Join(fakeRegPath, "hosts.toml"), []byte(hostsToml), 0644)
 			if err != nil {
 				log.Fatal(err)
 			}
