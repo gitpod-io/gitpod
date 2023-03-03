@@ -61,22 +61,22 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 	// generate individual services
 	for _, service := range file.Services {
 		// generate struct definition
-		handlerStructName := "Proxy" + service.GoName + "Handler"
+		handlerStructName := fmt.Sprintf("Proxy%sHandler", service.GoName)
 
 		// Generate a type assertion to ensure the handler implements the connect handler interface
-		g.P("var _ " + service.GoName + "Handler" + " = (*" + handlerStructName + ")(nil)")
+		g.P(fmt.Sprintf("var _ %sHandler = (*%s)(nil)", service.GoName, handlerStructName))
 
 		g.Annotate(handlerStructName, service.Location)
-		g.P("type " + handlerStructName + " struct {")
-		g.P("	Client " + g.QualifiedGoIdent(file.GoImportPath.Ident(service.GoName+"Client")))
-		g.P("	Unimplemented" + service.GoName + "Handler")
+		g.P(fmt.Sprintf("type %s struct {", handlerStructName))
+		g.P(fmt.Sprintf("	Client %s", g.QualifiedGoIdent(file.GoImportPath.Ident(service.GoName+"Client"))))
+		g.P(fmt.Sprintf("	Unimplemented%sHandler", service.GoName))
 		g.P("}")
 		g.P()
 
 		for _, method := range service.Methods {
 			// We do not generate any non-unary methods, for now.
 			// Should we need these, we can choose to do so and handle them explicitly.
-			// The handler still continues to work fine, as it inhertis from the default Unimplemented handling, and will
+			// The handler still continues to work fine, as it inherits from the default Unimplemented handling, and will
 			// always return Unimplemented.
 			if method.Desc.IsStreamingClient() || method.Desc.IsStreamingServer() {
 				continue
