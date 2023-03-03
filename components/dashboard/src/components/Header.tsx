@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { Separator } from "./Separator";
 import TabMenuItem from "./TabMenuItem";
+import { Heading1, Subheading } from "./typography/headings";
 
 export interface HeaderProps {
     title: string | React.ReactElement;
@@ -33,8 +34,12 @@ export default function Header(p: HeaderProps) {
         <div className="app-container border-gray-200 dark:border-gray-800">
             <div className="flex pb-8 pt-6">
                 <div className="">
-                    {typeof p.title === "string" ? <h1 className="tracking-tight">{p.title}</h1> : p.title}
-                    {typeof p.subtitle === "string" ? <h2 className="tracking-wide">{p.subtitle}</h2> : p.subtitle}
+                    {typeof p.title === "string" ? <Heading1>{p.title}</Heading1> : p.title}
+                    {typeof p.subtitle === "string" ? (
+                        <Subheading className="tracking-wide">{p.subtitle}</Subheading>
+                    ) : (
+                        p.subtitle
+                    )}
                 </div>
             </div>
             <nav className="flex">
