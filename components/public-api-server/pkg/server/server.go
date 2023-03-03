@@ -187,34 +187,20 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 		),
 	}
 
-	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(workspacesRoute, workspacesServiceHandler)
-
-	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(teamsRoute, teamsServiceHandler)
+	rootHandler.Mount(v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewUserServiceHandler(apiv1.NewUserService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.dbConn, deps.cipher), handlerOptions...))
+	rootHandler.Mount(v1connect.NewIdentityProviderServiceHandler(apiv1.NewIdentityProviderService(deps.connPool, deps.idpService), handlerOptions...))
 
 	if deps.signer != nil {
-		tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(deps.connPool, deps.expClient, deps.dbConn, deps.signer), handlerOptions...)
-		rootHandler.Mount(tokensRoute, tokensServiceHandler)
+		rootHandler.Mount(v1connect.NewTokensServiceHandler(apiv1.NewTokensService(deps.connPool, deps.expClient, deps.dbConn, deps.signer), handlerOptions...))
 	}
-
-	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(userRoute, userServiceHandler)
-
-	ideClientRoute, ideClientServiceHandler := v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(ideClientRoute, ideClientServiceHandler)
-
-	projectsRoute, projectsServiceHandler := v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(projectsRoute, projectsServiceHandler)
-
-	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.dbConn, deps.cipher), handlerOptions...)
-	rootHandler.Mount(oidcRoute, oidcServiceHandler)
 
 	// OIDC sign-in handlers
 	rootHandler.Mount("/oidc", oidc.Router(deps.oidcService))
-
-	idpRoute, idpServiceHandler := v1connect.NewIdentityProviderServiceHandler(apiv1.NewIdentityProviderService(deps.connPool, deps.idpService), handlerOptions...)
-	rootHandler.Mount(idpRoute, idpServiceHandler)
 
 	// The OIDC spec dictates how the identity provider endpoint needs to look like,
 	// hence the extra endpoint rather than making this part of the proto API.
