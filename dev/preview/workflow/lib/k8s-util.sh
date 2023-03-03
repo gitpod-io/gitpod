@@ -86,16 +86,3 @@ function readWerftSecret {
     get secret "${name}" -o jsonpath="{.data.${key}}" \
   | base64 -d
 }
-
-function diff-apply {
-  local context=$1
-  shift
-  local yaml=$1
-  yaml=$(realpath "${yaml}")
-
-  if kubectl --context "${context}" diff -f "${yaml}" > /dev/null; then
-    echo "Skipping ${yaml}, as it produced no diff"
-  else
-    kubectl --context "${context}" apply -f "${yaml}"
-  fi
-}
