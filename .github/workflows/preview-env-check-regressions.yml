@@ -124,11 +124,11 @@ jobs:
               if: always()
             - name: Slack Notification
               uses: rtCamp/action-slack-notify@v2
-              if: success() || failure()
+              if: failure()
               env:
                   SLACK_WEBHOOK: ${{ secrets.DEVELOPMENT_PIPELINE_SLACK_WEBHOOK_URL }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: "`${{ needs.configuration.outputs.version}}` ${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed"
+                  SLACK_MESSAGE: "`${{ needs.configuration.outputs.version}}` smoke test failed"
             - name: Delete preview environment
               if: always()
               uses: ./.github/actions/delete-preview
