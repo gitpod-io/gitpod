@@ -90,7 +90,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ReadinessProbe: &corev1.Probe{
 									ProbeHandler: corev1.ProbeHandler{
 										Exec: &v1.ExecAction{
-											Command: []string{"sh", "-c", "redis-cli ping | grep pong"},
+											Command: []string{"redis-cli", "ping", "|", "grep", "pong"},
 										},
 									},
 									InitialDelaySeconds: 5,
