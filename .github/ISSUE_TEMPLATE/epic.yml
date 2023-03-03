@@ -1,5 +1,5 @@
 name: Epic (User Impacting)
-description: An epic is a grouping of related issues which MUST be delivered together. Epics are as small in scope as reasonably possible, and are finite in scope. Please do not use this template for: categorising related work (please instead use labels), investigate work where the solutions is not well defined (e.g. investigations + spikes), or for technical debt work.
+description: An epic is a grouping of related issues which MUST be delivered together. Epics are as small in scope as reasonably possible, and are finite in scope. Please do not use this template for categorising related work, please instead use labels, investigate work where the solutions is not well defined e.g. investigations or spikes, or for technical debt work.
 title: "Epic: "
 labels: ["type: epic"]
 body:
