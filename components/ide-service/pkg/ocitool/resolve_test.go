@@ -43,7 +43,7 @@ func TestResolveIDEVersion(t *testing.T) {
 				t.Errorf("ResolveIDEVersion() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got != tt.want {
+			if got.Version != tt.want {
 				t.Errorf("ResolveIDEVersion() = %v, want %v", got, tt.want)
 			}
 		})
