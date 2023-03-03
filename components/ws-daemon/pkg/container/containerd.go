@@ -99,54 +99,72 @@ func (s *Containerd) start() {
 
 	reconnectionInterval := 2 * time.Second
 	for {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
+		func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
 
-		cs, err := s.Client.ContainerService().List(ctx)
-		if err != nil {
-			log.WithError(err).Error("cannot list container")
-			time.Sleep(reconnectionInterval)
-			continue
-		}
-
-		// we have to loop through the containers twice because we don't know in which order
-		// the sandbox and workspace container are in. handleNewContainer expects to see the
-		// sandbox before the actual workspace. Hence, the first pass is for the sandboxes,
-		// the second pass for workspaces.
-		for _, c := range cs {
-			s.handleNewContainer(c)
-		}
-		for _, c := range cs {
-			s.handleNewContainer(c)
-		}
-
-		tsks, err := s.Client.TaskService().List(ctx, &tasks.ListTasksRequest{})
-		if err != nil {
-			log.WithError(err).Error("cannot list tasks")
-			time.Sleep(reconnectionInterval)
-			continue
-		}
-		for _, t := range tsks.Tasks {
-			s.handleNewTask(t.ID, nil, t.Pid)
-		}
-
-		evts, errchan := s.Client.Subscribe(context.Background())
-		log.Info("containerd subscription established")
-		for {
-			select {
-			case evt := <-evts:
-				ev, err := typeurl.UnmarshalAny(evt.Event)
-				if err != nil {
-					log.WithError(err).Warn("cannot unmarshal containerd event")
-					continue
-				}
-				s.handleContainerdEvent(ev)
-			case err := <-errchan:
-				log.WithError(err).Error("lost connection to containerd - will attempt to reconnect")
+			isServing, err := s.Client.IsServing(ctx)
+			if err != nil {
+				log.WithError(err).Error("cannot check if containerd is available")
 				time.Sleep(reconnectionInterval)
-				break
+				return
 			}
-		}
+
+			if !isServing {
+				err := s.Client.Reconnect()
+				if err != nil {
+					log.WithError(err).Error("cannot reconnect to containerd")
+					time.Sleep(reconnectionInterval)
+					return
+				}
+			}
+
+			cs, err := s.Client.ContainerService().List(ctx)
+			if err != nil {
+				log.WithError(err).Error("cannot list container")
+				time.Sleep(reconnectionInterval)
+				return
+			}
+
+			// we have to loop through the containers twice because we don't know in which order
+			// the sandbox and workspace container are in. handleNewContainer expects to see the
+			// sandbox before the actual workspace. Hence, the first pass is for the sandboxes,
+			// the second pass for workspaces.
+			for _, c := range cs {
+				s.handleNewContainer(c)
+			}
+			for _, c := range cs {
+				s.handleNewContainer(c)
+			}
+
+			tsks, err := s.Client.TaskService().List(ctx, &tasks.ListTasksRequest{})
+			if err != nil {
+				log.WithError(err).Error("cannot list tasks")
+				time.Sleep(reconnectionInterval)
+				return
+			}
+			for _, t := range tsks.Tasks {
+				s.handleNewTask(t.ID, nil, t.Pid)
+			}
+
+			evts, errchan := s.Client.Subscribe(context.Background())
+			log.Info("containerd subscription established")
+			for {
+				select {
+				case evt := <-evts:
+					ev, err := typeurl.UnmarshalAny(evt.Event)
+					if err != nil {
+						log.WithError(err).Warn("cannot unmarshal containerd event")
+						continue
+					}
+					s.handleContainerdEvent(ev)
+				case err := <-errchan:
+					log.WithError(err).Error("lost connection to containerd - will attempt to reconnect")
+					time.Sleep(reconnectionInterval)
+					break
+				}
+			}
+		}()
 	}
 }
 
