@@ -7,7 +7,7 @@ body:
   id: press-release
   attributes:
     label: Press release (and FAQ's)
-    description: What would the future feature announcement look like from a customer/ user point of view? Think about questions both Gitpodders, and users/customers might ask about this feature. 
+    description: What would the future feature announcement look like from a customer/user point of view? Think about questions both Gitpodders, and users/customers might ask about this feature. 
   validations:
     required: false
 - type: textarea
