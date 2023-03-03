@@ -149,6 +149,7 @@ func (s *Containerd) start() {
 
 			evts, errchan := s.Client.Subscribe(context.Background())
 			log.Info("containerd subscription established")
+		LOOP:
 			for {
 				select {
 				case evt := <-evts:
@@ -161,7 +162,7 @@ func (s *Containerd) start() {
 				case err := <-errchan:
 					log.WithError(err).Error("lost connection to containerd - will attempt to reconnect")
 					time.Sleep(reconnectionInterval)
-					break
+					break LOOP
 				}
 			}
 		}()
