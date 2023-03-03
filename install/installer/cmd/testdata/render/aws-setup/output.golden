@@ -9160,9 +9160,11 @@ spec:
         readinessProbe:
           exec:
             command:
-            - sh
-            - -c
-            - redis-cli ping | grep pong
+            - redis-cli
+            - ping
+            - '|'
+            - grep
+            - pong
           failureThreshold: 5
           initialDelaySeconds: 5
           periodSeconds: 30
