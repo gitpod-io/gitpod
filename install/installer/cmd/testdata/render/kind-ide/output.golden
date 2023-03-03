@@ -484,7 +484,7 @@ data:
           memory: 2Gi
       runtime:
         containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
-        containerdSocket: /run/containerd/containerd.sock
+        containerdSocketDir: /run/containerd
         fsShiftMethod: fuse
   versions.json: |-
     {
