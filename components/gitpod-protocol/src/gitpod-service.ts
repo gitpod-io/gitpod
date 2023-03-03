@@ -28,6 +28,7 @@ import {
     SSHPublicKeyValue,
     IDESettings,
     EnvVarWithValue,
+    WorkspaceTimeoutSetting,
 } from "./protocol";
 import {
     Team,
@@ -314,6 +315,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getNotifications(): Promise<AppNotification[]>;
 
     getSupportedWorkspaceClasses(): Promise<SupportedWorkspaceClass[]>;
+    maySetTimeout(): Promise<boolean>;
+    updateWorkspaceTimeoutSetting(setting: Partial<WorkspaceTimeoutSetting>): Promise<void>;
 }
 
 export interface AppNotification {

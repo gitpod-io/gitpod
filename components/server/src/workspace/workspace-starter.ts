@@ -57,6 +57,7 @@ import {
     Project,
     GitpodServer,
     IDESettings,
+    WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -1437,6 +1438,7 @@ export class WorkspaceStarter {
             lastValidWorkspaceInstanceId,
         );
         const userTimeoutPromise = this.entitlementService.getDefaultWorkspaceTimeout(user, new Date());
+        const allowSetTimeoutPromise = this.entitlementService.maySetTimeout(user, new Date());
 
         let featureFlags = instance.configuration!.featureFlags || [];
 
@@ -1467,7 +1469,19 @@ export class WorkspaceStarter {
         spec.setClass(instance.workspaceClass!);
 
         if (workspace.type === "regular") {
-            spec.setTimeout(await userTimeoutPromise);
+            const [defaultTimeout, allowSetTimeout] = await Promise.all([userTimeoutPromise, allowSetTimeoutPromise]);
+            spec.setTimeout(defaultTimeout);
+            if (allowSetTimeout) {
+                if (user.additionalData?.workspaceTimeout) {
+                    try {
+                        let timeout = WorkspaceTimeoutDuration.validate(user.additionalData?.workspaceTimeout);
+                        spec.setTimeout(timeout);
+                    } catch (err) {}
+                }
+                if (user.additionalData?.disabledClosedTimeout === true) {
+                    spec.setClosedTimeout("0");
+                }
+            }
         }
         spec.setAdmission(admissionLevel);
         const sshKeys = await this.userDB.trace(traceCtx).getSSHPublicKeys(user.id);

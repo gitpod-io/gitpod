@@ -236,7 +236,14 @@ export namespace User {
     }
 }
 
-export interface AdditionalUserData {
+export interface WorkspaceTimeoutSetting {
+    // user globol workspace timeout
+    workspaceTimeout: string;
+    // control whether to enable the closed timeout of a workspace, i.e. close web ide, disconnect ssh connection
+    disabledClosedTimeout: boolean;
+}
+
+export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     platforms?: UserPlatform[];
     emailNotificationSettings?: EmailNotificationSettings;
     featurePreview?: boolean;
