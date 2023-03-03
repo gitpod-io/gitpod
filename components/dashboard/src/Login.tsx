@@ -24,6 +24,7 @@ import exclamation from "./images/exclamation.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
+import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 
 function Item(props: { icon: string; iconSize?: string; text: string }) {
     const iconSize = props.iconSize || 28;
@@ -138,7 +139,7 @@ export function Login() {
 
     return (
         <div id="login-container" className="z-50 flex w-screen h-screen">
-            {showWelcome ? (
+            {!showWelcome ? (
                 <div id="feature-section" className="flex-grow bg-gray-100 dark:bg-gray-800 w-1/2 hidden lg:block">
                     <div id="feature-section-column" className="flex max-w-xl h-full mx-auto pt-6">
                         <div className="flex flex-col px-8 my-auto ml-auto">
@@ -147,11 +148,11 @@ export function Login() {
                                 <img src={gitpodDark} className="h-8 hidden dark:block" alt="Gitpod dark theme logo" />
                             </div>
                             <div className="mb-10">
-                                <h1 className="text-5xl mb-3">Welcome to Gitpod</h1>
-                                <div className="text-gray-400 text-lg">
+                                <Heading1 className="text-5xl mb-3">Welcome to Gitpod</Heading1>
+                                <Subheading className="text-gray-400 text-lg">
                                     Spin up fresh cloud development environments for each task, fully automated, in
                                     seconds.
-                                </div>
+                                </Subheading>
                             </div>
                             <div className="flex mb-10">
                                 <Item icon={code} iconSize="16" text="Always Ready&#x2011;To&#x2011;Code" />
@@ -190,15 +191,15 @@ export function Login() {
                             <div className="mx-auto text-center pb-8 space-y-2">
                                 {providerFromContext ? (
                                     <>
-                                        <h2 className="text-xl text-black dark:text-gray-50 font-semibold">
-                                            Open a cloud development environment
-                                        </h2>
-                                        <h2 className="text-xl">for the repository {repoPathname?.slice(1)}</h2>
+                                        <Heading2>Open a cloud development environment</Heading2>
+                                        <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
                                     </>
                                 ) : (
                                     <>
-                                        <h1 className="text-3xl">Log in{showWelcome ? "" : " to Gitpod"}</h1>
-                                        <h2 className="uppercase text-sm text-gray-400">ALWAYS READY-TO-CODE</h2>
+                                        <Heading1>Log in{showWelcome ? "" : " to Gitpod"}</Heading1>
+                                        <Subheading className="uppercase text-sm text-gray-400">
+                                            ALWAYS READY-TO-CODE
+                                        </Subheading>
                                     </>
                                 )}
                             </div>

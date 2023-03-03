@@ -22,6 +22,7 @@ import { SpinnerLoader } from "../components/Loader";
 import TokenEntry from "./TokenEntry";
 import ShowTokenModal from "./ShowTokenModal";
 import Pagination from "../Pagination/Pagination";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 export default function PersonalAccessTokens() {
     const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
@@ -148,15 +149,15 @@ function ListAccessTokensView() {
         <>
             <div className="flex items-center sm:justify-between mb-4">
                 <div>
-                    <h3>
+                    <Heading2>
                         Access Tokens{" "}
                         <PillLabel type="warn" className="font-semibold self-center py-0.5 px-1.5">
                             <a href="https://www.gitpod.io/docs/references/gitpod-releases">
                                 <span className="text-xs">BETA</span>
                             </a>
                         </PillLabel>
-                    </h3>
-                    <h2 className="text-gray-500">
+                    </Heading2>
+                    <Subheading>
                         Create or regenerate access tokens.{" "}
                         <a
                             className="gp-link"
@@ -175,7 +176,7 @@ function ListAccessTokensView() {
                         >
                             Send feedback
                         </a>
-                    </h2>
+                    </Subheading>
                 </div>
                 {tokens.length > 0 && (
                     <Link to={settingsPathPersonalAccessTokenCreate}>
@@ -252,9 +253,9 @@ function ListAccessTokensView() {
                     ) : (
                         <>
                             <div className="px-3 py-3 flex justify-between space-x-2 text-sm text-gray-400 mb-2 bg-gray-100 dark:bg-gray-800 rounded-xl">
-                                <h2 className="w-4/12">Token Name</h2>
-                                <h2 className="w-4/12">Permissions</h2>
-                                <h2 className="w-3/12">Expires</h2>
+                                <Subheading className="w-4/12">Token Name</Subheading>
+                                <Subheading className="w-4/12">Permissions</Subheading>
+                                <Subheading className="w-3/12">Expires</Subheading>
                                 <div className="w-1/12"></div>
                             </div>
                             {tokens.map((t: PersonalAccessToken) => (

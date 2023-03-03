@@ -16,6 +16,7 @@ import Modal from "../components/Modal";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { OrgSettingsPage } from "./OrgSettingsPage";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 export default function SSO() {
     const team = useCurrentTeam();
@@ -86,8 +87,8 @@ function OIDCClients(props: { organizationId: string }) {
 
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
-                    <h3>Single sign sign-on with OIDC</h3>
-                    <h2>Setup SSO for your organization.</h2>
+                    <Heading2>Single sign sign-on with OIDC</Heading2>
+                    <Subheading>Setup SSO for your organization.</Subheading>
                 </div>
                 {clientConfigs.length !== 0 ? (
                     <div className="mt-3 flex mt-0">

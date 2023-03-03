@@ -17,6 +17,7 @@ import { openAuthorizeWindow } from "../provider-utils";
 import { useCurrentProject } from "./project-context";
 import { toRemoteURL } from "./render-utils";
 import { Redirect } from "react-router";
+import { Subheading } from "../components/typography/headings";
 
 export default function EventsPage() {
     const { project, loading } = useCurrentProject();
@@ -112,13 +113,13 @@ export default function EventsPage() {
             <Header
                 title="Prebuild Events"
                 subtitle={
-                    <h2 className="tracking-wide">
+                    <Subheading tracking="wide">
                         View recent prebuild events for{" "}
                         <a className="gp-link" href={project?.cloneUrl!}>
                             {toRemoteURL(project?.cloneUrl || "")}
                         </a>
                         .
-                    </h2>
+                    </Subheading>
                 }
             />
             <div className="app-container">

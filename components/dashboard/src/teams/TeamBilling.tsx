@@ -13,6 +13,7 @@ import Card from "../components/Card";
 import DropDown from "../components/DropDown";
 import PillLabel from "../components/PillLabel";
 import SolidCard from "../components/SolidCard";
+import { Heading2, Subheading } from "../components/typography/headings";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useOrgMembers } from "../data/organizations/org-members-query";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
@@ -149,8 +150,8 @@ const TeamBilling: FunctionComponent = () => {
     function renderTeamBilling(): JSX.Element {
         return (
             <>
-                <h3>{!teamPlan ? "Select Plan" : "Current Plan"}</h3>
-                <h2 className="text-gray-500">
+                <Heading2>{!teamPlan ? "Select Plan" : "Current Plan"}</Heading2>
+                <Subheading>
                     {!teamPlan ? (
                         <div className="flex space-x-1">
                             <span>Currency:</span>
@@ -175,7 +176,7 @@ const TeamBilling: FunctionComponent = () => {
                             This organization is currently on the <strong>{teamPlan.name}</strong> plan.
                         </span>
                     )}
-                </h2>
+                </Subheading>
                 <div className="mt-4 space-x-4 flex">
                     {isLoading && (
                         <>

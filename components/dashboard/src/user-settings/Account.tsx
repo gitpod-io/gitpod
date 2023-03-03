@@ -12,6 +12,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 import ProfileInformation, { ProfileState } from "./ProfileInformation";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Button } from "../components/Button";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
@@ -68,7 +69,7 @@ export default function Account() {
             </ConfirmationModal>
 
             <PageWithSettingsSubMenu>
-                <h3>Profile</h3>
+                <Heading2>Profile</Heading2>
                 <form
                     onSubmit={(e) => {
                         saveProfileState();
@@ -89,10 +90,8 @@ export default function Account() {
                         </div>
                     </ProfileInformation>
                 </form>
-                <h3 className="mt-12">Delete Account</h3>
-                <p className="text-base text-gray-500 pb-4">
-                    This action will remove all the data associated with your account in Gitpod.
-                </p>
+                <Heading2 className="mt-12">Delete Account</Heading2>
+                <Subheading>This action will remove all the data associated with your account in Gitpod.</Subheading>
                 <Button type="danger.secondary" onClick={() => setModal(true)}>
                     Delete Account
                 </Button>

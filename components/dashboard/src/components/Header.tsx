@@ -34,9 +34,9 @@ export default function Header(p: HeaderProps) {
         <div className="app-container border-gray-200 dark:border-gray-800">
             <div className="flex pb-8 pt-6">
                 <div className="">
-                    {typeof p.title === "string" ? <Heading1>{p.title}</Heading1> : p.title}
+                    {typeof p.title === "string" ? <Heading1 tracking="tight">{p.title}</Heading1> : p.title}
                     {typeof p.subtitle === "string" ? (
-                        <Subheading className="tracking-wide">{p.subtitle}</Subheading>
+                        <Subheading tracking="wide">{p.subtitle}</Subheading>
                     ) : (
                         p.subtitle
                     )}

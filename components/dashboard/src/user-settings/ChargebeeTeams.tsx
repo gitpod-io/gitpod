@@ -24,6 +24,7 @@ import { Disposable } from "@gitpod/gitpod-protocol";
 import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 export default function ChargebeeTeams() {
     return (
@@ -456,8 +457,8 @@ function AllTeams() {
         <div>
             <div className="flex flex-row">
                 <div className="flex-grow ">
-                    <h3 className="self-center">All Team Plans</h3>
-                    <h2>Manage team plans and members.</h2>
+                    <Heading2 className="self-center">All Team Plans</Heading2>
+                    <Subheading>Manage team plans and members.</Subheading>
                 </div>
                 <div className="flex flex-end space-x-3">
                     {isChargebeeCustomer && (

@@ -13,6 +13,7 @@ import { SSHPublicKeyValue, UserSSHPublicKeyValue } from "@gitpod/gitpod-protoco
 import { getGitpodService } from "../service/service";
 import dayjs from "dayjs";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
+import { Subheading } from "../components/typography/headings";
 
 interface AddModalProps {
     value: SSHPublicKeyValue;
@@ -188,7 +189,7 @@ export default function SSHKeys() {
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
                     <h3>SSH Keys</h3>
-                    <h2 className="text-gray-500">
+                    <Subheading>
                         Create and manage SSH keys.{" "}
                         <a
                             className="gp-link"
@@ -198,7 +199,7 @@ export default function SSHKeys() {
                         >
                             Learn more
                         </a>
-                    </h2>
+                    </Subheading>
                 </div>
                 {dataList.length !== 0 ? (
                     <div className="mt-3 flex">

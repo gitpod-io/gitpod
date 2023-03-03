@@ -50,6 +50,9 @@ module.exports = {
                 // TODO(andreafalzetti): remove custom ide-modal class once we implement https://github.com/gitpod-io/gitpod/issues/13116
                 51.5: "51.5rem",
             },
+            lineHeight: {
+                64: "64px",
+            },
         },
         fontFamily: {
             sans: [

@@ -28,6 +28,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./react-datepicker.css";
 import { useLocation } from "react-router";
 import dayjs from "dayjs";
+import { Heading1, Subheading } from "./typography/headings";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -208,13 +209,13 @@ function UsageView({ attributionId }: UsageViewProps) {
             <Header
                 title={
                     <div className="flex items-baseline">
-                        <h1 className="tracking-tight">Usage</h1>
-                        <h2 className="ml-3">(updated every 15 minutes).</h2>
+                        <Heading1 tracking="tight">Usage</Heading1>
+                        <Subheading className="ml-3">(updated every 15 minutes).</Subheading>
                     </div>
                 }
                 subtitle={
                     <div className="tracking-wide flex mt-3 items-center">
-                        <h2 className="mr-1">Showing usage from </h2>
+                        <Subheading className="mr-1">Showing usage from </Subheading>
                         <DatePicker
                             selected={startDate.toDate()}
                             onChange={(date) => date && setStartDate(dayjs(date))}
@@ -225,7 +226,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                             customInput={<DateDisplay />}
                             dateFormat={"MMM d, yyyy"}
                         />
-                        <h2 className="mx-1">to</h2>
+                        <Subheading className="mx-1">to</Subheading>
                         <DatePicker
                             selected={endDate.toDate()}
                             onChange={(date) => date && setEndDate(dayjs(date))}

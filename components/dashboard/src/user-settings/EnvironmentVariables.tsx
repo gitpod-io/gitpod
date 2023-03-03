@@ -13,6 +13,7 @@ import { getGitpodService } from "../service/service";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { EnvironmentVariableEntry } from "./EnvironmentVariableEntry";
 import { Button } from "../components/Button";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -221,8 +222,8 @@ export default function EnvVars() {
             )}
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
-                    <h3>Environment Variables</h3>
-                    <h2 className="text-gray-500">
+                    <Heading2>Environment Variables</Heading2>
+                    <Subheading>
                         Variables are used to store information like passwords.{" "}
                         <a
                             className="gp-link"
@@ -232,7 +233,7 @@ export default function EnvVars() {
                         >
                             Learn more
                         </a>
-                    </h2>
+                    </Subheading>
                 </div>
                 {envVars.length !== 0 ? (
                     <div className="mt-3 flex mt-0">

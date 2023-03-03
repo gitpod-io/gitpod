@@ -6,6 +6,7 @@
 
 import { FunctionComponent } from "react";
 import { SpinnerLoader } from "../../components/Loader";
+import { Heading2, Subheading } from "../../components/typography/headings";
 import { useOrgAuthProvidersQuery } from "../../data/auth-providers/org-auth-providers-query";
 import { GitIntegrationsList } from "./GitIntegrationsList";
 
@@ -16,8 +17,10 @@ export const GitIntegrations: FunctionComponent = () => {
         <div>
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
-                    <h3>Git Integrations</h3>
-                    <h2>Manage Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.</h2>
+                    <Heading2>Git Integrations</Heading2>
+                    <Subheading>
+                        Manage Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.
+                    </Subheading>
                 </div>
             </div>
 
