@@ -378,11 +378,20 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 	}
 
 	t.Logf("attemp to get the workspace information: %s", resp.CreatedWorkspaceID)
-	wi, err := server.GetWorkspace(ctx, resp.CreatedWorkspaceID)
-	if err != nil {
-		return nil, nil, xerrors.Errorf("cannot get workspace: %w", err)
+
+	var wi *protocol.WorkspaceInfo
+	for i := 0; i < 3; i++ {
+		wi, err = server.GetWorkspace(ctx, resp.CreatedWorkspaceID)
+		if err != nil || wi.LatestInstance == nil {
+			time.Sleep(2 * time.Second)
+			continue
+		}
+		if wi.LatestInstance.Status.Phase != "preparing" {
+			break
+		}
+		time.Sleep(5 * time.Second)
 	}
-	if wi.LatestInstance == nil {
+	if wi == nil || wi.LatestInstance == nil {
 		return nil, nil, xerrors.Errorf("CreateWorkspace did not start the workspace")
 	}
 	t.Logf("got the workspace information: %s", wi.Workspace.ID)
@@ -391,6 +400,19 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 	// from ws-manager, in which case IdeURL is not set
 	if wi.LatestInstance.IdeURL == "" {
 		wi.LatestInstance.IdeURL = resp.WorkspaceURL
+	}
+
+	if wi.LatestInstance.Status.Conditions.NeededImageBuild {
+		for ctx.Err() == nil {
+			wi, err = server.GetWorkspace(ctx, resp.CreatedWorkspaceID)
+			if err != nil {
+				return nil, nil, xerrors.Errorf("cannot get workspace: %w", err)
+			}
+			if wi.LatestInstance.Status.Phase == "running" {
+				break
+			}
+			time.Sleep(10 * time.Second)
+		}
 	}
 
 	stopWs = stopWsF(t, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api, false)
