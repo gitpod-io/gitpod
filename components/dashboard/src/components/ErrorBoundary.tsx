@@ -35,7 +35,7 @@ export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBound
             <div>
                 <button onClick={resetErrorBoundary}>Reload</button>
             </div>
-            <pre>{error.message}</pre>
+            {error.message && <pre>{error.message}</pre>}
         </div>
     );
 };
@@ -47,7 +47,7 @@ export const handleReset: ErrorBoundaryProps["onReset"] = () => {
 export const handleError: ErrorBoundaryProps["onError"] = async (error, info) => {
     const url = window.location.toString();
     try {
-        await getGitpodService().server.reportErrorBoundary(url, error.message);
+        await getGitpodService().server.reportErrorBoundary(url, error.message || "Unknown Error");
     } catch (e) {
         console.error(e);
     }
