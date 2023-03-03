@@ -1712,7 +1712,7 @@ data:
           memory: 2Gi
       runtime:
         containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
-        containerdSocket: /run/containerd/containerd.sock
+        containerdSocketDir: /run/containerd
         fsShiftMethod: fuse
   versions.json: |-
     {
@@ -5718,7 +5718,7 @@ data:
             },
             "runtime": "containerd",
             "containerd": {
-              "socket": "/mnt/containerd.sock"
+              "socket": "/mnt/containerd/containerd.sock"
             }
           },
           "kubeconfig": "",
@@ -8380,7 +8380,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: d78571b1e710efaaec72a70727b26bd4e0906743ef9d7c8fc019ad773f0a3d7e
+        gitpod.io/checksum_config: c3f063b20c86e50d84ab6b62d85d5042146c1748f01c42dd37581239a888b9d8
       creationTimestamp: null
       labels:
         app: gitpod
@@ -8460,7 +8460,7 @@ spec:
           name: working-area
         - mountPath: /config
           name: config
-        - mountPath: /mnt/containerd.sock
+        - mountPath: /mnt/containerd
           name: containerd-socket
         - mountPath: /mnt/node0
           name: node-fs0
@@ -8593,8 +8593,7 @@ spec:
           name: ws-daemon
         name: config
       - hostPath:
-          path: /run/containerd/containerd.sock
-          type: Socket
+          path: /run/containerd
         name: containerd-socket
       - hostPath:
           path: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io

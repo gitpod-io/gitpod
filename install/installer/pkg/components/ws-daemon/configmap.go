@@ -118,7 +118,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						ProcLoc: "/mnt/mounts",
 					},
 					Containerd: &container.ContainerdConfig{
-						SocketPath: "/mnt/containerd.sock",
+						SocketPath: "/mnt/containerd/containerd.sock",
 					},
 				},
 			},
