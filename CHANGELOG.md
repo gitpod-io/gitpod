@@ -1,6 +1,9 @@
 # Change Log
 
-## February 2023
+## March 2023
+- Fixed a bug where the Project Settings page sometimes wouldn't load correctly. ([#16627](https://github.com/gitpod-io/gitpod/pull/16627)) - [@selfcontained](https://github.com/selfcontained)
+
+##  February 2023
 - [ssh-gateway] support stderr forward in shell session ([#16546](https://github.com/gitpod-io/gitpod/pull/16546)) - [@iQQBot](https://github.com/iQQBot)
 - Revert ":wrench: Ambiguity of `New Workspace` option & :rocket: new `Settings` option " ([#16588](https://github.com/gitpod-io/gitpod/pull/16588)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 - Access Project Settings directly from Projects Page on Project Menu Items ([#16540](https://github.com/gitpod-io/gitpod/pull/16540)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)

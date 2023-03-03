@@ -51,6 +51,8 @@ jobs:
         needs: [configuration]
         if: ${{ needs.configuration.outputs.skip == 'false' }}
         runs-on: [self-hosted]
+        container:
+            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
         steps:
             - uses: actions/checkout@v3
             - name: Create preview environment infrastructure
@@ -68,7 +70,58 @@ jobs:
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
             - name: Check
+              shell: bash
+              env:
+                  ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
+                  USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
+                  PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
+                  PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
               run: |
+                  set -euo pipefail
+
+                  export LEEWAY_WORKSPACE_ROOT="$(pwd)"
+                  export HOME="/home/gitpod"
+                  export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
+
+                  echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+                  gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+                  leeway run dev/preview/previewctl:install
+
+                  echo "Setting up access to core-dev and harvester"
+                  previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+                  previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+                  # start integration test
+                  args=()
+                  args+=( "-kubeconfig=/home/gitpod/.kube/config" )
+                  args+=( "-namespace=default" )
+                  [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
+                  args+=( "-timeout=60m" )
+
+                  TESTS_DIR="$GITHUB_WORKSPACE/test/tests/smoke-test"
+
+                  go install github.com/jstemmer/go-junit-report/v2@latest
+
+                  echo "running integration for smoke test"
+
+                  cd "${TESTS_DIR}"
+                  set +e
+                  go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST.xml" -iocopy
+                  RC=${PIPESTATUS[0]}
+                  set -e
+
+                  if [ "${RC}" -ne "0" ]; then
+                    exit ${RC}
+                  fi
+            - name: Test Summary
+              id: test_summary
+              uses: test-summary/action@v2
+              with:
+                  paths: "test/tests/**/TEST.xml"
+              if: always()
                   echo "No regressions caught because I didn't check anything 🤡 Sleeping for 2 minutes."
                   sleep 60
             - name: Delete preview environment
