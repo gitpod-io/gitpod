@@ -91,7 +91,7 @@ export default function Preferences() {
                     </div>
                 </div>
 
-                <h3 className="mt-12">Inactivity Timeout </h3>
+                <h3 className="mt-12">Timeouts</h3>
                 <p className="text-base text-gray-500 dark:text-gray-400">
                     Workspaces will stop after a period of inactivity without any user input.
                 </p>
@@ -100,14 +100,17 @@ export default function Preferences() {
 
                     {!allowConfigureWorkspaceTimeout && (
                         <Alert type="message">
-                            Upgrade organization <Link to="/billing">billing</Link> plan to use a custom inactivity
-                            timeout.
+                            Upgrade organization{" "}
+                            <Link to="/billing" className="gp-link">
+                                billing
+                            </Link>{" "}
+                            plan to use a custom inactivity timeout.
                         </Alert>
                     )}
 
                     {allowConfigureWorkspaceTimeout && (
                         <>
-                            <span className="flex mt-2">
+                            <span className="flex">
                                 <input
                                     type="text"
                                     className="w-96 h-9"
@@ -126,7 +129,8 @@ export default function Preferences() {
                             </span>
                             <div className="mt-1">
                                 <p className="text-gray-500 dark:text-gray-400">
-                                    Use minutes or hours, like <strong>30m</strong> or <strong>2h</strong>.
+                                    Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
+                                    <span className="font-semibold">2h</span>.
                                 </p>
                             </div>
                         </>
