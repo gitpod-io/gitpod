@@ -15,6 +15,15 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
+	otelconnect "github.com/bufbuild/connect-opentelemetry-go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/go-chi/chi/v5"
@@ -178,10 +187,16 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	rootHandler := chi.NewRouter()
 	rootHandler.Use(middleware.NewLoggingMiddleware())
 
+	traceProvider, err := OpenTelemetryTracerProvider("public-api-server")
+	if err != nil {
+		return fmt.Errorf("failed to initialize tracing: %w", err)
+	}
+
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
 			NewMetricsInterceptor(connectMetrics),
 			NewLogInterceptor(log.Log),
+			otelconnect.NewInterceptor(otelconnect.WithTracerProvider(traceProvider)),
 			auth.NewServerInterceptor(),
 			origin.NewInterceptor(),
 		),
@@ -220,4 +235,40 @@ func readSecretFromFile(path string) (string, error) {
 	}
 
 	return strings.TrimSpace(string(b)), nil
+}
+
+// OpenTelemetryTracerProvider creates a new TracerProvider
+// Callers should ensure they call Shutdown on the TraceProvider at the end of
+// a component lifecycle to flush all pending spans.
+func OpenTelemetryTracerProvider(serviceName string) (*sdktrace.TracerProvider, error) {
+	ctx := context.Background()
+
+	// We export traces over a gRPC client
+	exporter, err := otlptracegrpc.New(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create trace exporter: %w", err)
+	}
+
+	resource, err := resource.New(ctx,
+		resource.WithAttributes(
+			semconv.ServiceName(serviceName),
+			semconv.ServiceVersion(os.Getenv("GITPOD_BUILD_VERSION")),
+			attribute.Key("service.build.commit").String(os.Getenv("GITPOD_BUILD_GIT_COMMIT")),
+			attribute.Key("service.build.version").String(os.Getenv("GITPOD_BUILD_VERSION")),
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create tracing resource: %w", err)
+	}
+
+	batching := sdktrace.NewBatchSpanProcessor(exporter)
+	provider := sdktrace.NewTracerProvider(
+		sdktrace.WithSpanProcessor(batching),
+		sdktrace.WithResource(resource),
+	)
+
+	otel.SetTracerProvider(provider)
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+
+	return provider, nil
 }
