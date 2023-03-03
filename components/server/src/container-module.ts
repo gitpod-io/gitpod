@@ -103,7 +103,6 @@ import {
 import { VerificationService } from "./auth/verification-service";
 import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
 import { LivenessController } from "./liveness/liveness-controller";
-import { FeatureFlagController } from "./feature-flag/featureflag-controller";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
 import { UsageService, UsageServiceImpl } from "./user/usage-service";
@@ -218,7 +217,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
     bind(WorkspaceDownloadService).toSelf().inSingletonScope();
     bind(LivenessController).toSelf().inSingletonScope();
-    bind(FeatureFlagController).toSelf().inSingletonScope();
 
     bind(OneTimeSecretServer).toSelf().inSingletonScope();
 
