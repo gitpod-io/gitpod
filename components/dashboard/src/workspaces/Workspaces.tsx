@@ -20,7 +20,6 @@ import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
-import { Button } from "../components/Button";
 
 const WorkspacesPage: FunctionComponent = () => {
     const user = useCurrentUser();
@@ -32,7 +31,6 @@ const WorkspacesPage: FunctionComponent = () => {
     const isOnboardingUser = useMemo(() => user && User.isOnboardingUser(user), [user]);
     const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
     const { newSignupFlow } = useFeatureFlags();
-    const [error, setError] = useState(false);
 
     // Sort workspaces into active/inactive groups
     const { activeWorkspaces, inactiveWorkspaces } = useMemo(() => {
@@ -83,14 +81,9 @@ const WorkspacesPage: FunctionComponent = () => {
         setDeleteModalVisible(false);
     }, [deleteInactiveWorkspaces, inactiveWorkspaces]);
 
-    if (error) {
-        throw new Error();
-    }
-
     return (
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
-            <Button onClick={() => setError(true)}>Boom</Button>
             {deleteModalVisible && (
                 <ConfirmationModal
                     title="Delete Inactive Workspaces"
