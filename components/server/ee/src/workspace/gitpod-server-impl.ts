@@ -2598,7 +2598,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 ? `/switch-to-payg?personalSubscription=${personalSubscription.uid}`
                 : "https://www.gitpod.io/docs/configure/billing#configure-personal-billing";
             result.unshift({
-                message: `Your old subscription '${plan.name}' will be deprecated end of March.`,
+                message: `Your personal '${plan.name}' subscription will be discontinued on March, 31st.`,
                 action: {
                     url,
                     label: "Switch to pay-as-you-go",
@@ -2615,7 +2615,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 ? `/switch-to-payg?teamSubscription=${ownedTeamSubscription.id}`
                 : "https://www.gitpod.io/docs/configure/billing/org-plans";
             result.unshift({
-                message: `Your old Team Subscription '${plan.name}' will be deprecated soon.`,
+                message: `Your Team Subscription '${plan.name}' will be discontinued on March, 31st.`,
                 action: {
                     url,
                     label: "Switch to pay-as-you-go",
@@ -2632,7 +2632,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 ? `/switch-to-payg?teamSubscription2=${ownedTeamSubscription2.id}`
                 : "https://www.gitpod.io/docs/configure/billing#configure-organization-billing";
             result.unshift({
-                message: `The subscription '${plan.name}' for team '${team.name}' will be deprecated soon.`,
+                message: `Your '${plan.name}' subscription for Organization '${team.name}' will be discontinued on March, 31st.`,
                 action: {
                     url,
                     label: "Switch to pay-as-you-go",
