@@ -654,7 +654,7 @@ var DeploymentStrategy = appsv1.DeploymentStrategy{
 var (
 	TypeMetaNamespace = metav1.TypeMeta{
 		APIVersion: "v1",
-		Kind:       "namespace",
+		Kind:       "Namespace",
 	}
 	TypeMetaStatefulSet = metav1.TypeMeta{
 		APIVersion: "apps/v1",
