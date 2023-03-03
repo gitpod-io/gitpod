@@ -30,10 +30,8 @@
 /components/installation-telemetry @gitpod-io/engineering-security-infrastructure-and-delivery
 /components/kots-config-check @gitpod-io/engineering-security-infrastructure-and-delivery
 /install @gitpod-io/engineering-security-infrastructure-and-delivery
-# For testdata a single review from anyone who is allowed to review PRs is sufficent.
-/install/installer/cmd/testdata
-# Allow everyone to approve config changes
-/install/installer/pgk/config
+# By default anything in in /install/installer is shared.
+/install/installer
 /install/installer/pkg/components/agent-smith @gitpod-io/engineering-workspace
 /install/installer/pkg/components/blobserve @gitpod-io/engineering-ide
 /install/installer/pkg/components/components-ide @gitpod-io/engineering-ide
