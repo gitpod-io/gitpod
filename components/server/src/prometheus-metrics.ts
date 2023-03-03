@@ -225,3 +225,15 @@ export function observespicedbClientLatency(
         durationInSeconds,
     );
 }
+
+export const dashboardErrorBoundary = new prometheusClient.Counter({
+    name: "gitpod_dashboard_error_boundary_total",
+    help: "Total number of errors caught by an error boundary in the dashboard",
+    labelNames: ["url"],
+});
+
+export function increaseDashboardErrorBoundaryCounter(url: string) {
+    dashboardErrorBoundary.inc({
+        url,
+    });
+}

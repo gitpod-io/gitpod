@@ -203,7 +203,7 @@ import {
     WriteOrganizationMembers,
     WriteOrganizationMetadata,
 } from "../authorization/checks";
-import { reportCentralizedPermsValidation } from "../prometheus-metrics";
+import { increaseDashboardErrorBoundaryCounter, reportCentralizedPermsValidation } from "../prometheus-metrics";
 import { RegionService } from "./region-service";
 import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { EnvVarService } from "./env-var-service";
@@ -3598,6 +3598,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getNotifications(ctx: TraceContext): Promise<AppNotification[]> {
         this.checkAndBlockUser("getNotifications");
         return [];
+    }
+
+    async reportErrorBoundary(ctx: TraceContextWithSpan, url: string, message: string): Promise<void> {
+        log.info("dashboard error boundary", { message, url, userId: this.user?.id });
+        increaseDashboardErrorBoundaryCounter(url);
     }
 
     protected mapGrpcError(err: Error): Error {
