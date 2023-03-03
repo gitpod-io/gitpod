@@ -789,6 +789,15 @@ func NodeNameEnv(context *RenderContext) []corev1.EnvVar {
 	}}
 }
 
+func NodeIPEnv(context *RenderContext) []corev1.EnvVar {
+	return []corev1.EnvVar{{
+		Name: "NODE_IP",
+		ValueFrom: &corev1.EnvVarSource{
+			FieldRef: &corev1.ObjectFieldSelector{FieldPath: "status.hostIP"},
+		},
+	}}
+}
+
 // ExperimentalWebappConfig extracts webapp experimental config from the render context.
 // When the experimental config is not defined, the result will be nil.
 func ExperimentalWebappConfig(ctx *RenderContext) *experimental.WebAppConfig {

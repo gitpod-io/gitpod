@@ -21,7 +21,7 @@ var Objects = common.CompositeRenderFunc(
 	common.GenerateService(Component, []common.ServicePort{
 		{
 			Name:          ContainerPortName,
-			ContainerPort: ContainerPort,
+			ContainerPort: ServicePort,
 			ServicePort:   ServicePort,
 		},
 	}, func(svc *corev1.Service) {

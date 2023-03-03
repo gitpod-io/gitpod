@@ -84,7 +84,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	rfcfg := regfac.ServiceConfig{
 		Registry: regfac.Config{
-			Port:               ContainerPort,
+			Port:               ServicePort,
 			RemoteSpecProvider: remoteSpecProviders,
 			TLS:                &tls,
 			Store:              "/mnt/cache/registry",

@@ -12,7 +12,6 @@ import (
 const (
 	Component         = common.RegistryFacadeComponent
 	ContainerPortName = "registry"
-	ContainerPort     = 32223
 	ServicePort       = common.RegistryFacadeServicePort
 	DockerUpImage     = workspace.DockerUpImage
 	SupervisorImage   = workspace.SupervisorImage

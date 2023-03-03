@@ -1604,7 +1604,7 @@ func waitForTCPPortToBeReachable(host string, port string, timeout time.Duration
 		case <-ctx.Done():
 			return xerrors.Errorf("port %v on host %v never reachable", port, host)
 		case <-ticker.C:
-			conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), timeout)
+			conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), 500*time.Millisecond)
 			if err != nil {
 				continue
 			}
