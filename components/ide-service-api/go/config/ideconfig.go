@@ -61,6 +61,10 @@ type IDEOption struct {
 	ImageVersion string `json:"imageVersion,omitempty"`
 	// LatestImageVersion the semantic version of the latest IDE image.
 	LatestImageVersion string `json:"latestImageVersion,omitempty"`
+	// ImageCommit the source code commit SHA of the IDE image.
+	ImageCommit string `json:"imageCommit,omitempty"`
+	// LatestImageCommit the source code commit SHA of the latest IDE image.
+	LatestImageCommit string `json:"latestImageCommit,omitempty"`
 	// ImageLayers for additional ide layers and dependencies
 	ImageLayers []string `json:"imageLayers,omitempty"`
 	// LatestImageLayers for latest additional ide layers and dependencies
