@@ -3061,7 +3061,7 @@ data:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 0bb7669b80268061303b990baae787a8d997b25fb668c6ae4ddd32db507823e0
+        gitpod.io/checksum_config: f2ff92069155ff57e75802877cca67fbca121b69cfc87ad0feee48dc0ee32854
         hello: world
       creationTimestamp: null
       labels:
@@ -5673,6 +5673,7 @@ apiVersion: v1
 data:
   config.json: |-
     {
+      "publicURL": "https://api.gitpod.example.com",
       "gitpodServiceUrl": "ws://server.default.svc.cluster.local:3000",
       "billingServiceAddress": "usage.default.svc.cluster.local:9001",
       "sessionServiceAddress": "server.default.svc.cluster.local:9876",
@@ -5680,6 +5681,9 @@ data:
       "oidcClientJWTSigningSecretPath": "",
       "personalAccessTokenSigningKeyPath": "",
       "databaseConfigPath": "/secrets/database-config",
+      "redis": {
+        "address": "redis:6379"
+      },
       "server": {
         "services": {
           "grpc": {
@@ -10626,7 +10630,7 @@ kind: Deployment
 metadata:
   annotations:
     gitpod.io: hello
-    gitpod.io/checksum_config: 0bb7669b80268061303b990baae787a8d997b25fb668c6ae4ddd32db507823e0
+    gitpod.io/checksum_config: f2ff92069155ff57e75802877cca67fbca121b69cfc87ad0feee48dc0ee32854
     hello: world
   creationTimestamp: null
   labels:

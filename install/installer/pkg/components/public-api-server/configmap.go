@@ -16,6 +16,7 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	corev1 "k8s.io/api/core/v1"
@@ -50,6 +51,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	_, _, databaseSecretMountPath := common.DatabaseEnvSecret(ctx.Config)
 
 	cfg := config.Configuration{
+		PublicURL:                         fmt.Sprintf("https://api.%s", ctx.Config.Domain),
 		GitpodServiceURL:                  fmt.Sprintf("ws://%s.%s.svc.cluster.local:%d", server.Component, ctx.Namespace, server.ContainerPort),
 		OIDCClientJWTSigningSecretPath:    oidcClientJWTSigningSecretPath,
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
@@ -57,6 +59,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		BillingServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
 		SessionServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", common.ServerComponent, ctx.Namespace), strconv.Itoa(common.ServerIAMSessionPort)),
 		DatabaseConfigPath:                databaseSecretMountPath,
+		Redis: config.RedisConfiguration{
+			Address: fmt.Sprintf("%s:%d", redis.Component, redis.Port),
+		},
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

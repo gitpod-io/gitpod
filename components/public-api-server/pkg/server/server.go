@@ -5,17 +5,20 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/go-chi/chi/v5"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
@@ -24,9 +27,11 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	"github.com/gitpod-io/gitpod/public-api-server/middleware"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/identityprovider"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/oidc"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/origin"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
@@ -55,6 +60,16 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	cipherSet, err := db.NewCipherSetFromKeysInFile(filepath.Join(cfg.DatabaseConfigPath, "encryptionKeys"))
 	if err != nil {
 		return fmt.Errorf("failed to read cipherset from file: %w", err)
+	}
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: cfg.Redis.Address,
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = redisClient.Ping(ctx).Err()
+	if err != nil {
+		return fmt.Errorf("redis is unavailable at %s", cfg.Redis.Address)
 	}
 
 	expClient := experiments.NewClient()
@@ -114,6 +129,14 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, stateJWT)
 
+	if redisClient == nil {
+		return fmt.Errorf("no Redis configiured")
+	}
+	idpService, err := identityprovider.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", identityprovider.NewRedisCache(redisClient))
+	if err != nil {
+		return err
+	}
+
 	if registerErr := register(srv, &registerDependencies{
 		connPool:    connPool,
 		expClient:   expClient,
@@ -121,6 +144,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		signer:      signer,
 		cipher:      cipherSet,
 		oidcService: oidcService,
+		idpService:  idpService,
 	}); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
@@ -139,6 +163,7 @@ type registerDependencies struct {
 	signer      auth.Signer
 	cipher      db.Cipher
 	oidcService *oidc.Service
+	idpService  *identityprovider.Service
 }
 
 func register(srv *baseserver.Server, deps *registerDependencies) error {
@@ -151,6 +176,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	}
 
 	rootHandler := chi.NewRouter()
+	rootHandler.Use(middleware.NewLoggingMiddleware())
 
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
@@ -161,31 +187,25 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 		),
 	}
 
-	workspacesRoute, workspacesServiceHandler := v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(workspacesRoute, workspacesServiceHandler)
-
-	teamsRoute, teamsServiceHandler := v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(teamsRoute, teamsServiceHandler)
+	rootHandler.Mount(v1connect.NewWorkspacesServiceHandler(apiv1.NewWorkspaceService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewTeamsServiceHandler(apiv1.NewTeamsService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewUserServiceHandler(apiv1.NewUserService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...))
+	rootHandler.Mount(v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.dbConn, deps.cipher), handlerOptions...))
+	rootHandler.Mount(v1connect.NewIdentityProviderServiceHandler(apiv1.NewIdentityProviderService(deps.connPool, deps.idpService), handlerOptions...))
 
 	if deps.signer != nil {
-		tokensRoute, tokensServiceHandler := v1connect.NewTokensServiceHandler(apiv1.NewTokensService(deps.connPool, deps.expClient, deps.dbConn, deps.signer), handlerOptions...)
-		rootHandler.Mount(tokensRoute, tokensServiceHandler)
+		rootHandler.Mount(v1connect.NewTokensServiceHandler(apiv1.NewTokensService(deps.connPool, deps.expClient, deps.dbConn, deps.signer), handlerOptions...))
 	}
-
-	userRoute, userServiceHandler := v1connect.NewUserServiceHandler(apiv1.NewUserService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(userRoute, userServiceHandler)
-
-	ideClientRoute, ideClientServiceHandler := v1connect.NewIDEClientServiceHandler(apiv1.NewIDEClientService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(ideClientRoute, ideClientServiceHandler)
-
-	projectsRoute, projectsServiceHandler := v1connect.NewProjectsServiceHandler(apiv1.NewProjectsService(deps.connPool), handlerOptions...)
-	rootHandler.Mount(projectsRoute, projectsServiceHandler)
-
-	oidcRoute, oidcServiceHandler := v1connect.NewOIDCServiceHandler(apiv1.NewOIDCService(deps.connPool, deps.expClient, deps.dbConn, deps.cipher), handlerOptions...)
-	rootHandler.Mount(oidcRoute, oidcServiceHandler)
 
 	// OIDC sign-in handlers
 	rootHandler.Mount("/oidc", oidc.Router(deps.oidcService))
+
+	// The OIDC spec dictates how the identity provider endpoint needs to look like,
+	// hence the extra endpoint rather than making this part of the proto API.
+	// See https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest
+	rootHandler.Mount("/idp", deps.idpService.Router())
 
 	// All requests are handled by our root router
 	srv.HTTPMux().Handle("/", rootHandler)

@@ -3660,4 +3660,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         return targetRegion;
     }
+
+    async getIDToken(): Promise<void> {}
 }

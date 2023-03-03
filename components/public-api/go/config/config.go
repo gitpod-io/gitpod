@@ -7,6 +7,9 @@ package config
 import "github.com/gitpod-io/gitpod/common-go/baseserver"
 
 type Configuration struct {
+	// PublicURL is the URL under which the API server is publicly reachable
+	PublicURL string `json:"publicURL"`
+
 	GitpodServiceURL string `json:"gitpodServiceUrl"`
 
 	BillingServiceAddress string `json:"billingServiceAddress,omitempty"`
@@ -26,5 +29,14 @@ type Configuration struct {
 	// Path to directory containing database configuration files
 	DatabaseConfigPath string `json:"databaseConfigPath"`
 
+	// Redis configures the connection to Redis
+	Redis RedisConfiguration `json:"redis"`
+
 	Server *baseserver.Configuration `json:"server,omitempty"`
+}
+
+type RedisConfiguration struct {
+
+	// Address configures the redis connection of this component
+	Address string `json:"address"`
 }
