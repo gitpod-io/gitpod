@@ -84,6 +84,7 @@ const WorkspacesPage: FunctionComponent = () => {
     return (
         <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
+
             {deleteModalVisible && (
                 <ConfirmationModal
                     title="Delete Inactive Workspaces"
