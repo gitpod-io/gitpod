@@ -29,11 +29,14 @@ type Configuration struct {
 	// Path to directory containing database configuration files
 	DatabaseConfigPath string `json:"databaseConfigPath"`
 
-	// RedisAddress configures the redis connection of this component
-	RedisAddress string `json:"redisAddress"`
+	// Redis configures the connection to Redis
+	Redis RedisConfiguration `json:"redis"`
 
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }
 
 type RedisConfiguration struct {
+
+	// Address configures the redis connection of this component
+	Address string `json:"address"`
 }

@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package idp
+package identityprovider
 
 import (
 	"context"
@@ -62,7 +62,7 @@ func (kp *Service) Router() http.Handler {
 			h.ServeHTTP(w, r)
 		})
 	})
-	mux.Handle(oidc.DiscoveryEndpoint, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Get(oidc.DiscoveryEndpoint, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		keysURL, err := url.JoinPath(kp.IssuerBaseURL, "keys")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -129,13 +129,16 @@ func (kp *Service) Router() http.Handler {
 			return
 		}
 	}))
-	mux.Handle("/keys", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	mux.Get("/keys", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		keys, err := kp.keys.PublicKeys(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		_, _ = w.Write(keys)
+		_, err = w.Write(keys)
+		if err != nil {
+			log.WithError(err).Error("cannot repond to /keys")
+		}
 	}))
 
 	return mux
@@ -163,5 +166,10 @@ func (kp *Service) IDToken(ctx context.Context, org string, audience []string, u
 		return "", err
 	}
 
-	return crypto.Sign(claims, signer)
+	token, err := crypto.Sign(claims, signer)
+	if err != nil {
+		log.WithError(err).Error("cannot sign OIDC ID token")
+		return "", fmt.Errorf("cannot sign ID token")
+	}
+	return token, nil
 }

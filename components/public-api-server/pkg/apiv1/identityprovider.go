@@ -20,31 +20,31 @@ type IDTokenSource interface {
 	IDToken(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error)
 }
 
-func NewIDPService(serverConnPool proxy.ServerConnectionPool, source IDTokenSource) *IDPService {
-	return &IDPService{
+func NewIdentityProviderService(serverConnPool proxy.ServerConnectionPool, source IDTokenSource) *IdentityProviderService {
+	return &IdentityProviderService{
 		connectionPool: serverConnPool,
 		idTokenSource:  source,
 	}
 }
 
-type IDPService struct {
+type IdentityProviderService struct {
 	connectionPool proxy.ServerConnectionPool
 	idTokenSource  IDTokenSource
 
 	v1connect.UnimplementedWorkspacesServiceHandler
 }
 
-var _ v1connect.IDPServiceHandler = ((*IDPService)(nil))
+var _ v1connect.IdentityProviderServiceHandler = ((*IdentityProviderService)(nil))
 
 // GetIDToken implements v1connect.IDPServiceHandler
-func (srv *IDPService) GetIDToken(ctx context.Context, req *connect.Request[v1.GetIDTokenRequest]) (*connect.Response[v1.GetIDTokenResponse], error) {
+func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect.Request[v1.GetIDTokenRequest]) (*connect.Response[v1.GetIDTokenResponse], error) {
 	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
 
 	if len(req.Msg.Audience) < 1 {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("must have at least one audience entry"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Must have at least one audience entry"))
 	}
 
 	logger := ctxlogrus.Extract(ctx).WithField("workspace_id", workspaceID)
@@ -70,6 +70,11 @@ func (srv *IDPService) GetIDToken(ctx context.Context, req *connect.Request[v1.G
 	if err != nil {
 		logger.WithError(err).Error("Failed to get calling user.")
 		return nil, proxy.ConvertError(err)
+	}
+
+	if workspace.Workspace == nil {
+		logger.WithError(err).Error("Server did not return a workspace.")
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
 	}
 
 	subject := workspace.Workspace.ContextURL

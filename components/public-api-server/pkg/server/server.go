@@ -30,7 +30,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
-	"github.com/gitpod-io/gitpod/public-api-server/pkg/idp"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/identityprovider"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/oidc"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/origin"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
@@ -61,17 +61,14 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		return fmt.Errorf("failed to read cipherset from file: %w", err)
 	}
 
-	var redisClient *redis.Client
-	if cfg.RedisAddress != "" {
-		redisClient = redis.NewClient(&redis.Options{
-			Addr: cfg.RedisAddress,
-		})
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		err := redisClient.Ping(ctx).Err()
-		if err != nil {
-			return fmt.Errorf("redis is unavailable at %s", cfg.RedisAddress)
-		}
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: cfg.Redis.Address,
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	err = redisClient.Ping(ctx).Err()
+	if err != nil {
+		return fmt.Errorf("redis is unavailable at %s", cfg.Redis.Address)
 	}
 
 	expClient := experiments.NewClient()
@@ -131,14 +128,10 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, stateJWT)
 
-	var idpCache idp.KeyCache
 	if redisClient == nil {
-		log.Info("No Redis cache configured - caching IDP public keys in memory.")
-		idpCache = idp.NewInMemoryCache()
-	} else {
-		idpCache = idp.NewRedisCache(redisClient)
+		return fmt.Errorf("no Redis configiured")
 	}
-	idpService, err := idp.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", idpCache)
+	idpService, err := identityprovider.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", identityprovider.NewRedisCache(redisClient))
 	if err != nil {
 		return err
 	}
@@ -169,7 +162,7 @@ type registerDependencies struct {
 	signer      auth.Signer
 	cipher      db.Cipher
 	oidcService *oidc.Service
-	idpService  *idp.Service
+	idpService  *identityprovider.Service
 }
 
 func register(srv *baseserver.Server, deps *registerDependencies) error {
@@ -218,10 +211,12 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	// OIDC sign-in handlers
 	rootHandler.Mount("/oidc", oidc.Router(deps.oidcService))
 
-	idpRoute, idpServiceHandler := v1connect.NewIDPServiceHandler(apiv1.NewIDPService(deps.connPool, deps.idpService), handlerOptions...)
+	idpRoute, idpServiceHandler := v1connect.NewIdentityProviderServiceHandler(apiv1.NewIdentityProviderService(deps.connPool, deps.idpService), handlerOptions...)
 	rootHandler.Mount(idpRoute, idpServiceHandler)
 
-	// IDP well-known and keys routes
+	// The OIDC spec dictates how the identity provider endpoint needs to look like,
+	// hence the extra endpoint rather than making this part of the proto API.
+	// See https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationRequest
 	rootHandler.Mount("/idp", deps.idpService.Router())
 
 	// All requests are handled by our root router

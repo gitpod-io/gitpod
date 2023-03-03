@@ -59,7 +59,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		BillingServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
 		SessionServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", common.ServerComponent, ctx.Namespace), strconv.Itoa(common.ServerIAMSessionPort)),
 		DatabaseConfigPath:                databaseSecretMountPath,
-		RedisAddress:                      fmt.Sprintf("%s:%d", redis.Component, redis.Port),
+		Redis: config.RedisConfiguration{
+			Address: fmt.Sprintf("%s:%d", redis.Component, redis.Port),
+		},
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

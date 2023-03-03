@@ -69,7 +69,7 @@ func idpToken(ctx context.Context, audience []string) (idToken string, err error
 	if err != nil {
 		return "", err
 	}
-	tkn, err := c.IDP.GetIDToken(ctx, &connect.Request[v1.GetIDTokenRequest]{
+	tkn, err := c.IdentityProvider.GetIDToken(ctx, &connect.Request[v1.GetIDTokenRequest]{
 		Msg: &v1.GetIDTokenRequest{
 			Audience:    audience,
 			WorkspaceId: wsInfo.WorkspaceId,
