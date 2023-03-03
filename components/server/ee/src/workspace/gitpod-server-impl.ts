@@ -1632,6 +1632,25 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return this.teamSubscription2DB.findForTeam(teamId, new Date().toISOString());
     }
 
+    async cancelTeamSubscription(ctx: TraceContext, teamId: string): Promise<void> {
+        this.checkUser("cancelTeamSubscription", { teamId });
+
+        await this.guardTeamOperation(teamId, "update", "not_implemented");
+        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, new Date().toISOString());
+        if (!ts2) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Cannot find Team Subscription!");
+        }
+
+        const chargebeeSubscriptionId = ts2.paymentReference;
+        await this.chargebeeService.cancelSubscription(
+            chargebeeSubscriptionId,
+            {},
+            { teamId, chargebeeSubscriptionId },
+        );
+
+        // Cancellation of team memberships is handled here: https://github.com/gitpod-io/gitpod/blob/5c90cd56572f55749b39e5b7134ff6be6f247357/components/ee/payment-endpoint/src/chargebee/team-subscription-handler.ts#L136-L139
+    }
+
     protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
         const now = new Date();
         const ts2 = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
