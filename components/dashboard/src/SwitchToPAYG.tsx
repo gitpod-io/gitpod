@@ -16,6 +16,9 @@ import Alert from "./components/Alert";
 import { useLocalStorage } from "./hooks/use-local-storage";
 import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
+import { useConfetti } from "./contexts/ConfettiContext";
+import { resetAllNotifications } from "./AppNotifications";
+import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 
 /**
  * Keys of known page params
@@ -37,7 +40,11 @@ type PageParams = {
 type PageState = {
     phase: "call-to-action" | "trigger-signup" | "wait-for-signup" | "cleanup" | "done";
     attributionId?: string;
-    oldSubscriptionId?: string;
+    old?: {
+        planName: string;
+        planDetails: string;
+        subscriptionId: string;
+    };
 };
 
 function SwitchToPAYG() {
@@ -52,9 +59,11 @@ function SwitchToPAYG() {
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<boolean>(false);
+    const [droppedConfetti, setDroppedConfetti] = useState<boolean>(false);
+    const { dropConfetti } = useConfetti();
 
     useEffect(() => {
-        const { phase, attributionId, oldSubscriptionId } = pageState;
+        const { phase, attributionId, old } = pageState;
         const { setupIntentId, type, oldSubscriptionOrTeamId } = pageParams || {};
 
         if (!type) {
@@ -74,10 +83,10 @@ function SwitchToPAYG() {
                 (async () => {
                     // Old Subscription still active?
                     let derivedAttributionId: string | undefined = undefined;
-                    let oldSubscriptionId: string;
+                    let old: PageState["old"];
                     switch (type) {
                         case "personalSubscription": {
-                            oldSubscriptionId = oldSubscriptionOrTeamId;
+                            const oldSubscriptionId = oldSubscriptionOrTeamId;
                             const statement = await getGitpodService().server.getAccountStatement({});
                             if (!statement) {
                                 console.error("No AccountStatement!");
@@ -96,12 +105,17 @@ function SwitchToPAYG() {
                                 }
                                 return;
                             }
+                            old = {
+                                subscriptionId: sub.uid,
+                                planName: Plans.getById(sub.planId!)!.name,
+                                planDetails: "personal",
+                            };
                             derivedAttributionId = AttributionId.render({ kind: "user", userId: sub.userId });
                             break;
                         }
 
                         case "teamSubscription": {
-                            oldSubscriptionId = oldSubscriptionOrTeamId;
+                            const oldSubscriptionId = oldSubscriptionOrTeamId;
                             const tss = await getGitpodService().server.tsGet();
                             const ts = tss.find((s) => s.id === oldSubscriptionId);
                             if (!ts) {
@@ -116,6 +130,11 @@ function SwitchToPAYG() {
                                 }
                                 return;
                             }
+                            old = {
+                                subscriptionId: ts.id,
+                                planName: Plans.getById(ts.planId!)!.name,
+                                planDetails: `${ts.quantity} Members`,
+                            };
                             // no derivedAttributionId: user has to select/create new org
                             break;
                         }
@@ -127,7 +146,6 @@ function SwitchToPAYG() {
                                 console.error(`No TeamSubscription2 for team ${teamId}!`);
                                 break;
                             }
-                            oldSubscriptionId = ts2.id;
                             const now = new Date().toISOString();
                             if (TeamSubscription2.isCancelled(ts2, now) || !TeamSubscription2.isActive(ts2, now)) {
                                 // We're happy!
@@ -136,14 +154,19 @@ function SwitchToPAYG() {
                                 }
                                 return;
                             }
+                            old = {
+                                subscriptionId: ts2.id,
+                                planName: Plans.getById(ts2.planId!)!.name,
+                                planDetails: `${ts2.quantity} Members`,
+                            };
                             derivedAttributionId = AttributionId.render({ kind: "team", teamId });
                             break;
                         }
                     }
-                    if (!cancelled) {
+                    if (!cancelled && !attributionId) {
                         setPageState((s) => {
                             const attributionId = s.attributionId || derivedAttributionId;
-                            return { ...s, attributionId, oldSubscriptionId };
+                            return { ...s, attributionId, old };
                         });
                     }
                 })().catch(console.error);
@@ -248,8 +271,9 @@ function SwitchToPAYG() {
             }
 
             case "cleanup": {
+                const oldSubscriptionId = old?.subscriptionId;
                 if (!oldSubscriptionId) {
-                    setErrorMessage("Error during params parsing: oldSubscriptionOrTeamId not set!");
+                    setErrorMessage("Error during cleanup: old.oldSubscriptionId not set!");
                     return;
                 }
                 switch (type) {
@@ -291,10 +315,15 @@ function SwitchToPAYG() {
             }
 
             case "done":
-                // Render hooray and confetti!
+                // Hooray and confetti!
+                resetAllNotifications();
+                if (!droppedConfetti) {
+                    setDroppedConfetti(true);
+                    dropConfetti();
+                }
                 return;
         }
-    }, [location.search, pageParams, pageState, setPageState]);
+    }, [location.search, pageParams, pageState, setPageState, dropConfetti, droppedConfetti]);
 
     const onUpgradePlan = useCallback(async () => {
         if (pageState.phase !== "call-to-action" || !pageState.attributionId) {
@@ -334,8 +363,11 @@ function SwitchToPAYG() {
     } else if (pageParams?.type === "teamSubscription2") {
         titleModifier = "organization's plan";
     }
+
+    const planName = pageState.old?.planName || "Legacy Plan";
+    const planDescription = pageState.old?.planDetails || "";
     return (
-        <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full mt-32">
+        <div className="flex flex-col max-h-screen max-w-3xl mx-auto items-center w-full mt-32">
             <h1>{`Update your ${titleModifier}`}</h1>
             <div className="w-full text-gray-500 text-center">
                 Switch to the new pricing model to keep uninterrupted access and get <strong>large workspaces</strong>{" "}
@@ -347,24 +379,39 @@ function SwitchToPAYG() {
                     Learn more →
                 </a>
             </div>
-            <div className="w-96 mt-6 text-sm">
-                <div className="w-full h-h96 rounded-xl text-center text-gray-500 bg-gray-50 dark:bg-gray-800"></div>
-                <div className="mt-6 w-full text-center">
-                    {renderCard({
-                        headline: "LEGACY SUBSCRIPTION",
-                        title: "Team Professional",
-                        description: "29 Members",
-                        selected: false,
-                        action: <>Discontinued</>,
-                        additionalStyles: "w-80",
-                    })}
-                </div>
+            <div className="mt-6 space-x-3 flex">
+                {renderCard({
+                    headline: "LEGACY PLAN",
+                    title: planName,
+                    description: planDescription,
+                    selected: false,
+                    action: (
+                        <Alert type="error">
+                            Discontinued on <strong>March 31st</strong>
+                        </Alert>
+                    ),
+                    additionalStyles: "",
+                })}
+                {renderCard({
+                    headline: "NEW PLAN",
+                    title: "$9 / month (1,000 credits)",
+                    description: "Pay-as-you-go after that for $0.036 per credit.",
+                    selected: true,
+                    action: (
+                        <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
+                            Estimate costs
+                        </a>
+                    ),
+                    additionalStyles: "",
+                })}
+            </div>
+            <div className="w-full mt-6 grid justify-items-center">
                 {pendingStripeSubscription && (
                     <div className="w-full mt-6 text-center">
                         <SpinnerLoader small={false} content="Creating subscription with Stripe" />
                     </div>
                 )}
-                <div className="w-full mt-10 text-center">
+                <div className="w-96 mt-10 text-center">
                     <button
                         className="w-full"
                         onClick={onUpgradePlan}
@@ -435,7 +482,7 @@ function renderCard(props: {
                 >
                     {props.description}
                 </div>
-                <div className="text-xl my-1 flex-row flex align-middle">
+                <div className="text-xl my-1 flex-row flex align-middle items-end">
                     <div
                         className={`text-sm font-normal truncate w-full ${
                             props.selected ? "text-gray-300 dark:text-gray-500" : "text-gray-500 dark:text-gray-400"
