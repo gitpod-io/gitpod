@@ -13,6 +13,7 @@ import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
 import { Link } from "react-router-dom";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
@@ -50,8 +51,8 @@ export default function Preferences() {
     return (
         <div>
             <PageWithSettingsSubMenu>
-                <h3>Editor</h3>
-                <p className="text-base text-gray-500 dark:text-gray-400">
+                <Heading2>Editor</Heading2>
+                <Subheading>
                     Choose the editor for opening workspaces.{" "}
                     <a
                         className="gp-link"
@@ -61,13 +62,13 @@ export default function Preferences() {
                     >
                         Learn more
                     </a>
-                </p>
+                </Subheading>
                 <SelectIDE location="preferences" />
 
                 <ThemeSelector className="mt-12" />
 
-                <h3 className="mt-12">Dotfiles </h3>
-                <p className="text-base text-gray-500 dark:text-gray-400">Customize workspaces using dotfiles.</p>
+                <Heading2 className="mt-12">Dotfiles</Heading2>
+                <Subheading>Customize workspaces using dotfiles.</Subheading>
                 <div className="mt-4 max-w-xl">
                     <h4>Repository URL</h4>
                     <span className="flex">
@@ -91,10 +92,8 @@ export default function Preferences() {
                     </div>
                 </div>
 
-                <h3 className="mt-12">Timeouts</h3>
-                <p className="text-base text-gray-500 dark:text-gray-400">
-                    Workspaces will stop after a period of inactivity without any user input.
-                </p>
+                <Heading2 className="mt-12">Timeouts</Heading2>
+                <Subheading>Workspaces will stop after a period of inactivity without any user input.</Subheading>
                 <div className="mt-4 max-w-xl">
                     <h4>Default Workspace Timeout</h4>
 

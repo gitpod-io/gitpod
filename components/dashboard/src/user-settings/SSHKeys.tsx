@@ -13,7 +13,7 @@ import { SSHPublicKeyValue, UserSSHPublicKeyValue } from "@gitpod/gitpod-protoco
 import { getGitpodService } from "../service/service";
 import dayjs from "dayjs";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
-import { Subheading } from "../components/typography/headings";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 interface AddModalProps {
     value: SSHPublicKeyValue;
@@ -188,7 +188,7 @@ export default function SSHKeys() {
             )}
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
-                    <h3>SSH Keys</h3>
+                    <Heading2>SSH Keys</Heading2>
                     <Subheading>
                         Create and manage SSH keys.{" "}
                         <a
@@ -212,11 +212,13 @@ export default function SSHKeys() {
             {dataList.length === 0 ? (
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full h-96">
                     <div className="pt-28 flex flex-col items-center w-112 m-auto">
-                        <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No SSH Keys</h3>
-                        <div className="text-center pb-6 text-gray-500">
+                        <Heading2 color="light" className="text-center pb-3 text-gray-500 dark:text-gray-400">
+                            No SSH Keys
+                        </Heading2>
+                        <Subheading className="pb-6">
                             SSH keys allow you to establish a <b>secure connection</b> between your <b>computer</b> and{" "}
                             <b>workspaces</b>.
-                        </div>
+                        </Subheading>
                         <button onClick={addOne}>New SSH Key</button>
                     </div>
                 </div>

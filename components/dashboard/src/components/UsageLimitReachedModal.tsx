@@ -11,6 +11,7 @@ import { settingsPathBilling } from "../user-settings/settings.routes";
 import { useTeams } from "../teams/teams-context";
 import Alert from "./Alert";
 import Modal from "./Modal";
+import { Heading2 } from "./typography/headings";
 
 export function UsageLimitReachedModal(p: { hints: any }) {
     const teams = useTeams();
@@ -32,9 +33,9 @@ export function UsageLimitReachedModal(p: { hints: any }) {
     const billingLink = attributedTeam ? "/billing" : settingsPathBilling;
     return (
         <Modal visible={true} closeable={false} onClose={() => {}}>
-            <h3 className="flex">
+            <Heading2 className="flex">
                 <span className="flex-grow">Usage Limit Reached</span>
-            </h3>
+            </Heading2>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-6">
                 <Alert type="error" className="app-container rounded-md">
                     You have reached the <strong>usage limit</strong> of your billing account.

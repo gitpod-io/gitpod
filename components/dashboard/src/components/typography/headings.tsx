@@ -43,6 +43,14 @@ export const Heading2: FC<HeadingProps> = ({ color, tracking, className, childre
     );
 };
 
+export const Heading3: FC<HeadingProps> = ({ color, tracking, className, children }) => {
+    return (
+        <h3 className={classNames(getHeadingColor(color), getTracking(tracking), "font-semibold text-lg", className)}>
+            {children}
+        </h3>
+    );
+};
+
 // Intended to be placed beneath a heading to provide more context
 export const Subheading: FC<HeadingProps> = ({ tracking, className, children }) => {
     return (

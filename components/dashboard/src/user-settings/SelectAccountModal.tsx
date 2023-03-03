@@ -8,7 +8,7 @@ import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useEffect, useState } from "react";
 import { gitpodHostUrl } from "../service/service";
 import InfoBox from "../components/InfoBox";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import SelectableCard from "../components/SelectableCard";
 
 export function SelectAccountModal(
@@ -47,8 +47,8 @@ export function SelectAccountModal(
     return (
         // TODO: Use title and buttons props
         <Modal visible={true} onClose={props.close}>
-            <h3 className="pb-2">Select Account</h3>
-            <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4">
+            <ModalHeader>Select Account</ModalHeader>
+            <ModalBody>
                 <p className="pb-2 text-gray-500 text-base">
                     You are trying to authorize a provider that is already connected with another account on Gitpod.
                 </p>
@@ -96,9 +96,9 @@ export function SelectAccountModal(
                         </div>
                     </SelectableCard>
                 </div>
-            </div>
+            </ModalBody>
 
-            <div className="flex justify-end mt-6">
+            <ModalFooter>
                 <button
                     className={"ml-2"}
                     onClick={() => {
@@ -111,7 +111,7 @@ export function SelectAccountModal(
                 >
                     Continue
                 </button>
-            </div>
+            </ModalFooter>
         </Modal>
     );
 }

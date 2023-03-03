@@ -11,7 +11,7 @@ import Alert from "../components/Alert";
 import CheckBox from "../components/CheckBox";
 import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { getGitpodService } from "../service/service";
 import { useCurrentProject } from "./project-context";
@@ -136,8 +136,8 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                 return false;
             }}
         >
-            <h3 className="mb-4">New Variable</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
+            <ModalHeader>New Variable</ModalHeader>
+            <ModalBody>
                 <Alert type="warning">
                     <strong>Project environment variables can be exposed.</strong>
                     <br />
@@ -186,15 +186,15 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                         </InfoBox>
                     </div>
                 )}
-            </div>
-            <div className="flex justify-end mt-6">
+            </ModalBody>
+            <ModalFooter>
                 <button className="secondary" onClick={props.onClose}>
                     Cancel
                 </button>
                 <button className="ml-2" onClick={addVariable}>
                     Add Variable
                 </button>
-            </div>
+            </ModalFooter>
         </Modal>
     );
 }

@@ -21,6 +21,7 @@ import Alert from "./Alert";
 import dayjs from "dayjs";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
+import { Heading2, Subheading } from "./typography/headings";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -167,11 +168,11 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
 
     return (
         <div className="mb-16">
-            <p className="text-gray-500 text-base">
+            <Subheading>
                 {attributionId && AttributionId.parse(attributionId)?.kind === "user"
                     ? "Manage billing for your personal account."
                     : "Manage billing for your organization."}
-            </p>
+            </Subheading>
             <div className="max-w-xl flex flex-col">
                 {errorMessage && (
                     <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">
@@ -349,7 +350,7 @@ export function BillingSetupModal(props: { attributionId: string; onClose: () =>
 
     return (
         <Modal visible={true} onClose={props.onClose}>
-            <h3 className="flex">Upgrade Plan</h3>
+            <Heading2 className="flex">Upgrade Plan</Heading2>
             <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-2 -mx-6 px-6 flex flex-col">
                 {(!stripePromise || !stripeSetupIntentClientSecret) && (
                     <div className="h-80 flex items-center justify-center">
@@ -492,7 +493,7 @@ function UpdateLimitModal(props: {
 
     return (
         <Modal visible={true} onClose={props.onClose} onEnter={() => false}>
-            <h3 className="mb-4">Usage Limit</h3>
+            <Heading2 className="mb-4">Usage Limit</Heading2>
             <form onSubmit={onSubmit}>
                 <div className="border-t border-b border-gray-200 dark:border-gray-700 -mx-6 px-6 py-4 flex flex-col">
                     <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>

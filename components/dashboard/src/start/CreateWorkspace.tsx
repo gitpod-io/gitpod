@@ -13,7 +13,7 @@ import {
     GitpodServer,
 } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser, UserContext } from "../user-context";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
@@ -242,8 +242,8 @@ export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
         statusMessage = (
             // TODO: Use title and buttons props
             <Modal visible={true} closeable={false} onClose={() => {}}>
-                <h3>Running Workspaces</h3>
-                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
+                <ModalHeader>Running Workspaces</ModalHeader>
+                <ModalBody>
                     <p className="mt-1 mb-2 text-base">
                         You already have running workspaces with the same context. You can open an existing one or open
                         a new workspace.
@@ -277,12 +277,12 @@ export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
                             );
                         })}
                     </>
-                </div>
-                <div className="flex justify-end mt-6">
+                </ModalBody>
+                <ModalFooter>
                     <button onClick={() => createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}>
                         New Workspace
                     </button>
-                </div>
+                </ModalFooter>
             </Modal>
         );
     } else if (result?.runningWorkspacePrebuild) {

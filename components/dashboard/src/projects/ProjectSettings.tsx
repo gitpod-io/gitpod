@@ -19,6 +19,7 @@ import Alert from "../components/Alert";
 import { Link } from "react-router-dom";
 import { RemoveProjectModal } from "./RemoveProjectModal";
 import { getProjectSettingsMenu, getProjectTabs } from "./projects.routes";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
@@ -93,10 +94,8 @@ export default function ProjectSettingsView() {
 
     return (
         <ProjectSettingsPage project={project}>
-            <h3>Prebuilds</h3>
-            <p className="text-base text-gray-500 dark:text-gray-400">
-                Choose the workspace machine type for your prebuilds.
-            </p>
+            <Heading2>Prebuilds</Heading2>
+            <Subheading>Choose the workspace machine type for your prebuilds.</Subheading>
             {BillingMode.canSetWorkspaceClass(billingMode) ? (
                 <SelectWorkspaceClass
                     workspaceClass={project.settings?.workspaceClasses?.prebuild}
@@ -203,10 +202,8 @@ export default function ProjectSettingsView() {
                 </div>
             </div>
             <div>
-                <h3 className="mt-12">Workspaces</h3>
-                <p className="text-base text-gray-500 dark:text-gray-400">
-                    Choose the workspace machine type for your workspaces.
-                </p>
+                <Heading2 className="mt-12">Workspaces</Heading2>
+                <Subheading>Choose the workspace machine type for your workspaces.</Subheading>
                 {BillingMode.canSetWorkspaceClass(billingMode) ? (
                     <SelectWorkspaceClass
                         workspaceClass={project.settings?.workspaceClasses?.regular}
@@ -240,11 +237,11 @@ export default function ProjectSettingsView() {
                 )}
             </div>
             <div className="">
-                <h3 className="mt-12">Remove Project</h3>
-                <p className="text-base text-gray-500 dark:text-gray-400 pb-4">
+                <Heading2 className="mt-12">Remove Project</Heading2>
+                <Subheading className="pb-4">
                     This will delete the project and all project-level environment variables you've set for this
                     project.
-                </p>
+                </Subheading>
                 <button className="danger secondary" onClick={() => setShowRemoveModal(true)}>
                     Remove Project
                 </button>

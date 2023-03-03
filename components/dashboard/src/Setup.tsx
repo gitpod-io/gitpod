@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
-import Modal from "./components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "./components/Modal";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { GitIntegrationModal } from "./user-settings/Integrations";
 
@@ -40,8 +40,8 @@ export default function Setup() {
             {!showModal && (
                 // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => {}} closeable={false}>
-                    <h3 className="pb-2">Welcome to Gitpod 🎉</h3>
-                    <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
+                    <ModalHeader>Welcome to Gitpod 🎉</ModalHeader>
+                    <ModalBody>
                         <p className="pb-4 text-gray-500 text-base">
                             To start using Gitpod, you will need to set up a Git integration.
                         </p>
@@ -59,12 +59,12 @@ export default function Setup() {
                                 .
                             </span>
                         </div>
-                    </div>
-                    <div className="flex justify-end mt-6">
+                    </ModalBody>
+                    <ModalFooter>
                         <button className={"ml-2"} onClick={() => acceptAndContinue()}>
                             Continue
                         </button>
-                    </div>
+                    </ModalFooter>
                 </Modal>
             )}
             {showModal && (

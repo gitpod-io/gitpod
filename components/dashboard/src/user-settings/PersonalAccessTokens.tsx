@@ -242,10 +242,12 @@ function ListAccessTokensView() {
                 <>
                     {tokens.length === 0 ? (
                         <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
-                            <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Access Tokens</h3>
-                            <p className="text-center pb-6 text-gray-500 text-base w-96">
+                            <Heading2 color="light" className="text-center pb-3">
+                                No Access Tokens
+                            </Heading2>
+                            <Subheading className="text-center pb-6 w-96">
                                 Generate an access token for applications that need access to the Gitpod API.{" "}
-                            </p>
+                            </Subheading>
                             <Link to={settingsPathPersonalAccessTokenCreate}>
                                 <button>New Access Token</button>
                             </Link>

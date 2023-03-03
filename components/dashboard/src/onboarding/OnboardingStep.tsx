@@ -7,7 +7,7 @@
 import { FC, FormEvent, useCallback } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
-import { Heading1, Subheading } from "../components/typography/headings";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 type Props = {
     title: string;
@@ -40,7 +40,8 @@ export const OnboardingStep: FC<Props> = ({
 
     return (
         <div className="flex flex-col items-center justify-center max-w-full">
-            <Heading1>{title}</Heading1>
+            {/* Intentionally adjusting the size of the heading here */}
+            <Heading2 className="text-4xl">{title}</Heading2>
             <Subheading>{subtitle}</Subheading>
 
             <form className="mt-8 mb-14 max-w-lg" onSubmit={handleSubmit}>

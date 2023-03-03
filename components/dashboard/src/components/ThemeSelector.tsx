@@ -8,6 +8,7 @@ import classNames from "classnames";
 import { FC, useCallback, useContext, useState } from "react";
 import { ThemeContext } from "../theme-context";
 import SelectableCardSolid from "./SelectableCardSolid";
+import { Heading2, Subheading } from "./typography/headings";
 
 type Theme = "light" | "dark" | "system";
 
@@ -37,8 +38,8 @@ export const ThemeSelector: FC<Props> = ({ className }) => {
 
     return (
         <div className={classNames(className)}>
-            <h3>Theme</h3>
-            <p className="text-base text-gray-500 dark:text-gray-400">Early bird or night owl? Choose your side.</p>
+            <Heading2>Theme</Heading2>
+            <Subheading>Early bird or night owl? Choose your side.</Subheading>
             <div className="mt-4 flex items-center flex-wrap">
                 <SelectableCardSolid
                     className="w-36 h-32 m-1"

@@ -9,7 +9,7 @@ import { useHistory } from "react-router-dom";
 import { TeamsContext } from "./teams-context";
 import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { ConnectError } from "@bufbuild/connect-web";
-import { Heading1, Subheading } from "../components/typography/headings";
+import { Heading1, Heading2, Heading3, Subheading } from "../components/typography/headings";
 
 export default function NewTeamPage() {
     const { setTeams } = useContext(TeamsContext);
@@ -57,8 +57,8 @@ export default function NewTeamPage() {
             </Subheading>
             <form className="mt-16" onSubmit={createTeam}>
                 <div className="rounded-xl p-6 bg-gray-50 dark:bg-gray-800">
-                    <h3 className="text-left text-lg">You're creating a new organization</h3>
-                    <p className="text-gray-500">After creating an organization, you can invite others to join.</p>
+                    <Heading3>You're creating a new organization</Heading3>
+                    <Subheading>After creating an organization, you can invite others to join.</Subheading>
                     <br />
                     <h4>Organization Name</h4>
                     <input

@@ -28,7 +28,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./react-datepicker.css";
 import { useLocation } from "react-router";
 import dayjs from "dayjs";
-import { Heading1, Subheading } from "./typography/headings";
+import { Heading1, Heading2, Subheading } from "./typography/headings";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -275,15 +275,15 @@ function UsageView({ attributionId }: UsageViewProps) {
                             (usagePage === undefined || currentPaginatedResults.length === 0) &&
                             !errorMessage && (
                                 <div className="flex flex-col w-full mb-8">
-                                    <h3 className="text-center text-gray-500 mt-8">No sessions found.</h3>
-                                    <p className="text-center text-gray-500 mt-1">
+                                    <Heading2 className="text-center mt-8">No sessions found.</Heading2>
+                                    <Subheading className="text-center mt-1">
                                         Have you started any
                                         <a className="gp-link" href={gitpodHostUrl.asWorkspacePage().toString()}>
                                             {" "}
                                             workspaces
                                         </a>{" "}
                                         in {startDate.format("MMMM YYYY")} or checked your other organizations?
-                                    </p>
+                                    </Subheading>
                                 </div>
                             )}
                         {isLoading && (

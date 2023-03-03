@@ -246,11 +246,13 @@ export default function EnvVars() {
             {envVars.length === 0 ? (
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full h-96">
                     <div className="pt-28 flex flex-col items-center w-96 m-auto">
-                        <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Environment Variables</h3>
-                        <div className="text-center pb-6 text-gray-500">
+                        <Heading2 color="light" className="text-center pb-3">
+                            No Environment Variables
+                        </Heading2>
+                        <Subheading className="text-center pb-6">
                             In addition to user-specific environment variables you can also pass variables through a
                             workspace creation URL.
-                        </div>
+                        </Subheading>
                         <button onClick={add}>New Variable</button>
                     </div>
                 </div>

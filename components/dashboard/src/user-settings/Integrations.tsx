@@ -722,7 +722,7 @@ export function GitIntegrationModal(
     return (
         // TODO: Use title and buttons props
         <Modal visible={!!props} onClose={onClose} closeable={props.closeable}>
-            <h3 className="pb-2">{mode === "new" ? "New Git Integration" : "Git Integration"}</h3>
+            <Heading2 className="pb-2">{mode === "new" ? "New Git Integration" : "Git Integration"}</Heading2>
             <div className="space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
                 {mode === "edit" && providerEntry?.status !== "verified" && (
                     <Alert type="warning">You need to activate this integration.</Alert>

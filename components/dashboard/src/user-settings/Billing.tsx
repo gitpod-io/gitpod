@@ -7,6 +7,7 @@
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Redirect } from "react-router";
 import { BillingAccountSelector } from "../components/BillingAccountSelector";
+import { Heading2 } from "../components/typography/headings";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
 import { useCurrentUser } from "../user-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
@@ -20,11 +21,11 @@ export default function Billing() {
     return (
         <PageWithSettingsSubMenu>
             <div>
-                <h3>Default Billing Account</h3>
+                <Heading2>Default Billing Account</Heading2>
                 <BillingAccountSelector />
                 {!user?.additionalData?.isMigratedToTeamOnlyAttribution && (
                     <>
-                        <h3 className="mt-12">Personal Billing</h3>
+                        <Heading2 className="mt-12">Personal Billing</Heading2>
                         <UsageBasedBillingConfig
                             attributionId={user && AttributionId.render({ kind: "user", userId: user.id })}
                         />
