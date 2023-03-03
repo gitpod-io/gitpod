@@ -2648,7 +2648,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 continue;
             }
             const url = switchToPAYG
-                ? `/switch-to-payg?teamSubscription2=${ownedTeamSubscription2.id}`
+                ? `/switch-to-payg?teamSubscription2=${team.id}` /** yes, team.id */
                 : "https://www.gitpod.io/docs/configure/billing#configure-organization-billing";
             result.unshift({
                 message: `Your '${plan.name}' subscription for Organization '${team.name}' will be discontinued on March, 31st.`,
