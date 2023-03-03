@@ -92,8 +92,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		{
 			Name: "containerd-socket",
 			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-				Path: ctx.Config.Workspace.Runtime.ContainerDSocket,
-				Type: func() *corev1.HostPathType { r := corev1.HostPathSocket; return &r }(),
+				Path: ctx.Config.Workspace.Runtime.ContainerDSocketDir,
 			}},
 		},
 		{
@@ -156,7 +155,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		{
 			Name:      "containerd-socket",
-			MountPath: "/mnt/containerd.sock",
+			MountPath: "/mnt/containerd",
 		},
 		{
 			Name:      "node-fs0",

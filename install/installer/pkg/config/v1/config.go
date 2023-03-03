@@ -71,7 +71,7 @@ func (v version) Defaults(in interface{}) error {
 		corev1.ResourceMemory: resource.MustParse("2Gi"),
 	}
 	cfg.Workspace.Runtime.FSShiftMethod = FSShiftFuseFS
-	cfg.Workspace.Runtime.ContainerDSocket = containerd.ContainerdSocketLocationDefault.String()
+	cfg.Workspace.Runtime.ContainerDSocketDir = containerd.ContainerdSocketLocationDefault.String()
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = containerd.ContainerdLocationDefault.String()
 	cfg.Workspace.MaxLifetime = util.Duration(36 * time.Hour)
 	cfg.Workspace.PrebuildPVC.Size = resource.MustParse("30Gi")
@@ -311,7 +311,7 @@ type WorkspaceRuntime struct {
 	// The location of containerd socket on the host machine
 	ContainerDRuntimeDir string `json:"containerdRuntimeDir" validate:"required,startswith=/"`
 	// The location of containerd socket on the host machine
-	ContainerDSocket string `json:"containerdSocket" validate:"required,startswith=/"`
+	ContainerDSocketDir string `json:"containerdSocketDir" validate:"required,startswith=/"`
 }
 
 type WorkspaceResources struct {

@@ -18,7 +18,7 @@ var (
 
 // This is the default location - this will be used for most installations
 const (
-	ContainerdSocketLocationDefault ContainerdSocketLocation = "/run/containerd/containerd.sock"
+	ContainerdSocketLocationDefault ContainerdSocketLocation = "/run/containerd"
 	ContainerdLocationDefault       ContainerdLocation       = "/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io"
 )
 

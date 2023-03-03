@@ -7,7 +7,7 @@ package containerd
 // k3s stores both socket and containerd in a different location
 const (
 	ContainerdLocationK3s       ContainerdLocation       = "/run/k3s/containerd/io.containerd.runtime.v2.task/k8s.io"
-	ContainerdSocketLocationK3s ContainerdSocketLocation = "/run/k3s/containerd/containerd.sock"
+	ContainerdSocketLocationK3s ContainerdSocketLocation = "/run/k3s/containerd"
 )
 
 func init() {

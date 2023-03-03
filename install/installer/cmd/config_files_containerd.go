@@ -32,7 +32,7 @@ var configNodeContainerdCmd = &cobra.Command{
 		log.Infof("containerd socket location detected as %s", *socket)
 
 		cfg.Workspace.Runtime.ContainerDRuntimeDir = containerd.String()
-		cfg.Workspace.Runtime.ContainerDSocket = socket.String()
+		cfg.Workspace.Runtime.ContainerDSocketDir = socket.String()
 
 		return saveConfigFile(cfg)
 	},
