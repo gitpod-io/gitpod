@@ -122,8 +122,13 @@ jobs:
               with:
                   paths: "test/tests/**/TEST.xml"
               if: always()
-                  echo "No regressions caught because I didn't check anything 🤡 Sleeping for 2 minutes."
-                  sleep 60
+            - name: Slack Notification
+              uses: rtCamp/action-slack-notify@v2
+              if: success() || failure()
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.DEVELOPMENT_PIPELINE_SLACK_WEBHOOK_URL }}
+                  SLACK_COLOR: ${{ job.status }}
+                  SLACK_MESSAGE: "`${{ needs.configuration.outputs.version}}` ${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed"
             - name: Delete preview environment
               if: always()
               uses: ./.github/actions/delete-preview
