@@ -27,7 +27,6 @@ func (s *ProxyUserServiceHandler) GetAuthenticatedUser(ctx context.Context, req 
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyUserServiceHandler) ListSSHKeys(ctx context.Context, req *connect_go.Request[v1.ListSSHKeysRequest]) (*connect_go.Response[v1.ListSSHKeysResponse], error) {
@@ -38,7 +37,6 @@ func (s *ProxyUserServiceHandler) ListSSHKeys(ctx context.Context, req *connect_
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyUserServiceHandler) CreateSSHKey(ctx context.Context, req *connect_go.Request[v1.CreateSSHKeyRequest]) (*connect_go.Response[v1.CreateSSHKeyResponse], error) {
@@ -49,7 +47,6 @@ func (s *ProxyUserServiceHandler) CreateSSHKey(ctx context.Context, req *connect
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyUserServiceHandler) GetSSHKey(ctx context.Context, req *connect_go.Request[v1.GetSSHKeyRequest]) (*connect_go.Response[v1.GetSSHKeyResponse], error) {
@@ -60,7 +57,6 @@ func (s *ProxyUserServiceHandler) GetSSHKey(ctx context.Context, req *connect_go
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyUserServiceHandler) DeleteSSHKey(ctx context.Context, req *connect_go.Request[v1.DeleteSSHKeyRequest]) (*connect_go.Response[v1.DeleteSSHKeyResponse], error) {
@@ -71,7 +67,6 @@ func (s *ProxyUserServiceHandler) DeleteSSHKey(ctx context.Context, req *connect
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyUserServiceHandler) GetGitToken(ctx context.Context, req *connect_go.Request[v1.GetGitTokenRequest]) (*connect_go.Response[v1.GetGitTokenResponse], error) {
@@ -82,5 +77,4 @@ func (s *ProxyUserServiceHandler) GetGitToken(ctx context.Context, req *connect_
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }

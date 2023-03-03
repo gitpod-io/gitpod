@@ -27,7 +27,6 @@ func (s *ProxyIDEClientServiceHandler) SendHeartbeat(ctx context.Context, req *c
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyIDEClientServiceHandler) SendDidClose(ctx context.Context, req *connect_go.Request[v1.SendDidCloseRequest]) (*connect_go.Response[v1.SendDidCloseResponse], error) {
@@ -38,5 +37,4 @@ func (s *ProxyIDEClientServiceHandler) SendDidClose(ctx context.Context, req *co
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }

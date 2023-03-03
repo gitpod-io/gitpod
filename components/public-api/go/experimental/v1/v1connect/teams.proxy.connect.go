@@ -27,7 +27,6 @@ func (s *ProxyTeamsServiceHandler) CreateTeam(ctx context.Context, req *connect_
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTeamsServiceHandler) GetTeam(ctx context.Context, req *connect_go.Request[v1.GetTeamRequest]) (*connect_go.Response[v1.GetTeamResponse], error) {
@@ -38,7 +37,6 @@ func (s *ProxyTeamsServiceHandler) GetTeam(ctx context.Context, req *connect_go.
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTeamsServiceHandler) ListTeams(ctx context.Context, req *connect_go.Request[v1.ListTeamsRequest]) (*connect_go.Response[v1.ListTeamsResponse], error) {
@@ -49,7 +47,6 @@ func (s *ProxyTeamsServiceHandler) ListTeams(ctx context.Context, req *connect_g
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTeamsServiceHandler) DeleteTeam(ctx context.Context, req *connect_go.Request[v1.DeleteTeamRequest]) (*connect_go.Response[v1.DeleteTeamResponse], error) {
@@ -60,7 +57,6 @@ func (s *ProxyTeamsServiceHandler) DeleteTeam(ctx context.Context, req *connect_
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTeamsServiceHandler) JoinTeam(ctx context.Context, req *connect_go.Request[v1.JoinTeamRequest]) (*connect_go.Response[v1.JoinTeamResponse], error) {
@@ -71,7 +67,6 @@ func (s *ProxyTeamsServiceHandler) JoinTeam(ctx context.Context, req *connect_go
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTeamsServiceHandler) ResetTeamInvitation(ctx context.Context, req *connect_go.Request[v1.ResetTeamInvitationRequest]) (*connect_go.Response[v1.ResetTeamInvitationResponse], error) {
@@ -82,7 +77,6 @@ func (s *ProxyTeamsServiceHandler) ResetTeamInvitation(ctx context.Context, req 
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTeamsServiceHandler) UpdateTeamMember(ctx context.Context, req *connect_go.Request[v1.UpdateTeamMemberRequest]) (*connect_go.Response[v1.UpdateTeamMemberResponse], error) {
@@ -93,7 +87,6 @@ func (s *ProxyTeamsServiceHandler) UpdateTeamMember(ctx context.Context, req *co
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTeamsServiceHandler) DeleteTeamMember(ctx context.Context, req *connect_go.Request[v1.DeleteTeamMemberRequest]) (*connect_go.Response[v1.DeleteTeamMemberResponse], error) {
@@ -104,5 +97,4 @@ func (s *ProxyTeamsServiceHandler) DeleteTeamMember(ctx context.Context, req *co
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }

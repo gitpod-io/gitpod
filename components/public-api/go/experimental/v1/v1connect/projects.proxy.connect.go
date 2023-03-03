@@ -27,7 +27,6 @@ func (s *ProxyProjectsServiceHandler) CreateProject(ctx context.Context, req *co
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyProjectsServiceHandler) GetProject(ctx context.Context, req *connect_go.Request[v1.GetProjectRequest]) (*connect_go.Response[v1.GetProjectResponse], error) {
@@ -38,7 +37,6 @@ func (s *ProxyProjectsServiceHandler) GetProject(ctx context.Context, req *conne
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyProjectsServiceHandler) ListProjects(ctx context.Context, req *connect_go.Request[v1.ListProjectsRequest]) (*connect_go.Response[v1.ListProjectsResponse], error) {
@@ -49,7 +47,6 @@ func (s *ProxyProjectsServiceHandler) ListProjects(ctx context.Context, req *con
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyProjectsServiceHandler) DeleteProject(ctx context.Context, req *connect_go.Request[v1.DeleteProjectRequest]) (*connect_go.Response[v1.DeleteProjectResponse], error) {
@@ -60,5 +57,4 @@ func (s *ProxyProjectsServiceHandler) DeleteProject(ctx context.Context, req *co
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }

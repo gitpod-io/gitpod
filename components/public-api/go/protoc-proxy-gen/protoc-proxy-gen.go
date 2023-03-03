@@ -99,7 +99,6 @@ func generateFile(gen *protogen.Plugin, file *protogen.File) {
 			g.P("	}")
 			g.P()
 			g.P(fmt.Sprintf("	return %s(resp), nil", g.QualifiedGoIdent(connectPackage.Ident("NewResponse"))))
-			g.P()
 
 			// method end
 			g.P("}")

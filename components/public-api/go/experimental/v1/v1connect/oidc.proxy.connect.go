@@ -27,7 +27,6 @@ func (s *ProxyOIDCServiceHandler) CreateClientConfig(ctx context.Context, req *c
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyOIDCServiceHandler) GetClientConfig(ctx context.Context, req *connect_go.Request[v1.GetClientConfigRequest]) (*connect_go.Response[v1.GetClientConfigResponse], error) {
@@ -38,7 +37,6 @@ func (s *ProxyOIDCServiceHandler) GetClientConfig(ctx context.Context, req *conn
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyOIDCServiceHandler) ListClientConfigs(ctx context.Context, req *connect_go.Request[v1.ListClientConfigsRequest]) (*connect_go.Response[v1.ListClientConfigsResponse], error) {
@@ -49,7 +47,6 @@ func (s *ProxyOIDCServiceHandler) ListClientConfigs(ctx context.Context, req *co
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyOIDCServiceHandler) UpdateClientConfig(ctx context.Context, req *connect_go.Request[v1.UpdateClientConfigRequest]) (*connect_go.Response[v1.UpdateClientConfigResponse], error) {
@@ -60,7 +57,6 @@ func (s *ProxyOIDCServiceHandler) UpdateClientConfig(ctx context.Context, req *c
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyOIDCServiceHandler) DeleteClientConfig(ctx context.Context, req *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error) {
@@ -71,5 +67,4 @@ func (s *ProxyOIDCServiceHandler) DeleteClientConfig(ctx context.Context, req *c
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }

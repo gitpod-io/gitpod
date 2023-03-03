@@ -27,7 +27,6 @@ func (s *ProxyTokensServiceHandler) CreatePersonalAccessToken(ctx context.Contex
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTokensServiceHandler) GetPersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.GetPersonalAccessTokenRequest]) (*connect_go.Response[v1.GetPersonalAccessTokenResponse], error) {
@@ -38,7 +37,6 @@ func (s *ProxyTokensServiceHandler) GetPersonalAccessToken(ctx context.Context, 
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTokensServiceHandler) ListPersonalAccessTokens(ctx context.Context, req *connect_go.Request[v1.ListPersonalAccessTokensRequest]) (*connect_go.Response[v1.ListPersonalAccessTokensResponse], error) {
@@ -49,7 +47,6 @@ func (s *ProxyTokensServiceHandler) ListPersonalAccessTokens(ctx context.Context
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTokensServiceHandler) RegeneratePersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.RegeneratePersonalAccessTokenRequest]) (*connect_go.Response[v1.RegeneratePersonalAccessTokenResponse], error) {
@@ -60,7 +57,6 @@ func (s *ProxyTokensServiceHandler) RegeneratePersonalAccessToken(ctx context.Co
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTokensServiceHandler) UpdatePersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.UpdatePersonalAccessTokenRequest]) (*connect_go.Response[v1.UpdatePersonalAccessTokenResponse], error) {
@@ -71,7 +67,6 @@ func (s *ProxyTokensServiceHandler) UpdatePersonalAccessToken(ctx context.Contex
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyTokensServiceHandler) DeletePersonalAccessToken(ctx context.Context, req *connect_go.Request[v1.DeletePersonalAccessTokenRequest]) (*connect_go.Response[v1.DeletePersonalAccessTokenResponse], error) {
@@ -82,5 +77,4 @@ func (s *ProxyTokensServiceHandler) DeletePersonalAccessToken(ctx context.Contex
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }

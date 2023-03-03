@@ -27,7 +27,6 @@ func (s *ProxyWorkspacesServiceHandler) ListWorkspaces(ctx context.Context, req 
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyWorkspacesServiceHandler) GetWorkspace(ctx context.Context, req *connect_go.Request[v1.GetWorkspaceRequest]) (*connect_go.Response[v1.GetWorkspaceResponse], error) {
@@ -38,7 +37,6 @@ func (s *ProxyWorkspacesServiceHandler) GetWorkspace(ctx context.Context, req *c
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyWorkspacesServiceHandler) GetOwnerToken(ctx context.Context, req *connect_go.Request[v1.GetOwnerTokenRequest]) (*connect_go.Response[v1.GetOwnerTokenResponse], error) {
@@ -49,7 +47,6 @@ func (s *ProxyWorkspacesServiceHandler) GetOwnerToken(ctx context.Context, req *
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyWorkspacesServiceHandler) CreateAndStartWorkspace(ctx context.Context, req *connect_go.Request[v1.CreateAndStartWorkspaceRequest]) (*connect_go.Response[v1.CreateAndStartWorkspaceResponse], error) {
@@ -60,7 +57,6 @@ func (s *ProxyWorkspacesServiceHandler) CreateAndStartWorkspace(ctx context.Cont
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyWorkspacesServiceHandler) StopWorkspace(ctx context.Context, req *connect_go.Request[v1.StopWorkspaceRequest]) (*connect_go.Response[v1.StopWorkspaceResponse], error) {
@@ -71,7 +67,6 @@ func (s *ProxyWorkspacesServiceHandler) StopWorkspace(ctx context.Context, req *
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyWorkspacesServiceHandler) DeleteWorkspace(ctx context.Context, req *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error) {
@@ -82,7 +77,6 @@ func (s *ProxyWorkspacesServiceHandler) DeleteWorkspace(ctx context.Context, req
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
 
 func (s *ProxyWorkspacesServiceHandler) UpdatePort(ctx context.Context, req *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error) {
@@ -93,5 +87,4 @@ func (s *ProxyWorkspacesServiceHandler) UpdatePort(ctx context.Context, req *con
 	}
 
 	return connect_go.NewResponse(resp), nil
-
 }
