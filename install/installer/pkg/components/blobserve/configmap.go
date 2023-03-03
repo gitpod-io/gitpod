@@ -99,7 +99,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PrePull: []string{},
 					Workdir: "/.supervisor/frontend",
 				},
-				ctx.RepoName("registry.hub.docker.com", "filiptronicek/xterm-ide"): {
+				ctx.RepoName(ctx.Config.Repository, ide.XtermIDEImage): {
 					PrePull: []string{},
 					Workdir: "/ide/xterm",
 					InlineStatic: []blobserve_config.InlineReplacement{{

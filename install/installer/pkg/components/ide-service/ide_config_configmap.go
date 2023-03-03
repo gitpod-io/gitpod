@@ -203,7 +203,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Logo:               getIdeLogoPath("xterm"),
 					Tooltip:            "A terminal in the browser with Xterm.js",
 					Label:              "Insiders",
-					Image:              ctx.ImageName("registry.hub.docker.com", "filiptronicek/xterm-ide", "latest"),
+					Image:              ctx.ImageName(ctx.Config.Repository, ide.XtermIDEImage, "latest"),
 					ResolveImageDigest: true,
 				},
 			},
