@@ -25,9 +25,9 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels: labels,
 			},
 			RoleRef: rbacv1.RoleRef{
+				APIGroup: "rbac.authorization.k8s.io",
 				Kind:     "ClusterRole",
 				Name:     fmt.Sprintf("%s-kube-rbac-proxy", ctx.Namespace),
-				APIGroup: "rbac.authorization.k8s.io",
 			},
 			Subjects: []rbacv1.Subject{
 				{
@@ -37,11 +37,30 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+		// &rbacv1.RoleBinding{
+		// 	TypeMeta: common.TypeMetaRoleBinding,
+		// 	ObjectMeta: metav1.ObjectMeta{
+		// 		Name:      Component,
+		// 		Namespace: ctx.Namespace,
+		// 		Labels:    labels,
+		// 	},
+		// 	RoleRef: rbacv1.RoleRef{
+		// 		APIGroup: "rbac.authorization.k8s.io",
+		// 		Kind:     "Role",
+		// 		Name:     Component,
+		// 	},
+		// 	Subjects: []rbacv1.Subject{
+		// 		{
+		// 			Kind: "ServiceAccount",
+		// 			Name: Component,
+		// 		},
+		// 	},
+		// },
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
-				Namespace: ctx.Namespace,
+				Namespace: WorkspaceNamespace,
 				Labels:    labels,
 			},
 			RoleRef: rbacv1.RoleRef{
@@ -66,7 +85,7 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 			RoleRef: rbacv1.RoleRef{
 				APIGroup: "rbac.authorization.k8s.io",
 				Kind:     "Role",
-				Name:     fmt.Sprintf("%s-secrets", Component),
+				Name:     Component,
 			},
 			Subjects: []rbacv1.Subject{
 				{

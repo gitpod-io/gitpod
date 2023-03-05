@@ -184,7 +184,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	wsmcfg := config.ServiceConfiguration{
 		Manager: config.Configuration{
-			Namespace:        ctx.Namespace,
+			Namespace:        WorkspaceNamespace,
 			SecretsNamespace: SecretsNamespace,
 			SchedulerName:    schedulerName,
 			SeccompProfile:   fmt.Sprintf("workspace_default_%s.json", ctx.VersionManifest.Version),

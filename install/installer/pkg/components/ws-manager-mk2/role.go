@@ -5,8 +5,6 @@
 package wsmanagermk2
 
 import (
-	"fmt"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -22,7 +20,7 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta: common.TypeMetaRole,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
-				Namespace: ctx.Namespace,
+				Namespace: WorkspaceNamespace,
 				Labels:    labels,
 			},
 			Rules: []rbacv1.PolicyRule{
@@ -141,7 +139,7 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&rbacv1.Role{
 			TypeMeta: common.TypeMetaRole,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-secrets", Component),
+				Name:      Component,
 				Namespace: SecretsNamespace,
 				Labels:    labels,
 			},
