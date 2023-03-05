@@ -12,6 +12,83 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
+var controllerRules = []rbacv1.PolicyRule{
+	{
+		APIGroups: []string{""},
+		Resources: []string{"pods"},
+		Verbs: []string{
+			"create",
+			"delete",
+			"get",
+			"list",
+			"patch",
+			"update",
+			"watch",
+		},
+	},
+	{
+		Verbs:     []string{"get"},
+		APIGroups: []string{""},
+		Resources: []string{"pod/status"},
+	},
+	{
+		APIGroups: []string{"workspace.gitpod.io"},
+		Resources: []string{"workspaces"},
+		Verbs: []string{
+			"create",
+			"delete",
+			"get",
+			"list",
+			"patch",
+			"update",
+			"watch",
+		},
+	},
+	{
+		Verbs:     []string{"update"},
+		APIGroups: []string{"workspace.gitpod.io"},
+		Resources: []string{"workspaces/finalizers"},
+	},
+	{
+		APIGroups: []string{"workspace.gitpod.io"},
+		Resources: []string{"workspaces/status"},
+		Verbs: []string{
+			"get",
+			"patch",
+			"update",
+		},
+	},
+	{
+		APIGroups: []string{"workspace.gitpod.io"},
+		Resources: []string{"snapshots"},
+		Verbs: []string{
+			"create",
+			"delete",
+			"get",
+			"list",
+			"watch",
+		},
+	},
+	{
+		APIGroups: []string{"workspace.gitpod.io"},
+		Resources: []string{"snapshots/status"},
+		Verbs: []string{
+			"get",
+		},
+	},
+	{
+		APIGroups: []string{""},
+		Resources: []string{"secrets"},
+		Verbs: []string{
+			"create",
+			"delete",
+			"get",
+			"list",
+			"watch",
+		},
+	},
+}
+
 func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.DefaultLabels(Component)
 
@@ -20,73 +97,10 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta: common.TypeMetaRole,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
-				Namespace: WorkspaceNamespace,
+				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
 			Rules: []rbacv1.PolicyRule{
-				{
-					APIGroups: []string{""},
-					Resources: []string{"pods"},
-					Verbs: []string{
-						"create",
-						"delete",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch",
-					},
-				},
-				{
-					Verbs:     []string{"get"},
-					APIGroups: []string{""},
-					Resources: []string{"pod/status"},
-				},
-				{
-					APIGroups: []string{"workspace.gitpod.io"},
-					Resources: []string{"workspaces"},
-					Verbs: []string{
-						"create",
-						"delete",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch",
-					},
-				},
-				{
-					Verbs:     []string{"update"},
-					APIGroups: []string{"workspace.gitpod.io"},
-					Resources: []string{"workspaces/finalizers"},
-				},
-				{
-					APIGroups: []string{"workspace.gitpod.io"},
-					Resources: []string{"workspaces/status"},
-					Verbs: []string{
-						"get",
-						"patch",
-						"update",
-					},
-				},
-				{
-					APIGroups: []string{"workspace.gitpod.io"},
-					Resources: []string{"snapshots"},
-					Verbs: []string{
-						"create",
-						"delete",
-						"get",
-						"list",
-						"watch",
-					},
-				},
-				{
-					APIGroups: []string{"workspace.gitpod.io"},
-					Resources: []string{"snapshots/status"},
-					Verbs: []string{
-						"get",
-					},
-				},
 				// ConfigMap, Leases, and Events access is required for leader-election.
 				{
 					APIGroups: []string{""},
@@ -122,18 +136,16 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"patch",
 					},
 				},
-				{
-					APIGroups: []string{""},
-					Resources: []string{"secrets"},
-					Verbs: []string{
-						"create",
-						"delete",
-						"get",
-						"list",
-						"watch",
-					},
-				},
 			},
+		},
+		&rbacv1.Role{
+			TypeMeta: common.TypeMetaRole,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      Component,
+				Namespace: WorkspaceNamespace,
+				Labels:    labels,
+			},
+			Rules: controllerRules,
 		},
 
 		&rbacv1.Role{
@@ -143,77 +155,7 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Namespace: SecretsNamespace,
 				Labels:    labels,
 			},
-			Rules: []rbacv1.PolicyRule{
-				{
-					APIGroups: []string{""},
-					Resources: []string{"secrets"},
-					Verbs: []string{
-						"create",
-						"delete",
-						"get",
-						"list",
-						"watch",
-					},
-				},
-				{
-					APIGroups: []string{""},
-					Resources: []string{"pods"},
-					Verbs: []string{
-						"create",
-						"delete",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch",
-					},
-				},
-				{
-					Verbs:     []string{"get"},
-					APIGroups: []string{""},
-					Resources: []string{"pod/status"},
-				},
-				{
-					APIGroups: []string{"workspace.gitpod.io"},
-					Resources: []string{"workspaces"},
-					Verbs: []string{
-						"create",
-						"delete",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch",
-					},
-				},
-				{
-					APIGroups: []string{"workspace.gitpod.io"},
-					Resources: []string{"workspaces/status"},
-					Verbs: []string{
-						"get",
-						"patch",
-						"update",
-					},
-				},
-				{
-					APIGroups: []string{"workspace.gitpod.io"},
-					Resources: []string{"snapshots"},
-					Verbs: []string{
-						"create",
-						"delete",
-						"get",
-						"list",
-						"watch",
-					},
-				},
-				{
-					APIGroups: []string{"workspace.gitpod.io"},
-					Resources: []string{"snapshots/status"},
-					Verbs: []string{
-						"get",
-					},
-				},
-			},
+			Rules: controllerRules,
 		},
 	}, nil
 }

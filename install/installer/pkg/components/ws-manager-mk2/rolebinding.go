@@ -37,30 +37,11 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
-		// &rbacv1.RoleBinding{
-		// 	TypeMeta: common.TypeMetaRoleBinding,
-		// 	ObjectMeta: metav1.ObjectMeta{
-		// 		Name:      Component,
-		// 		Namespace: ctx.Namespace,
-		// 		Labels:    labels,
-		// 	},
-		// 	RoleRef: rbacv1.RoleRef{
-		// 		APIGroup: "rbac.authorization.k8s.io",
-		// 		Kind:     "Role",
-		// 		Name:     Component,
-		// 	},
-		// 	Subjects: []rbacv1.Subject{
-		// 		{
-		// 			Kind: "ServiceAccount",
-		// 			Name: Component,
-		// 		},
-		// 	},
-		// },
 		&rbacv1.RoleBinding{
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
-				Namespace: WorkspaceNamespace,
+				Namespace: ctx.Namespace,
 				Labels:    labels,
 			},
 			RoleRef: rbacv1.RoleRef{
@@ -79,6 +60,26 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
+				Namespace: WorkspaceNamespace,
+				Labels:    labels,
+			},
+			RoleRef: rbacv1.RoleRef{
+				APIGroup: "rbac.authorization.k8s.io",
+				Kind:     "Role",
+				Name:     Component,
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      "ServiceAccount",
+					Name:      Component,
+					Namespace: ctx.Namespace,
+				},
+			},
+		},
+		&rbacv1.RoleBinding{
+			TypeMeta: common.TypeMetaRoleBinding,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      Component,
 				Namespace: SecretsNamespace,
 				Labels:    labels,
 			},
@@ -89,8 +90,9 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			Subjects: []rbacv1.Subject{
 				{
-					Kind: "ServiceAccount",
-					Name: Component,
+					Kind:      "ServiceAccount",
+					Name:      Component,
+					Namespace: ctx.Namespace,
 				},
 			},
 		},
