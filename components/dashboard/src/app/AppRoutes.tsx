@@ -183,7 +183,7 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
             <div className="container">
                 <Menu />
                 {isLocalPreview() && <LocalPreviewAlert />}
-                <AppNotifications />
+                {!location.pathname.startsWith("/switch-to-payg") && <AppNotifications />}
                 <Switch>
                     <Route path="/new" exact component={CreateWorkspacePage} />
                     <Route path={projectsPathNew} exact component={NewProject} />

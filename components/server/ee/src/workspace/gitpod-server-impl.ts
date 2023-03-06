@@ -1718,7 +1718,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         try {
             const allTS = await this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
-            if (!allTS.find((ts) => ts.id === teamSubscriptionId)) {
+            const ts = allTS.find((ts) => ts.id === teamSubscriptionId);
+            if (!ts) {
                 log.error({ userId: user.id }, "Cannot cancel: unknown Team Subscription (legacy)", {
                     teamSubscriptionId,
                 });
@@ -1726,7 +1727,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             }
 
             await this.chargebeeService.cancelSubscription(
-                teamSubscriptionId,
+                ts.paymentReference,
                 {},
                 {
                     teamSubscriptionId,

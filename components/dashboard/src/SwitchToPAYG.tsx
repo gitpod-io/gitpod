@@ -19,6 +19,11 @@ import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib
 import { useConfetti } from "./contexts/ConfettiContext";
 import { resetAllNotifications } from "./AppNotifications";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import ContextMenu, { ContextMenuEntry } from "./components/ContextMenu";
+import CaretDown from "./icons/CaretDown.svg";
+import { TeamsContext, useCurrentTeam } from "./teams/teams-context";
+import { Team } from "@gitpod/gitpod-protocol";
+import { OrgEntry } from "./menu/OrganizationSelector";
 
 /**
  * Keys of known page params
@@ -40,6 +45,7 @@ type PageParams = {
 type PageState = {
     phase: "call-to-action" | "trigger-signup" | "wait-for-signup" | "cleanup" | "done";
     attributionId?: string;
+    setupIntentId?: string;
     old?: {
         planName: string;
         planDetails: string;
@@ -56,15 +62,88 @@ function SwitchToPAYG() {
         phase: "call-to-action",
     });
 
+    const currentOrg = useCurrentTeam();
+    const { teams } = useContext(TeamsContext);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
+    const [selectedOrganization, setSelectedOrganization] = useState<Team | undefined>(undefined);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<boolean>(false);
     const [droppedConfetti, setDroppedConfetti] = useState<boolean>(false);
     const { dropConfetti } = useConfetti();
 
     useEffect(() => {
+        setSelectedOrganization(currentOrg);
+    }, [currentOrg, setSelectedOrganization]);
+
+    useEffect(() => {
+        const { phase, attributionId, setupIntentId } = pageState;
+        if (phase !== "trigger-signup") {
+            return;
+        }
+        console.log("phase: " + phase);
+
+        // We're back from the Stripe modal: (safely) trigger the signup
+        if (!attributionId) {
+            console.error("Signup, but attributionId not set!");
+            return;
+        }
+        if (!setupIntentId) {
+            console.error("Signup, but setupIntentId not set!");
+            setPageState((s) => ({ ...s, phase: "call-to-action" }));
+            return;
+        }
+
+        let cancelled = false;
+        (async () => {
+            // At this point we're coming back from the Stripe modal, and have the intent to setup a new subscription.
+            // Technically, we have to guard against:
+            //  - reloads
+            //  - unmounts (for whatever reason)
+
+            // Do we already have a subscription (co-owner, me in another tab, reload, etc.)?
+            let subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
+            if (subscriptionId) {
+                console.log(`${attributionId} already has a subscription! Moving to cleanup`);
+                // We're happy!
+                if (!cancelled) {
+                    setPageState((s) => ({ ...s, phase: "cleanup" }));
+                }
+                return;
+            }
+
+            // Now we want to signup for sure
+            setPendingStripeSubscription(true);
+            try {
+                if (cancelled) return;
+
+                const limit = 1000;
+                console.log("SUBSCRIBE TO STRIPE");
+                await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
+                // Here we go off the effect handler due to the await
+                if (!cancelled) {
+                    setPageState((s) => ({ ...s, phase: "wait-for-signup" }));
+                }
+            } catch (error) {
+                if (cancelled) return;
+
+                setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
+                setPendingStripeSubscription(false);
+                return;
+            }
+        })().catch(console.error);
+
+        return () => {
+            cancelled = true;
+        };
+    }, [pageState, setPageState]);
+
+    useEffect(() => {
         const { phase, attributionId, old } = pageState;
         const { setupIntentId, type, oldSubscriptionOrTeamId } = pageParams || {};
+        if (phase === "trigger-signup") {
+            // Handled in separate effect
+            return;
+        }
 
         if (!type) {
             setErrorMessage("Error during params parsing: type not set!");
@@ -77,7 +156,13 @@ function SwitchToPAYG() {
 
         console.log("phase: " + phase);
         switch (phase) {
-            case "call-to-action":
+            case "call-to-action": {
+                // Check: Can we progress?
+                if (setupIntentId) {
+                    setPageState((s) => ({ ...s, setupIntentId, phase: "trigger-signup" }));
+                    return;
+                }
+
                 // Just verify and display information
                 let cancelled = false;
                 (async () => {
@@ -135,7 +220,13 @@ function SwitchToPAYG() {
                                 planName: Plans.getById(ts.planId!)!.name,
                                 planDetails: `${ts.quantity} Members`,
                             };
-                            // no derivedAttributionId: user has to select/create new org
+                            // User has to select/create new org
+                            if (selectedOrganization) {
+                                derivedAttributionId = AttributionId.render({
+                                    kind: "team",
+                                    teamId: selectedOrganization.id,
+                                });
+                            }
                             break;
                         }
 
@@ -168,56 +259,6 @@ function SwitchToPAYG() {
                             const attributionId = s.attributionId || derivedAttributionId;
                             return { ...s, attributionId, old };
                         });
-                    }
-                })().catch(console.error);
-
-                return () => {
-                    cancelled = true;
-                };
-
-            case "trigger-signup": {
-                // We're back from the Stripe modal: (safely) trigger the signup
-                if (!attributionId) {
-                    console.error("Signup, but attributionId not set!");
-                    return;
-                }
-                if (!setupIntentId) {
-                    console.error("Signup, but setupIntentId not set!");
-                    return;
-                }
-
-                let cancelled = false;
-                (async () => {
-                    // At this point we're coming back from the Stripe modal, and have the intent to setup a new subscription.
-                    // Technically, we have to guard against:
-                    //  - reloads
-                    //  - unmounts (for whatever reason)
-
-                    // Do we already have a subscription (co-owner, me in another tab, reload, etc.)?
-                    let subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
-                    if (subscriptionId) {
-                        // We're happy!
-                        if (!cancelled) {
-                            setPageState((s) => ({ ...s, phase: "cleanup" }));
-                        }
-                        return;
-                    }
-
-                    // Now we want to signup for sure
-                    setPendingStripeSubscription(true);
-                    try {
-                        const limit = 1000;
-                        await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
-
-                        if (!cancelled) {
-                            setPageState((s) => ({ ...s, phase: "wait-for-signup" }));
-                        }
-                    } catch (error) {
-                        if (cancelled) return;
-
-                        setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
-                        setPendingStripeSubscription(false);
-                        return;
                     }
                 })().catch(console.error);
 
@@ -276,6 +317,7 @@ function SwitchToPAYG() {
                     setErrorMessage("Error during cleanup: old.oldSubscriptionId not set!");
                     return;
                 }
+
                 switch (type) {
                     case "personalSubscription":
                         getGitpodService()
@@ -289,6 +331,16 @@ function SwitchToPAYG() {
                         break;
 
                     case "teamSubscription":
+                        const attrId = AttributionId.parse(attributionId || "");
+                        if (attrId?.kind === "team") {
+                            // This should always be the case
+                            getGitpodService()
+                                .server.tsAddMembersToOrg(oldSubscriptionId, attrId.teamId)
+                                .catch((error) => {
+                                    console.error("Failed to move members to new org.", error);
+                                });
+                        }
+
                         getGitpodService()
                             .server.tsCancel(oldSubscriptionId)
                             .catch((error) => {
@@ -323,16 +375,25 @@ function SwitchToPAYG() {
                 }
                 return;
         }
-    }, [location.search, pageParams, pageState, setPageState, dropConfetti, droppedConfetti]);
+    }, [
+        location.search,
+        pageParams,
+        pageState,
+        setPageState,
+        pendingStripeSubscription,
+        setPendingStripeSubscription,
+        selectedOrganization,
+        dropConfetti,
+        droppedConfetti,
+    ]);
 
     const onUpgradePlan = useCallback(async () => {
         if (pageState.phase !== "call-to-action" || !pageState.attributionId) {
             return;
         }
 
-        setPageState((s) => ({ ...s, phase: "trigger-signup" }));
         setShowBillingSetupModal(true);
-    }, [pageState.phase, pageState.attributionId, setPageState]);
+    }, [pageState.phase, pageState.attributionId]);
 
     if (!switchToPAYG || !user || !pageParams) {
         return (
@@ -366,8 +427,9 @@ function SwitchToPAYG() {
 
     const planName = pageState.old?.planName || "Legacy Plan";
     const planDescription = pageState.old?.planDetails || "";
+    const selectorEntries = getOrganizationSelectorEntries(teams || [], setSelectedOrganization);
     return (
-        <div className="flex flex-col max-h-screen max-w-3xl mx-auto items-center w-full mt-32">
+        <div className="flex flex-col max-h-screen max-w-3xl mx-auto items-center w-full mt-24">
             <h1>{`Update your ${titleModifier}`}</h1>
             <div className="w-full text-gray-500 text-center">
                 Switch to the new pricing model to keep uninterrupted access and get <strong>large workspaces</strong>{" "}
@@ -405,13 +467,61 @@ function SwitchToPAYG() {
                     additionalStyles: "",
                 })}
             </div>
-            <div className="w-full mt-6 grid justify-items-center">
-                {pendingStripeSubscription && (
-                    <div className="w-full mt-6 text-center">
-                        <SpinnerLoader small={false} content="Creating subscription with Stripe" />
-                    </div>
-                )}
-                <div className="w-96 mt-10 text-center">
+            <div className="w-full grid justify-items-center">
+                <div className="w-96 mt-8 text-center">
+                    {pageParams?.type === "teamSubscription" && (
+                        <div className="w-full">
+                            <p className="text-gray-500 text-center text-base">
+                                Select organization or{" "}
+                                <a className="gp-link" target="_blank" href="/orgs/new">
+                                    create a new one
+                                </a>
+                            </p>
+                            <div className="mt-2 flex-col w-full">
+                                <div className="px-8 flex flex-col space-y-2">
+                                    <ContextMenu
+                                        customClasses="w-full left-0 cursor-pointer"
+                                        menuEntries={selectorEntries}
+                                    >
+                                        <div>
+                                            {selectedOrganization ? (
+                                                <OrgEntry
+                                                    id={selectedOrganization.id}
+                                                    title={selectedOrganization.name}
+                                                    subtitle=""
+                                                    iconSize="small"
+                                                />
+                                            ) : (
+                                                <input
+                                                    className="w-full px-12 cursor-pointer font-semibold"
+                                                    readOnly
+                                                    type="text"
+                                                    value={selectedOrganization}
+                                                ></input>
+                                            )}
+                                            <img
+                                                src={CaretDown}
+                                                title="Select Account"
+                                                className="filter-grayscale absolute top-1/2 right-3"
+                                                alt="down caret icon"
+                                            />
+                                        </div>
+                                    </ContextMenu>
+                                </div>
+                            </div>
+                            <div className="mt-2 text-sm text-gray-500 w-full text-center">
+                                Legacy Team Subscription <strong>members</strong> will be moved to the selected
+                                organization, and the new plan will cover all organization usage.
+                            </div>
+                        </div>
+                    )}
+                </div>
+                <div className="w-96 mt-8 text-center">
+                    {pendingStripeSubscription && (
+                        <div className="w-full text-center mb-2">
+                            <SpinnerLoader small={true} content="Creating subscription with Stripe" />
+                        </div>
+                    )}
                     <button
                         className="w-full"
                         onClick={onUpgradePlan}
@@ -440,6 +550,18 @@ function SwitchToPAYG() {
                 ))}
         </div>
     );
+}
+
+function getOrganizationSelectorEntries(organizations: Team[], setSelectedOrganization: (org: Team) => void) {
+    const result: ContextMenuEntry[] = [];
+    for (const org of organizations) {
+        result.push({
+            title: org.name,
+            customContent: <OrgEntry id={org.id} title={org.name} subtitle="" iconSize="small" />,
+            onClick: () => setSelectedOrganization(org),
+        });
+    }
+    return result;
 }
 
 function renderCard(props: {
