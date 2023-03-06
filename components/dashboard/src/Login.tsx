@@ -139,7 +139,7 @@ export function Login() {
 
     return (
         <div id="login-container" className="z-50 flex w-screen h-screen">
-            {!showWelcome ? (
+            {showWelcome ? (
                 <div id="feature-section" className="flex-grow bg-gray-100 dark:bg-gray-800 w-1/2 hidden lg:block">
                     <div id="feature-section-column" className="flex max-w-xl h-full mx-auto pt-6">
                         <div className="flex flex-col px-8 my-auto ml-auto">
