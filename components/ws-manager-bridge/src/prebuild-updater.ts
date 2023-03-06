@@ -12,24 +12,14 @@ import { injectable } from "inversify";
 export const PrebuildUpdater = Symbol("PrebuildUpdater");
 
 export interface PrebuildUpdater {
-    updatePrebuiltWorkspace(
-        ctx: TraceContext,
-        userId: string,
-        status: WorkspaceStatus.AsObject,
-        writeToDB: boolean,
-    ): Promise<void>;
+    updatePrebuiltWorkspace(ctx: TraceContext, userId: string, status: WorkspaceStatus.AsObject): Promise<void>;
 
     stopPrebuildInstance(ctx: TraceContext, instance: WorkspaceInstance): Promise<void>;
 }
 
 @injectable()
 export class PrebuildUpdaterNoOp implements PrebuildUpdater {
-    async updatePrebuiltWorkspace(
-        ctx: TraceContext,
-        userId: string,
-        status: WorkspaceStatus.AsObject,
-        writeToDB: boolean,
-    ): Promise<void> {}
+    async updatePrebuiltWorkspace(ctx: TraceContext, userId: string, status: WorkspaceStatus.AsObject): Promise<void> {}
 
     async stopPrebuildInstance(ctx: TraceContext, instance: WorkspaceInstance): Promise<void> {}
 }
