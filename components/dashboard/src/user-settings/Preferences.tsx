@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
@@ -14,39 +14,50 @@ import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
 import { Link } from "react-router-dom";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
+import { Button } from "../components/Button";
 
 export default function Preferences() {
-    const { user } = useContext(UserContext);
+    const { user, setUser } = useContext(UserContext);
+    const maySetTimeout = useUserMaySetTimeout();
 
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
-    const actuallySetDotfileRepo = async (value: string) => {
-        const additionalData = user?.additionalData || {};
-        const prevDotfileRepo = additionalData.dotfileRepo || "";
-        additionalData.dotfileRepo = value;
-        await getGitpodService().server.updateLoggedInUser({ additionalData });
-        if (value !== prevDotfileRepo) {
-            trackEvent("dotfile_repo_changed", {
-                previous: prevDotfileRepo,
-                current: value,
-            });
-        }
-    };
-
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
-    const actuallySetWorkspaceTimeout = useCallback(async (value: string) => {
-        try {
-            await getGitpodService().server.updateWorkspaceTimeoutSetting({ workspaceTimeout: value });
-        } catch (e) {
-            alert("Cannot set custom workspace timeout: " + e.message);
-        }
-    }, []);
 
-    const [allowConfigureWorkspaceTimeout, setAllowConfigureWorkspaceTimeout] = useState<boolean>(false);
-    useEffect(() => {
-        getGitpodService()
-            .server.maySetTimeout()
-            .then((r) => setAllowConfigureWorkspaceTimeout(r));
-    }, []);
+    const saveDotfileRepo = useCallback(
+        async (e) => {
+            e.preventDefault();
+
+            const prevDotfileRepo = user?.additionalData?.dotfileRepo || "";
+            const additionalData = {
+                ...(user?.additionalData || {}),
+                dotfileRepo,
+            };
+            const updatedUser = await getGitpodService().server.updateLoggedInUser({ additionalData });
+            setUser(updatedUser);
+
+            if (dotfileRepo !== prevDotfileRepo) {
+                trackEvent("dotfile_repo_changed", {
+                    previous: prevDotfileRepo,
+                    current: dotfileRepo,
+                });
+            }
+        },
+        [dotfileRepo, setUser, user?.additionalData],
+    );
+
+    const saveWorkspaceTimeout = useCallback(
+        async (e) => {
+            e.preventDefault();
+
+            try {
+                await getGitpodService().server.updateWorkspaceTimeoutSetting({ workspaceTimeout: workspaceTimeout });
+            } catch (e) {
+                alert("Cannot set custom workspace timeout: " + e.message);
+            }
+        },
+        [workspaceTimeout],
+    );
 
     return (
         <div>
@@ -69,7 +80,7 @@ export default function Preferences() {
 
                 <Heading2 className="mt-12">Dotfiles</Heading2>
                 <Subheading>Customize workspaces using dotfiles.</Subheading>
-                <div className="mt-4 max-w-xl">
+                <form className="mt-4 max-w-xl" onSubmit={saveDotfileRepo}>
                     <h4>Repository URL</h4>
                     <span className="flex">
                         <input
@@ -79,9 +90,9 @@ export default function Preferences() {
                             placeholder="e.g. https://github.com/username/dotfiles"
                             onChange={(e) => setDotfileRepo(e.target.value)}
                         />
-                        <button className="secondary ml-2" onClick={() => actuallySetDotfileRepo(dotfileRepo)}>
+                        <Button type="secondary" className="ml-2">
                             Save Changes
-                        </button>
+                        </Button>
                     </span>
                     <div className="mt-1">
                         <p className="text-gray-500 dark:text-gray-400">
@@ -90,14 +101,14 @@ export default function Preferences() {
                             clone and install your dotfiles for every new workspace.
                         </p>
                     </div>
-                </div>
+                </form>
 
                 <Heading2 className="mt-12">Timeouts</Heading2>
                 <Subheading>Workspaces will stop after a period of inactivity without any user input.</Subheading>
                 <div className="mt-4 max-w-xl">
                     <h4>Default Workspace Timeout</h4>
 
-                    {!allowConfigureWorkspaceTimeout && (
+                    {!maySetTimeout.isLoading && maySetTimeout.data === false && (
                         <Alert type="message">
                             Upgrade organization{" "}
                             <Link to="/billing" className="gp-link">
@@ -107,24 +118,19 @@ export default function Preferences() {
                         </Alert>
                     )}
 
-                    {allowConfigureWorkspaceTimeout && (
-                        <>
+                    {maySetTimeout.data === true && (
+                        <form onSubmit={saveWorkspaceTimeout}>
                             <span className="flex">
                                 <input
                                     type="text"
                                     className="w-96 h-9"
                                     value={workspaceTimeout}
-                                    disabled={!allowConfigureWorkspaceTimeout}
                                     placeholder="e.g. 30m"
                                     onChange={(e) => setWorkspaceTimeout(e.target.value)}
                                 />
-                                <button
-                                    className="secondary ml-2"
-                                    disabled={!allowConfigureWorkspaceTimeout}
-                                    onClick={() => actuallySetWorkspaceTimeout(workspaceTimeout)}
-                                >
+                                <Button type="secondary" className="ml-2">
                                     Save Changes
-                                </button>
+                                </Button>
                             </span>
                             <div className="mt-1">
                                 <p className="text-gray-500 dark:text-gray-400">
@@ -132,7 +138,7 @@ export default function Preferences() {
                                     <span className="font-semibold">2h</span>.
                                 </p>
                             </div>
-                        </>
+                        </form>
                     )}
                 </div>
             </PageWithSettingsSubMenu>
