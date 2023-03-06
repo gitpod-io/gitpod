@@ -112,7 +112,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										},
 										{
 											Name:  "REDIS_EXPORTER_WEB_LISTEN_ADDRESS",
-											Value: fmt.Sprintf("%d", ExporterPort),
+											Value: fmt.Sprintf(":%d", ExporterPort),
 										},
 										{
 											Name:  "REDIS_EXPORTER_LOG_FORMAT",

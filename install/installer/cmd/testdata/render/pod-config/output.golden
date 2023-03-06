@@ -10092,7 +10092,7 @@ spec:
         - name: REDIS_ADDR
           value: redis://localhost:6379
         - name: REDIS_EXPORTER_WEB_LISTEN_ADDRESS
-          value: "9500"
+          value: :9500
         - name: REDIS_EXPORTER_LOG_FORMAT
           value: json
         image: registry.hub.docker.com/oliver006/redis_exporter:v1.48.0
