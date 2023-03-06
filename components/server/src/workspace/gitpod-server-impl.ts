@@ -3601,8 +3601,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async reportErrorBoundary(ctx: TraceContextWithSpan, url: string, message: string): Promise<void> {
-        log.info("dashboard error boundary", { message, url, userId: this.user?.id });
-        increaseDashboardErrorBoundaryCounter(url);
+        // Cap message and url length so the entries aren't of unbounded length
+        log.warn("dashboard error boundary", {
+            message: (message || "").substring(0, 200),
+            url: (url || "").substring(0, 200),
+            userId: this.user?.id,
+        });
+        increaseDashboardErrorBoundaryCounter();
     }
 
     protected mapGrpcError(err: Error): Error {
