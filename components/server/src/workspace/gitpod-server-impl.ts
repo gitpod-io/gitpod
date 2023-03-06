@@ -3417,6 +3417,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getTeamSubscription(ctx: TraceContext, teamId: string): Promise<TeamSubscription2 | undefined> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+    async cancelTeamSubscription(ctx: TraceContext, teamId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
     protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
         // Extension point for EE
     }
