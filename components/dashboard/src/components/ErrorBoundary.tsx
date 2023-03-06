@@ -7,6 +7,7 @@
 import { FC } from "react";
 import { ErrorBoundary, FallbackProps, ErrorBoundaryProps } from "react-error-boundary";
 import gitpodIcon from "../icons/gitpod.svg";
+import { getGitpodService } from "../service/service";
 
 export const GitpodErrorBoundary: FC = ({ children }) => {
     return (
@@ -34,7 +35,7 @@ export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBound
             <div>
                 <button onClick={resetErrorBoundary}>Reload</button>
             </div>
-            <pre>{error.message}</pre>
+            {error.message && <pre>{error.message}</pre>}
         </div>
     );
 };
@@ -43,8 +44,11 @@ export const handleReset: ErrorBoundaryProps["onReset"] = () => {
     window.location.reload();
 };
 
-export const handleError: ErrorBoundaryProps["onError"] = (error, info) => {
-    // TODO: send metric for error boundary event
-    console.error(error);
-    console.info(info);
+export const handleError: ErrorBoundaryProps["onError"] = async (error, info) => {
+    const url = window.location.toString();
+    try {
+        await getGitpodService().server.reportErrorBoundary(url, error.message || "Unknown Error");
+    } catch (e) {
+        console.error(e);
+    }
 };
