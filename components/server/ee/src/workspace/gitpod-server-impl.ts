@@ -2350,7 +2350,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 throw new Error(`No Stripe customer profile for '${attributionId}'`);
             }
 
-            await this.billingService.createStripeSubscription({ attributionId, setupIntentId, usageLimit });
+            log.warn(`createStripeSubscription called`, { attributionId, setupIntentId, usageLimit });
+
+            const re = await this.billingService.createStripeSubscription({ attributionId, setupIntentId, usageLimit });
+            const subscriptionId = re.subscription?.id;
+
+            log.warn(`createStripeSubscription returned`, { attributionId, setupIntentId, usageLimit, subscriptionId });
 
             // Creating a cost center for this customer
             const { costCenter } = await this.usageService.setCostCenter({
