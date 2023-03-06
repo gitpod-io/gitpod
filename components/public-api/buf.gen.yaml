@@ -1,6 +1,5 @@
 version: v1
 plugins:
-  # Golang
   - name: go
     out: go
     opt:
@@ -19,12 +18,10 @@ plugins:
     opt:
      - module=github.com/gitpod-io/gitpod/components/public-api/go
 
-  # Typescript
   - name: es
     out: typescript/src
     opt: target=ts
     path: typescript/node_modules/.bin/protoc-gen-es
-
   - name: connect-web
     out: typescript/src
     opt: target=ts

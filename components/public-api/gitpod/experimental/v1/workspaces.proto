@@ -10,8 +10,6 @@ import "gitpod/experimental/v1/pagination.proto";
 
 service WorkspacesService {
 
-    rpc CreateWorkspace(CreateWorkspaceRequest) returns (CreateWorkspaceResponse) {}
-
     // ListWorkspaces enumerates all workspaces belonging to the authenticated user.
     rpc ListWorkspaces(ListWorkspacesRequest) returns (ListWorkspacesResponse) {}
 
@@ -39,14 +37,6 @@ service WorkspacesService {
     rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {}
 
     rpc UpdatePort(UpdatePortRequest) returns (UpdatePortResponse) {}
-}
-
-message CreateWorkspaceRequest {
-
-}
-
-message CreateWorkspaceResponse {
-
 }
 
 message ListWorkspacesRequest {

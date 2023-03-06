@@ -31,7 +31,6 @@ const (
 
 // WorkspacesServiceClient is a client for the gitpod.experimental.v1.WorkspacesService service.
 type WorkspacesServiceClient interface {
-	CreateWorkspace(context.Context, *connect_go.Request[v1.CreateWorkspaceRequest]) (*connect_go.Response[v1.CreateWorkspaceResponse], error)
 	// ListWorkspaces enumerates all workspaces belonging to the authenticated user.
 	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
 	// GetWorkspace returns a single workspace.
@@ -65,11 +64,6 @@ type WorkspacesServiceClient interface {
 func NewWorkspacesServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts ...connect_go.ClientOption) WorkspacesServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
 	return &workspacesServiceClient{
-		createWorkspace: connect_go.NewClient[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse](
-			httpClient,
-			baseURL+"/gitpod.experimental.v1.WorkspacesService/CreateWorkspace",
-			opts...,
-		),
 		listWorkspaces: connect_go.NewClient[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse](
 			httpClient,
 			baseURL+"/gitpod.experimental.v1.WorkspacesService/ListWorkspaces",
@@ -115,7 +109,6 @@ func NewWorkspacesServiceClient(httpClient connect_go.HTTPClient, baseURL string
 
 // workspacesServiceClient implements WorkspacesServiceClient.
 type workspacesServiceClient struct {
-	createWorkspace         *connect_go.Client[v1.CreateWorkspaceRequest, v1.CreateWorkspaceResponse]
 	listWorkspaces          *connect_go.Client[v1.ListWorkspacesRequest, v1.ListWorkspacesResponse]
 	getWorkspace            *connect_go.Client[v1.GetWorkspaceRequest, v1.GetWorkspaceResponse]
 	streamWorkspaceStatus   *connect_go.Client[v1.StreamWorkspaceStatusRequest, v1.StreamWorkspaceStatusResponse]
@@ -124,11 +117,6 @@ type workspacesServiceClient struct {
 	stopWorkspace           *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
 	deleteWorkspace         *connect_go.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
 	updatePort              *connect_go.Client[v1.UpdatePortRequest, v1.UpdatePortResponse]
-}
-
-// CreateWorkspace calls gitpod.experimental.v1.WorkspacesService.CreateWorkspace.
-func (c *workspacesServiceClient) CreateWorkspace(ctx context.Context, req *connect_go.Request[v1.CreateWorkspaceRequest]) (*connect_go.Response[v1.CreateWorkspaceResponse], error) {
-	return c.createWorkspace.CallUnary(ctx, req)
 }
 
 // ListWorkspaces calls gitpod.experimental.v1.WorkspacesService.ListWorkspaces.
@@ -174,7 +162,6 @@ func (c *workspacesServiceClient) UpdatePort(ctx context.Context, req *connect_g
 // WorkspacesServiceHandler is an implementation of the gitpod.experimental.v1.WorkspacesService
 // service.
 type WorkspacesServiceHandler interface {
-	CreateWorkspace(context.Context, *connect_go.Request[v1.CreateWorkspaceRequest]) (*connect_go.Response[v1.CreateWorkspaceResponse], error)
 	// ListWorkspaces enumerates all workspaces belonging to the authenticated user.
 	ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error)
 	// GetWorkspace returns a single workspace.
@@ -205,11 +192,6 @@ type WorkspacesServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewWorkspacesServiceHandler(svc WorkspacesServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle("/gitpod.experimental.v1.WorkspacesService/CreateWorkspace", connect_go.NewUnaryHandler(
-		"/gitpod.experimental.v1.WorkspacesService/CreateWorkspace",
-		svc.CreateWorkspace,
-		opts...,
-	))
 	mux.Handle("/gitpod.experimental.v1.WorkspacesService/ListWorkspaces", connect_go.NewUnaryHandler(
 		"/gitpod.experimental.v1.WorkspacesService/ListWorkspaces",
 		svc.ListWorkspaces,
@@ -255,10 +237,6 @@ func NewWorkspacesServiceHandler(svc WorkspacesServiceHandler, opts ...connect_g
 
 // UnimplementedWorkspacesServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedWorkspacesServiceHandler struct{}
-
-func (UnimplementedWorkspacesServiceHandler) CreateWorkspace(context.Context, *connect_go.Request[v1.CreateWorkspaceRequest]) (*connect_go.Response[v1.CreateWorkspaceResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.CreateWorkspace is not implemented"))
-}
 
 func (UnimplementedWorkspacesServiceHandler) ListWorkspaces(context.Context, *connect_go.Request[v1.ListWorkspacesRequest]) (*connect_go.Response[v1.ListWorkspacesResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.ListWorkspaces is not implemented"))

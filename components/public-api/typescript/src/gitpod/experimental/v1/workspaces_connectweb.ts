@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, CreateWorkspaceRequest, CreateWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
+import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -18,15 +18,6 @@ import {MethodKind} from "@bufbuild/protobuf";
 export const WorkspacesService = {
   typeName: "gitpod.experimental.v1.WorkspacesService",
   methods: {
-    /**
-     * @generated from rpc gitpod.experimental.v1.WorkspacesService.CreateWorkspace
-     */
-    createWorkspace: {
-      name: "CreateWorkspace",
-      I: CreateWorkspaceRequest,
-      O: CreateWorkspaceResponse,
-      kind: MethodKind.Unary,
-    },
     /**
      * ListWorkspaces enumerates all workspaces belonging to the authenticated user.
      *

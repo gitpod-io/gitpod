@@ -26,7 +26,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type WorkspacesServiceClient interface {
-	CreateWorkspace(ctx context.Context, in *CreateWorkspaceRequest, opts ...grpc.CallOption) (*CreateWorkspaceResponse, error)
 	// ListWorkspaces enumerates all workspaces belonging to the authenticated user.
 	ListWorkspaces(ctx context.Context, in *ListWorkspacesRequest, opts ...grpc.CallOption) (*ListWorkspacesResponse, error)
 	// GetWorkspace returns a single workspace.
@@ -56,15 +55,6 @@ type workspacesServiceClient struct {
 
 func NewWorkspacesServiceClient(cc grpc.ClientConnInterface) WorkspacesServiceClient {
 	return &workspacesServiceClient{cc}
-}
-
-func (c *workspacesServiceClient) CreateWorkspace(ctx context.Context, in *CreateWorkspaceRequest, opts ...grpc.CallOption) (*CreateWorkspaceResponse, error) {
-	out := new(CreateWorkspaceResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/CreateWorkspace", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *workspacesServiceClient) ListWorkspaces(ctx context.Context, in *ListWorkspacesRequest, opts ...grpc.CallOption) (*ListWorkspacesResponse, error) {
@@ -166,7 +156,6 @@ func (c *workspacesServiceClient) UpdatePort(ctx context.Context, in *UpdatePort
 // All implementations must embed UnimplementedWorkspacesServiceServer
 // for forward compatibility
 type WorkspacesServiceServer interface {
-	CreateWorkspace(context.Context, *CreateWorkspaceRequest) (*CreateWorkspaceResponse, error)
 	// ListWorkspaces enumerates all workspaces belonging to the authenticated user.
 	ListWorkspaces(context.Context, *ListWorkspacesRequest) (*ListWorkspacesResponse, error)
 	// GetWorkspace returns a single workspace.
@@ -195,9 +184,6 @@ type WorkspacesServiceServer interface {
 type UnimplementedWorkspacesServiceServer struct {
 }
 
-func (UnimplementedWorkspacesServiceServer) CreateWorkspace(context.Context, *CreateWorkspaceRequest) (*CreateWorkspaceResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateWorkspace not implemented")
-}
 func (UnimplementedWorkspacesServiceServer) ListWorkspaces(context.Context, *ListWorkspacesRequest) (*ListWorkspacesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListWorkspaces not implemented")
 }
@@ -233,24 +219,6 @@ type UnsafeWorkspacesServiceServer interface {
 
 func RegisterWorkspacesServiceServer(s grpc.ServiceRegistrar, srv WorkspacesServiceServer) {
 	s.RegisterService(&WorkspacesService_ServiceDesc, srv)
-}
-
-func _WorkspacesService_CreateWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateWorkspaceRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(WorkspacesServiceServer).CreateWorkspace(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/gitpod.experimental.v1.WorkspacesService/CreateWorkspace",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(WorkspacesServiceServer).CreateWorkspace(ctx, req.(*CreateWorkspaceRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _WorkspacesService_ListWorkspaces_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -407,10 +375,6 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "gitpod.experimental.v1.WorkspacesService",
 	HandlerType: (*WorkspacesServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "CreateWorkspace",
-			Handler:    _WorkspacesService_CreateWorkspace_Handler,
-		},
 		{
 			MethodName: "ListWorkspaces",
 			Handler:    _WorkspacesService_ListWorkspaces_Handler,
