@@ -224,7 +224,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ReconnectionInterval:             util.Duration(30 * time.Second),
 			RegistryFacadeHost:               fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
 			WorkspaceCACertSecret:            customCASecret,
-			WorkspaceMaxConcurrentReconciles: 15,
+			WorkspaceMaxConcurrentReconciles: 25,
 			TimeoutMaxConcurrentReconciles:   15,
 		},
 		Content: struct {
