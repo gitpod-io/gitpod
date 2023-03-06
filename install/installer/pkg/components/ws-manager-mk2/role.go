@@ -122,6 +122,17 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"patch",
 					},
 				},
+				{
+					APIGroups: []string{""},
+					Resources: []string{"secrets"},
+					Verbs: []string{
+						"create",
+						"delete",
+						"get",
+						"list",
+						"watch",
+					},
+				},
 			},
 		},
 	}, nil

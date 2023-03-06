@@ -32,7 +32,9 @@ import (
 var _ = Describe("WorkspaceController", func() {
 	Context("with regular workspaces", func() {
 		It("should handle successful workspace creation and stop request", func() {
-			ws := newWorkspace(uuid.NewString(), "default")
+			name := uuid.NewString()
+			ws := newWorkspace(name, "default")
+			secret := createSecret(fmt.Sprintf("%s-env", name), "default")
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
@@ -71,6 +73,7 @@ var _ = Describe("WorkspaceController", func() {
 			})
 
 			expectPhaseEventually(ws, workspacev1.WorkspacePhaseRunning)
+			expectSecretCleanup(secret)
 
 			markContentReady(ws)
 
@@ -223,7 +226,9 @@ var _ = Describe("WorkspaceController", func() {
 		})
 
 		It("deleting workspace resource should gracefully clean up", func() {
-			ws := newWorkspace(uuid.NewString(), "default")
+			name := uuid.NewString()
+			ws := newWorkspace(name, "default")
+			secret := createSecret(fmt.Sprintf("%s-env", name), "default")
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
@@ -235,11 +240,14 @@ var _ = Describe("WorkspaceController", func() {
 
 			expectWorkspaceCleanup(ws, pod)
 
+			expectSecretCleanup(secret)
+
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				stops:   1,
 				backups: 1,
 			})
 		})
+
 	})
 
 	Context("with headless workspaces", func() {
@@ -494,6 +502,23 @@ func expectWorkspaceCleanup(ws *workspacev1.Workspace, pod *corev1.Pod) {
 	}, timeout, interval).Should(Succeed(), "workspace did not go away")
 }
 
+func expectSecretCleanup(secret *corev1.Secret) {
+	GinkgoHelper()
+
+	By("controller deleting secrets")
+	Eventually(func() (int, error) {
+		var s corev1.Secret
+		if err := k8sClient.Get(ctx, types.NamespacedName{Name: secret.GetName(), Namespace: secret.GetNamespace()}, &s); err != nil {
+			if errors.IsNotFound(err) {
+				return 0, nil
+			}
+			return 1, err
+		}
+		return 1, nil
+
+	}, timeout, interval).Should(Equal(0), "environment secret has not been deleted")
+}
+
 // checkNotFound returns nil if the object does not exist.
 // Otherwise, it returns an error.
 func checkNotFound(obj client.Object) error {
@@ -549,6 +574,28 @@ func newWorkspace(name, namespace string) *workspacev1.Workspace {
 			},
 		},
 	}
+}
+
+func createSecret(name, namespace string) *corev1.Secret {
+	GinkgoHelper()
+
+	By(fmt.Sprintf("creating secret %s", name))
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: namespace,
+		},
+		StringData: map[string]string{
+			"git": "pod",
+		},
+	}
+
+	Expect(k8sClient.Create(ctx, secret)).To(Succeed())
+	Eventually(func() error {
+		return k8sClient.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, secret)
+	}, timeout, interval).Should(Succeed())
+
+	return secret
 }
 
 type metricCounts struct {
