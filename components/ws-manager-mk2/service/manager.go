@@ -850,6 +850,7 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 			OwnerToken: ws.Status.OwnerToken,
 		},
 	}
+
 	return res
 }
 
@@ -865,16 +866,14 @@ func getConditionMessageIfTrue(conds []metav1.Condition, tpe string) string {
 func convertCondition(conds []metav1.Condition, tpe string) wsmanapi.WorkspaceConditionBool {
 	res := wsk8s.GetCondition(conds, tpe)
 	if res == nil {
-		return wsmanapi.WorkspaceConditionBool_EMPTY
+		return wsmanapi.WorkspaceConditionBool_FALSE
 	}
 
 	switch res.Status {
 	case metav1.ConditionTrue:
 		return wsmanapi.WorkspaceConditionBool_TRUE
-	case metav1.ConditionFalse:
-		return wsmanapi.WorkspaceConditionBool_FALSE
 	default:
-		return wsmanapi.WorkspaceConditionBool_EMPTY
+		return wsmanapi.WorkspaceConditionBool_FALSE
 	}
 }
 
