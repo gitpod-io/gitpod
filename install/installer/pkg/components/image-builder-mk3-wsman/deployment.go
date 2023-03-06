@@ -175,7 +175,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					InitContainers: []corev1.Container{
 						{
 							Name:  "setup",
-							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version), ImagePullPolicy: corev1.PullIfNotPresent,
+							Image: ctx.ImageName(ctx.Config.Repository, imagebuildermk3.Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version), ImagePullPolicy: corev1.PullIfNotPresent,
 							Args: []string{
 								"setup",
 							},
