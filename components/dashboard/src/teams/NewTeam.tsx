@@ -9,6 +9,7 @@ import { useHistory } from "react-router-dom";
 import { TeamsContext } from "./teams-context";
 import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { ConnectError } from "@bufbuild/connect-web";
+import { Heading1, Heading2, Heading3, Subheading } from "../components/typography/headings";
 
 export default function NewTeamPage() {
     const { setTeams } = useContext(TeamsContext);
@@ -43,8 +44,8 @@ export default function NewTeamPage() {
 
     return (
         <div className="flex flex-col w-96 mt-24 mx-auto items-center">
-            <h1>New&nbsp;Organization</h1>
-            <p className="text-gray-500 text-center text-base">
+            <Heading1>New&nbsp;Organization</Heading1>
+            <Subheading className="text-center">
                 <a href="https://www.gitpod.io/docs/configure/teams" className="gp-link">
                     Organizations
                 </a>{" "}
@@ -53,11 +54,11 @@ export default function NewTeamPage() {
                     projects
                 </a>{" "}
                 and collaborate with other members.
-            </p>
+            </Subheading>
             <form className="mt-16" onSubmit={createTeam}>
                 <div className="rounded-xl p-6 bg-gray-50 dark:bg-gray-800">
-                    <h3 className="text-left text-lg">You're creating a new organization</h3>
-                    <p className="text-gray-500">After creating an organization, you can invite others to join.</p>
+                    <Heading3>You're creating a new organization</Heading3>
+                    <Subheading>After creating an organization, you can invite others to join.</Subheading>
                     <br />
                     <h4>Organization Name</h4>
                     <input

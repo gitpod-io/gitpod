@@ -12,6 +12,7 @@ import { Redirect, useHistory } from "react-router";
 import Alert from "../components/Alert";
 import Header from "../components/Header";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
+import { Subheading } from "../components/typography/headings";
 import NoAccess from "../icons/NoAccess.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { openAuthorizeWindow } from "../provider-utils";
@@ -195,13 +196,13 @@ export default function ProjectsPage() {
             <Header
                 title={project?.name || "Loading..."}
                 subtitle={
-                    <h2 className="tracking-wide">
+                    <Subheading tracking="wide">
                         View recent active branches for{" "}
                         <a target="_blank" rel="noreferrer noopener" className="gp-link" href={project?.cloneUrl!}>
                             {toRemoteURL(project?.cloneUrl || "")}
                         </a>
                         .
-                    </h2>
+                    </Subheading>
                 }
                 tabs={getProjectTabs(project)}
             />

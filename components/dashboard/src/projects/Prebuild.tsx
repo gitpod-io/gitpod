@@ -14,6 +14,7 @@ import Spinner from "../icons/Spinner.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { shortCommitMessage } from "./render-utils";
 import { useCurrentProject } from "./project-context";
+import { Heading1, Subheading } from "../components/typography/headings";
 
 export default function PrebuildPage() {
     const history = useHistory();
@@ -52,7 +53,7 @@ export default function PrebuildPage() {
         if (!prebuild) {
             return "unknown prebuild";
         }
-        return <h1 className="tracking-tight">{prebuild.info.branch} </h1>;
+        return <Heading1>{prebuild.info.branch} </Heading1>;
     };
 
     const renderSubtitle = () => {
@@ -69,9 +70,9 @@ export default function PrebuildPage() {
         return (
             <div className="flex">
                 <div className="my-auto">
-                    <p>
+                    <Subheading>
                         {startedByAvatar}Triggered {dayjs(prebuild.info.startedAt).fromNow()}
-                    </p>
+                    </Subheading>
                 </div>
                 <p className="mx-2 my-auto">·</p>
                 <div className="my-auto">

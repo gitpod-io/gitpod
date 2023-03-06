@@ -17,6 +17,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { CostCenterJSON, CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 import Modal from "../components/Modal";
+import { Heading2 } from "../components/typography/headings";
 
 export default function TeamDetail(props: { team: Team }) {
     const { team } = props;
@@ -72,7 +73,7 @@ export default function TeamDetail(props: { team: Team }) {
             <div className="flex mt-8">
                 <div className="flex-1">
                     <div className="flex">
-                        <h3>{team.name}</h3>
+                        <Heading2>{team.name}</Heading2>
                         {team.markedDeleted && (
                             <span className="mt-2">
                                 <Label text="Deleted" color="red" />

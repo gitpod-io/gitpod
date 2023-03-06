@@ -27,6 +27,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import CaretDown from "../icons/CaretDown.svg";
 import ContextMenu from "../components/ContextMenu";
 import { CostCenterJSON, CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
@@ -263,18 +264,18 @@ export default function UserDetail(p: { user: User }) {
                     <div className="flex mt-8">
                         <div className="flex-1">
                             <div className="flex">
-                                <h3>{user.fullName}</h3>
+                                <Heading2>{user.fullName}</Heading2>
                                 {user.blocked ? <Label text="Blocked" color="red" /> : null}{" "}
                                 {user.markedDeleted ? <Label text="Deleted" color="red" /> : null}
                                 {user.lastVerificationTime ? <Label text="Verified" color="green" /> : null}
                             </div>
-                            <p>
+                            <Subheading>
                                 {user.identities
                                     .map((i) => i.primaryEmail)
                                     .filter((e) => !!e)
                                     .join(", ")}
                                 {user.verificationPhoneNumber ? ` — ${user.verificationPhoneNumber}` : null}
-                            </p>
+                            </Subheading>
                         </div>
                         {!user.lastVerificationTime ? (
                             <button className="secondary ml-3" disabled={activity} onClick={verifyUser}>

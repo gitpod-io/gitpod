@@ -7,6 +7,7 @@
 import { ReactNode, useEffect } from "react";
 import cn from "classnames";
 import { getGitpodService } from "../service/service";
+import { Heading2 } from "./typography/headings";
 
 type CloseModalManner = "esc" | "enter" | "x";
 
@@ -112,7 +113,7 @@ type ModalHeaderProps = {
 };
 
 export const ModalHeader = ({ children }: ModalHeaderProps) => {
-    return <h3 className="pb-2">{children}</h3>;
+    return <Heading2 className="pb-2">{children}</Heading2>;
 };
 
 type ModalBodyProps = {

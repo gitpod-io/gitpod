@@ -10,6 +10,7 @@ import { useCurrentTeam } from "./teams-context";
 import { getGitpodService } from "../service/service";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { Heading2 } from "../components/typography/headings";
 
 export default function TeamUsageBasedBilling() {
     const team = useCurrentTeam();
@@ -30,7 +31,7 @@ export default function TeamUsageBasedBilling() {
 
     return (
         <>
-            <h3>Organization Billing</h3>
+            <Heading2>Organization Billing</Heading2>
             <UsageBasedBillingConfig attributionId={team && AttributionId.render({ kind: "team", teamId: team.id })} />
         </>
     );

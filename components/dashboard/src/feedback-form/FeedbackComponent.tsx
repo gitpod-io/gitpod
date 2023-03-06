@@ -11,6 +11,7 @@ import meh from "../images/feedback/meh-emoji.svg";
 import crying from "../images/feedback/crying-emoji.svg";
 import { trackEvent, TrackFeedback } from "../Analytics";
 import { StartWorkspaceError } from "../start/StartPage";
+import { Heading2 } from "../components/typography/headings";
 
 function FeedbackComponent(props: {
     onClose?: () => void;
@@ -76,7 +77,7 @@ function FeedbackComponent(props: {
 
     return (
         <>
-            {props.isModal && !isFeedbackSubmitted && <h3 className="mb-4">Send Feedback</h3>}
+            {props.isModal && !isFeedbackSubmitted && <Heading2 className="mb-4">Send Feedback</Heading2>}
             {minimisedFirstView && (
                 <div
                     className={

@@ -5,7 +5,7 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import Modal from "../components/Modal";
+import Modal, { ModalHeader } from "../components/Modal";
 import { WhatsNewEntry202104 } from "./WhatsNew-2021-04";
 import { WhatsNewEntry202106 } from "./WhatsNew-2021-06";
 import { UserContext } from "../user-context";
@@ -70,7 +70,7 @@ export function WhatsNew(props: { onClose: () => void }) {
     return (
         // TODO: Use title and buttons props
         <Modal visible={!!visibleEntry} onClose={internalClose}>
-            <h3 className="pb-4">What's New 🎁</h3>
+            <ModalHeader>What's New 🎁</ModalHeader>
             <>{visibleEntry && user ? visibleEntry.children(user, setUser) : <></>}</>
             {hasNext() ? (
                 <>

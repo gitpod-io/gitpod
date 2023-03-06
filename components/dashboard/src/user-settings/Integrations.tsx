@@ -14,6 +14,7 @@ import { ContextMenuEntry } from "../components/ContextMenu";
 import InfoBox from "../components/InfoBox";
 import { ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalHeader, ModalFooter } from "../components/Modal";
+import { Heading2, Subheading } from "../components/typography/headings";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { openAuthorizeWindow } from "../provider-utils";
@@ -323,8 +324,8 @@ function GitProviders() {
                 </Modal>
             )}
 
-            <h3>Git Providers</h3>
-            <h2 className="text-gray-500">
+            <Heading2>Git Providers</Heading2>
+            <Subheading>
                 Manage permissions for Git providers.{" "}
                 <a
                     className="gp-link"
@@ -334,7 +335,7 @@ function GitProviders() {
                 >
                     Learn more
                 </a>
-            </h2>
+            </Subheading>
             <ItemsList className="pt-6">
                 {authProviders &&
                     authProviders.map((ap) => (
@@ -431,8 +432,10 @@ function GitIntegrations() {
 
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
-                    <h3>Git Integrations</h3>
-                    <h2>Manage Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.</h2>
+                    <Heading2>Git Integrations</Heading2>
+                    <Subheading>
+                        Manage Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.
+                    </Subheading>
                 </div>
                 {providers.length !== 0 ? (
                     <div className="mt-3 flex mt-0">
@@ -446,11 +449,13 @@ function GitIntegrations() {
             {providers && providers.length === 0 && (
                 <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
                     <div className="m-auto text-center">
-                        <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No Git Integrations</h3>
-                        <div className="text-gray-500 mb-6">
+                        <Heading2 color="light" className="self-center mb-4">
+                            No Git Integrations
+                        </Heading2>
+                        <Subheading className="text-gray-500 mb-6">
                             In addition to the default Git Providers you can authorize
                             <br /> with a self-hosted instance of a provider.
-                        </div>
+                        </Subheading>
                         <button className="self-center" onClick={() => setModal({ mode: "new" })}>
                             New Integration
                         </button>
@@ -717,7 +722,7 @@ export function GitIntegrationModal(
     return (
         // TODO: Use title and buttons props
         <Modal visible={!!props} onClose={onClose} closeable={props.closeable}>
-            <h3 className="pb-2">{mode === "new" ? "New Git Integration" : "Git Integration"}</h3>
+            <Heading2 className="pb-2">{mode === "new" ? "New Git Integration" : "Git Integration"}</Heading2>
             <div className="space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
                 {mode === "edit" && providerEntry?.status !== "verified" && (
                     <Alert type="warning">You need to activate this integration.</Alert>

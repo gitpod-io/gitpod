@@ -5,20 +5,23 @@
  */
 
 import { FunctionComponent } from "react";
+import { Heading1, Subheading } from "../components/typography/headings";
 import gitpodIcon from "../icons/gitpod.svg";
 
 export const Blocked: FunctionComponent = () => {
     return (
         <div className="mt-48 text-center">
             <img src={gitpodIcon} className="h-16 mx-auto" alt="Gitpod's logo" />
-            <h1 className="mt-12 text-gray-500 text-3xl">Your account has been blocked.</h1>
-            <p className="mt-4 mb-8 text-lg w-96 mx-auto">
+            <Heading1 color="light" className="mt-12">
+                Your account has been blocked.
+            </Heading1>
+            <Subheading className="mt-4 mb-8 w-96 mx-auto">
                 Please contact support if you think this is an error. See also{" "}
                 <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/terms/">
                     terms of service
                 </a>
                 .
-            </p>
+            </Subheading>
             <a className="mx-auto" href="mailto:support@gitpod.io?Subject=Blocked">
                 <button className="secondary">Contact Support</button>
             </a>

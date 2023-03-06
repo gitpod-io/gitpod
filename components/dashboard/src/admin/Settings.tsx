@@ -14,6 +14,7 @@ import InfoBox from "../components/InfoBox";
 import { isGitpodIo } from "../utils";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getAdminTabs, getAdminSettingsMenu } from "./admin.routes";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 export function SettingsLayout(props: { children: React.ReactNode }) {
     return (
@@ -53,11 +54,11 @@ export default function Settings() {
     return (
         <div>
             <SettingsLayout>
-                <h3>Usage Statistics</h3>
-                <p className="text-base text-gray-500 pb-4 max-w-2xl">
+                <Heading2>Usage Statistics</Heading2>
+                <Subheading className="pb-4 max-w-2xl">
                     We collect usage telemetry to gain insights on how you use your Gitpod instance, so we can provide a
                     better overall experience.
-                </p>
+                </Subheading>
                 <p>
                     <a className="gp-link" href="https://www.gitpod.io/privacy">
                         Read our Privacy Policy
@@ -94,7 +95,7 @@ export default function Settings() {
                         } as InstallationAdminSettings)
                     }
                 />
-                <h3 className="mt-4">Telemetry preview</h3>
+                <Heading2 className="mt-4">Telemetry preview</Heading2>
                 <InfoBox>
                     <pre>{JSON.stringify(telemetryData, null, 2)}</pre>
                 </InfoBox>

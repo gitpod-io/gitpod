@@ -19,6 +19,7 @@ import { SpinnerLoader } from "../components/Loader";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
 import { projectsPathNew } from "./projects.routes";
 import search from "../icons/search.svg";
+import { Heading2 } from "../components/typography/headings";
 
 export default function ProjectsPage() {
     const history = useHistory();
@@ -67,7 +68,7 @@ export default function ProjectsPage() {
                         role="presentation"
                         src={isDark ? projectsEmptyDark : projectsEmpty}
                     />
-                    <h3 className="text-center text-gray-500 mt-8">No Recent Projects</h3>
+                    <Heading2 className="text-center mt-8">No Recent Projects</Heading2>
                     <p className="text-center text-base text-gray-500 mt-4">
                         Add projects to enable and manage Prebuilds.
                         <br />

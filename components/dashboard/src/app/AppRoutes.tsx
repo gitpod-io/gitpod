@@ -48,6 +48,7 @@ import { WebsocketClients } from "./WebsocketClients";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "../onboarding/UserOnboarding";
+import { Heading1, Subheading } from "../components/typography/headings";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -241,8 +242,8 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                     </Route>
                     <Route path="/sorry" exact>
                         <div className="mt-48 text-center">
-                            <h1 className="text-gray-500 text-3xl">Oh, no! Something went wrong!</h1>
-                            <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
+                            <Heading1 color="light">Oh, no! Something went wrong!</Heading1>
+                            <Subheading className="mt-4 text-gitpod-red">{decodeURIComponent(getURLHash())}</Subheading>
                         </div>
                     </Route>
                     <Route exact path="/teams">
@@ -312,8 +313,8 @@ export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) =>
                                 (window.location.host = "www.gitpod.io")
                             ) : (
                                 <div className="mt-48 text-center">
-                                    <h1 className="text-gray-500 text-3xl">404</h1>
-                                    <p className="mt-4 text-lg">Page not found.</p>
+                                    <Heading1>404</Heading1>
+                                    <Subheading className="mt-4">Page not found.</Subheading>
                                 </div>
                             );
                         }}

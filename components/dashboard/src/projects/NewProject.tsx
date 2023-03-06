@@ -22,6 +22,7 @@ import ErrorMessage from "../components/ErrorMessage";
 import Spinner from "../icons/Spinner.svg";
 import { useRefreshProjects } from "../data/projects/list-projects-query";
 import { projectsPathNew } from "./projects.routes";
+import { Heading1, Subheading } from "../components/typography/headings";
 
 export default function NewProject() {
     const currentTeam = useCurrentTeam();
@@ -288,7 +289,7 @@ export default function NewProject() {
 
         const projectText = () => {
             return (
-                <p className="text-gray-500 text-center text-base">
+                <Subheading className="text-center">
                     Projects allow you to manage prebuilds and workspaces for your repository.{" "}
                     <a
                         href="https://www.gitpod.io/docs/configure/projects"
@@ -298,7 +299,7 @@ export default function NewProject() {
                     >
                         Learn more
                     </a>
-                </p>
+                </Subheading>
             );
         };
 
@@ -507,7 +508,7 @@ export default function NewProject() {
         return (
             <div className="flex flex-col w-96 mt-24 mx-auto items-center">
                 <>
-                    <h1>New Project</h1>
+                    <Heading1>New Project</Heading1>
 
                     {!selectedRepo && renderSelectRepository()}
                 </>
@@ -530,15 +531,15 @@ export default function NewProject() {
         return (
             <div className="flex flex-col w-96 mt-24 mx-auto items-center">
                 <>
-                    <h1>Project Created</h1>
+                    <Heading1>Project Created</Heading1>
 
-                    <p className="mt-2 text-gray-500 text-center text-base">
+                    <Subheading className="mt-2 text-center">
                         Created{" "}
                         <a className="gp-link" href={projectLink}>
                             {project.name}
                         </a>{" "}
                         {location}
-                    </p>
+                    </Subheading>
 
                     <div className="mt-12">
                         <button onClick={onNewWorkspace}>New Workspace</button>

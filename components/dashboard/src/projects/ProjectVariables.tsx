@@ -11,7 +11,8 @@ import Alert from "../components/Alert";
 import CheckBox from "../components/CheckBox";
 import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
+import { Heading2, Subheading } from "../components/typography/headings";
 import { getGitpodService } from "../service/service";
 import { useCurrentProject } from "./project-context";
 import { ProjectSettingsPage } from "./ProjectSettings";
@@ -57,18 +58,18 @@ export default function ProjectVariablesPage() {
             )}
             <div className="mb-2 flex">
                 <div className="flex-grow">
-                    <h3>Environment Variables</h3>
-                    <h2 className="text-gray-500">Manage project-specific environment variables.</h2>
+                    <Heading2>Environment Variables</Heading2>
+                    <Subheading>Manage project-specific environment variables.</Subheading>
                 </div>
                 {envVars.length > 0 && <button onClick={() => setShowAddVariableModal(true)}>New Variable</button>}
             </div>
             {envVars.length === 0 ? (
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center">
-                    <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Environment Variables</h3>
-                    <p className="text-center pb-6 text-gray-500 text-base w-96">
+                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full py-28 flex flex-col items-center justify-center space-y-3">
+                    <Heading2 color="light">No Environment Variables</Heading2>
+                    <Subheading className="text-center w-96">
                         All <strong>project-specific environment variables</strong> will be visible in prebuilds and
                         optionally in workspaces for this project.
-                    </p>
+                    </Subheading>
                     <button onClick={() => setShowAddVariableModal(true)}>New Variable</button>
                 </div>
             ) : (
@@ -135,8 +136,8 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                 return false;
             }}
         >
-            <h3 className="mb-4">New Variable</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
+            <ModalHeader>New Variable</ModalHeader>
+            <ModalBody>
                 <Alert type="warning">
                     <strong>Project environment variables can be exposed.</strong>
                     <br />
@@ -185,15 +186,15 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                         </InfoBox>
                     </div>
                 )}
-            </div>
-            <div className="flex justify-end mt-6">
+            </ModalBody>
+            <ModalFooter>
                 <button className="secondary" onClick={props.onClose}>
                     Cancel
                 </button>
                 <button className="ml-2" onClick={addVariable}>
                     Add Variable
                 </button>
-            </div>
+            </ModalFooter>
         </Modal>
     );
 }

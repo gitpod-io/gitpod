@@ -9,6 +9,7 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Heading2, Subheading } from "../components/typography/headings";
 import { getGitpodService } from "../service/service";
 import { getProjectPath } from "../workspaces/WorkspaceEntry";
 import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
@@ -49,12 +50,12 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                 <div className="flex mt-8">
                     <div className="flex-1">
                         <div className="flex">
-                            <h3>{workspace.workspaceId}</h3>
+                            <Heading2>{workspace.workspaceId}</Heading2>
                             <span className="my-auto ml-3">
                                 <WorkspaceStatusIndicator instance={WorkspaceAndInstance.toInstance(workspace)} />
                             </span>
                         </div>
-                        <p>{getProjectPath(WorkspaceAndInstance.toWorkspace(workspace))}</p>
+                        <Subheading>{getProjectPath(WorkspaceAndInstance.toWorkspace(workspace))}</Subheading>
                     </div>
                     <button
                         className="secondary ml-3"

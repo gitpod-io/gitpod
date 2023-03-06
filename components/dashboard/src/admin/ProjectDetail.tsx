@@ -9,6 +9,7 @@ import { Project } from "@gitpod/gitpod-protocol";
 import Prebuilds from "../projects/Prebuilds";
 import Property from "./Property";
 import dayjs from "dayjs";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 export default function ProjectDetail(props: { project: Project; owner: string | undefined }) {
     return (
@@ -17,10 +18,10 @@ export default function ProjectDetail(props: { project: Project; owner: string |
                 <div className="flex mt-8">
                     <div className="flex-1">
                         <div className="flex">
-                            <h3>{props.project.name}</h3>
+                            <Heading2>{props.project.name}</Heading2>
                             <span className="my-auto"></span>
                         </div>
-                        <p>{props.project.cloneUrl}</p>
+                        <Subheading>{props.project.cloneUrl}</Subheading>
                     </div>
                 </div>
                 <div className="flex flex-col w-full">

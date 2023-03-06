@@ -14,6 +14,7 @@ import SelectableCardSolid from "../components/SelectableCardSolid";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import Alert from "./Alert";
 import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
+import { Subheading } from "./typography/headings";
 
 export function BillingAccountSelector(props: { onSelected?: () => void }) {
     const { user, setUser } = useContext(UserContext);
@@ -96,7 +97,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
             {teamsAvailableForAttribution === undefined && <Spinner className="m-2 h-5 w-5 animate-spin" />}
             {teamsAvailableForAttribution && (
                 <div>
-                    <h2 className="text-gray-500">
+                    <Subheading className="text-gray-500">
                         Associate usage without a project to the billing account below.{" "}
                         <a
                             className="gp-link"
@@ -106,7 +107,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                         >
                             Learn more
                         </a>
-                    </h2>
+                    </Subheading>
                     <div className="mt-4 max-w-2xl grid grid-cols-3 gap-3">
                         {!user?.additionalData?.isMigratedToTeamOnlyAttribution && (
                             <SelectableCardSolid

@@ -7,6 +7,7 @@
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { useEffect } from "react";
 import Alert from "../components/Alert";
+import { Heading2 } from "../components/typography/headings";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import gitpodIconUA from "../icons/gitpod.svg";
 import { gitpodHostUrl } from "../service/service";
@@ -105,7 +106,7 @@ export function StartPage(props: StartPageProps) {
                         error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady ? "" : "animate-bounce"
                     }`}
                 />
-                <h3 className="mt-8 text-xl">{title}</h3>
+                <Heading2 className="mt-8">{title}</Heading2>
                 {typeof phase === "number" && phase < StartPhase.IdeReady && (
                     <ProgressBar phase={phase} error={!!error} />
                 )}

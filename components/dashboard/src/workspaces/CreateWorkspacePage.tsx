@@ -26,6 +26,7 @@ import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { useCurrentTeam } from "../teams/teams-context";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 import { Button } from "../components/Button";
+import { Heading1 } from "../components/typography/headings";
 
 export const useNewCreateWorkspacePage = () => {
     const { startWithOptions } = useFeatureFlags();
@@ -121,7 +122,7 @@ export function CreateWorkspacePage() {
     return (
         <div className="flex flex-col mt-32 mx-auto ">
             <div className="flex flex-col max-h-screen max-w-lg mx-auto items-center w-full">
-                <h1>New Workspace</h1>
+                <Heading1>New Workspace</Heading1>
                 <div className="text-gray-500 text-center text-base">
                     Start a new workspace with the following options.
                 </div>

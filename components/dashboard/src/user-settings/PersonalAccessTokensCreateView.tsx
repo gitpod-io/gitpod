@@ -21,6 +21,7 @@ import { settingsPathPersonalAccessTokens } from "./settings.routes";
 import ShowTokenModal from "./ShowTokenModal";
 import { Timestamp } from "@bufbuild/protobuf";
 import arrowDown from "../images/sort-arrow.svg";
+import { Heading2, Subheading } from "../components/typography/headings";
 
 interface EditPATData {
     name: string;
@@ -192,13 +193,13 @@ function PersonalAccessTokenCreateView() {
                 <SpinnerOverlayLoader content="loading access token" loading={loading}>
                     <div className="mb-6">
                         <div className="flex flex-col mb-4">
-                            <h3>{isEditing ? "Edit" : "New"} Access Token</h3>
+                            <Heading2>{isEditing ? "Edit" : "New"} Access Token</Heading2>
                             {isEditing ? (
-                                <h2 className="text-gray-500 dark:text-gray-400">
+                                <Subheading>
                                     Update token name, expiration date, permissions, or regenerate token.
-                                </h2>
+                                </Subheading>
                             ) : (
-                                <h2 className="text-gray-500 dark:text-gray-400">Create a new access token.</h2>
+                                <Subheading>Create a new access token.</Subheading>
                             )}
                         </div>
                         <div className="flex flex-col gap-4">

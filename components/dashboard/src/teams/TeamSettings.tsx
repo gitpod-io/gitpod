@@ -9,6 +9,7 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import React, { useCallback, useContext, useState } from "react";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
+import { Heading2, Subheading } from "../components/typography/headings";
 import { teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
@@ -111,10 +112,10 @@ export default function TeamSettings() {
     return (
         <>
             <OrgSettingsPage>
-                <h3>Organization Name</h3>
-                <p className="text-base text-gray-500 max-w-2xl">
+                <Heading2>Organization Name</Heading2>
+                <Subheading className="max-w-2xl">
                     This is your organization's visible name within Gitpod. For example, the name of your company.
-                </p>
+                </Subheading>
                 {errorMessage && (
                     <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
                         {errorMessage}
@@ -143,11 +144,11 @@ export default function TeamSettings() {
                     </button>
                 </div>
 
-                <h3 className="pt-12">Delete Organization</h3>
-                <p className="text-base text-gray-500 pb-4 max-w-2xl">
+                <Heading2 className="pt-12">Delete Organization</Heading2>
+                <Subheading className="pb-4 max-w-2xl">
                     Deleting this organization will also remove all associated data, including projects and workspaces.
                     Deleted organizations cannot be restored!
-                </p>
+                </Subheading>
                 <button className="danger secondary" onClick={() => setModal(true)}>
                     Delete Organization
                 </button>

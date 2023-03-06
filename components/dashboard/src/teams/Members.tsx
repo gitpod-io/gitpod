@@ -11,7 +11,7 @@ import { useHistory } from "react-router";
 import Header from "../components/Header";
 import DropDown from "../components/DropDown";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import Tooltip from "../components/Tooltip";
 import copy from "../images/copy.svg";
 import { UserContext } from "../user-context";
@@ -287,8 +287,8 @@ export default function MembersPage() {
             {genericInviteId && showInviteModal && (
                 // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
-                    <h3 className="mb-4">Invite Members</h3>
-                    <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
+                    <ModalHeader>Invite Members</ModalHeader>
+                    <ModalBody>
                         <label htmlFor="inviteUrl" className="font-medium">
                             Invite URL
                         </label>
@@ -315,15 +315,15 @@ export default function MembersPage() {
                         <p className="mt-1 text-gray-500 text-sm">
                             Use this URL to join this organization as a member.
                         </p>
-                    </div>
-                    <div className="flex justify-end mt-6 space-x-2">
+                    </ModalBody>
+                    <ModalFooter>
                         <button className="secondary" onClick={() => resetInviteLink()}>
                             Reset Invite Link
                         </button>
                         <button className="secondary" onClick={() => setShowInviteModal(false)}>
                             Close
                         </button>
-                    </div>
+                    </ModalFooter>
                 </Modal>
             )}
         </>

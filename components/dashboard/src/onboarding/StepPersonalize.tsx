@@ -8,6 +8,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useState } from "react";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import { ThemeSelector } from "../components/ThemeSelector";
+import { Heading2, Subheading } from "../components/typography/headings";
 import { OnboardingStep } from "./OnboardingStep";
 
 type Props = {
@@ -32,8 +33,8 @@ export const StepPersonalize: FC<Props> = ({ user, onComplete }) => {
             isValid={isValid}
             onSubmit={handleSubmitted}
         >
-            <h3>Choose an editor</h3>
-            <p>You can change this later in your user preferences.</p>
+            <Heading2>Choose an editor</Heading2>
+            <Subheading className="mb-2">You can change this later in your user preferences.</Subheading>
             <SelectIDEComponent
                 onSelectionChange={(ide, latest) => {
                     setIDE(ide);

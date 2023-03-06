@@ -10,6 +10,7 @@ import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
 import { identifyUser } from "../Analytics";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
+import { Heading2 } from "../components/typography/headings";
 
 export default function Notifications() {
     const { user, setUser } = useContext(UserContext);
@@ -81,7 +82,7 @@ export default function Notifications() {
     return (
         <div>
             <PageWithSettingsSubMenu>
-                <h3>Email Notification Preferences</h3>
+                <Heading2>Email Notification Preferences</Heading2>
                 <CheckBox
                     title="Account Notifications [required]"
                     desc="Receive essential emails about changes to your account"
