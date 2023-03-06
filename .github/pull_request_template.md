@@ -49,7 +49,6 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 <summary>Installer Options</summary>
 
 - [ ] with-ee-license
-- [ ] with-slow-database
 - [ ] with-dedicated-emulation
 - [ ] with-ws-manager-mk2
 - [ ] workspace-feature-flags
