@@ -179,7 +179,7 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		workspace.Status.Phase = workspacev1.WorkspacePhaseUnknown
 
 	default:
-		log.Info("cannot determine workspace phase")
+		log.Info("cannot determine workspace phase", "podStatus", pod.Status)
 		workspace.Status.Phase = workspacev1.WorkspacePhaseUnknown
 
 	}

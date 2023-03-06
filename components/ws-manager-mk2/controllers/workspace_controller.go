@@ -109,6 +109,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	r.updateMetrics(ctx, &workspace)
 
+	log.V(1).Info("updated workspace status", "status", workspace.Status)
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
 		// log.WithValues("status", workspace).Error(err, "unable to update workspace status")

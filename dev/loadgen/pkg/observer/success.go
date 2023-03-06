@@ -73,14 +73,24 @@ func (o *SuccessObserver) Wait(ctx context.Context, expected int) error {
 		case <-ticker.C:
 			o.m.Lock()
 			running := 0
+			stopped := 0
 			for _, ws := range o.workspaces {
-				if ws.Phase == api.WorkspacePhase_RUNNING {
+				switch ws.Phase {
+				case api.WorkspacePhase_RUNNING:
 					running += 1
+				case api.WorkspacePhase_STOPPED:
+					stopped += 1
 				}
 			}
 
 			if float32(running) >= float32(len(o.workspaces))*o.successRate {
 				return nil
+			}
+
+			// Quit early if too many workspaces have stopped already. They'll never become ready.
+			maxRunning := len(o.workspaces) - stopped
+			if float32(maxRunning) < float32(len(o.workspaces))*o.successRate {
+				return fmt.Errorf("too many workspaces in stopped state (%d), will never get enough ready workspaces", stopped)
 			}
 
 			o.m.Unlock()

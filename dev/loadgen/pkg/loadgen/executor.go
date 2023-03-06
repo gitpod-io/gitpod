@@ -211,7 +211,7 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 
 		_, err := w.C.StopWorkspace(ctx, &stopReq)
 		if err != nil {
-			log.Warnf("failed to stop %s", id)
+			log.Warnf("failed to stop %s: %v", id, err)
 		}
 	}
 
