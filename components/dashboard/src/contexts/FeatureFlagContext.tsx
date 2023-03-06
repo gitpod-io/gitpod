@@ -31,6 +31,7 @@ const defaultFeatureFlags = {
     userGitAuthProviders: false,
     switchToPAYG: false,
     newSignupFlow: false,
+    experimentalIdes: false,
 };
 
 const FeatureFlagContext = createContext<FeatureFlagsType>(defaultFeatureFlags);
@@ -51,6 +52,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [userGitAuthProviders, setUserGitAuthProviders] = useState<boolean>(false);
     const [switchToPAYG, setSwitchToPAYG] = useState<boolean>(false);
     const [newSignupFlow, setNewSignupFlow] = useState<boolean>(false);
+    const [experimentalIdes, setExperimentalIdes] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -71,6 +73,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 userGitAuthProviders: { defaultValue: false, setter: setUserGitAuthProviders },
                 switchToPAYG: { defaultValue: false, setter: setSwitchToPAYG },
                 newSignupFlow: { defaultValue: false, setter: setNewSignupFlow },
+                experimentalIdes: { defaultValue: false, setter: setExperimentalIdes },
             };
 
             for (const [flagName, config] of Object.entries(featureFlags)) {
@@ -120,6 +123,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
             userGitAuthProviders,
             newSignupFlow,
             switchToPAYG,
+            experimentalIdes,
         };
     }, [
         enablePersonalAccessTokens,
@@ -133,6 +137,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         switchToPAYG,
         usePublicApiWorkspacesService,
         userGitAuthProviders,
+        experimentalIdes,
     ]);
 
     return <FeatureFlagContext.Provider value={flags}>{children}</FeatureFlagContext.Provider>;

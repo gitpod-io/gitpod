@@ -106,6 +106,11 @@ export interface IDEOption {
     hidden?: boolean;
 
     /**
+     * If `true` this IDE option is conditionally shown in the IDE preferences
+     */
+    experimental?: boolean;
+
+    /**
      * The image ref to the IDE image.
      */
     image: string;
