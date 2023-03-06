@@ -38,6 +38,8 @@ import { asyncHandler } from "../../../src/express-util";
 import { ContextParser } from "../../../src/workspace/context-parser-service";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { RepoURL } from "../../../src/repohost";
+import { ResponseError } from "vscode-ws-jsonrpc";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 /**
  * GitHub app urls:
@@ -535,18 +537,18 @@ export class GithubApp {
         const isFork = pr.head.repo.id !== pr.base.repo.id;
         const runPrebuild =
             this.prebuildManager.shouldPrebuild(config) && this.appRules.shouldRunPrebuild(config, false, true, isFork);
-        let prebuildStartPromise: Promise<StartPrebuildResult | undefined> | undefined;
         if (runPrebuild) {
             const commitInfo = await this.getCommitInfo(user, ctx.payload.repository.html_url, pr.head.sha);
-            prebuildStartPromise = this.prebuildManager.startPrebuild(tracecContext, {
+            const result = await this.prebuildManager.startPrebuild(tracecContext, {
                 user,
                 context,
                 project,
                 commitInfo,
             });
-            prebuildStartPromise = prebuildStartPromise.then((result) => (result?.done ? undefined : result));
-            prebuildStartPromise.catch((err) => log.error(err, "Error while starting prebuild", { contextURL }));
-            return prebuildStartPromise;
+            if (result?.done) {
+                return undefined;
+            }
+            return result;
         } else {
             log.debug(
                 { userId: user.id },
@@ -674,8 +676,14 @@ export class GithubApp {
 }
 
 function catchError<R>(p: Promise<R>): void {
-    // log as "debug" for now
-    p.catch(log.debug);
+    p.catch((err) => {
+        let logger = log.error;
+        if (err instanceof ResponseError) {
+            logger = ErrorCodes.isUserError(err.code) ? log.info : log.error;
+        }
+
+        logger("Failed to handle github event", err);
+    });
 }
 
 export namespace GithubApp {
