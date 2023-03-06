@@ -83,7 +83,7 @@ export class GithubFileProvider implements FileProvider {
             }
             return undefined;
         } catch (err) {
-            log.warn("Failed to get Github file content", err, {
+            log.debug("Failed to get Github file content", err, {
                 request: params,
             });
         }
