@@ -262,6 +262,7 @@ spec:
               timeout:
                 properties:
                   time:
+                    pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
                     type: string
                 type: object
               type:
