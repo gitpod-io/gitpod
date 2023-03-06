@@ -24,7 +24,7 @@ export const query = (...tuples: [string, string][]) => {
 export const isAllowedWebsocketDomain = (originHeader: string, gitpodHostName: string, strict: boolean): boolean => {
     if (!originHeader) {
         // TODO(gpl) Can we get rid of this dependency alltogether?
-        log.warn("Origin header check not applied because of empty Origin header!");
+        log.debug("Origin header check not applied because of empty Origin header!");
         return true;
     }
 
