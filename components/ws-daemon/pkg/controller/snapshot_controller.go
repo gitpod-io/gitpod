@@ -11,6 +11,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
@@ -21,15 +22,17 @@ import (
 // SnapshotReconciler reconciles a Snapshot object
 type SnapshotReconciler struct {
 	client.Client
-	nodeName   string
-	operations *WorkspaceOperations
+	maxConcurrentReconciles int
+	nodeName                string
+	operations              *WorkspaceOperations
 }
 
-func NewSnapshotController(c client.Client, nodeName string, wso *WorkspaceOperations) *SnapshotReconciler {
+func NewSnapshotController(c client.Client, nodeName string, maxConcurrentReconciles int, wso *WorkspaceOperations) *SnapshotReconciler {
 	return &SnapshotReconciler{
-		Client:     c,
-		nodeName:   nodeName,
-		operations: wso,
+		Client:                  c,
+		maxConcurrentReconciles: maxConcurrentReconciles,
+		nodeName:                nodeName,
+		operations:              wso,
 	}
 }
 
@@ -37,6 +40,9 @@ func NewSnapshotController(c client.Client, nodeName string, wso *WorkspaceOpera
 func (r *SnapshotReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("snapshot").
+		WithOptions(controller.Options{
+			MaxConcurrentReconciles: r.maxConcurrentReconciles,
+		}).
 		For(&workspacev1.Snapshot{}).
 		WithEventFilter(snapshotEventFilter(r.nodeName)).
 		Complete(r)

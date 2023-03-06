@@ -191,7 +191,8 @@ func isDisposalFinished(ws *workspacev1.Workspace) bool {
 	return wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
 		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
 		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) ||
-		wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure")
+		// Nothing to dispose if content wasn't ready.
+		!wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady))
 }
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then

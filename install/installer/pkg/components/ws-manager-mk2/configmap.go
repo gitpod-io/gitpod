@@ -221,10 +221,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Interrupted:         util.Duration(5 * time.Minute),
 			},
 			//EventTraceLog:                "", // todo(sje): make conditional based on config
-			ReconnectionInterval:           util.Duration(30 * time.Second),
-			RegistryFacadeHost:             fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
-			WorkspaceCACertSecret:          customCASecret,
-			TimeoutMaxConcurrentReconciles: 5,
+			ReconnectionInterval:             util.Duration(30 * time.Second),
+			RegistryFacadeHost:               fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
+			WorkspaceCACertSecret:            customCASecret,
+			WorkspaceMaxConcurrentReconciles: 15,
+			TimeoutMaxConcurrentReconciles:   15,
 		},
 		Content: struct {
 			Storage storageconfig.StorageConfig `json:"storage"`

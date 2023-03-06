@@ -222,9 +222,12 @@ func (w *WsmanExecutor) StopAll(ctx context.Context) error {
 		if err != nil {
 			log.Warnf("could not get workspaces: %v", err)
 		} else {
-			if len(resp.GetStatus()) == 0 {
+			n := len(resp.GetStatus())
+			if n == 0 {
 				break
 			}
+			ex := resp.GetStatus()[0]
+			log.Infof("%d workspaces remaining, e.g. %s", n, ex.Id)
 		}
 
 		select {
