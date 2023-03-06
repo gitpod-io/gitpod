@@ -215,14 +215,34 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 
 	disposeStart := time.Now()
 	var snapshotName string
+	var snapshotUrl string
 	if ws.Spec.Type == workspacev1.WorkspaceTypeRegular {
 		snapshotName = storage.DefaultBackup
 	} else {
-		_, snapshotName, err = wsc.operations.SnapshotIDs(ws.Name)
+		snapshotUrl, snapshotName, err = wsc.operations.SnapshotIDs(ws.Name)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		// ws-manager-bridge expects to receive the snapshot url while the workspace
+		// is in STOPPING so instead of breaking the assumptions of ws-manager-bridge
+		// we set the url here and not after the snapshot has been taken as otherwise
+		// the workspace would already be in STOPPED and ws-manager-bridge would not
+		// receive the url
+		err = retry.RetryOnConflict(retryParams, func() error {
+			if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
+				return err
+			}
+
+			ws.Status.Snapshot = snapshotUrl
+			return wsc.Client.Status().Update(ctx, ws)
+		})
+
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 	}
+
 	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
 		Meta: WorkspaceMeta{
 			Owner:       ws.Spec.Ownership.Owner,
