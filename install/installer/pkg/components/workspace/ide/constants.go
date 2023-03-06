@@ -9,7 +9,7 @@ const (
 	CodeIDEImageStableVersion   = "commit-0f3f6b068fc5aba9abdf02af45a8cfda067cb6d0" // stable version that will be updated manually on demand
 	CodeHelperIDEImage          = "ide/code-codehelper"
 	CodeWebExtensionImage       = "ide/gitpod-code-web"
-	CodeWebExtensionVersion     = "commit-266edb36ec96f3f0613715c6967fd4591fdd0569" // gitpod-web extension version comes from https://github.com/gitpod-io/gitpod-code
+	CodeWebExtensionVersion     = "commit-ae0ad032337978e1cdf293d13102696e8975f65b" // gitpod-web extension version comes from https://github.com/gitpod-io/gitpod-code
 	CodeDesktopIDEImage         = "ide/code-desktop"
 	CodeDesktopInsidersIDEImage = "ide/code-desktop-insiders"
 	IntelliJDesktopIDEImage     = "ide/intellij"
