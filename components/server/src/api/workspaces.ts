@@ -9,8 +9,6 @@ import { WorkspacesService as WorkspacesServiceInterface } from "@gitpod/public-
 import {
     CreateAndStartWorkspaceRequest,
     CreateAndStartWorkspaceResponse,
-    CreateWorkspaceRequest,
-    CreateWorkspaceResponse,
     DeleteWorkspaceRequest,
     DeleteWorkspaceResponse,
     GetOwnerTokenRequest,
@@ -27,10 +25,6 @@ import {
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_pb";
 
 export class WorkspacesService implements ServiceImpl<typeof WorkspacesServiceInterface> {
-    async createWorkspace(req: CreateWorkspaceRequest): Promise<CreateWorkspaceResponse> {
-        throw new ConnectError("unimplemented", Code.Unimplemented);
-    }
-
     async listWorkspaces(req: ListWorkspacesRequest): Promise<ListWorkspacesResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
