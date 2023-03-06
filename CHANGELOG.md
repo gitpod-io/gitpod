@@ -1,6 +1,9 @@
 # Change Log
 
 ## March 2023
+- Added `Auth Entry Component` along with `Integration Entry Component` linking with `Integrations.tsx` and associated it with Item List Context Menu, with ChangeMenuState Function, to keep the hovered effect ([#16657](https://github.com/gitpod-io/gitpod/pull/16657)) - [@henit-chobisa](https://github.com/henit-chobisa)
+- [dashboard, server] Add global custom timeout preference ([#16503](https://github.com/gitpod-io/gitpod/pull/16503)) - [@iQQBot](https://github.com/iQQBot)
+- Access Project Settings directly from Projects Page on Project Menu Items ([#16596](https://github.com/gitpod-io/gitpod/pull/16596)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
 - Fixed a bug where the Project Settings page sometimes wouldn't load correctly. ([#16627](https://github.com/gitpod-io/gitpod/pull/16627)) - [@selfcontained](https://github.com/selfcontained)
 
 ##  February 2023
