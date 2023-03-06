@@ -205,6 +205,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Label:              "Insiders",
 					Image:              ctx.ImageName(ctx.Config.Repository, ide.XtermIDEImage, "latest"),
 					ResolveImageDigest: true,
+					Experimental:       true,
 				},
 			},
 			DefaultIde:        "code",
