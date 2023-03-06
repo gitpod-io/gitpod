@@ -6,7 +6,7 @@
 
 import { FunctionComponent, useMemo } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
-import { OrgIcon } from "../components/org-icon/OrgIcon";
+import { OrgIcon, OrgIconProps } from "../components/org-icon/OrgIcon";
 import { useCurrentTeam, useTeamMemberInfos, useTeams } from "../teams/teams-context";
 import { useCurrentOrgMember } from "../data/organizations/org-members-query";
 import { useCurrentUser } from "../user-context";
@@ -227,11 +227,12 @@ type OrgEntryProps = {
     id: string;
     title: string;
     subtitle: string;
+    iconSize?: OrgIconProps["size"];
 };
-const OrgEntry: FunctionComponent<OrgEntryProps> = ({ id, title, subtitle }) => {
+export const OrgEntry: FunctionComponent<OrgEntryProps> = ({ id, title, subtitle, iconSize }) => {
     return (
         <div className="w-full text-gray-400 flex items-center">
-            <OrgIcon id={id} name={title} className="mr-4" />
+            <OrgIcon id={id} name={title} className="mr-4" size={iconSize} />
             <div className="flex flex-col">
                 <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
                 <span>{subtitle}</span>

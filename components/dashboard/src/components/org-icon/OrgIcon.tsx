@@ -19,13 +19,13 @@ const TEXT_SIZE_CLASSES = {
     medium: "text-xl",
 };
 
-type Props = {
+export type OrgIconProps = {
     id: string;
     name: string;
     size?: keyof typeof SIZE_CLASSES;
     className?: string;
 };
-export const OrgIcon: FunctionComponent<Props> = ({ id, name, size = "medium", className }) => {
+export const OrgIcon: FunctionComponent<OrgIconProps> = ({ id, name, size = "medium", className }) => {
     const logoBGClass = consistentClassname(id);
     const initials = getOrgInitials(name);
     const sizeClasses = SIZE_CLASSES[size];

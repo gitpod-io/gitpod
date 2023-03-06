@@ -119,3 +119,7 @@ function convertToAppNotification(array: string[] | AppNotification[] | any): Ap
     }
     return notifications;
 }
+
+export const resetAllNotifications = () => {
+    removeLocalStorageObject(KEY_APP_NOTIFICATIONS);
+};
