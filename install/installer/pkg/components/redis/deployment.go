@@ -100,6 +100,45 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									TimeoutSeconds:      3,
 								},
 							},
+							{
+								Name:            ExporterContainerName,
+								Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), ExporterRegistryImage, ExporterImageTag),
+								ImagePullPolicy: corev1.PullIfNotPresent,
+								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
+									[]v1.EnvVar{
+										{
+											Name:  "REDIS_ADDR",
+											Value: fmt.Sprintf("redis://localhost:%d", Port),
+										},
+										{
+											Name:  "REDIS_EXPORTER_WEB_LISTEN_ADDRESS",
+											Value: fmt.Sprintf("%d", ExporterPort),
+										},
+										{
+											Name:  "REDIS_EXPORTER_LOG_FORMAT",
+											Value: "json",
+										},
+									},
+								)),
+								Ports: []corev1.ContainerPort{
+									{
+										ContainerPort: ExporterPort,
+										Name:          ExporterPortName,
+										Protocol:      *common.TCPProtocol,
+									},
+								},
+								Resources: common.ResourceRequirements(ctx, Component, ContainerName, corev1.ResourceRequirements{
+									Requests: corev1.ResourceList{
+										"cpu":    resource.MustParse("0.1"),
+										"memory": resource.MustParse("5M"),
+									},
+								}),
+								SecurityContext: &corev1.SecurityContext{
+									RunAsGroup:   pointer.Int64(65532),
+									RunAsNonRoot: pointer.Bool(true),
+									RunAsUser:    pointer.Int64(65532),
+								},
+							},
 						},
 					},
 				},
