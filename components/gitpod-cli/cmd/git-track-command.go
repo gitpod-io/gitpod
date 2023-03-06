@@ -57,8 +57,11 @@ var gitTrackCommand = &cobra.Command{
 		defer client.Close()
 
 		type GitEventParams struct {
-			Command             string `json:"command,omitempty"`
-			WorkspaceId         string `json:"workspaceId,omitempty"`
+			Command     string `json:"command,omitempty"`
+			WorkspaceId string `json:"workspaceId,omitempty"`
+			// most often used across all events
+			InstanceId string `json:"instanceId,omitempty"`
+			// deprecated for backward compatibility
 			WorkspaceInstanceId string `json:"workspaceInstanceId,omitempty"`
 			Timestamp           int64  `json:"timestamp,omitempty"`
 		}
@@ -66,6 +69,7 @@ var gitTrackCommand = &cobra.Command{
 		params := &GitEventParams{
 			Command:             gitTrackCommandOpts.GitCommand,
 			WorkspaceId:         wsInfo.WorkspaceId,
+			InstanceId:          wsInfo.InstanceId,
 			WorkspaceInstanceId: wsInfo.InstanceId,
 			Timestamp:           time.Now().Unix(),
 		}
@@ -76,6 +80,7 @@ var gitTrackCommand = &cobra.Command{
 		log.WithField("command", gitTrackCommandOpts.GitCommand).
 			Info("tracking the GitCommand event")
 
+		// TODO(ak) use segment directly + supervisor info to get workspace and isntance IDs, don't use server
 		err = client.TrackEvent(ctx, event)
 		if err != nil {
 			log.WithError(err).Fatal("error tracking git event")
