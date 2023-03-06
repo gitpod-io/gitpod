@@ -319,24 +319,6 @@ func (wsm *WorkspaceManagerServer) createWorkspaceSecret(ctx context.Context, ow
 		return err
 	}
 
-	err = wait.PollWithContext(ctx, 100*time.Millisecond, 5*time.Second, func(c context.Context) (done bool, err error) {
-		var secret corev1.Secret
-		err = wsm.Client.Get(context.TODO(), types.NamespacedName{Namespace: namespace, Name: name}, &secret)
-		if errors.IsNotFound(err) {
-			return false, nil
-		}
-
-		if err != nil {
-			return false, err
-		}
-
-		return true, nil
-	})
-
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
