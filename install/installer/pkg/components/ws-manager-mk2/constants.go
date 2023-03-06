@@ -18,4 +18,5 @@ const (
 	VolumeWorkspaceTemplate    = "workspace-template"
 	WorkspaceTemplatePath      = "/workspace-templates"
 	WorkspaceTemplateConfigMap = "workspace-templates"
+	LabelMaintenanceConfig     = "gitpod.io/maintenanceConfig"
 )

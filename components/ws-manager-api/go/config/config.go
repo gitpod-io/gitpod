@@ -569,3 +569,7 @@ type CpuResourceLimit struct {
 	MinLimit   string `json:"min"`
 	BurstLimit string `json:"burst"`
 }
+
+type MaintenanceConfig struct {
+	Enabled bool `json:"enabled"`
+}

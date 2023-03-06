@@ -18,13 +18,17 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -105,6 +109,15 @@ func main() {
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "ws-manager-mk2-leader.gitpod.io",
 		Namespace:              cfg.Manager.Namespace,
+		NewCache: func(conf *rest.Config, opts cache.Options) (cache.Cache, error) {
+			// Only watch the maintenance mode ConfigMap.
+			opts.SelectorsByObject = cache.SelectorsByObject{
+				&corev1.ConfigMap{}: cache.ObjectSelector{
+					Label: labels.SelectorFromSet(labels.Set{controllers.LabelMaintenance: "true"}),
+				},
+			}
+			return cache.New(conf, opts)
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -124,6 +137,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	maintenance, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
+	if err != nil {
+		setupLog.Error(err, "unable to create maintenance controller", "controller", "Maintenance")
+		os.Exit(1)
+	}
+
 	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager service")
@@ -137,6 +156,10 @@ func main() {
 	}
 	if err = timeoutReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup timeout controller with manager", "controller", "Timeout")
+		os.Exit(1)
+	}
+	if err = maintenance.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to setup maintenance controller with manager", "controller", "Maintenance")
 		os.Exit(1)
 	}
 

@@ -278,6 +278,17 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, fmt.Errorf("failed to marshal ws-manager config: %w", err)
 	}
 
+	// Add label to maintenance ConfigMap that ws-manager-mk2 can filter the ConfigMap watch on.
+	maintenanceLabels := common.DefaultLabels(Component)
+	maintenanceLabels[LabelMaintenanceConfig] = "true"
+	maintenanceCfg := config.MaintenanceConfig{
+		Enabled: false,
+	}
+	mc, err := common.ToJSONString(maintenanceCfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal ws-manager maintenance config: %w", err)
+	}
+
 	res := []runtime.Object{
 		&corev1.ConfigMap{
 			TypeMeta: common.TypeMetaConfigmap,
@@ -299,6 +310,17 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    common.DefaultLabels(Component),
 			},
 			Data: tpls,
+		},
+		&corev1.ConfigMap{
+			TypeMeta: common.TypeMetaConfigmap,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-maintenance-mode", Component),
+				Namespace: ctx.Namespace,
+				Labels:    maintenanceLabels,
+			},
+			Data: map[string]string{
+				"config.json": string(mc),
+			},
 		},
 	}
 	return res, nil
