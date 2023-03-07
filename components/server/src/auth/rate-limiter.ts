@@ -14,7 +14,7 @@ type GitpodServerMethodType =
     | keyof Omit<GitpodServer, "dispose" | "setClient">
     | typeof accessCodeSyncStorage
     | typeof accessHeadlessLogs;
-type GroupKey = "default" | "startWorkspace" | "createWorkspace" | "phoneVerification";
+type GroupKey = "default" | "startWorkspace" | "createWorkspace" | "phoneVerification" | "sendHeartBeat";
 type GroupsConfig = {
     [key: string]: {
         points: number;
@@ -79,7 +79,7 @@ const defaultFunctions: FunctionsConfig = {
     setWorkspaceDescription: { group: "default", points: 1 },
     controlAdmission: { group: "default", points: 1 },
     updateWorkspaceUserPin: { group: "default", points: 1 },
-    sendHeartBeat: { group: "default", points: 1 },
+    sendHeartBeat: { group: "sendHeartBeat", points: 1 },
     watchWorkspaceImageBuildLogs: { group: "default", points: 1 },
     isPrebuildDone: { group: "default", points: 1 },
     getHeadlessLog: { group: "default", points: 1 },
@@ -258,6 +258,10 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         phoneVerification: {
             points: 10,
             durationsSec: 10,
+        },
+        sendHeartbeat: {
+            points: 10, // 10 heartbeats per user per 60s
+            durationsSec: 60,
         },
     };
 
