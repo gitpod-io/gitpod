@@ -20,5 +20,6 @@
     'gitpod-slo-login.json': (import 'dashboards/SLOs/login.json'),
     'gitpod-meta-overview.json': (import 'dashboards/components/meta-overview.json'),
     'gitpod-meta-services.json': (import 'dashboards/components/meta-services.json'),
+    'gitpod-components-spicedb.json': (import 'dashboards/components/spicedb.json'),
   },
 }
