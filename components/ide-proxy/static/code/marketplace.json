@@ -19,7 +19,7 @@
       },
       "Shan.code-settings-sync": {
         "disallowInstall": true,
-        "additionalInfo": "Please use the [built-in Settings Sync](https://aka.ms/vscode-settings-sync-help) functionality instead."
+        "additionalInfo": "Please use the built-in [Settings Sync](https://aka.ms/vscode-settings-sync-help) functionality instead."
       },
       "wwm.better-align": {
         "disallowInstall": true,
