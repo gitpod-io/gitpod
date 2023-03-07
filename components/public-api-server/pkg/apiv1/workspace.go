@@ -30,7 +30,7 @@ type WorkspaceService struct {
 }
 
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
-	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 }
 
 func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *connect.Request[v1.StreamWorkspaceStatusRequest], stream *connect.ServerStream[v1.StreamWorkspaceStatusResponse]) error {
-	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *conne
 }
 
 func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Request[v1.GetOwnerTokenRequest]) (*connect.Response[v1.GetOwnerTokenResponse], error) {
-	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
@@ -177,7 +177,7 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 }
 
 func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[v1.UpdatePortRequest]) (*connect.Response[v1.UpdatePortResponse], error) {
-	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +212,7 @@ func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[
 }
 
 func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Request[v1.StopWorkspaceRequest]) (*connect.Response[v1.StopWorkspaceResponse], error) {
-	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +232,7 @@ func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Reque
 }
 
 func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Request[v1.DeleteWorkspaceRequest]) (*connect.Response[v1.DeleteWorkspaceResponse], error) {
-	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
