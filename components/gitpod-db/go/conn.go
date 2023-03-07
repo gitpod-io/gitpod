@@ -18,6 +18,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 type ConnectionParams struct {
@@ -72,7 +73,7 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 	}
 
 	// refer to https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
-	return gorm.Open(mysql.Open(cfg.FormatDSN()), &gorm.Config{
+	conn, err := gorm.Open(mysql.Open(cfg.FormatDSN()), &gorm.Config{
 		Logger: logger.New(log.Log, logger.Config{
 			SlowThreshold:             200 * time.Millisecond,
 			Colorful:                  false,
@@ -89,4 +90,14 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 			})(),
 		}),
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to open db connection: %w", err)
+	}
+
+	err = conn.Use(tracing.NewPlugin(tracing.WithoutMetrics()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup db tracing: %w")
+	}
+
+	return conn, nil
 }
