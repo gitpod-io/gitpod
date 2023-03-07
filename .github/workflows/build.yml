@@ -1,41 +1,53 @@
 name: Build
 on:
   pull_request:
-    types: [opened, synchronize, edited]
+    types: [ opened, synchronize, edited ]
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-
   configuration:
     name: Configure job parameters
-    runs-on: [self-hosted]
+    runs-on: [ self-hosted ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-configuration
       cancel-in-progress: true
     outputs:
-      is_main_branch: ${{ steps.output.outputs.is_main_branch }}
-      version: ${{ steps.output.outputs.version }}
-      preview_enable: ${{ steps.output.outputs.preview_enable }}
-      preview_infra_provider: ${{ steps.output.outputs.preview_infra_provider }}
-      with_github_actions: ${{ steps.output.outputs.with_github_actions }}
-      build_no_cache: ${{ steps.output.outputs.build_no_cache }}
-      build_no_test: ${{ steps.output.outputs.build_no_test }}
+      is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
+      version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
+      with_github_actions: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}
+      preview_enable: ${{ contains(github.event.pull_request.body, '[x] /werft with-preview') }}
+      preview_infra_provider: ${{ contains(github.event.pull_request.body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}
+      build_no_cache: ${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}
+      build_no_test: ${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}
       build_leeway_target: ${{ steps.output.outputs.build_leeway_target }}
-      with_large_vm: ${{ steps.output.outputs.with_large_vm }}
-      publish_to_npm: ${{ steps.output.outputs.publish_to_npm }}
-      publish_to_jbmp: ${{ steps.output.outputs.publish_to_jbmp }}
-      with_ws_manager_mk2: ${{ steps.output.outputs.with_ws_manager_mk2 }}
-      with_dedicated_emulation: ${{ steps.output.outputs.with_dedicated_emulation }}
-      with_ee_license: ${{ steps.output.outputs.with_ee_license }}
-      with_slow_database: ${{ steps.output.outputs.with_slow_database }}
-      analytics: ${{ steps.output.outputs.analytics }}
+      with_large_vm: ${{ contains(github.event.pull_request.body, '[X] /werft with-large-vm') }}
+      publish_to_npm: ${{ contains(github.event.pull_request.body, '[X] /werft publish-to-npm') }}
+      publish_to_jbmp: ${{ contains(github.event.pull_request.body, '[X] /werft publish-to-jb-marketplace') }}
+      with_ws_manager_mk2: ${{ contains(github.event.pull_request.body, '[X] with-ws-manager-mk2') }}
+      with_dedicated_emulation: ${{ contains(github.event.pull_request.body, '[X] with-dedicated-emulation') }}
+      with_ee_license: ${{ contains(github.event.pull_request.body, '[X] with-ee-license') }}
+      with_slow_database: ${{ contains(github.event.pull_request.body, '[X] with-slow-database') }}
+      analytics: ${{ contains(github.event.pull_request.body, '[X] analytics') }}
       workspace_feature_flags: ${{ steps.output.outputs.workspace_feature_flags }}
+      pr_no_diff_skip: ${{ steps.pr-diff.outputs.pr_no_diff_skip }}
     steps:
       - name: "Determine Branch"
         id: branches
         uses: transferwise/sanitize-branch-name@v1
+        # If the PR got edited, but no checkbox changes occurred, we don't want to run the whole build
+        # Therefore we set a flag and use it to skip the next jobs
+      - name: "Check PR diff"
+        id: pr-diff
+        env:
+          PR_DESC: '${{ github.event.pull_request.body }}'
+          OLD_BODY: '${{ github.event.changes.body.from }}'
+        if: (github.event_name == 'pull_request' && github.event.action == 'edited')
+        run: |
+          if ! diff <(echo "$OLD_BODY") <(echo "$PR_DESC") | grep -e '\[x\]' -e '\[X\]'; then
+             echo "pr_no_diff_skip=true" >> $GITHUB_OUTPUT
+          fi
       - name: "Set outputs"
         id: output
         env:
@@ -43,34 +55,21 @@ jobs:
         shell: bash
         run: |
           {
-            echo "is_main_branch=${{ (github.head_ref || github.ref) == 'refs/heads/main' }}"
-            echo "version=${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}"
-            echo "with_github_actions=${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}"
-            echo "preview_enable=${{ contains(github.event.pull_request.body, '[x] /werft with-preview') }}"
-            echo "preview_infra_provider=${{ contains(github.event.pull_request.body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}"
-            echo "build_no_cache=${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}"
-            echo "build_no_test=${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}"
             echo "build_leeway_target=$(echo "$PR_DESC" | sed -n -e 's/^.*leeway-target=//p' | sed 's/\r$//')"
-            echo "with_large_vm=${{ contains(github.event.pull_request.body, '[X] /werft with-large-vm') }}"
-            echo "publish_to_npm=${{ contains(github.event.pull_request.body, '[X] /werft publish-to-npm') }}"
-            echo "publish_to_jbmp=${{ contains(github.event.pull_request.body, '[X] /werft publish-to-jb-marketplace') }}"
-            echo "with_ws_manager_mk2=${{ contains(github.event.pull_request.body, '[X] with-ws-manager-mk2') }}"
-            echo "with_dedicated_emulation=${{ contains(github.event.pull_request.body, '[X] with-dedicated-emulation') }}"
-            echo "with_ee_license=${{ contains(github.event.pull_request.body, '[X] with-ee-license') }}"
-            echo "with_slow_database=${{ contains(github.event.pull_request.body, '[X] with-slow-database') }}"
-            echo "analytics=${{ contains(github.event.pull_request.body, '[X] analytics') }}"
             echo "workspace_feature_flags=$(echo "$PR_DESC" | grep -oP '(?<=\[X\] workspace-feature-flags).*')"
           } >> $GITHUB_OUTPUT
 
   build-previewctl:
     name: Build previewctl
-    if: ${{ needs.configuration.outputs.is_main_branch == 'true' || needs.configuration.outputs.preview_enable == 'true' }}
-    needs: [configuration]
+    if: |
+      (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
+      (needs.configuration.outputs.is_main_branch == 'true' || needs.configuration.outputs.preview_enable == 'true')
+    needs: [ configuration ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-previewctl
       # see comment in build-gitpod below for context
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
-    runs-on: [self-hosted]
+    runs-on: [ self-hosted ]
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
     outputs:
@@ -99,9 +98,11 @@ jobs:
           echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}" -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
 
   infrastructure:
-    needs: [configuration, build-previewctl]
-    if: ${{ needs.configuration.outputs.preview_enable == 'true' && needs.configuration.outputs.with_github_actions == 'true' }}
-    runs-on: [self-hosted]
+    needs: [ configuration, build-previewctl ]
+    if: |
+      (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
+      (needs.configuration.outputs.preview_enable == 'true' && needs.configuration.outputs.with_github_actions == 'true')
+    runs-on: [ self-hosted ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-infrastructure
     steps:
@@ -118,9 +119,11 @@ jobs:
 
   build-gitpod:
     name: Build Gitpod
-    needs: [configuration]
-    if: ${{ needs.configuration.outputs.is_main_branch == 'true' || needs.configuration.outputs.with_github_actions == 'true' }}
-    runs-on: [self-hosted]
+    needs: [ configuration ]
+    if: |
+      (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
+      (needs.configuration.outputs.is_main_branch == 'true' || needs.configuration.outputs.with_github_actions == 'true')
+    runs-on: [ self-hosted ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-gitpod
       # For the main branch we always want the build job to run to completion
@@ -248,8 +251,8 @@ jobs:
 
   install:
     name: "Install Gitpod"
-    needs: [configuration, build-previewctl, build-gitpod, infrastructure]
-    runs-on: [self-hosted]
+    needs: [ configuration, build-previewctl, build-gitpod, infrastructure ]
+    runs-on: [ self-hosted ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-install
       cancel-in-progress: true
@@ -272,8 +275,8 @@ jobs:
 
   monitoring:
     name: "Install Monitoring Satellite"
-    needs: [infrastructure, build-previewctl]
-    runs-on: [self-hosted]
+    needs: [ infrastructure, build-previewctl ]
+    runs-on: [ self-hosted ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-monitoring
       cancel-in-progress: true
