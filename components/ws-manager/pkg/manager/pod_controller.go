@@ -34,7 +34,7 @@ type PodReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	var pod corev1.Pod
-	err := r.Client.Get(context.Background(), req.NamespacedName, &pod)
+	err := r.Client.Get(ctx, req.NamespacedName, &pod)
 	if errors.IsNotFound(err) {
 		// pod is gone - that's ok
 		if pod, ok := r.Pods[req.NamespacedName]; ok {
