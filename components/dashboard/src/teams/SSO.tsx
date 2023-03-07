@@ -4,24 +4,24 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { useCurrentTeam } from "./teams-context";
-import { oidcService } from "../service/public-api";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
-import { gitpodHostUrl } from "../service/service";
-import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
+import { useCallback, useEffect, useState } from "react";
 import { ContextMenuEntry } from "../components/ContextMenu";
+import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
 import Modal from "../components/Modal";
+import { oidcService } from "../service/public-api";
+import { gitpodHostUrl } from "../service/service";
 
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import { Heading2, Subheading } from "../components/typography/headings";
 
 export default function SSO() {
-    const team = useCurrentTeam();
+    const currentOrg = useCurrentOrg();
 
-    return <OrgSettingsPage>{team && <OIDCClients organizationId={team.id} />}</OrgSettingsPage>;
+    return <OrgSettingsPage>{currentOrg.data && <OIDCClients organizationId={currentOrg.data?.id} />}</OrgSettingsPage>;
 }
 
 function OIDCClients(props: { organizationId: string }) {

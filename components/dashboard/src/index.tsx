@@ -11,7 +11,6 @@ import { UserContextProvider } from "./user-context";
 import { AdminContextProvider } from "./admin-context";
 import { PaymentContextProvider } from "./payment-context";
 import { LicenseContextProvider } from "./license-context";
-import { TeamsContextProvider } from "./teams/teams-context";
 import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
 import { FeatureFlagContextProvider } from "./contexts/FeatureFlagContext";
@@ -64,19 +63,17 @@ const bootApp = () => {
                             <AdminContextProvider>
                                 <PaymentContextProvider>
                                     <LicenseContextProvider>
-                                        <TeamsContextProvider>
-                                            <ProjectContextProvider>
-                                                <ThemeContextProvider>
-                                                    <StartWorkspaceModalContextProvider>
-                                                        <BrowserRouter>
-                                                            <FeatureFlagContextProvider>
-                                                                <App />
-                                                            </FeatureFlagContextProvider>
-                                                        </BrowserRouter>
-                                                    </StartWorkspaceModalContextProvider>
-                                                </ThemeContextProvider>
-                                            </ProjectContextProvider>
-                                        </TeamsContextProvider>
+                                        <ProjectContextProvider>
+                                            <ThemeContextProvider>
+                                                <StartWorkspaceModalContextProvider>
+                                                    <BrowserRouter>
+                                                        <FeatureFlagContextProvider>
+                                                            <App />
+                                                        </FeatureFlagContextProvider>
+                                                    </BrowserRouter>
+                                                </StartWorkspaceModalContextProvider>
+                                            </ThemeContextProvider>
+                                        </ProjectContextProvider>
                                     </LicenseContextProvider>
                                 </PaymentContextProvider>
                             </AdminContextProvider>

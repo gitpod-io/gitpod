@@ -4,29 +4,22 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { FunctionComponent, Suspense, useEffect } from "react";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
-import { Login } from "./Login";
-import { isGitpodIo } from "./utils";
-import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
-import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
+import React, { FunctionComponent, Suspense } from "react";
 import { AppLoading } from "./app/AppLoading";
 import { AppRoutes } from "./app/AppRoutes";
-import { useCurrentTeam } from "./teams/teams-context";
-import { useHistory } from "react-router";
+import { useCurrentOrg } from "./data/organizations/orgs-query";
+import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
+import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
+import { Login } from "./Login";
+import { isGitpodIo } from "./utils";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 
 // Top level Dashboard App component
 const App: FunctionComponent = () => {
-    const { user, teams, isSetupRequired, loading } = useUserAndTeamsLoader();
-    const currentOrg = useCurrentTeam();
-    const history = useHistory();
-    useEffect(() => {
-        return history.listen((location, action) => {
-            console.log(location, action);
-        });
-    }, [history]);
+    const { user, isSetupRequired, loading } = useUserAndTeamsLoader();
+    const currentOrg = useCurrentOrg().data;
 
     // Setup analytics/tracking
     useAnalyticsTracking();
@@ -63,7 +56,7 @@ const App: FunctionComponent = () => {
     return (
         <Suspense fallback={<AppLoading />}>
             {/* Use org id as key to force re-render on org change */}
-            <AppRoutes key={currentOrg?.id ?? "no-org"} user={user} teams={teams} />
+            <AppRoutes key={currentOrg?.id ?? "no-org"} />
         </Suspense>
     );
 };

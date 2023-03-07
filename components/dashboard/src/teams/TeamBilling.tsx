@@ -7,22 +7,20 @@
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { Currency, Plan, Plans, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import React, { FunctionComponent, useCallback, useContext, useEffect, useState } from "react";
+import React, { FunctionComponent, useContext, useEffect, useState } from "react";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
 import Card from "../components/Card";
 import DropDown from "../components/DropDown";
 import PillLabel from "../components/PillLabel";
 import SolidCard from "../components/SolidCard";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
-import { useOrgMembers } from "../data/organizations/org-members-query";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as CheckSvg } from "../images/check.svg";
 import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-import { useCurrentTeam } from "./teams-context";
 import TeamUsageBasedBilling from "./TeamUsageBasedBilling";
 
 type PendingPlan = Plan & { pendingSince: number };
@@ -37,55 +35,56 @@ export default function TeamBillingPage() {
 
 const TeamBilling: FunctionComponent = () => {
     const user = useCurrentUser();
-    const team = useCurrentTeam();
-    const { data: teamBillingMode, isLoading: teamBillingModeLoading } = useOrgBillingMode();
-    const { data: members, isLoading: membersLoading } = useOrgMembers();
+    const currentOrg = useCurrentOrg();
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
     const { currency, setCurrency } = useContext(PaymentContext);
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
     const [pollTeamSubscriptionTimeout, setPollTeamSubscriptionTimeout] = useState<NodeJS.Timeout | undefined>();
+    const members = currentOrg.data?.members || [];
 
     useEffect(() => {
-        if (!team) {
+        const orgId = currentOrg.data?.id;
+        if (!orgId) {
             return;
         }
         (async () => {
-            const subscription = await getGitpodService().server.getTeamSubscription(team.id);
+            const subscription = await getGitpodService().server.getTeamSubscription(orgId);
             setTeamSubscription(subscription);
         })();
-    }, [team, user?.id]);
+    }, [currentOrg.data?.id, user?.id]);
 
     useEffect(() => {
         setPendingTeamPlan(undefined);
-        if (!team) {
+        if (!currentOrg.data) {
             return;
         }
         try {
-            const pendingTeamPlanString = window.localStorage.getItem(`pendingPlanForTeam${team.id}`);
+            const pendingTeamPlanString = window.localStorage.getItem(`pendingPlanForTeam${currentOrg.data?.id}`);
             if (!pendingTeamPlanString) {
                 return;
             }
             const pending = JSON.parse(pendingTeamPlanString);
             setPendingTeamPlan(pending);
         } catch (error) {
-            console.error("Could not load pending team plan", team.id, error);
+            console.error("Could not load pending team plan", currentOrg.data?.id, error);
         }
-    }, [team]);
+    }, [currentOrg.data]);
 
     useEffect(() => {
-        if (!pendingTeamPlan || !team) {
+        if (!pendingTeamPlan || !currentOrg.data) {
             return;
         }
+        const orgId = currentOrg.data.id;
         if (teamSubscription && teamSubscription.planId === pendingTeamPlan.chargebeeId) {
             // The purchase was successful!
-            window.localStorage.removeItem(`pendingPlanForTeam${team.id}`);
+            window.localStorage.removeItem(`pendingPlanForTeam${orgId}`);
             clearTimeout(pollTeamSubscriptionTimeout!);
             setPendingTeamPlan(undefined);
             return;
         }
         if (pendingTeamPlan.pendingSince + 1000 * 60 * 5 < Date.now()) {
             // Pending team plans expire after 5 minutes
-            window.localStorage.removeItem(`pendingPlanForTeam${team.id}`);
+            window.localStorage.removeItem(`pendingPlanForTeam${orgId}`);
             clearTimeout(pollTeamSubscriptionTimeout!);
             setPendingTeamPlan(undefined);
             return;
@@ -93,7 +92,7 @@ const TeamBilling: FunctionComponent = () => {
         if (!pollTeamSubscriptionTimeout) {
             // Refresh team subscription in 5 seconds in order to poll for purchase confirmation
             const timeout = setTimeout(async () => {
-                const ts = await getGitpodService().server.getTeamSubscription(team.id);
+                const ts = await getGitpodService().server.getTeamSubscription(orgId);
                 setTeamSubscription(ts);
                 setPollTeamSubscriptionTimeout(undefined);
             }, 5000);
@@ -102,33 +101,31 @@ const TeamBilling: FunctionComponent = () => {
         return function cleanup() {
             clearTimeout(pollTeamSubscriptionTimeout!);
         };
-    }, [pendingTeamPlan, pollTeamSubscriptionTimeout, team, teamSubscription]);
+    }, [pendingTeamPlan, pollTeamSubscriptionTimeout, currentOrg.data, teamSubscription]);
 
     const availableTeamPlans = Plans.getAvailableTeamPlans(currency || "USD").filter((p) => p.type !== "student");
 
-    const checkout = useCallback(
-        async (plan: Plan) => {
-            if (!team || (members || []).length < 1) {
-                return;
-            }
-            const chargebeeClient = await ChargebeeClient.getOrCreate(team.id);
-            await new Promise((resolve, reject) => {
-                chargebeeClient.checkout((paymentServer) => paymentServer.teamCheckout(team.id, plan.chargebeeId), {
-                    success: resolve,
-                    error: reject,
-                });
+    const checkout = async (plan: Plan) => {
+        if (!currentOrg.data || currentOrg.data.members.length < 1) {
+            return;
+        }
+        const orgId = currentOrg.data.id;
+        const chargebeeClient = await ChargebeeClient.getOrCreate(orgId);
+        await new Promise((resolve, reject) => {
+            chargebeeClient.checkout((paymentServer) => paymentServer.teamCheckout(orgId, plan.chargebeeId), {
+                success: resolve,
+                error: reject,
             });
-            const pending = {
-                ...plan,
-                pendingSince: Date.now(),
-            };
-            setPendingTeamPlan(pending);
-            window.localStorage.setItem(`pendingPlanForTeam${team.id}`, JSON.stringify(pending));
-        },
-        [members, team],
-    );
+        });
+        const pending = {
+            ...plan,
+            pendingSince: Date.now(),
+        };
+        setPendingTeamPlan(pending);
+        window.localStorage.setItem(`pendingPlanForTeam${orgId}`, JSON.stringify(pending));
+    };
 
-    const isLoading = teamBillingModeLoading || membersLoading;
+    const isLoading = currentOrg.isLoading;
     const teamPlan = pendingTeamPlan || Plans.getById(teamSubscription?.planId);
 
     const featuresByPlanType: { [type in PlanType]?: Array<React.ReactNode> } = {
@@ -277,9 +274,9 @@ const TeamBilling: FunctionComponent = () => {
                                         <div className="flex-grow flex flex-col items-stretch justify-end">
                                             <button
                                                 onClick={() => {
-                                                    if (team) {
-                                                        ChargebeeClient.getOrCreate(team.id).then((chargebeeClient) =>
-                                                            chargebeeClient.openPortal(),
+                                                    if (currentOrg.data) {
+                                                        ChargebeeClient.getOrCreate(currentOrg.data.id).then(
+                                                            (chargebeeClient) => chargebeeClient.openPortal(),
                                                         );
                                                     }
                                                 }}
@@ -304,7 +301,7 @@ const TeamBilling: FunctionComponent = () => {
         );
     }
 
-    const showUBP = BillingMode.showUsageBasedBilling(teamBillingMode);
+    const showUBP = BillingMode.showUsageBasedBilling(currentOrg.data?.billingMode);
 
     return showUBP ? <TeamUsageBasedBilling /> : renderTeamBilling();
 };

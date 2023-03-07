@@ -6,15 +6,15 @@
 
 import { Team } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import React, { useCallback, useContext, useState } from "react";
+import React, { useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-import { TeamsContext, useCurrentTeam } from "./teams-context";
 
 export function getTeamSettingsMenu(params: {
     team?: Team;
@@ -53,35 +53,33 @@ export function getTeamSettingsMenu(params: {
 
 export default function TeamSettings() {
     const user = useCurrentUser();
-    const team = useCurrentTeam();
-    const { teams, setTeams } = useContext(TeamsContext);
+    const org = useCurrentOrg().data;
+    const invalidateOrgs = useOrganizationsInvalidator();
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
-    const [teamName, setTeamName] = useState(team?.name || "");
+    const [teamName, setTeamName] = useState(org?.name || "");
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [updated, setUpdated] = useState(false);
 
     const close = () => setModal(false);
 
     const updateTeamInformation = useCallback(async () => {
-        if (!team || errorMessage || !teams) {
+        if (!org || errorMessage) {
             return;
         }
         try {
-            const updatedTeam = await getGitpodService().server.updateTeam(team.id, { name: teamName });
-            const updatedTeams = [...teams?.filter((t) => t.id !== team.id)];
-            updatedTeams.push(updatedTeam);
-            setTeams(updatedTeams);
+            await getGitpodService().server.updateTeam(org.id, { name: teamName });
+            invalidateOrgs();
             setUpdated(true);
             setTimeout(() => setUpdated(false), 3000);
         } catch (error) {
             setErrorMessage(`Failed to update organization information: ${error.message}`);
         }
-    }, [team, errorMessage, teams, teamName, setTeams]);
+    }, [org, errorMessage, teamName, invalidateOrgs]);
 
     const onNameChange = useCallback(
         async (event: React.ChangeEvent<HTMLInputElement>) => {
-            if (!team) {
+            if (!org) {
                 return;
             }
             const newName = event.target.value || "";
@@ -96,18 +94,18 @@ export default function TeamSettings() {
                 setErrorMessage(undefined);
             }
         },
-        [team],
+        [org],
     );
 
     const deleteTeam = useCallback(async () => {
-        if (!team || !user) {
+        if (!org || !user) {
             return;
         }
 
-        await teamsService.deleteTeam({ teamId: team.id });
-
+        await teamsService.deleteTeam({ teamId: org.id });
+        invalidateOrgs();
         document.location.href = gitpodHostUrl.asDashboard().toString();
-    }, [team, user]);
+    }, [invalidateOrgs, org, user]);
 
     return (
         <>
@@ -137,7 +135,7 @@ export default function TeamSettings() {
                 <div className="flex flex-row">
                     <button
                         className="primary"
-                        disabled={team?.name === teamName || !!errorMessage}
+                        disabled={org?.name === teamName || !!errorMessage}
                         onClick={updateTeamInformation}
                     >
                         Update Organization Name
@@ -157,7 +155,7 @@ export default function TeamSettings() {
             <ConfirmationModal
                 title="Delete Team"
                 buttonText="Delete Team"
-                buttonDisabled={teamNameToDelete !== team?.name}
+                buttonDisabled={teamNameToDelete !== org?.name}
                 visible={modal}
                 warningHead="Warning"
                 warningText="This action cannot be reversed."
@@ -165,7 +163,7 @@ export default function TeamSettings() {
                 onConfirm={deleteTeam}
             >
                 <p className="text-base text-gray-500">
-                    You are about to permanently delete <b>{team?.name}</b> including all associated data.
+                    You are about to permanently delete <b>{org?.name}</b> including all associated data.
                 </p>
                 <ol className="text-gray-500 text-m list-outside list-decimal">
                     <li className="ml-5">
@@ -178,7 +176,7 @@ export default function TeamSettings() {
                     </li>
                 </ol>
                 <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">
-                    Type <code>{team?.name}</code> to confirm
+                    Type <code>{org?.name}</code> to confirm
                 </p>
                 <input
                     autoFocus

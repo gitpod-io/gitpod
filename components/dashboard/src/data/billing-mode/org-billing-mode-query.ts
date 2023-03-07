@@ -7,12 +7,12 @@
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
-import { useCurrentTeam } from "../../teams/teams-context";
+import { useCurrentOrg } from "../organizations/orgs-query";
 
 type OrgBillingModeQueryResult = BillingMode;
 
 export const useOrgBillingMode = () => {
-    const team = useCurrentTeam();
+    const team = useCurrentOrg().data;
 
     return useQuery<OrgBillingModeQueryResult>({
         queryKey: getOrgBillingModeQueryKey(team?.id ?? ""),

@@ -8,11 +8,11 @@ import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { getGitpodService } from "../../service/service";
-import { useCurrentTeam } from "../../teams/teams-context";
+import { useCurrentOrg } from "../organizations/orgs-query";
 
 export type OrgAuthProvidersQueryResult = AuthProviderEntry[];
 export const useOrgAuthProvidersQuery = () => {
-    const organization = useCurrentTeam();
+    const organization = useCurrentOrg().data;
 
     return useQuery<OrgAuthProvidersQueryResult>({
         queryKey: getOrgAuthProvidersQueryKey(organization?.id ?? ""),

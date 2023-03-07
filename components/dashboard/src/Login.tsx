@@ -8,7 +8,6 @@ import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { UserContext } from "./user-context";
-import { TeamsContext } from "./teams/teams-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName, getSafeURLRedirect } from "./provider-utils";
 import gitpod from "./images/gitpod.svg";
@@ -23,7 +22,6 @@ import prebuild from "./images/welcome/prebuild.svg";
 import exclamation from "./images/exclamation.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
-import { publicApiTeamsToProtocol, teamsService } from "./service/public-api";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 
 function Item(props: { icon: string; iconSize?: string; text: string }) {
@@ -50,7 +48,6 @@ export function hasVisitedMarketingWebsiteBefore() {
 
 export function Login() {
     const { setUser } = useContext(UserContext);
-    const { setTeams } = useContext(TeamsContext);
 
     const urlHash = useMemo(() => getURLHash(), []);
 
@@ -100,12 +97,8 @@ export function Login() {
 
     const updateUser = async () => {
         await getGitpodService().reconnect();
-        const [user, teams] = await Promise.all([
-            getGitpodService().server.getLoggedInUser(),
-            publicApiTeamsToProtocol((await teamsService.listTeams({})).teams),
-        ]);
+        const [user] = await Promise.all([getGitpodService().server.getLoggedInUser()]);
         setUser(user);
-        setTeams(teams);
         markLoggedIn();
     };
 

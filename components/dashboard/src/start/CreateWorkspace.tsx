@@ -29,7 +29,7 @@ import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { StartWorkspaceOptions } from "./start-workspace-options";
 import { useLocation } from "react-router";
-import { useCurrentTeam } from "../teams/teams-context";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -48,7 +48,7 @@ export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload>();
     const [stillParsing, setStillParsing] = useState(false);
     const location = useLocation();
-    const org = useCurrentTeam();
+    const org = useCurrentOrg().data;
     const user = useCurrentUser();
 
     const createWorkspace = useCallback(

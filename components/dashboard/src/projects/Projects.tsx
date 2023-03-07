@@ -4,26 +4,26 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Link } from "react-router-dom";
-import Header from "../components/Header";
-import projectsEmpty from "../images/projects-empty.svg";
-import projectsEmptyDark from "../images/projects-empty-dark.svg";
-import { useHistory } from "react-router";
-import { useCallback, useContext, useMemo, useState } from "react";
-import { useCurrentTeam } from "../teams/teams-context";
-import { ThemeContext } from "../theme-context";
 import { Project } from "@gitpod/gitpod-protocol";
+import { useCallback, useContext, useMemo, useState } from "react";
+import { useHistory } from "react-router";
+import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
-import { ProjectListItem } from "./ProjectListItem";
+import Header from "../components/Header";
 import { SpinnerLoader } from "../components/Loader";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
-import { projectsPathNew } from "./projects.routes";
 import search from "../icons/search.svg";
 import { Heading2 } from "../components/typography/headings";
+import projectsEmptyDark from "../images/projects-empty-dark.svg";
+import projectsEmpty from "../images/projects-empty.svg";
+import { ThemeContext } from "../theme-context";
+import { ProjectListItem } from "./ProjectListItem";
+import { projectsPathNew } from "./projects.routes";
 
 export default function ProjectsPage() {
     const history = useHistory();
-    const team = useCurrentTeam();
+    const team = useCurrentOrg().data;
     const { data, isLoading, isError, refetch } = useListProjectsQuery();
     const { isDark } = useContext(ThemeContext);
     const [searchFilter, setSearchFilter] = useState<string | undefined>();

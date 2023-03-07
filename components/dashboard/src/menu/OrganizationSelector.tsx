@@ -4,187 +4,167 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent, useMemo } from "react";
+import { FunctionComponent } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { OrgIcon, OrgIconProps } from "../components/org-icon/OrgIcon";
-import { useCurrentTeam, useTeamMemberInfos, useTeams } from "../teams/teams-context";
-import { useCurrentOrgMember } from "../data/organizations/org-members-query";
 import { useCurrentUser } from "../user-context";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query";
-import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
+import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 
 export interface OrganizationSelectorProps {}
 
 export default function OrganizationSelector(p: OrganizationSelectorProps) {
     const user = useCurrentUser();
-    const teams = useTeams();
-    const currentOrg = useCurrentTeam();
-    const teamMembers = useTeamMemberInfos();
-    const { member: currentOrgMember } = useCurrentOrgMember();
+    const orgs = useOrganizations();
+    const currentOrg = useCurrentOrg();
     const { data: userBillingMode } = useUserBillingMode();
-    const { data: orgBillingMode } = useOrgBillingMode();
     const { showUsageView } = useFeatureFlags();
 
     const userFullName = user?.fullName || user?.name || "...";
 
-    const entries: ContextMenuEntry[] = useMemo(() => {
-        let activeOrgEntry = !currentOrg
-            ? {
-                  title: userFullName,
-                  customContent: <CurrentOrgEntry title={userFullName} subtitle="Personal Account" />,
-                  active: false,
-                  separator: false,
-                  tight: true,
-              }
-            : {
-                  title: currentOrg.name,
-                  customContent: (
-                      <CurrentOrgEntry
-                          title={currentOrg.name}
-                          subtitle={
-                              !!teamMembers[currentOrg.id]
-                                  ? `${teamMembers[currentOrg.id].length} member${
-                                        teamMembers[currentOrg.id].length === 1 ? "" : "s"
-                                    }`
-                                  : "..."
-                          }
-                      />
-                  ),
-                  active: false,
-                  separator: false,
-                  tight: true,
-              };
+    let activeOrgEntry = !currentOrg.data
+        ? {
+              title: userFullName,
+              customContent: <CurrentOrgEntry title={userFullName} subtitle="Personal Account" />,
+              active: false,
+              separator: false,
+              tight: true,
+          }
+        : {
+              title: currentOrg.data.name,
+              customContent: (
+                  <CurrentOrgEntry
+                      title={currentOrg.data.name}
+                      subtitle={
+                          !!currentOrg.data.members
+                              ? `${currentOrg.data.members.length} member${
+                                    currentOrg.data.members.length === 1 ? "" : "s"
+                                }`
+                              : "..."
+                      }
+                  />
+              ),
+              active: false,
+              separator: false,
+              tight: true,
+          };
 
-        const linkEntries: ContextMenuEntry[] = [];
+    const linkEntries: ContextMenuEntry[] = [];
 
-        // Show members if we have an org selected
-        if (currentOrg) {
-            linkEntries.push({
-                title: "Members",
-                customContent: <LinkEntry>Members</LinkEntry>,
-                active: false,
-                separator: true,
-                link: "/members",
-            });
-        }
-
-        // Show usage for personal account if usage based billing enabled for user
-        const showUsageForPersonalAccount =
-            !currentOrg &&
-            BillingMode.showUsageBasedBilling(userBillingMode) &&
-            !user?.additionalData?.isMigratedToTeamOnlyAttribution;
-
-        const showUsageForOrg =
-            currentOrg &&
-            currentOrgMember?.role === "owner" &&
-            (orgBillingMode?.mode === "usage-based" || showUsageView);
-
-        if (showUsageForPersonalAccount || showUsageForOrg) {
-            linkEntries.push({
-                title: "Usage",
-                customContent: <LinkEntry>Usage</LinkEntry>,
-                active: false,
-                separator: false,
-                link: "/usage",
-            });
-        }
-
-        // Show settings if user is an owner of current org
-        if (currentOrg && currentOrgMember?.role === "owner") {
-            linkEntries.push({
-                title: "Settings",
-                customContent: <LinkEntry>Settings</LinkEntry>,
-                active: false,
-                separator: false,
-                link: "/settings",
-            });
-        }
-
-        // Ensure only last link entry has a separator
-        linkEntries.forEach((e, idx) => {
-            e.separator = idx === linkEntries.length - 1;
+    // Show members if we have an org selected
+    if (currentOrg.data) {
+        linkEntries.push({
+            title: "Members",
+            customContent: <LinkEntry>Members</LinkEntry>,
+            active: false,
+            separator: true,
+            link: "/members",
         });
+    }
 
-        const otherOrgEntries = (teams || [])
-            .filter((t) => t.id !== currentOrg?.id)
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((t) => ({
-                title: t.name,
-                customContent: (
-                    <OrgEntry
-                        id={t.id}
-                        title={t.name}
-                        subtitle={
-                            !!teamMembers[t.id]
-                                ? `${teamMembers[t.id].length} member${teamMembers[t.id].length === 1 ? "" : "s"}`
-                                : "..."
-                        }
-                    />
-                ),
-                // marking as active for styles
-                active: true,
-                separator: true,
-                link: `/?org=${t.id}`,
-            }));
+    // Show usage for personal account if usage based billing enabled for user
+    const showUsageForPersonalAccount =
+        !currentOrg.data &&
+        BillingMode.showUsageBasedBilling(userBillingMode) &&
+        !user?.additionalData?.isMigratedToTeamOnlyAttribution;
 
-        const userMigrated = user?.additionalData?.isMigratedToTeamOnlyAttribution ?? false;
-        const showPersonalEntry = !userMigrated && !!currentOrg;
+    const showUsageForOrg =
+        currentOrg.data &&
+        currentOrg.data.isOwner &&
+        (currentOrg.data.billingMode?.mode === "usage-based" || showUsageView);
 
-        return [
-            activeOrgEntry,
-            ...linkEntries,
-            // If user has not been migrated, and isn't currently selected, show personal account
-            ...(showPersonalEntry
-                ? [
-                      {
-                          title: userFullName,
-                          customContent: (
-                              <OrgEntry id={user?.id ?? "self"} title={userFullName} subtitle="Personal Account" />
-                          ),
-                          // marking as active for styles
-                          active: true,
-                          separator: true,
-                          link: `/?org=0`,
-                      },
-                  ]
-                : []),
-            ...otherOrgEntries,
-            {
-                title: "Create a new organization",
-                customContent: (
-                    <div className="w-full text-gray-500 flex items-center">
-                        <span className="flex-1">New Organization</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5">
-                            <path
-                                fill="currentColor"
-                                fillRule="evenodd"
-                                d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
-                    </div>
-                ),
-                link: "/orgs/new",
-                // marking as active for styles
-                active: true,
-            },
-        ];
-    }, [
-        currentOrg,
-        userFullName,
-        user?.id,
-        user?.additionalData?.isMigratedToTeamOnlyAttribution,
-        teamMembers,
-        userBillingMode,
-        showUsageView,
-        currentOrgMember?.role,
-        orgBillingMode?.mode,
-        teams,
-    ]);
+    if (showUsageForPersonalAccount || showUsageForOrg) {
+        linkEntries.push({
+            title: "Usage",
+            customContent: <LinkEntry>Usage</LinkEntry>,
+            active: false,
+            separator: false,
+            link: "/usage",
+        });
+    }
 
-    const selectedTitle = currentOrg ? currentOrg.name : userFullName;
+    // Show settings if user is an owner of current org
+    if (currentOrg.data && currentOrg.data.isOwner) {
+        linkEntries.push({
+            title: "Settings",
+            customContent: <LinkEntry>Settings</LinkEntry>,
+            active: false,
+            separator: false,
+            link: "/settings",
+        });
+    }
+
+    // Ensure only last link entry has a separator
+    linkEntries.forEach((e, idx) => {
+        e.separator = idx === linkEntries.length - 1;
+    });
+
+    const otherOrgEntries = (orgs.data || [])
+        .filter((org) => org.id !== currentOrg.data?.id)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((org) => ({
+            title: org.name,
+            customContent: (
+                <OrgEntry
+                    id={org.id}
+                    title={org.name}
+                    subtitle={
+                        !!org.members ? `${org.members.length} member${org.members.length === 1 ? "" : "s"}` : "..."
+                    }
+                />
+            ),
+            // marking as active for styles
+            active: true,
+            separator: true,
+            link: `/?org=${org.id}`,
+        }));
+
+    const userMigrated = user?.additionalData?.isMigratedToTeamOnlyAttribution ?? false;
+    const showPersonalEntry = !userMigrated && !!currentOrg.data;
+
+    const entries = [
+        activeOrgEntry,
+        ...linkEntries,
+        // If user has not been migrated, and isn't currently selected, show personal account
+        ...(showPersonalEntry
+            ? [
+                  {
+                      title: userFullName,
+                      customContent: (
+                          <OrgEntry id={user?.id ?? "self"} title={userFullName} subtitle="Personal Account" />
+                      ),
+                      // marking as active for styles
+                      active: true,
+                      separator: true,
+                      link: `/?org=0`,
+                  },
+              ]
+            : []),
+        ...otherOrgEntries,
+        {
+            title: "Create a new organization",
+            customContent: (
+                <div className="w-full text-gray-500 flex items-center">
+                    <span className="flex-1">New Organization</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5">
+                        <path
+                            fill="currentColor"
+                            fillRule="evenodd"
+                            d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z"
+                            clipRule="evenodd"
+                        />
+                    </svg>
+                </div>
+            ),
+            link: "/orgs/new",
+            // marking as active for styles
+            active: true,
+        },
+    ];
+
+    const selectedTitle = currentOrg?.data ? currentOrg.data.name : userFullName;
     const classes =
         "flex h-full text-base py-0 text-gray-500 bg-gray-50  dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-700";
     return (
@@ -192,7 +172,7 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
             <div className={`${classes} rounded-2xl pl-1`}>
                 <div className="py-1 pr-1 flex font-semibold whitespace-nowrap max-w-xs overflow-hidden">
                     <OrgIcon
-                        id={currentOrg?.id || user?.id || "empty"}
+                        id={currentOrg?.data?.id || user?.id || "empty"}
                         name={selectedTitle}
                         size="small"
                         className="mr-2"
@@ -256,30 +236,30 @@ const CurrentOrgEntry: FunctionComponent<CurrentOrgEntryProps> = ({ title, subti
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" className="dark:hidden" fill="none">
                 <path
                     fill="#78716C"
-                    fill-rule="evenodd"
+                    fillRule="evenodd"
                     d="M18.2348 5.8867 7.88699 16.2345l-2.12132-2.1213L16.1135 3.76538l2.1213 2.12132Z"
-                    clip-rule="evenodd"
+                    clipRule="evenodd"
                 />
                 <path
                     fill="#78716C"
-                    fill-rule="evenodd"
+                    fillRule="evenodd"
                     d="m3.88695 8.06069 5.00004 5.00001-2.12132 2.1214-5.00005-5.0001 2.12133-2.12131Z"
-                    clip-rule="evenodd"
+                    clipRule="evenodd"
                 />
             </svg>
 
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" className="hidden dark:block" fill="none">
                 <path
                     fill="#E7E5E4"
-                    fill-rule="evenodd"
+                    fillRule="evenodd"
                     d="M18.2348 5.8867 7.88699 16.2345l-2.12132-2.1213L16.1135 3.76538l2.1213 2.12132Z"
-                    clip-rule="evenodd"
+                    clipRule="evenodd"
                 />
                 <path
                     fill="#E7E5E4"
-                    fill-rule="evenodd"
+                    fillRule="evenodd"
                     d="m3.88695 8.06069 5.00004 5.00001-2.12132 2.1214-5.00005-5.0001 2.12133-2.12131Z"
-                    clip-rule="evenodd"
+                    clipRule="evenodd"
                 />
             </svg>
         </div>

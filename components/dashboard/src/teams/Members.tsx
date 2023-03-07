@@ -4,59 +4,33 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import dayjs from "dayjs";
-import { useContext, useEffect, useState } from "react";
-import { useHistory } from "react-router";
-import Header from "../components/Header";
+import { useState } from "react";
+import { trackEvent } from "../Analytics";
 import DropDown from "../components/DropDown";
-import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
+import Header from "../components/Header";
+import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import Tooltip from "../components/Tooltip";
-import copy from "../images/copy.svg";
-import { UserContext } from "../user-context";
-import { TeamsContext, useCurrentTeam } from "./teams-context";
-import { trackEvent } from "../Analytics";
-import { publicApiTeamMembersToProtocol, publicApiTeamsToProtocol, teamsService } from "../service/public-api";
-import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import searchIcon from "../icons/search.svg";
+import copy from "../images/copy.svg";
+import { teamsService } from "../service/public-api";
+import { useCurrentUser } from "../user-context";
 
 export default function MembersPage() {
-    const { user } = useContext(UserContext);
-    const { setTeams } = useContext(TeamsContext);
+    const user = useCurrentUser();
+    const org = useCurrentOrg();
+    const invalidateOrgs = useOrganizationsInvalidator();
 
-    const history = useHistory();
-    const team = useCurrentTeam();
-    const [members, setMembers] = useState<TeamMemberInfo[]>([]);
-    const [genericInviteId, setGenericInviteId] = useState<string>();
     const [showInviteModal, setShowInviteModal] = useState<boolean>(false);
     const [searchText, setSearchText] = useState<string>("");
     const [roleFilter, setRoleFilter] = useState<TeamMemberRole | undefined>();
-    const [leaveTeamEnabled, setLeaveTeamEnabled] = useState<boolean>(false);
 
-    useEffect(() => {
-        if (!team) {
-            return;
-        }
-        (async () => {
-            const response = await teamsService.getTeam({ teamId: team.id });
-            const members = publicApiTeamMembersToProtocol(response.team?.members || []);
-            const invite = response.team?.teamInvitation?.id || "";
-
-            setMembers(members);
-            setGenericInviteId(invite);
-        })();
-    }, [team]);
-
-    useEffect(() => {
-        const owners = members.filter((m) => m.role === "owner");
-        const isOwner = owners.some((o) => o.userId === user?.id);
-        setLeaveTeamEnabled(!isOwner || owners.length > 1);
-    }, [members, user?.id]);
-
-    const ownMemberInfo = members.find((m) => m.userId === user?.id);
-
-    const getInviteURL = (inviteId: string) => {
+    const getInviteURL = (inviteId?: string) => {
+        if (!inviteId) return "no-invite-id";
         const link = new URL(window.location.href);
         link.pathname = "/orgs/join";
         link.search = "?inviteId=" + inviteId;
@@ -79,55 +53,34 @@ export default function MembersPage() {
     };
 
     const resetInviteLink = async () => {
-        // reset genericInvite first to prevent races on double click
-        if (genericInviteId) {
-            setGenericInviteId(undefined);
-            const newInviteId = (await teamsService.resetTeamInvitation({ teamId: team!.id })).teamInvitation?.id;
-            setGenericInviteId(newInviteId);
-        }
+        await teamsService.resetTeamInvitation({ teamId: org.data?.id });
+        invalidateOrgs();
     };
 
     const setTeamMemberRole = async (userId: string, role: TeamMemberRole) => {
         await teamsService.updateTeamMember({
-            teamId: team!.id,
+            teamId: org.data?.id,
             teamMember: { userId, role: role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER },
         });
-
-        const members = publicApiTeamMembersToProtocol(
-            (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-        );
-        setMembers(members);
+        invalidateOrgs();
     };
 
     const removeTeamMember = async (userId: string) => {
-        await teamsService.deleteTeamMember({ teamId: team!.id, teamMemberId: userId });
-
-        const newTeams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
-
-        if (newTeams.some((t) => t.id === team!.id)) {
-            // We're still a member of this team.
-
-            const newMembers = publicApiTeamMembersToProtocol(
-                (await teamsService.getTeam({ teamId: team!.id })).team?.members || [],
-            );
-            setMembers(newMembers);
-        } else {
-            // We're no longer a member of this team (note: we navigate away first in order to avoid a 404).
-            history.push("/");
-            setTeams(newTeams);
-        }
+        await teamsService.deleteTeamMember({ teamId: org.data?.id, teamMemberId: userId });
+        invalidateOrgs();
     };
 
-    const filteredMembers = members.filter((m) => {
-        if (!!roleFilter && m.role !== roleFilter) {
-            return false;
-        }
-        const memberSearchText = `${m.fullName || ""}${m.primaryEmail || ""}`.toLocaleLowerCase();
-        if (!memberSearchText.includes(searchText.toLocaleLowerCase())) {
-            return false;
-        }
-        return true;
-    });
+    const filteredMembers =
+        org.data?.members.filter((m) => {
+            if (!!roleFilter && m.role !== roleFilter) {
+                return false;
+            }
+            const memberSearchText = `${m.fullName || ""}${m.primaryEmail || ""}`.toLocaleLowerCase();
+            if (!memberSearchText.includes(searchText.toLocaleLowerCase())) {
+                return false;
+            }
+            return true;
+        }) || [];
 
     return (
         <>
@@ -173,7 +126,7 @@ export default function MembersPage() {
                     <button
                         onClick={() => {
                             trackEvent("invite_url_requested", {
-                                invite_url: getInviteURL(genericInviteId!),
+                                invite_url: getInviteURL(org.data?.invitationId),
                             });
                             setShowInviteModal(true);
                         }}
@@ -192,9 +145,9 @@ export default function MembersPage() {
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" className="h-4 w-4" viewBox="0 0 16 16">
                                 <path
                                     fill="#A8A29E"
-                                    fill-rule="evenodd"
+                                    fillRule="evenodd"
                                     d="M13.366 8.234a.8.8 0 010 1.132l-4.8 4.8a.8.8 0 01-1.132 0l-4.8-4.8a.8.8 0 111.132-1.132L7.2 11.67V2.4a.8.8 0 111.6 0v9.269l3.434-3.435a.8.8 0 011.132 0z"
-                                    clip-rule="evenodd"
+                                    clipRule="evenodd"
                                 />
                             </svg>
                         </ItemField>
@@ -232,7 +185,7 @@ export default function MembersPage() {
                                 </ItemField>
                                 <ItemField className="flex items-center my-auto">
                                     <span className="text-gray-400 capitalize">
-                                        {ownMemberInfo?.role !== "owner" ? (
+                                        {org.data?.isOwner ? (
                                             m.role
                                         ) : (
                                             <DropDown
@@ -257,16 +210,17 @@ export default function MembersPage() {
                                             m.userId === user?.id
                                                 ? [
                                                       {
-                                                          title: leaveTeamEnabled
+                                                          title: org.data?.isOwner
                                                               ? "Leave Organization"
                                                               : "Remaining owner",
-                                                          customFontStyle: leaveTeamEnabled
+                                                          customFontStyle: org.data?.isOwner
                                                               ? "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                                                               : "text-gray-400 dark:text-gray-200",
-                                                          onClick: () => leaveTeamEnabled && removeTeamMember(m.userId),
+                                                          onClick: () =>
+                                                              org.data?.isOwner && removeTeamMember(m.userId),
                                                       },
                                                   ]
-                                                : ownMemberInfo?.role === "owner"
+                                                : org.data?.isOwner
                                                 ? [
                                                       {
                                                           title: "Remove",
@@ -284,7 +238,7 @@ export default function MembersPage() {
                     )}
                 </ItemsList>
             </div>
-            {genericInviteId && showInviteModal && (
+            {org.data?.invitationId && showInviteModal && (
                 // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
                     <ModalHeader>Invite Members</ModalHeader>
@@ -298,12 +252,12 @@ export default function MembersPage() {
                                 disabled={true}
                                 readOnly={true}
                                 type="text"
-                                value={getInviteURL(genericInviteId!)}
+                                value={getInviteURL(org.data?.invitationId)}
                                 className="rounded-md w-full truncate overflow-x-scroll pr-8"
                             />
                             <div
                                 className="cursor-pointer"
-                                onClick={() => copyToClipboard(getInviteURL(genericInviteId!))}
+                                onClick={() => copyToClipboard(getInviteURL(org.data?.invitationId))}
                             >
                                 <div className="absolute top-1/3 right-3">
                                     <Tooltip content={copied ? "Copied!" : "Copy Invite URL"}>

@@ -129,7 +129,10 @@ export interface StartPrebuildResult {
     wsid: string;
     done: boolean;
 }
-export interface Team {
+
+// alias for backwards compatibility
+export type Team = Organization;
+export interface Organization {
     id: string;
     name: string;
     creationTime: string;
@@ -138,7 +141,8 @@ export interface Team {
     deleted?: boolean;
 }
 
-export type TeamMemberRole = "owner" | "member";
+export type TeamMemberRole = OrgMemberRole;
+export type OrgMemberRole = "owner" | "member";
 
 export namespace TeamMemberRole {
     export function isValid(role: any): role is TeamMemberRole {
@@ -146,7 +150,8 @@ export namespace TeamMemberRole {
     }
 }
 
-export interface TeamMemberInfo {
+export type TeamMemberInfo = OrgMemberInfo;
+export interface OrgMemberInfo {
     userId: string;
     fullName?: string;
     primaryEmail?: string;

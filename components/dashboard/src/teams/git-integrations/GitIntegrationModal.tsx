@@ -7,18 +7,18 @@
 import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import Alert from "../../components/Alert";
-import { InputWithCopy } from "../../components/InputWithCopy";
-import Modal, { ModalBody, ModalFooter, ModalHeader } from "../../components/Modal";
-import { openAuthorizeWindow } from "../../provider-utils";
-import { getGitpodService, gitpodHostUrl } from "../../service/service";
-import exclamation from "../../images/exclamation.svg";
-import { TextInputField } from "../../components/forms/TextInputField";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
-import { useUpsertOrgAuthProviderMutation } from "../../data/auth-providers/upsert-org-auth-provider-mutation";
+import { TextInputField } from "../../components/forms/TextInputField";
+import { InputWithCopy } from "../../components/InputWithCopy";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../../components/Modal";
 import { useInvalidateOrgAuthProvidersQuery } from "../../data/auth-providers/org-auth-providers-query";
-import { useCurrentTeam } from "../teams-context";
+import { useUpsertOrgAuthProviderMutation } from "../../data/auth-providers/upsert-org-auth-provider-mutation";
+import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
+import exclamation from "../../images/exclamation.svg";
+import { openAuthorizeWindow } from "../../provider-utils";
+import { getGitpodService, gitpodHostUrl } from "../../service/service";
 
 type Props = {
     provider?: AuthProviderEntry;
@@ -26,7 +26,7 @@ type Props = {
 };
 
 export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
-    const team = useCurrentTeam();
+    const team = useCurrentOrg().data;
     const [type, setType] = useState<string>(props.provider?.type ?? "GitLab");
     const [host, setHost] = useState<string>(props.provider?.host ?? "");
     const [clientId, setClientId] = useState<string>(props.provider?.oauth.clientId ?? "");

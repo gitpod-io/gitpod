@@ -8,8 +8,8 @@ import { Project } from "@gitpod/gitpod-protocol";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import { validate as uuidValidate } from "uuid";
+import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { listAllProjects } from "../service/public-api";
-import { useCurrentTeam, useTeams } from "../teams/teams-context";
 import { useCurrentUser } from "../user-context";
 
 export const ProjectContext = createContext<{
@@ -49,8 +49,8 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
     const { project, setProject } = useContext(ProjectContext);
     const [loading, setLoading] = useState(true);
     const user = useCurrentUser();
-    const team = useCurrentTeam();
-    const teams = useTeams();
+    const org = useCurrentOrg();
+    const orgs = useOrganizations();
     const slugs = useProjectSlugs();
     const location = useLocation();
     const history = useHistory();
@@ -69,18 +69,18 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
         }
         (async () => {
             let projects: Project[];
-            if (!!team) {
-                projects = await listAllProjects({ teamId: team.id });
+            if (!!org.data) {
+                projects = await listAllProjects({ teamId: org.data?.id });
             } else {
                 projects = await listAllProjects({ userId: user?.id });
             }
 
             // Find project matching with slug, otherwise with name
             const project = projects.find((p) => Project.slug(p) === slugs.projectSlug);
-            if (!project && teams) {
+            if (!project && orgs.data) {
                 // check other orgs
-                for (const t of teams) {
-                    if (t.id === team?.id) {
+                for (const t of orgs.data || []) {
+                    if (t.id === org.data?.id) {
                         continue;
                     }
                     const projects = await listAllProjects({ teamId: t.id });
@@ -102,7 +102,7 @@ export function useCurrentProject(): { project: Project | undefined; loading: bo
             setProject(project);
             setLoading(false);
         })();
-    }, [slugs.projectSlug, setProject, team, user, teams, location, history]);
+    }, [slugs.projectSlug, setProject, org.data, user, orgs.data, location, history]);
 
     return { project, loading };
 }

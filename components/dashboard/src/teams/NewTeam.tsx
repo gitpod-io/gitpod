@@ -4,15 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FormEvent, useContext, useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
-import { TeamsContext } from "./teams-context";
-import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
 import { ConnectError } from "@bufbuild/connect-web";
-import { Heading1, Heading2, Heading3, Subheading } from "../components/typography/headings";
+import { FormEvent, useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
+import { Heading1, Heading3, Subheading } from "../components/typography/headings";
+import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
+import { publicApiTeamToProtocol, teamsService } from "../service/public-api";
 
 export default function NewTeamPage() {
-    const { setTeams } = useContext(TeamsContext);
+    const invalidateOrgs = useOrganizationsInvalidator();
     const [name, setName] = useState("");
 
     const history = useHistory();
@@ -24,9 +24,7 @@ export default function NewTeamPage() {
         try {
             const team = publicApiTeamToProtocol((await teamsService.createTeam({ name })).team!);
 
-            const teams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
-
-            setTeams(teams);
+            invalidateOrgs();
             history.push(`/?org=${team.id}`);
         } catch (error) {
             console.error(error);
