@@ -58,7 +58,7 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 	if p.CaCert != "" {
 		rootCertPool := x509.NewCertPool()
 		if ok := rootCertPool.AppendCertsFromPEM([]byte(p.CaCert)); !ok {
-			log.Fatal("Failed to append custom DB CA cert.")
+			return nil, fmt.Errorf("failed to append custome certificate for database connection")
 		}
 
 		tlsConfigName := "custom"
@@ -67,7 +67,7 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 			MinVersion: tls.VersionTLS12, // semgrep finding: set lower boundary to exclude insecure TLS1.0
 		})
 		if err != nil {
-			return nil, fmt.Errorf("Failed to register custom DB CA cert: %w", err)
+			return nil, fmt.Errorf("failed to register custom DB CA cert: %w", err)
 		}
 		cfg.TLSConfig = tlsConfigName
 	}
@@ -94,9 +94,9 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to open db connection: %w", err)
 	}
 
-	err = conn.Use(tracing.NewPlugin(tracing.WithoutMetrics()))
+	err = conn.Use(tracing.NewPlugin())
 	if err != nil {
-		return nil, fmt.Errorf("failed to setup db tracing: %w")
+		return nil, fmt.Errorf("failed to setup db tracing: %w", err)
 	}
 
 	return conn, nil
