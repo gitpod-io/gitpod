@@ -9,6 +9,7 @@ import { getGitpodService } from "../service/service";
 import { trackEvent } from "../Analytics";
 import WorkspaceClass from "../components/WorkspaceClass";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
+import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 
 interface SelectWorkspaceClassProps {
     workspaceClass?: string;
@@ -17,6 +18,7 @@ interface SelectWorkspaceClassProps {
 
 export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
     const [workspaceClass, setWorkspaceClass] = useState<string | undefined>(props.workspaceClass);
+    const supportedClasses = useWorkspaceClasses();
     const actuallySetWorkspaceClass = async (value: string) => {
         const previousValue = await props.setWorkspaceClass(value);
         if (previousValue !== value) {
@@ -28,25 +30,9 @@ export default function SelectWorkspaceClass(props: SelectWorkspaceClassProps) {
         }
     };
 
-    const [supportedClasses, setSupportedClasses] = useState<SupportedWorkspaceClass[]>([]);
-
-    useEffect(() => {
-        const fetchClasses = async () => {
-            const classes = await getGitpodService().server.getSupportedWorkspaceClasses();
-            setSupportedClasses(classes);
-
-            if (!workspaceClass) {
-                setWorkspaceClass(classes.find((c) => c.isDefault)?.id || "");
-            }
-        };
-
-        fetchClasses().catch(console.error);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
     return (
         <div className="mt-4 space-x-3 flex">
-            {supportedClasses.map((c) => {
+            {supportedClasses.data?.map((c) => {
                 return (
                     <WorkspaceClass
                         additionalStyles="w-80"
