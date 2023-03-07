@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
@@ -49,11 +50,13 @@ type allowListCollector struct {
 	Labels                  []string
 	AllowLabelValues        map[string][]string
 	AllowLabelDefaultValues map[string]string
+	ClientLabel             string
 
 	reportedUnexpected map[string]struct{}
 }
 
 const UnknownValue = "unknown"
+const ClientHeaderField = "x-client"
 
 func (c *allowListCollector) Reconcile(metricName string, labels map[string]string) map[string]string {
 	reconcile := make(map[string]string)
@@ -113,20 +116,43 @@ func (c *allowListCollector) Reconcile(metricName string, labels map[string]stri
 	return reconcile
 }
 
-func newAllowListCollector(allowList []config.LabelAllowList) *allowListCollector {
+func (c *allowListCollector) withClientLabel(ctx context.Context, labels map[string]string) map[string]string {
+	if c.ClientLabel == "" {
+		return labels
+	}
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		if values := md.Get(ClientHeaderField); len(values) > 0 {
+			labels[c.ClientLabel] = values[0]
+		}
+	}
+	return labels
+}
+
+func newAllowListCollector(allowList []config.LabelAllowList, allowClient *config.ClientAllowList) *allowListCollector {
 	labels := make([]string, 0, len(allowList))
 	allowLabelValues := make(map[string][]string)
 	allowLabelDefaultValues := make(map[string]string)
+	ClientLabel := ""
 	for _, l := range allowList {
 		labels = append(labels, l.Name)
 		allowLabelValues[l.Name] = l.AllowValues
 		allowLabelDefaultValues[l.Name] = l.DefaultValue
+	}
+	if allowClient != nil {
+		labels = append(labels, allowClient.Name)
+		allowLabelValues[allowClient.Name] = allowClient.AllowValues
+		allowLabelDefaultValues[allowClient.Name] = allowClient.DefaultValue
+		ClientLabel = allowClient.Name
 	}
 	return &allowListCollector{
 		Labels:                  labels,
 		AllowLabelValues:        allowLabelValues,
 		AllowLabelDefaultValues: allowLabelDefaultValues,
 		reportedUnexpected:      make(map[string]struct{}),
+		ClientLabel:             ClientLabel,
 	}
 }
 
@@ -149,7 +175,7 @@ func (s *IDEMetricsServer) AddCounter(ctx context.Context, req *api.AddCounterRe
 	if err != nil {
 		return nil, err
 	}
-	newLabels := c.Reconcile(req.Name, req.Labels)
+	newLabels := c.Reconcile(req.Name, c.withClientLabel(ctx, req.Labels))
 	counterVec := c.Collector.(*prometheus.CounterVec)
 	counter, err := counterVec.GetMetricWith(newLabels)
 	if err != nil {
@@ -168,7 +194,7 @@ func (s *IDEMetricsServer) ObserveHistogram(ctx context.Context, req *api.Observ
 	if err != nil {
 		return nil, err
 	}
-	newLabels := c.Reconcile(req.Name, req.Labels)
+	newLabels := c.Reconcile(req.Name, c.withClientLabel(ctx, req.Labels))
 	histogramVec := c.Collector.(*prometheus.HistogramVec)
 	histogram, err := histogramVec.GetMetricWith(newLabels)
 	if err != nil {
@@ -188,7 +214,7 @@ func (s *IDEMetricsServer) AddHistogram(ctx context.Context, req *api.AddHistogr
 		return &api.AddHistogramResponse{}, nil
 	}
 	aggregatedHistograms := c.Collector.(*metrics.AggregatedHistograms)
-	newLabels := c.Reconcile(req.Name, req.Labels)
+	newLabels := c.Reconcile(req.Name, c.withClientLabel(ctx, req.Labels))
 	var labelValues []string
 	for _, label := range aggregatedHistograms.Labels {
 		labelValues = append(labelValues, newLabels[label])
@@ -235,7 +261,7 @@ func (s *IDEMetricsServer) registerCounterMetrics() {
 		if _, ok := s.counterMap[m.Name]; ok {
 			continue
 		}
-		c := newAllowListCollector(m.Labels)
+		c := newAllowListCollector(m.Labels, m.Client)
 		counterVec := prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: m.Name,
 			Help: m.Help,
@@ -254,7 +280,7 @@ func (s *IDEMetricsServer) registerHistogramMetrics() {
 		if _, ok := s.histogramMap[m.Name]; ok {
 			continue
 		}
-		c := newAllowListCollector(m.Labels)
+		c := newAllowListCollector(m.Labels, m.Client)
 		histogramVec := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    m.Name,
 			Help:    m.Help,
@@ -274,7 +300,7 @@ func (s *IDEMetricsServer) registerAggregatedHistogramMetrics() {
 		if _, ok := s.aggregatedHistogramMap[m.Name]; ok {
 			continue
 		}
-		c := newAllowListCollector(m.Labels)
+		c := newAllowListCollector(m.Labels, m.Client)
 		aggregatedHistograms := metrics.NewAggregatedHistograms(m.Name, m.Help, c.Labels, m.Buckets)
 		c.Collector = aggregatedHistograms
 		s.aggregatedHistogramMap[m.Name] = c
@@ -321,9 +347,15 @@ func (s *IDEMetricsServer) Start() error {
 	if err != nil {
 		return err
 	}
+	log.WithField("port", s.config.Server.Port).Info("started ide metrics server")
 	m := cmux.New(l)
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
-	restMux := grpcruntime.NewServeMux()
+	restMux := grpcruntime.NewServeMux(grpcruntime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
+		if strings.ToLower(key) == ClientHeaderField {
+			return ClientHeaderField, true
+		}
+		return grpcruntime.DefaultHeaderMatcher(key)
+	}))
 
 	var opts []grpc.ServerOption
 	if s.config.Debug {
