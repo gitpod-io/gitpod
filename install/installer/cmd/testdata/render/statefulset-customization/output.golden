@@ -3905,7 +3905,8 @@ data:
                 ],
                 "defaultValue": ""
               }
-            ]
+            ],
+            "client": null
           },
           {
             "name": "grpc_server_msg_received_total",
@@ -3932,7 +3933,8 @@ data:
                 ],
                 "defaultValue": ""
               }
-            ]
+            ],
+            "client": null
           },
           {
             "name": "grpc_server_msg_sent_total",
@@ -3959,7 +3961,8 @@ data:
                 ],
                 "defaultValue": ""
               }
-            ]
+            ],
+            "client": null
           },
           {
             "name": "grpc_server_started_total",
@@ -3986,7 +3989,8 @@ data:
                 ],
                 "defaultValue": ""
               }
-            ]
+            ],
+            "client": null
           },
           {
             "name": "gitpod_supervisor_frontend_error_total",
@@ -4008,7 +4012,8 @@ data:
                 ],
                 "defaultValue": "Unknown"
               }
-            ]
+            ],
+            "client": null
           },
           {
             "name": "gitpod_vscode_web_load_total",
@@ -4022,12 +4027,14 @@ data:
                 ],
                 "defaultValue": ""
               }
-            ]
+            ],
+            "client": null
           },
           {
             "name": "gitpod_supervisor_frontend_client_total",
             "help": "Total count of supervisor frontend client",
-            "labels": null
+            "labels": null,
+            "client": null
           },
           {
             "name": "gitpod_vscode_extension_gallery_operation_total",
@@ -4059,7 +4066,8 @@ data:
                 ],
                 "defaultValue": ""
               }
-            ]
+            ],
+            "client": null
           },
           {
             "name": "gitpod_vscode_extension_gallery_query_total",
@@ -4598,7 +4606,8 @@ data:
                 ],
                 "defaultValue": ""
               }
-            ]
+            ],
+            "client": null
           },
           {
             "name": "grpc_client_started_total",
@@ -4625,7 +4634,16 @@ data:
                 ],
                 "defaultValue": ""
               }
-            ]
+            ],
+            "client": {
+              "name": "metric_client",
+              "allowValues": [
+                "vscode-desktop-extension",
+                "supervisor",
+                "unknown"
+              ],
+              "defaultValue": "unknown"
+            }
           },
           {
             "name": "grpc_client_handled_total",
@@ -4659,7 +4677,16 @@ data:
                 ],
                 "defaultValue": ""
               }
-            ]
+            ],
+            "client": {
+              "name": "metric_client",
+              "allowValues": [
+                "vscode-desktop-extension",
+                "supervisor",
+                "unknown"
+              ],
+              "defaultValue": "unknown"
+            }
           }
         ],
         "histogramMetrics": [
@@ -4693,7 +4720,8 @@ data:
               10,
               15,
               30
-            ]
+            ],
+            "client": null
           },
           {
             "name": "gitpod_vscode_extension_gallery_query_duration_seconds",
@@ -4715,7 +4743,8 @@ data:
               10,
               15,
               30
-            ]
+            ],
+            "client": null
           }
         ],
         "aggregatedHistogramMetrics": [
@@ -4759,7 +4788,8 @@ data:
               120,
               240,
               600
-            ]
+            ],
+            "client": null
           },
           {
             "name": "supervisor_ide_ready_duration_total",
@@ -4783,7 +4813,8 @@ data:
               2.5,
               5,
               10
-            ]
+            ],
+            "client": null
           },
           {
             "name": "supervisor_initializer_bytes_second",
@@ -4810,7 +4841,8 @@ data:
               536870912,
               1073741824,
               2147483648
-            ]
+            ],
+            "client": null
           },
           {
             "name": "grpc_client_handling_seconds",
@@ -4846,7 +4878,16 @@ data:
               2,
               5,
               10
-            ]
+            ],
+            "client": {
+              "name": "metric_client",
+              "allowValues": [
+                "vscode-desktop-extension",
+                "supervisor",
+                "unknown"
+              ],
+              "defaultValue": "unknown"
+            }
           }
         ],
         "errorReporting": {
@@ -9080,7 +9121,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: d42da55c46ab5e8278c46a30a13e4f2c614ad4f340863a57c91fc6183a1068fc
+        gitpod.io/checksum_config: 1afcd55c5e92bb11d2bee732b987af017404083a008f7227966851accd542a17
       creationTimestamp: null
       labels:
         app: gitpod

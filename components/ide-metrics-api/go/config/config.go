@@ -19,6 +19,8 @@ type LabelAllowList struct {
 	DefaultValue string   `json:"defaultValue"`
 }
 
+type ClientAllowList = LabelAllowList
+
 type MetricsServerConfiguration struct {
 	Port                       int                             `json:"port"`
 	RateLimits                 map[string]grpc.RateLimit       `json:"ratelimits"`
@@ -32,6 +34,7 @@ type CounterMetricsConfiguration struct {
 	Name   string           `json:"name"`
 	Help   string           `json:"help"`
 	Labels []LabelAllowList `json:"labels"`
+	Client *ClientAllowList `json:"client"`
 }
 
 type HistogramMetricsConfiguration struct {
@@ -39,6 +42,7 @@ type HistogramMetricsConfiguration struct {
 	Help    string           `json:"help"`
 	Labels  []LabelAllowList `json:"labels"`
 	Buckets []float64        `json:"buckets"`
+	Client  *ClientAllowList `json:"client"`
 }
 
 type ErrorReportingConfiguration struct {
