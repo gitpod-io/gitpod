@@ -23,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
@@ -99,7 +100,7 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 }
 
 func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect.Request[v1.GetPersonalAccessTokenRequest]) (*connect.Response[v1.GetPersonalAccessTokenResponse], error) {
-	tokenID, err := validatePersonalAccessTokenID(req.Msg.GetId())
+	tokenID, err := validatePersonalAccessTokenID(ctx, req.Msg.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +150,7 @@ func (s *TokensService) ListPersonalAccessTokens(ctx context.Context, req *conne
 }
 
 func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *connect.Request[v1.RegeneratePersonalAccessTokenRequest]) (*connect.Response[v1.RegeneratePersonalAccessTokenResponse], error) {
-	tokenID, err := validatePersonalAccessTokenID(req.Msg.GetId())
+	tokenID, err := validatePersonalAccessTokenID(ctx, req.Msg.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +202,7 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 
 	tokenReq := req.Msg.GetToken()
 
-	tokenID, err := validatePersonalAccessTokenID(tokenReq.GetId())
+	tokenID, err := validatePersonalAccessTokenID(ctx, tokenReq.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -267,7 +268,7 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 }
 
 func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *connect.Request[v1.DeletePersonalAccessTokenRequest]) (*connect.Response[v1.DeletePersonalAccessTokenResponse], error) {
-	tokenID, err := validatePersonalAccessTokenID(req.Msg.GetId())
+	tokenID, err := validatePersonalAccessTokenID(ctx, req.Msg.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -300,6 +301,12 @@ func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface)
 	if err != nil {
 		return nil, uuid.Nil, proxy.ConvertError(err)
 	}
+
+	log.AddFields(ctx, logrus.Fields{
+		"user.id":        user.ID,
+		"user.blocked":   user.Blocked,
+		"user.prividged": user.Privileged,
+	})
 
 	if !s.isFeatureEnabled(ctx, conn, user) {
 		return nil, uuid.Nil, connect.NewError(connect.CodePermissionDenied, errors.New("This feature is currently in beta. If you would like to be part of the beta, please contact us."))
