@@ -174,7 +174,16 @@ func doAddCounter(gitpodHost string, name string, labels map[string]string, valu
 		return
 	}
 	url := fmt.Sprintf("https://ide.%s/metrics-api/metrics/counter/add/%s", gitpodHost, name)
-	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		log.WithError(err).Error("supervisor: grpc metric: failed to create request")
+		return
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Client", "supervisor")
+	resp, err := http.DefaultClient.Do(request)
 	var statusCode int
 	if resp != nil {
 		statusCode = resp.StatusCode
@@ -217,7 +226,16 @@ func doAddHistogram(gitpodHost string, name string, labels map[string]string, co
 		return
 	}
 	url := fmt.Sprintf("https://ide.%s/metrics-api/metrics/histogram/add/%s", gitpodHost, name)
-	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		log.WithError(err).Error("supervisor: grpc metric: failed to create request")
+		return
+	}
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Client", "supervisor")
+	resp, err := http.DefaultClient.Do(request)
 	var statusCode int
 	if resp != nil {
 		statusCode = resp.StatusCode
