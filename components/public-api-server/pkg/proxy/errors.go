@@ -33,7 +33,7 @@ func categorizeRPCError(err error) *connect.Error {
 			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf(rpcErr.Message))
 		// components/gitpod-protocol/src/messaging/error.ts
 		case 401:
-			return connect.NewError(connect.CodePermissionDenied, fmt.Errorf(rpcErr.Message))
+			return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf(rpcErr.Message))
 		// components/gitpod-protocol/src/messaging/error.ts
 		case 403:
 			return connect.NewError(connect.CodePermissionDenied, fmt.Errorf(rpcErr.Message))

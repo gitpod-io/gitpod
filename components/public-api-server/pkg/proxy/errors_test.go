@@ -36,6 +36,13 @@ func TestConvertError(t *testing.T) {
 		},
 		{
 			Input: &jsonrpc2.Error{
+				Code:    401,
+				Message: "user is not authenticated",
+			},
+			ExpectedError: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("user is not authenticated")),
+		},
+		{
+			Input: &jsonrpc2.Error{
 				Code:    -32603,
 				Message: "Request getWorkspace failed with message: No workspace with id 'some-id' found.",
 			},
