@@ -21,7 +21,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func validateTeamID(id string) (uuid.UUID, error) {
+func validateTeamID(ctx context.Context, id string) (uuid.UUID, error) {
+	log.AddFields(ctx, logrus.Fields{
+		"team.id": id,
+	})
 	teamID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID must be a valid UUID."))
@@ -48,7 +51,7 @@ func parseGitpodTimestamp(input string) (*timestamppb.Timestamp, error) {
 
 func validateWorkspaceID(ctx context.Context, id string) (string, error) {
 	log.AddFields(ctx, logrus.Fields{
-		"workspace_id": id,
+		"workspace.id": id,
 	})
 	if id == "" {
 		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Empty workspace id specified"))
@@ -62,7 +65,10 @@ func validateWorkspaceID(ctx context.Context, id string) (string, error) {
 	return id, nil
 }
 
-func validateProjectID(id string) (uuid.UUID, error) {
+func validateProjectID(ctx context.Context, id string) (uuid.UUID, error) {
+	log.AddFields(ctx, logrus.Fields{
+		"project.id": id,
+	})
 	projectID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Project ID must be a valid UUID."))
@@ -71,7 +77,10 @@ func validateProjectID(id string) (uuid.UUID, error) {
 	return projectID, nil
 }
 
-func validatePersonalAccessTokenID(id string) (uuid.UUID, error) {
+func validatePersonalAccessTokenID(ctx context.Context, id string) (uuid.UUID, error) {
+	log.AddFields(ctx, logrus.Fields{
+		"pat.id": id,
+	})
 	tokenID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token ID must be a valid UUID"))

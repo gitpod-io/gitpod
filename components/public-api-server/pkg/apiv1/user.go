@@ -8,10 +8,12 @@ import (
 	"context"
 
 	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
+	"github.com/sirupsen/logrus"
 )
 
 func NewUserService(pool proxy.ServerConnectionPool) *UserService {
@@ -38,6 +40,11 @@ func (s *UserService) GetAuthenticatedUser(ctx context.Context, req *connect.Req
 	if err != nil {
 		return nil, proxy.ConvertError(err)
 	}
+	log.AddFields(ctx, logrus.Fields{
+		"user.id":        user.ID,
+		"user.blocked":   user.Blocked,
+		"user.prividged": user.Privileged,
+	})
 
 	response := userToAPIResponse(user)
 
