@@ -139,7 +139,13 @@ func newAllowListCollector(allowList []config.LabelAllowList, allowClient *confi
 	for _, l := range allowList {
 		labels = append(labels, l.Name)
 		allowLabelValues[l.Name] = l.AllowValues
-		allowLabelDefaultValues[l.Name] = l.DefaultValue
+		if l.DefaultValue != "" {
+			// we only add default values if they are not empty
+			// which means requests cannot have label with empty string value
+			// empty will fallback to default
+			// it's because `string` type in golang is not nullable and we cannot distinguish between empty and nil
+			allowLabelDefaultValues[l.Name] = l.DefaultValue
+		}
 	}
 	if allowClient != nil {
 		labels = append(labels, allowClient.Name)
