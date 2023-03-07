@@ -200,6 +200,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					AllowValues: []string{"*"},
 				},
 			},
+			Client: &config.ClientAllowList{
+				Name:         "metric_client",
+				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
+				DefaultValue: "unknown",
+			},
 		}, {
 			Name: "grpc_client_handled_total",
 			Help: "Total number of RPCs completed by the client, regardless of success or failure.",
@@ -220,6 +225,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:        "grpc_code",
 					AllowValues: []string{"*"},
 				},
+			},
+			Client: &config.ClientAllowList{
+				Name:         "metric_client",
+				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
+				DefaultValue: "unknown",
 			},
 		},
 	}
@@ -313,6 +323,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			Buckets: []float64{0.1, 0.2, 0.5, 1, 2, 5, 10},
+			Client: &config.ClientAllowList{
+				Name:         "metric_client",
+				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
+				DefaultValue: "unknown",
+			},
 		},
 	}
 
