@@ -59,7 +59,7 @@ func (s *TeamService) CreateTeam(ctx context.Context, req *connect.Request[v1.Cr
 }
 
 func (s *TeamService) GetTeam(ctx context.Context, req *connect.Request[v1.GetTeamRequest]) (*connect.Response[v1.GetTeamResponse], error) {
-	teamID, err := validateTeamID(req.Msg.GetTeamId())
+	teamID, err := validateTeamID(ctx, req.Msg.GetTeamId())
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +143,7 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 }
 
 func (s *TeamService) DeleteTeam(ctx context.Context, req *connect.Request[v1.DeleteTeamRequest]) (*connect.Response[v1.DeleteTeamResponse], error) {
-	teamID, err := validateTeamID(req.Msg.GetTeamId())
+	teamID, err := validateTeamID(ctx, req.Msg.GetTeamId())
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func (s *TeamService) JoinTeam(ctx context.Context, req *connect.Request[v1.Join
 }
 
 func (s *TeamService) ResetTeamInvitation(ctx context.Context, req *connect.Request[v1.ResetTeamInvitationRequest]) (*connect.Response[v1.ResetTeamInvitationResponse], error) {
-	teamID, err := validateTeamID(req.Msg.GetTeamId())
+	teamID, err := validateTeamID(ctx, req.Msg.GetTeamId())
 	if err != nil {
 		return nil, err
 	}
