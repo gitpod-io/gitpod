@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full:2022-11-09-13-54-49
+FROM gitpod/workspace-full:2023-03-06-18-43-51
 
 ENV TRIGGER_REBUILD 25
 
@@ -163,7 +163,6 @@ ENV USE_GKE_GCLOUD_AUTH_PLUGIN=True
 # Install tools for gsutil
 RUN sudo install-packages \
     gcc \
-    python-dev \
     python-setuptools
 
 RUN sudo python3 -m pip uninstall crcmod; sudo python3 -m pip install --no-cache-dir -U crcmod
