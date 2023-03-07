@@ -4,7 +4,9 @@
 
 package experiments
 
-import "context"
+import (
+	"context"
+)
 
 const (
 	PersonalAccessTokensEnabledFlag                = "personalAccessTokensEnabled"

@@ -42,13 +42,13 @@ func (s *TeamService) CreateTeam(ctx context.Context, req *connect.Request[v1.Cr
 
 	created, err := conn.CreateTeam(ctx, req.Msg.GetName())
 	if err != nil {
-		log.WithError(err).Error("Failed to create team.")
+		log.Extract(ctx).Error("Failed to create team.")
 		return nil, proxy.ConvertError(err)
 	}
 
 	team, err := s.toTeamAPIResponse(ctx, conn, created)
 	if err != nil {
-		log.WithError(err).Error("Failed to populate team with details.")
+		log.Extract(ctx).WithError(err).Error("Failed to populate team with details.")
 		return nil, err
 	}
 
@@ -91,7 +91,7 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 
 	teams, err := conn.GetTeams(ctx)
 	if err != nil {
-		log.WithError(err).Error("Failed to list teams from server.")
+		log.Extract(ctx).WithError(err).Error("Failed to list teams from server.")
 		return nil, proxy.ConvertError(err)
 	}
 
@@ -99,7 +99,7 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 	for _, t := range teams {
 		team, err := s.toTeamAPIResponse(ctx, conn, t)
 		if err != nil {
-			log.WithError(err).Error("Failed to populate team with details.")
+			log.Extract(ctx).WithError(err).Error("Failed to populate team with details.")
 			return nil, err
 		}
 
@@ -147,7 +147,7 @@ func (s *TeamService) JoinTeam(ctx context.Context, req *connect.Request[v1.Join
 
 	response, err := s.toTeamAPIResponse(ctx, conn, team)
 	if err != nil {
-		log.WithError(err).Error("Failed to populate team with details.")
+		log.Extract(ctx).WithError(err).Error("Failed to populate team with details.")
 		return nil, err
 	}
 
@@ -241,13 +241,13 @@ func (s *TeamService) DeleteTeamMember(ctx context.Context, req *connect.Request
 func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIInterface, team *protocol.Team) (*v1.Team, error) {
 	members, err := conn.GetTeamMembers(ctx, team.ID)
 	if err != nil {
-		log.WithError(err).Error("Failed to get team members.")
+		log.Extract(ctx).WithError(err).Error("Failed to get team members.")
 		return nil, proxy.ConvertError(err)
 	}
 
 	invite, err := conn.GetGenericInvite(ctx, team.ID)
 	if err != nil {
-		log.WithError(err).Error("Failed to get generic invite.")
+		log.Extract(ctx).WithError(err).Error("Failed to get generic invite.")
 		return nil, proxy.ConvertError(err)
 	}
 

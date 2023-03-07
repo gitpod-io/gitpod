@@ -171,7 +171,7 @@ func (s *ProjectsService) getConnection(ctx context.Context) (protocol.APIInterf
 
 	conn, err := s.connectionPool.Get(ctx, token)
 	if err != nil {
-		log.Log.WithError(err).Error("Failed to get connection to server.")
+		log.Extract(ctx).WithError(err).Error("Failed to get connection to server.")
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to establish connection to downstream services. If this issue persists, please contact Gitpod Support."))
 	}
 

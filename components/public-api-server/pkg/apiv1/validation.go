@@ -5,14 +5,17 @@
 package apiv1
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
 	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"github.com/google/uuid"
 	"github.com/relvacode/iso8601"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -43,7 +46,10 @@ func parseGitpodTimestamp(input string) (*timestamppb.Timestamp, error) {
 	return timestamppb.New(parsed), nil
 }
 
-func validateWorkspaceID(id string) (string, error) {
+func validateWorkspaceID(ctx context.Context, id string) (string, error) {
+	log.AddFields(ctx, logrus.Fields{
+		"workspace_id": id,
+	})
 	if id == "" {
 		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Empty workspace id specified"))
 	}
@@ -74,7 +80,8 @@ func validatePersonalAccessTokenID(id string) (uuid.UUID, error) {
 	return tokenID, nil
 }
 
-func validateOrganizationID(id string) (uuid.UUID, error) {
+func validateOrganizationID(ctx context.Context, id string) (uuid.UUID, error) {
+	log.AddFields(ctx, logrus.Fields{"organization_id": id})
 	organizationID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("OrganizationID must be a valid UUID"))
@@ -83,7 +90,8 @@ func validateOrganizationID(id string) (uuid.UUID, error) {
 	return organizationID, nil
 }
 
-func validateOIDCClientConfigID(id string) (uuid.UUID, error) {
+func validateOIDCClientConfigID(ctx context.Context, id string) (uuid.UUID, error) {
+	log.AddFields(ctx, logrus.Fields{"oidc_client_config_id": id})
 	oidcClientConfigID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("OIDC Client Config ID must be a valid UUID"))
