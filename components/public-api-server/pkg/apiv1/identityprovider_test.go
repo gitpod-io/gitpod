@@ -114,7 +114,7 @@ func TestGetIDToken(t *testing.T) {
 				Audience:    []string{"some.audience.com"},
 			},
 			Expectation: Expectation{
-				Error: connect.NewError(connect.CodePermissionDenied, fmt.Errorf("User is not authenticated. Please login.")).Error(),
+				Error: connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("User is not authenticated. Please login.")).Error(),
 			},
 		},
 		{
