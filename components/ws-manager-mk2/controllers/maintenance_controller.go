@@ -35,7 +35,7 @@ type MaintenanceReconciler struct {
 	enabled bool
 }
 
-func (r *MaintenanceReconciler) MaintenanceEnabled(ctx context.Context, c client.Client, mgr ctrl.Manager) bool {
+func (r *MaintenanceReconciler) IsEnabled() bool {
 	return r.enabled
 }
 

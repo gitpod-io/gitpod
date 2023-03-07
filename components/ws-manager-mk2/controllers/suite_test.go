@@ -102,7 +102,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	conf := newTestConfig()
-	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), &conf, metrics.Registry)
+	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), &conf, metrics.Registry, &fakeMaintenance{enabled: false})
 	wsMetrics = wsReconciler.metrics
 	Expect(err).ToNot(HaveOccurred())
 	Expect(wsReconciler.SetupWithManager(k8sManager)).To(Succeed())
@@ -146,6 +146,14 @@ func newTestConfig() config.Configuration {
 		},
 		WorkspaceURLTemplate: "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 	}
+}
+
+type fakeMaintenance struct {
+	enabled bool
+}
+
+func (f *fakeMaintenance) IsEnabled() bool {
+	return f.enabled
 }
 
 var _ = AfterSuite(func() {

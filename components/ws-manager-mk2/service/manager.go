@@ -28,6 +28,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -53,15 +54,16 @@ const (
 	stopWorkspaceImmediatelyGracePeriod = 1 * time.Second
 )
 
-func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer, activity *activity.WorkspaceActivity) *WorkspaceManagerServer {
+func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer, activity *activity.WorkspaceActivity, maintenance maintenance.Maintenance) *WorkspaceManagerServer {
 	metrics := newWorkspaceMetrics()
 	reg.MustRegister(metrics)
 
 	return &WorkspaceManagerServer{
-		Client:   clnt,
-		Config:   cfg,
-		metrics:  metrics,
-		activity: activity,
+		Client:      clnt,
+		Config:      cfg,
+		metrics:     metrics,
+		activity:    activity,
+		maintenance: maintenance,
 		subs: subscriptions{
 			subscribers: make(map[string]chan *wsmanapi.SubscribeResponse),
 		},
@@ -69,10 +71,11 @@ func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, re
 }
 
 type WorkspaceManagerServer struct {
-	Client   client.Client
-	Config   *config.Configuration
-	metrics  *workspaceMetrics
-	activity *activity.WorkspaceActivity
+	Client      client.Client
+	Config      *config.Configuration
+	metrics     *workspaceMetrics
+	activity    *activity.WorkspaceActivity
+	maintenance maintenance.Maintenance
 
 	subs subscriptions
 	wsmanapi.UnimplementedWorkspaceManagerServer
@@ -92,6 +95,10 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	tracing.LogRequestSafe(span, req)
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
+
+	if wsm.maintenance.IsEnabled() {
+		return &wsmanapi.StartWorkspaceResponse{}, status.Error(codes.FailedPrecondition, "under maintenance mode")
+	}
 
 	if err := validateStartWorkspaceRequest(req); err != nil {
 		return nil, err
@@ -329,6 +336,10 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
+	if wsm.maintenance.IsEnabled() {
+		return &wsmanapi.StopWorkspaceResponse{}, status.Error(codes.FailedPrecondition, "under maintenance mode")
+	}
+
 	gracePeriod := stopWorkspaceNormallyGracePeriod
 	if req.Policy == wsmanapi.StopWorkspacePolicy_IMMEDIATELY {
 		span.LogKV("policy", "immediately")
@@ -562,6 +573,10 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 	span, ctx := tracing.FromContext(ctx, "TakeSnapshot")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
+
+	if wsm.maintenance.IsEnabled() {
+		return &wsmanapi.TakeSnapshotResponse{}, status.Error(codes.FailedPrecondition, "under maintenance mode")
+	}
 
 	var ws workspacev1.Workspace
 	err = wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: req.Id}, &ws)

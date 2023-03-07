@@ -46,6 +46,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	imgproxy "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
 	//+kubebuilder:scaffold:imports
@@ -124,7 +125,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), &cfg.Manager, metrics.Registry)
+	maintenance, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
+	if err != nil {
+		setupLog.Error(err, "unable to create maintenance controller", "controller", "Maintenance")
+		os.Exit(1)
+	}
+
+	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), &cfg.Manager, metrics.Registry, maintenance)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)
@@ -137,13 +144,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	maintenance, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
-	if err != nil {
-		setupLog.Error(err, "unable to create maintenance controller", "controller", "Maintenance")
-		os.Exit(1)
-	}
-
-	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity)
+	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity, maintenance)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager service")
 		os.Exit(1)
@@ -186,7 +187,7 @@ func main() {
 	}
 }
 
-func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activity *activity.WorkspaceActivity) (*service.WorkspaceManagerServer, error) {
+func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activity *activity.WorkspaceActivity, maintenance maintenance.Maintenance) (*service.WorkspaceManagerServer, error) {
 	// TODO(cw): remove use of common-go/log
 
 	if len(cfg.RPCServer.RateLimits) > 0 {
@@ -242,7 +243,7 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activ
 		imgbldr.RegisterImageBuilderServer(grpcServer, imgproxy.ImageBuilder{D: imgbldr.NewImageBuilderClient(conn)})
 	}
 
-	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, activity)
+	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, activity, maintenance)
 
 	grpc_prometheus.Register(grpcServer)
 	wsmanapi.RegisterWorkspaceManagerServer(grpcServer, srv)
