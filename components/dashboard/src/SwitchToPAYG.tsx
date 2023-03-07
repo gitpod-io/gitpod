@@ -407,10 +407,21 @@ function SwitchToPAYG() {
     }
 
     if (pageState.phase === "done") {
+        // /user/billing
+        // /billing?org=123
+
+        const attributionId = pageState.attributionId || "";
+        const parsed = AttributionId.parse(attributionId);
+        const orgId = parsed?.kind === "team" ? parsed.teamId : undefined;
+        const billingLink = orgId ? `/billing?org=${orgId}` : "/user/billing";
+
         return (
-            <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full">
+            <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full mt-24">
                 <Alert className="w-full mt-2" closable={false} showIcon={true} type="success">
-                    Thanks for renewing your subscription 🎉
+                    Thanks for subscribing!
+                    <a className="gp-link" href={billingLink}>
+                        Go to Billing →
+                    </a>
                 </Alert>
             </div>
         );
