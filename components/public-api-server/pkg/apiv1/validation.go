@@ -90,7 +90,7 @@ func validatePersonalAccessTokenID(ctx context.Context, id string) (uuid.UUID, e
 }
 
 func validateOrganizationID(ctx context.Context, id string) (uuid.UUID, error) {
-	log.AddFields(ctx, logrus.Fields{"organization_id": id})
+	log.AddFields(ctx, logrus.Fields{"org.id": id})
 	organizationID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("OrganizationID must be a valid UUID"))
@@ -100,7 +100,7 @@ func validateOrganizationID(ctx context.Context, id string) (uuid.UUID, error) {
 }
 
 func validateOIDCClientConfigID(ctx context.Context, id string) (uuid.UUID, error) {
-	log.AddFields(ctx, logrus.Fields{"oidc_client_config_id": id})
+	log.AddFields(ctx, logrus.Fields{"oidc_client_cfg.id": id})
 	oidcClientConfigID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("OIDC Client Config ID must be a valid UUID"))
