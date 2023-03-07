@@ -58,6 +58,10 @@ export class SupervisorServiceClient {
                 // bad gateway, supervisor is gone
                 return;
             }
+            if (response.status === 302 && response.headers.get("location")?.includes("/start/")) {
+                // redirect to start page, workspace is closed
+                return;
+            }
             console.debug(
                 `failed to check whether is about to shutdown, trying again...`,
                 response.status,
