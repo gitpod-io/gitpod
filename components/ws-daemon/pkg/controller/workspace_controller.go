@@ -13,6 +13,7 @@ import (
 	glog "github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
@@ -219,6 +220,35 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	}
 
 	disposeStart := time.Now()
+	var snapshotName string
+	var snapshotUrl string
+	if ws.Spec.Type == workspacev1.WorkspaceTypeRegular {
+		snapshotName = storage.DefaultBackup
+	} else {
+		snapshotUrl, snapshotName, err = wsc.operations.SnapshotIDs(ws.Name)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+
+		// ws-manager-bridge expects to receive the snapshot url while the workspace
+		// is in STOPPING so instead of breaking the assumptions of ws-manager-bridge
+		// we set the url here and not after the snapshot has been taken as otherwise
+		// the workspace would already be in STOPPED and ws-manager-bridge would not
+		// receive the url
+		err = retry.RetryOnConflict(retryParams, func() error {
+			if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
+				return err
+			}
+
+			ws.Status.Snapshot = snapshotUrl
+			return wsc.Client.Status().Update(ctx, ws)
+		})
+
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
 	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
 		Meta: WorkspaceMeta{
 			Owner:       ws.Spec.Ownership.Owner,
@@ -226,7 +256,9 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 			InstanceId:  ws.Name,
 		},
 		WorkspaceLocation: ws.Spec.WorkspaceLocation,
+		SnapshotName:      snapshotName,
 		BackupLogs:        ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
+		UpdateGitStatus:   ws.Spec.Type == workspacev1.WorkspaceTypeRegular,
 	})
 
 	if alreadyDisposing {
