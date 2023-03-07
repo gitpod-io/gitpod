@@ -45,6 +45,7 @@ export namespace IDEFrontendDashboardService {
     export interface Info {
         workspaceID: string;
         loggedUserId: string;
+        ownerId: string;
 
         instanceId?: string;
         ideUrl?: string;
