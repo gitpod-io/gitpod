@@ -1,4 +1,4 @@
-FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
+FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
 
 USER root
 ENV OCI_TOOL_VERSION="0.2.0"
