@@ -1,4 +1,4 @@
-{
+  {
     "malicious": [],
     "deprecated": {
       "msjsdiag.debugger-for-chrome": {
@@ -34,7 +34,7 @@
           "id": "Chouzz.vscode-better-align",
           "displayName": "Better Align"
         }
-		  },
+      },
       "rust-lang.rust": {
         "disallowInstall": true,
         "extension": {
