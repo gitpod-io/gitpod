@@ -85,6 +85,41 @@
           "displayName": "Inno Setup"
         }
       },
+      "ModyQyW.vscode-uni-app-schemas": {
+        "disallowInstall": true,
+        "extension": {
+          "id": "uni-helper.uni-app-schemas-vscode",
+          "displayName": "uni-app-schemas"
+        }
+      },
+      "ModyQyW.vscode-uni-app-snippets": {
+        "disallowInstall": true,
+        "extension": {
+          "id": "uni-helper.uni-app-snippets-vscode",
+          "displayName": "uni-app-snippets"
+        }
+      },
+      "ModyQyW.vscode-uni-cloud-snippets": {
+        "disallowInstall": true,
+        "extension": {
+          "id": "uni-helper.uni-cloud-snippets-vscode",
+          "displayName": "uni-cloud-snippets"
+        }
+      },
+      "ModyQyW.vscode-uni-helper": {
+        "disallowInstall": true,
+        "extension": {
+          "id": "uni-helper.uni-helper-vscode",
+          "displayName": "uni-helper"
+        }
+      },
+      "ModyQyW.vscode-uni-ui-snippets": {
+        "disallowInstall": true,
+        "extension": {
+          "id": "uni-helper.uni-ui-snippets-vscode",
+          "displayName": "uni-ui-snippets"
+        }
+      },
       "redhat.vscode-wsdl2rest": true,
       "ms-vscode.node-debug2": true,
       "ms-vscode.node-debug": true,
