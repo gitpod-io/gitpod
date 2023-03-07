@@ -25,12 +25,15 @@ require (
 	k8s.io/client-go v0.24.4
 )
 
+require github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
+
 require (
 	cloud.google.com/go/compute v1.12.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
@@ -42,10 +45,12 @@ require (
 	github.com/go-openapi/jsonreference v0.19.5 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
@@ -68,6 +73,7 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	golang.org/x/net v0.5.0 // indirect
@@ -93,11 +99,13 @@ require (
 
 replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // leeway
 
+replace github.com/gitpod-io/gitpod/components/public-api/go => ../../components/public-api/go // leeway
+
 replace github.com/gitpod-io/gitpod/content-service/api => ../../components/content-service-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
+replace github.com/gitpod-io/gitpod/gitpod-protocol => ../../components/gitpod-protocol/go // leeway
 
-replace github.com/gitpod-io/gitpod/components/public-api/go => ../../components/public-api/go // leeway
+replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../../components/registry-facade-api/go // leeway
 
@@ -106,6 +114,8 @@ replace github.com/gitpod-io/gitpod/ws-daemon/api => ../../components/ws-daemon-
 replace github.com/gitpod-io/gitpod/ws-manager-bridge/api => ../../components/ws-manager-bridge-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../../components/ws-manager-api/go // leeway
+
+replace github.com/google/addlicense => ../addlicense // leeway
 
 replace k8s.io/api => k8s.io/api v0.24.4 // leeway indirect from components/common-go:lib
 
