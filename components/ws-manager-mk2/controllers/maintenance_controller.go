@@ -24,8 +24,13 @@ const (
 
 func NewMaintenanceReconciler(c client.Client) (*MaintenanceReconciler, error) {
 	return &MaintenanceReconciler{
-		Client:  c,
-		enabled: false,
+		Client: c,
+		// Enable by default, until we observe the ConfigMap with the actual value.
+		// Prevents a race on startup where the workspace reconciler might run before
+		// we observe the maintenance mode ConfigMap. Better be safe and prevent
+		// reconciliation of that workspace until it's certain maintenance mode is
+		// not enabled.
+		enabled: true,
 	}, nil
 }
 
