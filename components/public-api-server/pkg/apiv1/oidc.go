@@ -49,7 +49,7 @@ type OIDCService struct {
 }
 
 func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Request[v1.CreateClientConfigRequest]) (*connect.Response[v1.CreateClientConfigResponse], error) {
-	organizationID, err := validateOrganizationID(req.Msg.Config.GetOrganizationId())
+	organizationID, err := validateOrganizationID(ctx, req.Msg.Config.GetOrganizationId())
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 }
 
 func (s *OIDCService) GetClientConfig(ctx context.Context, req *connect.Request[v1.GetClientConfigRequest]) (*connect.Response[v1.GetClientConfigResponse], error) {
-	organizationID, err := validateOrganizationID(ctx, req.Msg.GetOrganizationId())
+	organizationID, err := validateOrganizationID(ctx, ctx, req.Msg.GetOrganizationId())
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (s *OIDCService) GetClientConfig(ctx context.Context, req *connect.Request[
 }
 
 func (s *OIDCService) ListClientConfigs(ctx context.Context, req *connect.Request[v1.ListClientConfigsRequest]) (*connect.Response[v1.ListClientConfigsResponse], error) {
-	organizationID, err := validateOrganizationID(req.Msg.GetOrganizationId())
+	organizationID, err := validateOrganizationID(ctx, req.Msg.GetOrganizationId())
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 }
 
 func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Request[v1.DeleteClientConfigRequest]) (*connect.Response[v1.DeleteClientConfigResponse], error) {
-	organizationID, err := validateOrganizationID(ctx, req.Msg.GetOrganizationId())
+	organizationID, err := validateOrganizationID(ctx, ctx, req.Msg.GetOrganizationId())
 	if err != nil {
 		return nil, err
 	}
