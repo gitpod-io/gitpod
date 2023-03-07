@@ -4,23 +4,23 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useState, useContext, useEffect, useCallback, useMemo } from "react";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
+import dayjs from "dayjs";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
-import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { ReactComponent as Spinner } from "../icons/Spinner.svg";
-import { ReactComponent as Check } from "../images/check-circle.svg";
-import { ThemeContext } from "../theme-context";
-import { PaymentContext } from "../payment-context";
-import { getGitpodService } from "../service/service";
 import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { ReactComponent as Spinner } from "../icons/Spinner.svg";
+import { ReactComponent as Check } from "../images/check-circle.svg";
+import { PaymentContext } from "../payment-context";
+import { getGitpodService } from "../service/service";
+import { ThemeContext } from "../theme-context";
 import Alert from "./Alert";
-import dayjs from "dayjs";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { publicApiTeamMembersToProtocol, teamsService } from "../service/public-api";
 import { Heading2, Subheading } from "./typography/headings";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
@@ -33,6 +33,7 @@ interface Props {
 
 export default function UsageBasedBillingConfig({ attributionId }: Props) {
     const location = useLocation();
+    const currentOrg = useCurrentOrg().data;
     const attrId = attributionId ? AttributionId.parse(attributionId) : undefined;
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
@@ -104,11 +105,8 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 // Pick a good initial value for the Stripe usage limit (base_limit * team_size)
                 // FIXME: Should we ask the customer to confirm or edit this default limit?
                 let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
-                if (attrId?.kind === "team") {
-                    const members = publicApiTeamMembersToProtocol(
-                        (await teamsService.getTeam({ teamId: attrId.teamId })).team?.members || [],
-                    );
-                    limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * members.length;
+                if (attrId?.kind === "team" && currentOrg) {
+                    limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * currentOrg.members.length;
                 }
                 const newLimit = await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
                 if (newLimit) {
@@ -133,7 +131,7 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
                 setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
             }
         })();
-    }, [attributionId, location.pathname, location.search, refreshSubscriptionDetails]);
+    }, [attrId?.kind, attributionId, currentOrg, location.pathname, location.search, refreshSubscriptionDetails]);
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
     const showBalance = !showSpinner;

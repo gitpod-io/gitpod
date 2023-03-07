@@ -22,13 +22,13 @@ import Spinner from "../icons/Spinner.svg";
 import { ReactComponent as UsageIcon } from "../images/usage-default.svg";
 import { toRemoteURL } from "../projects/render-utils";
 import { WorkspaceType } from "@gitpod/gitpod-protocol";
-import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "./react-datepicker.css";
 import { useLocation } from "react-router";
 import dayjs from "dayjs";
 import { Heading1, Heading2, Subheading } from "./typography/headings";
+import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -42,7 +42,7 @@ function UsageView({ attributionId }: UsageViewProps) {
     const [endDate, setEndDate] = useState(dayjs());
     const [totalCreditsUsed, setTotalCreditsUsed] = useState<number>(0);
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [supportedClasses, setSupportedClasses] = useState<SupportedWorkspaceClass[]>([]);
+    const supportedClasses = useWorkspaceClasses();
 
     const location = useLocation();
     useEffect(() => {
@@ -55,10 +55,6 @@ function UsageView({ attributionId }: UsageViewProps) {
                 console.error(e);
             }
         }
-        (async () => {
-            const classes = await getGitpodService().server.getSupportedWorkspaceClasses();
-            setSupportedClasses(classes);
-        })();
     }, [location]);
 
     const loadPage = useCallback(
@@ -114,7 +110,7 @@ function UsageView({ attributionId }: UsageViewProps) {
     };
 
     const getDisplayName = (workspaceClass: string) => {
-        const workspaceDisplayName = supportedClasses.find((wc) => wc.id === workspaceClass)?.displayName;
+        const workspaceDisplayName = supportedClasses.data?.find((wc) => wc.id === workspaceClass)?.displayName;
         if (!workspaceDisplayName) {
             return workspaceClass;
         }

@@ -5,10 +5,10 @@
  */
 
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { getGitpodService } from "../service/service";
+import { useCallback, useEffect, useMemo } from "react";
 import WorkspaceClass from "../icons/WorkspaceClass.svg";
 import { DropDown2, DropDown2Element } from "./DropDown2";
+import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 
 interface SelectWorkspaceClassProps {
     selectedWorkspaceClass?: string;
@@ -17,36 +17,34 @@ interface SelectWorkspaceClassProps {
 }
 
 export default function SelectWorkspaceClassComponent(props: SelectWorkspaceClassProps) {
-    const [workspaceClasses, setWorkspaceClasses] = useState<SupportedWorkspaceClass[]>();
+    const workspaceClasses = useWorkspaceClasses();
+    const elements = useMemo(() => {
+        if (!workspaceClasses.data) {
+            return [];
+        }
+        return [
+            ...workspaceClasses.data?.map(
+                (c) =>
+                    ({
+                        id: c.id,
+                        element: <WorkspaceClassDropDownElement wsClass={c} />,
+                        isSelectable: true,
+                    } as DropDown2Element),
+            ),
+        ];
+    }, [workspaceClasses.data]);
     useEffect(() => {
-        getGitpodService().server.getSupportedWorkspaceClasses().then(setWorkspaceClasses);
-    }, []);
-    const getElements = useMemo(() => {
-        return () => {
-            if (!workspaceClasses) {
-                return [];
-            }
-            return [
-                ...workspaceClasses.map(
-                    (c) =>
-                        ({
-                            id: c.id,
-                            element: <WorkspaceClassDropDownElement wsClass={c} />,
-                            isSelectable: true,
-                        } as DropDown2Element),
-                ),
-            ];
-        };
-    }, [workspaceClasses]);
-    useEffect(() => {
-        if (!workspaceClasses) {
+        if (!workspaceClasses.data) {
             return;
         }
         // if the selected workspace class is not supported, we set an error and ask the user to pick one
-        if (props.selectedWorkspaceClass && !workspaceClasses.find((c) => c.id === props.selectedWorkspaceClass)) {
+        if (
+            props.selectedWorkspaceClass &&
+            !workspaceClasses.data?.find((c) => c.id === props.selectedWorkspaceClass)
+        ) {
             props.setError?.(`The workspace class '${props.selectedWorkspaceClass}' is not supported.`);
         }
-    }, [workspaceClasses, props.selectedWorkspaceClass, props.setError, props]);
+    }, [workspaceClasses.data, props.selectedWorkspaceClass, props.setError, props]);
     const internalOnSelectionChange = useCallback(
         (id: string) => {
             props.onSelectionChange(id);
@@ -56,16 +54,16 @@ export default function SelectWorkspaceClassComponent(props: SelectWorkspaceClas
         },
         [props],
     );
-    const selectedWsClass = useMemo(
-        () =>
-            workspaceClasses?.find(
-                (ws) => ws.id === (props.selectedWorkspaceClass || workspaceClasses.find((ws) => ws.isDefault)?.id),
-            ),
-        [props.selectedWorkspaceClass, workspaceClasses],
-    );
+    const selectedWsClass = useMemo(() => {
+        if (!workspaceClasses.data) {
+            return undefined;
+        }
+        const defaultClassId = workspaceClasses.data.find((ws) => ws.isDefault)?.id;
+        return workspaceClasses.data.find((ws) => ws.id === (props.selectedWorkspaceClass || defaultClassId));
+    }, [props.selectedWorkspaceClass, workspaceClasses.data]);
     return (
         <DropDown2
-            getElements={getElements}
+            getElements={() => elements}
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder="Select class"
             disableSearch={true}
