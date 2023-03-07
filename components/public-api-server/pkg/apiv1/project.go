@@ -145,7 +145,7 @@ func (s *ProjectsService) ListProjects(ctx context.Context, req *connect.Request
 }
 
 func (s *ProjectsService) DeleteProject(ctx context.Context, req *connect.Request[v1.DeleteProjectRequest]) (*connect.Response[v1.DeleteProjectResponse], error) {
-	projectID, err := validateProjectID(req.Msg.GetProjectId())
+	projectID, err := validateProjectID(ctx, req.Msg.GetProjectId())
 	if err != nil {
 		return nil, err
 	}
