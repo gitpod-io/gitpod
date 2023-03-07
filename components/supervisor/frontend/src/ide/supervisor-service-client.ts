@@ -25,13 +25,20 @@ export class SupervisorServiceClient {
     readonly ideReady = this.supervisorReady.then(() => this.checkReady("ide"));
     readonly contentReady = Promise.all([this.supervisorReady]).then(() => this.checkReady("content"));
     readonly getWorkspaceInfoPromise = this.supervisorReady.then(() => this.getWorkspaceInfo());
-    readonly supervisorWillShutdown = this.supervisorReady.then(() => this.checkWillShutdown());
+    private _supervisorWillShutdown: Promise<void> | undefined;
 
     private constructor() {}
 
+    public get supervisorWillShutdown() {
+        if (!this._supervisorWillShutdown) {
+            this._supervisorWillShutdown = this.supervisorReady.then(() => this.checkWillShutdown());
+        }
+        return this._supervisorWillShutdown;
+    }
+
     private async checkWillShutdown(delay = false): Promise<void> {
         if (delay) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         try {
             const wsSupervisorStatusUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href).with((url) => {
@@ -49,7 +56,11 @@ export class SupervisorServiceClient {
             }
             if (response.status === 502) {
                 // bad gateway, supervisor is gone
-                return
+                return;
+            }
+            if (response.status === 302 && response.headers.get("location")?.includes("/start/")) {
+                // redirect to start page, workspace is closed
+                return;
             }
             console.debug(
                 `failed to check whether is about to shutdown, trying again...`,
@@ -64,7 +75,7 @@ export class SupervisorServiceClient {
         await this.checkWillShutdown(true);
     }
 
-    private async checkReady(kind: "content" | "ide" | "supervisor" , delay?: boolean): Promise<any> {
+    private async checkReady(kind: "content" | "ide" | "supervisor", delay?: boolean): Promise<any> {
         if (delay) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
