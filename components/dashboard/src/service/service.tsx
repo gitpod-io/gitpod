@@ -70,6 +70,7 @@ export function getIDEFrontendService(workspaceID: string, sessionId: string, se
 
 export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
     private instanceID: string | undefined;
+    private ownerId: string | undefined;
     private user: User | undefined;
     private ideCredentials!: string;
 
@@ -103,6 +104,9 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             if (!this.instanceID) {
                 return;
             }
+            if (this.ownerId !== this.user?.id) {
+                return;
+            }
             // send last heartbeat (wasClosed: true)
             const data = { sessionId: this.sessionId };
             const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
@@ -125,6 +129,8 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             this.latestInfo = info;
             const oldInstanceID = this.instanceID;
             this.instanceID = info.instanceId;
+            this.ownerId = info.ownerId;
+
             if (info.instanceId && oldInstanceID !== info.instanceId) {
                 this.auth();
             }
@@ -148,6 +154,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             workspaceDescription: workspace.workspace.description,
             workspaceType: workspace.workspace.type,
             credentialsToken: this.ideCredentials,
+            ownerId: workspace.workspace.ownerId,
         };
     }
 
