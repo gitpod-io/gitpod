@@ -158,6 +158,7 @@ func init() {
 	clustersRegisterCmd.Flags().String("url", "", "cluster url")
 	clustersRegisterCmd.Flags().String("tls-path", "", "folder containing the ws cluster's ca.crt, tls.crt and tls.key")
 	clustersRegisterCmd.Flags().Bool("hint-cordoned", false, "sets hint cordoned")
+	clustersRegisterCmd.Flags().Bool("hint-govern", true, "DEPRECATED: sets hint govern")
 	clustersRegisterCmd.Flags().String("hint-preferability", "none", "sets hint preferability, one of: 'none', 'prefer', 'dontschedule'")
 
 	clustersRegisterCmd.Flags().String("from-file", "", "reads request from JSON file, '-' for stdin")
