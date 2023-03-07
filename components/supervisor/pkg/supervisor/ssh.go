@@ -18,6 +18,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/sirupsen/logrus"
 )
 
@@ -103,25 +104,23 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 		"-oSubsystem sftp internal-sftp",
 		"-oStrictModes no", // don't care for home directory and file permissions
 	)
-	// TODO enabled DEBUG mode by default - reconsider it
-	sshdLogLevel := "DEBUG"
-	if s.cfg.isDebugWorkspace() {
-		switch log.Log.Logger.GetLevel() {
-		case logrus.PanicLevel:
-			sshdLogLevel = "FATAL"
-		case logrus.FatalLevel:
-			sshdLogLevel = "FATAL"
-		case logrus.ErrorLevel:
-			sshdLogLevel = "ERROR"
-		case logrus.WarnLevel:
-			sshdLogLevel = "INFO"
-		case logrus.InfoLevel:
-			sshdLogLevel = "INFO"
-		case logrus.DebugLevel:
-			sshdLogLevel = "VERBOSE"
-		case logrus.TraceLevel:
-			sshdLogLevel = "DEBUG"
-		}
+	// can be configured with gp env LOG_LEVEL=DEBUG to see SSH sessions/channels
+	sshdLogLevel := "ERROR"
+	switch log.Log.Logger.GetLevel() {
+	case logrus.PanicLevel:
+		sshdLogLevel = "FATAL"
+	case logrus.FatalLevel:
+		sshdLogLevel = "FATAL"
+	case logrus.ErrorLevel:
+		sshdLogLevel = "ERROR"
+	case logrus.WarnLevel:
+		sshdLogLevel = "INFO"
+	case logrus.InfoLevel:
+		sshdLogLevel = "INFO"
+	case logrus.DebugLevel:
+		sshdLogLevel = "VERBOSE"
+	case logrus.TraceLevel:
+		sshdLogLevel = "DEBUG"
 	}
 	args = append(args, "-oLogLevel "+sshdLogLevel)
 
@@ -150,6 +149,11 @@ func (s *sshServer) handleConn(ctx context.Context, conn net.Conn) {
 	cmd.Env = s.envvars
 	cmd.ExtraFiles = []*os.File{socketFD}
 	cmd.Stderr = os.Stderr
+	if s.cfg.WorkspaceLogRateLimit > 0 {
+		limit := int64(s.cfg.WorkspaceLogRateLimit)
+		cmd.Stderr = dropwriter.Writer(cmd.Stderr, dropwriter.NewBucket(limit*1024*3, limit*1024))
+		log.WithField("limit_kb_per_sec", limit).Info("rate limiting SSH log output")
+	}
 	cmd.Stdin = bufio.NewReader(socketFD)
 	cmd.Stdout = bufio.NewWriter(socketFD)
 
