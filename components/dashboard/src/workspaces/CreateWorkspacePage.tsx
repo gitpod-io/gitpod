@@ -10,11 +10,16 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { FunctionComponent, useCallback, useState } from "react";
 import { useHistory, useLocation } from "react-router";
+import { Button } from "../components/Button";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
+import { Heading1 } from "../components/typography/headings";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 import { openAuthorizeWindow } from "../provider-utils";
 import { gitpodHostUrl } from "../service/service";
 import { LimitReachedOutOfHours, LimitReachedParallelWorkspacesModal } from "../start/CreateWorkspace";
@@ -22,11 +27,6 @@ import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { StartWorkspaceError } from "../start/StartPage";
 import { useCurrentUser } from "../user-context";
 import { SelectAccountModal } from "../user-settings/SelectAccountModal";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
-import { useCurrentTeam } from "../teams/teams-context";
-import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
-import { Button } from "../components/Button";
-import { Heading1 } from "../components/typography/headings";
 
 export const useNewCreateWorkspacePage = () => {
     const { startWithOptions } = useFeatureFlags();
@@ -36,7 +36,7 @@ export const useNewCreateWorkspacePage = () => {
 
 export function CreateWorkspacePage() {
     const user = useCurrentUser();
-    const team = useCurrentTeam();
+    const currentOrg = useCurrentOrg().data;
     const location = useLocation();
     const history = useHistory();
     const props = StartWorkspaceOptions.parseSearchParams(location.search);
@@ -88,7 +88,7 @@ export function CreateWorkspacePage() {
             try {
                 const result = await createWorkspaceMutation.mutateAsync({
                     contextUrl: repo,
-                    organizationId: team?.id,
+                    organizationId: currentOrg?.id,
                     ...opts,
                 });
                 if (result.workspaceURL) {
@@ -102,7 +102,7 @@ export function CreateWorkspacePage() {
                 console.log(error);
             }
         },
-        [createWorkspaceMutation, history, repo, selectedIde, selectedWsClass, team?.id, useLatestIde],
+        [createWorkspaceMutation, history, repo, selectedIde, selectedWsClass, currentOrg?.id, useLatestIde],
     );
 
     // Need a wrapper here so we call createWorkspace w/o any arguments

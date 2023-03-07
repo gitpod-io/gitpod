@@ -4,12 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { Project } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { Project } from "@gitpod/gitpod-protocol";
-import { useCurrentTeam } from "../../teams/teams-context";
-import { useCurrentUser } from "../../user-context";
 import { listAllProjects } from "../../service/public-api";
+import { useCurrentUser } from "../../user-context";
+import { useCurrentOrg } from "../organizations/orgs-query";
 
 type TeamOrUserID = {
     teamId?: string;
@@ -21,7 +21,7 @@ export type ListProjectsQueryResults = {
 };
 
 export const useListProjectsQuery = () => {
-    const team = useCurrentTeam();
+    const team = useCurrentOrg().data;
     const user = useCurrentUser();
 
     const teamId = team?.id;

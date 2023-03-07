@@ -21,9 +21,9 @@ import { resetAllNotifications } from "./AppNotifications";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import ContextMenu, { ContextMenuEntry } from "./components/ContextMenu";
 import CaretDown from "./icons/CaretDown.svg";
-import { TeamsContext, useCurrentTeam } from "./teams/teams-context";
 import { Team } from "@gitpod/gitpod-protocol";
 import { OrgEntry } from "./menu/OrganizationSelector";
+import { useCurrentOrg, useOrganizations } from "./data/organizations/orgs-query";
 
 /**
  * Keys of known page params
@@ -62,8 +62,8 @@ function SwitchToPAYG() {
         phase: "call-to-action",
     });
 
-    const currentOrg = useCurrentTeam();
-    const { teams } = useContext(TeamsContext);
+    const currentOrg = useCurrentOrg().data;
+    const orgs = useOrganizations().data;
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
     const [selectedOrganization, setSelectedOrganization] = useState<Team | undefined>(undefined);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
@@ -427,7 +427,7 @@ function SwitchToPAYG() {
 
     const planName = pageState.old?.planName || "Legacy Plan";
     const planDescription = pageState.old?.planDetails || "";
-    const selectorEntries = getOrganizationSelectorEntries(teams || [], setSelectedOrganization);
+    const selectorEntries = getOrganizationSelectorEntries(orgs || [], setSelectedOrganization);
     return (
         <div className="flex flex-col max-h-screen max-w-3xl mx-auto items-center w-full mt-24">
             <h1>{`Update your ${titleModifier}`}</h1>

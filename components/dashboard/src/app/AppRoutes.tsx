@@ -4,8 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, Team, User } from "@gitpod/gitpod-protocol";
-import React, { FunctionComponent, useContext, useState } from "react";
+import { ContextURL, User } from "@gitpod/gitpod-protocol";
+import React, { useContext, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "react-router";
 import { AppNotifications } from "../AppNotifications";
 import Menu from "../menu/Menu";
@@ -49,6 +49,7 @@ import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "../onboarding/UserOnboarding";
 import { Heading1, Subheading } from "../components/typography/headings";
+import { useCurrentUser } from "../user-context";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -95,17 +96,18 @@ const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
 const UserOnboarding = React.lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
 const SwitchToPAYG = React.lazy(() => import(/* webpackPrefetch: true */ "../SwitchToPAYG"));
 
-type AppRoutesProps = {
-    user: User;
-    teams?: Team[];
-};
-export const AppRoutes: FunctionComponent<AppRoutesProps> = ({ user, teams }) => {
+export const AppRoutes = () => {
     const hash = getURLHash();
+    const user = useCurrentUser();
     const { startWorkspaceModalProps, setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
-    const [isWhatsNewShown, setWhatsNewShown] = useState(shouldSeeWhatsNew(user));
+    const [isWhatsNewShown, setWhatsNewShown] = useState(user && shouldSeeWhatsNew(user));
     const newCreateWsPage = useNewCreateWorkspacePage();
     const location = useLocation();
     const { newSignupFlow } = useFeatureFlags();
+
+    if (!user) {
+        return <></>;
+    }
     const search = new URLSearchParams(location.search);
 
     // TODO: Add a Route for this instead of inspecting location manually

@@ -4,30 +4,28 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Team } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { useEffect, useState } from "react";
+import { OrganizationInfo, useOrganizations } from "../data/organizations/orgs-query";
 import { settingsPathBilling } from "../user-settings/settings.routes";
-import { useTeams } from "../teams/teams-context";
 import Alert from "./Alert";
 import Modal from "./Modal";
 import { Heading2 } from "./typography/headings";
 
 export function UsageLimitReachedModal(p: { hints: any }) {
-    const teams = useTeams();
-    // const [attributionId, setAttributionId] = useState<AttributionId | undefined>();
-    const [attributedTeam, setAttributedTeam] = useState<Team | undefined>();
+    const orgs = useOrganizations();
+    const [attributedTeam, setAttributedTeam] = useState<OrganizationInfo | undefined>();
 
     useEffect(() => {
         const attributionId: AttributionId | undefined = p.hints && p.hints.attributionId;
         if (attributionId) {
             // setAttributionId(attributionId);
             if (attributionId.kind === "team") {
-                const team = teams?.find((t) => t.id === attributionId.teamId);
+                const team = orgs?.data?.find((t) => t.id === attributionId.teamId);
                 setAttributedTeam(team);
             }
         }
-    }, []);
+    }, [orgs?.data, p.hints]);
 
     const attributedTeamName = attributedTeam?.name;
     const billingLink = attributedTeam ? "/billing" : settingsPathBilling;

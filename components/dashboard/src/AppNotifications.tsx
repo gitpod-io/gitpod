@@ -15,7 +15,7 @@ export function AppNotifications() {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
     useEffect(() => {
-        let localState = getLocalStorageObject(KEY_APP_NOTIFICATIONS);
+        const localState = getLocalStorageObject(KEY_APP_NOTIFICATIONS);
         if (Array.isArray(localState)) {
             setNotifications(convertToAppNotification(localState));
             return;

@@ -30,6 +30,7 @@ export default function License() {
             const data = await getGitpodService().server.adminGetLicense();
             setLicense(data);
         })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const featureList = license?.enabledFeatures;

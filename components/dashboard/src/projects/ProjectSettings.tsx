@@ -4,22 +4,22 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
+import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router";
-import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
+import { Link } from "react-router-dom";
+import Alert from "../components/Alert";
 import CheckBox from "../components/CheckBox";
-import { getGitpodService } from "../service/service";
-import { useCurrentTeam } from "../teams/teams-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
-import { ProjectContext, useCurrentProject } from "./project-context";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { getGitpodService } from "../service/service";
 import SelectWorkspaceClass from "../user-settings/selectClass";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import Alert from "../components/Alert";
-import { Link } from "react-router-dom";
-import { RemoveProjectModal } from "./RemoveProjectModal";
+import { ProjectContext, useCurrentProject } from "./project-context";
 import { getProjectSettingsMenu, getProjectTabs } from "./projects.routes";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { RemoveProjectModal } from "./RemoveProjectModal";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
@@ -39,7 +39,7 @@ export default function ProjectSettingsView() {
     const { project } = useCurrentProject();
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [showRemoveModal, setShowRemoveModal] = useState(false);
-    const team = useCurrentTeam();
+    const team = useCurrentOrg().data;
     const history = useHistory();
 
     useEffect(() => {

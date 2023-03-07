@@ -5,9 +5,9 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useMemo } from "react";
+import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { getExperimentsClient } from "../experiments/client";
 import { ProjectContext } from "../projects/project-context";
-import { useCurrentTeam, useTeams } from "../teams/teams-context";
 import { UserContext } from "../user-context";
 
 interface FeatureFlagConfig {
@@ -35,9 +35,9 @@ const FeatureFlagContext = createContext<FeatureFlagsType>(defaultFeatureFlags);
 
 const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const { user } = useContext(UserContext);
-    const teams = useTeams();
+    const orgs = useOrganizations().data;
     const { project } = useContext(ProjectContext);
-    const team = useCurrentTeam();
+    const currentOrg = useCurrentOrg();
     const [startWithOptions, setStartWithOptions] = useState<boolean>(false);
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
     const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
@@ -71,12 +71,12 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
             for (const [flagName, config] of Object.entries(featureFlags)) {
                 const value = async () => {
                     // First check if the flag is non-default for any of the orgs
-                    for (const team of teams || []) {
+                    for (const org of orgs || []) {
                         const flagValue = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
                             user,
                             projectId: project?.id,
-                            teamId: team.id,
-                            teamName: team?.name,
+                            teamId: org.id,
+                            teamName: org.name,
                         });
 
                         if (flagValue !== config.defaultValue) {
@@ -89,8 +89,8 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                     const valueForUser = await getExperimentsClient().getValueAsync(flagName, config.defaultValue, {
                         user,
                         projectId: project?.id,
-                        teamId: team?.id,
-                        teamName: team?.name,
+                        teamId: currentOrg.data?.id,
+                        teamName: currentOrg.data?.name,
                     });
 
                     return valueForUser;
@@ -100,7 +100,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 config.setter(val);
             }
         })();
-    }, [user, teams, team, project]);
+    }, [user, orgs, currentOrg, project]);
 
     const flags = useMemo(() => {
         return {

@@ -49,7 +49,7 @@ function newNonProductionConfigCatClient(): Client {
     // clientKey is an identifier of our ConfigCat application. It is not a secret.
     const clientKey = "WBLaCPtkjkqKHlHedziE9g/LEAOCNkbuUKiqUZAcVg7dw";
     const client = configcat.createClientWithLazyLoad(clientKey, {
-        logger: configcat.createConsoleLogger(LogLevel.Info),
+        logger: configcat.createConsoleLogger(LogLevel.Error),
         cacheTimeToLiveSeconds: 60 * 3, // 3 minutes
         requestTimeoutMs: 1500,
     });

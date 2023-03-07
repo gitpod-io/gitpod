@@ -10,9 +10,7 @@ import Header from "../components/Header";
 import { SpinnerLoader } from "../components/Loader";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
-import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
-import { useCurrentOrgMember } from "../data/organizations/org-members-query";
-import { useCurrentTeam } from "./teams-context";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { getTeamSettingsMenu } from "./TeamSettings";
 
 export interface OrgSettingsPageProps {
@@ -20,28 +18,25 @@ export interface OrgSettingsPageProps {
 }
 
 export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
-    const team = useCurrentTeam();
-    const { data: teamBillingMode, isLoading: isBillingModeLoading } = useOrgBillingMode();
-    const { isOwner, isLoading: isMemberInfoLoading } = useCurrentOrgMember();
+    const org = useCurrentOrg();
     const { oidcServiceEnabled, orgGitAuthProviders } = useFeatureFlags();
-    const isLoading = isBillingModeLoading || isMemberInfoLoading;
 
     const menu = useMemo(
         () =>
             getTeamSettingsMenu({
-                team,
-                billingMode: teamBillingMode,
+                team: org.data,
+                billingMode: org.data?.billingMode,
                 ssoEnabled: oidcServiceEnabled,
                 orgGitAuthProviders,
             }),
-        [oidcServiceEnabled, orgGitAuthProviders, team, teamBillingMode],
+        [oidcServiceEnabled, orgGitAuthProviders, org.data],
     );
 
     const title = "Organization Settings";
     const subtitle = "Manage your organization's settings.";
 
     // Render as much of the page as we can in a loading state to avoid content shift
-    if (isLoading) {
+    if (org.isLoading) {
         return (
             <div className="w-full">
                 <Header title={title} subtitle={subtitle} />
@@ -53,7 +48,7 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     }
 
     // After we've loaded, ensure user is an owner, if not, redirect
-    if (!isOwner) {
+    if (!org.data?.isOwner) {
         return <Redirect to={"/"} />;
     }
 

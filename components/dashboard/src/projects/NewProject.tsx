@@ -4,28 +4,28 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useEffect, useState } from "react";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "../provider-utils";
 import { AuthProviderInfo, Project, ProviderRepository, Team, User } from "@gitpod/gitpod-protocol";
-import { useCurrentTeam } from "../teams/teams-context";
+import dayjs from "dayjs";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { trackEvent } from "../Analytics";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
+import ErrorMessage from "../components/ErrorMessage";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { useRefreshProjects } from "../data/projects/list-projects-query";
 import CaretDown from "../icons/CaretDown.svg";
 import Plus from "../icons/Plus.svg";
-import Switch from "../icons/Switch.svg";
 import search from "../icons/search.svg";
-import dayjs from "dayjs";
-import { UserContext } from "../user-context";
-import { trackEvent } from "../Analytics";
-import exclamation from "../images/exclamation.svg";
-import ErrorMessage from "../components/ErrorMessage";
 import Spinner from "../icons/Spinner.svg";
-import { useRefreshProjects } from "../data/projects/list-projects-query";
+import Switch from "../icons/Switch.svg";
+import exclamation from "../images/exclamation.svg";
+import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "../provider-utils";
+import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { UserContext } from "../user-context";
 import { projectsPathNew } from "./projects.routes";
 import { Heading1, Subheading } from "../components/typography/headings";
 
 export default function NewProject() {
-    const currentTeam = useCurrentTeam();
+    const currentTeam = useCurrentOrg()?.data;
     const { user, setUser } = useContext(UserContext);
     const refreshProjects = useRefreshProjects();
 

@@ -6,12 +6,12 @@
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import UsageView from "./components/UsageView";
-import { useCurrentTeam } from "./teams/teams-context";
+import { useCurrentOrg } from "./data/organizations/orgs-query";
 import { useCurrentUser } from "./user-context";
 
 function Usage() {
     const user = useCurrentUser();
-    const org = useCurrentTeam();
+    const org = useCurrentOrg().data;
 
     if (!user) {
         return <></>;

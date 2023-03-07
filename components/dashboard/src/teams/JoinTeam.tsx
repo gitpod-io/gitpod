@@ -4,13 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
-import { publicApiTeamsToProtocol, publicApiTeamToProtocol, teamsService } from "../service/public-api";
-import { TeamsContext } from "./teams-context";
+import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
+import { publicApiTeamToProtocol, teamsService } from "../service/public-api";
 
 export default function JoinTeamPage() {
-    const { setTeams } = useContext(TeamsContext);
+    const orgInvalidator = useOrganizationsInvalidator();
     const history = useHistory();
     const location = useLocation();
 
@@ -24,8 +24,7 @@ export default function JoinTeamPage() {
                     throw new Error("This invite URL is incorrect.");
                 }
                 const team = publicApiTeamToProtocol((await teamsService.joinTeam({ invitationId: inviteId })).team!);
-                const teams = publicApiTeamsToProtocol((await teamsService.listTeams({})).teams);
-                setTeams(teams);
+                orgInvalidator();
 
                 history.push(`/members?org=${team.id}`);
             } catch (error) {
@@ -33,7 +32,7 @@ export default function JoinTeamPage() {
                 setJoinError(error);
             }
         })();
-    }, [history, inviteId, setTeams]);
+    }, [history, inviteId, orgInvalidator]);
 
     useEffect(() => {
         document.title = "Joining Organization — Gitpod";

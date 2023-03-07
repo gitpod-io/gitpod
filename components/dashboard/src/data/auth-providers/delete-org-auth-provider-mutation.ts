@@ -6,7 +6,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
-import { useCurrentTeam } from "../../teams/teams-context";
+import { useCurrentOrg } from "../organizations/orgs-query";
 import { getOrgAuthProvidersQueryKey, OrgAuthProvidersQueryResult } from "./org-auth-providers-query";
 
 type DeleteAuthProviderArgs = {
@@ -14,7 +14,7 @@ type DeleteAuthProviderArgs = {
 };
 export const useDeleteOrgAuthProviderMutation = () => {
     const queryClient = useQueryClient();
-    const organization = useCurrentTeam();
+    const organization = useCurrentOrg().data;
 
     return useMutation({
         mutationFn: async ({ providerId }: DeleteAuthProviderArgs) => {
