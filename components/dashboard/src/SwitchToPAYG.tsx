@@ -23,6 +23,7 @@ import ContextMenu, { ContextMenuEntry } from "./components/ContextMenu";
 import CaretDown from "./icons/CaretDown.svg";
 import { Team } from "@gitpod/gitpod-protocol";
 import { OrgEntry } from "./menu/OrganizationSelector";
+import { Heading2, Subheading } from "./components/typography/headings";
 import { useCurrentOrg, useOrganizations } from "./data/organizations/orgs-query";
 
 /**
@@ -417,12 +418,14 @@ function SwitchToPAYG() {
 
         return (
             <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full mt-24">
-                <Alert className="w-full mt-2" closable={false} showIcon={true} type="success">
-                    Thanks for subscribing!
-                    <a className="gp-link" href={billingLink}>
-                        Go to Billing →
+                <Heading2>You're now on pay-as-you-go! 🎊</Heading2>
+                <Subheading>You are one step away from using larger workspaces and custom timeouts.</Subheading>
+
+                <div className="mt-12">
+                    <a href={billingLink}>
+                        <button className="secondary">Go to Billing →</button>
                     </a>
-                </Alert>
+                </div>
             </div>
         );
     }
@@ -440,38 +443,51 @@ function SwitchToPAYG() {
     const planDescription = pageState.old?.planDetails || "";
     const selectorEntries = getOrganizationSelectorEntries(orgs || [], setSelectedOrganization);
     return (
-        <div className="flex flex-col max-h-screen max-w-3xl mx-auto items-center w-full mt-24">
-            <h1>{`Update your ${titleModifier}`}</h1>
-            <div className="w-full text-gray-500 text-center">
-                Switch to the new pricing model to keep uninterrupted access and get <strong>large workspaces</strong>{" "}
-                and <strong>custom timeouts</strong>.{" "}
+        <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center mt-24">
+            <Heading2>{`Update your ${titleModifier}`}</Heading2>
+            <Subheading className="w-full mt-3 text-center">
+                Switch to the new pricing model to keep uninterrupted access and <br /> get{" "}
+                <strong>large workspaces</strong> and <strong>custom timeouts</strong>.{" "}
                 <a
                     className="gp-link"
+                    target="_blank"
+                    rel="noreferrer"
                     href="https://www.gitpod.io/blog/introducing-workspace-classes-and-flexible-pricing"
                 >
                     Learn more →
                 </a>
-            </div>
-            <div className="mt-6 space-x-3 flex">
+            </Subheading>
+            <div className="mt-7 space-x-3 flex">
                 {renderCard({
                     headline: "LEGACY PLAN",
                     title: planName,
-                    description: planDescription,
+                    description: <div className="mb-5">{planDescription}</div>,
                     selected: false,
                     action: (
-                        <Alert type="error">
-                            Discontinued on <strong>March 31st</strong>
-                        </Alert>
+                        <div className="flex">
+                            <span className="text-red-600 dark:text-red-400">
+                                Discontinued on <strong>March 31st</strong>
+                            </span>
+                        </div>
                     ),
                     additionalStyles: "",
                 })}
                 {renderCard({
                     headline: "NEW PLAN",
                     title: "$9 / month (1,000 credits)",
-                    description: "Pay-as-you-go after that for $0.036 per credit.",
+                    description: (
+                        <>
+                            Pay-as-you-go after that for <br /> $0.036 per credit.
+                        </>
+                    ),
                     selected: true,
                     action: (
-                        <a className="gp-link" href="https://www.gitpod.io/pricing#cost-estimator">
+                        <a
+                            className="gp-link"
+                            href="https://www.gitpod.io/pricing#cost-estimator"
+                            target="_blank"
+                            rel="noreferrer"
+                        >
                             Estimate costs
                         </a>
                     ),
@@ -578,14 +594,14 @@ function getOrganizationSelectorEntries(organizations: Team[], setSelectedOrgani
 function renderCard(props: {
     headline: string;
     title: string;
-    description: string;
+    description: JSX.Element;
     action: JSX.Element;
     selected: boolean;
     additionalStyles?: string;
 }) {
     return (
         <div
-            className={`rounded-xl px-3 py-3 flex flex-col cursor-pointer group transition ease-in-out ${
+            className={`w-60 rounded-xl px-3 py-3 flex flex-col group transition ease-in-out ${
                 props.selected ? "bg-gray-800 dark:bg-gray-100" : "bg-gray-100 dark:bg-gray-800"
             } ${props.additionalStyles || ""}`}
         >
@@ -602,7 +618,7 @@ function renderCard(props: {
             </div>
             <div className="pl-1 grid auto-rows-auto">
                 <div
-                    className={`text-xl font-semibold mt-1 mb-4 ${
+                    className={`text-l font-semibold mt-1 ${
                         props.selected ? "text-gray-100 dark:text-gray-600" : "text-gray-700 dark:text-gray-300"
                     }`}
                 >
@@ -617,7 +633,7 @@ function renderCard(props: {
                 </div>
                 <div className="text-xl my-1 flex-row flex align-middle items-end">
                     <div
-                        className={`text-sm font-normal truncate w-full ${
+                        className={`text-sm font-normal truncate ${
                             props.selected ? "text-gray-300 dark:text-gray-500" : "text-gray-500 dark:text-gray-400"
                         }`}
                     >
