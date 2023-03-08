@@ -23,7 +23,7 @@ jobs:
       branch: ${{ steps.comment-branch.outputs.head_ref }}
       run_url: ${{ fromJSON(steps.run_outputs.outputs.result).html_url }}
       run_id: ${{ fromJSON(steps.run_outputs.outputs.result).id }}
-      recreate_vm: ${{ steps.configure.outputs.recreate-vm }}
+      recreate_vm: ${{ steps.configure.outputs.recreate_vm }}
     steps:
       # In order for us to find out from which PR the comment originates, we use the `xt0rted/pull-request-comment-branch@v1` action
       - uses: xt0rted/pull-request-comment-branch@v1
@@ -33,7 +33,7 @@ jobs:
         id: outputs
         run: |
           {
-            echo "recreate-vm=${{ contains(github.event.comment.body, 'recreate-vm') }}"
+            echo "recreate_vm=${{ contains(github.event.comment.body, 'recreate-vm') }}"
           } >> $GITHUB_OUTPUT
       # Trigger the build workflow with the input we got from the comment
       # In the triggered job (build), we'll combine the information from the PR description, with the input we pass here
@@ -49,7 +49,7 @@ jobs:
               workflow_id: 'build.yml',
               ref: '${{ steps.comment-branch.outputs.head_ref }}',
               inputs: {
-                "recreate_vm": '${{ steps.configure.outputs.recreate-vm }}'
+                "recreate_vm": '${{ steps.outputs.outputs.recreate_vm }}'
               }
             })
       # Getting the ID of the workflow we triggered above is a bit tricky, as it's async :(
@@ -88,7 +88,7 @@ jobs:
             commentBody += `\n\n#### Comment triggered a workflow run
 
               Started workflow run: [${{ fromJSON(steps.run_outputs.outputs.result).id }}](${{ fromJSON(steps.run_outputs.outputs.result).html_url }})
-              * \`recreate_vm: ${{ steps.configure.outputs.recreate-vm }}\``
+              * \`recreate_vm: ${{ steps.outputs.outputs.recreate_vm }}\``
             github.rest.issues.updateComment({
               issue_number: ${{ github.event.issue.number }},
               owner: context.repo.owner,
