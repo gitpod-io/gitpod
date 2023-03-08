@@ -21,7 +21,6 @@ jobs:
     outputs:
       is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
-      with_github_actions: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-github-actions') }}
       preview_enable: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-preview') }}
       preview_infra_provider: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}
       build_no_cache: ${{ contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
@@ -37,6 +36,7 @@ jobs:
       analytics: ${{ contains( steps.pr-details.outputs.pr_body, '[X] analytics') }}
       workspace_feature_flags: ${{ steps.output.outputs.workspace_feature_flags }}
       pr_no_diff_skip: ${{ steps.pr-diff.outputs.pr_no_diff_skip }}
+      with_werft: ${{ steps.output.outputs.with-werft }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -74,7 +74,7 @@ jobs:
     name: Build previewctl
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
-      (needs.configuration.outputs.is_main_branch == 'true' || needs.configuration.outputs.preview_enable == 'true')
+      (needs.configuration.outputs.preview_enable == 'true')
     needs: [ configuration ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-previewctl
@@ -112,7 +112,7 @@ jobs:
     needs: [ configuration, build-previewctl ]
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
-      (needs.configuration.outputs.preview_enable == 'true' && needs.configuration.outputs.with_github_actions == 'true')
+      (needs.configuration.outputs.preview_enable == 'true')
     runs-on: [ self-hosted ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-infrastructure
@@ -134,7 +134,7 @@ jobs:
     needs: [ configuration ]
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
-      (needs.configuration.outputs.is_main_branch == 'true' || needs.configuration.outputs.with_github_actions == 'true')
+      (needs.configuration.outputs.with_github_actions == 'true')
     runs-on: [ self-hosted ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-build-gitpod
@@ -223,9 +223,9 @@ jobs:
           PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
           PR_LEEWAY_TARGET: ${{needs.configuration.outputs.build_leeway_target}}
           NPM_AUTH_TOKEN: '${{ steps.secrets.outputs.npm-auth-token }}'
-          PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true' }}
+          PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
           JB_MARKETPLACE_PUBLISH_TOKEN: '${{ steps.secrets.outputs.jb-marketplace-publish-token }}'
-          PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true' }}
+          PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
           CODECOV_TOKEN: '${{ steps.secrets.outputs.codecov-token }}'
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"

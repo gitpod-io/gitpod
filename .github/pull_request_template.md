@@ -31,8 +31,8 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 
 ## Build Options:
 
-- [ ] /werft with-github-actions
-      Experimental feature to run the build with GitHub Actions (and not in Werft).
+- [ ] /werft with-werft
+      Run the build with werft instead of GHA
 - [ ] leeway-no-cache
       leeway-target=components:all
 - [ ] /werft no-test
