@@ -359,6 +359,7 @@ export namespace ConfigFile {
             admin: {
                 ...config.admin,
                 loginKey: adminLoginKey,
+                credentialsFilePath: "",
             },
         };
     }
