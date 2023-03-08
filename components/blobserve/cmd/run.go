@@ -19,7 +19,7 @@ import (
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/distribution/reference"
-	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
+	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/heptiolabs/healthcheck"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -42,7 +42,7 @@ var runCmd = &cobra.Command{
 	Short: "Starts the blobserve",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg, err := config.GetConfig(args[0])
+		cfg, err := blobserve_config.GetConfig(args[0])
 		if err != nil {
 			log.WithError(err).WithField("filename", args[0]).Fatal("cannot load config")
 		}
