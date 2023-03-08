@@ -17,6 +17,10 @@ inputs:
     previewctl_hash:
         description: "The Leeway hash of the dev/preview/previewctl:docker package to be used when downloading previewclt"
         required: false
+    recreate_vm:
+        description: "Whether to recreate the VM"
+        required: false
+        default: "false"
 runs:
     using: "docker"
     image: "Dockerfile"

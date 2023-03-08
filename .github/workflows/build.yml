@@ -1,10 +1,15 @@
 name: Build
 on:
   pull_request:
-    types: [ opened, synchronize, edited ]
+    types: [ opened, edited ]
   push:
-    branches: [ main ]
   workflow_dispatch:
+    inputs:
+      recreate_vm:
+        required: true
+        type: string
+        description: "Whether to recreate the VM"
+        default: "false"
 
 jobs:
   configuration:
@@ -16,34 +21,40 @@ jobs:
     outputs:
       is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
-      with_github_actions: ${{ contains(github.event.pull_request.body, '[x] /werft with-github-actions') }}
-      preview_enable: ${{ contains(github.event.pull_request.body, '[x] /werft with-preview') }}
-      preview_infra_provider: ${{ contains(github.event.pull_request.body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}
-      build_no_cache: ${{ contains(github.event.pull_request.body, '[x] leeway-no-cache') }}
-      build_no_test: ${{ contains(github.event.pull_request.body, '[x] /werft no-test') }}
+      with_github_actions: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-github-actions') }}
+      preview_enable: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-preview') }}
+      preview_infra_provider: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft with-gce-vm') && 'gce' || 'harvester' }}
+      build_no_cache: ${{ contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
+      build_no_test: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft no-test') }}
       build_leeway_target: ${{ steps.output.outputs.build_leeway_target }}
-      with_large_vm: ${{ contains(github.event.pull_request.body, '[X] /werft with-large-vm') }}
-      publish_to_npm: ${{ contains(github.event.pull_request.body, '[X] /werft publish-to-npm') }}
-      publish_to_jbmp: ${{ contains(github.event.pull_request.body, '[X] /werft publish-to-jb-marketplace') }}
-      with_ws_manager_mk2: ${{ contains(github.event.pull_request.body, '[X] with-ws-manager-mk2') }}
-      with_dedicated_emulation: ${{ contains(github.event.pull_request.body, '[X] with-dedicated-emulation') }}
-      with_ee_license: ${{ contains(github.event.pull_request.body, '[X] with-ee-license') }}
-      with_slow_database: ${{ contains(github.event.pull_request.body, '[X] with-slow-database') }}
-      analytics: ${{ contains(github.event.pull_request.body, '[X] analytics') }}
+      with_large_vm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft with-large-vm') }}
+      publish_to_npm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-npm') }}
+      publish_to_jbmp: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-jb-marketplace') }}
+      with_ws_manager_mk2: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-ws-manager-mk2') }}
+      with_dedicated_emulation: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-dedicated-emulation') }}
+      with_ee_license: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-ee-license') }}
+      with_slow_database: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-slow-database') }}
+      analytics: ${{ contains( steps.pr-details.outputs.pr_body, '[X] analytics') }}
       workspace_feature_flags: ${{ steps.output.outputs.workspace_feature_flags }}
       pr_no_diff_skip: ${{ steps.pr-diff.outputs.pr_no_diff_skip }}
     steps:
       - name: "Determine Branch"
         id: branches
         uses: transferwise/sanitize-branch-name@v1
+        # Since we trigger this worklow on other event types, besides pull_request
+        # We use this action to help us get the pr body, as it's not included in push/workflow_dispatch events
+      - uses: 8BitJonny/gh-get-current-pr@2.2.0
+        id: pr-details
+        with:
+          sha: ${{ github.event.pull_request.head.sha }}
         # If the PR got edited, but no checkbox changes occurred, we don't want to run the whole build
         # Therefore we set a flag and use it to skip the next jobs
       - name: "Check PR diff"
         id: pr-diff
-        env:
-          PR_DESC: '${{ github.event.pull_request.body }}'
-          OLD_BODY: '${{ github.event.changes.body.from }}'
         if: (github.event_name == 'pull_request' && github.event.action == 'edited')
+        env:
+          PR_DESC: '${{  steps.pr-details.outputs.pr_body }}'
+          OLD_BODY: '${{ github.event.changes.body.from }}'
         run: |
           if ! diff <(echo "$OLD_BODY") <(echo "$PR_DESC") | grep -e '\[x\]' -e '\[X\]'; then
              echo "pr_no_diff_skip=true" >> $GITHUB_OUTPUT
@@ -51,7 +62,7 @@ jobs:
       - name: "Set outputs"
         id: output
         env:
-          PR_DESC: '${{ github.event.pull_request.body }}'
+          PR_DESC: '${{ steps.pr-details.outputs.pr_body }}'
         shell: bash
         run: |
           {
@@ -116,6 +127,7 @@ jobs:
           infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           large_vm: ${{ needs.configuration.outputs.with_large_vm }}
+          recreate_vm: ${{ inputs.recreate_vm }}
 
   build-gitpod:
     name: Build Gitpod
