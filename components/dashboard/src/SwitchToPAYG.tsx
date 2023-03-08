@@ -352,9 +352,19 @@ function SwitchToPAYG() {
                             });
                         break;
 
-                    case "teamSubscription2":
+                    case "teamSubscription2": {
+                        let teamId;
+                        const parsed = attributionId && AttributionId.parse(attributionId);
+                        if (parsed && parsed.kind === "team") {
+                            teamId = parsed.teamId;
+                        }
+                        if (!teamId) {
+                            // this should never be the case, but we need to re-parse the attribution id.
+                            alert("Missing Organization ID.");
+                            break;
+                        }
                         getGitpodService()
-                            .server.cancelTeamSubscription(oldSubscriptionId)
+                            .server.cancelTeamSubscription(teamId)
                             .catch((error) => {
                                 console.error(
                                     "Failed to cancel old subscription. We should take care of that async.",
@@ -362,6 +372,7 @@ function SwitchToPAYG() {
                                 );
                             });
                         break;
+                    }
                 }
                 setPageState((s) => ({ ...s, phase: "done" }));
                 return;
