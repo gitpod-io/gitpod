@@ -79,14 +79,15 @@ jobs:
 
             return url[0];
       # Comment with a link to the job that got triggered
-      - uses: actions/github-script@v6
+      - name: Update comment with workflow run
+        uses: actions/github-script@v6
         with:
           github-token: ${{ github.token }}
           script: |
             let commentBody = '${{ github.event.comment.body }}'
             commentBody += `\n\n#### Comment triggered a workflow run
 
-              Started workflow run: [${{ needs.configure.outputs.run_id }}](${{ needs.configure.outputs.run_url }})
+              Started workflow run: [${{ fromJSON(steps.run_outputs.outputs.result).id }}](${{ fromJSON(steps.run_outputs.outputs.result).html_url }})
               * \`recreate_vm: ${{ steps.configure.outputs.recreate-vm }}\``
             github.rest.issues.updateComment({
               issue_number: ${{ github.event.issue.number }},
