@@ -13,7 +13,6 @@ import (
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	deployment,
-	networkpolicy,
 	rolebinding,
 	role,
 	func(cfg *common.RenderContext) ([]runtime.Object, error) {

@@ -24,7 +24,6 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		configmap,
 		common.DefaultServiceAccount(Component),
 		service,
-		networkpolicy,
 	)(ctx)
 }
 

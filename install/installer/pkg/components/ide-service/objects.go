@@ -11,7 +11,6 @@ var Objects = common.CompositeRenderFunc(
 	deployment,
 	rolebinding,
 	service,
-	networkpolicy,
 	ideConfigConfigmap,
 	common.DefaultServiceAccount(Component),
 )

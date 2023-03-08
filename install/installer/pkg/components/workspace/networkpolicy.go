@@ -74,10 +74,11 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 					From: []networkingv1.NetworkPolicyPeer{
 						{
-							NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
-								"chart": common.MonitoringChart,
-							}},
-							PodSelector: &metav1.LabelSelector{MatchLabels: common.DefaultLabels(common.ServerComponent)},
+							NamespaceSelector: &metav1.LabelSelector{
+								MatchLabels: map[string]string{
+									"role": "monitoring",
+								},
+							},
 						},
 					},
 				},
