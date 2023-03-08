@@ -37,6 +37,7 @@ import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
 import { VerificationService } from "../auth/verification-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import * as fs from "fs/promises";
 
 @injectable()
 export class UserController {
@@ -138,6 +139,25 @@ export class UserController {
                 }
             };
         };
+
+        // Admin user is logging-in with a one-time-token.
+        router.get("/login/ots/admin/:token", async (req: express.Request, res: express.Response) => {
+            // For the login to be succesful, we expect to receive a token which we need to validate against
+            // pre-created credentials.
+            // The credentials are provided as a file into the system, and can be updated while our system is running.
+            // We must validate the following:
+            //  * hash(token) matches the pre-created credentials
+            //  * now() is not greater than the pre-created credentials expiry
+            // If valid, we log the user-in as the "admin" user - a singleton identity which exists on the installation.
+
+            try {
+                const credentials = await this.readAdminCredentials();
+            } catch (e) {
+                res.sendStatus(401);
+                return;
+            }
+        });
+
         router.get(
             "/login/ots/admin-user/:key",
             loginUserWithOts(async (req: express.Request, res: express.Response, user: User, secret: string) => {
@@ -850,5 +870,47 @@ export class UserController {
         const server = this.serverFactory();
         server.initialize(undefined, user, resourceGuard, ClientMetadata.from(user.id), undefined, {});
         return server;
+    }
+
+    private async readAdminCredentials(): Promise<AdminCredentials> {
+        const contents = await fs.readFile("TODO", { encoding: "utf8" });
+        const payload = await JSON.parse(contents);
+
+        const err = new Error("Invalid admin credentials file.");
+
+        if (!payload.expiresAt) {
+            log.error("Admin credentials file does not contain expiry timestamp.");
+            throw err;
+        }
+        if (!payload.tokenHash) {
+            log.error("Admin credentials file does not contain tokenHash.");
+            throw err;
+        }
+        if (!payload.algo || payload.algo !== "sha512") {
+            log.error(`Admin credentials file contains invalid hash algorithm. got: ${payload.algo}`);
+            throw err;
+        }
+
+        return new AdminCredentials(payload.tokenHash, payload.expiresAt, payload.algo);
+    }
+}
+
+class AdminCredentials {
+    protected expiresAt: number;
+
+    // We expect to receive the hex digest of the hash
+    protected hash: string;
+    protected algo: "sha512";
+
+    constructor(hash: string, expires: number, algo: "sha512") {
+        this.hash = hash;
+        this.expiresAt = expires;
+        this.algo = algo;
+    }
+
+    validate(token: string) {
+        const suppliedTokenHash = crypto.createHash(this.algo).update(token).digest("hex");
+
+        crypto.timingSafeEqual();
     }
 }
