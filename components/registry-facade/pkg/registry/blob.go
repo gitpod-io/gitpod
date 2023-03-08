@@ -211,6 +211,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *blobHandler) retrieveFromSource(ctx context.Context, src BlobSource, w http.ResponseWriter, r *http.Request) (handled, dontCache bool, err error) {
+	log.Debugf("retrieving blob %s from %s", bh.Digest, src.Name())
 	dontCache, mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
 	if err != nil {
 		return false, true, xerrors.Errorf("cannnot fetch the blob from source %s: %v", src.Name(), err)
