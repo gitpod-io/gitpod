@@ -15,7 +15,8 @@ jobs:
     # Otherwise they can execute arbitrary code if the triggered workflow (i.e. the build) is modified, as it's being run by the github-actions bot, and it always has permissions
     if: |
       (github.event.issue.author_association == 'OWNER' || github.event.issue.author_association == 'MEMBER') &&
-      (github.event.issue.pull_request && contains(github.event.comment.body, '/gh run'))
+      (github.event.issue.pull_request && contains(github.event.comment.body, '/gh run')) &&
+      (contains(github.event.comment.body, 'recreate-vm'))
     runs-on: [ self-hosted ]
     # Technically we don't need these here, as we don't reuse them between jobs, but it's good to have them in a single place
     outputs:
@@ -45,7 +46,7 @@ jobs:
             await github.rest.actions.createWorkflowDispatch({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              workflow_id: 'build.yaml',
+              workflow_id: 'build.yml',
               ref: '${{ steps.comment-branch.outputs.head_ref }}',
               inputs: {
                 "recreate_vm": '${{ steps.configure.outputs.recreate-vm }}'
@@ -71,19 +72,23 @@ jobs:
         with:
           github-token: ${{ github.token }}
           script: |
-            github.rest.issues.createComment({
-              issue_number: ${{ github.event.issue.number }},
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `#### Comment triggered a workflow run
+            let commentBody = '${{ github.event.comment.body }}'
+            commentBody += `\n\n#### Comment triggered a workflow run
 
               Started workflow run: [${{ needs.configure.outputs.run_id }}](${{ needs.configure.outputs.run_url }})
               * \`recreate_vm: ${{ steps.configure.outputs.recreate-vm }}\``
+            github.rest.issues.updateComment({
+              issue_number: ${{ github.event.issue.number }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ github.event.comment.id }},
+              body: commentBody
             })
 
   # Comment if this job failed, so there's some feedback
   comment-fail:
-    if: failure()
+    if: (always() && contains(needs.*.result, 'failure'))
+    needs: [ configure ]
     runs-on: [ self-hosted ]
     steps:
       - uses: actions/github-script@v6
