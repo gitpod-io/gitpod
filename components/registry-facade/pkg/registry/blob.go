@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -20,8 +21,9 @@ import (
 	"github.com/containerd/containerd/remotes"
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/gorilla/handlers"
-	files "github.com/ipfs/go-ipfs-files"
-	icorepath "github.com/ipfs/interface-go-ipfs-core/path"
+
+	// files "github.com/ipfs/go-ipfs-files"
+	// icorepath "github.com/ipfs/interface-go-ipfs-core/path"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
@@ -211,7 +213,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *blobHandler) retrieveFromSource(ctx context.Context, src BlobSource, w http.ResponseWriter, r *http.Request) (handled, dontCache bool, err error) {
-	log.Debugf("retrieving blob %s from %s", bh.Digest, src.Name())
+	log.Infof("retrieving blob %s from %s", bh.Digest, src.Name())
 	dontCache, mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
 	if err != nil {
 		return false, true, xerrors.Errorf("cannnot fetch the blob from source %s: %v", src.Name(), err)
@@ -427,46 +429,48 @@ func (sbs ipfsBlobSource) Name() string {
 }
 
 func (sbs ipfsBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {
-	_, err := sbs.source.Redis.Get(ctx, dgst.String()).Result()
-	return err == nil
+	return true
+	// _, err := sbs.source.Redis.Get(ctx, dgst.String()).Result()
+	// return err == nil
 }
 
 func (sbs ipfsBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (dontCache bool, mediaType string, url string, data io.ReadCloser, err error) {
-	log := log.WithField("digest", dgst)
+	//log := log.WithField("digest", dgst)
+	return true, "", "", nil, fmt.Errorf("IPFS failed")
 
-	ipfsCID, err := sbs.source.Redis.Get(ctx, dgst.String()).Result()
-	if err != nil {
-		log.WithError(err).Error("unable to get blob details from Redis")
-		err = distv2.ErrorCodeBlobUnknown
-		return
-	}
+	// ipfsCID, err := sbs.source.Redis.Get(ctx, dgst.String()).Result()
+	// if err != nil {
+	// 	log.WithError(err).Error("unable to get blob details from Redis")
+	// 	err = distv2.ErrorCodeBlobUnknown
+	// 	return
+	// }
 
-	ipfsFile, err := sbs.source.IPFS.Unixfs().Get(ctx, icorepath.New(ipfsCID))
-	if err != nil {
-		log.WithError(err).Error("unable to get blob from IPFS")
-		err = distv2.ErrorCodeBlobUnknown
-		return
-	}
+	// ipfsFile, err := sbs.source.IPFS.Unixfs().Get(ctx, icorepath.New(ipfsCID))
+	// if err != nil {
+	// 	log.WithError(err).Error("unable to get blob from IPFS")
+	// 	err = distv2.ErrorCodeBlobUnknown
+	// 	return
+	// }
 
-	f, ok := ipfsFile.(interface {
-		files.File
-		io.ReaderAt
-	})
-	if !ok {
-		log.WithError(err).Error("IPFS file does not support io.ReaderAt")
-		err = distv2.ErrorCodeBlobUnknown
-		return
-	}
+	// f, ok := ipfsFile.(interface {
+	// 	files.File
+	// 	io.ReaderAt
+	// })
+	// if !ok {
+	// 	log.WithError(err).Error("IPFS file does not support io.ReaderAt")
+	// 	err = distv2.ErrorCodeBlobUnknown
+	// 	return
+	// }
 
-	mediaType, err = sbs.source.Redis.Get(ctx, mediaTypeKeyFromDigest(dgst)).Result()
-	if err != nil {
-		log.WithError(err).Error("cannot get media type from Redis")
-		err = distv2.ErrorCodeBlobUnknown
-		return
-	}
+	// mediaType, err = sbs.source.Redis.Get(ctx, mediaTypeKeyFromDigest(dgst)).Result()
+	// if err != nil {
+	// 	log.WithError(err).Error("cannot get media type from Redis")
+	// 	err = distv2.ErrorCodeBlobUnknown
+	// 	return
+	// }
 
-	log.Debug("returning blob from IPFS")
-	return true, mediaType, "", f, nil
+	// log.Debug("returning blob from IPFS")
+	// return true, mediaType, "", f, nil
 }
 
 func mediaTypeKeyFromDigest(dgst digest.Digest) string {
