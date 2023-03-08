@@ -124,6 +124,7 @@ import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { ResolvedEnvVars } from "./env-var-service";
+import { Synchronizer } from "@gitpod/gitpod-db/lib/typeorm/synchronizer";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
@@ -202,6 +203,7 @@ export class WorkspaceStarter {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(BillingModes) protected readonly billingModes: BillingModes;
+    @inject(Synchronizer) protected readonly synchronizer: Synchronizer;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -276,20 +278,24 @@ export class WorkspaceStarter {
             const ideConfig = await this.resolveIDEConfiguration(ctx, workspace, user, options.ideSettings);
 
             // create and store instance
-            let instance = await this.workspaceDb
-                .trace({ span })
-                .storeInstance(
-                    await this.newInstance(
-                        ctx,
-                        workspace,
-                        lastValidWorkspaceInstance,
-                        user,
-                        project,
-                        options.excludeFeatureFlags || [],
-                        ideConfig,
-                        options.workspaceClass,
-                    ),
-                );
+            let instance = await this.newInstance(
+                ctx,
+                workspace,
+                lastValidWorkspaceInstance,
+                user,
+                project,
+                options.excludeFeatureFlags || [],
+                ideConfig,
+                options.workspaceClass,
+            );
+            // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
+            await this.synchronizer.synchronized("startws-" + workspace.id, "server", async () => {
+                const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspace.id);
+                if (runningInstance) {
+                    throw new Error(`Workspace ${workspace.id} is already running`);
+                }
+                instance = await this.workspaceDb.trace({ span }).storeInstance(instance);
+            });
             span.log({ newInstance: instance.id });
             instanceId = instance.id;
 
