@@ -48,7 +48,11 @@ function Pagination(props: PaginationProps) {
                 />
                 {calculatedPagination.map((pn, i) => {
                     if (pn === "...") {
-                        return <li className={getClassnames(pn)}>&#8230;</li>;
+                        return (
+                            <li key={i} className={getClassnames(pn)}>
+                                &#8230;
+                            </li>
+                        );
                     }
                     return (
                         <li key={i} className={getClassnames(pn)} onClick={() => typeof pn === "number" && setPage(pn)}>
