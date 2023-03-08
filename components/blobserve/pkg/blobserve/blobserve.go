@@ -24,7 +24,7 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/xerrors"
 
-	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
+	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
@@ -33,7 +33,7 @@ type ResolverProvider func() remotes.Resolver
 
 // Server offers image blobs for download
 type Server struct {
-	Config   blobserve_config.BlobServe
+	Config   config.BlobServe
 	Resolver ResolverProvider
 
 	refstore *refstore
@@ -81,7 +81,7 @@ var ReferenceRegexp = expression(reference.NameRegexp,
 	optional(literal("@"), reference.DigestRegexp))
 
 // NewServer creates a new blob server
-func NewServer(cfg blobserve_config.BlobServe, resolver ResolverProvider) (*Server, error) {
+func NewServer(cfg config.BlobServe, resolver ResolverProvider) (*Server, error) {
 	refstore, err := newRefStore(cfg, resolver)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	repo := pref.Name()
 
 	var workdir string
-	var inlineReplacements []blobserve_config.InlineReplacement
+	var inlineReplacements []config.InlineReplacement
 	if cfg, ok := reg.Config.Repos[repo]; ok {
 		workdir = cfg.Workdir
 		inlineReplacements = cfg.InlineStatic
@@ -251,7 +251,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	http.StripPrefix(pathPrefix, http.FileServer(fs)).ServeHTTP(w, req)
 }
 
-func inlineVars(req *http.Request, r io.ReadSeeker, inlineReplacements []blobserve_config.InlineReplacement) (io.ReadSeeker, error) {
+func inlineVars(req *http.Request, r io.ReadSeeker, inlineReplacements []config.InlineReplacement) (io.ReadSeeker, error) {
 	inlineVarsValue := req.Header.Get("X-BlobServe-InlineVars")
 	if len(inlineReplacements) == 0 || inlineVarsValue == "" {
 		return r, nil
