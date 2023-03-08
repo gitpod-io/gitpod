@@ -117,13 +117,10 @@ export class ClusterService implements IClusterServiceServer {
 
                 // store the ws-manager into the database
                 let perfereability = Preferability.NONE;
-                let govern = false;
+                let govern = true;
                 let state: WorkspaceClusterState = "available";
                 if (req.hints) {
                     perfereability = req.hints.perfereability;
-                    if (req.hints.govern) {
-                        govern = req.hints.govern;
-                    }
                     state = mapCordoned(req.hints.cordoned);
                 }
                 let score = mapPreferabilityToScore(perfereability);

@@ -103,8 +103,6 @@ export class RegistrationHints extends jspb.Message {
     setPerfereability(value: Preferability): RegistrationHints;
     getCordoned(): boolean;
     setCordoned(value: boolean): RegistrationHints;
-    getGovern(): boolean;
-    setGovern(value: boolean): RegistrationHints;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): RegistrationHints.AsObject;
@@ -120,7 +118,6 @@ export namespace RegistrationHints {
     export type AsObject = {
         perfereability: Preferability,
         cordoned: boolean,
-        govern: boolean,
     }
 }
 

@@ -1031,8 +1031,7 @@ proto.workspacemanagerbridge.RegistrationHints.prototype.toObject = function(opt
 proto.workspacemanagerbridge.RegistrationHints.toObject = function(includeInstance, msg) {
   var f, obj = {
     perfereability: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    cordoned: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
-    govern: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
+    cordoned: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -1077,10 +1076,6 @@ proto.workspacemanagerbridge.RegistrationHints.deserializeBinaryFromReader = fun
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setCordoned(value);
       break;
-    case 3:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setGovern(value);
-      break;
     default:
       reader.skipField();
       break;
@@ -1124,13 +1119,6 @@ proto.workspacemanagerbridge.RegistrationHints.serializeBinaryToWriter = functio
       f
     );
   }
-  f = message.getGovern();
-  if (f) {
-    writer.writeBool(
-      3,
-      f
-    );
-  }
 };
 
 
@@ -1167,24 +1155,6 @@ proto.workspacemanagerbridge.RegistrationHints.prototype.getCordoned = function(
  */
 proto.workspacemanagerbridge.RegistrationHints.prototype.setCordoned = function(value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
-};
-
-
-/**
- * optional bool govern = 3;
- * @return {boolean}
- */
-proto.workspacemanagerbridge.RegistrationHints.prototype.getGovern = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
-};
-
-
-/**
- * @param {boolean} value
- * @return {!proto.workspacemanagerbridge.RegistrationHints} returns this
- */
-proto.workspacemanagerbridge.RegistrationHints.prototype.setGovern = function(value) {
-  return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 
