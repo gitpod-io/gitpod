@@ -21,7 +21,6 @@ import (
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -64,8 +63,7 @@ type Service struct {
 	// gitpodService server API
 	gitpodService gitpod.APIInterface
 	// publicAPIConn public API publicAPIConn
-	publicAPIConn    *grpc.ClientConn
-	publicApiMetrics *grpc_prometheus.ClientMetrics
+	publicAPIConn *grpc.ClientConn
 
 	// usingPublicAPI is using atomic type to avoid reconnect when configcat value change
 	usingPublicAPI atomic.Bool
@@ -75,6 +73,8 @@ type Service struct {
 	// subs is the subscribers of instanceUpdates
 	subs     map[chan *gitpod.WorkspaceInstance]struct{}
 	subMutex sync.Mutex
+
+	apiMetrics *ClientMetrics
 }
 
 var _ APIInterface = (*Service)(nil)
@@ -114,15 +114,10 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 		gitpodService:    gitpodService,
 		cfg:              cfg,
 		experiments:      experiments.NewClient(),
-		publicApiMetrics: grpc_prometheus.NewClientMetrics(),
+		apiMetrics:       NewClientMetrics(),
 		onUsingPublicAPI: make(chan struct{}),
 		subs:             make(map[chan *gitpod.WorkspaceInstance]struct{}),
 	}
-
-	service.publicApiMetrics.EnableClientHandlingTimeHistogram(
-		// it should be aligned with https://github.com/gitpod-io/gitpod/blob/84ed1a0672d91446ba33cb7b504cfada769271a8/install/installer/pkg/components/ide-metrics/configmap.go#L315
-		grpc_prometheus.WithHistogramBuckets([]float64{0.1, 0.2, 0.5, 1, 2, 5, 10}),
-	)
 
 	// public api
 	service.tryConnToPublicAPI(ctx)
@@ -143,14 +138,12 @@ func (s *Service) tryConnToPublicAPI(ctx context.Context) {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13})),
 		grpc.WithStreamInterceptor(grpc_middleware.ChainStreamClient([]grpc.StreamClientInterceptor{
-			s.publicApiMetrics.StreamClientInterceptor(),
 			func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 				withAuth := metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+s.token)
 				return streamer(withAuth, desc, cc, method, opts...)
 			},
 		}...)),
 		grpc.WithUnaryInterceptor(grpc_middleware.ChainUnaryClient([]grpc.UnaryClientInterceptor{
-			s.publicApiMetrics.UnaryClientInterceptor(),
 			func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 				withAuth := metadata.AppendToOutgoingContext(ctx, "authorization", "Bearer "+s.token)
 				return invoker(withAuth, method, req, reply, cc, opts...)
@@ -202,10 +195,15 @@ func (s *Service) usePublicAPI(ctx context.Context) bool {
 }
 
 func (s *Service) GetToken(ctx context.Context, query *gitpod.GetTokenSearchOptions) (res *gitpod.Token, err error) {
+	startTime := time.Now()
+	usePublicApi := s.usePublicAPI(ctx)
+	defer func() {
+		s.apiMetrics.ProcessMetrics(usePublicApi, "GetToken", err, startTime)
+	}()
 	if s == nil {
 		return nil, errNotConnected
 	}
-	if !s.usePublicAPI(ctx) {
+	if !usePublicApi {
 		return s.gitpodService.GetToken(ctx, query)
 	}
 
@@ -229,11 +227,16 @@ func (s *Service) GetToken(ctx context.Context, query *gitpod.GetTokenSearchOpti
 }
 
 func (s *Service) OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error) {
+	startTime := time.Now()
+	usePublicApi := s.usePublicAPI(ctx)
+	defer func() {
+		s.apiMetrics.ProcessMetrics(usePublicApi, "OpenPort", err, startTime)
+	}()
 	if s == nil {
 		return nil, errNotConnected
 	}
 	workspaceID := s.cfg.WorkspaceID
-	if !s.usePublicAPI(ctx) {
+	if !usePublicApi {
 		return s.gitpodService.OpenPort(ctx, workspaceID, port)
 	}
 	service := v1.NewWorkspacesServiceClient(s.publicAPIConn)
@@ -330,6 +333,13 @@ func (s *Service) InstanceUpdates(ctx context.Context) (<-chan *gitpod.Workspace
 func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan error) {
 	workspaceID := s.cfg.WorkspaceID
 	resp, err := backoff.RetryWithData(func() (v1.WorkspacesService_StreamWorkspaceStatusClient, error) {
+		startTime := time.Now()
+		var err error
+		defer func() {
+			if err != nil {
+				s.apiMetrics.ProcessMetrics(true, "InstanceUpdates", err, startTime)
+			}
+		}()
 		service := v1.NewWorkspacesServiceClient(s.publicAPIConn)
 		resp, err := service.StreamWorkspaceStatus(ctx, &v1.StreamWorkspaceStatusRequest{
 			WorkspaceId: workspaceID,
@@ -348,8 +358,13 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan erro
 		errChan <- err
 		return
 	}
+	startTime := time.Now()
+	defer func() {
+		s.apiMetrics.ProcessMetrics(true, "InstanceUpdates", err, startTime)
+	}()
+	var data *v1.StreamWorkspaceStatusResponse
 	for {
-		resp, err := resp.Recv()
+		data, err = resp.Recv()
 		if err != nil {
 			code := status.Code(err)
 			if err != io.EOF && ctx.Err() == nil && code != codes.Canceled {
@@ -363,7 +378,7 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan erro
 		}
 		s.subMutex.Lock()
 		for sub := range s.subs {
-			sub <- workspaceStatusToWorkspaceInstance(resp.Result)
+			sub <- workspaceStatusToWorkspaceInstance(data.Result)
 		}
 		s.subMutex.Unlock()
 	}
@@ -372,7 +387,13 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan erro
 func (s *Service) serverInstanceUpdate(ctx context.Context, errChan chan error) {
 	instanceID := s.cfg.InstanceID
 	ch, err := backoff.RetryWithData(func() (<-chan *gitpod.WorkspaceInstance, error) {
+		startTime := time.Now()
 		ch, err := s.gitpodService.InstanceUpdates(ctx, instanceID)
+		defer func() {
+			if err != nil {
+				s.apiMetrics.ProcessMetrics(false, "InstanceUpdates", err, startTime)
+			}
+		}()
 		if err != nil {
 			log.WithError(err).Info("backoff failed to listen to serverAPI instanceUpdates, try again")
 		}
@@ -387,6 +408,10 @@ func (s *Service) serverInstanceUpdate(ctx context.Context, errChan chan error) 
 		errChan <- err
 		return
 	}
+	startTime := time.Now()
+	defer func() {
+		s.apiMetrics.ProcessMetrics(false, "InstanceUpdates", ctx.Err(), startTime)
+	}()
 	for update := range ch {
 		s.subMutex.Lock()
 		for sub := range s.subs {
@@ -414,7 +439,7 @@ func (s *Service) RegisterMetrics(registry *prometheus.Registry) error {
 	if s == nil {
 		return errNotConnected
 	}
-	return registry.Register(s.publicApiMetrics)
+	return registry.Register(s.apiMetrics)
 }
 
 func workspaceStatusToWorkspaceInstance(status *v1.WorkspaceStatus) *gitpod.WorkspaceInstance {
