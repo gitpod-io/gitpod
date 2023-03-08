@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
 	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -38,7 +37,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	trustedDomain := "https://open-vsx.org"
 
 	bscfg := config.Config{
-		BlobServe: blobserve.Config{
+		BlobServe: config.BlobServe{
 			Port:    ContainerPort,
 			Timeout: util.Duration(time.Second * 5),
 			Repos: map[string]blobserve.Repo{

@@ -24,8 +24,8 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/xerrors"
 
+	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
 // ResolverProvider provides new resolver
@@ -33,7 +33,7 @@ type ResolverProvider func() remotes.Resolver
 
 // Server offers image blobs for download
 type Server struct {
-	Config   Config
+	Config   config.BlobServe
 	Resolver ResolverProvider
 
 	refstore *refstore
@@ -42,40 +42,6 @@ type Server struct {
 type BlobserveInlineVars struct {
 	IDE             string `json:"ide"`
 	SupervisorImage string `json:"supervisor"`
-}
-
-type BlobSpace struct {
-	Location string `json:"location"`
-	MaxSize  int64  `json:"maxSizeBytes,omitempty"`
-}
-
-type Repo struct {
-	PrePull      []string            `json:"prePull,omitempty"`
-	Workdir      string              `json:"workdir,omitempty"`
-	Replacements []StringReplacement `json:"replacements,omitempty"`
-	InlineStatic []InlineReplacement `json:"inlineStatic,omitempty"`
-}
-
-// Config configures a server.
-type Config struct {
-	Port    int             `json:"port"`
-	Timeout util.Duration   `json:"timeout,omitempty"`
-	Repos   map[string]Repo `json:"repos"`
-	// AllowAnyRepo enables users to access any repo/image, irregardles if they're listed in the
-	// ref config or not.
-	AllowAnyRepo bool      `json:"allowAnyRepo"`
-	BlobSpace    BlobSpace `json:"blobSpace"`
-}
-
-type StringReplacement struct {
-	Path        string `json:"path"`
-	Search      string `json:"search"`
-	Replacement string `json:"replacement"`
-}
-
-type InlineReplacement struct {
-	Search      string `json:"search"`
-	Replacement string `json:"replacement"`
 }
 
 // From https://github.com/distribution/distribution/blob/v2.7.1/reference/regexp.go
@@ -115,7 +81,7 @@ var ReferenceRegexp = expression(reference.NameRegexp,
 	optional(literal("@"), reference.DigestRegexp))
 
 // NewServer creates a new blob server
-func NewServer(cfg Config, resolver ResolverProvider) (*Server, error) {
+func NewServer(cfg config.BlobServe, resolver ResolverProvider) (*Server, error) {
 	refstore, err := newRefStore(cfg, resolver)
 	if err != nil {
 		return nil, err
@@ -202,7 +168,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	repo := pref.Name()
 
 	var workdir string
-	var inlineReplacements []InlineReplacement
+	var inlineReplacements []config.InlineReplacement
 	if cfg, ok := reg.Config.Repos[repo]; ok {
 		workdir = cfg.Workdir
 		inlineReplacements = cfg.InlineStatic
@@ -285,7 +251,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	http.StripPrefix(pathPrefix, http.FileServer(fs)).ServeHTTP(w, req)
 }
 
-func inlineVars(req *http.Request, r io.ReadSeeker, inlineReplacements []InlineReplacement) (io.ReadSeeker, error) {
+func inlineVars(req *http.Request, r io.ReadSeeker, inlineReplacements []config.InlineReplacement) (io.ReadSeeker, error) {
 	inlineVarsValue := req.Header.Get("X-BlobServe-InlineVars")
 	if len(inlineReplacements) == 0 || inlineVarsValue == "" {
 		return r, nil
