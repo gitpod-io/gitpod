@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
+	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -36,15 +36,15 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	extensionsGalleryItemUrl := "https://open-vsx.org/vscode/item"
 	trustedDomain := "https://open-vsx.org"
 
-	bscfg := config.Config{
-		BlobServe: config.BlobServe{
+	bscfg := blobserve_config.Config{
+		BlobServe: blobserve_config.BlobServe{
 			Port:    ContainerPort,
 			Timeout: util.Duration(time.Second * 5),
-			Repos: map[string]blobserve.Repo{
+			Repos: map[string]blobserve_config.Repo{
 				ctx.RepoName(ctx.Config.Repository, ide.CodeIDEImage): {
 					PrePull: []string{},
 					Workdir: "/ide",
-					Replacements: []blobserve.StringReplacement{{
+					Replacements: []blobserve_config.StringReplacement{{
 						Search:      "vscode-cdn.net",
 						Replacement: ctx.Config.Domain,
 						Path:        "/ide/out/vs/workbench/workbench.web.main.js",
@@ -75,7 +75,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}},
 					// TODO consider to provide it as a part of image label or rather inline ${ide} and ${supervisor} in index.html
 					// to decouple blobserve and code image
-					InlineStatic: []blobserve.InlineReplacement{{
+					InlineStatic: []blobserve_config.InlineReplacement{{
 						Search:      "window.location.origin;",
 						Replacement: "'${ide}';",
 					}, {
@@ -100,7 +100,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Workdir: "/.supervisor/frontend",
 				},
 			},
-			BlobSpace: blobserve.BlobSpace{
+			BlobSpace: blobserve_config.BlobSpace{
 				Location: "/mnt/cache/blobserve",
 				MaxSize:  MaxSizeBytes,
 			},
