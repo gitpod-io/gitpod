@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	blobserve_config "github.com/gitpod-io/gitpod/blobserve/pkg/config"
+	"github.com/gitpod-io/gitpod/blobserve/pkg/config"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -127,7 +127,7 @@ func Test_inlineVars(t *testing.T) {
 	tests := []struct {
 		Name         string
 		InlineVars   *BlobserveInlineVars
-		Replacements []blobserve_config.InlineReplacement
+		Replacements []config.InlineReplacement
 		Content      string
 		Expected     string
 	}{
@@ -142,7 +142,7 @@ func Test_inlineVars(t *testing.T) {
 		},
 		{
 			Name: "no inline vars",
-			Replacements: []blobserve_config.InlineReplacement{
+			Replacements: []config.InlineReplacement{
 				{Search: "aaa", Replacement: "${ide}"},
 				{Search: "bbb", Replacement: "${supervisor}"},
 			},
@@ -155,7 +155,7 @@ func Test_inlineVars(t *testing.T) {
 				IDE:             "foo",
 				SupervisorImage: "bar",
 			},
-			Replacements: []blobserve_config.InlineReplacement{
+			Replacements: []config.InlineReplacement{
 				{Search: "aaa", Replacement: "${ide}"},
 				{Search: "bbb", Replacement: "${supervisor}"},
 			},
