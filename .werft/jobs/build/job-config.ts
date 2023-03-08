@@ -44,7 +44,7 @@ export interface JobConfig {
     certIssuer: string;
     recreatePreview: boolean;
     recreateVm: boolean;
-    withGitHubActions: boolean;
+    withWerft: boolean;
     useWsManagerMk2: boolean;
     withGceVm: boolean;
 }
@@ -116,7 +116,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const analytics = parseAnalytics(werft, sliceId, buildConfig["analytics"])
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
-    const withGitHubActions = "with-github-actions" in buildConfig;
+    const withWerft = "with-werft" in buildConfig;
     const withGceVm = "with-gce-vm" in buildConfig;
 
     switch (buildConfig["cert-issuer"]) {
@@ -188,7 +188,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         recreatePreview,
         recreateVm,
         withSlowDatabase,
-        withGitHubActions,
+        withWerft,
         withDedicatedEmulation,
         useWsManagerMk2,
         withGceVm,
