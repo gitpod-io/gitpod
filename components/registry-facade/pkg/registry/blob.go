@@ -33,6 +33,13 @@ import (
 	"github.com/gitpod-io/gitpod/registry-facade/api"
 )
 
+var backoffParams = wait.Backoff{
+	Duration: 100 * time.Millisecond,
+	Factor:   1.5,
+	Jitter:   0.2,
+	Steps:    4,
+}
+
 func (reg *Registry) handleBlob(ctx context.Context, r *http.Request) http.Handler {
 	spname, name := getSpecProviderName(ctx)
 	sp, ok := reg.SpecProvider[spname]
@@ -142,62 +149,82 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		srcs = append(srcs, &configBlobSource{Fetcher: fetcher, Spec: bh.Spec, Manifest: manifest, ConfigModifier: bh.ConfigModifier})
 		srcs = append(srcs, bh.AdditionalSources...)
 
+		w.Header().Set("Etag", bh.Digest.String())
+
+		var dontCache bool
+		var mediaType string
 		var src BlobSource
+		var n int64
+		var returnBlob bool
+		var blobError error
+		t0 := time.Now()
 		for _, s := range srcs {
-			if s.HasBlob(ctx, bh.Spec, bh.Digest) {
-				src = s
+			if !s.HasBlob(ctx, bh.Spec, bh.Digest) {
+				continue
+			}
+			src = s
+
+			dc, mt, url, rc, err := s.GetBlob(ctx, bh.Spec, bh.Digest)
+			dontCache = dc
+			mediaType = mt
+
+			if err != nil {
+				log.Errorf("cannnot fetch the blob from source %w: %w", s.Name(), err)
+				continue
+			}
+
+			if url != "" {
+				http.Redirect(w, r, url, http.StatusPermanentRedirect)
+				return nil
+			}
+
+			w.Header().Set("Content-Type", mediaType)
+
+			err = func() error {
+				bp := bufPool.Get().(*[]byte)
+				defer bufPool.Put(bp)
+
+				var serr error
+
+				err = wait.ExponentialBackoffWithContext(ctx, backoffParams, func() (done bool, err error) {
+					n, serr = io.CopyBuffer(w, rc, *bp)
+					if serr == nil {
+						return true, nil
+					}
+					if errors.Is(serr, syscall.ECONNRESET) || errors.Is(serr, syscall.EPIPE) {
+						log.WithField("blobSource", s.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(serr).Warn("retry get blob because of error")
+						return false, nil
+					}
+					return true, serr
+				})
+
+				if err != nil {
+					if bh.Metrics != nil {
+						bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
+					}
+					return err
+				}
+
+				return nil
+			}()
+
+			rc.Close()
+
+			if err == nil {
+				returnBlob = true
+				blobError = err
 				break
 			}
 		}
-		if src == nil {
-			return distv2.ErrorCodeBlobUnknown
-		}
 
-		t0 := time.Now()
-
-		dontCache, mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
-		if err != nil {
-			return xerrors.Errorf("cannnot fetch the blob: %w", err)
-		}
-		if rc != nil {
-			defer rc.Close()
-		}
-
-		if url != "" {
-			http.Redirect(w, r, url, http.StatusPermanentRedirect)
-			return nil
-		}
-
-		w.Header().Set("Content-Type", mediaType)
-		w.Header().Set("Etag", bh.Digest.String())
-
-		bp := bufPool.Get().(*[]byte)
-		defer bufPool.Put(bp)
-
-		var n int64
-		var serr error
-		err = wait.PollImmediateWithContext(ctx, 100*time.Millisecond, time.Minute, func(context.Context) (done bool, err error) {
-			n, serr = io.CopyBuffer(w, rc, *bp)
-			if serr == nil {
-				return true, nil
-			}
-			if errors.Is(serr, syscall.ECONNRESET) || errors.Is(serr, syscall.EPIPE) {
-				log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(serr).Warn("retry get blob because of error")
-				return false, nil
-			}
-			return true, serr
-		})
-		if err != nil {
-			if bh.Metrics != nil {
-				bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
-			}
-			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Errorf("unable to return blob: %v", serr)
-			return xerrors.Errorf("unable to return blob: %w", err)
+		if !returnBlob {
+			log.WithField("baseRef", bh.Spec.BaseRef).WithError(blobError).Error("unable to return blob")
+			return xerrors.Errorf("unable to return blob: %w", blobError)
 		}
 
 		if bh.Metrics != nil {
-			bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
 			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()
+			bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
 			bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
 		}
 
