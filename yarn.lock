@@ -5411,6 +5411,11 @@ capture-exit@^2.0.0:
   dependencies:
     rsvp "^4.8.4"
 
+case-anything@^2.1.10:
+  version "2.1.10"
+  resolved "https://registry.yarnpkg.com/case-anything/-/case-anything-2.1.10.tgz#d18a6ca968d54ec3421df71e3e190f3bced23410"
+  integrity sha512-JczJwVrCP0jPKh05McyVsuOg6AYosrB9XWZKbQzXeDAm2ClE/PJE/BcrrQrVyGYH7Jg8V/LDupmyL4kFlVsVFQ==
+
 case-sensitive-paths-webpack-plugin@2.3.0:
   version "2.3.0"
   resolved "https://registry.npmjs.org/case-sensitive-paths-webpack-plugin/-/case-sensitive-paths-webpack-plugin-2.3.0.tgz"
@@ -12481,6 +12486,13 @@ nice-grpc-common@^2.0.0:
   dependencies:
     ts-error "^1.0.6"
 
+nice-grpc-common@^2.0.1:
+  version "2.0.1"
+  resolved "https://registry.yarnpkg.com/nice-grpc-common/-/nice-grpc-common-2.0.1.tgz#2291d3d9c321eb9829a48d6e1c061b29363bc283"
+  integrity sha512-QbQ8nAALQagN4VukmTGwEWKzVtgQr3YwWP9okIzoMCmx0mLTswBFpyOUbKlG4cOm7NDaIFmbmtleQR9EWmNtrw==
+  dependencies:
+    ts-error "^1.0.6"
+
 nice-grpc@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/nice-grpc/-/nice-grpc-2.0.0.tgz#0fa3f04e5f45905349cf44330ae26e54e77c6b1c"
@@ -17624,6 +17636,13 @@ ts-poet@^6.1.0:
   dependencies:
     dprint-node "^1.0.7"
 
+ts-poet@^6.2.0:
+  version "6.3.0"
+  resolved "https://registry.yarnpkg.com/ts-poet/-/ts-poet-6.3.0.tgz#954f2a6923ccaa2d4cdf55979f2e991d440e30a3"
+  integrity sha512-RjS37SnXMa9En8xvQf//+rvNNNCB7x2TKP/ZfsiQFidtfN3A6FYgPDESe4r7YA3F663XO2ozx+2buQItGOLMxg==
+  dependencies:
+    dprint-node "^1.0.7"
+
 ts-proto-descriptors@1.7.1:
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/ts-proto-descriptors/-/ts-proto-descriptors-1.7.1.tgz#685d00305b06adfa929fd5a016a419382cd64c50"
@@ -17642,6 +17661,19 @@ ts-proto@^1.125.0:
     object-hash "^1.3.1"
     protobufjs "^6.11.3"
     ts-poet "^6.1.0"
+    ts-proto-descriptors "1.7.1"
+
+ts-proto@^1.140.0:
+  version "1.140.0"
+  resolved "https://registry.yarnpkg.com/ts-proto/-/ts-proto-1.140.0.tgz#cb1528cd5945a4de0ef50637beabf6a70d039f4a"
+  integrity sha512-0FhFT+S8u7ES3O6b+yEQJ3eSOtW1Sp9F5b4TAfsIs+ojQozghz8Zr5dTHXcuibwoUIZibzt45OxvXLhmJyFMMQ==
+  dependencies:
+    "@types/object-hash" "^1.3.0"
+    case-anything "^2.1.10"
+    dataloader "^1.4.0"
+    object-hash "^1.3.1"
+    protobufjs "^6.11.3"
+    ts-poet "^6.2.0"
     ts-proto-descriptors "1.7.1"
 
 ts-protoc-gen@^0.13.0:
