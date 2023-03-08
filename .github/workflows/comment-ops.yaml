@@ -21,8 +21,8 @@ jobs:
     # Technically we don't need these here, as we don't reuse them between jobs, but it's good to have them in a single place
     outputs:
       branch: ${{ steps.comment-branch.outputs.head_ref }}
-      run_url: ${{ steps.run_outputs.outputs.run_url }}
-      run_id: ${{ steps.run_outputs.outputs.run_id }}
+      run_url: ${{ fromJSON(steps.run_outputs.outputs.result).html_url }}
+      run_id: ${{ fromJSON(steps.run_outputs.outputs.result).id }}
       recreate_vm: ${{ steps.configure.outputs.recreate-vm }}
     steps:
       # In order for us to find out from which PR the comment originates, we use the `xt0rted/pull-request-comment-branch@v1` action
@@ -57,16 +57,27 @@ jobs:
       # But it's an overkill for now
       # Instead, we wait a little, and grab the last job that was triggered by a `workflow_dispatch` event, AND is not completed, and we hope for the best 🤞
       - name: Get run URL
+        uses: actions/github-script@v6
         id: run_outputs
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          sleep 5
-          url=$(gh run list --repo '${{ github.repository }}' --workflow build.yaml -b ${{ steps.comment-branch.outputs.head_ref }} --json event,url,status -q '[.[] | select(.event=="workflow_dispatch") | select(.status!="completed").url][0]')
-          {
-            echo "run_url=${url}"
-            echo "run_id=${url##*/}"
-          } >> $GITHUB_OUTPUT
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            await new Promise(r => setTimeout(r, 5000));
+            let result = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'build.yml',
+              branch: '${{ steps.comment-branch.outputs.head_ref }}',
+              event: 'workflow_dispatch',
+              per_page: 10
+            });
+
+            var url = result.data.workflow_runs
+              .filter(function (e) {
+                return e.status != 'completed' && e.status != 'skipped'
+            });
+
+            return url[0];
       # Comment with a link to the job that got triggered
       - uses: actions/github-script@v6
         with:
