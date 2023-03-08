@@ -38,6 +38,7 @@ import { ResponseError } from "vscode-jsonrpc";
 import { VerificationService } from "../auth/verification-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import * as fs from "fs/promises";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class UserController {
@@ -151,9 +152,40 @@ export class UserController {
             // If valid, we log the user-in as the "admin" user - a singleton identity which exists on the installation.
 
             try {
+                const token = req.params.token;
+                if (!token) {
+                    throw new ResponseError(ErrorCodes.BAD_REQUEST, "missing token");
+                }
                 const credentials = await this.readAdminCredentials();
+                credentials.validate(token);
+
+                // The user has supplied a valid token, we need to sign them in.
+                // Login this user (sets cookie as side-effect)
+                const user = await this.userDb.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID);
+                if (!user) {
+                    // We respond with NOT_AUTHENTICATED to prevent gleaning whether the user, or token are invalid.
+                    throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Admin user not found");
+                }
+                await new Promise<void>((resolve, reject) => {
+                    req.login(user, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+
+                // Redirect the user to create a new Organization
+                // We'll want to be more specific about the redirect based on the cell information in the future.
+                res.redirect("/orgs/new", 307);
             } catch (e) {
-                res.sendStatus(401);
+                log.error("Failed to sign-in as admin with OTS Token", e);
+
+                // Default to unathenticated, to not leak information.
+                // We do not send the error response to ensure we do not disclose information.
+                const code = e.code || 401;
+                res.sendStatus(code);
                 return;
             }
         });
@@ -873,10 +905,17 @@ export class UserController {
     }
 
     private async readAdminCredentials(): Promise<AdminCredentials> {
-        const contents = await fs.readFile("TODO", { encoding: "utf8" });
+        const credentialsFilePath = this.config.admin.credentialsFilePath;
+
+        // Credentials do not have to be present in the system, if admin level sing-in is entirely disabled.
+        if (!credentialsFilePath) {
+            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "No admin credentials");
+        }
+
+        const contents = await fs.readFile(credentialsFilePath, { encoding: "utf8" });
         const payload = await JSON.parse(contents);
 
-        const err = new Error("Invalid admin credentials file.");
+        const err = new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Invalid admin credentials.");
 
         if (!payload.expiresAt) {
             log.error("Admin credentials file does not contain expiry timestamp.");
@@ -896,11 +935,11 @@ export class UserController {
 }
 
 class AdminCredentials {
-    protected expiresAt: number;
-
     // We expect to receive the hex digest of the hash
     protected hash: string;
     protected algo: "sha512";
+
+    protected expiresAt: number;
 
     constructor(hash: string, expires: number, algo: "sha512") {
         this.hash = hash;
@@ -911,6 +950,19 @@ class AdminCredentials {
     validate(token: string) {
         const suppliedTokenHash = crypto.createHash(this.algo).update(token).digest("hex");
 
-        crypto.timingSafeEqual();
+        const nowInSeconds = new Date().getTime() / 1000;
+        if (nowInSeconds >= this.expiresAt) {
+            log.error("Admin credentials are expired.");
+            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "invalid token");
+        }
+
+        const tokensMatch = crypto.timingSafeEqual(
+            Buffer.from(suppliedTokenHash, "utf8"),
+            Buffer.from(this.hash, "utf8"),
+        );
+
+        if (!tokensMatch) {
+            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "invalid token");
+        }
     }
 }

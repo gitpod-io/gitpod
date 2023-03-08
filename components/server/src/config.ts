@@ -38,7 +38,11 @@ export type Config = Omit<
     inactivityPeriodForReposInDays?: number;
 
     patSigningKey: string;
-    admin: { loginKey?: string };
+    admin: {
+        loginKey?: string;
+        // Absolute file path pointing to a file which contains admin credentials, encoded as JSON.
+        credentialsFilePath: string;
+    };
 };
 
 export interface WorkspaceDefaults {
