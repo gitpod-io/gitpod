@@ -151,81 +151,28 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Etag", bh.Digest.String())
 
-		var dontCache bool
-		var mediaType string
+		var retrieved bool
 		var src BlobSource
-		var n int64
-		var returnBlob bool
-		var blobError error
-		t0 := time.Now()
+		var dontCache bool
 		for _, s := range srcs {
 			if !s.HasBlob(ctx, bh.Spec, bh.Digest) {
 				continue
 			}
-			src = s
 
-			dc, mt, url, rc, err := s.GetBlob(ctx, bh.Spec, bh.Digest)
-			dontCache = dc
-			mediaType = mt
-
+			retrieved, dontCache, err = bh.retrieveFromSource(ctx, s, w, r)
 			if err != nil {
-				log.Errorf("cannnot fetch the blob from source %w: %w", s.Name(), err)
-				continue
+				log.WithField("src", src.Name()).WithError(err).Error("unable to retrieve blob")
 			}
 
-			if url != "" {
-				http.Redirect(w, r, url, http.StatusPermanentRedirect)
-				return nil
-			}
-
-			w.Header().Set("Content-Type", mediaType)
-
-			err = func() error {
-				bp := bufPool.Get().(*[]byte)
-				defer bufPool.Put(bp)
-
-				var serr error
-
-				err = wait.ExponentialBackoffWithContext(ctx, backoffParams, func() (done bool, err error) {
-					n, serr = io.CopyBuffer(w, rc, *bp)
-					if serr == nil {
-						return true, nil
-					}
-					if errors.Is(serr, syscall.ECONNRESET) || errors.Is(serr, syscall.EPIPE) {
-						log.WithField("blobSource", s.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(serr).Warn("retry get blob because of error")
-						return false, nil
-					}
-					return true, serr
-				})
-
-				if err != nil {
-					if bh.Metrics != nil {
-						bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
-					}
-					return err
-				}
-
-				return nil
-			}()
-
-			rc.Close()
-
-			if err == nil {
-				returnBlob = true
-				blobError = err
+			if retrieved {
+				src = s
 				break
 			}
 		}
 
-		if !returnBlob {
-			log.WithField("baseRef", bh.Spec.BaseRef).WithError(blobError).Error("unable to return blob")
-			return xerrors.Errorf("unable to return blob: %w", blobError)
-		}
-
-		if bh.Metrics != nil {
-			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()
-			bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
-			bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
+		if !retrieved {
+			log.WithField("baseRef", bh.Spec.BaseRef).WithError(err).Error("unable to return blob")
+			return xerrors.Errorf("unable to return blob: %w", err)
 		}
 
 		if dontCache {
@@ -235,7 +182,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		go func() {
 			// we can do this only after the io.Copy above. Otherwise we might expect the blob
 			// to be in the blobstore when in reality it isn't.
-			_, _, _, rc, err := src.GetBlob(context.Background(), bh.Spec, bh.Digest)
+			_, mediaType, _, rc, err := src.GetBlob(context.Background(), bh.Spec, bh.Digest)
 			if err != nil {
 				log.WithError(err).WithField("digest", bh.Digest).Warn("cannot push to IPFS - unable to get blob")
 				return
@@ -261,6 +208,55 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, err)
 	}
 	tracing.FinishSpan(span, &err)
+}
+
+func (bh *blobHandler) retrieveFromSource(ctx context.Context, src BlobSource, w http.ResponseWriter, r *http.Request) (handled, dontCache bool, err error) {
+	dontCache, mediaType, url, rc, err := src.GetBlob(ctx, bh.Spec, bh.Digest)
+	if err != nil {
+		return false, true, xerrors.Errorf("cannnot fetch the blob from source %s: %v", src.Name(), err)
+	}
+	if rc != nil {
+		defer rc.Close()
+	}
+
+	if url != "" {
+		http.Redirect(w, r, url, http.StatusPermanentRedirect)
+		return true, true, nil
+	}
+
+	w.Header().Set("Content-Type", mediaType)
+
+	bp := bufPool.Get().(*[]byte)
+	defer bufPool.Put(bp)
+
+	var n int64
+	t0 := time.Now()
+	err = wait.ExponentialBackoffWithContext(ctx, backoffParams, func() (done bool, err error) {
+		n, err = io.CopyBuffer(w, rc, *bp)
+		if err == nil {
+			return true, nil
+		}
+		if errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.EPIPE) {
+			log.WithField("blobSource", src.Name()).WithField("baseRef", bh.Spec.BaseRef).WithError(err).Warn("retry get blob because of error")
+			return false, nil
+		}
+		return true, err
+	})
+
+	if err != nil {
+		if bh.Metrics != nil {
+			bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "false").Inc()
+		}
+		return false, true, err
+	}
+
+	if bh.Metrics != nil {
+		bh.Metrics.BlobDownloadCounter.WithLabelValues(src.Name(), "true").Inc()
+		bh.Metrics.BlobDownloadSpeedHist.WithLabelValues(src.Name()).Observe(float64(n) / time.Since(t0).Seconds())
+		bh.Metrics.BlobDownloadSizeCounter.WithLabelValues(src.Name()).Add(float64(n))
+	}
+
+	return true, dontCache, nil
 }
 
 func (bh *blobHandler) downloadManifest(ctx context.Context, ref string) (res *ociv1.Manifest, fetcher remotes.Fetcher, err error) {
