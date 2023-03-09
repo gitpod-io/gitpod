@@ -231,7 +231,7 @@ jobs:
 
           RESULT=0
           set -x
-          CI= leeway build \
+          CI= leeway build dev:all \
             --docker-build-options network=host \
             --cache $CACHE \
             --coverage-output-path=/__w/gitpod/gitpod/test-coverage-report \
