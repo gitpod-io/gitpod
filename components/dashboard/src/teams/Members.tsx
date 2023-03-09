@@ -19,6 +19,7 @@ import searchIcon from "../icons/search.svg";
 import copy from "../images/copy.svg";
 import { teamsService } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
+import { SpinnerLoader } from "../components/Loader";
 
 export default function MembersPage() {
     const user = useCurrentUser();
@@ -161,7 +162,7 @@ export default function MembersPage() {
                         </ItemField>
                     </Item>
                     {filteredMembers.length === 0 ? (
-                        <p className="pt-16 text-center">No members found</p>
+                        <SpinnerLoader />
                     ) : (
                         filteredMembers.map((m) => (
                             <Item className="grid grid-cols-3" key={m.userId}>
