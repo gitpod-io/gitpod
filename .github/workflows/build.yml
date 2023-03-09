@@ -303,7 +303,7 @@ jobs:
 
   deploy-webapp-staging:
     name: "Deploy WebApp SaaS to staging"
-    needs: [ install, monitoring ]
+    needs: [ configuration, install, monitoring ]
     runs-on: ubuntu-latest
     if: |
       (needs.configuration.outputs.is_main_branch == 'true')
