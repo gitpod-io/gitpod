@@ -2304,6 +2304,34 @@ data:
               ],
               "defaultValue": "unknown"
             }
+          },
+          {
+            "name": "supervisor_client_handled_total",
+            "help": "Total number of supervisor outgoing services completed by the client, regardless of success or failure.",
+            "labels": [
+              {
+                "name": "method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "server",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "err_code",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ],
+            "client": null
           }
         ],
         "histogramMetrics": [
@@ -2505,6 +2533,43 @@ data:
               ],
               "defaultValue": "unknown"
             }
+          },
+          {
+            "name": "supervisor_client_handling_seconds",
+            "help": "Histogram of response latency (seconds) of the supervisor outgoing services until it is finished by the application.",
+            "labels": [
+              {
+                "name": "method",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "server",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              },
+              {
+                "name": "err_code",
+                "allowValues": [
+                  "*"
+                ],
+                "defaultValue": ""
+              }
+            ],
+            "buckets": [
+              0.1,
+              0.2,
+              0.5,
+              1,
+              2,
+              5,
+              10
+            ],
+            "client": null
           }
         ],
         "errorReporting": {
@@ -3371,7 +3436,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 1afcd55c5e92bb11d2bee732b987af017404083a008f7227966851accd542a17
+        gitpod.io/checksum_config: 82bbddda1db42c99ce600d77026a61a8bae98a12a8d8c345c7d599a9d1158ea1
       creationTimestamp: null
       labels:
         app: gitpod

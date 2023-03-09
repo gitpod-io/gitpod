@@ -232,6 +232,24 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				DefaultValue: "unknown",
 			},
 		},
+		{
+			Name: "supervisor_client_handled_total",
+			Help: "Total number of supervisor outgoing services completed by the client, regardless of success or failure.",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "method",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "server",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "err_code",
+					AllowValues: []string{"*"},
+				},
+			},
+		},
 	}
 
 	histogramMetrics := []config.HistogramMetricsConfiguration{
@@ -328,6 +346,24 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				AllowValues:  []string{"vscode-desktop-extension", "supervisor", "unknown"},
 				DefaultValue: "unknown",
 			},
+		}, {
+			Name: "supervisor_client_handling_seconds",
+			Help: "Histogram of response latency (seconds) of the supervisor outgoing services until it is finished by the application.",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "method",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "server",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "err_code",
+					AllowValues: []string{"*"},
+				},
+			},
+			Buckets: []float64{0.1, 0.2, 0.5, 1, 2, 5, 10},
 		},
 	}
 
