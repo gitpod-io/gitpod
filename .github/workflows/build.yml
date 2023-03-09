@@ -209,39 +209,17 @@ jobs:
             npm-auth-token:gitpod-core-dev/npm-auth-token
             jb-marketplace-publish-token:gitpod-core-dev/jb-marketplace-publish-token
             codecov-token:gitpod-core-dev/codecov
-      - name: dev Build
+      - name: Dev Build
         id: dev-build
         shell: bash
         working-directory: /workspace/gitpod
-        env:
-          JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
-          VERSION: ${{needs.configuration.outputs.version}}
-          PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
-          PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
-          PR_LEEWAY_TARGET: ${{needs.configuration.outputs.build_leeway_target}}
-          PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
-          PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
         run: |
-          [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
-          [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
-          [[ -z "$PR_LEEWAY_TARGET" ]] && PR_LEEWAY_TARGET="components:all"
-          [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
-
-          mkdir -p /__w/gitpod/gitpod/test-coverage-report
-
-          RESULT=0
-          set -x
           CI= leeway build dev:all \
             --docker-build-options network=host \
-            --cache $CACHE \
-            --coverage-output-path=/__w/gitpod/gitpod/test-coverage-report \
+            --cache remote \
             -Dversion=$VERSION \
             -DlocalAppVersion=$VERSION \
-            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev \
-            --report report.html || RESULT=$?
-
-          cat report.html >> $GITHUB_STEP_SUMMARY
-          exit $RESULT
+            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev
       - name: Leeway Build
         id: leeway
         shell: bash
@@ -275,6 +253,7 @@ jobs:
             --cache $CACHE \
             $TEST \
             -Dversion=$VERSION \
+            --docker-build-options network=host \
             -DlocalAppVersion=$VERSION \
             -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
