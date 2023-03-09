@@ -211,15 +211,19 @@ jobs:
             codecov-token:gitpod-core-dev/codecov
       - name: Dev Build
         id: dev-build
+        env:
+          JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
+          VERSION: ${{needs.configuration.outputs.version}}
         shell: bash
         working-directory: /workspace/gitpod
         run: |
-          CI= leeway build dev:all \
+          leeway build dev:all \
             --docker-build-options network=host \
             --cache remote \
             -Dversion=$VERSION \
             -DlocalAppVersion=$VERSION \
             -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev
+
       - name: Leeway Build
         id: leeway
         shell: bash
@@ -259,6 +263,7 @@ jobs:
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
             -DnpmPublishTrigger="${NPM_PUBLISH_TRIGGER}" \
             -DpublishToJBMarketplace="${PUBLISH_TO_JBPM}" \
+            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build \
             --coverage-output-path=/__w/gitpod/gitpod/test-coverage-report \
             --report report.html || RESULT=$?
           set +x
