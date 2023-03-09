@@ -307,7 +307,7 @@ jobs:
     needs: [ install, monitoring ]
     runs-on: ubuntu-latest
     if: |
-      (needs.configuration.outputs.is_main_branch != 'true')
+      (needs.configuration.outputs.is_main_branch == 'true')
     steps:
       - uses: gitpod-io/ops/.github/workflows/webapp-deploy-staging.yml@main
         with:
