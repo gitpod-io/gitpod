@@ -990,6 +990,9 @@ data:
           },
           "wsProxy": {
             "version": "test"
+          },
+          "node-labeler": {
+            "version": "test"
           }
         }
       }

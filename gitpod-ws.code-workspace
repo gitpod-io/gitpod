@@ -36,7 +36,7 @@
         { "path": "dev/preview/previewctl" },
         { "path": "install/installer" },
         { "path": "install/preview" },
-        { "path": "dev/ready-probe-labeler" },
+        { "path": "components/node-labeler" },
     ],
     "settings": {
         "typescript.tsdk": "gitpod/node_modules/typescript/lib",

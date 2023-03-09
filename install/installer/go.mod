@@ -336,6 +336,8 @@ replace github.com/gitpod-io/gitpod/ws-manager/api => ../../components/ws-manage
 
 replace github.com/gitpod-io/gitpod/ws-proxy => ../../components/ws-proxy // leeway
 
+replace github.com/gitpod-io/gitpod/node-labeler => ../../components/node-labeler // leeway
+
 replace k8s.io/api => k8s.io/api v0.24.4 // leeway indirect from components/common-go:lib
 
 replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.24.4 // leeway indirect from components/common-go:lib

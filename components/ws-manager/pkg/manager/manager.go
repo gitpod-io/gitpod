@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -1559,11 +1558,6 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 				return false, nil
 			}
 
-			err = waitForTCPPortToBeReachable(pod.Status.PodIP, "8080", 5*time.Second)
-			if err != nil {
-				return false, nil
-			}
-
 			podIP = pod.Status.PodIP
 			break
 		}
@@ -1590,33 +1584,6 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	}
 
 	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
-}
-
-func waitForTCPPortToBeReachable(host string, port string, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return xerrors.Errorf("port %v on host %v never reachable", port, host)
-		case <-ticker.C:
-			conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), 500*time.Millisecond)
-			if err != nil {
-				continue
-			}
-
-			if conn != nil {
-				conn.Close()
-				return nil
-			}
-
-			continue
-		}
-	}
 }
 
 func (m *Manager) createWorkspaceSnapshotFromPVC(ctx context.Context, pvcName string, pvcVolumeSnapshotName string, pvcVolumeSnapshotClassName string, workspaceID string, labels map[string]string) error {

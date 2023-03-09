@@ -82,6 +82,7 @@ type Components struct {
 	WSManagerMk2    Versioned `json:"wsManagerMk2"`
 	WSManagerBridge Versioned `json:"wsManagerBridge"`
 	WSProxy         Versioned `json:"wsProxy"`
+	NodeLabeler     Versioned `json:"node-labeler"`
 }
 
 // var embedded embed.FS

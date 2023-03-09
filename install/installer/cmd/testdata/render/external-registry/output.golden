@@ -870,6 +870,18 @@ metadata:
   name: nobody
   namespace: default
 ---
+# v1/ServiceAccount node-labeler
+apiVersion: v1
+automountServiceAccountToken: true
+kind: ServiceAccount
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: node-labeler
+  name: node-labeler
+  namespace: default
+---
 # v1/ServiceAccount openvsx-proxy
 apiVersion: v1
 automountServiceAccountToken: true
@@ -1606,6 +1618,9 @@ data:
             "version": "test"
           },
           "wsProxy": {
+            "version": "test"
+          },
+          "node-labeler": {
             "version": "test"
           }
         }
@@ -3216,6 +3231,65 @@ data:
         app: gitpod
         component: image-builder-mk3
       name: image-builder-mk3
+      namespace: default
+    ---
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: node-labeler
+      name: node-labeler
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRole
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: node-labeler
+      name: node-labeler
+      namespace: default
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: node-labeler
+      name: default-node-labeler-kube-rbac-proxy
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: node-labeler
+      name: node-labeler
+    ---
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: node-labeler
+      name: node-labeler
+      namespace: default
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: node-labeler
+        kind: service
+      name: node-labeler
       namespace: default
     ---
     apiVersion: v1
@@ -5698,6 +5772,64 @@ rules:
   - patch
   - update
 ---
+# rbac.authorization.k8s.io/v1/ClusterRole node-labeler
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: node-labeler
+  name: node-labeler
+  namespace: default
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
 # rbac.authorization.k8s.io/v1/ClusterRole ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -5838,6 +5970,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: image-builder-mk3
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding default-node-labeler-kube-rbac-proxy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: node-labeler
+  name: default-node-labeler-kube-rbac-proxy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default-kube-rbac-proxy
+subjects:
+- kind: ServiceAccount
+  name: node-labeler
   namespace: default
 ---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding default-openvsx-proxy-kube-rbac-proxy
@@ -6072,6 +6222,24 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ide-service
+  namespace: default
+---
+# rbac.authorization.k8s.io/v1/ClusterRoleBinding node-labeler
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: node-labeler
+  name: node-labeler
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: node-labeler
+subjects:
+- kind: ServiceAccount
+  name: node-labeler
   namespace: default
 ---
 # rbac.authorization.k8s.io/v1/ClusterRoleBinding ws-manager
@@ -7061,6 +7229,30 @@ spec:
     app.kubernetes.io/instance: mysql
     app.kubernetes.io/component: primary
 ---
+# v1/Service node-labeler
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: node-labeler
+    kind: service
+  name: node-labeler
+  namespace: default
+spec:
+  ports:
+  - name: metrics
+    port: 9500
+    protocol: TCP
+    targetPort: 9500
+  selector:
+    app: gitpod
+    component: node-labeler
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
 # v1/Service openvsx-proxy
 apiVersion: v1
 kind: Service
@@ -7581,35 +7773,6 @@ spec:
           runAsNonRoot: true
           runAsUser: 65532
         terminationMessagePolicy: FallbackToLogsOnError
-      - command:
-        - /app/ready-probe-labeler
-        - --label=gitpod.io/registry-facade_ready_ns_default
-        - --probe-url=http://localhost:8086/ready
-        env:
-        - name: NODENAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        image: eu.gcr.io/gitpod-core-dev/build/registry-facade:test
-        imagePullPolicy: IfNotPresent
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /app/ready-probe-labeler
-              - --label=gitpod.io/registry-facade_ready_ns_default
-              - --shutdown
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /ready
-            port: 8086
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          successThreshold: 1
-          timeoutSeconds: 2
-        name: node-labeler
-        resources: {}
       dnsPolicy: ClusterFirst
       enableServiceLinks: false
       initContainers:
@@ -7813,37 +7976,6 @@ spec:
           runAsNonRoot: true
           runAsUser: 65532
         terminationMessagePolicy: FallbackToLogsOnError
-      - command:
-        - /app/ready-probe-labeler
-        - --label=gitpod.io/ws-daemon_ready_ns_default
-        - --probe-url=http://localhost:9501/ready
-        env:
-        - name: NODENAME
-          valueFrom:
-            fieldRef:
-              fieldPath: spec.nodeName
-        image: eu.gcr.io/gitpod-core-dev/build/ws-daemon:test
-        imagePullPolicy: IfNotPresent
-        lifecycle:
-          preStop:
-            exec:
-              command:
-              - /app/ready-probe-labeler
-              - --label=gitpod.io/ws-daemon_ready_ns_default
-              - --shutdown
-        livenessProbe:
-          failureThreshold: 3
-          httpGet:
-            path: /ready
-            port: 9501
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          successThreshold: 1
-          timeoutSeconds: 1
-        name: node-labeler
-        resources: {}
-        securityContext:
-          allowPrivilegeEscalation: false
       dnsPolicy: ClusterFirst
       enableServiceLinks: false
       hostPID: true
@@ -9405,6 +9537,114 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: minio
+---
+# apps/v1/Deployment node-labeler
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: node-labeler
+  name: node-labeler
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gitpod
+      component: node-labeler
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: node-labeler
+      name: node-labeler
+      namespace: default
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: gitpod.io/workload_services
+                operator: Exists
+      containers:
+      - args:
+        - run
+        - --registry-facade-port=31750
+        - --ws-daemon-port=8080
+        - --namespace=default
+        env:
+        - name: GITPOD_DOMAIN
+          value: gitpod.example.com
+        - name: GITPOD_INSTALLATION_SHORTNAME
+          value: default
+        - name: GITPOD_REGION
+          value: local
+        - name: HOST_URL
+          value: https://gitpod.example.com
+        - name: KUBE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KUBE_DOMAIN
+          value: svc.cluster.local
+        - name: LOG_LEVEL
+          value: info
+        image: eu.gcr.io/gitpod-core-dev/build/node-labeler:test
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8086
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: node-labeler
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8086
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 32Mi
+      - args:
+        - --logtostderr
+        - --insecure-listen-address=[$(IP)]:9500
+        - --upstream=http://127.0.0.1:9500/
+        env:
+        - name: IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 9500
+          name: metrics
+        resources:
+          requests:
+            cpu: 1m
+            memory: 30Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
+        terminationMessagePolicy: FallbackToLogsOnError
+      enableServiceLinks: false
+      priorityClassName: system-node-critical
+      serviceAccountName: node-labeler
+status: {}
 ---
 # apps/v1/Deployment proxy
 apiVersion: apps/v1
