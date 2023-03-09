@@ -12,7 +12,7 @@ import Alert from "./Alert";
 import Modal from "./Modal";
 import { Heading2 } from "./typography/headings";
 
-export function UsageLimitReachedModal(p: { hints: any }) {
+export function UsageLimitReachedModal(p: { hints: any; onClose?: () => void }) {
     const orgs = useOrganizations();
     const [attributedTeam, setAttributedTeam] = useState<OrganizationInfo | undefined>();
 
@@ -30,7 +30,7 @@ export function UsageLimitReachedModal(p: { hints: any }) {
     const attributedTeamName = attributedTeam?.name;
     const billingLink = attributedTeam ? "/billing" : settingsPathBilling;
     return (
-        <Modal visible={true} closeable={false} onClose={() => {}}>
+        <Modal visible={true} closeable={!!p.onClose} onClose={p.onClose || (() => {})}>
             <Heading2 className="flex">
                 <span className="flex-grow">Usage Limit Reached</span>
             </Heading2>
