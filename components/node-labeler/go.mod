@@ -1,4 +1,4 @@
-module github.com/gitpod-io/gitpod/node-labeler/cmd
+module github.com/gitpod-io/gitpod/node-labeler
 
 go 1.19
 
