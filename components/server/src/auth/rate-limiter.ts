@@ -261,8 +261,8 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
             durationsSec: 10,
         },
         sendHeartBeat: {
-            points: 10, // 10 heartbeats per user per 60s
-            durationsSec: 60,
+            points: 10, // 10 heartbeats per connection per 5 minutes
+            durationsSec: 60 * 5,
         },
     };
 
