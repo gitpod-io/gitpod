@@ -7,6 +7,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -200,6 +201,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	_, _, adminCredentialsPath := getAdminCredentials(cfg)
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -298,6 +301,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PATSigningKeyFile:              personalAccessTokenSigningKeyPath,
 		Admin: AdminConfig{
 			GrantFirstUserAdminRole: true, // existing default
+			CredentialsPath:         adminCredentialsPath,
 		},
 		AdminLoginKeyFile: AdminLoginKeyFile(ctx),
 		ShowSetupModal:    showSetupModal,
@@ -361,4 +365,24 @@ func getPersonalAccessTokenSigningKey(cfg *experimental.Config) (corev1.Volume, 
 	}
 
 	return volume, mount, path, true
+}
+
+func getAdminCredentials() (corev1.Volume, corev1.VolumeMount, string) {
+	volume := corev1.Volume{
+		Name: "admin-credentials",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: AdminCredentialsSecretName,
+				Optional:   pointer.Bool(true),
+			},
+		},
+	}
+
+	mount := corev1.VolumeMount{
+		Name:      "admin-credentials",
+		MountPath: AdminCredentialsSecretMountPath,
+		ReadOnly:  true,
+	}
+
+	return volume, mount, filepath.Join(AdminCredentialsSecretMountPath, AdminCredentialsSecretKey)
 }

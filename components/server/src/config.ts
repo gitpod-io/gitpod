@@ -41,7 +41,7 @@ export type Config = Omit<
     admin: {
         loginKey?: string;
         // Absolute file path pointing to a file which contains admin credentials, encoded as JSON.
-        credentialsFilePath: string;
+        credentialsPath: string;
     };
 };
 
@@ -154,6 +154,7 @@ export interface ConfigSerialized {
     adminLoginKeyFile?: string;
     admin: {
         grantFirstUserAdminRole: boolean;
+        credentialsPath: string;
     };
 
     /** defaultBaseImageRegistryWhitelist is the list of registryies users get acces to by default */
@@ -359,7 +360,7 @@ export namespace ConfigFile {
             admin: {
                 ...config.admin,
                 loginKey: adminLoginKey,
-                credentialsFilePath: "",
+                credentialsPath: config.admin.credentialsPath,
             },
         };
     }

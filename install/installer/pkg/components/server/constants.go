@@ -28,4 +28,8 @@ const (
 	AdminSecretName                        = "server-admin-secret"
 	AdminSecretLoginKeyName                = "login-key"
 	AdminSecretMountPath                   = "/admin"
+
+	AdminCredentialsSecretName      = "admin-credentials"
+	AdminCredentialsSecretMountPath = "/credentials/admin"
+	AdminCredentialsSecretKey       = "admin.json"
 )
