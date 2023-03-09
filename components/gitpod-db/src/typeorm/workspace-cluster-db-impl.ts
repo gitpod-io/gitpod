@@ -32,14 +32,14 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         await repo.save(cluster);
     }
 
-    async deleteByName(name: string, applicationCluster: string): Promise<void> {
+    async deleteByName(name: string): Promise<void> {
         const repo = await this.getRepo();
-        await repo.update({ name, applicationCluster }, { deleted: true });
+        await repo.update({ name }, { deleted: true });
     }
 
-    async findByName(name: string, applicationCluster: string): Promise<WorkspaceCluster | undefined> {
+    async findByName(name: string): Promise<WorkspaceCluster | undefined> {
         const repo = await this.getRepo();
-        return repo.findOne({ name, applicationCluster, deleted: false });
+        return repo.findOne({ name, deleted: false });
     }
 
     async findFiltered(predicate: WorkspaceClusterFilter): Promise<WorkspaceClusterWoTLS[]> {
@@ -52,7 +52,6 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
             state: "available",
             govern: false,
             admissionConstraints: [],
-            applicationCluster: "",
         };
 
         const repo = await this.getRepo();
@@ -62,9 +61,6 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
             .where("wsc.deleted = 0");
         if (predicate.name !== undefined) {
             qb = qb.andWhere("wsc.name = :name", predicate);
-        }
-        if (predicate.applicationCluster !== undefined) {
-            qb = qb.andWhere("wsc.applicationCluster = :applicationCluster", predicate);
         }
         if (predicate.state !== undefined) {
             qb = qb.andWhere("wsc.state = :state", predicate);

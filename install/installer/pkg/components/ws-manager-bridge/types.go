@@ -40,7 +40,6 @@ type WorkspaceCluster struct {
 	Score                int32                 `json:"score"`
 	Govern               bool                  `json:"govern"`
 	AdmissionConstraints []AdmissionConstraint `json:"admissionConstraints"`
-	ApplicationCluster   string                `json:"applicationCluster"`
 	Region               string                `json:"region"`
 }
 

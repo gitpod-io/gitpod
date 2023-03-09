@@ -100,7 +100,7 @@ export class BridgeController {
             ...defaultGRPCOptions,
         };
         const clientProvider = async () => {
-            return this.clientProvider.get(cluster.name, this.config.installation, grpcOptions);
+            return this.clientProvider.get(cluster.name, grpcOptions);
         };
         bridge.start(cluster, clientProvider);
         return bridge;

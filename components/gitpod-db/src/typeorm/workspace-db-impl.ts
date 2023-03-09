@@ -444,7 +444,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     }
 
     public async findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]> {
-        const infos = await this.findRunningInstancesWithWorkspaces(undefined, userId);
+        const infos = await this.findRunningInstancesWithWorkspaces(userId);
         return infos.filter((info) => info.workspace.type === "regular").map((wsinfo) => wsinfo.latestInstance);
     }
 

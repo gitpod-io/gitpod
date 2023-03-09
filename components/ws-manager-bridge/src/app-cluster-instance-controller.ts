@@ -48,32 +48,22 @@ export class AppClusterWorkspaceInstancesController implements Disposable {
     }
 
     protected async controlAppClusterManagedWorkspaceInstances() {
-        const appClusterInstallation = this.config.installation;
-
         const span = TraceContext.startSpan("controlAppClusterManagedWorkspaceInstances");
         const ctx = { span };
         try {
-            log.info("Controlling app cluster instances", { installation: appClusterInstallation });
+            log.info("Controlling app cluster instances");
 
-            const notStoppedInstances = await this.workspaceDb.findRunningInstancesWithWorkspaces(
-                appClusterInstallation,
-                undefined,
-                false,
-            );
+            const notStoppedInstances = await this.workspaceDb.findRunningInstancesWithWorkspaces(undefined, false);
             await this.workspaceInstanceController.controlNotStoppedAppClusterManagedInstanceTimeouts(
                 ctx,
                 notStoppedInstances,
-                appClusterInstallation,
             );
 
             log.info("Done controlling app cluster instances", {
-                installation: appClusterInstallation,
                 instancesCount: notStoppedInstances.length,
             });
         } catch (err) {
-            log.error("Error controlling app cluster instances", err, {
-                installation: appClusterInstallation,
-            });
+            log.error("Error controlling app cluster instances", err);
             TraceContext.setError(ctx, err);
         } finally {
             span.finish();

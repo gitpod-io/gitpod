@@ -58,6 +58,5 @@ func WSManagerList(ctx *common.RenderContext) []WorkspaceCluster {
 		Score:                50,
 		Govern:               true,
 		AdmissionConstraints: nil,
-		ApplicationCluster:   ctx.Config.Metadata.InstallationShortname,
 	}}
 }

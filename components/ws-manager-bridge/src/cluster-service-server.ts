@@ -92,10 +92,9 @@ export class ClusterService implements IClusterServiceServer {
                     throw new GRPCError(grpc.status.INVALID_ARGUMENT, `Invalid value for workspace region.`);
                 }
 
-                const clusterByNamePromise = this.clusterDB.findByName(req.name, this.config.installation);
+                const clusterByNamePromise = this.clusterDB.findByName(req.name);
                 const clusterByUrlPromise = this.clusterDB.findFiltered({
                     url: req.url,
-                    applicationCluster: this.config.installation,
                 });
 
                 const [clusterByName, clusterByUrl] = await Promise.all([clusterByNamePromise, clusterByUrlPromise]);
@@ -146,7 +145,6 @@ export class ClusterService implements IClusterServiceServer {
                 const newCluster: WorkspaceCluster = {
                     name: req.name,
                     url: req.url,
-                    applicationCluster: this.config.installation,
                     region: req.region,
                     state,
                     score,
@@ -161,12 +159,7 @@ export class ClusterService implements IClusterServiceServer {
                     {},
                 );
                 if (enabled) {
-                    let classConstraints = await getSupportedWorkspaceClasses(
-                        this.clientProvider,
-                        newCluster,
-                        this.config.installation,
-                        false,
-                    );
+                    let classConstraints = await getSupportedWorkspaceClasses(this.clientProvider, newCluster, false);
                     newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
                 } else {
                     // try to connect to validate the config. Throws an exception if it fails.
@@ -206,7 +199,7 @@ export class ClusterService implements IClusterServiceServer {
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
-                const cluster = await this.clusterDB.findByName(req.name, this.config.installation);
+                const cluster = await this.clusterDB.findByName(req.name);
                 if (!cluster) {
                     throw new GRPCError(
                         grpc.status.NOT_FOUND,
@@ -283,7 +276,7 @@ export class ClusterService implements IClusterServiceServer {
                     );
                 }
 
-                await this.clusterDB.deleteByName(req.name, this.config.installation);
+                await this.clusterDB.deleteByName(req.name);
                 log.info({}, "cluster deregistered", { cluster: req.name });
                 this.triggerReconcile("deregister", req.name);
 
@@ -301,16 +294,14 @@ export class ClusterService implements IClusterServiceServer {
                 const response = new ListResponse();
 
                 const dbClusterIdx = new Map<string, boolean>();
-                const allDBClusters = await this.clusterDB.findFiltered({
-                    applicationCluster: this.config.installation,
-                });
+                const allDBClusters = await this.clusterDB.findFiltered({});
                 for (const cluster of allDBClusters) {
                     const clusterStatus = convertToGRPC(cluster);
                     response.addStatus(clusterStatus);
                     dbClusterIdx.set(cluster.name, true);
                 }
 
-                const allCluster = await this.allClientProvider.getAllWorkspaceClusters(this.config.installation);
+                const allCluster = await this.allClientProvider.getAllWorkspaceClusters();
                 for (const cluster of allCluster) {
                     if (dbClusterIdx.get(cluster.name)) {
                         continue;
@@ -345,7 +336,6 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
     clusterStatus.setScore(ws.score);
     clusterStatus.setMaxScore(ws.maxScore);
     clusterStatus.setGoverned(ws.govern);
-    clusterStatus.setApplicationCluster(ws.applicationCluster);
     clusterStatus.setRegion(ws.region);
 
     ws.admissionConstraints?.forEach((c) => {
