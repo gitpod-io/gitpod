@@ -29,6 +29,7 @@ import {
     IDESettings,
     EnvVarWithValue,
     WorkspaceTimeoutSetting,
+    WorkspaceContext,
 } from "./protocol";
 import {
     Team,
@@ -132,6 +133,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteWorkspace(id: string): Promise<void>;
     setWorkspaceDescription(id: string, desc: string): Promise<void>;
     controlAdmission(id: string, level: GitpodServer.AdmissionLevel): Promise<void>;
+    resolveContext(contextUrl: string): Promise<WorkspaceContext>;
 
     updateWorkspaceUserPin(id: string, action: GitpodServer.PinAction): Promise<void>;
     sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void>;
