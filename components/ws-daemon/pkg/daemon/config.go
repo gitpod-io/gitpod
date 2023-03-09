@@ -42,6 +42,7 @@ type RuntimeConfig struct {
 	Container           *container.Config `json:"containerRuntime"`
 	Kubeconfig          string            `json:"kubeconfig"`
 	KubernetesNamespace string            `json:"namespace"`
+	SecretsNamespace    string            `json:"secretsNamespace"`
 }
 
 type IOLimitConfig struct {

@@ -22,6 +22,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
@@ -175,6 +176,7 @@ func NewDaemon(config Config) (*Daemon, error) {
 			Namespace:              config.Runtime.KubernetesNamespace,
 			HealthProbeBindAddress: "0",
 			MetricsBindAddress:     "0", // Metrics are exposed through baseserver.
+			NewCache:               cache.MultiNamespacedCacheBuilder([]string{config.Runtime.KubernetesNamespace, config.Runtime.SecretsNamespace}),
 		})
 		if err != nil {
 			return nil, err
@@ -207,7 +209,8 @@ func NewDaemon(config Config) (*Daemon, error) {
 			return nil, err
 		}
 
-		wsctrl, err := controller.NewWorkspaceController(mgr.GetClient(), nodename, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps, wrappedReg)
+		wsctrl, err := controller.NewWorkspaceController(
+			mgr.GetClient(), nodename, config.Runtime.SecretsNamespace, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps, wrappedReg)
 		if err != nil {
 			return nil, err
 		}

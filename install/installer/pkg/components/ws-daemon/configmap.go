@@ -112,6 +112,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Daemon: daemon.Config{
 			Runtime: daemon.RuntimeConfig{
 				KubernetesNamespace: ctx.Namespace,
+				SecretsNamespace:    common.WorkspaceSecretsNamespace,
 				Container: &container.Config{
 					Runtime: container.RuntimeContainerd,
 					Mapping: runtimeMapping,
