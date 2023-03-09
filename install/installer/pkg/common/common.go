@@ -139,13 +139,17 @@ func WebappTracingEnv(context *RenderContext, component string) (res []corev1.En
 }
 
 func tracingEnv(context *RenderContext, component string, tracing *experimental.Tracing) (res []corev1.EnvVar) {
+	// For OpenTelemetry (OTEL) environment variable specification, see https://opentelemetry.io/docs/reference/specification/protocol/exporter/
+
 	if context.Config.Observability.Tracing == nil {
 		res = append(res, corev1.EnvVar{Name: "JAEGER_DISABLED", Value: "true"})
+		res = append(res, corev1.EnvVar{Name: "OTEL_SDK_DISABLED", Value: "true"})
 		return
 	}
 
 	if ep := context.Config.Observability.Tracing.Endpoint; ep != nil {
 		res = append(res, corev1.EnvVar{Name: "JAEGER_ENDPOINT", Value: *ep})
+		res = append(res, corev1.EnvVar{Name: "OTEL_EXPORTER_OTLP_ENDPOINT", Value: *ep})
 	} else if v := context.Config.Observability.Tracing.AgentHost; v != nil {
 		res = append(res, corev1.EnvVar{Name: "JAEGER_AGENT_HOST", Value: *v})
 	} else {
@@ -173,6 +177,7 @@ func tracingEnv(context *RenderContext, component string, tracing *experimental.
 	}
 
 	res = append(res, corev1.EnvVar{Name: "JAEGER_SERVICE_NAME", Value: component})
+	res = append(res, corev1.EnvVar{Name: "OTEL_SERVICE_NAME", Value: component})
 
 	jaegerTags := []string{}
 	if context.Config.Metadata.InstallationShortname != "" {
@@ -186,6 +191,8 @@ func tracingEnv(context *RenderContext, component string, tracing *experimental.
 	if len(jaegerTags) > 0 {
 		res = append(res,
 			corev1.EnvVar{Name: "JAEGER_TAGS", Value: strings.Join(jaegerTags, ",")},
+			// https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable
+			corev1.EnvVar{Name: "OTEL_RESOURCE_ATTRIBUTES", Value: strings.Join(jaegerTags, ",")},
 		)
 	}
 
@@ -204,6 +211,9 @@ func tracingEnv(context *RenderContext, component string, tracing *experimental.
 	res = append(res,
 		corev1.EnvVar{Name: "JAEGER_SAMPLER_TYPE", Value: string(samplerType)},
 		corev1.EnvVar{Name: "JAEGER_SAMPLER_PARAM", Value: samplerParam},
+
+		corev1.EnvVar{Name: "OTEL_TRACES_SAMPLER", Value: string(samplerType)},
+		corev1.EnvVar{Name: "OTEL_TRACES_SAMPLER_ARG", Value: samplerParam},
 	)
 
 	return

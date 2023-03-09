@@ -3728,6 +3728,8 @@ spec:
           value: info
         - name: JAEGER_DISABLED
           value: "true"
+        - name: OTEL_SDK_DISABLED
+          value: "true"
         - name: GRPC_GO_RETRY
           value: "on"
         image: eu.gcr.io/gitpod-core-dev/build/content-service:test
@@ -4630,6 +4632,8 @@ spec:
               name: mysql
         - name: JAEGER_DISABLED
           value: "true"
+        - name: OTEL_SDK_DISABLED
+          value: "true"
         - name: MESSAGEBUS_USERNAME
           valueFrom:
             secretKeyRef:
@@ -4871,6 +4875,8 @@ spec:
         - name: LOG_LEVEL
           value: info
         - name: JAEGER_DISABLED
+          value: "true"
+        - name: OTEL_SDK_DISABLED
           value: "true"
         - name: MESSAGEBUS_USERNAME
           valueFrom:

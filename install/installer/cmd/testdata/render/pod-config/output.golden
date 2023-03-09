@@ -7676,6 +7676,8 @@ spec:
           value: info
         - name: JAEGER_DISABLED
           value: "true"
+        - name: OTEL_SDK_DISABLED
+          value: "true"
         - name: NODENAME
           valueFrom:
             fieldRef:
@@ -7791,6 +7793,8 @@ spec:
         - name: LOG_LEVEL
           value: info
         - name: JAEGER_DISABLED
+          value: "true"
+        - name: OTEL_SDK_DISABLED
           value: "true"
         - name: GRPC_GO_RETRY
           value: "on"
@@ -8011,6 +8015,8 @@ spec:
         - name: LOG_LEVEL
           value: info
         - name: JAEGER_DISABLED
+          value: "true"
+        - name: OTEL_SDK_DISABLED
           value: "true"
         - name: NODENAME
           valueFrom:
@@ -8811,6 +8817,8 @@ spec:
           value: info
         - name: JAEGER_DISABLED
           value: "true"
+        - name: OTEL_SDK_DISABLED
+          value: "true"
         image: eu.gcr.io/gitpod-core-dev/build/blobserve:test
         imagePullPolicy: IfNotPresent
         livenessProbe:
@@ -8952,6 +8960,8 @@ spec:
         - name: LOG_LEVEL
           value: info
         - name: JAEGER_DISABLED
+          value: "true"
+        - name: OTEL_SDK_DISABLED
           value: "true"
         - name: GRPC_GO_RETRY
           value: "on"
@@ -9482,6 +9492,8 @@ spec:
         - name: LOG_LEVEL
           value: info
         - name: JAEGER_DISABLED
+          value: "true"
+        - name: OTEL_SDK_DISABLED
           value: "true"
         image: eu.gcr.io/gitpod-core-dev/build/image-builder-mk3:test
         imagePullPolicy: IfNotPresent
@@ -10332,6 +10344,8 @@ spec:
               name: mysql
         - name: JAEGER_DISABLED
           value: "true"
+        - name: OTEL_SDK_DISABLED
+          value: "true"
         - name: MESSAGEBUS_USERNAME
           valueFrom:
             secretKeyRef:
@@ -10584,6 +10598,8 @@ spec:
           value: info
         - name: JAEGER_DISABLED
           value: "true"
+        - name: OTEL_SDK_DISABLED
+          value: "true"
         - name: GRPC_GO_RETRY
           value: "on"
         image: eu.gcr.io/gitpod-core-dev/build/ws-manager:test
@@ -10714,6 +10730,8 @@ spec:
         - name: LOG_LEVEL
           value: info
         - name: JAEGER_DISABLED
+          value: "true"
+        - name: OTEL_SDK_DISABLED
           value: "true"
         - name: MESSAGEBUS_USERNAME
           valueFrom:
@@ -10961,6 +10979,8 @@ spec:
         - name: LOG_LEVEL
           value: info
         - name: JAEGER_DISABLED
+          value: "true"
+        - name: OTEL_SDK_DISABLED
           value: "true"
         image: eu.gcr.io/gitpod-core-dev/build/ws-proxy:test
         imagePullPolicy: IfNotPresent
