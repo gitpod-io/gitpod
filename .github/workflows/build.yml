@@ -209,6 +209,7 @@ jobs:
             npm-auth-token:gitpod-core-dev/npm-auth-token
             jb-marketplace-publish-token:gitpod-core-dev/jb-marketplace-publish-token
             codecov-token:gitpod-core-dev/codecov
+            github-token:gitpod-core-dev/github-token-gitpod-bot
       - name: Leeway Build
         id: leeway
         shell: bash
@@ -310,4 +311,4 @@ jobs:
     with:
       version: ${{needs.configuration.outputs.version}}
     secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ steps.secrets.outputs.github-token }}
