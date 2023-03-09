@@ -261,6 +261,61 @@ jobs:
           path: |
             test-coverage-report
 
+  dev-build:
+    runs-on: [ self-hosted ]
+    needs: [ configuration ]
+    if: |
+      (needs.configuration.outputs.pr_no_diff_skip != 'true')
+    steps:
+      - name: Get Secrets from GCP
+        id: 'secrets'
+        uses: 'google-github-actions/get-secretmanager-secrets@v1'
+        with:
+          secrets: |-
+            segment-io-token:gitpod-core-dev/segment-io-token
+            npm-auth-token:gitpod-core-dev/npm-auth-token
+            jb-marketplace-publish-token:gitpod-core-dev/jb-marketplace-publish-token
+            codecov-token:gitpod-core-dev/codecov
+      - name: dev Build
+        id: dev-build
+        shell: bash
+        working-directory: /workspace/gitpod
+        env:
+          DB_HOST: "mysql"
+          DB_PORT: "23306"
+          JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
+          VERSION: ${{needs.configuration.outputs.version}}
+          SEGMENT_IO_TOKEN: '${{ steps.secrets.outputs.segment-io-token }}'
+          PR_NO_CACHE: ${{needs.configuration.outputs.build_no_cache}}
+          PR_NO_TEST: ${{needs.configuration.outputs.build_no_test}}
+          PR_LEEWAY_TARGET: ${{needs.configuration.outputs.build_leeway_target}}
+          NPM_AUTH_TOKEN: '${{ steps.secrets.outputs.npm-auth-token }}'
+          PUBLISH_TO_NPM: ${{ needs.configuration.outputs.publish_to_npm == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
+          JB_MARKETPLACE_PUBLISH_TOKEN: '${{ steps.secrets.outputs.jb-marketplace-publish-token }}'
+          PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
+          CODECOV_TOKEN: '${{ steps.secrets.outputs.codecov-token }}'
+        run: |
+          [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
+          [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
+          [[ -z "$PR_LEEWAY_TARGET" ]] && PR_LEEWAY_TARGET="components:all"
+          [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
+
+          mkdir -p /__w/gitpod/gitpod/test-coverage-report
+
+          RESULT=0
+          set -x
+          CI= leeway build \
+            --docker-build-options network=host \
+            --cache $CACHE \
+            --coverage-output-path=/__w/gitpod/gitpod/test-coverage-report \
+            -Dversion=$VERSION \
+            -DlocalAppVersion=$VERSION \
+            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev \
+            --report report.html || RESULT=$?
+
+          cat report.html >> $GITHUB_STEP_SUMMARY
+          exit $RESULT
+
   install:
     name: "Install Gitpod"
     needs: [ configuration, build-previewctl, build-gitpod, infrastructure ]
