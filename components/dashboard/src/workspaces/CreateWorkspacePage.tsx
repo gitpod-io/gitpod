@@ -4,11 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, GitpodServer, WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { CommitContext, ContextURL, GitpodServer, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
-import { FunctionComponent, useCallback, useState } from "react";
+import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import { Button } from "../components/Button";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
@@ -19,7 +19,9 @@ import { Heading1 } from "../components/typography/headings";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { useListProjectsQuery } from "../data/projects/list-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
+import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
 import { openAuthorizeWindow } from "../provider-utils";
 import { gitpodHostUrl } from "../service/service";
 import { LimitReachedOutOfHours, LimitReachedParallelWorkspacesModal } from "../start/CreateWorkspace";
@@ -37,6 +39,7 @@ export const useNewCreateWorkspacePage = () => {
 export function CreateWorkspacePage() {
     const user = useCurrentUser();
     const currentOrg = useCurrentOrg().data;
+    const projects = useListProjectsQuery();
     const location = useLocation();
     const history = useHistory();
     const props = StartWorkspaceOptions.parseSearchParams(location.search);
@@ -55,6 +58,26 @@ export function CreateWorkspacePage() {
     const [selectedWsClass, setSelectedWsClass] = useState<string | undefined>(props.workspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
     const [repo, setRepo] = useState<string | undefined>(location.hash.substring(1));
+    const workspaceContext = useWorkspaceContext(repo);
+    const isLoading = workspaceContext.isLoading || projects.isLoading;
+    const project = useMemo(() => {
+        if (!workspaceContext.data || !projects.data) {
+            return undefined;
+        }
+        const cloneUrl = (workspaceContext.data as CommitContext).repository.cloneUrl;
+        return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
+    }, [projects.data, workspaceContext.data]);
+
+    useEffect(() => {
+        if (!project || props.workspaceClass) {
+            return;
+        }
+        const wsClass = project.settings?.workspaceClasses;
+        if (wsClass?.regular) {
+            setSelectedWsClass(wsClass?.regular);
+        }
+    }, [project, props.workspaceClass]);
+
     const onSelectEditorChange = useCallback(
         (ide: string, useLatest: boolean) => {
             setSelectedIde(ide);
@@ -151,10 +174,14 @@ export function CreateWorkspacePage() {
                 <div className="w-full flex justify-end mt-6 space-x-2 px-6">
                     <Button
                         onClick={onClickCreate}
-                        loading={createWorkspaceMutation.isLoading}
+                        loading={createWorkspaceMutation.isLoading || isLoading}
                         disabled={!repo || repo.length === 0 || !!errorIde || !!errorWsClass}
                     >
-                        {createWorkspaceMutation.isLoading ? "Creating Workspace ..." : "New Workspace"}
+                        {isLoading
+                            ? "Loading ..."
+                            : createWorkspaceMutation.isLoading
+                            ? "Creating Workspace ..."
+                            : "New Workspace"}
                     </Button>
                 </div>
                 <div>
