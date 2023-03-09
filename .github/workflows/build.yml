@@ -16,7 +16,9 @@ jobs:
     name: Configure job parameters
     runs-on: [ self-hosted ]
     concurrency:
-      group: ${{ github.head_ref || github.ref }}-configuration
+      # github.head_ref is set by a pull_request event - contains the name of the source branch of the PR
+      # github.ref_name is set if the event is NOT a pull_request - it contains only the branch name.
+      group: ${{ github.head_ref || github.ref_name }}-configuration
       cancel-in-progress: true
     outputs:
       is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
@@ -77,7 +79,7 @@ jobs:
       (needs.configuration.outputs.preview_enable == 'true')
     needs: [ configuration ]
     concurrency:
-      group: ${{ github.head_ref || github.ref }}-build-previewctl
+      group: ${{ github.head_ref || github.ref_name }}-build-previewctl
       # see comment in build-gitpod below for context
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: [ self-hosted ]
@@ -116,14 +118,14 @@ jobs:
       (needs.configuration.outputs.is_main_branch != 'true')
     runs-on: [ self-hosted ]
     concurrency:
-      group: ${{ github.head_ref || github.ref }}-infrastructure
+      group: ${{ github.head_ref || github.ref_name }}-infrastructure
     steps:
       - uses: actions/checkout@v3
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
         with:
-          name: ${{ github.head_ref || github.ref }}
+          name: ${{ github.head_ref || github.ref_name }}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
@@ -137,7 +139,7 @@ jobs:
       (needs.configuration.outputs.pr_no_diff_skip != 'true')
     runs-on: [ self-hosted ]
     concurrency:
-      group: ${{ github.head_ref || github.ref }}-build-gitpod
+      group: ${{ github.head_ref || github.ref_name }}-build-gitpod
       # For the main branch we always want the build job to run to completion
       # For other branches we only care about the "latest" version, so it is fine to cancel in-progress builds
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
@@ -266,7 +268,7 @@ jobs:
     needs: [ configuration, build-previewctl, build-gitpod, infrastructure ]
     runs-on: [ self-hosted ]
     concurrency:
-      group: ${{ github.head_ref || github.ref }}-install
+      group: ${{ github.head_ref || github.ref_name }}-install
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
@@ -274,7 +276,7 @@ jobs:
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
         with:
-          name: ${{ github.head_ref || github.ref }}
+          name: ${{ github.head_ref || github.ref_name }}
           version: ${{needs.configuration.outputs.version}}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
@@ -290,7 +292,7 @@ jobs:
     needs: [ infrastructure, build-previewctl ]
     runs-on: [ self-hosted ]
     concurrency:
-      group: ${{ github.head_ref || github.ref }}-monitoring
+      group: ${{ github.head_ref || github.ref_name }}-monitoring
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
