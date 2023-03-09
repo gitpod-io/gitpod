@@ -5,7 +5,7 @@ on:
 name: Configcat code references
 jobs:
   scan-repo:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted ]
     name: Scan repository for configcat code references
     steps:
     - name: Checkout

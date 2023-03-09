@@ -25,7 +25,7 @@ on:
 jobs:
     update-plugin-platform:
         name: Update Platform Version from ${{ inputs.pluginName }}
-        runs-on: ubuntu-latest
+        runs-on: [ self-hosted ]
         env:
             SNAPSHOTS_HTML_FILENAME: snapshots.html
         steps:

@@ -8,7 +8,7 @@ on:
 jobs:
   notify:
     name: Build and upload model
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted ]
     steps:
       - name: Notify
         uses: KeisukeYamashita/create-comment@v1

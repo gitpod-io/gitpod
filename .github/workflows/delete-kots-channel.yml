@@ -7,7 +7,7 @@ env:
 jobs:
   delete:
     if: github.event.ref_type == 'branch'
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted ]
     continue-on-error: true
     steps:
       - name: Install Replicated CLI
