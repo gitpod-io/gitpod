@@ -75,7 +75,8 @@ func (r *MaintenanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	var cfg config.MaintenanceConfig
 	if err := json.Unmarshal([]byte(configJson), &cfg); err != nil {
-		log.Error(err, "failed to unmarshal maintenance config")
+		log.Error(err, "failed to unmarshal maintenance config, setting maintenance mode as disabled")
+		r.setEnabled(log, false)
 		return ctrl.Result{}, nil
 	}
 

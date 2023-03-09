@@ -97,7 +97,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	defer tracing.FinishSpan(span, &err)
 
 	if wsm.maintenance.IsEnabled() {
-		return &wsmanapi.StartWorkspaceResponse{}, status.Error(codes.FailedPrecondition, "under maintenance mode")
+		return &wsmanapi.StartWorkspaceResponse{}, status.Error(codes.FailedPrecondition, "under maintenance")
 	}
 
 	if err := validateStartWorkspaceRequest(req); err != nil {
@@ -337,7 +337,7 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 	defer tracing.FinishSpan(span, &err)
 
 	if wsm.maintenance.IsEnabled() {
-		return &wsmanapi.StopWorkspaceResponse{}, status.Error(codes.FailedPrecondition, "under maintenance mode")
+		return &wsmanapi.StopWorkspaceResponse{}, status.Error(codes.FailedPrecondition, "under maintenance")
 	}
 
 	gracePeriod := stopWorkspaceNormallyGracePeriod
@@ -575,7 +575,7 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 	defer tracing.FinishSpan(span, &err)
 
 	if wsm.maintenance.IsEnabled() {
-		return &wsmanapi.TakeSnapshotResponse{}, status.Error(codes.FailedPrecondition, "under maintenance mode")
+		return &wsmanapi.TakeSnapshotResponse{}, status.Error(codes.FailedPrecondition, "under maintenance")
 	}
 
 	var ws workspacev1.Workspace
