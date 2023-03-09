@@ -50,7 +50,7 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 
 - [ ] with-ee-license
 - [ ] with-dedicated-emulation
-- [ ] with-ws-manager-mk2
+- [ ] with-wsman-mk2
 - [ ] workspace-feature-flags
   Add desired feature flags to the end of the line above, space separated
 </details>
