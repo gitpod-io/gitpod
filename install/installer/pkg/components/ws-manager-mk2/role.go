@@ -145,7 +145,7 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta: common.TypeMetaRole,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
-				Namespace: WorkspaceSecretsNamespace,
+				Namespace: common.WorkspaceSecretsNamespace,
 				Labels:    labels,
 			},
 			Rules: controllerRules,

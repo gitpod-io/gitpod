@@ -16,7 +16,7 @@ func namespace(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&v1.Namespace{
 			TypeMeta: common.TypeMetaNamespace,
 			ObjectMeta: metav1.ObjectMeta{
-				Name: WorkspaceSecretsNamespace,
+				Name: common.WorkspaceSecretsNamespace,
 			},
 		},
 	}, nil

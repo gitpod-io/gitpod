@@ -19,5 +19,4 @@ const (
 	WorkspaceTemplatePath      = "/workspace-templates"
 	WorkspaceTemplateConfigMap = "workspace-templates"
 	LabelMaintenanceConfig     = "gitpod.io/maintenanceConfig"
-	WorkspaceSecretsNamespace  = "workspace-secrets"
 )

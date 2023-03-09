@@ -62,7 +62,7 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta: common.TypeMetaRoleBinding,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      Component,
-				Namespace: WorkspaceSecretsNamespace,
+				Namespace: common.WorkspaceSecretsNamespace,
 				Labels:    labels,
 			},
 			RoleRef: rbacv1.RoleRef{
