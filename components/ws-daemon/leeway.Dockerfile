@@ -55,7 +55,6 @@ RUN groupadd -r -g 33333 gitpod \
 COPY components-ws-daemon--app/ws-daemon /app/ws-daemond
 COPY components-ws-daemon--content-initializer/ws-daemon /app/content-initializer
 COPY components-ws-daemon-nsinsider--app/nsinsider /app/nsinsider
-COPY dev-ready-probe-labeler--app/ready-probe-labeler /app/ready-probe-labeler
 
 COPY default.gitconfig /etc/gitconfig
 COPY default.gitconfig /home/gitpod/.gitconfig

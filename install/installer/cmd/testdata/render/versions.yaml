@@ -133,4 +133,6 @@ components:
     version: test
   wsProxy:
     version: test
+  node-labeler:
+    version: test
   version: test

@@ -9,6 +9,7 @@ import (
 	agentsmith "github.com/gitpod-io/gitpod/installer/pkg/components/agent-smith"
 	imagebuildermk3 "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3"
 	imagebuilderwsman "github.com/gitpod-io/gitpod/installer/pkg/components/image-builder-mk3-wsman"
+	nodelabeler "github.com/gitpod-io/gitpod/installer/pkg/components/node-labeler"
 	registryfacade "github.com/gitpod-io/gitpod/installer/pkg/components/registry-facade"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
@@ -27,6 +28,7 @@ var Objects = common.CompositeRenderFunc(
 	imagebuildermk3.Objects,
 	imagebuilderwsman.Objects,
 	wsmanagermk2.Objects,
+	nodelabeler.Objects,
 )
 
 var Helm = common.CompositeHelmFunc()

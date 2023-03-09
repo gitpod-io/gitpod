@@ -303,44 +303,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						},
 					},
 						*common.KubeRBACProxyContainer(ctx),
-						{
-							Name:  "node-labeler",
-							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.RegistryFacade.Version),
-							Command: []string{
-								"/app/ready-probe-labeler",
-								fmt.Sprintf("--label=gitpod.io/registry-facade_ready_ns_%v", ctx.Namespace),
-								fmt.Sprintf(`--probe-url=http://localhost:%v/ready`, ReadinessPort),
-							},
-							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
-								common.NodeNameEnv(ctx),
-								common.ProxyEnv(&ctx.Config),
-							)),
-							LivenessProbe: &corev1.Probe{
-								ProbeHandler: corev1.ProbeHandler{
-									HTTPGet: &corev1.HTTPGetAction{
-										Path: "/ready",
-										Port: intstr.IntOrString{IntVal: ReadinessPort},
-									},
-								},
-								InitialDelaySeconds: 5,
-								PeriodSeconds:       2,
-								TimeoutSeconds:      2,
-								SuccessThreshold:    1,
-								FailureThreshold:    3,
-							},
-							ImagePullPolicy: corev1.PullIfNotPresent,
-							Lifecycle: &corev1.Lifecycle{
-								PreStop: &corev1.LifecycleHandler{
-									Exec: &corev1.ExecAction{
-										Command: []string{
-											"/app/ready-probe-labeler",
-											fmt.Sprintf("--label=gitpod.io/registry-facade_ready_ns_%v", ctx.Namespace),
-											"--shutdown",
-										},
-									},
-								},
-							},
-						},
 					},
 					Volumes: append([]corev1.Volume{{
 						Name:         "cache",
