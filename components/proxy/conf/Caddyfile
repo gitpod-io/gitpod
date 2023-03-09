@@ -139,7 +139,7 @@
 }
 
 # public-api
-api.{$GITPOD_DOMAIN} {
+https://api.{$GITPOD_DOMAIN} {
 	log {
 		level DEBUG
 		output stdout
