@@ -304,11 +304,9 @@ jobs:
   deploy-webapp-staging:
     name: "Deploy WebApp SaaS to staging"
     needs: [ configuration, install, monitoring ]
-    runs-on: ubuntu-latest
     if: |
       (needs.configuration.outputs.is_main_branch == 'true')
-    steps:
-      - uses: gitpod-io/ops/.github/workflows/webapp-deploy-staging.yml@main
-        with:
-          version: ${{needs.configuration.outputs.version}}
-        secrets: inherit
+    uses: gitpod-io/ops/.github/workflows/webapp-deploy-staging.yml@main
+    with:
+      version: ${{needs.configuration.outputs.version}}
+    secrets: inherit
