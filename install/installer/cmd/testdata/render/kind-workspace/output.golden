@@ -1189,6 +1189,16 @@ data:
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: ws-daemon
+      name: ws-daemon
+      namespace: workspace-secrets
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
       creationTimestamp: null
@@ -1244,6 +1254,13 @@ data:
         app: gitpod
         component: ws-daemon
       name: default-ws-daemon-rb
+    ---
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      creationTimestamp: null
+      name: ws-daemon
+      namespace: workspace-secrets
     ---
     apiVersion: v1
     kind: Service
@@ -2000,6 +2017,7 @@ data:
     {
       "manager": {
         "namespace": "default",
+        "secretsNamespace": "",
         "schedulerName": "",
         "seccompProfile": "workspace_default_pd-ide-metrics.23.json",
         "timeouts": {
@@ -2625,6 +2643,26 @@ rules:
   - get
   - update
 ---
+# rbac.authorization.k8s.io/v1/Role ws-daemon
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: ws-daemon
+  name: ws-daemon
+  namespace: workspace-secrets
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+---
 # rbac.authorization.k8s.io/v1/Role ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -2804,6 +2842,22 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: workspace
+---
+# rbac.authorization.k8s.io/v1/RoleBinding ws-daemon
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  name: ws-daemon
+  namespace: workspace-secrets
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ws-daemon
+subjects:
+- kind: ServiceAccount
+  name: ws-daemon
+  namespace: default
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
@@ -3985,7 +4039,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 220f4f84d031d4a23cf0177b3e94a85a25707d132a8313a51602a3d8b9255414
+        gitpod.io/checksum_config: 04d0c84ff10675d023182a24beb2171cdf9b88568eb96032394819e8566b3c00
       creationTimestamp: null
       labels:
         app: gitpod
