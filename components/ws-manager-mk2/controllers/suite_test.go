@@ -24,6 +24,8 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -31,9 +33,10 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 const (
-	timeout  = time.Second * 20
-	duration = time.Second * 2
-	interval = time.Millisecond * 250
+	timeout          = time.Second * 20
+	duration         = time.Second * 2
+	interval         = time.Millisecond * 250
+	secretsNamespace = "workspace-secrets"
 )
 
 // var cfg *rest.Config
@@ -113,6 +116,7 @@ var _ = BeforeSuite(func() {
 	Expect(timeoutReconciler.SetupWithManager(k8sManager)).To(Succeed())
 
 	ctx, cancel = context.WithCancel(context.Background())
+	_ = createNamespace(secretsNamespace)
 
 	go func() {
 		defer GinkgoRecover()
@@ -127,6 +131,7 @@ func newTestConfig() config.Configuration {
 		GitpodHostURL:     "gitpod.io",
 		HeartbeatInterval: util.Duration(30 * time.Second),
 		Namespace:         "default",
+		SecretsNamespace:  secretsNamespace,
 		SeccompProfile:    "default.json",
 		Timeouts: config.WorkspaceTimeoutConfiguration{
 			AfterClose:          util.Duration(1 * time.Minute),
@@ -154,6 +159,19 @@ type fakeMaintenance struct {
 
 func (f *fakeMaintenance) IsEnabled() bool {
 	return f.enabled
+}
+
+func createNamespace(name string) *corev1.Namespace {
+	GinkgoHelper()
+
+	namespace := &corev1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+
+	Expect(k8sClient.Create(ctx, namespace)).To(Succeed())
+	return namespace
 }
 
 var _ = AfterSuite(func() {
