@@ -186,8 +186,6 @@ export default function MembersPage() {
                                 <ItemField className="flex items-center my-auto">
                                     <span className="text-gray-400 capitalize">
                                         {org.data?.isOwner ? (
-                                            m.role
-                                        ) : (
                                             <DropDown
                                                 customClasses="w-32"
                                                 activeEntry={m.role}
@@ -202,6 +200,8 @@ export default function MembersPage() {
                                                     },
                                                 ]}
                                             />
+                                        ) : (
+                                            m.role
                                         )}
                                     </span>
                                     <span className="flex-grow" />
