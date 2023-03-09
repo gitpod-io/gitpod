@@ -7,7 +7,7 @@
 import { TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { trackEvent } from "../Analytics";
 import DropDown from "../components/DropDown";
 import Header from "../components/Header";
@@ -69,6 +69,11 @@ export default function MembersPage() {
         await teamsService.deleteTeamMember({ teamId: org.data?.id, teamMemberId: userId });
         invalidateOrgs();
     };
+
+    const isRemainingOwner = useMemo(() => {
+        const owners = org.data?.members.filter((m) => m.role === "owner");
+        return owners?.length === 1 && owners[0].userId === user?.id;
+    }, [org.data?.members, user?.id]);
 
     const filteredMembers =
         org.data?.members.filter((m) => {
@@ -210,14 +215,14 @@ export default function MembersPage() {
                                             m.userId === user?.id
                                                 ? [
                                                       {
-                                                          title: org.data?.isOwner
+                                                          title: !isRemainingOwner
                                                               ? "Leave Organization"
                                                               : "Remaining owner",
-                                                          customFontStyle: org.data?.isOwner
+                                                          customFontStyle: !isRemainingOwner
                                                               ? "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                                                               : "text-gray-400 dark:text-gray-200",
                                                           onClick: () =>
-                                                              org.data?.isOwner && removeTeamMember(m.userId),
+                                                              !isRemainingOwner && removeTeamMember(m.userId),
                                                       },
                                                   ]
                                                 : org.data?.isOwner
