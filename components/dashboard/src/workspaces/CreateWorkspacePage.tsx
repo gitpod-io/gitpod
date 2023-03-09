@@ -44,6 +44,10 @@ export function CreateWorkspacePage() {
     const history = useHistory();
     const props = StartWorkspaceOptions.parseSearchParams(location.search);
     const createWorkspaceMutation = useCreateWorkspaceMutation();
+    const isStarting =
+        createWorkspaceMutation.isLoading ||
+        !!createWorkspaceMutation.data?.workspaceURL ||
+        !!createWorkspaceMutation.data?.createdWorkspaceId;
 
     const [useLatestIde, setUseLatestIde] = useState(
         props.ideSettings?.useLatestVersion !== undefined
@@ -174,14 +178,10 @@ export function CreateWorkspacePage() {
                 <div className="w-full flex justify-end mt-6 space-x-2 px-6">
                     <Button
                         onClick={onClickCreate}
-                        loading={createWorkspaceMutation.isLoading || isLoading}
+                        loading={isStarting || isLoading}
                         disabled={!repo || repo.length === 0 || !!errorIde || !!errorWsClass}
                     >
-                        {isLoading
-                            ? "Loading ..."
-                            : createWorkspaceMutation.isLoading
-                            ? "Creating Workspace ..."
-                            : "New Workspace"}
+                        {isLoading ? "Loading ..." : isStarting ? "Creating Workspace ..." : "New Workspace"}
                     </Button>
                 </div>
                 <div>
@@ -196,6 +196,7 @@ export function CreateWorkspacePage() {
                 <ExistingWorkspaceModal
                     existingWorkspaces={existingWorkspaces}
                     createWorkspace={createWorkspace}
+                    isStarting={isStarting}
                     onClose={() => setExistingWorkspaces([])}
                 />
             )}
@@ -315,12 +316,14 @@ const StatusMessage: FunctionComponent<StatusMessageProps> = ({ error, setSelect
 interface ExistingWorkspaceModalProps {
     existingWorkspaces: WorkspaceInfo[];
     onClose: () => void;
+    isStarting: boolean;
     createWorkspace: (opts: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) => void;
 }
 
 const ExistingWorkspaceModal: FunctionComponent<ExistingWorkspaceModalProps> = ({
     existingWorkspaces,
     onClose,
+    isStarting,
     createWorkspace,
 }) => {
     return (
@@ -358,9 +361,12 @@ const ExistingWorkspaceModal: FunctionComponent<ExistingWorkspaceModalProps> = (
                 <button className="secondary" onClick={onClose}>
                     Cancel
                 </button>
-                <button onClick={() => createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}>
-                    New Workspace
-                </button>
+                <Button
+                    loading={isStarting}
+                    onClick={() => createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}
+                >
+                    {isStarting ? "Creating Workspace ..." : "New Workspace"}
+                </Button>
             </ModalFooter>
         </Modal>
     );
