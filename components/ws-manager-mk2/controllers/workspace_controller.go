@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,13 +32,15 @@ const (
 	metricsWorkspaceSubsystem = "ws_manager_mk2"
 	// kubernetesOperationTimeout is the time we give Kubernetes operations in general.
 	kubernetesOperationTimeout = 5 * time.Second
+	maintenanceRequeue         = 1 * time.Minute
 )
 
-func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg *config.Configuration, reg prometheus.Registerer) (*WorkspaceReconciler, error) {
+func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg *config.Configuration, reg prometheus.Registerer, maintenance maintenance.Maintenance) (*WorkspaceReconciler, error) {
 	reconciler := &WorkspaceReconciler{
-		Client: c,
-		Scheme: scheme,
-		Config: cfg,
+		Client:      c,
+		Scheme:      scheme,
+		Config:      cfg,
+		maintenance: maintenance,
 	}
 
 	metrics, err := newControllerMetrics(reconciler)
@@ -57,6 +60,7 @@ type WorkspaceReconciler struct {
 
 	Config      *config.Configuration
 	metrics     *controllerMetrics
+	maintenance maintenance.Maintenance
 	OnReconcile func(ctx context.Context, ws *workspacev1.Workspace)
 }
 
@@ -94,6 +98,12 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	log.Info("reconciling workspace", "ws", req.NamespacedName)
+	if r.maintenance.IsEnabled() {
+		// Don't reconcile workspaces in maintenance mode, to prevent Pod creation and deletion.
+		// Requeue after some time to ensure we do still reconcile this workspace when
+		// maintenance mode ends.
+		return ctrl.Result{RequeueAfter: maintenanceRequeue}, nil
+	}
 
 	var workspacePods corev1.PodList
 	err := r.List(ctx, &workspacePods, client.InNamespace(req.Namespace), client.MatchingFields{wsOwnerKey: req.Name})

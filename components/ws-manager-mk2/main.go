@@ -18,13 +18,17 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -42,6 +46,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	imgproxy "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/proxy"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/service"
 	//+kubebuilder:scaffold:imports
@@ -105,13 +110,28 @@ func main() {
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "ws-manager-mk2-leader.gitpod.io",
 		Namespace:              cfg.Manager.Namespace,
+		NewCache: func(conf *rest.Config, opts cache.Options) (cache.Cache, error) {
+			// Only watch the maintenance mode ConfigMap.
+			opts.SelectorsByObject = cache.SelectorsByObject{
+				&corev1.ConfigMap{}: cache.ObjectSelector{
+					Label: labels.SelectorFromSet(labels.Set{controllers.LabelMaintenance: "true"}),
+				},
+			}
+			return cache.New(conf, opts)
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
 
-	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), &cfg.Manager, metrics.Registry)
+	maintenance, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
+	if err != nil {
+		setupLog.Error(err, "unable to create maintenance controller", "controller", "Maintenance")
+		os.Exit(1)
+	}
+
+	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), &cfg.Manager, metrics.Registry, maintenance)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)
@@ -124,7 +144,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity)
+	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity, maintenance)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager service")
 		os.Exit(1)
@@ -137,6 +157,10 @@ func main() {
 	}
 	if err = timeoutReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup timeout controller with manager", "controller", "Timeout")
+		os.Exit(1)
+	}
+	if err = maintenance.SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to setup maintenance controller with manager", "controller", "Maintenance")
 		os.Exit(1)
 	}
 
@@ -163,7 +187,7 @@ func main() {
 	}
 }
 
-func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activity *activity.WorkspaceActivity) (*service.WorkspaceManagerServer, error) {
+func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activity *activity.WorkspaceActivity, maintenance maintenance.Maintenance) (*service.WorkspaceManagerServer, error) {
 	// TODO(cw): remove use of common-go/log
 
 	if len(cfg.RPCServer.RateLimits) > 0 {
@@ -219,7 +243,7 @@ func setupGRPCService(cfg *config.ServiceConfiguration, k8s client.Client, activ
 		imgbldr.RegisterImageBuilderServer(grpcServer, imgproxy.ImageBuilder{D: imgbldr.NewImageBuilderClient(conn)})
 	}
 
-	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, activity)
+	srv := service.NewWorkspaceManagerServer(k8s, &cfg.Manager, metrics.Registry, activity, maintenance)
 
 	grpc_prometheus.Register(grpcServer)
 	wsmanapi.RegisterWorkspaceManagerServer(grpcServer, srv)
