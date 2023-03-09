@@ -18,4 +18,10 @@ const (
 	ImageTag      = "7.0.8"
 
 	ContainerName = "redis"
+
+	ExporterRegistryImage = "oliver006/redis_exporter"
+	ExporterImageTag      = "v1.48.0"
+	ExporterContainerName = "exporter"
+	ExporterPortName      = "exporter"
+	ExporterPort          = 9500
 )

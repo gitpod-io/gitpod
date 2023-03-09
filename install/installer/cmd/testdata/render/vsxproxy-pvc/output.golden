@@ -10113,6 +10113,28 @@ spec:
           runAsGroup: 65532
           runAsNonRoot: true
           runAsUser: 65532
+      - env:
+        - name: REDIS_ADDR
+          value: redis://localhost:6379
+        - name: REDIS_EXPORTER_WEB_LISTEN_ADDRESS
+          value: :9500
+        - name: REDIS_EXPORTER_LOG_FORMAT
+          value: json
+        image: registry.hub.docker.com/oliver006/redis_exporter:v1.48.0
+        imagePullPolicy: IfNotPresent
+        name: exporter
+        ports:
+        - containerPort: 9500
+          name: exporter
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 5M
+        securityContext:
+          runAsGroup: 65532
+          runAsNonRoot: true
+          runAsUser: 65532
       dnsPolicy: ClusterFirst
       enableServiceLinks: false
       priorityClassName: system-node-critical
