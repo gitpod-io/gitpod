@@ -122,11 +122,17 @@ jobs:
               with:
                   paths: "test/tests/**/TEST.xml"
               if: always()
+            - name: Get Secrets from GCP
+              id: 'secrets'
+              uses: 'google-github-actions/get-secretmanager-secrets@v1'
+              with:
+                  secrets: |-
+                      devx-slack-webhook:gitpod-core-dev/devx-alerts-slack-webhook
             - name: Slack Notification
               uses: rtCamp/action-slack-notify@v2
               if: failure()
               env:
-                  SLACK_WEBHOOK: ${{ secrets.DEVELOPMENT_PIPELINE_SLACK_WEBHOOK_URL }}
+                  SLACK_WEBHOOK: '${{ steps.secrets.outputs.devx-slack-webhook }}'
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: "`${{ needs.configuration.outputs.version}}` smoke test failed"
             - name: Delete preview environment
