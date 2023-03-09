@@ -112,7 +112,8 @@ jobs:
     needs: [ configuration, build-previewctl ]
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
-      (needs.configuration.outputs.preview_enable == 'true')
+      (needs.configuration.outputs.preview_enable == 'true') &&
+      (needs.configuration.outputs.is_main_branch != 'true')
     runs-on: [ self-hosted ]
     concurrency:
       group: ${{ github.head_ref || github.ref }}-infrastructure
