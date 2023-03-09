@@ -28,7 +28,6 @@ export type Config = Omit<
     | "stripeConfigFile"
     | "licenseFile"
     | "patSigningKeyFile"
-    | "adminLoginKeyFile"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
@@ -151,7 +150,6 @@ export interface ConfigSerialized {
 
     showSetupModal: boolean;
 
-    adminLoginKeyFile?: string;
     admin: {
         grantFirstUserAdminRole: boolean;
         credentialsPath: string;
@@ -331,15 +329,6 @@ export namespace ConfigFile {
             }
         }
 
-        let adminLoginKey: string | undefined = undefined;
-        if (config.adminLoginKeyFile) {
-            try {
-                adminLoginKey = fs.readFileSync(filePathTelepresenceAware(config.adminLoginKeyFile), "utf-8").trim();
-            } catch (error) {
-                log.error("Could not load admin login key", error);
-            }
-        }
-
         return {
             ...config,
             hostUrl,
@@ -359,7 +348,6 @@ export namespace ConfigFile {
             patSigningKey,
             admin: {
                 ...config.admin,
-                loginKey: adminLoginKey,
                 credentialsPath: config.admin.credentialsPath,
             },
         };
