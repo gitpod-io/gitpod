@@ -6,7 +6,7 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { UserContext } from "../user-context";
@@ -33,12 +33,12 @@ export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps)
     const { userBillingMode, user } = useContext(UserContext);
     const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
 
+    const settingsMenu = useMemo(() => {
+        return getSettingsMenu(user, userBillingMode, enablePersonalAccessTokens);
+    }, [user, userBillingMode, enablePersonalAccessTokens]);
+
     return (
-        <PageWithSubMenu
-            subMenu={getSettingsMenu(user, userBillingMode, enablePersonalAccessTokens)}
-            title="User Settings"
-            subtitle="Manage your personal account settings."
-        >
+        <PageWithSubMenu subMenu={settingsMenu} title="User Settings" subtitle="Manage your personal account settings.">
             {children}
         </PageWithSubMenu>
     );
