@@ -109,16 +109,7 @@ func main() {
 		HealthProbeBindAddress: cfg.Health.Addr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "ws-manager-mk2-leader.gitpod.io",
-		Namespace:              cfg.Manager.Namespace,
-		NewCache: func(conf *rest.Config, opts cache.Options) (cache.Cache, error) {
-			// Only watch the maintenance mode ConfigMap.
-			opts.SelectorsByObject = cache.SelectorsByObject{
-				&corev1.ConfigMap{}: cache.ObjectSelector{
-					Label: labels.SelectorFromSet(labels.Set{controllers.LabelMaintenance: "true"}),
-				},
-			}
-			return cache.New(conf, opts)
-		},
+		NewCache:               cache.MultiNamespacedCacheBuilder([]string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
