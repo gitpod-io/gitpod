@@ -4896,7 +4896,8 @@ data:
         "resources": null
       },
       "admin": {
-        "grantFirstUserAdminRole": true
+        "grantFirstUserAdminRole": true,
+        "credentialsPath": "/credentials/admin/admin.json"
       },
       "adminLoginKeyFile": "",
       "prebuildLimiter": {
@@ -9273,7 +9274,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: e641db8210464747aa714799870c610059b5c4880a288a9da91a843660ae9cb0
+        gitpod.io/checksum_config: 5e1f7a11dab8d9002c8567f2c82f62f7e579052e6d7c55b155f077ae65a83830
       creationTimestamp: null
       labels:
         app: gitpod
@@ -9411,6 +9412,9 @@ spec:
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
+        - mountPath: /credentials/admin
+          name: admin-credentials
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -9522,6 +9526,10 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: ws-manager-client-tls
+      - name: admin-credentials
+        secret:
+          optional: true
+          secretName: admin-credentials
 status: {}
 ---
 # apps/v1/Deployment ws-manager

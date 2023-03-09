@@ -175,4 +175,7 @@ type PrebuildRateLimiterConfig struct {
 
 type AdminConfig struct {
 	GrantFirstUserAdminRole bool `json:"grantFirstUserAdminRole"`
+
+	// Absolute path to a file containg credentials (as JSON) which can be used to log-in as admin
+	CredentialsPath string `json:"credentialsPath"`
 }

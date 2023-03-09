@@ -2344,7 +2344,8 @@ data:
         "resources": null
       },
       "admin": {
-        "grantFirstUserAdminRole": true
+        "grantFirstUserAdminRole": true,
+        "credentialsPath": "/credentials/admin/admin.json"
       },
       "adminLoginKeyFile": "",
       "prebuildLimiter": {
@@ -4572,7 +4573,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 3b028b705e7974d991b2e95eb1810c588d61f71f88685d474475982f5e8e97e5
+        gitpod.io/checksum_config: c929d9663d6775337cd6d6c0a1fdf590af09ad71c0b3247c78f26501653d1256
       creationTimestamp: null
       labels:
         app: gitpod
@@ -4707,6 +4708,9 @@ spec:
         - mountPath: /twilio-config
           name: twilio-secret-volume
           readOnly: true
+        - mountPath: /credentials/admin
+          name: admin-credentials
+          readOnly: true
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -4815,6 +4819,10 @@ spec:
         secret:
           optional: true
           secretName: twilio-secret
+      - name: admin-credentials
+        secret:
+          optional: true
+          secretName: admin-credentials
 status: {}
 ---
 # apps/v1/Deployment ws-manager-bridge

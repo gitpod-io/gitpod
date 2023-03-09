@@ -335,6 +335,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
+	adminCredentialsVolume, adminCredentialsMount, _ := getAdminCredentials()
+	volumes = append(volumes, adminCredentialsVolume)
+	volumeMounts = append(volumeMounts, adminCredentialsMount)
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
