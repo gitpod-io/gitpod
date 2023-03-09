@@ -434,7 +434,7 @@ function SwitchToPAYG() {
 
                 <div className="mt-12">
                     <a href={billingLink}>
-                        <button className="secondary">Go to Billing →</button>
+                        <button className="secondary">Manage usage limit →</button>
                     </a>
                 </div>
             </div>
