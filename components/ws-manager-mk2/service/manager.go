@@ -117,11 +117,6 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return nil, status.Errorf(codes.InvalidArgument, "unsupported workspace type: %v", req.Type)
 	}
 
-	initializer, err := proto.Marshal(req.Spec.Initializer)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "cannot serialise content initializer: %v", err)
-	}
-
 	var git *workspacev1.GitSpec
 	if req.Spec.Git != nil {
 		git = &workspacev1.GitSpec{
@@ -205,7 +200,11 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	userEnvVars, envData := extractWorkspaceUserEnv(envSecretName, req.Spec.Envvars, req.Spec.SysEnvvars)
 	sysEnvVars := extractWorkspaceSysEnv(req.Spec.SysEnvvars)
 
-	tokenData, _ := extractWorkspaceTokenData(req.Spec)
+	tokenData := extractWorkspaceTokenData(req.Spec)
+	initializer, err := proto.Marshal(req.Spec.Initializer)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot serialise content initializer: %v", err)
+	}
 
 	ws := workspacev1.Workspace{
 		TypeMeta: metav1.TypeMeta{
@@ -865,13 +864,12 @@ func extractWorkspaceSysEnv(sysEnvs []*wsmanapi.EnvironmentVariable) []corev1.En
 	return envs
 }
 
-func extractWorkspaceTokenData(spec *wsmanapi.StartWorkspaceSpec) (secrets map[string]string, secretsLen int) {
-	secrets = make(map[string]string)
-	for k, v := range csapi.GatherSecretsFromInitializer(spec.Initializer) {
+func extractWorkspaceTokenData(spec *wsmanapi.StartWorkspaceSpec) map[string]string {
+	secrets := make(map[string]string)
+	for k, v := range csapi.ExtractAndReplaceSecretsFromInitializer(spec.Initializer) {
 		secrets[k] = v
-		secretsLen += len(v)
 	}
-	return secrets, secretsLen
+	return secrets
 }
 
 func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus {
