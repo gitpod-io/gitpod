@@ -201,7 +201,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	_, _, adminCredentialsPath := getAdminCredentials(cfg)
+	_, _, adminCredentialsPath := getAdminCredentials()
 
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
