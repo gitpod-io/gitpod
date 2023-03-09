@@ -37,6 +37,8 @@ import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
 import { VerificationService } from "../auth/verification-service";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import * as fs from "fs/promises";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class UserController {
@@ -138,6 +140,56 @@ export class UserController {
                 }
             };
         };
+
+        // Admin user is logging-in with a one-time-token.
+        router.get("/login/ots/admin/:token", async (req: express.Request, res: express.Response) => {
+            // For the login to be succesful, we expect to receive a token which we need to validate against
+            // pre-created credentials.
+            // The credentials are provided as a file into the system, and can be updated while our system is running.
+            // We must validate the following:
+            //  * hash(token) matches the pre-created credentials
+            //  * now() is not greater than the pre-created credentials expiry
+            // If valid, we log the user-in as the "admin" user - a singleton identity which exists on the installation.
+
+            try {
+                const token = req.params.token;
+                if (!token) {
+                    throw new ResponseError(ErrorCodes.BAD_REQUEST, "missing token");
+                }
+                const credentials = await this.readAdminCredentials();
+                credentials.validate(token);
+
+                // The user has supplied a valid token, we need to sign them in.
+                // Login this user (sets cookie as side-effect)
+                const user = await this.userDb.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID);
+                if (!user) {
+                    // We respond with NOT_AUTHENTICATED to prevent gleaning whether the user, or token are invalid.
+                    throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Admin user not found");
+                }
+                await new Promise<void>((resolve, reject) => {
+                    req.login(user, (err) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+
+                // Redirect the user to create a new Organization
+                // We'll want to be more specific about the redirect based on the cell information in the future.
+                res.redirect("/orgs/new", 307);
+            } catch (e) {
+                log.error("Failed to sign-in as admin with OTS Token", e);
+
+                // Default to unathenticated, to not leak information.
+                // We do not send the error response to ensure we do not disclose information.
+                const code = e.code || 401;
+                res.sendStatus(code);
+                return;
+            }
+        });
+
         router.get(
             "/login/ots/admin-user/:key",
             loginUserWithOts(async (req: express.Request, res: express.Response, user: User, secret: string) => {
@@ -850,5 +902,67 @@ export class UserController {
         const server = this.serverFactory();
         server.initialize(undefined, user, resourceGuard, ClientMetadata.from(user.id), undefined, {});
         return server;
+    }
+
+    private async readAdminCredentials(): Promise<AdminCredentials> {
+        const credentialsFilePath = this.config.admin.credentialsFilePath;
+
+        // Credentials do not have to be present in the system, if admin level sing-in is entirely disabled.
+        if (!credentialsFilePath) {
+            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "No admin credentials");
+        }
+
+        const contents = await fs.readFile(credentialsFilePath, { encoding: "utf8" });
+        const payload = await JSON.parse(contents);
+
+        const err = new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Invalid admin credentials.");
+
+        if (!payload.expiresAt) {
+            log.error("Admin credentials file does not contain expiry timestamp.");
+            throw err;
+        }
+        if (!payload.tokenHash) {
+            log.error("Admin credentials file does not contain tokenHash.");
+            throw err;
+        }
+        if (!payload.algo || payload.algo !== "sha512") {
+            log.error(`Admin credentials file contains invalid hash algorithm. got: ${payload.algo}`);
+            throw err;
+        }
+
+        return new AdminCredentials(payload.tokenHash, payload.expiresAt, payload.algo);
+    }
+}
+
+class AdminCredentials {
+    // We expect to receive the hex digest of the hash
+    protected hash: string;
+    protected algo: "sha512";
+
+    protected expiresAt: number;
+
+    constructor(hash: string, expires: number, algo: "sha512") {
+        this.hash = hash;
+        this.expiresAt = expires;
+        this.algo = algo;
+    }
+
+    validate(token: string) {
+        const suppliedTokenHash = crypto.createHash(this.algo).update(token).digest("hex");
+
+        const nowInSeconds = new Date().getTime() / 1000;
+        if (nowInSeconds >= this.expiresAt) {
+            log.error("Admin credentials are expired.");
+            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "invalid token");
+        }
+
+        const tokensMatch = crypto.timingSafeEqual(
+            Buffer.from(suppliedTokenHash, "utf8"),
+            Buffer.from(this.hash, "utf8"),
+        );
+
+        if (!tokensMatch) {
+            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "invalid token");
+        }
     }
 }
