@@ -316,6 +316,11 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
+      - id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          token_format: access_token
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
       - name: Get Secrets from GCP
         id: 'secrets'
         uses: 'google-github-actions/get-secretmanager-secrets@v1'
