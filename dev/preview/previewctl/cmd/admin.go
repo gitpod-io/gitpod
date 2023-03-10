@@ -64,12 +64,11 @@ func newCreateAdminCredentialsCmd(logger *logrus.Logger) *cobra.Command {
 				logger.WithError(err).Fatal("Failed to create admin credentials.")
 			}
 
-			logger.Info("Created new admin credentials.")
-			logger.Info("Created new admin credentials.")
-			logger.Infof("Token: 	%s", token)
-			logger.Infof("Hash:		%s", creds.TokenHash)
-			logger.Infof("Expires:	%d (%s)", creds.ExpiresAt, time.Unix(creds.ExpiresAt, 0).Format(time.RFC3339))
-			logger.Infof("Algo:		%s", creds.Algo)
+			logger.Info("Created new admin credentials:")
+			logger.Infof("	Token: 	%s", token)
+			logger.Infof("	Hash:		%s", creds.TokenHash)
+			logger.Infof("	Expires:	%d (%s)", creds.ExpiresAt, time.Unix(creds.ExpiresAt, 0).Format(time.RFC3339))
+			logger.Infof("	Algo:		%s", creds.Algo)
 			return nil
 		},
 	}
