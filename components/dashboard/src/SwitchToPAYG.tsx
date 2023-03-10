@@ -18,13 +18,14 @@ import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { useConfetti } from "./contexts/ConfettiContext";
 import { resetAllNotifications } from "./AppNotifications";
-import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { Currency, Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import ContextMenu, { ContextMenuEntry } from "./components/ContextMenu";
 import CaretDown from "./icons/CaretDown.svg";
 import { Team } from "@gitpod/gitpod-protocol";
 import { OrgEntry } from "./menu/OrganizationSelector";
 import { Heading2, Subheading } from "./components/typography/headings";
 import { useCurrentOrg, useOrganizations } from "./data/organizations/orgs-query";
+import { PaymentContext } from "./payment-context";
 
 /**
  * Keys of known page params
@@ -56,6 +57,8 @@ type PageState = {
 
 function SwitchToPAYG() {
     const { switchToPAYG } = useContext(FeatureFlagContext);
+    const { currency } = useContext(PaymentContext);
+
     const user = useCurrentUser();
     const location = useLocation();
     const pageParams = parseSearchParams(location.search);
@@ -430,7 +433,10 @@ function SwitchToPAYG() {
         return (
             <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full mt-24">
                 <Heading2>You're now on pay-as-you-go! 🎊</Heading2>
-                <Subheading>You are one step away from using larger workspaces and custom timeouts.</Subheading>
+                <Subheading>
+                    New subscriptions are limited to 1000 credits ({Currency.getSymbol(currency)}9 / month) by default.
+                    Change your monthly limit on the billing page if you need more.
+                </Subheading>
 
                 <div className="mt-12">
                     <a href={billingLink}>
