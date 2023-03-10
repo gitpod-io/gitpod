@@ -180,6 +180,23 @@ function installFluentBit {
       upgrade --install fluent-bit fluent/fluent-bit --version 0.21.6 -n "${PREVIEW_NAMESPACE}" -f "$ROOT/.werft/vm/charts/fluentbit/values.yaml"
 }
 
+function installTrustManager {
+    helm3 \
+      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+      --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+      repo add jetstack https://charts.jetstack.io
+
+    helm3 \
+      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+      --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+      repo update
+
+    helm3 \
+      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
+      --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
+      upgrade --install --namespace cert-manager trust-manager jetstack/trust-manager --wait
+}
+
 # ====================================
 # Prerequisites
 # ====================================
@@ -202,6 +219,7 @@ done
 copyImagePullSecret
 installRookCeph
 installFluentBit
+installTrustManager
 
 # ========
 # Init
