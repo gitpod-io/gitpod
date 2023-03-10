@@ -151,6 +151,8 @@ jobs:
           - 23306:23306
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
+      volumes:
+        - /var/tmp:/var/tmp
       env:
         DB_HOST: "mysql"
         DB_PORT: "23306"
