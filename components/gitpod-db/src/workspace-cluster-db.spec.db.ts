@@ -57,9 +57,6 @@ export class WorkspaceClusterDBSpec {
         await this.db.save(wsc1);
         await this.db.save(wsc2);
 
-        const all = await (await this.typeORM.getConnection()).manager.getRepository(DBWorkspaceCluster).find();
-        console.log("all", all);
-
         const result = await this.db.findByName("eu71", "us02");
         expect(result).not.to.be.undefined;
         expect((result as WorkspaceCluster).name).to.equal("eu71");
