@@ -151,7 +151,7 @@ export interface WorkspaceDB {
 
     findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]>;
     findRunningInstancesWithWorkspaces(
-        installation?: string,
+        workspaceClusterName?: string,
         userId?: string,
         includeStopping?: boolean,
     ): Promise<RunningWorkspaceInfo[]>;

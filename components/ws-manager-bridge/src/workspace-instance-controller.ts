@@ -24,7 +24,7 @@ export const WorkspaceInstanceController = Symbol("WorkspaceInstanceController")
 
 export interface WorkspaceInstanceController {
     start(
-        installation: string,
+        workspaceClusterName: string,
         clientProvider: ClientProvider,
         controllerIntervalSeconds: number,
         controllerMaxDisconnectSeconds: number,
@@ -33,7 +33,7 @@ export interface WorkspaceInstanceController {
     controlNotStoppedAppClusterManagedInstanceTimeouts(
         parentCtx: TraceContext,
         runningInstances: RunningWorkspaceInfo[],
-        installation: string,
+        workspaceClusterName: string,
     ): Promise<void>;
 
     onStopped(ctx: TraceContext, ownerUserID: string, instance: WorkspaceInstance): Promise<void>;
@@ -70,7 +70,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
     protected readonly disposables = new DisposableCollection();
 
     start(
-        installation: string,
+        workspaceClusterName: string,
         clientProvider: ClientProvider,
         controllerIntervalSeconds: number,
         controllerMaxDisconnectSeconds: number,
@@ -81,17 +81,17 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                 const span = TraceContext.startSpan("controlInstances");
                 const ctx = { span };
                 try {
-                    log.debug("Controlling instances...", { installation });
+                    log.debug("Controlling instances...", { workspaceClusterName });
 
                     const nonStoppedInstances = await this.workspaceDB
                         .trace(ctx)
-                        .findRunningInstancesWithWorkspaces(installation, undefined, true);
+                        .findRunningInstancesWithWorkspaces(workspaceClusterName, undefined, true);
 
                     // Control running workspace instances against ws-manager
                     try {
                         await this.controlNonStoppedWSManagerManagedInstances(
                             ctx,
-                            installation,
+                            workspaceClusterName,
                             nonStoppedInstances,
                             clientProvider,
                             this.config.timeouts.pendingPhaseSeconds,
@@ -101,8 +101,8 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                         disconnectStarted = Number.MAX_SAFE_INTEGER; // Reset disconnect period
                     } catch (err) {
                         if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
-                            log.warn("Error while controlling installation's workspaces", err, {
-                                installation,
+                            log.warn("Error while controlling workspace cluster's workspaces", err, {
+                                workspaceClusterName,
                             });
                         } else if (disconnectStarted > Date.now()) {
                             disconnectStarted = Date.now();
@@ -113,14 +113,14 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                     await this.controlNotStoppedAppClusterManagedInstanceTimeouts(
                         ctx,
                         nonStoppedInstances,
-                        installation,
+                        workspaceClusterName,
                     );
 
-                    log.debug("Done controlling instances.", { installation });
+                    log.debug("Done controlling instances.", { workspaceClusterName });
                 } catch (err) {
                     TraceContext.setError(ctx, err);
-                    log.error("Error while controlling installation's workspaces", err, {
-                        installation,
+                    log.error("Error while controlling workspace cluster's workspaces", err, {
+                        workspaceClusterName,
                     });
                 } finally {
                     span.finish();
@@ -135,7 +135,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
      */
     protected async controlNonStoppedWSManagerManagedInstances(
         parentCtx: TraceContext,
-        installation: string,
+        workspaceClusterName: string,
         runningInstances: RunningWorkspaceInfo[],
         clientProvider: ClientProvider,
         pendingPhaseSeconds: number,
@@ -144,7 +144,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
         const span = TraceContext.startSpan("controlNonStoppedWSManagerManagedInstances", parentCtx);
         const ctx = { span };
         try {
-            log.debug("Controlling ws-manager managed instances...", { installation });
+            log.debug("Controlling ws-manager managed instances...", { workspaceClusterName });
 
             const runningInstancesIdx = new Map<string, RunningWorkspaceInfo>();
             runningInstances.forEach((i) => runningInstancesIdx.set(i.latestInstance.id, i));
@@ -173,7 +173,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                     log.info(
                         { instanceId, workspaceId: instance.workspaceId },
                         "Database says the instance is present, but ws-man does not know about it. Marking as stopped in database.",
-                        { installation, phase },
+                        { workspaceClusterName, phase },
                     );
                     await this.markWorkspaceInstanceAsStopped(ctx, ri, new Date());
                     continue;
@@ -186,7 +186,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                 });
             }
 
-            log.debug("Done controlling ws-manager managed instances.", { installation });
+            log.debug("Done controlling ws-manager managed instances.", { workspaceClusterName });
         } catch (err) {
             TraceContext.setError(ctx, err);
             throw err; // required by caller
@@ -204,21 +204,21 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
     async controlNotStoppedAppClusterManagedInstanceTimeouts(
         parentCtx: TraceContext,
         runningInstances: RunningWorkspaceInfo[],
-        installation: string,
+        applicationClusterName: string,
     ) {
         const span = TraceContext.startSpan("controlNotStoppedAppClusterManagedInstanceTimeouts", parentCtx);
         const ctx = { span };
         try {
-            log.debug("Controlling app cluster managed instances...", { installation });
+            log.debug("Controlling app cluster managed instances...", { applicationClusterName });
 
             await Promise.all(
                 runningInstances.map((info) => this.controlNotStoppedAppClusterManagedInstance(ctx, info)),
             );
 
-            log.debug("Done controlling app cluster managed instances.", { installation });
+            log.debug("Done controlling app cluster managed instances.", { applicationClusterName });
         } catch (err) {
             log.error("Error while controlling app cluster managed instances:", err, {
-                installation,
+                applicationClusterName,
             });
             TraceContext.setError(ctx, err);
         } finally {

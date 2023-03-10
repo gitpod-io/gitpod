@@ -449,7 +449,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     }
 
     public async findRunningInstancesWithWorkspaces(
-        installation?: string,
+        workspaceClusterName?: string,
         userId?: string,
         includeStopping: boolean = false,
     ): Promise<RunningWorkspaceInfo[]> {
@@ -459,8 +459,8 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             // This excludes instances in a 'stopping' phase
             conditions.push("wsi.phasePersisted != 'stopping'");
         }
-        if (installation) {
-            params.region = installation;
+        if (workspaceClusterName) {
+            params.region = workspaceClusterName;
             conditions.push("wsi.region = :region");
         }
         const joinParams: any = {};
