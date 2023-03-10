@@ -53,11 +53,10 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 	type fixture struct {
 		WorkspaceClass
 
-		Spec         *json.RawMessage          `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
-		Request      *json.RawMessage          `json:"request,omitempty"` // *api.StartWorkspaceRequest
-		Context      *startWorkspaceContext    `json:"context,omitempty"`
-		CACertSecret string                    `json:"caCertSecret,omitempty"`
-		Classes      map[string]WorkspaceClass `json:"classes,omitempty"`
+		Spec    *json.RawMessage          `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
+		Request *json.RawMessage          `json:"request,omitempty"` // *api.StartWorkspaceRequest
+		Context *startWorkspaceContext    `json:"context,omitempty"`
+		Classes map[string]WorkspaceClass `json:"classes,omitempty"`
 
 		EnforceAffinity   bool `json:"enforceAffinity,omitempty"`
 		DebugWorkspacePod bool `json:"debugWorkspacePod,omitempty"`
@@ -74,7 +73,6 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 			fixture := input.(*fixture)
 
 			mgmtCfg := forTestingOnlyManagerConfig()
-			mgmtCfg.WorkspaceCACertSecret = fixture.CACertSecret
 			mgmtCfg.DebugWorkspacePod = fixture.DebugWorkspacePod
 
 			if fixture.Classes == nil {
@@ -198,11 +196,10 @@ func TestCreatePVCForWorkspacePod(t *testing.T) {
 	type fixture struct {
 		WorkspaceClass
 
-		Spec         *json.RawMessage          `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
-		Request      *json.RawMessage          `json:"request,omitempty"` // *api.StartWorkspaceRequest
-		Context      *startWorkspaceContext    `json:"context,omitempty"`
-		CACertSecret string                    `json:"caCertSecret,omitempty"`
-		Classes      map[string]WorkspaceClass `json:"classes,omitempty"`
+		Spec    *json.RawMessage          `json:"spec,omitempty"`    // *api.StartWorkspaceSpec
+		Request *json.RawMessage          `json:"request,omitempty"` // *api.StartWorkspaceRequest
+		Context *startWorkspaceContext    `json:"context,omitempty"`
+		Classes map[string]WorkspaceClass `json:"classes,omitempty"`
 
 		EnforceAffinity bool `json:"enforceAffinity,omitempty"`
 	}
@@ -218,7 +215,6 @@ func TestCreatePVCForWorkspacePod(t *testing.T) {
 			fixture := input.(*fixture)
 
 			mgmtCfg := forTestingOnlyManagerConfig()
-			mgmtCfg.WorkspaceCACertSecret = fixture.CACertSecret
 
 			if fixture.Classes == nil {
 				fixture.Classes = make(map[string]WorkspaceClass)

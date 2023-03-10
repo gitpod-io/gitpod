@@ -7,7 +7,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 
@@ -68,27 +67,6 @@ server = "https://%v:%v"
 				}
 			}
 		}
-
-		{
-			log.Info("Updating CA certificates in the node...")
-			shCmd := exec.Command("update-ca-certificates", "-f")
-			shCmd.Stdin = os.Stdin
-			shCmd.Stderr = os.Stderr
-			shCmd.Stdout = os.Stdout
-
-			err := shCmd.Run()
-			if err != nil {
-				log.Fatalf("cannot update CA certificates: %v", err)
-			}
-
-			sourceCA := "/etc/ssl/certs/ca-certificates.crt"
-			targetCA := filepath.Join(hostfs, "/etc/ssl/certs/ca-certificates.crt")
-
-			err = copyFile(sourceCA, targetCA)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
 	},
 }
 
@@ -101,7 +79,6 @@ func init() {
 
 	_ = setupCmd.MarkFlagRequired("hostname")
 	_ = setupCmd.MarkFlagRequired("hostfs")
-	_ = setupCmd.MarkFlagRequired("ca-directory")
 }
 
 func hostExists(hostname, hostsPath string) bool {
