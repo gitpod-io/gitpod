@@ -62,6 +62,7 @@ var (
 	// wsdaemonRetryInterval is the time in between attempts to work with ws-daemon.
 	//
 	// Note: this is a variable rather than a constant so that tests can modify this value.
+	//nolint:unused
 	wsdaemonRetryInterval = 5 * time.Second
 )
 
@@ -75,8 +76,10 @@ type Monitor struct {
 
 	probeMap sync.Map
 
+	//nolint:unused
 	initializerMap sync.Map
-	finalizerMap   sync.Map
+	//nolint:unused
+	finalizerMap sync.Map
 
 	act actingManager
 
@@ -505,6 +508,7 @@ type actingManager interface {
 	modifyFinalizer(ctx context.Context, workspaceID string, finalizer string, add bool) error
 }
 
+//nolint:unused
 func (m *Monitor) clearInitializerFromMap(podName string) {
 	m.initializerMap.Delete(podName)
 }
@@ -602,6 +606,8 @@ func (m *Monitor) traceWorkspaceState(state string, wso *workspaceObjects) opent
 }
 
 // waitForWorkspaceReady waits until the workspace's content and Theia to become available.
+//
+//nolint:unused
 func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (err error) {
 	span, ctx := tracing.FromContext(ctx, "waitForWorkspaceReady")
 	defer tracing.FinishSpan(span, &err)
@@ -715,6 +721,8 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 
 // probeWorkspaceReady continually HTTP GETs a workspace's ready URL until we've tried a certain number of times
 // or the workspace responded with status code 200.
+//
+//nolint:unused
 func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (result *WorkspaceProbeResult, err error) {
 	span, ctx := tracing.FromContext(ctx, "probeWorkspaceReady")
 	defer tracing.FinishSpan(span, &err)
@@ -775,6 +783,8 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 // initializeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and initializes the workspace content.
 // If we're already initializing the workspace, thus function will return immediately. If we were not initializing,
 // prior to this call this function returns once initialization is complete.
+//
+//nolint:unused
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
 	span, ctx := tracing.FromContext(ctx, "initializeWorkspaceContent")
 	defer tracing.FinishSpan(span, &err)
@@ -939,6 +949,8 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 }
 
 // retryIfUnavailable makes multiple attempts to execute op if op returns an UNAVAILABLE gRPC status code
+//
+//nolint:unused
 func retryIfUnavailable(ctx context.Context, op func(ctx context.Context) error) (err error) {
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		err := op(ctx)
@@ -959,6 +971,7 @@ func retryIfUnavailable(ctx context.Context, op func(ctx context.Context) error)
 	return grpc_status.Error(codes.Unavailable, "workspace content initialization is currently unavailable")
 }
 
+//nolint:unused
 func shouldDisableRemoteStorage(pod *corev1.Pod) bool {
 	wso := &workspaceObjects{Pod: pod}
 	tpe, err := wso.WorkspaceType()
@@ -975,6 +988,8 @@ func shouldDisableRemoteStorage(pod *corev1.Pod) bool {
 }
 
 // finalizeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and creates a backup of the workspace content.
+//
+//nolint:unused
 func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceObjects) {
 	span, ctx := tracing.FromContext(ctx, "finalizeWorkspaceContent")
 	defer tracing.FinishSpan(span, nil)
@@ -1407,6 +1422,7 @@ func workspaceObjectListOptions(namespace string) *client.ListOptions {
 	}
 }
 
+//nolint:unused
 func handleGRPCError(ctx context.Context, err error) error {
 	if err == nil {
 		return err
