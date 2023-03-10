@@ -2359,7 +2359,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // The user is leaving a team, if they are removing themselves from the team.
         const userLeavingTeam = user.id === userId;
 
-        if (userLeavingTeam) {
+        if (!userLeavingTeam) {
             await this.guardTeamOperation(teamId, "update", "not_implemented");
         } else {
             await this.guardTeamOperation(teamId, "get", "org_members_write");
