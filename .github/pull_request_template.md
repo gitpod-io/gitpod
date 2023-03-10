@@ -34,7 +34,6 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 - [ ] /werft with-werft
       Run the build with werft instead of GHA
 - [ ] leeway-no-cache
-      leeway-target=components:all
 - [ ] /werft no-test
       Run Leeway with `--dont-test`
 
