@@ -144,8 +144,6 @@ jobs:
       # For the main branch we always want the build job to run to completion
       # For other branches we only care about the "latest" version, so it is fine to cancel in-progress builds
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
-    outputs:
-      tempo-preview-password: '${{ steps.secrets.outputs.tempo-preview-password }}'
     services:
       mysql:
         image: mysql:5.7
@@ -318,10 +316,16 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
+      - name: Get Secrets from GCP
+        id: 'secrets'
+        uses: 'google-github-actions/get-secretmanager-secrets@v1'
+        with:
+          secrets: |-
+            tempo-preview-password:gitpod-core-dev/tempo-preview-password
       - name: Deploy monitoring satellite to the preview environment
         id: deploy-monitoring-satellite
         uses: ./.github/actions/deploy-monitoring-satellite
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
-          tempo_basic_auth_password: '${{ needs.build-gitpod.outputs.tempo-preview-password }}'
+          tempo_basic_auth_password: '${{ steps.secrets.outputs.tempo-preview-password }}'
