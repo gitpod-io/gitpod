@@ -63,8 +63,7 @@ mv installer observability-installer
 HONEYCOMB_API_KEY="$(readWerftSecret honeycomb-api-key apikey)" \
 PROM_REMOTE_WRITE_USER="$(readWerftSecret prometheus-remote-write-auth user)" \
 PROM_REMOTE_WRITE_PASSWORD="$(readWerftSecret prometheus-remote-write-auth password)" \
-TEMPO_BASIC_AUTH_USER="$(readWerftSecret tempo-preview-auth user)" \
-TEMPO_BASIC_AUTH_PASSWORD="$(readWerftSecret tempo-preview-auth password)" \
+TEMPO_BASIC_AUTH_PASSWORD="${TEMPO_BASIC_AUTH_PASSWORD:-$(readWerftSecret tempo-preview-auth password)}"
 PREVIEW_NAME="${PREVIEW_NAME}" \
 WORKSPACE_ROOT="${ROOT}" \
 envsubst <"${ROOT}/dev/preview/workflow/config/monitoring-satellite.yaml" \

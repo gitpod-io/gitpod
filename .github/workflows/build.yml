@@ -215,6 +215,7 @@ jobs:
             npm-auth-token:gitpod-core-dev/npm-auth-token
             jb-marketplace-publish-token:gitpod-core-dev/jb-marketplace-publish-token
             codecov-token:gitpod-core-dev/codecov
+            tempo-preview-password:gitpod-core-dev/tempo-preview-password
       - name: Dev Build
         id: dev-build
         env:
@@ -321,3 +322,5 @@ jobs:
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
+        env:
+          TEMPO_BASIC_AUTH_PASSWORD: '${{ steps.secrets.outputs.tempo-preview-password }}'

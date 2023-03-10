@@ -5,7 +5,7 @@ tracing:
   honeycombDataset: preview-environments
   extraSpanAttributes:
     preview.name: ${PREVIEW_NAME}
-  tempoBasicUser: ${TEMPO_BASIC_AUTH_USER}
+  tempoBasicUser: preview
   tempoBasicPassword: ${TEMPO_BASIC_AUTH_PASSWORD}
 certmanager:
   installServiceMonitors: true
