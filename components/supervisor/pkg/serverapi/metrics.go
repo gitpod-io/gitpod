@@ -5,9 +5,14 @@
 package serverapi
 
 import (
+	"context"
+	"errors"
 	"time"
 
+	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sourcegraph/jsonrpc2"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
@@ -40,7 +45,7 @@ func NewClientMetrics() *ClientMetrics {
 }
 
 func (c *ClientMetrics) ProcessMetrics(usePublicAPI bool, method string, err error, startTime time.Time) {
-	code := status.Code(err)
+	code := status.Code(normalizeError(err))
 	server := ServerTypeServerAPI
 	if usePublicAPI {
 		server = ServerTypePublicAPI
@@ -60,4 +65,42 @@ func (c *ClientMetrics) Collect(ch chan<- prometheus.Metric) {
 func (c *ClientMetrics) Describe(ch chan<- *prometheus.Desc) {
 	c.clientHandledCounter.Describe(ch)
 	c.clientHandledHistogram.Describe(ch)
+}
+
+func normalizeError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if errors.Is(err, context.Canceled) {
+		return status.Error(codes.Canceled, context.Canceled.Error())
+	}
+
+	if rpcErr := new(jsonrpc2.Error); errors.As(err, &rpcErr) {
+		switch rpcErr.Code {
+		case 400:
+			return status.Error(codes.InvalidArgument, rpcErr.Message)
+		case 401:
+			return status.Error(codes.Unauthenticated, rpcErr.Message)
+		case 403:
+			return status.Error(codes.PermissionDenied, rpcErr.Message)
+		case 404:
+			return status.Error(codes.NotFound, rpcErr.Message)
+		case 409:
+			return status.Error(codes.AlreadyExists, rpcErr.Message)
+		case -32603:
+			return status.Error(codes.Internal, rpcErr.Message)
+		case 470:
+			return status.Error(codes.PermissionDenied, rpcErr.Message)
+
+		default:
+			return status.Error(codes.Internal, rpcErr.Message)
+		}
+	}
+
+	if handshakeErr := new(protocol.ErrBadHandshake); errors.As(err, &handshakeErr) {
+		return status.Error(codes.Unauthenticated, "Failed to establish caller identity")
+	}
+
+	return err
 }
