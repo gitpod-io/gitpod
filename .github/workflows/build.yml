@@ -14,7 +14,7 @@ on:
 jobs:
   configuration:
     name: Configure job parameters
-    runs-on: [ self-hosted ]
+    runs-on: [ ssd-no-cache ]
     concurrency:
       # github.head_ref is set by a pull_request event - contains the name of the source branch of the PR
       # github.ref_name is set if the event is NOT a pull_request - it contains only the branch name.
@@ -80,7 +80,7 @@ jobs:
       group: ${{ github.head_ref || github.ref_name }}-build-previewctl
       # see comment in build-gitpod below for context
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
-    runs-on: [ self-hosted ]
+    runs-on: [ ssd-no-cache ]
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
     outputs:
@@ -114,7 +114,7 @@ jobs:
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
       (needs.configuration.outputs.preview_enable == 'true') &&
       (needs.configuration.outputs.is_main_branch != 'true')
-    runs-on: [ self-hosted ]
+    runs-on: [ ssd-no-cache ]
     concurrency:
       group: ${{ github.head_ref || github.ref_name }}-infrastructure
     steps:
@@ -135,7 +135,7 @@ jobs:
     needs: [ configuration ]
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true')
-    runs-on: [ self-hosted ]
+    runs-on: [ ssd-no-cache ]
     concurrency:
       group: ${{ github.head_ref || github.ref_name }}-build-gitpod
       # For the main branch we always want the build job to run to completion
@@ -279,7 +279,7 @@ jobs:
   install:
     name: "Install Gitpod"
     needs: [ configuration, build-previewctl, build-gitpod, infrastructure ]
-    runs-on: [ self-hosted ]
+    runs-on: [ ssd-no-cache ]
     concurrency:
       group: ${{ github.head_ref || github.ref_name }}-install
       cancel-in-progress: true
@@ -303,7 +303,7 @@ jobs:
   monitoring:
     name: "Install Monitoring Satellite"
     needs: [ infrastructure, build-previewctl ]
-    runs-on: [ self-hosted ]
+    runs-on: [ ssd-no-cache ]
     concurrency:
       group: ${{ github.head_ref || github.ref_name }}-monitoring
       cancel-in-progress: true
