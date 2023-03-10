@@ -7,6 +7,9 @@ inputs:
     previewctl_hash:
         description: "The Leeway hash of the dev/preview/previewctl:docker package to be used when downloading previewclt"
         required: false
+    tempo_basic_auth_password:
+        description: "Password for tempo"
+        required: false
 runs:
     using: "docker"
     image: "Dockerfile"
