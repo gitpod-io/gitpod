@@ -1,4 +1,49 @@
 ---
+# trust.cert-manager.io/v1alpha1/Bundle gitpod-ca-bundle
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  creationTimestamp: null
+  name: gitpod-ca-bundle
+spec:
+  sources:
+  - useDefaultCAs: true
+  - secret:
+      key: ca.crt
+      name: gitpod-identity-trust-root
+  target:
+    configMap:
+      key: ca-certificates.crt
+status:
+  target: null
+---
+# cert-manager.io/v1/ClusterIssuer gitpod-ca-issuer
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: cluster
+  name: gitpod-ca-issuer
+spec:
+  ca:
+    secretName: gitpod-identity-trust-root
+status: {}
+---
+# cert-manager.io/v1/ClusterIssuer gitpod-self-signed-issuer
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: cluster
+  name: gitpod-self-signed-issuer
+spec:
+  selfSigned: {}
+status: {}
+---
 # networking.k8s.io/v1/NetworkPolicy content-service
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -220,35 +265,6 @@ spec:
       - system-node-critical
 status: {}
 ---
-# cert-manager.io/v1/Issuer ca-issuer
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: cluster
-  name: ca-issuer
-  namespace: default
-spec:
-  ca:
-    secretName: ca-issuer-ca
-status: {}
----
-# cert-manager.io/v1/Issuer gitpod-selfsigned-issuer
-apiVersion: cert-manager.io/v1
-kind: Issuer
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: cluster
-  name: gitpod-selfsigned-issuer
-  namespace: default
-spec:
-  selfSigned: {}
-status: {}
----
 # cert-manager.io/v1/Certificate builtin-registry-certs
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -265,8 +281,8 @@ spec:
   duration: 2160h0m0s
   issuerRef:
     group: cert-manager.io
-    kind: Issuer
-    name: ca-issuer
+    kind: ClusterIssuer
+    name: gitpod-ca-issuer
   secretName: builtin-registry-certs
   secretTemplate:
     labels:
@@ -274,7 +290,7 @@ spec:
       component: docker-registry
 status: {}
 ---
-# cert-manager.io/v1/Certificate ca-issuer-ca
+# cert-manager.io/v1/Certificate gitpod-ca-issuer
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -282,24 +298,60 @@ metadata:
   labels:
     app: gitpod
     component: cluster
-  name: ca-issuer-ca
+  name: gitpod-ca-issuer
   namespace: default
 spec:
-  commonName: ca-issuer-ca
-  duration: 2160h0m0s
+  commonName: ca.gitpod.cluster.local
+  duration: 2190h0m0s
   isCA: true
   issuerRef:
     group: cert-manager.io
-    kind: Issuer
-    name: gitpod-selfsigned-issuer
+    kind: ClusterIssuer
+    name: gitpod-ca-issuer
   privateKey:
     algorithm: ECDSA
     size: 256
-  secretName: ca-issuer-ca
+  secretName: gitpod-identity-trust-root-intermediate
   secretTemplate:
     labels:
       app: gitpod
       component: cluster
+  usages:
+  - cert sign
+  - crl sign
+  - server auth
+  - client auth
+status: {}
+---
+# cert-manager.io/v1/Certificate gitpod-trust-anchor
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: cluster
+  name: gitpod-trust-anchor
+  namespace: cert-manager
+spec:
+  commonName: root.gitpod.cluster.local
+  duration: 8760h0m0s
+  isCA: true
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: gitpod-self-signed-issuer
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  secretName: gitpod-identity-trust-root
+  secretTemplate:
+    labels:
+      app: gitpod
+      component: cluster
+  usages:
+  - cert sign
+  - crl sign
 status: {}
 ---
 # policy/v1/PodDisruptionBudget messagebus
@@ -1051,14 +1103,13 @@ data:
       namespace: default
     ---
     apiVersion: cert-manager.io/v1
-    kind: Issuer
+    kind: ClusterIssuer
     metadata:
       creationTimestamp: null
       labels:
         app: gitpod
         component: cluster
-      name: gitpod-selfsigned-issuer
-      namespace: default
+      name: gitpod-self-signed-issuer
     ---
     apiVersion: cert-manager.io/v1
     kind: Certificate
@@ -1067,18 +1118,33 @@ data:
       labels:
         app: gitpod
         component: cluster
-      name: ca-issuer-ca
-      namespace: default
+      name: gitpod-trust-anchor
+      namespace: cert-manager
     ---
     apiVersion: cert-manager.io/v1
-    kind: Issuer
+    kind: ClusterIssuer
     metadata:
       creationTimestamp: null
       labels:
         app: gitpod
         component: cluster
-      name: ca-issuer
+      name: gitpod-ca-issuer
+    ---
+    apiVersion: cert-manager.io/v1
+    kind: Certificate
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: cluster
+      name: gitpod-ca-issuer
       namespace: default
+    ---
+    apiVersion: trust.cert-manager.io/v1alpha1
+    kind: Bundle
+    metadata:
+      creationTimestamp: null
+      name: gitpod-ca-bundle
     ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -3766,6 +3832,10 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
+        - mountPath: /etc/ssl/certs/ca-certificates.crt
+          name: ca-certificates
+          readOnly: true
+          subPath: ca-certificates.crt
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -3807,6 +3877,9 @@ spec:
       - configMap:
           name: content-service
         name: config
+      - configMap:
+          name: gitpod-ca-bundle
+        name: ca-certificates
 status: {}
 ---
 # apps/v1/Deployment dashboard
@@ -4814,6 +4887,10 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
+        - mountPath: /etc/ssl/certs/ca-certificates.crt
+          name: ca-certificates
+          readOnly: true
+          subPath: ca-certificates.crt
         - mountPath: /twilio-config
           name: twilio-secret-volume
           readOnly: true
@@ -4932,6 +5009,9 @@ spec:
       - configMap:
           name: server-config
         name: config
+      - configMap:
+          name: gitpod-ca-bundle
+        name: ca-certificates
       - name: twilio-secret-volume
         secret:
           optional: true
@@ -5084,6 +5164,10 @@ spec:
         - mountPath: /config
           name: config
           readOnly: true
+        - mountPath: /etc/ssl/certs/ca-certificates.crt
+          name: ca-certificates
+          readOnly: true
+          subPath: ca-certificates.crt
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -5199,6 +5283,9 @@ spec:
       - configMap:
           name: ws-manager-bridge-config
         name: config
+      - configMap:
+          name: gitpod-ca-bundle
+        name: ca-certificates
 status: {}
 ---
 # batch/v1/Job migrations
