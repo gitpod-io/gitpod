@@ -5,6 +5,7 @@
 package cluster
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -19,7 +20,7 @@ import (
 
 func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 	issuerName := "gitpod-self-signed-issuer"
-	secretCAName := "gitpod-identity-trust-roots"
+	secretCAName := "gitpod-identity-trust-root"
 
 	return []runtime.Object{
 		// Define a self-signed issuer so we can generate a CA
@@ -89,7 +90,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 				IsCA:       true,
 				Duration:   &metav1.Duration{Duration: time.Duration(2190 * time.Hour)}, // 90 days
 				CommonName: "ca.gitpod.cluster.local",
-				SecretName: secretCAName,
+				SecretName: fmt.Sprintf("%v-intermediate", secretCAName),
 				PrivateKey: &v1.CertificatePrivateKey{
 					Algorithm: v1.ECDSAKeyAlgorithm,
 					Size:      256,

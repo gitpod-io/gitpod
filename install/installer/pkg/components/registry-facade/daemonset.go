@@ -224,6 +224,12 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Name:      name,
 									MountPath: "/mnt/pull-secret",
 								},
+								{
+									Name:      "ca-certificate",
+									MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
+									SubPath:   "ca.crt",
+									ReadOnly:  true,
+								},
 								common.CAVolumeMount(),
 							},
 							volumeMounts...,
@@ -288,10 +294,11 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}},
 						},
 						{
-							Name: "ws-manager-client-tls-certs",
+
+							Name: "ca-certificate",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
-									SecretName: wsmanager.TLSSecretNameClient,
+									SecretName: "gitpod-identity-trust-root",
 								},
 							},
 						},
