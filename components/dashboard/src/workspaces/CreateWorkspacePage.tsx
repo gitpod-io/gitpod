@@ -188,6 +188,9 @@ export function CreateWorkspacePage() {
                     <StatusMessage
                         error={createWorkspaceMutation.error as StartWorkspaceError}
                         setSelectAccountError={setSelectAccountError}
+                        reset={() => {
+                            createWorkspaceMutation.reset();
+                        }}
                         createWorkspace={createWorkspace}
                     />
                 </div>
@@ -232,10 +235,16 @@ function tryAuthorize(host: string, scopes?: string[]): Promise<SelectAccountPay
 
 interface StatusMessageProps {
     error?: StartWorkspaceError;
+    reset: () => void;
     setSelectAccountError: (error?: SelectAccountPayload) => void;
     createWorkspace: (opts: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) => void;
 }
-const StatusMessage: FunctionComponent<StatusMessageProps> = ({ error, setSelectAccountError, createWorkspace }) => {
+const StatusMessage: FunctionComponent<StatusMessageProps> = ({
+    error,
+    reset,
+    setSelectAccountError,
+    createWorkspace,
+}) => {
     if (!error) {
         return <></>;
     }
@@ -299,7 +308,7 @@ const StatusMessage: FunctionComponent<StatusMessageProps> = ({ error, setSelect
                 </div>
             );
         case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
-            return <UsageLimitReachedModal hints={error?.data} />;
+            return <UsageLimitReachedModal onClose={reset} hints={error?.data} />;
         case ErrorCodes.PROJECT_REQUIRED:
             return (
                 <p className="text-base text-gitpod-red w-96">
