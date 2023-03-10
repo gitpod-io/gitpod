@@ -24,7 +24,7 @@ const App: FunctionComponent = () => {
     // Setup analytics/tracking
     useAnalyticsTracking();
 
-    if (loading || currentOrgQuery.isLoading) {
+    if (loading) {
         return <AppLoading />;
     }
 
@@ -50,6 +50,9 @@ const App: FunctionComponent = () => {
     // At this point if there's no user, they should Login
     if (!user) {
         return <Login />;
+    }
+    if (currentOrgQuery.isLoading) {
+        return <AppLoading />;
     }
 
     // If we made it here, we have a logged in user w/ their teams. Yay.
