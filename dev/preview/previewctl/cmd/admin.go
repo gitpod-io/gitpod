@@ -64,11 +64,12 @@ func newCreateAdminCredentialsCmd(logger *logrus.Logger) *cobra.Command {
 				logger.WithError(err).Fatal("Failed to create admin credentials.")
 			}
 
-			logger.Info("Created new admin credentials:")
-			logger.Infof("	Token: 	%s", token)
-			logger.Infof("	Hash:		%s", creds.TokenHash)
-			logger.Infof("	Expires:	%d (%s)", creds.ExpiresAt, time.Unix(creds.ExpiresAt, 0).Format(time.RFC3339))
-			logger.Infof("	Algo:		%s", creds.Algo)
+			logger.
+				WithField("hash", creds.TokenHash).
+				WithField("algo", creds.Algo).
+				WithField("expires_unix", creds.ExpiresAt).
+				WithField("expires", time.Unix(creds.ExpiresAt, 0).Format(time.RFC3339)).
+				Infof("Created new admin credentials: %s", token)
 			return nil
 		},
 	}
@@ -114,7 +115,7 @@ func createAdminCredentials(ctx context.Context, expiry time.Duration) (string, 
 		return "", nil, fmt.Errorf("failed to serialize credentials into JSON: %w", err)
 	}
 
-	_, err = clientset.CoreV1().Secrets("default").Create(ctx, &v1.Secret{
+	_, err = clientset.CoreV1().Secrets("default").Update(ctx, &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Secret",
@@ -130,7 +131,7 @@ func createAdminCredentials(ctx context.Context, expiry time.Duration) (string, 
 		Data: map[string][]byte{
 			"admin.json": secretContents,
 		},
-	}, metav1.CreateOptions{})
+	}, metav1.UpdateOptions{})
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to create k8s secret: %w", err)
 	}
