@@ -420,6 +420,63 @@ func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID st
 	return customer, nil
 }
 
+type PaymentHoldResult string
+
+// List of values that PaymentIntentStatus can take
+const (
+	PaymentHoldResultRequiresAction        PaymentHoldResult = "requires_action"
+	PaymentHoldResultRequiresConfirmation  PaymentHoldResult = "requires_confirmation"
+	PaymentHoldResultRequiresPaymentMethod PaymentHoldResult = "requires_payment_method"
+	PaymentHoldResultSucceeded             PaymentHoldResult = "succeeded"
+	PaymentHoldResultFailed                PaymentHoldResult = "failed"
+)
+
+func (c *Client) TryHoldAmount(ctx context.Context, customer *stripe.Customer, amountInCents int) (PaymentHoldResult, error) {
+	if customer == nil {
+		return PaymentHoldResultFailed, fmt.Errorf("no customer specified")
+	}
+
+	if amountInCents <= 0 {
+		return PaymentHoldResultFailed, fmt.Errorf("amountInCents must be greater than 0")
+	}
+
+	// we create a payment intent with the amount we want to hold
+	// and then cancel it immediately
+	// this will create a pending charge on the customer's card
+
+	paymentIntent, err := c.sc.PaymentIntents.New(&stripe.PaymentIntentParams{
+		Amount:        stripe.Int64(int64(amountInCents)),
+		Currency:      stripe.String(string(stripe.CurrencyUSD)),
+		Customer:      stripe.String(customer.ID),
+		PaymentMethod: stripe.String("manual"),
+		Confirm:       stripe.Bool(true),
+	})
+	if err != nil {
+		return PaymentHoldResultFailed, fmt.Errorf("failed to confirm payment intent: %w", err)
+	}
+	if paymentIntent.Status != stripe.PaymentIntentStatusRequiresCapture {
+		result := PaymentHoldResultFailed
+		if paymentIntent.Status == stripe.PaymentIntentStatusRequiresAction {
+			result = PaymentHoldResultRequiresAction
+		} else if paymentIntent.Status == stripe.PaymentIntentStatusRequiresConfirmation {
+			result = PaymentHoldResultRequiresConfirmation
+		} else if paymentIntent.Status == stripe.PaymentIntentStatusRequiresPaymentMethod {
+			result = PaymentHoldResultRequiresPaymentMethod
+		}
+		return result, fmt.Errorf("Couldn't put a hold on the card: %s", paymentIntent.Status)
+	}
+	paymentIntent, err = c.sc.PaymentIntents.Cancel(paymentIntent.ID, nil)
+	if err != nil {
+		log.Errorf("Failed to cancel payment intent: %v", err)
+		return PaymentHoldResultSucceeded, nil
+	}
+	if paymentIntent.Status != stripe.PaymentIntentStatusCanceled {
+		log.Errorf("Failed to cancel payment intent: %v", err)
+		return PaymentHoldResultSucceeded, nil
+	}
+	return PaymentHoldResultSucceeded, nil
+}
+
 func GetAttributionID(ctx context.Context, customer *stripe.Customer) (db.AttributionID, error) {
 	if customer == nil {
 		log.Error("No customer information available for invoice.")
