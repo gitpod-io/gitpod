@@ -123,6 +123,7 @@ import {
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 import { ConfigProvider } from "../../../src/workspace/config-provider";
+import { ClientError } from "nice-grpc-common";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
@@ -2284,7 +2285,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         try {
             customer = (await this.billingService.getStripeCustomer({ attributionId })).customer;
         } catch (e) {
-            log.error(e);
+            log.info(e);
         }
         if (customer) {
             // NOTE: this is a temporary workaround, as long as we're not automatically re-create the customer
@@ -2366,6 +2367,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             return costCenter?.spendingLimit;
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
+            if (error instanceof ClientError) {
+                throw new ResponseError(error.code, error.details);
+            }
             throw new ResponseError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 `Failed to subscribe '${attributionId}' to Stripe`,

@@ -214,6 +214,16 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
 	}
 
+	// check the provided payment method by creating a hold on it.
+	result, err := s.stripeClient.TryHoldAmount(ctx, stripeCustomer, 1000)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to verify credit card for customer %s", stripeCustomer.ID)
+	}
+	if result != stripe.PaymentHoldResultSucceeded {
+		log.Errorf("Failed to verify credit card for customer %s. Result: %s", stripeCustomer.ID, result)
+		return nil, status.Error(codes.InvalidArgument, "The provided payment method is invalid. Please provide working credit card information to proceed.")
+	}
+
 	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceID, isAutomaticTaxSupported)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "Failed to create subscription with customer ID %s", customer.Customer.Id)
