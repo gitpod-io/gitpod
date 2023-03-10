@@ -87,10 +87,6 @@ var controllerRules = []rbacv1.PolicyRule{
 			"watch",
 		},
 	},
-}
-
-// ConfigMap, Leases, and Events access is required for leader-election.
-var leaderElectionRules = []rbacv1.PolicyRule{
 	{
 		APIGroups: []string{""},
 		Resources: []string{"configmaps"},
@@ -104,6 +100,10 @@ var leaderElectionRules = []rbacv1.PolicyRule{
 			"watch",
 		},
 	},
+}
+
+// ConfigMap, Leases, and Events access is required for leader-election.
+var leaderElectionRules = []rbacv1.PolicyRule{
 	{
 		APIGroups: []string{"coordination.k8s.io"},
 		Resources: []string{"leases"},
