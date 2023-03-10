@@ -19,12 +19,12 @@ const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 // Top level Dashboard App component
 const App: FunctionComponent = () => {
     const { user, isSetupRequired, loading } = useUserAndTeamsLoader();
-    const currentOrg = useCurrentOrg().data;
+    const currentOrgQuery = useCurrentOrg();
 
     // Setup analytics/tracking
     useAnalyticsTracking();
 
-    if (loading) {
+    if (loading || currentOrgQuery.isLoading) {
         return <AppLoading />;
     }
 
@@ -56,7 +56,7 @@ const App: FunctionComponent = () => {
     return (
         <Suspense fallback={<AppLoading />}>
             {/* Use org id as key to force re-render on org change */}
-            <AppRoutes key={currentOrg?.id ?? "no-org"} />
+            <AppRoutes key={currentOrgQuery.data?.id ?? "no-org"} />
         </Suspense>
     );
 };
