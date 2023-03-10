@@ -18,6 +18,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 type ConnectionParams struct {
@@ -41,7 +42,7 @@ func ConnectionParamsFromEnv() ConnectionParams {
 func Connect(p ConnectionParams) (*gorm.DB, error) {
 	loc, err := time.LoadLocation("UTC")
 	if err != nil {
-		return nil, fmt.Errorf("Failed to load UT location: %w", err)
+		return nil, fmt.Errorf("Failed to load UTC location: %w", err)
 	}
 	cfg := driver_mysql.Config{
 		User:                 p.User,
@@ -57,7 +58,7 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 	if p.CaCert != "" {
 		rootCertPool := x509.NewCertPool()
 		if ok := rootCertPool.AppendCertsFromPEM([]byte(p.CaCert)); !ok {
-			log.Fatal("Failed to append custom DB CA cert.")
+			return nil, fmt.Errorf("failed to append custom certificate for database connection")
 		}
 
 		tlsConfigName := "custom"
@@ -66,13 +67,13 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 			MinVersion: tls.VersionTLS12, // semgrep finding: set lower boundary to exclude insecure TLS1.0
 		})
 		if err != nil {
-			return nil, fmt.Errorf("Failed to register custom DB CA cert: %w", err)
+			return nil, fmt.Errorf("failed to register custom DB CA cert: %w", err)
 		}
 		cfg.TLSConfig = tlsConfigName
 	}
 
 	// refer to https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
-	return gorm.Open(mysql.Open(cfg.FormatDSN()), &gorm.Config{
+	conn, err := gorm.Open(mysql.Open(cfg.FormatDSN()), &gorm.Config{
 		Logger: logger.New(log.Log, logger.Config{
 			SlowThreshold:             200 * time.Millisecond,
 			Colorful:                  false,
@@ -89,4 +90,14 @@ func Connect(p ConnectionParams) (*gorm.DB, error) {
 			})(),
 		}),
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to open db connection: %w", err)
+	}
+
+	err = conn.Use(tracing.NewPlugin())
+	if err != nil {
+		return nil, fmt.Errorf("failed to setup db tracing: %w", err)
+	}
+
+	return conn, nil
 }
