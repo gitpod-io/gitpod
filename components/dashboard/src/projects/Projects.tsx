@@ -111,7 +111,7 @@ export default function ProjectsPage() {
                             />
                         </div>
                         <div className="flex-1" />
-                        <div className="py-3 pl-3"></div>
+                        <div className="py-2 pl-3"></div>
                         {team && (
                             <Link to="./members" className="flex">
                                 <button className="ml-2 secondary">Invite Members</button>
