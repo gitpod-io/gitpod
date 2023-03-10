@@ -5077,7 +5077,8 @@ data:
             }
           },
           "kubeconfig": "",
-          "namespace": "default"
+          "namespace": "default",
+          "secretsNamespace": "workspace-secrets"
         },
         "content": {
           "workingArea": "/mnt/workingarea",
@@ -7597,7 +7598,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: eb4dd48f0756c6343cc7b91acd5ec6e881b6d1f97547b217b5ce52d5e6669e91
+        gitpod.io/checksum_config: c9e4e386dff69815d3f4617c1255e1fc80fdf92a2406c6511ca690df3d54e12d
       creationTimestamp: null
       labels:
         app: gitpod
