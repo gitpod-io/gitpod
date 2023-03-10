@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full:2022-11-09-13-54-49
 
-ENV TRIGGER_REBUILD 25
+ENV TRIGGER_REBUILD 26
 
 USER root
 
@@ -173,7 +173,7 @@ RUN sudo python3 -m pip uninstall crcmod; sudo python3 -m pip install --no-cache
 ARG GCLOUD_CONFIG_DIR=/home/gitpod/.config/gcloud
 COPY --chown=gitpod gcloud-default-config $GCLOUD_CONFIG_DIR/configurations/config_default
 
-ENV DB_HOST=localhost
+ENV DB_HOST=127.0.0.1
 
 # awscliv2
 # See also: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-version.html

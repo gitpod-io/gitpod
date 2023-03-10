@@ -95,7 +95,7 @@ packages:
         - ${imageRepoBase}/db-migrations:commit-${__git_commit}
 scripts:
 - name: init-testdb
-  description: "Starts a properly initialized MySQL instance to run tests against. Usage: '. $(leeway run components/gitpod-db:db-test-env)'"
+  description: "Starts a properly initialized MySQL instance to run tests against. Usage: '. $(leeway run components/gitpod-db:init-testdb)'"
   deps: []
   script: |
     export DB_HOST=${DB_HOST:-127.0.0.1}
