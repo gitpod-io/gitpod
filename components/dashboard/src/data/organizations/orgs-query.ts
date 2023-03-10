@@ -13,6 +13,7 @@ import { publicApiTeamMembersToProtocol, publicApiTeamToProtocol, teamsService }
 import { getGitpodService } from "../../service/service";
 import { useCurrentUser, UserContext } from "../../user-context";
 import { getUserBillingModeQueryKey } from "../billing-mode/user-billing-mode-query";
+import { noPersistence } from "../setup";
 
 export interface OrganizationInfo extends Organization {
     members: OrgMemberInfo[];
@@ -72,7 +73,7 @@ export function useOrganizations() {
 }
 
 function getQueryKey(user?: User) {
-    return ["organizations", user?.id];
+    return noPersistence(["organizations", user?.id]);
 }
 
 // Custom hook to return the current org if one is selected

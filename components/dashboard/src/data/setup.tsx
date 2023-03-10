@@ -11,7 +11,7 @@ import {
     PersistQueryClientProvider,
     PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, QueryKey } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { FunctionComponent } from "react";
 
@@ -19,6 +19,13 @@ import { FunctionComponent } from "react";
 // If data we cache changes in a non-backwards compatible way, increment this version
 // That will bust any previous cache versions a client may have stored
 const CACHE_VERSION = "1";
+
+export function noPersistence(queryKey: QueryKey): QueryKey {
+    return [...queryKey, "no-persistence"];
+}
+export function isNoPersistence(queryKey: QueryKey): boolean {
+    return queryKey.some((e) => e === "no-persistence");
+}
 
 export const setupQueryClientProvider = () => {
     const client = new QueryClient();
@@ -30,6 +37,11 @@ export const setupQueryClientProvider = () => {
         // Individual queries may expire prior to this though
         maxAge: 1000 * 60 * 60 * 24, // 24 hours
         buster: CACHE_VERSION,
+        dehydrateOptions: {
+            shouldDehydrateQuery: (query) => {
+                return !isNoPersistence(query.queryKey) && query.state.status === "success";
+            },
+        },
     };
 
     // Return a wrapper around PersistQueryClientProvider w/ the query client options we setp
