@@ -139,6 +139,12 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Name:      "hostfs",
 					MountPath: "/mnt/dst",
 				},
+				{
+					Name:      "ca-certificate",
+					MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
+					SubPath:   "gitpod-ca.crt",
+					ReadOnly:  true,
+				},
 			},
 			Env: common.ProxyEnv(&ctx.Config),
 		},
@@ -223,12 +229,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								{
 									Name:      name,
 									MountPath: "/mnt/pull-secret",
-								},
-								{
-									Name:      "ca-certificate",
-									MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
-									SubPath:   "gitpod-ca.crt",
-									ReadOnly:  true,
 								},
 								common.CAVolumeMount(),
 							},
