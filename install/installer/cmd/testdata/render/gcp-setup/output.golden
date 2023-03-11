@@ -7608,10 +7608,6 @@ spec:
           readOnly: true
         - mountPath: /mnt/pull-secret
           name: pull-secret
-        - mountPath: /usr/local/share/ca-certificates/gitpod-ca.crt
-          name: ca-certificate
-          readOnly: true
-          subPath: gitpod-ca.crt
         - mountPath: /etc/ssl/certs/ca-certificates.crt
           name: ca-certificates
           readOnly: true
@@ -7657,6 +7653,10 @@ spec:
         volumeMounts:
         - mountPath: /mnt/dst
           name: hostfs
+        - mountPath: /usr/local/share/ca-certificates/gitpod-ca.crt
+          name: ca-certificate
+          readOnly: true
+          subPath: gitpod-ca.crt
       priorityClassName: system-node-critical
       restartPolicy: Always
       serviceAccountName: registry-facade
