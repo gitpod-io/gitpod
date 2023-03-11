@@ -214,7 +214,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				Spec: corev1.PodSpec{
 					PriorityClassName:             common.SystemNodeCritical,
-					Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+					Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",

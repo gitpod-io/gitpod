@@ -93,7 +93,8 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}),
 				},
 				Spec: v1.PodSpec{
-					Affinity:                      common.NodeAffinity(cluster.AffinityLabelIDE),
+					Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelIDE),
+					TopologySpreadConstraints:     cluster.WithHostnameTopologySpread(Component),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",

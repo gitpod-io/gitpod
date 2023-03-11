@@ -45,7 +45,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDaemonset),
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+					Affinity:                      cluster.WithNodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					HostPID:                       true,
 					EnableServiceLinks:            pointer.Bool(false),

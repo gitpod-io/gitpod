@@ -293,7 +293,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		DNSPolicy:                     "ClusterFirst",
 		ServiceAccountName:            Component,
 		HostPID:                       true,
-		Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+		Affinity:                      cluster.WithNodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 		Tolerations:                   tolerations,
 		PriorityClassName:             common.SystemNodeCritical,
 		EnableServiceLinks:            pointer.Bool(false),

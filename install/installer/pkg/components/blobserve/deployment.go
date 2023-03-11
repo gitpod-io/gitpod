@@ -77,9 +77,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}),
 					},
 					Spec: corev1.PodSpec{
-						Affinity:           common.NodeAffinity(cluster.AffinityLabelIDE),
-						ServiceAccountName: Component,
-						EnableServiceLinks: pointer.Bool(false),
+						Affinity:                  cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelIDE),
+						TopologySpreadConstraints: cluster.WithHostnameTopologySpread(Component),
+						ServiceAccountName:        Component,
+						EnableServiceLinks:        pointer.Bool(false),
 						Volumes: []corev1.Volume{{
 							Name:         "cache",
 							VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},

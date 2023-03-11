@@ -23,10 +23,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 
 	podSpec := corev1.PodSpec{
-		PriorityClassName:  common.SystemNodeCritical,
-		Affinity:           common.NodeAffinity(cluster.AffinityLabelServices),
-		EnableServiceLinks: pointer.Bool(false),
-		ServiceAccountName: Component,
+		PriorityClassName:         common.SystemNodeCritical,
+		Affinity:                  cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelServices),
+		TopologySpreadConstraints: cluster.WithHostnameTopologySpread(Component),
+		EnableServiceLinks:        pointer.Bool(false),
+		ServiceAccountName:        Component,
 		Containers: []corev1.Container{
 			{
 				Name:            Component,

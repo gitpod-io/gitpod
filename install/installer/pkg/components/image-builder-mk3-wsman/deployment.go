@@ -136,11 +136,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
-	var nodeAffinity = cluster.AffinityLabelMeta
-	if ctx.Config.Kind == config.InstallationWorkspace {
-		nodeAffinity = cluster.AffinityLabelServices
-	}
-
 	return []runtime.Object{&appsv1.Deployment{
 		TypeMeta: common.TypeMetaDeployment,
 		ObjectMeta: metav1.ObjectMeta{
@@ -165,7 +160,8 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}),
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.NodeAffinity(nodeAffinity),
+					Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelServices),
+					TopologySpreadConstraints:     cluster.WithHostnameTopologySpread(Component),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
 					DNSPolicy:                     "ClusterFirst",
