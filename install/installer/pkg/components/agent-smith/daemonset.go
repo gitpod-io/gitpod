@@ -49,7 +49,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					ServiceAccountName:            Component,
 					HostPID:                       true,
 					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     "ClusterFirst",
+					DNSPolicy:                     corev1.DNSClusterFirst,
 					RestartPolicy:                 "Always",
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Containers: []corev1.Container{{

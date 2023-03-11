@@ -67,7 +67,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						PriorityClassName:             common.SystemNodeCritical,
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
-						DNSPolicy:                     "ClusterFirst",
+						DNSPolicy:                     corev1.DNSClusterFirst,
 						RestartPolicy:                 "Always",
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						SecurityContext: &corev1.PodSecurityContext{

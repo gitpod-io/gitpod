@@ -290,7 +290,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		RestartPolicy:                 "Always",
 		TerminationGracePeriodSeconds: pointer.Int64(30),
-		DNSPolicy:                     "ClusterFirst",
+		DNSPolicy:                     corev1.DNSClusterFirst,
 		ServiceAccountName:            Component,
 		HostPID:                       true,
 		Affinity:                      cluster.WithNodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
