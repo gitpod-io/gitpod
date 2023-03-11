@@ -136,5 +136,27 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+		// single gitpod Bundle (used by registry-facade)
+		&trust.Bundle{
+			TypeMeta: common.TypeMetaBundle,
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "gitpod-ca",
+			},
+			Spec: trust.BundleSpec{
+				Sources: []trust.BundleSource{
+					{
+						Secret: &trust.SourceObjectKeySelector{
+							Name:        secretCAName,
+							KeySelector: trust.KeySelector{Key: "ca.crt"},
+						},
+					},
+				},
+				Target: trust.BundleTarget{
+					ConfigMap: &trust.KeySelector{
+						Key: "gitpod-ca.crt",
+					},
+				},
+			},
+		},
 	}, nil
 }
