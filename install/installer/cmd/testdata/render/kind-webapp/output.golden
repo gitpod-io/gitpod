@@ -1,4 +1,21 @@
 ---
+# trust.cert-manager.io/v1alpha1/Bundle gitpod-ca
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  creationTimestamp: null
+  name: gitpod-ca
+spec:
+  sources:
+  - secret:
+      key: ca.crt
+      name: gitpod-identity-trust-root
+  target:
+    configMap:
+      key: gitpod-ca.crt
+status:
+  target: null
+---
 # trust.cert-manager.io/v1alpha1/Bundle gitpod-ca-bundle
 apiVersion: trust.cert-manager.io/v1alpha1
 kind: Bundle
@@ -1145,6 +1162,12 @@ data:
     metadata:
       creationTimestamp: null
       name: gitpod-ca-bundle
+    ---
+    apiVersion: trust.cert-manager.io/v1alpha1
+    kind: Bundle
+    metadata:
+      creationTimestamp: null
+      name: gitpod-ca
     ---
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
