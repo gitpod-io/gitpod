@@ -40,6 +40,23 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumeMounts []corev1.VolumeMount
 	)
 
+	if ctx.Config.Certificate.Name != "" {
+		name := "config-certificates"
+		volumes = append(volumes, corev1.Volume{
+			Name: name,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: ctx.Config.Certificate.Name,
+				},
+			},
+		})
+
+		volumeMounts = append(volumeMounts, corev1.VolumeMount{
+			Name:      name,
+			MountPath: "/mnt/certificates",
+		})
+	}
+
 	if objs, err := common.DockerRegistryHash(ctx); err != nil {
 		return nil, err
 	} else {
