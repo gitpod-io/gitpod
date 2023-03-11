@@ -122,7 +122,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						ServiceAccountName:            Component,
 						EnableServiceLinks:            pointer.Bool(false),
 						DNSPolicy:                     corev1.DNSClusterFirst,
-						RestartPolicy:                 "Always",
+						RestartPolicy:                 corev1.RestartPolicyAlways,
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						InitContainers:                []corev1.Container{*common.DatabaseWaiterContainer(ctx)},
 						Containers: []corev1.Container{

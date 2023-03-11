@@ -97,8 +97,8 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					TopologySpreadConstraints:     cluster.WithHostnameTopologySpread(Component),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     corev1.DNSClusterFirst,
-					RestartPolicy:                 "Always",
+					DNSPolicy:                     v1.DNSClusterFirst,
+					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Volumes:                       volumes,
 					Containers: []v1.Container{{

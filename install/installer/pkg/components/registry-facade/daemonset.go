@@ -217,8 +217,8 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Affinity:                      cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     "ClusterFirst",
-					RestartPolicy:                 "Always",
+					DNSPolicy:                     corev1.DNSClusterFirst,
+					RestartPolicy:                 corev1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					InitContainers:                initContainers,
 					Containers: []corev1.Container{{

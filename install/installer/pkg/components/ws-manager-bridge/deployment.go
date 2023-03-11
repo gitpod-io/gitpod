@@ -123,7 +123,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						PriorityClassName:             common.SystemNodeCritical,
 						EnableServiceLinks:            pointer.Bool(false),
 						DNSPolicy:                     corev1.DNSClusterFirst,
-						RestartPolicy:                 "Always",
+						RestartPolicy:                 corev1.RestartPolicyAlways,
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						Volumes: append(
 							[]corev1.Volume{{

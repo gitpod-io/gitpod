@@ -288,7 +288,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 			*common.KubeRBACProxyContainer(ctx),
 		},
-		RestartPolicy:                 "Always",
+		RestartPolicy:                 corev1.RestartPolicyAlways,
 		TerminationGracePeriodSeconds: pointer.Int64(30),
 		DNSPolicy:                     corev1.DNSClusterFirst,
 		ServiceAccountName:            Component,
