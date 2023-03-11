@@ -8212,6 +8212,8 @@ spec:
           name: ca-certificates
           readOnly: true
           subPath: ca-certificates.crt
+        - mountPath: /mnt/certificates
+          name: config-certificates
       - args:
         - --logtostderr
         - --insecure-listen-address=[$(IP)]:9500
@@ -8289,6 +8291,9 @@ spec:
       - configMap:
           name: gitpod-ca-bundle
         name: ca-certificates
+      - name: config-certificates
+        secret:
+          secretName: https-certificates
   updateStrategy: {}
 status:
   currentNumberScheduled: 0
