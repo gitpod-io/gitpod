@@ -42,13 +42,15 @@ var setupCmd = &cobra.Command{
 			}
 
 			// https://github.com/containerd/containerd/blob/main/docs/cri/config.md#registry-configuration
+			// https://github.com/containerd/containerd/blob/main/docs/hosts.md
 			hostsToml := fmt.Sprintf(`
 server = "https://%v:%v"
 
 [host."https://%v:%v"]
     capabilities = ["pull", "resolve"]
     ca = "%v"
-    skip_verify = true
+	# skip verifications of the registry's certificate chain and host name when set to true
+    #skip_verify = true
 `, hostname, port, hostname, port, filepath.Join(regDirectory, "ca.crt"))
 
 			err = os.WriteFile(filepath.Join(fakeRegPath, "hosts.toml"), []byte(hostsToml), 0644)
