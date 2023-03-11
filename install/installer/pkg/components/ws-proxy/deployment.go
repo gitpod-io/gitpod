@@ -63,7 +63,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	podSpec := corev1.PodSpec{
 		PriorityClassName:         common.SystemNodeCritical,
-		Affinity:                  cluster.WithNodeAffinityHostnameAntiAffinity(cluster.AffinityLabelServices),
+		Affinity:                  cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelServices),
 		TopologySpreadConstraints: cluster.WithHostnameTopologySpread(Component),
 		EnableServiceLinks:        pointer.Bool(false),
 		ServiceAccountName:        Component,
