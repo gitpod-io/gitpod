@@ -75,8 +75,11 @@ func openPreview(gpBrowserEnvVar string, url string) error {
 	}
 
 	var args []string
-	if len(pargs) > 1 && pargs[1] != "" {
-		args = append(args, pargs[1])
+	for _, parg := range pargs[1:] {
+		if parg == "" {
+			continue
+		}
+		args = append(args, parg)
 	}
 	args = append(args, url)
 

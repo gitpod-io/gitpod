@@ -959,6 +959,27 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 		envs[nme] = val
 	}
 
+	getEnv := func(name string) string {
+		return envs[name]
+	}
+	for _, ide := range []*IDEConfig{&cfg.IDE, cfg.DesktopIDE} {
+		if ide == nil || ide.Env == nil {
+			continue
+		}
+		for _, name := range ide.Env.Keys() {
+			if isBlacklistedEnvvar(name) {
+				continue
+			}
+			raw, exists := ide.Env.Get(name)
+			if !exists {
+				continue
+			}
+			if value, ok := raw.(string); ok {
+				envs[name] = os.Expand(value, getEnv)
+			}
+		}
+	}
+
 	envs["SUPERVISOR_ADDR"] = fmt.Sprintf("localhost:%d", cfg.APIEndpointPort)
 
 	if cfg.EnvvarOTS != "" {
