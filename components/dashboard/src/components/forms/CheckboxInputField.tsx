@@ -56,7 +56,7 @@ export const CheckboxInput: FC<CheckboxInputProps> = ({
             <input
                 type="checkbox"
                 className={classNames(
-                    "h-4 w-4 mt-0.5 rounded cursor-pointer border-2 dark:filter-invert",
+                    "h-4 w-4 mt-1 rounded cursor-pointer border-2 dark:filter-invert",
                     "focus:ring-2 focus:border-gray-900 ring-blue-400 dark:focus:border-gray-800",
                     "border-gray-600 dark:border-gray-900 bg-transparent",
                     { "bg-gray-600 dark:bg-gray-900": checked },
@@ -70,7 +70,7 @@ export const CheckboxInput: FC<CheckboxInputProps> = ({
             <div className="flex flex-col">
                 <span
                     className={classNames(
-                        "text-sm font-semibold cursor-pointer",
+                        "text-md font-semibold cursor-pointer",
                         disabled ? "text-gray-400 dark:text-gray-400" : "text-gray-600 dark:text-gray-100",
                     )}
                 >
@@ -81,4 +81,12 @@ export const CheckboxInput: FC<CheckboxInputProps> = ({
             </div>
         </label>
     );
+};
+
+type CheckBoxInputContainerProps = {
+    className?: string;
+};
+
+export const CheckBoxInputContainer: FC<CheckBoxInputContainerProps> = ({ className, children }) => {
+    return <div className={classNames("mt-4 max-w-2xl flex flex-col space-y-4", className)}>{children}</div>;
 };

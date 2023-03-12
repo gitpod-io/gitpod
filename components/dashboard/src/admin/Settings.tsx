@@ -7,7 +7,7 @@
 import React, { useContext } from "react";
 import { TelemetryData, InstallationAdminSettings } from "@gitpod/gitpod-protocol";
 import { AdminContext } from "../admin-context";
-import CheckBox from "../components/CheckBox";
+import { CheckboxInput, CheckBoxInputContainer } from "../components/forms/CheckboxInputField";
 import { getGitpodService } from "../service/service";
 import { useEffect, useState } from "react";
 import InfoBox from "../components/InfoBox";
@@ -64,37 +64,34 @@ export default function Settings() {
                         Read our Privacy Policy
                     </a>
                 </p>
-                <CheckBox
-                    title="Enable usage telemetry"
-                    desc={
-                        <span>
-                            Enable usage telemetry on your Gitpod instance. A preview of your telemetry is available
-                            below.
-                        </span>
-                    }
-                    checked={adminSettings?.sendTelemetry ?? false}
-                    onChange={(evt) =>
-                        actuallySetTelemetryPrefs({
-                            ...adminSettings,
-                            sendTelemetry: evt.target.checked,
-                        } as InstallationAdminSettings)
-                    }
-                />
-                <CheckBox
-                    title="Include customer ID in telemetry"
-                    desc={
-                        <span>
-                            Include an optional customer ID in usage telemetry to provide individualized support.
-                        </span>
-                    }
-                    checked={adminSettings?.sendCustomerID ?? false}
-                    onChange={(evt) =>
-                        actuallySetTelemetryPrefs({
-                            ...adminSettings,
-                            sendCustomerID: evt.target.checked,
-                        } as InstallationAdminSettings)
-                    }
-                />
+                <CheckBoxInputContainer>
+                    <CheckboxInput
+                        value="enable"
+                        label="Enable usage telemetry"
+                        hint="Enable usage telemetry on your Gitpod instance. A preview of your telemetry is available
+                        below."
+                        checked={adminSettings?.sendTelemetry ?? false}
+                        onChange={(checked) =>
+                            actuallySetTelemetryPrefs({
+                                ...adminSettings,
+                                sendTelemetry: checked,
+                            } as InstallationAdminSettings)
+                        }
+                    />
+
+                    <CheckboxInput
+                        value="include"
+                        label="Include customer ID in telemetry"
+                        hint="Include an optional customer ID in usage telemetry to provide individualized support."
+                        checked={adminSettings?.sendCustomerID ?? false}
+                        onChange={(checked) =>
+                            actuallySetTelemetryPrefs({
+                                ...adminSettings,
+                                sendCustomerID: checked,
+                            } as InstallationAdminSettings)
+                        }
+                    />
+                </CheckBoxInputContainer>
                 <Heading2 className="mt-4">Telemetry preview</Heading2>
                 <InfoBox>
                     <pre>{JSON.stringify(telemetryData, null, 2)}</pre>

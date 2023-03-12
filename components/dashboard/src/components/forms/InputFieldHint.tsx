@@ -14,7 +14,7 @@ export const InputFieldHint: FC<Props> = ({ disabled = false, children }) => {
     return (
         <span
             className={classNames(
-                "text-sm",
+                "text-md",
                 disabled ? "text-gray-400 dark:text-gray-400" : "text-gray-500 dark:text-gray-400",
             )}
         >
