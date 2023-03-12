@@ -2805,6 +2805,10 @@ data:
     apiVersion: v1
     kind: Service
     metadata:
+      annotations:
+        prometheus.io/port: "9500"
+        prometheus.io/scheme: https
+        prometheus.io/scrape: "true"
       creationTimestamp: null
       labels:
         app: gitpod
@@ -6558,10 +6562,6 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    prometheus.io/port: "9500"
-    prometheus.io/scheme: https
-    prometheus.io/scrape: "true"
   creationTimestamp: null
   labels:
     app: gitpod
@@ -7140,6 +7140,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    prometheus.io/port: "9500"
+    prometheus.io/scheme: https
+    prometheus.io/scrape: "true"
   creationTimestamp: null
   labels:
     app: gitpod
@@ -7164,6 +7168,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    prometheus.io/port: "9500"
+    prometheus.io/scheme: https
+    prometheus.io/scrape: "true"
   creationTimestamp: null
   labels:
     app: gitpod
@@ -9292,14 +9300,14 @@ spec:
             memory: 32Mi
       - args:
         - --logtostderr
-        - --insecure-listen-address=[$(IP)]:9500
+        - --secure-listen-address=[$(IP)]:9500
         - --upstream=http://127.0.0.1:9500/
         env:
         - name: IP
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        image: quay.io/brancz/kube-rbac-proxy:v0.12.0
+        image: quay.io/brancz/kube-rbac-proxy:v0.14.0
         name: kube-rbac-proxy
         ports:
         - containerPort: 9500

@@ -4882,10 +4882,6 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    prometheus.io/port: "9500"
-    prometheus.io/scheme: https
-    prometheus.io/scrape: "true"
   creationTimestamp: null
   labels:
     app: gitpod
@@ -4963,6 +4959,10 @@ status:
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    prometheus.io/port: "9500"
+    prometheus.io/scheme: https
+    prometheus.io/scrape: "true"
   creationTimestamp: null
   labels:
     app: gitpod
