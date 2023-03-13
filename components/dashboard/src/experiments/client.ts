@@ -22,7 +22,7 @@ export function getExperimentsClient(): Client {
 }
 
 function newProxyConfigCatClient(): Client {
-    const clientKey = ""; // the client key is populated by the proxy
+    const clientKey = "unimportant"; // the client key is populated by the proxy
     const client = configcat.createClientWithLazyLoad(clientKey, {
         logger: configcat.createConsoleLogger(LogLevel.Error),
         cacheTimeToLiveSeconds: 60 * 3, // 3 minutes
