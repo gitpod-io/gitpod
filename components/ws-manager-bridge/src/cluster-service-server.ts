@@ -55,9 +55,6 @@ export class ClusterService implements IClusterServiceServer {
     // Satisfy the grpc.UntypedServiceImplementation interface.
     [name: string]: any;
 
-    @inject(Configuration)
-    protected readonly config: Configuration;
-
     @inject(WorkspaceClusterDB)
     protected readonly clusterDB: WorkspaceClusterDB;
 
@@ -151,12 +148,7 @@ export class ClusterService implements IClusterServiceServer {
                     tls,
                 };
 
-                let classConstraints = await getSupportedWorkspaceClasses(
-                    this.clientProvider,
-                    newCluster,
-                    this.config.installation,
-                    false,
-                );
+                let classConstraints = await getSupportedWorkspaceClasses(this.clientProvider, newCluster, false);
                 newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
 
                 await this.clusterDB.save(newCluster);
@@ -280,7 +272,7 @@ export class ClusterService implements IClusterServiceServer {
                     dbClusterIdx.set(cluster.name, true);
                 }
 
-                const allCluster = await this.allClientProvider.getAllWorkspaceClusters(this.config.installation);
+                const allCluster = await this.allClientProvider.getAllWorkspaceClusters();
                 for (const cluster of allCluster) {
                     if (dbClusterIdx.get(cluster.name)) {
                         continue;
