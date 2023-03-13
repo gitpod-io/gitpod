@@ -6,5 +6,14 @@
         "http": {
             "path": "version"
         }
+    },
+    "env": {
+        "PATH": "/ide/bin/remote-cli:$PATH",
+        "EDITOR": "/ide/bin/remote-cli/gitpod-code",
+        "VISUAL": "$EDITOR",
+        "GP_OPEN_EDITOR": "$EDITOR",
+        "GIT_EDITOR": "$EDITOR --wait",
+        "GP_PREVIEW_BROWSER": "$EDITOR --preview",
+        "GP_EXTERNAL_BROWSER": "$EDITOR --openExternal"
     }
 }

@@ -803,18 +803,9 @@ func (c *ControlService) CreateDebugEnv(ctx context.Context, req *api.CreateDebu
 		}
 		parts := strings.SplitN(env, "=", 2)
 		key := parts[0]
-		if strings.HasPrefix(key, "THEIA_") ||
-			strings.HasPrefix(key, "GITPOD_") ||
-			// TODO IDE - get rid of env vars in images, use supervisor api as a mediator to support many IDEs running in the same worksapce?
-			// TODO PATH - use well defined locations to pick up binaries, i.e. /ide/bin or /ide-desktop/bin in supervisor?
-			key == "VSX_REGISTRY_URL" ||
-			key == "EDITOR" ||
-			key == "VISUAL" ||
-			key == "GP_OPEN_EDITOR" ||
-			key == "GIT_EDITOR" ||
-			key == "GP_PREVIEW_BROWSER" ||
-			key == "GP_EXTERNAL_BROWSER" ||
-			key == "JETBRAINS_BACKEND_QUALIFIER" {
+		// TODO all system envs should start with GITPOD_
+		// gp env shoud not allow to set env vars with GITPOD_ prefix
+		if strings.HasPrefix(key, "GITPOD_") || strings.HasPrefix(key, "THEIA_") || key == "VSX_REGISTRY_URL" {
 			envs = append(envs, env)
 		}
 	}

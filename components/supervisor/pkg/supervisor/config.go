@@ -21,6 +21,8 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+
+	"github.com/iancoleman/orderedmap"
 )
 
 const supervisorConfigFile = "supervisor-config.json"
@@ -154,6 +156,10 @@ type IDEConfig struct {
 			Path string `json:"path"`
 		} `json:"http"`
 	} `json:"readinessProbe"`
+
+	// A set of name-value pairs that sets or overrides environment variables for the workspace.
+	// Environment may be referenced in the values.
+	Env *orderedmap.OrderedMap
 }
 
 // Validate validates this configuration.

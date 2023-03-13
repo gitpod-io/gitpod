@@ -52,6 +52,16 @@ const ideConfigs = [
                     path: "/status",
                 },
             },
+            env: {
+                JETBRAINS_BACKEND_QUALIFIER: qualifier,
+                PATH: `/ide-desktop/${name}/bin:$PATH`,
+                EDITOR: `/ide-desktop/${name}/bin/idea-cli open`,
+                VISUAL: "$EDITOR",
+                GP_OPEN_EDITOR: "$EDITOR",
+                GIT_EDITOR: "$EDITOR --wait",
+                GP_PREVIEW_BROWSER: `/ide-desktop/${name}/bin/idea-cli preview`,
+                GP_EXTERNAL_BROWSER: `/ide-desktop/${name}/bin/idea-cli preview`,
+            },
         };
         fs.writeFileSync(`supervisor-ide-config_${name}.json`, JSON.stringify(template, null, 2), "utf-8");
     });
