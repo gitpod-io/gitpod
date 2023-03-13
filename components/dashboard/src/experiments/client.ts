@@ -27,7 +27,7 @@ function newProxyConfigCatClient(): Client {
         logger: configcat.createConsoleLogger(LogLevel.Error),
         cacheTimeToLiveSeconds: 60 * 3, // 3 minutes
         requestTimeoutMs: 1500,
-        proxy: `${window.location.origin}/configcat`,
+        baseUrl: `${window.location.origin}/configcat`,
     });
 
     return new ConfigCatClient(client);
