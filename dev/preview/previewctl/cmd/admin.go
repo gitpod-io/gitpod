@@ -26,13 +26,6 @@ func newAdminCmd(logger *logrus.Logger) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "admin",
 		Short: "Manage installation's admin",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := create(); err != nil {
-				logger.WithError(err).Fatal("Failed to create preview.")
-			}
-
-			return nil
-		},
 	}
 
 	credentialsCmd := &cobra.Command{
