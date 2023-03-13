@@ -155,37 +155,13 @@ export class ClusterService implements IClusterServiceServer {
                     tls,
                 };
 
-                const enabled = await getExperimentsClientForBackend().getValueAsync(
-                    "workspace_classes_backend",
+                let classConstraints = await getSupportedWorkspaceClasses(
+                    this.clientProvider,
+                    newCluster,
+                    this.config.installation,
                     false,
-                    {},
                 );
-                if (enabled) {
-                    let classConstraints = await getSupportedWorkspaceClasses(
-                        this.clientProvider,
-                        newCluster,
-                        this.config.installation,
-                        false,
-                    );
-                    newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
-                } else {
-                    // try to connect to validate the config. Throws an exception if it fails.
-                    await new Promise<void>((resolve, reject) => {
-                        const c = this.clientProvider.createConnection(WorkspaceManagerClient, newCluster);
-                        c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
-                            if (err) {
-                                reject(
-                                    new GRPCError(
-                                        grpc.status.FAILED_PRECONDITION,
-                                        `cannot reach ${req.url}: ${err.message}`,
-                                    ),
-                                );
-                            } else {
-                                resolve();
-                            }
-                        });
-                    });
-                }
+                newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
 
                 await this.clusterDB.save(newCluster);
                 log.info({}, "cluster registered", { cluster: req.name });
