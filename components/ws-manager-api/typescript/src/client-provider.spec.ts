@@ -39,7 +39,6 @@ class TestClientProvider {
                         state: "cordoned",
                         url: "",
                         admissionConstraints: [],
-                        applicationCluster: "xx01",
                         region: "north-america",
                     },
                     {
@@ -50,7 +49,6 @@ class TestClientProvider {
                         state: "cordoned",
                         url: "",
                         admissionConstraints: [],
-                        applicationCluster: "xx01",
                         region: "north-america",
                     },
                     {
@@ -61,7 +59,6 @@ class TestClientProvider {
                         state: "cordoned",
                         url: "",
                         admissionConstraints: [],
-                        applicationCluster: "xx01",
                         region: "north-america",
                     },
                     {
@@ -72,7 +69,6 @@ class TestClientProvider {
                         state: "available",
                         url: "",
                         admissionConstraints: [],
-                        applicationCluster: "xx01",
                         region: "north-america",
                     },
                     {
@@ -83,7 +79,6 @@ class TestClientProvider {
                         state: "available",
                         url: "",
                         admissionConstraints: [],
-                        applicationCluster: "xx01",
                         region: "north-america",
                     },
                     {
@@ -94,7 +89,6 @@ class TestClientProvider {
                         state: "available",
                         url: "",
                         admissionConstraints: [],
-                        applicationCluster: "xx01",
                         region: "europe",
                     },
                     {
@@ -105,7 +99,6 @@ class TestClientProvider {
                         state: "available",
                         url: "",
                         admissionConstraints: [{ type: "has-permission", permission: "new-workspace-cluster" }],
-                        applicationCluster: "xx01",
                         region: "europe",
                     },
                     {
@@ -118,7 +111,6 @@ class TestClientProvider {
                         admissionConstraints: [
                             { type: "has-permission", permission: "monitor" }, // This is meant to represent a permission that does not take special precedence (cmp. constraints.ts)
                         ],
-                        applicationCluster: "xx01",
                         region: "europe",
                     },
                 ];
