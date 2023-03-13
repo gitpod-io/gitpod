@@ -32,7 +32,6 @@ import {
     UpdateResponse,
     AdmissionConstraint as GRPCAdmissionConstraint,
 } from "@gitpod/ws-manager-bridge-api/lib";
-import { GetWorkspacesRequest, WorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     WorkspaceManagerClientProviderCompositeSource,
@@ -43,7 +42,6 @@ import { inject, injectable } from "inversify";
 import { BridgeController } from "./bridge-controller";
 import { getSupportedWorkspaceClasses } from "./cluster-sync-service";
 import { Configuration } from "./config";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { GRPCError } from "./rpc";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 
