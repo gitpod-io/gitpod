@@ -135,7 +135,7 @@ func createAdminCredentials(ctx context.Context, expiry time.Duration) (string, 
 		}
 	} else {
 		// secret exists, update it
-		_, err = clientset.CoreV1().Secrets("default").Update(ctx, secret, metav1.UpdateOptions{})
+		_, err = secretsAPI.Update(ctx, secret, metav1.UpdateOptions{})
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to update secret with admin credentials: %w", err)
 		}
