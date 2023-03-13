@@ -148,8 +148,15 @@ func (c *CostCenterManager) IncrementBillingCycle(ctx context.Context, attributi
 		return cc, nil
 	}
 	billingCycleStart := NewVarCharTime(now)
+	nextMonth := func(start VarcharTime) VarcharTime {
+		return NewVarCharTime(start.Time().AddDate(0, 1, 0))
+	}
 	if cc.NextBillingTime.IsSet() {
 		billingCycleStart = cc.NextBillingTime
+		for nextMonth(billingCycleStart).Time().Before(now) {
+			log.Error("Bad billing cycle. The old billing cycle is over a month in the past. Setting to next month.", cc.ID, cc.BillingCycleStart, cc.NextBillingTime)
+			billingCycleStart = nextMonth(billingCycleStart)
+		}
 	}
 	// All fields on the new cost center remain the same, except for BillingCycleStart, NextBillingTime, and CreationTime
 	newCostCenter := CostCenter{
@@ -157,7 +164,7 @@ func (c *CostCenterManager) IncrementBillingCycle(ctx context.Context, attributi
 		SpendingLimit:     cc.SpendingLimit,
 		BillingStrategy:   cc.BillingStrategy,
 		BillingCycleStart: billingCycleStart,
-		NextBillingTime:   NewVarCharTime(billingCycleStart.Time().AddDate(0, 1, 0)),
+		NextBillingTime:   nextMonth(billingCycleStart),
 		CreationTime:      NewVarCharTime(now),
 	}
 	err = c.conn.Save(&newCostCenter).Error

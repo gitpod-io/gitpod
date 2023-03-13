@@ -466,3 +466,30 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 	})
 
 }
+
+func TestCostCenterManager_IncrementBillingCycle(t *testing.T) {
+	t.Run("increments to the current month", func(t *testing.T) {
+		now := db.NewVarCharTime(time.Now().UTC()).Time()
+		conn := dbtest.ConnectForTests(t)
+		mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
+			ForTeams: 0,
+			ForUsers: 500,
+		})
+		cc := dbtest.CreateCostCenters(t, conn, db.CostCenter{
+			ID:                db.NewUserAttributionID(uuid.New().String()),
+			CreationTime:      db.NewVarCharTime(time.Now()),
+			SpendingLimit:     500,
+			BillingStrategy:   db.CostCenter_Stripe,
+			BillingCycleStart: db.NewVarCharTime(now.AddDate(0, -3, 0)),
+			NextBillingTime:   db.NewVarCharTime(now.AddDate(0, -2, 0)),
+		})[0]
+
+		_, err := mnr.IncrementBillingCycle(context.Background(), cc.ID)
+		require.NoError(t, err)
+		cc, err = mnr.GetOrCreateCostCenter(context.Background(), cc.ID)
+		require.NoError(t, err)
+		require.Equal(t, now, cc.BillingCycleStart.Time(), "billing cycle start should be now")
+		require.Equal(t, now.AddDate(0, 1, 0), cc.NextBillingTime.Time(), "next billing time should be in one month")
+	})
+
+}
