@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 type SetValue<T> = Dispatch<SetStateAction<T>>;
 
@@ -20,16 +20,16 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T
         }
         return initialValue;
     });
-    const setValue: SetValue<T> = (value) => {
+
+    useEffect(() => {
         try {
-            const valueToStore = value instanceof Function ? value(storedValue) : value;
-            setStoredValue(valueToStore);
             if (typeof window !== "undefined") {
-                window.localStorage.setItem(key, JSON.stringify(valueToStore));
+                window.localStorage.setItem(key, JSON.stringify(storedValue));
             }
         } catch (error) {
             console.log(error);
         }
-    };
-    return [storedValue, setValue];
+    }, [key, storedValue]);
+
+    return [storedValue, setStoredValue];
 }
