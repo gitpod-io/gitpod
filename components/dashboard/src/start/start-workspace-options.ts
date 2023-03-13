@@ -49,4 +49,9 @@ export namespace StartWorkspaceOptions {
         }
         return params.toString();
     }
+
+    export function parseContextUrl(locationHash: string): string {
+        let result = locationHash.replace(/^[#/]+/, "").trim();
+        return result;
+    }
 }

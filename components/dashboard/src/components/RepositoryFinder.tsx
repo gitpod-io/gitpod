@@ -19,6 +19,9 @@ interface RepositoryFinderProps {
 }
 
 function stripOffProtocol(url: string): string {
+    if (!url.startsWith("http")) {
+        return url;
+    }
     return url.substring(url.indexOf("//") + 2);
 }
 
@@ -105,7 +108,7 @@ function displayContextUrl(contextUrl?: string) {
     if (!contextUrl) {
         return undefined;
     }
-    return contextUrl.substring(contextUrl.indexOf("//") + 2);
+    return stripOffProtocol(contextUrl);
 }
 
 function loadSearchData(): string[] {
