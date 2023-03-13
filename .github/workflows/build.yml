@@ -138,6 +138,8 @@ jobs:
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true')
     runs-on: [ self-hosted ]
+    outputs:
+      success: ${{ job.status }}
     concurrency:
       group: ${{ github.head_ref || github.ref_name }}-build-gitpod
       # For the main branch we always want the build job to run to completion
@@ -280,6 +282,25 @@ jobs:
           if-no-files-found: ignore
           path: |
             test-coverage-report
+
+  # A skipped check counts as passed in gh actions - so there can be a case where
+  # build-gitpod never ran, and a PR got merged regardless
+  # this should provide a workaround to that and provide a check we can always use as a required
+  ci-check:
+    runs-on: [ self-hosted ]
+    if: always() # always run, so we never skip the check
+    needs: [ build-gitpod ]
+    steps:
+      # pass step only when the output of build-gitpod job is set
+      - run: |
+          passed="${{ needs.build-gitpod.outputs.success }}"
+          if [[ $passed == "success" ]]; then
+            echo "build-gitpod passed"
+            exit 0
+          else
+            echo "build-gitpod failed"
+            exit 1
+          fi
 
   install:
     name: "Install Gitpod"
