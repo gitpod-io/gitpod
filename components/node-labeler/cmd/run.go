@@ -188,6 +188,12 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 		time.Sleep(1 * time.Second)
 		err := updateLabel(labelToUpdate, false, nodeName, r)
 		if err != nil {
+			// this is a edge case when cluster-autoscaler removes a node
+			// (all the running pods will be removed after that)
+			if errors.IsNotFound(err) {
+				return reconcile.Result{}, nil
+			}
+
 			log.WithError(err).Error("unexpected error removing node label")
 			return reconcile.Result{RequeueAfter: time.Second * 10}, err
 		}
