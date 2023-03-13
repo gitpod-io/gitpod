@@ -90,7 +90,7 @@ export class ClusterService implements IClusterServiceServer {
                     throw new GRPCError(grpc.status.INVALID_ARGUMENT, `Invalid value for workspace region.`);
                 }
 
-                const clusterByNamePromise = this.clusterDB.findByName(req.name, this.config.installation);
+                const clusterByNamePromise = this.clusterDB.findByName(req.name);
                 const clusterByUrlPromise = this.clusterDB.findFiltered({
                     url: req.url,
                 });
@@ -178,7 +178,7 @@ export class ClusterService implements IClusterServiceServer {
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
-                const cluster = await this.clusterDB.findByName(req.name, this.config.installation);
+                const cluster = await this.clusterDB.findByName(req.name);
                 if (!cluster) {
                     throw new GRPCError(
                         grpc.status.NOT_FOUND,
@@ -255,7 +255,7 @@ export class ClusterService implements IClusterServiceServer {
                     );
                 }
 
-                await this.clusterDB.deleteByName(req.name, this.config.installation);
+                await this.clusterDB.deleteByName(req.name);
                 log.info({}, "cluster deregistered", { cluster: req.name });
                 this.triggerReconcile("deregister", req.name);
 
