@@ -115,7 +115,8 @@ func createAdminCredentials(ctx context.Context, expiry time.Duration) (string, 
 		return "", nil, fmt.Errorf("failed to serialize credentials into JSON: %w", err)
 	}
 
-	_, err = clientset.CoreV1().Secrets("default").Update(ctx, &v1.Secret{
+	secretsAPI := clientset.CoreV1().Secrets("default")
+	secret := &v1.Secret{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Secret",
@@ -131,9 +132,20 @@ func createAdminCredentials(ctx context.Context, expiry time.Duration) (string, 
 		Data: map[string][]byte{
 			"admin.json": secretContents,
 		},
-	}, metav1.UpdateOptions{})
+	}
+	_, err = secretsAPI.Get(ctx, secret.ObjectMeta.Name, metav1.GetOptions{})
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to create k8s secret: %w", err)
+		// secret does not yet exist, create it
+		_, err = secretsAPI.Create(ctx, secret, metav1.CreateOptions{})
+		if err != nil {
+			return "", nil, fmt.Errorf("failed to create secret with admin credentials: %w", err)
+		}
+	} else {
+		// secret exists, update it
+		_, err = clientset.CoreV1().Secrets("default").Update(ctx, secret, metav1.UpdateOptions{})
+		if err != nil {
+			return "", nil, fmt.Errorf("failed to update secret with admin credentials: %w", err)
+		}
 	}
 
 	return token, creds, nil
