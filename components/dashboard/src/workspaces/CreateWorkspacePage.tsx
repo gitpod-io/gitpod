@@ -61,8 +61,10 @@ export function CreateWorkspacePage() {
     );
     const [selectedWsClass, setSelectedWsClass] = useState<string | undefined>(props.workspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
-    const [repo, setRepo] = useState<string | undefined>(location.hash.substring(1));
-    const workspaceContext = useWorkspaceContext(repo);
+    const [contextURL, setContextURL] = useState<string | undefined>(
+        StartWorkspaceOptions.parseContextUrl(location.hash),
+    );
+    const workspaceContext = useWorkspaceContext(contextURL);
     const isLoading = workspaceContext.isLoading || projects.isLoading;
     const project = useMemo(() => {
         if (!workspaceContext.data || !projects.data) {
@@ -108,20 +110,20 @@ export function CreateWorkspacePage() {
                     useLatestVersion: useLatestIde,
                 };
             }
-            if (!repo) {
+            if (!contextURL) {
                 return;
             }
 
             try {
                 const result = await createWorkspaceMutation.mutateAsync({
-                    contextUrl: repo,
+                    contextUrl: contextURL,
                     organizationId: currentOrg?.id,
                     ...opts,
                 });
                 if (result.workspaceURL) {
                     window.location.href = result.workspaceURL;
                 } else if (result.createdWorkspaceId) {
-                    history.push(`/start/${result.createdWorkspaceId}`);
+                    history.push(`/start/#${result.createdWorkspaceId}`);
                 } else if (result.existingWorkspaces && result.existingWorkspaces.length > 0) {
                     setExistingWorkspaces(result.existingWorkspaces);
                 }
@@ -129,7 +131,7 @@ export function CreateWorkspacePage() {
                 console.log(error);
             }
         },
-        [createWorkspaceMutation, history, repo, selectedIde, selectedWsClass, currentOrg?.id, useLatestIde],
+        [createWorkspaceMutation, history, contextURL, selectedIde, selectedWsClass, currentOrg?.id, useLatestIde],
     );
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
@@ -155,7 +157,12 @@ export function CreateWorkspacePage() {
                 </div>
                 <div className="-mx-6 px-6 mt-6 w-full">
                     <div className="pt-3">
-                        <RepositoryFinder setSelection={setRepo} initialValue={repo} />
+                        {workspaceContext.error && (
+                            <div className="text-red-500 text-sm">
+                                {workspaceContext.error.message} URL was: {contextURL}
+                            </div>
+                        )}
+                        <RepositoryFinder setSelection={setContextURL} initialValue={contextURL} />
                     </div>
                     <div className="pt-3">
                         {errorIde && <div className="text-red-500 text-sm">{errorIde}</div>}
@@ -178,8 +185,15 @@ export function CreateWorkspacePage() {
                 <div className="w-full flex justify-end mt-6 space-x-2 px-6">
                     <Button
                         onClick={onClickCreate}
+                        autoFocus={true}
                         loading={isStarting || isLoading}
-                        disabled={!repo || repo.length === 0 || !!errorIde || !!errorWsClass}
+                        disabled={
+                            !contextURL ||
+                            contextURL.length === 0 ||
+                            !!errorIde ||
+                            !!errorWsClass ||
+                            !!workspaceContext.error
+                        }
                     >
                         {isLoading ? "Loading ..." : isStarting ? "Creating Workspace ..." : "New Workspace"}
                     </Button>
