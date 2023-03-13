@@ -89,7 +89,7 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, nil
 	}
 
-	snapshotURL, snapshotName, snapshotErr := ssc.operations.SnapshotIDs(snapshot.Spec.WorkspaceID)
+	snapshotURL, snapshotName, snapshotErr := ssc.operations.SnapshotIDs(ctx, snapshot.Spec.WorkspaceID)
 	if snapshotErr != nil {
 		return ctrl.Result{}, snapshotErr
 	}
