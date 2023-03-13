@@ -72,7 +72,10 @@ var runCmd = &cobra.Command{
 			client,
 		}
 
-		c, err := controller.New("pod-watcher", mgr, controller.Options{Reconciler: r})
+		c, err := controller.New("pod-watcher", mgr, controller.Options{
+			Reconciler:              r,
+			MaxConcurrentReconciles: 20,
+		})
 		if err != nil {
 			log.WithError(err).Fatal("unable to bind controller watch event handler")
 		}
