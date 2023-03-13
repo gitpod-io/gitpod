@@ -153,7 +153,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 title: `${owner}/${repoName} ${defaultBranch ? "- " + defaultBranch.name : ""}`,
                 ref,
                 refType,
-                revision: (defaultBranch && defaultBranch.target.oid) || "",
+                revision: (defaultBranch && defaultBranch.target?.oid) || "",
                 repository: this.toRepository(host, result.data.repository),
             };
         } catch (e) {
@@ -191,6 +191,12 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     query {
                         repository(name: "${repoName}", owner: "${owner}") {
                             ${this.repoProperties()}
+                            defaultBranchRef {
+                                name,
+                                target {
+                                    oid
+                                }
+                            }
                             path: object(expression: ${pathExpression}) {
                                 ... on Blob {
                                     oid
@@ -367,6 +373,12 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                                 name
                                 repository {
                                     ${this.repoProperties()}
+                                    defaultBranchRef {
+                                        name,
+                                        target {
+                                            oid
+                                        }
+                                    }
                                 }
                                 target {
                                     oid
@@ -376,6 +388,12 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                                 name
                                 repository {
                                     ${this.repoProperties()}
+                                    defaultBranchRef {
+                                        name,
+                                        target {
+                                            oid
+                                        }
+                                    }
                                 }
                                 target {
                                     oid
@@ -517,9 +535,11 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         if (repoQueryResult === null) {
             throw new Error("Unknown repository.");
         }
+        const defaultBranch = repoQueryResult?.defaultBranchRef?.name;
         const result: Repository = {
             cloneUrl: repoQueryResult.url + ".git",
             host,
+            defaultBranch,
             name: repoQueryResult.name,
             owner: repoQueryResult.owner.login,
             private: !!repoQueryResult.isPrivate,
