@@ -288,7 +288,7 @@ jobs:
   # this should provide a workaround to that and provide a check we can always use as a required
   ci-check:
     runs-on: [ self-hosted ]
-    if: always() # always run, so we never skip the check
+    if: always() && github.event_name == 'push' # always run, so we never skip the check
     needs: [ build-gitpod ]
     steps:
       # pass step only when the output of build-gitpod job is set
