@@ -22,12 +22,12 @@ export function getExperimentsClient(): Client {
 }
 
 function newProxyConfigCatClient(): Client {
-    const clientKey = "unimportant"; // the client key is populated by the proxy
+    const clientKey = "gitpod"; // the client key is populated by the proxy
     const client = configcat.createClientWithLazyLoad(clientKey, {
         logger: configcat.createConsoleLogger(LogLevel.Error),
         cacheTimeToLiveSeconds: 60 * 3, // 3 minutes
         requestTimeoutMs: 1500,
-        proxy: "/configcat",
+        proxy: `${window.location.origin}/configcat`,
     });
 
     return new ConfigCatClient(client);
