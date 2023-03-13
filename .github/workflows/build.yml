@@ -135,8 +135,6 @@ jobs:
   build-gitpod:
     name: Build Gitpod
     needs: [ configuration ]
-    if: |
-      (needs.configuration.outputs.pr_no_diff_skip != 'true')
     runs-on: [ self-hosted ]
     concurrency:
       group: ${{ github.head_ref || github.ref_name }}-build-gitpod
