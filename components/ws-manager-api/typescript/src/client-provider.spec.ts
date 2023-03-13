@@ -127,11 +127,7 @@ class TestClientProvider {
         this.provider = c.get(WorkspaceManagerClientProvider);
 
         // we don't actually want to try and connect here
-        this.provider.get = async (
-            name: string,
-            applicationCluster: string,
-            grpcOptions?: object,
-        ): Promise<PromisifiedWorkspaceManagerClient> => {
+        this.provider.get = async (name: string, grpcOptions?: object): Promise<PromisifiedWorkspaceManagerClient> => {
             return {} as PromisifiedWorkspaceManagerClient;
         };
     }
@@ -140,13 +136,12 @@ class TestClientProvider {
     public async getStartClusterSets() {
         await this.expectInstallations(
             [["a2", "a3"]],
-            await this.provider.getStartClusterSets("xx01", {} as User, {} as Workspace, {} as WorkspaceInstance),
+            await this.provider.getStartClusterSets({} as User, {} as Workspace, {} as WorkspaceInstance),
             "default case",
         );
         await this.expectInstallations(
             [["con1"], ["a2", "a3", "con1"]],
             await this.provider.getStartClusterSets(
-                "xx01",
                 { rolesOrPermissions: ["new-workspace-cluster"] } as User,
                 {} as Workspace,
                 {} as WorkspaceInstance,
@@ -156,7 +151,6 @@ class TestClientProvider {
         await this.expectInstallations(
             [["a2", "a3", "con2"]],
             await this.provider.getStartClusterSets(
-                "xx01",
                 { rolesOrPermissions: ["monitor"] } as User,
                 {} as Workspace,
                 {} as WorkspaceInstance,
@@ -165,18 +159,12 @@ class TestClientProvider {
         );
         await this.expectInstallations(
             [["a2", "a3"]],
-            await this.provider.getStartClusterSets("xx01", {} as User, {} as Workspace, {} as WorkspaceInstance),
+            await this.provider.getStartClusterSets({} as User, {} as Workspace, {} as WorkspaceInstance),
             "cluster has permission w/o precedence, user NOT",
         );
         await this.expectInstallations(
             [["a3"], ["a2"]],
-            await this.provider.getStartClusterSets(
-                "xx01",
-                {} as User,
-                {} as Workspace,
-                {} as WorkspaceInstance,
-                "europe",
-            ),
+            await this.provider.getStartClusterSets({} as User, {} as Workspace, {} as WorkspaceInstance, "europe"),
             "regional cluster set",
         );
     }
