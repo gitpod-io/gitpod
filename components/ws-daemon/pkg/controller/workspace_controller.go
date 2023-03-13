@@ -148,7 +148,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 		}
 
 		initStart := time.Now()
-		alreadyInit, failure, initErr := wsc.operations.InitWorkspaceContent(ctx, InitContentOptions{
+		failure, initErr := wsc.operations.InitWorkspaceContent(ctx, InitContentOptions{
 			Meta: WorkspaceMeta{
 				Owner:       ws.Spec.Ownership.Owner,
 				WorkspaceId: ws.Spec.Ownership.WorkspaceID,
@@ -157,10 +157,6 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 			Initializer: init,
 			Headless:    ws.IsHeadless(),
 		})
-
-		if alreadyInit {
-			return ctrl.Result{}, nil
-		}
 
 		err = retry.RetryOnConflict(retryParams, func() error {
 			if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
@@ -226,7 +222,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	if ws.Spec.Type == workspacev1.WorkspaceTypeRegular {
 		snapshotName = storage.DefaultBackup
 	} else {
-		snapshotUrl, snapshotName, err = wsc.operations.SnapshotIDs(ws.Name)
+		snapshotUrl, snapshotName, err = wsc.operations.SnapshotIDs(ctx, ws.Name)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -250,7 +246,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		}
 	}
 
-	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
+	gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
 		Meta: WorkspaceMeta{
 			Owner:       ws.Spec.Ownership.Owner,
 			WorkspaceId: ws.Spec.Ownership.WorkspaceID,
@@ -261,10 +257,6 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		BackupLogs:        ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
 		UpdateGitStatus:   ws.Spec.Type == workspacev1.WorkspaceTypeRegular,
 	})
-
-	if alreadyDisposing {
-		return ctrl.Result{}, nil
-	}
 
 	err = retry.RetryOnConflict(retryParams, func() error {
 		if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {

@@ -35,7 +35,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/netlimit"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
@@ -193,18 +192,26 @@ func NewDaemon(config Config) (*Daemon, error) {
 			return nil, err
 		}
 
-		store, err := session.NewStore(context.Background(), contentCfg.WorkingArea, content.WorkspaceLifecycleHooks(
+		hooks := content.WorkspaceLifecycleHooks(
 			contentCfg,
 			func(instanceID string) bool { return true },
 			&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
 			xfs,
 			config.CPULimit.CGroupBasePath,
-		))
-		if err != nil {
-			return nil, err
-		}
+		)
 
-		workspaceOps, err := controller.NewWorkspaceOperations(contentCfg, store, wrappedReg)
+		// store, err := session.NewStore(context.Background(), contentCfg.WorkingArea, content.WorkspaceLifecycleHooks(
+		// 	contentCfg,
+		// 	func(instanceID string) bool { return true },
+		// 	&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+		// 	xfs,
+		// 	config.CPULimit.CGroupBasePath,
+		// ))
+		// if err != nil {
+		// 	return nil, err
+		// }
+
+		workspaceOps, err := controller.NewWorkspaceOperations(contentCfg, controller.NewWorkspaceProvider(hooks, contentCfg.WorkingArea), wrappedReg)
 		if err != nil {
 			return nil, err
 		}

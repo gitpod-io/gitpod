@@ -41,8 +41,9 @@ const (
 )
 
 type WorkspaceOperations struct {
-	config                 content.Config
-	store                  *session.Store
+	config content.Config
+	//store                  *session.Store
+	provider               *WorkspaceProvider
 	backupWorkspaceLimiter chan struct{}
 	metrics                *content.Metrics
 }
@@ -67,7 +68,7 @@ type DisposeOptions struct {
 	SnapshotName      string
 }
 
-func NewWorkspaceOperations(config content.Config, store *session.Store, reg prometheus.Registerer) (*WorkspaceOperations, error) {
+func NewWorkspaceOperations(config content.Config, store *WorkspaceProvider, reg prometheus.Registerer) (*WorkspaceOperations, error) {
 	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(reg, "_mk2")
 	if err != nil {
 		return nil, err
@@ -75,7 +76,7 @@ func NewWorkspaceOperations(config content.Config, store *session.Store, reg pro
 
 	return &WorkspaceOperations{
 		config: config,
-		store:  store,
+		//store:  store,
 		metrics: &content.Metrics{
 			BackupWaitingTimeHist:       waitingTimeHist,
 			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
@@ -85,34 +86,26 @@ func NewWorkspaceOperations(config content.Config, store *session.Store, reg pro
 	}, nil
 }
 
-func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, options InitContentOptions) (bool, string, error) {
-	res, err := wso.store.NewWorkspace(
-		ctx, options.Meta.InstanceId, filepath.Join(wso.store.Location, options.Meta.InstanceId),
+func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, options InitContentOptions) (string, error) {
+	ws, err := wso.provider.Create(ctx, options.Meta.InstanceId, filepath.Join(wso.provider.Location, options.Meta.InstanceId),
 		wso.creator(options.Meta.Owner, options.Meta.WorkspaceId, options.Meta.InstanceId, options.Initializer, false))
-	if errors.Is(err, storage.ErrNotFound) {
-		return false, "", nil
-	}
-
-	if errors.Is(err, session.ErrAlreadyExists) {
-		return true, "", nil
-	}
 
 	if err != nil {
-		return false, "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
+		return "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
 	}
 
-	rs, ok := res.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
+	rs, ok := ws.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
-		return false, "bug: workspace has no remote storage", xerrors.Errorf("workspace has no remote storage")
+		return "bug: workspace has no remote storage", xerrors.Errorf("workspace has no remote storage")
 	}
 	ps, err := storage.NewPresignedAccess(&wso.config.Storage)
 	if err != nil {
-		return false, "bug: no presigned storage available", xerrors.Errorf("no presigned storage available: %w", err)
+		return "bug: no presigned storage available", xerrors.Errorf("no presigned storage available: %w", err)
 	}
 
 	remoteContent, err := content.CollectRemoteContent(ctx, rs, ps, options.Meta.Owner, options.Initializer)
 	if err != nil {
-		return false, "remote content error", xerrors.Errorf("remote content error: %w", err)
+		return "remote content error", xerrors.Errorf("remote content error: %w", err)
 	}
 
 	// Initialize workspace.
@@ -138,13 +131,18 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 		},
 	}
 
-	err = content.RunInitializer(ctx, res.Location, options.Initializer, remoteContent, opts)
+	err = content.RunInitializer(ctx, ws.Location, options.Initializer, remoteContent, opts)
 	if err != nil {
 		glog.Infof("error running initializer %v", err)
-		return false, err.Error(), err
+		return err.Error(), err
 	}
 
-	return false, "", nil
+	err = ws.Persist()
+	if err != nil {
+		return "cannot persist workspace", err
+	}
+
+	return "", nil
 }
 
 func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, init *csapi.WorkspaceInitializer, storageDisabled bool) session.WorkspaceFactory {
@@ -173,25 +171,14 @@ func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, i
 	}
 }
 
-func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts DisposeOptions) (bool, *csapi.GitStatus, error) {
-	sess := wso.store.Get(opts.Meta.InstanceId)
-	if sess == nil {
-		return false, nil, fmt.Errorf("cannot find workspace %s during DisposeWorkspace", opts.Meta.InstanceId)
-	}
-
-	// Maybe there's someone else already trying to dispose the workspace.
-	// In that case we'll simply wait for that to happen.
-	done, repo, err := sess.WaitOrMarkForDisposal(ctx)
+func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts DisposeOptions) (*csapi.GitStatus, error) {
+	ws, err := wso.provider.Get(ctx, opts.Meta.InstanceId)
 	if err != nil {
-		return false, nil, fmt.Errorf("failed to wait for workspace disposal of %s", opts.Meta.InstanceId)
+		return nil, fmt.Errorf("cannot find workspace %s during DisposeWorkspace", opts.Meta.InstanceId)
 	}
 
-	if done {
-		return true, repo, nil
-	}
-
-	if sess.RemoteStorageDisabled {
-		return false, nil, xerrors.Errorf("workspace has no remote storage")
+	if ws.RemoteStorageDisabled {
+		return nil, fmt.Errorf("workspace has no remote storage")
 	}
 
 	if opts.BackupLogs {
@@ -202,14 +189,15 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		}
 	}
 
-	err = wso.uploadWorkspaceContent(ctx, sess, opts.SnapshotName)
+	err = wso.uploadWorkspaceContent(ctx, ws, opts.SnapshotName)
 	if err != nil {
-		return false, nil, xerrors.Errorf("final backup failed for workspace %s", opts.Meta.InstanceId)
+		return nil, fmt.Errorf("final backup failed for workspace %s", opts.Meta.InstanceId)
 	}
 
+	var repo *csapi.GitStatus
 	if opts.UpdateGitStatus {
 		// Update the git status prior to deleting the workspace
-		repo, err = sess.UpdateGitStatus(ctx, false)
+		repo, err = ws.UpdateGitStatus(ctx, false)
 		if err != nil {
 			// do not fail workspace because we were unable to get git status
 			// which can happen for various reasons, including user corrupting his .git folder somehow
@@ -219,22 +207,22 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		}
 	}
 
-	if err = sess.Dispose(ctx); err != nil {
+	if err = ws.Dispose(ctx); err != nil {
 		glog.WithError(err).Error("cannot dispose session")
 	}
 
 	// remove workspace daemon directory in the node
-	if err := os.RemoveAll(sess.ServiceLocDaemon); err != nil {
+	if err := os.RemoveAll(ws.ServiceLocDaemon); err != nil {
 		glog.WithError(err).Error("cannot delete workspace daemon directory")
 	}
 
-	return false, repo, nil
+	return repo, nil
 }
 
-func (wso *WorkspaceOperations) SnapshotIDs(workspaceID string) (snapshotUrl, snapshotName string, err error) {
-	sess := wso.store.Get(workspaceID)
-	if sess == nil {
-		return "", "", fmt.Errorf("cannot find workspace %s during SnapshotName", workspaceID)
+func (wso *WorkspaceOperations) SnapshotIDs(ctx context.Context, workspaceID string) (snapshotUrl, snapshotName string, err error) {
+	sess, err := wso.provider.Get(ctx, workspaceID)
+	if err != nil {
+		return "", "", fmt.Errorf("cannot find workspace %s during SnapshotName: %w", workspaceID, err)
 	}
 
 	baseName := fmt.Sprintf("snapshot-%d", time.Now().UnixNano())
@@ -258,16 +246,16 @@ func (wso *WorkspaceOperations) TakeSnapshot(ctx context.Context, workspaceID, s
 		return fmt.Errorf("workspaceID is required")
 	}
 
-	sess := wso.store.Get(workspaceID)
-	if sess == nil {
+	ws, err := wso.provider.Get(ctx, workspaceID)
+	if err != nil {
 		return fmt.Errorf("cannot find workspace %s during DisposeWorkspace", workspaceID)
 	}
 
-	if sess.RemoteStorageDisabled {
+	if ws.RemoteStorageDisabled {
 		return fmt.Errorf("workspace has no remote storage")
 	}
 
-	err = wso.uploadWorkspaceContent(ctx, sess, snapshotName)
+	err = wso.uploadWorkspaceContent(ctx, ws, snapshotName)
 	if err != nil {
 		return fmt.Errorf("snapshot failed for workspace %s", workspaceID)
 	}
