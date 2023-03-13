@@ -75,15 +75,6 @@ export class WorkspaceClusterDBSpec {
             maxScore: 100,
             govern: true,
         });
-        const wsc1a: DBWorkspaceCluster = dbWorkspaceCluster({
-            name: "eu71",
-            region: "north-america",
-            url: "some-url",
-            state: "cordoned",
-            score: 0,
-            maxScore: 0,
-            govern: false,
-        });
         const wsc2: DBWorkspaceCluster = dbWorkspaceCluster({
             name: "us71",
             region: "europe",
@@ -95,13 +86,10 @@ export class WorkspaceClusterDBSpec {
         });
 
         await this.db.save(wsc1);
-        await this.db.save(wsc1a);
         await this.db.save(wsc2);
 
-        // Can delete the eu71 cluster as seen by the eu02 application cluster.
         await this.db.deleteByName("eu71");
         expect(await this.db.findByName("eu71")).to.be.undefined;
-        expect(await this.db.findByName("eu71")).not.to.be.undefined;
         expect(await this.db.findByName("us71")).not.to.be.undefined;
     }
 
