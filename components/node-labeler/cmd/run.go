@@ -206,6 +206,18 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 
 	if !IsPodReady(&pod) {
 		// not ready. Wait until the next update.
+		log.WithField("pod", pod.Name).Info("pod is not yet ready")
+		return reconcile.Result{}, nil
+	}
+
+	var node corev1.Node
+	err = r.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
+	if err != nil {
+		return reconcile.Result{}, fmt.Errorf("failed to get node %s: %w", nodeName, err)
+	}
+
+	if node.Labels[labelToUpdate] == "true" {
+		// Label already exists.
 		return reconcile.Result{}, nil
 	}
 
