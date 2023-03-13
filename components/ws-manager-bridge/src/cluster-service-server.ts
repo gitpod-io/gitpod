@@ -93,7 +93,6 @@ export class ClusterService implements IClusterServiceServer {
                 const clusterByNamePromise = this.clusterDB.findByName(req.name, this.config.installation);
                 const clusterByUrlPromise = this.clusterDB.findFiltered({
                     url: req.url,
-                    applicationCluster: this.config.installation,
                 });
 
                 const [clusterByName, clusterByUrl] = await Promise.all([clusterByNamePromise, clusterByUrlPromise]);
@@ -144,7 +143,6 @@ export class ClusterService implements IClusterServiceServer {
                 const newCluster: WorkspaceCluster = {
                     name: req.name,
                     url: req.url,
-                    applicationCluster: this.config.installation,
                     region: req.region,
                     state,
                     score,
@@ -275,9 +273,7 @@ export class ClusterService implements IClusterServiceServer {
                 const response = new ListResponse();
 
                 const dbClusterIdx = new Map<string, boolean>();
-                const allDBClusters = await this.clusterDB.findFiltered({
-                    applicationCluster: this.config.installation,
-                });
+                const allDBClusters = await this.clusterDB.findFiltered({});
                 for (const cluster of allDBClusters) {
                     const clusterStatus = convertToGRPC(cluster);
                     response.addStatus(clusterStatus);
@@ -319,7 +315,7 @@ function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
     clusterStatus.setScore(ws.score);
     clusterStatus.setMaxScore(ws.maxScore);
     clusterStatus.setGoverned(ws.govern);
-    clusterStatus.setApplicationCluster(ws.applicationCluster);
+    clusterStatus.setApplicationCluster("");
     clusterStatus.setRegion(ws.region);
 
     ws.admissionConstraints?.forEach((c) => {

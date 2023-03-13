@@ -43,7 +43,7 @@ export class ClusterSyncService {
 
     private async reconcile() {
         log.debug("reconciling workspace classes...");
-        let allClusters = await this.clusterDB.findFiltered({ applicationCluster: this.config.installation });
+        let allClusters = await this.clusterDB.findFiltered({});
         for (const cluster of allClusters) {
             try {
                 let supportedClasses = await getSupportedWorkspaceClasses(
