@@ -23,7 +23,7 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         return (await this.typeORM.getConnection()).manager;
     }
 
-    protected async getRepo(): Promise<Repository<DBWorkspaceCluster>> {
+    public async getRepo(): Promise<Repository<DBWorkspaceCluster>> {
         return (await this.getEntityManager()).getRepository(DBWorkspaceCluster);
     }
 
