@@ -22,9 +22,6 @@ inputs:
     with_ee_licencse:
         description: "Use EE license"
         required: false
-    with_slow_database:
-        description: "Use slow database"
-        required: false
     analytics:
         description: "With analytics"
         required: false

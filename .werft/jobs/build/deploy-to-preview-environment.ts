@@ -109,7 +109,6 @@ export async function deployToPreviewEnvironment(werft: Werft, jobConfig: JobCon
             analytics: deploymentConfig.analytics,
             withEELicense: deploymentConfig.installEELicense,
             workspaceFeatureFlags: workspaceFeatureFlags,
-            withSlowDatabase: jobConfig.withSlowDatabase,
             withDedicatedEmulation: jobConfig.withDedicatedEmulation,
             useWsManagerMk2: useWsManagerMk2,
         });

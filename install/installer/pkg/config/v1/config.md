@@ -174,7 +174,6 @@ Additional config parameters that are in experimental state
 |`experimental.webapp.stripe.individualUsagePriceIds.usd`|string|N|  ||
 |`experimental.webapp.stripe.teamUsagePriceIds.eur`|string|N|  ||
 |`experimental.webapp.stripe.teamUsagePriceIds.usd`|string|N|  ||
-|`experimental.webapp.slowDatabase`|bool|N|  ||
 |`experimental.webapp.iam`|IAMConfig|N|  ||
 |`experimental.ide.resolveLatest`|bool|N|  |  Disable resolution of latest images and use bundled latest versions instead|
 |`experimental.ide.ideProxy.serviceAnnotations`||N|  ||

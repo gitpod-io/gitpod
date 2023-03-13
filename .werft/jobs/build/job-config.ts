@@ -33,7 +33,6 @@ export interface JobConfig {
     withSelfHostedPreview: boolean;
     withObservability: boolean;
     withLocalPreview: boolean;
-    withSlowDatabase: boolean;
     withDedicatedEmulation: boolean;
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
@@ -109,7 +108,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const withLocalPreview = "with-local-preview" in buildConfig || mainBuild
     const recreatePreview = "recreate-preview" in buildConfig
     const recreateVm = mainBuild || "recreate-vm" in buildConfig;
-    const withSlowDatabase = "with-slow-database" in buildConfig && !mainBuild;
     const withDedicatedEmulation = "with-dedicated-emulation" in buildConfig && !mainBuild;
     const storageClass = buildConfig["storage-class"] || "";
 
@@ -187,7 +185,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         certIssuer,
         recreatePreview,
         recreateVm,
-        withSlowDatabase,
         withWerft,
         withDedicatedEmulation,
         useWsManagerMk2,
