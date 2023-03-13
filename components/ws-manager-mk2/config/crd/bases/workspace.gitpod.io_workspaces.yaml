@@ -151,6 +151,10 @@ spec:
                   type: object
                 minItems: 0
                 type: array
+              sshPublicKeys:
+                items:
+                  type: string
+                type: array
               sysEnvVars:
                 items:
                   description: EnvVar represents an environment variable present in

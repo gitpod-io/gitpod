@@ -214,7 +214,7 @@ type CRDWorkspaceInfoProvider struct {
 }
 
 // NewRemoteWorkspaceInfoProvider creates a fresh WorkspaceInfoProvider.
-func NewCRDWorkspaceInfoProvider(ctx context.Context, client client.Client, scheme *runtime.Scheme) (*CRDWorkspaceInfoProvider, error) {
+func NewCRDWorkspaceInfoProvider(client client.Client, scheme *runtime.Scheme) (*CRDWorkspaceInfoProvider, error) {
 	// create custom indexer for searches
 	indexers := cache.Indexers{
 		workspaceIndex: func(obj interface{}) ([]string, error) {
@@ -291,6 +291,7 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 		Ports:           ports,
 		Auth:            &wsapi.WorkspaceAuthentication{Admission: admission, OwnerToken: ws.Status.OwnerToken},
 		StartedAt:       ws.CreationTimestamp.Time,
+		SSHPublicKeys:   ws.Spec.SshPublicKeys,
 	}
 
 	r.store.Update(req.Name, wsinfo)
@@ -350,12 +351,16 @@ func extractUserSSHPublicKeys(pod *corev1.Pod) []string {
 		if err != nil {
 			return nil
 		}
-		var spec api.SSHPublicKeys
-		err = proto.Unmarshal(specPB, &spec)
-		if err != nil {
-			return nil
-		}
-		return spec.Keys
+		return unmarshalUserSSHPublicKey(specPB)
 	}
 	return nil
+}
+
+func unmarshalUserSSHPublicKey(keys []byte) []string {
+	var spec api.SSHPublicKeys
+	err := proto.Unmarshal(keys, &spec)
+	if err != nil {
+		return nil
+	}
+	return spec.Keys
 }
