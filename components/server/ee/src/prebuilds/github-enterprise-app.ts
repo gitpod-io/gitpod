@@ -168,7 +168,7 @@ export class GitHubEnterpriseApp {
                 !this.prebuildManager.shouldPrebuild(config) ||
                 !this.appRules.shouldRunPrebuild(config, context.ref === context.repository.defaultBranch, false, false)
             ) {
-                log.info("GitHub Enterprise push event: No prebuild.", config);
+                log.info("GitHub Enterprise push event: No prebuild.", { config, context });
 
                 await this.webhookEvents.updateEvent(event.id, {
                     prebuildStatus: "ignored_unconfigured",
