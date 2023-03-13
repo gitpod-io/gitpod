@@ -13,6 +13,8 @@ packages:
       - "src/main/resources-stable/*"
       - "*.kts"
       - "*.md"
+    argdeps:
+      - publishToJBMarketplace
     env:
       - DO_PUBLISH=${publishToJBMarketplace}
     config:
@@ -32,6 +34,8 @@ packages:
       - "src/main/resources-latest/*"
       - "*.kts"
       - "*.md"
+    argdeps:
+      - publishToJBMarketplace
     env:
       - DO_PUBLISH=${publishToJBMarketplace}
     config:
