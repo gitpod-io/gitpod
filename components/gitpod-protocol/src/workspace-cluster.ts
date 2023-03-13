@@ -22,10 +22,6 @@ export interface WorkspaceCluster {
     // Must be identical to the installationShortname of the cluster it represents!
     name: string;
 
-    // The name of the application cluster to which this cluster should be registered.
-    // The name can be at most 60 characters.
-    applicationCluster: string;
-
     // The name of the region this cluster belongs to. E.g. europe or north-america
     // The name can be at most 60 characters.
     region: WorkspaceRegion;
@@ -116,6 +112,7 @@ export interface WorkspaceClusterDB {
     findFiltered(predicate: WorkspaceClusterFilter): Promise<WorkspaceClusterWoTLS[]>;
 }
 
-export type WorkspaceClusterFilter = Pick<WorkspaceCluster, "applicationCluster"> &
-    DeepPartial<Pick<WorkspaceCluster, "name" | "state" | "govern" | "url" | "region">> &
+export type WorkspaceClusterFilter = DeepPartial<
+    Pick<WorkspaceCluster, "name" | "state" | "govern" | "url" | "region">
+> &
     Partial<{ minScore: number }>;
