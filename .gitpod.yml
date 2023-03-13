@@ -51,14 +51,6 @@ tasks:
       init: |
           (cd install/installer && make deps)
           exit 0
-    - name: Java
-      init: leeway run components/supervisor-api:generate-java
-      command: |
-          if [ -z "$RUN_GRADLE_TASK" ]; then
-            read -r -p "Press enter to continue Java gradle task"
-          fi
-          leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
-          leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest --package components/ide/jetbrains/gateway-plugin:publish-latest --parallel -- ./gradlew buildPlugin
     - name: TypeScript
       init: yarn --network-timeout 100000 && yarn build
     - name: Go
@@ -83,3 +75,37 @@ vscode:
         - dbaeumer.vscode-eslint
         - esbenp.prettier-vscode
         - akosyakov.gitpod-monitor
+profiles:
+    # implicit profile derived from usual .gitpod.yml config
+    default:
+      # display name shown in New Workspace window under Context URL, if only default profile then omitted 
+      name: Gitpod development
+    jb:
+      name: Gitpod JetBrains integration
+      tasks:
+          - name: Java
+            init: leeway run components/supervisor-api:generate-java
+            command: |
+                leeway exec --package components/supervisor-api/java:lib --package components/gitpod-protocol/java:lib -- ./gradlew build
+                leeway exec --package components/ide/jetbrains/backend-plugin:plugin-latest --package components/ide/jetbrains/gateway-plugin:publish-latest --parallel -- ./gradlew buildPlugin
+      workspaceLocation: gitpod/jb.code-workspace
+      jetbrains:
+        intellij:
+          vmoptions: -Xmx4g
+    vscode:
+      name: Gitpod VS Code integration
+      include: 
+        - config: gitpod-code/.gitpod.yml
+          profile: default
+      additionalRepositories:
+      - url: https://github.com/gitpod-io/gitpod-code
+        checkoutLocation: gitpod-code
+      workspaceLocation: gitpod/vscode.code-workspace
+    ide:
+      name: Gitpod IDE development
+      include:
+        - config: gitpod/.gitpod.yml
+          profile: jb
+        - config: gitpod/.gitpod.yml
+          profile: vscode
+      workspaceLocation: gitpod/ide.code-workspace
