@@ -121,6 +121,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 
 	glog.WithField("workspaceID", workspace.Name).WithField("phase", workspace.Status.Phase).Debug("Reconcile workspace")
 
+	glog.Info("RECONCILE")
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseCreating ||
 		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing {
 
@@ -147,6 +148,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 			return ctrl.Result{}, err
 		}
 
+		glog.Info("START WORKSPACE INIT")
 		initStart := time.Now()
 		failure, initErr := wsc.operations.InitWorkspaceContent(ctx, InitContentOptions{
 			Meta: WorkspaceMeta{

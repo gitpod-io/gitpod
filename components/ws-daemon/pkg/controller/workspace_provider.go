@@ -31,7 +31,7 @@ func NewWorkspaceProvider(hooks map[session.WorkspaceState][]session.WorkspaceLi
 }
 
 func (wf *WorkspaceProvider) Create(ctx context.Context, instanceID, location string, create session.WorkspaceFactory) (ws *session.Workspace, err error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "Store.NewWorkspace")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "WorkspaceProvider.Create")
 	tracing.ApplyOWI(span, log.OWI("", "", instanceID))
 	defer tracing.FinishSpan(span, &err)
 
@@ -40,22 +40,40 @@ func (wf *WorkspaceProvider) Create(ctx context.Context, instanceID, location st
 		return nil, err
 	}
 
+	if ws.NonPersistentAttrs == nil {
+		ws.NonPersistentAttrs = make(map[string]interface{})
+	}
+
 	err = wf.runLifecycleHooks(ctx, ws, session.WorkspaceInitializing)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, nil
+	return ws, nil
 }
 
 func (wf *WorkspaceProvider) Get(ctx context.Context, instanceID string) (*session.Workspace, error) {
 	path := filepath.Join(wf.Location, fmt.Sprintf("%s.workspace.json", instanceID))
-	return loadWorkspace(ctx, path)
+	ws, err := loadWorkspace(ctx, path)
+	if err != nil {
+		return nil, err
+	}
+
+	if ws.NonPersistentAttrs == nil {
+		ws.NonPersistentAttrs = make(map[string]interface{})
+	}
+
+	err = wf.runLifecycleHooks(ctx, ws, session.WorkspaceReady)
+	if err != nil {
+		return nil, err
+	}
+
+	return ws, nil
 }
 
 func (s *WorkspaceProvider) runLifecycleHooks(ctx context.Context, ws *session.Workspace, state session.WorkspaceState) error {
 	hooks := s.hooks[state]
-	log.WithFields(ws.OWI()).WithField("state", state).WithField("hooks", len(hooks)).Debug("running lifecycle hooks")
+	log.WithFields(ws.OWI()).WithField("state", state).WithField("hooks", len(hooks)).Info("running lifecycle hooks")
 
 	for _, h := range hooks {
 		err := h(ctx, ws)
@@ -75,10 +93,11 @@ func loadWorkspace(ctx context.Context, path string) (ws *session.Workspace, err
 		return nil, fmt.Errorf("cannot load session file: %w", err)
 	}
 
-	err = json.Unmarshal(fc, ws)
+	var workspace session.Workspace
+	err = json.Unmarshal(fc, &workspace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot unmarshal session file: %w", err)
 	}
 
-	return ws, nil
+	return &workspace, nil
 }

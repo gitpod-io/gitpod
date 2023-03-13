@@ -75,6 +75,8 @@ type Workspace struct {
 
 	XFSProjectID int `json:"xfsProjectID"`
 
+	IsMk2 bool `json:"isMk2,omitempty"`
+
 	NonPersistentAttrs map[string]interface{} `json:"-"`
 
 	store              *Store
@@ -198,7 +200,7 @@ func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo 
 }
 
 // Dispose marks the workspace as disposed and clears it from disk
-func (s *Workspace) Dispose(ctx context.Context) (err error) {
+func (s *Workspace) Dispose(ctx context.Context, hooks map[WorkspaceState][]WorkspaceLivecycleHook) (err error) {
 	//nolint:ineffassign,staticcheck
 	span, ctx := opentracing.StartSpanFromContext(ctx, "workspace.Dispose")
 	defer tracing.FinishSpan(span, &err)
@@ -215,14 +217,20 @@ func (s *Workspace) Dispose(ctx context.Context) (err error) {
 		}
 	}
 
-	s.stateLock.Lock()
-	s.state = WorkspaceDisposed
-	s.operatingCondition.Broadcast()
-	s.stateLock.Unlock()
+	if !s.IsMk2 {
+		s.stateLock.Lock()
+		s.state = WorkspaceDisposed
+		s.operatingCondition.Broadcast()
+		s.stateLock.Unlock()
+	}
 
-	err = s.store.runLifecycleHooks(ctx, s)
-	if err != nil {
-		return err
+	if hooks != nil {
+
+	} else {
+		err = s.store.runLifecycleHooks(ctx, s)
+		if err != nil {
+			return err
+		}
 	}
 
 	if s.PersistentVolumeClaim {
@@ -343,6 +351,10 @@ type persistentWorkspace struct {
 }
 
 func (s *Workspace) persistentStateLocation() string {
+	if s.IsMk2 {
+		return filepath.Join(filepath.Dir(s.Location), fmt.Sprintf("%s.workspace.json", s.InstanceID))
+	}
+
 	return filepath.Join(s.store.Location, fmt.Sprintf("%s.workspace.json", s.InstanceID))
 }
 

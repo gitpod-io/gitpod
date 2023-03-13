@@ -68,15 +68,15 @@ type DisposeOptions struct {
 	SnapshotName      string
 }
 
-func NewWorkspaceOperations(config content.Config, store *WorkspaceProvider, reg prometheus.Registerer) (*WorkspaceOperations, error) {
+func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, reg prometheus.Registerer) (*WorkspaceOperations, error) {
 	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(reg, "_mk2")
 	if err != nil {
 		return nil, err
 	}
 
 	return &WorkspaceOperations{
-		config: config,
-		//store:  store,
+		config:   config,
+		provider: provider,
 		metrics: &content.Metrics{
 			BackupWaitingTimeHist:       waitingTimeHist,
 			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
@@ -87,6 +87,8 @@ func NewWorkspaceOperations(config content.Config, store *WorkspaceProvider, reg
 }
 
 func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, options InitContentOptions) (string, error) {
+	glog.Infof("ENTERING INIT: %v", wso.provider.Location)
+
 	ws, err := wso.provider.Create(ctx, options.Meta.InstanceId, filepath.Join(wso.provider.Location, options.Meta.InstanceId),
 		wso.creator(options.Meta.Owner, options.Meta.WorkspaceId, options.Meta.InstanceId, options.Initializer, false))
 
@@ -164,6 +166,7 @@ func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, i
 			FullWorkspaceBackup:   false,
 			PersistentVolumeClaim: false,
 			RemoteStorageDisabled: storageDisabled,
+			IsMk2:                 true,
 
 			ServiceLocDaemon: filepath.Join(wso.config.WorkingArea, serviceDirName),
 			ServiceLocNode:   filepath.Join(wso.config.WorkingAreaNode, serviceDirName),
@@ -174,7 +177,7 @@ func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, i
 func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts DisposeOptions) (*csapi.GitStatus, error) {
 	ws, err := wso.provider.Get(ctx, opts.Meta.InstanceId)
 	if err != nil {
-		return nil, fmt.Errorf("cannot find workspace %s during DisposeWorkspace", opts.Meta.InstanceId)
+		return nil, fmt.Errorf("cannot find workspace %s during DisposeWorkspace: %w", opts.Meta.InstanceId, err)
 	}
 
 	if ws.RemoteStorageDisabled {
@@ -207,7 +210,7 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		}
 	}
 
-	if err = ws.Dispose(ctx); err != nil {
+	if err = ws.Dispose(ctx, wso.provider.hooks); err != nil {
 		glog.WithError(err).Error("cannot dispose session")
 	}
 
