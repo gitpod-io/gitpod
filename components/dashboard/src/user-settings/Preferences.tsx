@@ -9,7 +9,6 @@ import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
 import SelectIDEComponent from "../components/SelectIDEComponent";
-import { updateUserIDEInfo } from "./SelectIDE";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
@@ -19,6 +18,33 @@ import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query
 import { Button } from "../components/Button";
 import CheckBox from "../components/CheckBox";
 import { User } from "@gitpod/gitpod-protocol";
+
+export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
+
+export const updateUserIDEInfo = async (
+    user: User,
+    selectedIde: string,
+    useLatestVersion: boolean,
+    location: IDEChangedTrackLocation,
+) => {
+    const additionalData = user?.additionalData ?? {};
+    const settings = additionalData.ideSettings ?? {};
+    settings.settingVersion = "2.0";
+    settings.defaultIde = selectedIde;
+    settings.useLatestVersion = useLatestVersion;
+    additionalData.ideSettings = settings;
+    getGitpodService()
+        .server.trackEvent({
+            event: "ide_configuration_changed",
+            properties: {
+                ...settings,
+                location,
+            },
+        })
+        .then()
+        .catch(console.error);
+    return getGitpodService().server.updateLoggedInUser({ additionalData });
+};
 
 export default function Preferences() {
     const { user, setUser } = useContext(UserContext);
