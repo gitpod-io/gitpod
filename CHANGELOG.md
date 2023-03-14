@@ -1,6 +1,12 @@
 # Change Log
 
 ## March 2023
+- Fix for missing prebuilds on default branch of a GitHub repository. ([#16816](https://github.com/gitpod-io/gitpod/pull/16816)) - [@AlexTugarev](https://github.com/AlexTugarev)
+- [gpctl] Add users block command ([#16715](https://github.com/gitpod-io/gitpod/pull/16715)) - [@csweichel](https://github.com/csweichel)
+- Fix PortsViews icons don't show up in Safari ([#16799](https://github.com/gitpod-io/gitpod/pull/16799)) - [@mustard-mh](https://github.com/mustard-mh)
+- Update search input style on project pages ([#16636](https://github.com/gitpod-io/gitpod/pull/16636)) - [@gtsiolis](https://github.com/gtsiolis)
+- Show loading spinner when fetching organization members ([#16417](https://github.com/gitpod-io/gitpod/pull/16417)) - [@gtsiolis](https://github.com/gtsiolis)
+- Fixed an issue where the workspace image could not be pulled if IPFS was in a bad state ([#16738](https://github.com/gitpod-io/gitpod/pull/16738)) - [@Furisto](https://github.com/Furisto)
 - Added `Auth Entry Component` along with `Integration Entry Component` linking with `Integrations.tsx` and associated it with Item List Context Menu, with ChangeMenuState Function, to keep the hovered effect ([#16657](https://github.com/gitpod-io/gitpod/pull/16657)) - [@henit-chobisa](https://github.com/henit-chobisa)
 - [dashboard, server] Add global custom timeout preference ([#16503](https://github.com/gitpod-io/gitpod/pull/16503)) - [@iQQBot](https://github.com/iQQBot)
 - Access Project Settings directly from Projects Page on Project Menu Items ([#16596](https://github.com/gitpod-io/gitpod/pull/16596)) - [@Siddhant-K-code](https://github.com/Siddhant-K-code)
