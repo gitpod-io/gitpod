@@ -1008,7 +1008,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             req.setId(instanceId);
             req.setClosed(wasClosed);
 
-            const client = await this.workspaceManagerClientProvider.get(wsi.region, this.config.installationShortname);
+            const client = await this.workspaceManagerClientProvider.get(wsi.region);
             await client.markActive(ctx, req);
 
             if (options && options.roundTripTime && Number.isFinite(options.roundTripTime)) {
@@ -1579,10 +1579,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const req = new DescribeWorkspaceRequest();
         req.setId(instance.id);
-        const client = await this.workspaceManagerClientProvider.get(
-            instance.region,
-            this.config.installationShortname,
-        );
+        const client = await this.workspaceManagerClientProvider.get(instance.region);
         const desc = await client.describeWorkspace(ctx, req);
 
         if (!desc.hasStatus()) {
@@ -1635,10 +1632,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         req.setExpose(true);
 
         try {
-            const client = await this.workspaceManagerClientProvider.get(
-                runningInstance.region,
-                this.config.installationShortname,
-            );
+            const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
             await client.controlPort(ctx, req);
         } catch (e) {
             throw this.mapGrpcError(e);
@@ -1690,10 +1684,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         req.setSpec(spec);
         req.setExpose(false);
 
-        const client = await this.workspaceManagerClientProvider.get(
-            instance.region,
-            this.config.installationShortname,
-        );
+        const client = await this.workspaceManagerClientProvider.get(instance.region);
         await client.controlPort(ctx, req);
     }
 
@@ -2085,10 +2076,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 const req = new UpdateSSHKeyRequest();
                 req.setId(instance.id);
                 req.setKeysList(keys);
-                const cli = await this.workspaceManagerClientProvider.get(
-                    instance.region,
-                    this.config.installationShortname,
-                );
+                const cli = await this.workspaceManagerClientProvider.get(instance.region);
                 await cli.updateSSHPublicKey(ctx, req);
             } catch (err) {
                 const logCtx = { userId, instanceId: instance.id };
@@ -3595,7 +3583,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        return this.imagebuilderClientProvider.getClient(this.config.installationShortname, user, workspace, instance);
+        return this.imagebuilderClientProvider.getClient(user, workspace, instance);
     }
 
     async getNotifications(ctx: TraceContext): Promise<AppNotification[]> {

@@ -431,10 +431,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
 
-        const client = await this.workspaceManagerClientProvider.get(
-            runningInstance.region,
-            this.config.installationShortname,
-        );
+        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
 
         const req = new SetTimeoutRequest();
         req.setId(runningInstance.id);
@@ -470,10 +467,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const req = new DescribeWorkspaceRequest();
         req.setId(runningInstance.id);
 
-        const client = await this.workspaceManagerClientProvider.get(
-            runningInstance.region,
-            this.config.installationShortname,
-        );
+        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
         const desc = await client.describeWorkspace(ctx, req);
         const duration = desc.getStatus()!.getSpec()!.getTimeout();
 
@@ -520,10 +514,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             req.setId(instance.id);
             req.setLevel(lvlmap.get(level)!);
 
-            const client = await this.workspaceManagerClientProvider.get(
-                instance.region,
-                this.config.installationShortname,
-            );
+            const client = await this.workspaceManagerClientProvider.get(instance.region);
             await client.controlAdmission(ctx, req);
         }
 
@@ -549,10 +540,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
 
-        const client = await this.workspaceManagerClientProvider.get(
-            instance.region,
-            this.config.installationShortname,
-        );
+        const client = await this.workspaceManagerClientProvider.get(instance.region);
         const request = new TakeSnapshotRequest();
         request.setId(instance.id);
         request.setReturnImmediately(true);

@@ -92,12 +92,6 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
         type: "varchar",
         length: 60,
     })
-    applicationCluster: string;
-
-    @Column({
-        type: "varchar",
-        length: 60,
-    })
     region: WorkspaceRegion;
 
     // This column triggers the periodic deleter deletion mechanism. It's not intended for public consumption.
