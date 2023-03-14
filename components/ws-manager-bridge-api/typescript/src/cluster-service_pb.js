@@ -1665,7 +1665,6 @@ proto.workspacemanagerbridge.ClusterStatus.toObject = function(includeInstance, 
     admissionConstraintList: jspb.Message.toObjectList(msg.getAdmissionConstraintList(),
     proto.workspacemanagerbridge.AdmissionConstraint.toObject, includeInstance),
     pb_static: jspb.Message.getBooleanFieldWithDefault(msg, 8, false),
-    applicationCluster: jspb.Message.getFieldWithDefault(msg, 10, ""),
     region: jspb.Message.getFieldWithDefault(msg, 11, "")
   };
 
@@ -1735,10 +1734,6 @@ proto.workspacemanagerbridge.ClusterStatus.deserializeBinaryFromReader = functio
     case 8:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setStatic(value);
-      break;
-    case 10:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setApplicationCluster(value);
       break;
     case 11:
       var value = /** @type {string} */ (reader.readString());
@@ -1827,13 +1822,6 @@ proto.workspacemanagerbridge.ClusterStatus.serializeBinaryToWriter = function(me
   if (f) {
     writer.writeBool(
       8,
-      f
-    );
-  }
-  f = message.getApplicationCluster();
-  if (f.length > 0) {
-    writer.writeString(
-      10,
       f
     );
   }
@@ -2008,24 +1996,6 @@ proto.workspacemanagerbridge.ClusterStatus.prototype.getStatic = function() {
  */
 proto.workspacemanagerbridge.ClusterStatus.prototype.setStatic = function(value) {
   return jspb.Message.setProto3BooleanField(this, 8, value);
-};
-
-
-/**
- * optional string application_cluster = 10;
- * @return {string}
- */
-proto.workspacemanagerbridge.ClusterStatus.prototype.getApplicationCluster = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
-};
-
-
-/**
- * @param {string} value
- * @return {!proto.workspacemanagerbridge.ClusterStatus} returns this
- */
-proto.workspacemanagerbridge.ClusterStatus.prototype.setApplicationCluster = function(value) {
-  return jspb.Message.setProto3StringField(this, 10, value);
 };
 
 
