@@ -8,7 +8,8 @@ import { useCallback, useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
-import SelectIDE from "./SelectIDE";
+import SelectIDEComponent from "../components/SelectIDEComponent";
+import { updateUserIDEInfo } from "./SelectIDE";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
@@ -74,7 +75,11 @@ export default function Preferences() {
                         Learn more
                     </a>
                 </Subheading>
-                <SelectIDE location="preferences" />
+                <SelectIDEComponent
+                    onSelectionChange={async (ide, latest) => {
+                        await updateUserIDEInfo(user!, ide, latest, "preferences");
+                    }}
+                />
 
                 <ThemeSelector className="mt-12" />
 
