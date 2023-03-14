@@ -97,13 +97,15 @@ export default function Preferences() {
                         Learn more
                     </a>
                 </Subheading>
-                <SelectIDEComponent
-                    onSelectionChange={async (ide) => {
-                        await actuallySetDefaultIde(ide);
-                    }}
-                    selectedIdeOption={defaultIde}
-                    useLatest={useLatestVersion}
-                />
+                <div className="w-96">
+                    <SelectIDEComponent
+                        onSelectionChange={async (ide) => {
+                            await actuallySetDefaultIde(ide);
+                        }}
+                        selectedIdeOption={defaultIde}
+                        useLatest={useLatestVersion}
+                    />
+                </div>
 
                 <CheckBox
                     title="Latest Release (Unstable)"
