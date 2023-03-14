@@ -153,13 +153,12 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         const websocketConnectionHandler = this.websocketConnectionHandler;
         this.eventEmitter.on(Server.EVENT_ON_START, (httpServer) => {
             // CSRF protection: check "Origin" header:
-            //  - for cookie/session auth: MUST be gitpod.io (hostUrl.hostname)
-            //  - for Bearer auth: MUST be sth with the same base domain (*.gitpod.io) (is this required?)
-            //  - edge case: empty "Origin" is always permitted (can this be removed?)
+            //  - for cookie/session AND Bearer auth: MUST be hostUrl.hostname (gitpod.io)
+            //  - edge case: empty "Origin" is always permitted
             // We rely on the origin header being set correctly (needed by regular clients to use Gitpod:
             // CORS allows subdomains to access gitpod.io)
-            const verifyOrigin = (origin: string, strict: boolean) => {
-                let allowedRequest = isAllowedWebsocketDomain(origin, this.config.hostUrl.url.hostname, strict);
+            const verifyOrigin = (origin: string) => {
+                let allowedRequest = isAllowedWebsocketDomain(origin, this.config.hostUrl.url.hostname);
                 if (!allowedRequest && this.config.insecureNoDomain) {
                     log.warn("Websocket connection CSRF guard disabled");
                     allowedRequest = true;
@@ -174,7 +173,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 let authenticatedUsingBearerToken = false;
                 if (info.req.url === "/v1") {
                     // Connection attempt with Bearer-Token: be less strict for now
-                    if (!verifyOrigin(info.origin, false)) {
+                    if (!verifyOrigin(info.origin)) {
                         log.debug("Websocket connection attempt with non-matching Origin header.", {
                             origin: info.origin,
                         });
@@ -196,7 +195,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
                 if (!authenticatedUsingBearerToken) {
                     // Connection attempt with cookie/session based authentication: be strict about where we accept connections from!
-                    if (!verifyOrigin(info.origin, true)) {
+                    if (!verifyOrigin(info.origin)) {
                         log.debug("Websocket connection attempt with non-matching Origin header: " + info.origin);
                         return callback(false, 403);
                     }
