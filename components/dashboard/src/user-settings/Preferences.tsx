@@ -97,7 +97,7 @@ export default function Preferences() {
                         Learn more
                     </a>
                 </Subheading>
-                <div className="w-96">
+                <div className="max-w-112">
                     <SelectIDEComponent
                         onSelectionChange={async (ide) => {
                             await actuallySetDefaultIde(ide);
