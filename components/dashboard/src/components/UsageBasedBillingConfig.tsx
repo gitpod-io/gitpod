@@ -128,7 +128,11 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
             } catch (error) {
                 console.error("Could not subscribe to Stripe", error);
                 setPendingStripeSubscription(undefined);
-                setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
+                setErrorMessage(
+                    `Could not subscribe: ${
+                        error?.message || String(error)
+                    } Contact support@gitpod.io if you believe this is a system error.`,
+                );
             }
         })();
     }, [attrId?.kind, attributionId, currentOrg, location.pathname, location.search, refreshSubscriptionDetails]);
