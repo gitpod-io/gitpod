@@ -115,17 +115,26 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 		}(t)
 	}
 
+	// Block until we've fetched all teams
 	wg.Wait()
 	close(resultsChan)
 
-	var response []*v1.Team
+	// We want to maintain the order of results that we got from server
+	// So we convert our concurrent results to a map, so we can index into it
+	resultMap := map[string]*v1.Team{}
 	for res := range resultsChan {
 		if res.err != nil {
 			log.WithError(err).Error("Failed to populate team with details.")
 			return nil, err
 		}
 
-		response = append(response, res.team)
+		resultMap[res.team.GetId()] = res.team
+	}
+
+	// Map the original order of teams against the populated results
+	var response []*v1.Team
+	for _, t := range teams {
+		response = append(response, resultMap[t.ID])
 	}
 
 	return connect.NewResponse(&v1.ListTeamsResponse{
