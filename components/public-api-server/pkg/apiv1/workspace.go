@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -30,10 +31,12 @@ type WorkspaceService struct {
 }
 
 func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Request[v1.GetWorkspaceRequest]) (*connect.Response[v1.GetWorkspaceResponse], error) {
-	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
+
+	logger := ctxlogrus.Extract(ctx).WithField("workspace_id", workspaceID)
 
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
@@ -42,13 +45,13 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 
 	workspace, err := conn.GetWorkspace(ctx, workspaceID)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
+		logger.WithError(err).Error("Failed to get workspace.")
 		return nil, proxy.ConvertError(err)
 	}
 
 	instance, err := convertWorkspaceInstance(workspace.LatestInstance, workspace.Workspace.Shareable)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to convert workspace instance.")
+		logger.WithError(err).Error("Failed to convert workspace instance.")
 		instance = &v1.WorkspaceInstance{}
 	}
 
@@ -73,10 +76,12 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 }
 
 func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *connect.Request[v1.StreamWorkspaceStatusRequest], stream *connect.ServerStream[v1.StreamWorkspaceStatusResponse]) error {
-	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
 	if err != nil {
 		return err
 	}
+
+	logger := ctxlogrus.Extract(ctx).WithField("workspace_id", workspaceID)
 
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
@@ -85,25 +90,25 @@ func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *conne
 
 	workspace, err := conn.GetWorkspace(ctx, workspaceID)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
+		logger.WithError(err).Error("Failed to get workspace.")
 		return proxy.ConvertError(err)
 	}
 
 	if workspace.LatestInstance == nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get latest instance.")
+		logger.WithError(err).Error("Failed to get latest instance.")
 		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("instance not found"))
 	}
 
 	ch, err := conn.InstanceUpdates(ctx, workspace.LatestInstance.ID)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get workspace instance updates.")
+		logger.WithError(err).Error("Failed to get workspace instance updates.")
 		return proxy.ConvertError(err)
 	}
 
 	for update := range ch {
 		instance, err := convertWorkspaceInstance(update, workspace.Workspace.Shareable)
 		if err != nil {
-			log.Extract(ctx).WithError(err).Error("Failed to convert workspace instance.")
+			logger.WithError(err).Error("Failed to convert workspace instance.")
 			return proxy.ConvertError(err)
 		}
 		err = stream.Send(&v1.StreamWorkspaceStatusResponse{
@@ -112,7 +117,7 @@ func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *conne
 			},
 		})
 		if err != nil {
-			log.Extract(ctx).WithError(err).Error("Failed to stream workspace status.")
+			logger.WithError(err).Error("Failed to stream workspace status.")
 			return proxy.ConvertError(err)
 		}
 	}
@@ -121,11 +126,12 @@ func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *conne
 }
 
 func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Request[v1.GetOwnerTokenRequest]) (*connect.Response[v1.GetOwnerTokenResponse], error) {
-	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
 
+	logger := ctxlogrus.Extract(ctx).WithField("workspace_id", workspaceID)
 	conn, err := getConnection(ctx, s.connectionPool)
 	if err != nil {
 		return nil, err
@@ -134,7 +140,7 @@ func (s *WorkspaceService) GetOwnerToken(ctx context.Context, req *connect.Reque
 	ownerToken, err := conn.GetOwnerToken(ctx, workspaceID)
 
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get owner token.")
+		logger.WithError(err).Error("Failed to get owner token.")
 		return nil, proxy.ConvertError(err)
 	}
 
@@ -177,7 +183,7 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 }
 
 func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[v1.UpdatePortRequest]) (*connect.Response[v1.UpdatePortResponse], error) {
-	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +208,7 @@ func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unknown port policy specified."))
 	}
 	if err != nil {
-		log.Extract(ctx).Error("Failed to update port")
+		log.WithField("workspace_id", workspaceID).Error("Failed to update port")
 		return nil, proxy.ConvertError(err)
 	}
 
@@ -212,7 +218,7 @@ func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[
 }
 
 func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Request[v1.StopWorkspaceRequest]) (*connect.Response[v1.StopWorkspaceResponse], error) {
-	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +230,7 @@ func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Reque
 
 	err = conn.StopWorkspace(ctx, workspaceID)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to stop workspace.")
+		log.WithField("workspace_id", workspaceID).WithError(err).Error("Failed to stop workspace.")
 		return nil, proxy.ConvertError(err)
 	}
 
@@ -232,7 +238,7 @@ func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Reque
 }
 
 func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Request[v1.DeleteWorkspaceRequest]) (*connect.Response[v1.DeleteWorkspaceResponse], error) {
-	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
@@ -244,7 +250,7 @@ func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Req
 
 	err = conn.DeleteWorkspace(ctx, workspaceID)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to delete workspace.")
+		log.WithField("workspace_id", workspaceID).WithError(err).Error("Failed to delete workspace.")
 		return nil, proxy.ConvertError(err)
 	}
 

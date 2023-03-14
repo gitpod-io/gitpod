@@ -23,7 +23,6 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
@@ -77,7 +76,7 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 
 	pat, err := auth.GeneratePersonalAccessToken(s.signer)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Errorf("Failed to generate personal access token for user %s", userID.String())
+		log.WithError(err).Errorf("Failed to generate personal access token for user %s", userID.String())
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to generate personal access token."))
 	}
 
@@ -90,7 +89,7 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 		ExpirationTime: expiry.AsTime().UTC(),
 	})
 	if err != nil {
-		log.Extract(ctx).WithError(err).Errorf("Failed to store personal access token for user %s", userID.String())
+		log.WithError(err).Errorf("Failed to store personal access token for user %s", userID.String())
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to store personal access token."))
 	}
 
@@ -100,7 +99,7 @@ func (s *TokensService) CreatePersonalAccessToken(ctx context.Context, req *conn
 }
 
 func (s *TokensService) GetPersonalAccessToken(ctx context.Context, req *connect.Request[v1.GetPersonalAccessTokenRequest]) (*connect.Response[v1.GetPersonalAccessTokenResponse], error) {
-	tokenID, err := validatePersonalAccessTokenID(ctx, req.Msg.GetId())
+	tokenID, err := validatePersonalAccessTokenID(req.Msg.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +149,7 @@ func (s *TokensService) ListPersonalAccessTokens(ctx context.Context, req *conne
 }
 
 func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *connect.Request[v1.RegeneratePersonalAccessTokenRequest]) (*connect.Response[v1.RegeneratePersonalAccessTokenResponse], error) {
-	tokenID, err := validatePersonalAccessTokenID(ctx, req.Msg.GetId())
+	tokenID, err := validatePersonalAccessTokenID(req.Msg.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +170,7 @@ func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *
 	}
 	pat, err := auth.GeneratePersonalAccessToken(s.signer)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Errorf("Failed to regenerate personal access token for user %s", userID.String())
+		log.WithError(err).Errorf("Failed to regenerate personal access token for user %s", userID.String())
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to regenerate personal access token."))
 	}
 
@@ -182,7 +181,7 @@ func (s *TokensService) RegeneratePersonalAccessToken(ctx context.Context, req *
 			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Personal Access Token with ID %s for User %s does not exist", tokenID.String(), userID.String()))
 		}
 
-		log.Extract(ctx).WithError(err).Errorf("Failed to store personal access token for user %s", userID.String())
+		log.WithError(err).Errorf("Failed to store personal access token for user %s", userID.String())
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to store personal access token."))
 	}
 
@@ -202,7 +201,7 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 
 	tokenReq := req.Msg.GetToken()
 
-	tokenID, err := validatePersonalAccessTokenID(ctx, tokenReq.GetId())
+	tokenID, err := validatePersonalAccessTokenID(tokenReq.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +257,7 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Personal Access Token with ID %s for User %s does not exist", tokenID.String(), userID.String()))
 		}
 
-		log.Extract(ctx).WithError(err).Error("Failed to update PAT for user")
+		log.WithError(err).Error("Failed to update PAT for user")
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to update token (ID %s) for user (ID %s).", tokenID.String(), userID.String()))
 	}
 
@@ -268,7 +267,7 @@ func (s *TokensService) UpdatePersonalAccessToken(ctx context.Context, req *conn
 }
 
 func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *connect.Request[v1.DeletePersonalAccessTokenRequest]) (*connect.Response[v1.DeletePersonalAccessTokenResponse], error) {
-	tokenID, err := validatePersonalAccessTokenID(ctx, req.Msg.GetId())
+	tokenID, err := validatePersonalAccessTokenID(req.Msg.GetId())
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +288,7 @@ func (s *TokensService) DeletePersonalAccessToken(ctx context.Context, req *conn
 			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("Personal Access Token with ID %s for User %s does not exist", tokenID.String(), userID.String()))
 		}
 
-		log.Extract(ctx).WithError(err).Errorf("failed to delete personal access token (ID: %s) for user %s", tokenID.String(), userID.String())
+		log.WithError(err).Errorf("failed to delete personal access token (ID: %s) for user %s", tokenID.String(), userID.String())
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to delete personal access token."))
 	}
 
@@ -301,12 +300,6 @@ func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface)
 	if err != nil {
 		return nil, uuid.Nil, proxy.ConvertError(err)
 	}
-
-	log.AddFields(ctx, logrus.Fields{
-		"user.id":        user.ID,
-		"user.blocked":   user.Blocked,
-		"user.prividged": user.Privileged,
-	})
 
 	if !s.isFeatureEnabled(ctx, conn, user) {
 		return nil, uuid.Nil, connect.NewError(connect.CodePermissionDenied, errors.New("This feature is currently in beta. If you would like to be part of the beta, please contact us."))
@@ -331,7 +324,7 @@ func (s *TokensService) isFeatureEnabled(ctx context.Context, conn protocol.APII
 
 	teams, err := conn.GetTeams(ctx)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Warnf("Failed to retreive Teams for user %s, personal access token feature flag will not evaluate team membership.", user.ID)
+		log.WithError(err).Warnf("Failed to retreive Teams for user %s, personal access token feature flag will not evaluate team membership.", user.ID)
 		teams = nil
 	}
 	for _, team := range teams {
@@ -351,7 +344,7 @@ func getConnection(ctx context.Context, pool proxy.ServerConnectionPool) (protoc
 
 	conn, err := pool.Get(ctx, token)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get connection to server.")
+		log.Log.WithError(err).Error("Failed to get connection to server.")
 		return nil, connect.NewError(connect.CodeInternal, errors.New("Failed to establish connection to downstream services. If this issue persists, please contact Gitpod Support."))
 	}
 

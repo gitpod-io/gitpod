@@ -9,11 +9,11 @@ import (
 	"fmt"
 
 	connect "github.com/bufbuild/connect-go"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 )
 
 func NewIDEClientService(pool proxy.ServerConnectionPool) *IDEClientService {
@@ -31,6 +31,8 @@ type IDEClientService struct {
 }
 
 func (this *IDEClientService) SendHeartbeat(ctx context.Context, req *connect.Request[v1.SendHeartbeatRequest]) (*connect.Response[v1.SendHeartbeatResponse], error) {
+	logger := ctxlogrus.Extract(ctx)
+
 	conn, err := getConnection(ctx, this.connectionPool)
 	if err != nil {
 		return nil, err
@@ -38,12 +40,12 @@ func (this *IDEClientService) SendHeartbeat(ctx context.Context, req *connect.Re
 
 	workspace, err := conn.GetWorkspace(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
+		logger.WithError(err).Error("Failed to get workspace.")
 		return nil, proxy.ConvertError(err)
 	}
 
 	if workspace.LatestInstance == nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get latest instance.")
+		logger.WithError(err).Error("Failed to get latest instance.")
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("instance not found"))
 	}
 
@@ -59,6 +61,8 @@ func (this *IDEClientService) SendHeartbeat(ctx context.Context, req *connect.Re
 }
 
 func (this *IDEClientService) SendDidClose(ctx context.Context, req *connect.Request[v1.SendDidCloseRequest]) (*connect.Response[v1.SendDidCloseResponse], error) {
+	logger := ctxlogrus.Extract(ctx)
+
 	conn, err := getConnection(ctx, this.connectionPool)
 	if err != nil {
 		return nil, err
@@ -66,12 +70,12 @@ func (this *IDEClientService) SendDidClose(ctx context.Context, req *connect.Req
 
 	workspace, err := conn.GetWorkspace(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
+		logger.WithError(err).Error("Failed to get workspace.")
 		return nil, proxy.ConvertError(err)
 	}
 
 	if workspace.LatestInstance == nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get latest instance.")
+		logger.WithError(err).Error("Failed to get latest instance.")
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("instance not found"))
 	}
 
