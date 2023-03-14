@@ -7,6 +7,7 @@ package apiv1
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -95,15 +96,36 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 		return nil, proxy.ConvertError(err)
 	}
 
-	var response []*v1.Team
+	type result struct {
+		team *v1.Team
+		err  error
+	}
+
+	wg := sync.WaitGroup{}
+	resultsChan := make(chan result, len(teams))
 	for _, t := range teams {
-		team, err := s.toTeamAPIResponse(ctx, conn, t)
-		if err != nil {
+		wg.Add(1)
+		go func(t *protocol.Team) {
+			team, err := s.toTeamAPIResponse(ctx, conn, t)
+			resultsChan <- result{
+				team: team,
+				err:  err,
+			}
+			defer wg.Done()
+		}(t)
+	}
+
+	wg.Wait()
+	close(resultsChan)
+
+	var response []*v1.Team
+	for res := range resultsChan {
+		if res.err != nil {
 			log.WithError(err).Error("Failed to populate team with details.")
 			return nil, err
 		}
 
-		response = append(response, team)
+		response = append(response, res.team)
 	}
 
 	return connect.NewResponse(&v1.ListTeamsResponse{
