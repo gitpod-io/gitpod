@@ -103,9 +103,7 @@ export default function Preferences() {
                         Learn more
                     </a>
                 </Subheading>
-                <div className="max-w-112">
-                    <SelectIDE updateUserContext={false} location="preferences" />
-                </div>
+                <SelectIDE updateUserContext={false} location="preferences" />
 
                 <ThemeSelector className="mt-12" />
 
