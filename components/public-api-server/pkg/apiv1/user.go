@@ -41,9 +41,7 @@ func (s *UserService) GetAuthenticatedUser(ctx context.Context, req *connect.Req
 		return nil, proxy.ConvertError(err)
 	}
 	log.AddFields(ctx, logrus.Fields{
-		"user.id":        user.ID,
-		"user.blocked":   user.Blocked,
-		"user.prividged": user.Privileged,
+		"user.id": user.ID,
 	})
 
 	response := userToAPIResponse(user)
