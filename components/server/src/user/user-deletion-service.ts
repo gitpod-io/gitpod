@@ -122,10 +122,7 @@ export class UserDeletionService {
                 req.setPolicy(StopWorkspacePolicy.NORMALLY);
 
                 try {
-                    const manager = await this.workspaceManagerClientProvider.get(
-                        wsi.region,
-                        this.config.installationShortname,
-                    );
+                    const manager = await this.workspaceManagerClientProvider.get(wsi.region);
                     await manager.stopWorkspace({}, req);
                 } catch (err) {
                     log.debug(

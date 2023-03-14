@@ -32,7 +32,6 @@ export const ImageBuilderClientProvider = Symbol("ImageBuilderClientProvider");
 // ImageBuilderClientProvider caches image builder connections
 export interface ImageBuilderClientProvider {
     getClient(
-        applicationCluster: string,
         user: User,
         workspace: Workspace,
         instance?: WorkspaceInstance,
@@ -97,7 +96,7 @@ export class CachingImageBuilderClientProvider implements ImageBuilderClientProv
         return connection;
     }
 
-    async getClient(applicationCluster: string, user: User, workspace: Workspace, instance?: WorkspaceInstance) {
+    async getClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
         return this.getDefault();
     }
 

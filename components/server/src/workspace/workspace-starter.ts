@@ -411,7 +411,7 @@ export class WorkspaceStarter {
         req.setId(instanceId);
         req.setPolicy(policy || StopWorkspacePolicy.NORMALLY);
 
-        const client = await this.clientProvider.get(instanceRegion, this.config.installationShortname);
+        const client = await this.clientProvider.get(instanceRegion);
         await client.stopWorkspace(ctx, req);
     }
 
@@ -640,13 +640,7 @@ export class WorkspaceStarter {
         region?: WorkspaceRegion,
     ): Promise<StartWorkspaceResponse.AsObject | undefined> {
         let lastInstallation = "";
-        const clusters = await this.clientProvider.getStartClusterSets(
-            this.config.installationShortname,
-            user,
-            workspace,
-            instance,
-            region,
-        );
+        const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance, region);
         for await (let cluster of clusters) {
             try {
                 // getStartManager will throw an exception if there's no cluster available and hence exit the loop
@@ -1835,12 +1829,6 @@ export class WorkspaceStarter {
         instance?: WorkspaceInstance,
         region?: WorkspaceRegion,
     ) {
-        return this.imagebuilderClientProvider.getClient(
-            this.config.installationShortname,
-            user,
-            workspace,
-            instance,
-            region,
-        );
+        return this.imagebuilderClientProvider.getClient(user, workspace, instance, region);
     }
 }

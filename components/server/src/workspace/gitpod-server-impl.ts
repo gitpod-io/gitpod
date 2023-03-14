@@ -3583,7 +3583,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
      * @returns
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        return this.imagebuilderClientProvider.getClient(this.config.installationShortname, user, workspace, instance);
+        return this.imagebuilderClientProvider.getClient(user, workspace, instance);
     }
 
     async getNotifications(ctx: TraceContext): Promise<AppNotification[]> {
