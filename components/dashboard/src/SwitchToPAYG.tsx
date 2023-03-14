@@ -335,9 +335,13 @@ function SwitchToPAYG() {
             }
 
             case "done":
-                // Hooray and confetti!
-                resetAllNotifications();
-                dropConfetti();
+                if (!confettiDropped) {
+                    confettiDropped = true;
+
+                    // Hooray and confetti!
+                    resetAllNotifications();
+                    dropConfetti();
+                }
                 return;
         }
     }, [
@@ -643,6 +647,8 @@ function parseSearchParams(search: string): PageParams | undefined {
         }
     }
 }
+
+let confettiDropped = false;
 
 let subscribeToStripe_called = false;
 async function subscribeToStripe(
