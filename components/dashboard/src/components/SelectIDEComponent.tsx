@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { IDEOption, IDEOptions, makeIdeVersionHumanReadable } from "@gitpod/gitpod-protocol";
 import { useCallback, useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { DropDown2, DropDown2Element } from "./DropDown2";
@@ -149,7 +149,7 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
                 {version && (
                     <>
                         <div className="mx-1">&middot;</div>
-                        <div>{version}</div>
+                        <div>{makeIdeVersionHumanReadable(version)}</div>
                     </>
                 )}
                 {label && (
