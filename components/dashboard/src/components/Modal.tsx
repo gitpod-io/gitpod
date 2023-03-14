@@ -4,10 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ReactNode, useEffect } from "react";
+import { FC, ReactNode, useEffect, useMemo } from "react";
 import cn from "classnames";
 import { getGitpodService } from "../service/service";
 import { Heading2 } from "./typography/headings";
+import Alert from "./Alert";
 
 type CloseModalManner = "esc" | "enter" | "x";
 
@@ -125,7 +126,7 @@ type ModalBodyProps = {
 export const ModalBody = ({ children, hideDivider = false, noScroll = false }: ModalBodyProps) => {
     return (
         <div
-            className={cn("border-gray-200 dark:border-gray-800 -mx-6 px-6 ", {
+            className={cn("relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-14", {
                 "border-t border-b mt-2 py-4": !hideDivider,
                 "overflow-y-auto": !noScroll,
             })}
@@ -136,8 +137,47 @@ export const ModalBody = ({ children, hideDivider = false, noScroll = false }: M
 };
 
 type ModalFooterProps = {
+    error?: string;
+    warning?: string;
     children: ReactNode;
 };
-export const ModalFooter = ({ children }: ModalFooterProps) => {
-    return <div className="flex justify-end mt-6 space-x-2">{children}</div>;
+export const ModalFooter: FC<ModalFooterProps> = ({ error, warning, children }) => {
+    // Inlining these to ensure error band covers modal left/right borders
+    const alertStyles = useMemo(() => ({ marginLeft: "-25px", marginRight: "-25px" }), []);
+
+    const hasAlert = error || warning;
+
+    return (
+        <div className="relative">
+            {hasAlert && (
+                <div className="absolute -top-12 left-0 right-0" style={alertStyles}>
+                    <ModalFooterAlert error={error} warning={warning} />
+                </div>
+            )}
+            <div className="flex justify-end mt-6 space-x-2">{children}</div>
+        </div>
+    );
+};
+
+type ModalFooterAlertProps = {
+    error?: string;
+    warning?: string;
+};
+const ModalFooterAlert: FC<ModalFooterAlertProps> = ({ error, warning }) => {
+    if (error) {
+        return (
+            <Alert type="danger" rounded={false}>
+                {error}
+            </Alert>
+        );
+    }
+    if (warning) {
+        return (
+            <Alert type="warning" rounded={false}>
+                {warning}
+            </Alert>
+        );
+    }
+
+    return null;
 };

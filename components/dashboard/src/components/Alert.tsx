@@ -10,6 +10,7 @@ import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 import { ReactComponent as InfoSvg } from "../images/info.svg";
 import { ReactComponent as XSvg } from "../images/x.svg";
 import { ReactComponent as Check } from "../images/check-circle.svg";
+import classNames from "classnames";
 
 export type AlertType =
     // Green
@@ -20,6 +21,8 @@ export type AlertType =
     | "info"
     // Red
     | "error"
+    // Dark Red
+    | "danger"
     // Blue
     | "message";
 
@@ -32,6 +35,7 @@ export interface AlertProps {
     onClose?: () => void;
     showIcon?: boolean;
     icon?: React.ReactNode;
+    rounded?: boolean;
     children?: React.ReactNode;
 }
 
@@ -73,6 +77,12 @@ const infoMap: Record<AlertType, AlertInfo> = {
         icon: <Exclamation className="w-4 h-4"></Exclamation>,
         iconColor: "text-red-400",
     },
+    danger: {
+        bgCls: "bg-red-600 dark:bg-red-600",
+        txtCls: "text-white",
+        icon: <Exclamation className="w-4 h-4"></Exclamation>,
+        iconColor: "filter-brightness-10",
+    },
 };
 
 export default function Alert(props: AlertProps) {
@@ -84,11 +94,16 @@ export default function Alert(props: AlertProps) {
     const info = infoMap[type];
     const showIcon = props.showIcon ?? true;
     const light = props.light ?? false;
+    const rounded = props.rounded ?? true;
     return (
         <div
-            className={`flex relative whitespace-pre-wrap rounded p-4 ${info.txtCls} ${props.className || ""} ${
-                light ? "" : info.bgCls
-            }`}
+            className={classNames(
+                "flex relative whitespace-pre-wrap p-4",
+                info.txtCls,
+                props.className,
+                light ? "" : info.bgCls,
+                rounded ? "rounded" : "",
+            )}
         >
             {showIcon && <span className={`mt-1 mr-4 h-4 w-4 ${info.iconColor}`}>{props.icon ?? info.icon}</span>}
             <span className="flex-1 text-left">{props.children}</span>
