@@ -72,13 +72,15 @@ export default function SelectIDE(props: SelectIDEProps) {
 
     return (
         <>
-            <SelectIDEComponent
-                onSelectionChange={async (ide) => {
-                    await actuallySetDefaultIde(ide);
-                }}
-                selectedIdeOption={defaultIde}
-                useLatest={useLatestVersion}
-            />
+            <div className="max-w-112">
+                <SelectIDEComponent
+                    onSelectionChange={async (ide) => {
+                        await actuallySetDefaultIde(ide);
+                    }}
+                    selectedIdeOption={defaultIde}
+                    useLatest={useLatestVersion}
+                />
+            </div>
             <CheckBox
                 title="Latest Release (Unstable)"
                 desc={
