@@ -427,8 +427,15 @@ function SwitchToPAYG() {
 
         const attributionId = pageState.attributionId || "";
         const parsed = AttributionId.parse(attributionId);
+        let billingLink = "/billing";
         const orgId = parsed?.kind === "team" ? parsed.teamId : undefined;
-        const billingLink = orgId ? `/billing?org=${orgId}` : "/user/billing";
+        if (orgId) {
+            billingLink = `/billing?org=${orgId}`;
+        } else {
+            if (!user.additionalData?.isMigratedToTeamOnlyAttribution) {
+                billingLink = "/user/billing";
+            }
+        }
 
         return (
             <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full mt-24">
