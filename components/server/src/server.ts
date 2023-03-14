@@ -175,7 +175,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 if (info.req.url === "/v1") {
                     // Connection attempt with Bearer-Token: be less strict for now
                     if (!verifyOrigin(info.origin, false)) {
-                        log.warn("Websocket connection attempt with non-matching Origin header.", {
+                        log.debug("Websocket connection attempt with non-matching Origin header.", {
                             origin: info.origin,
                         });
                         return callback(false, 403);
@@ -197,7 +197,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 if (!authenticatedUsingBearerToken) {
                     // Connection attempt with cookie/session based authentication: be strict about where we accept connections from!
                     if (!verifyOrigin(info.origin, true)) {
-                        log.warn("Websocket connection attempt with non-matching Origin header: " + info.origin);
+                        log.debug("Websocket connection attempt with non-matching Origin header: " + info.origin);
                         return callback(false, 403);
                     }
                 }
