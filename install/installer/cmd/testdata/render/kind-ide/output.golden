@@ -3313,6 +3313,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_ide
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - blobserve
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -3403,6 +3414,14 @@ spec:
         terminationMessagePolicy: FallbackToLogsOnError
       enableServiceLinks: false
       serviceAccountName: blobserve
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: blobserve
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - emptyDir: {}
         name: cache
@@ -3456,6 +3475,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - ide-metrics
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -3530,6 +3560,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: ide-metrics
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: ide-metrics
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: ide-metrics
@@ -3573,6 +3611,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - ide-proxy
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - env:
         - name: GITPOD_DOMAIN
@@ -3617,6 +3666,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: ide-proxy
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: ide-proxy
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
 status: {}
 ---
 # apps/v1/Deployment ide-service
@@ -3658,6 +3715,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - ide-service
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -3736,6 +3804,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: ide-service
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: ide-service
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: ide-service
