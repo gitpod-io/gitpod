@@ -37,7 +37,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
                     element: <IdeOptionElementInDropDown option={ide} useLatest={false} />,
                     isSelectable: true,
                 });
-                if (ide.latestImage) {
+                if (props.useLatest && ide.latestImage) {
                     result.push({
                         id: ide.id + "-latest",
                         element: <IdeOptionElementInDropDown option={ide} useLatest={true} />,
@@ -47,7 +47,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             }
             return result;
         },
-        [ideOptions],
+        [ideOptions, props.useLatest],
     );
     const internalOnSelectionChange = (id: string) => {
         const { ide, useLatest } = parseId(id);

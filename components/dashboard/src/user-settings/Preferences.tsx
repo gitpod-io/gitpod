@@ -17,6 +17,8 @@ import { Link } from "react-router-dom";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
 import { Button } from "../components/Button";
+import CheckBox from "../components/CheckBox";
+import { User } from "@gitpod/gitpod-protocol";
 
 export default function Preferences() {
     const { user, setUser } = useContext(UserContext);
@@ -24,6 +26,26 @@ export default function Preferences() {
 
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
+
+    const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || "code");
+
+    const actualUpdateUserIDEInfo = async (user: User, selectedIde: string, useLatestVersion: boolean) => {
+        const newUserData = await updateUserIDEInfo(user, selectedIde, useLatestVersion, "preferences");
+        setUser({ ...newUserData });
+    };
+
+    const actuallySetDefaultIde = async (value: string) => {
+        await actualUpdateUserIDEInfo(user!, value, useLatestVersion);
+        setDefaultIde(value);
+    };
+
+    const [useLatestVersion, setUseLatestVersion] = useState<boolean>(
+        user?.additionalData?.ideSettings?.useLatestVersion ?? false,
+    );
+    const actuallySetUseLatestVersion = async (value: boolean) => {
+        await actualUpdateUserIDEInfo(user!, defaultIde, value);
+        setUseLatestVersion(value);
+    };
 
     const saveDotfileRepo = useCallback(
         async (e) => {
@@ -76,9 +98,40 @@ export default function Preferences() {
                     </a>
                 </Subheading>
                 <SelectIDEComponent
-                    onSelectionChange={async (ide, latest) => {
-                        await updateUserIDEInfo(user!, ide, latest, "preferences");
+                    onSelectionChange={async (ide) => {
+                        await actuallySetDefaultIde(ide);
                     }}
+                    selectedIdeOption={defaultIde}
+                    useLatest={useLatestVersion}
+                />
+
+                <CheckBox
+                    title="Latest Release (Unstable)"
+                    desc={
+                        <span>
+                            Use the latest version for each editor.{" "}
+                            <a
+                                className="gp-link"
+                                target="_blank"
+                                href="https://code.visualstudio.com/blogs/2016/02/01/introducing_insiders_build"
+                                rel="noreferrer"
+                            >
+                                Insiders
+                            </a>{" "}
+                            for VS Code,{" "}
+                            <a
+                                className="gp-link"
+                                target="_blank"
+                                href="https://www.jetbrains.com/resources/eap/"
+                                rel="noreferrer"
+                            >
+                                EAP
+                            </a>{" "}
+                            for JetBrains IDEs.
+                        </span>
+                    }
+                    checked={useLatestVersion}
+                    onChange={(e) => actuallySetUseLatestVersion(e.target.checked)}
                 />
 
                 <ThemeSelector className="mt-12" />
