@@ -53,26 +53,6 @@ export default function Preferences() {
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
 
-    const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || "code");
-
-    const actualUpdateUserIDEInfo = async (user: User, selectedIde: string, useLatestVersion: boolean) => {
-        const newUserData = await updateUserIDEInfo(user, selectedIde, useLatestVersion, "preferences");
-        setUser({ ...newUserData });
-    };
-
-    const actuallySetDefaultIde = async (value: string) => {
-        await actualUpdateUserIDEInfo(user!, value, useLatestVersion);
-        setDefaultIde(value);
-    };
-
-    const [useLatestVersion, setUseLatestVersion] = useState<boolean>(
-        user?.additionalData?.ideSettings?.useLatestVersion ?? false,
-    );
-    const actuallySetUseLatestVersion = async (value: boolean) => {
-        await actualUpdateUserIDEInfo(user!, defaultIde, value);
-        setUseLatestVersion(value);
-    };
-
     const saveDotfileRepo = useCallback(
         async (e) => {
             e.preventDefault();
@@ -126,35 +106,6 @@ export default function Preferences() {
                 <div className="max-w-112">
                     <SelectIDE updateUserContext={false} location="preferences" />
                 </div>
-
-                <CheckBox
-                    title="Latest Release (Unstable)"
-                    desc={
-                        <span>
-                            Use the latest version for each editor.{" "}
-                            <a
-                                className="gp-link"
-                                target="_blank"
-                                href="https://code.visualstudio.com/blogs/2016/02/01/introducing_insiders_build"
-                                rel="noreferrer"
-                            >
-                                Insiders
-                            </a>{" "}
-                            for VS Code,{" "}
-                            <a
-                                className="gp-link"
-                                target="_blank"
-                                href="https://www.jetbrains.com/resources/eap/"
-                                rel="noreferrer"
-                            >
-                                EAP
-                            </a>{" "}
-                            for JetBrains IDEs.
-                        </span>
-                    }
-                    checked={useLatestVersion}
-                    onChange={(e) => actuallySetUseLatestVersion(e.target.checked)}
-                />
 
                 <ThemeSelector className="mt-12" />
 
