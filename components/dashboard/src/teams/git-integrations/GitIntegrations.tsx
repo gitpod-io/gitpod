@@ -18,6 +18,7 @@ export const GitIntegrations: FunctionComponent = () => {
             <div className="flex items-start sm:justify-between mb-2">
                 <div>
                     <Heading2>Git Integrations</Heading2>
+
                     <Subheading>
                         Manage Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.
                     </Subheading>
