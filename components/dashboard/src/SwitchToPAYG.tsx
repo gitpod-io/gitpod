@@ -27,6 +27,9 @@ import { Heading2, Subheading } from "./components/typography/headings";
 import { useCurrentOrg, useOrganizations } from "./data/organizations/orgs-query";
 import { PaymentContext } from "./payment-context";
 
+// DEFAULTS
+const DEFAULT_USAGE_LIMIT = 1000;
+
 /**
  * Keys of known page params
  */
@@ -45,7 +48,7 @@ type PageParams = {
     setupIntentId?: string;
 };
 type PageState = {
-    phase: "call-to-action" | "trigger-signup" | "wait-for-signup" | "cleanup" | "done";
+    phase: "call-to-action" | "trigger-signup" | "cleanup" | "done";
     attributionId?: string;
     setupIntentId?: string;
     old?: {
@@ -68,11 +71,10 @@ function SwitchToPAYG() {
 
     const currentOrg = useCurrentOrg().data;
     const orgs = useOrganizations().data;
-    const [errorMessage, setErrorMessage] = useState<string | undefined>();
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [selectedOrganization, setSelectedOrganization] = useState<Team | undefined>(undefined);
     const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<boolean>(false);
-    const [droppedConfetti, setDroppedConfetti] = useState<boolean>(false);
     const { dropConfetti } = useConfetti();
 
     useEffect(() => {
@@ -80,11 +82,12 @@ function SwitchToPAYG() {
     }, [currentOrg, setSelectedOrganization]);
 
     useEffect(() => {
-        const { phase, attributionId, setupIntentId } = pageState;
+        const phase = pageState.phase;
+        const attributionId = pageState.attributionId;
+        const setupIntentId = pageState.setupIntentId;
         if (phase !== "trigger-signup") {
             return;
         }
-        console.log("phase: " + phase);
 
         // We're back from the Stripe modal: (safely) trigger the signup
         if (!attributionId) {
@@ -97,53 +100,34 @@ function SwitchToPAYG() {
             return;
         }
 
-        let cancelled = false;
-        (async () => {
-            // At this point we're coming back from the Stripe modal, and have the intent to setup a new subscription.
-            // Technically, we have to guard against:
-            //  - reloads
-            //  - unmounts (for whatever reason)
+        console.log(`trigger-signup: ${JSON.stringify({ phase, attributionId, setupIntentId })}`);
 
-            // Do we already have a subscription (co-owner, me in another tab, reload, etc.)?
-            let subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
-            if (subscriptionId) {
-                console.log(`${attributionId} already has a subscription! Moving to cleanup`);
-                // We're happy!
-                if (!cancelled) {
-                    setPageState((s) => ({ ...s, phase: "cleanup" }));
-                }
-                return;
-            }
-
-            // Now we want to signup for sure
-            setPendingStripeSubscription(true);
-            try {
-                if (cancelled) return;
-
-                const limit = 1000;
-                console.log("SUBSCRIBE TO STRIPE");
-                await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
-                // Here we go off the effect handler due to the await
-                if (!cancelled) {
-                    setPageState((s) => ({ ...s, phase: "wait-for-signup" }));
-                }
-            } catch (error) {
-                if (cancelled) return;
-
-                setErrorMessage(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
+        // do not await here, it might get called several times during rendering, but only first call has any effect.
+        setPendingStripeSubscription(true);
+        subscribeToStripe(
+            setupIntentId,
+            attributionId,
+            (update) => {
+                setPageState((prev) => ({ ...prev, ...update }));
                 setPendingStripeSubscription(false);
-                return;
-            }
-        })().catch(console.error);
-
-        return () => {
-            cancelled = true;
-        };
-    }, [pageState, setPageState]);
+            },
+            (errorMessage) => {
+                setErrorMessage(errorMessage);
+                setPendingStripeSubscription(false);
+            },
+        ).catch(console.error);
+    }, [pageState.attributionId, pageState.phase, pageState.setupIntentId, setPageState]);
 
     useEffect(() => {
-        const { phase, attributionId, old } = pageState;
-        const { setupIntentId, type, oldSubscriptionOrTeamId } = pageParams || {};
+        if (!pageParams?.type) {
+            return;
+        }
+        const phase = pageState.phase;
+        const attributionId = pageState.attributionId;
+        const old = pageState.old;
+        const type = pageParams.type;
+        const oldSubscriptionOrTeamId = pageParams.oldSubscriptionOrTeamId;
+
         if (phase === "trigger-signup") {
             // Handled in separate effect
             return;
@@ -158,12 +142,28 @@ function SwitchToPAYG() {
             return;
         }
 
-        console.log("phase: " + phase);
+        console.log(
+            `context: ${JSON.stringify({
+                state: { phase, attributionId, old },
+                params: { type, oldSubscriptionOrTeamId },
+                oldSubscriptionOrTeamId,
+                type,
+            })}`,
+        );
+
         switch (phase) {
             case "call-to-action": {
                 // Check: Can we progress?
-                if (setupIntentId) {
-                    setPageState((s) => ({ ...s, setupIntentId, phase: "trigger-signup" }));
+                if (pageParams.setupIntentId) {
+                    if (pageState.setupIntentId === pageParams.setupIntentId) {
+                        // we've been here already
+                        return;
+                    }
+                    setPageState((prev) => ({
+                        ...prev,
+                        setupIntentId: pageParams.setupIntentId,
+                        phase: "trigger-signup",
+                    }));
                     return;
                 }
 
@@ -190,7 +190,7 @@ function SwitchToPAYG() {
                             if (Subscription.isCancelled(sub, now) || !Subscription.isActive(sub, now)) {
                                 // We're happy!
                                 if (!cancelled) {
-                                    setPageState((s) => ({ ...s, phase: "done" }));
+                                    setPageState((prev) => ({ ...prev, phase: "done" }));
                                 }
                                 return;
                             }
@@ -215,7 +215,7 @@ function SwitchToPAYG() {
                             if (TeamSubscription.isCancelled(ts, now) || !TeamSubscription.isActive(ts, now)) {
                                 // We're happy!
                                 if (!cancelled) {
-                                    setPageState((s) => ({ ...s, phase: "done" }));
+                                    setPageState((prev) => ({ ...prev, phase: "done" }));
                                 }
                                 return;
                             }
@@ -245,7 +245,7 @@ function SwitchToPAYG() {
                             if (TeamSubscription2.isCancelled(ts2, now) || !TeamSubscription2.isActive(ts2, now)) {
                                 // We're happy!
                                 if (!cancelled) {
-                                    setPageState((s) => ({ ...s, phase: "done" }));
+                                    setPageState((prev) => ({ ...prev, phase: "done" }));
                                 }
                                 return;
                             }
@@ -259,55 +259,8 @@ function SwitchToPAYG() {
                         }
                     }
                     if (!cancelled && !attributionId) {
-                        setPageState((s) => {
-                            const attributionId = s.attributionId || derivedAttributionId;
-                            return { ...s, attributionId, old };
-                        });
+                        setPageState((prev) => ({ ...prev, old, attributionId: derivedAttributionId }));
                     }
-                })().catch(console.error);
-
-                return () => {
-                    cancelled = true;
-                };
-            }
-
-            case "wait-for-signup": {
-                // Wait for the singup to be completed
-                if (!attributionId) {
-                    console.error("Signup, but attributionId not set!");
-                    return;
-                }
-                setPendingStripeSubscription(true);
-
-                let cancelled = false;
-                (async () => {
-                    // We need to poll for the subscription to appear
-                    let subscriptionId: string | undefined;
-                    for (let i = 1; i <= 10; i++) {
-                        if (cancelled) {
-                            break;
-                        }
-
-                        try {
-                            subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
-                            if (subscriptionId) {
-                                break;
-                            }
-                        } catch (error) {
-                            console.error("Search for subscription failed.", error);
-                        }
-                        await new Promise((resolve) => setTimeout(resolve, 1000));
-                    }
-                    if (cancelled) {
-                        return;
-                    }
-
-                    setPendingStripeSubscription(false);
-                    if (!subscriptionId) {
-                        setErrorMessage(`Could not find the subscription.`);
-                        return;
-                    }
-                    setPageState((s) => ({ ...s, phase: "cleanup" }));
                 })().catch(console.error);
 
                 return () => {
@@ -377,29 +330,31 @@ function SwitchToPAYG() {
                         break;
                     }
                 }
-                setPageState((s) => ({ ...s, phase: "done" }));
+                setPageState((prev) => ({ ...prev, phase: "done" }));
                 return;
             }
 
             case "done":
-                // Hooray and confetti!
-                resetAllNotifications();
-                if (!droppedConfetti) {
-                    setDroppedConfetti(true);
+                if (!confettiDropped) {
+                    confettiDropped = true;
+
+                    // Hooray and confetti!
+                    resetAllNotifications();
                     dropConfetti();
                 }
                 return;
         }
     }, [
-        location.search,
-        pageParams,
-        pageState,
-        setPageState,
-        pendingStripeSubscription,
-        setPendingStripeSubscription,
         selectedOrganization,
         dropConfetti,
-        droppedConfetti,
+        setPageState,
+        pageParams?.type,
+        pageParams?.oldSubscriptionOrTeamId,
+        pageParams?.setupIntentId,
+        pageState.phase,
+        pageState.attributionId,
+        pageState.old,
+        pageState.setupIntentId,
     ]);
 
     const onUpgradePlan = useCallback(async () => {
@@ -427,8 +382,15 @@ function SwitchToPAYG() {
 
         const attributionId = pageState.attributionId || "";
         const parsed = AttributionId.parse(attributionId);
+        let billingLink = "/billing";
         const orgId = parsed?.kind === "team" ? parsed.teamId : undefined;
-        const billingLink = orgId ? `/billing?org=${orgId}` : "/user/billing";
+        if (orgId) {
+            billingLink = `/billing?org=${orgId}`;
+        } else {
+            if (!user.additionalData?.isMigratedToTeamOnlyAttribution) {
+                billingLink = "/user/billing";
+            }
+        }
 
         return (
             <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full mt-24">
@@ -631,7 +593,7 @@ function renderCard(props: {
                 >
                     {props.headline}
                 </p>
-                <input className="opacity-0" type="radio" checked={props.selected} />
+                <input className="opacity-0" type="radio" checked={props.selected} readOnly={true} />
             </div>
             <div className="pl-1 grid auto-rows-auto">
                 <div
@@ -683,6 +645,59 @@ function parseSearchParams(search: string): PageParams | undefined {
                 setupIntentId,
             };
         }
+    }
+}
+
+let confettiDropped = false;
+
+let subscribeToStripe_called = false;
+async function subscribeToStripe(
+    setupIntentId: string,
+    attributionId: string,
+    updateState: (u: Partial<PageState>) => void,
+    onError: (e: string) => void,
+) {
+    if (subscribeToStripe_called) {
+        return;
+    }
+    subscribeToStripe_called = true;
+
+    // Do we already have a subscription (co-owner, me in another tab, reload, etc.)?
+    let subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
+    if (subscriptionId) {
+        console.log(`${attributionId} already has a subscription! Moving to cleanup`);
+        // We're happy!
+        updateState({ phase: "cleanup" });
+        return;
+    }
+
+    // Now we want to signup for sure
+    try {
+        await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, DEFAULT_USAGE_LIMIT);
+
+        // We need to poll for the subscription to appear
+        let subscriptionId: string | undefined;
+        for (let i = 1; i <= 10; i++) {
+            try {
+                subscriptionId = await getGitpodService().server.findStripeSubscriptionId(attributionId);
+                if (subscriptionId) {
+                    break;
+                }
+            } catch (error) {
+                console.error("Search for subscription failed.", error);
+            }
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+
+        if (!subscriptionId) {
+            onError(`Could not find the subscription.`);
+            return;
+        }
+
+        updateState({ phase: "cleanup" });
+    } catch (error) {
+        onError(`Could not subscribe to Stripe. ${error?.message || String(error)}`);
+        return;
     }
 }
 
