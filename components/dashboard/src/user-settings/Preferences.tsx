@@ -8,7 +8,6 @@ import { useCallback, useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
-import SelectIDEComponent from "../components/SelectIDEComponent";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
@@ -18,6 +17,7 @@ import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query
 import { Button } from "../components/Button";
 import CheckBox from "../components/CheckBox";
 import { User } from "@gitpod/gitpod-protocol";
+import SelectIDE from "./SelectIDE";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
@@ -124,13 +124,7 @@ export default function Preferences() {
                     </a>
                 </Subheading>
                 <div className="max-w-112">
-                    <SelectIDEComponent
-                        onSelectionChange={async (ide) => {
-                            await actuallySetDefaultIde(ide);
-                        }}
-                        selectedIdeOption={defaultIde}
-                        useLatest={useLatestVersion}
-                    />
+                    <SelectIDE updateUserContext={false} location="preferences" />
                 </div>
 
                 <CheckBox
