@@ -38,7 +38,7 @@ var _ v1connect.IdentityProviderServiceHandler = ((*IdentityProviderService)(nil
 
 // GetIDToken implements v1connect.IDPServiceHandler
 func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect.Request[v1.GetIDTokenRequest]) (*connect.Response[v1.GetIDTokenResponse], error) {
-	workspaceID, err := validateWorkspaceID(req.Msg.GetWorkspaceId())
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
 	}
