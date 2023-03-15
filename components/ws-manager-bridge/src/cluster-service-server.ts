@@ -44,6 +44,8 @@ import { getSupportedWorkspaceClasses } from "./cluster-sync-service";
 import { Configuration } from "./config";
 import { GRPCError } from "./rpc";
 import { isWorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { GetWorkspacesRequest, WorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 
 export interface ClusterServiceServerOptions {
     port: number;
@@ -148,8 +150,32 @@ export class ClusterService implements IClusterServiceServer {
                     tls,
                 };
 
-                let classConstraints = await getSupportedWorkspaceClasses(this.clientProvider, newCluster, false);
-                newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
+                const enabled = await getExperimentsClientForBackend().getValueAsync(
+                    "workspace_classes_backend",
+                    false,
+                    {},
+                );
+                if (enabled) {
+                    let classConstraints = await getSupportedWorkspaceClasses(this.clientProvider, newCluster, false);
+                    newCluster.admissionConstraints = admissionConstraints.concat(classConstraints);
+                } else {
+                    // try to connect to validate the config. Throws an exception if it fails.
+                    await new Promise<void>((resolve, reject) => {
+                        const c = this.clientProvider.createConnection(WorkspaceManagerClient, newCluster);
+                        c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
+                            if (err) {
+                                reject(
+                                    new GRPCError(
+                                        grpc.status.FAILED_PRECONDITION,
+                                        `cannot reach ${req.url}: ${err.message}`,
+                                    ),
+                                );
+                            } else {
+                                resolve();
+                            }
+                        });
+                    });
+                }
 
                 await this.clusterDB.save(newCluster);
                 log.info({}, "cluster registered", { cluster: req.name });

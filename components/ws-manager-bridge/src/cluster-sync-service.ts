@@ -42,6 +42,11 @@ export class ClusterSyncService {
     }
 
     private async reconcile() {
+        const enabled = await this.featureClient.getValueAsync("workspace_classes_backend", false, {});
+        if (!enabled) {
+            return;
+        }
+
         log.debug("reconciling workspace classes...");
         let allClusters = await this.clusterDB.findFiltered({});
         for (const cluster of allClusters) {
