@@ -5,7 +5,8 @@
  */
 
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
-import { FC, useCallback, useEffect, useMemo, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
+import isURL from "validator/lib/isURL";
 import { Button } from "../../components/Button";
 import { InputField } from "../../components/forms/InputField";
 import { TextInputField } from "../../components/forms/TextInputField";
@@ -14,10 +15,7 @@ import Modal, { ModalBody, ModalFooter, ModalHeader } from "../../components/Mod
 import { useUpsertOIDCClientMutation } from "../../data/oidc-clients/upsert-oidc-client-mutation";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
-import { oidcService } from "../../service/public-api";
 import { gitpodHostUrl } from "../../service/service";
-import copy from "../images/copy.svg";
-import exclamation from "../images/exclamation.svg";
 
 type Props = {
     clientConfig?: OIDCClientConfig;
@@ -30,13 +28,13 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
 
     const isNew = !clientConfig;
 
-    const [issuer, setIssuer] = useState<string>(clientConfig?.oidcConfig?.issuer ?? "");
-    const [clientId, setClientId] = useState<string>("");
-    const [clientSecret, setClientSecret] = useState<string>("");
+    const [issuer, setIssuer] = useState(clientConfig?.oidcConfig?.issuer ?? "");
+    const [clientId, setClientId] = useState(clientConfig?.oauth2Config?.clientId ?? "");
+    const [clientSecret, setClientSecret] = useState(clientConfig?.oauth2Config?.clientSecret ?? "");
 
     const redirectUrl = gitpodHostUrl.with({ pathname: `/iam/oidc/callback` }).toString();
 
-    const issuerError = useOnBlurError(`Issuer is missing.`, issuer.trim().length > 0);
+    const issuerError = useOnBlurError(`Please enter a valid URL.`, issuer.trim().length > 0 && isURL(issuer));
     const clientIdError = useOnBlurError("Client ID is missing.", clientId.trim().length > 0);
     const clientSecretError = useOnBlurError("Client Secret is missing.", clientSecret.trim().length > 0);
 
@@ -54,31 +52,54 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
             return;
         }
 
+        const trimmedIssuer = issuer.trim();
+        const trimmedClientId = clientId.trim();
+        const trimmedClientSecret = clientSecret.trim();
+
         try {
-            upsertClientConfig.mutateAsync({
-                config: {
-                    organizationId: org.id,
-                    oauth2Config: {
-                        clientId: clientId,
-                        clientSecret: clientSecret,
-                    },
-                    oidcConfig: {
-                        issuer: issuer,
-                    },
-                },
+            await upsertClientConfig.mutateAsync({
+                config: isNew
+                    ? {
+                          organizationId: org.id,
+                          oauth2Config: {
+                              clientId: trimmedClientId,
+                              clientSecret: trimmedClientSecret,
+                          },
+                          oidcConfig: {
+                              issuer: trimmedIssuer,
+                          },
+                      }
+                    : {
+                          id: clientConfig?.id,
+                          organizationId: org.id,
+                          oauth2Config: {
+                              clientId: trimmedClientSecret,
+                              // TODO: determine how we should handle when user doesn't change their secret
+                              clientSecret: clientSecret === "redacted" ? "" : trimmedClientSecret,
+                          },
+                          oidcConfig: {
+                              issuer: trimmedIssuer,
+                          },
+                      },
             });
+
             onClose();
         } catch (error) {
             console.error(error);
         }
-    }, [clientId, clientSecret, isValid, issuer, onClose, org, upsertClientConfig]);
+    }, [clientConfig?.id, clientId, clientSecret, isNew, isValid, issuer, onClose, org, upsertClientConfig]);
 
-    const errorMessage = upsertClientConfig.isError
-        ? (upsertClientConfig.error as Error)?.message || "There was a problem saving your configuration."
-        : "";
+    const errorMessage = upsertClientConfig.isError ? "There was a problem saving your configuration." : "";
 
     return (
-        <Modal visible onClose={onClose}>
+        <Modal
+            visible
+            onClose={onClose}
+            onEnter={() => {
+                saveConfig();
+                return false;
+            }}
+        >
             <ModalHeader>{isNew ? "New OIDC Client" : "OIDC Client"}</ModalHeader>
             <ModalBody>
                 <div className="flex flex-col">
@@ -89,8 +110,8 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                     label="Issuer URL"
                     value={issuer}
                     placeholder={"https://accounts.google.com"}
-                    // error={hostError}
-                    // onBlur={hostOnBlur}
+                    error={issuerError.message}
+                    onBlur={issuerError.onBlur}
                     onChange={setIssuer}
                 />
 
@@ -101,8 +122,8 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                 <TextInputField
                     label="Client ID"
                     value={clientId}
-                    // error={clientIdError}
-                    // onBlur={clientIdOnBlur}
+                    error={clientIdError.message}
+                    onBlur={clientIdError.onBlur}
                     onChange={setClientId}
                 />
 
@@ -110,8 +131,8 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                     label="Client Secret"
                     type="password"
                     value={clientSecret}
-                    // error={clientSecretError}
-                    // onBlur={clientSecretOnBlur}
+                    error={clientSecretError.message}
+                    onBlur={clientSecretError.onBlur}
                     onChange={setClientSecret}
                 />
             </ModalBody>

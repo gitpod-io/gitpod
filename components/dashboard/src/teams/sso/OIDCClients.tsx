@@ -8,14 +8,14 @@ import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/
 import { FC, useCallback, useState } from "react";
 import { Button } from "../../components/Button";
 import { EmptyMessage } from "../../components/EmptyMessage";
-import { ItemsList } from "../../components/ItemsList";
+import { Item, ItemField, ItemsList } from "../../components/ItemsList";
 import { SpinnerLoader } from "../../components/Loader";
 import { Heading2, Subheading } from "../../components/typography/headings";
 import { useOIDCClientsQuery } from "../../data/oidc-clients/oidc-clients-query";
 import { OIDCClientConfigModal } from "./OIDCClientConfigModal";
 import { OIDCClientListItem } from "./OIDCClientListItem";
 
-export const SSOClients: FC = () => {
+export const OIDCClients: FC = () => {
     const { data, isLoading } = useOIDCClientsQuery();
 
     if (isLoading) {
@@ -26,13 +26,13 @@ export const SSOClients: FC = () => {
         );
     }
 
-    return <OIDCClients clientConfigs={data || []} />;
+    return <OIDCClientsList clientConfigs={data || []} />;
 };
 
-type OIDCClientsProps = {
+type OIDCClientsListProps = {
     clientConfigs: OIDCClientConfig[];
 };
-const OIDCClients: FC<OIDCClientsProps> = ({ clientConfigs }) => {
+const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     const onCreate = useCallback(() => setShowCreateModal(true), []);
@@ -53,20 +53,25 @@ const OIDCClients: FC<OIDCClientsProps> = ({ clientConfigs }) => {
                 ) : null}
             </div>
 
-            {clientConfigs.length === 0 && (
+            {clientConfigs.length === 0 ? (
                 <EmptyMessage
                     title="No OIDC providers"
                     subtitle="Enable single sign-on for your organization using an external identity provider (IdP) service that supports the OpenID Connect (OIDC) standard, such as Google."
                     buttonText="New OIDC Client"
                     onClick={onCreate}
                 />
+            ) : (
+                <ItemsList className="pt-6">
+                    <Item header={true}>
+                        <ItemField className="w-1/12"> </ItemField>
+                        <ItemField className="w-5/12">ID</ItemField>
+                        <ItemField className="w-6/12">Issuer URL</ItemField>
+                    </Item>
+                    {clientConfigs.map((cc) => (
+                        <OIDCClientListItem key={cc.id} clientConfig={cc} />
+                    ))}
+                </ItemsList>
             )}
-
-            <ItemsList className="pt-6">
-                {clientConfigs.map((cc) => (
-                    <OIDCClientListItem clientConfig={cc} />
-                ))}
-            </ItemsList>
         </>
     );
 };

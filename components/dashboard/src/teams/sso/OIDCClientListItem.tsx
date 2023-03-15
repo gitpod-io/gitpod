@@ -58,18 +58,16 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
     return (
         <>
             <Item key={clientConfig.id} className="h-16">
-                <ItemFieldIcon>
+                <ItemFieldIcon className="w-1/12 flex items-center">
                     <div className={"rounded-full w-3 h-3 text-sm align-middle m-auto bg-gray-400"}>&nbsp;</div>
                 </ItemFieldIcon>
-                <ItemField className="w-3/12 flex flex-col my-auto">
-                    <span className="font-medium truncate overflow-ellipsis">{clientConfig.id}</span>
+                <ItemField className="w-5/12 flex flex-grow items-center">
+                    <span className="text-sm font-medium truncate overflow-ellipsis">{clientConfig.id}</span>
                 </ItemField>
-                <ItemField className="w-7/12 flex flex-col my-auto">
-                    <span className="my-auto truncate text-gray-500 overflow-ellipsis">
-                        {clientConfig.oidcConfig?.issuer}
-                    </span>
+                <ItemField className="w-5/12 flex flex-grow items-center">
+                    <span className="text-gray-500 truncate overflow-ellipsis">{clientConfig.oidcConfig?.issuer}</span>
                 </ItemField>
-                <ItemFieldContextMenu menuEntries={menuEntries} />
+                <ItemFieldContextMenu className="w-1/12" menuEntries={menuEntries} />
             </Item>
             {showDeleteConfirmation && (
                 <ConfirmationModal
