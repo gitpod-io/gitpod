@@ -155,6 +155,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									common.DefaultEnv(&ctx.Config),
 									common.ConfigcatEnv(ctx),
 									common.DatabaseEnv(&ctx.Config),
+									common.WebappTracingEnv(ctx, Component),
 								)),
 								LivenessProbe: &corev1.Probe{
 									ProbeHandler: corev1.ProbeHandler{

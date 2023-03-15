@@ -23,6 +23,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -240,8 +241,13 @@ func readSecretFromFile(path string) (string, error) {
 // OpenTelemetryTracerProvider creates a new TracerProvider
 // Callers should ensure they call Shutdown on the TraceProvider at the end of
 // a component lifecycle to flush all pending spans.
-func OpenTelemetryTracerProvider(serviceName string) (*sdktrace.TracerProvider, error) {
+func OpenTelemetryTracerProvider(serviceName string) (trace.TracerProvider, error) {
 	ctx := context.Background()
+
+	if os.Getenv("OTEL_SDK_DISABLED") != "" {
+		// Return the default, which is NoopTraceProvider
+		return otel.GetTracerProvider(), nil
+	}
 
 	// We export traces over a gRPC client
 	exporter, err := otlptracegrpc.New(ctx)
