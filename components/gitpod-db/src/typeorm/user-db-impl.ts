@@ -109,7 +109,9 @@ export class TypeORMUserDBImpl implements UserDB {
             creationDate: new Date().toISOString(),
             identities: [],
             additionalData: {
-                // Please DO NOT add ideSettings prop, it'll broke onboarding of JetBrains Gateway
+                // new users are treated as migrated
+                isMigratedToTeamOnlyAttribution: true,
+                // Please DO NOT add ideSettings prop, it'll break onboarding of JetBrains Gateway
                 // If you want to do it, ping IDE team
                 // ideSettings: {},
                 emailNotificationSettings: {
