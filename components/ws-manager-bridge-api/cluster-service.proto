@@ -80,7 +80,8 @@ message ClusterStatus {
   bool governed = 6;
   repeated AdmissionConstraint admission_constraint = 7;
   bool static = 8;
-  string application_cluster = 10;
+
+  reserved 10; // string application_cluster = 10;
 
   // DEPRECATED
   // repeated AdmissionPreference admission_preference = 9;
