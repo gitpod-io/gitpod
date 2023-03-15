@@ -10422,6 +10422,10 @@ spec:
             secretKeyRef:
               key: encryptionKeys
               name: mysql
+        - name: JAEGER_DISABLED
+          value: "true"
+        - name: OTEL_SDK_DISABLED
+          value: "true"
         image: registry.mydomain.com/namespace/public-api-server:test
         imagePullPolicy: IfNotPresent
         livenessProbe:
