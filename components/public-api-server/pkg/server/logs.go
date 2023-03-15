@@ -11,6 +11,7 @@ import (
 
 	"github.com/bufbuild/connect-go"
 	"github.com/sirupsen/logrus"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func NewLogInterceptor(entry *logrus.Entry) connect.UnaryInterceptorFunc {
@@ -24,6 +25,7 @@ func NewLogInterceptor(entry *logrus.Entry) connect.UnaryInterceptorFunc {
 				"address":           req.Peer().Addr,
 				"requestStreamType": streamType(req.Spec().StreamType),
 				"requestHeaders":    req.Header(),
+				"traceId":           trace.SpanContextFromContext(ctx).TraceID(),
 			})
 			log.Extract(ctx).Debugf("Handling request for %s", req.Spec().Procedure)
 
