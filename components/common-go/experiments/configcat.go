@@ -6,8 +6,10 @@ package experiments
 
 import (
 	"context"
+	"fmt"
 
 	configcat "github.com/configcat/go-sdk/v7"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,20 +33,28 @@ type configCatClient struct {
 	client *configcat.Client
 }
 
-func (c *configCatClient) GetBoolValue(_ context.Context, experimentName string, defaultValue bool, attributes Attributes) bool {
-	return c.client.GetBoolValue(experimentName, defaultValue, attributesToUser(attributes))
+func (c *configCatClient) GetBoolValue(ctx context.Context, experimentName string, defaultValue bool, attributes Attributes) bool {
+	value := c.client.GetBoolValue(experimentName, defaultValue, attributesToUser(attributes))
+	log.AddFields(ctx, logField(experimentName, value))
+	return value
 }
 
-func (c *configCatClient) GetIntValue(_ context.Context, experimentName string, defaultValue int, attributes Attributes) int {
-	return c.client.GetIntValue(experimentName, defaultValue, attributesToUser(attributes))
+func (c *configCatClient) GetIntValue(ctx context.Context, experimentName string, defaultValue int, attributes Attributes) int {
+	value := c.client.GetIntValue(experimentName, defaultValue, attributesToUser(attributes))
+	log.AddFields(ctx, logField(experimentName, value))
+	return value
 }
 
-func (c *configCatClient) GetFloatValue(_ context.Context, experimentName string, defaultValue float64, attributes Attributes) float64 {
-	return c.client.GetFloatValue(experimentName, defaultValue, attributesToUser(attributes))
+func (c *configCatClient) GetFloatValue(ctx context.Context, experimentName string, defaultValue float64, attributes Attributes) float64 {
+	value := c.client.GetFloatValue(experimentName, defaultValue, attributesToUser(attributes))
+	log.AddFields(ctx, logField(experimentName, value))
+	return value
 }
 
-func (c *configCatClient) GetStringValue(_ context.Context, experimentName string, defaultValue string, attributes Attributes) string {
-	return c.client.GetStringValue(experimentName, defaultValue, attributesToUser(attributes))
+func (c *configCatClient) GetStringValue(ctx context.Context, experimentName string, defaultValue string, attributes Attributes) string {
+	value := c.client.GetStringValue(experimentName, defaultValue, attributesToUser(attributes))
+	log.AddFields(ctx, logField(experimentName, value))
+	return value
 }
 
 func attributesToUser(attributes Attributes) *configcat.UserData {
@@ -84,4 +94,10 @@ type configCatLogger struct {
 
 func (l *configCatLogger) GetLevel() configcat.LogLevel {
 	return configcat.LogLevelError
+}
+
+func logField(experimentName, value interface{}) logrus.Fields {
+	return logrus.Fields{
+		fmt.Sprintf("experiments.%s", experimentName): value,
+	}
 }
