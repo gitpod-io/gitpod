@@ -90,7 +90,7 @@ func validatePersonalAccessTokenID(ctx context.Context, id string) (uuid.UUID, e
 }
 
 func validateOrganizationID(ctx context.Context, id string) (uuid.UUID, error) {
-	log.AddFields(ctx, logrus.Fields{"org.id": id})
+	log.AddFields(ctx, logrus.Fields{"orgId": id})
 	organizationID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("OrganizationID must be a valid UUID"))
