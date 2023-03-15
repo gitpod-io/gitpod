@@ -45,12 +45,12 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Annotations: common.CustomizeAnnotation(ctx, Component, common.TypeMetaDaemonset),
 				},
 				Spec: corev1.PodSpec{
-					Affinity:                      common.NodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
+					Affinity:                      cluster.WithNodeAffinity(cluster.AffinityLabelWorkspacesRegular, cluster.AffinityLabelWorkspacesHeadless),
 					ServiceAccountName:            Component,
 					HostPID:                       true,
 					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     "ClusterFirst",
-					RestartPolicy:                 "Always",
+					DNSPolicy:                     corev1.DNSClusterFirst,
+					RestartPolicy:                 corev1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Containers: []corev1.Container{{
 						Name:            Component,

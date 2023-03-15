@@ -56,7 +56,7 @@ func getProxyServerEnvvar(cfg *config.Config, envvarName string, key string) []c
 
 func DefaultLabels(component string) map[string]string {
 	return map[string]string{
-		"app":       AppName,
+		"app":       "gitpod",
 		"component": component,
 	}
 }
@@ -545,28 +545,6 @@ func KubeRBACProxyContainerWithConfig(ctx *RenderContext) *corev1.Container {
 			RunAsUser:                pointer.Int64(65532),
 			RunAsGroup:               pointer.Int64(65532),
 			RunAsNonRoot:             pointer.Bool(true),
-		},
-	}
-}
-
-func NodeAffinity(orLabels ...string) *corev1.Affinity {
-	var terms []corev1.NodeSelectorTerm
-	for _, lbl := range orLabels {
-		terms = append(terms, corev1.NodeSelectorTerm{
-			MatchExpressions: []corev1.NodeSelectorRequirement{
-				{
-					Key:      lbl,
-					Operator: corev1.NodeSelectorOpExists,
-				},
-			},
-		})
-	}
-
-	return &corev1.Affinity{
-		NodeAffinity: &corev1.NodeAffinity{
-			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-				NodeSelectorTerms: terms,
-			},
 		},
 	}
 }

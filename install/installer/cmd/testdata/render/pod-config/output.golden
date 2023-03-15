@@ -8992,6 +8992,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_ide
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - blobserve
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -9082,6 +9093,14 @@ spec:
         terminationMessagePolicy: FallbackToLogsOnError
       enableServiceLinks: false
       serviceAccountName: blobserve
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: blobserve
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - emptyDir: {}
         name: cache
@@ -9135,6 +9154,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - content-service
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -9211,6 +9241,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: content-service
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: content-service
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: content-service
@@ -9254,6 +9292,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - dashboard
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - env:
         - name: GITPOD_DOMAIN
@@ -9298,6 +9347,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: dashboard
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: dashboard
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
 status: {}
 ---
 # apps/v1/Deployment ide-metrics
@@ -9339,6 +9396,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - ide-metrics
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -9413,6 +9481,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: ide-metrics
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: ide-metrics
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: ide-metrics
@@ -9456,6 +9532,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - ide-proxy
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - env:
         - name: GITPOD_DOMAIN
@@ -9500,6 +9587,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: ide-proxy
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: ide-proxy
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
 status: {}
 ---
 # apps/v1/Deployment ide-service
@@ -9541,6 +9636,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - ide-service
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -9619,6 +9725,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: ide-service
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: ide-service
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: ide-service
@@ -9665,8 +9779,19 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
-              - key: gitpod.io/workload_meta
+              - key: gitpod.io/workload_services
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - image-builder-mk3
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -9758,6 +9883,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: image-builder-mk3
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: image-builder-mk3
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: image-builder-mk3-config
@@ -9927,6 +10060,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_services
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - node-labeler
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -9996,6 +10140,14 @@ spec:
       enableServiceLinks: false
       priorityClassName: system-node-critical
       serviceAccountName: node-labeler
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: node-labeler
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
 status: {}
 ---
 # apps/v1/Deployment proxy
@@ -10037,6 +10189,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - proxy
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - --logtostderr
@@ -10144,6 +10307,14 @@ spec:
         runAsNonRoot: false
       serviceAccountName: proxy
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: proxy
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: proxy-config
@@ -10198,6 +10369,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - public-api-server
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -10348,6 +10530,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: public-api-server
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: public-api-server
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: public-api-server
@@ -10394,6 +10584,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - redis
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - command:
         - redis-server
@@ -10477,6 +10678,14 @@ spec:
         runAsNonRoot: false
       serviceAccountName: redis
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: redis
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
 status: {}
 ---
 # apps/v1/Deployment registry
@@ -10605,6 +10814,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - server
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - env:
         - name: GITPOD_DOMAIN
@@ -10831,6 +11051,14 @@ spec:
           runAsUser: 31001
       priorityClassName: system-node-critical
       serviceAccountName: server
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: server
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: server-config
@@ -10887,6 +11115,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_services
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - ws-manager
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -10970,6 +11209,14 @@ spec:
       securityContext:
         runAsUser: 31002
       serviceAccountName: ws-manager
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: ws-manager
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: ws-manager
@@ -11024,6 +11271,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_meta
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - ws-manager-bridge
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - env:
         - name: GITPOD_DOMAIN
@@ -11222,6 +11480,14 @@ spec:
       restartPolicy: Always
       serviceAccountName: ws-manager-bridge
       terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: gitpod
+            component: ws-manager-bridge
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: ws-manager-bridge-config
@@ -11270,6 +11536,17 @@ spec:
             - matchExpressions:
               - key: gitpod.io/workload_services
                 operator: Exists
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - ws-proxy
+              topologyKey: kubernetes.io/hostname
+            weight: 100
       containers:
       - args:
         - run
@@ -11375,7 +11652,7 @@ spec:
             component: ws-proxy
         maxSkew: 1
         topologyKey: kubernetes.io/hostname
-        whenUnsatisfiable: DoNotSchedule
+        whenUnsatisfiable: ScheduleAnyway
       volumes:
       - configMap:
           name: ws-proxy
@@ -11408,13 +11685,6 @@ spec:
       name: migrations
       namespace: default
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: gitpod.io/workload_meta
-                operator: Exists
       containers:
       - command:
         - sh

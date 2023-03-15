@@ -93,11 +93,11 @@ func statefulset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					}),
 				},
 				Spec: v1.PodSpec{
-					Affinity:                      common.NodeAffinity(cluster.AffinityLabelIDE),
+					Affinity:                      cluster.WithNodeAffinity(cluster.AffinityLabelIDE),
 					ServiceAccountName:            Component,
 					EnableServiceLinks:            pointer.Bool(false),
-					DNSPolicy:                     "ClusterFirst",
-					RestartPolicy:                 "Always",
+					DNSPolicy:                     v1.DNSClusterFirst,
+					RestartPolicy:                 v1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Volumes:                       volumes,
 					Containers: []v1.Container{{

@@ -268,28 +268,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	var podAntiAffinity *corev1.PodAntiAffinity
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.UsePodAntiAffinity {
-			podAntiAffinity = &corev1.PodAntiAffinity{
-				PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{{
-					Weight: 100,
-					PodAffinityTerm: corev1.PodAffinityTerm{
-						LabelSelector: &metav1.LabelSelector{
-							MatchExpressions: []metav1.LabelSelectorRequirement{{
-								Key:      "component",
-								Operator: "In",
-								Values:   []string{Component},
-							}},
-						},
-						TopologyKey: cluster.AffinityLabelMeta,
-					},
-				}},
-			}
-		}
-		return nil
-	})
-
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		volume, mount, _, ok := getPersonalAccessTokenSigningKey(cfg)
 		if !ok {
@@ -347,13 +325,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						}),
 					},
 					Spec: corev1.PodSpec{
-						Affinity: &corev1.Affinity{
-							NodeAffinity:    common.NodeAffinity(cluster.AffinityLabelMeta).NodeAffinity,
-							PodAntiAffinity: podAntiAffinity,
-						},
-						PriorityClassName:  common.SystemNodeCritical,
-						ServiceAccountName: Component,
-						EnableServiceLinks: pointer.Bool(false),
+						Affinity:                  cluster.WithNodeAffinityHostnameAntiAffinity(Component, cluster.AffinityLabelMeta),
+						TopologySpreadConstraints: cluster.WithHostnameTopologySpread(Component),
+						PriorityClassName:         common.SystemNodeCritical,
+						ServiceAccountName:        Component,
+						EnableServiceLinks:        pointer.Bool(false),
 						// todo(sje): do we need to cater for serverContainer.volumeMounts from values.yaml?
 						Volumes: append(
 							[]corev1.Volume{

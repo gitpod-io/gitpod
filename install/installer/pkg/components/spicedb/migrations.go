@@ -7,8 +7,8 @@ package spicedb
 import (
 	"fmt"
 
-	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +43,6 @@ func migrations(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Template: corev1.PodTemplateSpec{
 					ObjectMeta: objectMeta,
 					Spec: corev1.PodSpec{
-						Affinity:           common.NodeAffinity(cluster.AffinityLabelMeta),
 						RestartPolicy:      corev1.RestartPolicyNever,
 						ServiceAccountName: Component,
 						EnableServiceLinks: pointer.Bool(false),
