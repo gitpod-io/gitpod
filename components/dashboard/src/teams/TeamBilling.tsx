@@ -27,7 +27,7 @@ type PendingPlan = Plan & { pendingSince: number };
 
 export default function TeamBillingPage() {
     return (
-        <OrgSettingsPage>
+        <OrgSettingsPage title={"Organization Billing"} subtitle="Manage billing for your organization.">
             <TeamBilling />
         </OrgSettingsPage>
     );

@@ -5,7 +5,6 @@
  */
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { Heading2 } from "../components/typography/headings";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
@@ -19,8 +18,10 @@ export default function TeamUsageBasedBilling() {
 
     return (
         <>
-            <Heading2>Organization Billing</Heading2>
-            <UsageBasedBillingConfig attributionId={org && AttributionId.render({ kind: "team", teamId: org.id })} />
+            <UsageBasedBillingConfig
+                hideSubheading
+                attributionId={org && AttributionId.render({ kind: "team", teamId: org.id })}
+            />
         </>
     );
 }

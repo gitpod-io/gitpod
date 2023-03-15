@@ -6,7 +6,7 @@
 
 import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
-import Alert from "../../components/Alert";
+import { Button } from "../../components/Button";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
 import { TextInputField } from "../../components/forms/TextInputField";
@@ -16,7 +16,6 @@ import { useInvalidateOrgAuthProvidersQuery } from "../../data/auth-providers/or
 import { useUpsertOrgAuthProviderMutation } from "../../data/auth-providers/upsert-org-auth-provider-mutation";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
-import exclamation from "../../images/exclamation.svg";
 import { openAuthorizeWindow } from "../../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../../service/service";
 
@@ -104,6 +103,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
             console.error("no current team selected");
             return;
         }
+
         // Set a saving state and clear any error message
         setSavingProvider(true);
         setErrorMessage(undefined);
@@ -193,9 +193,6 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
         >
             <ModalHeader>{isNew ? "New Git Integration" : "Git Integration"}</ModalHeader>
             <ModalBody>
-                {!isNew && savedProvider?.status !== "verified" && (
-                    <Alert type="warning">You need to activate this integration.</Alert>
-                )}
                 <div className="flex flex-col text-gray-500">
                     Configure an integration with a self-managed instance of GitLab, GitHub, or Bitbucket.
                 </div>
@@ -239,22 +236,14 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                         onBlur={clientSecretOnBlur}
                     />
                 </div>
-
-                {errorMessage && (
-                    <div className="flex rounded-md bg-red-600 p-3">
-                        <img
-                            className="w-4 h-4 mx-2 my-auto filter-brightness-10"
-                            src={exclamation}
-                            alt="exclamation mark"
-                        />
-                        <span className="text-white">{errorMessage}</span>
-                    </div>
-                )}
             </ModalBody>
-            <ModalFooter>
-                <button onClick={activate} disabled={!isValid || savingProvider}>
+            <ModalFooter
+                error={errorMessage}
+                warning={!isNew && savedProvider?.status !== "verified" ? "You need to activate this integration." : ""}
+            >
+                <Button onClick={activate} disabled={!isValid || savingProvider} loading={savingProvider}>
                     Activate Integration
-                </button>
+                </Button>
             </ModalFooter>
         </Modal>
     );
