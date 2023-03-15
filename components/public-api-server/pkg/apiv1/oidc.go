@@ -301,6 +301,9 @@ func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor)
 			AuthorizationEndpoint: decrypted.RedirectURL,
 			Scopes:                decrypted.Scopes,
 		},
+		OidcConfig: &v1.OIDCConfig{
+			Issuer: config.Issuer,
+		},
 	}, nil
 }
 
