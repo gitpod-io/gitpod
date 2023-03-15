@@ -8,8 +8,6 @@ import { URL } from "url";
 import * as express from "express";
 import * as crypto from "crypto";
 import * as session from "express-session";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -21,7 +19,7 @@ export const query = (...tuples: [string, string][]) => {
 // Strict: We only allow connections from the base domain, so disallow connections from all other Origins
 //      Only (current) exception: If no Origin header is set, skip the check!
 // Non-Strict: "rely" on subdomain parsing (do we still need this?)
-export const isAllowedWebsocketDomain = (originHeader: string, gitpodHostName: string, strict: boolean): boolean => {
+export const isAllowedWebsocketDomain = (originHeader: string, gitpodHostName: string): boolean => {
     if (!originHeader) {
         // Origin header check not applied because of empty Origin header
         return true;
@@ -30,41 +28,10 @@ export const isAllowedWebsocketDomain = (originHeader: string, gitpodHostName: s
     try {
         const originUrl = new URL(originHeader);
         const originHostname = originUrl.hostname;
-        if (originHostname === gitpodHostName) {
-            return true;
-        }
-
-        if (strict) {
-            return false;
-        }
-        // TODO(gpl) This is only used for Bearer-Token authentication.
-        // Does this restriction help at all, or can we remove it entirely?
-        log.warn("Origin header check based on looksLikeWorkspaceHostname");
-        if (looksLikeWorkspaceHostname(originUrl, gitpodHostName)) {
-            return true;
-        } else {
-            return false;
-        }
+        return originHostname === gitpodHostName;
     } catch (err) {
         return false;
     }
-};
-
-const looksLikeWorkspaceHostname = (originHostname: URL, gitpodHostName: string): boolean => {
-    // Is prefix a valid (looking) workspace ID?
-    const found = originHostname.toString().lastIndexOf(gitpodHostName);
-    if (found === -1) {
-        return false;
-    }
-    const url = new GitpodHostUrl(originHostname);
-    const workspaceId = url.workspaceId;
-    if (workspaceId) {
-        const hostname = url.url.hostname as string;
-        if (hostname.startsWith(workspaceId)) {
-            return true;
-        }
-    }
-    return false;
 };
 
 export function saveSession(session: session.Session): Promise<void> {
