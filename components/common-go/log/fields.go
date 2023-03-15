@@ -21,7 +21,9 @@ const (
 
 	OrganizationIDField = "orgId"
 
-	ServiceContextField = "serviceContext"
+	ServiceContextField        = "serviceContext"
+	PersonalAccessTokenIDField = "patId"
+	OIDCClientConfigIDField    = "oidcClientConfigId"
 )
 
 // OWI builds a structure meant for logrus which contains the owner, workspace and instance.
@@ -72,7 +74,18 @@ func OrganizationID(orgID string) log.Fields {
 		String(TeamIDField, orgID),
 		String(OrganizationIDField, orgID),
 	)
+}
 
+func PersonalAccessTokenID(patID string) log.Fields {
+	return String(PersonalAccessTokenIDField, patID)
+}
+
+func OIDCClientConfigID(id string) log.Fields {
+	return String(OIDCClientConfigIDField, id)
+}
+
+func UserID(userID string) log.Fields {
+	return String(UserIDField, userID)
 }
 
 // Compose composes multiple sets of log.Fields into a single

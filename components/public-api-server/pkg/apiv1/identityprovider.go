@@ -9,10 +9,10 @@ import (
 	"fmt"
 
 	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
-	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	"github.com/zitadel/oidc/pkg/oidc"
 )
 
@@ -47,8 +47,6 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Must have at least one audience entry"))
 	}
 
-	logger := ctxlogrus.Extract(ctx).WithField("workspace_id", workspaceID)
-
 	conn, err := getConnection(ctx, srv.connectionPool)
 	if err != nil {
 		return nil, err
@@ -62,18 +60,18 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 
 	workspace, err := conn.GetWorkspace(ctx, workspaceID)
 	if err != nil {
-		logger.WithError(err).Error("Failed to get workspace.")
+		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
 		return nil, proxy.ConvertError(err)
 	}
 
 	user, err := conn.GetLoggedInUser(ctx)
 	if err != nil {
-		logger.WithError(err).Error("Failed to get calling user.")
+		log.Extract(ctx).WithError(err).Error("Failed to get calling user.")
 		return nil, proxy.ConvertError(err)
 	}
 
 	if workspace.Workspace == nil {
-		logger.WithError(err).Error("Server did not return a workspace.")
+		log.Extract(ctx).WithError(err).Error("Server did not return a workspace.")
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
 	}
 
@@ -84,7 +82,7 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 
 	token, err := srv.idTokenSource.IDToken(ctx, "gitpod", req.Msg.Audience, userInfo)
 	if err != nil {
-		logger.WithError(err).Error("Failed to produce ID token.")
+		log.Extract(ctx).WithError(err).Error("Failed to produce ID token.")
 		return nil, proxy.ConvertError(err)
 	}
 	return &connect.Response[v1.GetIDTokenResponse]{
