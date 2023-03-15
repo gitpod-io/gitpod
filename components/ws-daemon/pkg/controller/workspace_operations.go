@@ -210,7 +210,7 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		}
 	}
 
-	if err = ws.Dispose(ctx, wso.provider.hooks); err != nil {
+	if err = ws.Dispose(ctx, wso.provider.hooks[session.WorkspaceDisposed]); err != nil {
 		glog.WithError(err).Error("cannot dispose session")
 	}
 
