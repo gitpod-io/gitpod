@@ -31,8 +31,6 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Component,
 	}
 
-	issuer := common.CertManagerCAIssuer
-
 	return []runtime.Object{
 		&certmanagerv1.Certificate{
 			TypeMeta: common.TypeMetaCertificate,
@@ -46,8 +44,8 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				SecretName: TLSSecretNameSecret,
 				DNSNames:   serverAltNames,
 				IssuerRef: cmmeta.ObjectReference{
-					Name:  issuer,
-					Kind:  "Issuer",
+					Name:  common.CertManagerCAIssuer,
+					Kind:  certmanagerv1.ClusterIssuerKind,
 					Group: "cert-manager.io",
 				},
 				SecretTemplate: &certmanagerv1.CertificateSecretTemplate{
@@ -67,8 +65,8 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				SecretName: TLSSecretNameClient,
 				DNSNames:   clientAltNames,
 				IssuerRef: cmmeta.ObjectReference{
-					Name:  issuer,
-					Kind:  "Issuer",
+					Name:  common.CertManagerCAIssuer,
+					Kind:  certmanagerv1.ClusterIssuerKind,
 					Group: "cert-manager.io",
 				},
 				SecretTemplate: &certmanagerv1.CertificateSecretTemplate{

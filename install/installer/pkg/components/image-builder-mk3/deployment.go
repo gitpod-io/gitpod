@@ -86,18 +86,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
-		{
-			Name: "gitpod-ca-certificate",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: "builtin-registry-facade-cert",
-					Items: []corev1.KeyToPath{
-						{Key: "ca.crt", Path: "ca.crt"},
-					},
-				},
-			},
-		},
+		common.CAVolume(),
 	}
+
 	volumeMounts := []corev1.VolumeMount{
 		{
 			Name:      "configuration",
@@ -113,11 +104,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name:      "pull-secret",
 			MountPath: "/config/pull-secret",
 		},
+		common.CAVolumeMount(),
 	}
-	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
-		volumes = append(volumes, *vol)
-		volumeMounts = append(volumeMounts, *mnt)
-	}
+
 	if ctx.Config.Kind == config.InstallationWorkspace {
 		// Only enable TLS in workspace clusters. This check can be removed
 		// once image-builder-mk3 has been removed from application clusters
@@ -167,24 +156,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					RestartPolicy:                 corev1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Volumes:                       volumes,
-					InitContainers: []corev1.Container{
-						{
-							Name:  "setup",
-							Image: ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version), ImagePullPolicy: corev1.PullIfNotPresent,
-							Args: []string{
-								"setup",
-							},
-							SecurityContext: &corev1.SecurityContext{RunAsUser: pointer.Int64(0)},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "gitpod-ca-certificate",
-									SubPath:   "ca.crt",
-									MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
-								},
-							},
-							Env: common.ProxyEnv(&ctx.Config),
-						},
-					},
 					Containers: []corev1.Container{{
 						Name:            Component,
 						Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),

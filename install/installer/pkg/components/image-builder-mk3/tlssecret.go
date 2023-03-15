@@ -45,7 +45,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				DNSNames:   serverAltNames,
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  common.CertManagerCAIssuer,
-					Kind:  "Issuer",
+					Kind:  certmanagerv1.ClusterIssuerKind,
 					Group: "cert-manager.io",
 				},
 				SecretTemplate: &certmanagerv1.CertificateSecretTemplate{

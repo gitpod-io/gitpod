@@ -15,7 +15,7 @@ import (
 const (
 	AppName                         = "gitpod"
 	BlobServeServicePort            = 4000
-	CertManagerCAIssuer             = "ca-issuer"
+	CertManagerCAIssuer             = "gitpod-ca-issuer"
 	DockerRegistryURL               = "docker.io"
 	DockerRegistryName              = "registry"
 	GitpodContainerRegistry         = "eu.gcr.io/gitpod-core-dev/build"

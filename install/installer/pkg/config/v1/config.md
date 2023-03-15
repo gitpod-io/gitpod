@@ -83,8 +83,6 @@ Config defines the v1 version structure of the gitpod config file
 |`sshGatewayHostKey.kind`|string|N| `secret` ||
 |`sshGatewayHostKey.name`|string|Y|  ||
 |`disableDefinitelyGp`|bool|N|  ||
-|`customCACert.kind`|string|N| `secret` ||
-|`customCACert.name`|string|Y|  ||
 |`dropImageRepo`|bool|N|  ||
 |`customization`||N|  ||
 |`components.proxy.service.serviceType`||N|  ||
