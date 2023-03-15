@@ -615,7 +615,8 @@ rm -f /tmp/public-api
 # ===============
 
 log_info "Applying manifests (installing)"
-
+# avoid random werft namespace errors
+kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" create namespace werft || true
 kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" delete -n "${PREVIEW_NAMESPACE}" job migrations || true
 # export the function so we can use it in xargs
 export -f diff-apply
