@@ -19,7 +19,6 @@ jobs:
       # github.head_ref is set by a pull_request event - contains the name of the source branch of the PR
       # github.ref_name is set if the event is NOT a pull_request - it contains only the branch name.
       group: ${{ github.head_ref || github.ref_name }}-configuration
-      cancel-in-progress: true
     outputs:
       is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
@@ -140,7 +139,6 @@ jobs:
       group: ${{ github.head_ref || github.ref_name }}-build-gitpod
       # For the main branch we always want the build job to run to completion
       # For other branches we only care about the "latest" version, so it is fine to cancel in-progress builds
-      cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     services:
       mysql:
         image: mysql:5.7
