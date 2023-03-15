@@ -6191,7 +6191,8 @@ data:
             }
           },
           "kubeconfig": "",
-          "namespace": "default"
+          "namespace": "default",
+          "secretsNamespace": "workspace-secrets"
         },
         "content": {
           "workingArea": "/mnt/workingarea",
@@ -6313,6 +6314,7 @@ data:
     {
       "manager": {
         "namespace": "default",
+        "secretsNamespace": "",
         "schedulerName": "",
         "seccompProfile": "workspace_default_pd-ide-metrics.23.json",
         "timeouts": {
@@ -8951,7 +8953,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: e72f036b19d3287feece7409ecc0991d1c4f58ad96da7b901ce565b0f5208039
+        gitpod.io/checksum_config: 0f892bd4e952cbaa5d71eaaea340ba2838a5763f0caca3f2e6f1b1591c104000
         hello: world
       creationTimestamp: null
       labels:
@@ -11978,7 +11980,7 @@ spec:
     metadata:
       annotations:
         gitpod.io: hello
-        gitpod.io/checksum_config: 6ea687679b10a3046a6840985edd56495c512b0d5bf4b5a9f85d46f41de49036
+        gitpod.io/checksum_config: 14b2091d899fef2d7a41550f7baf02deebc76d64734f5d9b812acd7f937eed88
         hello: world
       creationTimestamp: null
       labels:

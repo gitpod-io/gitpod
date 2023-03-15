@@ -33,8 +33,11 @@ var _ = Describe("WorkspaceController", func() {
 	Context("with regular workspaces", func() {
 		It("should handle successful workspace creation and stop request", func() {
 			name := uuid.NewString()
+
+			envSecret := createSecret(fmt.Sprintf("%s-env", name), "default")
+			tokenSecret := createSecret(fmt.Sprintf("%s-tokens", name), secretsNamespace)
+
 			ws := newWorkspace(name, "default")
-			secret := createSecret(fmt.Sprintf("%s-env", name), "default")
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
@@ -73,7 +76,8 @@ var _ = Describe("WorkspaceController", func() {
 			})
 
 			expectPhaseEventually(ws, workspacev1.WorkspacePhaseRunning)
-			expectSecretCleanup(secret)
+			expectSecretCleanup(envSecret)
+			expectSecretCleanup(tokenSecret)
 
 			markContentReady(ws)
 
@@ -255,7 +259,10 @@ var _ = Describe("WorkspaceController", func() {
 		It("deleting workspace resource should gracefully clean up", func() {
 			name := uuid.NewString()
 			ws := newWorkspace(name, "default")
-			secret := createSecret(fmt.Sprintf("%s-env", name), "default")
+
+			envSecret := createSecret(fmt.Sprintf("%s-env", name), "default")
+			tokenSecret := createSecret(fmt.Sprintf("%s-tokens", name), secretsNamespace)
+
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
@@ -269,7 +276,8 @@ var _ = Describe("WorkspaceController", func() {
 
 			expectWorkspaceCleanup(ws, pod)
 
-			expectSecretCleanup(secret)
+			expectSecretCleanup(envSecret)
+			expectSecretCleanup(tokenSecret)
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				restores: 1,

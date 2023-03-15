@@ -18,12 +18,9 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -109,16 +106,7 @@ func main() {
 		HealthProbeBindAddress: cfg.Health.Addr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "ws-manager-mk2-leader.gitpod.io",
-		Namespace:              cfg.Manager.Namespace,
-		NewCache: func(conf *rest.Config, opts cache.Options) (cache.Cache, error) {
-			// Only watch the maintenance mode ConfigMap.
-			opts.SelectorsByObject = cache.SelectorsByObject{
-				&corev1.ConfigMap{}: cache.ObjectSelector{
-					Label: labels.SelectorFromSet(labels.Set{controllers.LabelMaintenance: "true"}),
-				},
-			}
-			return cache.New(conf, opts)
-		},
+		NewCache:               cache.MultiNamespacedCacheBuilder([]string{cfg.Manager.Namespace, cfg.Manager.SecretsNamespace}),
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

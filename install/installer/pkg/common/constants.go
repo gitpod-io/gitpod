@@ -59,6 +59,7 @@ const (
 	DBCaFileName                    = "ca.crt"
 	DBCaBasePath                    = "/db-ssl"
 	DBCaPath                        = DBCaBasePath + "/" + DBCaFileName
+	WorkspaceSecretsNamespace       = "workspace-secrets"
 
 	AnnotationConfigChecksum = "gitpod.io/checksum_config"
 

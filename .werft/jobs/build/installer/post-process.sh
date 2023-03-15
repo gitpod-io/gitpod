@@ -52,7 +52,7 @@ MATCHES="$(grep -c -- --- k8s.yaml)"
 # get the read number of K8s manifest docs
 # K8s object names and kinds are duplicated in a config map to faciliate deletion
 # subtract one (the config map) and then divide by 2 to get the actual # of docs we'll loop through
-DOCS="$((((MATCHES - 1) / 2) + 1))"
+DOCS="$(((MATCHES - 1) / 2))"
 documentIndex=0
 
 while [ "$documentIndex" -le "$DOCS" ]; do

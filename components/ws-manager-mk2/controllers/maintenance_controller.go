@@ -50,7 +50,6 @@ func (r *MaintenanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	log := log.FromContext(ctx).WithValues("configMap", req.NamespacedName)
 
 	if req.Name != configMapName {
-		log.Info("ignoring unexpected ConfigMap")
 		return ctrl.Result{}, nil
 	}
 

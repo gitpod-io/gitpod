@@ -1883,7 +1883,8 @@ data:
             }
           },
           "kubeconfig": "",
-          "namespace": "default"
+          "namespace": "default",
+          "secretsNamespace": "workspace-secrets"
         },
         "content": {
           "workingArea": "/mnt/workingarea",
@@ -2000,6 +2001,7 @@ data:
     {
       "manager": {
         "namespace": "default",
+        "secretsNamespace": "",
         "schedulerName": "",
         "seccompProfile": "workspace_default_pd-ide-metrics.23.json",
         "timeouts": {
@@ -3389,7 +3391,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: c3f063b20c86e50d84ab6b62d85d5042146c1748f01c42dd37581239a888b9d8
+        gitpod.io/checksum_config: 96b5a68d5c5c49ae0d0c9f68e9d28d40b15481832f04c7686a092963380f1093
       creationTimestamp: null
       labels:
         app: gitpod
@@ -4023,7 +4025,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 220f4f84d031d4a23cf0177b3e94a85a25707d132a8313a51602a3d8b9255414
+        gitpod.io/checksum_config: 04d0c84ff10675d023182a24beb2171cdf9b88568eb96032394819e8566b3c00
       creationTimestamp: null
       labels:
         app: gitpod

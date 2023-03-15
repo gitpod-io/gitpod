@@ -7,6 +7,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -14,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -195,7 +197,9 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 				}
 			}
 
-			r.deleteWorkspaceSecrets(ctx, workspace)
+			if err := r.deleteWorkspaceSecrets(ctx, workspace); err != nil {
+				return ctrl.Result{RequeueAfter: 10 * time.Second}, err
+			}
 
 			// Workspace might have already been in a deleting state,
 			// but not guaranteed, so try deleting anyway.
@@ -257,7 +261,10 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		}
 
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseRunning:
-		r.deleteWorkspaceSecrets(ctx, workspace)
+		err := r.deleteWorkspaceSecrets(ctx, workspace)
+		if err != nil {
+			log.Error(err, "could not delete workspace secrets")
+		}
 
 	// we've disposed already - try to remove the finalizer and call it a day
 	case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
@@ -349,35 +356,62 @@ func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev
 	return ctrl.Result{}, nil
 }
 
-func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) {
+func (r *WorkspaceReconciler) deleteWorkspaceSecrets(ctx context.Context, ws *workspacev1.Workspace) error {
 	log := log.FromContext(ctx)
 
 	// if a secret cannot be deleted we do not return early because we want to attempt
 	// the deletion of the remaining secrets
+	var errs []string
 	err := r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "env"), r.Config.Namespace)
 	if err != nil {
+		errs = append(errs, err.Error())
 		log.Error(err, "could not delete environment secret", "workspace", ws.Name)
 	}
-}
 
-func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace string) error {
-	var secret corev1.Secret
-	err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret)
-	if errors.IsNotFound(err) {
-		// nothing to delete
-		return nil
-	}
-
+	err = r.deleteSecret(ctx, fmt.Sprintf("%s-%s", ws.Name, "tokens"), r.Config.SecretsNamespace)
 	if err != nil {
-		return fmt.Errorf("could not retrieve secret %s: %w", name, err)
+		errs = append(errs, err.Error())
+		log.Error(err, "could not delete token secret", "workspace", ws.Name)
 	}
 
-	err = r.Client.Delete(ctx, &secret)
-	if err != nil && !errors.IsNotFound(err) {
-		return fmt.Errorf("could not delete secret %s: %w", name, err)
+	if len(errs) != 0 {
+		return fmt.Errorf(strings.Join(errs, ":"))
 	}
 
 	return nil
+}
+
+func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace string) error {
+	log := log.FromContext(ctx)
+
+	err := wait.ExponentialBackoffWithContext(ctx, wait.Backoff{
+		Duration: 100 * time.Millisecond,
+		Factor:   1.5,
+		Jitter:   0.2,
+		Steps:    3,
+	}, func() (bool, error) {
+		var secret corev1.Secret
+		err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret)
+		if errors.IsNotFound(err) {
+			// nothing to delete
+			return true, nil
+		}
+
+		if err != nil {
+			log.Error(err, "cannot retrieve secret scheduled for deletion", "secret", name)
+			return false, nil
+		}
+
+		err = r.Client.Delete(ctx, &secret)
+		if err != nil && !errors.IsNotFound(err) {
+			log.Error(err, "cannot delete secret", "secret", name)
+			return false, nil
+		}
+
+		return true, nil
+	})
+
+	return err
 }
 
 var (

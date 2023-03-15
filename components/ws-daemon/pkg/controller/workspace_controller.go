@@ -22,7 +22,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"google.golang.org/protobuf/proto"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -55,9 +57,10 @@ type WorkspaceController struct {
 	maxConcurrentReconciles int
 	operations              *WorkspaceOperations
 	metrics                 *workspaceMetrics
+	secretNamespace         string
 }
 
-func NewWorkspaceController(c client.Client, nodeName string, maxConcurrentReconciles int, ops *WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
+func NewWorkspaceController(c client.Client, nodeName, secretNamespace string, maxConcurrentReconciles int, ops *WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
 	metrics := newWorkspaceMetrics()
 	reg.Register(metrics)
 
@@ -67,6 +70,7 @@ func NewWorkspaceController(c client.Client, nodeName string, maxConcurrentRecon
 		maxConcurrentReconciles: maxConcurrentReconciles,
 		operations:              ops,
 		metrics:                 metrics,
+		secretNamespace:         secretNamespace,
 	}, nil
 }
 
@@ -139,10 +143,8 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 	defer tracing.FinishSpan(span, &err)
 
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil {
-		var init csapi.WorkspaceInitializer
-		err = proto.Unmarshal(ws.Spec.Initializer, &init)
+		init, err := wsc.prepareInitializer(ctx, ws)
 		if err != nil {
-			err = fmt.Errorf("cannot unmarshal initializer config: %w", err)
 			return ctrl.Result{}, err
 		}
 
@@ -153,7 +155,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 				WorkspaceId: ws.Spec.Ownership.WorkspaceID,
 				InstanceId:  ws.Name,
 			},
-			Initializer: &init,
+			Initializer: init,
 			Headless:    ws.IsHeadless(),
 		})
 
@@ -298,6 +300,27 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	}
 
 	return ctrl.Result{}, err
+}
+
+func (wsc *WorkspaceController) prepareInitializer(ctx context.Context, ws *workspacev1.Workspace) (*csapi.WorkspaceInitializer, error) {
+	var init csapi.WorkspaceInitializer
+	err := proto.Unmarshal(ws.Spec.Initializer, &init)
+	if err != nil {
+		err = fmt.Errorf("cannot unmarshal initializer config: %w", err)
+		return nil, err
+	}
+
+	var tokenSecret corev1.Secret
+	err = wsc.Get(ctx, types.NamespacedName{Name: fmt.Sprintf("%s-tokens", ws.Name), Namespace: wsc.secretNamespace}, &tokenSecret)
+	if err != nil {
+		return nil, fmt.Errorf("could not get token secret for workspace: %w", err)
+	}
+
+	if err = csapi.InjectSecretsToInitializer(&init, tokenSecret.Data); err != nil {
+		return nil, fmt.Errorf("failed to inject secrets into initializer: %w", err)
+	}
+
+	return &init, nil
 }
 
 func toWorkspaceGitStatus(status *csapi.GitStatus) *workspacev1.GitStatus {

@@ -9,6 +9,7 @@ import (
 )
 
 var Objects = common.CompositeRenderFunc(
+	role,
 	clusterrole,
 	configmap,
 	common.DefaultServiceAccount(Component),
