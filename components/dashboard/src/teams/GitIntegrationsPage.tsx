@@ -24,11 +24,14 @@ export default function GitAuth() {
 export const OrgSettingsPageWrapper: FunctionComponent = ({ children }) => {
     const currentOrg = useCurrentOrg();
 
+    const title = "Git Integrations";
+    const subtitle = "Configure Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.";
+
     // Render as much of the page as we can in a loading state to avoid content shift
     if (currentOrg.isLoading) {
         return (
             <div className="w-full">
-                <Header title="Organization Settings" subtitle="Manage your organization's settings." />
+                <Header title={title} subtitle={subtitle} />
                 <div className="w-full">
                     <SpinnerLoader />
                 </div>
@@ -40,5 +43,9 @@ export const OrgSettingsPageWrapper: FunctionComponent = ({ children }) => {
         return <Redirect to={"/"} />;
     }
 
-    return <OrgSettingsPage>{children}</OrgSettingsPage>;
+    return (
+        <OrgSettingsPage title={title} subtitle={subtitle}>
+            {children}
+        </OrgSettingsPage>
+    );
 };

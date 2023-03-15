@@ -47,7 +47,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
     return (
         <>
             <Item className="h-16">
-                <ItemFieldIcon>
+                <ItemFieldIcon className="w-1/12">
                     <div
                         className={
                             "rounded-full w-3 h-3 text-sm align-middle m-auto " +
@@ -57,13 +57,13 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
                         &nbsp;
                     </div>
                 </ItemFieldIcon>
-                <ItemField className="w-3/12 flex flex-col my-auto">
+                <ItemField className="w-5/12 flex items-center">
                     <span className="font-medium truncate overflow-ellipsis">{provider.type}</span>
                 </ItemField>
-                <ItemField className="w-7/12 flex flex-col my-auto">
+                <ItemField className="w-5/12 flex items-center">
                     <span className="my-auto truncate text-gray-500 overflow-ellipsis">{provider.host}</span>
                 </ItemField>
-                <ItemFieldContextMenu menuEntries={menuEntries} />
+                <ItemFieldContextMenu className="w-1/12" menuEntries={menuEntries} />
             </Item>
             {showDeleteConfirmation && (
                 <ConfirmationModal

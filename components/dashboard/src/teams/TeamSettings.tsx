@@ -109,7 +109,7 @@ export default function TeamSettings() {
 
     return (
         <>
-            <OrgSettingsPage>
+            <OrgSettingsPage title="Organization Settings" subtitle="Manage your organization's settings.">
                 <Heading2>Organization Name</Heading2>
                 <Subheading className="max-w-2xl">
                     This is your organization's visible name within Gitpod. For example, the name of your company.

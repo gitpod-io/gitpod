@@ -6,8 +6,9 @@
 
 import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useState } from "react";
-import { ItemsList } from "../../components/ItemsList";
-import { Heading2 } from "../../components/typography/headings";
+import { Button } from "../../components/Button";
+import { EmptyMessage } from "../../components/EmptyMessage";
+import { Item, ItemField, ItemsList } from "../../components/ItemsList";
 import { GitIntegrationListItem } from "./GitIntegrationListItem";
 import { GitIntegrationModal } from "./GitIntegrationModal";
 
@@ -23,27 +24,24 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
     return (
         <>
             {providers.length === 0 ? (
-                <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
-                    <div className="m-auto text-center px-8">
-                        <Heading2 color="light" className="self-center mb-4">
-                            No Git Integrations
-                        </Heading2>
-                        <div className="text-gray-500 mb-6 max-w-md">
-                            In addition to the default Git Providers you can authorize with a self-hosted instance of a
-                            provider.
-                        </div>
-                        <button className="self-center" onClick={onCreate}>
-                            New Integration
-                        </button>
-                    </div>
-                </div>
+                <EmptyMessage
+                    title="No Git Integrations"
+                    subtitle="In addition to the default Git Providers you can authorize with a self-hosted instance of a provider."
+                    buttonText="New Integration"
+                    onClick={onCreate}
+                />
             ) : (
                 <>
                     <div className="mt-3">
-                        <button onClick={onCreate}>New Integration</button>
+                        <Button onClick={onCreate}>New Integration</Button>
                     </div>
 
                     <ItemsList className="pt-6">
+                        <Item header={true}>
+                            <ItemField className="w-1/12"> </ItemField>
+                            <ItemField className="w-5/12">Provider Type</ItemField>
+                            <ItemField className="w-6/12">Host Name</ItemField>
+                        </Item>
                         {providers.map((p) => (
                             <GitIntegrationListItem key={p.id} provider={p} />
                         ))}

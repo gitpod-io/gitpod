@@ -29,9 +29,10 @@ type PendingStripeSubscription = { pendingSince: number };
 
 interface Props {
     attributionId?: string;
+    hideSubheading?: boolean;
 }
 
-export default function UsageBasedBillingConfig({ attributionId }: Props) {
+export default function UsageBasedBillingConfig({ attributionId, hideSubheading = false }: Props) {
     const location = useLocation();
     const currentOrg = useCurrentOrg().data;
     const attrId = attributionId ? AttributionId.parse(attributionId) : undefined;
@@ -170,11 +171,13 @@ export default function UsageBasedBillingConfig({ attributionId }: Props) {
 
     return (
         <div className="mb-16">
-            <Subheading>
-                {attributionId && AttributionId.parse(attributionId)?.kind === "user"
-                    ? "Manage billing for your personal account."
-                    : "Manage billing for your organization."}
-            </Subheading>
+            {!hideSubheading && (
+                <Subheading>
+                    {attributionId && AttributionId.parse(attributionId)?.kind === "user"
+                        ? "Manage billing for your personal account."
+                        : "Manage billing for your organization."}
+                </Subheading>
+            )}
             <div className="max-w-xl flex flex-col">
                 {errorMessage && (
                     <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">

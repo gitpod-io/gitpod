@@ -17,11 +17,16 @@ import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { EmptyMessage } from "../components/EmptyMessage";
 
 export default function SSO() {
     const currentOrg = useCurrentOrg();
 
-    return <OrgSettingsPage>{currentOrg.data && <OIDCClients organizationId={currentOrg.data?.id} />}</OrgSettingsPage>;
+    return (
+        <OrgSettingsPage title="SSO" subtitle="Configure OpenID Connect single sign-on providers.">
+            {currentOrg.data && <OIDCClients organizationId={currentOrg.data?.id} />}
+        </OrgSettingsPage>
+    );
 }
 
 function OIDCClients(props: { organizationId: string }) {
@@ -85,11 +90,10 @@ function OIDCClients(props: { organizationId: string }) {
             {modal?.mode === "edit" && <></>}
             {modal?.mode === "delete" && <></>}
 
+            <Heading2>OpenID Connect providers</Heading2>
+            <Subheading>Configure single sign-on for your organization.</Subheading>
+
             <div className="flex items-start sm:justify-between mb-2">
-                <div>
-                    <Heading2>Single sign sign-on with OIDC</Heading2>
-                    <Subheading>Setup SSO for your organization.</Subheading>
-                </div>
                 {clientConfigs.length !== 0 ? (
                     <div className="mt-3 flex mt-0">
                         <button onClick={() => setModal({ mode: "new" })} className="ml-2">
@@ -100,18 +104,12 @@ function OIDCClients(props: { organizationId: string }) {
             </div>
 
             {clientConfigs.length === 0 && (
-                <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
-                    <div className="m-auto text-center">
-                        <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No OIDC Clients</h3>
-                        <div className="text-gray-500 mb-6">
-                            Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
-                            invidunt ut labore et dolore magna aliquyam
-                        </div>
-                        <button className="self-center" onClick={() => setModal({ mode: "new" })}>
-                            New OIDC Client
-                        </button>
-                    </div>
-                </div>
+                <EmptyMessage
+                    title="No OIDC providers"
+                    subtitle="Enter the client ID, client secret, and other information issued by your identity provider, to enable single sign-on for your organization."
+                    buttonText="New OIDC Client"
+                    onClick={() => setModal({ mode: "new" })}
+                />
             )}
 
             <ItemsList className="pt-6">
