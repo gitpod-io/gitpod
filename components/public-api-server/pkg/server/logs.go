@@ -6,6 +6,7 @@ package server
 
 import (
 	"context"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 
 	"github.com/bufbuild/connect-go"
@@ -18,11 +19,11 @@ func NewLogInterceptor(entry *logrus.Entry) connect.UnaryInterceptorFunc {
 			ctx = log.ToContext(ctx, entry.WithContext(ctx))
 
 			log.AddFields(ctx, logrus.Fields{
-				"request.protocol":    "connect",
-				"request.procedure":   req.Spec().Procedure,
-				"address":             req.Peer().Addr,
-				"request.stream_type": streamType(req.Spec().StreamType),
-				"request.headers":     req.Header(),
+				"requestProtocol":   "connect",
+				"requestProcedure":  req.Spec().Procedure,
+				"address":           req.Peer().Addr,
+				"requestStreamType": streamType(req.Spec().StreamType),
+				"requestHeaders":    req.Header(),
 			})
 			log.Extract(ctx).Debugf("Handling request for %s", req.Spec().Procedure)
 
@@ -30,12 +31,12 @@ func NewLogInterceptor(entry *logrus.Entry) connect.UnaryInterceptorFunc {
 
 			// Retrieve the logger from the context again, in case it's been updated.
 			code := codeOf(err)
-			log.AddFields(ctx, logrus.Fields{"response.code": code})
+			log.AddFields(ctx, logrus.Fields{"responseCode": code})
 
 			if err != nil {
 				log.AddFields(ctx, logrus.Fields{logrus.ErrorKey: err})
 			} else {
-				log.AddFields(ctx, logrus.Fields{"response.body": resp.Any()})
+				log.AddFields(ctx, logrus.Fields{"responseBody": resp.Any()})
 			}
 
 			if req.Spec().IsClient {

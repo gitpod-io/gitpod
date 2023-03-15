@@ -303,9 +303,7 @@ func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface)
 	}
 
 	log.AddFields(ctx, logrus.Fields{
-		"user.id":        user.ID,
-		"user.blocked":   user.Blocked,
-		"user.prividged": user.Privileged,
+		"userId": user.ID,
 	})
 
 	if !s.isFeatureEnabled(ctx, conn, user) {

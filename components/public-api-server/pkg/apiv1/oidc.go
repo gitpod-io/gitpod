@@ -90,7 +90,7 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 	}
 
 	log.AddFields(ctx, logrus.Fields{
-		"oidc_client_config_id": created.ID.String(),
+		"oidcClientConfigId": created.ID.String(),
 	})
 
 	converted, err := dbOIDCClientConfigToAPI(created, s.cipher)
@@ -248,9 +248,7 @@ func (s *OIDCService) getUser(ctx context.Context, conn protocol.APIInterface) (
 	}
 
 	log.AddFields(ctx, logrus.Fields{
-		"user.id":        user.ID,
-		"user.blocked":   user.Blocked,
-		"user.prividged": user.Privileged,
+		"userId": user.ID,
 	})
 
 	if !s.isFeatureEnabled(ctx, conn, user) {

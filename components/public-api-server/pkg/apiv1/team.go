@@ -270,7 +270,7 @@ func (s *TeamService) DeleteTeamMember(ctx context.Context, req *connect.Request
 }
 
 func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIInterface, team *protocol.Team) (*v1.Team, error) {
-	logger := log.Extract(ctx).WithField("team.id", team.ID)
+	logger := log.Extract(ctx).WithField("teamId", team.ID)
 	members, err := conn.GetTeamMembers(ctx, team.ID)
 	if err != nil {
 		logger.WithError(err).Error("Failed to get team members.")
