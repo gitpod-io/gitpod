@@ -1376,6 +1376,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 		if timedout == "" {
 			continue
 		}
+		log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Infof("workspace timed out: %s", timedout)
 		err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceTimedOutAnnotation, timedout))
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("workspaceId=%s: %q", workspaceID, err))
