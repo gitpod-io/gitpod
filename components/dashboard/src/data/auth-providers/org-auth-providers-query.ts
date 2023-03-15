@@ -12,7 +12,7 @@ import { useCurrentOrg } from "../organizations/orgs-query";
 
 export type OrgAuthProvidersQueryResult = AuthProviderEntry[];
 export const useOrgAuthProvidersQuery = () => {
-    const organization = useCurrentOrg().data;
+    const { data: organization, isLoading } = useCurrentOrg();
 
     return useQuery<OrgAuthProvidersQueryResult>({
         queryKey: getOrgAuthProvidersQueryKey(organization?.id ?? ""),
@@ -23,6 +23,7 @@ export const useOrgAuthProvidersQuery = () => {
 
             return await getGitpodService().server.getOrgAuthProviders({ organizationId: organization.id });
         },
+        enabled: isLoading,
     });
 };
 
