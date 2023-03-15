@@ -194,9 +194,9 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 
 	handlerOptions := []connect.HandlerOption{
 		connect.WithInterceptors(
+			otelconnect.NewInterceptor(otelconnect.WithTracerProvider(traceProvider)),
 			NewMetricsInterceptor(connectMetrics),
 			NewLogInterceptor(log.Log),
-			otelconnect.NewInterceptor(otelconnect.WithTracerProvider(traceProvider)),
 			auth.NewServerInterceptor(),
 			origin.NewInterceptor(),
 		),

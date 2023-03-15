@@ -54,6 +54,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220214200702-86341886e292 // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	gorm.io/driver/mysql v1.4.4 // indirect
+	gorm.io/plugin/opentelemetry v0.1.1 // indirect
 )
 
 require (
@@ -91,7 +92,7 @@ require (
 	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
 	github.com/uber/jaeger-lib v2.4.1+incompatible // indirect
 	github.com/zitadel/logging v0.3.4 // indirect
-	go.uber.org/atomic v1.6.0 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/text v0.7.0 // indirect
