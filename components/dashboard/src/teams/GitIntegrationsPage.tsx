@@ -24,8 +24,8 @@ export default function GitAuth() {
 export const OrgSettingsPageWrapper: FunctionComponent = ({ children }) => {
     const currentOrg = useCurrentOrg();
 
-    const title = "Git Integrations";
-    const subtitle = "Configure Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.";
+    const title = "Git Auth";
+    const subtitle = "Configure Git Auth for GitLab, or Github.";
 
     // Render as much of the page as we can in a loading state to avoid content shift
     if (currentOrg.isLoading) {

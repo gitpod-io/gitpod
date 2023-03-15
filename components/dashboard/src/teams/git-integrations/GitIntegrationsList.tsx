@@ -25,8 +25,8 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
         <>
             {providers.length === 0 ? (
                 <EmptyMessage
-                    title="No Git Integrations"
-                    subtitle="In addition to the default Git Providers you can authorize with a self-hosted instance of a provider."
+                    title="No Git Auth configurations"
+                    subtitle="Configure Git Auth with GitHub or GitLab."
                     buttonText="New Integration"
                     onClick={onCreate}
                 />

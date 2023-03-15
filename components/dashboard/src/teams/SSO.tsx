@@ -23,7 +23,7 @@ export default function SSO() {
     const currentOrg = useCurrentOrg();
 
     return (
-        <OrgSettingsPage title="SSO" subtitle="Configure OpenID Connect single sign-on providers.">
+        <OrgSettingsPage title="SSO" subtitle="Configure OpenID Connect (OIDC) single sign-on.">
             {currentOrg.data && <OIDCClients organizationId={currentOrg.data?.id} />}
         </OrgSettingsPage>
     );
@@ -90,7 +90,7 @@ function OIDCClients(props: { organizationId: string }) {
             {modal?.mode === "edit" && <></>}
             {modal?.mode === "delete" && <></>}
 
-            <Heading2>OpenID Connect providers</Heading2>
+            <Heading2>OpenID Connect clients</Heading2>
             <Subheading>Configure single sign-on for your organization.</Subheading>
 
             <div className="flex items-start sm:justify-between mb-2">
@@ -106,7 +106,7 @@ function OIDCClients(props: { organizationId: string }) {
             {clientConfigs.length === 0 && (
                 <EmptyMessage
                     title="No OIDC providers"
-                    subtitle="Enter the client ID, client secret, and other information issued by your identity provider, to enable single sign-on for your organization."
+                    subtitle="Enable single sign-on for your organization using an external identity provider (IdP) service that supports the OpenID Connect (OIDC) standard, such as Google."
                     buttonText="New OIDC Client"
                     onClick={() => setModal({ mode: "new" })}
                 />
