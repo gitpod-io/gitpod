@@ -46,6 +46,16 @@ require (
 )
 
 require (
+	github.com/cilium/ebpf v0.4.0 // indirect
+	github.com/containerd/cgroups v1.0.4 // indirect
+	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
+	github.com/docker/go-units v0.4.0 // indirect
+	github.com/godbus/dbus/v5 v5.0.4 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/opencontainers/runtime-spec v1.0.2 // indirect
+)
+
+require (
 	cloud.google.com/go v0.105.0 // indirect
 	cloud.google.com/go/compute v1.12.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
@@ -113,7 +123,7 @@ require (
 	github.com/rs/xid v1.2.1 // indirect
 	github.com/segmentio/backo-go v0.0.0-20200129164019-23eae7c10bd3 // indirect
 	github.com/slok/go-http-metrics v0.10.0 // indirect
-	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37 // indirect
+	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/uber/jaeger-client-go v2.29.1+incompatible // indirect
