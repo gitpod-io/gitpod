@@ -316,6 +316,14 @@ export class UserRateLimiter {
         }
 
         const points = this.config.functions[method as GitpodServerMethodType]?.points || 1;
-        return await limiter.consume(user, points);
+        try {
+            return await limiter.consume(user, points);
+        } catch (err) {
+            log.warn("Rate-limiting websocket api calls.", {
+                userId: user,
+                method,
+            });
+            throw err;
+        }
     }
 }
