@@ -7,6 +7,8 @@ package server
 import (
 	"context"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
+
 	"github.com/bufbuild/connect-go"
 	"github.com/sirupsen/logrus"
 )
@@ -14,42 +16,38 @@ import (
 func NewLogInterceptor(entry *logrus.Entry) connect.UnaryInterceptorFunc {
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			logger := entry.
-				WithContext(ctx).
-				WithField("protocol", "connect").
-				WithField("procedure", req.Spec().Procedure).
-				WithField("address", req.Peer().Addr).
-				WithField("stream_type", streamType(req.Spec().StreamType))
+			ctx = log.ToContext(ctx, entry.WithContext(ctx))
 
-			isClient := req.Spec().IsClient
-
-			if isClient {
-				logger.WithField("headers", req.Header()).Debugf("Starting request for %s", req.Spec().Procedure)
-			} else {
-				logger.WithField("headers", req.Header()).Debugf("Handling request for %s", req.Spec().Procedure)
-			}
+			log.AddFields(ctx, logrus.Fields{
+				"requestProtocol":   "connect",
+				"requestProcedure":  req.Spec().Procedure,
+				"address":           req.Peer().Addr,
+				"requestStreamType": streamType(req.Spec().StreamType),
+				"requestHeaders":    req.Header(),
+			})
+			log.Extract(ctx).Debugf("Handling request for %s", req.Spec().Procedure)
 
 			resp, err := next(ctx, req)
+
+			// Retrieve the logger from the context again, in case it's been updated.
 			code := codeOf(err)
-			logger = logger.WithField("code", code)
+			log.AddFields(ctx, logrus.Fields{"responseCode": code})
 
 			if err != nil {
-				logger = logger.WithError(err)
-				if isClient {
-					logger.Errorf("Received response for %s with code %s", req.Spec().Procedure, code)
-				} else {
-					logger.Warnf("Completed handling of request for %s with code %s", req.Spec().Procedure, code)
-				}
+				log.AddFields(ctx, logrus.Fields{logrus.ErrorKey: err})
 			} else {
-				if resp.Any() != nil {
-					logger = logger.WithField("response", resp.Any())
-				}
+				log.AddFields(ctx, logrus.Fields{"responseBody": resp.Any()})
+			}
 
-				if isClient {
-					logger.WithField("response", resp.Any()).Debugf("Received ok response for %s", req.Spec().Procedure)
+			if req.Spec().IsClient {
+				if err != nil {
+					log.Extract(ctx).Errorf("Received response for %s with code %s", req.Spec().Procedure, code)
 				} else {
-					logger.WithField("response", resp.Any()).Debugf("Completed handling of request for %s with code %s", req.Spec().Procedure, code)
+					log.Extract(ctx).Infof("Received response for %s with code %s", req.Spec().Procedure, code)
 				}
+				log.Extract(ctx).Errorf("Received response for %s with code %s", req.Spec().Procedure, code)
+			} else {
+				log.Extract(ctx).Warnf("Completed handling of request for %s with code %s", req.Spec().Procedure, code)
 			}
 
 			return resp, err
