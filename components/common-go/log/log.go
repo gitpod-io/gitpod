@@ -19,69 +19,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	// OwnerField is the log field name of a workspace owner
-	OwnerField = "userId"
-	// WorkspaceField is the log field name of a workspace ID (not instance ID)
-	WorkspaceField = "workspaceId"
-	// InstanceField is the log field name of a workspace instance ID
-	InstanceField = "instanceId"
-	// ProjectField is the log field name of the project
-	ProjectField = "projectId"
-	// TeamField is the log field name of the team
-	TeamField = "teamId"
-)
-
-// OWI builds a structure meant for logrus which contains the owner, workspace and instance.
-// Beware that this refers to the terminology outside of wsman which maps like:
-//
-//	owner = owner, workspace = metaID, instance = workspaceID
-func OWI(owner, workspace, instance string) log.Fields {
-	return log.Fields{
-		OwnerField:     owner,
-		WorkspaceField: workspace,
-		InstanceField:  instance,
-	}
-}
-
-// LogContext builds a structure meant for logrus which contains the owner, workspace and instance.
-// Beware that this refers to the terminology outside of wsman which maps like:
-//
-//	owner = owner, workspace = metaID, instance = workspaceID
-func LogContext(owner, workspace, instance, project, team string) log.Fields {
-	logFields := log.Fields{}
-
-	if owner != "" {
-		logFields[OwnerField] = owner
-	}
-
-	if workspace != "" {
-		logFields[WorkspaceField] = workspace
-	}
-
-	if instance != "" {
-		logFields[InstanceField] = instance
-	}
-
-	if project != "" {
-		logFields[ProjectField] = project
-	}
-
-	if team != "" {
-		logFields[TeamField] = team
-	}
-
-	return logFields
-}
-
-// ServiceContext is the shape required for proper error logging in the GCP context.
-// See https://cloud.google.com/error-reporting/reference/rest/v1beta1/ServiceContext
-// Note that we musn't set resourceType for reporting errors.
-type ServiceContext struct {
-	Service string `json:"service"`
-	Version string `json:"version"`
-}
-
 // Log is the application wide console logger
 var Log = log.WithFields(log.Fields{})
 
@@ -111,9 +48,7 @@ func logLevelFromEnv() {
 
 // Init initializes/configures the application-wide logger
 func Init(service, version string, json, verbose bool) {
-	Log = log.WithFields(log.Fields{
-		"serviceContext": ServiceContext{service, version},
-	})
+	Log = log.WithFields(ServiceContext(service, version))
 	log.SetReportCaller(true)
 
 	if json {
