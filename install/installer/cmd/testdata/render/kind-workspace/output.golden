@@ -1189,16 +1189,6 @@ data:
       namespace: default
     ---
     apiVersion: rbac.authorization.k8s.io/v1
-    kind: Role
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: gitpod
-        component: ws-daemon
-      name: ws-daemon
-      namespace: workspace-secrets
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
     metadata:
       creationTimestamp: null
@@ -1254,13 +1244,6 @@ data:
         app: gitpod
         component: ws-daemon
       name: default-ws-daemon-rb
-    ---
-    apiVersion: rbac.authorization.k8s.io/v1
-    kind: RoleBinding
-    metadata:
-      creationTimestamp: null
-      name: ws-daemon
-      namespace: workspace-secrets
     ---
     apiVersion: v1
     kind: Service
@@ -2644,26 +2627,6 @@ rules:
   - get
   - update
 ---
-# rbac.authorization.k8s.io/v1/Role ws-daemon
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  creationTimestamp: null
-  labels:
-    app: gitpod
-    component: ws-daemon
-  name: ws-daemon
-  namespace: workspace-secrets
-rules:
-- apiGroups:
-  - ""
-  resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
----
 # rbac.authorization.k8s.io/v1/Role ws-manager
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -2843,22 +2806,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: workspace
----
-# rbac.authorization.k8s.io/v1/RoleBinding ws-daemon
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  creationTimestamp: null
-  name: ws-daemon
-  namespace: workspace-secrets
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: ws-daemon
-subjects:
-- kind: ServiceAccount
-  name: ws-daemon
-  namespace: default
 ---
 # rbac.authorization.k8s.io/v1/RoleBinding ws-manager
 apiVersion: rbac.authorization.k8s.io/v1

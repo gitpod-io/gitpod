@@ -6,6 +6,7 @@ package wsdaemon
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -13,6 +14,17 @@ import (
 )
 
 func role(ctx *common.RenderContext) ([]runtime.Object, error) {
+	var useMk2 bool
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace != nil {
+			useMk2 = ucfg.Workspace.UseWsmanagerMk2
+		}
+		return nil
+	})
+	if !useMk2 {
+		return nil, nil
+	}
+
 	return []runtime.Object{
 		&rbacv1.Role{
 			TypeMeta: common.TypeMetaRole,
