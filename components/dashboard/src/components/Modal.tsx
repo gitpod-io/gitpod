@@ -150,7 +150,7 @@ export const ModalFooter: FC<ModalFooterProps> = ({ error, warning, children }) 
     return (
         <div className="relative">
             {hasAlert && (
-                <div className="absolute -top-12 left-0 right-0" style={alertStyles}>
+                <div className="absolute bottom-12 left-0 right-0" style={alertStyles}>
                     <ModalFooterAlert error={error} warning={warning} />
                 </div>
             )}
