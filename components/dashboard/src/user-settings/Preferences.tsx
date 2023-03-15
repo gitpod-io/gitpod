@@ -15,7 +15,6 @@ import { Link } from "react-router-dom";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
 import { Button } from "../components/Button";
-import CheckBox from "../components/CheckBox";
 import { User } from "@gitpod/gitpod-protocol";
 import SelectIDE from "./SelectIDE";
 
