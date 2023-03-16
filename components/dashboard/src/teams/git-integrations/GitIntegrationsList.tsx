@@ -9,6 +9,7 @@ import { FunctionComponent, useCallback, useState } from "react";
 import { Button } from "../../components/Button";
 import { EmptyMessage } from "../../components/EmptyMessage";
 import { Item, ItemField, ItemsList } from "../../components/ItemsList";
+import { Heading2, Subheading } from "../../components/typography/headings";
 import { GitIntegrationListItem } from "./GitIntegrationListItem";
 import { GitIntegrationModal } from "./GitIntegrationModal";
 
@@ -23,6 +24,21 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
 
     return (
         <>
+            <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
+                <div>
+                    <Heading2>Git Auth configurations</Heading2>
+                    <Subheading>Configure Git Auth for your organization.</Subheading>
+                </div>
+
+                {providers.length !== 0 ? (
+                    <div className="">
+                        <Button className="whitespace-nowrap" onClick={onCreate}>
+                            New Integration
+                        </Button>
+                    </div>
+                ) : null}
+            </div>
+
             {providers.length === 0 ? (
                 <EmptyMessage
                     title="No Git Auth configurations"
@@ -31,22 +47,16 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
                     onClick={onCreate}
                 />
             ) : (
-                <>
-                    <div className="mt-3">
-                        <Button onClick={onCreate}>New Integration</Button>
-                    </div>
-
-                    <ItemsList className="pt-6">
-                        <Item header={true}>
-                            <ItemField className="w-1/12"> </ItemField>
-                            <ItemField className="w-5/12">Provider Type</ItemField>
-                            <ItemField className="w-6/12">Host Name</ItemField>
-                        </Item>
-                        {providers.map((p) => (
-                            <GitIntegrationListItem key={p.id} provider={p} />
-                        ))}
-                    </ItemsList>
-                </>
+                <ItemsList className="pt-6">
+                    <Item header={true}>
+                        <ItemField className="w-1/12"> </ItemField>
+                        <ItemField className="w-5/12">Provider Type</ItemField>
+                        <ItemField className="w-6/12">Host Name</ItemField>
+                    </Item>
+                    {providers.map((p) => (
+                        <GitIntegrationListItem key={p.id} provider={p} />
+                    ))}
+                </ItemsList>
             )}
             {showCreateModal && <GitIntegrationModal onClose={hideModal} />}
         </>

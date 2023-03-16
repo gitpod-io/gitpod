@@ -19,11 +19,7 @@ export const OIDCClients: FC = () => {
     const { data, isLoading } = useOIDCClientsQuery();
 
     if (isLoading) {
-        return (
-            <div>
-                <SpinnerLoader />
-            </div>
-        );
+        return <SpinnerLoader />;
     }
 
     return <OIDCClientsList clientConfigs={data || []} />;
