@@ -110,6 +110,15 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
+        // Logins with organizational Git Auth is not permitted
+        if (authProvider.info.organizationId) {
+            log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, {
+                "authorize-flow": true,
+                ap: authProvider.info,
+            });
+            res.redirect(this.getSorryUrl(`Login with "${host}" is not permitted.`));
+            return;
+        }
         if (this.config.disableDynamicAuthProviderLogin && !authProvider.params.builtin) {
             log.info({ sessionId: req.sessionID }, `Auth Provider is not allowed.`, { ap: authProvider.info });
             res.redirect(this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));

@@ -59,6 +59,7 @@ export class AuthProviderService {
             host: oap.host.toLowerCase(),
             verified: oap.status === "verified",
             builtin: false,
+            disallowLogin: !!oap.organizationId,
             // hiddenOnDashboard: true, // i.e. show only if it's used
             loginContextMatcher: `https://${oap.host}/`,
             oauth: {
