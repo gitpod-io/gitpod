@@ -87,7 +87,7 @@ jobs:
               uses: ./.github/actions/preview-create
               with:
                 name: ${{ needs.configuration.outputs.name }}
-                infrastructure_provider: harvester
+                infrastructure_provider: gce
                 large_vm: false
                 sa_key: ${{ secrets.GCP_CREDENTIALS }}
             - name: Deploy Gitpod to the preview environment
