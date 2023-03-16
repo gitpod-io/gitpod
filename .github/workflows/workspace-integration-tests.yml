@@ -81,21 +81,6 @@ jobs:
             image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
         steps:
             - uses: actions/checkout@v3
-            - name: Create preview environment infrastructure
-              uses: ./.github/actions/preview-create
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  infrastructure_provider: harvester
-                  large_vm: true
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-            - name: Deploy Gitpod to the preview environment
-              if: github.event.inputs.skip_deploy != 'true'
-              id: deploy-gitpod
-              uses: ./.github/actions/deploy-gitpod
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-                  version: ${{ needs.configuration.outputs.version}}
             - id: auth
               uses: google-github-actions/auth@v1
               with:
@@ -111,6 +96,21 @@ jobs:
                     WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
                     WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
                     WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
+            - name: Create preview environment infrastructure
+              uses: ./.github/actions/preview-create
+              with:
+                  name: ${{ needs.configuration.outputs.name }}
+                  infrastructure_provider: harvester
+                  large_vm: true
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+            - name: Deploy Gitpod to the preview environment
+              if: github.event.inputs.skip_deploy != 'true'
+              id: deploy-gitpod
+              uses: ./.github/actions/deploy-gitpod
+              with:
+                  name: ${{ needs.configuration.outputs.name }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+                  version: ${{ needs.configuration.outputs.version}}
             - name: Integration Test
               shell: bash
               env:
