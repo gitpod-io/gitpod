@@ -53,8 +53,18 @@ jobs:
                           echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
                       } >> $GITHUB_OUTPUT
                   fi
+            # sometimes auth fails with:
+            # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
             - id: auth
               uses: google-github-actions/auth@v1
+              continue-on-error: true
+              with:
+                token_format: access_token
+                credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+            # so we retry on failure
+            - id: auth-retry
+              uses: google-github-actions/auth@v1
+              if: steps.auth.outcome == 'failure'
               with:
                 token_format: access_token
                 credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
@@ -88,8 +98,18 @@ jobs:
                 infrastructure_provider: gce
                 large_vm: false
                 sa_key: ${{ secrets.GCP_CREDENTIALS }}
+            # sometimes auth fails with:
+            # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
             - id: auth
               uses: google-github-actions/auth@v1
+              continue-on-error: true
+              with:
+                token_format: access_token
+                credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+            # so we retry on failure
+            - id: auth-retry
+              uses: google-github-actions/auth@v1
+              if: steps.auth.outcome == 'failure'
               with:
                 token_format: access_token
                 credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
