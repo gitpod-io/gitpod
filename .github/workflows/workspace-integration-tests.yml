@@ -83,30 +83,6 @@ jobs:
             image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
         steps:
             - uses: actions/checkout@v3
-            # - name: Configure workspace
-            #   run: |
-            #     cp -r /__w/gitpod/gitpod /workspace
-            #     # Needed by google-github-actions/setup-gcloud
-            #     sudo chown -R gitpod:gitpod /__t
-            #     # Needed by docker/login-action
-            #     sudo chmod goa+rw /var/run/docker.sock
-            # - id: auth
-            #   uses: google-github-actions/auth@v1
-            #   with:
-            #     token_format: access_token
-            #     credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            # - name: Set up Cloud SDK
-            #   uses: google-github-actions/setup-gcloud@v1
-            # - name: Get Secrets from GCP
-            #   id: 'secrets'
-            #   uses: 'google-github-actions/get-secretmanager-secrets@v1'
-            #   with:
-            #     secrets: |-
-            #         WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
-            #         WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
-            #         WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
-            # do not add more steps before this, if you do and there's a failure before we have the secrets
-            # then the Slack Notification on failure will failure due to not having a webhook`s
             - name: Create preview environment infrastructure
               uses: ./.github/actions/preview-create
               with:
