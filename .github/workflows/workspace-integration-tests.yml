@@ -53,6 +53,13 @@ jobs:
                           echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
                       } >> $GITHUB_OUTPUT
                   fi
+            - id: auth
+              uses: google-github-actions/auth@v1
+              with:
+                token_format: access_token
+                credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+            - name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v1
             - name: Get Secrets from GCP
               id: 'secrets'
               uses: 'google-github-actions/get-secretmanager-secrets@v1'
@@ -89,6 +96,13 @@ jobs:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
+            - id: auth
+              uses: google-github-actions/auth@v1
+              with:
+                token_format: access_token
+                credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+            - name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v1
             - name: Get Secrets from GCP
               id: 'secrets'
               uses: 'google-github-actions/get-secretmanager-secrets@v1'
