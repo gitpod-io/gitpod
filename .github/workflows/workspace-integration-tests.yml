@@ -53,11 +53,17 @@ jobs:
                           echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
                       } >> $GITHUB_OUTPUT
                   fi
+            - name: Get Secrets from GCP
+              id: 'secrets'
+              uses: 'google-github-actions/get-secretmanager-secrets@v1'
+              with:
+                secrets: |-
+                    WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
             - name: Slack Notification
               uses: rtCamp/action-slack-notify@v2
               if: failure()
               env:
-                  SLACK_WEBHOOK: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
+                  SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: main branch build failed
     check:
@@ -83,12 +89,20 @@ jobs:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
+            - name: Get Secrets from GCP
+              id: 'secrets'
+              uses: 'google-github-actions/get-secretmanager-secrets@v1'
+              with:
+                secrets: |-
+                    WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
+                    WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
+                    WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
             - name: Integration Test
               shell: bash
               env:
                   ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  USERNAME: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USERNAME }}
-                  USER_TOKEN: ${{ secrets.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
+                  USERNAME: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USERNAME }}
+                  USER_TOKEN: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
                   PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
                   PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
               run: |
@@ -156,7 +170,7 @@ jobs:
               uses: rtCamp/action-slack-notify@v2
               if: success() || failure()
               env:
-                  SLACK_WEBHOOK: ${{ secrets.WORKSPACE_SLACK_WEBHOOK }}
+                  SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: ${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed
             - name: Delete preview environment
