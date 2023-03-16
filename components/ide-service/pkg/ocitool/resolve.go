@@ -71,24 +71,24 @@ func interactiveFetchManifestOrIndex(ctx context.Context, res remotes.Resolver, 
 	return "", nil, nil
 }
 
-func ResolveIDEVersion(ctx context.Context, ref string) (ManifestLabels, error) {
+func ResolveIDEVersion(ctx context.Context, ref string) (string, error) {
 	newCtx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 	res := docker.NewResolver(docker.ResolverOptions{})
 
 	name, mf, err := interactiveFetchManifestOrIndex(newCtx, res, ref)
 	if err != nil {
-		return ManifestLabels{}, err
+		return "", err
 	}
 
 	fetcher, err := res.Fetcher(ctx, name)
 	if err != nil {
-		return ManifestLabels{}, err
+		return "", err
 	}
 
 	cfgin, err := fetcher.Fetch(ctx, mf.Config)
 	if err != nil {
-		return ManifestLabels{}, err
+		return "", err
 	}
 	defer cfgin.Close()
 
@@ -96,19 +96,15 @@ func ResolveIDEVersion(ctx context.Context, ref string) (ManifestLabels, error) 
 
 	err = json.NewDecoder(cfgin).Decode(&tmp)
 	if err != nil {
-		return ManifestLabels{}, err
+		return "", nil
 	}
-
-	return tmp.Config.Labels, nil
-}
-
-type ManifestLabels struct {
-	Version string  `json:"io.gitpod.ide.version"`
-	Commit  *string `json:"io.gitpod.ide.commit,omitempty"`
+	return tmp.Config.Labels.Version, nil
 }
 
 type ManifestJSON struct {
 	Config struct {
-		Labels ManifestLabels `json:"Labels"`
+		Labels struct {
+			Version string `json:"io.gitpod.ide.version"`
+		} `json:"Labels"`
 	} `json:"config"`
 }

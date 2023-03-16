@@ -149,14 +149,4 @@ export interface IDEOption {
      * LatestImageVersion the semantic version of the latest IDE image.
      */
     latestImageVersion?: string;
-
-    /**
-     * ImageCommit the source code commit SHA of the IDE image.
-     */
-    imageCommit?: string;
-
-    /**
-     * LatestImageCommit the source code commit SHA of the latest IDE image.
-     */
-    latestImageCommit?: string;
 }
