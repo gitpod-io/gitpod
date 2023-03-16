@@ -4,16 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, User } from "@gitpod/gitpod-protocol";
+import { User } from "@gitpod/gitpod-protocol";
 import React, { useContext, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "react-router";
 import { AppNotifications } from "../AppNotifications";
 import Menu from "../menu/Menu";
 import OAuthClientApproval from "../OauthClientApproval";
 import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/projects.routes";
-import { StartPage, StartPhase } from "../start/StartPage";
 import { parseProps } from "../start/StartWorkspace";
-import SelectIDEModal from "../user-settings/SelectIDEModal";
 import {
     settingsPathAccount,
     settingsPathBilling,
@@ -137,16 +135,7 @@ export const AppRoutes = () => {
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)
     const isCreation = location.pathname === "/" && hash !== "";
     if (isCreation) {
-        // Prefix with `/#referrer` will specify an IDE for workspace
-        // After selection is saved, user will be updated, and this condition will be false
-        const showIDESelection = User.isOnboardingUser(user) && !hash.startsWith(ContextURL.REFERRER_PREFIX);
-        if (showIDESelection) {
-            return (
-                <StartPage phase={StartPhase.Checking}>
-                    <SelectIDEModal location="workspace_start" />
-                </StartPage>
-            );
-        } else if (new URLSearchParams(location.search).has("showOptions") || newCreateWsPage) {
+        if (new URLSearchParams(location.search).has("showOptions") || newCreateWsPage) {
             return <Redirect to={"/new" + location.pathname + location.search + location.hash} />;
         } else {
             return <CreateWorkspace contextUrl={hash} />;
