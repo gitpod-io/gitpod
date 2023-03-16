@@ -241,6 +241,9 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                 error={errorMessage}
                 warning={!isNew && savedProvider?.status !== "verified" ? "You need to activate this integration." : ""}
             >
+                <Button type="secondary" onClick={props.onClose}>
+                    Cancel
+                </Button>
                 <Button onClick={activate} disabled={!isValid || savingProvider} loading={savingProvider}>
                     Activate Integration
                 </Button>

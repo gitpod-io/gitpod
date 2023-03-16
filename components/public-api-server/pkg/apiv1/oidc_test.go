@@ -126,6 +126,9 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 					ClientSecret: "REDACTED",
 					Scopes:       []string{"openid", "profile", "email", "my-scope"},
 				},
+				OidcConfig: &v1.OIDCConfig{
+					Issuer: config.OidcConfig.Issuer,
+				},
 			},
 		}, response.Msg)
 

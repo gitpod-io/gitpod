@@ -63,7 +63,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
                 <ItemField className="w-5/12 flex items-center">
                     <span className="my-auto truncate text-gray-500 overflow-ellipsis">{provider.host}</span>
                 </ItemField>
-                <ItemFieldContextMenu className="w-1/12" menuEntries={menuEntries} />
+                <ItemFieldContextMenu menuEntries={menuEntries} />
             </Item>
             {showDeleteConfirmation && (
                 <ConfirmationModal
