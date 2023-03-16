@@ -393,10 +393,11 @@ function SwitchToPAYG() {
         }
 
         return (
-            <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full mt-24">
+            <div className="flex flex-col max-h-screen max-w-2xl mx-auto items-center w-full mt-24 text-center">
                 <Heading2>You're now on pay-as-you-go! 🎊</Heading2>
                 <Subheading>
                     New subscriptions are limited to 1000 credits ({Currency.getSymbol(currency)}9 / month) by default.
+                    <br />
                     Change your monthly limit on the billing page if you need more.
                 </Subheading>
 
