@@ -75,7 +75,7 @@ var awaitPortCmdAlias = &cobra.Command{
 	Short:      awaitPortCmd.Short,
 	Long:       awaitPortCmd.Long,
 	Args:       awaitPortCmd.Args,
-	Run:        awaitPortCmd.Run,
+	RunE:       awaitPortCmd.RunE,
 }
 
 func init() {
