@@ -8,29 +8,22 @@ import { FunctionComponent, useCallback, useMemo, useState } from "react";
 import Header from "../components/Header";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { ItemsList } from "../components/ItemsList";
-import { useCurrentUser } from "../user-context";
-import { User, WorkspaceInfo } from "@gitpod/gitpod-protocol";
-import SelectIDEModal from "../user-settings/SelectIDEModal";
+import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import Arrow from "../components/Arrow";
 import ConfirmationModal from "../components/ConfirmationModal";
-import { ProfileState } from "../user-settings/ProfileInformation";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
 import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
 import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 
 const WorkspacesPage: FunctionComponent = () => {
-    const user = useCurrentUser();
     const [limit, setLimit] = useState(50);
     const [searchTerm, setSearchTerm] = useState("");
     const [showInactive, setShowInactive] = useState(false);
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const { data, isLoading } = useListWorkspacesQuery({ limit });
-    const isOnboardingUser = useMemo(() => user && User.isOnboardingUser(user), [user]);
     const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
-    const { newSignupFlow } = useFeatureFlags();
 
     // Sort workspaces into active/inactive groups
     const { activeWorkspaces, inactiveWorkspaces } = useMemo(() => {
@@ -95,12 +88,6 @@ const WorkspacesPage: FunctionComponent = () => {
                     visible
                 />
             )}
-
-            {/* TODO: can remove this once newSignupFlow flag is enabled */}
-            {isOnboardingUser && !newSignupFlow && <SelectIDEModal location={"workspace_list"} />}
-
-            {/* TODO: can remove this once newSignupFlow flag is enabled */}
-            {!isOnboardingUser && !newSignupFlow && <ProfileState.NudgeForProfileUpdateModal />}
 
             {!isLoading &&
                 (activeWorkspaces.length > 0 || inactiveWorkspaces.length > 0 || searchTerm ? (
