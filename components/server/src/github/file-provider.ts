@@ -60,7 +60,7 @@ export class GithubFileProvider implements FileProvider {
             path,
             ref: commit.revision,
             headers: {
-                accept: "application/vnd.github.VERSION.raw",
+                accept: "application/vnd.github.raw",
             },
         };
 
@@ -70,7 +70,7 @@ export class GithubFileProvider implements FileProvider {
                 if (typeof response.data === "string") {
                     return response.data;
                 }
-                log.warn("GithubFileProvider.getFileContent – unexpected response type.", {
+                log.warn("GithubFileProvider.getFileContent – unexpected response type.", {
                     request: params,
                     response: {
                         headers: {
