@@ -137,7 +137,7 @@ jobs:
                   SERVER_TESTS="$BASE_TESTS_DIR/components/server"
                   WS_DAEMON_TESTS="$BASE_TESTS_DIR/components/ws-daemon"
                   WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
-                  WORKSPACE_TESTS="$BASE_TESTS_DIR/components/workspace"
+                  WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
 
                   go install github.com/jstemmer/go-junit-report/v2@latest
 
