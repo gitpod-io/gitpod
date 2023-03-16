@@ -23,7 +23,6 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
@@ -302,9 +301,7 @@ func (s *TokensService) getUser(ctx context.Context, conn protocol.APIInterface)
 		return nil, uuid.Nil, proxy.ConvertError(err)
 	}
 
-	log.AddFields(ctx, logrus.Fields{
-		"userId": user.ID,
-	})
+	log.AddFields(ctx, log.UserID(user.ID))
 
 	if !s.isFeatureEnabled(ctx, conn, user) {
 		return nil, uuid.Nil, connect.NewError(connect.CodePermissionDenied, errors.New("This feature is currently in beta. If you would like to be part of the beta, please contact us."))

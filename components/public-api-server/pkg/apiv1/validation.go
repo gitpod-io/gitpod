@@ -15,16 +15,13 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"github.com/google/uuid"
 	"github.com/relvacode/iso8601"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func validateTeamID(ctx context.Context, id string) (uuid.UUID, error) {
-	log.AddFields(ctx, logrus.Fields{
-		"teamId": id,
-	})
+	log.AddFields(ctx, log.OrganizationID(id))
 	teamID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID must be a valid UUID."))
@@ -50,9 +47,7 @@ func parseGitpodTimestamp(input string) (*timestamppb.Timestamp, error) {
 }
 
 func validateWorkspaceID(ctx context.Context, id string) (string, error) {
-	log.AddFields(ctx, logrus.Fields{
-		"workspaceId": id,
-	})
+	log.AddFields(ctx, log.WorkspaceID(id))
 	if id == "" {
 		return "", connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Empty workspace id specified"))
 	}
@@ -66,9 +61,7 @@ func validateWorkspaceID(ctx context.Context, id string) (string, error) {
 }
 
 func validateProjectID(ctx context.Context, id string) (uuid.UUID, error) {
-	log.AddFields(ctx, logrus.Fields{
-		"projectId": id,
-	})
+	log.AddFields(ctx, log.ProjectID(id))
 	projectID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Project ID must be a valid UUID."))
@@ -78,9 +71,7 @@ func validateProjectID(ctx context.Context, id string) (uuid.UUID, error) {
 }
 
 func validatePersonalAccessTokenID(ctx context.Context, id string) (uuid.UUID, error) {
-	log.AddFields(ctx, logrus.Fields{
-		"patId": id,
-	})
+	log.AddFields(ctx, log.PersonalAccessTokenID(id))
 	tokenID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Token ID must be a valid UUID"))
@@ -90,7 +81,7 @@ func validatePersonalAccessTokenID(ctx context.Context, id string) (uuid.UUID, e
 }
 
 func validateOrganizationID(ctx context.Context, id string) (uuid.UUID, error) {
-	log.AddFields(ctx, logrus.Fields{"orgId": id})
+	log.AddFields(ctx, log.OrganizationID(id))
 	organizationID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("OrganizationID must be a valid UUID"))
@@ -100,7 +91,7 @@ func validateOrganizationID(ctx context.Context, id string) (uuid.UUID, error) {
 }
 
 func validateOIDCClientConfigID(ctx context.Context, id string) (uuid.UUID, error) {
-	log.AddFields(ctx, logrus.Fields{"oidcClientConfigId": id})
+	log.AddFields(ctx, log.OIDCClientConfigID(id))
 	oidcClientConfigID, err := validateUUID(id)
 	if err != nil {
 		return uuid.Nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("OIDC Client Config ID must be a valid UUID"))

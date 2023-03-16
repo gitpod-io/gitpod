@@ -23,7 +23,6 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
@@ -89,9 +88,7 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, status.Errorf(codes.Internal, "Failed to store OIDC client config.")
 	}
 
-	log.AddFields(ctx, logrus.Fields{
-		"oidcClientConfigId": created.ID.String(),
-	})
+	log.AddFields(ctx, log.OIDCClientConfigID(created.ID.String()))
 
 	converted, err := dbOIDCClientConfigToAPI(created, s.cipher)
 	if err != nil {
@@ -247,9 +244,7 @@ func (s *OIDCService) getUser(ctx context.Context, conn protocol.APIInterface) (
 		return nil, uuid.Nil, proxy.ConvertError(err)
 	}
 
-	log.AddFields(ctx, logrus.Fields{
-		"userId": user.ID,
-	})
+	log.AddFields(ctx, log.UserID(user.ID))
 
 	if !s.isFeatureEnabled(ctx, conn, user) {
 		return nil, uuid.Nil, connect.NewError(connect.CodePermissionDenied, errors.New("This feature is currently in beta. If you would like to be part of the beta, please contact us."))
