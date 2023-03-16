@@ -5026,7 +5026,8 @@ data:
             "vscode-workbench",
             "vscode-server",
             "vscode-web",
-            "gitpod-cli"
+            "gitpod-cli",
+            "vscode-desktop-extension"
           ]
         }
       },
@@ -9367,7 +9368,7 @@ spec:
   template:
     metadata:
       annotations:
-        gitpod.io/checksum_config: 82bbddda1db42c99ce600d77026a61a8bae98a12a8d8c345c7d599a9d1158ea1
+        gitpod.io/checksum_config: ef5919405425791f25bbe4820597a9d9c487e25b132708cdfbf02f9c75c75981
       creationTimestamp: null
       labels:
         app: gitpod
