@@ -137,6 +137,9 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                 />
             </ModalBody>
             <ModalFooter error={errorMessage}>
+                <Button type="secondary" onClick={onClose}>
+                    Cancel
+                </Button>
                 <Button onClick={saveConfig} disabled={!isValid} loading={upsertClientConfig.isLoading}>
                     Save
                 </Button>
