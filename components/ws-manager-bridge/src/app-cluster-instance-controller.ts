@@ -63,6 +63,7 @@ export class AppClusterWorkspaceInstancesController implements Disposable {
             await this.workspaceInstanceController.controlNotStoppedAppClusterManagedInstanceTimeouts(
                 ctx,
                 notStoppedInstances,
+                appClusterInstallation,
             );
 
             log.info("Done controlling app cluster instances", {

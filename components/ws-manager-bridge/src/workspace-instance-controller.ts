@@ -33,6 +33,7 @@ export interface WorkspaceInstanceController {
     controlNotStoppedAppClusterManagedInstanceTimeouts(
         parentCtx: TraceContext,
         runningInstances: RunningWorkspaceInfo[],
+        workspaceClusterName: string,
     ): Promise<void>;
 
     onStopped(ctx: TraceContext, ownerUserID: string, instance: WorkspaceInstance): Promise<void>;
@@ -90,6 +91,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                     try {
                         await this.controlNonStoppedWSManagerManagedInstances(
                             ctx,
+                            workspaceClusterName,
                             nonStoppedInstances,
                             clientProvider,
                             this.config.timeouts.pendingPhaseSeconds,
@@ -108,7 +110,11 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                     }
 
                     // Control workspace instances against timeouts
-                    await this.controlNotStoppedAppClusterManagedInstanceTimeouts(ctx, nonStoppedInstances);
+                    await this.controlNotStoppedAppClusterManagedInstanceTimeouts(
+                        ctx,
+                        nonStoppedInstances,
+                        workspaceClusterName,
+                    );
 
                     log.debug("Done controlling instances.", { workspaceClusterName });
                 } catch (err) {
@@ -129,6 +135,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
      */
     protected async controlNonStoppedWSManagerManagedInstances(
         parentCtx: TraceContext,
+        workspaceClusterName: string,
         runningInstances: RunningWorkspaceInfo[],
         clientProvider: ClientProvider,
         pendingPhaseSeconds: number,
@@ -137,7 +144,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
         const span = TraceContext.startSpan("controlNonStoppedWSManagerManagedInstances", parentCtx);
         const ctx = { span };
         try {
-            log.debug("Controlling ws-manager managed instances...");
+            log.debug("Controlling ws-manager managed instances...", { workspaceClusterName });
 
             const runningInstancesIdx = new Map<string, RunningWorkspaceInfo>();
             runningInstances.forEach((i) => runningInstancesIdx.set(i.latestInstance.id, i));
@@ -166,7 +173,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                     log.info(
                         { instanceId, workspaceId: instance.workspaceId },
                         "Database says the instance is present, but ws-man does not know about it. Marking as stopped in database.",
-                        { phase },
+                        { workspaceClusterName, phase },
                     );
                     await this.markWorkspaceInstanceAsStopped(ctx, ri, new Date());
                     continue;
@@ -179,7 +186,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                 });
             }
 
-            log.debug("Done controlling ws-manager managed instances.");
+            log.debug("Done controlling ws-manager managed instances.", { workspaceClusterName });
         } catch (err) {
             TraceContext.setError(ctx, err);
             throw err; // required by caller
@@ -197,19 +204,22 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
     async controlNotStoppedAppClusterManagedInstanceTimeouts(
         parentCtx: TraceContext,
         runningInstances: RunningWorkspaceInfo[],
+        applicationClusterName: string,
     ) {
         const span = TraceContext.startSpan("controlNotStoppedAppClusterManagedInstanceTimeouts", parentCtx);
         const ctx = { span };
         try {
-            log.debug("Controlling managed instances...");
+            log.debug("Controlling app cluster managed instances...", { applicationClusterName });
 
             await Promise.all(
                 runningInstances.map((info) => this.controlNotStoppedAppClusterManagedInstance(ctx, info)),
             );
 
-            log.debug("Done controlling managed instances.");
+            log.debug("Done controlling app cluster managed instances.", { applicationClusterName });
         } catch (err) {
-            log.error("Error while controlling managed instances:", err);
+            log.error("Error while controlling app cluster managed instances:", err, {
+                applicationClusterName,
+            });
             TraceContext.setError(ctx, err);
         } finally {
             span.finish();
