@@ -1,5 +1,7 @@
 # Introduction to ws-manager
 
+test
+
 The workspace manager (aka `wsman`) controls workspaces and reports their state. It serves as our facade towards Kubernetes.
 
 ## Design Principles
