@@ -46,7 +46,7 @@ func stopDebugContainer(ctx context.Context, dockerPath string) error {
 }
 
 func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClient) error {
-	logLevel, err := logrus.ParseLevel(rebuildOpts.LogLevel)
+	logLevel, err := logrus.ParseLevel(validateOpts.LogLevel)
 	if err != nil {
 		return GpError{Err: err, OutCome: utils.Outcome_UserErr, ErrorCode: utils.RebuildErrorCode_InvaligLogLevel}
 	}
@@ -57,7 +57,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		return err
 	}
 
-	checkoutLocation := rebuildOpts.WorkspaceFolder
+	checkoutLocation := validateOpts.WorkspaceFolder
 	if checkoutLocation == "" {
 		checkoutLocation = wsInfo.CheckoutLocation
 	}
@@ -206,11 +206,11 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 
 	workspaceType := api.DebugWorkspaceType_regular
 	contentSource := api.ContentSource_from_other
-	if rebuildOpts.Prebuild {
+	if validateOpts.Prebuild {
 		workspaceType = api.DebugWorkspaceType_prebuild
-	} else if rebuildOpts.From == "prebuild" {
+	} else if validateOpts.From == "prebuild" {
 		contentSource = api.ContentSource_from_prebuild
-	} else if rebuildOpts.From == "snapshot" {
+	} else if validateOpts.From == "snapshot" {
 		contentSource = api.ContentSource_from_backup
 	}
 	debugEnvs, err := supervisorClient.Control.CreateDebugEnv(ctx, &api.CreateDebugEnvRequest{
@@ -238,7 +238,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	for _, env := range debugEnvs.Envs {
 		envs += env + "\n"
 	}
-	for _, env := range rebuildOpts.GitpodEnvs {
+	for _, env := range validateOpts.GitpodEnvs {
 		envs += env + "\n"
 	}
 	for _, env := range workspaceEnvs {
@@ -462,7 +462,7 @@ func openWindow(ctx context.Context, workspaceUrl string) error {
 	return gpCmd.Run()
 }
 
-var rebuildOpts struct {
+var validateOpts struct {
 	WorkspaceFolder string
 	LogLevel        string
 	From            string
@@ -472,9 +472,9 @@ var rebuildOpts struct {
 	GitpodEnvs []string
 }
 
-var rebuildCmd = &cobra.Command{
-	Use:    "rebuild",
-	Short:  "[experimental] Re-builds the workspace (useful to debug a workspace configuration)",
+var validateCmd = &cobra.Command{
+	Use:    "validate",
+	Short:  "[experimental] Validates the workspace (useful to debug a workspace configuration)",
 	Hidden: false,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		supervisorClient, err := supervisor.New(cmd.Context())
@@ -485,6 +485,14 @@ var rebuildCmd = &cobra.Command{
 
 		return runRebuild(cmd.Context(), supervisorClient)
 	},
+}
+
+var rebuildCmd = &cobra.Command{
+	Hidden:     true,
+	Use:        "rebuild",
+	Deprecated: "please use `gp validate` instead.",
+	Short:      validateCmd.Short,
+	RunE:       validateCmd.RunE,
 }
 
 func init() {
@@ -500,13 +508,22 @@ func init() {
 		}
 	}
 
-	rootCmd.AddCommand(rebuildCmd)
-	rebuildCmd.PersistentFlags().StringVarP(&rebuildOpts.WorkspaceFolder, "workspace-folder", "w", workspaceFolder, "Path to the workspace folder.")
-	rebuildCmd.PersistentFlags().StringVarP(&rebuildOpts.LogLevel, "log", "", "error", "Log level to use. Allowed values are 'error', 'warn', 'info', 'debug', 'trace'.")
-	rebuildCmd.PersistentFlags().StringVarP(&rebuildOpts.From, "from", "", "", "Starts from 'prebuild' or 'snapshot'.")
-	rebuildCmd.PersistentFlags().BoolVarP(&rebuildOpts.Prebuild, "prebuild", "", false, "starts as a prebuild workspace (--from is ignored).")
+	setFlags := func(cmd *cobra.Command) {
+		cmd.PersistentFlags().BoolVarP(&validateOpts.Prebuild, "prebuild", "", false, "starts as a prebuild workspace.")
+		cmd.PersistentFlags().StringVarP(&validateOpts.LogLevel, "log", "", "error", "Log level to use. Allowed values are 'error', 'warn', 'info', 'debug', 'trace'.")
 
-	// internal
-	rebuildCmd.PersistentFlags().StringArrayVarP(&rebuildOpts.GitpodEnvs, "gitpod-env", "", nil, "")
-	rebuildCmd.PersistentFlags().MarkHidden("gitpod-env")
+		// internal
+		cmd.PersistentFlags().StringArrayVarP(&validateOpts.GitpodEnvs, "gitpod-env", "", nil, "")
+		cmd.PersistentFlags().StringVarP(&validateOpts.WorkspaceFolder, "workspace-folder", "w", workspaceFolder, "Path to the workspace folder.")
+		cmd.PersistentFlags().StringVarP(&validateOpts.From, "from", "", "", "Starts from 'prebuild' or 'snapshot'.")
+		_ = cmd.PersistentFlags().MarkHidden("gitpod-env")
+		_ = cmd.PersistentFlags().MarkHidden("workspace-folder")
+		_ = cmd.PersistentFlags().MarkHidden("from")
+	}
+
+	setFlags(validateCmd)
+	setFlags(rebuildCmd)
+
+	rootCmd.AddCommand(validateCmd)
+	rootCmd.AddCommand(rebuildCmd)
 }
