@@ -8,6 +8,8 @@ import (
 	"context"
 	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,14 +27,16 @@ type SnapshotReconciler struct {
 	maxConcurrentReconciles int
 	nodeName                string
 	operations              *WorkspaceOperations
+	recorder                record.EventRecorder
 }
 
-func NewSnapshotController(c client.Client, nodeName string, maxConcurrentReconciles int, wso *WorkspaceOperations) *SnapshotReconciler {
+func NewSnapshotController(c client.Client, recorder record.EventRecorder, nodeName string, maxConcurrentReconciles int, wso *WorkspaceOperations) *SnapshotReconciler {
 	return &SnapshotReconciler{
 		Client:                  c,
 		maxConcurrentReconciles: maxConcurrentReconciles,
 		nodeName:                nodeName,
 		operations:              wso,
+		recorder:                recorder,
 	}
 }
 
@@ -124,5 +128,20 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		log.Error(err, "could not set completion status for snapshot", "workspace", snapshot.Spec.WorkspaceID)
 	}
 
+	ssc.emitEvent(&snapshot, snapshotErr)
 	return ctrl.Result{}, err
+}
+
+func (ssc *SnapshotReconciler) emitEvent(s *workspacev1.Snapshot, failure error) {
+	eventType := corev1.EventTypeNormal
+	reason := "Succeeded"
+	message := ""
+
+	if failure != nil {
+		eventType = corev1.EventTypeWarning
+		reason = "Failed"
+		message = failure.Error()
+	}
+
+	ssc.recorder.Event(s, eventType, reason, message)
 }

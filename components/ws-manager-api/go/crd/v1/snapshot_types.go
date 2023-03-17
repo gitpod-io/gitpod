@@ -30,7 +30,7 @@ type SnapshotStatus struct {
 	// +kubebuilder:validation:Optional
 	URL string `json:"url,omitempty"`
 
-	// Completed indicates if the snapshot operation has completed either by taking the snapshot or through failure
+	// Completed indicates if the snapshot operation has completed either by taking the snapshot or due to failure
 	// +kubebuilder:validation:Required
 	Completed bool `json:"completed"`
 }

@@ -65,7 +65,7 @@ spec:
             properties:
               completed:
                 description: Completed indicates if the snapshot operation has completed
-                  either by taking the snapshot or through failure
+                  either by taking the snapshot or due to failure
                 type: boolean
               error:
                 description: Erorr is the error observed during snapshot creation
