@@ -27,4 +27,4 @@ sudo rm -rf /.supervisor/frontend && true
 sudo ln -s "$DIR/frontend/dist" /.supervisor/frontend
 echo "$DIR/frontend/dist linked in /.supervisor/frontend"
 
-gp rebuild --workspace-folder="$ROOT_DIR/dev/ide/example/workspace" --gitpod-env "GITPOD_ANALYTICS_SEGMENT_KEY=YErmvd89wPsrCuGcVnF2XAl846W9WIGl" --gitpod-env "GP_OPEN_EDITOR=" --gitpod-env "GP_PREVIEW_BROWSER=" --gitpod-env "GP_EXTERNAL_BROWSER=" "$@"
+gp validate --workspace-folder="$ROOT_DIR/dev/ide/example/workspace" --gitpod-env "GITPOD_ANALYTICS_SEGMENT_KEY=YErmvd89wPsrCuGcVnF2XAl846W9WIGl" --gitpod-env "GP_OPEN_EDITOR=" --gitpod-env "GP_PREVIEW_BROWSER=" --gitpod-env "GP_EXTERNAL_BROWSER=" "$@"

@@ -778,8 +778,8 @@ function ImageBuildView(props: ImageBuildViewProps) {
                 <>
                     <div className="mt-6 w-11/12 lg:w-3/5">
                         <p className="text-center text-gray-400 dark:text-gray-500">
-                            💡 You can use the <code>gp rebuild</code> command to rebuild the workspace from the editor
-                            terminal. &nbsp;
+                            💡 You can use the <code>gp validate</code> command to validate the workspace configuration
+                            from the editor terminal. &nbsp;
                             <a
                                 href="https://www.gitpod.io/docs/configure/workspaces/workspace-image#trying-out-changes-to-your-dockerfile"
                                 target="_blank"

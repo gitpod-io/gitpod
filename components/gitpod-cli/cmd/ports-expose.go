@@ -95,7 +95,7 @@ var portExposeCmdAlias = &cobra.Command{
 	Short:      portExposeCmd.Short,
 	Long:       portExposeCmd.Long,
 	Args:       portExposeCmd.Args,
-	Run:        portExposeCmd.Run,
+	RunE:       portExposeCmd.RunE,
 }
 
 func init() {
