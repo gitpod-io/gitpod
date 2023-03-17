@@ -115,6 +115,7 @@ jobs:
                 credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
             - name: Set up Cloud SDK
               uses: google-github-actions/setup-gcloud@v1
+            # do this step as early as possible, so that Slack Notify failure has the secret
             - name: Get Secrets from GCP
               id: 'secrets'
               uses: 'google-github-actions/get-secretmanager-secrets@v1'
@@ -128,6 +129,12 @@ jobs:
                 sudo chown -R gitpod:gitpod /__t
                 # Needed by docker/login-action
                 sudo chmod goa+rw /var/run/docker.sock
+            # w/o this step, there is no credential file, and we cannot download previewctl
+            - uses: docker/login-action@v2
+              with:
+                registry: eu.gcr.io
+                username: oauth2accesstoken
+                password: "${{ steps.auth.outputs.access_token }}"
             - name: Create preview environment infrastructure
               uses: ./.github/actions/preview-create
               with:
