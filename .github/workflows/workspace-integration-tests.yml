@@ -99,7 +99,7 @@ jobs:
               env:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: main branch build failed
+                  SLACK_MESSAGE: Workspace Integration Tests failed
     check:
         name: Check for regressions
         needs: [configuration]
@@ -124,6 +124,7 @@ jobs:
               name: Set up Cloud SDK
               uses: google-github-actions/setup-gcloud@v1
             # do this step as early as possible, so that Slack Notify failure has the secret
+            # any earlier, and it conflicts with create previ
             - name: Get Secrets from GCP
               id: "secrets"
               uses: "google-github-actions/get-secretmanager-secrets@v1"
