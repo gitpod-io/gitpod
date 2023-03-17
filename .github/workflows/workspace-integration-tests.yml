@@ -98,6 +98,11 @@ jobs:
                 - /tmp:/tmp
         steps:
             - uses: actions/checkout@v3
+            - name: Configure workspace
+              run: |
+                cp -r /__w/gitpod/gitpod /workspace
+                # Needed by google-github-actions/setup-gcloud
+                sudo chown -R gitpod:gitpod /__t
             # sometimes auth fails with:
             # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
             - id: auth
