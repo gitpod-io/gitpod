@@ -317,6 +317,25 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 		}
 		if mnt.Target == "" {
 			mnt.Target = mnt.Source
+		} else if !mnt.IsFile {
+			// if target is not same with source and it not a file, ensure target is created by gitpod user
+			_, err = os.Stat(mnt.Target)
+			if err != nil {
+				if (os.IsPermission(err) || os.IsNotExist(err)) && mnt.Optional {
+					continue
+				}
+				if !os.IsNotExist(err) {
+					return err
+				}
+				err = os.MkdirAll(mnt.Target, mnt.Permission)
+				if err != nil {
+					return err
+				}
+				_, err = os.Stat(mnt.Target)
+				if err != nil {
+					return err
+				}
+			}
 		}
 		dockerArgs = append(dockerArgs, "-v", fmt.Sprintf("%s:%s", mnt.Source, mnt.Target))
 	}
