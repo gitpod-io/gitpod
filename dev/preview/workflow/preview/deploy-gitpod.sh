@@ -616,13 +616,6 @@ rm -f "${INSTALLER_RENDER_PATH}"
 # =========================
 # Wait for objects to be ready
 # =========================
-DEBUG_CONTEXT=$(kubectx -c)
-DEBUG_CONTEXT+="::"
-DEBUG_CONTEXT+=$(kubens -c)
-DEBUG_CONTEXT+="::"
-DEBUG_CONTEXT+=$(kubectx)
-log_info "${DEBUG_CONTEXT}"
-
 for item in deployment.apps/blobserve deployment.apps/content-service deployment.apps/dashboard deployment.apps/ide-metrics deployment.apps/ide-proxy deployment.apps/ide-service deployment.apps/image-builder-mk3 deployment.apps/minio deployment.apps/node-labeler deployment.apps/payment-endpoint deployment.apps/proxy deployment.apps/public-api-server deployment.apps/redis deployment.apps/server deployment.apps/spicedb deployment.apps/usage deployment.apps/ws-manager deployment.apps/ws-manager-bridge deployment.apps/ws-proxy statefulset.apps/messagebus statefulset.apps/mysql statefulset.apps/openvsx-proxy daemonset.apps/agent-smith daemonset.apps/fluent-bit daemonset.apps/registry-facade daemonset.apps/ws-daemon; do
   kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" rollout status "${item}" --namespace="${PREVIEW_NAMESPACE}"
 done
