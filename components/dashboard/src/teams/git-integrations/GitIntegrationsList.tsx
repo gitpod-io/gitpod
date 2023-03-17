@@ -8,7 +8,7 @@ import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useState } from "react";
 import { Button } from "../../components/Button";
 import { EmptyMessage } from "../../components/EmptyMessage";
-import { Item, ItemField, ItemsList } from "../../components/ItemsList";
+import { Item, ItemField, ItemFieldIcon, ItemsList } from "../../components/ItemsList";
 import { Heading2, Subheading } from "../../components/typography/headings";
 import { GitIntegrationListItem } from "./GitIntegrationListItem";
 import { GitIntegrationModal } from "./GitIntegrationModal";
@@ -49,7 +49,7 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
             ) : (
                 <ItemsList className="pt-6">
                     <Item header={true}>
-                        <ItemField className="w-1/12"> </ItemField>
+                        <ItemFieldIcon />
                         <ItemField className="w-5/12">Provider Type</ItemField>
                         <ItemField className="w-6/12">Host Name</ItemField>
                     </Item>
