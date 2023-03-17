@@ -21,6 +21,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/cobra v1.4.0
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
 	google.golang.org/grpc v1.52.3
 	google.golang.org/protobuf v1.28.1
@@ -68,6 +69,7 @@ require (
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect

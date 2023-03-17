@@ -42,6 +42,7 @@ import (
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/cmd"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/controllers"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
@@ -68,6 +69,11 @@ func init() {
 }
 
 func main() {
+	cmd.Execute()
+	if true {
+		return
+	}
+
 	var enableLeaderElection bool
 	var configFN string
 	var jsonLog bool
