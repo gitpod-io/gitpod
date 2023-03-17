@@ -16,6 +16,7 @@ on:
                 description: "The infrastructure provider to use. Valid options: harvester, gcp"
                 required: false
                 default: harvester
+
 jobs:
     configuration:
         name: Configuration
@@ -46,22 +47,23 @@ jobs:
                           echo "skip=${{ github.event.workflow_run.conclusion == 'failure' }}"
                       } >> $GITHUB_OUTPUT
                   fi
-    check:
-        name: Check for regressions
-        needs: [configuration]
-        if: ${{ needs.configuration.outputs.skip == 'false' }}
-        runs-on: [self-hosted]
-        container:
-            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
+
+    infrastructure:
+        name: Create preview environment infrastructure
+        needs: [ configuration ]
+        runs-on: [ self-hosted ]
+        concurrency:
+            group: ${{ github.head_ref || github.ref_name }}-infrastructure
         steps:
             - uses: actions/checkout@v3
             - name: Create preview environment infrastructure
+              id: create
               uses: ./.github/actions/preview-create
               with:
                   name: ${{ needs.configuration.outputs.name }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   infrastructure_provider: ${{ needs.configuration.outputs.infrastructure_provider }}
                   large_vm: false
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
             - name: Deploy Gitpod to the preview environment
               id: deploy-gitpod
               uses: ./.github/actions/deploy-gitpod
@@ -69,6 +71,19 @@ jobs:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
+
+    check:
+        name: Check for regressions
+        needs: [configuration, infrastructure]
+        if: ${{ needs.configuration.outputs.skip == 'false' }}
+        runs-on: [self-hosted]
+        container:
+            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
+            volumes:
+                - /var/tmp:/var/tmp
+                - /tmp:/tmp
+        steps:
+            - uses: actions/checkout@v3
             - name: Check
               shell: bash
               env:
@@ -142,8 +157,15 @@ jobs:
                   SLACK_WEBHOOK: '${{ steps.secrets.outputs.devx-slack-webhook }}'
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: "`${{ needs.configuration.outputs.version}}` smoke test failed"
+
+    delete:
+        name: Delete preview environment
+        needs: [ configuration, infrastructure, check ]
+        if: always()
+        runs-on: [ self-hosted ]
+        steps:
+            - uses: actions/checkout@v3
             - name: Delete preview environment
-              if: always()
               uses: ./.github/actions/delete-preview
               with:
                   name: ${{ needs.configuration.outputs.name }}
