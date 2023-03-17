@@ -38,7 +38,7 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
         <>
             {showCreateModal && <OIDCClientConfigModal onClose={hideModal} />}
 
-            <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
+            <div className="flex flex-col space-y-2 md:flex-row md:items-start md:justify-between md:space-y-0">
                 <div>
                     <Heading2>OpenID Connect clients</Heading2>
                     <Subheading>Configure single sign-on for your organization.</Subheading>
@@ -62,12 +62,6 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
                 />
             ) : (
                 <ItemsList className="pt-6">
-                    <Item header={true}>
-                        <ItemField className="flex flex-col">
-                            <span>Issuer URL</span>
-                            <span>ID</span>
-                        </ItemField>
-                    </Item>
                     {clientConfigs.map((cc) => (
                         <OIDCClientListItem key={cc.id} clientConfig={cc} />
                     ))}

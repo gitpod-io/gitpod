@@ -24,7 +24,7 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
 
     return (
         <>
-            <div className="flex flex-col space-y-2 md:flex-row md:items-center md:justify-between md:space-y-0">
+            <div className="flex flex-col space-y-2 md:flex-row md:items-start md:justify-between md:space-y-0">
                 <div>
                     <Heading2>Git Auth configurations</Heading2>
                     <Subheading>Configure Git Auth for your organization.</Subheading>
