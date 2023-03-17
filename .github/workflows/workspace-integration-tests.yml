@@ -90,6 +90,7 @@ jobs:
                         --limit=1 \
                         --format=json \
                     | jq --raw-output '.[0].tags[0]' \
+                    | | cut -c 6-
                 )
                 echo "previewctl_version=$PREVIEWCTL_VERSION" >> "$GITHUB_OUTPUT"
             - name: Slack Notification
