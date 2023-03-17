@@ -96,6 +96,6 @@ function diff-apply {
   if kubectl --context "${context}" diff -f "${yaml}" > /dev/null; then
     echo "Skipping ${yaml}, as it produced no diff"
   else
-    kubectl --context "${context}" apply --server-side -f "${yaml}"
+    kubectl --context "${context}" apply --server-side --force-conflicts -f "${yaml}"
   fi
 }
