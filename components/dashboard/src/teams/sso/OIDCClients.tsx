@@ -62,6 +62,11 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
                 />
             ) : (
                 <ItemsList className="pt-6">
+                    <Item header={true}>
+                        <ItemField className="flex flex-col">
+                            <span>Issuer URL</span>
+                        </ItemField>
+                    </Item>
                     {clientConfigs.map((cc) => (
                         <OIDCClientListItem key={cc.id} clientConfig={cc} />
                     ))}
