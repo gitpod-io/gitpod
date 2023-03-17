@@ -5,6 +5,7 @@
 package grpc
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/apipb"
 	"google.golang.org/protobuf/types/known/sourcecontextpb"
+	"google.golang.org/protobuf/types/known/typepb"
 )
 
 func TestGetFieldValue(t *testing.T) {
@@ -32,10 +34,22 @@ func TestGetFieldValue(t *testing.T) {
 			Expectation: Expectation{Found: true, Val: "bar"},
 		},
 		{
-			Name:        "empty field",
+			Name:        "empty string field",
 			Message:     &apipb.Api{},
 			Path:        "name",
 			Expectation: Expectation{Found: true},
+		},
+		{
+			Name:        "enum field",
+			Message:     &apipb.Api{Syntax: typepb.Syntax_SYNTAX_PROTO3},
+			Path:        "syntax",
+			Expectation: Expectation{Found: true, Val: strconv.Itoa(int(typepb.Syntax_SYNTAX_PROTO3))},
+		},
+		{
+			Name:        "empty enum field",
+			Message:     &apipb.Api{},
+			Path:        "syntax",
+			Expectation: Expectation{Found: true, Val: "0"},
 		},
 		{
 			Name:        "non-existent field",
