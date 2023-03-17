@@ -115,8 +115,6 @@ jobs:
               run: |
                 # Needed by google-github-actions/setup-gcloud
                 sudo chown -R gitpod:gitpod /__t
-                echo "$(ls /__t)"
-                echo "$(ls /__w)"
             - id: auth
               uses: google-github-actions/auth@v1
               with:
