@@ -74,10 +74,11 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         val connectParams = ConnectParams(
             parameters["gitpodHost"]!!,
             parameters["workspaceId"]!!,
-            parameters["backendPort"]
+            parameters["backendPort"],
+            parameters["debugWorkspace"] == "true"
         )
 
-        val connectionKeyId = "${connectParams.gitpodHost}-${connectParams.workspaceId}-${connectParams.backendPort}"
+        var connectionKeyId = "${connectParams.gitpodHost}-${connectParams.resolvedWorkspaceId}-${connectParams.backendPort}"
 
         var found = true
         val connectionLifetime = activeConnections.computeIfAbsent(connectionKeyId) {
@@ -88,7 +89,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         if (found) {
             val message =
                 "You are trying to connect to a workspace that has a client already open. Check for opened JetBrains clients on your machine"
-            val title = "${connectParams.workspaceId} (${connectParams.gitpodHost})"
+            val title = connectParams.title
             val okButton = Messages.getOkButton()
             val options = arrayOf(okButton)
             val defaultIndex = 0
@@ -104,8 +105,8 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         }
 
         val client = gitpod.obtainClient(connectParams.gitpodHost)
-        val updates = client.listenToWorkspace(connectionLifetime, connectParams.workspaceId)
-        val workspace = client.syncWorkspace(connectParams.workspaceId).workspace
+        val updates = client.listenToWorkspace(connectionLifetime, connectParams.actualWorkspaceId)
+        val workspace = client.syncWorkspace(connectParams.actualWorkspaceId).workspace
 
         val phaseMessage = JLabel()
         val statusMessage = JLabel()
@@ -120,7 +121,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             background = phaseMessage.background
             columns = 30
         }
-        var ideUrl = ""
+        var resolvedIdeUrl = ""
         val connectionPanel = panel {
             indent {
                 row {
@@ -144,9 +145,9 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         }
                         panel {
                             row {
-                                link(connectParams.workspaceId) {
-                                    if (ideUrl.isNotBlank()) {
-                                        BrowserUtil.browse(ideUrl)
+                                link(connectParams.resolvedWorkspaceId) {
+                                    if (resolvedIdeUrl.isNotBlank()) {
+                                        BrowserUtil.browse(resolvedIdeUrl)
                                     }
                                 }
                             }
@@ -183,7 +184,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         if (WorkspaceInstance.isUpToDate(lastUpdate, update)) {
                             continue
                         }
-                        ideUrl = update.ideUrl
+                        resolvedIdeUrl = update.ideUrl.replace(connectParams.actualWorkspaceId, connectParams.resolvedWorkspaceId)
                         lastUpdate = update
                         if (!update.status.conditions.failed.isNullOrBlank()) {
                             setErrorMessage(update.status.conditions.failed)
@@ -243,18 +244,17 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         if (thinClientJob == null && update.status.phase == "running") {
                             thinClientJob = launch {
                                 try {
-                                    val updatedIdeUrl = URL(update.ideUrl)
-                                    val sshHostUrl =
-                                        URL(update.ideUrl.replace(update.workspaceId, "${update.workspaceId}.ssh"))
-                                    val hostKeys = resolveHostKeys(updatedIdeUrl, connectParams)
+                                    val hostKeys = resolveHostKeys(URL(update.ideUrl), connectParams)
                                     if (hostKeys.isNullOrEmpty()) {
                                         setErrorMessage("${connectParams.gitpodHost} installation does not allow SSH access, public keys cannot be found")
                                         return@launch
                                     }
                                     val ownerToken = client.server.getOwnerToken(update.workspaceId).await()
+                                    val sshHostUrl =
+                                        URL(resolvedIdeUrl.replace(connectParams.resolvedWorkspaceId, "${connectParams.resolvedWorkspaceId}.ssh"))
                                     val credentials =
-                                        resolveCredentials(sshHostUrl, update.workspaceId, ownerToken, hostKeys)
-                                    val joinLink = resolveJoinLink(updatedIdeUrl, ownerToken, connectParams)
+                                        resolveCredentials(sshHostUrl, connectParams.resolvedWorkspaceId, ownerToken, hostKeys)
+                                    val joinLink = resolveJoinLink(URL(resolvedIdeUrl), ownerToken, connectParams)
                                     if (joinLink.isNullOrEmpty()) {
                                         setErrorMessage("failed to fetch JetBrains Gateway Join Link.")
                                         return@launch
@@ -283,7 +283,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                         throw t
                                     }
                                     thisLogger().error(
-                                        "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to connect:",
+                                        "${connectParams.gitpodHost}: ${connectParams.resolvedWorkspaceId}: failed to connect:",
                                         t
                                     )
                                     setErrorMessage("" + t.message)
@@ -292,7 +292,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                         }
                     } catch (e: Throwable) {
                         thisLogger().error(
-                            "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to process workspace update:",
+                            "${connectParams.gitpodHost}: ${connectParams.resolvedWorkspaceId}: failed to process workspace update:",
                             e
                         )
                     }
@@ -300,7 +300,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                 connectionLifetime.terminate()
             } catch (t: Throwable) {
                 thisLogger().error(
-                    "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to process workspace updates:",
+                    "${connectParams.gitpodHost}: ${connectParams.resolvedWorkspaceId}: failed to process workspace updates:",
                     t
                 )
                 setErrorMessage("failed to process workspace updates ${t.message}")
@@ -451,16 +451,16 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                     return response.body()
                 }
                 if (response.statusCode() < 500) {
-                    thisLogger().error("${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '$endpointUrl': ${response.statusCode()}")
+                    thisLogger().error("${connectParams.gitpodHost}: ${connectParams.resolvedWorkspaceId}: failed to fetch '$endpointUrl': ${response.statusCode()}")
                     return null
                 }
-                thisLogger().warn("${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '$endpointUrl', trying again...: ${response.statusCode()}")
+                thisLogger().warn("${connectParams.gitpodHost}: ${connectParams.resolvedWorkspaceId}: failed to fetch '$endpointUrl', trying again...: ${response.statusCode()}")
             } catch (t: Throwable) {
                 if (t is CancellationException) {
                     throw t
                 }
                 thisLogger().warn(
-                    "${connectParams.gitpodHost}: ${connectParams.workspaceId}: failed to fetch '$endpointUrl', trying again...:",
+                    "${connectParams.gitpodHost}: ${connectParams.resolvedWorkspaceId}: failed to fetch '$endpointUrl', trying again...:",
                     t
                 )
             }
@@ -476,9 +476,13 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
 
     private data class ConnectParams(
         val gitpodHost: String,
-        val workspaceId: String,
-        val backendPort: String?
-    )
+        val actualWorkspaceId: String,
+        val backendPort: String?,
+        val debugWorkspace: Boolean,
+    ) {
+        val resolvedWorkspaceId = "${if (debugWorkspace) "debug-" else ""}$actualWorkspaceId"
+        val title = "$resolvedWorkspaceId ($gitpodHost)"
+    }
 
     private class GitpodConnectionHandle(
         lifetime: Lifetime,
@@ -491,7 +495,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         }
 
         override fun getTitle(): String {
-            return "${params.workspaceId} (${params.gitpodHost})"
+            return params.title
         }
 
         override fun hideToTrayOnStart(): Boolean {
