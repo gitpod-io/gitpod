@@ -14,7 +14,6 @@ import (
 	"golang.org/x/crypto/ssh"
 	"sigs.k8s.io/yaml"
 
-	"github.com/go-playground/validator/v10"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
 )
@@ -265,10 +264,6 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 
 	if cfg.MessageBus != nil && cfg.MessageBus.Credentials != nil {
 		res = append(res, cluster.CheckSecret(cfg.MessageBus.Credentials.Name, cluster.CheckSecretRequiredData("rabbitmq-password")))
-	}
-
-	if cfg.AdminLoginSecret != nil {
-		res = append(res, cluster.CheckSecret(cfg.AdminLoginSecret.Name, cluster.CheckSecretRequiredData("login-key")))
 	}
 
 	res = append(res, experimental.ClusterValidation(cfg.Experimental)...)
