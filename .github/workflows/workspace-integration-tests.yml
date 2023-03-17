@@ -117,6 +117,15 @@ jobs:
             infrastructure_provider: gce
             previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
             large_vm: true
+        - name: Deploy Gitpod to the preview environment
+          if: github.event.inputs.skip_deploy != 'true'
+          id: deploy-gitpod
+          uses: ./.github/actions/deploy-gitpod
+          with:
+            name: ${{ needs.configuration.outputs.name }}
+            sa_key: ${{ secrets.GCP_CREDENTIALS }}
+            version: ${{ needs.configuration.outputs.version}}
+            previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
 
     check:
         name: Check for regressions
@@ -133,14 +142,15 @@ jobs:
               run: |
                 # Needed by google-github-actions/setup-gcloud
                 sudo chown -R gitpod:gitpod /__t
+
+            - id: gcloud-sdk-setup
+              name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v1
             - id: auth
               uses: google-github-actions/auth@v1
               with:
                   token_format: access_token
                   credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            - id: gcloud-sdk-setup
-              name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@v1
             # do this step as early as possible, so that Slack Notify failure has the secret
             # any earlier, and it conflicts with create previ
             - name: Get Secrets from GCP
@@ -151,15 +161,6 @@ jobs:
                       WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
                       WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
                       WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
-            - name: Deploy Gitpod to the preview environment
-              if: github.event.inputs.skip_deploy != 'true'
-              id: deploy-gitpod
-              uses: ./.github/actions/deploy-gitpod
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-                  version: ${{ needs.configuration.outputs.version}}
-                  previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
             - name: Integration Test
               shell: bash
               env:
@@ -248,6 +249,7 @@ jobs:
           - /var/tmp:/var/tmp
           - /tmp:/tmp
       steps:
+        - uses: actions/checkout@v3
         - name: Delete preview environment
           uses: ./.github/actions/delete-preview
           with:
