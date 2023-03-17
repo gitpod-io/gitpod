@@ -674,7 +674,7 @@ async function subscribeToStripe(
 
     // Now we want to signup for sure
     try {
-        await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, DEFAULT_USAGE_LIMIT);
+        await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, "", DEFAULT_USAGE_LIMIT);
 
         // We need to poll for the subscription to appear
         let subscriptionId: string | undefined;
