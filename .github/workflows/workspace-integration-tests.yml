@@ -124,11 +124,6 @@ jobs:
                     WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
                     WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
                     WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
-            - name: Revoke service account, removing it from the container
-              shell: bash
-              run: |
-                  set -euo pipefail
-                  gcloud auth revoke --all
             - name: Create preview environment infrastructure
               uses: ./.github/actions/preview-create
               with:
