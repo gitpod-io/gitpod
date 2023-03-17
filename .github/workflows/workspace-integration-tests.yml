@@ -31,6 +31,11 @@ jobs:
             name: ${{ steps.configuration.outputs.name }}
             version: ${{ steps.configuration.outputs.version }}
         steps:
+            - name: Configure workspace
+              run: |
+                cp -r /__w/gitpod/gitpod /workspace
+                # Needed by google-github-actions/setup-gcloud
+                sudo chown -R gitpod:gitpod /__t
             # sometimes auth fails with:
             # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
             - id: auth
@@ -98,27 +103,13 @@ jobs:
                 - /tmp:/tmp
         steps:
             - uses: actions/checkout@v3
-            - name: Configure workspace
-              run: |
-                cp -r /__w/gitpod/gitpod /workspace
-                # Needed by google-github-actions/setup-gcloud
-                sudo chown -R gitpod:gitpod /__t
-            # sometimes auth fails with:
-            # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
             - id: auth
               uses: google-github-actions/auth@v1
-              continue-on-error: true
               with:
                 token_format: access_token
                 credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            # so we retry on failure
-            - id: auth-retry
-              uses: google-github-actions/auth@v1
-              if: steps.auth.outcome == 'failure'
-              with:
-                token_format: access_token
-                credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            - name: Set up Cloud SDK
+            - id: gcloud-sdk-setup
+              name: Set up Cloud SDK
               uses: google-github-actions/setup-gcloud@v1
             # do this step as early as possible, so that Slack Notify failure has the secret
             - name: Get Secrets from GCP
