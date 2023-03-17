@@ -93,6 +93,14 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"update",
 					},
 				},
+				rbacv1.PolicyRule{
+					APIGroups: []string{""},
+					Resources: []string{"events"},
+					Verbs: []string{
+						"create",
+						"patch",
+					},
+				},
 			),
 		},
 	}, nil
