@@ -100,9 +100,36 @@ jobs:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: Workspace Integration Tests failed
+
+    infrastructure:
+      needs: [ configuration ]
+      runs-on: [ self-hosted ]
+      concurrency:
+        group: ${{ github.head_ref || github.ref_name }}-infrastructure
+      steps:
+        - uses: actions/checkout@v3
+        - name: Create preview environment infrastructure
+          id: create
+          uses: ./.github/actions/preview-create
+          with:
+            name: ${{ needs.configuration.outputs.name }}
+            sa_key: ${{ secrets.GCP_CREDENTIALS }}
+            infrastructure_provider: gce
+            previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
+            large_vm: true
+        - name: Deploy Gitpod to the preview environment
+          if: github.event.inputs.skip_deploy != 'true'
+          id: deploy-gitpod
+          uses: ./.github/actions/deploy-gitpod
+          with:
+            name: ${{ needs.configuration.outputs.name }}
+            sa_key: ${{ secrets.GCP_CREDENTIALS }}
+            version: ${{ needs.configuration.outputs.version}}
+            previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
+
     check:
         name: Check for regressions
-        needs: [configuration]
+        needs: [configuration, infrastructure]
         runs-on: [self-hosted]
         container:
             image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
@@ -115,14 +142,15 @@ jobs:
               run: |
                 # Needed by google-github-actions/setup-gcloud
                 sudo chown -R gitpod:gitpod /__t
+
+            - id: gcloud-sdk-setup
+              name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v1
             - id: auth
               uses: google-github-actions/auth@v1
               with:
                   token_format: access_token
                   credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            - id: gcloud-sdk-setup
-              name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@v1
             # do this step as early as possible, so that Slack Notify failure has the secret
             # any earlier, and it conflicts with create previ
             - name: Get Secrets from GCP
@@ -133,26 +161,6 @@ jobs:
                       WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
                       WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
                       WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
-            # TODO: is failing like below
-            # F0317 03:21:48.280214     177 cred.go:123] print credential failed with error: Failed to retrieve access token:: failure while executing gcloud, with args [config config-helper --format=json]: exit status 1
-            # reference: https://github.com/gitpod-io/gitpod/actions/runs/4443861654/jobs/7801529386
-            - name: Create preview environment infrastructure
-              uses: ./.github/actions/preview-create
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  infrastructure_provider: gce
-                  large_vm: true
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-                  previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
-            - name: Deploy Gitpod to the preview environment
-              if: github.event.inputs.skip_deploy != 'true'
-              id: deploy-gitpod
-              uses: ./.github/actions/deploy-gitpod
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-                  version: ${{ needs.configuration.outputs.version}}
-                  previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
             - name: Integration Test
               shell: bash
               env:
@@ -229,10 +237,22 @@ jobs:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: ${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed
-            - name: Delete preview environment
-              if: github.event.inputs.skip_delete != 'true' && (success() || failure())
-              uses: ./.github/actions/delete-preview
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-                  previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
+
+    delete:
+      name: Delete preview environment
+      needs: [ configuration, infrastructure, check ]
+      if: github.event.inputs.skip_delete != 'true' && always()
+      runs-on: [ self-hosted ]
+      container:
+        image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
+        volumes:
+          - /var/tmp:/var/tmp
+          - /tmp:/tmp
+      steps:
+        - uses: actions/checkout@v3
+        - name: Delete preview environment
+          uses: ./.github/actions/delete-preview
+          with:
+              name: ${{ needs.configuration.outputs.name }}
+              sa_key: ${{ secrets.GCP_CREDENTIALS }}
+              previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
