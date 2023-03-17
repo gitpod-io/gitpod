@@ -121,7 +121,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	r.updateMetrics(ctx, &workspace)
 
-	log.V(1).Info("updated workspace status", "status", workspace.Status)
+	log.V(1).Info("updating workspace status", "status", workspace.Status)
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
 		// log.WithValues("status", workspace).Error(err, "unable to update workspace status")
@@ -189,16 +189,16 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			r.metrics.rememberWorkspace(workspace, nil)
 
 		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
+			if err := r.deleteWorkspaceSecrets(ctx, workspace); err != nil {
+				return ctrl.Result{}, err
+			}
+
 			// Done stopping workspace - remove finalizer.
 			if controllerutil.ContainsFinalizer(workspace, workspacev1.GitpodFinalizerName) {
 				controllerutil.RemoveFinalizer(workspace, workspacev1.GitpodFinalizerName)
 				if err := r.Update(ctx, workspace); err != nil {
 					return ctrl.Result{}, client.IgnoreNotFound(err)
 				}
-			}
-
-			if err := r.deleteWorkspaceSecrets(ctx, workspace); err != nil {
-				return ctrl.Result{RequeueAfter: 10 * time.Second}, err
 			}
 
 			// Workspace might have already been in a deleting state,

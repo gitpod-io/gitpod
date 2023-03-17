@@ -31,7 +31,6 @@ spec:
       type: string
     - jsonPath: .spec.type
       name: Type
-      priority: 10
       type: string
     - jsonPath: .status.runtime.nodeName
       name: Node

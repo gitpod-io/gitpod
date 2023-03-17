@@ -228,7 +228,7 @@ type WorkspaceRuntimeStatus struct {
 // Columns with priority > 0 will only show up with `-o wide`.
 //+kubebuilder:printcolumn:name="Workspace",type="string",JSONPath=".spec.ownership.workspaceID",priority=10
 //+kubebuilder:printcolumn:name="Class",type="string",JSONPath=".spec.class"
-//+kubebuilder:printcolumn:name="Type",type="string",JSONPath=".spec.type",priority=10
+//+kubebuilder:printcolumn:name="Type",type="string",JSONPath=".spec.type"
 //+kubebuilder:printcolumn:name="Node",type="string",JSONPath=".status.runtime.nodeName"
 //+kubebuilder:printcolumn:name="Owner",type="string",JSONPath=".spec.ownership.owner"
 //+kubebuilder:printcolumn:name="Team",type="string",JSONPath=".spec.ownership.team"
