@@ -30,6 +30,7 @@ jobs:
         outputs:
             name: ${{ steps.configuration.outputs.name }}
             version: ${{ steps.configuration.outputs.version }}
+            previewctl_version: ${{ steps.configuration.outputs.previewctl_version }}
         steps:
             # sometimes auth fails with:
             # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
@@ -37,24 +38,24 @@ jobs:
               uses: google-github-actions/auth@v1
               continue-on-error: true
               with:
-                token_format: access_token
-                credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+                  token_format: access_token
+                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
             # so we retry on failure
             - id: auth-retry
               uses: google-github-actions/auth@v1
               if: steps.auth.outcome == 'failure'
               with:
-                token_format: access_token
-                credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+                  token_format: access_token
+                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
             - name: Set up Cloud SDK
               uses: google-github-actions/setup-gcloud@v1
             # do this step as early as possible, so that Slack Notify failure has the secret
             - name: Get Secrets from GCP
-              id: 'secrets'
-              uses: 'google-github-actions/get-secretmanager-secrets@v1'
+              id: "secrets"
+              uses: "google-github-actions/get-secretmanager-secrets@v1"
               with:
-                secrets: |-
-                    WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
+                  secrets: |-
+                      WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
             - name: "Set outputs"
               id: configuration
               shell: bash
@@ -80,6 +81,16 @@ jobs:
                           echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
                       } >> $GITHUB_OUTPUT
                   fi
+            - id: set-previewctl-version
+              run: |
+                PREVIEWCTL_VERSION=$(\
+                gcloud container images list-tags eu.gcr.io/gitpod-core-dev/build/previewctl \
+                        --filter="tags:main-gha.*" \
+                        --limit=1 \
+                        --format=json \
+                    | jq --raw-output '.[0].tags[0]' \
+                )
+                echo "$PREVIEWCTL_VERSION" >> "$GITHUB_OUTPUT"
             - name: Slack Notification
               uses: rtCamp/action-slack-notify@v2
               if: failure()
@@ -100,32 +111,33 @@ jobs:
             - uses: actions/checkout@v3
             - name: Configure workspace
               run: |
-                # Needed by google-github-actions/setup-gcloud
-                sudo chown -R gitpod:gitpod /__t
+                  # Needed by google-github-actions/setup-gcloud
+                  sudo chown -R gitpod:gitpod /__t
             - id: auth
               uses: google-github-actions/auth@v1
               with:
-                token_format: access_token
-                credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+                  token_format: access_token
+                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
             - id: gcloud-sdk-setup
               name: Set up Cloud SDK
               uses: google-github-actions/setup-gcloud@v1
             # do this step as early as possible, so that Slack Notify failure has the secret
             - name: Get Secrets from GCP
-              id: 'secrets'
-              uses: 'google-github-actions/get-secretmanager-secrets@v1'
+              id: "secrets"
+              uses: "google-github-actions/get-secretmanager-secrets@v1"
               with:
-                secrets: |-
-                    WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
-                    WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
-                    WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
+                  secrets: |-
+                      WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
+                      WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
+                      WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
             - name: Create preview environment infrastructure
               uses: ./.github/actions/preview-create
               with:
-                name: ${{ needs.configuration.outputs.name }}
-                infrastructure_provider: gce
-                large_vm: true
-                sa_key: ${{ secrets.GCP_CREDENTIALS }}
+                  name: ${{ needs.configuration.outputs.name }}
+                  infrastructure_provider: gce
+                  large_vm: true
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+                  previewctl_hash: ${{needs.configure.outputs.previewctl_version }}
             - name: Deploy Gitpod to the preview environment
               if: github.event.inputs.skip_deploy != 'true'
               id: deploy-gitpod
@@ -134,6 +146,7 @@ jobs:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
+                  previewctl_hash: ${{needs.configure.outputs.previewctl_version }}
             - name: Integration Test
               shell: bash
               env:
