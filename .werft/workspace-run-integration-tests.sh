@@ -122,7 +122,7 @@ REVISION=$(git show -s --format="%h" HEAD)
     git checkout -B "${BRANCH}" && \
     git commit -m "${TEMP_COMMIT_MSG}" --allow-empty  && \
     git push --set-upstream origin "${BRANCH}" && \
-    werft run github -a with-preview=true -a with-large-vm=true -a with-werft=true
+    werft run github -a with-preview=true -a with-large-vm=true -a with-werft=true -a with-gce-vm=true
 ) | werft log slice "build preview environment"
 
 for signal in SIGINT SIGTERM EXIT; do
