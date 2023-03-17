@@ -144,6 +144,7 @@ jobs:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
+                  previewctl_hash: ""
             - name: Integration Test
               shell: bash
               env:
