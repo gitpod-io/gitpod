@@ -124,9 +124,8 @@ jobs:
               with:
                 name: ${{ needs.configuration.outputs.name }}
                 infrastructure_provider: gce
-                large_vm: false
+                large_vm: true
                 sa_key: ${{ secrets.GCP_CREDENTIALS }}
-                previewctl_hash: ""
             - name: Deploy Gitpod to the preview environment
               if: github.event.inputs.skip_deploy != 'true'
               id: deploy-gitpod
@@ -135,7 +134,6 @@ jobs:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
-                  previewctl_hash: ""
             - name: Integration Test
               shell: bash
               env:
