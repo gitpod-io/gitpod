@@ -8,7 +8,7 @@ import { FC, ReactNode, useEffect, useMemo } from "react";
 import cn from "classnames";
 import { getGitpodService } from "../service/service";
 import { Heading2 } from "./typography/headings";
-import Alert from "./Alert";
+import Alert, { AlertProps } from "./Alert";
 
 type CloseModalManner = "esc" | "enter" | "x";
 
@@ -137,21 +137,18 @@ export const ModalBody = ({ children, hideDivider = false, noScroll = false }: M
 };
 
 type ModalFooterProps = {
-    error?: string;
-    warning?: string;
+    alert?: ReactNode;
     children: ReactNode;
 };
-export const ModalFooter: FC<ModalFooterProps> = ({ error, warning, children }) => {
+export const ModalFooter: FC<ModalFooterProps> = ({ alert, children }) => {
     // Inlining these to ensure error band covers modal left/right borders
     const alertStyles = useMemo(() => ({ marginLeft: "-25px", marginRight: "-25px" }), []);
 
-    const hasAlert = error || warning;
-
     return (
         <div className="relative">
-            {hasAlert && (
+            {alert && (
                 <div className="absolute bottom-12 left-0 right-0" style={alertStyles}>
-                    <ModalFooterAlert error={error} warning={warning} />
+                    {alert}
                 </div>
             )}
             <div className="flex justify-end mt-6 space-x-2">{children}</div>
@@ -159,25 +156,11 @@ export const ModalFooter: FC<ModalFooterProps> = ({ error, warning, children }) 
     );
 };
 
-type ModalFooterAlertProps = {
-    error?: string;
-    warning?: string;
-};
-const ModalFooterAlert: FC<ModalFooterAlertProps> = ({ error, warning }) => {
-    if (error) {
-        return (
-            <Alert type="danger" rounded={false}>
-                {error}
-            </Alert>
-        );
-    }
-    if (warning) {
-        return (
-            <Alert type="warning" rounded={false}>
-                {warning}
-            </Alert>
-        );
-    }
-
-    return null;
+// Wrapper around Alert to ensure it's used correctly in a Modal
+export const ModalFooterAlert: FC<AlertProps> = ({ closable = true, children, ...alertProps }) => {
+    return (
+        <Alert rounded={false} closable={closable} {...alertProps}>
+            {children}
+        </Alert>
+    );
 };

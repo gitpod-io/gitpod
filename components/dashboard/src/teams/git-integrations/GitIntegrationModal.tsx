@@ -11,7 +11,7 @@ import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
 import { TextInputField } from "../../components/forms/TextInputField";
 import { InputWithCopy } from "../../components/InputWithCopy";
-import Modal, { ModalBody, ModalFooter, ModalHeader } from "../../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
 import { useInvalidateOrgAuthProvidersQuery } from "../../data/auth-providers/org-auth-providers-query";
 import { useUpsertOrgAuthProviderMutation } from "../../data/auth-providers/upsert-org-auth-provider-mutation";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
@@ -238,8 +238,20 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                 </div>
             </ModalBody>
             <ModalFooter
-                error={errorMessage}
-                warning={!isNew && savedProvider?.status !== "verified" ? "You need to activate this integration." : ""}
+                alert={
+                    <>
+                        {errorMessage ? (
+                            <ModalFooterAlert type="danger">{errorMessage}</ModalFooterAlert>
+                        ) : (
+                            !isNew &&
+                            savedProvider?.status !== "verified" && (
+                                <ModalFooterAlert type="warning" closable={false}>
+                                    You need to activate this integration.
+                                </ModalFooterAlert>
+                            )
+                        )}
+                    </>
+                }
             >
                 <Button type="secondary" onClick={props.onClose}>
                     Cancel
