@@ -157,11 +157,7 @@ const SaveErrorAlert: FC<SaveErrorMessageProps> = ({ error }) => {
     return (
         <ModalFooterAlert type="danger">
             <span>There was a problem saving your configuration.</span>
-            {message && (
-                <div>
-                    <span className="text-xs font-mono">{message}</span>
-                </div>
-            )}
+            {message && <div className="leading-4 text-xs font-mono">{message}</div>}
         </ModalFooterAlert>
     );
 };

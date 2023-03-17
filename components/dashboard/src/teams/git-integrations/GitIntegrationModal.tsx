@@ -6,6 +6,7 @@
 
 import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
+import Alert from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
@@ -245,7 +246,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                         ) : (
                             !isNew &&
                             savedProvider?.status !== "verified" && (
-                                <ModalFooterAlert type="warning" closable={false}>
+                                <ModalFooterAlert type="warning" closable>
                                     You need to activate this integration.
                                 </ModalFooterAlert>
                             )

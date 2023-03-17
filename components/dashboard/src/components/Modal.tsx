@@ -4,11 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, ReactNode, useEffect, useMemo } from "react";
+import { FC, ReactNode, useEffect } from "react";
 import cn from "classnames";
 import { getGitpodService } from "../service/service";
 import { Heading2 } from "./typography/headings";
 import Alert, { AlertProps } from "./Alert";
+import "./modal.css";
+import classNames from "classnames";
 
 type CloseModalManner = "esc" | "enter" | "x";
 
@@ -114,7 +116,11 @@ type ModalHeaderProps = {
 };
 
 export const ModalHeader = ({ children }: ModalHeaderProps) => {
-    return <Heading2 className="pb-2">{children}</Heading2>;
+    return (
+        <div className="pb-2">
+            <Heading2>{children}</Heading2>
+        </div>
+    );
 };
 
 type ModalBodyProps = {
@@ -126,7 +132,7 @@ type ModalBodyProps = {
 export const ModalBody = ({ children, hideDivider = false, noScroll = false }: ModalBodyProps) => {
     return (
         <div
-            className={cn("relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-14", {
+            className={cn("relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
                 "border-t border-b mt-2 py-4": !hideDivider,
                 "overflow-y-auto": !noScroll,
             })}
@@ -141,26 +147,32 @@ type ModalFooterProps = {
     children: ReactNode;
 };
 export const ModalFooter: FC<ModalFooterProps> = ({ alert, children }) => {
-    // Inlining these to ensure error band covers modal left/right borders
-    const alertStyles = useMemo(() => ({ marginLeft: "-25px", marginRight: "-25px" }), []);
-
     return (
-        <div className="relative">
-            {alert && (
-                <div className="absolute bottom-12 left-0 right-0" style={alertStyles}>
-                    {alert}
-                </div>
-            )}
-            <div className="flex justify-end mt-6 space-x-2">{children}</div>
-        </div>
+        <>
+            {alert}
+            <div
+                className={classNames(
+                    // causes footer to show up on top of alert
+                    "relative",
+                    // make as wide as the modal so it covers the alert
+                    "-mx-6 -mb-6 p-6",
+                    // apply the same bg and rounded corners as the modal
+                    "bg-white dark:bg-gray-900 rounded-b-xl",
+                )}
+            >
+                <div className="flex justify-end space-x-2">{children}</div>
+            </div>
+        </>
     );
 };
 
 // Wrapper around Alert to ensure it's used correctly in a Modal
 export const ModalFooterAlert: FC<AlertProps> = ({ closable = true, children, ...alertProps }) => {
     return (
-        <Alert rounded={false} closable={closable} {...alertProps}>
-            {children}
-        </Alert>
+        <div className="gp-modal-footer-alert gp-modal-footer-alert_animate absolute">
+            <Alert rounded={false} closable={closable} {...alertProps}>
+                {children}
+            </Alert>
+        </div>
     );
 };
