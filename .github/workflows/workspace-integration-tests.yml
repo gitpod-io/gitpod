@@ -231,3 +231,4 @@ jobs:
               with:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
+                  previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
