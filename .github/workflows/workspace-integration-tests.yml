@@ -135,6 +135,7 @@ jobs:
                       WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
             # TODO: is failing like below
             # F0317 03:21:48.280214     177 cred.go:123] print credential failed with error: Failed to retrieve access token:: failure while executing gcloud, with args [config config-helper --format=json]: exit status 1
+            # reference: https://github.com/gitpod-io/gitpod/actions/runs/4443861654/jobs/7801529386
             - name: Create preview environment infrastructure
               uses: ./.github/actions/preview-create
               with:
