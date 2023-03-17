@@ -6,6 +6,7 @@ package grpc
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"time"
 
@@ -110,12 +111,16 @@ func getFieldValue(msg protoreflect.Message, path []string) (val string, ok bool
 		return getFieldValue(child, path[1:])
 	}
 
-	if field.Kind() != protoreflect.StringKind {
-		// we only support string fields
+	switch field.Kind() {
+	case protoreflect.StringKind:
+		return msg.Get(field).String(), true
+	case protoreflect.EnumKind:
+		enumNum := msg.Get(field).Enum()
+		return strconv.Itoa(int(enumNum)), true
+	default:
+		// we only support string and enum fields
 		return "", false
 	}
-
-	return msg.Get(field).String(), true
 }
 
 // RatelimitingInterceptor limits how often a gRPC function may be called. If the limit has been
