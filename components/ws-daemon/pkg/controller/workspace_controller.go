@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -58,9 +59,10 @@ type WorkspaceController struct {
 	operations              *WorkspaceOperations
 	metrics                 *workspaceMetrics
 	secretNamespace         string
+	recorder                record.EventRecorder
 }
 
-func NewWorkspaceController(c client.Client, nodeName, secretNamespace string, maxConcurrentReconciles int, ops *WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
+func NewWorkspaceController(c client.Client, recorder record.EventRecorder, nodeName, secretNamespace string, maxConcurrentReconciles int, ops *WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
 	metrics := newWorkspaceMetrics()
 	reg.Register(metrics)
 
@@ -71,6 +73,7 @@ func NewWorkspaceController(c client.Client, nodeName, secretNamespace string, m
 		operations:              ops,
 		metrics:                 metrics,
 		secretNamespace:         secretNamespace,
+		recorder:                recorder,
 	}, nil
 }
 
@@ -182,6 +185,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 			wsc.metrics.recordInitializeTime(time.Since(initStart).Seconds(), ws)
 		}
 
+		wsc.emitEvent(ws, "Content init", initErr)
 		return ctrl.Result{}, err
 	}
 
@@ -277,6 +281,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		wsc.metrics.recordFinalizeTime(time.Since(disposeStart).Seconds(), ws)
 	}
 
+	wsc.emitEvent(ws, "Backup", disposeErr)
 	return ctrl.Result{}, err
 }
 
@@ -299,6 +304,12 @@ func (wsc *WorkspaceController) prepareInitializer(ctx context.Context, ws *work
 	}
 
 	return &init, nil
+}
+
+func (wsc *WorkspaceController) emitEvent(ws *workspacev1.Workspace, operation string, failure error) {
+	if failure != nil {
+		wsc.recorder.Eventf(ws, corev1.EventTypeWarning, "Failed", "%s failed: %s", operation, failure.Error())
+	}
 }
 
 func toWorkspaceGitStatus(status *csapi.GitStatus) *workspacev1.GitStatus {

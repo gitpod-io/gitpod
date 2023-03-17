@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -37,12 +38,13 @@ const (
 	maintenanceRequeue         = 1 * time.Minute
 )
 
-func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, cfg *config.Configuration, reg prometheus.Registerer, maintenance maintenance.Maintenance) (*WorkspaceReconciler, error) {
+func NewWorkspaceReconciler(c client.Client, scheme *runtime.Scheme, recorder record.EventRecorder, cfg *config.Configuration, reg prometheus.Registerer, maintenance maintenance.Maintenance) (*WorkspaceReconciler, error) {
 	reconciler := &WorkspaceReconciler{
 		Client:      c,
 		Scheme:      scheme,
 		Config:      cfg,
 		maintenance: maintenance,
+		Recorder:    recorder,
 	}
 
 	metrics, err := newControllerMetrics(reconciler)
@@ -63,6 +65,7 @@ type WorkspaceReconciler struct {
 	Config      *config.Configuration
 	metrics     *controllerMetrics
 	maintenance maintenance.Maintenance
+	Recorder    record.EventRecorder
 	OnReconcile func(ctx context.Context, ws *workspacev1.Workspace)
 }
 
@@ -114,12 +117,14 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	err = updateWorkspaceStatus(ctx, &workspace, workspacePods, r.Config)
+	oldStatus := workspace.Status
+	err = r.updateWorkspaceStatus(ctx, &workspace, workspacePods, r.Config)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
 	r.updateMetrics(ctx, &workspace)
+	r.emitPhaseEvents(ctx, &workspace, oldStatus)
 
 	log.V(1).Info("updated workspace status", "status", workspace.Status)
 	err = r.Status().Update(ctx, &workspace)
@@ -185,6 +190,8 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 					log.Error(err, "Failed to patch PodStarts in workspace status")
 					return ctrl.Result{}, err
 				}
+
+				r.Recorder.Event(workspace, corev1.EventTypeNormal, "Creating", "")
 			}
 			r.metrics.rememberWorkspace(workspace, nil)
 
@@ -203,6 +210,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 			// Workspace might have already been in a deleting state,
 			// but not guaranteed, so try deleting anyway.
+			r.Recorder.Event(workspace, corev1.EventTypeNormal, "Deleting", "")
 			err := r.Client.Delete(ctx, workspace)
 			return ctrl.Result{}, client.IgnoreNotFound(err)
 		}
@@ -338,6 +346,20 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	}
 
 	r.metrics.rememberWorkspace(workspace, &lastState)
+}
+
+func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspacev1.Workspace, old workspacev1.WorkspaceStatus) {
+	if ws.Status.Phase == workspacev1.WorkspacePhaseInitializing && old.Phase != workspacev1.WorkspacePhaseInitializing {
+		r.Recorder.Event(ws, corev1.EventTypeNormal, "Initializing", "")
+	}
+
+	if ws.Status.Phase == workspacev1.WorkspacePhaseRunning && old.Phase != workspacev1.WorkspacePhaseRunning {
+		r.Recorder.Event(ws, corev1.EventTypeNormal, "Running", "")
+	}
+
+	if ws.Status.Phase == workspacev1.WorkspacePhaseStopping && old.Phase != workspacev1.WorkspacePhaseStopping {
+		r.Recorder.Event(ws, corev1.EventTypeNormal, "Stopping", "")
+	}
 }
 
 func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev1.Pod, reason string) (ctrl.Result, error) {

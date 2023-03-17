@@ -113,13 +113,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	maintenance, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
+	maintenanceReconciler, err := controllers.NewMaintenanceReconciler(mgr.GetClient())
 	if err != nil {
 		setupLog.Error(err, "unable to create maintenance controller", "controller", "Maintenance")
 		os.Exit(1)
 	}
 
-	reconciler, err := controllers.NewWorkspaceReconciler(mgr.GetClient(), mgr.GetScheme(), &cfg.Manager, metrics.Registry, maintenance)
+	workspaceReconciler, err := controllers.NewWorkspaceReconciler(
+		mgr.GetClient(), mgr.GetScheme(), mgr.GetEventRecorderFor("workspace"), &cfg.Manager, metrics.Registry, maintenanceReconciler)
 	if err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Workspace")
 		os.Exit(1)
@@ -132,14 +133,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity, maintenance)
+	wsmanService, err := setupGRPCService(cfg, mgr.GetClient(), activity, maintenanceReconciler)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager service")
 		os.Exit(1)
 	}
 
-	reconciler.OnReconcile = wsmanService.OnWorkspaceReconcile
-	if err = reconciler.SetupWithManager(mgr); err != nil {
+	workspaceReconciler.OnReconcile = wsmanService.OnWorkspaceReconcile
+	if err = workspaceReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup workspace controller with manager", "controller", "Workspace")
 		os.Exit(1)
 	}
@@ -147,7 +148,7 @@ func main() {
 		setupLog.Error(err, "unable to setup timeout controller with manager", "controller", "Timeout")
 		os.Exit(1)
 	}
-	if err = maintenance.SetupWithManager(mgr); err != nil {
+	if err = maintenanceReconciler.SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to setup maintenance controller with manager", "controller", "Maintenance")
 		os.Exit(1)
 	}
