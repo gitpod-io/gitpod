@@ -111,10 +111,6 @@ jobs:
                 - /tmp:/tmp
         steps:
             - uses: actions/checkout@v3
-            - name: Configure workspace
-              run: |
-                  # Needed by google-github-actions/setup-gcloud
-                  sudo chown -R gitpod:gitpod /__t
             - id: auth
               uses: google-github-actions/auth@v1
               with:
