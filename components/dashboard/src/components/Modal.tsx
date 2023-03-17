@@ -169,7 +169,12 @@ export const ModalFooter: FC<ModalFooterProps> = ({ alert, children }) => {
 // Wrapper around Alert to ensure it's used correctly in a Modal
 export const ModalFooterAlert: FC<AlertProps> = ({ closable = true, children, ...alertProps }) => {
     return (
-        <div className="gp-modal-footer-alert gp-modal-footer-alert_animate absolute">
+        <div
+            className={classNames({
+                "gp-modal-footer-alert border-b": !closable,
+                "gp-modal-footer-alert_animate absolute": closable,
+            })}
+        >
             <Alert rounded={false} closable={closable} {...alertProps}>
                 {children}
             </Alert>

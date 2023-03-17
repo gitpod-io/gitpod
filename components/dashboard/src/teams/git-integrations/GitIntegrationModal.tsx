@@ -246,7 +246,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                         ) : (
                             !isNew &&
                             savedProvider?.status !== "verified" && (
-                                <ModalFooterAlert type="warning" closable>
+                                <ModalFooterAlert type="warning" closable={false}>
                                     You need to activate this integration.
                                 </ModalFooterAlert>
                             )
