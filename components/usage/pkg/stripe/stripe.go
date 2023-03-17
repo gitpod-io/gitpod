@@ -357,6 +357,34 @@ func (c *Client) GetSubscriptionWithCustomer(ctx context.Context, subscriptionID
 	return subscription, nil
 }
 
+func (c *Client) CreateHoldPaymentIntent(ctx context.Context, customer *stripe.Customer, amountInCents int) (*stripe.PaymentIntent, error) {
+	if customer == nil {
+		return nil, fmt.Errorf("no customer specified")
+	}
+
+	currency := customer.Metadata["preferredCurrency"]
+	if currency == "" {
+		currency = string(stripe.CurrencyUSD)
+	}
+
+	// We create a payment intent with the amount we want to hold
+	paymentIntent, err := c.sc.PaymentIntents.New(&stripe.PaymentIntentParams{
+		Amount:   stripe.Int64(int64(amountInCents)),
+		Currency: stripe.String(currency),
+		Customer: stripe.String(customer.ID),
+		PaymentMethodTypes: stripe.StringSlice([]string{
+			"card", // TODO(gpl) paymentMethod: Would be great to abstract over "card" by looking up the registered paymentMethod on the customer here
+		}),
+		PaymentMethod: stripe.String(customer.InvoiceSettings.DefaultPaymentMethod.ID),
+		CaptureMethod: stripe.String(string(stripe.PaymentIntentCaptureMethodManual)),
+		Confirm:       stripe.Bool(true),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create hold payment intent: %w", err)
+	}
+	return paymentIntent, nil
+}
+
 func (c *Client) CreateSubscription(ctx context.Context, customerID string, priceID string, isAutomaticTaxSupported bool) (*stripe.Subscription, error) {
 	if customerID == "" {
 		return nil, fmt.Errorf("no customerID specified")
@@ -453,35 +481,30 @@ const (
 	PaymentHoldResultFailed                PaymentHoldResult = "failed"
 )
 
-func (c *Client) TryHoldAmount(ctx context.Context, customer *stripe.Customer, amountInCents int) (PaymentHoldResult, error) {
+func (c *Client) TryHoldAmount(ctx context.Context, customer *stripe.Customer, holdPaymentIntentId string) (PaymentHoldResult, error) {
 	if customer == nil {
 		return PaymentHoldResultFailed, fmt.Errorf("no customer specified")
 	}
 
-	if amountInCents <= 0 {
-		return PaymentHoldResultFailed, fmt.Errorf("amountInCents must be greater than 0")
+	if holdPaymentIntentId == "" {
+		return PaymentHoldResultFailed, fmt.Errorf("no payment intent specified for hold")
 	}
+	defer func(holdPaymentIntentId string) {
+		paymentIntent, err := c.sc.PaymentIntents.Cancel(holdPaymentIntentId, nil)
+		if err != nil {
+			log.Errorf("Failed to cancel payment intent: %v", err)
+			return
+		}
+		if paymentIntent.Status != stripe.PaymentIntentStatusCanceled {
+			log.Errorf("Failed to cancel payment intent: %v", err)
+			return
+		}
+		log.Debugf("Successfully cancelled payment intent %s", holdPaymentIntentId)
+	}(holdPaymentIntentId)
 
-	currency := customer.Metadata["preferredCurrency"]
-	if currency == "" {
-		currency = string(stripe.CurrencyUSD)
-	}
-
-	// we create a payment intent with the amount we want to hold
-	// and then cancel it immediately
-	paymentIntent, err := c.sc.PaymentIntents.New(&stripe.PaymentIntentParams{
-		Amount:   stripe.Int64(int64(amountInCents)),
-		Currency: stripe.String(currency),
-		Customer: stripe.String(customer.ID),
-		PaymentMethodTypes: stripe.StringSlice([]string{
-			"card",
-		}),
-		PaymentMethod: stripe.String(customer.InvoiceSettings.DefaultPaymentMethod.ID),
-		CaptureMethod: stripe.String(string(stripe.PaymentIntentCaptureMethodManual)),
-		Confirm:       stripe.Bool(true),
-	})
+	paymentIntent, err := c.sc.PaymentIntents.Get(holdPaymentIntentId, nil)
 	if err != nil {
-		return PaymentHoldResultFailed, fmt.Errorf("failed to confirm payment intent: %w", err)
+		return "", fmt.Errorf("failed to retrieve payment intent: %w", err)
 	}
 	if paymentIntent.Status != stripe.PaymentIntentStatusRequiresCapture {
 		result := PaymentHoldResultFailed
@@ -494,16 +517,7 @@ func (c *Client) TryHoldAmount(ctx context.Context, customer *stripe.Customer, a
 		}
 		return result, fmt.Errorf("Couldn't put a hold on the card: %s", paymentIntent.Status)
 	}
-	paymentIntent, err = c.sc.PaymentIntents.Cancel(paymentIntent.ID, nil)
-	if err != nil {
-		log.Errorf("Failed to cancel payment intent: %v", err)
-		return PaymentHoldResultSucceeded, nil
-	}
-	if paymentIntent.Status != stripe.PaymentIntentStatusCanceled {
-		log.Errorf("Failed to cancel payment intent: %v", err)
-		return PaymentHoldResultSucceeded, nil
-	}
-	log.Info("Successfully put a hold on the card. Payment intent canceled.", customer.ID)
+	log.Info("Successfully put a hold on the card.", customer.ID)
 	return PaymentHoldResultSucceeded, nil
 }
 

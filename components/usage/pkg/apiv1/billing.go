@@ -180,6 +180,39 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 	}, nil
 }
 
+func (s *BillingService) CreateHoldPaymentIntent(ctx context.Context, req *v1.CreateHoldPaymentIntentRequest) (*v1.CreateHoldPaymentIntentResponse, error) {
+	attributionID, err := db.ParseAttributionID(req.GetAttributionId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
+	}
+
+	customer, err := s.GetStripeCustomer(ctx, &v1.GetStripeCustomerRequest{
+		Identifier: &v1.GetStripeCustomerRequest_AttributionId{
+			AttributionId: string(attributionID),
+		},
+	})
+	if err != nil {
+		log.WithError(err).Errorf("Failed to find stripe customer.")
+		return nil, status.Errorf(codes.Internal, "Failed to find stripe customer")
+	}
+	stripeCustomer, err := s.stripeClient.GetCustomer(ctx, customer.Customer.Id)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to get customer from stripe.")
+		return nil, status.Errorf(codes.Internal, "Failed to get customer from stripe.")
+	}
+
+	holdPaymentIntent, err := s.stripeClient.CreateHoldPaymentIntent(ctx, stripeCustomer, 1000)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to create a payment intent to for playing a hold.")
+		return nil, status.Errorf(codes.Internal, "Failed to create a payment intent to for playing a hold.")
+	}
+
+	return &v1.CreateHoldPaymentIntentResponse{
+		PaymentIntentId:           holdPaymentIntent.ID,
+		PaymentIntentClientSecret: holdPaymentIntent.ClientSecret,
+	}, nil
+}
+
 func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.CreateStripeSubscriptionRequest) (*v1.CreateStripeSubscriptionResponse, error) {
 	attributionID, err := db.ParseAttributionID(req.GetAttributionId())
 	if err != nil {
@@ -224,14 +257,17 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
 	}
 
-	// check the provided payment method by creating a hold on it.
-	result, err := s.stripeClient.TryHoldAmount(ctx, stripeCustomer, 1000)
-	if err != nil {
-		log.WithError(err).Errorf("Failed to verify credit card for customer %s", stripeCustomer.ID)
-	}
-	if result != stripe.PaymentHoldResultSucceeded {
-		log.Errorf("Failed to verify credit card for customer %s. Result: %s", stripeCustomer.ID, result)
-		return nil, status.Error(codes.InvalidArgument, "The provided payment method is invalid. Please provide working credit card information to proceed.")
+	// TODO(gpl): Make this mandatory to mitigate abuse (what we see here is frontend-controlled!)
+	if req.HoldPaymentIntentId != "" {
+		// check the provided payment method by creating a hold on it.
+		result, err := s.stripeClient.TryHoldAmount(ctx, stripeCustomer, req.HoldPaymentIntentId)
+		if err != nil {
+			log.WithError(err).Errorf("Failed to verify credit card for customer %s", stripeCustomer.ID)
+		}
+		if result != stripe.PaymentHoldResultSucceeded {
+			log.Errorf("Failed to verify credit card for customer %s. Result: %s", stripeCustomer.ID, result)
+			return nil, status.Error(codes.InvalidArgument, "The provided payment method is invalid. Please provide working credit card information to proceed.")
+		}
 	}
 
 	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceID, isAutomaticTaxSupported)
