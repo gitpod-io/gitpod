@@ -30,7 +30,7 @@ jobs:
         outputs:
             name: ${{ steps.configuration.outputs.name }}
             version: ${{ steps.configuration.outputs.version }}
-            previewctl_version: ${{ steps.configuration.outputs.previewctl_version }}
+            previewctl_version: ${{ steps.set-previewctl-version.outputs.previewctl_version }}
         steps:
             # sometimes auth fails with:
             # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
@@ -81,7 +81,8 @@ jobs:
                           echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
                       } >> $GITHUB_OUTPUT
                   fi
-            - id: set-previewctl-version
+            - name: Set previewctl version
+              id: set-previewctl-version
               run: |
                 PREVIEWCTL_VERSION=$(\
                 gcloud container images list-tags eu.gcr.io/gitpod-core-dev/build/previewctl \
