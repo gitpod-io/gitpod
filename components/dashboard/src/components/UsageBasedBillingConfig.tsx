@@ -32,8 +32,10 @@ interface Props {
     hideSubheading?: boolean;
 }
 
+// Guard against multiple calls to subscripe (per page load)
+let didAlreadyCallSubscripe = false;
+
 export default function UsageBasedBillingConfig({ attributionId, hideSubheading = false }: Props) {
-    const location = useLocation();
     const currentOrg = useCurrentOrg().data;
     const attrId = attributionId ? AttributionId.parse(attributionId) : undefined;
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
@@ -48,6 +50,10 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>(
         undefined,
     );
+
+    // Stripe-controlled parameters
+    const location = useLocation();
+    const [stripeParams, setStripeParams] = useState<{ setupIntentId?: string; redirectStatus?: string }>({});
 
     const now = useMemo(() => dayjs().utc(true), []);
     const [billingCycleFrom, setBillingCycleFrom] = useState<dayjs.Dayjs>(now.startOf("month"));
@@ -90,14 +96,31 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     }, [attributionId, refreshSubscriptionDetails]);
 
     useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        setStripeParams({
+            setupIntentId: params.get("setup_intent") || undefined,
+            redirectStatus: params.get("redirect_status") || undefined,
+        });
+    }, [location.search]);
+
+    const subscribeToStripe = useCallback(() => {
         if (!attributionId) {
             return;
         }
-        const params = new URLSearchParams(location.search);
-        if (!params.get("setup_intent") || params.get("redirect_status") !== "succeeded") {
+        const { setupIntentId, redirectStatus } = stripeParams;
+        if (!setupIntentId || redirectStatus !== "succeeded") {
+            // TODO(gpl) We have to handle external validation errors (3DS, e.g.) here
             return;
         }
-        const setupIntentId = params.get("setup_intent")!;
+
+        // Guard against multiple execution following the pattern here: https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application
+        if (didAlreadyCallSubscripe) {
+            console.log("didAlreadyCallSubscripe, skipping this time.");
+            return;
+        }
+        didAlreadyCallSubscripe = true;
+        console.log("didAlreadyCallSubscripe false, first run.");
+
         window.history.replaceState({}, "", location.pathname);
         (async () => {
             const pendingSubscription = { pendingSince: Date.now() };
@@ -136,7 +159,8 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 );
             }
         })();
-    }, [attrId?.kind, attributionId, currentOrg, location.pathname, location.search, refreshSubscriptionDetails]);
+    }, [attrId?.kind, attributionId, currentOrg, location.pathname, stripeParams, refreshSubscriptionDetails]);
+    useEffect(subscribeToStripe, [subscribeToStripe]); // Call every time the function changes, and guard in against re-entry in the function itself
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
     const showBalance = !showSpinner;
