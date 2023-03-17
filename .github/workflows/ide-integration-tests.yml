@@ -58,29 +58,43 @@ jobs:
                   SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: main branch build failed
-    check:
-        name: Check for regressions
-        needs: [configuration]
-        runs-on: [self-hosted]
-        container:
-            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
+
+    infrastructure:
+        name: Create preview environment infrastructure
+        needs: [ configuration ]
+        runs-on: [ self-hosted ]
+        concurrency:
+            group: ${{ github.head_ref || github.ref_name }}-infrastructure
         steps:
             - uses: actions/checkout@v3
             - name: Create preview environment infrastructure
+              id: create
               uses: ./.github/actions/preview-create
               with:
                   name: ${{ needs.configuration.outputs.name }}
+                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   infrastructure_provider: harvester
                   large_vm: true
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
             - name: Deploy Gitpod to the preview environment
-              if: github.event.inputs.skip_deploy != 'true'
               id: deploy-gitpod
+              if: github.event.inputs.skip_deploy != 'true'
               uses: ./.github/actions/deploy-gitpod
               with:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
+
+    check:
+        name: Check for regressions
+        needs: [configuration, infrastructure]
+        runs-on: [self-hosted]
+        container:
+            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
+            volumes:
+              - /var/tmp:/var/tmp
+              - /tmp:/tmp
+        steps:
+            - uses: actions/checkout@v3
             - name: Integration Test
               shell: bash
               env:
@@ -153,9 +167,16 @@ jobs:
                   SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: ${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed
-            - name: Delete preview environment
-              if: github.event.inputs.skip_delete != 'true' && (success() || failure())
-              uses: ./.github/actions/delete-preview
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+
+    delete:
+      name: Delete preview environment
+      needs: [ configuration, infrastructure, check ]
+      if: github.event.inputs.skip_delete != 'true' && always()
+      runs-on: [ self-hosted ]
+      steps:
+        - uses: actions/checkout@v3
+        - name: Delete preview environment
+          uses: ./.github/actions/delete-preview
+          with:
+            name: ${{ needs.configuration.outputs.name }}
+            sa_key: ${{ secrets.GCP_CREDENTIALS }}
