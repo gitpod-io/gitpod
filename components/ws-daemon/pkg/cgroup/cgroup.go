@@ -6,12 +6,16 @@ package cgroup
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/cgroups"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 func NewPluginHost(cgroupBasePath string, plugins ...Plugin) (*PluginHost, error) {
@@ -89,6 +93,35 @@ func (host *PluginHost) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspa
 		CgroupPath:  cgroupPath,
 		InstanceId:  ws.InstanceID,
 		Annotations: ws.Pod.Annotations,
+	}
+
+	fullCgroupPath := filepath.Join(opts.BasePath, opts.CgroupPath)
+
+	start := time.Now()
+	defer func() {
+		log.WithFields(ws.OWI()).WithField("cgroupPath", fullCgroupPath).WithField("ms", time.Since(start).Milliseconds()).Info("time waiting for cgroup fd")
+	}()
+
+	err = wait.PollImmediate(100*time.Millisecond, 10*time.Second, func() (bool, error) {
+		fInfo, err := os.Stat(fullCgroupPath)
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		if err != nil {
+			return false, nil
+		}
+		if !fInfo.IsDir() {
+			return false, nil
+		}
+
+		return true, nil
+	})
+	if err != nil {
+		if err == wait.ErrWaitTimeout {
+			return xerrors.Errorf("timeout waiting for cgroup path for container %s: %w", ws.ContainerID, err)
+		}
+
+		return xerrors.Errorf("cannot get cgroup path for container %s: %w", ws.ContainerID, err)
 	}
 
 	for _, plg := range host.Plugins {
