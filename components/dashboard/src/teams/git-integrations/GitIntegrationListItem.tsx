@@ -47,7 +47,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
     return (
         <>
             <Item className="h-16">
-                <ItemFieldIcon className="">
+                <ItemFieldIcon>
                     <div
                         className={
                             "rounded-full w-3 h-3 text-sm align-middle m-auto " +
