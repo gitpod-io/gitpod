@@ -28,8 +28,8 @@ type CheckboxInputProps = {
     value: string;
     checked: boolean;
     disabled?: boolean;
-    label: string;
-    hint?: string;
+    label: string | React.ReactNode;
+    hint?: string | React.ReactNode;
     onChange: (checked: boolean) => void;
 };
 export const CheckboxInput: FC<CheckboxInputProps> = ({
@@ -83,10 +83,10 @@ export const CheckboxInput: FC<CheckboxInputProps> = ({
     );
 };
 
-type CheckBoxInputContainerProps = {
+type CheckboxInputContainerProps = {
     className?: string;
 };
 
-export const CheckBoxInputContainer: FC<CheckBoxInputContainerProps> = ({ className, children }) => {
+export const CheckboxInputContainer: FC<CheckboxInputContainerProps> = ({ className, children }) => {
     return <div className={classNames("mt-4 max-w-2xl flex flex-col space-y-4", className)}>{children}</div>;
 };
