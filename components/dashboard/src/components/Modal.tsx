@@ -116,11 +116,7 @@ type ModalHeaderProps = {
 };
 
 export const ModalHeader = ({ children }: ModalHeaderProps) => {
-    return (
-        <div className="pb-2">
-            <Heading2>{children}</Heading2>
-        </div>
-    );
+    return <Heading2 className="pb-2">{children}</Heading2>;
 };
 
 type ModalBodyProps = {
