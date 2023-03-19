@@ -196,8 +196,6 @@ jobs:
                   BASE_TESTS_DIR="$GITHUB_WORKSPACE/test/tests"
                   CONTENT_SERVICE_TESTS="$BASE_TESTS_DIR/components/content-service"
                   IMAGE_BUILDER_TESTS="$BASE_TESTS_DIR/components/image-builder"
-                  DATABASE_TESTS="$BASE_TESTS_DIR/components/database"
-                  SERVER_TESTS="$BASE_TESTS_DIR/components/server"
                   WS_DAEMON_TESTS="$BASE_TESTS_DIR/components/ws-daemon"
                   WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
                   WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
