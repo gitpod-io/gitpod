@@ -17,7 +17,7 @@ on:
                 type: boolean
                 description: "Skip delete preview environment (debug only)"
     schedule:
-        - cron: "0 3 * * *"
+        - cron: "0 3,12 * * *"
 jobs:
     configuration:
         name: Configuration
@@ -220,7 +220,7 @@ jobs:
                         FAILURE_COUNT=$((FAILURE_COUNT+1))
                       fi
 
-                       set +e
+                      set +e
                       go test -p 2 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
                       RC=${PIPESTATUS[0]}
                       set -e
