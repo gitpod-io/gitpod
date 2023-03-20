@@ -31,7 +31,7 @@ const (
 	containerUnknownExitCode = 255
 )
 
-func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList, cfg *config.Configuration) error {
+func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList, cfg *config.Configuration) error {
 	log := log.FromContext(ctx)
 
 	switch len(pods.Items) {
@@ -104,6 +104,8 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 			LastTransitionTime: metav1.Now(),
 			Message:            failure,
 		})
+
+		r.Recorder.Event(workspace, corev1.EventTypeWarning, "Failed", failure)
 	}
 
 	switch {

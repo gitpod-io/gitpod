@@ -6081,6 +6081,13 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
 ---
 # rbac.authorization.k8s.io/v1/ClusterRole node-labeler
 apiVersion: rbac.authorization.k8s.io/v1

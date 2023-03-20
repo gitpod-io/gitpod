@@ -210,7 +210,7 @@ func NewDaemon(config Config) (*Daemon, error) {
 		}
 
 		wsctrl, err := controller.NewWorkspaceController(
-			mgr.GetClient(), nodename, config.Runtime.SecretsNamespace, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps, wrappedReg)
+			mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), nodename, config.Runtime.SecretsNamespace, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps, wrappedReg)
 		if err != nil {
 			return nil, err
 		}
@@ -219,7 +219,8 @@ func NewDaemon(config Config) (*Daemon, error) {
 			return nil, err
 		}
 
-		ssctrl := controller.NewSnapshotController(mgr.GetClient(), nodename, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps)
+		ssctrl := controller.NewSnapshotController(
+			mgr.GetClient(), mgr.GetEventRecorderFor("snapshot"), nodename, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps)
 		err = ssctrl.SetupWithManager(mgr)
 		if err != nil {
 			return nil, err
