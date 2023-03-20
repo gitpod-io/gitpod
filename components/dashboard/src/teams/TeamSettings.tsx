@@ -6,11 +6,15 @@
 
 import React, { useCallback, useState } from "react";
 import Alert from "../components/Alert";
+import { Button } from "../components/Button";
 import ConfirmationModal from "../components/ConfirmationModal";
+import { TextInputField } from "../components/forms/TextInputField";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
+import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
+import { useOnBlurError } from "../hooks/use-onblur-error";
 import { teamsService } from "../service/public-api";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 
@@ -22,63 +26,44 @@ export default function TeamSettings() {
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(org?.name || "");
     const [slug, setSlug] = useState(org?.slug || "");
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [updated, setUpdated] = useState(false);
+    const updateOrg = useUpdateOrgMutation();
 
     const close = () => setModal(false);
 
-    const updateTeamInformation = useCallback(async () => {
-        if (!org || errorMessage) {
-            return;
-        }
-        try {
-            await getGitpodService().server.updateTeam(org.id, { name: teamName, slug });
-            invalidateOrgs();
-            setUpdated(true);
-            setTimeout(() => setUpdated(false), 3000);
-        } catch (error) {
-            setErrorMessage(`Failed to update organization information: ${error.message}`);
-        }
-    }, [org, errorMessage, slug, teamName, invalidateOrgs]);
-
-    const onNameChange = useCallback(
-        async (event: React.ChangeEvent<HTMLInputElement>) => {
-            if (!org) {
-                return;
-            }
-            const newName = event.target.value || "";
-            setTeamName(newName);
-            if (newName.trim().length === 0) {
-                setErrorMessage("Organization name can not be blank.");
-                return;
-            } else if (newName.trim().length > 32) {
-                setErrorMessage("Organization name must not be longer than 32 characters.");
-                return;
-            } else {
-                setErrorMessage(undefined);
-            }
-        },
-        [org],
+    const teamNameError = useOnBlurError(
+        teamName.length > 32
+            ? "Organization name must not be longer than 32 characters"
+            : "Organization name can not be blank",
+        !!teamName && teamName.length <= 32,
     );
 
-    const onSlugChange = useCallback(
-        async (event: React.ChangeEvent<HTMLInputElement>) => {
-            if (!org) {
+    const slugError = useOnBlurError(
+        slug.length > 100
+            ? "Organization slug must not be longer than 100 characters"
+            : "Organization slug can not be blank.",
+        !!slug && slug.length <= 100,
+    );
+
+    const orgFormIsValid = teamNameError.isValid && slugError.isValid;
+
+    const updateTeamInformation = useCallback(
+        async (e: React.FormEvent) => {
+            e.preventDefault();
+
+            if (!orgFormIsValid) {
                 return;
             }
-            const newSlug = event.target.value || "";
-            setSlug(newSlug);
-            if (newSlug.trim().length === 0) {
-                setErrorMessage("Organization slug can not be blank.");
-                return;
-            } else if (newSlug.trim().length > 100) {
-                setErrorMessage("Organization slug must not be longer than 100 characters.");
-                return;
-            } else {
-                setErrorMessage(undefined);
+
+            try {
+                await updateOrg.mutateAsync({ name: teamName, slug });
+                setUpdated(true);
+                setTimeout(() => setUpdated(false), 3000);
+            } catch (error) {
+                console.error(error);
             }
         },
-        [org],
+        [orgFormIsValid, updateOrg, teamName, slug],
     );
 
     const deleteTeam = useCallback(async () => {
@@ -94,13 +79,13 @@ export default function TeamSettings() {
     return (
         <>
             <OrgSettingsPage>
-                <Heading2>Organization Name</Heading2>
-                <Subheading className="max-w-2xl">
-                    This is your organization's visible name within Gitpod. For example, the name of your company.
-                </Subheading>
-                {errorMessage && (
+                <Heading2>Organization Details</Heading2>
+                <Subheading className="max-w-2xl">Details of your organization within Gitpod.</Subheading>
+
+                {updateOrg.isError && (
                     <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
-                        {errorMessage}
+                        <span>Failed to update organization information: </span>
+                        <span>{updateOrg.error.message || "unknown error"}</span>
                     </Alert>
                 )}
                 {updated && (
@@ -108,31 +93,33 @@ export default function TeamSettings() {
                         Organization name has been updated.
                     </Alert>
                 )}
-                <div className="flex flex-col lg:flex-row">
-                    <div>
-                        <div className="mt-4 mb-3">
-                            <h4>Name</h4>
-                            <input type="text" value={teamName} onChange={onNameChange} />
-                        </div>
-                    </div>
-                </div>
-                <div className="flex flex-col lg:flex-row">
-                    <div>
-                        <div className="mt-4 mb-3">
-                            <h4>Slug</h4>
-                            <input type="text" value={slug} onChange={onSlugChange} />
-                        </div>
-                    </div>
-                </div>
-                <div className="flex flex-row">
-                    <button
-                        className="primary"
-                        disabled={(org?.name === teamName && org?.slug === slug) || !!errorMessage}
-                        onClick={updateTeamInformation}
+                <form onSubmit={updateTeamInformation}>
+                    <TextInputField
+                        label="Name"
+                        hint="The name of your company or organization"
+                        value={teamName}
+                        error={teamNameError.message}
+                        onChange={setTeamName}
+                        onBlur={teamNameError.onBlur}
+                    />
+
+                    <TextInputField
+                        label="Slug"
+                        hint="The slug will be used for easier signin and discovery"
+                        value={slug}
+                        error={slugError.message}
+                        onChange={setSlug}
+                        onBlur={slugError.onBlur}
+                    />
+
+                    <Button
+                        className="mt-4"
+                        htmlType="submit"
+                        disabled={(org?.name === teamName && org?.slug === slug) || !orgFormIsValid}
                     >
-                        Update Organization Name
-                    </button>
-                </div>
+                        Update Organization
+                    </Button>
+                </form>
 
                 <Heading2 className="pt-12">Delete Organization</Heading2>
                 <Subheading className="pb-4 max-w-2xl">
