@@ -9,6 +9,7 @@ import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
+import { randomBytes } from "crypto";
 import { TeamDB } from "../team-db";
 import { DBTeam } from "./entity/db-team";
 import { DBTeamMembership } from "./entity/db-team-membership";
@@ -16,6 +17,7 @@ import { DBUser } from "./entity/db-user";
 import { DBTeamMembershipInvite } from "./entity/db-team-membership-invite";
 import { ResponseError } from "vscode-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import slugify from "slugify";
 
 @injectable()
 export class TeamDBImpl implements TeamDB {
@@ -121,17 +123,40 @@ export class TeamDBImpl implements TeamDB {
         return soleOwnedTeams;
     }
 
-    public async updateTeam(teamId: string, team: Pick<Team, "name">): Promise<Team> {
+    public async updateTeam(teamId: string, team: Pick<Team, "name" | "slug">): Promise<Team> {
+        const name = team.name && team.name.trim();
+        const slug = team.slug && team.slug.trim();
+        if (!name && !slug) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "No update provided");
+        }
+
         const teamRepo = await this.getTeamRepo();
         const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
         if (!existingTeam) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Organization not found");
         }
-        const name = team.name && team.name.trim();
-        if (!name || name.length === 0 || name.length > 32) {
-            throw new ResponseError(ErrorCodes.INVALID_VALUE, "The name must be between 1 and 32 characters long");
+
+        // no changes
+        if (existingTeam.name === name && existingTeam.slug === slug) {
+            return existingTeam;
         }
-        existingTeam.name = name;
+
+        if (!!name) {
+            if (name.length > 32) {
+                throw new ResponseError(ErrorCodes.INVALID_VALUE, "The name must be between 1 and 32 characters long");
+            }
+            existingTeam.name = name;
+        }
+        if (!!slug) {
+            if (slug.length > 100) {
+                throw new ResponseError(ErrorCodes.INVALID_VALUE, "Slug must be between 1 and 100 characters long");
+            }
+            if (!/^[A-Za-z0-9-]+$/.test(slug)) {
+                throw new ResponseError(ErrorCodes.BAD_REQUEST, "Slug must contain only letters, or numbers.");
+            }
+            existingTeam.slug = slug;
+        }
+
         return teamRepo.save(existingTeam);
     }
 
@@ -146,10 +171,18 @@ export class TeamDBImpl implements TeamDB {
             );
         }
 
+        let slug = slugify(name, { lower: true });
         const teamRepo = await this.getTeamRepo();
+
+        const existingTeam = await teamRepo.findOne({ slug, deleted: false, markedDeleted: false });
+        if (!!existingTeam) {
+            slug = slug + "-" + randomBytes(10).toString("hex");
+        }
+
         const team: Team = {
             id: uuidv4(),
             name,
+            slug,
             creationTime: new Date().toISOString(),
         };
         await teamRepo.save(team);
