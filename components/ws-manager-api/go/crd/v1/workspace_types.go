@@ -212,21 +212,21 @@ func NewWorkspaceConditionTimeout(message string) metav1.Condition {
 	}
 }
 
-func NewWorkspaceConditionFirstUserActivity() metav1.Condition {
+func NewWorkspaceConditionFirstUserActivity(reason string) metav1.Condition {
 	return metav1.Condition{
 		Type:               string(WorkspaceConditionFirstUserActivity),
 		LastTransitionTime: metav1.Now(),
 		Status:             metav1.ConditionTrue,
-		Reason:             "MarkActiveRequest",
+		Reason:             reason,
 	}
 }
 
-func NewWorkspaceConditionClosed(status metav1.ConditionStatus) metav1.Condition {
+func NewWorkspaceConditionClosed(status metav1.ConditionStatus, reason string) metav1.Condition {
 	return metav1.Condition{
 		Type:               string(WorkspaceConditionClosed),
 		LastTransitionTime: metav1.Now(),
 		Status:             status,
-		Reason:             "MarkActiveRequest",
+		Reason:             reason,
 	}
 }
 

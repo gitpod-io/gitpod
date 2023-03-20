@@ -467,12 +467,12 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 	isMarkedClosed := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed))
 	if req.Closed && !isMarkedClosed {
 		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionClosed(metav1.ConditionTrue))
+			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionClosed(metav1.ConditionTrue, "MarkActiveRequest"))
 			return nil
 		})
 	} else if !req.Closed && isMarkedClosed {
 		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionClosed(metav1.ConditionFalse))
+			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionClosed(metav1.ConditionFalse, "MarkActiveRequest"))
 			return nil
 		})
 	}
@@ -487,7 +487,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 	// If it's the first call: Mark the pod with FirstUserActivity condition.
 	if firstUserActivity == nil {
 		err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionFirstUserActivity())
+			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionFirstUserActivity("MarkActiveRequest"))
 			return nil
 		})
 		if err != nil {
