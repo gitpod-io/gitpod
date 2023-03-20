@@ -110,6 +110,10 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	snapshotErr = ssc.operations.TakeSnapshot(ctx, snapshot.Spec.WorkspaceID, snapshotName)
+	if snapshotErr != nil {
+		log.Error(snapshotErr, "could not take snapshot", "workspace", snapshot.Spec.WorkspaceID)
+	}
+
 	err = retry.RetryOnConflict(retryParams, func() error {
 		err := ssc.Client.Get(ctx, req.NamespacedName, &snapshot)
 		if err != nil {

@@ -117,7 +117,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	oldStatus := workspace.Status
+	oldStatus := workspace.Status.DeepCopy()
 	err = r.updateWorkspaceStatus(ctx, &workspace, workspacePods, r.Config)
 	if err != nil {
 		return ctrl.Result{}, err
@@ -348,7 +348,7 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	r.metrics.rememberWorkspace(workspace, &lastState)
 }
 
-func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspacev1.Workspace, old workspacev1.WorkspaceStatus) {
+func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspacev1.Workspace, old *workspacev1.WorkspaceStatus) {
 	if ws.Status.Phase == workspacev1.WorkspacePhaseInitializing && old.Phase != workspacev1.WorkspacePhaseInitializing {
 		r.Recorder.Event(ws, corev1.EventTypeNormal, "Initializing", "")
 	}
