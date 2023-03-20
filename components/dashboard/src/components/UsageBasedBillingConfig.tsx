@@ -32,8 +32,10 @@ interface Props {
     hideSubheading?: boolean;
 }
 
+// Guard against multiple calls to subscripe (per page load)
+let didAlreadyCallSubscribe = false;
+
 export default function UsageBasedBillingConfig({ attributionId, hideSubheading = false }: Props) {
-    const location = useLocation();
     const currentOrg = useCurrentOrg().data;
     const attrId = attributionId ? AttributionId.parse(attributionId) : undefined;
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
@@ -48,6 +50,9 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>(
         undefined,
     );
+
+    // Stripe-controlled parameters
+    const location = useLocation();
 
     const now = useMemo(() => dayjs().utc(true), []);
     const [billingCycleFrom, setBillingCycleFrom] = useState<dayjs.Dayjs>(now.startOf("month"));
@@ -90,53 +95,82 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     }, [attributionId, refreshSubscriptionDetails]);
 
     useEffect(() => {
-        if (!attributionId) {
-            return;
-        }
         const params = new URLSearchParams(location.search);
-        if (!params.get("setup_intent") || params.get("redirect_status") !== "succeeded") {
-            return;
+        const setupIntentId = params.get("setup_intent");
+        const redirectStatus = params.get("redirect_status");
+        if (setupIntentId && redirectStatus) {
+            subscribeToStripe({
+                setupIntentId,
+                redirectStatus,
+            });
         }
-        const setupIntentId = params.get("setup_intent")!;
-        window.history.replaceState({}, "", location.pathname);
-        (async () => {
-            const pendingSubscription = { pendingSince: Date.now() };
-            try {
-                setPendingStripeSubscription(pendingSubscription);
-                // Pick a good initial value for the Stripe usage limit (base_limit * team_size)
-                // FIXME: Should we ask the customer to confirm or edit this default limit?
-                let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
-                if (attrId?.kind === "team" && currentOrg) {
-                    limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * currentOrg.members.length;
-                }
-                const newLimit = await getGitpodService().server.subscribeToStripe(attributionId, setupIntentId, limit);
-                if (newLimit) {
-                    setUsageLimit(newLimit);
-                }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-                //refresh every 5 secs until we get a subscriptionId
-                const interval = setInterval(async () => {
-                    try {
-                        const subscriptionId = await refreshSubscriptionDetails(attributionId);
-                        if (subscriptionId) {
-                            setPendingStripeSubscription(undefined);
-                            clearInterval(interval);
-                        }
-                    } catch (error) {
-                        console.error(error);
-                    }
-                }, 1000);
-            } catch (error) {
-                console.error("Could not subscribe to Stripe", error);
-                setPendingStripeSubscription(undefined);
-                setErrorMessage(
-                    `Could not subscribe: ${
-                        error?.message || String(error)
-                    } Contact support@gitpod.io if you believe this is a system error.`,
-                );
+    const subscribeToStripe = useCallback(
+        (stripeParams: { setupIntentId: string; redirectStatus: string }) => {
+            if (!attributionId) {
+                return;
             }
-        })();
-    }, [attrId?.kind, attributionId, currentOrg, location.pathname, location.search, refreshSubscriptionDetails]);
+            const { setupIntentId, redirectStatus } = stripeParams;
+            if (redirectStatus !== "succeeded") {
+                // TODO(gpl) We have to handle external validation errors (3DS, e.g.) here
+                return;
+            }
+
+            // Guard against multiple execution following the pattern here: https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application
+            if (didAlreadyCallSubscribe) {
+                console.log("didAlreadyCallSubscribe, skipping this time.");
+                return;
+            }
+            didAlreadyCallSubscribe = true;
+            console.log("didAlreadyCallSubscribe false, first run.");
+
+            window.history.replaceState({}, "", location.pathname);
+            (async () => {
+                const pendingSubscription = { pendingSince: Date.now() };
+                try {
+                    setPendingStripeSubscription(pendingSubscription);
+                    // Pick a good initial value for the Stripe usage limit (base_limit * team_size)
+                    // FIXME: Should we ask the customer to confirm or edit this default limit?
+                    let limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS;
+                    if (attrId?.kind === "team" && currentOrg) {
+                        limit = BASE_USAGE_LIMIT_FOR_STRIPE_USERS * currentOrg.members.length;
+                    }
+                    const newLimit = await getGitpodService().server.subscribeToStripe(
+                        attributionId,
+                        setupIntentId,
+                        limit,
+                    );
+                    if (newLimit) {
+                        setUsageLimit(newLimit);
+                    }
+
+                    //refresh every 5 secs until we get a subscriptionId
+                    const interval = setInterval(async () => {
+                        try {
+                            const subscriptionId = await refreshSubscriptionDetails(attributionId);
+                            if (subscriptionId) {
+                                setPendingStripeSubscription(undefined);
+                                clearInterval(interval);
+                            }
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }, 1000);
+                } catch (error) {
+                    console.error("Could not subscribe to Stripe", error);
+                    setPendingStripeSubscription(undefined);
+                    setErrorMessage(
+                        `Could not subscribe: ${
+                            error?.message || String(error)
+                        } Contact support@gitpod.io if you believe this is a system error.`,
+                    );
+                }
+            })();
+        },
+        [attrId?.kind, attributionId, currentOrg, location.pathname, refreshSubscriptionDetails],
+    );
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
     const showBalance = !showSpinner;
