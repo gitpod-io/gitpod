@@ -210,6 +210,11 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		return ctrl.Result{}, nil
 	}
 
+	if ws.Spec.Type == workspacev1.WorkspaceTypeImageBuild {
+		// No disposal for image builds.
+		return ctrl.Result{}, nil
+	}
+
 	disposeStart := time.Now()
 	var snapshotName string
 	var snapshotUrl string

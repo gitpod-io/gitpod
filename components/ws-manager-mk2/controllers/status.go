@@ -183,7 +183,9 @@ func isDisposalFinished(ws *workspacev1.Workspace) bool {
 		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
 		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) ||
 		// Nothing to dispose if content wasn't ready.
-		!wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady))
+		!wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) ||
+		// Image builds have nothing to dispose.
+		ws.Spec.Type == workspacev1.WorkspaceTypeImageBuild
 }
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then
