@@ -6,7 +6,6 @@
 
 import { Team } from "@gitpod/gitpod-protocol";
 import { Entity, Column, PrimaryColumn } from "typeorm";
-import { Transformer } from "../transformer";
 import { TypeORM } from "../typeorm";
 
 @Entity()
@@ -18,12 +17,8 @@ export class DBTeam implements Team {
     @Column("varchar")
     name: string;
 
-    // Deprecated.
-    @Column({
-        type: "varchar",
-        transformer: Transformer.ALWAYS_EMPTY_STRING,
-    })
-    slug: string = "";
+    @Column("varchar")
+    slug: string;
 
     @Column("varchar")
     creationTime: string;
