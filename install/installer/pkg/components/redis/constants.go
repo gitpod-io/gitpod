@@ -10,9 +10,6 @@ const (
 	PortName = "api"
 	Port     = 6379
 
-	ContainerPrometheusPort  = 9090
-	ContainterPrometheusName = "prometheus"
-
 	RegistryRepo  = "registry.hub.docker.com"
 	RegistryImage = "library/redis"
 	ImageTag      = "7.0.8"
