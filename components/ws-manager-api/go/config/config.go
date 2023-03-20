@@ -574,5 +574,5 @@ type CpuResourceLimit struct {
 }
 
 type MaintenanceConfig struct {
-	EnabledUntil *time.Time `json:"enabledUntil,omitempty"`
+	EnabledUntil *time.Time `json:"enabledUntil"`
 }

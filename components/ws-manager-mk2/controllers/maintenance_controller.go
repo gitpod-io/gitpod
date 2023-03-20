@@ -96,7 +96,7 @@ func (r *MaintenanceReconciler) setEnabledUntil(log logr.Logger, enabledUntil *t
 	}
 
 	r.enabledUntil = enabledUntil
-	log.Info("maintenance mode state change", "enabledUntil", enabledUntil)
+	log.Info("maintenance mode state change", "enabled", r.IsEnabled(), "enabledUntil", enabledUntil)
 }
 
 func (r *MaintenanceReconciler) SetupWithManager(mgr ctrl.Manager) error {
