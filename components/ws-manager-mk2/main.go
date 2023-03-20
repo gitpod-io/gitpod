@@ -99,6 +99,17 @@ func main() {
 		go pprof.Serve(cfg.PProf.Addr)
 	}
 
+	// Check that namespace config values are set. Empty namespaces default to a cluster-scoped cache,
+	// which the controller doesn't have the right RBAC for.
+	if cfg.Manager.Namespace == "" {
+		setupLog.Error(nil, "namespace cannot be empty")
+		os.Exit(1)
+	}
+	if cfg.Manager.SecretsNamespace == "" {
+		setupLog.Error(nil, "secretsNamespace cannot be empty")
+		os.Exit(1)
+	}
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     cfg.Prometheus.Addr,
