@@ -58,6 +58,7 @@ export default function TeamSettings() {
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(org?.name || "");
+    const [slug, setSlug] = useState(org?.slug || "");
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [updated, setUpdated] = useState(false);
 
@@ -68,14 +69,14 @@ export default function TeamSettings() {
             return;
         }
         try {
-            await getGitpodService().server.updateTeam(org.id, { name: teamName });
+            await getGitpodService().server.updateTeam(org.id, { name: teamName, slug });
             invalidateOrgs();
             setUpdated(true);
             setTimeout(() => setUpdated(false), 3000);
         } catch (error) {
             setErrorMessage(`Failed to update organization information: ${error.message}`);
         }
-    }, [org, errorMessage, teamName, invalidateOrgs]);
+    }, [org, errorMessage, slug, teamName, invalidateOrgs]);
 
     const onNameChange = useCallback(
         async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,6 +90,26 @@ export default function TeamSettings() {
                 return;
             } else if (newName.trim().length > 32) {
                 setErrorMessage("Organization name must not be longer than 32 characters.");
+                return;
+            } else {
+                setErrorMessage(undefined);
+            }
+        },
+        [org],
+    );
+
+    const onSlugChange = useCallback(
+        async (event: React.ChangeEvent<HTMLInputElement>) => {
+            if (!org) {
+                return;
+            }
+            const newSlug = event.target.value || "";
+            setSlug(newSlug);
+            if (newSlug.trim().length === 0) {
+                setErrorMessage("Organization slug can not be blank.");
+                return;
+            } else if (newSlug.trim().length > 100) {
+                setErrorMessage("Organization slug must not be longer than 100 characters.");
                 return;
             } else {
                 setErrorMessage(undefined);
@@ -132,10 +153,18 @@ export default function TeamSettings() {
                         </div>
                     </div>
                 </div>
+                <div className="flex flex-col lg:flex-row">
+                    <div>
+                        <div className="mt-4 mb-3">
+                            <h4>Slug</h4>
+                            <input type="text" value={slug} onChange={onSlugChange} />
+                        </div>
+                    </div>
+                </div>
                 <div className="flex flex-row">
                     <button
                         className="primary"
-                        disabled={org?.name === teamName || !!errorMessage}
+                        disabled={(org?.name === teamName && org?.slug === slug) || !!errorMessage}
                         onClick={updateTeamInformation}
                     >
                         Update Organization Name

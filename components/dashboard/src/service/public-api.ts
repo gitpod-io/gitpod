@@ -30,6 +30,7 @@ export function publicApiTeamToProtocol(team: Team): ProtocolTeam {
     return {
         id: team.id,
         name: team.name,
+        slug: team.slug,
         // We do not use the creationTime in the dashboard anywhere, se we keep it empty.
         creationTime: "",
     };
