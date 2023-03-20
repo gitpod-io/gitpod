@@ -10,7 +10,6 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -103,14 +102,7 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 			return err
 		}
 
-		workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionTimeout),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-			Reason:             "TimedOut",
-			Message:            timedout,
-		})
-
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionTimeout(timedout))
 		return r.Status().Update(ctx, &workspace)
 	}); err != nil {
 		log.Error(err, "Failed to update workspace status with Timeout condition")

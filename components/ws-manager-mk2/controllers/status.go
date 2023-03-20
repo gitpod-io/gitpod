@@ -48,22 +48,13 @@ func updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace
 		// continue below
 	default:
 		// This is exceptional - not sure what to do here. Probably fail the pod
-		workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionFailed),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-			Message:            "multiple pods exists - this should never happen",
-		})
-
+		workspace.Status.SetCondition(
+			workspacev1.NewWorkspaceConditionFailed("multiple pods exists - this should never happen"))
 		return nil
 	}
 
 	if c := wsk8s.GetCondition(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionDeployed)); c == nil {
-		workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionDeployed),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-		})
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionDeployed())
 	}
 
 	pod := &pods.Items[0]

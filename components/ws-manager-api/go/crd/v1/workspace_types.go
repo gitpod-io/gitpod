@@ -5,6 +5,7 @@
 package v1
 
 import (
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -140,6 +141,10 @@ type WorkspaceStatus struct {
 	Runtime *WorkspaceRuntimeStatus `json:"runtime,omitempty"`
 }
 
+func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
+	s.Conditions = wsk8s.AddUniqueCondition(s.Conditions, cond)
+}
+
 // +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;BackupComplete;BackupFailure
 type WorkspaceCondition string
 
@@ -179,6 +184,99 @@ const (
 	// BackupFailure contains information about the backup failure
 	WorkspaceConditionBackupFailure WorkspaceCondition = "BackupFailure"
 )
+
+func NewWorkspaceConditionDeployed() metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionDeployed),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+	}
+}
+
+func NewWorkspaceConditionFailed(message string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionFailed),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+		Message:            message,
+	}
+}
+
+func NewWorkspaceConditionTimeout(message string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionTimeout),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+		Reason:             "TimedOut",
+		Message:            message,
+	}
+}
+
+func NewWorkspaceConditionFirstUserActivity(reason string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionFirstUserActivity),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+		Reason:             reason,
+	}
+}
+
+func NewWorkspaceConditionClosed(status metav1.ConditionStatus, reason string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionClosed),
+		LastTransitionTime: metav1.Now(),
+		Status:             status,
+		Reason:             reason,
+	}
+}
+
+func NewWorkspaceConditionStoppedByRequest(message string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionStoppedByRequest),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+		Reason:             "StopWorkspaceRequest",
+		Message:            message,
+	}
+}
+
+func NewWorkspaceConditionAborted(reason string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionAborted),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+		Reason:             reason,
+	}
+}
+
+func NewWorkspaceConditionContentReady(status metav1.ConditionStatus, reason, message string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionContentReady),
+		LastTransitionTime: metav1.Now(),
+		Status:             status,
+		Reason:             reason,
+		Message:            message,
+	}
+}
+
+func NewWorkspaceConditionBackupComplete() metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionBackupComplete),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+		Reason:             "BackupComplete",
+	}
+}
+
+func NewWorkspaceConditionBackupFailure(message string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionBackupFailure),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+		Reason:             "BackupFailed",
+		Message:            message,
+	}
+}
 
 // +kubebuilder:validation:Enum:=Unknown;Pending;Imagebuild;Creating;Initializing;Running;Stopping;Stopped
 type WorkspacePhase string

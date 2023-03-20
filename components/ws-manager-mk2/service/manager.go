@@ -356,25 +356,14 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 		span.LogKV("policy", "abort")
 		gracePeriod = stopWorkspaceImmediatelyGracePeriod
 		if err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-				Type:               string(workspacev1.WorkspaceConditionAborted),
-				Status:             metav1.ConditionTrue,
-				Reason:             "StopWorkspaceRequest",
-				LastTransitionTime: metav1.Now(),
-			})
+			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionAborted("StopWorkspaceRequest"))
 			return nil
 		}); err != nil {
 			log.Error(err, "failed to add Aborted condition to workspace")
 		}
 	}
 	err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-			Message:            gracePeriod.String(),
-			Reason:             "StopWorkspaceRequest",
-		})
+		ws.Status.SetCondition(workspacev1.NewWorkspaceConditionStoppedByRequest(gracePeriod.String()))
 		return nil
 	})
 	if err != nil {
@@ -473,27 +462,17 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 	now := time.Now().UTC()
 	wsm.activity.Store(req.Id, now)
 
-	// We do however maintain the the "closed" flag as annotation on the workspace. This flag should not change
+	// We do however maintain the the "closed" flag as condition on the workspace. This flag should not change
 	// very often and provides a better UX if it persists across ws-manager restarts.
 	isMarkedClosed := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed))
 	if req.Closed && !isMarkedClosed {
 		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-				Type:               string(workspacev1.WorkspaceConditionClosed),
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: metav1.NewTime(now),
-				Reason:             "MarkActiveRequest",
-			})
+			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionClosed(metav1.ConditionTrue, "MarkActiveRequest"))
 			return nil
 		})
 	} else if !req.Closed && isMarkedClosed {
 		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-				Type:               string(workspacev1.WorkspaceConditionClosed),
-				Status:             metav1.ConditionFalse,
-				LastTransitionTime: metav1.NewTime(now),
-				Reason:             "MarkActiveRequest",
-			})
+			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionClosed(metav1.ConditionFalse, "MarkActiveRequest"))
 			return nil
 		})
 	}
@@ -508,12 +487,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 	// If it's the first call: Mark the pod with FirstUserActivity condition.
 	if firstUserActivity == nil {
 		err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
-			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-				Type:               string(workspacev1.WorkspaceConditionFirstUserActivity),
-				Status:             metav1.ConditionTrue,
-				LastTransitionTime: metav1.NewTime(now),
-				Reason:             "MarkActiveRequest",
-			})
+			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionFirstUserActivity("MarkActiveRequest"))
 			return nil
 		})
 		if err != nil {

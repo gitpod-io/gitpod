@@ -170,20 +170,9 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 
 			if failure != "" {
 				log.Error(initErr, "could not initialize workspace", "name", ws.Name)
-				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-					Type:               string(workspacev1.WorkspaceConditionContentReady),
-					Status:             metav1.ConditionFalse,
-					Message:            failure,
-					Reason:             "InitializationFailure",
-					LastTransitionTime: metav1.Now(),
-				})
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionFalse, "InitializationFailure", failure))
 			} else {
-				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-					Type:               string(workspacev1.WorkspaceConditionContentReady),
-					Status:             metav1.ConditionTrue,
-					Reason:             "InitializationSuccess",
-					LastTransitionTime: metav1.Now(),
-				})
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, "InitializationSuccess", ""))
 			}
 
 			return wsc.Status().Update(ctx, ws)
@@ -276,20 +265,9 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 
 		if disposeErr != nil {
 			log.Error(disposeErr, "failed to dispose workspace", "name", ws.Name)
-			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-				Type:               string(workspacev1.WorkspaceConditionBackupFailure),
-				Status:             metav1.ConditionTrue,
-				Reason:             "BackupFailed",
-				Message:            disposeErr.Error(),
-				LastTransitionTime: metav1.Now(),
-			})
+			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupFailure(disposeErr.Error()))
 		} else {
-			ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-				Type:               string(workspacev1.WorkspaceConditionBackupComplete),
-				Status:             metav1.ConditionTrue,
-				Reason:             "BackupComplete",
-				LastTransitionTime: metav1.Now(),
-			})
+			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupComplete())
 		}
 
 		return wsc.Status().Update(ctx, ws)
