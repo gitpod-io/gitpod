@@ -283,7 +283,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	maintenanceLabels := common.DefaultLabels(Component)
 	maintenanceLabels[LabelMaintenanceConfig] = "true"
 	maintenanceCfg := config.MaintenanceConfig{
-		Enabled: false,
+		EnabledUntil: nil,
 	}
 	mc, err := common.ToJSONString(maintenanceCfg)
 	if err != nil {
