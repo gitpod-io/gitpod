@@ -140,6 +140,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									RunAsUser:    pointer.Int64(65532),
 								},
 							},
+							*common.KubeRBACProxyContainer(ctx),
 						},
 					},
 				},
