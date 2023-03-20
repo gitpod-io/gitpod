@@ -23,6 +23,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -122,12 +123,14 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	if !wsc.latestWorkspace(ctx, &workspace) {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
 	glog.WithField("workspaceID", workspace.Name).WithField("phase", workspace.Status.Phase).Debug("Reconcile workspace")
 
-	glog.Info("RECONCILE")
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseCreating ||
-		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing ||
-		workspace.Status.Phase == workspacev1.WorkspacePhaseRunning {
+		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing {
 
 		result, err = wsc.handleWorkspaceInit(ctx, &workspace, req)
 		return result, err
@@ -141,6 +144,13 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	return ctrl.Result{}, nil
 }
 
+func (wsc *WorkspaceController) latestWorkspace(ctx context.Context, ws *workspacev1.Workspace) bool {
+	ws.Status.SetCondition(workspacev1.NewWorkspaceConditionRefresh())
+
+	err := wsc.Client.Status().Update(ctx, ws)
+	return !errors.IsConflict(err)
+}
+
 func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
 	log := log.FromContext(ctx)
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceInit")
@@ -152,7 +162,6 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 			return ctrl.Result{}, err
 		}
 
-		glog.Info("START WORKSPACE INIT")
 		initStart := time.Now()
 		failure, initErr := wsc.operations.InitWorkspaceContent(ctx, InitContentOptions{
 			Meta: WorkspaceMeta{

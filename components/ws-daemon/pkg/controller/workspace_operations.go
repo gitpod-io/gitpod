@@ -41,8 +41,7 @@ const (
 )
 
 type WorkspaceOperations struct {
-	config content.Config
-	//store                  *session.Store
+	config                 content.Config
 	provider               *WorkspaceProvider
 	backupWorkspaceLimiter chan struct{}
 	metrics                *content.Metrics
@@ -87,8 +86,6 @@ func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, 
 }
 
 func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, options InitContentOptions) (string, error) {
-	glog.Infof("ENTERING INIT: %v", wso.provider.Location)
-
 	ws, err := wso.provider.Create(ctx, options.Meta.InstanceId, filepath.Join(wso.provider.Location, options.Meta.InstanceId),
 		wso.creator(options.Meta.Owner, options.Meta.WorkspaceId, options.Meta.InstanceId, options.Initializer, false))
 
@@ -210,7 +207,7 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		}
 	}
 
-	if err = ws.Dispose(ctx, wso.provider.hooks); err != nil {
+	if err = ws.Dispose(ctx, wso.provider.hooks[session.WorkspaceDisposed]); err != nil {
 		glog.WithError(err).Error("cannot dispose session")
 	}
 
@@ -448,7 +445,6 @@ func (wsc *WorkspaceController) UpdateGitStatus(ctx context.Context, ws *workspa
 		return
 	}
 
-	glog.Infof("GIT LOCATION IS %v", loc)
 	loc = filepath.Join(loc, s.CheckoutLocation)
 	if !git.IsWorkingCopy(loc) {
 		glog.WithField("loc", loc).WithField("checkout location", s.CheckoutLocation).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")

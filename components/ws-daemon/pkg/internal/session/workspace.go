@@ -200,7 +200,7 @@ func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo 
 }
 
 // Dispose marks the workspace as disposed and clears it from disk
-func (s *Workspace) Dispose(ctx context.Context, hooks map[WorkspaceState][]WorkspaceLivecycleHook) (err error) {
+func (s *Workspace) Dispose(ctx context.Context, hooks []WorkspaceLivecycleHook) (err error) {
 	//nolint:ineffassign,staticcheck
 	span, ctx := opentracing.StartSpanFromContext(ctx, "workspace.Dispose")
 	defer tracing.FinishSpan(span, &err)
@@ -225,7 +225,12 @@ func (s *Workspace) Dispose(ctx context.Context, hooks map[WorkspaceState][]Work
 	}
 
 	if hooks != nil {
-
+		for _, h := range hooks {
+			err := h(ctx, s)
+			if err != nil {
+				return err
+			}
+		}
 	} else {
 		err = s.store.runLifecycleHooks(ctx, s)
 		if err != nil {

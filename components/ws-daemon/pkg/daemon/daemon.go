@@ -200,17 +200,6 @@ func NewDaemon(config Config) (*Daemon, error) {
 			config.CPULimit.CGroupBasePath,
 		)
 
-		// store, err := session.NewStore(context.Background(), contentCfg.WorkingArea, content.WorkspaceLifecycleHooks(
-		// 	contentCfg,
-		// 	func(instanceID string) bool { return true },
-		// 	&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
-		// 	xfs,
-		// 	config.CPULimit.CGroupBasePath,
-		// ))
-		// if err != nil {
-		// 	return nil, err
-		// }
-
 		workspaceOps, err := controller.NewWorkspaceOperations(contentCfg, controller.NewWorkspaceProvider(hooks, contentCfg.WorkingArea), wrappedReg)
 		if err != nil {
 			return nil, err
