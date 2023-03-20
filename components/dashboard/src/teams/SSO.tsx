@@ -9,7 +9,7 @@ import { OIDCClients } from "./sso/OIDCClients";
 
 export default function SSO() {
     return (
-        <OrgSettingsPage title="SSO" subtitle="Configure OpenID Connect (OIDC) single sign-on.">
+        <OrgSettingsPage>
             <OIDCClients />
         </OrgSettingsPage>
     );

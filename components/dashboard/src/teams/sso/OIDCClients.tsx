@@ -19,11 +19,7 @@ export const OIDCClients: FC = () => {
     const { data, isLoading } = useOIDCClientsQuery();
 
     if (isLoading) {
-        return (
-            <div>
-                <SpinnerLoader />
-            </div>
-        );
+        return <SpinnerLoader />;
     }
 
     return <OIDCClientsList clientConfigs={data || []} />;
@@ -42,13 +38,17 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
         <>
             {showCreateModal && <OIDCClientConfigModal onClose={hideModal} />}
 
-            <Heading2>OpenID Connect clients</Heading2>
-            <Subheading>Configure single sign-on for your organization.</Subheading>
+            <div className="flex flex-col space-y-2 md:flex-row md:items-start md:justify-between md:space-y-0">
+                <div>
+                    <Heading2>OpenID Connect clients</Heading2>
+                    <Subheading>Configure single sign-on for your organization.</Subheading>
+                </div>
 
-            <div className="flex items-start sm:justify-between mb-2">
                 {clientConfigs.length !== 0 ? (
-                    <div className="mt-3 flex mt-0">
-                        <Button onClick={onCreate}>New OIDC Client</Button>
+                    <div className="">
+                        <Button className="whitespace-nowrap" onClick={onCreate}>
+                            New OIDC Client
+                        </Button>
                     </div>
                 ) : null}
             </div>
@@ -63,9 +63,9 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
             ) : (
                 <ItemsList className="pt-6">
                     <Item header={true}>
-                        <ItemField className="w-1/12"> </ItemField>
-                        <ItemField className="w-5/12">ID</ItemField>
-                        <ItemField className="w-6/12">Issuer URL</ItemField>
+                        <ItemField className="flex flex-col">
+                            <span>Issuer URL</span>
+                        </ItemField>
                     </Item>
                     {clientConfigs.map((cc) => (
                         <OIDCClientListItem key={cc.id} clientConfig={cc} />

@@ -8,7 +8,7 @@ import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/
 import { FC, useCallback, useMemo, useState } from "react";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { ContextMenuEntry } from "../../components/ContextMenu";
-import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon } from "../../components/ItemsList";
+import { Item, ItemField, ItemFieldContextMenu } from "../../components/ItemsList";
 import { useDeleteOIDCClientMutation } from "../../data/oidc-clients/delete-oidc-client-mutation";
 import { gitpodHostUrl } from "../../service/service";
 import { OIDCClientConfigModal } from "./OIDCClientConfigModal";
@@ -24,17 +24,17 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
     const menuEntries = useMemo(() => {
         const result: ContextMenuEntry[] = [
             {
+                title: "Edit",
+                onClick: () => setShowEditModal(true),
+                separator: true,
+            },
+            {
                 title: "Login",
                 onClick: () => {
                     window.location.href = gitpodHostUrl
                         .with({ pathname: `/iam/oidc/start`, search: `id=${clientConfig.id}` })
                         .toString();
                 },
-                separator: true,
-            },
-            {
-                title: "Edit",
-                onClick: () => setShowEditModal(true),
                 separator: true,
             },
             {
@@ -57,17 +57,12 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
 
     return (
         <>
-            <Item key={clientConfig.id} className="h-16">
-                <ItemFieldIcon className="w-1/12 flex items-center">
-                    <div className={"rounded-full w-3 h-3 text-sm align-middle m-auto bg-gray-400"}>&nbsp;</div>
-                </ItemFieldIcon>
-                <ItemField className="w-5/12 flex flex-grow items-center">
-                    <span className="text-sm font-medium truncate overflow-ellipsis">{clientConfig.id}</span>
+            <Item key={clientConfig.id}>
+                <ItemField className="flex flex-col flex-grow">
+                    <span className="font-medium truncate overflow-ellipsis">{clientConfig.oidcConfig?.issuer}</span>
+                    <span className="text-sm text-gray-500 truncate overflow-ellipsis">{clientConfig.id}</span>
                 </ItemField>
-                <ItemField className="w-5/12 flex flex-grow items-center">
-                    <span className="text-gray-500 truncate overflow-ellipsis">{clientConfig.oidcConfig?.issuer}</span>
-                </ItemField>
-                <ItemFieldContextMenu className="w-1/12" menuEntries={menuEntries} />
+                <ItemFieldContextMenu menuEntries={menuEntries} />
             </Item>
             {showDeleteConfirmation && (
                 <ConfirmationModal

@@ -4,11 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, ReactNode, useEffect, useMemo } from "react";
+import { FC, ReactNode, useEffect } from "react";
 import cn from "classnames";
 import { getGitpodService } from "../service/service";
 import { Heading2 } from "./typography/headings";
-import Alert from "./Alert";
+import Alert, { AlertProps } from "./Alert";
+import "./modal.css";
+import classNames from "classnames";
 
 type CloseModalManner = "esc" | "enter" | "x";
 
@@ -126,7 +128,7 @@ type ModalBodyProps = {
 export const ModalBody = ({ children, hideDivider = false, noScroll = false }: ModalBodyProps) => {
     return (
         <div
-            className={cn("relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-14", {
+            className={cn("relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
                 "border-t border-b mt-2 py-4": !hideDivider,
                 "overflow-y-auto": !noScroll,
             })}
@@ -137,47 +139,41 @@ export const ModalBody = ({ children, hideDivider = false, noScroll = false }: M
 };
 
 type ModalFooterProps = {
-    error?: string;
-    warning?: string;
+    alert?: ReactNode;
     children: ReactNode;
 };
-export const ModalFooter: FC<ModalFooterProps> = ({ error, warning, children }) => {
-    // Inlining these to ensure error band covers modal left/right borders
-    const alertStyles = useMemo(() => ({ marginLeft: "-25px", marginRight: "-25px" }), []);
-
-    const hasAlert = error || warning;
-
+export const ModalFooter: FC<ModalFooterProps> = ({ alert, children }) => {
     return (
-        <div className="relative">
-            {hasAlert && (
-                <div className="absolute bottom-12 left-0 right-0" style={alertStyles}>
-                    <ModalFooterAlert error={error} warning={warning} />
-                </div>
-            )}
-            <div className="flex justify-end mt-6 space-x-2">{children}</div>
-        </div>
+        <>
+            {alert}
+            <div
+                className={classNames(
+                    // causes footer to show up on top of alert
+                    "relative",
+                    // make as wide as the modal so it covers the alert
+                    "-mx-6 -mb-6 p-6",
+                    // apply the same bg and rounded corners as the modal
+                    "bg-white dark:bg-gray-900 rounded-b-xl",
+                )}
+            >
+                <div className="flex justify-end space-x-2">{children}</div>
+            </div>
+        </>
     );
 };
 
-type ModalFooterAlertProps = {
-    error?: string;
-    warning?: string;
-};
-const ModalFooterAlert: FC<ModalFooterAlertProps> = ({ error, warning }) => {
-    if (error) {
-        return (
-            <Alert type="danger" rounded={false}>
-                {error}
+// Wrapper around Alert to ensure it's used correctly in a Modal
+export const ModalFooterAlert: FC<AlertProps> = ({ closable = true, children, ...alertProps }) => {
+    return (
+        <div
+            className={classNames({
+                "gp-modal-footer-alert border-b": !closable,
+                "gp-modal-footer-alert_animate absolute": closable,
+            })}
+        >
+            <Alert rounded={false} closable={closable} {...alertProps}>
+                {children}
             </Alert>
-        );
-    }
-    if (warning) {
-        return (
-            <Alert type="warning" rounded={false}>
-                {warning}
-            </Alert>
-        );
-    }
-
-    return null;
+        </div>
+    );
 };

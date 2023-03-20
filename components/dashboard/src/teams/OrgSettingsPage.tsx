@@ -14,12 +14,10 @@ import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { getTeamSettingsMenu } from "./TeamSettings";
 
 export interface OrgSettingsPageProps {
-    title: string;
-    subtitle: string;
     children: React.ReactNode;
 }
 
-export function OrgSettingsPage({ title, subtitle, children }: OrgSettingsPageProps) {
+export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     const org = useCurrentOrg();
     const { oidcServiceEnabled, orgGitAuthProviders } = useFeatureFlags();
 
@@ -33,6 +31,9 @@ export function OrgSettingsPage({ title, subtitle, children }: OrgSettingsPagePr
             }),
         [oidcServiceEnabled, orgGitAuthProviders, org.data],
     );
+
+    const title = "Organization Settings";
+    const subtitle = "Manage your organization's settings.";
 
     // Render as much of the page as we can in a loading state to avoid content shift
     if (org.isLoading) {

@@ -9,7 +9,7 @@ import { OrgSettingsPage } from "./OrgSettingsPage";
 
 export default function GitAuthPage() {
     return (
-        <OrgSettingsPage title="Git Auth" subtitle="Configure Git Auth for GitLab or Github.">
+        <OrgSettingsPage>
             <GitIntegrations />
         </OrgSettingsPage>
     );

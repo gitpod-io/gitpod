@@ -11,7 +11,7 @@ import { Button } from "../../components/Button";
 import { InputField } from "../../components/forms/InputField";
 import { TextInputField } from "../../components/forms/TextInputField";
 import { InputWithCopy } from "../../components/InputWithCopy";
-import Modal, { ModalBody, ModalFooter, ModalHeader } from "../../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
 import { useUpsertOIDCClientMutation } from "../../data/oidc-clients/upsert-oidc-client-mutation";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
@@ -89,8 +89,6 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
         }
     }, [clientConfig?.id, clientId, clientSecret, isNew, isValid, issuer, onClose, org, upsertClientConfig]);
 
-    const errorMessage = upsertClientConfig.isError ? "There was a problem saving your configuration." : "";
-
     return (
         <Modal
             visible
@@ -136,7 +134,9 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                     onChange={setClientSecret}
                 />
             </ModalBody>
-            <ModalFooter error={errorMessage}>
+            <ModalFooter
+                alert={upsertClientConfig.isError ? <SaveErrorAlert error={upsertClientConfig.error as Error} /> : null}
+            >
                 <Button type="secondary" onClick={onClose}>
                     Cancel
                 </Button>
@@ -145,5 +145,19 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                 </Button>
             </ModalFooter>
         </Modal>
+    );
+};
+
+type SaveErrorMessageProps = {
+    error?: Error;
+};
+const SaveErrorAlert: FC<SaveErrorMessageProps> = ({ error }) => {
+    const message = error?.message || "";
+
+    return (
+        <ModalFooterAlert type="danger">
+            <span>There was a problem saving your configuration.</span>
+            {message && <div className="leading-4 text-xs font-mono">{message}</div>}
+        </ModalFooterAlert>
     );
 };
