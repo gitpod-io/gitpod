@@ -66,12 +66,20 @@ export function CreateWorkspacePage() {
     );
     const workspaceContext = useWorkspaceContext(contextURL);
     const isLoading = workspaceContext.isLoading || projects.isLoading;
+
+    // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
         if (!workspaceContext.data || !projects.data) {
             return undefined;
         }
-        const cloneUrl = (workspaceContext.data as CommitContext).repository.cloneUrl;
-        return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
+        if ("repository" in workspaceContext.data) {
+            const cloneUrl = (workspaceContext.data as CommitContext)?.repository?.cloneUrl;
+            if (!cloneUrl) {
+                return;
+            }
+
+            return projects.data.projects.find((p) => p.cloneUrl === cloneUrl);
+        }
     }, [projects.data, workspaceContext.data]);
 
     useEffect(() => {
