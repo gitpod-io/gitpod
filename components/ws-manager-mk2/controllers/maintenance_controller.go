@@ -79,7 +79,6 @@ func (r *MaintenanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 	var cfg config.MaintenanceConfig
 	if err := json.Unmarshal([]byte(configJson), &cfg); err != nil {
-		// TODO: Default to enabled? Invalid timestamp is likely meant to have maintenance mode enabled.
 		log.Error(err, "failed to unmarshal maintenance config, setting maintenance mode as disabled")
 		r.setEnabledUntil(log, nil)
 		return ctrl.Result{}, nil
