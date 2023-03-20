@@ -120,6 +120,7 @@
 .github/workflows/ide-*.yml @gitpod-io/engineering-ide
 .github/workflows/jetbrains-*.yml @gitpod-io/engineering-ide
 .github/workflows/code-nightly.yml @gitpod-io/engineering-ide
+.github/workflows/workspace-*.yml @gitpod-io/engineering-workspace
 
 #
 # Automation

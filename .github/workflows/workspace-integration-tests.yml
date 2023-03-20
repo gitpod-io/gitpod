@@ -17,17 +17,45 @@ on:
                 type: boolean
                 description: "Skip delete preview environment (debug only)"
     schedule:
-        - cron: "0 3 * * *"
+        - cron: "0 3,12 * * *"
 jobs:
     configuration:
         name: Configuration
         runs-on: [self-hosted]
         container:
             image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
+            volumes:
+                - /var/tmp:/var/tmp
+                - /tmp:/tmp
         outputs:
             name: ${{ steps.configuration.outputs.name }}
             version: ${{ steps.configuration.outputs.version }}
+            previewctl_hash: ${{ steps.set-previewctl-version.outputs.previewctl_version }}
         steps:
+            # sometimes auth fails with:
+            # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
+            - id: auth
+              uses: google-github-actions/auth@v1
+              continue-on-error: true
+              with:
+                  token_format: access_token
+                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+            # so we retry on failure
+            - id: auth-retry
+              uses: google-github-actions/auth@v1
+              if: steps.auth.outcome == 'failure'
+              with:
+                  token_format: access_token
+                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+            - name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v1
+            # do this step as early as possible, so that Slack Notify failure has the secret
+            - name: Get Secrets from GCP
+              id: "secrets"
+              uses: "google-github-actions/get-secretmanager-secrets@v1"
+              with:
+                  secrets: |-
+                      WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
             - name: "Set outputs"
               id: configuration
               shell: bash
@@ -53,50 +81,86 @@ jobs:
                           echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
                       } >> $GITHUB_OUTPUT
                   fi
-            - name: Get Secrets from GCP
-              id: 'secrets'
-              uses: 'google-github-actions/get-secretmanager-secrets@v1'
-              with:
-                secrets: |-
-                    WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
+            - name: Set previewctl version
+              id: set-previewctl-version
+              run: |
+                PREVIEWCTL_VERSION=$(\
+                    gcloud container images list-tags eu.gcr.io/gitpod-core-dev/build/previewctl \
+                        --filter="tags:main-gha.*" \
+                        --limit=1 \
+                        --format=json \
+                    | jq --raw-output '.[0].tags[0]' \
+                    | cut -c 6-
+                )
+                echo "previewctl_version=$PREVIEWCTL_VERSION" >> "$GITHUB_OUTPUT"
             - name: Slack Notification
               uses: rtCamp/action-slack-notify@v2
               if: failure()
               env:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: main branch build failed
+                  SLACK_MESSAGE: Workspace Integration Tests failed
+
+    infrastructure:
+      needs: [ configuration ]
+      runs-on: [ self-hosted ]
+      concurrency:
+        group: ${{ github.head_ref || github.ref_name }}-infrastructure
+      steps:
+        - uses: actions/checkout@v3
+        - name: Create preview environment infrastructure
+          id: create
+          uses: ./.github/actions/preview-create
+          with:
+            name: ${{ needs.configuration.outputs.name }}
+            sa_key: ${{ secrets.GCP_CREDENTIALS }}
+            infrastructure_provider: gce
+            previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
+            large_vm: true
+        - name: Deploy Gitpod to the preview environment
+          if: github.event.inputs.skip_deploy != 'true'
+          id: deploy-gitpod
+          uses: ./.github/actions/deploy-gitpod
+          with:
+            name: ${{ needs.configuration.outputs.name }}
+            sa_key: ${{ secrets.GCP_CREDENTIALS }}
+            version: ${{ needs.configuration.outputs.version}}
+            previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
+
     check:
         name: Check for regressions
-        needs: [configuration]
+        needs: [configuration, infrastructure]
         runs-on: [self-hosted]
         container:
             image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
+            volumes:
+                - /var/tmp:/var/tmp
+                - /tmp:/tmp
         steps:
             - uses: actions/checkout@v3
-            - name: Create preview environment infrastructure
-              uses: ./.github/actions/preview-create
+            - name: Configure workspace
+              run: |
+                # Needed by google-github-actions/setup-gcloud
+                sudo chown -R gitpod:gitpod /__t
+
+            - id: gcloud-sdk-setup
+              name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v1
+            - id: auth
+              uses: google-github-actions/auth@v1
               with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  infrastructure_provider: harvester
-                  large_vm: true
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-            - name: Deploy Gitpod to the preview environment
-              if: github.event.inputs.skip_deploy != 'true'
-              id: deploy-gitpod
-              uses: ./.github/actions/deploy-gitpod
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
-                  version: ${{ needs.configuration.outputs.version}}
+                  token_format: access_token
+                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+            # do this step as early as possible, so that Slack Notify failure has the secret
+            # any earlier, and it conflicts with create previ
             - name: Get Secrets from GCP
-              id: 'secrets'
-              uses: 'google-github-actions/get-secretmanager-secrets@v1'
+              id: "secrets"
+              uses: "google-github-actions/get-secretmanager-secrets@v1"
               with:
-                secrets: |-
-                    WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
-                    WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
-                    WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
+                  secrets: |-
+                      WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
+                      WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
+                      WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
             - name: Integration Test
               shell: bash
               env:
@@ -132,17 +196,15 @@ jobs:
                   BASE_TESTS_DIR="$GITHUB_WORKSPACE/test/tests"
                   CONTENT_SERVICE_TESTS="$BASE_TESTS_DIR/components/content-service"
                   IMAGE_BUILDER_TESTS="$BASE_TESTS_DIR/components/image-builder"
-                  DATABASE_TESTS="$BASE_TESTS_DIR/components/database"
-                  SERVER_TESTS="$BASE_TESTS_DIR/components/server"
                   WS_DAEMON_TESTS="$BASE_TESTS_DIR/components/ws-daemon"
                   WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
-                  WORKSPACE_TESTS="$BASE_TESTS_DIR/components/workspace"
+                  WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
 
                   go install github.com/jstemmer/go-junit-report/v2@latest
 
                   FAILURE_COUNT=0
 
-                  WORKSPACE_TEST_LIST=("$CONTENT_SERVICE_TESTS" "$IMAGE_BUILDER_TESTS" "$DATABASE_TESTS" "$SERVER_TESTS" "$WS_DAEMON_TESTS" "$WS_MANAGER_TESTS" "$WORKSPACE_TESTS")
+                  WORKSPACE_TEST_LIST=("$CONTENT_SERVICE_TESTS" "$IMAGE_BUILDER_TESTS" "$WS_DAEMON_TESTS" "$WS_MANAGER_TESTS" "$WORKSPACE_TESTS")
                   for TEST_PATH in "${WORKSPACE_TEST_LIST[@]}"
                   do
                       TEST_NAME=$(basename "${TEST_PATH}")
@@ -150,7 +212,16 @@ jobs:
 
                       cd "${TEST_PATH}"
                       set +e
-                      go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}.xml" -iocopy
+                      go test -p 1 -v ./... "${args[@]}" -run '.*SerialOnly$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-SERIAL.xml" -iocopy
+                      RC=${PIPESTATUS[0]}
+                      set -e
+
+                      if [ "${RC}" -ne "0" ]; then
+                        FAILURE_COUNT=$((FAILURE_COUNT+1))
+                      fi
+
+                      set +e
+                      go test -p 2 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
                       RC=${PIPESTATUS[0]}
                       set -e
 
@@ -173,9 +244,22 @@ jobs:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: ${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed
-            - name: Delete preview environment
-              if: github.event.inputs.skip_delete != 'true' && (success() || failure())
-              uses: ./.github/actions/delete-preview
-              with:
-                  name: ${{ needs.configuration.outputs.name }}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+
+    delete:
+      name: Delete preview environment
+      needs: [ configuration, infrastructure, check ]
+      if: github.event.inputs.skip_delete != 'true' && always()
+      runs-on: [ self-hosted ]
+      container:
+        image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-kubecdl-home.1
+        volumes:
+          - /var/tmp:/var/tmp
+          - /tmp:/tmp
+      steps:
+        - uses: actions/checkout@v3
+        - name: Delete preview environment
+          uses: ./.github/actions/delete-preview
+          with:
+              name: ${{ needs.configuration.outputs.name }}
+              sa_key: ${{ secrets.GCP_CREDENTIALS }}
+              previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
