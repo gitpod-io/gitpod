@@ -1,6 +1,7 @@
 # Change Log
 
 ## March 2023
+- [gitpod-cli] change `gp rebuild` to `gp validate` ([#16867](https://github.com/gitpod-io/gitpod/pull/16867)) - [@iQQBot](https://github.com/iQQBot)
 - Fix for missing prebuilds on default branch of a GitHub repository. ([#16816](https://github.com/gitpod-io/gitpod/pull/16816)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [gpctl] Add users block command ([#16715](https://github.com/gitpod-io/gitpod/pull/16715)) - [@csweichel](https://github.com/csweichel)
 - Fix PortsViews icons don't show up in Safari ([#16799](https://github.com/gitpod-io/gitpod/pull/16799)) - [@mustard-mh](https://github.com/mustard-mh)
