@@ -195,12 +195,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		ReadOnly:  true,
 	})
 
-	if vol, mnt, envv, ok := common.CustomCACertVolume(ctx); ok {
-		volumes = append(volumes, *vol)
-		volumeMounts = append(volumeMounts, *mnt)
-		env = append(env, envv...)
-	}
-
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.ChargebeeSecret != "" {
 			chargebeeSecret := cfg.WebApp.Server.ChargebeeSecret
@@ -341,6 +335,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										},
 									},
 								},
+								common.CAVolume(),
 							},
 							volumes...,
 						),
@@ -404,6 +399,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 										MountPath: "/config",
 										ReadOnly:  true,
 									},
+									common.CAVolumeMount(),
 								},
 								volumeMounts...,
 							),

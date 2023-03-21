@@ -56,32 +56,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			MountPath: "/mnt/certificates",
 		})
 	}
-	if ctx.Config.CustomCACert != nil && ctx.Config.CustomCACert.Name != "" {
-		// Attach the custom CA certificate as registry-facade seems to talk to
-		// the registry through the `proxy`
-		volumeName := "custom-ca-cert"
-		volumes = append(volumes, corev1.Volume{
-			Name: volumeName,
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: ctx.Config.CustomCACert.Name,
-					Items: []corev1.KeyToPath{
-						{
-							Key:  "ca.crt",
-							Path: "ca.crt",
-						},
-					},
-				},
-			},
-		})
-
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			ReadOnly:  true,
-			MountPath: "/etc/ssl/certs/proxy-ca.crt",
-			SubPath:   "ca.crt",
-			Name:      volumeName,
-		})
-	}
 
 	if objs, err := common.DockerRegistryHash(ctx); err != nil {
 		return nil, err
@@ -183,9 +157,10 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					MountPath: "/mnt/dst",
 				},
 				{
-					Name:      "gitpod-ca-certificate",
-					SubPath:   "ca.crt",
+					Name:      "ca-certificate",
 					MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
+					SubPath:   "gitpod-ca.crt",
+					ReadOnly:  true,
 				},
 			},
 			Env: common.ProxyEnv(&ctx.Config),
@@ -272,6 +247,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Name:      name,
 									MountPath: "/mnt/pull-secret",
 								},
+								common.CAVolumeMount(),
 							},
 							volumeMounts...,
 						),
@@ -304,46 +280,45 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 						*common.KubeRBACProxyContainer(ctx),
 					},
-					Volumes: append([]corev1.Volume{{
-						Name:         "cache",
-						VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
-					}, {
-						Name: "config",
-						VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-							LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-						}},
-					}, {
-						Name: "ws-manager-client-tls-certs",
-						VolumeSource: corev1.VolumeSource{
-							Secret: &corev1.SecretVolumeSource{
-								SecretName: wsmanager.TLSSecretNameClient,
-							},
-						},
-					}, {
-						Name: name,
-						VolumeSource: corev1.VolumeSource{
-							Secret: &corev1.SecretVolumeSource{
-								SecretName: secretName,
-								Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
-							},
-						},
-					}, {
-						Name: "hostfs",
-						VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-							Path: "/",
-						}},
-					},
+					Volumes: append([]corev1.Volume{
 						{
-							Name: "gitpod-ca-certificate",
+							Name:         "cache",
+							VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+						}, {
+							Name: "config",
+							VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+								LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+							}},
+						}, {
+							Name: "ws-manager-client-tls-certs",
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
-									SecretName: "builtin-registry-facade-cert",
-									Items: []corev1.KeyToPath{
-										{Key: "ca.crt", Path: "ca.crt"},
-									},
+									SecretName: wsmanager.TLSSecretNameClient,
+								},
+							},
+						}, {
+							Name: name,
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: secretName,
+									Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
+								},
+							},
+						}, {
+							Name: "hostfs",
+							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
+								Path: "/",
+							}},
+						},
+						{
+							Name: "ca-certificate",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{Name: "gitpod-ca"},
 								},
 							},
 						},
+						common.CAVolume(),
 					}, volumes...),
 					Tolerations: common.GPUToleration(),
 				},

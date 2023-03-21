@@ -51,9 +51,6 @@ type ConfigVersion interface {
 	// CheckDeprecated checks for deprecated config params.
 	// Returns key/value pair of deprecated params/values and any error messages (used for conflicting params)
 	CheckDeprecated(cfg interface{}) (map[string]interface{}, []string)
-
-	// BuildFromEnvvars builds the configuration file from assigned envvars
-	BuildFromEnvvars(cfg interface{}) error
 }
 
 // AddVersion adds a new version.

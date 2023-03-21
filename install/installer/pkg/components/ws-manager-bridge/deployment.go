@@ -126,14 +126,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						RestartPolicy:                 corev1.RestartPolicyAlways,
 						TerminationGracePeriodSeconds: pointer.Int64(30),
 						Volumes: append(
-							[]corev1.Volume{{
-								Name: "config",
-								VolumeSource: corev1.VolumeSource{
-									ConfigMap: &corev1.ConfigMapVolumeSource{
-										LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+							[]corev1.Volume{
+								{
+									Name: "config",
+									VolumeSource: corev1.VolumeSource{
+										ConfigMap: &corev1.ConfigMapVolumeSource{
+											LocalObjectReference: corev1.LocalObjectReference{Name: fmt.Sprintf("%s-config", Component)},
+										},
 									},
 								},
-							}},
+								common.CAVolume(),
+							},
 							volumes...,
 						),
 						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx), *common.MessageBusWaiterContainer(ctx)},
@@ -171,11 +174,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								},
 							},
 							VolumeMounts: append(
-								[]corev1.VolumeMount{{
-									Name:      "config",
-									MountPath: "/config",
-									ReadOnly:  true,
-								}},
+								[]corev1.VolumeMount{
+									{
+										Name:      "config",
+										MountPath: "/config",
+										ReadOnly:  true,
+									},
+									common.CAVolumeMount(),
+								},
 								volumeMounts...,
 							),
 						}, *common.KubeRBACProxyContainer(ctx)},
