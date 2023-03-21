@@ -5,15 +5,16 @@
 package io.gitpod.jetbrains.remote
 
 import com.jetbrains.ide.model.uiautomation.BeControl
+import com.jetbrains.ide.model.uiautomation.DefiniteProgress
+import com.jetbrains.rd.platform.codeWithMe.unattendedHost.metrics.Metric
 import com.jetbrains.rd.ui.bedsl.dsl.*
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rdserver.diagnostics.BackendDiagnosticsService
 import com.jetbrains.rdserver.unattendedHost.customization.controlCenter.performance.MetricControlProvider
 import com.jetbrains.rdserver.unattendedHost.customization.controlCenter.performance.createProgressBar
-import com.jetbrains.rdserver.unattendedHost.customization.controlCenter.performance.createProgressRow
 
-class GitpodMetricControlProvider : MetricControlProvider {
+abstract class AbstractGitpodMetricControlProvider : MetricControlProvider {
     override val id: String = "gitpodMetricsControl"
     override fun getControl(lifetime: Lifetime): BeControl {
         val backendDiagnosticsService = BackendDiagnosticsService.Companion.getInstance()
@@ -92,7 +93,7 @@ class GitpodMetricControlProvider : MetricControlProvider {
         cpuTotal.valueProperty.change.advise(lifetime) {
             updateLabel()
         }
-        createProgressRow(ctx, lifetime, label, cpuPercentage.statusProperty, labelProperty, cpuPercentageProperty, progressBar)
+        createProgressControl(ctx, lifetime, label, cpuPercentage, labelProperty, cpuPercentageProperty, progressBar)
     }
 
     private fun createMemoryControl(ctx: VerticalGridBuilder, backendDiagnosticsService: BackendDiagnosticsService, lifetime: Lifetime) {
@@ -115,6 +116,8 @@ class GitpodMetricControlProvider : MetricControlProvider {
             updateLabel()
         }
 
-        createProgressRow(ctx, lifetime, label, memoryPercentage.statusProperty, labelProperty, memoryPercentageProperty, progressBar)
+        createProgressControl(ctx, lifetime, label, memoryPercentage, labelProperty, memoryPercentageProperty, progressBar)
     }
+
+    protected abstract fun createProgressControl(ctx: VerticalGridBuilder, lifetime: Lifetime, label: String, cpuPercentage: Metric, labelProperty: Property<String>, cpuPercentageProperty: Property<String>, progressBar: DefiniteProgress)
 }

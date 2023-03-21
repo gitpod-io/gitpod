@@ -26,9 +26,6 @@
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.services.HeartbeatService"
                             preload="true"/>
         <applicationService serviceImplementation="io.gitpod.jetbrains.remote.GitpodManager" preload="true"/>
-        <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodIgnoredPortsForNotificationService"
-                            serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodIgnoredPortsForNotificationServiceImpl"
-                            preload="true"/>
         <applicationService serviceInterface="io.gitpod.jetbrains.remote.GitpodPortForwardingService"
                             serviceImplementation="io.gitpod.jetbrains.remote.internal.GitpodPortForwardingServiceImpl"
                             client="controller" preload="true"/>
@@ -39,13 +36,9 @@
 
         <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodClientProjectSessionTracker"
                         client="controller" preload="true"/>
-        <projectService serviceImplementation="io.gitpod.jetbrains.remote.GitpodTerminalService" client="controller"
-                        preload="true"/>
 
         <gateway.customization.name
                 implementation="io.gitpod.jetbrains.remote.GitpodGatewayClientCustomizationProvider"/>
-        <gateway.customization.performance id="gitpodMetricsControl" order="before cpuControl"
-                                           implementation="io.gitpod.jetbrains.remote.GitpodMetricControlProvider"/>
         <gateway.customization.metrics id="gitpodMetricsProvider"
                                        implementation="io.gitpod.jetbrains.remote.GitpodMetricProvider"/>
 

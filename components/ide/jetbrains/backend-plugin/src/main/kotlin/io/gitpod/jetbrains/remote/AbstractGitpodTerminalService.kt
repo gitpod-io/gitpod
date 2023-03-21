@@ -13,7 +13,6 @@ import com.intellij.util.application
 import com.jediterm.terminal.ui.TerminalWidget
 import com.jediterm.terminal.ui.TerminalWidgetListener
 import com.jetbrains.rd.framework.util.launch
-import com.jetbrains.rdserver.terminal.BackendTerminalManager
 import io.gitpod.supervisor.api.Status
 import io.gitpod.supervisor.api.StatusServiceGrpc
 import io.gitpod.supervisor.api.TerminalOuterClass
@@ -25,16 +24,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.guava.await
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
-import org.jetbrains.plugins.terminal.TerminalView
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 
-@Suppress("UnstableApiUsage")
-class GitpodTerminalService(project: Project): Disposable {
+abstract class AbstractGitpodTerminalService(project: Project) : Disposable {
     private val lifetime = defineNestedLifetime()
-    private val terminalView = TerminalView.getInstance(project)
-    private val backendTerminalManager = BackendTerminalManager.getInstance(project)
     private val terminalServiceFutureStub = TerminalServiceGrpc.newFutureStub(GitpodManager.supervisorChannel)
     private val terminalServiceStub = TerminalServiceGrpc.newStub(GitpodManager.supervisorChannel)
     private val statusServiceStub = StatusServiceGrpc.newStub(GitpodManager.supervisorChannel)
@@ -44,8 +39,7 @@ class GitpodTerminalService(project: Project): Disposable {
     }
 
     override fun dispose() = Unit
-
-    private fun start() {
+    protected fun start() {
         if (application.isHeadlessEnvironment) return
 
         lifetime.launch {
@@ -58,25 +52,7 @@ class GitpodTerminalService(project: Project): Disposable {
         }
     }
 
-    private fun createSharedTerminalAndExecuteCommand(title: String, command: String): ShellTerminalWidget? {
-        val registeredTerminals = terminalView.widgets.toMutableList()
-
-        backendTerminalManager.createNewSharedTerminal(UUID.randomUUID().toString(), title)
-
-        for (widget in terminalView.widgets) {
-            if (registeredTerminals.contains(widget)) continue
-
-            widget.terminalTitle.change { applicationTitle = title }
-
-            val shellTerminalWidget = widget as ShellTerminalWidget
-
-            shellTerminalWidget.executeCommand(command)
-
-            return shellTerminalWidget
-        }
-
-        return null
-    }
+    protected abstract fun createSharedTerminal(title: String): ShellTerminalWidget
 
     private fun createTerminalsAttachedToTasks(
             terminals: List<TerminalOuterClass.Terminal>,
@@ -181,15 +157,10 @@ class GitpodTerminalService(project: Project): Disposable {
     }
 
     private fun createAttachedSharedTerminal(supervisorTerminal: TerminalOuterClass.Terminal) {
-        val shellTerminalWidget = createSharedTerminalAndExecuteCommand(
-                supervisorTerminal.title,
-                "gp tasks attach ${supervisorTerminal.alias}"
-        ) ?: return
-
+        val shellTerminalWidget = createSharedTerminal(supervisorTerminal.title)
+        shellTerminalWidget.executeCommand("gp tasks attach ${supervisorTerminal.alias}")
         closeTerminalWidgetWhenClientGetsClosed(shellTerminalWidget)
-
         exitTaskWhenTerminalWidgetGetsClosed(supervisorTerminal, shellTerminalWidget)
-
         listenForTaskTerminationAndTitleChanges(supervisorTerminal, shellTerminalWidget)
     }
 
@@ -207,10 +178,7 @@ class GitpodTerminalService(project: Project): Disposable {
                     .build()
 
             val listenTerminalResponseObserver =
-                    object : ClientResponseObserver<
-                            TerminalOuterClass.ListenTerminalRequest,
-                            TerminalOuterClass.ListenTerminalResponse
-                            > {
+                    object : ClientResponseObserver<TerminalOuterClass.ListenTerminalRequest, TerminalOuterClass.ListenTerminalResponse> {
                         override fun beforeStart(
                                 request: ClientCallStreamObserver<TerminalOuterClass.ListenTerminalRequest>
                         ) {
@@ -286,7 +254,7 @@ class GitpodTerminalService(project: Project): Disposable {
                         )
                     } catch (throwable: Throwable) {
                         thisLogger().error("gitpod: Got an error while shutting down " +
-                                        "'${supervisorTerminal.title}' terminal.", throwable)
+                                "'${supervisorTerminal.title}' terminal.", throwable)
                     }
                 }
             }
