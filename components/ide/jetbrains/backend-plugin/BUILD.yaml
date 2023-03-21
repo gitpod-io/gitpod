@@ -31,7 +31,6 @@ packages:
       buildArgs:
         JETBRAINS_BACKEND_QUALIFIER: latest
       image:
-        - ${imageRepoBase}/ide/jb-backend-plugin:${version}
         - ${imageRepoBase}/ide/jb-backend-plugin:commit-${__git_commit}-latest
   - name: plugin-stable
     type: generic
