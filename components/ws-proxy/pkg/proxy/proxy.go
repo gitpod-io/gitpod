@@ -5,16 +5,18 @@
 package proxy
 
 import (
+	"bytes"
 	"crypto/tls"
+	stdlog "log"
 	"net/http"
 	"os"
 	"path/filepath"
 
-	"github.com/gitpod-io/golang-crypto/ssh"
 	"github.com/gorilla/mux"
 	"github.com/klauspost/cpuid/v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/golang-crypto/ssh"
 )
 
 // WorkspaceProxy is the entity which forwards all inbound requests to the relevant workspace pods.
@@ -64,6 +66,7 @@ func (p *WorkspaceProxy) MustServe() {
 			PreferServerCipherSuites: true,
 			NextProtos:               []string{"h2", "http/1.1"},
 		},
+		ErrorLog: stdlog.New(logrusErrorWriter{}, "", 0),
 	}
 
 	var (
@@ -140,4 +143,17 @@ func optimalDefaultCipherSuites() []uint16 {
 		return defaultCipherSuitesWithAESNI
 	}
 	return defaultCipherSuitesWithoutAESNI
+}
+
+var tlsHandshakeErrorPrefix = []byte("http: TLS handshake error")
+
+type logrusErrorWriter struct{}
+
+func (w logrusErrorWriter) Write(p []byte) (int, error) {
+	if bytes.Contains(p, tlsHandshakeErrorPrefix) {
+		return len(p), nil
+	}
+
+	log.Errorf("%s", string(p))
+	return len(p), nil
 }
