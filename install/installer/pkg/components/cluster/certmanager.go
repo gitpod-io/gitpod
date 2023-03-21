@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	trust "github.com/cert-manager/trust-manager/pkg/apis/trust/v1alpha1"
 	v1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
@@ -21,6 +22,16 @@ import (
 func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 	issuerName := "gitpod-self-signed-issuer"
 	secretCAName := "gitpod-identity-trust-root"
+
+	// TODO (gpl): This is a workaround to untangle the refactoring of existing infrastructure from
+	// moving forward with this change
+	caCertificateNamespace := "cert-manager" // this is the default we want to converge on, eventually
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.CertmanagerNamespaceOverride != "" {
+			caCertificateNamespace = cfg.WebApp.CertmanagerNamespaceOverride
+		}
+		return nil
+	})
 
 	return []runtime.Object{
 		// Define a self-signed issuer so we can generate a CA
@@ -39,7 +50,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta: common.TypeMetaCertificate,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "gitpod-trust-anchor",
-				Namespace: "cert-manager",
+				Namespace: caCertificateNamespace,
 				Labels:    common.DefaultLabels(Component),
 			},
 			Spec: v1.CertificateSpec{
