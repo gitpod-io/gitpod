@@ -19,16 +19,17 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"github.com/bombsimon/logrusr/v2"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
@@ -50,6 +51,11 @@ import (
 )
 
 var (
+	// ServiceName is the name we use for tracing/logging
+	ServiceName = "ws-manager-mk2"
+	// Version of this service - set during build
+	Version = ""
+
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
@@ -64,17 +70,21 @@ func init() {
 func main() {
 	var enableLeaderElection bool
 	var configFN string
+	var jsonLog bool
+	var verbose bool
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&configFN, "config", "", "Path to the config file")
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
+	flag.BoolVar(&jsonLog, "json-log", true, "produce JSON log output on verbose level")
+	flag.BoolVar(&verbose, "verbose", false, "Enable verbose logging")
 	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	log.Init(ServiceName, Version, jsonLog, verbose)
+	baseLogger := logrusr.New(log.Log)
+	ctrl.SetLogger(baseLogger)
+	// Set the logger used by k8s (e.g. client-go).
+	klog.SetLogger(baseLogger)
 	promrep := &tracing.PromReporter{
 		Operations: map[string]tracing.SpanMetricMapping{
 			"StartWorkspace": {
@@ -84,7 +94,7 @@ func main() {
 			},
 		},
 	}
-	closer := tracing.Init("ws-manager-mk2", tracing.WithPrometheusReporter(promrep))
+	closer := tracing.Init(ServiceName, tracing.WithPrometheusReporter(promrep))
 	if closer != nil {
 		defer closer.Close()
 	}
