@@ -677,7 +677,7 @@ metadata:
     app: gitpod
     component: cluster
   name: gitpod-trust-anchor
-  namespace: cert-manager
+  namespace: certmanager
 spec:
   commonName: root.gitpod.cluster.local
   duration: 8760h0m0s
@@ -2014,7 +2014,7 @@ data:
         app: gitpod
         component: cluster
       name: gitpod-trust-anchor
-      namespace: cert-manager
+      namespace: certmanager
     ---
     apiVersion: cert-manager.io/v1
     kind: ClusterIssuer
