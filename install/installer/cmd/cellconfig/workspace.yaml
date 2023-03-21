@@ -1,0 +1,282 @@
+# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: v1
+
+authProviders: []
+
+experimental:
+  workspace:
+    stage: prod
+    #schedulerName: "kumquat"
+    hostURL: "https://[[ .DomainName ]]"
+    wsManagerRateLimits:
+      "/wsman.WorkspaceManager/StartWorkspace":
+        block: true
+        bucketSize: 3
+        refillInterval: "500ms"
+      "/wsman.WorkspaceManager/ControlPort":
+        block: true
+        bucketSize: 6
+        refillInterval: "1s"
+      "/wsman.WorkspaceManager/DeleteVolumeSnapshot":
+        block: true
+        bucketSize: 100
+        refillInterval: "1m"
+    wsProxy:
+      ingressHeader: "Host"
+    #tracing:
+    #  samplerType: const
+    #  samplerParam: 1
+    #cpuLimits:
+    #  enabled: false
+    #  nodeBandwidth: "12"
+    #  limit: "2"
+    #  burstLimit: "6"
+
+    # Configure I/O limits only to avoid starvation
+    ioLimits:
+      writeBandwidthPerSecond: "500Mi"
+      readBandwidthPerSecond: "500Mi"
+    procLimit: 6144
+    oomScores:
+      enabled: true
+      tier1: -1000
+      tier2: -100
+    registryFacade:
+      redisCache:
+        enabled: true
+        singleHostAddr: "[[ .RegistryFacadeCacheHost ]]"
+        passwordSecret: redis-credentials
+        username: default
+        # TODO(aledbf): switch to TLS after switching to cluster
+        useTLS: false
+        insecureSkipVerify: true
+    wsDaemon:
+      runtime:
+        nodeToContainerMapping:
+          - path: "/run/containerd/io.containerd.runtime.v2.task/k8s.io"
+            value: "/mnt/node1"
+          - path: "/var/lib"
+            value: "/mnt/node0"
+
+
+    classes:
+      g1-standard:
+        resources:
+          requests:
+            cpu: "2"
+            memory: 6Gi
+          limits:
+            memory: 8Gi
+            storage: 30Gi
+        templates:
+          default:
+            spec:
+              dnsConfig:
+                nameservers:
+                  - 1.1.1.1
+                  - 8.8.8.8
+              dnsPolicy: None
+              enableServiceLinks: false
+              containers:
+                - env:
+                    - name: GITPOD_PREVENT_METADATA_ACCESS
+                      value: "true"
+                  name: workspace
+
+      g1-large:
+        resources:
+          requests:
+            cpu: "4"
+            memory: 8Gi
+          limits:
+            memory: 16Gi
+            storage: 50Gi
+        templates:
+          default:
+            spec:
+              dnsConfig:
+                nameservers:
+                  - 1.1.1.1
+                  - 8.8.8.8
+              dnsPolicy: None
+              enableServiceLinks: false
+              containers:
+                - env:
+                    - name: GITPOD_PREVENT_METADATA_ACCESS
+                      value: "true"
+                  name: workspace
+
+      g1-xlarge:
+        resources:
+          requests:
+            cpu: "14"
+            memory: 30Gi
+          limits:
+            memory: 30Gi
+            storage: 75Gi
+        templates:
+          default:
+            spec:
+              dnsConfig:
+                nameservers:
+                  - 1.1.1.1
+                  - 8.8.8.8
+              dnsPolicy: None
+              enableServiceLinks: false
+              containers:
+                - env:
+                    - name: GITPOD_PREVENT_METADATA_ACCESS
+                      value: "true"
+                  name: workspace
+
+      g1-xxlarge:
+        resources:
+          requests:
+            cpu: "30"
+            memory: 54Gi
+          limits:
+            memory: 54Gi
+            storage: 100Gi
+        templates:
+          default:
+            spec:
+              dnsConfig:
+                nameservers:
+                  - 1.1.1.1
+                  - 8.8.8.8
+              dnsPolicy: None
+              enableServiceLinks: false
+              containers:
+                - env:
+                    - name: GITPOD_PREVENT_METADATA_ACCESS
+                      value: "true"
+                  name: workspace
+
+      gpu-g4dn-8xlarge:
+        resources:
+          requests:
+            cpu: "30"
+            memory: 110Gi
+          limits:
+            memory: 110Gi
+            storage: 500Gi
+
+        templates:
+          default:
+            spec:
+              tolerations:
+                - key: nvidia.com/gpu
+                  operator: Exists
+                  effect: NoSchedule
+
+              dnsConfig:
+                nameservers:
+                  - 1.1.1.1
+                  - 8.8.8.8
+              dnsPolicy: None
+              enableServiceLinks: false
+              runtimeClassName: nvidia
+              containers:
+                - env:
+                    - name: GITPOD_PREVENT_METADATA_ACCESS
+                      value: "true"
+                  name: workspace
+                  resources:
+                    limits:
+                      cpu: "30"
+                      memory: 110Gi
+                      nvidia.com/gpu: 1
+blockNewUsers:
+  passlist: []
+
+sshGatewayHostKey:
+  kind: secret
+  name: ssh-host-key
+
+certificate:
+  kind: secret
+  name: https-certificates
+
+containerRegistry:
+  inCluster: false
+  external:
+    url: "[[ .WorkspaceImageRepo ]]"
+    certificate:
+      kind: secret
+      name: aws-ecr-credential
+
+domain: "[[ .DomainName ]]"
+
+kind: Workspace
+metadata:
+  region: "[[ .Region ]]"
+
+objectStorage:
+  inCluster: false
+  blobQuota: 0
+  s3:
+    endpoint: s3.amazonaws.com
+    bucket: "[[ .StorageBucket ]]"
+
+#observability:
+#  logLevel: info
+#  tracing:
+#    endpoint: ${JAEGER_ENDPOINT}
+#    secretName: jaeger-authentication
+repository: eu.gcr.io/gitpod-core-dev/build
+workspace:
+  timeoutAfterClose: 5m
+  runtime:
+    containerdRuntimeDir: /var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
+    containerdSocketDir: /run/containerd
+    fsShiftMethod: shiftfs
+  resources:
+    limits:
+      cpu: "4"
+      memory: 8Gi
+      storage: 30Gi
+    requests:
+      cpu: "4"
+      memory: 8Gi
+
+  templates:
+    default:
+      spec:
+        dnsConfig:
+          nameservers:
+            - 1.1.1.1
+            - 8.8.8.8
+        dnsPolicy: None
+        enableServiceLinks: false
+
+    prebuild:
+      spec:
+        containers:
+          - name: workspace
+            resources:
+              requests:
+                cpu: "4"
+                memory: 6Gi
+              limits:
+                cpu: "6"
+                memory: 8Gi
+
+    regular:
+      spec:
+        enableServiceLinks: false
+
+    imagebuild:
+      spec:
+        containers:
+          - name: workspace
+            resources:
+              requests:
+                cpu: "4"
+                memory: 6Gi
+              limits:
+                cpu: "6"
+                memory: 8Gi
+        enableServiceLinks: false

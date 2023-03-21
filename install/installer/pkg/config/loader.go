@@ -90,10 +90,6 @@ func Load(overrideConfig string, strict bool) (cfg interface{}, version string, 
 	}
 
 	apiVersion := overrideVS.APIVersion
-	// fall-back to default CurrentVersion if no apiVersion was passed
-	if version == "" {
-		apiVersion = CurrentVersion
-	}
 
 	v, err := LoadConfigVersion(apiVersion)
 	if err != nil {

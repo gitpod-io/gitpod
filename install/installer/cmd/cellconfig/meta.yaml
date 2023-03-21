@@ -1,0 +1,195 @@
+# Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License.AGPL.txt in the project root for license information.
+
+apiVersion: v1
+kind: Meta
+domain: [[ .DomainName ]]
+metadata:
+  region: [[ .Region ]]
+repository: eu.gcr.io/gitpod-core-dev/build
+
+certificate:
+  kind: secret
+  name: https-certificates
+
+database:
+  inCluster: false
+  external:
+    certificate:
+      name: database
+      kind: secret
+
+objectStorage:
+  blobQuota: 0
+  inCluster: false
+  s3:
+    endpoint: s3.amazonaws.com
+    bucket: [[ .StorageBucket ]]
+
+containerRegistry:
+  inCluster: false
+  external:
+    url: [[ .WorkspaceImageRepo ]]
+    certificate:
+      kind: secret
+      name: aws-ecr-credential
+  privateBaseImageAllowList:
+    - "https://index.docker.io/v1/"
+    - "https://docker.io/"
+
+#observability:
+#  logLevel: info
+#  tracing:
+#    endpoint: http://otel-collector.monitoring-satellite.svc:14268/api/traces
+    # TODO(gpl): enable sampling when available
+    # samplerType: ratelimiting
+    # samplerParam: "5.0"
+
+authProviders: []
+
+disableDefinitelyGp: false
+
+experimental:
+  common:
+    staticMessagebusPassword: [[ .Secrets.MessageBusPassword ]]
+
+    podConfig:
+      proxy:
+        replicas: 2
+        resources:
+          proxy:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+      openvsx-proxy:
+        replicas: 2
+        resources:
+          redis:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+          openvsx-proxy:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+      ide-proxy:
+        replicas: 2
+      server:
+        replicas: 2
+        resources:
+          server:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+      public-api-server:
+        replicas: 2
+      dashboard:
+        replicas: 2
+      ide-service:
+        replicas: 2
+
+  workspace:
+    # cmp. here: https://github.com/gitpod-io/gitpod/blob/8ddbf93e003a095f2ea5b5ca2b34ef74b33e8193/components/content-service-api/go/config/config.go#L70
+    stage: "prod"
+    tracing:
+      samplerType: rateLimiting
+      samplerParam: 5.0
+    contentService:
+      usageReportBucketName: [[ .UsageBucket ]]
+
+  ide:
+    ideMetrics:
+      enabledErrorReporting: true
+
+  webapp:
+    disableMigration: false
+    usePodAntiAffinity: true
+    tracing:
+      samplerType: rateLimiting
+      samplerParam: 5.0
+    proxy:
+      configcat:
+        baseUrl: "https://cdn-global.configcat.com"
+        pollInterval: "10m"
+    wsManagerBridge:
+      skipSelf: true
+    server:
+      enableLocalApp: false
+      runDbDeleter: false
+      disableDynamicAuthProviderLogin: false
+      oauthServer:
+        jwtSecret: "[[ .Secrets.JWTSecret ]]"
+      session:
+        secret: "[[ .Secrets.SessionSecret ]]"
+      inactivityPeriodForReposInDays: 14
+
+    publicApi:
+      personalAccessTokenSigningKeySecretName: "personal-access-token-signing-key"
+
+    # TODO: remove. Do not use this in customer cells
+    configcatKey: "WBLaCPtkjkqKHlHedziE9g/TwAe6YyftEGPnGxVRXd0Ig"
+
+    usage:
+      enabled: true
+      schedule: "15m"
+      resetUsageSchedule: "15m"
+      billInstancesAfter: "2022-08-11T08:05:32.499Z"
+      defaultSpendingLimit:
+        forUsers: 500
+        forTeams: 0
+        minForUsersOnStripe: 1000
+
+    workspaceClasses:
+    - id: "g1-standard"
+      category: "GENERAL PURPOSE"
+      displayName: "Standard"
+      description: "4 vCPU, 8GB memory, 30GB disk"
+      powerups: 1
+      isDefault: true
+      credits:
+        perMinute: 0.1666666667
+
+    - id: "g1-large"
+      category: "GENERAL PURPOSE"
+      displayName: "Large"
+      description: "8 vCPU, 16GB memory, 50GB disk"
+      powerups: 2
+      credits:
+        perMinute: 0.3333333333
+      marker:
+        moreResources: true
+
+    - id: "g1-xlarge"
+      category: "GENERAL PURPOSE"
+      displayName: "XLarge"
+      description: "14 vCPU, 30GB memory, 75GB disk"
+      powerups: 2
+      credits:
+        perMinute: 0.3333333333
+      marker:
+        moreResources: true
+
+    - id: "g1-xxlarge"
+      category: "GENERAL PURPOSE"
+      displayName: "XXLarge"
+      description: "30 vCPU, 54GB memory, 100GB disk"
+      powerups: 2
+      credits:
+        perMinute: 0.3333333333
+      marker:
+        moreResources: true
+
+    - id: "gpu-g4dn-8xlarge"
+      category: "ML"
+      displayName: "NVIDIA Tesla 4 16 GiB"
+      description: "30 vCPU, 110GB memory, 500GB disk"
+      powerups: 2
+      credits:
+        perMinute: 0.3333333333
+      marker:
+        moreResources: true
+
+sshGatewayHostKey:
+  kind: secret
+  name: ssh-host-key

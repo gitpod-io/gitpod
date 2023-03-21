@@ -10,6 +10,7 @@ import (
 	agentSmith "github.com/gitpod-io/gitpod/agent-smith/pkg/config"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/config"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/cellv1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/containerd"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cpulimit"
@@ -22,6 +23,7 @@ import (
 
 func init() {
 	config.AddVersion("v1", version{})
+	config.AddVersion("cell/v1", cellv1.Version{})
 }
 
 type version struct{}
