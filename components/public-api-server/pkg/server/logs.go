@@ -6,6 +6,7 @@ package server
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 
@@ -15,7 +16,7 @@ import (
 
 func NewLogInterceptor(entry *logrus.Entry) connect.UnaryInterceptorFunc {
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
-		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 			ctx = log.ToContext(ctx, entry.WithContext(ctx))
 
 			log.AddFields(ctx, logrus.Fields{
@@ -23,20 +24,17 @@ func NewLogInterceptor(entry *logrus.Entry) connect.UnaryInterceptorFunc {
 				"requestProcedure":  req.Spec().Procedure,
 				"address":           req.Peer().Addr,
 				"requestStreamType": streamType(req.Spec().StreamType),
-				"requestHeaders":    req.Header(),
+				"requestHeaders":    filterHeaders(req.Header()),
 			})
 			log.Extract(ctx).Debugf("Handling request for %s", req.Spec().Procedure)
 
 			resp, err := next(ctx, req)
 
-			// Retrieve the logger from the context again, in case it's been updated.
 			code := codeOf(err)
 			log.AddFields(ctx, logrus.Fields{"responseCode": code})
 
 			if err != nil {
 				log.AddFields(ctx, logrus.Fields{logrus.ErrorKey: err})
-			} else {
-				log.AddFields(ctx, logrus.Fields{"responseBody": resp.Any()})
 			}
 
 			if req.Spec().IsClient {
@@ -45,14 +43,24 @@ func NewLogInterceptor(entry *logrus.Entry) connect.UnaryInterceptorFunc {
 				} else {
 					log.Extract(ctx).Infof("Received response for %s with code %s", req.Spec().Procedure, code)
 				}
-				log.Extract(ctx).Errorf("Received response for %s with code %s", req.Spec().Procedure, code)
 			} else {
-				log.Extract(ctx).Warnf("Completed handling of request for %s with code %s", req.Spec().Procedure, code)
+				if err != nil {
+					log.Extract(ctx).Warnf("Completed handling of request for %s with code %s", req.Spec().Procedure, code)
+				} else {
+					log.Extract(ctx).Debugf("Completed handling of request for %s with code %s", req.Spec().Procedure, code)
+				}
 			}
 
 			return resp, err
-		})
+		}
 	}
 
-	return connect.UnaryInterceptorFunc(interceptor)
+	return interceptor
+}
+
+func filterHeaders(headers http.Header) http.Header {
+	cloned := headers.Clone()
+	cloned.Del("Authorization")
+	cloned.Del("Cookie")
+	return cloned
 }
