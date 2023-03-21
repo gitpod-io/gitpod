@@ -39,6 +39,11 @@ export function useOrganizations() {
         getQueryKey(user),
         async () => {
             console.log("Fetching orgs... " + JSON.stringify(getQueryKey(user)));
+            if (!user) {
+                console.log("useOrganizations with empty user");
+                return [];
+            }
+
             const response = await teamsService.listTeams({});
             const result: OrganizationInfo[] = [];
             for (const org of response.teams) {
@@ -63,6 +68,9 @@ export function useOrganizations() {
                 // refresh user billing mode to update the billing mode in the user context as it depends on the orgs
                 refreshUserBillingMode();
                 queryClient.invalidateQueries(getUserBillingModeQueryKey(user.id));
+            },
+            onError: (err) => {
+                console.error("useOrganizations", err);
             },
             enabled: !!user,
             cacheTime: 1000 * 60 * 60 * 1, // 1 hour
