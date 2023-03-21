@@ -157,17 +157,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					RestartPolicy:                 corev1.RestartPolicyAlways,
 					TerminationGracePeriodSeconds: pointer.Int64(30),
 					Volumes:                       volumes,
-					InitContainers: []corev1.Container{
-						{
-							Name:  "setup",
-							Image: ctx.ImageName(ctx.Config.Repository, imagebuildermk3.Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version), ImagePullPolicy: corev1.PullIfNotPresent,
-							Args: []string{
-								"setup",
-							},
-							SecurityContext: &corev1.SecurityContext{RunAsUser: pointer.Int64(0)},
-							Env:             common.ProxyEnv(&ctx.Config),
-						},
-					},
 					Containers: []corev1.Container{{
 						Name:            Component,
 						Image:           ctx.ImageName(ctx.Config.Repository, imagebuildermk3.Component, ctx.VersionManifest.Components.ImageBuilderMk3.Version),
