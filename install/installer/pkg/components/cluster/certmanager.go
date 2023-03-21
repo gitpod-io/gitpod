@@ -39,7 +39,7 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 			TypeMeta: common.TypeMetaCertificate,
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      "gitpod-trust-anchor",
-				Namespace: "cert-manager",
+				Namespace: ctx.Namespace,
 				Labels:    common.DefaultLabels(Component),
 			},
 			Spec: v1.CertificateSpec{
