@@ -167,6 +167,10 @@
         "julialang.language-julia-insider": {
             "id": "julialang.language-julia",
             "displayName": "Julia"
+        },
+        "ms-vscode.PowerShell-Preview": {
+            "id": "ms-vscode.PowerShell",
+            "displayName": "PowerShell"
         }
     }
 }
