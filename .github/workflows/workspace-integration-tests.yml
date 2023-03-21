@@ -221,7 +221,7 @@ jobs:
                       fi
 
                       set +e
-                      go test -p 2 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
+                      go test -p 1 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
                       RC=${PIPESTATUS[0]}
                       set -e
 
