@@ -450,6 +450,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         const withPrebuild = WithPrebuild.is(this.state.workspace?.context);
         let phase: StartPhase | undefined = StartPhase.Preparing;
         let title = undefined;
+        let isTimedOut = false;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
         const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
         const useLatest = !!this.state.workspaceInstance?.configuration?.ideConfig?.useLatest;
@@ -677,6 +678,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 }
                 if (!isPrebuild && this.state.workspaceInstance.status.conditions.timeout) {
                     title = "Timed Out";
+                    isTimedOut = true;
                 }
                 statusMessage = (
                     <div>
@@ -710,7 +712,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 break;
         }
         return (
-            <StartPage phase={phase} error={error} title={title} showLatestIdeWarning={useLatest}>
+            <StartPage phase={phase} error={error} title={title} showLatestIdeWarning={!isTimedOut && useLatest}>
                 {statusMessage}
             </StartPage>
         );
