@@ -141,7 +141,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
 			}},
 		},
-		common.CAVolume(),
 	}
 
 	volumeMounts := []corev1.VolumeMount{
@@ -185,7 +184,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name:      "gcloud-tmp",
 			MountPath: "/mnt/sync-tmp",
 		},
-		common.CAVolumeMount(),
 	}
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
@@ -304,6 +302,14 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	err = common.AddStorageMounts(ctx, &podSpec, Component)
 	if err != nil {
 		return nil, err
+	}
+
+	if vol, mnt, env, ok := common.CustomCACertVolume(ctx); ok {
+		podSpec.Volumes = append(podSpec.Volumes, *vol)
+		pod := podSpec.Containers[0]
+		pod.VolumeMounts = append(pod.VolumeMounts, *mnt)
+		pod.Env = append(pod.Env, env...)
+		podSpec.Containers[0] = pod
 	}
 
 	return []runtime.Object{&appsv1.DaemonSet{

@@ -81,28 +81,23 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						TopologySpreadConstraints: cluster.WithHostnameTopologySpread(Component),
 						ServiceAccountName:        Component,
 						EnableServiceLinks:        pointer.Bool(false),
-						Volumes: []corev1.Volume{
-							{
-								Name:         "cache",
-								VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
-							}, {
-								Name: "config",
-								VolumeSource: corev1.VolumeSource{
-									ConfigMap: &corev1.ConfigMapVolumeSource{
-										LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-									},
-								},
-							}, {
-								Name: volumeName,
-								VolumeSource: corev1.VolumeSource{
-									Secret: &corev1.SecretVolumeSource{
-										SecretName: secretName,
-										Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
-									},
+						Volumes: []corev1.Volume{{
+							Name:         "cache",
+							VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
+						}, {
+							Name: "config",
+							VolumeSource: corev1.VolumeSource{
+								ConfigMap: &corev1.ConfigMapVolumeSource{
+									LocalObjectReference: corev1.LocalObjectReference{Name: Component},
 								},
 							},
-							common.CAVolume(),
-						},
+						}, {
+							Name: volumeName,
+							VolumeSource: corev1.VolumeSource{Secret: &corev1.SecretVolumeSource{
+								SecretName: secretName,
+								Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
+							}},
+						}},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Args:            []string{"run", "/mnt/config/config.json"},
@@ -126,20 +121,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								common.DefaultEnv(&ctx.Config),
 								common.WorkspaceTracingEnv(ctx, Component),
 							)),
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "config",
-									MountPath: "/mnt/config",
-									ReadOnly:  true,
-								}, {
-									Name:      "cache",
-									MountPath: "/mnt/cache",
-								}, {
-									Name:      volumeName,
-									MountPath: "/mnt/pull-secret",
-								},
-								common.CAVolumeMount(),
-							},
+							VolumeMounts: []corev1.VolumeMount{{
+								Name:      "config",
+								MountPath: "/mnt/config",
+								ReadOnly:  true,
+							}, {
+								Name:      "cache",
+								MountPath: "/mnt/cache",
+							}, {
+								Name:      volumeName,
+								MountPath: "/mnt/pull-secret",
+							}},
 
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{

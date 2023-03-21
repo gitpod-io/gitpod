@@ -267,6 +267,16 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 		prefix = "prebuild"
 	case workspacev1.WorkspaceTypeImageBuild:
 		prefix = "imagebuild"
+		// mount self-signed gitpod CA certificate to ensure
+		// we can push images to the in-cluster registry
+		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts,
+			corev1.VolumeMount{
+				Name:      "gitpod-ca-certificate",
+				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
+				SubPath:   "ca.crt",
+				ReadOnly:  true,
+			},
+		)
 	default:
 		prefix = "ws"
 	}
@@ -310,6 +320,51 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 				},
 			},
 		},
+	}
+	if sctx.Workspace.Spec.Type == workspacev1.WorkspaceTypeImageBuild {
+		volumes = append(volumes, corev1.Volume{
+			Name: "gitpod-ca-certificate",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "builtin-registry-facade-cert",
+					Items: []corev1.KeyToPath{
+						{Key: "ca.crt", Path: "ca.crt"},
+					},
+				},
+			},
+		})
+	}
+
+	// This is how we support custom CA certs in Gitpod workspaces.
+	// Keep workspace templates clean.
+	if sctx.Config.WorkspaceCACertSecret != "" {
+		const volumeName = "custom-ca-certs"
+		volumes = append(volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: sctx.Config.WorkspaceCACertSecret,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "ca.crt",
+							Path: "ca.crt",
+						},
+					},
+				},
+			},
+		})
+
+		const mountPath = "/etc/ssl/certs/gitpod-ca.crt"
+		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			ReadOnly:  true,
+			MountPath: mountPath,
+			SubPath:   "ca.crt",
+		})
+		workspaceContainer.Env = append(workspaceContainer.Env, corev1.EnvVar{
+			Name:  "NODE_EXTRA_CA_CERTS",
+			Value: mountPath,
+		})
 	}
 
 	workloadType := "regular"

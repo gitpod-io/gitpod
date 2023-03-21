@@ -443,6 +443,51 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	// This is how we support custom CA certs in Gitpod workspaces.
+	// Keep workspace templates clean.
+	if m.Config.WorkspaceCACertSecret != "" {
+		const volumeName = "custom-ca-certs"
+		volumes = append(volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: m.Config.WorkspaceCACertSecret,
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "ca.crt",
+							Path: "ca.crt",
+						},
+					},
+				},
+			},
+		})
+
+		const mountPath = "/etc/ssl/certs/gitpod-ca.crt"
+		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			ReadOnly:  true,
+			MountPath: mountPath,
+			SubPath:   "ca.crt",
+		})
+		workspaceContainer.Env = append(workspaceContainer.Env, corev1.EnvVar{
+			Name:  "NODE_EXTRA_CA_CERTS",
+			Value: mountPath,
+		})
+	}
+
+	if req.Type == api.WorkspaceType_IMAGEBUILD {
+		// mount self-signed gitpod CA certificate to ensure
+		// we can push images to the in-cluster registry
+		workspaceContainer.VolumeMounts = append(workspaceContainer.VolumeMounts,
+			corev1.VolumeMount{
+				Name:      "gitpod-ca-certificate",
+				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
+				SubPath:   "ca.crt",
+				ReadOnly:  true,
+			},
+		)
+	}
+
 	workloadType := "regular"
 	if startContext.Headless {
 		workloadType = "headless"
@@ -602,6 +647,20 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		default:
 			log.Warnf("Unknown feature flag %v", feature)
 		}
+	}
+
+	if req.Type == api.WorkspaceType_IMAGEBUILD {
+		pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+			Name: "gitpod-ca-certificate",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "builtin-registry-facade-cert",
+					Items: []corev1.KeyToPath{
+						{Key: "ca.crt", Path: "ca.crt"},
+					},
+				},
+			},
+		})
 	}
 
 	return &pod, nil

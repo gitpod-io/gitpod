@@ -32,7 +32,7 @@ func certificate(ctx *common.RenderContext) ([]runtime.Object, error) {
 			SecretName: BuiltInRegistryCerts,
 			IssuerRef: cmmeta.ObjectReference{
 				Name:  common.CertManagerCAIssuer,
-				Kind:  certmanagerv1.ClusterIssuerKind,
+				Kind:  "Issuer",
 				Group: "cert-manager.io",
 			},
 			DNSNames: []string{

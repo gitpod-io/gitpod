@@ -6,7 +6,6 @@ package wsdaemon
 
 import (
 	"fmt"
-
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
@@ -34,7 +33,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  common.CertManagerCAIssuer,
-					Kind:  certmanagerv1.ClusterIssuerKind,
+					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
 				SecretTemplate: &certmanagerv1.CertificateSecretTemplate{

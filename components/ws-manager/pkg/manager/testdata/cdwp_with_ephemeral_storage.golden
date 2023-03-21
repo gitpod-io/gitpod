@@ -50,6 +50,18 @@
                         "path": "/tmp/workspaces/foobar-daemon",
                         "type": "DirectoryOrCreate"
                     }
+                },
+                {
+                    "name": "gitpod-ca-certificate",
+                    "secret": {
+                        "secretName": "builtin-registry-facade-cert",
+                        "items": [
+                            {
+                                "key": "ca.crt",
+                                "path": "ca.crt"
+                            }
+                        ]
+                    }
                 }
             ],
             "containers": [
@@ -170,6 +182,12 @@
                             "name": "daemon-mount",
                             "mountPath": "/.workspace",
                             "mountPropagation": "HostToContainer"
+                        },
+                        {
+                            "name": "gitpod-ca-certificate",
+                            "readOnly": true,
+                            "mountPath": "/usr/local/share/ca-certificates/gitpod-ca.crt",
+                            "subPath": "ca.crt"
                         }
                     ],
                     "readinessProbe": {

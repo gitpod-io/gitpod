@@ -33,17 +33,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		DNSPolicy:                     corev1.DNSClusterFirst,
 		RestartPolicy:                 corev1.RestartPolicyAlways,
 		TerminationGracePeriodSeconds: pointer.Int64(30),
-		Volumes: []corev1.Volume{
-			{
-				Name: "config",
-				VolumeSource: corev1.VolumeSource{
-					ConfigMap: &corev1.ConfigMapVolumeSource{
-						LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-					},
+		Volumes: []corev1.Volume{{
+			Name: "config",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{Name: Component},
 				},
 			},
-			common.CAVolume(),
-		},
+		}},
 		Containers: []corev1.Container{{
 			Name:            Component,
 			Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.ContentService.Version),
@@ -78,14 +75,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Value: "on",
 				}},
 			)),
-			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "config",
-					MountPath: "/config",
-					ReadOnly:  true,
-				},
-				common.CAVolumeMount(),
-			},
+			VolumeMounts: []corev1.VolumeMount{{
+				Name:      "config",
+				MountPath: "/config",
+				ReadOnly:  true,
+			}},
 		}, *common.KubeRBACProxyContainer(ctx),
 		},
 	}

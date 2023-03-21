@@ -88,6 +88,9 @@ type Configuration struct {
 	Timeouts WorkspaceTimeoutConfiguration `json:"timeouts"`
 	// InitProbe configures the ready-probe of workspaces which signal when the initialization is finished
 	InitProbe InitProbeConfiguration `json:"initProbe"`
+	// WorkspaceCACertSecret optionally names a secret which is mounted in `/etc/ssl/certs/gp-custom.crt`
+	// in all workspace pods.
+	WorkspaceCACertSecret string `json:"caCertSecret,omitempty"`
 	// WorkspaceURLTemplate is a Go template which resolves to the external URL of the
 	// workspace. Available fields are:
 	// - `ID` which is the workspace ID,

@@ -48,6 +48,11 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		timeoutAfterClose = *ctx.Config.Workspace.TimeoutAfterClose
 	}
 
+	var customCASecret string
+	if ctx.Config.CustomCACert != nil {
+		customCASecret = ctx.Config.CustomCACert.Name
+	}
+
 	classes := map[string]*config.WorkspaceClass{
 		config.DefaultWorkspaceClass: {
 			Name: config.DefaultWorkspaceClass,
@@ -217,8 +222,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Interrupted:         util.Duration(5 * time.Minute),
 			},
 			//EventTraceLog:                "", // todo(sje): make conditional based on config
-			ReconnectionInterval: util.Duration(30 * time.Second),
-			RegistryFacadeHost:   fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
+			ReconnectionInterval:  util.Duration(30 * time.Second),
+			RegistryFacadeHost:    fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
+			WorkspaceCACertSecret: customCASecret,
 		},
 		Content: struct {
 			Storage storageconfig.StorageConfig `json:"storage"`

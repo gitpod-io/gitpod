@@ -98,7 +98,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						MountPath: "/certs",
 						ReadOnly:  true,
 					},
-					common.CAVolumeMount(),
 				},
 				volumeMounts...,
 			),
@@ -135,7 +134,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Secret: &corev1.SecretVolumeSource{SecretName: TLSSecretNameSecret},
 					},
 				},
-				common.CAVolume(),
 			},
 			volumes...,
 		),
@@ -144,6 +142,13 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	err = common.AddStorageMounts(ctx, &podSpec, Component)
 	if err != nil {
 		return nil, err
+	}
+
+	if vol, mnt, _, ok := common.CustomCACertVolume(ctx); ok {
+		podSpec.Volumes = append(podSpec.Volumes, *vol)
+		container := podSpec.Containers[0]
+		container.VolumeMounts = append(container.VolumeMounts, *mnt)
+		podSpec.Containers[0] = container
 	}
 
 	return []runtime.Object{

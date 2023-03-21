@@ -63,13 +63,10 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								"memory": resource.MustParse("32Mi"),
 							},
 						}),
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      "config",
-								MountPath: "/config",
-							},
-							common.CAVolumeMount(),
-						},
+						VolumeMounts: []corev1.VolumeMount{{
+							Name:      "config",
+							MountPath: "/config",
+						}},
 						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 							common.DefaultEnv(&ctx.Config),
 							common.WorkspaceTracingEnv(ctx, Component),
@@ -79,18 +76,13 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							Privileged: pointer.Bool(true),
 							ProcMount:  func() *corev1.ProcMountType { r := corev1.DefaultProcMount; return &r }(),
 						},
-					},
-						*common.KubeRBACProxyContainer(ctx),
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "config",
-							VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
-								LocalObjectReference: corev1.LocalObjectReference{Name: Component},
-							}},
-						},
-						common.CAVolume(),
-					},
+					}, *common.KubeRBACProxyContainer(ctx)},
+					Volumes: []corev1.Volume{{
+						Name: "config",
+						VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
+							LocalObjectReference: corev1.LocalObjectReference{Name: Component},
+						}},
+					}},
 				},
 			},
 		},

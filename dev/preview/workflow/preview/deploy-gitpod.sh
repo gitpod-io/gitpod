@@ -180,23 +180,6 @@ function installFluentBit {
       upgrade --install fluent-bit fluent/fluent-bit --version 0.21.6 -n "${PREVIEW_NAMESPACE}" -f "$ROOT/.werft/vm/charts/fluentbit/values.yaml"
 }
 
-function installTrustManager {
-    helm3 \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      repo add jetstack https://charts.jetstack.io
-
-    helm3 \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      repo update
-
-    helm3 \
-      --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
-      --kube-context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-      upgrade --install --namespace cert-manager trust-manager jetstack/trust-manager --wait
-}
-
 # ====================================
 # Prerequisites
 # ====================================
@@ -219,7 +202,6 @@ done
 copyImagePullSecret
 installRookCeph
 installFluentBit
-installTrustManager
 
 # ========
 # Init
@@ -601,8 +583,7 @@ rm -f /tmp/public-api
 # ===============
 
 log_info "Applying manifests (installing)"
-# avoid random werft namespace errors
-kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" create namespace werft || true
+
 kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" delete -n "${PREVIEW_NAMESPACE}" job migrations || true
 # export the function so we can use it in xargs
 export -f diff-apply

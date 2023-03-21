@@ -720,14 +720,6 @@ var (
 		APIVersion: "batch/v1",
 		Kind:       "CronJob",
 	}
-	TypeMetaCertificateClusterIssuer = metav1.TypeMeta{
-		APIVersion: "cert-manager.io/v1",
-		Kind:       "ClusterIssuer",
-	}
-	TypeMetaBundle = metav1.TypeMeta{
-		APIVersion: "trust.cert-manager.io/v1alpha1",
-		Kind:       "Bundle",
-	}
 )
 
 // validCookieChars contains all characters which may occur in an HTTP Cookie value (unicode \u0021 through \u007E),

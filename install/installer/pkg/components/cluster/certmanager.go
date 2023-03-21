@@ -6,29 +6,26 @@ package cluster
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-
-	trust "github.com/cert-manager/trust-manager/pkg/apis/trust/v1alpha1"
 	v1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
 )
 
 func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
-	issuerName := "gitpod-self-signed-issuer"
-	secretCAName := "gitpod-identity-trust-root"
+	caIssuer := "gitpod-selfsigned-issuer"
+	caName := fmt.Sprintf("%s-ca", common.CertManagerCAIssuer)
 
 	return []runtime.Object{
 		// Define a self-signed issuer so we can generate a CA
-		&v1.ClusterIssuer{
-			TypeMeta: common.TypeMetaCertificateClusterIssuer,
+		&v1.Issuer{
+			TypeMeta: common.TypeMetaCertificateIssuer,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:   issuerName,
-				Labels: common.DefaultLabels(Component),
+				Name:      caIssuer,
+				Labels:    common.DefaultLabels(Component),
+				Namespace: ctx.Namespace,
 			},
 			Spec: v1.IssuerSpec{IssuerConfig: v1.IssuerConfig{
 				SelfSigned: &v1.SelfSignedIssuer{},
@@ -38,125 +35,40 @@ func certmanager(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&v1.Certificate{
 			TypeMeta: common.TypeMetaCertificate,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "gitpod-trust-anchor",
-				Namespace: "cert-manager",
-				Labels:    common.DefaultLabels(Component),
-			},
-			Spec: v1.CertificateSpec{
-				IsCA:       true,
-				Duration:   &metav1.Duration{Duration: time.Duration(8760 * time.Hour)}, // 365 days
-				CommonName: "root.gitpod.cluster.local",
-				SecretName: secretCAName,
-				PrivateKey: &v1.CertificatePrivateKey{
-					Algorithm: v1.ECDSAKeyAlgorithm,
-					Size:      256,
-				},
-				IssuerRef: cmmeta.ObjectReference{
-					Name:  issuerName,
-					Kind:  v1.ClusterIssuerKind,
-					Group: "cert-manager.io",
-				},
-				SecretTemplate: &v1.CertificateSecretTemplate{
-					Labels: common.DefaultLabels(Component),
-				},
-				Usages: []v1.KeyUsage{
-					v1.UsageCertSign,
-					v1.UsageCRLSign,
-				},
-			},
-		},
-		// Set the CA to our issuer
-		&v1.ClusterIssuer{
-			TypeMeta: common.TypeMetaCertificateClusterIssuer,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:   common.CertManagerCAIssuer,
-				Labels: common.DefaultLabels(Component),
-			},
-			Spec: v1.IssuerSpec{
-				IssuerConfig: v1.IssuerConfig{
-					CA: &v1.CAIssuer{SecretName: secretCAName},
-				},
-			},
-		},
-		// Generate that CA
-		&v1.Certificate{
-			TypeMeta: common.TypeMetaCertificate,
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      common.CertManagerCAIssuer,
+				Name:      caName,
 				Namespace: ctx.Namespace,
 				Labels:    common.DefaultLabels(Component),
 			},
 			Spec: v1.CertificateSpec{
 				IsCA:       true,
-				Duration:   &metav1.Duration{Duration: time.Duration(2190 * time.Hour)}, // 90 days
-				CommonName: "ca.gitpod.cluster.local",
-				SecretName: fmt.Sprintf("%v-intermediate", secretCAName),
+				Duration:   common.InternalCertDuration,
+				CommonName: caName,
+				SecretName: caName,
 				PrivateKey: &v1.CertificatePrivateKey{
 					Algorithm: v1.ECDSAKeyAlgorithm,
 					Size:      256,
 				},
 				IssuerRef: cmmeta.ObjectReference{
-					Name:  common.CertManagerCAIssuer,
-					Kind:  v1.ClusterIssuerKind,
+					Name:  caIssuer,
+					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
 				SecretTemplate: &v1.CertificateSecretTemplate{
 					Labels: common.DefaultLabels(Component),
 				},
-				Usages: []v1.KeyUsage{
-					v1.UsageCertSign,
-					v1.UsageCRLSign,
-					v1.UsageServerAuth,
-					v1.UsageClientAuth,
-				},
 			},
 		},
-		// trust Bundle
-		&trust.Bundle{
-			TypeMeta: common.TypeMetaBundle,
+		// Set the CA to our issuer
+		&v1.Issuer{
+			TypeMeta: common.TypeMetaCertificateIssuer,
 			ObjectMeta: metav1.ObjectMeta{
-				Name: "gitpod-ca-bundle",
+				Name:      common.CertManagerCAIssuer,
+				Namespace: ctx.Namespace,
+				Labels:    common.DefaultLabels(Component),
 			},
-			Spec: trust.BundleSpec{
-				Sources: []trust.BundleSource{
-					{
-						UseDefaultCAs: pointer.Bool(true),
-					},
-					{
-						Secret: &trust.SourceObjectKeySelector{
-							Name:        secretCAName,
-							KeySelector: trust.KeySelector{Key: "ca.crt"},
-						},
-					},
-				},
-				Target: trust.BundleTarget{
-					ConfigMap: &trust.KeySelector{
-						Key: "ca-certificates.crt",
-					},
-				},
-			},
-		},
-		// single gitpod Bundle (used by registry-facade)
-		&trust.Bundle{
-			TypeMeta: common.TypeMetaBundle,
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "gitpod-ca",
-			},
-			Spec: trust.BundleSpec{
-				Sources: []trust.BundleSource{
-					{
-						Secret: &trust.SourceObjectKeySelector{
-							Name:        secretCAName,
-							KeySelector: trust.KeySelector{Key: "ca.crt"},
-						},
-					},
-				},
-				Target: trust.BundleTarget{
-					ConfigMap: &trust.KeySelector{
-						Key: "gitpod-ca.crt",
-					},
-				},
-			},
+			Spec: v1.IssuerSpec{IssuerConfig: v1.IssuerConfig{
+				CA: &v1.CAIssuer{SecretName: caName},
+			}},
 		},
 	}, nil
 }

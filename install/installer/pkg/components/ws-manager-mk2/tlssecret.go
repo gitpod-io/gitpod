@@ -52,7 +52,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				DNSNames:   serverAltNames,
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  issuer,
-					Kind:  certmanagerv1.IssuerKind,
+					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
 			},
@@ -70,7 +70,7 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 				DNSNames:   clientAltNames,
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  issuer,
-					Kind:  certmanagerv1.IssuerKind,
+					Kind:  "Issuer",
 					Group: "cert-manager.io",
 				},
 			},
