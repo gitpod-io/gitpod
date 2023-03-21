@@ -51,9 +51,11 @@ const App: FunctionComponent = () => {
     if (!user) {
         return <Login />;
     }
-    if (currentOrgQuery.isLoading) {
-        return <AppLoading />;
-    }
+    // TODO(gpl) "isLoading" is "true" even if there are errors in this "useCurrentOrg" call.
+    // Why don't understand as to why .isLoading is not resolved at some point, though. Maybe we're missing proper error handling for useOrganizations
+    // if (currentOrgQuery.isLoading) {
+    //     return <AppLoading />;
+    // }
 
     // If we made it here, we have a logged in user w/ their teams. Yay.
     return (
