@@ -123,10 +123,6 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if !wsc.latestWorkspace(ctx, &workspace) {
-		return ctrl.Result{Requeue: true}, nil
-	}
-
 	glog.WithField("workspaceID", workspace.Name).WithField("phase", workspace.Status.Phase).Debug("Reconcile workspace")
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseCreating ||
@@ -137,6 +133,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	}
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
+
 		result, err = wsc.handleWorkspaceStop(ctx, &workspace, req)
 		return result, err
 	}
@@ -144,11 +141,19 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	return ctrl.Result{}, nil
 }
 
-func (wsc *WorkspaceController) latestWorkspace(ctx context.Context, ws *workspacev1.Workspace) bool {
+// latestWorkspace checks if the we have the latest generation of the workspace CR. We do this because
+// the cache could be stale and we retrieve a workspace CR that does not have the content init/backup
+// conditions even though we have set them previously. This will lead to us performing these operations
+// again. To prevent this we wait until we have the latest workspace CR.
+func (wsc *WorkspaceController) latestWorkspace(ctx context.Context, ws *workspacev1.Workspace) error {
 	ws.Status.SetCondition(workspacev1.NewWorkspaceConditionRefresh())
 
 	err := wsc.Client.Status().Update(ctx, ws)
-	return !errors.IsConflict(err)
+	if err != nil && !errors.IsConflict(err) {
+		glog.Warnf("could not refresh workspace: %v", err)
+	}
+
+	return err
 }
 
 func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
@@ -157,6 +162,10 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 	defer tracing.FinishSpan(span, &err)
 
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil {
+		if wsc.latestWorkspace(ctx, ws) != nil {
+			return ctrl.Result{Requeue: true}, nil
+		}
+
 		init, err := wsc.prepareInitializer(ctx, ws)
 		if err != nil {
 			return ctrl.Result{}, err
@@ -224,6 +233,10 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	if ws.Spec.Type == workspacev1.WorkspaceTypeImageBuild {
 		// No disposal for image builds.
 		return ctrl.Result{}, nil
+	}
+
+	if wsc.latestWorkspace(ctx, ws) != nil {
+		return ctrl.Result{Requeue: true}, nil
 	}
 
 	disposeStart := time.Now()
