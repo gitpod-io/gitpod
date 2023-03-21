@@ -448,6 +448,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         let phase: StartPhase | undefined = StartPhase.Preparing;
         let title = undefined;
         let isTimedOut = false;
+        let isStoppingOrStopped = false;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
         const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
         const useLatest = !!this.state.workspaceInstance?.configuration?.ideConfig?.useLatest;
@@ -622,6 +623,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
             // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
             case "stopping":
+                isStoppingOrStopped = true;
                 if (isPrebuild) {
                     return (
                         <StartPage title="Prebuild in Progress">
@@ -659,6 +661,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
             // Stopped means the workspace ended regularly because it was shut down.
             case "stopped":
+                isStoppingOrStopped = true;
                 phase = StartPhase.Stopped;
                 if (this.state.hasImageBuildLogs) {
                     const restartWithDefaultImage = (event: React.MouseEvent) => {
@@ -710,7 +713,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 break;
         }
         return (
-            <StartPage phase={phase} error={error} title={title} showLatestIdeWarning={!isTimedOut && useLatest}>
+            <StartPage
+                phase={phase}
+                error={error}
+                title={title}
+                showLatestIdeWarning={!isTimedOut && !isStoppingOrStopped && useLatest}
+            >
                 {statusMessage}
             </StartPage>
         );
