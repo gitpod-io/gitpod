@@ -19,6 +19,7 @@
     'gitpod-nodes-overview.json': (import 'dashboards/gitpod-nodes-overview.json'),
     'gitpod-admin-node.json': (import 'dashboards/gitpod-admin-node.json'),
     'gitpod-admin-workspace.json': (import 'dashboards/gitpod-admin-workspace.json'),
-    'gitpod-applications.json': (import 'dashboards/gitpod-applications.json')
+    'gitpod-applications.json': (import 'dashboards/gitpod-applications.json'),
+    'redis.json': (import 'dashboards/redis.json')
   },
 }
