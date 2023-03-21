@@ -3713,13 +3713,13 @@ data:
             "image": "registry.mydomain.com/namespace/ide/clion:test",
             "latestImage": "registry.mydomain.com/namespace/ide/clion:latest",
             "pluginImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+              "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ]
           },
@@ -3756,13 +3756,13 @@ data:
             "image": "registry.mydomain.com/namespace/ide/goland:test",
             "latestImage": "registry.mydomain.com/namespace/ide/goland:latest",
             "pluginImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+              "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ]
           },
@@ -3775,13 +3775,13 @@ data:
             "image": "registry.mydomain.com/namespace/ide/intellij:test",
             "latestImage": "registry.mydomain.com/namespace/ide/intellij:latest",
             "pluginImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+              "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ]
           },
@@ -3793,13 +3793,13 @@ data:
             "image": "registry.mydomain.com/namespace/ide/phpstorm:test",
             "latestImage": "registry.mydomain.com/namespace/ide/phpstorm:latest",
             "pluginImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+              "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ]
           },
@@ -3812,13 +3812,13 @@ data:
             "image": "registry.mydomain.com/namespace/ide/pycharm:test",
             "latestImage": "registry.mydomain.com/namespace/ide/pycharm:latest",
             "pluginImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+              "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ]
           },
@@ -3830,13 +3830,13 @@ data:
             "image": "registry.mydomain.com/namespace/ide/rider:test",
             "latestImage": "registry.mydomain.com/namespace/ide/rider:latest",
             "pluginImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+              "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ]
           },
@@ -3848,13 +3848,13 @@ data:
             "image": "registry.mydomain.com/namespace/ide/rubymine:test",
             "latestImage": "registry.mydomain.com/namespace/ide/rubymine:latest",
             "pluginImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+              "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ]
           },
@@ -3866,13 +3866,13 @@ data:
             "image": "registry.mydomain.com/namespace/ide/webstorm:test",
             "latestImage": "registry.mydomain.com/namespace/ide/webstorm:latest",
             "pluginImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
-            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+            "pluginLatestImage": "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
             "imageLayers": [
               "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ],
             "latestImageLayers": [
-              "registry.mydomain.com/namespace/ide/jb-backend-plugin:latest",
+              "registry.mydomain.com/namespace/ide/jb-backend-plugin:test",
               "registry.mydomain.com/namespace/ide/jb-launcher:test"
             ]
           }
