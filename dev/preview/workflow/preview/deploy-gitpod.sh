@@ -590,7 +590,7 @@ export -f diff-apply
 mkdir temp-installer || true
 pushd temp-installer
 # this will split the big yaml produced by the installer, so we can diff individual parts of it and run them in parallel
-yq4 -s '.kind + "_" + .metadata.name' "../${INSTALLER_RENDER_PATH}"
+yq4 -s '.kind + "_" + (.metadata.namespace // "") + "_" + .metadata.name' "../${INSTALLER_RENDER_PATH}"
 rm .yml || true # this one is a leftover from the split
 # shellcheck disable=SC2038
 find . | xargs -n 1 -I {} -P 5 bash -c "diff-apply ${PREVIEW_K3S_KUBE_CONTEXT} {}"
