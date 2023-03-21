@@ -557,4 +557,13 @@ export class UserService {
 
         throw EmailAddressAlreadyTakenException.create(`Email address is already in use.`, { host });
     }
+
+    /**
+     * Only installation-level users are allowed to create/join other orgs then the one they belong to
+     * @param user
+     * @returns
+     */
+    async mayCreateOrJoinOrganization(user: User): Promise<boolean> {
+        return !user.organizationId;
+    }
 }
