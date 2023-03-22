@@ -97,7 +97,13 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	var stopWs func(waitForStop bool, api *integration.ComponentAPI) (*wsmanapi.WorkspaceStatus, error)
 
 	for i := 0; i < 3; i++ {
-		nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(t, ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
+		nfo, stopWs, err = integration.LaunchWorkspaceWithOptions(t, ctx, &integration.LaunchWorkspaceOptions{
+			ContextURL: repo,
+			IDESettings: &protocol.IDESettings{
+				DefaultIde:       ideName,
+				UseLatestVersion: os.Getenv("JB_TEST_USE_LATEST_VERSION") == "true",
+			},
+		}, username, api)
 		if err != nil {
 			if strings.Contains(err.Error(), "code 429 message: too many requests") {
 				t.Log(err)

@@ -24,7 +24,7 @@ export async function runIntegrationTests(werft: Werft, config: JobConfig, usern
 
     try {
         exec(
-            `KUBECONFIG="${PREVIEW_K3S_KUBECONFIG_PATH}" GOOGLE_APPLICATION_CREDENTIALS=/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json /workspace/test/run.sh -s ${config.withIntegrationTests}`,
+            `JB_TEST_USE_LATEST_VERSION="${!!config.withLatestIDEVersion}" KUBECONFIG="${PREVIEW_K3S_KUBECONFIG_PATH}" GOOGLE_APPLICATION_CREDENTIALS=/home/gitpod/.config/gcloud/legacy_credentials/cd-gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json /workspace/test/run.sh -s ${config.withIntegrationTests}`,
         );
         werft.done(phases.RUN_INTEGRATION_TESTS);
     } catch (err) {

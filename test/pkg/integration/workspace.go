@@ -322,6 +322,22 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 //
 // When possible, prefer the less complex LaunchWorkspaceDirectly.
 func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL string, username string, api *ComponentAPI, serverOpts ...GitpodServerOpt) (*protocol.WorkspaceInfo, StopWorkspaceFunc, error) {
+	return LaunchWorkspaceWithOptions(t, ctx, &LaunchWorkspaceOptions{
+		ContextURL: contextURL,
+	}, username, api, serverOpts...)
+}
+
+type LaunchWorkspaceOptions struct {
+	ContextURL  string
+	IDESettings *protocol.IDESettings
+}
+
+// LaunchWorkspaceWithOptions force-creates a new workspace using the Gitpod server API,
+// and waits for the workspace to start. If any step along the way fails, this function will
+// fail the test.
+//
+// When possible, prefer the less complex LaunchWorkspaceDirectly.
+func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchWorkspaceOptions, username string, api *ComponentAPI, serverOpts ...GitpodServerOpt) (*protocol.WorkspaceInfo, StopWorkspaceFunc, error) {
 	var (
 		defaultServerOpts []GitpodServerOpt
 		stopWs            StopWorkspaceFunc = nil
@@ -349,11 +365,14 @@ func LaunchWorkspaceFromContextURL(t *testing.T, ctx context.Context, contextURL
 
 	var resp *protocol.WorkspaceCreationResult
 	for i := 0; i < 3; i++ {
-		t.Logf("attemp to create the workspace: %s", contextURL)
+		t.Logf("attemp to create the workspace: %s", opts.ContextURL)
 		resp, err = server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
-			ContextURL:                         contextURL,
+			ContextURL:                         opts.ContextURL,
 			IgnoreRunningPrebuild:              true,
 			IgnoreRunningWorkspaceOnSameCommit: true,
+			StartWorkspaceOptions: protocol.StartWorkspaceOptions{
+				IdeSettings: opts.IDESettings,
+			},
 		})
 		if err != nil {
 			scode := status.Code(err)

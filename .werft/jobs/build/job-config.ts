@@ -29,6 +29,7 @@ export interface JobConfig {
     version: string;
     withContrib: boolean;
     withIntegrationTests: WithIntegrationTests;
+    withLatestIDEVersion: boolean;
     withUpgradeTests: boolean;
     withSelfHostedPreview: boolean;
     withObservability: boolean;
@@ -113,6 +114,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
 
     const analytics = parseAnalytics(werft, sliceId, buildConfig["analytics"])
     const withIntegrationTests = parseWithIntegrationTests(werft, sliceId, buildConfig["with-integration-tests"]);
+    const withLatestIDEVersion = "with-latest-ide-version" in buildConfig;
     const withPreview = decideWithPreview({werft, sliceID: sliceId, buildConfig, mainBuild, withIntegrationTests})
     const withWerft = "with-werft" in buildConfig;
     const withGceVm = "with-gce-vm" in buildConfig;
@@ -150,7 +152,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         branch: context.Annotations.withObservabilityBranch || "main",
     };
 
-    const jobConfig = {
+    const jobConfig: JobConfig = {
         analytics,
         buildConfig,
         cleanSlateDeployment,
@@ -176,6 +178,7 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         version,
         withContrib,
         withIntegrationTests,
+        withLatestIDEVersion,
         withObservability,
         withUpgradeTests,
         withSelfHostedPreview,
