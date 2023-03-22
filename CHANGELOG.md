@@ -1,6 +1,8 @@
 # Change Log
 
 ## March 2023
+- Fixes https://github.com/gitpod-io/gitpod/issues/16916 ([#16941](https://github.com/gitpod-io/gitpod/pull/16941)) - [@geropl](https://github.com/geropl)
+- Removes the latest ide alert warning on the workspace timeout page ([#16551](https://github.com/gitpod-io/gitpod/pull/16551)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
 - [gitpod-cli] change `gp rebuild` to `gp validate` ([#16867](https://github.com/gitpod-io/gitpod/pull/16867)) - [@iQQBot](https://github.com/iQQBot)
 - Fix for missing prebuilds on default branch of a GitHub repository. ([#16816](https://github.com/gitpod-io/gitpod/pull/16816)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - [gpctl] Add users block command ([#16715](https://github.com/gitpod-io/gitpod/pull/16715)) - [@csweichel](https://github.com/csweichel)
