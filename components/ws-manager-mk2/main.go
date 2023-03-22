@@ -69,8 +69,8 @@ func init() {
 }
 
 func main() {
-	cmd.Execute()
-	if true {
+	if os.Getenv("WS_CLIENT") == "true" {
+		cmd.Execute()
 		return
 	}
 

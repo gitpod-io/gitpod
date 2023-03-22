@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -14,13 +15,9 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
-var (
-	tpe bool
-)
-
 // clientInitCmd starts a new workspace
-var clientSetTimeoutCmd = &cobra.Command{
-	Use:  "set-timeout",
+var clientMarkActiveCmd = &cobra.Command{
+	Use:  "mark-active",
 	Args: cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
 		// fc, err := os.ReadFile(args[0])
@@ -33,13 +30,8 @@ var clientSetTimeoutCmd = &cobra.Command{
 		// 	log.WithError(err).Fatal("cannot parse init request")
 		// }
 
-		timeoutType := api.TimeoutType_WORKSPACE_TIMEOUT
-		if tpe {
-			timeoutType = api.TimeoutType_CLOSED_TIMEOUT
-		}
-		initReq := api.SetTimeoutRequest{
-			Id:   "foobar",
-			Type: timeoutType,
+		initReq := api.MarkActiveRequest{
+			Id: "foobar",
 		}
 
 		conn, err := getGRPCConnection()
@@ -49,7 +41,8 @@ var clientSetTimeoutCmd = &cobra.Command{
 		defer conn.Close()
 
 		client := api.NewWorkspaceManagerClient(conn)
-		resp, err := client.SetTimeout(context.Background(), &initReq)
+		ctx, _ := context.WithDeadline(cmd.Context(), time.Now().Add(1*time.Second))
+		resp, err := client.MarkActive(ctx, &initReq)
 		if err != nil {
 			log.WithError(err).Fatal("error during RPC call")
 		}
@@ -58,8 +51,7 @@ var clientSetTimeoutCmd = &cobra.Command{
 }
 
 func init() {
-	clientCmd.AddCommand(clientSetTimeoutCmd)
-	clientSetTimeoutCmd.Flags().BoolVar(&tpe, "type", false, "start a headless workspace")
+	clientCmd.AddCommand(clientMarkActiveCmd)
 	// clientInitCmd.Flags().StringVarP(&startWorkspaceReq.ServicePrefix, "service-prefix", "p", "", "use a service prefix different from the workspace ID")
 	// clientInitCmd.Flags().StringVar(&startWorkspaceReq.Metadata.Owner, "owner", "foobar", "set the workspace owner")
 }

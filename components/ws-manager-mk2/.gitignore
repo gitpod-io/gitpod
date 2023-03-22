@@ -26,3 +26,5 @@ api/
 *.swp
 *.swo
 *~
+
+wsman-tls/
