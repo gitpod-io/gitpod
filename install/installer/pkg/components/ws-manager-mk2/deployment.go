@@ -126,7 +126,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				common.CAVolumeMount(),
 			}, volumeMounts...),
 		},
-			*common.KubeRBACProxyContainer(ctx),
+			*common.KubeRBACProxyContainerForWorkspace(ctx),
 		},
 		Volumes: append([]corev1.Volume{
 			{

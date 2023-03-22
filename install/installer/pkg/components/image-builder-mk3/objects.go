@@ -4,7 +4,10 @@
 
 package image_builder_mk3
 
-import "github.com/gitpod-io/gitpod/installer/pkg/common"
+import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
+)
 
 var Objects = common.CompositeRenderFunc(
 	clusterrole,
@@ -17,6 +20,11 @@ var Objects = common.CompositeRenderFunc(
 			Name:          RPCPortName,
 			ContainerPort: RPCPort,
 			ServicePort:   RPCPort,
+		},
+		{
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
 	}),
 	common.DefaultServiceAccount(Component),

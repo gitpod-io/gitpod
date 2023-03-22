@@ -5,6 +5,7 @@
 package wsdaemon
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
@@ -20,6 +21,11 @@ var Objects = common.CompositeRenderFunc(
 			Name:          "rpc",
 			ContainerPort: ServicePort,
 			ServicePort:   ServicePort,
+		},
+		{
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
 	}),
 	tlssecret,

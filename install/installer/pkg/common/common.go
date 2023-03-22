@@ -19,7 +19,6 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -553,6 +552,46 @@ func KubeRBACProxyContainerWithConfig(ctx *RenderContext) *corev1.Container {
 	}
 }
 
+// TODO: remove duplication after we test the scraping test in the workspace side and we are ready to continue with the meta side
+func KubeRBACProxyContainerForWorkspace(ctx *RenderContext) *corev1.Container {
+	return &corev1.Container{
+		Name:  "kube-rbac-proxy",
+		Image: ctx.ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
+		Args: []string{
+			"--logtostderr",
+			fmt.Sprintf("--secure-listen-address=[$(IP)]:%d", baseserver.BuiltinMetricsPort),
+			fmt.Sprintf("--upstream=http://127.0.0.1:%d/", baseserver.BuiltinMetricsPort),
+		},
+		Ports: []corev1.ContainerPort{
+			{Name: baseserver.BuiltinMetricsPortName, ContainerPort: baseserver.BuiltinMetricsPort},
+		},
+		Env: MergeEnv(
+			[]corev1.EnvVar{
+				{
+					Name: "IP",
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							FieldPath: "status.podIP",
+						},
+					},
+				},
+			},
+			ProxyEnv(&ctx.Config),
+		),
+		Resources: corev1.ResourceRequirements{Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    resource.MustParse("1m"),
+			corev1.ResourceMemory: resource.MustParse("30Mi"),
+		}},
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		SecurityContext: &corev1.SecurityContext{
+			AllowPrivilegeEscalation: pointer.Bool(false),
+			RunAsUser:                pointer.Int64(65532),
+			RunAsGroup:               pointer.Int64(65532),
+			RunAsNonRoot:             pointer.Bool(true),
+		},
+	}
+}
+
 func IsDatabaseMigrationDisabled(ctx *RenderContext) bool {
 	disableMigration := false
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
@@ -613,25 +652,6 @@ var (
 		tcpProtocol := corev1.ProtocolTCP
 		return &tcpProtocol
 	}()
-	PrometheusIngressRule = networkingv1.NetworkPolicyIngressRule{
-		Ports: []networkingv1.NetworkPolicyPort{
-			{
-				Protocol: TCPProtocol,
-				Port:     &intstr.IntOrString{IntVal: baseserver.BuiltinMetricsPort},
-			},
-		},
-		From: []networkingv1.NetworkPolicyPeer{
-			{
-				// todo(sje): add these labels to the prometheus instance
-				PodSelector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						"app":       "prometheus",
-						"component": "server",
-					},
-				},
-			},
-		},
-	}
 )
 
 var DeploymentStrategy = appsv1.DeploymentStrategy{

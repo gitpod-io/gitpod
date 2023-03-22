@@ -103,7 +103,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				volumeMounts...,
 			),
 		},
-			*common.KubeRBACProxyContainerWithConfig(ctx),
+			*common.KubeRBACProxyContainerForWorkspace(ctx),
 		},
 		Volumes: append(
 			[]corev1.Volume{

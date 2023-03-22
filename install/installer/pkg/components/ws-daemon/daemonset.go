@@ -288,7 +288,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					FailureThreshold:    5,
 				},
 			},
-			*common.KubeRBACProxyContainer(ctx),
+			*common.KubeRBACProxyContainerForWorkspace(ctx),
 		},
 		RestartPolicy:                 corev1.RestartPolicyAlways,
 		TerminationGracePeriodSeconds: pointer.Int64(30),

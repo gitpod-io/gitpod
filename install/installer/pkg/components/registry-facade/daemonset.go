@@ -278,7 +278,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							FailureThreshold:    3,
 						},
 					},
-						*common.KubeRBACProxyContainer(ctx),
+						*common.KubeRBACProxyContainerForWorkspace(ctx),
 					},
 					Volumes: append([]corev1.Volume{
 						{

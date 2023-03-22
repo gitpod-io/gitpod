@@ -80,7 +80,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							ProcMount:  func() *corev1.ProcMountType { r := corev1.DefaultProcMount; return &r }(),
 						},
 					},
-						*common.KubeRBACProxyContainer(ctx),
+						*common.KubeRBACProxyContainerForWorkspace(ctx),
 					},
 					Volumes: []corev1.Volume{
 						{

@@ -90,6 +90,11 @@ func GenerateService(component string, ports []ServicePort, mod ...func(spec *co
 			return service.ObjectMeta.Annotations
 		})
 
+		// configure prometheus scraping using static annotations
+		service.ObjectMeta.Annotations["prometheus.io/port"] = "9500"
+		service.ObjectMeta.Annotations["prometheus.io/scrape"] = "true"
+		service.ObjectMeta.Annotations["prometheus.io/scheme"] = "https"
+
 		return []runtime.Object{service}, nil
 	}
 }
