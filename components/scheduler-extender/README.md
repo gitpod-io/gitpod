@@ -19,7 +19,7 @@ The scheduler is installed as a secondary scheduler using the name `gitpod-sched
 
 ### How can we use it?
 
-Unless a pod configures a particular scheduler, it will use the default one called `default`.
+Unless a pod configures a particular scheduler, it will use the default one called `default-scheduler`.
 We can see the scheduler used for a running pod executing `kubectl describe pods`.
 
 To indicate the use of the custom scheduler, the pod needs to contain the field `schedulerName: gitpod-scheduler` (the installer provides a field to set such value)
