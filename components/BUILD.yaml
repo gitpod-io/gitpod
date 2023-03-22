@@ -88,6 +88,7 @@ packages:
       - components/kots-config-check/registry:docker
       - components/kots-config-check/storage:docker
       - components/node-labeler:docker
+      - components/scheduler-extender:docker
       - test:docker
       - dev/version-manifest:app
     config:
@@ -135,6 +136,7 @@ packages:
       - components/ide-service:app
       - components/ide/jetbrains/launcher:app
       - components/node-labeler:app
+      - components/scheduler-extender:app
 scripts:
   - name: update-license-header
     description: Updates the license header in all source files
