@@ -91,6 +91,7 @@
 /components/ws-proxy @gitpod-io/engineering-workspace
 /components/node-labeler @gitpod-io/engineering-workspace
 /install/installer/pkg/components/node-labeler @gitpod-io/engineering-workspace
+/components/scheduler-extender @gitpod-io/engineering-workspace
 /dev/gpctl @gitpod-io/engineering-workspace
 /dev/gpctl/api/ @gitpod-io/engineering-webapp
 /dev/loadgen @gitpod-io/engineering-workspace
