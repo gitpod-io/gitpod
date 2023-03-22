@@ -52,6 +52,7 @@ type ServiceConfig struct {
 	WorkspaceID       string
 	OwnerID           string
 	SupervisorVersion string
+	ConfigcatEnabled  bool
 }
 
 type Service struct {
@@ -109,11 +110,15 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 		return nil
 	}
 
+	opts := []experiments.ClientOpt{}
+	if cfg.ConfigcatEnabled {
+		opts = append(opts, experiments.WithGitpodProxy(cfg.Host))
+	}
 	service := &Service{
 		token:            tknres.Token,
 		gitpodService:    gitpodService,
 		cfg:              cfg,
-		experiments:      experiments.NewClient(),
+		experiments:      experiments.NewClient(opts...),
 		apiMetrics:       NewClientMetrics(),
 		onUsingPublicAPI: make(chan struct{}),
 		subs:             make(map[chan *gitpod.WorkspaceInstance]struct{}),

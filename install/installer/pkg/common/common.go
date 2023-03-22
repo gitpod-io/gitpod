@@ -424,7 +424,11 @@ func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
 	return []corev1.EnvVar{
 		{
 			Name:  "CONFIGCAT_SDK_KEY",
-			Value: sdkKey,
+			Value: "gitpod",
+		},
+		{
+			Name:  "CONFIGCAT_BASE_URL",
+			Value: "https://" + ctx.Config.Domain + "/configcat",
 		},
 	}
 }
