@@ -26,8 +26,11 @@ type keyFunc func(req interface{}) (string, error)
 
 // RateLimit configures the reate limit for a function
 type RateLimit struct {
-	Block          bool          `json:"block"`
-	BucketSize     uint          `json:"bucketSize"`
+	Block      bool `json:"block"`
+	BucketSize uint `json:"bucketSize"`
+	// RefillInterval is the rate at which a new token gets added to the bucket.
+	// Note that this does _not_ completely refill the bucket, only one token gets added,
+	// so effectively this is the rate at which requests can be made.
 	RefillInterval util.Duration `json:"refillInterval"`
 
 	KeyCacheSize uint   `json:"keyCacheSize,omitempty"`
