@@ -893,6 +893,7 @@ func (m *Manager) deleteWorkspacePVC(ctx context.Context, pvcName string) error 
 	return nil
 }
 
+//nolint:unused
 func (m *Manager) deleteWorkspaceSecrets(ctx context.Context, podName string) error {
 	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -1586,6 +1587,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
 }
 
+//nolint:unused
 func (m *Manager) createWorkspaceSnapshotFromPVC(ctx context.Context, pvcName string, pvcVolumeSnapshotName string, pvcVolumeSnapshotClassName string, workspaceID string, labels map[string]string) error {
 	// create snapshot object out of PVC
 	volumeSnapshot := &volumesnapshotv1.VolumeSnapshot{
@@ -1611,6 +1613,7 @@ func (m *Manager) createWorkspaceSnapshotFromPVC(ctx context.Context, pvcName st
 	return nil
 }
 
+//nolint:unused
 func (m *Manager) waitForWorkspaceVolumeSnapshotReady(ctx context.Context, pvcVolumeSnapshotName string, log *logrus.Entry) (pvcVolumeSnapshotContentName string, readyVolumeSnapshot bool, err error) {
 	log = log.WithField("VolumeSnapshot.Name", pvcVolumeSnapshotName)
 

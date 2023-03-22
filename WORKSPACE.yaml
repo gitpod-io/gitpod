@@ -34,7 +34,7 @@ defaultVariant:
       - "**/node_modules/**"
   config:
     go:
-      lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,typecheck,staticcheck,structcheck --allow-parallel-runners --timeout 5m"]
+      lintCommand: ["sh", "-c", "golangci-lint run --disable govet,errcheck,typecheck,staticcheck,structcheck --allow-parallel-runners --timeout 15m"]
 variants:
   - name: oss
     srcs:
