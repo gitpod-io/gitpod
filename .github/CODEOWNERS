@@ -79,7 +79,7 @@
 /components/supervisor @gitpod-io/engineering-ide
 /components/usage @gitpod-io/engineering-webapp
 /components/usage-api @gitpod-io/engineering-webapp
-/components/workspace-rollout-job @gitpod-io/engineering-security-infrastructure-and-delivery @gitpod-io/engineering-workspace
+/components/workspace-rollout-job @gitpod-io/engineering-workspace
 /components/workspacekit @gitpod-io/engineering-workspace
 /components/ws-daemon-api @gitpod-io/engineering-workspace
 /components/ws-daemon @gitpod-io/engineering-workspace
@@ -94,19 +94,20 @@
 /dev/gpctl @gitpod-io/engineering-workspace
 /dev/gpctl/api/ @gitpod-io/engineering-webapp
 /dev/loadgen @gitpod-io/engineering-workspace
-/dev/preview @gitpod-io/engineering-security-infrastructure-and-delivery
-# The deploy-gitpod.sh is shared between all teams.
-/dev/preview/workflow/preview/deploy-gitpod.sh
-/operations/observability/mixins @gitpod-io/engineering-security-infrastructure-and-delivery
-/operations/observability/mixins/platform @gitpod-io/engineering-security-infrastructure-and-delivery
+
+# Preview is shared between all teams.
+/dev/preview
+
+# Operations is shared between all teams
+/operations
 /operations/observability/mixins/IDE @gitpod-io/engineering-ide
 /operations/observability/mixins/meta @gitpod-io/engineering-webapp
 /operations/observability/mixins/workspace @gitpod-io/engineering-workspace
 # a single review should be enough
 /operations/observability/mixins/cross-teams
 
-/.werft/observability @gitpod-io/engineering-security-infrastructure-and-delivery
-
+# werft is shared between all teams
+/.werft
 /.werft/ide-* @gitpod-io/engineering-ide
 /.werft/platform-* @gitpod-io/engineering-security-infrastructure-and-delivery
 /.werft/webapp-* @gitpod-io/engineering-webapp
@@ -114,9 +115,6 @@
 /.werft/self-hosted-* @gitpod-io/engineering-security-infrastructure-and-delivery
 /.werft/*installer-tests* @gitpod-io/engineering-security-infrastructure-and-delivery
 /.werft/jobs/build/self-hosted-* @gitpod-io/engineering-security-infrastructure-and-delivery
-
-/dev/preview/infrastructure/harvester @gitpod-io/engineering-security-infrastructure-and-delivery
-/dev/preview/workflow @gitpod-io/engineering-security-infrastructure-and-delivery
 
 .github/workflows/ide-*.yml @gitpod-io/engineering-ide
 .github/workflows/jetbrains-*.yml @gitpod-io/engineering-ide
