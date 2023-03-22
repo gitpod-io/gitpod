@@ -15,5 +15,6 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		service,
 		rolebinding,
 		common.DefaultServiceAccount(Component),
+		networkpolicy,
 	)(ctx)
 }

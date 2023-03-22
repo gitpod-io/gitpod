@@ -361,6 +361,40 @@ spec:
     - Ingress
 
 ---
+# networking.k8s.io/v1/NetworkPolicy redis
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  creationTimestamp: null
+  labels:
+    app: gitpod
+    component: redis
+  name: redis
+  namespace: default
+spec:
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              component: public-api-server
+      ports:
+        - port: 6379
+          protocol: TCP
+    - from:
+        - podSelector:
+            matchLabels:
+              component: server
+      ports:
+        - port: 6379
+          protocol: TCP
+  podSelector:
+    matchLabels:
+      app: gitpod
+      component: redis
+  policyTypes:
+    - Ingress
+
+---
 # networking.k8s.io/v1/NetworkPolicy registry-facade
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -3056,6 +3090,16 @@ data:
     ---
     apiVersion: v1
     kind: ServiceAccount
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: gitpod
+        component: redis
+      name: redis
+      namespace: default
+    ---
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
     metadata:
       creationTimestamp: null
       labels:
