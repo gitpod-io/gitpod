@@ -34,10 +34,14 @@ export const useUserLoader = () => {
                         setSetupRequired(true);
                         return;
                     }
-                }
 
-                // If it wasn't a setup required error, re-throw it
-                throw error;
+                    // If it was a server error, throw it so we can catch it with an ErrorBoundary
+                    if (error.code >= 500) {
+                        throw error;
+                    }
+
+                    // Other errors will treat user as needing to log in
+                }
             } finally {
                 trackLocation(!!user);
             }
