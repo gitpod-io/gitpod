@@ -14,6 +14,7 @@ import { getGitpodService } from "../service/service";
 import dayjs from "dayjs";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { EmptyMessage } from "../components/EmptyMessage";
 
 interface AddModalProps {
     value: SSHPublicKeyValue;
@@ -210,18 +211,17 @@ export default function SSHKeys() {
                 ) : null}
             </div>
             {dataList.length === 0 ? (
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full h-96">
-                    <div className="pt-28 flex flex-col items-center w-112 m-auto">
-                        <Heading2 color="light" className="text-center pb-3 text-gray-500 dark:text-gray-400">
-                            No SSH Keys
-                        </Heading2>
-                        <Subheading className="pb-6">
+                <EmptyMessage
+                    title="No SSH Keys"
+                    subtitle={
+                        <span>
                             SSH keys allow you to establish a <b>secure connection</b> between your <b>computer</b> and{" "}
                             <b>workspaces</b>.
-                        </Subheading>
-                        <button onClick={addOne}>New SSH Key</button>
-                    </div>
-                </div>
+                        </span>
+                    }
+                    buttonText="New SSH Key"
+                    onClick={addOne}
+                />
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
                     {dataList.map((key) => {
