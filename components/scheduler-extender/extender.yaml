@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: gitpod-scheduler
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: gitpod-scheduler-cluster-admin
+  namespace: kube-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    namespace: kube-system
+    name: gitpod-scheduler
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitpod-scheduler-config
+  namespace: kube-system
+data:
+  config.yaml: |
+    apiVersion: kubescheduler.config.k8s.io/v1
+    kind: KubeSchedulerConfiguration
+    leaderElection:
+      leaderElect: true
+      leaseDuration: 15s
+      renewDeadline: 10s
+      resourceLock: leases
+      resourceName: gitpod-scheduler
+      resourceNamespace: kube-system
+    profiles:
+      - schedulerName: gitpod-scheduler
+        plugins:
+          score:
+            disabled:
+              - name: NodeResourcesBalancedAllocation
+            enabled:
+              - name: ImageLocality
+              - name: NodeResourcesFit
+        pluginConfig:
+          - name: NodeResourcesFit
+            args:
+              scoringStrategy:
+                resources:
+                - name: cpu
+                  weight: 2
+                type: MostAllocated
+    extenders:
+      - urlPrefix: http://localhost:8080/scheduler
+        filterVerb: predicates/gitpod
+        weight: 1
+        enableHTTPS: false
+        nodeCacheCapable: false
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitpod-scheduler
+  namespace: kube-system
+  labels:
+    app: gitpod-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitpod-scheduler
+  template:
+    metadata:
+      labels:
+        app: gitpod-scheduler
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: gitpod.io/workload_services
+                    operator: In
+                    values:
+                      - "true"
+
+      serviceAccountName: gitpod-scheduler
+      volumes:
+        - name: gitpod-scheduler-config
+          configMap:
+            name: gitpod-scheduler-config
+      containers:
+        - name: scheduler
+          image: registry.k8s.io/scheduler-plugins/kube-scheduler:v0.25.7
+          imagePullPolicy: IfNotPresent
+          args:
+            - kube-scheduler
+            - --config=/gitpod-scheduler/config.yaml
+            - -v=2
+          volumeMounts:
+            - name: gitpod-scheduler-config
+              mountPath: /gitpod-scheduler
+        - name: scheduler-extender
+          image: eu.gcr.io/gitpod-core-dev/build/scheduler-extender
+          imagePullPolicy: IfNotPresent
+          args:
+            - run
+            - --namespace=default
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 8080
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: 8080
+          ports:
+            - containerPort: 8080

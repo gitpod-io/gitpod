@@ -37,6 +37,7 @@
         { "path": "install/installer" },
         { "path": "install/preview" },
         { "path": "components/node-labeler" },
+        { "path": "components/scheduler-extender" },
     ],
     "settings": {
         "typescript.tsdk": "gitpod/node_modules/typescript/lib",

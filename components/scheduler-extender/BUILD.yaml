@@ -1,0 +1,22 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-buildid= -w -s"]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - eu.gcr.io/gitpod-core-dev/build/scheduler-extender:latest
+        - eu.gcr.io/gitpod-core-dev/build/scheduler-extender:commit-${__git_commit}
