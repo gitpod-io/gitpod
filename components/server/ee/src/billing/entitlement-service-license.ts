@@ -11,10 +11,7 @@ import {
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
-    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
-import { LicenseEvaluator } from "@gitpod/licensor/lib";
-import { Feature } from "@gitpod/licensor/lib/api";
 import { inject, injectable } from "inversify";
 import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { Config } from "../../../src/config";
@@ -23,7 +20,6 @@ import { Config } from "../../../src/config";
 export class EntitlementServiceLicense implements EntitlementService {
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
-    @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
 
     async mayStartWorkspace(
         user: User,
@@ -41,13 +37,6 @@ export class EntitlementServiceLicense implements EntitlementService {
     }
 
     async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
-        const userCount = await this.userDb.getUserCount(true);
-
-        // the self-hosted case
-        if (!this.licenseEvaluator.isEnabled(Feature.FeatureSetTimeout, userCount)) {
-            return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-        }
-
         return WORKSPACE_TIMEOUT_DEFAULT_LONG;
     }
 

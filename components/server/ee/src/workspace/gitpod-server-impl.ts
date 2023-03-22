@@ -60,9 +60,7 @@ import {
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { v4 as uuidv4 } from "uuid";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { LicenseKeySource } from "@gitpod/licensor/lib";
-import { Feature } from "@gitpod/licensor/lib/api";
-import { LicenseValidationResult, LicenseFeature } from "@gitpod/gitpod-protocol/lib/license-protocol";
+import { LicenseValidationResult } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
@@ -131,7 +129,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
-    @inject(LicenseKeySource) protected readonly licenseKeySource: LicenseKeySource;
 
     // per-user state
     @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
@@ -334,38 +331,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    protected async requireEELicense(feature: Feature) {
-        const cachedUserCount = this.userCounter.count;
-
-        let userCount: number;
-        if (cachedUserCount === null) {
-            userCount = await this.userDB.getUserCount(true);
-            this.userCounter.count = userCount;
-        } else {
-            userCount = cachedUserCount;
-        }
-
-        if (!this.licenseEvaluator.isEnabled(feature, userCount)) {
-            throw new ResponseError(ErrorCodes.EE_LICENSE_REQUIRED, "enterprise license required");
-        }
-    }
-
     async validateLicense(ctx: TraceContext): Promise<LicenseValidationResult> {
-        const v = this.licenseEvaluator.validate();
-        if (!v.valid) {
-            return v;
-        }
-
-        const userCount = await this.userDB.getUserCount(true);
-        const canAnotherUserSignUp = this.licenseEvaluator.hasEnoughSeats(userCount + 1);
-        if (!canAnotherUserSignUp) {
-            return {
-                valid: true,
-                issue: "seats-exhausted",
-                msg: "maximum number of users reached",
-            };
-        }
-
         return { valid: true };
     }
 
@@ -409,7 +375,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         traceAPIParams(ctx, { workspaceId, duration });
         traceWI(ctx, { workspaceId });
 
-        await this.requireEELicense(Feature.FeatureSetTimeout);
         const user = this.checkUser("setWorkspaceTimeout");
 
         if (!(await this.entitlementService.maySetTimeout(user, new Date()))) {
@@ -448,9 +413,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
 
-        // Allowed in the free version, because it is read only.
-        // this.requireEELicense(Feature.FeatureSetTimeout);
-
         const user = this.checkUser("getWorkspaceTimeout");
 
         const canChange = await this.entitlementService.maySetTimeout(user, new Date());
@@ -477,9 +439,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {
         traceAPIParams(ctx, { pwsId });
 
-        // Allowed in the free version, because it is read only.
-        // this.requireEELicense(Feature.FeaturePrebuild);
-
         const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsId);
         if (!pws) {
             // there is no prebuild - that's as good one being done
@@ -493,7 +452,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         traceAPIParams(ctx, { workspaceId, level });
         traceWI(ctx, { workspaceId });
 
-        await this.requireEELicense(Feature.FeatureWorkspaceSharing);
         this.checkAndBlockUser("controlAdmission");
 
         const lvlmap = new Map<string, AdmissionLevel>();
@@ -529,7 +487,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const { workspaceId, dontWait } = options;
         traceWI(ctx, { workspaceId });
 
-        await this.requireEELicense(Feature.FeatureSnapshot);
         const user = this.checkAndBlockUser("takeSnapshot");
 
         const workspace = await this.guardSnaphotAccess(ctx, user.id, workspaceId);
@@ -584,7 +541,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async waitForSnapshot(ctx: TraceContext, snapshotId: string): Promise<void> {
         traceAPIParams(ctx, { snapshotId });
 
-        await this.requireEELicense(Feature.FeatureSnapshot);
         const user = this.checkAndBlockUser("waitForSnapshot");
 
         const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(snapshotId);
@@ -608,9 +564,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
 
-        // Allowed in the free version, because it is read only.
-        // this.requireEELicense(Feature.FeatureSnapshot);
-
         const user = this.checkAndBlockUser("getSnapshots");
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
@@ -626,8 +579,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
         traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
-
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetUsers", { req }, Permission.ADMIN_USERS);
 
@@ -649,8 +600,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async adminGetUser(ctx: TraceContext, userId: string): Promise<User> {
         traceAPIParams(ctx, { userId });
 
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
-
         await this.guardAdminAccess("adminGetUser", { id: userId }, Permission.ADMIN_USERS);
 
         let result: User | undefined;
@@ -668,8 +617,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
         traceAPIParams(ctx, { req });
-
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
 
@@ -701,8 +648,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminVerifyUser(ctx: TraceContext, userId: string): Promise<User> {
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
-
         await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
         try {
             const user = await this.userDB.findUserById(userId);
@@ -720,8 +665,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
         traceAPIParams(ctx, { userId });
 
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
-
         await this.guardAdminAccess("adminDeleteUser", { id: userId }, Permission.ADMIN_USERS);
 
         try {
@@ -736,7 +679,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         req: AdminGetListRequest<BlockedRepository>,
     ): Promise<AdminGetListResult<BlockedRepository>> {
         traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
 
@@ -760,7 +702,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         blockUser: boolean,
     ): Promise<BlockedRepository> {
         traceAPIParams(ctx, { urlRegexp, blockUser });
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminCreateBlockedRepository", { urlRegexp, blockUser }, Permission.ADMIN_USERS);
 
@@ -769,7 +710,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
         traceAPIParams(ctx, { id });
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
 
@@ -778,8 +718,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
         traceAPIParams(ctx, { req });
-
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminModifyRoleOrPermission", { req }, Permission.ADMIN_USERS);
 
@@ -811,8 +749,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     ): Promise<User> {
         traceAPIParams(ctx, { req });
 
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
-
         await this.guardAdminAccess("adminModifyPermanentWorkspaceFeatureFlag", { req }, Permission.ADMIN_USERS);
         const target = await this.userDB.findUserById(req.id);
         if (!target) {
@@ -839,7 +775,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminGetTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
         await this.guardAdminAccess("adminGetTeamMembers", { teamId }, Permission.ADMIN_WORKSPACES);
 
         const team = await this.teamDB.findTeamById(teamId);
@@ -851,7 +786,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminGetTeams(ctx: TraceContext, req: AdminGetListRequest<Team>): Promise<AdminGetListResult<Team>> {
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
         await this.guardAdminAccess("adminGetTeams", { req }, Permission.ADMIN_WORKSPACES);
 
         return await this.teamDB.findTeams(
@@ -864,7 +798,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
         await this.guardAdminAccess("adminGetTeamById", { id }, Permission.ADMIN_WORKSPACES);
         return await this.teamDB.findTeamById(id);
     }
@@ -875,7 +808,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         userId: string,
         role: TeamMemberRole,
     ): Promise<void> {
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
         await this.guardAdminAccess("adminSetTeamMemberRole", { teamId, userId, role }, Permission.ADMIN_WORKSPACES);
         return this.teamDB.setTeamMemberRole(userId, teamId, role);
     }
@@ -885,8 +817,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         req: AdminGetWorkspacesRequest,
     ): Promise<AdminGetListResult<WorkspaceAndInstance>> {
         traceAPIParams(ctx, { req });
-
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetWorkspaces", { req }, Permission.ADMIN_WORKSPACES);
 
@@ -904,8 +834,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async adminGetWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceAndInstance> {
         traceAPIParams(ctx, { workspaceId });
 
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
-
         await this.guardAdminAccess("adminGetWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
 
         const result = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(workspaceId);
@@ -918,8 +846,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async adminForceStopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         traceAPIParams(ctx, { workspaceId });
 
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
-
         await this.guardAdminAccess("adminForceStopWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
@@ -930,8 +856,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         traceAPIParams(ctx, { workspaceId });
-
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess(
             "adminRestoreSoftDeletedWorkspace",
@@ -962,7 +886,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         ctx: TraceContext,
         req: AdminGetListRequest<Project>,
     ): Promise<AdminGetListResult<Project>> {
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
         await this.guardAdminAccess("adminGetProjectsBySearchTerm", { req }, Permission.ADMIN_PROJECTS);
         return await this.projectDB.findProjectsBySearchTerm(
             req.offset,
@@ -974,7 +897,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async adminGetProjectById(ctx: TraceContext, id: string): Promise<Project | undefined> {
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
         await this.guardAdminAccess("adminGetProjectById", { id }, Permission.ADMIN_PROJECTS);
         return await this.projectDB.findProjectById(id);
     }
@@ -1174,26 +1096,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardAdminAccess("adminGetWorkspaces", { key }, Permission.ADMIN_API);
 
         await this.licenseDB.store(uuidv4(), key);
-        await this.licenseEvaluator.reloadLicense();
-    }
-
-    async licenseIncludesFeature(ctx: TraceContext, licenseFeature: LicenseFeature): Promise<boolean> {
-        traceAPIParams(ctx, { licenseFeature });
-
-        this.checkAndBlockUser("licenseIncludesFeature");
-
-        let feature: Feature | undefined;
-        switch (licenseFeature) {
-            case LicenseFeature.CreateSnapshot:
-                feature = Feature.FeatureSnapshot;
-            // room for more
-            default:
-        }
-        if (feature) {
-            const userCount = await this.userDB.getUserCount(true);
-            return this.licenseEvaluator.isEnabled(feature, userCount);
-        }
-        return false;
     }
 
     // (SaaS) – accounting
@@ -2999,7 +2901,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async adminFindPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         traceAPIParams(ctx, { params });
-        await this.requireEELicense(Feature.FeatureAdminDashboard);
         await this.guardAdminAccess("adminFindPrebuilds", { params }, Permission.ADMIN_PROJECTS);
 
         return this.projectsService.findPrebuilds(params);

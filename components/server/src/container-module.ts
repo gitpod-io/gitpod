@@ -90,7 +90,6 @@ import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messagin
 import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser";
 import { InstallationAdminTelemetryDataProvider } from "./installation-admin/telemetry-data-provider";
 import { IDEService } from "./ide-service";
-import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
 import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
@@ -226,8 +225,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(TermsProvider).toSelf().inSingletonScope();
 
     bind(InstallationAdminTelemetryDataProvider).toSelf().inSingletonScope();
-
-    bind(LicenseEvaluator).toSelf().inSingletonScope();
 
     // binds all content services
     contentServiceBinder((ctx) => {

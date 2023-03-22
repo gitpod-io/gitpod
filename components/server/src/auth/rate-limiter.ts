@@ -174,7 +174,6 @@ const defaultFunctions: FunctionsConfig = {
 
     validateLicense: { group: "default", points: 1 },
     getLicenseInfo: { group: "default", points: 1 },
-    licenseIncludesFeature: { group: "default", points: 1 },
 
     accessCodeSyncStorage: { group: "default", points: 1 },
 

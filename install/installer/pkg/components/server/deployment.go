@@ -19,7 +19,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsmanagerbridge "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-bridge"
-	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -90,25 +89,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Name:  "CONFIG_PATH",
 				Value: "/config/config.json",
 			},
-			func() corev1.EnvVar {
-				envvar := corev1.EnvVar{
-					Name: "GITPOD_LICENSE_TYPE",
-				}
-
-				if ctx.Config.License == nil {
-					envvar.Value = string(configv1.LicensorTypeGitpod)
-				} else {
-					envvar.ValueFrom = &corev1.EnvVarSource{
-						SecretKeyRef: &corev1.SecretKeySelector{
-							LocalObjectReference: corev1.LocalObjectReference{Name: ctx.Config.License.Name},
-							Key:                  "type",
-							Optional:             pointer.Bool(true),
-						},
-					}
-				}
-
-				return envvar
-			}(),
 			{
 				Name:  "NODE_ENV",
 				Value: "production", // todo(sje): will we need to change this?
@@ -140,22 +120,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	volumes := make([]corev1.Volume, 0)
 	volumeMounts := make([]corev1.VolumeMount, 0)
-	if ctx.Config.License != nil {
-		volumes = append(volumes, corev1.Volume{
-			Name: "gitpod-license-key",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: ctx.Config.License.Name,
-				},
-			},
-		})
-
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "gitpod-license-key",
-			MountPath: licenseFilePath,
-			SubPath:   "license",
-		})
-	}
 
 	if len(ctx.Config.AuthProviders) > 0 {
 		for i, provider := range ctx.Config.AuthProviders {

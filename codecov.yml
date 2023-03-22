@@ -41,9 +41,6 @@ flags:
   components-image-builder-app:
     paths:
       - components/image-builder/
-  components-licensor-app:
-    paths:
-      - components/licensor/
   components-local-app-api-go-lib:
     paths:
       - components/local-app-api/go/

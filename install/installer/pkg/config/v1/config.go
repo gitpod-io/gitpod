@@ -145,7 +145,6 @@ type Config struct {
 
 	AuthProviders []ObjectRef   `json:"authProviders" validate:"dive"`
 	BlockNewUsers BlockNewUsers `json:"blockNewUsers"`
-	License       *ObjectRef    `json:"license,omitempty"`
 
 	SSHGatewayHostKey *ObjectRef `json:"sshGatewayHostKey,omitempty"`
 
@@ -387,13 +386,6 @@ type OpenVSXProxy struct {
 type Proxy struct {
 	ServiceAnnotations ServiceAnnotations `json:"serviceAnnotations"`
 }
-
-type LicensorType string
-
-const (
-	LicensorTypeGitpod     LicensorType = "gitpod"
-	LicensorTypeReplicated LicensorType = "replicated"
-)
 
 type FSShiftMethod string
 

@@ -14,7 +14,6 @@ packages:
       - components/ee/payment-endpoint:lib
       - components/gitpod-protocol:lib
       - components/image-builder-api/typescript:lib
-      - components/licensor/typescript:lib
       - components/ws-manager-api/typescript:lib
       - components/supervisor-api/typescript-grpcweb:lib
       - components/usage-api/typescript:lib
@@ -54,7 +53,6 @@ packages:
       - components/ee/payment-endpoint:lib
       - components/gitpod-protocol:lib
       - components/image-builder-api/typescript:lib
-      - components/licensor/typescript:lib
       - components/ws-manager-api/typescript:lib
       - components/supervisor-api/typescript-grpcweb:lib
       - components/usage-api/typescript:lib
@@ -81,7 +79,6 @@ packages:
       - components/ee/payment-endpoint:lib
       - components/gitpod-protocol:lib
       - components/image-builder-api/typescript:lib
-      - components/licensor/typescript:lib
       - components/ws-manager-api/typescript:lib
       - components/supervisor-api/typescript-grpcweb:lib
       - components/usage-api/typescript:lib
