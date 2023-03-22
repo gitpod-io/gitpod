@@ -243,6 +243,7 @@ const defaultFunctions: FunctionsConfig = {
 };
 
 function getConfig(config: RateLimiterConfig): RateLimiterConfig {
+    // Be aware that some of our API calls are bound by rate-limits in downstream systems like ws-manager
     const defaultGroups: GroupsConfig = {
         default: {
             points: 60000, // 1,000 calls per user per second
@@ -261,7 +262,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
             durationsSec: 10,
         },
         sendHeartBeat: {
-            points: 10, // 10 heartbeats per connection per 5 minutes
+            points: 100, // 100 heartbeats per connection per 5 minutes
             durationsSec: 60 * 5,
         },
     };
