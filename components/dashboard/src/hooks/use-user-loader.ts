@@ -46,7 +46,7 @@ export const useUserLoader = () => {
                 trackLocation(!!user);
             }
 
-            return user;
+            return user || null;
         },
         // We'll let an ErrorBoundary catch the error
         useErrorBoundary: true,
