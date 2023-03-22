@@ -66,6 +66,7 @@ export function useOrganizations() {
             enabled: !!user,
             cacheTime: 1000 * 60 * 60 * 1, // 1 hour
             staleTime: 1000 * 60 * 60 * 1, // 1 hour
+            // We'll let an ErrorBoundary catch the error
             useErrorBoundary: true,
         },
     );
