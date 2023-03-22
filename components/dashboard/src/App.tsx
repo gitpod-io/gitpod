@@ -10,7 +10,7 @@ import { AppLoading } from "./app/AppLoading";
 import { AppRoutes } from "./app/AppRoutes";
 import { useCurrentOrg } from "./data/organizations/orgs-query";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
-import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
+import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
 import { isGitpodIo } from "./utils";
 
@@ -18,7 +18,7 @@ const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 
 // Top level Dashboard App component
 const App: FunctionComponent = () => {
-    const { user, isSetupRequired, loading } = useUserAndTeamsLoader();
+    const { user, isSetupRequired, loading } = useUserLoader();
     const currentOrgQuery = useCurrentOrg();
 
     // Setup analytics/tracking

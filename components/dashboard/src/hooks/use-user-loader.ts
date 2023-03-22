@@ -12,7 +12,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { trackLocation } from "../Analytics";
 import { refreshSearchData } from "../components/RepositoryFinder";
 
-export const useUserAndTeamsLoader = () => {
+export const useUserLoader = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const { user, setUser } = useContext(UserContext);
     const [isSetupRequired, setSetupRequired] = useState(false);
