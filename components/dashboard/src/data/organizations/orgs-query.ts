@@ -5,19 +5,16 @@
  */
 
 import { Organization, OrgMemberInfo, User } from "@gitpod/gitpod-protocol";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useContext } from "react";
 import { useLocation } from "react-router";
 import { publicApiTeamMembersToProtocol, publicApiTeamToProtocol, teamsService } from "../../service/public-api";
-import { getGitpodService } from "../../service/service";
 import { useCurrentUser, UserContext } from "../../user-context";
 import { getUserBillingModeQueryKey } from "../billing-mode/user-billing-mode-query";
 import { noPersistence } from "../setup";
 
 export interface OrganizationInfo extends Organization {
     members: OrgMemberInfo[];
-    billingMode?: BillingMode;
     isOwner: boolean;
     invitationId?: string;
 }
@@ -47,13 +44,11 @@ export function useOrganizations() {
             const response = await teamsService.listTeams({});
             const result: OrganizationInfo[] = [];
             for (const org of response.teams) {
-                const billingMode = await getGitpodService().server.getBillingModeForTeam(org.id);
                 const members = publicApiTeamMembersToProtocol(org.members || []);
                 const isOwner = members.some((m) => m.role === "owner" && m.userId === user?.id);
                 result.push({
                     ...publicApiTeamToProtocol(org),
                     members,
-                    billingMode,
                     isOwner,
                     invitationId: org.teamInvitation?.id,
                 });

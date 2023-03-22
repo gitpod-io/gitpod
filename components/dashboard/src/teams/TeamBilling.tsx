@@ -14,6 +14,7 @@ import DropDown from "../components/DropDown";
 import PillLabel from "../components/PillLabel";
 import SolidCard from "../components/SolidCard";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as CheckSvg } from "../images/check.svg";
@@ -36,6 +37,7 @@ export default function TeamBillingPage() {
 const TeamBilling: FunctionComponent = () => {
     const user = useCurrentUser();
     const currentOrg = useCurrentOrg();
+    const orgBillingMode = useOrgBillingMode();
     const [teamSubscription, setTeamSubscription] = useState<TeamSubscription2 | undefined>();
     const { currency, setCurrency } = useContext(PaymentContext);
     const [pendingTeamPlan, setPendingTeamPlan] = useState<PendingPlan | undefined>();
@@ -125,7 +127,7 @@ const TeamBilling: FunctionComponent = () => {
         window.localStorage.setItem(`pendingPlanForTeam${orgId}`, JSON.stringify(pending));
     };
 
-    const isLoading = currentOrg.isLoading;
+    const isLoading = currentOrg.isLoading || orgBillingMode.isLoading;
     const teamPlan = pendingTeamPlan || Plans.getById(teamSubscription?.planId);
 
     const featuresByPlanType: { [type in PlanType]?: Array<React.ReactNode> } = {
@@ -301,7 +303,7 @@ const TeamBilling: FunctionComponent = () => {
         );
     }
 
-    const showUBP = BillingMode.showUsageBasedBilling(currentOrg.data?.billingMode);
+    const showUBP = BillingMode.showUsageBasedBilling(orgBillingMode.data);
 
     return showUBP ? <TeamUsageBasedBilling /> : renderTeamBilling();
 };
