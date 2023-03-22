@@ -88,6 +88,7 @@ jobs:
                       - [ ] /werft with-large-vm
                       - [x] /werft with-integration-tests=jetbrains
                       - [x] /werft publish-to-jb-marketplace
+                      - [x] /werft with-werft
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
@@ -128,6 +129,7 @@ jobs:
                       - [x] /werft with-preview
                       - [x] /werft with-large-vm
                       - [x] /werft with-integration-tests=jetbrains
+                      - [x] /werft with-werft
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
