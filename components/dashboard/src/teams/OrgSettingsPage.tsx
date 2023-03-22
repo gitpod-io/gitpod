@@ -62,7 +62,7 @@ export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     );
 }
 
-export function getTeamSettingsMenu(params: {
+function getTeamSettingsMenu(params: {
     team?: Team;
     billingMode?: BillingMode;
     ssoEnabled?: boolean;
