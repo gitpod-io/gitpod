@@ -51,17 +51,18 @@ const App: FunctionComponent = () => {
     if (!user) {
         return <Login />;
     }
-    // TODO(gpl) "isLoading" is "true" even if there are errors in this "useCurrentOrg" call.
-    // Why don't understand as to why .isLoading is not resolved at some point, though. Maybe we're missing proper error handling for useOrganizations
-    // if (currentOrgQuery.isLoading) {
-    //     return <AppLoading />;
-    // }
+
+    // At this point we want to make sure that we never render AppRoutes prematurely, e.g. without finishing loading the orgs
+    // This would cause us to re-render the whole App again soon after, creating havoc with all our "onMount" hooks.
+    if (currentOrgQuery.isLoading) {
+        return <AppLoading />;
+    }
 
     // If we made it here, we have a logged in user w/ their teams. Yay.
     return (
         <Suspense fallback={<AppLoading />}>
-            {/* Use org id as key to force re-render on org change */}
-            <AppRoutes key={currentOrgQuery.data?.id ?? "no-org"} />
+            {/* Use org id, or user id (for personal account) as key to force re-render on org change */}
+            <AppRoutes key={currentOrgQuery?.data?.id ?? user.id} />
         </Suspense>
     );
 };
