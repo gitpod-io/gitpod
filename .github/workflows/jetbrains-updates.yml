@@ -58,6 +58,7 @@ jobs:
                       - [x] /werft with-preview
                       - [x] /werft with-large-vm
                       - [x] /werft with-integration-tests=jetbrains
+                      - [x] /werft with-werft
 
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-updates.yml) GHA_
                   commit-message: "[JetBrains] Update IDE images to new build version"
