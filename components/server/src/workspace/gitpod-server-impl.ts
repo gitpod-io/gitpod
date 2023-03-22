@@ -1023,6 +1023,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 // This is an old tab with open workspace: drop silently
                 return;
             } else {
+                e = this.mapGrpcError(e);
                 throw e;
             }
         }
