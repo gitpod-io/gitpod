@@ -2271,6 +2271,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("createTeam");
+
+        const mayCreateOrganization = await this.userService.mayCreateOrJoinOrganization(user);
+        if (!mayCreateOrganization) {
+            throw new ResponseError(
+                ErrorCodes.PERMISSION_DENIED,
+                "Organizational accounts are not allowed to create new organizations",
+            );
+        }
+
         const team = await this.teamDB.createTeam(user.id, name);
         const invite = await this.getGenericInvite(ctx, team.id);
         ctx.span?.setTag("teamId", team.id);
@@ -2291,6 +2300,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { inviteId });
 
         const user = this.checkAndBlockUser("joinTeam");
+
+        const mayCreateOrganization = await this.userService.mayCreateOrJoinOrganization(user);
+        if (!mayCreateOrganization) {
+            throw new ResponseError(
+                ErrorCodes.PERMISSION_DENIED,
+                "Organizational accounts are not allowed to join other organizations",
+            );
+        }
+
         // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
         const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
         if (!invite || invite.invalidationTime !== "") {
