@@ -21,12 +21,11 @@
       }
     ]
   },
-  "description": "Redis Dashboard",
+  "description": "",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "gnetId": 11835,
   "graphTooltip": 1,
-  "id": 88,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -100,14 +99,12 @@
             "type": "prometheus",
             "uid": "P4169E866C3094E38"
           },
-          "editorMode": "code",
-          "expr": "max(max_over_time(redis_uptime_in_seconds{}[$__interval]))",
+          "expr": "max(max_over_time(redis_uptime_in_seconds{instance=~\"$instance\"}[$__interval]))",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 2,
           "legendFormat": "",
           "metric": "",
-          "range": true,
           "refId": "A",
           "step": 1800
         }
@@ -1286,10 +1283,115 @@
     "redis"
   ],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "VictoriaMetrics",
+          "value": "VictoriaMetrics"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Prometheus",
+        "multi": false,
+        "name": "DS_PROMETHEUS",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "default",
+          "value": "default"
+        },
+        "datasource": {
+          "uid": "$DS_PROMETHEUS"
+        },
+        "definition": "label_values(redis_up, namespace)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Namespace",
+        "multi": false,
+        "name": "namespace",
+        "options": [],
+        "query": {
+          "query": "label_values(redis_up, namespace)",
+          "refId": "VictoriaMetrics-namespace-Variable-Query"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "redis-79cdfcf898-k8959",
+          "value": "redis-79cdfcf898-k8959"
+        },
+        "datasource": {
+          "uid": "$DS_PROMETHEUS"
+        },
+        "definition": "label_values(redis_up{namespace=\"$namespace\"}, pod)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Pod Name",
+        "multi": false,
+        "name": "pod_name",
+        "options": [],
+        "query": {
+          "query": "label_values(redis_up{namespace=\"$namespace\"}, pod)",
+          "refId": "VictoriaMetrics-pod_name-Variable-Query"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "current": {
+          "selected": false,
+          "text": "10.60.4.31:9500",
+          "value": "10.60.4.31:9500"
+        },
+        "datasource": {
+          "uid": "$DS_PROMETHEUS"
+        },
+        "definition": "label_values(redis_up{namespace=\"$namespace\", pod=\"$pod_name\"}, instance)",
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "instance",
+        "options": [],
+        "query": {
+          "query": "label_values(redis_up{namespace=\"$namespace\", pod=\"$pod_name\"}, instance)",
+          "refId": "VictoriaMetrics-instance-Variable-Query"
+        },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "tagValuesQuery": "",
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
   },
   "time": {
-    "from": "now-24h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
@@ -1316,8 +1418,8 @@
     ]
   },
   "timezone": "utc",
-  "title": "Components/ Redis",
+  "title": "Components / Redis",
   "uid": "xDLNRKUWz",
-  "version": 2,
+  "version": 3,
   "weekStart": "monday"
 }
