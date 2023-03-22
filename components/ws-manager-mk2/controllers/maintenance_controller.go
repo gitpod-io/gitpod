@@ -7,6 +7,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	"github.com/go-logr/logr"
@@ -22,26 +23,30 @@ const (
 	configMapName    = "ws-manager-mk2-maintenance-mode"
 )
 
+var (
+	indefinite = time.Now().Add(999999 * time.Hour)
+)
+
 func NewMaintenanceReconciler(c client.Client) (*MaintenanceReconciler, error) {
 	return &MaintenanceReconciler{
 		Client: c,
-		// Enable by default, until we observe the ConfigMap with the actual value.
+		// Enable maintenance by default, until we observe the ConfigMap with the actual value.
 		// Prevents a race on startup where the workspace reconciler might run before
 		// we observe the maintenance mode ConfigMap. Better be safe and prevent
 		// reconciliation of that workspace until it's certain maintenance mode is
 		// not enabled.
-		enabled: true,
+		enabledUntil: &indefinite,
 	}, nil
 }
 
 type MaintenanceReconciler struct {
 	client.Client
 
-	enabled bool
+	enabledUntil *time.Time
 }
 
 func (r *MaintenanceReconciler) IsEnabled() bool {
-	return r.enabled
+	return r.enabledUntil != nil && time.Now().Before(*r.enabledUntil)
 }
 
 //+kubebuilder:rbac:groups=core,resources=configmap,verbs=get;list;watch
@@ -57,7 +62,7 @@ func (r *MaintenanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err := r.Get(ctx, req.NamespacedName, &cm); err != nil {
 		if errors.IsNotFound(err) {
 			// ConfigMap does not exist, disable maintenance mode.
-			r.setEnabled(log, false)
+			r.setEnabledUntil(log, nil)
 			return ctrl.Result{}, nil
 		}
 
@@ -68,29 +73,29 @@ func (r *MaintenanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	configJson, ok := cm.Data["config.json"]
 	if !ok {
 		log.Info("missing config.json, setting maintenance mode as disabled")
-		r.setEnabled(log, false)
+		r.setEnabledUntil(log, nil)
 		return ctrl.Result{}, nil
 	}
 
 	var cfg config.MaintenanceConfig
 	if err := json.Unmarshal([]byte(configJson), &cfg); err != nil {
 		log.Error(err, "failed to unmarshal maintenance config, setting maintenance mode as disabled")
-		r.setEnabled(log, false)
+		r.setEnabledUntil(log, nil)
 		return ctrl.Result{}, nil
 	}
 
-	r.setEnabled(log, cfg.Enabled)
+	r.setEnabledUntil(log, cfg.EnabledUntil)
 	return ctrl.Result{}, nil
 }
 
-func (r *MaintenanceReconciler) setEnabled(log logr.Logger, enabled bool) {
-	if enabled == r.enabled {
+func (r *MaintenanceReconciler) setEnabledUntil(log logr.Logger, enabledUntil *time.Time) {
+	if enabledUntil == r.enabledUntil {
 		// Nothing to do.
 		return
 	}
 
-	r.enabled = enabled
-	log.Info("maintenance mode state change", "enabled", enabled)
+	r.enabledUntil = enabledUntil
+	log.Info("maintenance mode state change", "enabled", r.IsEnabled(), "enabledUntil", enabledUntil)
 }
 
 func (r *MaintenanceReconciler) SetupWithManager(mgr ctrl.Manager) error {

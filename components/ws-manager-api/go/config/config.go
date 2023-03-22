@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	ozzo "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
@@ -570,5 +571,5 @@ type CpuResourceLimit struct {
 }
 
 type MaintenanceConfig struct {
-	Enabled bool `json:"enabled"`
+	EnabledUntil *time.Time `json:"enabledUntil"`
 }
