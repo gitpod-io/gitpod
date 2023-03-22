@@ -1,5 +1,4 @@
 installer
 dist
 versions.yaml
-!cmd/testdata/render/versions.yaml
 gitpod.config.yaml

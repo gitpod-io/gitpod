@@ -39,12 +39,3 @@ config-doc:
 	@echo "Building doc from Config struct for current version"
 	go run ./scripts/structdoc.go
 .PHONY: config-doc
-
-generateRenderTests:
-	go test ./cmd/... -update
-.PHONY: generateRenderTests
-
-getRenderVersionManifest:
-	VERSION_MANIFEST="./cmd/testdata/render/versions.yaml" $(MAKE) versionManifest
-	yq w -i ./cmd/testdata/render/versions.yaml **.version test
-.PHONY: getRenderVersionManifest
