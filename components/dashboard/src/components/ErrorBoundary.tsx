@@ -18,9 +18,18 @@ export const GitpodErrorBoundary: FC = ({ children }) => {
     );
 };
 
+type CaughtError = Error & { code?: number };
+
 export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBoundary }) => {
+    // adjust typing, as we may have caught an api error here w/ a code property
+    const caughtError = error as CaughtError;
+
     const emailSubject = encodeURIComponent("Gitpod Dashboard Error");
-    const emailBody = encodeURIComponent(`\n\nError: ${error.message}`);
+    let emailBodyStr = `\n\nError: ${caughtError.message}`;
+    if (caughtError.code) {
+        emailBodyStr += `\nCode: ${caughtError.code}`;
+    }
+    const emailBody = encodeURIComponent(emailBodyStr);
 
     return (
         <div role="alert" className="app-container mt-14 flex flex-col items-center justify-center space-y-6">
@@ -36,7 +45,14 @@ export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBound
             <div>
                 <button onClick={resetErrorBoundary}>Reload</button>
             </div>
-            {error.message && <pre>{error.message}</pre>}
+            <div>
+                {caughtError.code && (
+                    <span>
+                        <strong>Code:</strong> {caughtError.code}
+                    </span>
+                )}
+                {caughtError.message && <pre>{caughtError.message}</pre>}
+            </div>
         </div>
     );
 };
