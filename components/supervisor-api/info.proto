@@ -97,6 +97,9 @@ message WorkspaceInfoResponse {
 
     // debug_workspace_type indicates whether it is a regular or prebuild debug workspace
     DebugWorkspaceType debug_workspace_type = 17;
+
+    // configcat_enabled controls whether configcat is enabled
+    bool configcat_enabled = 18;
 }
 
 enum DebugWorkspaceType {
