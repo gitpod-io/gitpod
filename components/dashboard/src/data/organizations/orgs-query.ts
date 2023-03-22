@@ -6,10 +6,10 @@
 
 import { Organization, OrgMemberInfo, User } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext } from "react";
+import { useCallback } from "react";
 import { useLocation } from "react-router";
 import { publicApiTeamMembersToProtocol, publicApiTeamToProtocol, teamsService } from "../../service/public-api";
-import { useCurrentUser, UserContext } from "../../user-context";
+import { useCurrentUser } from "../../user-context";
 import { getUserBillingModeQueryKey } from "../billing-mode/user-billing-mode-query";
 import { noPersistence } from "../setup";
 
@@ -31,7 +31,6 @@ export function useOrganizationsInvalidator() {
 export function useOrganizations() {
     const user = useCurrentUser();
     const queryClient = useQueryClient();
-    const { refreshUserBillingMode } = useContext(UserContext);
     const query = useQuery<OrganizationInfo[], Error>(
         getQueryKey(user),
         async () => {
@@ -60,8 +59,8 @@ export function useOrganizations() {
                 if (!user) {
                     return;
                 }
+
                 // refresh user billing mode to update the billing mode in the user context as it depends on the orgs
-                refreshUserBillingMode();
                 queryClient.invalidateQueries(getUserBillingModeQueryKey(user.id));
             },
             onError: (err) => {

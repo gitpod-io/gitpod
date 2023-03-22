@@ -21,11 +21,12 @@ import InfoBox from "../components/InfoBox";
 import Modal from "../components/Modal";
 import SelectableCard from "../components/SelectableCard";
 import { getGitpodService } from "../service/service";
-import { UserContext } from "../user-context";
+import { useCurrentUser } from "../user-context";
 import Tooltip from "../components/Tooltip";
 import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
+import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query";
 
 type PlanWithOriginalPrice = Plan & { originalPrice?: number };
 type Pending = { pendingSince: number };
@@ -44,7 +45,8 @@ type TeamClaimModal =
       };
 
 export default function PlansPage() {
-    const { user, userBillingMode } = useContext(UserContext);
+    const user = useCurrentUser();
+    const userBillingMode = useUserBillingMode();
     const { currency, setCurrency, isStudent, isChargebeeCustomer } = useContext(PaymentContext);
     const { isUsageBasedBillingEnabled } = useContext(FeatureFlagContext);
     const [accountStatement, setAccountStatement] = useState<AccountStatement>();
@@ -708,10 +710,10 @@ export default function PlansPage() {
                     </p>
                 </div>
                 <div className="mt-4 flex justify-center space-x-3 2xl:space-x-7">{planCards}</div>
-                {assignedTs && userBillingMode?.mode === "chargebee" && !!userBillingMode.teamNames && (
+                {assignedTs && userBillingMode.data?.mode === "chargebee" && !!userBillingMode.data?.teamNames && (
                     <Alert type="info" className="mt-10 mx-auto">
                         <p>Assigned Organization Seats</p>
-                        <ul>{userBillingMode.teamNames.join(", ")}</ul>
+                        <ul>{userBillingMode.data.teamNames.join(", ")}</ul>
                     </Alert>
                 )}
                 {!!confirmUpgradeToPlan && (

@@ -5,33 +5,22 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import React, { createContext, useState, useCallback, useContext } from "react";
-import { getGitpodService } from "./service/service";
+import React, { createContext, useState, useContext, useMemo } from "react";
 
 const UserContext = createContext<{
     user?: User;
     setUser: React.Dispatch<User>;
-    userBillingMode?: BillingMode;
-    refreshUserBillingMode: () => void;
 }>({
     setUser: () => null,
-    refreshUserBillingMode: () => null,
 });
 
 const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
-    const [billingMode, setBillingMode] = useState<BillingMode>();
 
-    const refreshUserBillingMode = useCallback(() => {
-        return getGitpodService().server.getBillingModeForUser().then(setBillingMode);
-    }, []);
+    // Wrap value in useMemo to avoid unnecessary re-renders
+    const ctxValue = useMemo(() => ({ user, setUser }), [user, setUser]);
 
-    return (
-        <UserContext.Provider value={{ user, setUser, userBillingMode: billingMode, refreshUserBillingMode }}>
-            {children}
-        </UserContext.Provider>
-    );
+    return <UserContext.Provider value={ctxValue}>{children}</UserContext.Provider>;
 };
 
 export { UserContext, UserContextProvider };
