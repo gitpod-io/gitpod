@@ -52,17 +52,17 @@ const App: FunctionComponent = () => {
         return <Login />;
     }
 
-    // At this point we want to make sure that we never render AppRoutes prematurely, e.g. without an Org.
+    // At this point we want to make sure that we never render AppRoutes prematurely, e.g. without finishing loading the orgs
     // This would cause us to re-render the whole App again soon after, creating havoc with all our "onMount" hooks.
-    if (currentOrgQuery.isLoading || !currentOrgQuery.data) {
+    if (currentOrgQuery.isLoading) {
         return <AppLoading />;
     }
 
     // If we made it here, we have a logged in user w/ their teams. Yay.
     return (
         <Suspense fallback={<AppLoading />}>
-            {/* Use org id as key to force re-render on org change */}
-            <AppRoutes key={currentOrgQuery.data.id} />
+            {/* Use org id, or user id (for personal account) as key to force re-render on org change */}
+            <AppRoutes key={currentOrgQuery?.data?.id ?? user.id} />
         </Suspense>
     );
 };
