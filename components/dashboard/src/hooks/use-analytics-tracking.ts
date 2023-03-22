@@ -13,6 +13,11 @@ export const useAnalyticsTracking = () => {
 
     // listen and notify Segment of client-side path updates
     useEffect(() => {
+        //store current path to have access to previous when path changes
+        const w = window as any;
+        const _gp = w._gp || (w._gp = {});
+        _gp.path = window.location.pathname;
+
         return history.listen((location: any) => {
             const path = window.location.pathname;
             trackPathChange({

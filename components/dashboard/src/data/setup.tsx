@@ -11,7 +11,7 @@ import {
     PersistQueryClientProvider,
     PersistQueryClientProviderProps,
 } from "@tanstack/react-query-persist-client";
-import { QueryClient, QueryKey } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryKey } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { FunctionComponent } from "react";
 
@@ -28,7 +28,14 @@ export function isNoPersistence(queryKey: QueryKey): boolean {
 }
 
 export const setupQueryClientProvider = () => {
-    const client = new QueryClient();
+    const client = new QueryClient({
+        queryCache: new QueryCache({
+            // log any errors our queries throw
+            onError: (error) => {
+                console.error(error);
+            },
+        }),
+    });
     const queryClientPersister = createIDBPersister();
 
     const persistOptions: PersistQueryClientProviderProps["persistOptions"] = {
