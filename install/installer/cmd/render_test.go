@@ -10,10 +10,6 @@ import (
 	"testing"
 )
 
-var (
-	update = flag.Bool("update", false, "update the golden files of this test")
-)
-
 func init() {
 	// Ensure that the randomisation always returns the same values
 	rootOpts.SeedValue = 42
