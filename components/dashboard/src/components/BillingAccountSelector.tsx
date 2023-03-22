@@ -22,7 +22,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
     useEffect(() => {
-        if (orgs.isLoading) {
+        if (!orgs?.data) {
             setTeamsAvailableForAttribution([]);
             return;
         }
@@ -49,7 +49,7 @@ export function BillingAccountSelector(props: { onSelected?: () => void }) {
                 console.error("Could not get list of available billing accounts.", error);
                 setErrorMessage(`Could not get list of available billing accounts. ${error?.message || String(error)}`);
             });
-    }, [orgs]);
+    }, [orgs?.data]);
 
     const setUsageAttributionTeam = async (team?: Team) => {
         if (!user) {
