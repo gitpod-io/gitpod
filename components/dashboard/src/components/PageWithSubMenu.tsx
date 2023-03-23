@@ -9,6 +9,7 @@ import { FC, useEffect, useRef } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import Header, { TabEntry } from "../components/Header";
+import { Separator } from "./Separator";
 
 export interface PageWithSubMenuProps {
     title: string;
@@ -43,7 +44,10 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
                         })}
                     </ul>
                 </div>
-                <div className="md:ml-16 lg:ml-32 w-full pt-1 mb-40">{p.children}</div>
+                <div className="md:ml-16 lg:ml-32 w-full pt-1 mb-40">
+                    <Separator className="md:hidden" />
+                    <div className="pt-4 md:pt-0">{p.children}</div>
+                </div>
             </div>
         </div>
     );
