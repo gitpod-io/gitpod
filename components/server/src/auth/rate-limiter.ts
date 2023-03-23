@@ -245,7 +245,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
     // Be aware that some of our API calls are bound by rate-limits in downstream systems like ws-manager
     const defaultGroups: GroupsConfig = {
         default: {
-            points: 60000, // 1,000 calls per user per second
+            points: 200, // 200 calls per user, per connection, per minute
             durationsSec: 60,
         },
         startWorkspace: {
