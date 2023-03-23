@@ -5,12 +5,12 @@
  */
 
 import { useContext, useEffect, useState } from "react";
-import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
 import { User } from "@gitpod/gitpod-protocol";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import PillLabel from "../components/PillLabel";
+import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -18,33 +18,9 @@ interface SelectIDEProps {
     location: IDEChangedTrackLocation;
 }
 
-export const updateUserIDEInfo = async (
-    user: User,
-    selectedIde: string,
-    useLatestVersion: boolean,
-    location: IDEChangedTrackLocation,
-) => {
-    const additionalData = user?.additionalData ?? {};
-    const settings = additionalData.ideSettings ?? {};
-    settings.settingVersion = "2.0";
-    settings.defaultIde = selectedIde;
-    settings.useLatestVersion = useLatestVersion;
-    additionalData.ideSettings = settings;
-    getGitpodService()
-        .server.trackEvent({
-            event: "ide_configuration_changed",
-            properties: {
-                ...settings,
-                location,
-            },
-        })
-        .then()
-        .catch(console.error);
-    return getGitpodService().server.updateLoggedInUser({ additionalData });
-};
-
 export default function SelectIDE(props: SelectIDEProps) {
     const { user, setUser } = useContext(UserContext);
+    const updateUser = useUpdateCurrentUserMutation();
 
     // Only exec once when we access this component
     useEffect(() => {
@@ -52,22 +28,30 @@ export default function SelectIDE(props: SelectIDEProps) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const actualUpdateUserIDEInfo = async (user: User, selectedIde: string, useLatestVersion: boolean) => {
-        const newUserData = await updateUserIDEInfo(user, selectedIde, useLatestVersion, props.location);
-        props.updateUserContext && setUser({ ...newUserData });
-    };
-
     const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || "code");
-    const actuallySetDefaultIde = async (value: string) => {
-        await actualUpdateUserIDEInfo(user!, value, useLatestVersion);
-        setDefaultIde(value);
-    };
-
     const [useLatestVersion, setUseLatestVersion] = useState<boolean>(
         user?.additionalData?.ideSettings?.useLatestVersion ?? false,
     );
+
+    const actualUpdateUserIDEInfo = async (selectedIde: string, useLatestVersion: boolean) => {
+        const additionalData = user?.additionalData ?? {};
+        const settings = additionalData.ideSettings ?? {};
+        settings.settingVersion = "2.0";
+        settings.defaultIde = selectedIde;
+        settings.useLatestVersion = useLatestVersion;
+        additionalData.ideSettings = settings;
+
+        const newUserData = await updateUser.mutateAsync({ additionalData });
+        props.updateUserContext && setUser({ ...newUserData });
+    };
+
+    const actuallySetDefaultIde = async (value: string) => {
+        await actualUpdateUserIDEInfo(value, useLatestVersion);
+        setDefaultIde(value);
+    };
+
     const actuallySetUseLatestVersion = async (value: boolean) => {
-        await actualUpdateUserIDEInfo(user!, defaultIde, value);
+        await actualUpdateUserIDEInfo(defaultIde, value);
         setUseLatestVersion(value);
     };
 
