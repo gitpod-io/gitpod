@@ -128,7 +128,9 @@ var runCmd = &cobra.Command{
 			grpcOpts := common_grpc.DefaultClientOptions()
 			grpcOpts = append(grpcOpts, dialOption)
 
+			log.Info("Attempting to dial ws-manager, it's a blocking call that retries...")
 			conn, err := grpc.Dial(wsm.Addr, grpcOpts...)
+			// you will never get here if ws-manager is crashing, instead the readiness check for ws-proxy will restart the pod
 			if err != nil {
 				log.WithError(err).Fatal("cannot connect to ws-manager")
 			}
