@@ -26,7 +26,8 @@ const defaultFeatureFlags = {
     usePublicApiWorkspacesService: false,
     enablePersonalAccessTokens: false,
     oidcServiceEnabled: false,
-    orgGitAuthProviders: false,
+    // Default to true to enable on gitpod dedicated until ff support is added for dedicated
+    orgGitAuthProviders: true,
     switchToPAYG: false,
     newSignupFlow: false,
 };
@@ -63,7 +64,8 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                     setter: setUsePublicApiWorkspacesService,
                 },
                 oidcServiceEnabled: { defaultValue: false, setter: setOidcServiceEnabled },
-                orgGitAuthProviders: { defaultValue: false, setter: setOrgGitAuthProviders },
+                // Default to true to enable on gitpod dedicated until ff support is added for dedicated
+                orgGitAuthProviders: { defaultValue: true, setter: setOrgGitAuthProviders },
                 switchToPAYG: { defaultValue: false, setter: setSwitchToPAYG },
                 newSignupFlow: { defaultValue: false, setter: setNewSignupFlow },
             };
