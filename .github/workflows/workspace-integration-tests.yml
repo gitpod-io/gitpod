@@ -130,6 +130,7 @@ jobs:
             sa_key: ${{ secrets.GCP_CREDENTIALS }}
             version: ${{ needs.configuration.outputs.version}}
             previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
+            wsmanager_mk2: ${{ github.event.inputs.wsman_mk2 }}
 
     check:
         name: Check for regressions
@@ -204,7 +205,7 @@ jobs:
                   WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
                   WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
 
-                  WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 }}"
+                  export WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 }}"
 
                   go install github.com/jstemmer/go-junit-report/v2@latest
 

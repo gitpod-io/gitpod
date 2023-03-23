@@ -296,7 +296,7 @@ jobs:
           version: ${{needs.configuration.outputs.version}}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
-          with_ws_manager_mk2: ${{needs.configuration.outputs.with_ws_manager_mk2}}
+          wsmanager_mk2: ${{needs.configuration.outputs.with_ws_manager_mk2}}
           with_dedicated_emulation: ${{needs.configuration.outputs.with_dedicated_emulation}}
           with_ee_license: ${{needs.configuration.outputs.with_ee_license}}
           analytics: ${{needs.configuration.outputs.analytics}}
