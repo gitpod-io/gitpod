@@ -183,6 +183,9 @@ const (
 
 	// BackupFailure contains information about the backup failure
 	WorkspaceConditionBackupFailure WorkspaceCondition = "BackupFailure"
+
+	// Refresh is used to ensure that we operate on the latest version of the workspace
+	WorkspaceConditionRefresh WorkspaceCondition = "Refresh"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
@@ -275,6 +278,14 @@ func NewWorkspaceConditionBackupFailure(message string) metav1.Condition {
 		Status:             metav1.ConditionTrue,
 		Reason:             "BackupFailed",
 		Message:            message,
+	}
+}
+
+func NewWorkspaceConditionRefresh() metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionRefresh),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
 	}
 }
 

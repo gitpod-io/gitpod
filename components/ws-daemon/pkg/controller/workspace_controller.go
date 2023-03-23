@@ -23,6 +23,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -125,19 +126,34 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	glog.WithField("workspaceID", workspace.Name).WithField("phase", workspace.Status.Phase).Debug("Reconcile workspace")
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseCreating ||
-		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing ||
-		workspace.Status.Phase == workspacev1.WorkspacePhaseRunning {
+		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing {
 
 		result, err = wsc.handleWorkspaceInit(ctx, &workspace, req)
 		return result, err
 	}
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
+
 		result, err = wsc.handleWorkspaceStop(ctx, &workspace, req)
 		return result, err
 	}
 
 	return ctrl.Result{}, nil
+}
+
+// latestWorkspace checks if the we have the latest generation of the workspace CR. We do this because
+// the cache could be stale and we retrieve a workspace CR that does not have the content init/backup
+// conditions even though we have set them previously. This will lead to us performing these operations
+// again. To prevent this we wait until we have the latest workspace CR.
+func (wsc *WorkspaceController) latestWorkspace(ctx context.Context, ws *workspacev1.Workspace) error {
+	ws.Status.SetCondition(workspacev1.NewWorkspaceConditionRefresh())
+
+	err := wsc.Client.Status().Update(ctx, ws)
+	if err != nil && !errors.IsConflict(err) {
+		glog.Warnf("could not refresh workspace: %v", err)
+	}
+
+	return err
 }
 
 func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
@@ -146,13 +162,17 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 	defer tracing.FinishSpan(span, &err)
 
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil {
+		if wsc.latestWorkspace(ctx, ws) != nil {
+			return ctrl.Result{Requeue: true}, nil
+		}
+
 		init, err := wsc.prepareInitializer(ctx, ws)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
 
 		initStart := time.Now()
-		alreadyInit, failure, initErr := wsc.operations.InitWorkspaceContent(ctx, InitContentOptions{
+		failure, initErr := wsc.operations.InitWorkspaceContent(ctx, InitContentOptions{
 			Meta: WorkspaceMeta{
 				Owner:       ws.Spec.Ownership.Owner,
 				WorkspaceId: ws.Spec.Ownership.WorkspaceID,
@@ -161,10 +181,6 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 			Initializer: init,
 			Headless:    ws.IsHeadless(),
 		})
-
-		if alreadyInit {
-			return ctrl.Result{}, nil
-		}
 
 		err = retry.RetryOnConflict(retryParams, func() error {
 			if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
@@ -219,13 +235,17 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		return ctrl.Result{}, nil
 	}
 
+	if wsc.latestWorkspace(ctx, ws) != nil {
+		return ctrl.Result{Requeue: true}, nil
+	}
+
 	disposeStart := time.Now()
 	var snapshotName string
 	var snapshotUrl string
 	if ws.Spec.Type == workspacev1.WorkspaceTypeRegular {
 		snapshotName = storage.DefaultBackup
 	} else {
-		snapshotUrl, snapshotName, err = wsc.operations.SnapshotIDs(ws.Name)
+		snapshotUrl, snapshotName, err = wsc.operations.SnapshotIDs(ctx, ws.Name)
 		if err != nil {
 			return ctrl.Result{}, err
 		}
@@ -249,7 +269,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		}
 	}
 
-	alreadyDisposing, gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
+	gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
 		Meta: WorkspaceMeta{
 			Owner:       ws.Spec.Ownership.Owner,
 			WorkspaceId: ws.Spec.Ownership.WorkspaceID,
@@ -260,10 +280,6 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		BackupLogs:        ws.Spec.Type == workspacev1.WorkspaceTypePrebuild,
 		UpdateGitStatus:   ws.Spec.Type == workspacev1.WorkspaceTypeRegular,
 	})
-
-	if alreadyDisposing {
-		return ctrl.Result{}, nil
-	}
 
 	err = retry.RetryOnConflict(retryParams, func() error {
 		if err := wsc.Get(ctx, req.NamespacedName, ws); err != nil {
