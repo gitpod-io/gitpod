@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateSSHKeyRequest, CreateSSHKeyResponse, DeleteSSHKeyRequest, DeleteSSHKeyResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, GetGitTokenRequest, GetGitTokenResponse, GetSSHKeyRequest, GetSSHKeyResponse, ListSSHKeysRequest, ListSSHKeysResponse} from "./user_pb.js";
+import {BlockUserRequest, BlockUserResponse, CreateSSHKeyRequest, CreateSSHKeyResponse, DeleteSSHKeyRequest, DeleteSSHKeyResponse, GetAuthenticatedUserRequest, GetAuthenticatedUserResponse, GetGitTokenRequest, GetGitTokenResponse, GetSSHKeyRequest, GetSSHKeyResponse, ListSSHKeysRequest, ListSSHKeysResponse} from "./user_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -82,5 +82,15 @@ export const UserService = {
       O: GetGitTokenResponse,
       kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc gitpod.experimental.v1.UserService.BlockUser
+     */
+    blockUser: {
+      name: "BlockUser",
+      I: BlockUserRequest,
+      O: BlockUserResponse,
+      kind: MethodKind.Unary,
+    },
   }
 } as const;
+

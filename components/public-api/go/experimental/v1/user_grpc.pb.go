@@ -37,6 +37,7 @@ type UserServiceClient interface {
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(ctx context.Context, in *DeleteSSHKeyRequest, opts ...grpc.CallOption) (*DeleteSSHKeyResponse, error)
 	GetGitToken(ctx context.Context, in *GetGitTokenRequest, opts ...grpc.CallOption) (*GetGitTokenResponse, error)
+	BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error)
 }
 
 type userServiceClient struct {
@@ -101,6 +102,15 @@ func (c *userServiceClient) GetGitToken(ctx context.Context, in *GetGitTokenRequ
 	return out, nil
 }
 
+func (c *userServiceClient) BlockUser(ctx context.Context, in *BlockUserRequest, opts ...grpc.CallOption) (*BlockUserResponse, error) {
+	out := new(BlockUserResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.UserService/BlockUser", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility
@@ -116,6 +126,7 @@ type UserServiceServer interface {
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(context.Context, *DeleteSSHKeyRequest) (*DeleteSSHKeyResponse, error)
 	GetGitToken(context.Context, *GetGitTokenRequest) (*GetGitTokenResponse, error)
+	BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -140,6 +151,9 @@ func (UnimplementedUserServiceServer) DeleteSSHKey(context.Context, *DeleteSSHKe
 }
 func (UnimplementedUserServiceServer) GetGitToken(context.Context, *GetGitTokenRequest) (*GetGitTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetGitToken not implemented")
+}
+func (UnimplementedUserServiceServer) BlockUser(context.Context, *BlockUserRequest) (*BlockUserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BlockUser not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 
@@ -262,6 +276,24 @@ func _UserService_GetGitToken_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_BlockUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BlockUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).BlockUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.UserService/BlockUser",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).BlockUser(ctx, req.(*BlockUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -292,6 +324,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetGitToken",
 			Handler:    _UserService_GetGitToken_Handler,
+		},
+		{
+			MethodName: "BlockUser",
+			Handler:    _UserService_BlockUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

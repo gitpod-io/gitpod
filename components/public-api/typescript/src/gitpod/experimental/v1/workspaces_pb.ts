@@ -1569,3 +1569,4 @@ export class UpdatePortResponse extends Message<UpdatePortResponse> {
     return proto3.util.equals(UpdatePortResponse, a, b);
   }
 }
+

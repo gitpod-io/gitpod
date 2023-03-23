@@ -666,3 +666,82 @@ export class GitToken extends Message<GitToken> {
     return proto3.util.equals(GitToken, a, b);
   }
 }
+
+/**
+ * @generated from message gitpod.experimental.v1.BlockUserRequest
+ */
+export class BlockUserRequest extends Message<BlockUserRequest> {
+  /**
+   * the ID of a User to block
+   *
+   * @generated from field: string user_id = 1;
+   */
+  userId = "";
+
+  /**
+   * reason is the reason for blocking the user
+   *
+   * @generated from field: string reason = 2;
+   */
+  reason = "";
+
+  constructor(data?: PartialMessage<BlockUserRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.BlockUserRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "reason", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BlockUserRequest {
+    return new BlockUserRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BlockUserRequest {
+    return new BlockUserRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BlockUserRequest {
+    return new BlockUserRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BlockUserRequest | PlainMessage<BlockUserRequest> | undefined, b: BlockUserRequest | PlainMessage<BlockUserRequest> | undefined): boolean {
+    return proto3.util.equals(BlockUserRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.BlockUserResponse
+ */
+export class BlockUserResponse extends Message<BlockUserResponse> {
+  constructor(data?: PartialMessage<BlockUserResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.BlockUserResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): BlockUserResponse {
+    return new BlockUserResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): BlockUserResponse {
+    return new BlockUserResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): BlockUserResponse {
+    return new BlockUserResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: BlockUserResponse | PlainMessage<BlockUserResponse> | undefined, b: BlockUserResponse | PlainMessage<BlockUserResponse> | undefined): boolean {
+    return proto3.util.equals(BlockUserResponse, a, b);
+  }
+}
+
