@@ -2198,6 +2198,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 currency,
                 email: billingEmail,
                 name: billingName,
+                billingCreatorUserId: user.id,
             });
             return;
         } catch (error) {

@@ -70,6 +70,8 @@ message CreateStripeCustomerRequest {
   string name = 2;
   string email = 3;
   string currency = 4;
+  // Gitpod User ID for the user setting up billing.
+  string billing_creator_user_id = 5;
 }
 
 message CreateStripeCustomerResponse {

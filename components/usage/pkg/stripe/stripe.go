@@ -23,8 +23,10 @@ import (
 )
 
 const (
-	AttributionIDMetadataKey     = "attributionId"
-	PreferredCurrencyMetadataKey = "preferredCurrency"
+	// Metadata keys are used for storing additional context in Stripe
+	AttributionIDMetadataKey        = "attributionId"
+	PreferredCurrencyMetadataKey    = "preferredCurrency"
+	BillingCreaterUserIDMetadataKey = "billingCreatorUserId"
 )
 
 type Client struct {
@@ -278,10 +280,11 @@ func (c *Client) GetPriceInformation(ctx context.Context, priceID string) (price
 }
 
 type CreateCustomerParams struct {
-	AttributuonID string
-	Currency      string
-	Email         string
-	Name          string
+	AttributuonID        string
+	Currency             string
+	Email                string
+	Name                 string
+	BillingCreatorUserID string
 }
 
 func (c *Client) CreateCustomer(ctx context.Context, params CreateCustomerParams) (customer *stripe.Customer, err error) {
@@ -298,8 +301,9 @@ func (c *Client) CreateCustomer(ctx context.Context, params CreateCustomerParams
 				// We set the preferred currency on the metadata such that we can later retreive it when we're creating a Subscription
 				// This is also done to propagate the preference into the Customer such that we can inform them when their
 				// new subscription would use a different currency to the previous one
-				PreferredCurrencyMetadataKey: params.Currency,
-				AttributionIDMetadataKey:     params.AttributuonID,
+				PreferredCurrencyMetadataKey:    params.Currency,
+				AttributionIDMetadataKey:        params.AttributuonID,
+				BillingCreaterUserIDMetadataKey: params.BillingCreatorUserID,
 			},
 		},
 		Email: stripe.String(params.Email),
