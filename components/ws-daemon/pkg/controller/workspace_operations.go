@@ -171,7 +171,7 @@ func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, i
 	}
 }
 
-func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts DisposeOptions) (*csapi.GitStatus, error) {
+func (wso *WorkspaceOperations) BackupWorkspace(ctx context.Context, opts DisposeOptions) (*csapi.GitStatus, error) {
 	ws, err := wso.provider.Get(ctx, opts.Meta.InstanceId)
 	if err != nil {
 		return nil, fmt.Errorf("cannot find workspace %s during DisposeWorkspace: %w", opts.Meta.InstanceId, err)
@@ -207,16 +207,27 @@ func (wso *WorkspaceOperations) DisposeWorkspace(ctx context.Context, opts Dispo
 		}
 	}
 
+	return repo, nil
+}
+
+func (wso *WorkspaceOperations) DeleteWorkspace(ctx context.Context, instanceID string) error {
+	ws, err := wso.provider.Get(ctx, instanceID)
+	if err != nil {
+		return fmt.Errorf("cannot find workspace %s during DisposeWorkspace: %w", instanceID, err)
+	}
+
 	if err = ws.Dispose(ctx, wso.provider.hooks[session.WorkspaceDisposed]); err != nil {
 		glog.WithError(err).Error("cannot dispose session")
+		return err
 	}
 
 	// remove workspace daemon directory in the node
 	if err := os.RemoveAll(ws.ServiceLocDaemon); err != nil {
 		glog.WithError(err).Error("cannot delete workspace daemon directory")
+		return err
 	}
 
-	return repo, nil
+	return nil
 }
 
 func (wso *WorkspaceOperations) SnapshotIDs(ctx context.Context, workspaceID string) (snapshotUrl, snapshotName string, err error) {

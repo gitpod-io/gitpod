@@ -269,7 +269,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		}
 	}
 
-	gitStatus, disposeErr := wsc.operations.DisposeWorkspace(ctx, DisposeOptions{
+	gitStatus, disposeErr := wsc.operations.BackupWorkspace(ctx, DisposeOptions{
 		Meta: WorkspaceMeta{
 			Owner:       ws.Spec.Ownership.Owner,
 			WorkspaceId: ws.Spec.Ownership.WorkspaceID,
@@ -289,7 +289,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		ws.Status.GitStatus = toWorkspaceGitStatus(gitStatus)
 
 		if disposeErr != nil {
-			log.Error(disposeErr, "failed to dispose workspace", "name", ws.Name)
+			log.Error(disposeErr, "failed to backup workspace", "name", ws.Name)
 			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupFailure(disposeErr.Error()))
 		} else {
 			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupComplete())
@@ -302,7 +302,14 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		wsc.metrics.recordFinalizeTime(time.Since(disposeStart).Seconds(), ws)
 	}
 
-	wsc.emitEvent(ws, "Backup", disposeErr)
+	wsc.emitEvent(ws, "Backup", fmt.Errorf("failed to backup workspace: %w", disposeErr))
+
+	err = wsc.operations.DeleteWorkspace(ctx, ws.Name)
+	if err != nil {
+		wsc.emitEvent(ws, "Backup", fmt.Errorf("failed to clean up workspace: %w", err))
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, err
 }
 
