@@ -122,10 +122,18 @@ export function CreateWorkspacePage() {
                 return;
             }
 
+            const organizationId = currentOrg?.id;
+            console.log("organizationId: " + JSON.stringify(organizationId));
+            if (!organizationId && !!user?.additionalData?.isMigratedToTeamOnlyAttribution) {
+                // We need an organizationId for this group of users
+                console.warn("Skipping createWorkspace");
+                return;
+            }
+
             try {
                 const result = await createWorkspaceMutation.mutateAsync({
                     contextUrl: contextURL,
-                    organizationId: currentOrg?.id,
+                    organizationId,
                     ...opts,
                 });
                 if (result.workspaceURL) {
@@ -139,7 +147,7 @@ export function CreateWorkspacePage() {
                 console.log(error);
             }
         },
-        [createWorkspaceMutation, history, contextURL, selectedIde, selectedWsClass, currentOrg?.id, useLatestIde],
+        [createWorkspaceMutation, history, contextURL, selectedIde, selectedWsClass, currentOrg?.id, user?.additionalData?.isMigratedToTeamOnlyAttribution, useLatestIde],
     );
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
