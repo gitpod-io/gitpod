@@ -262,6 +262,7 @@ func Run(options ...RunOption) {
 			WorkspaceID:       cfg.WorkspaceID,
 			OwnerID:           cfg.OwnerId,
 			SupervisorVersion: Version,
+			ConfigcatEnabled:  cfg.ConfigcatEnabled,
 		}, tokenService)
 	}
 

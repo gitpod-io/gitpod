@@ -32,32 +32,43 @@ type Attributes struct {
 	VSCodeClientID string
 }
 
+type ClientOpt func(o *options)
+
+func WithGitpodProxy(gitpodHost string) ClientOpt {
+	return func(o *options) {
+		o.sdkKey = "gitpod"
+		o.baseURL = fmt.Sprintf("https://%s/configcat", gitpodHost)
+		o.pollInterval = 1 * time.Minute
+	}
+}
+
+type options struct {
+	pollInterval time.Duration
+	baseURL      string
+	sdkKey       string
+}
+
 // NewClient constructs a new experiments.Client. This is NOT A SINGLETON.
 // You should normally only call this once in the lifecycle of an application, clients are independent of each other will refresh flags on their own.
-// If the environment contains CONFIGCAT_SDK_KEY value, it vill be used to construct a ConfigCat client.
+// If the environment contains CONFIGCAT_SDK_KEY value, it will be used to construct a ConfigCat client.
 // Otherwise, it returns a client which always returns the default value. This client is used for Self-Hosted installations.
-func NewClient() Client {
-	// TODO: get rid fo GITPOD_HOST is implementaion detail of supervisor, it is a subject to change
-	// gitpodHost should be provided as an option instead
-	gitpodHost := os.Getenv("GITPOD_HOST")
-	if gitpodHost == "" {
-		gitpodHost = os.Getenv("HOST_URL")
+func NewClient(opts ...ClientOpt) Client {
+	opt := &options{
+		sdkKey:       os.Getenv("CONFIGCAT_SDK_KEY"),
+		baseURL:      os.Getenv("CONFIGCAT_BASE_URL"),
+		pollInterval: 3 * time.Minute,
 	}
-	if gitpodHost != "" {
-		return newConfigCatClient(configcat.Config{
-			SDKKey:       "gitpod",
-			BaseURL:      fmt.Sprintf("%s%s", gitpodHost, "/configcat"),
-			PollInterval: 1 * time.Minute,
-			HTTPTimeout:  3 * time.Second,
-		})
+	for _, o := range opts {
+		o(opt)
 	}
-	sdkKey := os.Getenv("CONFIGCAT_SDK_KEY")
-	if sdkKey == "" {
+
+	if opt.sdkKey == "" {
 		return NewAlwaysReturningDefaultValueClient()
 	}
 	return newConfigCatClient(configcat.Config{
-		SDKKey:       sdkKey,
-		PollInterval: 3 * time.Minute,
+		SDKKey:       opt.sdkKey,
+		BaseURL:      opt.baseURL,
+		PollInterval: opt.pollInterval,
 		HTTPTimeout:  3 * time.Second,
 		Logger:       &configCatLogger{log.Log},
 	})

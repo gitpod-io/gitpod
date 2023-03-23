@@ -254,6 +254,13 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		IdeImageLayers:  defaultIde.ImageLayers,
 	}
 
+	if os.Getenv("CONFIGCAT_SDK_KEY") != "" {
+		resp.Envvars = append(resp.Envvars, &api.EnvironmentVariable{
+			Name:  "GITPOD_CONFIGCAT_ENABLED",
+			Value: "true",
+		})
+	}
+
 	var wsConfig *gitpodapi.GitpodConfig
 
 	if req.WorkspaceConfig != "" {

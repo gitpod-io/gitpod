@@ -298,6 +298,9 @@ type WorkspaceConfig struct {
 
 	// DebugWorkspaceContenSource indicates where the debug workspace content came from
 	DebugWorkspaceContenSource api.ContentSource `env:"SUPERVISOR_DEBUG_WORKSPACE_CONTENT_SOURCE"`
+
+	// ConfigcatEnabled controls whether configcat is enabled
+	ConfigcatEnabled bool `env:"GITPOD_CONFIGCAT_ENABLED"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service.

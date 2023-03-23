@@ -670,6 +670,7 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		WorkspaceClass:       &api.WorkspaceInfoResponse_WorkspaceClass{Id: is.cfg.WorkspaceClass},
 		OwnerId:              is.cfg.OwnerId,
 		DebugWorkspaceType:   is.cfg.DebugWorkspaceType,
+		ConfigcatEnabled:     is.cfg.ConfigcatEnabled,
 	}
 	if is.cfg.WorkspaceClassInfo != nil {
 		resp.WorkspaceClass.DisplayName = is.cfg.WorkspaceClassInfo.DisplayName

@@ -35,6 +35,7 @@ export function getExperimentsClientForBackend(): Client {
         requestTimeoutMs: 2000,
         logger: configcat.createConsoleLogger(LogLevel.Error),
         maxInitWaitTimeSeconds: 0,
+        baseUrl: process.env.CONFIGCAT_BASE_URL,
     });
 
     client = new ConfigCatClient(configCatClient);
