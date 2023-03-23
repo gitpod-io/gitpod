@@ -5,20 +5,31 @@
  */
 
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
-import React, { FunctionComponent, Suspense } from "react";
+import React, { FC, Suspense } from "react";
 import { AppLoading } from "./app/AppLoading";
 import { AppRoutes } from "./app/AppRoutes";
+import { GitpodErrorBoundary } from "./components/ErrorBoundary";
 import { useCurrentOrg } from "./data/organizations/orgs-query";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
-import { useUserAndTeamsLoader } from "./hooks/use-user-and-teams-loader";
+import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
 import { isGitpodIo } from "./utils";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "./Setup"));
 
+// Wrap the App in an ErrorBoundary to catch User/Org loading errors
+// This will also catch any errors that happen to bubble all the way up to the top
+const AppWithErrorBoundary: FC = () => {
+    return (
+        <GitpodErrorBoundary>
+            <App />
+        </GitpodErrorBoundary>
+    );
+};
+
 // Top level Dashboard App component
-const App: FunctionComponent = () => {
-    const { user, isSetupRequired, loading } = useUserAndTeamsLoader();
+const App: FC = () => {
+    const { user, isSetupRequired, loading } = useUserLoader();
     const currentOrgQuery = useCurrentOrg();
 
     // Setup analytics/tracking
@@ -67,4 +78,4 @@ const App: FunctionComponent = () => {
     );
 };
 
-export default App;
+export default AppWithErrorBoundary;

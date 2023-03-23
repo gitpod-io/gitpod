@@ -5,19 +5,16 @@
  */
 
 import { Organization, OrgMemberInfo, User } from "@gitpod/gitpod-protocol";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useContext } from "react";
+import { useCallback } from "react";
 import { useLocation } from "react-router";
 import { publicApiTeamMembersToProtocol, publicApiTeamToProtocol, teamsService } from "../../service/public-api";
-import { getGitpodService } from "../../service/service";
-import { useCurrentUser, UserContext } from "../../user-context";
+import { useCurrentUser } from "../../user-context";
 import { getUserBillingModeQueryKey } from "../billing-mode/user-billing-mode-query";
 import { noPersistence } from "../setup";
 
 export interface OrganizationInfo extends Organization {
     members: OrgMemberInfo[];
-    billingMode?: BillingMode;
     isOwner: boolean;
     invitationId?: string;
 }
@@ -34,7 +31,6 @@ export function useOrganizationsInvalidator() {
 export function useOrganizations() {
     const user = useCurrentUser();
     const queryClient = useQueryClient();
-    const { refreshUserBillingMode } = useContext(UserContext);
     const query = useQuery<OrganizationInfo[], Error>(
         getQueryKey(user),
         async () => {
@@ -47,13 +43,11 @@ export function useOrganizations() {
             const response = await teamsService.listTeams({});
             const result: OrganizationInfo[] = [];
             for (const org of response.teams) {
-                const billingMode = await getGitpodService().server.getBillingModeForTeam(org.id);
                 const members = publicApiTeamMembersToProtocol(org.members || []);
                 const isOwner = members.some((m) => m.role === "owner" && m.userId === user?.id);
                 result.push({
                     ...publicApiTeamToProtocol(org),
                     members,
-                    billingMode,
                     isOwner,
                     invitationId: org.teamInvitation?.id,
                 });
@@ -65,16 +59,15 @@ export function useOrganizations() {
                 if (!user) {
                     return;
                 }
+
                 // refresh user billing mode to update the billing mode in the user context as it depends on the orgs
-                refreshUserBillingMode();
                 queryClient.invalidateQueries(getUserBillingModeQueryKey(user.id));
-            },
-            onError: (err) => {
-                console.error("useOrganizations", err);
             },
             enabled: !!user,
             cacheTime: 1000 * 60 * 60 * 1, // 1 hour
             staleTime: 1000 * 60 * 60 * 1, // 1 hour
+            // We'll let an ErrorBoundary catch the error
+            useErrorBoundary: true,
         },
     );
     return query;

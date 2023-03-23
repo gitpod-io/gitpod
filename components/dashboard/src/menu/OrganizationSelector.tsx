@@ -12,6 +12,7 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 
 export interface OrganizationSelectorProps {}
 
@@ -20,6 +21,7 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
     const { data: userBillingMode } = useUserBillingMode();
+    const { data: orgBillingMode } = useOrgBillingMode();
     const { showUsageView } = useFeatureFlags();
 
     const userFullName = user?.fullName || user?.name || "...";
@@ -70,10 +72,7 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
         BillingMode.showUsageBasedBilling(userBillingMode) &&
         !user?.additionalData?.isMigratedToTeamOnlyAttribution;
 
-    const showUsageForOrg =
-        currentOrg.data &&
-        currentOrg.data.isOwner &&
-        (currentOrg.data.billingMode?.mode === "usage-based" || showUsageView);
+    const showUsageForOrg = currentOrg.data?.isOwner && (orgBillingMode?.mode === "usage-based" || showUsageView);
 
     if (showUsageForPersonalAccount || showUsageForOrg) {
         linkEntries.push({

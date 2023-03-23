@@ -7,12 +7,14 @@
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import UsageBasedBillingConfig from "../components/UsageBasedBillingConfig";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 
 export default function TeamUsageBasedBilling() {
     const org = useCurrentOrg().data;
+    const orgBillingMode = useOrgBillingMode();
 
-    if (!BillingMode.showUsageBasedBilling(org?.billingMode)) {
+    if (!BillingMode.showUsageBasedBilling(orgBillingMode.data)) {
         return <></>;
     }
 

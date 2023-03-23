@@ -9,7 +9,8 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useContext, useMemo } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
-import { UserContext } from "../user-context";
+import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query";
+import { useCurrentUser } from "../user-context";
 import {
     settingsPathAccount,
     settingsPathBilling,
@@ -30,11 +31,12 @@ export interface PageWithAdminSubMenuProps {
 }
 
 export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps) {
-    const { userBillingMode, user } = useContext(UserContext);
+    const user = useCurrentUser();
+    const userBillingMode = useUserBillingMode();
     const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
 
     const settingsMenu = useMemo(() => {
-        return getSettingsMenu(user, userBillingMode, enablePersonalAccessTokens);
+        return getSettingsMenu(user, userBillingMode.data, enablePersonalAccessTokens);
     }, [user, userBillingMode, enablePersonalAccessTokens]);
 
     return (

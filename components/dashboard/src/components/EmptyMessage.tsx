@@ -5,13 +5,13 @@
  */
 
 import classNames from "classnames";
-import { FC, useCallback } from "react";
+import { FC, ReactNode, useCallback } from "react";
 import { Button } from "./Button";
 import { Heading2, Subheading } from "./typography/headings";
 
 type Props = {
-    title: string;
-    subtitle?: string;
+    title: ReactNode;
+    subtitle?: ReactNode;
     buttonText?: string;
     onClick?: () => void;
     className?: string;

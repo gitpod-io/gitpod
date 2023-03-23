@@ -4,8 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Team } from "@gitpod/gitpod-protocol";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import React, { useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -15,41 +13,6 @@ import { teamsService } from "../service/public-api";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
-
-export function getTeamSettingsMenu(params: {
-    team?: Team;
-    billingMode?: BillingMode;
-    ssoEnabled?: boolean;
-    orgGitAuthProviders: boolean;
-}) {
-    const { billingMode, ssoEnabled, orgGitAuthProviders } = params;
-    const result = [
-        {
-            title: "General",
-            link: [`/settings`],
-        },
-    ];
-    if (ssoEnabled) {
-        result.push({
-            title: "SSO",
-            link: [`/sso`],
-        });
-    }
-    if (orgGitAuthProviders) {
-        result.push({
-            title: "Git Auth",
-            link: [`/settings/git`],
-        });
-    }
-    if (billingMode?.mode !== "none") {
-        // The Billing page contains both chargebee and usage-based components, so: always show them!
-        result.push({
-            title: "Billing",
-            link: ["/billing"],
-        });
-    }
-    return result;
-}
 
 export default function TeamSettings() {
     const user = useCurrentUser();
