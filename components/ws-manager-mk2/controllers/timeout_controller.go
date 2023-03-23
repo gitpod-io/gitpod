@@ -9,8 +9,10 @@ import (
 	"fmt"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,7 +26,7 @@ import (
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
-func NewTimeoutReconciler(c client.Client, cfg config.Configuration, activity *wsactivity.WorkspaceActivity) (*TimeoutReconciler, error) {
+func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg config.Configuration, activity *wsactivity.WorkspaceActivity) (*TimeoutReconciler, error) {
 	if cfg.HeartbeatInterval == 0 {
 		return nil, fmt.Errorf("invalid heartbeat interval, must not be 0")
 	}
@@ -39,6 +41,7 @@ func NewTimeoutReconciler(c client.Client, cfg config.Configuration, activity *w
 		activity:          activity,
 		reconcileInterval: reconcileInterval,
 		ctrlStartTime:     time.Now().UTC(),
+		recorder:          recorder,
 	}, nil
 }
 
@@ -53,6 +56,7 @@ type TimeoutReconciler struct {
 	activity          *wsactivity.WorkspaceActivity
 	reconcileInterval time.Duration
 	ctrlStartTime     time.Time
+	recorder          record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=workspace.gitpod.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
@@ -109,6 +113,7 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		return ctrl.Result{}, err
 	}
 
+	r.recorder.Event(&workspace, corev1.EventTypeNormal, "TimedOut", timedout)
 	return ctrl.Result{}, nil
 }
 

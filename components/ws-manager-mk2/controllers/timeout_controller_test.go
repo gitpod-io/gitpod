@@ -15,6 +15,7 @@ import (
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/pointer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -35,7 +36,7 @@ var _ = Describe("TimeoutController", func() {
 			// Use a fake client instead of the envtest's k8s client, such that we can add objects
 			// with custom CreationTimestamps and check timeout logic.
 			fakeClient = fake.NewClientBuilder().WithScheme(k8sClient.Scheme()).Build()
-			r, err = NewTimeoutReconciler(fakeClient, conf, &activity.WorkspaceActivity{})
+			r, err = NewTimeoutReconciler(fakeClient, record.NewFakeRecorder(100), conf, &activity.WorkspaceActivity{})
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -196,7 +197,7 @@ var _ = Describe("TimeoutController", func() {
 		var r *TimeoutReconciler
 		BeforeEach(func() {
 			var err error
-			r, err = NewTimeoutReconciler(k8sClient, newTestConfig(), &activity.WorkspaceActivity{})
+			r, err = NewTimeoutReconciler(k8sClient, record.NewFakeRecorder(100), newTestConfig(), &activity.WorkspaceActivity{})
 			Expect(err).ToNot(HaveOccurred())
 		})
 
