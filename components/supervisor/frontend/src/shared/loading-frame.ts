@@ -16,7 +16,7 @@ export function load(): Promise<{
         frame.src = startUrl.toString();
         frame.style.visibility = "visible";
         frame.className = "gitpod-frame loading";
-        document.body.appendChild(frame);
+        document.body.prepend(frame);
 
         frame.onload = () => {
             const frontendDashboardServiceClient = new FrontendDashboardServiceClient(frame.contentWindow!);
