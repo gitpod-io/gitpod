@@ -33,7 +33,7 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
                 {providers.length !== 0 ? (
                     <div className="">
                         <Button className="whitespace-nowrap" onClick={onCreate}>
-                            New Integration
+                            New Git Auth
                         </Button>
                     </div>
                 ) : null}
@@ -43,7 +43,7 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
                 <EmptyMessage
                     title="No Git Auth configurations"
                     subtitle="Configure Git Auth with GitHub or GitLab."
-                    buttonText="New Integration"
+                    buttonText="New Git Auth"
                     onClick={onCreate}
                 />
             ) : (
