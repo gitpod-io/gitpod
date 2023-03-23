@@ -612,3 +612,4 @@ export class DeleteProjectResponse extends Message<DeleteProjectResponse> {
     return proto3.util.equals(DeleteProjectResponse, a, b);
   }
 }
+

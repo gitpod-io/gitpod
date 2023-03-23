@@ -147,3 +147,4 @@ export class SendDidCloseResponse extends Message<SendDidCloseResponse> {
     return proto3.util.equals(SendDidCloseResponse, a, b);
   }
 }
+

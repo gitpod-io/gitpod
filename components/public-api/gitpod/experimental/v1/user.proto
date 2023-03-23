@@ -51,6 +51,8 @@ service UserService {
     rpc DeleteSSHKey(DeleteSSHKeyRequest) returns (DeleteSSHKeyResponse) {}
 
     rpc GetGitToken(GetGitTokenRequest) returns (GetGitTokenResponse) {}
+
+    rpc BlockUser(BlockUserRequest) returns (BlockUserResponse) {}
 }
 
 message GetAuthenticatedUserRequest {
@@ -128,3 +130,13 @@ message GitToken {
     // value is the actual token value for the token
     string value = 7;
 }
+
+message BlockUserRequest {
+    // the ID of a User to block
+    string user_id = 1;
+
+    // reason is the reason for blocking the user
+    string reason = 2;
+}
+
+message BlockUserResponse {}

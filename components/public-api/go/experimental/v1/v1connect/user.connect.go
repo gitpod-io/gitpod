@@ -42,6 +42,7 @@ type UserServiceClient interface {
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(context.Context, *connect_go.Request[v1.DeleteSSHKeyRequest]) (*connect_go.Response[v1.DeleteSSHKeyResponse], error)
 	GetGitToken(context.Context, *connect_go.Request[v1.GetGitTokenRequest]) (*connect_go.Response[v1.GetGitTokenResponse], error)
+	BlockUser(context.Context, *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error)
 }
 
 // NewUserServiceClient constructs a client for the gitpod.experimental.v1.UserService service. By
@@ -84,6 +85,11 @@ func NewUserServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+"/gitpod.experimental.v1.UserService/GetGitToken",
 			opts...,
 		),
+		blockUser: connect_go.NewClient[v1.BlockUserRequest, v1.BlockUserResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.UserService/BlockUser",
+			opts...,
+		),
 	}
 }
 
@@ -95,6 +101,7 @@ type userServiceClient struct {
 	getSSHKey            *connect_go.Client[v1.GetSSHKeyRequest, v1.GetSSHKeyResponse]
 	deleteSSHKey         *connect_go.Client[v1.DeleteSSHKeyRequest, v1.DeleteSSHKeyResponse]
 	getGitToken          *connect_go.Client[v1.GetGitTokenRequest, v1.GetGitTokenResponse]
+	blockUser            *connect_go.Client[v1.BlockUserRequest, v1.BlockUserResponse]
 }
 
 // GetAuthenticatedUser calls gitpod.experimental.v1.UserService.GetAuthenticatedUser.
@@ -127,6 +134,11 @@ func (c *userServiceClient) GetGitToken(ctx context.Context, req *connect_go.Req
 	return c.getGitToken.CallUnary(ctx, req)
 }
 
+// BlockUser calls gitpod.experimental.v1.UserService.BlockUser.
+func (c *userServiceClient) BlockUser(ctx context.Context, req *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error) {
+	return c.blockUser.CallUnary(ctx, req)
+}
+
 // UserServiceHandler is an implementation of the gitpod.experimental.v1.UserService service.
 type UserServiceHandler interface {
 	// GetAuthenticatedUser gets the user info.
@@ -140,6 +152,7 @@ type UserServiceHandler interface {
 	// DeleteSSHKey removes a public SSH key.
 	DeleteSSHKey(context.Context, *connect_go.Request[v1.DeleteSSHKeyRequest]) (*connect_go.Response[v1.DeleteSSHKeyResponse], error)
 	GetGitToken(context.Context, *connect_go.Request[v1.GetGitTokenRequest]) (*connect_go.Response[v1.GetGitTokenResponse], error)
+	BlockUser(context.Context, *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error)
 }
 
 // NewUserServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -179,6 +192,11 @@ func NewUserServiceHandler(svc UserServiceHandler, opts ...connect_go.HandlerOpt
 		svc.GetGitToken,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.UserService/BlockUser", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.UserService/BlockUser",
+		svc.BlockUser,
+		opts...,
+	))
 	return "/gitpod.experimental.v1.UserService/", mux
 }
 
@@ -207,4 +225,8 @@ func (UnimplementedUserServiceHandler) DeleteSSHKey(context.Context, *connect_go
 
 func (UnimplementedUserServiceHandler) GetGitToken(context.Context, *connect_go.Request[v1.GetGitTokenRequest]) (*connect_go.Response[v1.GetGitTokenResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.UserService.GetGitToken is not implemented"))
+}
+
+func (UnimplementedUserServiceHandler) BlockUser(context.Context, *connect_go.Request[v1.BlockUserRequest]) (*connect_go.Response[v1.BlockUserResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.UserService.BlockUser is not implemented"))
 }
