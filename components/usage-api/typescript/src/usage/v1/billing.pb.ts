@@ -52,6 +52,8 @@ export interface CreateStripeCustomerRequest {
   name: string;
   email: string;
   currency: string;
+  /** Gitpod User ID for the user setting up billing. */
+  billingCreatorUserId: string;
 }
 
 export interface CreateStripeCustomerResponse {
@@ -508,7 +510,7 @@ export const StripeCustomer = {
 };
 
 function createBaseCreateStripeCustomerRequest(): CreateStripeCustomerRequest {
-  return { attributionId: "", name: "", email: "", currency: "" };
+  return { attributionId: "", name: "", email: "", currency: "", billingCreatorUserId: "" };
 }
 
 export const CreateStripeCustomerRequest = {
@@ -524,6 +526,9 @@ export const CreateStripeCustomerRequest = {
     }
     if (message.currency !== "") {
       writer.uint32(34).string(message.currency);
+    }
+    if (message.billingCreatorUserId !== "") {
+      writer.uint32(42).string(message.billingCreatorUserId);
     }
     return writer;
   },
@@ -547,6 +552,9 @@ export const CreateStripeCustomerRequest = {
         case 4:
           message.currency = reader.string();
           break;
+        case 5:
+          message.billingCreatorUserId = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -561,6 +569,7 @@ export const CreateStripeCustomerRequest = {
       name: isSet(object.name) ? String(object.name) : "",
       email: isSet(object.email) ? String(object.email) : "",
       currency: isSet(object.currency) ? String(object.currency) : "",
+      billingCreatorUserId: isSet(object.billingCreatorUserId) ? String(object.billingCreatorUserId) : "",
     };
   },
 
@@ -570,6 +579,7 @@ export const CreateStripeCustomerRequest = {
     message.name !== undefined && (obj.name = message.name);
     message.email !== undefined && (obj.email = message.email);
     message.currency !== undefined && (obj.currency = message.currency);
+    message.billingCreatorUserId !== undefined && (obj.billingCreatorUserId = message.billingCreatorUserId);
     return obj;
   },
 
@@ -579,6 +589,7 @@ export const CreateStripeCustomerRequest = {
     message.name = object.name ?? "";
     message.email = object.email ?? "";
     message.currency = object.currency ?? "";
+    message.billingCreatorUserId = object.billingCreatorUserId ?? "";
     return message;
   },
 };
