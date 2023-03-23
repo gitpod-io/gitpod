@@ -23,6 +23,7 @@ import (
 )
 
 const (
+	// Metadata keys are used for storing additional context in Stripe
 	AttributionIDMetadataKey        = "attributionId"
 	PreferredCurrencyMetadataKey    = "preferredCurrency"
 	BillingCreaterUserIDMetadataKey = "billingCreatorUserId"
