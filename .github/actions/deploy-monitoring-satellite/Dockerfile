@@ -1,4 +1,4 @@
-FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-upgrade-node-gha.5515
+FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-upgrade-node-gha.5599
 
 USER root
 ENV OCI_TOOL_VERSION="0.2.0"
