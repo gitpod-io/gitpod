@@ -13,8 +13,8 @@ message Team {
     // name is the name of the Team
     string name = 2;
 
-    // previously used for slug
-    reserved 3;
+    // slug is the slug of the Team
+    string slug = 3;
 
     // members are the team members of this Team
     repeated TeamMember members = 4;

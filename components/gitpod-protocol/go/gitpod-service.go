@@ -2295,6 +2295,7 @@ type UserMessage struct {
 type Team struct {
 	ID           string `json:"id,omitempty"`
 	Name         string `json:"name,omitempty"`
+	Slug         string `json:"slug,omitempty"`
 	CreationTime string `json:"creationTime,omitempty"`
 }
 
