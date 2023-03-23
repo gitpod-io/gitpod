@@ -449,6 +449,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         let title = undefined;
         let isTimedOut = false;
         let isStoppingOrStopped = false;
+        let isError = error ? true : false;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
         const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
         const useLatest = !!this.state.workspaceInstance?.configuration?.ideConfig?.useLatest;
@@ -717,7 +718,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 phase={phase}
                 error={error}
                 title={title}
-                showLatestIdeWarning={!isTimedOut && !isStoppingOrStopped && useLatest}
+                showLatestIdeWarning={isError || (!isTimedOut && !isStoppingOrStopped && useLatest)}
             >
                 {statusMessage}
             </StartPage>
