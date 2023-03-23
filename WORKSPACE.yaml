@@ -22,7 +22,7 @@ defaultArgs:
   jbBackendVersion: "latest"
   REPLICATED_API_TOKEN: ""
   REPLICATED_APP: ""
-  dockerVersion: 20.10.17
+  dockerVersion: 20.10.23
   dockerComposeVersion: "2.16.0-gitpod.0"
 provenance:
   enabled: true
