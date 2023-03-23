@@ -141,6 +141,8 @@ RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
+# TODO: remove after updating webpack https://github.com/nodejs/node/blob/main/doc/changelogs/CHANGELOG_V17.md#openssl-30
+ENV NODE_OPTIONS="--openssl-legacy-provider"
 
 ## Register leeway autocompletion in bashrc
 RUN bash -c "echo . \<\(leeway bash-completion\) >> ~/.bashrc"
