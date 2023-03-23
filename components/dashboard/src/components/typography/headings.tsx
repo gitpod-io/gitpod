@@ -19,7 +19,7 @@ export const Heading1: FC<HeadingProps> = ({ color, tracking, className, childre
             className={classNames(
                 getHeadingColor(color),
                 getTracking(tracking),
-                "font-bold text-5xl leading-64",
+                "font-bold text-4xl md:text-5xl leading-64",
                 className,
             )}
         >
