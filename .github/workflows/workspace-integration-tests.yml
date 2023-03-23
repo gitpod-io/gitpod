@@ -16,6 +16,10 @@ on:
                 required: false
                 type: boolean
                 description: "Skip delete preview environment (debug only)"
+            wsman_mk2:
+                required: false
+                type: boolean
+                description: "Run tests against ws-manager-mk2"
     schedule:
         - cron: "0 3,12 * * *"
 jobs:
@@ -99,7 +103,7 @@ jobs:
               env:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: Workspace Integration Tests failed
+                  SLACK_MESSAGE: "Workspace Integration Tests failed (used mk2: ${{ github.event.inputs.wsman_mk2 }})"
 
     infrastructure:
       needs: [ configuration ]
@@ -199,6 +203,8 @@ jobs:
                   WS_DAEMON_TESTS="$BASE_TESTS_DIR/components/ws-daemon"
                   WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
                   WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
+
+                  WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 }}"
 
                   go install github.com/jstemmer/go-junit-report/v2@latest
 

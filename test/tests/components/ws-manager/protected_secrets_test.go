@@ -120,8 +120,13 @@ func assertEnvSuppliedBySecret(t *testing.T, wsPod *corev1.Pod, secretEnv string
 					t.Fatalf("environment variable value is not supplied by secret")
 				}
 
-				if env.ValueFrom.SecretKeyRef.Name != wsPod.Name {
-					t.Fatalf("expected environment variable values are not supplied by secret %s", wsPod.Name)
+				expectedName := wsPod.Name
+				if integration.UseWsmanMk2() {
+					expectedName = fmt.Sprintf("%s-env", strings.TrimPrefix(wsPod.Name, "ws-"))
+				}
+
+				if env.ValueFrom.SecretKeyRef.Name != expectedName {
+					t.Fatalf("expected environment variable values are not supplied by secret %s", expectedName)
 				}
 			}
 		}

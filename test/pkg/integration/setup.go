@@ -142,17 +142,24 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 	klog.V(2).Info("Checking status of Gitpod components...")
 
 	return func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
+		imgBuilder := "image-builder-mk3"
+		wsman := "ws-manager"
+		if UseWsmanMk2() {
+			imgBuilder = "image-builder-mk3-wsman"
+			wsman = "ws-manager-mk2"
+		}
+
 		components := []string{
 			"agent-smith",
 			"blobserve",
 			"content-service",
 			"dashboard",
-			"image-builder-mk3",
+			imgBuilder,
 			"proxy",
 			"registry-facade",
 			"server",
 			"ws-daemon",
-			"ws-manager",
+			wsman,
 			"ws-manager-bridge",
 			"ws-proxy",
 		}
@@ -220,4 +227,8 @@ func getNamespace(path string) (string, error) {
 	}
 
 	return namespace, nil
+}
+
+func UseWsmanMk2() bool {
+	return os.Getenv("WS_MANAGER_MK2") == "true"
 }
