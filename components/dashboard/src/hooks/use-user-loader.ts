@@ -15,12 +15,12 @@ import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
 
 export const useUserLoader = () => {
-    const { setUser } = useContext(UserContext);
+    const { user, setUser } = useContext(UserContext);
     const [isSetupRequired, setSetupRequired] = useState(false);
 
     // For now, we're using the user context to store the user, but letting react-query handle the loading
     // In the future, we should remove the user context and use react-query to access the user
-    const { data, isLoading } = useQuery({
+    const { isLoading } = useQuery({
         queryKey: noPersistence(["current-user"]),
         queryFn: async () => {
             let user: User | undefined;
@@ -54,5 +54,5 @@ export const useUserLoader = () => {
         staleTime: 1000 * 60 * 60 * 1, // 1 hour
     });
 
-    return { user: data, loading: isLoading, isSetupRequired };
+    return { user, loading: isLoading, isSetupRequired };
 };
