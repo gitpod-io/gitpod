@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-upgrade-node-gha.5515
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:

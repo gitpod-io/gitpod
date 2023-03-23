@@ -1,4 +1,4 @@
-FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
+FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-upgrade-node-gha.5515
 
 USER root
 ENV OCI_TOOL_VERSION="0.2.0"
