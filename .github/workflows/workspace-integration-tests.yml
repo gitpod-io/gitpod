@@ -103,7 +103,7 @@ jobs:
               env:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: "Workspace Integration Tests failed (used mk2: ${{ github.event.inputs.wsman_mk2 }})"
+                  SLACK_MESSAGE: "Workspace Integration Tests failed"
 
     infrastructure:
       needs: [ configuration ]
@@ -250,7 +250,7 @@ jobs:
               env:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: ${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed
+                  SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed (mk2: ${{ github.event.inputs.wsman_mk2 }})"
 
     delete:
       name: Delete preview environment
