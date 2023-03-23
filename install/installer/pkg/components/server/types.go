@@ -19,7 +19,6 @@ type ConfigSerialized struct {
 	DevBranch                         string   `json:"devBranch"`
 	InsecureNoDomain                  bool     `json:"insecureNoDomain"`
 	License                           string   `json:"license"`
-	LicenseFile                       string   `json:"licenseFile"`
 	DefinitelyGpDisabled              bool     `json:"definitelyGpDisabled"`
 	EnableLocalApp                    bool     `json:"enableLocalApp"`
 	DisableDynamicAuthProviderLogin   bool     `json:"disableDynamicAuthProviderLogin"`

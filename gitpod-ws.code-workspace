@@ -12,7 +12,6 @@
         { "path": "components/ide-service" },
         { "path": "components/image-builder-bob" },
         { "path": "components/image-builder-mk3" },
-        { "path": "components/licensor" },
         { "path": "components/local-app" },
         { "path": "components/registry-facade" },
         { "path": "components/service-waiter" },

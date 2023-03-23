@@ -36,11 +36,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	license := ""
-	if ctx.Config.License != nil {
-		license = licenseFilePath
-	}
-
 	workspaceImage := ctx.Config.Workspace.WorkspaceImage
 	if workspaceImage == "" {
 		workspaceImage = ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, ""), workspace.DefaultWorkspaceImage, workspace.DefaultWorkspaceImageVersion)
@@ -208,7 +203,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Version:               ctx.VersionManifest.Version,
 		HostURL:               fmt.Sprintf("https://%s", ctx.Config.Domain),
 		InstallationShortname: ctx.Config.Metadata.InstallationShortname,
-		LicenseFile:           license,
 		WorkspaceHeartbeat: WorkspaceHeartbeat{
 			IntervalSeconds: 60,
 			TimeoutSeconds:  300,

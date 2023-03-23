@@ -9,8 +9,6 @@ import { GitpodServerImpl } from "../../src/workspace/gitpod-server-impl";
 import { GitpodServerEEImpl } from "./workspace/gitpod-server-impl";
 import { Server } from "../../src/server";
 import { ServerEE } from "./server";
-import { LicenseKeySource } from "@gitpod/licensor/lib";
-import { DBLicenseKeySource } from "./license-source";
 import { UserService } from "../../src/user/user-service";
 import { UserServiceEE } from "./user/user-service";
 import { HostContainerMapping } from "../../src/auth/host-container-mapping";
@@ -86,8 +84,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
 
     bind(UserCounter).toSelf().inSingletonScope();
-
-    bind(LicenseKeySource).to(DBLicenseKeySource).inSingletonScope();
 
     // GitpodServerImpl (stateful per user)
     rebind(GitpodServerImpl).to(GitpodServerEEImpl).inRequestScope();

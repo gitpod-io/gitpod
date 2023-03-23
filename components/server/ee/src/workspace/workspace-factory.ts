@@ -21,10 +21,6 @@ import {
     Project,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { LicenseEvaluator } from "@gitpod/licensor/lib";
-import { Feature } from "@gitpod/licensor/lib/api";
-import { ResponseError } from "vscode-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { UserCounter } from "../user/user-counter";
@@ -35,29 +31,12 @@ import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-
 
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
-    @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UserCounter) protected readonly userCounter: UserCounter;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
 
     @inject(UserDB) protected readonly userDB: UserDB;
-
-    protected async requireEELicense(feature: Feature) {
-        const cachedUserCount = this.userCounter.count;
-
-        let userCount: number;
-        if (cachedUserCount === null) {
-            userCount = await this.userDB.getUserCount(true);
-            this.userCounter.count = userCount;
-        } else {
-            userCount = cachedUserCount;
-        }
-
-        if (!this.licenseEvaluator.isEnabled(feature, userCount)) {
-            throw new ResponseError(ErrorCodes.EE_LICENSE_REQUIRED, "enterprise license required");
-        }
-    }
 
     public async createForContext(
         ctx: TraceContext,
@@ -83,7 +62,6 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
         context: StartPrebuildContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
-        await this.requireEELicense(Feature.FeaturePrebuild);
         const span = TraceContext.startSpan("createForStartPrebuild", ctx);
 
         try {
@@ -222,7 +200,6 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
         context: PrebuiltWorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
-        await this.requireEELicense(Feature.FeaturePrebuild);
         const span = TraceContext.startSpan("createForPrebuiltWorkspace", ctx);
 
         try {
