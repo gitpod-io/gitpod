@@ -283,7 +283,7 @@ type CreateCustomerParams struct {
 	Currency             string
 	Email                string
 	Name                 string
-	BillingCreaterUserID string
+	BillingCreatorUserID string
 }
 
 func (c *Client) CreateCustomer(ctx context.Context, params CreateCustomerParams) (customer *stripe.Customer, err error) {
@@ -302,7 +302,7 @@ func (c *Client) CreateCustomer(ctx context.Context, params CreateCustomerParams
 				// new subscription would use a different currency to the previous one
 				PreferredCurrencyMetadataKey:    params.Currency,
 				AttributionIDMetadataKey:        params.AttributuonID,
-				BillingCreaterUserIDMetadataKey: params.BillingCreaterUserID,
+				BillingCreaterUserIDMetadataKey: params.BillingCreatorUserID,
 			},
 		},
 		Email: stripe.String(params.Email),

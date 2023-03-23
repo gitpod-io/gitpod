@@ -147,7 +147,7 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 		Currency:             req.GetCurrency(),
 		Email:                req.GetEmail(),
 		Name:                 req.GetName(),
-		BillingCreaterUserID: req.GetBillingCreatorUserId(),
+		BillingCreatorUserID: req.GetBillingCreatorUserId(),
 	})
 	if err != nil {
 		log.WithError(err).Errorf("Failed to create stripe customer.")
