@@ -2,9 +2,9 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full:2023-03-06-18-43-51
+FROM gitpod/workspace-full:2023-03-24-02-48-18
 
-ENV TRIGGER_REBUILD 26
+ENV TRIGGER_REBUILD 39
 
 USER root
 
@@ -261,3 +261,7 @@ ENV PATH=$PATH:/workspace/bin
 # Setting the environment variable here so that it will be accessible to all tasks and
 # terminal sessions in Gitpod workspaces.
 ENV PREVIEW_ENV_DEV_SA_KEY_PATH=/home/gitpod/.config/gcloud/preview-environment-dev-sa.json
+
+# So we can parse the report.html output by leeway, and remove the output produced by this image build
+# why? it's too verbose, exceeding the Github Actions summary limit
+RUN go install github.com/ericchiang/pup@v0.4.0
