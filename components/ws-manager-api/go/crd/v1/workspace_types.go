@@ -13,6 +13,13 @@ import (
 const (
 	// GitpodFinalizerName is the name of the finalizer we use on workspaces and their pods.
 	GitpodFinalizerName = "gitpod.io/finalizer"
+
+	// ReasonInitializationSuccess is a Reason for the WorkspaceConditionContentReady condition,
+	// incidating content init succeeded.
+	ReasonInitializationSuccess = "InitializationSuccess"
+	// ReasonInitializationFailure is a Reason for the WorkspaceConditionContentReady condition,
+	// indicating that content init failed. The condition's message will contain the failure details.
+	ReasonInitializationFailure = "InitializationFailure"
 )
 
 // WorkspaceSpec defines the desired state of Workspace

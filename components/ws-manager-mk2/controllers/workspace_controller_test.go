@@ -111,7 +111,7 @@ var _ = Describe("WorkspaceController", func() {
 					Type:               string(workspacev1.WorkspaceConditionContentReady),
 					Status:             metav1.ConditionFalse,
 					Message:            "some failure",
-					Reason:             "InitializationFailure",
+					Reason:             workspacev1.ReasonInitializationFailure,
 					LastTransitionTime: metav1.Now(),
 				})
 			})
@@ -443,7 +443,7 @@ func markContentReady(ws *workspacev1.Workspace) {
 		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
 			Type:               string(workspacev1.WorkspaceConditionContentReady),
 			Status:             metav1.ConditionTrue,
-			Reason:             "InitializationSuccess",
+			Reason:             workspacev1.ReasonInitializationSuccess,
 			LastTransitionTime: metav1.Now(),
 		})
 	})

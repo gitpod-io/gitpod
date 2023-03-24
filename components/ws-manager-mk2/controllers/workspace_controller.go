@@ -252,7 +252,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		return r.deleteWorkspacePod(ctx, pod, "timed out")
 
 	// if the content initialization failed, delete the pod
-	case wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") && !isPodBeingDeleted(pod):
+	case wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure) && !isPodBeingDeleted(pod):
 		return r.deleteWorkspacePod(ctx, pod, "init failed")
 
 	case isWorkspaceBeingDeleted(workspace) && !isPodBeingDeleted(pod):
@@ -299,7 +299,7 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 		return
 	}
 
-	if !lastState.recordedInitFailure && wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure") {
+	if !lastState.recordedInitFailure && wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure) {
 		r.metrics.countTotalRestoreFailures(&log, workspace)
 		lastState.recordedInitFailure = true
 
