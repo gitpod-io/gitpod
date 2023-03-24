@@ -28,6 +28,7 @@ const defaultFeatureFlags = {
     oidcServiceEnabled: false,
     // Default to true to enable on gitpod dedicated until ff support is added for dedicated
     orgGitAuthProviders: true,
+    userGitAuthProviders: false,
     switchToPAYG: false,
     newSignupFlow: false,
 };
@@ -47,6 +48,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [usePublicApiWorkspacesService, setUsePublicApiWorkspacesService] = useState<boolean>(false);
     const [oidcServiceEnabled, setOidcServiceEnabled] = useState<boolean>(false);
     const [orgGitAuthProviders, setOrgGitAuthProviders] = useState<boolean>(false);
+    const [userGitAuthProviders, setUserGitAuthProviders] = useState<boolean>(false);
     const [switchToPAYG, setSwitchToPAYG] = useState<boolean>(false);
     const [newSignupFlow, setNewSignupFlow] = useState<boolean>(false);
 
@@ -66,6 +68,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 oidcServiceEnabled: { defaultValue: false, setter: setOidcServiceEnabled },
                 // Default to true to enable on gitpod dedicated until ff support is added for dedicated
                 orgGitAuthProviders: { defaultValue: true, setter: setOrgGitAuthProviders },
+                userGitAuthProviders: { defaultValue: false, setter: setUserGitAuthProviders },
                 switchToPAYG: { defaultValue: false, setter: setSwitchToPAYG },
                 newSignupFlow: { defaultValue: false, setter: setNewSignupFlow },
             };
@@ -114,6 +117,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
             usePublicApiWorkspacesService,
             oidcServiceEnabled,
             orgGitAuthProviders,
+            userGitAuthProviders,
             newSignupFlow,
             switchToPAYG,
         };
@@ -128,6 +132,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         startWithOptions,
         switchToPAYG,
         usePublicApiWorkspacesService,
+        userGitAuthProviders,
     ]);
 
     return <FeatureFlagContext.Provider value={flags}>{children}</FeatureFlagContext.Provider>;

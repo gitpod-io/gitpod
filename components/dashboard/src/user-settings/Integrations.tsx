@@ -6,15 +6,19 @@
 
 import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
+import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import Alert from "../components/Alert";
 import CheckBox from "../components/CheckBox";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ContextMenuEntry } from "../components/ContextMenu";
+import { Delayed } from "../components/Delayed";
 import InfoBox from "../components/InfoBox";
 import { ItemsList } from "../components/ItemsList";
+import { SpinnerLoader } from "../components/Loader";
 import Modal, { ModalBody, ModalHeader, ModalFooter } from "../components/Modal";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { openAuthorizeWindow } from "../provider-utils";
@@ -294,7 +298,6 @@ function GitProviders() {
             )}
 
             {editModal && (
-                // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setEditModal(undefined)}>
                     <ModalHeader>Edit Permissions</ModalHeader>
                     <ModalBody>
@@ -340,6 +343,7 @@ function GitProviders() {
                 {authProviders &&
                     authProviders.map((ap) => (
                         <AuthEntryItem
+                            key={ap.authProviderId}
                             isConnected={isConnected}
                             gitProviderMenu={gitProviderMenu}
                             getUsername={getUsername}
@@ -354,8 +358,7 @@ function GitProviders() {
 
 function GitIntegrations() {
     const { user } = useContext(UserContext);
-
-    const [providers, setProviders] = useState<AuthProviderEntry[]>([]);
+    const { userGitAuthProviders } = useFeatureFlags();
 
     const [modal, setModal] = useState<
         | { mode: "new" }
@@ -364,13 +367,15 @@ function GitIntegrations() {
         | undefined
     >(undefined);
 
-    useEffect(() => {
-        updateOwnAuthProviders();
-    }, []);
-
-    const updateOwnAuthProviders = async () => {
-        setProviders(await getGitpodService().server.getOwnAuthProviders());
-    };
+    const {
+        data: providers,
+        isLoading,
+        refetch,
+    } = useQuery(
+        ["own-auth-providers", { userId: user?.id ?? "" }],
+        async () => await getGitpodService().server.getOwnAuthProviders(),
+        { enabled: !!user },
+    );
 
     const deleteProvider = async (provider: AuthProviderEntry) => {
         try {
@@ -379,7 +384,7 @@ function GitIntegrations() {
             console.log(error);
         }
         setModal(undefined);
-        updateOwnAuthProviders();
+        refetch();
     };
 
     const gitProviderMenu = (provider: AuthProviderEntry) => {
@@ -397,6 +402,20 @@ function GitIntegrations() {
         return result;
     };
 
+    if (isLoading) {
+        return (
+            <Delayed>
+                <SpinnerLoader />
+            </Delayed>
+        );
+    }
+
+    // If user has no personal providers and ff is not enabled, don't show anything
+    // Otherwise we show their existing providers w/o ability to create new ones if ff is disabled
+    if ((providers || []).length === 0 && !userGitAuthProviders) {
+        return null;
+    }
+
     return (
         <div>
             {modal?.mode === "new" && (
@@ -404,7 +423,7 @@ function GitIntegrations() {
                     mode={modal.mode}
                     userId={user?.id || "no-user"}
                     onClose={() => setModal(undefined)}
-                    onUpdate={updateOwnAuthProviders}
+                    onUpdate={refetch}
                 />
             )}
             {modal?.mode === "edit" && (
@@ -413,7 +432,7 @@ function GitIntegrations() {
                     userId={user?.id || "no-user"}
                     provider={modal.provider}
                     onClose={() => setModal(undefined)}
-                    onUpdate={updateOwnAuthProviders}
+                    onUpdate={refetch}
                 />
             )}
             {modal?.mode === "delete" && (
@@ -437,7 +456,8 @@ function GitIntegrations() {
                         Manage Git integrations for self-managed instances of GitLab, GitHub, or Bitbucket.
                     </Subheading>
                 </div>
-                {providers.length !== 0 ? (
+                {/* Hide create button if ff is disabled */}
+                {userGitAuthProviders && (providers || []).length !== 0 ? (
                     <div className="mt-3 flex mt-0">
                         <button onClick={() => setModal({ mode: "new" })} className="ml-2">
                             New Integration
