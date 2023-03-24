@@ -226,9 +226,9 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	}
 
 	if component == registryFacade {
-		err = waitForRegistryFacade(ipAddress, port, 30*time.Second)
+		err = checkegistryFacade(ipAddress, port)
 		if err != nil {
-			return reconcile.Result{}, fmt.Errorf("waiting for registry-facade: %v", err)
+			return reconcile.Result{RequeueAfter: time.Second * 10}, err
 		}
 	}
 
@@ -306,13 +306,7 @@ func waitForTCPPortToBeReachable(host string, port string, timeout time.Duration
 	}
 }
 
-func waitForRegistryFacade(host, port string, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	ticker := time.NewTicker(1 * time.Second)
-	defer ticker.Stop()
-
+func checkRegistryFacade(host, port string) error {
 	transport := newDefaultTransport()
 	transport.TLSClientConfig = &tls.Config{
 		InsecureSkipVerify: true,
@@ -323,31 +317,23 @@ func waitForRegistryFacade(host, port string, timeout time.Duration) error {
 	}
 
 	dummyURL := fmt.Sprintf("https://%v:%v/v2/remote/not-a-valid-image/manifests/latest", host, port)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return fmt.Errorf("port %v on host %v never reachable", port, host)
-		case <-ticker.C:
-			req, err := http.NewRequest(http.MethodGet, dummyURL, nil)
-			if err != nil {
-				log.WithError(err).Error("unexpected error building HTTP request")
-				continue
-			}
-
-			req.Header.Set("Accept", "application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json")
-			resp, err := client.Do(req)
-			if err != nil {
-				log.WithError(err).Error("unexpected error during HTTP request")
-				continue
-			}
-			resp.Body.Close()
-
-			if resp.StatusCode == http.StatusNotFound {
-				return nil
-			}
-		}
+	req, err := http.NewRequest(http.MethodGet, dummyURL, nil)
+	if err != nil {
+		return fmt.Errorf("unexpected error building HTTP request: %v", err)
 	}
+
+	req.Header.Set("Accept", "application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("unexpected error during HTTP request: %v", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	return fmt.Errorf("registry-facade is not ready yet")
 }
 
 func newDefaultTransport() *http.Transport {
