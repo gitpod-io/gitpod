@@ -65,13 +65,13 @@ const bootApp = () => {
                                     <LicenseContextProvider>
                                         <ProjectContextProvider>
                                             <ThemeContextProvider>
-                                                <StartWorkspaceModalContextProvider>
-                                                    <BrowserRouter>
+                                                <BrowserRouter>
+                                                    <StartWorkspaceModalContextProvider>
                                                         <FeatureFlagContextProvider>
                                                             <App />
                                                         </FeatureFlagContextProvider>
-                                                    </BrowserRouter>
-                                                </StartWorkspaceModalContextProvider>
+                                                    </StartWorkspaceModalContextProvider>
+                                                </BrowserRouter>
                                             </ThemeContextProvider>
                                         </ProjectContextProvider>
                                     </LicenseContextProvider>
