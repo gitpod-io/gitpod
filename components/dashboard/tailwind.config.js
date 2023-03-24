@@ -49,6 +49,15 @@ module.exports = {
             lineHeight: {
                 64: "64px",
             },
+            keyframes: {
+                "toast-in-right": {
+                    from: { transform: "translateX(100%)" },
+                    to: { transform: "translateX(0)" },
+                },
+            },
+            animation: {
+                "toast-in-right": "toast-in-right 0.5s",
+            },
         },
         fontFamily: {
             sans: [

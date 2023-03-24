@@ -16,10 +16,14 @@ import { Heading2, Subheading } from "../components/typography/headings";
 import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
 import { Button } from "../components/Button";
 import SelectIDE from "./SelectIDE";
+import { InputField } from "../components/forms/InputField";
+import { TextInput } from "../components/forms/TextInputField";
+import { useToast } from "../components/toasts/Toasts";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
 export default function Preferences() {
+    const { notify } = useToast();
     const { user, setUser } = useContext(UserContext);
     const maySetTimeout = useUserMaySetTimeout();
 
@@ -38,6 +42,7 @@ export default function Preferences() {
             const updatedUser = await getGitpodService().server.updateLoggedInUser({ additionalData });
             setUser(updatedUser);
 
+            notify({ message: "Your dotfiles repository was updated", autoHide: false });
             if (dotfileRepo !== prevDotfileRepo) {
                 trackEvent("dotfile_repo_changed", {
                     previous: prevDotfileRepo,
@@ -45,7 +50,7 @@ export default function Preferences() {
                 });
             }
         },
-        [dotfileRepo, setUser, user?.additionalData],
+        [dotfileRepo, notify, setUser, user?.additionalData],
     );
 
     const saveWorkspaceTimeout = useCallback(
@@ -80,9 +85,37 @@ export default function Preferences() {
 
                 <ThemeSelector className="mt-12" />
 
+                <Subheading>wtf is going on</Subheading>
+                <Button
+                    onClick={() => {
+                        notify("This is a toast!");
+                    }}
+                >
+                    Toasty
+                </Button>
+
                 <Heading2 className="mt-12">Dotfiles</Heading2>
                 <Subheading>Customize workspaces using dotfiles.</Subheading>
                 <form className="mt-4 max-w-xl" onSubmit={saveDotfileRepo}>
+                    <InputField
+                        label="Repository URL"
+                        hint="Add a repository URL that includes dotfiles. Gitpod will clone and install your dotfiles for every new workspace."
+                    >
+                        <div className="flex space-x-2">
+                            <div className="flex-grow">
+                                <TextInput
+                                    value={dotfileRepo}
+                                    placeholder="e.g. https://github.com/username/dotfiles"
+                                    onChange={setDotfileRepo}
+                                />
+                            </div>
+                            <Button>Save</Button>
+                        </div>
+                    </InputField>
+
+                    <br />
+                    <br />
+                    <br />
                     <h4>Repository URL</h4>
                     <span className="flex">
                         <input

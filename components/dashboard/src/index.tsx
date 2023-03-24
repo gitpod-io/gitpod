@@ -25,6 +25,7 @@ import { setupQueryClientProvider } from "./data/setup";
 import { ConfettiContextProvider } from "./contexts/ConfettiContext";
 import { GitpodErrorBoundary } from "./components/ErrorBoundary";
 import "./index.css";
+import { ToastContextProvider } from "./components/toasts/Toasts";
 
 const bootApp = () => {
     // gitpod.io specific boot logic
@@ -59,25 +60,27 @@ const bootApp = () => {
             <GitpodErrorBoundary>
                 <GitpodQueryClientProvider>
                     <ConfettiContextProvider>
-                        <UserContextProvider>
-                            <AdminContextProvider>
-                                <PaymentContextProvider>
-                                    <LicenseContextProvider>
-                                        <ProjectContextProvider>
-                                            <ThemeContextProvider>
-                                                <BrowserRouter>
-                                                    <StartWorkspaceModalContextProvider>
-                                                        <FeatureFlagContextProvider>
-                                                            <App />
-                                                        </FeatureFlagContextProvider>
-                                                    </StartWorkspaceModalContextProvider>
-                                                </BrowserRouter>
-                                            </ThemeContextProvider>
-                                        </ProjectContextProvider>
-                                    </LicenseContextProvider>
-                                </PaymentContextProvider>
-                            </AdminContextProvider>
-                        </UserContextProvider>
+                        <ToastContextProvider>
+                            <UserContextProvider>
+                                <AdminContextProvider>
+                                    <PaymentContextProvider>
+                                        <LicenseContextProvider>
+                                            <ProjectContextProvider>
+                                                <ThemeContextProvider>
+                                                    <BrowserRouter>
+                                                        <StartWorkspaceModalContextProvider>
+                                                            <FeatureFlagContextProvider>
+                                                                <App />
+                                                            </FeatureFlagContextProvider>
+                                                        </StartWorkspaceModalContextProvider>
+                                                    </BrowserRouter>
+                                                </ThemeContextProvider>
+                                            </ProjectContextProvider>
+                                        </LicenseContextProvider>
+                                    </PaymentContextProvider>
+                                </AdminContextProvider>
+                            </UserContextProvider>
+                        </ToastContextProvider>
                     </ConfettiContextProvider>
                 </GitpodQueryClientProvider>
             </GitpodErrorBoundary>
