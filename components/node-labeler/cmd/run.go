@@ -197,7 +197,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 				return reconcile.Result{}, nil
 			}
 
-			log.WithError(err).Error("unexpected error removing node label")
+			log.WithError(err).Error("removing node label")
 			return reconcile.Result{RequeueAfter: time.Second * 10}, err
 		}
 
@@ -228,6 +228,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	if component == registryFacade {
 		err = checkRegistryFacade(ipAddress, port)
 		if err != nil {
+			log.WithError(err).Error("checking registry-facade")
 			return reconcile.Result{RequeueAfter: time.Second * 10}, nil
 		}
 	}
@@ -236,7 +237,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 
 	err = updateLabel(labelToUpdate, true, nodeName, r)
 	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("Unexpected error while trying to add the label: %v", err)
+		return reconcile.Result{}, fmt.Errorf("trying to add the label: %v", err)
 	}
 
 	readyIn := time.Since(pod.Status.StartTime.Time)
@@ -319,7 +320,7 @@ func checkRegistryFacade(host, port string) error {
 	dummyURL := fmt.Sprintf("https://%v:%v/v2/remote/not-a-valid-image/manifests/latest", host, port)
 	req, err := http.NewRequest(http.MethodGet, dummyURL, nil)
 	if err != nil {
-		return fmt.Errorf("unexpected error building HTTP request: %v", err)
+		return fmt.Errorf("building HTTP request: %v", err)
 	}
 
 	req.Header.Set("Accept", "application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json")
