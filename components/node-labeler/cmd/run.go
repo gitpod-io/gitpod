@@ -6,8 +6,10 @@ package cmd
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -164,7 +166,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 		component     string
 		labelToUpdate string
 
-		waitTimeout time.Duration = 1 * time.Second
+		waitTimeout time.Duration = 5 * time.Second
 	)
 
 	switch {
@@ -173,8 +175,6 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 		labelToUpdate = fmt.Sprintf(registryFacadeLabel, namespace)
 		ipAddress = pod.Status.HostIP
 		port = strconv.Itoa(registryFacadePort)
-		// wait for kube-proxy sync to avoid connection refused due to missing nodeport rules
-		waitTimeout = 15 * time.Second
 	case strings.HasPrefix(pod.Name, wsDaemon):
 		component = wsDaemon
 		labelToUpdate = fmt.Sprintf(wsdaemonLabel, namespace)
@@ -197,7 +197,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 				return reconcile.Result{}, nil
 			}
 
-			log.WithError(err).Error("unexpected error removing node label")
+			log.WithError(err).Error("removing node label")
 			return reconcile.Result{RequeueAfter: time.Second * 10}, err
 		}
 
@@ -206,14 +206,13 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 
 	if !IsPodReady(&pod) {
 		// not ready. Wait until the next update.
-		log.WithField("pod", pod.Name).Info("pod is not yet ready")
 		return reconcile.Result{}, nil
 	}
 
 	var node corev1.Node
 	err = r.Get(ctx, types.NamespacedName{Name: nodeName}, &node)
 	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("failed to get node %s: %w", nodeName, err)
+		return reconcile.Result{}, fmt.Errorf("obtaining node %s: %w", nodeName, err)
 	}
 
 	if node.Labels[labelToUpdate] == "true" {
@@ -223,14 +222,22 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 
 	err = waitForTCPPortToBeReachable(ipAddress, port, 30*time.Second)
 	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("Unexpected error waiting for probe URL: %v", err)
+		return reconcile.Result{}, fmt.Errorf("waiting for TCP port: %v", err)
+	}
+
+	if component == registryFacade {
+		err = checkRegistryFacade(ipAddress, port)
+		if err != nil {
+			log.WithError(err).Error("checking registry-facade")
+			return reconcile.Result{RequeueAfter: time.Second * 10}, nil
+		}
 	}
 
 	time.Sleep(waitTimeout)
 
 	err = updateLabel(labelToUpdate, true, nodeName, r)
 	if err != nil {
-		return reconcile.Result{}, fmt.Errorf("Unexpected error while trying to add the label: %v", err)
+		return reconcile.Result{}, fmt.Errorf("trying to add the label: %v", err)
 	}
 
 	readyIn := time.Since(pod.Status.StartTime.Time)
@@ -297,5 +304,50 @@ func waitForTCPPortToBeReachable(host string, port string, timeout time.Duration
 
 			continue
 		}
+	}
+}
+
+func checkRegistryFacade(host, port string) error {
+	transport := newDefaultTransport()
+	transport.TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	client := &http.Client{
+		Transport: transport,
+	}
+
+	dummyURL := fmt.Sprintf("https://%v:%v/v2/remote/not-a-valid-image/manifests/latest", host, port)
+	req, err := http.NewRequest(http.MethodGet, dummyURL, nil)
+	if err != nil {
+		return fmt.Errorf("building HTTP request: %v", err)
+	}
+
+	req.Header.Set("Accept", "application/vnd.oci.image.manifest.v1+json, application/vnd.oci.image.index.v1+json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("unexpected error during HTTP request: %v", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil
+	}
+
+	return fmt.Errorf("registry-facade is not ready yet")
+}
+
+func newDefaultTransport() *http.Transport {
+	return &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   1 * time.Second,
+			KeepAlive: 1 * time.Second,
+			DualStack: false,
+		}).DialContext,
+		MaxIdleConns:          0,
+		MaxIdleConnsPerHost:   1,
+		IdleConnTimeout:       5 * time.Second,
+		ExpectContinueTimeout: 5 * time.Second,
+		DisableKeepAlives:     true,
 	}
 }
