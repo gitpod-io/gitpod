@@ -3104,12 +3104,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 throw new Error("Host could not be reached.");
             }
 
-            // const hostContext = this.hostContextProvider.get(host);
-            // if (hostContext) {
-            //     const builtInExists = hostContext.authProvider.params.ownerId === undefined;
-            //     log.debug(`Attempt to override existing auth provider.`, { entry, newProvider, builtInExists });
-            //     throw new Error("Provider for this host already exists.");
-            // }
+            const hostContext = this.hostContextProvider.get(host);
+            if (hostContext) {
+                const builtInExists = hostContext.authProvider.params.ownerId === undefined;
+                log.debug(`Attempt to override existing auth provider.`, { entry, newProvider, builtInExists });
+                throw new Error("Provider for this host already exists.");
+            }
 
             const result = await this.authProviderService.createOrgAuthProvider(newProvider);
             return AuthProviderEntry.redact(result);
