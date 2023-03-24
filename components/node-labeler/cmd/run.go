@@ -226,9 +226,9 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 	}
 
 	if component == registryFacade {
-		err = checkegistryFacade(ipAddress, port)
+		err = checkRegistryFacade(ipAddress, port)
 		if err != nil {
-			return reconcile.Result{RequeueAfter: time.Second * 10}, err
+			return reconcile.Result{RequeueAfter: time.Second * 10}, nil
 		}
 	}
 
