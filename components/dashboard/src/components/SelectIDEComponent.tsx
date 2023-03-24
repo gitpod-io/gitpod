@@ -32,12 +32,13 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             for (const ide of options.filter((ide) =>
                 `${ide.label}${ide.title}${ide.notes}${ide.id}`.toLowerCase().includes(search.toLowerCase()),
             )) {
-                result.push({
-                    id: ide.id,
-                    element: <IdeOptionElementInDropDown option={ide} useLatest={false} />,
-                    isSelectable: true,
-                });
-                if (ide.latestImage) {
+                if (!props.useLatest) {
+                    result.push({
+                        id: ide.id,
+                        element: <IdeOptionElementInDropDown option={ide} useLatest={false} />,
+                        isSelectable: true,
+                    });
+                } else if (ide.latestImage) {
                     result.push({
                         id: ide.id + "-latest",
                         element: <IdeOptionElementInDropDown option={ide} useLatest={true} />,
@@ -47,7 +48,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             }
             return result;
         },
-        [ideOptions],
+        [ideOptions, props.useLatest],
     );
     const internalOnSelectionChange = (id: string) => {
         const { ide, useLatest } = parseId(id);

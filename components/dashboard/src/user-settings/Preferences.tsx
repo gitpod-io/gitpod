@@ -8,7 +8,6 @@ import { useCallback, useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { trackEvent } from "../Analytics";
-import SelectIDE from "./SelectIDE";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
@@ -16,6 +15,9 @@ import { Link } from "react-router-dom";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
 import { Button } from "../components/Button";
+import SelectIDE from "./SelectIDE";
+
+export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
 export default function Preferences() {
     const { user, setUser } = useContext(UserContext);
@@ -74,7 +76,7 @@ export default function Preferences() {
                         Learn more
                     </a>
                 </Subheading>
-                <SelectIDE location="preferences" />
+                <SelectIDE updateUserContext={false} location="preferences" />
 
                 <ThemeSelector className="mt-12" />
 
