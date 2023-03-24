@@ -461,7 +461,6 @@ export class UserService {
     }
 
     async deauthorize(user: User, authProviderId: string) {
-        const builtInProviders = ["Public-GitLab", "Public-GitHub", "Public-Bitbucket"];
         const externalIdentities = user.identities.filter(
             (i) => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID,
         );
@@ -476,10 +475,8 @@ export class UserService {
             (i) => i !== identity && (!this.config.disableDynamicAuthProviderLogin || isBuiltin(i.authProviderId)),
         );
 
-        if (
-            remainingLoginIdentities.length === 1 &&
-            !builtInProviders.includes(remainingLoginIdentities[0].authProviderId)
-        ) {
+        // Disallow users to deregister the last builtin auth provider's from their user
+        if (remainingLoginIdentities.length === 0) {
             throw new Error(
                 "Cannot remove last authentication provider for logging in to Gitpod. Please delete account if you want to leave.",
             );
