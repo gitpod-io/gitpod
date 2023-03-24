@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
 import { User } from "@gitpod/gitpod-protocol";
@@ -14,7 +14,6 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
-    updateUserContext?: boolean;
     location: IDEChangedTrackLocation;
 }
 
@@ -33,27 +32,44 @@ export default function SelectIDE(props: SelectIDEProps) {
         user?.additionalData?.ideSettings?.useLatestVersion ?? false,
     );
 
-    const actualUpdateUserIDEInfo = async (selectedIde: string, useLatestVersion: boolean) => {
-        const additionalData = user?.additionalData ?? {};
-        const settings = additionalData.ideSettings ?? {};
-        settings.settingVersion = "2.0";
-        settings.defaultIde = selectedIde;
-        settings.useLatestVersion = useLatestVersion;
-        additionalData.ideSettings = settings;
+    const actualUpdateUserIDEInfo = useCallback(
+        async (selectedIde: string, useLatestVersion: boolean) => {
+            const additionalData = user?.additionalData || {};
+            const ideSettings = additionalData.ideSettings || {};
 
-        const newUserData = await updateUser.mutateAsync({ additionalData });
-        props.updateUserContext && setUser({ ...newUserData });
-    };
+            // Avoid mutating user object in state for updates
+            const updates = {
+                additionalData: {
+                    ...additionalData,
+                    ideSettings: {
+                        ...ideSettings,
+                        settingVersion: "2.0",
+                        defaultIde: selectedIde,
+                        useLatestVersion: useLatestVersion,
+                    },
+                },
+            };
+            const newUserData = await updateUser.mutateAsync(updates);
+            setUser(newUserData);
+        },
+        [setUser, updateUser, user?.additionalData],
+    );
 
-    const actuallySetDefaultIde = async (value: string) => {
-        await actualUpdateUserIDEInfo(value, useLatestVersion);
-        setDefaultIde(value);
-    };
+    const actuallySetDefaultIde = useCallback(
+        async (value: string) => {
+            await actualUpdateUserIDEInfo(value, useLatestVersion);
+            setDefaultIde(value);
+        },
+        [actualUpdateUserIDEInfo, useLatestVersion],
+    );
 
-    const actuallySetUseLatestVersion = async (value: boolean) => {
-        await actualUpdateUserIDEInfo(defaultIde, value);
-        setUseLatestVersion(value);
-    };
+    const actuallySetUseLatestVersion = useCallback(
+        async (value: boolean) => {
+            await actualUpdateUserIDEInfo(defaultIde, value);
+            setUseLatestVersion(value);
+        },
+        [actualUpdateUserIDEInfo, defaultIde],
+    );
 
     //todo(ft): find a better way to group IDEs by vendor
     const shouldShowJetbrainsNotice = !["code", "code-desktop"].includes(defaultIde); // a really hacky way to get just JetBrains IDEs
@@ -62,9 +78,7 @@ export default function SelectIDE(props: SelectIDEProps) {
         <>
             <div className="w-112 my-4">
                 <SelectIDEComponent
-                    onSelectionChange={async (ide) => {
-                        await actuallySetDefaultIde(ide);
-                    }}
+                    onSelectionChange={actuallySetDefaultIde}
                     selectedIdeOption={defaultIde}
                     useLatest={useLatestVersion}
                 />

@@ -76,7 +76,7 @@ export default function Preferences() {
                         Learn more
                     </a>
                 </Subheading>
-                <SelectIDE updateUserContext={false} location="preferences" />
+                <SelectIDE location="preferences" />
 
                 <ThemeSelector className="mt-12" />
 
