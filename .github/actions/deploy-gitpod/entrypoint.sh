@@ -29,7 +29,7 @@ previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}
 PREVIEW_NAME="$(previewctl get-name --branch "${INPUT_NAME}")"
 export PREVIEW_NAME
 
-for var in WITH_WS_MANAGER_MK2 WITH_DEDICATED_EMU WITH_EE_LICENSE ANALYTICS WORKSPACE_FEATURE_FLAGS; do
+for var in WSMANAGER_MK2 WITH_DEDICATED_EMU WITH_EE_LICENSE ANALYTICS WORKSPACE_FEATURE_FLAGS; do
   input_var="INPUT_${var}"
   if [[ -n "${!input_var:-}" ]];then
     export GITPOD_${var}=${!input_var}

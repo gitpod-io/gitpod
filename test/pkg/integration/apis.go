@@ -708,11 +708,16 @@ func (c *ComponentAPI) WorkspaceManager() (wsmanapi.WorkspaceManagerClient, erro
 		return c.wsmanStatus.Client, nil
 	}
 
+	var wsman = ComponentWorkspaceManager
+	if UseWsmanMk2() {
+		wsman = ComponentWorkspaceManagerMK2
+	}
+
 	if c.wsmanStatus.Port == 0 {
 		c.wsmanStatusMu.Lock()
 		defer c.wsmanStatusMu.Unlock()
 
-		pod, _, err := selectPod(ComponentWorkspaceManager, selectPodOptions{}, c.namespace, c.client)
+		pod, _, err := selectPod(wsman, selectPodOptions{}, c.namespace, c.client)
 		if err != nil {
 			return nil, err
 		}
@@ -733,7 +738,7 @@ func (c *ComponentAPI) WorkspaceManager() (wsmanapi.WorkspaceManagerClient, erro
 		c.wsmanStatus.Port = localPort
 	}
 
-	secretName := "ws-manager-client-tls"
+	secretName := fmt.Sprintf("%s-client-tls", wsman)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	c.appendCloser(func() error { cancel(); return nil })
@@ -759,7 +764,7 @@ func (c *ComponentAPI) WorkspaceManager() (wsmanapi.WorkspaceManagerClient, erro
 	creds := credentials.NewTLS(&tls.Config{
 		Certificates: []tls.Certificate{cert},
 		RootCAs:      certPool,
-		ServerName:   "ws-manager",
+		ServerName:   string(wsman),
 	})
 	dialOption := grpc.WithTransportCredentials(creds)
 
@@ -1084,12 +1089,17 @@ func (c *ComponentAPI) ImageBuilder(opts ...APIImageBuilderOpt) (imgbldr.ImageBu
 		return c.imgbldStatus.Client, nil
 	}
 
+	imgbuilder := ComponentImageBuilderMK3
+	if UseWsmanMk2() {
+		imgbuilder = ComponentImageBuilderMK3Wsman
+	}
+
 	err := func() error {
 		if c.imgbldStatus.Port == 0 {
 			c.imgbldStatusMu.Lock()
 			defer c.imgbldStatusMu.Unlock()
 
-			pod, _, err := selectPod(ComponentImageBuilderMK3, selectPodOptions{}, c.namespace, c.client)
+			pod, _, err := selectPod(imgbuilder, selectPodOptions{}, c.namespace, c.client)
 			if err != nil {
 				return err
 			}

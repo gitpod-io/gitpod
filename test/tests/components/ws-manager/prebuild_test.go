@@ -552,27 +552,31 @@ func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
 					})
 
 					// create a prebuild
-					ws, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
-						req.Type = wsmanapi.WorkspaceType_PREBUILD
-						req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
-							Name:  "GITPOD_TASKS",
-							Value: `[{ "init": "./init.sh" }]`,
-						})
-						req.Spec.FeatureFlags = test.FF
-						req.Spec.Initializer = &csapi.WorkspaceInitializer{
-							Spec: &csapi.WorkspaceInitializer_Git{
-								Git: &csapi.GitInitializer{
-									RemoteUri:        test.RemoteUri,
-									TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
-									CloneTaget:       test.CloneTargetForPrebuild,
-									CheckoutLocation: test.CheckoutLocation,
-									Config:           &csapi.GitConfig{},
+					ws, prebuildStopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api,
+						integration.WithRequestModifier(func(req *wsmanapi.StartWorkspaceRequest) error {
+							req.Type = wsmanapi.WorkspaceType_PREBUILD
+							req.Spec.Envvars = append(req.Spec.Envvars, &wsmanapi.EnvironmentVariable{
+								Name:  "GITPOD_TASKS",
+								Value: `[{ "init": "./init.sh" }]`,
+							})
+							req.Spec.FeatureFlags = test.FF
+							req.Spec.Initializer = &csapi.WorkspaceInitializer{
+								Spec: &csapi.WorkspaceInitializer_Git{
+									Git: &csapi.GitInitializer{
+										RemoteUri:        test.RemoteUri,
+										TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
+										CloneTaget:       test.CloneTargetForPrebuild,
+										CheckoutLocation: test.CheckoutLocation,
+										Config:           &csapi.GitConfig{},
+									},
 								},
-							},
-						}
-						req.Spec.WorkspaceLocation = test.CheckoutLocation
-						return nil
-					}))
+							}
+							req.Spec.WorkspaceLocation = test.CheckoutLocation
+							return nil
+						}),
+						// The init task only runs for a short duration, so it's possible we miss the Running state, as it quickly transitions to Stopping.
+						// Therefore ignore if we can't see the Running state.
+						integration.WithWaitWorkspaceForOpts(integration.WorkspaceCanFail))
 					if err != nil {
 						t.Fatalf("cannot launch a workspace: %q", err)
 					}
@@ -585,6 +589,9 @@ func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
 					prebuildSnapshot, prebuildVSInfo, err := watchStopWorkspaceAndFindSnapshot(t, ctx, ws.Req.Id, ws.WorkspaceID, api)
 					if err != nil {
 						t.Fatalf("stop workspace and find snapshot error: %v", err)
+					}
+					if prebuildSnapshot == "" {
+						t.Fatalf("prebuild snapshot is empty")
 					}
 
 					t.Logf("prebuild snapshot: %s", prebuildSnapshot)
@@ -1050,7 +1057,7 @@ func watchStopWorkspaceAndFindSnapshot(t *testing.T, ctx context.Context, instan
 	if lastStatus.Conditions.HeadlessTaskFailed != "" {
 		return "", nil, errors.New("unexpected HeadlessTaskFailed condition")
 	}
-	if lastStatus == nil || lastStatus.Conditions == nil || lastStatus.Conditions.VolumeSnapshot == nil {
+	if lastStatus == nil || lastStatus.Conditions == nil {
 		return "", nil, nil
 	}
 	return lastStatus.Conditions.Snapshot, lastStatus.Conditions.VolumeSnapshot, nil

@@ -13,7 +13,7 @@ inputs:
     previewctl_hash:
         description: "The Leeway hash of the dev/preview/previewctl:docker package to be used when downloading previewclt"
         required: false
-    with_ws_manager_mk2:
+    wsmanager_mk2:
         description: "Use WS Manager MK2"
         required: false
     with_dedicated_emu:

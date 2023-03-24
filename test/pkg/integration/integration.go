@@ -586,12 +586,16 @@ const (
 	ComponentWorkspaceDaemon ComponentType = "ws-daemon"
 	// ComponentWorkspaceManager points to the workspace manager
 	ComponentWorkspaceManager ComponentType = "ws-manager"
+	// ComponentWorkspaceManagerMK2 points to the MK2 workspace manager
+	ComponentWorkspaceManagerMK2 ComponentType = "ws-manager-mk2"
 	// ComponentContentService points to the content service
 	ComponentContentService ComponentType = "content-service"
 	// ComponentWorkspace points to a workspace
 	ComponentWorkspace ComponentType = "workspace"
 	// ComponentImageBuilderMK3 points to the image-builder-mk3
 	ComponentImageBuilderMK3 ComponentType = "image-builder-mk3"
+	// ComponentImageBuilderMK3Wsman points to ws-manager-mk2's image-builder-mk3
+	ComponentImageBuilderMK3Wsman ComponentType = "image-builder-mk3-wsman"
 )
 
 func waitForPodRunningReady(c kubernetes.Interface, podName string, namespace string, timeout time.Duration) error {

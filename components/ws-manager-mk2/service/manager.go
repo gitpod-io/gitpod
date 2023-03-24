@@ -366,7 +366,8 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 		ws.Status.SetCondition(workspacev1.NewWorkspaceConditionStoppedByRequest(gracePeriod.String()))
 		return nil
 	})
-	if err != nil {
+	// Ignore NotFound errors, workspace has already been stopped.
+	if err != nil && status.Code(err) != codes.NotFound {
 		return nil, err
 	}
 	return &wsmanapi.StopWorkspaceResponse{}, nil
