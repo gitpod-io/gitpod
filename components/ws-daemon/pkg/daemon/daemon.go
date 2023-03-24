@@ -221,6 +221,9 @@ func NewDaemon(config Config) (*Daemon, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		housekeeping := controller.NewHousekeeping(contentCfg.WorkingArea, 5*time.Minute)
+		go housekeeping.Start(context.Background())
 	}
 
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
