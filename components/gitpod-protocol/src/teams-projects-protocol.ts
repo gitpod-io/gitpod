@@ -135,6 +135,7 @@ export type Team = Organization;
 export interface Organization {
     id: string;
     name: string;
+    slug?: string;
     creationTime: string;
     markedDeleted?: boolean;
     /** This is a flag that triggers the HARD DELETION of this entity */

@@ -64,6 +64,13 @@ export class Team extends Message<Team> {
   name = "";
 
   /**
+   * slug is the slug of the Team
+   *
+   * @generated from field: string slug = 3;
+   */
+  slug = "";
+
+  /**
    * members are the team members of this Team
    *
    * @generated from field: repeated gitpod.experimental.v1.TeamMember members = 4;
@@ -87,6 +94,7 @@ export class Team extends Message<Team> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "slug", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "members", kind: "message", T: TeamMember, repeated: true },
     { no: 5, name: "team_invitation", kind: "message", T: TeamInvitation },
   ]);
