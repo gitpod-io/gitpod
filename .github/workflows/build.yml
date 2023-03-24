@@ -278,6 +278,32 @@ jobs:
           path: |
             test-coverage-report
 
+  install-app:
+    runs-on: ubuntu-latest
+    needs: [ configuration, build-gitpod ]
+    if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
+    steps:
+      - uses: gitpod-io/gh-app-auth@v0.1
+        id: auth
+        with:
+          private-key: ${{ secrets.ACTIONS_APP_PKEY }}
+          app-id: 308947
+          installation-id: 35574470
+      - name: trigger installation
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ steps.auth.outputs.token }}
+          script: |
+            const result = await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: 'gitpod-dedicated',
+              workflow_id: 'install-app.yaml',
+              ref: 'main',
+              inputs: {
+                "version": '${{ needs.configuration.outputs.version }}'
+              }
+            })
+
   install:
     name: "Install Gitpod"
     needs: [ configuration, build-previewctl, build-gitpod, infrastructure ]
