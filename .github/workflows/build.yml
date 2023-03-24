@@ -36,6 +36,7 @@ jobs:
       workspace_feature_flags: ${{ steps.output.outputs.workspace_feature_flags }}
       pr_no_diff_skip: ${{ steps.pr-diff.outputs.pr_no_diff_skip }}
       with_werft: ${{ steps.output.outputs.with-werft }}
+      with_integration_tests: ${{ steps.output.outputs.with_integration_tests }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -66,6 +67,7 @@ jobs:
         run: |
           {
             echo "workspace_feature_flags=$(echo "$PR_DESC" | grep -oP '(?<=\[X\] workspace-feature-flags).*')"
+            echo "with_integration_tests=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] with-integration-tests=).*')"
           } >> $GITHUB_OUTPUT
 
   build-previewctl:
@@ -315,3 +317,47 @@ jobs:
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
+
+  integration-test:
+    name: "Run integration test"
+    needs: [ configuration, build-previewctl, build-gitpod, infrastructure, install ]
+    runs-on: [ self-hosted ]
+    container:
+        image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
+        volumes:
+          - /var/tmp:/var/tmp
+          - /tmp:/tmp
+    if: needs.configuration.outputs.with_integration_tests != ''
+    concurrency:
+      group: ${{ github.head_ref || github.ref_name }}-integration-test
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run integration test
+        shell: bash
+        env:
+            ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            INTEGRATION_TEST_USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
+            INTEGRATION_TEST_USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
+            PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
+            PREVIEW_NAME: ${{ github.head_ref || github.ref_name }}
+            TEST_SUITS: ${{ needs.configuration.outputs.with_integration_tests }}
+        run: |
+            set -euo pipefail
+
+            export LEEWAY_WORKSPACE_ROOT="$(pwd)"
+            export HOME="/home/gitpod"
+            export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
+
+            echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+            gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+            leeway run dev/preview/previewctl:install
+
+            echo "Setting up access to core-dev and harvester"
+            previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+            previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+
+            $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
+

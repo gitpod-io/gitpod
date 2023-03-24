@@ -61,5 +61,5 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 - [ ] /werft with-large-vm
 - [ ] /werft with-gce-vm
       If enabled this will create the environment on GCE infra
-- [ ] /werft with-integration-tests=all
+- [ ] with-integration-tests=all
       Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`
