@@ -130,6 +130,11 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 		},
 	}
 
+	err = ensureCleanSlate(ws.Location)
+	if err != nil {
+		glog.Warnf("cannot ensure clean slate for workspace %s (this might break content init): %v", ws.InstanceID, err)
+	}
+
 	err = content.RunInitializer(ctx, ws.Location, options.Initializer, remoteContent, opts)
 	if err != nil {
 		glog.Infof("error running initializer %v", err)
@@ -269,6 +274,25 @@ func (wso *WorkspaceOperations) TakeSnapshot(ctx context.Context, workspaceID, s
 	err = wso.uploadWorkspaceContent(ctx, ws, snapshotName)
 	if err != nil {
 		return fmt.Errorf("snapshot failed for workspace %s", workspaceID)
+	}
+
+	return nil
+}
+
+func ensureCleanSlate(location string) error {
+	// do not remove the location itself but only
+	// the children
+	files, err := os.ReadDir(location)
+	if err != nil {
+		return err
+	}
+
+	for _, f := range files {
+		path := filepath.Join(location, f.Name())
+		err = os.RemoveAll(path)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
