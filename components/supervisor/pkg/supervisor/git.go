@@ -10,9 +10,11 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
+	"golang.org/x/xerrors"
 )
 
 // GitTokenProvider provides tokens for Git hosting services by asking
@@ -62,22 +64,11 @@ func (p *GitTokenProvider) GetToken(ctx context.Context, req *api.GetTokenReques
 			return nil, err
 		}
 		if result.Action == "Open Access Control" {
-			gpPath, err := exec.LookPath("gp")
-			if err != nil {
-				return nil, err
-			}
-			gpCmd := exec.Command(gpPath, "preview", "--external", p.workspaceConfig.GitpodHost+"/access-control")
-			gpCmd = runAsGitpodUser(gpCmd)
-			err = gpCmd.Start()
-			if err != nil {
-				return nil, err
-			}
-			err = gpCmd.Process.Release()
-			if err != nil {
-				return nil, err
-			}
+			go func() {
+				_ = p.openAccessControl()
+			}()
 		}
-		return nil, nil
+		return nil, xerrors.Errorf("miss required permissions")
 	}
 	tkn = &Token{
 		User:  token.Username,
@@ -87,6 +78,20 @@ func (p *GitTokenProvider) GetToken(ctx context.Context, req *api.GetTokenReques
 		Reuse: api.TokenReuse_REUSE_NEVER,
 	}
 	return tkn, nil
+}
+
+func (p *GitTokenProvider) openAccessControl() error {
+	gpPath, err := exec.LookPath("gp")
+	if err != nil {
+		return err
+	}
+	gpCmd := exec.Command(gpPath, "preview", "--external", p.workspaceConfig.GitpodHost+"/access-control")
+	runAsGitpodUser(gpCmd)
+	if b, err := gpCmd.CombinedOutput(); err != nil {
+		log.WithField("Stdout", string(b)).WithError(err).Error("failed to exec gp preview to open access control")
+		return err
+	}
+	return nil
 }
 
 func getMissingScopes(required []string, provided map[string]struct{}) []string {

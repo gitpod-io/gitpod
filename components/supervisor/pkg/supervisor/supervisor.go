@@ -149,6 +149,8 @@ func (s IDEKind) String() string {
 	return "unknown"
 }
 
+var childProcEnvvars []string
+
 // Run serves as main entrypoint to the supervisor.
 func Run(options ...RunOption) {
 	exitCode := 0
@@ -182,7 +184,7 @@ func Run(options ...RunOption) {
 
 	// BEWARE: we can only call buildChildProcEnv once, because it might download env vars from a one-time-secret
 	//         URL, which would fail if we tried another time.
-	childProcEnvvars := buildChildProcEnv(cfg, nil, opts.RunGP)
+	childProcEnvvars = buildChildProcEnv(cfg, nil, opts.RunGP)
 
 	err = AddGitpodUserIfNotExists()
 	if err != nil {
@@ -190,7 +192,7 @@ func Run(options ...RunOption) {
 	}
 	symlinkBinaries(cfg)
 
-	configureGit(cfg, childProcEnvvars)
+	configureGit(cfg)
 
 	telemetry := analytics.NewFromEnvironment()
 	defer telemetry.Close()
@@ -366,15 +368,15 @@ func Run(options ...RunOption) {
 	if !cfg.isPrebuild() {
 		// We need to checkout dotfiles first, because they may be changing the path which affects the IDE.
 		// TODO(cw): provide better feedback if the IDE start fails because of the dotfiles (provide any feedback at all).
-		installDotfiles(ctx, cfg, tokenService, childProcEnvvars)
+		installDotfiles(ctx, cfg, tokenService)
 	}
 
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &cfg.IDE, childProcEnvvars, &ideWG, cstate, ideReady, WebIDE, supervisorMetrics)
+	go startAndWatchIDE(ctx, cfg, &cfg.IDE, &ideWG, cstate, ideReady, WebIDE, supervisorMetrics)
 	if cfg.DesktopIDE != nil {
 		ideWG.Add(1)
-		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, childProcEnvvars, &ideWG, cstate, desktopIdeReady, DesktopIDE, supervisorMetrics)
+		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, &ideWG, cstate, desktopIdeReady, DesktopIDE, supervisorMetrics)
 	}
 
 	var (
@@ -395,7 +397,7 @@ func Run(options ...RunOption) {
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, metricsReporter, apiEndpointOpts...)
 
 	wg.Add(1)
-	go startSSHServer(ctx, cfg, &wg, childProcEnvvars)
+	go startSSHServer(ctx, cfg, &wg)
 
 	wg.Add(1)
 	tasksSuccessChan := make(chan taskSuccess, 1)
@@ -436,12 +438,11 @@ func Run(options ...RunOption) {
 					log.Debugf("unshallow of local repository took %v", time.Since(start))
 				}()
 
-				if !isShallowRepository(repoRoot, childProcEnvvars) {
+				if !isShallowRepository(repoRoot) {
 					return
 				}
 
 				cmd := runAsGitpodUser(exec.Command("git", "fetch", "--unshallow", "--tags"))
-				cmd.Env = childProcEnvvars
 				cmd.Dir = repoRoot
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
@@ -476,9 +477,8 @@ func Run(options ...RunOption) {
 	wg.Wait()
 }
 
-func isShallowRepository(rootDir string, env []string) bool {
+func isShallowRepository(rootDir string) bool {
 	cmd := runAsGitpodUser(exec.Command("git", "rev-parse", "--is-shallow-repository"))
-	cmd.Env = env
 	cmd.Dir = rootDir
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -495,7 +495,7 @@ func isShallowRepository(rootDir string, env []string) bool {
 	return isShallow
 }
 
-func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTokenService, childProcEnvvars []string) {
+func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTokenService) {
 	repo := cfg.DotfileRepo
 	if repo == "" {
 		return
@@ -510,15 +510,7 @@ func installDotfiles(ctx context.Context, cfg *Config, tokenService *InMemoryTok
 	prep := func(cfg *Config, out io.Writer, name string, args ...string) *exec.Cmd {
 		cmd := exec.Command(name, args...)
 		cmd.Dir = "/home/gitpod"
-		cmd.Env = childProcEnvvars
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			// All supervisor children run as gitpod user. The environment variables we produce are also
-			// gitpod user specific.
-			Credential: &syscall.Credential{
-				Uid: gitpodUID,
-				Gid: gitpodGID,
-			},
-		}
+		runAsGitpodUser(cmd)
 		cmd.Stdout = out
 		cmd.Stderr = out
 		return cmd
@@ -707,7 +699,7 @@ func symlinkBinaries(cfg *Config) {
 	}
 }
 
-func configureGit(cfg *Config, childProcEnvvars []string) {
+func configureGit(cfg *Config) {
 	settings := [][]string{
 		{"push.default", "simple"},
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
@@ -724,7 +716,6 @@ func configureGit(cfg *Config, childProcEnvvars []string) {
 	for _, s := range settings {
 		cmd := exec.Command("git", append([]string{"config", "--global"}, s...)...)
 		cmd = runAsGitpodUser(cmd)
-		cmd.Env = childProcEnvvars
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
@@ -769,7 +760,7 @@ var (
 	errSignalTerminated = errors.New("signal: terminated")
 )
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, ideConfig *IDEConfig, wg *sync.WaitGroup, cstate *InMemoryContentState, ideReady *ideReadyState, ide IDEKind, metrics *metrics.SupervisorMetrics) {
 	defer wg.Done()
 	defer log.WithField("ide", ide.String()).Debug("startAndWatchIDE shutdown")
 
@@ -796,7 +787,7 @@ supervisorLoop:
 
 		ideStopped = make(chan struct{}, 1)
 		startTime := time.Now()
-		cmd = prepareIDELaunch(cfg, ideConfig, childProcEnvvars)
+		cmd = prepareIDELaunch(cfg, ideConfig)
 		launchIDE(cfg, ideConfig, cmd, ideStopped, ideReady, &ideStatus, ide)
 
 		if firstStart {
@@ -897,7 +888,7 @@ func launchIDE(cfg *Config, ideConfig *IDEConfig, cmd *exec.Cmd, ideStopped chan
 	}()
 }
 
-func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig, childProcEnvvars []string) *exec.Cmd {
+func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig) *exec.Cmd {
 	args := ideConfig.EntrypointArgs
 	for i := range args {
 		args[i] = strings.ReplaceAll(args[i], "{IDEPORT}", strconv.Itoa(cfg.IDEPort))
@@ -906,20 +897,15 @@ func prepareIDELaunch(cfg *Config, ideConfig *IDEConfig, childProcEnvvars []stri
 	log.WithField("args", args).WithField("entrypoint", ideConfig.Entrypoint).Info("preparing IDE launch")
 
 	cmd := exec.Command(ideConfig.Entrypoint, args...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		// We need the child process to run in its own process group, s.t. we can suspend and resume
-		// IDE and its children.
-		Setpgid:   true,
-		Pdeathsig: syscall.SIGKILL,
 
-		// All supervisor children run as gitpod user. The environment variables we produce are also
-		// gitpod user specific.
-		Credential: &syscall.Credential{
-			Uid: gitpodUID,
-			Gid: gitpodGID,
-		},
-	}
-	cmd.Env = childProcEnvvars
+	// All supervisor children run as gitpod user. The environment variables we produce are also
+	// gitpod user specific.
+	runAsGitpodUser(cmd)
+
+	// We need the child process to run in its own process group, s.t. we can suspend and resume
+	// IDE and its children.
+	cmd.SysProcAttr.Setpgid = true
+	cmd.SysProcAttr.Pdeathsig = syscall.SIGKILL
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.
@@ -1385,7 +1371,7 @@ func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan
 	shutdown <- ShutdownReasonSuccess
 }
 
-func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup, childProcEnvvars []string) {
+func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	if cfg.isHeadless() {
@@ -1784,6 +1770,7 @@ func runAsGitpodUser(cmd *exec.Cmd) *exec.Cmd {
 	if cmd.SysProcAttr.Credential == nil {
 		cmd.SysProcAttr.Credential = &syscall.Credential{}
 	}
+	cmd.Env = append(cmd.Env, childProcEnvvars...)
 	cmd.SysProcAttr.Credential.Uid = gitpodUID
 	cmd.SysProcAttr.Credential.Gid = gitpodGID
 	return cmd
