@@ -60,7 +60,7 @@ export default function SelectIDE(props: SelectIDEProps) {
 
     return (
         <>
-            <div className="w-112 my-4">
+            <div className="w-112 max-w-full my-4">
                 <SelectIDEComponent
                     onSelectionChange={async (ide) => {
                         await actuallySetDefaultIde(ide);
