@@ -43,6 +43,7 @@ const (
 	SystemNodeCritical              = "system-node-critical"
 	PaymentEndpointComponent        = "payment-endpoint"
 	PublicApiComponent              = "public-api-server"
+	UsageComponent                  = "usage"
 	WSManagerComponent              = "ws-manager"
 	WSManagerMk2Component           = "ws-manager-mk2"
 	WSManagerBridgeComponent        = "ws-manager-bridge"
