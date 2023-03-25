@@ -112,30 +112,6 @@ export default function Preferences() {
                             <Button>Save</Button>
                         </div>
                     </InputField>
-
-                    <br />
-                    <br />
-                    <br />
-                    <h4>Repository URL</h4>
-                    <span className="flex">
-                        <input
-                            type="text"
-                            value={dotfileRepo}
-                            className="w-96 h-9"
-                            placeholder="e.g. https://github.com/username/dotfiles"
-                            onChange={(e) => setDotfileRepo(e.target.value)}
-                        />
-                        <Button type="secondary" className="ml-2">
-                            Save Changes
-                        </Button>
-                    </span>
-                    <div className="mt-1">
-                        <p className="text-gray-500 dark:text-gray-400">
-                            Add a repository URL that includes dotfiles. Gitpod will
-                            <br />
-                            clone and install your dotfiles for every new workspace.
-                        </p>
-                    </div>
                 </form>
 
                 <Heading2 className="mt-12">Timeouts</Heading2>

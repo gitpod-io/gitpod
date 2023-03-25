@@ -1,5 +1,6 @@
-import { createContext, FC, useCallback, useContext, useMemo, useState } from "react";
-import { Toast, ToastEntry } from "./Toast";
+import { createContext, FC, memo, useCallback, useContext, useMemo, useReducer } from "react";
+import { ToastEntry, toastReducer } from "./reducer";
+import { Toast } from "./Toast";
 
 type NotifyProps = string | (Pick<ToastEntry, "message"> & Partial<ToastEntry>);
 
@@ -14,46 +15,47 @@ export const useToast = () => {
 };
 
 export const ToastContextProvider: FC = ({ children }) => {
-    const [toasts, setToasts] = useState<ToastEntry[]>([]);
+    const [toasts, dispatch] = useReducer(toastReducer, []);
 
-    const addToast = useCallback(
-        (message: NotifyProps) => {
-            let newToast: ToastEntry | undefined;
+    const removeToast = useCallback((id) => {
+        dispatch({ type: "remove", id });
+    }, []);
 
-            if (typeof message === "string") {
-                newToast = {
-                    id: `${Date.now()}`,
-                    message,
-                };
-            } else {
-                newToast = {
-                    id: `${Date.now()}`,
-                    ...message,
-                };
-            }
+    const addToast = useCallback((message: NotifyProps) => {
+        const newToast: ToastEntry =
+            typeof message === "string"
+                ? {
+                      id: `${Math.random()}`,
+                      message,
+                  }
+                : {
+                      id: `${Math.random()}`,
+                      ...message,
+                  };
 
-            setToasts([...toasts, newToast]);
-        },
-        [toasts],
-    );
-
-    const removeToast = useCallback(
-        (id) => {
-            setToasts(toasts.filter((toast) => toast.id !== id));
-        },
-        [toasts],
-    );
+        dispatch({ type: "add", toast: newToast });
+    }, []);
 
     const ctxValue = useMemo(() => ({ notify: addToast }), [addToast]);
 
     return (
         <ToastContext.Provider value={ctxValue}>
             {children}
-            <div className="fixed z-50 box-border bottom-2 right-2 space-y-2">
-                {toasts.map((toast) => {
-                    return <Toast key={toast.id} {...toast} onRemove={removeToast} />;
-                })}
-            </div>
+            <ToastsList toasts={toasts} onRemove={removeToast} />
         </ToastContext.Provider>
     );
 };
+
+type ToastsListProps = {
+    toasts: ToastEntry[];
+    onRemove: (id: string) => void;
+};
+const ToastsList: FC<ToastsListProps> = memo(({ toasts, onRemove }) => {
+    return (
+        <div className="fixed z-50 box-border bottom-2 right-2 space-y-2">
+            {toasts.map((toast) => {
+                return <Toast key={toast.id} {...toast} onRemove={onRemove} />;
+            })}
+        </div>
+    );
+});
