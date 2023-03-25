@@ -15,3 +15,7 @@ func (c *NoOpClient) FinalizeInvoice(ctx context.Context, invoiceId string) erro
 func (c *NoOpClient) CancelSubscription(ctx context.Context, subscriptionId string) error {
 	return nil
 }
+
+func (c *NoOpClient) ChargeDisputeCreated(ctx context.Context, disputeID string) error {
+	return nil
+}
