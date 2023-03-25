@@ -26,7 +26,6 @@ GITPOD_CONTAINER_REGISTRY_URL="eu.gcr.io/gitpod-core-dev/build/";
 GITPOD_IMAGE_PULL_SECRET_NAME="gcp-sa-registry-auth";
 GITPOD_PROXY_SECRET_NAME="proxy-config-certificates";
 GITPOD_ANALYTICS="${GITPOD_ANALYTICS:-}"
-GITPOD_WITH_EE_LICENSE="${GITPOD_WITH_EE_LICENSE:-true}"
 GITPOD_WORKSPACE_FEATURE_FLAGS="${GITPOD_WORKSPACE_FEATURE_FLAGS:-}"
 GITPOD_WITH_DEDICATED_EMU="${GITPOD_WITH_DEDICATED_EMU:-false}"
 GITPOD_WSMANAGER_MK2="${GITPOD_WSMANAGER_MK2:-false}"
@@ -534,16 +533,6 @@ installer --debug-version-file="/tmp/versions.yaml" render \
 # ===============
 
 log_info "Post-processing"
-
-#
-# configureLicense
-#
-if [[ "${GITPOD_WITH_EE_LICENSE}" == "true" ]]
-then
-  readWerftSecret "gpsh-harvester-license" "license" > /tmp/license
-else
-  touch /tmp/license
-fi
 
 #
 # configureWorkspaceFeatureFlags

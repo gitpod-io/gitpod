@@ -30,7 +30,6 @@ export class Installer {
             PREVIEW_NAME: this.options.previewName,
             GITPOD_ANALYTICS: this.options.analytics,
             GITPOD_WORKSPACE_FEATURE_FLAGS: this.options.workspaceFeatureFlags.join(" "),
-            GITPOD_WITH_EE_LICENSE: this.options.withEELicense,
             GITPOD_WITH_DEDICATED_EMU: this.options.withDedicatedEmulation,
             GITPOD_WSMANAGER_MK2: this.options.useWsManagerMk2,
         };
