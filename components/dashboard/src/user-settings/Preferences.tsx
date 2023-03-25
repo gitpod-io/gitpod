@@ -41,8 +41,8 @@ export default function Preferences() {
             };
             const updatedUser = await getGitpodService().server.updateLoggedInUser({ additionalData });
             setUser(updatedUser);
+            notify("Your dotfiles repository was updated");
 
-            notify({ message: "Your dotfiles repository was updated", autoHide: false });
             if (dotfileRepo !== prevDotfileRepo) {
                 trackEvent("dotfile_repo_changed", {
                     previous: prevDotfileRepo,
@@ -59,11 +59,18 @@ export default function Preferences() {
 
             try {
                 await getGitpodService().server.updateWorkspaceTimeoutSetting({ workspaceTimeout: workspaceTimeout });
+
+                // TODO: Once current user is in react-query, we can instead invalidate the query vs. refetching here
+                const updatedUser = await getGitpodService().server.getLoggedInUser();
+                setUser(updatedUser);
+
+                notify("Your default workspace timeout was updated");
             } catch (e) {
+                // TODO: Convert this to an error style toast
                 alert("Cannot set custom workspace timeout: " + e.message);
             }
         },
-        [workspaceTimeout],
+        [notify, setUser, workspaceTimeout],
     );
 
     return (
@@ -85,17 +92,9 @@ export default function Preferences() {
 
                 <ThemeSelector className="mt-12" />
 
-                <Subheading>wtf is going on</Subheading>
-                <Button
-                    onClick={() => {
-                        notify("This is a toast!");
-                    }}
-                >
-                    Toasty
-                </Button>
-
                 <Heading2 className="mt-12">Dotfiles</Heading2>
                 <Subheading>Customize workspaces using dotfiles.</Subheading>
+
                 <form className="mt-4 max-w-xl" onSubmit={saveDotfileRepo}>
                     <InputField
                         label="Repository URL"
@@ -109,16 +108,15 @@ export default function Preferences() {
                                     onChange={setDotfileRepo}
                                 />
                             </div>
-                            <Button>Save</Button>
+                            <Button disabled={dotfileRepo === user?.additionalData?.dotfileRepo ?? ""}>Save</Button>
                         </div>
                     </InputField>
                 </form>
 
                 <Heading2 className="mt-12">Timeouts</Heading2>
                 <Subheading>Workspaces will stop after a period of inactivity without any user input.</Subheading>
-                <div className="mt-4 max-w-xl">
-                    <h4>Default Workspace Timeout</h4>
 
+                <div className="mt-4 max-w-xl">
                     {!maySetTimeout.isLoading && maySetTimeout.data === false && (
                         <Alert type="message">
                             Upgrade organization{" "}
@@ -131,24 +129,30 @@ export default function Preferences() {
 
                     {maySetTimeout.data === true && (
                         <form onSubmit={saveWorkspaceTimeout}>
-                            <span className="flex">
-                                <input
-                                    type="text"
-                                    className="w-96 h-9"
-                                    value={workspaceTimeout}
-                                    placeholder="e.g. 30m"
-                                    onChange={(e) => setWorkspaceTimeout(e.target.value)}
-                                />
-                                <Button type="secondary" className="ml-2">
-                                    Save Changes
-                                </Button>
-                            </span>
-                            <div className="mt-1">
-                                <p className="text-gray-500 dark:text-gray-400">
-                                    Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
-                                    <span className="font-semibold">2h</span>.
-                                </p>
-                            </div>
+                            <InputField
+                                label="Default Workspace Timeout"
+                                hint={
+                                    <span>
+                                        Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
+                                        <span className="font-semibold">2h</span>
+                                    </span>
+                                }
+                            >
+                                <div className="flex space-x-2">
+                                    <div className="flex-grow">
+                                        <TextInput
+                                            value={workspaceTimeout}
+                                            placeholder="e.g. 30m"
+                                            onChange={setWorkspaceTimeout}
+                                        />
+                                    </div>
+                                    <Button
+                                        disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
+                                    >
+                                        Save
+                                    </Button>
+                                </div>
+                            </InputField>
                         </form>
                     )}
                 </div>
