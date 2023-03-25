@@ -620,27 +620,18 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
 
-        let targetUser;
-        try {
-            targetUser = await this.userService.blockUser(req.id, req.blocked);
-        } catch (error) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
-        }
+        const targetUser = await this.userService.blockUser(req.id, req.blocked);
 
-        const workspaceDb = this.workspaceDb.trace(ctx);
-        const workspaces = await workspaceDb.findWorkspacesByUser(req.id);
-        const isDefined = <T>(x: T | undefined): x is T => x !== undefined;
-        (await Promise.all(workspaces.map((workspace) => workspaceDb.findRunningInstance(workspace.id))))
-            .filter(isDefined)
-            .forEach((instance) =>
-                this.workspaceStarter.stopWorkspaceInstance(
-                    ctx,
-                    instance.id,
-                    instance.region,
-                    "user blocked by admin",
-                    StopWorkspacePolicy.IMMEDIATELY,
-                ),
-            );
+        const stoppedWorkspaces = await this.workspaceStarter.stopWorkspacesForUser(
+            ctx,
+            req.id,
+            "user blocked by admin",
+            StopWorkspacePolicy.IMMEDIATELY,
+        );
+
+        log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to admin initiated block.`, {
+            workspaceIds: stoppedWorkspaces.map((w) => w.id),
+        });
 
         // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
         // Returning `target` instead (which should be equivalent).
