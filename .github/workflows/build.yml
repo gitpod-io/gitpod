@@ -31,7 +31,6 @@ jobs:
       publish_to_jbmp: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-jb-marketplace') }}
       with_ws_manager_mk2: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-ws-manager-mk2') }}
       with_dedicated_emulation: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-dedicated-emulation') }}
-      with_ee_license: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-ee-license') }}
       analytics: ${{ contains( steps.pr-details.outputs.pr_body, '[X] analytics') }}
       workspace_feature_flags: ${{ steps.output.outputs.workspace_feature_flags }}
       pr_no_diff_skip: ${{ steps.pr-diff.outputs.pr_no_diff_skip }}
@@ -298,7 +297,6 @@ jobs:
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           wsmanager_mk2: ${{needs.configuration.outputs.with_ws_manager_mk2}}
           with_dedicated_emulation: ${{needs.configuration.outputs.with_dedicated_emulation}}
-          with_ee_license: ${{needs.configuration.outputs.with_ee_license}}
           analytics: ${{needs.configuration.outputs.analytics}}
           workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
 
