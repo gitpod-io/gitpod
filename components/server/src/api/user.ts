@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { ServiceImpl, ConnectError, Code } from "@bufbuild/connect";
 import { UserService as UserServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
 import {
@@ -23,9 +23,17 @@ import {
     GetGitTokenResponse,
     BlockUserResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
+import { WorkspaceStarter } from "../workspace/workspace-starter";
+import { UserService } from "../user/user-service";
+import { validate } from "uuid";
+import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class APIUserService implements ServiceImpl<typeof UserServiceInterface> {
+    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
+    @inject(UserService) protected readonly userService: UserService;
+
     public async getAuthenticatedUser(req: GetAuthenticatedUserRequest): Promise<GetAuthenticatedUserResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
@@ -51,6 +59,34 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
     }
 
     public async blockUser(req: BlockUserRequest): Promise<BlockUserResponse> {
-        throw new ConnectError("unimplemented", Code.Unimplemented);
+        const { userId, reason } = req;
+
+        if (!userId) {
+            throw new ConnectError("userId is a required parameter", Code.InvalidArgument);
+        }
+        if (!validate(userId)) {
+            throw new ConnectError("userId must be a valid uuid", Code.InvalidArgument);
+        }
+        if (!reason) {
+            throw new ConnectError("reason is a required parameter", Code.InvalidArgument);
+        }
+
+        // TODO: Once connect-node supports middlewares, lift the tracing into the middleware.
+        const trace = {};
+        await this.userService.blockUser(userId, true);
+
+        const stoppedWorkspaces = await this.workspaceStarter.stopRunningWorkspacesForUser(
+            trace,
+            userId,
+            reason,
+            StopWorkspacePolicy.IMMEDIATELY,
+        );
+
+        log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to BlockUser.`, {
+            userId: userId,
+            workspaceIds: stoppedWorkspaces.map((w) => w.id),
+        });
+
+        return new BlockUserResponse();
     }
 }
