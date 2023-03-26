@@ -15,12 +15,12 @@ import (
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	redis "github.com/go-redis/redis/v8"
 	files "github.com/ipfs/go-ipfs-files"
 	ipfs "github.com/ipfs/interface-go-ipfs-core"
 	"github.com/ipfs/interface-go-ipfs-core/options"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	redis "github.com/redis/go-redis/v9"
 	"golang.org/x/xerrors"
 )
 

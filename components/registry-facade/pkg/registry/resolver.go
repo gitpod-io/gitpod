@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 
 	"github.com/containerd/containerd/remotes"
-	redis "github.com/go-redis/redis/v8"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type RedisCachedResolver struct {
