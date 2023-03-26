@@ -67,6 +67,8 @@ replace github.com/gitpod-io/gitpod/components/gitpod-db/go => ../gitpod-db/go /
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
+replace github.com/gitpod-io/gitpod/components/public-api/go => ../public-api/go // leeway
+
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/usage-api => ../usage-api/go // leeway

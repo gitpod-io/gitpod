@@ -12,8 +12,11 @@ import (
 	"math"
 	"time"
 
+	"github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	experimental_v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
@@ -37,6 +40,8 @@ type BillingService struct {
 	stripeClient *stripe.Client
 	ccManager    *db.CostCenterManager
 	stripePrices stripe.StripePrices
+
+	teamsService v1connect.TeamsServiceClient
 
 	v1.UnimplementedBillingServiceServer
 }
@@ -406,6 +411,73 @@ func (s *BillingService) CancelSubscription(ctx context.Context, in *v1.CancelSu
 		return nil, err
 	}
 	return &v1.CancelSubscriptionResponse{}, nil
+}
+
+func (s *BillingService) OnChargeDispute(ctx context.Context, req *v1.OnChargeDisputeRequest) (*v1.OnChargeDisputeResponse, error) {
+	if req.DisputeId == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "dispute ID is required")
+	}
+
+	logger := log.WithContext(ctx).WithField("disputeId", req.DisputeId)
+
+	dispute, err := s.stripeClient.GetDispute(ctx, req.DisputeId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to retrieve dispute ID %s from stripe", req.DisputeId)
+	}
+
+	if dispute.PaymentIntent == nil || dispute.PaymentIntent.Customer == nil {
+		return nil, status.Errorf(codes.Internal, "dispute did not contain customer of payment intent in expanded fields")
+	}
+
+	customer := dispute.PaymentIntent.Customer
+	logger = logger.WithField("customerId", customer.ID)
+
+	attributionIDValue, ok := customer.Metadata[stripe.AttributionIDMetadataKey]
+	if !ok {
+		return nil, status.Errorf(codes.Internal, "Customer %s object did not contain attribution ID in metadata", customer.ID)
+	}
+
+	logger = logger.WithField("attributionId", attributionIDValue)
+
+	attributionID, err := db.ParseAttributionID(attributionIDValue)
+	if err != nil {
+		log.WithError(err).Errorf("Failed to parse attribution ID from customer metadata.")
+		return nil, status.Errorf(codes.Internal, "failed to parse attribution ID from customer metadata")
+	}
+
+	var userIDsToBlock []string
+	entity, id := attributionID.Values()
+	switch entity {
+	case db.AttributionEntity_User:
+		// legacy for cases where we've not migrated the user to a team
+		// because we attribute to the user directly, we can just block the user directly
+		userIDsToBlock = append(userIDsToBlock, id)
+
+	case db.AttributionEntity_Team:
+		team, err := s.teamsService.GetTeam(ctx, connect.NewRequest(&experimental_v1.GetTeamRequest{
+			TeamId: id,
+		}))
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to lookup team details for team ID: %s", id)
+		}
+
+		for _, member := range team.Msg.GetTeam().GetMembers() {
+			if member.GetRole() != experimental_v1.TeamRole_TEAM_ROLE_OWNER {
+				continue
+			}
+			userIDsToBlock = append(userIDsToBlock, member.GetUserId())
+		}
+
+	default:
+		return nil, status.Errorf(codes.Internal, "unknown attribution entity for %s", attributionIDValue)
+	}
+
+	logger = logger.WithField("teamOwners", userIDsToBlock)
+
+	logger.Infof("Identified %d users to block based on charge dispute", len(userIDsToBlock))
+	// TODO: actually block users
+
+	return &v1.OnChargeDisputeResponse{}, nil
 }
 
 func (s *BillingService) getPriceId(ctx context.Context, attributionId string) string {
