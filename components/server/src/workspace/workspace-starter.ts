@@ -420,7 +420,7 @@ export class WorkspaceStarter {
         userID: string,
         reason: string,
         policy?: StopWorkspacePolicy,
-    ): Promise<Workspace> {
+    ): Promise<Workspace[]> {
         const isDefined = <T>(x: T | undefined): x is T => x !== undefined;
 
         const workspaceDb = this.workspaceDb.trace(ctx);
