@@ -19,7 +19,7 @@ import (
 type Interface interface {
 	FinalizeInvoice(ctx context.Context, invoiceId string) error
 	CancelSubscription(ctx context.Context, subscriptionId string) error
-	ChargeDisputeCreated(ctx context.Context, disputeID string) error
+	OnChargeDispute(ctx context.Context, disputeID string) error
 }
 
 type Client struct {
@@ -53,7 +53,7 @@ func (c *Client) CancelSubscription(ctx context.Context, subscriptionId string) 
 	return nil
 }
 
-func (c *Client) ChargeDisputeCreated(ctx context.Context, disputeID string) error {
+func (c *Client) OnChargeDispute(ctx context.Context, disputeID string) error {
 	log.Infof("Handling stripe charge dispute ID: %s", disputeID)
 	return fmt.Errorf("unimplemented")
 }

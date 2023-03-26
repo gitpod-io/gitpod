@@ -94,7 +94,7 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 
-		if err := h.billingService.ChargeDisputeCreated(req.Context(), disputeID); err != nil {
+		if err := h.billingService.OnChargeDispute(req.Context(), disputeID); err != nil {
 			log.WithError(err).Errorf("Failed to handle charge dispute event for dispute ID: %s", disputeID)
 			w.WriteHeader(http.StatusInternalServerError)
 			return

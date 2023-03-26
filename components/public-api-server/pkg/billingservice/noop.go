@@ -16,6 +16,6 @@ func (c *NoOpClient) CancelSubscription(ctx context.Context, subscriptionId stri
 	return nil
 }
 
-func (c *NoOpClient) ChargeDisputeCreated(ctx context.Context, disputeID string) error {
+func (c *NoOpClient) OnChargeDispute(ctx context.Context, disputeID string) error {
 	return nil
 }
