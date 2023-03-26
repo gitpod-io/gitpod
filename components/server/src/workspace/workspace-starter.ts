@@ -415,23 +415,26 @@ export class WorkspaceStarter {
         await client.stopWorkspace(ctx, req);
     }
 
-    public async stopWorkspacesForUser(
+    public async stopRunningWorkspacesForUser(
         ctx: TraceContext,
         userID: string,
         reason: string,
         policy?: StopWorkspacePolicy,
     ): Promise<Workspace[]> {
-        const isDefined = <T>(x: T | undefined): x is T => x !== undefined;
-
         const workspaceDb = this.workspaceDb.trace(ctx);
-        const workspaces = await workspaceDb.findWorkspacesByUser(userID);
-
-        const toStop = workspaces.filter(isDefined);
-        (await Promise.all(toStop.map((workspace) => workspaceDb.findRunningInstance(workspace.id)))).forEach(
-            (instance) => this.stopWorkspaceInstance(ctx, instance.id, instance.region, reason, policy),
+        const instances = await workspaceDb.findRunningInstancesWithWorkspaces(undefined, userID);
+        await Promise.all(
+            instances.map((instance) =>
+                this.stopWorkspaceInstance(
+                    ctx,
+                    instance.latestInstance.id,
+                    instance.latestInstance.region,
+                    reason,
+                    policy,
+                ),
+            ),
         );
-
-        return toStop;
+        return instances.map((instance) => instance.workspace);
     }
 
     protected async checkBlockedRepository(user: User, contextURL: string) {

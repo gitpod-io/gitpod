@@ -622,7 +622,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         const targetUser = await this.userService.blockUser(req.id, req.blocked);
 
-        const stoppedWorkspaces = await this.workspaceStarter.stopWorkspacesForUser(
+        const stoppedWorkspaces = await this.workspaceStarter.stopRunningWorkspacesForUser(
             ctx,
             req.id,
             "user blocked by admin",
