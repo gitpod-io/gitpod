@@ -630,6 +630,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         );
 
         log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to admin initiated block.`, {
+            userId: targetUser.id,
             workspaceIds: stoppedWorkspaces.map((w) => w.id),
         });
 
