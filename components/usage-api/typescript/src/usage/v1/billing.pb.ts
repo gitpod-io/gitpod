@@ -82,6 +82,13 @@ export interface GetPriceInformationResponse {
   humanReadableDescription: string;
 }
 
+export interface OnChargeDisputeRequest {
+  disputeId: string;
+}
+
+export interface OnChargeDisputeResponse {
+}
+
 function createBaseReconcileInvoicesRequest(): ReconcileInvoicesRequest {
   return {};
 }
@@ -904,6 +911,92 @@ export const GetPriceInformationResponse = {
   },
 };
 
+function createBaseOnChargeDisputeRequest(): OnChargeDisputeRequest {
+  return { disputeId: "" };
+}
+
+export const OnChargeDisputeRequest = {
+  encode(message: OnChargeDisputeRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.disputeId !== "") {
+      writer.uint32(10).string(message.disputeId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): OnChargeDisputeRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseOnChargeDisputeRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.disputeId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): OnChargeDisputeRequest {
+    return { disputeId: isSet(object.disputeId) ? String(object.disputeId) : "" };
+  },
+
+  toJSON(message: OnChargeDisputeRequest): unknown {
+    const obj: any = {};
+    message.disputeId !== undefined && (obj.disputeId = message.disputeId);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<OnChargeDisputeRequest>): OnChargeDisputeRequest {
+    const message = createBaseOnChargeDisputeRequest();
+    message.disputeId = object.disputeId ?? "";
+    return message;
+  },
+};
+
+function createBaseOnChargeDisputeResponse(): OnChargeDisputeResponse {
+  return {};
+}
+
+export const OnChargeDisputeResponse = {
+  encode(_: OnChargeDisputeResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): OnChargeDisputeResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseOnChargeDisputeResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): OnChargeDisputeResponse {
+    return {};
+  },
+
+  toJSON(_: OnChargeDisputeResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<OnChargeDisputeResponse>): OnChargeDisputeResponse {
+    const message = createBaseOnChargeDisputeResponse();
+    return message;
+  },
+};
+
 export type BillingServiceDefinition = typeof BillingServiceDefinition;
 export const BillingServiceDefinition = {
   name: "BillingService",
@@ -979,6 +1072,15 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    /** OnChargeDispute handles charge disputes created with the underlying payment provider. */
+    onChargeDispute: {
+      name: "OnChargeDispute",
+      requestType: OnChargeDisputeRequest,
+      requestStream: false,
+      responseType: OnChargeDisputeResponse,
+      responseStream: false,
+      options: {},
+    },
   },
 } as const;
 
@@ -1025,6 +1127,11 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: GetPriceInformationRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<GetPriceInformationResponse>>;
+  /** OnChargeDispute handles charge disputes created with the underlying payment provider. */
+  onChargeDispute(
+    request: OnChargeDisputeRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<OnChargeDisputeResponse>>;
 }
 
 export interface BillingServiceClient<CallOptionsExt = {}> {
@@ -1070,6 +1177,11 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<GetPriceInformationRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<GetPriceInformationResponse>;
+  /** OnChargeDispute handles charge disputes created with the underlying payment provider. */
+  onChargeDispute(
+    request: DeepPartial<OnChargeDisputeRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<OnChargeDisputeResponse>;
 }
 
 export interface DataLoaderOptions {
