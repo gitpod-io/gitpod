@@ -18,15 +18,9 @@ export const useUpdateTeamSettingsMutation = () => {
         mutationFn: async ({ teamId, workspaceSharingDisabled }) => {
             return await getGitpodService().server.updateTeamSettings(teamId, { workspaceSharingDisabled });
         },
-        onSuccess: (_, { teamId, workspaceSharingDisabled }) => {
+        onSuccess: (newData, { teamId }) => {
             const queryKey = getOrgSettingsQuery(teamId);
-            queryClient.setQueryData<TeamSettingsResult>(queryKey, (oldData) => {
-                return {
-                    teamId,
-                    ...oldData,
-                    workspaceSharingDisabled: !workspaceSharingDisabled,
-                };
-            });
+            queryClient.setQueryData<TeamSettingsResult>(queryKey, newData);
             queryClient.invalidateQueries({ queryKey });
         },
     });

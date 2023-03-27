@@ -364,7 +364,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async findTeamSettings(teamId: string): Promise<TeamSettings | undefined> {
         const repo = await this.getTeamSettingsRepo();
-        return repo.findOne({ where: { teamId, deleted: false } });
+        return repo.findOne({ where: { teamId, deleted: false }, select: { deleted: false } });
     }
 
     public async setTeamSettings(teamId: string, settings: Partial<TeamSettings>): Promise<void> {
