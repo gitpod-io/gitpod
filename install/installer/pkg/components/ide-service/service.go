@@ -5,6 +5,7 @@
 package ide_service
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -16,6 +17,11 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name:          GRPCPortName,
 			ContainerPort: GRPCServicePort,
 			ServicePort:   GRPCServicePort,
+		},
+		{
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
 	}
 	return common.GenerateService(Component, ports)(ctx)

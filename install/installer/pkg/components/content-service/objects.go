@@ -12,7 +12,6 @@ import (
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	deployment,
-	networkpolicy,
 	rolebinding,
 	common.GenerateService(Component, []common.ServicePort{
 		{

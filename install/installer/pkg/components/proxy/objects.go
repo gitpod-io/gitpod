@@ -11,7 +11,6 @@ import (
 var Objects = common.CompositeRenderFunc(
 	configmap,
 	deployment,
-	networkpolicy,
 	rolebinding,
 	service,
 	common.DefaultServiceAccount(Component),

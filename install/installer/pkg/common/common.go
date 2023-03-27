@@ -520,7 +520,7 @@ func KubeRBACProxyContainerWithConfig(ctx *RenderContext) *corev1.Container {
 		Image: ctx.ImageName(ThirdPartyContainerRepo(ctx.Config.Repository, KubeRBACProxyRepo), KubeRBACProxyImage, KubeRBACProxyTag),
 		Args: []string{
 			"--logtostderr",
-			fmt.Sprintf("--insecure-listen-address=[$(IP)]:%d", baseserver.BuiltinMetricsPort),
+			fmt.Sprintf("--secure-listen-address=[$(IP)]:%d", baseserver.BuiltinMetricsPort),
 			fmt.Sprintf("--upstream=http://127.0.0.1:%d/", baseserver.BuiltinMetricsPort),
 		},
 		Ports: []corev1.ContainerPort{
@@ -608,27 +608,29 @@ func ObjectHash(objs []runtime.Object, err error) (string, error) {
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
 }
 
+const (
+	AllowIngress = "{}"
+)
+
 var (
 	TCPProtocol = func() *corev1.Protocol {
 		tcpProtocol := corev1.ProtocolTCP
 		return &tcpProtocol
 	}()
 	PrometheusIngressRule = networkingv1.NetworkPolicyIngressRule{
+		From: []networkingv1.NetworkPolicyPeer{
+			{
+				NamespaceSelector: &metav1.LabelSelector{
+					MatchLabels: map[string]string{
+						"role": "monitoring",
+					},
+				},
+			},
+		},
 		Ports: []networkingv1.NetworkPolicyPort{
 			{
 				Protocol: TCPProtocol,
 				Port:     &intstr.IntOrString{IntVal: baseserver.BuiltinMetricsPort},
-			},
-		},
-		From: []networkingv1.NetworkPolicyPeer{
-			{
-				// todo(sje): add these labels to the prometheus instance
-				PodSelector: &metav1.LabelSelector{
-					MatchLabels: map[string]string{
-						"app":       "prometheus",
-						"component": "server",
-					},
-				},
 			},
 		},
 	}

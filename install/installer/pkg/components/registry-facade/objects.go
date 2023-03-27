@@ -7,6 +7,7 @@ package registryfacade
 import (
 	corev1 "k8s.io/api/core/v1"
 
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 )
 
@@ -14,7 +15,6 @@ var Objects = common.CompositeRenderFunc(
 	clusterrole,
 	configmap,
 	daemonset,
-	networkpolicy,
 	podsecuritypolicy,
 	rolebinding,
 	certificate,
@@ -23,6 +23,11 @@ var Objects = common.CompositeRenderFunc(
 			Name:          ContainerPortName,
 			ContainerPort: ServicePort,
 			ServicePort:   ServicePort,
+		},
+		{
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
 	}, func(svc *corev1.Service) {
 		svc.Spec.Type = corev1.ServiceTypeNodePort

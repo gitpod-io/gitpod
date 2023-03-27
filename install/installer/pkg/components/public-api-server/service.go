@@ -5,6 +5,7 @@
 package public_api_server
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -20,6 +21,11 @@ func service(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Name:          HTTPPortName,
 			ContainerPort: HTTPContainerPort,
 			ServicePort:   HTTPServicePort,
+		},
+		{
+			Name:          baseserver.BuiltinMetricsPortName,
+			ContainerPort: baseserver.BuiltinMetricsPort,
+			ServicePort:   baseserver.BuiltinMetricsPort,
 		},
 	}
 
