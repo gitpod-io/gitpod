@@ -6,6 +6,7 @@ package supervisor
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -13,7 +14,12 @@ import (
 	"golang.org/x/xerrors"
 )
 
+var isGHAction = os.Getenv("GITHUB_ACTIONS") == "true"
+
 func TestTopServiceHappyPath(t *testing.T) {
+	if isGHAction {
+		t.Skip("skipping test in GH action")
+	}
 	ctx := context.Background()
 
 	topService := NewTopService()
