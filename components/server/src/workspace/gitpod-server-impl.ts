@@ -2508,7 +2508,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return settings ?? { workspaceSharingDisabled: false };
     }
 
-    async orgId(
+    async updateOrgSettings(
         ctx: TraceContextWithSpan,
         orgId: string,
         settings: Partial<OrganizationSettings>,

@@ -186,7 +186,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     resetGenericInvite(inviteId: string): Promise<TeamMembershipInvite>;
     deleteTeam(teamId: string): Promise<void>;
     getOrgSettings(orgId: string): Promise<OrganizationSettings>;
-    updateOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<OrganizationSettings>;
+    updateOrgSettings(teamId: string, settings: Partial<OrganizationSettings>): Promise<OrganizationSettings>;
     createOrgAuthProvider(params: GitpodServer.CreateOrgAuthProviderParams): Promise<AuthProviderEntry>;
     updateOrgAuthProvider(params: GitpodServer.UpdateOrgAuthProviderParams): Promise<AuthProviderEntry>;
     getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;
