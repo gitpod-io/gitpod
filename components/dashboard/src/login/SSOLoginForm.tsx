@@ -6,11 +6,15 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { FC, useCallback, useState } from "react";
+import Alert from "../components/Alert";
 import { Button } from "../components/Button";
 import { TextInputField } from "../components/forms/TextInputField";
+import { getGitpodService } from "../service/service";
 
 export const SSOLoginForm: FC = () => {
     const [orgSlug, setOrgSlug] = useState("");
+    const [error, setError] = useState("");
+
     // TODO: remove this
     const [loginUrl, setLoginUrl] = useState("");
 
@@ -20,6 +24,7 @@ export const SSOLoginForm: FC = () => {
             // return provider id
             await new Promise((resolve) => setTimeout(resolve, 2000));
 
+            // return await getGitpodService().server.getSSOLoginID(slug);
             return { id: "sample-id" };
         },
     });
@@ -29,10 +34,16 @@ export const SSOLoginForm: FC = () => {
             e.preventDefault();
 
             // make api call to get provider id by slug
-            const { id } = await exchangeSlug.mutateAsync({ slug: orgSlug });
+            const resp = await exchangeSlug.mutateAsync({ slug: orgSlug });
+            const loginId = resp?.id;
+
+            // No SSO configured for provided slug
+            if (!loginId) {
+                setError("It looks like SSO has not been configured for that organization.");
+            }
 
             // create sso login url with provider id
-            const loginUrl = `/oidc/start/?id=${id}`;
+            const loginUrl = `/oidc/start/?id=${loginId}`;
             setLoginUrl(loginUrl);
 
             // openAuthorize window for sso w/ login url
@@ -49,6 +60,7 @@ export const SSOLoginForm: FC = () => {
                     Continue with SSO
                 </Button>
                 {loginUrl && <p>{loginUrl}</p>}
+                {error && <Alert type="info">{error}</Alert>}
             </div>
         </form>
     );
