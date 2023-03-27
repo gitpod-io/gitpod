@@ -134,6 +134,7 @@ type WorkspaceConfig struct {
 
 	EnableProtectedSecrets *bool `json:"enableProtectedSecrets"`
 	UseWsmanagerMk2        bool  `json:"useWsmanagerMk2,omitempty"`
+	UseMk2ExperimentalMode bool  `json:"useMk2ExperimentalMode,omitempty"`
 }
 
 type PersistentVolumeClaim struct {
