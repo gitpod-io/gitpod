@@ -86,22 +86,27 @@ func NewRatelimitingInterceptor(f map[string]RateLimit) RatelimitingInterceptor 
 }
 
 func fieldAccessKey(key string) keyFunc {
+	fields := strings.Split(key, ",")
+	paths := make([][]string, len(fields))
+	for i, field := range fields {
+		paths[i] = strings.Split(field, ".")
+	}
 	return func(req interface{}) (string, error) {
 		msg, ok := req.(proto.Message)
 		if !ok {
 			return "", status.Errorf(codes.Internal, "request was not a protobuf message")
 		}
 
-		fields := strings.Split(key, ",")
 		var composite string
-		for _, field := range fields {
-			val, ok := getFieldValue(msg.ProtoReflect(), strings.Split(field, "."))
+		for i, field := range fields {
+			val, ok := getFieldValue(msg.ProtoReflect(), paths[i])
 			if !ok {
 				return "", status.Errorf(codes.Internal, "Field %s does not exist in message. This is a rate limiting configuration error.", field)
 			}
 			// It's technically possible that `|` is part of one of the field values, and therefore could cause collisions
 			// in composite keys, e.g. values (`a|`, `b`), and (`a`, `|b`) would result in the same composite key `a||b`
-			// and share the rate limit. This is currently not possible though given the fields we rate limit on.
+			// and share the rate limit. This is highly unlikely though given the current fields we rate limit on and
+			// otherwise unlikely to cause issues.
 			composite += "|" + val
 		}
 
