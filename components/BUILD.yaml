@@ -200,12 +200,10 @@ scripts:
     srcs:
       - components/**/*
     script: |
-      RED='\033[0;31m'
-
       if [ "$(git diff --cached | grep "+" | grep ".only")" != "" ]; then
         echo ""
-        echo "${RED}COMMIT FAILED:"
-        echo "${RED}Some spec files have .only. Please remove only and try committing again."
+        echo "COMMIT FAILED:"
+        echo "Some spec files have .only. Please remove only and try committing again."
         exit 1
       else
         exit 0
