@@ -4,7 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Team, TeamMemberInfo, TeamMemberRole, TeamMembershipInvite, User } from "@gitpod/gitpod-protocol";
+import {
+    Team,
+    TeamMemberInfo,
+    TeamMemberRole,
+    TeamMembershipInvite,
+    OrganizationSettings,
+    User,
+} from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
@@ -18,6 +25,7 @@ import { DBTeamMembershipInvite } from "./entity/db-team-membership-invite";
 import { ResponseError } from "vscode-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import slugify from "slugify";
+import { DBOrgSettings } from "./entity/db-team-settings";
 
 @injectable()
 export class TeamDBImpl implements TeamDB {
@@ -37,6 +45,10 @@ export class TeamDBImpl implements TeamDB {
 
     protected async getMembershipInviteRepo(): Promise<Repository<DBTeamMembershipInvite>> {
         return (await this.getEntityManager()).getRepository<DBTeamMembershipInvite>(DBTeamMembershipInvite);
+    }
+
+    protected async getOrgSettingsRepo(): Promise<Repository<DBOrgSettings>> {
+        return (await this.getEntityManager()).getRepository<DBOrgSettings>(DBOrgSettings);
     }
 
     protected async getUserRepo(): Promise<Repository<DBUser>> {
@@ -221,6 +233,16 @@ export class TeamDBImpl implements TeamDB {
         if (team) {
             team.markedDeleted = true;
             await teamRepo.save(team);
+            await this.deleteOrgSettings(teamId);
+        }
+    }
+
+    private async deleteOrgSettings(orgId: string): Promise<void> {
+        const orgSettingsRepo = await this.getOrgSettingsRepo();
+        const orgSettings = await orgSettingsRepo.findOne({ where: { orgId, deleted: false } });
+        if (orgSettings) {
+            orgSettings.deleted = true;
+            orgSettingsRepo.save(orgSettings);
         }
     }
 
@@ -338,5 +360,24 @@ export class TeamDBImpl implements TeamDB {
         };
         await inviteRepo.save(newInvite);
         return newInvite;
+    }
+
+    public async findOrgSettings(orgId: string): Promise<OrganizationSettings | undefined> {
+        const repo = await this.getOrgSettingsRepo();
+        return repo.findOne({ where: { orgId, deleted: false }, select: ["orgId", "workspaceSharingDisabled"] });
+    }
+
+    public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<void> {
+        const repo = await this.getOrgSettingsRepo();
+        const team = await repo.findOne({ where: { orgId, deleted: false } });
+        if (!team) {
+            await repo.insert({
+                ...settings,
+                orgId,
+            });
+        } else {
+            team.workspaceSharingDisabled = settings.workspaceSharingDisabled;
+            repo.save(team);
+        }
     }
 }

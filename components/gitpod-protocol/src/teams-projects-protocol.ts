@@ -142,6 +142,10 @@ export interface Organization {
     deleted?: boolean;
 }
 
+export interface OrganizationSettings {
+    workspaceSharingDisabled?: boolean;
+}
+
 export type TeamMemberRole = OrgMemberRole;
 export type OrgMemberRole = "owner" | "member";
 

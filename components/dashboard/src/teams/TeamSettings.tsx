@@ -4,12 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { OrganizationSettings } from "@gitpod/gitpod-protocol";
 import React, { useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
+import CheckBox from "../components/CheckBox";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { TextInputField } from "../components/forms/TextInputField";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { useUpdateOrgSettingsMutation } from "../data/organizations/update-org-settings-mutation";
+import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
@@ -18,7 +22,7 @@ import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 
-export default function TeamSettings() {
+export default function TeamSettingsPage() {
     const user = useCurrentUser();
     const org = useCurrentOrg().data;
     const invalidateOrgs = useOrganizationsInvalidator();
@@ -28,6 +32,21 @@ export default function TeamSettings() {
     const [slug, setSlug] = useState(org?.slug || "");
     const [updated, setUpdated] = useState(false);
     const updateOrg = useUpdateOrgMutation();
+    const { data: settings, isLoading } = useOrgSettingsQuery();
+    const updateTeamSettings = useUpdateOrgSettingsMutation();
+
+    const handleUpdateTeamSettings = useCallback(
+        (newSettings: Partial<OrganizationSettings>) => {
+            if (!org?.id) {
+                throw new Error("no organization selected");
+            }
+            updateTeamSettings.mutate({
+                ...settings,
+                ...newSettings,
+            });
+        },
+        [updateTeamSettings, org?.id, settings],
+    );
 
     const close = () => setModal(false);
 
@@ -88,6 +107,12 @@ export default function TeamSettings() {
                         <span>{updateOrg.error.message || "unknown error"}</span>
                     </Alert>
                 )}
+                {updateTeamSettings.isError && (
+                    <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
+                        <span>Failed to update organization settings: </span>
+                        <span>{updateTeamSettings.error.message || "unknown error"}</span>
+                    </Alert>
+                )}
                 {updated && (
                     <Alert type="message" closable={true} className="mb-2 max-w-xl rounded-md">
                         Organization name has been updated.
@@ -119,6 +144,21 @@ export default function TeamSettings() {
                     >
                         Update Organization
                     </Button>
+
+                    <Heading2 className="pt-12">Collaboration & Sharing</Heading2>
+                    <CheckBox
+                        title={<span>Workspace Sharing</span>}
+                        desc={
+                            <span>
+                                Allow organization members to share running workspaces outside the organization.
+                            </span>
+                        }
+                        checked={!settings?.workspaceSharingDisabled}
+                        onChange={({ target }) =>
+                            handleUpdateTeamSettings({ workspaceSharingDisabled: !target.checked })
+                        }
+                        disabled={isLoading}
+                    />
                 </form>
 
                 <Heading2 className="pt-12">Delete Organization</Heading2>
