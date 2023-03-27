@@ -233,16 +233,16 @@ export class TeamDBImpl implements TeamDB {
         if (team) {
             team.markedDeleted = true;
             await teamRepo.save(team);
-            await this.deleteTeamSettings(teamId);
+            await this.deleteOrgSettings(teamId);
         }
     }
 
-    private async deleteTeamSettings(teamId: string): Promise<void> {
-        const teamSettingRepo = await this.getOrgSettingsRepo();
-        const teamSettings = await teamSettingRepo.findOne({ where: { teamId: teamId, deleted: false } });
-        if (teamSettings) {
-            teamSettings.deleted = true;
-            teamSettingRepo.save(teamSettings);
+    private async deleteOrgSettings(orgId: string): Promise<void> {
+        const orgSettingsRepo = await this.getOrgSettingsRepo();
+        const orgSettings = await orgSettingsRepo.findOne({ where: { orgId, deleted: false } });
+        if (orgSettings) {
+            orgSettings.deleted = true;
+            orgSettingsRepo.save(orgSettings);
         }
     }
 
@@ -362,18 +362,18 @@ export class TeamDBImpl implements TeamDB {
         return newInvite;
     }
 
-    public async findOrgSettings(teamId: string): Promise<OrganizationSettings | undefined> {
+    public async findOrgSettings(orgId: string): Promise<OrganizationSettings | undefined> {
         const repo = await this.getOrgSettingsRepo();
-        return repo.findOne({ where: { teamId, deleted: false }, select: ["teamId", "workspaceSharingDisabled"] });
+        return repo.findOne({ where: { orgId, deleted: false }, select: ["orgId", "workspaceSharingDisabled"] });
     }
 
-    public async setOrgSettings(teamId: string, settings: Partial<OrganizationSettings>): Promise<void> {
+    public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<void> {
         const repo = await this.getOrgSettingsRepo();
-        const team = await repo.findOne({ where: { teamId, deleted: false } });
+        const team = await repo.findOne({ where: { teamId: orgId, deleted: false } });
         if (!team) {
             await repo.insert({
                 ...settings,
-                teamId,
+                orgId,
             });
         } else {
             team.workspaceSharingDisabled = settings.workspaceSharingDisabled;
