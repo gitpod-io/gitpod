@@ -41,6 +41,7 @@ import {
     StartPrebuildResult,
     PartialProject,
     PrebuildEvent,
+    TeamSettings,
 } from "./teams-projects-protocol";
 import { JsonRpcProxy, JsonRpcServer } from "./messaging/proxy-factory";
 import { Disposable, CancellationTokenSource } from "vscode-jsonrpc";
@@ -184,6 +185,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getGenericInvite(teamId: string): Promise<TeamMembershipInvite>;
     resetGenericInvite(inviteId: string): Promise<TeamMembershipInvite>;
     deleteTeam(teamId: string): Promise<void>;
+    getTeamSettings(teamId: string): Promise<TeamSettings>;
+    updateTeamSettings(teamId: string, settings: Partial<TeamSettings>): Promise<TeamSettings>;
     createOrgAuthProvider(params: GitpodServer.CreateOrgAuthProviderParams): Promise<AuthProviderEntry>;
     updateOrgAuthProvider(params: GitpodServer.UpdateOrgAuthProviderParams): Promise<AuthProviderEntry>;
     getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;

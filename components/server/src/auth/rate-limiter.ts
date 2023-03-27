@@ -113,6 +113,8 @@ const defaultFunctions: FunctionsConfig = {
     getGenericInvite: { group: "default", points: 1 },
     resetGenericInvite: { group: "default", points: 1 },
     deleteTeam: { group: "default", points: 1 },
+    getTeamSettings: { group: "default", points: 1 },
+    updateTeamSettings: { group: "default", points: 1 },
     getProviderRepositoriesForUser: { group: "default", points: 1 },
     createProject: { group: "default", points: 1 },
     getTeamProjects: { group: "default", points: 1 },

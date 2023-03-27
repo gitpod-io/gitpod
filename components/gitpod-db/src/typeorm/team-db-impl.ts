@@ -4,7 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { Team, TeamMemberInfo, TeamMemberRole, TeamMembershipInvite, User } from "@gitpod/gitpod-protocol";
+import {
+    Team,
+    TeamMemberInfo,
+    TeamMemberRole,
+    TeamMembershipInvite,
+    TeamSettings,
+    User,
+} from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
@@ -18,6 +25,7 @@ import { DBTeamMembershipInvite } from "./entity/db-team-membership-invite";
 import { ResponseError } from "vscode-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import slugify from "slugify";
+import { DBTeamSettings } from "./entity/db-team-settings";
 
 @injectable()
 export class TeamDBImpl implements TeamDB {
@@ -37,6 +45,10 @@ export class TeamDBImpl implements TeamDB {
 
     protected async getMembershipInviteRepo(): Promise<Repository<DBTeamMembershipInvite>> {
         return (await this.getEntityManager()).getRepository<DBTeamMembershipInvite>(DBTeamMembershipInvite);
+    }
+
+    protected async getTeamSettingsRepo(): Promise<Repository<DBTeamSettings>> {
+        return (await this.getEntityManager()).getRepository<DBTeamSettings>(DBTeamSettings);
     }
 
     protected async getUserRepo(): Promise<Repository<DBUser>> {
@@ -221,6 +233,16 @@ export class TeamDBImpl implements TeamDB {
         if (team) {
             team.markedDeleted = true;
             await teamRepo.save(team);
+            await this.deleteTeamSettings(teamId);
+        }
+    }
+
+    private async deleteTeamSettings(teamId: string): Promise<void> {
+        const teamSettingRepo = await this.getTeamSettingsRepo();
+        const teamSettings = await teamSettingRepo.findOne({ where: { teamId: teamId, deleted: false } });
+        if (teamSettings) {
+            teamSettings.deleted = true;
+            teamSettingRepo.save(teamSettings);
         }
     }
 
@@ -338,5 +360,24 @@ export class TeamDBImpl implements TeamDB {
         };
         await inviteRepo.save(newInvite);
         return newInvite;
+    }
+
+    public async findTeamSettings(teamId: string): Promise<TeamSettings | undefined> {
+        const repo = await this.getTeamSettingsRepo();
+        return repo.findOne({ where: { teamId, deleted: false } });
+    }
+
+    public async setTeamSettings(teamId: string, settings: Partial<TeamSettings>): Promise<void> {
+        const repo = await this.getTeamSettingsRepo();
+        const team = await repo.findOne({ where: { teamId, deleted: false } });
+        if (!team) {
+            await repo.insert({
+                ...settings,
+                teamId,
+            });
+        } else {
+            team.workspaceSharingDisabled = settings.workspaceSharingDisabled;
+            repo.save(team);
+        }
     }
 }

@@ -159,7 +159,10 @@ import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { PartialProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import {
+    PartialProject,
+    TeamSettings,
+} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ConfigurationService } from "../config/configuration-service";
 import {
@@ -2486,6 +2489,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             });
         });
 
+        // TODO: delete setting
         await this.teamDB.deleteTeam(teamId);
         await this.onTeamDeleted(teamId);
 
@@ -2496,6 +2500,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 team_id: teamId,
             },
         });
+    }
+
+    async getTeamSettings(ctx: TraceContextWithSpan, teamId: string): Promise<TeamSettings> {
+        const user = this.checkAndBlockUser("getTeamSettings");
+        traceAPIParams(ctx, { teamId, userId: user.id });
+        await this.guardTeamOperation(teamId, "get", "org_write");
+        const settings = await this.teamDB.findTeamSettings(teamId);
+        // TODO make a default in protocol
+        return settings ?? { teamId: teamId, workspaceSharingDisabled: false };
+    }
+
+    async updateTeamSettings(
+        ctx: TraceContextWithSpan,
+        teamId: string,
+        settings: Partial<TeamSettings>,
+    ): Promise<TeamSettings> {
+        const user = this.checkAndBlockUser("updateTeamSettings");
+        traceAPIParams(ctx, { teamId, userId: user.id });
+        await this.guardTeamOperation(teamId, "update", "org_write");
+        await this.teamDB.setTeamSettings(teamId, settings);
+        return (await this.teamDB.findTeamSettings(teamId))!;
     }
 
     public async getTeamProjects(ctx: TraceContext, teamId: string): Promise<Project[]> {

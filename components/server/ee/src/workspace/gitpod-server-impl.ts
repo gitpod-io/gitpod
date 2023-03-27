@@ -464,6 +464,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
 
+        // TOOD: team settings check
+
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (instance) {
             await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace: workspace }, "update");
