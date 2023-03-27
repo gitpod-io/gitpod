@@ -53,6 +53,11 @@ var Objects = common.CompositeRenderFunc(
 			ContainerPort: common.DebugNodePort,
 			ServicePort:   common.DebugNodePort,
 		},
+		{
+			Name:          GRPCAPIName,
+			ContainerPort: GRPCAPIPort,
+			ServicePort:   GRPCAPIPort,
+		},
 	}),
 	common.DefaultServiceAccount(Component),
 )

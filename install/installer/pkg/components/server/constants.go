@@ -29,4 +29,7 @@ const (
 	AdminCredentialsSecretName      = "admin-credentials"
 	AdminCredentialsSecretMountPath = "/credentials/admin"
 	AdminCredentialsSecretKey       = "admin.json"
+
+	GRPCAPIName = "grpc"
+	GRPCAPIPort = 9877
 )
