@@ -582,7 +582,6 @@ WITH_VM=true "$ROOT/.werft/jobs/build/installer/post-process.sh" "${PREVIEW_NAME
 #
 rm -f /tmp/payment
 rm -f /tmp/defaultFeatureFlags
-rm -f /tmp/license
 rm -f /tmp/public-api
 
 # ===============

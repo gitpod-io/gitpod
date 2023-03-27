@@ -3,7 +3,7 @@
 # to test this script, follow these steps
 # 1. generate a config like so: ./installer init > config.yaml
 # 2. generate a k8s manifest like so: ./installer render -n $(kubens -c) -c config.yaml > k8s.yaml
-# 3. fake a license and feature file like so: echo "foo" > /tmp/license && echo '"bar"' > /tmp/defaultFeatureFlags
+# 3. fake a feature file like so: echo '"bar"' > /tmp/defaultFeatureFlags
 # 4. call this script like so: ./.werft/jobs/build/installer/post-process.sh 1234 5678 2 your-branch-just-dashes
 
 set -euo pipefail
@@ -28,8 +28,6 @@ fi
 echo "Use node pool index $NODE_POOL_INDEX"
 
 # Optional params
-# default yes, we add a license
-LICENSE=$(cat /tmp/license)
 # default, no, we do not add feature flags, file is empty
 DEFAULT_FEATURE_FLAGS=$(cat /tmp/defaultFeatureFlags)
 # if payment is configured: Append the YAML objects
@@ -124,13 +122,6 @@ while [ "$documentIndex" -le "$DOCS" ]; do
       STAGE="devstaging"
       STAGE_EXPR="s/\"stage\": \"production\"/\"stage\": \"$STAGE\"/"
       sed -i "$STAGE_EXPR" /tmp/"$NAME"overrides.yaml
-      # Install EE license, if it exists
-      # This is a temporary solution until #6868 is resolved
-      if [ "${#LICENSE}" -gt 0 ]; then
-         echo "Installing EE License..."
-         LICENSE_EXPR="s/\"license\": \"\"/\"license\": \"$LICENSE\"/"
-         sed -i "$LICENSE_EXPR" /tmp/"$NAME"overrides.yaml
-      fi
       # DEFAULT_FEATURE_FLAGS
       # default none, this is CSV list like: ws-feature-flags=registry_facade,full_workspace_backup
       if [ "${#DEFAULT_FEATURE_FLAGS}" -gt 0 ]; then
