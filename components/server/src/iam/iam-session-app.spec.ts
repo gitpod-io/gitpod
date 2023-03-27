@@ -19,6 +19,8 @@ import * as request from "supertest";
 
 import * as chai from "chai";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
+import { TeamDB } from "@gitpod/gitpod-db/lib";
+import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -42,6 +44,16 @@ class TestIamSessionApp {
             return undefined;
         },
     };
+
+    protected teamDbMock: TeamDB = {
+        findMembersByTeam: async (teamId: string): Promise<TeamMemberInfo[]> => {
+            return [];
+        },
+        addMemberToTeam: async (userId: string, teamId: string): Promise<"added" | "already_member"> => {
+            return "added";
+        },
+        setTeamMemberRole: async (userId, teamId, role): Promise<void> => {},
+    } as TeamDB;
 
     protected payload: OIDCCreateSessionPayload = {
         idToken: {} as any,
@@ -70,6 +82,7 @@ class TestIamSessionApp {
                 bind(Authenticator).toConstantValue(<any>{}); // unused
                 bind(Config).toConstantValue(<any>{}); // unused
                 bind(UserService).toConstantValue(this.userServiceMock as any);
+                bind(TeamDB).toConstantValue(this.teamDbMock as TeamDB);
             }),
         );
         this.app = container.get(IamSessionApp);
