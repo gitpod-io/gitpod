@@ -95,9 +95,15 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	t.Logf("starting workspace")
 	var nfo *protocol.WorkspaceInfo
 	var stopWs func(waitForStop bool, api *integration.ComponentAPI) (*wsmanapi.WorkspaceStatus, error)
-
+	useLatest := os.Getenv("TEST_USE_LATEST_VERSION")
 	for i := 0; i < 3; i++ {
-		nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(t, ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
+		nfo, stopWs, err = integration.LaunchWorkspaceWithOptions(t, ctx, &integration.LaunchWorkspaceOptions{
+			ContextURL: repo,
+			IDESettings: &protocol.IDESettings{
+				DefaultIde:       ideName,
+				UseLatestVersion: useLatest == "true",
+			},
+		}, username, api)
 		if err != nil {
 			if strings.Contains(err.Error(), "code 429 message: too many requests") {
 				t.Log(err)
@@ -151,11 +157,15 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 
 	t.Logf("trigger github action")
 	_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
-		Ref: "main",
+		Ref: os.Getenv("BUILD_CONTEXT_REF"),
 		Inputs: map[string]interface{}{
 			"secret_gateway_link": gatewayLink,
 			"secret_access_token": oauthToken,
 			"secret_endpoint":     strings.TrimPrefix(nfo.LatestInstance.IdeURL, "https://"),
+			"jb_product":          ideName,
+			"use_latest":          useLatest,
+			"build_id":            os.Getenv("TEST_BUILD_ID"),
+			"build_url":           os.Getenv("TEST_BUILD_URL"),
 		},
 	})
 	if err != nil {
