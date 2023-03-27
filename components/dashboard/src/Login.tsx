@@ -6,10 +6,16 @@
 
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useState, useMemo } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
-import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName, getSafeURLRedirect } from "./provider-utils";
+import {
+    iconForAuthProvider,
+    openAuthorizeWindow,
+    simplifyProviderName,
+    getSafeURLRedirect,
+    openOIDCStartWindow,
+} from "./provider-utils";
 import gitpod from "./images/gitpod.svg";
 import gitpodDark from "./images/gitpod-dark.svg";
 import gitpodIcon from "./icons/gitpod.svg";
@@ -23,6 +29,7 @@ import exclamation from "./images/exclamation.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
+import { Button } from "./components/Button";
 
 function Item(props: { icon: string; iconSize?: string; text: string }) {
     const iconSize = props.iconSize || 28;
@@ -57,7 +64,8 @@ export function Login() {
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
 
-    const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
+    const [showSSO, setShowSSO] = useState<boolean>(false);
+    const [orgSlug, setOrgSlug] = useState<string>("");
 
     useEffect(() => {
         try {
@@ -75,6 +83,16 @@ export function Login() {
         (async () => {
             setAuthProviders(await getGitpodService().server.getAuthProviders());
         })();
+
+        try {
+            const content = window.localStorage.getItem("gitpod-ui-experiments");
+            const object = content && JSON.parse(content);
+            if (object["ssoLogin"] === true) {
+                setShowSSO(true);
+            }
+        } catch {
+            // ignore as non-critical
+        }
     }, []);
 
     useEffect(() => {
@@ -83,6 +101,8 @@ export function Login() {
             setProviderFromContext(providerFromContext);
         }
     }, [hostFromContext, authProviders]);
+
+    const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
 
     const authorizeSuccessful = async (payload?: string) => {
         updateUser().catch(console.error);
@@ -129,6 +149,46 @@ export function Login() {
             console.log(error);
         }
     };
+
+    const openLoginWithSSO = async () => {
+        setErrorMessage(undefined);
+
+        if (!orgSlug?.trim()) {
+            return;
+        }
+
+        try {
+            await openOIDCStartWindow({
+                orgSlug,
+                onSuccess: authorizeSuccessful,
+                onError: (payload) => {
+                    let errorMessage: string;
+                    if (typeof payload === "string") {
+                        errorMessage = payload;
+                    } else {
+                        errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                    }
+                    setErrorMessage(errorMessage);
+                },
+            });
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const onOrgSlugChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newOrgSlug = event.target.value || "";
+        setOrgSlug(newOrgSlug);
+        if (newOrgSlug.trim().length === 0) {
+            setErrorMessage("Organization slug can not be blank.");
+            return;
+        } else if (newOrgSlug.trim().length > 63) {
+            setErrorMessage("Organization slug must not be longer than 63 characters.");
+            return;
+        } else {
+            setErrorMessage(undefined);
+        }
+    }, []);
 
     return (
         <div id="login-container" className="z-50 flex w-screen h-screen">
@@ -222,6 +282,27 @@ export function Login() {
                                             </span>
                                         </button>
                                     ))
+                                )}
+                                {showSSO && (
+                                    <div className="pt-8">
+                                        <div className="mt-4 mb-3">
+                                            <input
+                                                type="text"
+                                                value={orgSlug}
+                                                onChange={onOrgSlugChange}
+                                                placeholder="org-slug"
+                                            />
+                                        </div>
+                                        <Button
+                                            key={"button-sso"}
+                                            className="w-full"
+                                            type="secondary"
+                                            disabled={!showSSO || !orgSlug?.trim()}
+                                            onClick={() => openLoginWithSSO()}
+                                        >
+                                            Sign in with SSO
+                                        </Button>
+                                    </div>
                                 )}
                             </div>
                             {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
