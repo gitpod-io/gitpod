@@ -23,6 +23,7 @@ import exclamation from "./images/exclamation.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
+import { SSOLoginForm } from "./login/SSOLoginForm";
 
 function Item(props: { icon: string; iconSize?: string; text: string }) {
     const iconSize = props.iconSize || 28;
@@ -230,6 +231,9 @@ export function Login() {
                                     ))
                                 )}
                             </div>
+
+                            <SSOLoginForm />
+
                             {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
                         </div>
                     </div>
