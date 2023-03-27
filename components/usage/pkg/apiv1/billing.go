@@ -42,6 +42,7 @@ type BillingService struct {
 	stripePrices stripe.StripePrices
 
 	teamsService v1connect.TeamsServiceClient
+	userService  v1connect.UserServiceClient
 
 	v1.UnimplementedBillingServiceServer
 }
@@ -475,7 +476,16 @@ func (s *BillingService) OnChargeDispute(ctx context.Context, req *v1.OnChargeDi
 	logger = logger.WithField("teamOwners", userIDsToBlock)
 
 	logger.Infof("Identified %d users to block based on charge dispute", len(userIDsToBlock))
-	// TODO: actually block users
+	var errs []error
+	for _, userToBlock := range userIDsToBlock {
+		_, err := s.userService.BlockUser(ctx, connect.NewRequest(&experimental_v1.BlockUserRequest{
+			UserId: userToBlock,
+			Reason: fmt.Sprintf("User has created a Stripe dispute ID: %s", req.GetDisputeId()),
+		}))
+		if err != nil {
+			errs = append(errs, fmt.Errorf("failed to block user %s: %w", userToBlock, err))
+		}
+	}
 
 	return &v1.OnChargeDisputeResponse{}, nil
 }
