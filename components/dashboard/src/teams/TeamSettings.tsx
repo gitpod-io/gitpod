@@ -37,14 +37,14 @@ export default function TeamSettingsPage() {
 
     const handleUpdateTeamSettings = useCallback((settings: Partial<TeamSettings>) => {
         if (!org?.id) {
-            // TODO: handle
             throw new Error("no org");
         }
         updateTeamSettings.mutate({
             teamId: org.id,
             ...settings,
         })
-    }, [updateTeamSettings, org?.id])
+        loadSettings()
+    }, [updateTeamSettings, org?.id, loadSettings])
 
 
     const close = () => setModal(false);
@@ -130,13 +130,6 @@ export default function TeamSettingsPage() {
                         onBlur={slugError.onBlur}
                     />
 
-                    <CheckBox
-                        title={<span>Disable Workspace Sharing</span>}
-                        desc={<span>Disable team members to share their workspace</span>}
-                        checked={settings?.workspaceSharingDisabled ?? false}
-                        onChange={({ target }) => handleUpdateTeamSettings({ workspaceSharingDisabled: target.checked })}
-                    />
-
                     <Button
                         className="mt-4"
                         htmlType="submit"
@@ -144,6 +137,13 @@ export default function TeamSettingsPage() {
                     >
                         Update Organization
                     </Button>
+
+                    <CheckBox
+                        title={<span>Disable Workspace Sharing</span>}
+                        desc={<span>Disable team members to share their workspace</span>}
+                        checked={settings?.workspaceSharingDisabled ?? false}
+                        onChange={({ target }) => handleUpdateTeamSettings({ workspaceSharingDisabled: target.checked })}
+                    />
                 </form>
 
                 <Heading2 className="pt-12">Delete Organization</Heading2>
