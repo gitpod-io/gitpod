@@ -223,7 +223,7 @@ func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Reque
 	return connect.NewResponse(&v1.DeleteClientConfigResponse{}), nil
 }
 
-func (s *OIDCService) GetLoginID(ctx context.Context, req *connect.Request[v1.GetLoginIDRequest]) (*connect.Response[v1.GetLoginIDResponse], error) {
+func (s *OIDCService) GetSSOLoginID(ctx context.Context, req *connect.Request[v1.GetSSOLoginIDRequest]) (*connect.Response[v1.GetSSOLoginIDResponse], error) {
 	slug := req.Msg.GetSlug()
 	if slug == "" {
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("slug must not be empty"))
@@ -234,7 +234,7 @@ func (s *OIDCService) GetLoginID(ctx context.Context, req *connect.Request[v1.Ge
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("failed to retrieve oidc client config by org slug"))
 	}
 
-	return connect.NewResponse(&v1.GetLoginIDResponse{
+	return connect.NewResponse(&v1.GetSSOLoginIDResponse{
 		Id: config.ID.String(),
 	}), nil
 }
