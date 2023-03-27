@@ -15,6 +15,9 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
+var wsId string
+var markClosed bool
+
 // clientInitCmd starts a new workspace
 var clientMarkActiveCmd = &cobra.Command{
 	Use:  "mark-active",
@@ -31,7 +34,8 @@ var clientMarkActiveCmd = &cobra.Command{
 		// }
 
 		initReq := api.MarkActiveRequest{
-			Id: "foobar",
+			Id:     wsId,
+			Closed: markClosed,
 		}
 
 		conn, err := getGRPCConnection()
@@ -52,6 +56,7 @@ var clientMarkActiveCmd = &cobra.Command{
 
 func init() {
 	clientCmd.AddCommand(clientMarkActiveCmd)
-	// clientInitCmd.Flags().StringVarP(&startWorkspaceReq.ServicePrefix, "service-prefix", "p", "", "use a service prefix different from the workspace ID")
+	clientMarkActiveCmd.Flags().StringVarP(&wsId, "id", "i", "foo", "workspace ID")
+	clientMarkActiveCmd.Flags().BoolVarP(&markClosed, "mark-closed", "c", false, "mark closed")
 	// clientInitCmd.Flags().StringVar(&startWorkspaceReq.Metadata.Owner, "owner", "foobar", "set the workspace owner")
 }
