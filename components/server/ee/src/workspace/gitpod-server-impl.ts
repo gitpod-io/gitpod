@@ -469,7 +469,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             if (settings?.workspaceSharingDisabled) {
                 throw new ResponseError(
                     ErrorCodes.PERMISSION_DENIED,
-                    "Organization not allow to share workspaces, please contact admin.",
+                    "An Organization Owner has disabled workspace sharing for workspaces in this Organization. ",
                 );
             }
         }
