@@ -377,7 +377,7 @@ export class UserService {
     async blockUser(targetUserId: string, block: boolean): Promise<User> {
         const target = await this.userDb.findUserById(targetUserId);
         if (!target) {
-            throw new Error("Not found.");
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
         }
 
         target.blocked = !!block;

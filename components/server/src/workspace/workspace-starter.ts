@@ -415,6 +415,28 @@ export class WorkspaceStarter {
         await client.stopWorkspace(ctx, req);
     }
 
+    public async stopRunningWorkspacesForUser(
+        ctx: TraceContext,
+        userID: string,
+        reason: string,
+        policy?: StopWorkspacePolicy,
+    ): Promise<Workspace[]> {
+        const workspaceDb = this.workspaceDb.trace(ctx);
+        const instances = await workspaceDb.findRunningInstancesWithWorkspaces(undefined, userID);
+        await Promise.all(
+            instances.map((instance) =>
+                this.stopWorkspaceInstance(
+                    ctx,
+                    instance.latestInstance.id,
+                    instance.latestInstance.region,
+                    reason,
+                    policy,
+                ),
+            ),
+        );
+        return instances.map((instance) => instance.workspace);
+    }
+
     protected async checkBlockedRepository(user: User, contextURL: string) {
         const blockedRepository = await this.blockedRepositoryDB.findBlockedRepositoryByURL(contextURL);
         if (!blockedRepository) return;
