@@ -32,19 +32,19 @@ export default function TeamSettingsPage() {
     const [slug, setSlug] = useState(org?.slug || "");
     const [updated, setUpdated] = useState(false);
     const updateOrg = useUpdateOrgMutation();
-    const { data: settings, refetch: loadSettings } = useOrgSettingsQuery({ teamId: org?.id ?? "" });
+    const { data: settings } = useOrgSettingsQuery({ teamId: org?.id ?? "" });
     const updateTeamSettings = useUpdateTeamSettingsMutation()
 
-    const handleUpdateTeamSettings = useCallback((settings: Partial<TeamSettings>) => {
+    const handleUpdateTeamSettings = useCallback((newSettings: Partial<TeamSettings>) => {
         if (!org?.id) {
-            throw new Error("no org");
+            throw new Error("no organization selected");
         }
         updateTeamSettings.mutate({
             teamId: org.id,
             ...settings,
+            ...newSettings,
         })
-        loadSettings()
-    }, [updateTeamSettings, org?.id, loadSettings])
+    }, [updateTeamSettings, org?.id, settings])
 
 
     const close = () => setModal(false);
@@ -104,6 +104,12 @@ export default function TeamSettingsPage() {
                     <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
                         <span>Failed to update organization information: </span>
                         <span>{updateOrg.error.message || "unknown error"}</span>
+                    </Alert>
+                )}
+                {updateTeamSettings.isError && (
+                    <Alert type="error" closable={true} className="mb-2 max-w-xl rounded-md">
+                        <span>Failed to update organization settings: </span>
+                        <span>{updateTeamSettings.error.message || "unknown error"}</span>
                     </Alert>
                 )}
                 {updated && (
