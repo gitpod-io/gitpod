@@ -26,7 +26,6 @@ var Objects common.RenderFunc = func(cfg *common.RenderContext) ([]runtime.Objec
 		clusterrole,
 		configmap,
 		deployment,
-		networkpolicy,
 		rolebinding,
 		common.GenerateService(Component, []common.ServicePort{
 			{

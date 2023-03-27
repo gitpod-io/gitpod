@@ -27,7 +27,6 @@ var Objects common.RenderFunc = func(cfg *common.RenderContext) ([]runtime.Objec
 		crd,
 		configmap,
 		deployment,
-		networkpolicy,
 		role,
 		rolebinding,
 		common.DefaultServiceAccount(Component),
