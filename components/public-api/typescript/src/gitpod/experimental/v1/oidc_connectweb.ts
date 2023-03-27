@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateClientConfigRequest, CreateClientConfigResponse, DeleteClientConfigRequest, DeleteClientConfigResponse, GetClientConfigRequest, GetClientConfigResponse, GetLoginIDRequest, GetLoginIDResponse, ListClientConfigsRequest, ListClientConfigsResponse, UpdateClientConfigRequest, UpdateClientConfigResponse} from "./oidc_pb.js";
+import {CreateClientConfigRequest, CreateClientConfigResponse, DeleteClientConfigRequest, DeleteClientConfigResponse, GetClientConfigRequest, GetClientConfigResponse, GetSSOLoginIDRequest, GetSSOLoginIDResponse, ListClientConfigsRequest, ListClientConfigsResponse, UpdateClientConfigRequest, UpdateClientConfigResponse} from "./oidc_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -74,12 +74,12 @@ export const OIDCService = {
       kind: MethodKind.Unary,
     },
     /**
-     * @generated from rpc gitpod.experimental.v1.OIDCService.GetLoginID
+     * @generated from rpc gitpod.experimental.v1.OIDCService.GetSSOLoginID
      */
-    getLoginID: {
-      name: "GetLoginID",
-      I: GetLoginIDRequest,
-      O: GetLoginIDResponse,
+    getSSOLoginID: {
+      name: "GetSSOLoginID",
+      I: GetSSOLoginIDRequest,
+      O: GetSSOLoginIDResponse,
       kind: MethodKind.Unary,
     },
   }

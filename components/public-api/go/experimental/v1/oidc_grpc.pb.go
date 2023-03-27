@@ -36,7 +36,7 @@ type OIDCServiceClient interface {
 	UpdateClientConfig(ctx context.Context, in *UpdateClientConfigRequest, opts ...grpc.CallOption) (*UpdateClientConfigResponse, error)
 	// Removes a OIDC client configuration by ID.
 	DeleteClientConfig(ctx context.Context, in *DeleteClientConfigRequest, opts ...grpc.CallOption) (*DeleteClientConfigResponse, error)
-	GetLoginID(ctx context.Context, in *GetLoginIDRequest, opts ...grpc.CallOption) (*GetLoginIDResponse, error)
+	GetSSOLoginID(ctx context.Context, in *GetSSOLoginIDRequest, opts ...grpc.CallOption) (*GetSSOLoginIDResponse, error)
 }
 
 type oIDCServiceClient struct {
@@ -92,9 +92,9 @@ func (c *oIDCServiceClient) DeleteClientConfig(ctx context.Context, in *DeleteCl
 	return out, nil
 }
 
-func (c *oIDCServiceClient) GetLoginID(ctx context.Context, in *GetLoginIDRequest, opts ...grpc.CallOption) (*GetLoginIDResponse, error) {
-	out := new(GetLoginIDResponse)
-	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.OIDCService/GetLoginID", in, out, opts...)
+func (c *oIDCServiceClient) GetSSOLoginID(ctx context.Context, in *GetSSOLoginIDRequest, opts ...grpc.CallOption) (*GetSSOLoginIDResponse, error) {
+	out := new(GetSSOLoginIDResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.OIDCService/GetSSOLoginID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ type OIDCServiceServer interface {
 	UpdateClientConfig(context.Context, *UpdateClientConfigRequest) (*UpdateClientConfigResponse, error)
 	// Removes a OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *DeleteClientConfigRequest) (*DeleteClientConfigResponse, error)
-	GetLoginID(context.Context, *GetLoginIDRequest) (*GetLoginIDResponse, error)
+	GetSSOLoginID(context.Context, *GetSSOLoginIDRequest) (*GetSSOLoginIDResponse, error)
 	mustEmbedUnimplementedOIDCServiceServer()
 }
 
@@ -138,8 +138,8 @@ func (UnimplementedOIDCServiceServer) UpdateClientConfig(context.Context, *Updat
 func (UnimplementedOIDCServiceServer) DeleteClientConfig(context.Context, *DeleteClientConfigRequest) (*DeleteClientConfigResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteClientConfig not implemented")
 }
-func (UnimplementedOIDCServiceServer) GetLoginID(context.Context, *GetLoginIDRequest) (*GetLoginIDResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetLoginID not implemented")
+func (UnimplementedOIDCServiceServer) GetSSOLoginID(context.Context, *GetSSOLoginIDRequest) (*GetSSOLoginIDResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSSOLoginID not implemented")
 }
 func (UnimplementedOIDCServiceServer) mustEmbedUnimplementedOIDCServiceServer() {}
 
@@ -244,20 +244,20 @@ func _OIDCService_DeleteClientConfig_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
-func _OIDCService_GetLoginID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetLoginIDRequest)
+func _OIDCService_GetSSOLoginID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetSSOLoginIDRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(OIDCServiceServer).GetLoginID(ctx, in)
+		return srv.(OIDCServiceServer).GetSSOLoginID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/gitpod.experimental.v1.OIDCService/GetLoginID",
+		FullMethod: "/gitpod.experimental.v1.OIDCService/GetSSOLoginID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OIDCServiceServer).GetLoginID(ctx, req.(*GetLoginIDRequest))
+		return srv.(OIDCServiceServer).GetSSOLoginID(ctx, req.(*GetSSOLoginIDRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -290,8 +290,8 @@ var OIDCService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _OIDCService_DeleteClientConfig_Handler,
 		},
 		{
-			MethodName: "GetLoginID",
-			Handler:    _OIDCService_GetLoginID_Handler,
+			MethodName: "GetSSOLoginID",
+			Handler:    _OIDCService_GetSSOLoginID_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

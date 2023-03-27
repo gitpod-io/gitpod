@@ -69,8 +69,8 @@ func (s *ProxyOIDCServiceHandler) DeleteClientConfig(ctx context.Context, req *c
 	return connect_go.NewResponse(resp), nil
 }
 
-func (s *ProxyOIDCServiceHandler) GetLoginID(ctx context.Context, req *connect_go.Request[v1.GetLoginIDRequest]) (*connect_go.Response[v1.GetLoginIDResponse], error) {
-	resp, err := s.Client.GetLoginID(ctx, req.Msg)
+func (s *ProxyOIDCServiceHandler) GetSSOLoginID(ctx context.Context, req *connect_go.Request[v1.GetSSOLoginIDRequest]) (*connect_go.Response[v1.GetSSOLoginIDResponse], error) {
+	resp, err := s.Client.GetSSOLoginID(ctx, req.Msg)
 	if err != nil {
 		// TODO(milan): Convert to correct status code
 		return nil, err
