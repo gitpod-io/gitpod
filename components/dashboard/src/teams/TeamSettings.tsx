@@ -12,7 +12,7 @@ import CheckBox from "../components/CheckBox";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { TextInputField } from "../components/forms/TextInputField";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { useUpdateTeamSettingsMutation } from "../data/organizations/org-settings-mutation";
+import { useUpdateOrgSettingsMutation } from "../data/organizations/update-org-settings-mutation";
 import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
@@ -32,20 +32,21 @@ export default function TeamSettingsPage() {
     const [slug, setSlug] = useState(org?.slug || "");
     const [updated, setUpdated] = useState(false);
     const updateOrg = useUpdateOrgMutation();
-    const { data: settings } = useOrgSettingsQuery({ teamId: org?.id ?? "" });
-    const updateTeamSettings = useUpdateTeamSettingsMutation()
+    const { data: settings, isLoading } = useOrgSettingsQuery();
+    const updateTeamSettings = useUpdateOrgSettingsMutation();
 
-    const handleUpdateTeamSettings = useCallback((newSettings: Partial<TeamSettings>) => {
-        if (!org?.id) {
-            throw new Error("no organization selected");
-        }
-        updateTeamSettings.mutate({
-            teamId: org.id,
-            ...settings,
-            ...newSettings,
-        })
-    }, [updateTeamSettings, org?.id, settings])
-
+    const handleUpdateTeamSettings = useCallback(
+        (newSettings: Partial<TeamSettings>) => {
+            if (!org?.id) {
+                throw new Error("no organization selected");
+            }
+            updateTeamSettings.mutate({
+                ...settings,
+                ...newSettings,
+            });
+        },
+        [updateTeamSettings, org?.id, settings],
+    );
 
     const close = () => setModal(false);
 
@@ -144,11 +145,19 @@ export default function TeamSettingsPage() {
                         Update Organization
                     </Button>
 
+                    <Heading2 className="pt-12">Collaboration & Sharing</Heading2>
                     <CheckBox
-                        title={<span>Disable Workspace Sharing</span>}
-                        desc={<span>Disable team members to share their workspace</span>}
-                        checked={settings?.workspaceSharingDisabled ?? false}
-                        onChange={({ target }) => handleUpdateTeamSettings({ workspaceSharingDisabled: target.checked })}
+                        title={<span>Workspace Sharing</span>}
+                        desc={
+                            <span>
+                                Allow organization members to share running workspaces outside the organization.
+                            </span>
+                        }
+                        checked={!settings?.workspaceSharingDisabled}
+                        onChange={({ target }) =>
+                            handleUpdateTeamSettings({ workspaceSharingDisabled: !target.checked })
+                        }
+                        disabled={isLoading}
                     />
                 </form>
 

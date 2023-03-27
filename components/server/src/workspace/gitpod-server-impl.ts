@@ -2505,7 +2505,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardTeamOperation(teamId, "get", "org_write");
         const settings = await this.teamDB.findTeamSettings(teamId);
         // TODO: make a default in protocol
-        return settings ?? { teamId: teamId, workspaceSharingDisabled: false };
+        return settings ?? { workspaceSharingDisabled: false };
     }
 
     async updateTeamSettings(

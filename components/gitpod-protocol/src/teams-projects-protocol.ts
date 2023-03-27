@@ -145,7 +145,6 @@ export interface Organization {
 export type TeamSettings = OrganizationSettings;
 
 export interface OrganizationSettings {
-    teamId: string;
     workspaceSharingDisabled?: boolean;
 }
 

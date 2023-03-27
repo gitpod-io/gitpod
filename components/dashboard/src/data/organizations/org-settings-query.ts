@@ -7,16 +7,15 @@
 import { TeamSettings } from "@gitpod/gitpod-protocol";
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
+import { useCurrentOrg } from "./orgs-query";
 
 export type TeamSettingsResult = TeamSettings;
 
-type Args = {
-    teamId: string;
-};
-
-export const useOrgSettingsQuery = ({ teamId }: Args) => {
+export const useOrgSettingsQuery = () => {
+    const team = useCurrentOrg().data;
+    const teamId = team?.id || "";
     return useQuery<TeamSettingsResult>({
-        queryKey: getOrgSettingsQuery(teamId),
+        queryKey: getOrgSettingsQueryKey(teamId),
         staleTime: 1000 * 60 * 1, // 1 minute
         queryFn: async () => {
             const settings = await getGitpodService().server.getTeamSettings(teamId);
@@ -25,4 +24,4 @@ export const useOrgSettingsQuery = ({ teamId }: Args) => {
     });
 };
 
-export const getOrgSettingsQuery = (teamId: string) => ["org-settings", { teamId }];
+export const getOrgSettingsQueryKey = (teamId: string) => ["org-settings", { teamId }];
