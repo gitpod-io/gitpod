@@ -5,18 +5,20 @@
  */
 
 import { TeamSettings } from "@gitpod/gitpod-protocol";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
 import CheckBox from "../components/CheckBox";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { TextInputField } from "../components/forms/TextInputField";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { useUpdateTeamSettingsMutation } from "../data/organizations/org-settings-mutation";
+import { useOrgSettingsQuery } from "../data/organizations/org-settings-query";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { teamsService } from "../service/public-api";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import { OrgSettingsPage } from "./OrgSettingsPage";
 
@@ -30,27 +32,19 @@ export default function TeamSettingsPage() {
     const [slug, setSlug] = useState(org?.slug || "");
     const [updated, setUpdated] = useState(false);
     const updateOrg = useUpdateOrgMutation();
-    const [teamSetting, setTeamSetting] = useState<TeamSettings>({ teamId: org?.id ?? "", workspaceSharingDisabled: false });
+    const { data: settings, refetch: loadSettings } = useOrgSettingsQuery({ teamId: org?.id ?? "" });
+    const updateTeamSettings = useUpdateTeamSettingsMutation()
 
-    const loadSetting = () => {
-        if (!org) {
-            return;
-        }
-        getGitpodService().server.getTeamSettings(org.id).then((r) => setTeamSetting(r))
-    }
-
-    useEffect(() => {
-        loadSetting();
-    }, []);
-
-    const updateTeamSettings = async (settings: Partial<TeamSettings>) => {
+    const handleUpdateTeamSettings = useCallback((settings: Partial<TeamSettings>) => {
         if (!org?.id) {
             // TODO: handle
             throw new Error("no org");
         }
-        const newSettings = await getGitpodService().server.updateTeamSettings(org.id, settings)
-        setTeamSetting(newSettings);
-    }
+        updateTeamSettings.mutate({
+            teamId: org.id,
+            ...settings,
+        })
+    }, [updateTeamSettings, org?.id])
 
 
     const close = () => setModal(false);
@@ -139,8 +133,8 @@ export default function TeamSettingsPage() {
                     <CheckBox
                         title={<span>Disable Workspace Sharing</span>}
                         desc={<span>Disable team members to share their workspace</span>}
-                        checked={teamSetting?.workspaceSharingDisabled ?? false}
-                        onChange={({ target }) => updateTeamSettings({ workspaceSharingDisabled: target.checked })}
+                        checked={settings?.workspaceSharingDisabled ?? false}
+                        onChange={({ target }) => handleUpdateTeamSettings({ workspaceSharingDisabled: target.checked })}
                     />
 
                     <Button
