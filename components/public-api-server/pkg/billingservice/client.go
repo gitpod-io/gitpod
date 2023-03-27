@@ -8,14 +8,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+//go:generate mockgen -source=client.go Interface -destination=./mock_billingservice/billingservice.go > mock_billingservice/billingservice.go
+
 type Interface interface {
 	FinalizeInvoice(ctx context.Context, invoiceId string) error
 	CancelSubscription(ctx context.Context, subscriptionId string) error
+	OnChargeDispute(ctx context.Context, disputeID string) error
 }
 
 type Client struct {
@@ -47,4 +51,9 @@ func (c *Client) CancelSubscription(ctx context.Context, subscriptionId string) 
 	}
 
 	return nil
+}
+
+func (c *Client) OnChargeDispute(ctx context.Context, disputeID string) error {
+	log.Infof("Handling stripe charge dispute ID: %s", disputeID)
+	return fmt.Errorf("unimplemented")
 }
