@@ -159,10 +159,7 @@ import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import {
-    PartialProject,
-    TeamSettings,
-} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { PartialProject, TeamSettings } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ConfigurationService } from "../config/configuration-service";
 import {
@@ -2507,7 +2504,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId, userId: user.id });
         await this.guardTeamOperation(teamId, "get", "org_write");
         const settings = await this.teamDB.findTeamSettings(teamId);
-        // TODO make a default in protocol
+        // TODO: make a default in protocol
         return settings ?? { teamId: teamId, workspaceSharingDisabled: false };
     }
 
