@@ -12,15 +12,20 @@ import { useCurrentOrg } from "./orgs-query";
 export type TeamSettingsResult = TeamSettings;
 
 export const useOrgSettingsQuery = () => {
-    const team = useCurrentOrg().data;
-    const teamId = team?.id || "";
+    const org = useCurrentOrg().data;
+
     return useQuery<TeamSettingsResult>({
-        queryKey: getOrgSettingsQueryKey(teamId),
+        queryKey: getOrgSettingsQueryKey(org?.id ?? ""),
         staleTime: 1000 * 60 * 1, // 1 minute
         queryFn: async () => {
-            const settings = await getGitpodService().server.getTeamSettings(teamId);
+            if (!org) {
+                throw new Error("No org selected.");
+            }
+
+            const settings = await getGitpodService().server.getTeamSettings(org.id);
             return settings || null;
         },
+        enabled: !!org,
     });
 };
 
