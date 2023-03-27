@@ -1,4 +1,5 @@
 name: JetBrains Test
+run-name: Test ${{ inputs.jb_product }} (latest=${{ inputs.use_latest }}, build_id=${{ inputs.build_id }})
 on:
   workflow_dispatch:
     inputs:
@@ -14,10 +15,32 @@ on:
         type: string
         description: IDE Endpoint
         required: true
+      jb_product:
+        type: string
+        description: JB product
+        required: true
+      use_latest:
+        type: string
+        description: Use latest IDE version
+        required: true
+      build_id:
+        type: string
+        description: Build ID
+        required: true
+      build_url:
+        type: string
+        description: Build URL
+        required: true
 jobs:
   jetbrains-smoke-test-linux:
     runs-on: ubuntu-latest
     steps:
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "- Build URL: ${{ inputs.build_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- JB Product: ${{ inputs.jb_product }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Latest Version: ${{ inputs.use_latest }}" >> $GITHUB_STEP_SUMMARY
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
         with:

@@ -84,13 +84,13 @@ func Setup(ctx context.Context) (string, string, env.Environment, bool, string, 
 	flagset := flag.CommandLine
 	klog.InitFlags(flagset)
 
-	flagset.StringVar(&username, "username", "", "username to execute the tests with. Chooses one automatically if left blank.")
+	flagset.StringVar(&username, "username", os.Getenv("USER_NAME"), "username to execute the tests with. Chooses one automatically if left blank.")
 	flagset.BoolVar(&enterprise, "enterprise", false, "whether to test enterprise features. requires enterprise lisence installed.")
 	flagset.BoolVar(&gitlab, "gitlab", false, "whether to test gitlab integration.")
 	flagset.BoolVar(&parallel, "parallel", false, "Run test features in parallel")
 	flagset.DurationVar(&waitGitpodReady, "wait-gitpod-timeout", 5*time.Minute, `wait time for Gitpod components before starting integration test`)
 	flagset.StringVar(&namespace, "namespace", "", "Kubernetes cluster namespaces to use")
-	flagset.StringVar(&kubeconfig, "kubeconfig", "", "The path to the kubeconfig file")
+	flagset.StringVar(&kubeconfig, "kubeconfig", os.Getenv("KUBE_CONFIG"), "The path to the kubeconfig file")
 	flagset.StringVar(&feature, "feature", "", "Regular expression that targets features to test")
 	flagset.StringVar(&assess, "assess", "", "Regular expression that targets assertive steps to run")
 	flagset.Var(&labels, "labels", "Comma-separated key/value pairs to filter tests by labels")

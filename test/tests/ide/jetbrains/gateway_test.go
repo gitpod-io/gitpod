@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/go-github/v42/github"
@@ -54,8 +55,14 @@ func init() {
 	roboquatToken, _ = os.LookupEnv("ROBOQUAT_TOKEN")
 }
 
-func GetHttpContent(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+func GetHttpContent(url string, ownerToken string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("x-gitpod-owner-token", ownerToken)
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -64,19 +71,14 @@ func GetHttpContent(url string) ([]byte, error) {
 	return b, err
 }
 
-func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, ideName string, repo string) {
+func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, ide string, repo string) {
 	api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 	t.Cleanup(func() {
 		api.Done(t)
 	})
 
-	config, err := integration.GetServerConfig(cfg.Namespace(), cfg.Client())
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	t.Logf("get or create user")
-	_, err = api.CreateUser(username, userToken)
+	_, err := api.CreateUser(username, userToken)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,11 +95,17 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	t.Logf("connected to server")
 
 	t.Logf("starting workspace")
-	var nfo *protocol.WorkspaceInfo
+	var info *protocol.WorkspaceInfo
 	var stopWs func(waitForStop bool, api *integration.ComponentAPI) (*wsmanapi.WorkspaceStatus, error)
-
+	useLatest := os.Getenv("TEST_USE_LATEST_VERSION") == "true"
 	for i := 0; i < 3; i++ {
-		nfo, stopWs, err = integration.LaunchWorkspaceFromContextURL(t, ctx, "referrer:jetbrains-gateway:"+ideName+"/"+repo, username, api)
+		info, stopWs, err = integration.LaunchWorkspaceWithOptions(t, ctx, &integration.LaunchWorkspaceOptions{
+			ContextURL: repo,
+			IDESettings: &protocol.IDESettings{
+				DefaultIde:       ide,
+				UseLatestVersion: useLatest,
+			},
+		}, username, api)
 		if err != nil {
 			if strings.Contains(err.Error(), "code 429 message: too many requests") {
 				t.Log(err)
@@ -134,13 +142,17 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 		t.Fatal(err)
 	}
 
-	t.Logf("make port 63342 public")
-	_, err = server.OpenPort(ctx, nfo.Workspace.ID, &protocol.WorkspaceInstancePort{Port: 63342, Visibility: "public"})
+	t.Logf("resolve owner token")
+	ownerToken, err := server.GetOwnerToken(ctx, info.LatestInstance.WorkspaceID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	gatewayLink := fmt.Sprintf("jetbrains-gateway://connect#gitpodHost=%s&workspaceId=%s", strings.TrimPrefix(config.HostURL, "https://"), nfo.Workspace.ID)
+	t.Logf("resolve desktop IDE link")
+	gatewayLink, err := resolveDesktopIDELink(info, ide, ownerToken, t)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: roboquatToken},
@@ -151,24 +163,28 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 
 	t.Logf("trigger github action")
 	_, err = githubClient.Actions.CreateWorkflowDispatchEventByFileName(ctx, "gitpod-io", "gitpod", "jetbrains-integration-test.yml", github.CreateWorkflowDispatchEventRequest{
-		Ref: "main",
+		Ref: os.Getenv("TEST_BUILD_REF"),
 		Inputs: map[string]interface{}{
 			"secret_gateway_link": gatewayLink,
 			"secret_access_token": oauthToken,
-			"secret_endpoint":     strings.TrimPrefix(nfo.LatestInstance.IdeURL, "https://"),
+			"secret_endpoint":     strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"),
+			"jb_product":          ide,
+			"use_latest":          fmt.Sprintf("%v", useLatest),
+			"build_id":            os.Getenv("TEST_BUILD_ID"),
+			"build_url":           os.Getenv("TEST_BUILD_URL"),
 		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	checkUrl := fmt.Sprintf("https://63342-%s/codeWithMe/unattendedHostStatus?token=gitpod", strings.TrimPrefix(nfo.LatestInstance.IdeURL, "https://"))
+	checkUrl := fmt.Sprintf("https://63342-%s/codeWithMe/unattendedHostStatus?token=gitpod", strings.TrimPrefix(info.LatestInstance.IdeURL, "https://"))
 
 	t.Logf("waiting result")
 	testStatus := false
 	for ctx.Err() == nil {
 		time.Sleep(1 * time.Second)
-		body, _ := GetHttpContent(checkUrl)
+		body, _ := GetHttpContent(checkUrl, ownerToken)
 		var status GatewayHostStatus
 		err = json.Unmarshal(body, &status)
 		if err != nil {
@@ -182,6 +198,52 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	if !testStatus {
 		t.Fatal(ctx.Err())
 	}
+}
+
+func resolveDesktopIDELink(info *protocol.WorkspaceInfo, ide string, ownerToken string, t *testing.T) (string, error) {
+	var (
+		ideLink  string
+		err      error
+		maxTries = 5
+	)
+	for i := 0; ideLink == "" && i < maxTries; i++ {
+		ideLink, err = fetchDekstopIDELink(info, ide, ownerToken)
+		if ideLink == "" && i < maxTries-1 {
+			t.Logf("failed to fetch IDE link: %v, trying again...", err)
+		}
+	}
+	if ideLink != "" {
+		return ideLink, nil
+	}
+	return "", err
+}
+
+func fetchDekstopIDELink(info *protocol.WorkspaceInfo, ide string, ownerToken string) (string, error) {
+	body, err := GetHttpContent(fmt.Sprintf("%s/_supervisor/v1/status/ide/wait/true", info.LatestInstance.IdeURL), ownerToken)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch IDE status response: %v", err)
+	}
+
+	var ideStatus supervisor.IDEStatusResponse
+	err = json.Unmarshal(body, &ideStatus)
+	if err != nil {
+		return "", fmt.Errorf("failed to unmarshal IDE status response: %v, response body: %s", err, body)
+	}
+	if !ideStatus.GetOk() {
+		return "", fmt.Errorf("IDE status is not OK, response body: %s", body)
+	}
+
+	desktop := ideStatus.GetDesktop()
+	if desktop == nil {
+		return "", fmt.Errorf("workspace does not have desktop IDE running, response body: %s", body)
+	}
+	if desktop.Kind != ide {
+		return "", fmt.Errorf("workspace does not have %s running, but %s, response body: %s", ide, desktop.Kind, body)
+	}
+	if desktop.Link == "" {
+		return "", fmt.Errorf("IDE link is empty, response body: %s", body)
+	}
+	return desktop.Link, nil
 }
 
 func TestGoLand(t *testing.T) {
@@ -312,7 +374,7 @@ func TestRider(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "Rider", "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp")
+			JetBrainsIDETest(ctx, t, cfg, "rider", "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp")
 			return ctx
 		}).
 		Feature()
@@ -331,7 +393,7 @@ func TestCLion(t *testing.T) {
 		Assess("it can let JetBrains Gateway connect", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 			defer cancel()
-			JetBrainsIDETest(ctx, t, cfg, "CLion", "https://github.com/gitpod-samples/template-cpp")
+			JetBrainsIDETest(ctx, t, cfg, "clion", "https://github.com/gitpod-samples/template-cpp")
 			return ctx
 		}).
 		Feature()

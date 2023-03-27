@@ -23,6 +23,9 @@ while getopts rs-: opt; do
   optarg="${!OPTIND}"
   [[ "$opt" = - ]] && opt="-$OPTARG"
 
+  # trim traling whitespace in optarg
+  optarg="${optarg%"${optarg##*[![:space:]]}"}"
+
   case "-$opt" in
     -r|--report)
       REPORT=${optarg}
@@ -71,7 +74,7 @@ case $TEST_SUITE in
     TEST_LIST="${WEBAPP_TEST_LIST} ${IDE_TEST_LIST} ${WORKSPACE_TEST_LIST}"
     ;;
   *)
-    echo "Unknown test suite ${TEST_SUITE}"
+    echo "Unknown test suite '${TEST_SUITE}'"
     exit 1
 esac
 

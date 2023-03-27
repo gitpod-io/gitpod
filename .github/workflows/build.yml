@@ -36,6 +36,7 @@ jobs:
       pr_no_diff_skip: ${{ steps.pr-diff.outputs.pr_no_diff_skip }}
       with_werft: ${{ steps.output.outputs.with-werft }}
       with_integration_tests: ${{ steps.output.outputs.with_integration_tests }}
+      latest_ide_version: ${{ contains( steps.pr-details.outputs.pr_body, '[x] latest-ide-version=true') }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -340,6 +341,10 @@ jobs:
             PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
             PREVIEW_NAME: ${{ github.head_ref || github.ref_name }}
             TEST_SUITS: ${{ needs.configuration.outputs.with_integration_tests }}
+            TEST_USE_LATEST_VERSION: ${{ needs.configuration.outputs.latest_ide_version }}
+            TEST_BUILD_ID: ${{ github.run_id }}
+            TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            TEST_BUILD_REF: ${{ github.ref }}
         run: |
             set -euo pipefail
 
@@ -358,4 +363,3 @@ jobs:
             previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
             $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
-
