@@ -369,7 +369,7 @@ export class TeamDBImpl implements TeamDB {
 
     public async setOrgSettings(orgId: string, settings: Partial<OrganizationSettings>): Promise<void> {
         const repo = await this.getOrgSettingsRepo();
-        const team = await repo.findOne({ where: { teamId: orgId, deleted: false } });
+        const team = await repo.findOne({ where: { orgId, deleted: false } });
         if (!team) {
             await repo.insert({
                 ...settings,
