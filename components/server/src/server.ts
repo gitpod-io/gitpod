@@ -52,6 +52,10 @@ import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-c
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
+import { expressConnectMiddleware } from "@bufbuild/connect-express";
+import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
+import { APIUserService } from "./api/user";
+import { ConnectRouter } from "@bufbuild/connect";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -92,6 +96,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(IamSessionApp) protected readonly iamSessionAppCreator: IamSessionApp;
     protected iamSessionApp?: express.Application;
     protected iamSessionAppServer?: http.Server;
+
+    @inject(APIUserService) protected readonly apiUserService: APIUserService;
+    protected apiServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
@@ -307,6 +314,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             .catch((err) => log.error("webhook-event-gc: error during startup", err));
 
         this.app = app;
+
         log.info("server initialized.");
     }
 
@@ -388,6 +396,20 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
+        {
+            const apiApp = express();
+            apiApp.use(
+                expressConnectMiddleware({
+                    routes: (router: ConnectRouter) => {
+                        router.service(UserServiceDefinition, this.apiUserService);
+                    },
+                }),
+            );
+            this.apiServer = apiApp.listen(9877, () => {
+                log.info(`Connect API server listening on: ${<AddressInfo>this.apiServer!.address()}`);
+            });
+        }
+
         this.debugApp.start();
     }
 
@@ -397,6 +419,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         await this.stopServer(this.monitoringHttpServer);
         await this.stopServer(this.installationAdminHttpServer);
         await this.stopServer(this.httpServer);
+        await this.stopServer(this.apiServer);
         this.disposables.dispose();
         log.info("server stopped.");
     }

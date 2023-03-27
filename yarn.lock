@@ -1238,10 +1238,32 @@
   resolved "https://registry.npmjs.org/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@bufbuild/connect-express@^0.8.1":
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/connect-express/-/connect-express-0.8.1.tgz#54eb548896fad2488bc9cd16b968713e0799c955"
+  integrity sha512-DZkPfMYmL1doR8XaeQdwHI0YmKyWz7sG9HaZYEOcBoag+lnlbqXGaakx5gbMnE1OSX7qkSVEqrv7kB/B1tSXOQ==
+  dependencies:
+    "@bufbuild/connect" "0.8.1"
+    "@bufbuild/connect-node" "^0.8.1"
+    "@types/express" "^4.17.17"
+
+"@bufbuild/connect-node@^0.8.1":
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/connect-node/-/connect-node-0.8.1.tgz#db371506a9c54cac78b0b73b25dd531d86dbe45a"
+  integrity sha512-yIdXWekNaKDBFVWY6S6L0js6Szh2fhunmVxxCd5taOL4KekO5joIfuA9eLuunTDlp1ie0fPPm7Dc5KlxWgOn0Q==
+  dependencies:
+    "@bufbuild/connect" "0.8.1"
+    headers-polyfill "^3.1.2"
+
 "@bufbuild/connect-web@^0.2.1":
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/@bufbuild/connect-web/-/connect-web-0.2.1.tgz#a7ee2914bf1b77d640fc4ee3c3a89d626f3015fa"
   integrity sha512-L580cL9VZCXcjwXMCvIvdFBqdQofVBQcL+jmSis7m8ZxPj5NQ4p7fUhQRTsZMWHkyWINdlZnr7WsHQL0BT7wPQ==
+
+"@bufbuild/connect@0.8.1", "@bufbuild/connect@^0.8.1":
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/connect/-/connect-0.8.1.tgz#71afa90bf56bb833a7f3e2a492e6f9f83c2bebeb"
+  integrity sha512-cQA0jstYcLknJecTE7KbU4ePNBqiCNviBEcUCbFLve3x+vcSmtoH6jb8z39MeBqFy42ZoWhTGGc3RNCeOx2QUA==
 
 "@bufbuild/protobuf@0.1.1", "@bufbuild/protobuf@^0.1.1":
   version "0.1.1"
@@ -2880,6 +2902,15 @@
     "@types/qs" "*"
     "@types/range-parser" "*"
 
+"@types/express-serve-static-core@^4.17.33":
+  version "4.17.33"
+  resolved "https://registry.yarnpkg.com/@types/express-serve-static-core/-/express-serve-static-core-4.17.33.tgz#de35d30a9d637dc1450ad18dd583d75d5733d543"
+  integrity sha512-TPBqmR/HRYI3eC2E5hmiivIzv+bidAfXofM+sbonAGvyDhySGw9/PQZFt2BLOrjUUR++4eJVpx6KnLQK1Fk9tA==
+  dependencies:
+    "@types/node" "*"
+    "@types/qs" "*"
+    "@types/range-parser" "*"
+
 "@types/express-session@*", "@types/express-session@1.17.4":
   version "1.17.4"
   resolved "https://registry.npmjs.org/@types/express-session/-/express-session-1.17.4.tgz"
@@ -2894,6 +2925,16 @@
   dependencies:
     "@types/body-parser" "*"
     "@types/express-serve-static-core" "^4.17.18"
+    "@types/qs" "*"
+    "@types/serve-static" "*"
+
+"@types/express@^4.17.17":
+  version "4.17.17"
+  resolved "https://registry.yarnpkg.com/@types/express/-/express-4.17.17.tgz#01d5437f6ef9cfa8668e616e13c2f2ac9a491ae4"
+  integrity sha512-Q4FmmuLGBG58btUnfS1c1r/NQdlp3DMfGDGig8WhfpA2YRUtEkxAjkZb0yvplJGYdF1fsQ81iMDcH24sSCNC/Q==
+  dependencies:
+    "@types/body-parser" "*"
+    "@types/express-serve-static-core" "^4.17.33"
     "@types/qs" "*"
     "@types/serve-static" "*"
 
@@ -9354,6 +9395,11 @@ he@^1.2.0:
   version "1.2.0"
   resolved "https://registry.npmjs.org/he/-/he-1.2.0.tgz"
   integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
+
+headers-polyfill@^3.1.2:
+  version "3.1.2"
+  resolved "https://registry.yarnpkg.com/headers-polyfill/-/headers-polyfill-3.1.2.tgz#9a4dcb545c5b95d9569592ef7ec0708aab763fbe"
+  integrity sha512-tWCK4biJ6hcLqTviLXVR9DTRfYGQMXEIUj3gwJ2rZ5wO/at3XtkI4g8mCvFdUF9l1KMBNCfmNAdnahm1cgavQA==
 
 heapdump@^0.3.15:
   version "0.3.15"

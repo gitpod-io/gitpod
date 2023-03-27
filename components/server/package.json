@@ -28,6 +28,8 @@
   ],
   "dependencies": {
     "@authzed/authzed-node": "^0.10.0",
+    "@bufbuild/connect": "^0.8.1",
+    "@bufbuild/connect-express": "^0.8.1",
     "@gitbeaker/node": "^35.7.0",
     "@gitpod/content-service": "0.1.5",
     "@gitpod/gitpod-db": "0.1.5",
@@ -36,6 +38,7 @@
     "@gitpod/gitpod-protocol": "0.1.5",
     "@gitpod/ide-service-api": "0.1.5",
     "@gitpod/image-builder": "0.1.5",
+    "@gitpod/public-api": "0.1.5",
     "@gitpod/supervisor-api-grpcweb": "0.1.5",
     "@gitpod/usage-api": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",

@@ -113,6 +113,7 @@ import { IamSessionApp } from "./iam/iam-session-app";
 import { spicedbClientFromEnv, SpiceDBClient } from "./authorization/spicedb";
 import { Authorizer, PermissionChecker } from "./authorization/perms";
 import { EnvVarService } from "./workspace/env-var-service";
+import { APIUserService } from "./api/user";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -313,4 +314,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         .toDynamicValue(() => spicedbClientFromEnv())
         .inSingletonScope();
     bind(PermissionChecker).to(Authorizer).inSingletonScope();
+
+    // grpc / Connect API
+    bind(APIUserService).toSelf().inSingletonScope();
 });
