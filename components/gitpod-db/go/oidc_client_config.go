@@ -166,3 +166,25 @@ func DeleteOIDCClientConfig(ctx context.Context, conn *gorm.DB, id, organization
 
 	return nil
 }
+
+func GetOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug string) (OIDCClientConfig, error) {
+	var config OIDCClientConfig
+
+	if slug == "" {
+		return OIDCClientConfig{}, fmt.Errorf("slug is a required argument")
+	}
+
+	tx := conn.
+		WithContext(ctx).
+		Table((&OIDCClientConfig{}).TableName()).
+		Joins("JOIN d_b_team team ON team.id = d_b_oidc_client_config.organizationId").
+		Where("team.slug = ?", slug).
+		Where("deleted = ?", 0).
+		First(&config)
+
+	if tx.Error != nil {
+		return OIDCClientConfig{}, fmt.Errorf("failed to get oidc client config by org slug (slug: %s): %v", slug, tx.Error)
+	}
+
+	return config, nil
+}
