@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamSettings } from "@gitpod/gitpod-protocol";
+import { OrganizationSettings } from "@gitpod/gitpod-protocol";
 import React, { useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
@@ -36,7 +36,7 @@ export default function TeamSettingsPage() {
     const updateTeamSettings = useUpdateOrgSettingsMutation();
 
     const handleUpdateTeamSettings = useCallback(
-        (newSettings: Partial<TeamSettings>) => {
+        (newSettings: Partial<OrganizationSettings>) => {
             if (!org?.id) {
                 throw new Error("no organization selected");
             }
