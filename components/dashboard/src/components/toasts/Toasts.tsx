@@ -1,4 +1,5 @@
 import { createContext, FC, memo, useCallback, useContext, useMemo, useReducer } from "react";
+import { Portal } from "react-portal";
 import { ToastEntry, toastReducer } from "./reducer";
 import { Toast } from "./Toast";
 
@@ -52,10 +53,12 @@ type ToastsListProps = {
 };
 const ToastsList: FC<ToastsListProps> = memo(({ toasts, onRemove }) => {
     return (
-        <div className="fixed z-50 box-border bottom-2 right-2 space-y-2">
-            {toasts.map((toast) => {
-                return <Toast key={toast.id} {...toast} onRemove={onRemove} />;
-            })}
-        </div>
+        <Portal>
+            <div className="fixed z-50 box-border bottom-2 right-2 space-y-2">
+                {toasts.map((toast) => {
+                    return <Toast key={toast.id} {...toast} onRemove={onRemove} />;
+                })}
+            </div>
+        </Portal>
     );
 });

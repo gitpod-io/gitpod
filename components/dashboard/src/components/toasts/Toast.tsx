@@ -35,7 +35,7 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
         <div
             className={classNames(
                 "flex justify-between items-center",
-                "md:w-80 max-w-full",
+                "md:w-96 max-w-full",
                 "p-6 border-1 rounded relative bottom-2 right-2",
                 "bg-gray-800 dark:bg-gray-100",
                 "text-white dark:text-gray-800",
