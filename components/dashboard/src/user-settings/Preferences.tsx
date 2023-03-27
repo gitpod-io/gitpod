@@ -23,7 +23,7 @@ import { useToast } from "../components/toasts/Toasts";
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
 export default function Preferences() {
-    const { notify } = useToast();
+    const { toast } = useToast();
     const { user, setUser } = useContext(UserContext);
     const maySetTimeout = useUserMaySetTimeout();
 
@@ -41,7 +41,7 @@ export default function Preferences() {
             };
             const updatedUser = await getGitpodService().server.updateLoggedInUser({ additionalData });
             setUser(updatedUser);
-            notify("Your dotfiles repository was updated");
+            toast("Your dotfiles repository was updated");
 
             if (dotfileRepo !== prevDotfileRepo) {
                 trackEvent("dotfile_repo_changed", {
@@ -50,7 +50,7 @@ export default function Preferences() {
                 });
             }
         },
-        [dotfileRepo, notify, setUser, user?.additionalData],
+        [dotfileRepo, toast, setUser, user?.additionalData],
     );
 
     const saveWorkspaceTimeout = useCallback(
@@ -64,13 +64,13 @@ export default function Preferences() {
                 const updatedUser = await getGitpodService().server.getLoggedInUser();
                 setUser(updatedUser);
 
-                notify("Your default workspace timeout was updated");
+                toast("Your default workspace timeout was updated");
             } catch (e) {
                 // TODO: Convert this to an error style toast
                 alert("Cannot set custom workspace timeout: " + e.message);
             }
         },
-        [notify, setUser, workspaceTimeout],
+        [toast, setUser, workspaceTimeout],
     );
 
     return (

@@ -6,9 +6,9 @@ import { Toast } from "./Toast";
 type NotifyProps = string | (Pick<ToastEntry, "message"> & Partial<ToastEntry>);
 
 const ToastContext = createContext<{
-    notify: (toast: NotifyProps) => void;
+    toast: (toast: NotifyProps) => void;
 }>({
-    notify: () => undefined,
+    toast: () => undefined,
 });
 
 export const useToast = () => {
@@ -37,7 +37,7 @@ export const ToastContextProvider: FC = ({ children }) => {
         dispatch({ type: "add", toast: newToast });
     }, []);
 
-    const ctxValue = useMemo(() => ({ notify: addToast }), [addToast]);
+    const ctxValue = useMemo(() => ({ toast: addToast }), [addToast]);
 
     return (
         <ToastContext.Provider value={ctxValue}>
