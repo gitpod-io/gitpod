@@ -159,7 +159,7 @@ import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { PartialProject, TeamSettings } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { PartialProject, OrganizationSettings } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ConfigurationService } from "../config/configuration-service";
 import {
@@ -2499,25 +2499,25 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
     }
 
-    async getTeamSettings(ctx: TraceContextWithSpan, teamId: string): Promise<TeamSettings> {
-        const user = this.checkAndBlockUser("getTeamSettings");
+    async getOrgSettings(ctx: TraceContextWithSpan, teamId: string): Promise<OrganizationSettings> {
+        const user = this.checkAndBlockUser("getOrgSettings");
         traceAPIParams(ctx, { teamId, userId: user.id });
         await this.guardTeamOperation(teamId, "get", "org_write");
-        const settings = await this.teamDB.findTeamSettings(teamId);
+        const settings = await this.teamDB.findOrgSettings(teamId);
         // TODO: make a default in protocol
         return settings ?? { workspaceSharingDisabled: false };
     }
 
-    async updateTeamSettings(
+    async updateOrgSettings(
         ctx: TraceContextWithSpan,
         teamId: string,
-        settings: Partial<TeamSettings>,
-    ): Promise<TeamSettings> {
-        const user = this.checkAndBlockUser("updateTeamSettings");
+        settings: Partial<OrganizationSettings>,
+    ): Promise<OrganizationSettings> {
+        const user = this.checkAndBlockUser("updateOrgSettings");
         traceAPIParams(ctx, { teamId, userId: user.id });
         await this.guardTeamOperation(teamId, "update", "org_write");
-        await this.teamDB.setTeamSettings(teamId, settings);
-        return (await this.teamDB.findTeamSettings(teamId))!;
+        await this.teamDB.setOrgSettings(teamId, settings);
+        return (await this.teamDB.findOrgSettings(teamId))!;
     }
 
     public async getTeamProjects(ctx: TraceContext, teamId: string): Promise<Project[]> {

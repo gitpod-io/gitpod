@@ -465,7 +465,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
 
         if (workspace.organizationId) {
-            const settings = await this.teamDB.findTeamSettings(workspace.organizationId);
+            const settings = await this.teamDB.findOrgSettings(workspace.organizationId);
             if (settings?.workspaceSharingDisabled) {
                 throw new ResponseError(
                     ErrorCodes.PERMISSION_DENIED,

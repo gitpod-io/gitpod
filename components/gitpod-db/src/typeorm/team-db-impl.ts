@@ -9,7 +9,7 @@ import {
     TeamMemberInfo,
     TeamMemberRole,
     TeamMembershipInvite,
-    TeamSettings,
+    OrganizationSettings,
     User,
 } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
@@ -25,7 +25,7 @@ import { DBTeamMembershipInvite } from "./entity/db-team-membership-invite";
 import { ResponseError } from "vscode-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import slugify from "slugify";
-import { DBTeamSettings } from "./entity/db-team-settings";
+import { DBOrgSettings } from "./entity/db-team-settings";
 
 @injectable()
 export class TeamDBImpl implements TeamDB {
@@ -47,8 +47,8 @@ export class TeamDBImpl implements TeamDB {
         return (await this.getEntityManager()).getRepository<DBTeamMembershipInvite>(DBTeamMembershipInvite);
     }
 
-    protected async getTeamSettingsRepo(): Promise<Repository<DBTeamSettings>> {
-        return (await this.getEntityManager()).getRepository<DBTeamSettings>(DBTeamSettings);
+    protected async getOrgSettingsRepo(): Promise<Repository<DBOrgSettings>> {
+        return (await this.getEntityManager()).getRepository<DBOrgSettings>(DBOrgSettings);
     }
 
     protected async getUserRepo(): Promise<Repository<DBUser>> {
@@ -238,7 +238,7 @@ export class TeamDBImpl implements TeamDB {
     }
 
     private async deleteTeamSettings(teamId: string): Promise<void> {
-        const teamSettingRepo = await this.getTeamSettingsRepo();
+        const teamSettingRepo = await this.getOrgSettingsRepo();
         const teamSettings = await teamSettingRepo.findOne({ where: { teamId: teamId, deleted: false } });
         if (teamSettings) {
             teamSettings.deleted = true;
@@ -362,13 +362,13 @@ export class TeamDBImpl implements TeamDB {
         return newInvite;
     }
 
-    public async findTeamSettings(teamId: string): Promise<TeamSettings | undefined> {
-        const repo = await this.getTeamSettingsRepo();
+    public async findOrgSettings(teamId: string): Promise<OrganizationSettings | undefined> {
+        const repo = await this.getOrgSettingsRepo();
         return repo.findOne({ where: { teamId, deleted: false }, select: ["teamId", "workspaceSharingDisabled"] });
     }
 
-    public async setTeamSettings(teamId: string, settings: Partial<TeamSettings>): Promise<void> {
-        const repo = await this.getTeamSettingsRepo();
+    public async setOrgSettings(teamId: string, settings: Partial<OrganizationSettings>): Promise<void> {
+        const repo = await this.getOrgSettingsRepo();
         const team = await repo.findOne({ where: { teamId, deleted: false } });
         if (!team) {
             await repo.insert({

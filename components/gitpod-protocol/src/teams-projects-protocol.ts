@@ -142,8 +142,6 @@ export interface Organization {
     deleted?: boolean;
 }
 
-export type TeamSettings = OrganizationSettings;
-
 export interface OrganizationSettings {
     workspaceSharingDisabled?: boolean;
 }

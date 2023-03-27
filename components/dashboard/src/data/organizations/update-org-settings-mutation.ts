@@ -7,7 +7,7 @@
 import { TeamSettings } from "@gitpod/gitpod-protocol";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
-import { getOrgSettingsQueryKey, TeamSettingsResult } from "./org-settings-query";
+import { getOrgSettingsQueryKey, OrgSettingsResult } from "./org-settings-query";
 import { useCurrentOrg } from "./orgs-query";
 
 type UpdateTeamSettingsArgs = Pick<TeamSettings, "workspaceSharingDisabled">;
@@ -23,7 +23,7 @@ export const useUpdateOrgSettingsMutation = () => {
         },
         onSuccess: (newData, _) => {
             const queryKey = getOrgSettingsQueryKey(teamId);
-            queryClient.setQueryData<TeamSettingsResult>(queryKey, newData);
+            queryClient.setQueryData<OrgSettingsResult>(queryKey, newData);
             queryClient.invalidateQueries({ queryKey });
         },
     });

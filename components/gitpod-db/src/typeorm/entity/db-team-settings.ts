@@ -4,14 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamSettings } from "@gitpod/gitpod-protocol";
+import { OrganizationSettings } from "@gitpod/gitpod-protocol";
 import { Entity, Column, PrimaryColumn } from "typeorm";
 import { TypeORM } from "../typeorm";
 
 @Entity()
-export class DBTeamSettings implements TeamSettings {
+export class DBOrgSettings implements OrganizationSettings {
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
-    teamId: string;
+    orgId: string;
 
     @Column({
         default: false,
