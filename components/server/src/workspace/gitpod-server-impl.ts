@@ -2499,25 +2499,25 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
     }
 
-    async getOrgSettings(ctx: TraceContextWithSpan, teamId: string): Promise<OrganizationSettings> {
+    async getOrgSettings(ctx: TraceContextWithSpan, orgId: string): Promise<OrganizationSettings> {
         const user = this.checkAndBlockUser("getOrgSettings");
-        traceAPIParams(ctx, { teamId, userId: user.id });
-        await this.guardTeamOperation(teamId, "get", "org_write");
-        const settings = await this.teamDB.findOrgSettings(teamId);
+        traceAPIParams(ctx, { teamId: orgId, userId: user.id });
+        await this.guardTeamOperation(orgId, "get", "org_write");
+        const settings = await this.teamDB.findOrgSettings(orgId);
         // TODO: make a default in protocol
         return settings ?? { workspaceSharingDisabled: false };
     }
 
     async updateOrgSettings(
         ctx: TraceContextWithSpan,
-        teamId: string,
+        orgId: string,
         settings: Partial<OrganizationSettings>,
     ): Promise<OrganizationSettings> {
         const user = this.checkAndBlockUser("updateOrgSettings");
-        traceAPIParams(ctx, { teamId, userId: user.id });
-        await this.guardTeamOperation(teamId, "update", "org_write");
-        await this.teamDB.setOrgSettings(teamId, settings);
-        return (await this.teamDB.findOrgSettings(teamId))!;
+        traceAPIParams(ctx, { teamId: orgId, userId: user.id });
+        await this.guardTeamOperation(orgId, "update", "org_write");
+        await this.teamDB.setOrgSettings(orgId, settings);
+        return (await this.teamDB.findOrgSettings(orgId))!;
     }
 
     public async getTeamProjects(ctx: TraceContext, teamId: string): Promise<Project[]> {
