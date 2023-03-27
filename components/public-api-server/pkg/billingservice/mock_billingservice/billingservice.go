@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -38,6 +38,20 @@ func (m *MockInterface) EXPECT() *MockInterfaceMockRecorder {
 	return m.recorder
 }
 
+// CancelSubscription mocks base method.
+func (m *MockInterface) CancelSubscription(ctx context.Context, subscriptionId string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CancelSubscription", ctx, subscriptionId)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CancelSubscription indicates an expected call of CancelSubscription.
+func (mr *MockInterfaceMockRecorder) CancelSubscription(ctx, subscriptionId interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelSubscription", reflect.TypeOf((*MockInterface)(nil).CancelSubscription), ctx, subscriptionId)
+}
+
 // FinalizeInvoice mocks base method.
 func (m *MockInterface) FinalizeInvoice(ctx context.Context, invoiceId string) error {
 	m.ctrl.T.Helper()
@@ -52,16 +66,16 @@ func (mr *MockInterfaceMockRecorder) FinalizeInvoice(ctx, invoiceId interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinalizeInvoice", reflect.TypeOf((*MockInterface)(nil).FinalizeInvoice), ctx, invoiceId)
 }
 
-// CancelSubscription mocks base method.
-func (m *MockInterface) CancelSubscription(ctx context.Context, subscriptionId string) error {
+// OnChargeDispute mocks base method.
+func (m *MockInterface) OnChargeDispute(ctx context.Context, disputeID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CancelSubscription", ctx, subscriptionId)
+	ret := m.ctrl.Call(m, "OnChargeDispute", ctx, disputeID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CancelSubscription indicates an expected call of CancelSubscription.
-func (mr *MockInterfaceMockRecorder) CancelSubscription(ctx, subscriptionId interface{}) *gomock.Call {
+// OnChargeDispute indicates an expected call of OnChargeDispute.
+func (mr *MockInterfaceMockRecorder) OnChargeDispute(ctx, disputeID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelSubscription", reflect.TypeOf((*MockInterface)(nil).CancelSubscription), ctx, subscriptionId)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnChargeDispute", reflect.TypeOf((*MockInterface)(nil).OnChargeDispute), ctx, disputeID)
 }

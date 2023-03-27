@@ -26,6 +26,9 @@ service BillingService {
 
   // GetPriceInformation returns the price information for a given attribtion id
   rpc GetPriceInformation(GetPriceInformationRequest) returns (GetPriceInformationResponse) {};
+
+  // OnChargeDispute handles charge disputes created with the underlying payment provider.
+  rpc OnChargeDispute(OnChargeDisputeRequest) returns (OnChargeDisputeResponse) {};
 }
 
 message ReconcileInvoicesRequest {}
@@ -99,3 +102,9 @@ message GetPriceInformationRequest {
 message GetPriceInformationResponse {
   string human_readable_description = 2;
 }
+
+message OnChargeDisputeRequest {
+  string dispute_id = 1;
+}
+
+message OnChargeDisputeResponse {}

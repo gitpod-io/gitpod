@@ -41,6 +41,8 @@ type BillingServiceClient interface {
 	CreateStripeSubscription(ctx context.Context, in *CreateStripeSubscriptionRequest, opts ...grpc.CallOption) (*CreateStripeSubscriptionResponse, error)
 	// GetPriceInformation returns the price information for a given attribtion id
 	GetPriceInformation(ctx context.Context, in *GetPriceInformationRequest, opts ...grpc.CallOption) (*GetPriceInformationResponse, error)
+	// OnChargeDispute handles charge disputes created with the underlying payment provider.
+	OnChargeDispute(ctx context.Context, in *OnChargeDisputeRequest, opts ...grpc.CallOption) (*OnChargeDisputeResponse, error)
 }
 
 type billingServiceClient struct {
@@ -114,6 +116,15 @@ func (c *billingServiceClient) GetPriceInformation(ctx context.Context, in *GetP
 	return out, nil
 }
 
+func (c *billingServiceClient) OnChargeDispute(ctx context.Context, in *OnChargeDisputeRequest, opts ...grpc.CallOption) (*OnChargeDisputeResponse, error) {
+	out := new(OnChargeDisputeResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/OnChargeDispute", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BillingServiceServer is the server API for BillingService service.
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility
@@ -133,6 +144,8 @@ type BillingServiceServer interface {
 	CreateStripeSubscription(context.Context, *CreateStripeSubscriptionRequest) (*CreateStripeSubscriptionResponse, error)
 	// GetPriceInformation returns the price information for a given attribtion id
 	GetPriceInformation(context.Context, *GetPriceInformationRequest) (*GetPriceInformationResponse, error)
+	// OnChargeDispute handles charge disputes created with the underlying payment provider.
+	OnChargeDispute(context.Context, *OnChargeDisputeRequest) (*OnChargeDisputeResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }
 
@@ -160,6 +173,9 @@ func (UnimplementedBillingServiceServer) CreateStripeSubscription(context.Contex
 }
 func (UnimplementedBillingServiceServer) GetPriceInformation(context.Context, *GetPriceInformationRequest) (*GetPriceInformationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetPriceInformation not implemented")
+}
+func (UnimplementedBillingServiceServer) OnChargeDispute(context.Context, *OnChargeDisputeRequest) (*OnChargeDisputeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method OnChargeDispute not implemented")
 }
 func (UnimplementedBillingServiceServer) mustEmbedUnimplementedBillingServiceServer() {}
 
@@ -300,6 +316,24 @@ func _BillingService_GetPriceInformation_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_OnChargeDispute_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(OnChargeDisputeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).OnChargeDispute(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/OnChargeDispute",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).OnChargeDispute(ctx, req.(*OnChargeDisputeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BillingService_ServiceDesc is the grpc.ServiceDesc for BillingService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -334,6 +368,10 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetPriceInformation",
 			Handler:    _BillingService_GetPriceInformation_Handler,
+		},
+		{
+			MethodName: "OnChargeDispute",
+			Handler:    _BillingService_OnChargeDispute_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

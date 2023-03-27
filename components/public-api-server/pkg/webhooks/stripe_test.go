@@ -27,6 +27,7 @@ const (
 	invoiceFinalizedEventType   = "invoice.finalized"
 	customerCreatedEventType    = "customer.created"
 	customerSubscriptionDeleted = "customer.subscription.deleted"
+	chargeDisputeCreated        = "charge.dispute.created"
 )
 
 const (
@@ -73,7 +74,7 @@ func TestWebhookAcceptsPostRequests(t *testing.T) {
 	}
 }
 
-func TestWebhookIgnoresIrrelevantEvents(t *testing.T) {
+func TestWebhookIgnoresIrrelevantEvents_NoopClient(t *testing.T) {
 	scenarios := []struct {
 		EventType          string
 		ExpectedStatusCode int
@@ -93,6 +94,10 @@ func TestWebhookIgnoresIrrelevantEvents(t *testing.T) {
 		{
 			EventType:          customerCreatedEventType,
 			ExpectedStatusCode: http.StatusBadRequest,
+		},
+		{
+			EventType:          chargeDisputeCreated,
+			ExpectedStatusCode: http.StatusOK,
 		},
 	}
 
