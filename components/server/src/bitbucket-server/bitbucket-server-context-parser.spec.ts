@@ -306,7 +306,7 @@ class TestBitbucketServerContextParser {
         });
     }
 
-    @test.only test_toSimpleBranchName() {
+    @test test_toSimpleBranchName() {
         const url = new URL(
             "https://bitbucket.gitpod-self-hosted.com/projects/FOO/repos/repo123/browse?at=refs%2Fheads%2Ffoo",
         );

@@ -7,7 +7,7 @@
 import { render, fireEvent, screen } from "@testing-library/react";
 import { GitIntegrationModal } from "./Integrations";
 
-test.only("should update redirectURL preview", async () => {
+test("should update redirectURL preview", async () => {
     render(<GitIntegrationModal mode="new" userId="F00" />);
 
     fireEvent.change(screen.getByLabelText(/Host/i), {

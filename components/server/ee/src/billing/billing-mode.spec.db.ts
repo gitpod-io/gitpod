@@ -555,8 +555,7 @@ class BillingModeSpec {
             },
         ];
 
-        const onlyTest = tests.find((t) => t.only);
-        for (const test of onlyTest ? [onlyTest] : tests) {
+        for (const test of tests) {
             // Setup test code, environment and data
             const testContainer = new Container();
             testContainer.load(dbContainerModule);

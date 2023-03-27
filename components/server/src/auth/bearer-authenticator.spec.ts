@@ -15,9 +15,8 @@ class TestPersonalAccessToken {
         const token = "gitpod_pat_GrvGthczSRf3ypqFhNtcRiN5fK6CV7rdCkkPLfpbc_4." + "test".repeat(10);
 
         const parsed = PersonalAccessToken.parse(token);
-        expect(parsed).to.equal(
-            new PersonalAccessToken("GrvGthczSRf3ypqFhNtcRiN5fK6CV7rdCkkPLfpbc_4", "test".repeat(10)),
-        );
+        const expected = new PersonalAccessToken("GrvGthczSRf3ypqFhNtcRiN5fK6CV7rdCkkPLfpbc_4", "test".repeat(10));
+        expect(parsed).to.deep.equal(expected);
     }
 
     @test
@@ -29,7 +28,7 @@ class TestPersonalAccessToken {
         ];
 
         tokens.forEach((token) => {
-            expect(PersonalAccessToken.parse(token)).to.throw();
+            expect(() => PersonalAccessToken.parse(token)).to.throw();
         });
     }
 }
