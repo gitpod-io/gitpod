@@ -41,6 +41,7 @@ type OIDCServiceClient interface {
 	UpdateClientConfig(context.Context, *connect_go.Request[v1.UpdateClientConfigRequest]) (*connect_go.Response[v1.UpdateClientConfigResponse], error)
 	// Removes a OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error)
+	GetLoginID(context.Context, *connect_go.Request[v1.GetLoginIDRequest]) (*connect_go.Response[v1.GetLoginIDResponse], error)
 }
 
 // NewOIDCServiceClient constructs a client for the gitpod.experimental.v1.OIDCService service. By
@@ -78,6 +79,11 @@ func NewOIDCServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+"/gitpod.experimental.v1.OIDCService/DeleteClientConfig",
 			opts...,
 		),
+		getLoginID: connect_go.NewClient[v1.GetLoginIDRequest, v1.GetLoginIDResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.OIDCService/GetLoginID",
+			opts...,
+		),
 	}
 }
 
@@ -88,6 +94,7 @@ type oIDCServiceClient struct {
 	listClientConfigs  *connect_go.Client[v1.ListClientConfigsRequest, v1.ListClientConfigsResponse]
 	updateClientConfig *connect_go.Client[v1.UpdateClientConfigRequest, v1.UpdateClientConfigResponse]
 	deleteClientConfig *connect_go.Client[v1.DeleteClientConfigRequest, v1.DeleteClientConfigResponse]
+	getLoginID         *connect_go.Client[v1.GetLoginIDRequest, v1.GetLoginIDResponse]
 }
 
 // CreateClientConfig calls gitpod.experimental.v1.OIDCService.CreateClientConfig.
@@ -115,6 +122,11 @@ func (c *oIDCServiceClient) DeleteClientConfig(ctx context.Context, req *connect
 	return c.deleteClientConfig.CallUnary(ctx, req)
 }
 
+// GetLoginID calls gitpod.experimental.v1.OIDCService.GetLoginID.
+func (c *oIDCServiceClient) GetLoginID(ctx context.Context, req *connect_go.Request[v1.GetLoginIDRequest]) (*connect_go.Response[v1.GetLoginIDResponse], error) {
+	return c.getLoginID.CallUnary(ctx, req)
+}
+
 // OIDCServiceHandler is an implementation of the gitpod.experimental.v1.OIDCService service.
 type OIDCServiceHandler interface {
 	// Creates a new OIDC client configuration.
@@ -127,6 +139,7 @@ type OIDCServiceHandler interface {
 	UpdateClientConfig(context.Context, *connect_go.Request[v1.UpdateClientConfigRequest]) (*connect_go.Response[v1.UpdateClientConfigResponse], error)
 	// Removes a OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error)
+	GetLoginID(context.Context, *connect_go.Request[v1.GetLoginIDRequest]) (*connect_go.Response[v1.GetLoginIDResponse], error)
 }
 
 // NewOIDCServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -161,6 +174,11 @@ func NewOIDCServiceHandler(svc OIDCServiceHandler, opts ...connect_go.HandlerOpt
 		svc.DeleteClientConfig,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.OIDCService/GetLoginID", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.OIDCService/GetLoginID",
+		svc.GetLoginID,
+		opts...,
+	))
 	return "/gitpod.experimental.v1.OIDCService/", mux
 }
 
@@ -185,4 +203,8 @@ func (UnimplementedOIDCServiceHandler) UpdateClientConfig(context.Context, *conn
 
 func (UnimplementedOIDCServiceHandler) DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.DeleteClientConfig is not implemented"))
+}
+
+func (UnimplementedOIDCServiceHandler) GetLoginID(context.Context, *connect_go.Request[v1.GetLoginIDRequest]) (*connect_go.Response[v1.GetLoginIDResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.GetLoginID is not implemented"))
 }

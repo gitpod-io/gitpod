@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateClientConfigRequest, CreateClientConfigResponse, DeleteClientConfigRequest, DeleteClientConfigResponse, GetClientConfigRequest, GetClientConfigResponse, ListClientConfigsRequest, ListClientConfigsResponse, UpdateClientConfigRequest, UpdateClientConfigResponse} from "./oidc_pb.js";
+import {CreateClientConfigRequest, CreateClientConfigResponse, DeleteClientConfigRequest, DeleteClientConfigResponse, GetClientConfigRequest, GetClientConfigResponse, GetLoginIDRequest, GetLoginIDResponse, ListClientConfigsRequest, ListClientConfigsResponse, UpdateClientConfigRequest, UpdateClientConfigResponse} from "./oidc_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -73,6 +73,14 @@ export const OIDCService = {
       O: DeleteClientConfigResponse,
       kind: MethodKind.Unary,
     },
+    /**
+     * @generated from rpc gitpod.experimental.v1.OIDCService.GetLoginID
+     */
+    getLoginID: {
+      name: "GetLoginID",
+      I: GetLoginIDRequest,
+      O: GetLoginIDResponse,
+      kind: MethodKind.Unary,
+    },
   }
 } as const;
-

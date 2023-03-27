@@ -873,3 +873,76 @@ export class DeleteClientConfigResponse extends Message<DeleteClientConfigRespon
   }
 }
 
+/**
+ * @generated from message gitpod.experimental.v1.GetLoginIDRequest
+ */
+export class GetLoginIDRequest extends Message<GetLoginIDRequest> {
+  /**
+   * @generated from field: string slug = 1;
+   */
+  slug = "";
+
+  constructor(data?: PartialMessage<GetLoginIDRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetLoginIDRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "slug", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetLoginIDRequest {
+    return new GetLoginIDRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetLoginIDRequest {
+    return new GetLoginIDRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetLoginIDRequest {
+    return new GetLoginIDRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetLoginIDRequest | PlainMessage<GetLoginIDRequest> | undefined, b: GetLoginIDRequest | PlainMessage<GetLoginIDRequest> | undefined): boolean {
+    return proto3.util.equals(GetLoginIDRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.GetLoginIDResponse
+ */
+export class GetLoginIDResponse extends Message<GetLoginIDResponse> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  constructor(data?: PartialMessage<GetLoginIDResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.GetLoginIDResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetLoginIDResponse {
+    return new GetLoginIDResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetLoginIDResponse {
+    return new GetLoginIDResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetLoginIDResponse {
+    return new GetLoginIDResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: GetLoginIDResponse | PlainMessage<GetLoginIDResponse> | undefined, b: GetLoginIDResponse | PlainMessage<GetLoginIDResponse> | undefined): boolean {
+    return proto3.util.equals(GetLoginIDResponse, a, b);
+  }
+}

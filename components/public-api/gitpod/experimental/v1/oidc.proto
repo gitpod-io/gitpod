@@ -137,6 +137,8 @@ service OIDCService {
 
   // Removes a OIDC client configuration by ID.
   rpc DeleteClientConfig(DeleteClientConfigRequest) returns (DeleteClientConfigResponse) {};
+
+  rpc GetLoginID(GetLoginIDRequest) returns (GetLoginIDResponse) {};
 }
 
 message CreateClientConfigRequest {
@@ -184,3 +186,11 @@ message DeleteClientConfigRequest {
 }
 
 message DeleteClientConfigResponse {}
+
+message GetLoginIDRequest {
+  string slug = 1;
+}
+
+message GetLoginIDResponse {
+  string id = 1;
+}

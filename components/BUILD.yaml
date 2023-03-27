@@ -200,7 +200,7 @@ scripts:
     srcs:
       - components/**/*
     script: |
-      if [ "$(git diff --cached | grep "+" | grep ".only")" != "" ]; then
+      if [ "$(git diff --cached | grep "+" | grep "\w+\.only(")" != "" ]; then
         echo ""
         echo "COMMIT FAILED:"
         echo "Some spec files have .only. Please remove only and try committing again."
