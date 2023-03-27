@@ -189,9 +189,9 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 
 			if failure != "" {
 				log.Error(initErr, "could not initialize workspace", "name", ws.Name)
-				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionFalse, "InitializationFailure", failure))
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionFalse, workspacev1.ReasonInitializationFailure, failure))
 			} else {
-				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, "InitializationSuccess", ""))
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, workspacev1.ReasonInitializationSuccess, ""))
 			}
 
 			return wsc.Status().Update(ctx, ws)

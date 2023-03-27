@@ -218,7 +218,7 @@ func newMetricState(ws *workspacev1.Workspace) metricState {
 		// This is to prevent these from being re-recorded after the controller restarts and clears the metric state for
 		// each workspace.
 		recordedStartTime:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
-		recordedInitFailure:     wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, "InitializationFailure"),
+		recordedInitFailure:     wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure),
 		recordedStartFailure:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)),
 		recordedContentReady:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)),
 		recordedBackupFailed:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)),

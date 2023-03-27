@@ -192,7 +192,20 @@ func isDisposalFinished(ws *workspacev1.Workspace) bool {
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then
 // one should extract the phase themselves. If the pod has not failed, this function returns "", nil.
+// This failure is then stored in the Failed condition on the workspace.
 func extractFailure(ws *workspacev1.Workspace, pod *corev1.Pod) (string, *workspacev1.WorkspacePhase) {
+	// Check for content init failure.
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c != nil {
+		if c.Status == metav1.ConditionFalse && c.Reason == workspacev1.ReasonInitializationFailure {
+			return c.Message, nil
+		}
+	}
+
+	// Check for backup failure.
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)); c != nil {
+		return c.Message, nil
+	}
+
 	status := pod.Status
 	if status.Phase == corev1.PodFailed && (status.Reason != "" || status.Message != "") {
 		// Don't force the phase to UNKNONWN here to leave a chance that we may detect the actual phase of
