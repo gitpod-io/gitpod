@@ -464,6 +464,16 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         await this.guardAccess({ kind: "workspace", subject: workspace }, "update");
 
+        if (workspace.organizationId) {
+            const settings = await this.teamDB.findTeamSettings(workspace.organizationId);
+            if (settings?.workspaceSharingDisabled) {
+                throw new ResponseError(
+                    ErrorCodes.PERMISSION_DENIED,
+                    "Organization not allow to share workspaces, please contact admin.",
+                );
+            }
+        }
+
         // TOOD: team settings check
 
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
