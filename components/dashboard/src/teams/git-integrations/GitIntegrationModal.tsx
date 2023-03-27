@@ -6,13 +6,13 @@
 
 import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useMemo, useState } from "react";
-import Alert from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
 import { TextInputField } from "../../components/forms/TextInputField";
 import { InputWithCopy } from "../../components/InputWithCopy";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
+import { Subheading } from "../../components/typography/headings";
 import { useInvalidateOrgAuthProvidersQuery } from "../../data/auth-providers/org-auth-providers-query";
 import { useUpsertOrgAuthProviderMutation } from "../../data/auth-providers/upsert-org-auth-provider-mutation";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
@@ -37,15 +37,14 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
 
     // This is a readonly value to copy and plug into external oauth config
     const redirectURL = useMemo(() => {
-        // Default to an example
-        let url = callbackUrl("gitlab.example.com");
+        let url = "";
 
         // Once it's saved, use what's stored
         if (!isNew) {
             url = savedProvider?.oauth.callBackUrl ?? url;
         } else {
-            // Otherwise construct it w/ their provided host value
-            url = callbackUrl(host);
+            // Otherwise construct it w/ their provided host value or example
+            url = callbackUrl(host || "gitlab.example.com");
         }
 
         return url;
@@ -79,9 +78,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     const hostOnBlur = useCallback(() => {
         hostOnBlurErrorTracking();
 
-        if (host.startsWith("https://")) {
-            setHost(host.replace("https://", ""));
-        }
+        setHost(cleanHost(host));
     }, [host, hostOnBlurErrorTracking]);
 
     // TODO: We could remove this extra state management if we convert the modal into a detail flow w/ it's own route
@@ -116,7 +113,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
             const newProvider = await upsertProvider.mutateAsync({
                 provider: isNew
                     ? {
-                          host: host.replace("https://", ""),
+                          host: cleanHost(host),
                           type,
                           clientId: trimmedId,
                           clientSecret: trimmedSecret,
@@ -192,20 +189,20 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                 return false;
             }}
         >
-            <ModalHeader>{isNew ? "New Git Integration" : "Git Integration"}</ModalHeader>
+            <ModalHeader>{isNew ? "New Git Auth" : "Git Auth"}</ModalHeader>
             <ModalBody>
-                <div className="flex flex-col text-gray-500">
-                    Configure an integration with a self-managed instance of GitLab, GitHub, or Bitbucket.
-                </div>
+                {isNew && (
+                    <Subheading>
+                        Configure Git Auth with a self-managed instance of GitLab, GitHub or Bitbucket Server.
+                    </Subheading>
+                )}
 
                 <div>
-                    {isNew && (
-                        <SelectInputField label="Provider Type" value={type} onChange={setType}>
-                            <option value="GitHub">GitHub</option>
-                            <option value="GitLab">GitLab</option>
-                            <option value="BitbucketServer">Bitbucket Server</option>
-                        </SelectInputField>
-                    )}
+                    <SelectInputField disabled={!isNew} label="Provider Type" value={type} onChange={setType}>
+                        <option value="GitHub">GitHub</option>
+                        <option value="GitLab">GitLab</option>
+                        <option value="BitbucketServer">Bitbucket Server</option>
+                    </SelectInputField>
                     <TextInputField
                         label="Provider Host Name"
                         value={host}
@@ -247,7 +244,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                             !isNew &&
                             savedProvider?.status !== "verified" && (
                                 <ModalFooterAlert type="warning" closable={false}>
-                                    You need to activate this integration.
+                                    You need to activate this configuration.
                                 </ModalFooterAlert>
                             )
                         )}
@@ -258,7 +255,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                     Cancel
                 </Button>
                 <Button onClick={activate} disabled={!isValid || savingProvider} loading={savingProvider}>
-                    Activate Integration
+                    Activate
                 </Button>
             </ModalFooter>
         </Modal>
@@ -331,3 +328,17 @@ const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = (
         </span>
     );
 };
+
+function cleanHost(host: string) {
+    let cleanedHost = host;
+
+    // Removing https protocol
+    if (host.startsWith("https://")) {
+        cleanedHost = host.replace("https://", "");
+    }
+
+    // Trim any trailing slashes
+    cleanedHost = cleanedHost.replace(/\/$/, "");
+
+    return cleanedHost;
+}

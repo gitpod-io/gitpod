@@ -23,7 +23,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
     const menuEntries = useMemo(() => {
         const result: ContextMenuEntry[] = [];
         result.push({
-            title: provider.status === "verified" ? "Edit Configuration" : "Activate Integration",
+            title: provider.status === "verified" ? "Edit" : "Activate",
             onClick: () => setShowEditModal(true),
             separator: true,
         });

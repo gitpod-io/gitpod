@@ -110,6 +110,7 @@
     select.error {
         @apply border-gitpod-red dark:border-gitpod-red focus:border-gitpod-red dark:focus:border-gitpod-red;
     }
+    select[disabled],
     textarea[disabled],
     input[disabled] {
         @apply bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500;

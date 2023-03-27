@@ -123,8 +123,8 @@ export class AuthProviderService {
     }
 
     async createOrgAuthProvider(entry: AuthProviderEntry.NewOrgEntry): Promise<AuthProviderEntry> {
-        // TODO: only restrict existing provider w/ same host if it's the same organization
-        const existing = await this.authProviderDB.findByHost(entry.host);
+        const orgProviders = await this.authProviderDB.findByOrgId(entry.organizationId);
+        const existing = orgProviders.find((p) => p.host === entry.host);
         if (existing) {
             throw new Error("Provider for this host already exists.");
         }
