@@ -20,14 +20,6 @@ import (
 )
 
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
-	var tls regfac.TLS
-	if ctx.Config.Certificate.Name != "" {
-		tls = regfac.TLS{
-			Certificate: "/mnt/certificates/tls.crt",
-			PrivateKey:  "/mnt/certificates/tls.key",
-		}
-	}
-
 	var (
 		ipfsCache  *regfac.IPFSCacheConfig
 		redisCache *regfac.RedisCacheConfig
@@ -86,9 +78,12 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Registry: regfac.Config{
 			Port:               ServicePort,
 			RemoteSpecProvider: remoteSpecProviders,
-			TLS:                &tls,
-			Store:              "/mnt/cache/registry",
-			RequireAuth:        false,
+			TLS: &regfac.TLS{
+				Certificate: "/mnt/certificates/tls.crt",
+				PrivateKey:  "/mnt/certificates/tls.key",
+			},
+			Store:       "/mnt/cache/registry",
+			RequireAuth: false,
 			StaticLayer: []regfac.StaticLayerCfg{
 				{
 					Ref:  ctx.ImageName(ctx.Config.Repository, SupervisorImage, ctx.VersionManifest.Components.Workspace.Supervisor.Version),

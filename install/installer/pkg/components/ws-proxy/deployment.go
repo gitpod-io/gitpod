@@ -28,23 +28,23 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	var volumes []corev1.Volume
-	var volumeMounts []corev1.VolumeMount
-	if ctx.Config.Certificate.Name != "" {
-		volumes = append(volumes, corev1.Volume{
+	volumes := []corev1.Volume{
+		{
 			Name: "config-certificates",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: ctx.Config.Certificate.Name,
 				},
 			},
-		})
-
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "config-certificates",
-			MountPath: "/mnt/certificates",
-		})
+		},
 	}
+
+	volumeMounts := []corev1.VolumeMount{
+		{
+			Name:      "config-certificates",
+			MountPath: "/mnt/certificates"},
+	}
+
 	if ctx.Config.SSHGatewayHostKey != nil {
 		volumes = append(volumes, corev1.Volume{
 			Name: "host-key",
