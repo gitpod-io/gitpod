@@ -52,6 +52,14 @@ repos:
         language: system
         pass_filenames: false
 
+  - repo: local
+    hooks:
+      - id: mocha-tests-only
+        name: mocha-tests-only
+        entry: leeway run components:check-mocha-no-only
+        language: system
+        pass_filenames: false
+
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: v1.75.0
     hooks:
