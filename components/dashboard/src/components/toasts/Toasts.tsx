@@ -54,7 +54,12 @@ type ToastsListProps = {
 const ToastsList: FC<ToastsListProps> = memo(({ toasts, onRemove }) => {
     return (
         <Portal>
-            <div className="fixed z-50 box-border bottom-2 right-2 space-y-2">
+            <div
+                className="fixed box-border bottom-2 right-2 space-y-2"
+                tabIndex={-1}
+                role="region"
+                aria-label="Notifications"
+            >
                 {toasts.map((toast) => {
                     return <Toast key={toast.id} {...toast} onRemove={onRemove} />;
                 })}

@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import { FC, useCallback, useEffect } from "react";
+import { useId } from "../../hooks/useId";
 import { ToastEntry } from "./reducer";
 
 type Props = ToastEntry & {
@@ -7,6 +8,8 @@ type Props = ToastEntry & {
 };
 
 export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true, onRemove }) => {
+    const elId = useId();
+
     const handleRemove = useCallback(
         (e) => {
             e.preventDefault();
@@ -41,8 +44,10 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
                 "text-white dark:text-gray-800",
                 "transition-transform animate-toast-in-right",
             )}
+            role="alert"
+            aria-labelledby={elId}
         >
-            <p>{message}</p>
+            <p id={elId}>{message}</p>
             <button
                 className={classNames(
                     "cursor-pointer p-2",
