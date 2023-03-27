@@ -22,7 +22,8 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
 
     const [firstName, setFirstName] = useState(first);
     const [lastName, setLastName] = useState(last);
-    const [emailAddress, setEmailAddress] = useState(User.getPrimaryEmail(user) ?? "");
+    // Email purposefully not pre-filled
+    const [emailAddress, setEmailAddress] = useState("");
 
     const handleSubmit = useCallback(async () => {
         const additionalData = user.additionalData || {};
