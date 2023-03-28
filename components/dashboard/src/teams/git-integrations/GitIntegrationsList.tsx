@@ -26,14 +26,14 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
         <>
             <div className="flex flex-col space-y-2 md:flex-row md:items-start md:justify-between md:space-y-0">
                 <div>
-                    <Heading2>Git Auth configurations</Heading2>
-                    <Subheading>Configure Git Auth for your organization.</Subheading>
+                    <Heading2>Git Integrations</Heading2>
+                    <Subheading>Configure a Git Integration for your organization.</Subheading>
                 </div>
 
                 {providers.length !== 0 ? (
                     <div className="">
                         <Button className="whitespace-nowrap" onClick={onCreate}>
-                            New Git Auth
+                            New Git Integration
                         </Button>
                     </div>
                 ) : null}
@@ -41,9 +41,9 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
 
             {providers.length === 0 ? (
                 <EmptyMessage
-                    title="No Git Auth configurations"
-                    subtitle="Configure Git Auth with GitHub or GitLab."
-                    buttonText="New Git Auth"
+                    title="No Git Integrations"
+                    subtitle="Configure a Git Integration with GitHub, GitLab, or Bitbucket Server."
+                    buttonText="New Git Integration"
                     onClick={onCreate}
                 />
             ) : (

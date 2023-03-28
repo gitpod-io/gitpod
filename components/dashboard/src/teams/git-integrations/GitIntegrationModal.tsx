@@ -189,11 +189,11 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                 return false;
             }}
         >
-            <ModalHeader>{isNew ? "New Git Auth" : "Git Auth"}</ModalHeader>
+            <ModalHeader>{isNew ? "New Git Integration" : "Git Integration"}</ModalHeader>
             <ModalBody>
                 {isNew && (
                     <Subheading>
-                        Configure Git Auth with a self-managed instance of GitLab, GitHub or Bitbucket Server.
+                        Configure a Git Integration with a self-managed instance of GitLab, GitHub, or Bitbucket Server.
                     </Subheading>
                 )}
 
