@@ -52,13 +52,7 @@ import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-c
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
-import { expressConnectMiddleware } from "@bufbuild/connect-express";
-import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
-import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
-import { APIUserService } from "./api/user";
-import { ConnectRouter } from "@bufbuild/connect";
-import { APITeamsService } from "./api/teams";
-import { API, APIServer } from "./api/server";
+import { API } from "./api/server";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {

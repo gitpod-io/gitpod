@@ -7,15 +7,15 @@ import { suite, test } from "mocha-typescript";
 import { APIUserService } from "./user";
 import { Container } from "inversify";
 import { testContainer } from "@gitpod/gitpod-db/lib";
+import { API } from "./server";
+import * as http from "http";
+import { createConnectTransport } from "@bufbuild/connect-node";
+import { Code, ConnectError, PromiseClient, createPromiseClient } from "@bufbuild/connect";
+import { AddressInfo } from "net";
+import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { UserService } from "../user/user-service";
-import { BlockUserRequest, BlockUserResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
-import { User } from "@gitpod/gitpod-protocol";
-import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
-import { Workspace } from "@gitpod/gitpod-protocol/lib/protocol";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { v4 as uuidv4 } from "uuid";
-import { ConnectError, Code } from "@bufbuild/connect";
+import { APITeamsService } from "./teams";
 import * as chai from "chai";
 
 const expect = chai.expect;
@@ -23,15 +23,50 @@ const expect = chai.expect;
 @suite()
 export class APITeamsServiceSpec {
     private container: Container;
+    private server: http.Server;
+
+    private client: PromiseClient<typeof TeamsServiceDefinition>;
 
     async before() {
         this.container = testContainer.createChild();
+        this.container.bind(API).toSelf().inSingletonScope();
         this.container.bind(APIUserService).toSelf().inSingletonScope();
+        this.container.bind(APITeamsService).toSelf().inSingletonScope();
+
+        this.container.bind(WorkspaceStarter).toConstantValue({} as WorkspaceStarter);
+        this.container.bind(UserService).toConstantValue({} as UserService);
+
+        this.server = this.container.get<API>(API).listen(0);
+
+        const address = this.server.address() as AddressInfo;
+        const transport = createConnectTransport({
+            baseUrl: `http://localhost:${address.port}`,
+            httpVersion: "1.1",
+        });
+
+        this.client = createPromiseClient(TeamsServiceDefinition, transport);
     }
 
-    @test async getTeam_respondsWithTeamMembersAndInvite() {
-        const sut = this.container.get<APIUserService>(APIUserService);
+    async after() {
+        await new Promise((resolve, reject) => {
+            this.server.close((err) => {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(null);
+            });
+        });
+    }
 
-        const;
+    @test async getTeam_rejectsMissingTeamID() {
+        try {
+            await this.client.getTeam({
+                teamId: "",
+            });
+            expect.fail("getteam did not throw an exception");
+        } catch (err) {
+            expect(err).to.be.an.instanceof(ConnectError);
+            expect(err.code).to.equal(Code.InvalidArgument);
+        }
     }
 }
