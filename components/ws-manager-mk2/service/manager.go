@@ -684,6 +684,26 @@ func (wsm *WorkspaceManagerServer) UpdateSSHKey(ctx context.Context, req *wsmana
 	return &wsmanapi.UpdateSSHKeyResponse{}, err
 }
 
+func (wsm *WorkspaceManagerServer) DescribeCluster(ctx context.Context, req *wsmanapi.DescribeClusterRequest) (*wsmanapi.DescribeClusterResponse, error) {
+	span, _ := tracing.FromContext(ctx, "DescribeCluster")
+	defer tracing.FinishSpan(span, nil)
+
+	classes := make([]*wsmanapi.WorkspaceClass, len(wsm.Config.WorkspaceClasses))
+
+	i := 0
+	for id, class := range wsm.Config.WorkspaceClasses {
+		classes[i] = &wsmanapi.WorkspaceClass{
+			Id:          id,
+			DisplayName: class.Name,
+		}
+		i += 1
+	}
+
+	return &wsmanapi.DescribeClusterResponse{
+		WorkspaceClasses: classes,
+	}, nil
+}
+
 // modifyWorkspace modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
 // is returned directly. If mod returns a non-gRPC error it is turned into one.
 func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id string, updateStatus bool, mod func(ws *workspacev1.Workspace) error) error {
