@@ -29,7 +29,10 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
 
     async save(cluster: WorkspaceCluster): Promise<void> {
         const repo = await this.getRepo();
-        await repo.save(cluster);
+        await repo.save({
+            ...cluster,
+            deleted: false,
+        });
     }
 
     async deleteByName(name: string): Promise<void> {
