@@ -31,13 +31,12 @@ export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
         const repo = await this.getRepo();
         await repo.save({
             ...cluster,
-            deleted: false,
         });
     }
 
     async deleteByName(name: string): Promise<void> {
         const repo = await this.getRepo();
-        await repo.update({ name }, { deleted: true });
+        await repo.delete({ name });
     }
 
     async findByName(name: string): Promise<WorkspaceCluster | undefined> {
