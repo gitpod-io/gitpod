@@ -1006,7 +1006,7 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	memory := cgroups.NewMemoryController("/sys/fs/cgroup")
 	if limit, err := memory.Max(); err == nil {
 		memTotal := int64(limit * 1024 * 1024)
-		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", memTotal)
+		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%vm", memTotal)
 	}
 
 	var env, envn []string
