@@ -117,6 +117,7 @@ import { APIUserService } from "./api/user";
 import { LongRunningMigration } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
 import {
     CancelChargebeePersonalSubscriptionsMigration,
+    CancelChargebeeTeamSubscriptions2Migration,
     CancelChargebeeTeamSubscriptionsMigration,
 } from "./billing/cancel-chargebee-migration";
 
@@ -328,4 +329,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(CancelChargebeeTeamSubscriptionsMigration).toSelf().inSingletonScope();
     bind(LongRunningMigration).toService(CancelChargebeeTeamSubscriptionsMigration);
+
+    bind(CancelChargebeeTeamSubscriptions2Migration).toSelf().inSingletonScope();
+    bind(LongRunningMigration).toService(CancelChargebeeTeamSubscriptions2Migration);
 });

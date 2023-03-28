@@ -12,6 +12,7 @@ export interface TeamSubscription2DB {
     findById(id: string): Promise<TeamSubscription2 | undefined>;
     findByPaymentRef(teamId: string, paymentReference: string): Promise<TeamSubscription2 | undefined>;
     findForTeam(teamId: string, date: string): Promise<TeamSubscription2 | undefined>;
+    findActiveTeamSubscriptions(date: string, limit: number): Promise<TeamSubscription2[]>;
 
     transaction<T>(code: (db: TeamSubscription2DB) => Promise<T>): Promise<T>;
 }

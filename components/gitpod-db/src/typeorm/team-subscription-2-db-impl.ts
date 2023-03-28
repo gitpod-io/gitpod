@@ -60,6 +60,17 @@ export class TeamSubscription2DBImpl implements TeamSubscription2DB {
             .andWhere('ts2.endDate = "" OR ts2.endDate > :date', { date });
         return query.getOne();
     }
+
+    async findActiveTeamSubscriptions(date: string, limit: number): Promise<TeamSubscription2[]> {
+        const repo = await this.getRepo();
+        const query = repo
+            .createQueryBuilder("ts2")
+            .andWhere("ts2.startDate <= :date", { date: date })
+            .andWhere('ts2.endDate = "" OR ts2.endDate > :date', { date: date })
+            .andWhere("ts2.deleted = FALSE")
+            .limit(limit);
+        return query.getMany();
+    }
 }
 
 export class TransactionalTeamSubscription2DBImpl extends TeamSubscription2DBImpl {
