@@ -120,6 +120,9 @@ export namespace User {
     }
 
     export function isOnboardingUser(user: User) {
+        if (!!user.organizationId) {
+            return false;
+        }
         return !hasPreferredIde(user);
     }
 
