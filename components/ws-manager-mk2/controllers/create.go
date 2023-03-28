@@ -482,11 +482,6 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 }
 
 func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, error) {
-	class, ok := sctx.Config.WorkspaceClasses[sctx.Workspace.Spec.Class]
-	if !ok {
-		return nil, xerrors.Errorf("unknown workspace class: %s", sctx.Workspace.Spec.Class)
-	}
-
 	getWorkspaceRelativePath := func(segment string) string {
 		// ensure we do not produce nested paths for the default workspace location
 		return filepath.Join("/workspace", strings.TrimPrefix(segment, "/workspace"))
