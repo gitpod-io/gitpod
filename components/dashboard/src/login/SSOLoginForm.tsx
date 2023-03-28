@@ -9,7 +9,7 @@ import { FC, useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
 import { TextInputField } from "../components/forms/TextInputField";
-import { getGitpodService } from "../service/service";
+import { oidcService } from "../service/public-api";
 
 export const SSOLoginForm: FC = () => {
     const [orgSlug, setOrgSlug] = useState("");
@@ -22,10 +22,7 @@ export const SSOLoginForm: FC = () => {
         mutationFn: async ({ slug }: { slug: string }) => {
             // make api call to get provider id by slug
             // return provider id
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-
-            // return await getGitpodService().server.getSSOLoginID(slug);
-            return { id: "sample-id" };
+            return await oidcService.getSSOLoginID({ slug: orgSlug });
         },
     });
 
