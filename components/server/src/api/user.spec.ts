@@ -13,7 +13,7 @@ import { UserService } from "../user/user-service";
 import { BlockUserRequest, BlockUserResponse } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_pb";
 import { User } from "@gitpod/gitpod-protocol";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
-import { Workspace } from "@gitpod/gitpod-protocol/src/protocol";
+import { Workspace } from "@gitpod/gitpod-protocol/lib/protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { v4 as uuidv4 } from "uuid";
 import { ConnectError, Code } from "@bufbuild/connect";
