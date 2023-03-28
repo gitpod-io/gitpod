@@ -327,6 +327,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 				Spec: podSpec,
 			},
+			UpdateStrategy: common.DaemonSetRolloutStrategy(),
 		},
 	}}, nil
 }
