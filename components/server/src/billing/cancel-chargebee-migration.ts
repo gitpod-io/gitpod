@@ -6,11 +6,12 @@
 
 import { inject, injectable } from "inversify";
 import { LongRunningMigration } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
-import { AccountingDB } from "@gitpod/gitpod-db/lib";
+import { AccountingDB, TeamSubscriptionDB } from "@gitpod/gitpod-db/lib";
 import { ChargebeeService } from "../../ee/src/user/chargebee-service";
 import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { TeamSubscription } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 
 @injectable()
 export class CancelChargebeePersonalSubscriptionsMigration implements LongRunningMigration {
@@ -67,6 +68,61 @@ export class CancelChargebeePersonalSubscriptionsMigration implements LongRunnin
                 log.error({ userId }, "Cancel: Error cancelling subscription, skipping for now", err, {
                     subscriptionId: subscription.uid,
                     paymentReference: subscription.paymentReference,
+                });
+                todo = -1;
+            }
+        }
+
+        return todo === 0;
+    }
+}
+
+@injectable()
+export class CancelChargebeeTeamSubscriptionsMigration implements LongRunningMigration {
+    @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDB: TeamSubscriptionDB;
+    @inject(ChargebeeService) protected readonly chargebeeService: ChargebeeService;
+
+    getName(): string {
+        return "cancel-chargebee-team-subscriptions";
+    }
+
+    /**
+     * This migration cancels all Chargebee Team Subscriptions in the database that are still active and not yet cancelled.
+     */
+    async runMigrationBatch(): Promise<boolean> {
+        const now = new Date().toISOString();
+
+        const allTss = await this.teamSubscriptionDB.findActiveTeamSubscriptions(now, 100);
+        const activeNotCancelledTss = allTss.filter(
+            (ts) => TeamSubscription.isActive(ts, now) && !TeamSubscription.isCancelled(ts, now),
+        );
+
+        let todo = activeNotCancelledTss.length;
+        for (const ts of activeNotCancelledTss) {
+            const userId = ts.userId;
+            if (!ts.paymentReference) {
+                log.warn({ userId }, "Cancel: Team Subscription without payment reference", {
+                    tsId: ts.id,
+                });
+                todo = -1;
+                continue;
+            }
+
+            try {
+                const chargebeeSubscriptionId = ts.paymentReference;
+                await this.chargebeeService.cancelSubscription(
+                    chargebeeSubscriptionId,
+                    { userId },
+                    { tsId: ts.id, paymentReference: ts.paymentReference },
+                );
+                log.info({ userId }, "Cancel: Team Subscription cancelled", {
+                    tsId: ts.id,
+                    paymentReference: ts.paymentReference,
+                });
+            } catch (err) {
+                log.error({ userId }, "Cancel: Error cancelling Team Subscription, skipping for now", err, {
+                    tsId: ts.id,
+                    paymentReference: ts.paymentReference,
                 });
                 todo = -1;
             }

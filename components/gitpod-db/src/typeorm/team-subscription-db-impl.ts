@@ -84,6 +84,17 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
         return repo.find(partial);
     }
 
+    async findActiveTeamSubscriptions(date: string, limit: number): Promise<TeamSubscription[]> {
+        const repo = await this.getRepo();
+        const query = repo
+            .createQueryBuilder("ts")
+            .andWhere("ts.startDate <= :date", { date: date })
+            .andWhere('ts.endDate = "" OR ts.endDate > :date', { date: date })
+            .andWhere("ts.deleted = FALSE")
+            .limit(limit);
+        return query.getMany();
+    }
+
     /**
      * Team Subscription Slots
      */

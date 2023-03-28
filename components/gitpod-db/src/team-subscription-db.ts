@@ -15,6 +15,7 @@ export interface TeamSubscriptionDB {
     findTeamSubscriptionByPaymentRef(userId: string, paymentReference: string): Promise<TeamSubscription | undefined>;
     findTeamSubscriptionsForUser(userId: string, date: string): Promise<TeamSubscription[]>;
     findTeamSubscriptions(partial: DeepPartial<TeamSubscription>): Promise<TeamSubscription[]>;
+    findActiveTeamSubscriptions(date: string, limit: number): Promise<TeamSubscription[]>;
 
     storeSlot(slot: TeamSubscriptionSlot): Promise<TeamSubscriptionSlot>;
     findSlotById(id: string): Promise<TeamSubscriptionSlot | undefined>;

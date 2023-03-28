@@ -115,7 +115,10 @@ import { Authorizer, PermissionChecker } from "./authorization/perms";
 import { EnvVarService } from "./workspace/env-var-service";
 import { APIUserService } from "./api/user";
 import { LongRunningMigration } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
-import { CancelChargebeePersonalSubscriptionsMigration } from "./billing/cancel-chargebee-migration";
+import {
+    CancelChargebeePersonalSubscriptionsMigration,
+    CancelChargebeeTeamSubscriptionsMigration,
+} from "./billing/cancel-chargebee-migration";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -322,4 +325,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(CancelChargebeePersonalSubscriptionsMigration).toSelf().inSingletonScope();
     bind(LongRunningMigration).toService(CancelChargebeePersonalSubscriptionsMigration);
+
+    bind(CancelChargebeeTeamSubscriptionsMigration).toSelf().inSingletonScope();
+    bind(LongRunningMigration).toService(CancelChargebeeTeamSubscriptionsMigration);
 });
