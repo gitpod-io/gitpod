@@ -8,7 +8,7 @@ jobs:
         name: "Find stale preview environments"
         runs-on: [self-hosted]
         container:
-            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
+            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
         outputs:
             names: ${{ steps.set-matrix.outputs.names }}
             count: ${{ steps.set-matrix.outputs.count }}

@@ -81,7 +81,7 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: [ self-hosted ]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
@@ -149,7 +149,7 @@ jobs:
         ports:
           - 23306:23306
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
@@ -219,13 +219,26 @@ jobs:
         shell: bash
         working-directory: /workspace/gitpod
         run: |
+          RESULT=0
+          set -x
           leeway build dev:all \
             --docker-build-options network=host \
             --cache remote \
             -Dversion=$VERSION \
             -DlocalAppVersion=$VERSION \
-            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev
+            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev \
+            --report large-report.html || RESULT=$?
 
+          set +x
+
+          # capture logs for the dev/image build, they're too big for GITHUB_STEP_SUMMARY
+          pup -p -f large-report.html '[id="dev/image:docker"] + details + details' > remove.txt
+
+          # remove logs for the dev/image build output from the report file
+          grep -vxFf  remove.txt large-report.html > report.html
+
+          cat report.html >> $GITHUB_STEP_SUMMARY
+          exit $RESULT
       - name: Leeway Build
         id: leeway
         shell: bash
@@ -347,7 +360,7 @@ jobs:
     needs: [ configuration, build-previewctl, build-gitpod, infrastructure, install ]
     runs-on: [ self-hosted ]
     container:
-        image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-jam-dev-image.2
+        image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
         volumes:
           - /var/tmp:/var/tmp
           - /tmp:/tmp
