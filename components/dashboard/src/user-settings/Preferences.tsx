@@ -7,7 +7,6 @@
 import { useCallback, useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
-import { trackEvent } from "../Analytics";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
@@ -19,6 +18,7 @@ import SelectIDE from "./SelectIDE";
 import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { useToast } from "../components/toasts/Toasts";
+import { useUpdateCurrentUserDotfileRepoMutation } from "../data/current-user/update-mutation";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
@@ -26,6 +26,7 @@ export default function Preferences() {
     const { toast } = useToast();
     const { user, setUser } = useContext(UserContext);
     const maySetTimeout = useUserMaySetTimeout();
+    const updateDotfileRepo = useUpdateCurrentUserDotfileRepoMutation();
 
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
@@ -34,23 +35,11 @@ export default function Preferences() {
         async (e) => {
             e.preventDefault();
 
-            const prevDotfileRepo = user?.additionalData?.dotfileRepo || "";
-            const additionalData = {
-                ...(user?.additionalData || {}),
-                dotfileRepo,
-            };
-            const updatedUser = await getGitpodService().server.updateLoggedInUser({ additionalData });
+            const updatedUser = await updateDotfileRepo.mutateAsync(dotfileRepo);
             setUser(updatedUser);
             toast("Your dotfiles repository was updated");
-
-            if (dotfileRepo !== prevDotfileRepo) {
-                trackEvent("dotfile_repo_changed", {
-                    previous: prevDotfileRepo,
-                    current: dotfileRepo,
-                });
-            }
         },
-        [dotfileRepo, toast, setUser, user?.additionalData],
+        [updateDotfileRepo, dotfileRepo, setUser, toast],
     );
 
     const saveWorkspaceTimeout = useCallback(
@@ -92,6 +81,8 @@ export default function Preferences() {
 
                 <ThemeSelector className="mt-12" />
 
+                <Button onClick={() => toast("Coming soon!", { autoHide: false })}>Toast It!</Button>
+
                 <Heading2 className="mt-12">Dotfiles</Heading2>
                 <Subheading>Customize workspaces using dotfiles.</Subheading>
 
@@ -108,7 +99,14 @@ export default function Preferences() {
                                     onChange={setDotfileRepo}
                                 />
                             </div>
-                            <Button disabled={dotfileRepo === user?.additionalData?.dotfileRepo ?? ""}>Save</Button>
+                            <Button
+                                disabled={
+                                    updateDotfileRepo.isLoading ||
+                                    (dotfileRepo === user?.additionalData?.dotfileRepo ?? "")
+                                }
+                            >
+                                Save
+                            </Button>
                         </div>
                     </InputField>
                 </form>
