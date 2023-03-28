@@ -584,8 +584,8 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 			Namespace: wsm.Config.Namespace,
 		},
 		Spec: workspacev1.SnapshotSpec{
-			NodeName:    ws.Status.Runtime.NodeName,
-			WorkspaceID: ws.Name,
+			NodeName:   ws.Status.Runtime.NodeName,
+			InstanceID: ws.Name,
 		},
 	}
 

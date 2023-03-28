@@ -52,13 +52,13 @@ spec:
           spec:
             description: SnapshotSpec defines the desired state of the snapshot
             properties:
+              instanceID:
+                type: string
               nodeName:
                 type: string
-              workspaceID:
-                type: string
             required:
+            - instanceID
             - nodeName
-            - workspaceID
             type: object
           status:
             description: SnapshotStatus defines the observed state of the snapshot

@@ -14,7 +14,7 @@ type SnapshotSpec struct {
 	NodeName string `json:"nodeName"`
 
 	// +kubebuilder:validation:Required
-	WorkspaceID string `json:"workspaceID"`
+	InstanceID string `json:"instanceID"`
 }
 
 // SnapshotStatus defines the observed state of the snapshot
