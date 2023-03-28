@@ -11,7 +11,9 @@ export const Permissions = {
     enforcement: undefined,
     "privileged-ws": undefined,
     "registry-access": undefined,
+    "admin-role": undefined,
     "admin-users": undefined,
+    "admin-workspace-content": undefined,
     "admin-workspaces": undefined,
     "admin-projects": undefined,
     "admin-api": undefined,
@@ -63,10 +65,16 @@ export namespace Permission {
     /** The permission for registry access (start workspaces referencing gitpod-internal Docker images) */
     export const REGISTRY_ACCESS: PermissionName = "registry-access";
 
-    /** The permission for accessing all user data */
+    /** The permission for administration and deletion of user data */
+    export const ADMIN_ROLE: PermissionName = "admin-role";
+
+    /** The permission for accessing user data */
     export const ADMIN_USERS: PermissionName = "admin-users";
 
-    /** The permission for accessing all workspace data */
+    /** The permission for accessing workspace content */
+    export const ADMIN_WORKSPACE_CONTENT: PermissionName = "admin-workspace-content";
+
+    /** The permission for accessing workspace data */
     export const ADMIN_WORKSPACES: PermissionName = "admin-workspaces";
 
     /** The permission for accessing all projects data */

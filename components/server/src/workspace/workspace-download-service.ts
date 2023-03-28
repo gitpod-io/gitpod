@@ -42,7 +42,7 @@ export class WorkspaceDownloadService {
 
                 if (
                     wsi.ownerId !== userId &&
-                    !this.authorizationService.hasPermission(req.user, Permission.ADMIN_WORKSPACES)
+                    !this.authorizationService.hasPermission(req.user, Permission.ADMIN_WORKSPACE_CONTENT)
                 ) {
                     log.warn({ workspaceId, userId }, "user attempted to download someone else's workspace");
                     res.sendStatus(500);
