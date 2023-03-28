@@ -26,11 +26,11 @@ type SnapshotReconciler struct {
 	client.Client
 	maxConcurrentReconciles int
 	nodeName                string
-	operations              *WorkspaceOperations
+	operations              WorkspaceOperations
 	recorder                record.EventRecorder
 }
 
-func NewSnapshotController(c client.Client, recorder record.EventRecorder, nodeName string, maxConcurrentReconciles int, wso *WorkspaceOperations) *SnapshotReconciler {
+func NewSnapshotController(c client.Client, recorder record.EventRecorder, nodeName string, maxConcurrentReconciles int, wso WorkspaceOperations) *SnapshotReconciler {
 	return &SnapshotReconciler{
 		Client:                  c,
 		maxConcurrentReconciles: maxConcurrentReconciles,
@@ -109,7 +109,7 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{}, err
 	}
 
-	snapshotErr = ssc.operations.TakeSnapshot(ctx, snapshot.Spec.WorkspaceID, snapshotName)
+	snapshotErr = ssc.operations.Snapshot(ctx, snapshot.Spec.WorkspaceID, snapshotName)
 	if snapshotErr != nil {
 		log.Error(snapshotErr, "could not take snapshot", "workspace", snapshot.Spec.WorkspaceID)
 	}
