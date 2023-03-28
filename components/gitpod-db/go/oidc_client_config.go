@@ -177,10 +177,10 @@ func GetOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug strin
 	tx := conn.
 		WithContext(ctx).
 		Table((&OIDCClientConfig{}).TableName()).
-		// TODO: is there a better way to reference the team table name here?
+		// TODO: is there a better way to reference table names here and below?
 		Joins("JOIN d_b_team team ON team.id = d_b_oidc_client_config.organizationId").
 		Where("team.slug = ?", slug).
-		Where("deleted = ?", 0).
+		Where("d_b_oidc_client_config.deleted = ?", 0).
 		First(&config)
 
 	if tx.Error != nil {
