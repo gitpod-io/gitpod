@@ -100,14 +100,6 @@ type startWorkspaceContext struct {
 	VolumeSnapshot *workspaceVolumeSnapshotStatus `json:"volumeSnapshot"`
 }
 
-func (swctx *startWorkspaceContext) ContainerConfiguration() config.ContainerConfiguration {
-	var res config.ContainerConfiguration
-	if swctx.Class != nil {
-		res = swctx.Class.Container
-	}
-	return res
-}
-
 const (
 	// workspaceVolume is the name of the workspace volume
 	workspaceVolumeName = "vol-this-workspace"

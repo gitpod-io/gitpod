@@ -45,6 +45,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/common-go/analytics"
+	cgroups "github.com/gitpod-io/gitpod/common-go/cgroups/v2"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -1002,8 +1003,10 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	envs["USER"] = "gitpod"
 
 	// Particular Java optimisation: Java pre v10 did not gauge it's available memory correctly, and needed explicitly setting "-Xmx" for all Hotspot/openJDK VMs
-	if mem, ok := envs["GITPOD_MEMORY"]; ok {
-		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", mem)
+	memory := cgroups.NewMemoryController("/sys/fs/cgroup")
+	if limit, err := memory.Max(); err == nil {
+		memTotal := int64(limit * 1024 * 1024)
+		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", memTotal)
 	}
 
 	var env, envn []string

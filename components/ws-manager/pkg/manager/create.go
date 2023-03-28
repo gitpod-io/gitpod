@@ -828,13 +828,6 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	heartbeatInterval := time.Duration(m.Config.HeartbeatInterval)
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INTERVAL", Value: fmt.Sprintf("%d", int64(heartbeatInterval/time.Millisecond))})
 
-	res, err := startContext.ContainerConfiguration().Requests.ResourceList()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create environment: %w", err)
-	}
-	memoryInMegabyte := res.Memory().Value() / (1000 * 1000)
-	result = append(result, corev1.EnvVar{Name: "GITPOD_MEMORY", Value: strconv.FormatInt(memoryInMegabyte, 10)})
-
 	if startContext.Headless {
 		result = append(result, corev1.EnvVar{Name: "GITPOD_HEADLESS", Value: "true"})
 	}

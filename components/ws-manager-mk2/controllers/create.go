@@ -570,17 +570,6 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	heartbeatInterval := time.Duration(sctx.Config.HeartbeatInterval)
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INTERVAL", Value: fmt.Sprintf("%d", int64(heartbeatInterval/time.Millisecond))})
 
-	res, err := class.Container.Requests.ResourceList()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create environment: %w", err)
-	}
-	memoryInMegabyte := res.Memory().Value() / (1000 * 1000)
-	result = append(result, corev1.EnvVar{Name: "GITPOD_MEMORY", Value: strconv.FormatInt(memoryInMegabyte, 10)})
-
-	if sctx.Headless {
-		result = append(result, corev1.EnvVar{Name: "GITPOD_HEADLESS", Value: "true"})
-	}
-
 	// remove empty env vars
 	cleanResult := make([]corev1.EnvVar, 0)
 	for _, v := range result {
