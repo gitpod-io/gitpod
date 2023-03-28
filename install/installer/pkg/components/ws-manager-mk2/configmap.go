@@ -82,6 +82,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	var schedulerName string
+	var experimentalMode bool
 	gitpodHostURL := "https://" + ctx.Config.Domain
 	workspaceClusterHost := fmt.Sprintf("ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 	workspaceURLTemplate := fmt.Sprintf("https://{{ .Prefix }}.ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
@@ -149,6 +150,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 		if ucfg.Workspace.UseWsmanagerMk2 {
 			hostWorkingArea = wsdaemon.HostWorkingAreaMk2
+			experimentalMode = ucfg.Workspace.UseMk2ExperimentalMode
 		}
 
 		return nil
@@ -221,6 +223,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			RegistryFacadeHost:               fmt.Sprintf("reg.%s:%d", ctx.Config.Domain, common.RegistryFacadeServicePort),
 			WorkspaceMaxConcurrentReconciles: 25,
 			TimeoutMaxConcurrentReconciles:   15,
+			ExperimentalMode:                 experimentalMode,
 		},
 		Content: struct {
 			Storage storageconfig.StorageConfig `json:"storage"`

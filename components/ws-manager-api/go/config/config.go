@@ -131,6 +131,8 @@ type Configuration struct {
 	// TimeoutMaxConcurrentReconciles configures the max amount of concurrent workspace reconciliations on
 	// the timeout controller.
 	TimeoutMaxConcurrentReconciles int `json:"timeoutMaxConcurrentReconciles,omitempty"`
+	// ExperimentalMode controls if experimental features are enabled
+	ExperimentalMode bool `json:"experimentalMode"`
 }
 
 type WorkspaceClass struct {
