@@ -57,7 +57,7 @@ import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/git
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import { APIUserService } from "./api/user";
 import { ConnectRouter } from "@bufbuild/connect";
-import { APITeamService } from "./api/teams";
+import { APITeamsService } from "./api/teams";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -100,7 +100,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected iamSessionAppServer?: http.Server;
 
     @inject(APIUserService) protected readonly apiUserService: APIUserService;
-    @inject(APITeamService) protected readonly apiTeamService: APITeamService;
+    @inject(APITeamsService) protected readonly apiTeamService: APITeamsService;
     protected apiServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();

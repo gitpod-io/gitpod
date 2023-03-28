@@ -35,7 +35,7 @@ import { OrgMemberInfo, Organization, TeamMembershipInvite } from "@gitpod/gitpo
 import { Timestamp } from "@bufbuild/protobuf";
 
 @injectable()
-export class APITeamService implements ServiceImpl<typeof TeamServiceInterface> {
+export class APITeamsService implements ServiceImpl<typeof TeamServiceInterface> {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     public async createTeam(req: CreateTeamRequest): Promise<CreateTeamResponse> {
