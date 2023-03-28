@@ -99,8 +99,8 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			return
 		}
 		result, err := s.Authenticate(r.Context(), AuthenticateParams{
+			Config:           config,
 			OAuth2Result:     oauth2Result,
-			Issuer:           config.Issuer,
 			NonceCookieValue: nonceCookie.Value,
 		})
 		if err != nil {

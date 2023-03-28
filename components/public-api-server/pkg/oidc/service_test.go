@@ -209,7 +209,9 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 			OAuth2Token: token.WithExtra(extra),
 		},
 		NonceCookieValue: "111",
-		Issuer:           issuer,
+		Config: &ClientConfig{
+			Issuer: issuer,
+		},
 	})
 
 	require.NoError(t, err, "failed to authenticate")

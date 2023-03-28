@@ -229,8 +229,8 @@ func (s *Service) convertClientConfig(ctx context.Context, dbEntry db.OIDCClient
 }
 
 type AuthenticateParams struct {
+	Config           *ClientConfig
 	OAuth2Result     *OAuth2Result
-	Issuer           string
 	NonceCookieValue string
 }
 
@@ -240,12 +240,12 @@ func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (
 		return nil, fmt.Errorf("id_token not found")
 	}
 
-	provider, err := oidc.NewProvider(ctx, params.Issuer)
+	provider, err := oidc.NewProvider(ctx, params.Config.Issuer)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to initialize provider.")
 	}
 	verifier := provider.Verifier(&goidc.Config{
-		ClientID: params.OAuth2Result.ClientID,
+		ClientID: params.Config.OAuth2Config.ClientID,
 	})
 
 	idToken, err := verifier.Verify(ctx, rawIDToken)
