@@ -127,20 +127,25 @@ func randString(size int) (string, error) {
 func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfig, error) {
 	orgSlug := r.URL.Query().Get("orgSlug")
 	if orgSlug != "" {
-		org, err := db.GetTeamBySlug(r.Context(), s.dbConn, orgSlug)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to find org: %w", err)
-		}
-
-		dbEntries, err := db.ListOIDCClientConfigsForOrganization(r.Context(), s.dbConn, org.ID)
+		dbEntry, err := db.GetOIDCClientConfigByOrgSlug(r.Context(), s.dbConn, orgSlug)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
 		}
-		if len(dbEntries) < 1 {
-			return nil, fmt.Errorf("No OIDC clients.")
-		}
 
-		config, err := s.convertClientConfig(r.Context(), dbEntries[0])
+		// org, err := db.GetTeamBySlug(r.Context(), s.dbConn, orgSlug)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("Failed to find org: %w", err)
+		// }
+
+		// dbEntries, err := db.ListOIDCClientConfigsForOrganization(r.Context(), s.dbConn, org.ID)
+		// if err != nil {
+		// 	return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
+		// }
+		// if len(dbEntries) < 1 {
+		// 	return nil, fmt.Errorf("No OIDC clients.")
+		// }
+
+		config, err := s.convertClientConfig(r.Context(), dbEntry)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
 		}
