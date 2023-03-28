@@ -102,16 +102,16 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.Location, func(t *testing.T) {
+		t.Run(tc.Location, func(te *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
 			config, err := service.GetClientConfigFromStartRequest(request)
 			if tc.ExpectedError == true {
-				require.Error(t, err)
+				require.Error(te, err)
 			}
 			if tc.ExpectedError != true {
-				require.NoError(t, err)
-				require.NotNil(t, config)
-				require.Equal(t, tc.ExpectedId, config.ID)
+				require.NoError(te, err)
+				require.NotNil(te, config)
+				require.Equal(te, tc.ExpectedId, config.ID)
 			}
 		})
 	}
@@ -239,7 +239,8 @@ func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) (db.OIDCC
 	team, err := db.CreateTeam(context.Background(), dbConn, db.Team{
 		ID:   orgID,
 		Name: "Org 1",
-		Slug: "org-1",
+		// creating random slug using UUID generator, because it's handy here
+		Slug: uuid.New().String(),
 	})
 	require.NoError(t, err)
 
