@@ -238,7 +238,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_started_total{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[10m])) - sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[10m]))",
+          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_started_total{cluster=~\"$cluster\", pod=~\"$pod\"}[10m])) - sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{cluster=~\"$cluster\", pod=~\"$pod\"}[10m]))",
           "legendFormat": "# of events received - # of events completed",
           "range": true,
           "refId": "A"
@@ -331,7 +331,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{outcome=\"success\", db_write=\"true\"}[1m])) OR 0",
+          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{outcome=\"success\"}[1m])) OR 0",
           "interval": "",
           "legendFormat": "success",
           "range": true,
@@ -343,7 +343,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{outcome=\"error\", db_write=\"true\"}[1m])) OR 0",
+          "expr": "sum(increase(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_count{outcome=\"error\"}[1m])) OR 0",
           "hide": false,
           "interval": "",
           "legendFormat": "error",
@@ -1597,7 +1597,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.5, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
+              "expr": "histogram_quantile(0.5, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
               "legendFormat": "50th",
               "range": true,
               "refId": "A"
@@ -1608,7 +1608,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.90, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
+              "expr": "histogram_quantile(0.90, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
               "hide": false,
               "legendFormat": "90th",
               "range": true,
@@ -1620,7 +1620,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "histogram_quantile(0.99, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{db_write=\"true\", cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
+              "expr": "histogram_quantile(0.99, sum(rate(gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds_bucket{cluster=~\"$cluster\", pod=~\"$pod\"}[5m])) by (le))",
               "hide": false,
               "legendFormat": "99th",
               "range": true,

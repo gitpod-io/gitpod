@@ -67,16 +67,12 @@ export class PrometheusMetricsExporter {
         this.workspaceInstanceUpdateStartedTotal = new prom.Counter({
             name: "gitpod_ws_manager_bridge_workspace_instance_update_started_total",
             help: "Total number of workspace instance updates that started processing",
-            // we track db_write because we need to be able to distinguish between outcomes which did affect the system negatively - failed to write,
-            // and outcomes by read-only replicas.
             labelNames: ["workspace_cluster", "workspace_instance_type"],
         });
 
         this.workspaceInstanceUpdateCompletedSeconds = new prom.Histogram({
             name: "gitpod_ws_manager_bridge_workspace_instance_update_completed_seconds",
             help: "Histogram of completed workspace instance updates, by outcome",
-            // we track db_write because we need to be able to distinguish between outcomes which did affect the system negatively - failed to write,
-            // and outcomes by read-only replicas.
             labelNames: ["workspace_cluster", "workspace_instance_type", "outcome"],
             buckets: prom.exponentialBuckets(0.05, 2, 8),
         });
