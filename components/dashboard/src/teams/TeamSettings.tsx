@@ -150,7 +150,7 @@ export default function TeamSettingsPage() {
                         title={<span>Workspace Sharing</span>}
                         desc={
                             <span>
-                                Allow workspaces creаted within an Organization to share the workspace with other users.
+                                Allow workspaces creаted within an Organization to share the workspace with any authenticated user.
                             </span>
                         }
                         checked={!settings?.workspaceSharingDisabled}
