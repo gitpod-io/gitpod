@@ -447,8 +447,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         const withPrebuild = WithPrebuild.is(this.state.workspace?.context);
         let phase: StartPhase | undefined = StartPhase.Preparing;
         let title = undefined;
-        let isTimedOut = false;
-        let isStoppingOrStopped = false;
+        let isStoppingOrStoppedPhase = false;
         let isError = error ? true : false;
         let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
         const contextURL = ContextURL.getNormalizedURL(this.state.workspace)?.toString();
@@ -624,7 +623,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
             // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
             case "stopping":
-                isStoppingOrStopped = true;
+                isStoppingOrStoppedPhase = true;
                 if (isPrebuild) {
                     return (
                         <StartPage title="Prebuild in Progress">
@@ -662,7 +661,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
             // Stopped means the workspace ended regularly because it was shut down.
             case "stopped":
-                isStoppingOrStopped = true;
+                isStoppingOrStoppedPhase = true;
                 phase = StartPhase.Stopped;
                 if (this.state.hasImageBuildLogs) {
                     const restartWithDefaultImage = (event: React.MouseEvent) => {
@@ -680,7 +679,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 }
                 if (!isPrebuild && this.state.workspaceInstance.status.conditions.timeout) {
                     title = "Timed Out";
-                    isTimedOut = true;
                 }
                 statusMessage = (
                     <div>
@@ -718,7 +716,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                 phase={phase}
                 error={error}
                 title={title}
-                showLatestIdeWarning={isError || (!isTimedOut && !isStoppingOrStopped && useLatest)}
+                showLatestIdeWarning={useLatest && (isError || !isStoppingOrStoppedPhase)}
             >
                 {statusMessage}
             </StartPage>
