@@ -132,19 +132,6 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
 		}
 
-		// org, err := db.GetTeamBySlug(r.Context(), s.dbConn, orgSlug)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("Failed to find org: %w", err)
-		// }
-
-		// dbEntries, err := db.ListOIDCClientConfigsForOrganization(r.Context(), s.dbConn, org.ID)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
-		// }
-		// if len(dbEntries) < 1 {
-		// 	return nil, fmt.Errorf("No OIDC clients.")
-		// }
-
 		config, err := s.convertClientConfig(r.Context(), dbEntry)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
