@@ -69,14 +69,12 @@ func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher,
 	}
 }
 
-func (s *Service) GetStartParams(config *ClientConfig, redirectURL string) (*StartParams, error) {
+func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, returnToURL string) (*StartParams, error) {
 	// state is supposed to a) be present on client request as cookie header
 	// and b) to be mirrored by the IdP on callback requests.
 	stateParam := StateParam{
 		ClientConfigID: config.ID,
-
-		// TODO(at) read a relative URL from `returnTo` query param of the start request
-		ReturnToURL: "/",
+		ReturnToURL:    returnToURL,
 	}
 	state, err := s.encodeStateParam(stateParam)
 	if err != nil {

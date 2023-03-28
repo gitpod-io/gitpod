@@ -43,7 +43,7 @@ func TestGetStartParams(t *testing.T) {
 		},
 	}
 
-	params, err := service.GetStartParams(config, redirectURL)
+	params, err := service.GetStartParams(config, redirectURL, "/")
 
 	require.NoError(t, err)
 	require.NotNil(t, params.Nonce)
