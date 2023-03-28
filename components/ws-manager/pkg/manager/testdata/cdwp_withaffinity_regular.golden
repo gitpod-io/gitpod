@@ -142,10 +142,6 @@
                         {
                             "name": "GITPOD_INTERVAL",
                             "value": "30000"
-                        },
-                        {
-                            "name": "GITPOD_MEMORY",
-                            "value": "999"
                         }
                     ],
                     "resources": {

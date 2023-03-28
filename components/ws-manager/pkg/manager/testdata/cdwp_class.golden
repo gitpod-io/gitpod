@@ -148,10 +148,6 @@
                             "value": "30000"
                         },
                         {
-                            "name": "GITPOD_MEMORY",
-                            "value": "0"
-                        },
-                        {
                             "name": "some-envvar",
                             "value": "foofoo"
                         }
