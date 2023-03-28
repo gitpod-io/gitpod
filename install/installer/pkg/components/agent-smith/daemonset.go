@@ -93,6 +93,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 			},
+			UpdateStrategy: common.DaemonSetRolloutStrategy(),
 		},
 	}}, nil
 }

@@ -320,6 +320,7 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Tolerations: common.GPUToleration(),
 				},
 			},
+			UpdateStrategy: common.DaemonSetRolloutStrategy(),
 		},
 	}}, nil
 }

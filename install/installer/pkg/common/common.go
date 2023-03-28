@@ -818,3 +818,14 @@ func ExperimentalWebappConfig(ctx *RenderContext) *experimental.WebAppConfig {
 func WithLocalWsManager(ctx *RenderContext) bool {
 	return ctx.Config.Kind == config.InstallationFull
 }
+
+func DaemonSetRolloutStrategy() appsv1.DaemonSetUpdateStrategy {
+	maxUnavailable := intstr.Parse("20%")
+
+	return appsv1.DaemonSetUpdateStrategy{
+		Type: appsv1.RollingUpdateDaemonSetStrategyType,
+		RollingUpdate: &appsv1.RollingUpdateDaemonSet{
+			MaxUnavailable: &maxUnavailable,
+		},
+	}
+}
