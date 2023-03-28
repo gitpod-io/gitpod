@@ -81,8 +81,6 @@ export default function Preferences() {
 
                 <ThemeSelector className="mt-12" />
 
-                <Button onClick={() => toast("Coming soon!", { autoHide: false })}>Toast It!</Button>
-
                 <Heading2 className="mt-12">Dotfiles</Heading2>
                 <Subheading>Customize workspaces using dotfiles.</Subheading>
 
