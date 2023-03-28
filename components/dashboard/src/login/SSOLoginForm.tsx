@@ -60,17 +60,10 @@ export const SSOLoginForm: FC<Props> = ({ onSuccess }) => {
         [onSuccess, orgSlug],
     );
 
-    // TODO: Rework useOnBlurError args to make this easier
-    let slugErrorMsg = "";
-    let slugIsValid = true;
-    if (!orgSlug.trim()) {
-        slugErrorMsg = "Organization slug can not be blank.";
-        slugIsValid = false;
-    } else if (orgSlug.trim().length > 63) {
-        slugErrorMsg = "Organization slug must not be longer than 63 characters.";
-        slugIsValid = false;
-    }
-    const slugError = useOnBlurError(slugErrorMsg, slugIsValid);
+    const slugError = useOnBlurError(
+        "Organization slug must not be longer than 63 characters.",
+        orgSlug.trim().length <= 63,
+    );
 
     // Don't render anything if not enabled
     if (!showSSO) {
@@ -82,11 +75,13 @@ export const SSOLoginForm: FC<Props> = ({ onSuccess }) => {
             <div className="mt-10 space-y-2">
                 <TextInputField
                     label="Organization Slug"
+                    placeholder="my-team"
                     value={orgSlug}
                     onChange={setOrgSlug}
                     error={slugError.message}
+                    onBlur={slugError.onBlur}
                 />
-                <Button className="w-full" type="secondary" disabled={!orgSlug}>
+                <Button className="w-full" type="secondary" disabled={!orgSlug.trim() || !slugError.isValid}>
                     Continue with SSO
                 </Button>
                 {error && <Alert type="info">{error}</Alert>}

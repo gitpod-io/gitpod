@@ -6,7 +6,7 @@
 
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
-import { useContext, useEffect, useState, useMemo } from "react";
+import { useContext, useEffect, useState, useMemo, useCallback } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName, getSafeURLRedirect } from "./provider-utils";
@@ -85,51 +85,57 @@ export function Login() {
 
     const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
 
-    const authorizeSuccessful = async (payload?: string) => {
-        updateUser().catch(console.error);
-
-        // Check for a valid returnTo in payload
-        const safeReturnTo = getSafeURLRedirect(payload);
-        if (safeReturnTo) {
-            // ... and if it is, redirect to it
-            window.location.replace(safeReturnTo);
-        }
-    };
-
-    const updateUser = async () => {
+    const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
         const [user] = await Promise.all([getGitpodService().server.getLoggedInUser()]);
         setUser(user);
         markLoggedIn();
-    };
+    }, [setUser]);
 
-    const openLogin = async (host: string) => {
-        setErrorMessage(undefined);
+    const authorizeSuccessful = useCallback(
+        async (payload?: string) => {
+            updateUser().catch(console.error);
 
-        try {
-            await openAuthorizeWindow({
-                login: true,
-                host,
-                onSuccess: authorizeSuccessful,
-                onError: (payload) => {
-                    let errorMessage: string;
-                    if (typeof payload === "string") {
-                        errorMessage = payload;
-                    } else {
-                        errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
-                        if (payload.error === "email_taken") {
-                            errorMessage = `Email address already used in another account. Please log in with ${
-                                (payload as any).host
-                            }.`;
+            // Check for a valid returnTo in payload
+            const safeReturnTo = getSafeURLRedirect(payload);
+            if (safeReturnTo) {
+                // ... and if it is, redirect to it
+                window.location.replace(safeReturnTo);
+            }
+        },
+        [updateUser],
+    );
+
+    const openLogin = useCallback(
+        async (host: string) => {
+            setErrorMessage(undefined);
+
+            try {
+                await openAuthorizeWindow({
+                    login: true,
+                    host,
+                    onSuccess: authorizeSuccessful,
+                    onError: (payload) => {
+                        let errorMessage: string;
+                        if (typeof payload === "string") {
+                            errorMessage = payload;
+                        } else {
+                            errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                            if (payload.error === "email_taken") {
+                                errorMessage = `Email address already used in another account. Please log in with ${
+                                    (payload as any).host
+                                }.`;
+                            }
                         }
-                    }
-                    setErrorMessage(errorMessage);
-                },
-            });
-        } catch (error) {
-            console.log(error);
-        }
-    };
+                        setErrorMessage(errorMessage);
+                    },
+                });
+            } catch (error) {
+                console.log(error);
+            }
+        },
+        [authorizeSuccessful],
+    );
 
     return (
         <div id="login-container" className="z-50 flex w-screen h-screen">
@@ -198,7 +204,7 @@ export function Login() {
                                 )}
                             </div>
 
-                            <div className="flex flex-col space-y-3 items-center">
+                            <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
                                 {providerFromContext ? (
                                     <button
                                         key={"button" + providerFromContext.host}
