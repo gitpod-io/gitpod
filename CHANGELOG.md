@@ -1,6 +1,13 @@
 # Change Log
 
 ## March 2023
+- Allow to disable workspace sharing in team settings ([#17042](https://github.com/gitpod-io/gitpod/pull/17042)) - [@akosyakov](https://github.com/akosyakov), [@easyCZ](https://github.com/easyCZ), [@mustard-mh](https://github.com/mustard-mh), [@selfcontained](https://github.com/selfcontained)
+- Update JetBrains IDE images to most recent stable version. ([#16989](https://github.com/gitpod-io/gitpod/pull/16989)) - [@roboquat](https://github.com/roboquat)
+- Fix Ctrl/Cmd+O (Shortcut for "New Workspace" modal) ([#16995](https://github.com/gitpod-io/gitpod/pull/16995)) - [@geropl](https://github.com/geropl)
+- Fix `Open Access Control` not working when git permission missing ([#16987](https://github.com/gitpod-io/gitpod/pull/16987)) - [@mustard-mh](https://github.com/mustard-mh)
+- # ([#16823](https://github.com/gitpod-io/gitpod/pull/16823)) - [@Furisto](https://github.com/Furisto)
+- None ([#16823](https://github.com/gitpod-io/gitpod/pull/16823)) - [@Furisto](https://github.com/Furisto)
+- Update JetBrains IDE images to most recent stable version. ([#16969](https://github.com/gitpod-io/gitpod/pull/16969)) - [@akosyakov](https://github.com/akosyakov)
 - Fixes https://github.com/gitpod-io/gitpod/issues/16916 ([#16941](https://github.com/gitpod-io/gitpod/pull/16941)) - [@geropl](https://github.com/geropl)
 - Removes the latest ide alert warning on the workspace timeout page ([#16551](https://github.com/gitpod-io/gitpod/pull/16551)) - [@Devansu-Yadav](https://github.com/Devansu-Yadav)
 - [gitpod-cli] change `gp rebuild` to `gp validate` ([#16867](https://github.com/gitpod-io/gitpod/pull/16867)) - [@iQQBot](https://github.com/iQQBot)
