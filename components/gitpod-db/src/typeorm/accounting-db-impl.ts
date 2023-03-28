@@ -151,16 +151,19 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
             .getMany();
     }
 
-    async findActiveSubscriptions(fromDate: string, toDate: string): Promise<Subscription[]> {
-        return (await this.getSubscriptionRepo())
+    async findActiveSubscriptions(fromDate: string, toDate: string, limit?: number): Promise<Subscription[]> {
+        let qb = (await this.getSubscriptionRepo())
             .createQueryBuilder("subscription")
             .where('subscription.startDate <= :to AND (subscription.endDate = "" OR subscription.endDate > :from)', {
                 from: fromDate,
                 to: toDate,
             })
             .andWhere("subscription.deleted != true")
-            .andWhere('subscription.planId != "free"') // TODO DEL FREE-SUBS
-            .getMany();
+            .andWhere('subscription.planId != "free"'); // TODO DEL FREE-SUBS
+        if (limit) {
+            qb = qb.limit(limit);
+        }
+        return qb.getMany();
     }
 
     async findActiveSubscriptionsForUser(userId: string, date: string): Promise<Subscription[]> {

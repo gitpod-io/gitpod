@@ -30,7 +30,7 @@ export interface AccountingDB {
     storeSubscription(subscription: Subscription): Promise<Subscription>;
     findSubscriptionById(id: string): Promise<Subscription | undefined>;
     deleteSubscription(subscription: Subscription): Promise<void>;
-    findActiveSubscriptions(fromDate: string, toDate: string): Promise<Subscription[]>;
+    findActiveSubscriptions(fromDate: string, toDate: string, limit?: number): Promise<Subscription[]>;
     findActiveSubscriptionsForUser(userId: string, fromDate: string): Promise<Subscription[]>;
     findActiveSubscriptionsByIdentity(
         authId: string[],
