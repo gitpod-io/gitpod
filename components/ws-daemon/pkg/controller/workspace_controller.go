@@ -302,7 +302,9 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		wsc.metrics.recordFinalizeTime(time.Since(disposeStart).Seconds(), ws)
 	}
 
-	wsc.emitEvent(ws, "Backup", fmt.Errorf("failed to backup workspace: %w", disposeErr))
+	if disposeErr != nil {
+		wsc.emitEvent(ws, "Backup", fmt.Errorf("failed to backup workspace: %w", disposeErr))
+	}
 
 	err = wsc.operations.DeleteWorkspace(ctx, ws.Name)
 	if err != nil {
