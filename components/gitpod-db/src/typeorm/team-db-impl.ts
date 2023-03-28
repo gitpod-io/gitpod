@@ -337,10 +337,15 @@ export class TeamDBImpl implements TeamDB {
         return invite;
     }
 
-    public async findGenericInviteByTeamId(teamId: string): Promise<TeamMembershipInvite | undefined> {
+    public async findGenericInviteByTeamId(teamId: string): Promise<TeamMembershipInvite> {
         const inviteRepo = await this.getMembershipInviteRepo();
         const all = await inviteRepo.find({ teamId });
-        return all.filter((i) => i.invalidationTime === "" && !i.invitedEmail)[0];
+        const invite = all.filter((i) => i.invalidationTime === "" && !i.invitedEmail)[0];
+        if (!invite) {
+            return this.resetGenericInvite(teamId);
+        }
+
+        return invite;
     }
 
     public async resetGenericInvite(teamId: string): Promise<TeamMembershipInvite> {

@@ -2390,11 +2390,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.checkUser("getGenericInvite");
         await this.guardTeamOperation(teamId, "get", "org_members_write");
 
-        const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
-        if (invite) {
-            return invite;
-        }
-        return this.teamDB.resetGenericInvite(teamId);
+        return await this.teamDB.findGenericInviteByTeamId(teamId);
     }
 
     public async resetGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {

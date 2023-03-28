@@ -5,7 +5,7 @@
  */
 
 import { Code, ConnectError, ServiceImpl } from "@bufbuild/connect";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { TeamsService as TeamServiceInterface } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import {
     CreateTeamRequest,
@@ -22,17 +22,43 @@ import {
     ListTeamsResponse,
     ResetTeamInvitationRequest,
     ResetTeamInvitationResponse,
+    Team,
+    TeamInvitation,
+    TeamMember,
+    TeamRole,
     UpdateTeamMemberRequest,
     UpdateTeamMemberResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { TeamDB } from "@gitpod/gitpod-db/lib";
+import { validate } from "uuid";
+import { OrgMemberInfo, Organization, TeamMembershipInvite } from "@gitpod/gitpod-protocol";
+import { Timestamp } from "@bufbuild/protobuf";
 
 @injectable()
 export class APITeamService implements ServiceImpl<typeof TeamServiceInterface> {
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
+
     public async createTeam(req: CreateTeamRequest): Promise<CreateTeamResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
     public async getTeam(req: GetTeamRequest): Promise<GetTeamResponse> {
-        throw new ConnectError("unimplemented", Code.Unimplemented);
+        const { teamId } = req;
+
+        if (!teamId || !validate(teamId)) {
+            throw new ConnectError("Invalid argument: teamId", Code.InvalidArgument);
+        }
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ConnectError(`Team (ID: ${teamId}) does not exist`, Code.NotFound);
+        }
+
+        const members = await this.teamDB.findMembersByTeam(teamId);
+        let invite = await this.teamDB.findGenericInviteByTeamId(teamId);
+
+        return new GetTeamResponse({
+            team: toAPITeam(team, members, invite),
+        });
     }
     public async listTeams(req: ListTeamsRequest): Promise<ListTeamsResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
@@ -52,4 +78,26 @@ export class APITeamService implements ServiceImpl<typeof TeamServiceInterface> 
     public async deleteTeamMember(req: DeleteTeamMemberRequest): Promise<DeleteTeamMemberResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
+}
+
+function toAPITeam(team: Organization, members: OrgMemberInfo[], invite: TeamMembershipInvite): Team {
+    return new Team({
+        id: team.id,
+        name: team.name,
+        slug: team.slug,
+        teamInvitation: new TeamInvitation({
+            id: invite.id,
+        }),
+        members: members.map(
+            (m) =>
+                new TeamMember({
+                    avatarUrl: m.avatarUrl,
+                    fullName: m.fullName,
+                    memberSince: Timestamp.fromDate(new Date(m.memberSince)),
+                    primaryEmail: m.primaryEmail,
+                    role: m.role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER,
+                    userId: m.userId,
+                }),
+        ),
+    });
 }
