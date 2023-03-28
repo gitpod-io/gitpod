@@ -1,12 +1,19 @@
+/**
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
+ */
+
+import classNames from "classnames";
 import { createContext, FC, memo, useCallback, useContext, useMemo, useReducer } from "react";
 import { Portal } from "react-portal";
 import { ToastEntry, toastReducer } from "./reducer";
 import { Toast } from "./Toast";
 
-type NotifyProps = string | (Pick<ToastEntry, "message"> & Partial<ToastEntry>);
+type ToastFnProps = string | (Pick<ToastEntry, "message"> & Partial<ToastEntry>);
 
 const ToastContext = createContext<{
-    toast: (toast: NotifyProps) => void;
+    toast: (toast: ToastFnProps, opts?: Partial<ToastEntry>) => void;
 }>({
     toast: () => undefined,
 });
@@ -22,9 +29,9 @@ export const ToastContextProvider: FC = ({ children }) => {
         dispatch({ type: "remove", id });
     }, []);
 
-    const addToast = useCallback((message: NotifyProps) => {
-        const newToast: ToastEntry =
-            typeof message === "string"
+    const addToast = useCallback((message: ToastFnProps, opts = {}) => {
+        let newToast: ToastEntry = {
+            ...(typeof message === "string"
                 ? {
                       id: `${Math.random()}`,
                       message,
@@ -32,7 +39,9 @@ export const ToastContextProvider: FC = ({ children }) => {
                 : {
                       id: `${Math.random()}`,
                       ...message,
-                  };
+                  }),
+            ...opts,
+        };
 
         dispatch({ type: "add", toast: newToast });
     }, []);
@@ -55,7 +64,11 @@ const ToastsList: FC<ToastsListProps> = memo(({ toasts, onRemove }) => {
     return (
         <Portal>
             <div
-                className="fixed box-border bottom-2 right-2 space-y-2"
+                className={classNames(
+                    "fixed box-border space-y-2",
+                    "w-full md:w-auto",
+                    "bottom-0 md:bottom-2 right-0 md:right-2",
+                )}
                 tabIndex={-1}
                 role="region"
                 aria-label="Notifications"

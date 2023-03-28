@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
+ */
+
 import classNames from "classnames";
 import { FC, useCallback, useEffect } from "react";
 import { useId } from "../../hooks/useId";
@@ -37,9 +43,9 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
     return (
         <div
             className={classNames(
-                "flex justify-between items-center",
-                "md:w-96 max-w-full",
-                "p-6 border-1 rounded relative bottom-2 right-2",
+                "relative flex justify-between items-center",
+                "w-full md:w-96 max-w-full",
+                "p-6 border-1 md:rounded",
                 "bg-gray-800 dark:bg-gray-100",
                 "text-white dark:text-gray-800",
                 "transition-transform animate-toast-in-right",
@@ -52,7 +58,7 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
                 className={classNames(
                     "cursor-pointer p-2",
                     "bg-transparent hover:bg-transparent",
-                    "text-white hover:text-gray-200",
+                    "text-white hover:text-gray-200 dark:text-gray-800 dark:hover:text-gray-600",
                 )}
                 onClick={handleRemove}
             >
