@@ -4,6 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { useState } from "react";
+
 export interface SelectableCardSolidProps {
     title: string;
     selected: boolean;
@@ -13,9 +15,21 @@ export interface SelectableCardSolidProps {
 }
 
 function SelectableCardSolid(props: SelectableCardSolidProps) {
+    const [isFocused, setIsFocused] = useState(false);
+
+    const handleFocus = () => {
+        setIsFocused(true);
+    };
+
+    const handleBlur = () => {
+        setIsFocused(false);
+    };
+
     return (
         <div
             className={`rounded-xl px-3 py-3 flex flex-col cursor-pointer group transition ease-in-out ${
+                isFocused ? "focus:ring-2 focus:ring-blue-500" : ""
+            } ${
                 props.selected
                     ? "bg-gray-800 dark:bg-gray-100"
                     : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -31,7 +45,13 @@ function SelectableCardSolid(props: SelectableCardSolidProps) {
                 >
                     {props.title}
                 </p>
-                <input className="opacity-0" type="radio" checked={props.selected} />
+                <input
+                    className="opacity-0"
+                    type="radio"
+                    checked={props.selected}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                />
             </div>
             {props.children}
         </div>
