@@ -114,7 +114,8 @@ import { spicedbClientFromEnv, SpiceDBClient } from "./authorization/spicedb";
 import { Authorizer, PermissionChecker } from "./authorization/perms";
 import { EnvVarService } from "./workspace/env-var-service";
 import { APIUserService } from "./api/user";
-import { APITeamService } from "./api/teams";
+import { APITeamsService } from "./api/teams";
+import { API } from "./api/server";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -318,5 +319,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     // grpc / Connect API
     bind(APIUserService).toSelf().inSingletonScope();
-    bind(APITeamService).toSelf().inSingletonScope();
+    bind(APITeamsService).toSelf().inSingletonScope();
+    bind(API).toSelf().inSingletonScope();
 });

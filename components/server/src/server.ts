@@ -58,6 +58,7 @@ import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/g
 import { APIUserService } from "./api/user";
 import { ConnectRouter } from "@bufbuild/connect";
 import { APITeamsService } from "./api/teams";
+import { API, APIServer } from "./api/server";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -99,8 +100,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected iamSessionApp?: express.Application;
     protected iamSessionAppServer?: http.Server;
 
-    @inject(APIUserService) protected readonly apiUserService: APIUserService;
-    @inject(APITeamsService) protected readonly apiTeamService: APITeamsService;
+    @inject(API) protected readonly api: API;
     protected apiServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();
@@ -399,20 +399,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
-        {
-            const apiApp = express();
-            apiApp.use(
-                expressConnectMiddleware({
-                    routes: (router: ConnectRouter) => {
-                        router.service(UserServiceDefinition, this.apiUserService);
-                        router.service(TeamsServiceDefinition, this.apiTeamService);
-                    },
-                }),
-            );
-            this.apiServer = apiApp.listen(9877, () => {
-                log.info(`Connect API server listening on: ${<AddressInfo>this.apiServer!.address()}`);
-            });
-        }
+        this.apiServer = this.api.listen(9877);
 
         this.debugApp.start();
     }
