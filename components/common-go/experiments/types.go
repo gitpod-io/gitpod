@@ -12,6 +12,7 @@ import (
 
 	configcat "github.com/configcat/go-sdk/v7"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 )
 
 type Client interface {
@@ -65,11 +66,13 @@ func NewClient(opts ...ClientOpt) Client {
 	if opt.sdkKey == "" {
 		return NewAlwaysReturningDefaultValueClient()
 	}
+	logger := log.Log.Dup()
+	logger.Logger.SetLevel(logrus.ErrorLevel)
 	return newConfigCatClient(configcat.Config{
 		SDKKey:       opt.sdkKey,
 		BaseURL:      opt.baseURL,
 		PollInterval: opt.pollInterval,
 		HTTPTimeout:  3 * time.Second,
-		Logger:       &configCatLogger{log.Log},
+		Logger:       &configCatLogger{logger},
 	})
 }
