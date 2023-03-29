@@ -16,7 +16,9 @@ import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/g
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { UserService } from "../user/user-service";
 import { APITeamsService } from "./teams";
+import { v4 as uuidv4 } from "uuid";
 import * as chai from "chai";
+import { GetTeamRequest } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 
 const expect = chai.expect;
 
@@ -58,15 +60,34 @@ export class APITeamsServiceSpec {
         });
     }
 
-    @test async getTeam_rejectsMissingTeamID() {
+    @test async getTeam_invalidArgument() {
+        const payloads = [
+            new GetTeamRequest({}), // empty
+            new GetTeamRequest({ teamId: "foo-bar" }), // not a valid UUID
+        ];
+
+        for (let payload of payloads) {
+            try {
+                await this.client.getTeam(payload);
+                expect.fail("get team did not throw an exception");
+            } catch (err) {
+                expect(err).to.be.an.instanceof(ConnectError);
+                expect(err.code).to.equal(Code.InvalidArgument);
+            }
+        }
+    }
+
+    @test async getTeam_notFoundWhenTeamDoesNotExist() {
         try {
-            await this.client.getTeam({
-                teamId: "",
-            });
-            expect.fail("getteam did not throw an exception");
+            await this.client.getTeam(
+                new GetTeamRequest({
+                    teamId: uuidv4(),
+                }),
+            );
+            expect.fail("get team did not throw an exception");
         } catch (err) {
             expect(err).to.be.an.instanceof(ConnectError);
-            expect(err.code).to.equal(Code.InvalidArgument);
+            expect(err.code).to.equal(Code.NotFound);
         }
     }
 }
