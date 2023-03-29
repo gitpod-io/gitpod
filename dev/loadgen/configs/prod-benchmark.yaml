@@ -78,17 +78,29 @@ repos:
     score: 20
     workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
     workspaceClass: "g1-large"
+    environment:
+    - name: "GITPOD_TASKS"
+      value: "[{\"name\":\"Open port 1\",\"command\":\"gp ports visibility 6879:private\"},{\"name\":\"Open port 2\",\"command\":\"gp ports visibility 7869:private\"}]"
   - cloneURL: https://github.com/gitpod-io/template-typescript-react
     cloneTarget: main
     score: 20
     workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
     workspaceClass: "default"
+    environment:
+    - name: "GITPOD_TASKS"
+      value: "[{\"name\":\"Open port 1\",\"command\":\"gp ports visibility 6879:private\"},{\"name\":\"Open port 2\",\"command\":\"gp ports visibility 7869:private\"}]"
   - cloneURL: https://github.com/gitpod-io/template-python-django
     cloneTarget: main
     score: 20
     workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
     workspaceClass: "gitpodio-internal-xl"
+    environment:
+    - name: "GITPOD_TASKS"
+      value: "[{\"name\":\"Open port 1\",\"command\":\"gp ports visibility 6879:private\"},{\"name\":\"Open port 2\",\"command\":\"gp ports visibility 7869:private\"}]"
   - cloneURL: https://github.com/gitpod-io/non-gitpodified-repo
     score: 20
     cloneTarget: main
     workspaceImage: registry.hub.docker.com/gitpod/workspace-full:latest
+    environment:
+    - name: "GITPOD_TASKS"
+      value: "[{\"name\":\"Open port 1\",\"command\":\"gp ports visibility 6879:private\"},{\"name\":\"Open port 2\",\"command\":\"gp ports visibility 7869:private\"}]"
