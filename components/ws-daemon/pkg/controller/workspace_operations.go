@@ -40,6 +40,7 @@ const (
 	maxPendingChanges = 100
 )
 
+//go:generate mockgen -destination=mock.go -package=controller . WorkspaceOperations
 type WorkspaceOperations interface {
 	// InitWorkspace initializes the workspace content
 	InitWorkspace(ctx context.Context, options InitOptions) (string, error)
