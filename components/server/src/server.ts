@@ -54,8 +54,10 @@ import { IamSessionApp } from "./iam/iam-session-app";
 import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
 import { expressConnectMiddleware } from "@bufbuild/connect-express";
 import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
+import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import { APIUserService } from "./api/user";
 import { ConnectRouter } from "@bufbuild/connect";
+import { APITeamService } from "./api/teams";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -98,6 +100,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected iamSessionAppServer?: http.Server;
 
     @inject(APIUserService) protected readonly apiUserService: APIUserService;
+    @inject(APITeamService) protected readonly apiTeamService: APITeamService;
     protected apiServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();
@@ -402,6 +405,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 expressConnectMiddleware({
                     routes: (router: ConnectRouter) => {
                         router.service(UserServiceDefinition, this.apiUserService);
+                        router.service(TeamsServiceDefinition, this.apiTeamService);
                     },
                 }),
             );
