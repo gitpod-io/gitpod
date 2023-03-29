@@ -82,6 +82,7 @@ jobs:
         env:
           DISPLAY: ':10'
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: '8388608'
+          TEST_USE_LATEST: ${{ inputs.use_latest }}
         run: |
           export GATEWAY_LINK=$(jq -r '.inputs.secret_gateway_link' $GITHUB_EVENT_PATH)
           export GITPOD_TEST_ACCESSTOKEN=$(jq -r '.inputs.secret_access_token' $GITHUB_EVENT_PATH)
@@ -89,11 +90,17 @@ jobs:
 
           export LEEWAY_WORKSPACE_ROOT=$(pwd)
 
-          sudo mkdir -p /workspace/.gradle-latest
-          sudo chown -R $(whoami) /workspace
-
-          mkdir -p $HOME/.cache/pluginVerifier-latest
-          leeway run dev/jetbrains-test:test -Dversion=integration-test -DpublishToJBMarketplace=false
+          if [ $TEST_USE_LATEST = "false" ]; then
+            sudo mkdir -p /workspace/.gradle-stable
+            sudo chown -R $(whoami) /workspace
+            mkdir -p $HOME/.cache/pluginVerifier-stable
+            leeway run dev/jetbrains-test:test-stable -Dversion=integration-test -DpublishToJBMarketplace=false
+          else
+            sudo mkdir -p /workspace/.gradle-latest
+            sudo chown -R $(whoami) /workspace
+            mkdir -p $HOME/.cache/pluginVerifier-latest
+            leeway run dev/jetbrains-test:test-latest -Dversion=integration-test -DpublishToJBMarketplace=false
+          fi
       - name: Move video
         if: always()
         run: |
