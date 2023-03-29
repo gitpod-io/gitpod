@@ -85,7 +85,7 @@ export class APITeamsService implements ServiceImpl<typeof TeamServiceInterface>
     }
 }
 
-function toAPITeam(team: Organization, members: OrgMemberInfo[], invite: TeamMembershipInvite): Team {
+export function toAPITeam(team: Organization, members: OrgMemberInfo[], invite: TeamMembershipInvite): Team {
     return new Team({
         id: team.id,
         name: team.name,
@@ -93,16 +93,17 @@ function toAPITeam(team: Organization, members: OrgMemberInfo[], invite: TeamMem
         teamInvitation: new TeamInvitation({
             id: invite.id,
         }),
-        members: members.map(
-            (m) =>
-                new TeamMember({
-                    avatarUrl: m.avatarUrl,
-                    fullName: m.fullName,
-                    memberSince: Timestamp.fromDate(new Date(m.memberSince)),
-                    primaryEmail: m.primaryEmail,
-                    role: m.role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER,
-                    userId: m.userId,
-                }),
-        ),
+        members: members.map(memberToAPI),
+    });
+}
+
+export function memberToAPI(member: OrgMemberInfo): TeamMember {
+    return new TeamMember({
+        avatarUrl: member.avatarUrl,
+        fullName: member.fullName,
+        memberSince: Timestamp.fromDate(new Date(member.memberSince)),
+        primaryEmail: member.primaryEmail,
+        role: member.role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER,
+        userId: member.userId,
     });
 }

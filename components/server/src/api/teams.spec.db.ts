@@ -18,9 +18,10 @@ import { UserService } from "../user/user-service";
 import { APITeamsService } from "./teams";
 import { v4 as uuidv4 } from "uuid";
 import * as chai from "chai";
-import { GetTeamRequest } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
+import { GetTeamRequest, Team, TeamMember, TeamRole } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_pb";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
 import { Connection } from "typeorm";
+import { Timestamp } from "@bufbuild/protobuf";
 
 const expect = chai.expect;
 
@@ -110,13 +111,31 @@ export class APITeamsServiceSpec {
         const userDB = this.container.get<UserDB>(UserDB);
         const user = await userDB.storeUser(await userDB.newUser());
         const team = await teamDB.createTeam(user.id, "myteam");
+        const invite = await teamDB.resetGenericInvite(team.id);
 
         const response = await this.client.getTeam(
             new GetTeamRequest({
                 teamId: team.id,
             }),
         );
-        console.log("response", response);
-        expect(response.team).to.equal({});
+        expect(response.team).to.deep.equal(
+            new Team({
+                id: team.id,
+                slug: team.slug,
+                name: team.name,
+                members: [
+                    new TeamMember({
+                        userId: user.id,
+                        avatarUrl: user.avatarUrl,
+                        fullName: user.fullName,
+                        role: TeamRole.OWNER,
+                        memberSince: Timestamp.fromDate(new Date(team.creationTime)),
+                    }),
+                ],
+                teamInvitation: {
+                    id: invite.id,
+                },
+            }),
+        );
     }
 }
