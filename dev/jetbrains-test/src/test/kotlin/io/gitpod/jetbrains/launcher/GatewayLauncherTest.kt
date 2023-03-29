@@ -78,8 +78,11 @@ class GatewayLauncherTest {
         val client = OkHttpClient()
         remoteRobot = RemoteRobot("http://localhost:8082", client)
         val ideDownloader = IdeDownloader(client)
+
+        val useLatest = System.getenv("TEST_USE_LATEST")?.toBoolean() ?: false
+        val type = if (useLatest) "eap,rc,release" else "release"
         gatewayProcess = IdeLauncher.launchIde(
-            ideDownloader.downloadAndExtractLatestEap(Ide.GATEWAY, tmpDir),
+            ideDownloader.downloadAndExtract(Ide.GATEWAY, tmpDir, type),
             mapOf("robot-server.port" to 8082),
             emptyList(),
             listOf(
