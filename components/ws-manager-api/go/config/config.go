@@ -296,20 +296,6 @@ func (c *PVCConfiguration) Validate() error {
 	)
 }
 
-// ContainerConfiguration configures properties of workspace pod container
-type ContainerConfiguration struct {
-	Requests *ResourceRequestConfiguration `json:"requests,omitempty"`
-	Limits   *ResourceLimitConfiguration   `json:"limits,omitempty"`
-}
-
-// Validate validates a container configuration
-func (c *ContainerConfiguration) Validate() error {
-	return ozzo.ValidateStruct(c,
-		ozzo.Field(&c.Requests, validResourceRequestConfig),
-		ozzo.Field(&c.Limits, validResourceLimitConfig),
-	)
-}
-
 var validResourceRequestConfig = ozzo.By(func(o interface{}) error {
 	rc, ok := o.(*ResourceRequestConfiguration)
 	if !ok {

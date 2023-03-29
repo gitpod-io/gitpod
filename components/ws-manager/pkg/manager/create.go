@@ -581,17 +581,19 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				},
 			})
 
-		case api.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
-			limits := startContext.Class.Container.Limits
-			if limits != nil && limits.CPU != nil {
-				if limits.CPU.MinLimit != "" {
-					annotations[kubernetes.WorkspaceCpuMinLimitAnnotation] = limits.CPU.MinLimit
-				}
+		/*
+			case api.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
+				limits := startContext.Class.Container.Limits
+				if limits != nil && limits.CPU != nil {
+					if limits.CPU.MinLimit != "" {
+						annotations[kubernetes.WorkspaceCpuMinLimitAnnotation] = limits.CPU.MinLimit
+					}
 
-				if limits.CPU.BurstLimit != "" {
-					annotations[kubernetes.WorkspaceCpuBurstLimitAnnotation] = limits.CPU.BurstLimit
+					if limits.CPU.BurstLimit != "" {
+						annotations[kubernetes.WorkspaceCpuBurstLimitAnnotation] = limits.CPU.BurstLimit
+					}
 				}
-			}
+		*/
 
 		case api.WorkspaceFeatureFlag_WORKSPACE_CONNECTION_LIMITING:
 			annotations[kubernetes.WorkspaceNetConnLimitAnnotation] = util.BooleanTrueString
@@ -658,19 +660,6 @@ func removeVolume(pod *corev1.Pod, name string) {
 }
 
 func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) (*corev1.Container, error) {
-	var containerConfig config.ContainerConfiguration
-	if startContext.Class != nil {
-		containerConfig = startContext.Class.Container
-	}
-
-	limits, err := containerConfig.Limits.ResourceList()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot parse workspace container limits: %w", err)
-	}
-	requests, err := containerConfig.Requests.ResourceList()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot parse workspace container requests: %w", err)
-	}
 	env, err := m.createWorkspaceEnvironment(startContext)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace env: %w", err)
@@ -828,13 +817,6 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	heartbeatInterval := time.Duration(m.Config.HeartbeatInterval)
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INTERVAL", Value: fmt.Sprintf("%d", int64(heartbeatInterval/time.Millisecond))})
 
-	res, err := startContext.ContainerConfiguration().Requests.ResourceList()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create environment: %w", err)
-	}
-	memoryInMegabyte := res.Memory().Value() / (1000 * 1000)
-	result = append(result, corev1.EnvVar{Name: "GITPOD_MEMORY", Value: strconv.FormatInt(memoryInMegabyte, 10)})
-
 	if startContext.Headless {
 		result = append(result, corev1.EnvVar{Name: "GITPOD_HEADLESS", Value: "true"})
 	}
@@ -964,7 +946,7 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 	if _, ok := m.Config.WorkspaceClasses[req.Spec.Class]; clsName == "" || !ok {
 		// For the time being, if the requested workspace class is unknown, or if
 		// no class is specified, we'll fall back to the default class.
-		clsName = config.DefaultWorkspaceClass
+		return nil, xerrors.Errorf("unknown workspace class (%v): %w", req.Spec.Class, err)
 	}
 
 	var class *config.WorkspaceClass
