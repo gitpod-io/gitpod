@@ -17,7 +17,7 @@ import (
 type OIDCClientConfig struct {
 	ID uuid.UUID `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
 
-	OrganizationID *uuid.UUID `gorm:"column:organizationId;type:char;size:36;" json:"organizationId"`
+	OrganizationID uuid.UUID `gorm:"column:organizationId;type:char;size:36;" json:"organizationId"`
 
 	Issuer string `gorm:"column:issuer;type:char;size:255;" json:"issuer"`
 
@@ -128,7 +128,7 @@ func ListOIDCClientConfigsForOrganization(ctx context.Context, conn *gorm.DB, or
 
 	tx := conn.
 		WithContext(ctx).
-		Where("organizationId = ?", organizationID).
+		Where("organizationId = ?", organizationID.String()).
 		Where("deleted = ?", 0).
 		Order("id").
 		Find(&results)
@@ -165,4 +165,27 @@ func DeleteOIDCClientConfig(ctx context.Context, conn *gorm.DB, id, organization
 	}
 
 	return nil
+}
+
+func GetOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug string) (OIDCClientConfig, error) {
+	var config OIDCClientConfig
+
+	if slug == "" {
+		return OIDCClientConfig{}, fmt.Errorf("slug is a required argument")
+	}
+
+	tx := conn.
+		WithContext(ctx).
+		Table((&OIDCClientConfig{}).TableName()).
+		// TODO: is there a better way to reference table names here and below?
+		Joins("JOIN d_b_team team ON team.id = d_b_oidc_client_config.organizationId").
+		Where("team.slug = ?", slug).
+		Where("d_b_oidc_client_config.deleted = ?", 0).
+		First(&config)
+
+	if tx.Error != nil {
+		return OIDCClientConfig{}, fmt.Errorf("failed to get oidc client config by org slug (slug: %s): %v", slug, tx.Error)
+	}
+
+	return config, nil
 }

@@ -37,18 +37,21 @@ function simplifyProviderName(host: string) {
     }
 }
 
-interface OpenAuthorizeWindowParams {
+interface WindowMessageHandler {
+    onSuccess?: (payload?: string) => void;
+    onError?: (error: string | { error: string; description?: string }) => void;
+}
+
+interface OpenAuthorizeWindowParams extends WindowMessageHandler {
     login?: boolean;
     host: string;
     scopes?: string[];
     overrideScopes?: boolean;
     overrideReturn?: string;
-    onSuccess?: (payload?: string) => void;
-    onError?: (error: string | { error: string; description?: string }) => void;
 }
 
 async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
-    const { login, host, scopes, overrideScopes, onSuccess, onError } = params;
+    const { login, host, scopes, overrideScopes } = params;
     let search = "message=success";
     const redirectURL = getSafeURLRedirect();
     if (redirectURL) {
@@ -72,6 +75,12 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
               })
               .toString();
 
+    openModalWindow(url);
+
+    attachMessageListener(params);
+}
+
+function openModalWindow(url: string) {
     const width = 800;
     const height = 800;
     const left = window.screen.width / 2 - width / 2;
@@ -83,7 +92,9 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
         "gitpod-auth-window",
         `width=${width},height=${height},top=${top},left=${left},status=yes,scrollbars=yes,resizable=yes`,
     );
+}
 
+function attachMessageListener({ onSuccess, onError }: WindowMessageHandler) {
     const eventListener = (event: MessageEvent) => {
         // todo: check event.origin
 
@@ -117,6 +128,30 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     };
     window.addEventListener("message", eventListener);
 }
+
+interface OpenOIDCStartWindowParams extends WindowMessageHandler {
+    orgSlug: string;
+}
+
+async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
+    const { orgSlug } = params;
+    let search = "message=success";
+    const redirectURL = getSafeURLRedirect();
+    if (redirectURL) {
+        search = `${search}&returnTo=${encodeURIComponent(redirectURL)}`;
+    }
+    const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search }).toString();
+    const url = gitpodHostUrl
+        .with((url) => ({
+            pathname: `/iam/oidc/start`,
+            search: `orgSlug=${orgSlug}&returnTo=${encodeURIComponent(returnTo)}`,
+        }))
+        .toString();
+
+    openModalWindow(url);
+
+    attachMessageListener(params);
+}
 const getSafeURLRedirect = (source?: string) => {
     const returnToURL: string | null = new URLSearchParams(source ? source : window.location.search).get("returnTo");
     if (returnToURL) {
@@ -131,4 +166,4 @@ const getSafeURLRedirect = (source?: string) => {
     }
 };
 
-export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, getSafeURLRedirect };
+export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, getSafeURLRedirect, openOIDCStartWindow };
