@@ -383,7 +383,7 @@ jobs:
             TEST_USE_LATEST_VERSION: ${{ needs.configuration.outputs.latest_ide_version }}
             TEST_BUILD_ID: ${{ github.run_id }}
             TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            TEST_BUILD_REF: ${{ github.ref }}
+            TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
         run: |
             set -euo pipefail
 
