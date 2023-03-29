@@ -44,8 +44,6 @@ export class APITeamsService implements ServiceImpl<typeof TeamServiceInterface>
     public async getTeam(req: GetTeamRequest): Promise<GetTeamResponse> {
         const { teamId } = req;
 
-        console.log("Handling getTeam", teamId);
-
         if (!teamId || !validate(teamId)) {
             throw new ConnectError("Invalid argument: teamId", Code.InvalidArgument);
         }
