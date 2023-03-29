@@ -30,4 +30,16 @@ export interface WorkspaceClassConfig {
         // Marks this class as the one that users marked with "GetMoreResources" receive
         moreResources: boolean;
     };
+
+    // The number of CPUs to assign to the workspace
+    cpus?: number;
+
+    // The amount of RAM in GB to assign to the workspace
+    memory?: number;
+
+    // The amount of storage in GB to assign to the workspace
+    storage?: number;
+
+    // The amount of ephemeral storage in GB to assign to the workspace
+    ephemeralStorage?: number;    
 }

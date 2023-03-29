@@ -26,9 +26,6 @@ import (
 	cntntcfg "github.com/gitpod-io/gitpod/content-service/api/config"
 )
 
-// DefaultWorkspaceClass is the name of the default workspace class
-const DefaultWorkspaceClass = "default"
-
 type osFS struct{}
 
 func (*osFS) Open(name string) (iofs.File, error) {
@@ -137,7 +134,6 @@ type Configuration struct {
 
 type WorkspaceClass struct {
 	Name        string                            `json:"name"`
-	Container   ContainerConfiguration            `json:"container"`
 	Templates   WorkspacePodTemplateConfiguration `json:"templates"`
 	PrebuildPVC PVCConfiguration                  `json:"prebuildPVC"`
 	PVC         PVCConfiguration                  `json:"pvc"`
@@ -237,15 +233,9 @@ func (c *Configuration) Validate() error {
 		return err
 	}
 
-	if _, ok := c.WorkspaceClasses[DefaultWorkspaceClass]; !ok {
-		return xerrors.Errorf("missing \"%s\" workspace class", DefaultWorkspaceClass)
-	}
 	for name, class := range c.WorkspaceClasses {
 		if errs := validation.IsValidLabelValue(name); len(errs) > 0 {
 			return xerrors.Errorf("workspace class name \"%s\" is invalid: %v", name, errs)
-		}
-		if err := class.Container.Validate(); err != nil {
-			return xerrors.Errorf("workspace class %s: %w", name, err)
 		}
 
 		err = ozzo.ValidateStruct(&class.Templates,
