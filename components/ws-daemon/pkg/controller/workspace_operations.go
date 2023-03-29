@@ -40,26 +40,41 @@ const (
 	maxPendingChanges = 100
 )
 
-type WorkspaceOperations struct {
+type WorkspaceOperations interface {
+	// InitWorkspace initializes the workspace content
+	InitWorkspace(ctx context.Context, options InitOptions) (string, error)
+	// BackupWorkspace backups the content of the workspace
+	BackupWorkspace(ctx context.Context, opts BackupOptions) (*csapi.GitStatus, error)
+	// DeleteWorkspace deletes the content of the workspace from disk
+	DeleteWorkspace(ctx context.Context, instanceID string) error
+	// SnapshotIDs generates the name and url for a snapshot
+	SnapshotIDs(ctx context.Context, instanceID string) (snapshotUrl, snapshotName string, err error)
+	// Snapshot takes a snapshot of the workspace
+	Snapshot(ctx context.Context, instanceID, snapshotName string) (err error)
+}
+
+type DefaultWorkspaceOperations struct {
 	config                 content.Config
 	provider               *WorkspaceProvider
 	backupWorkspaceLimiter chan struct{}
 	metrics                *content.Metrics
 }
 
+var _ WorkspaceOperations = (*DefaultWorkspaceOperations)(nil)
+
 type WorkspaceMeta struct {
 	Owner       string
-	WorkspaceId string
-	InstanceId  string
+	WorkspaceID string
+	InstanceID  string
 }
 
-type InitContentOptions struct {
+type InitOptions struct {
 	Meta        WorkspaceMeta
 	Initializer *csapi.WorkspaceInitializer
 	Headless    bool
 }
 
-type DisposeOptions struct {
+type BackupOptions struct {
 	Meta              WorkspaceMeta
 	WorkspaceLocation string
 	BackupLogs        bool
@@ -67,13 +82,13 @@ type DisposeOptions struct {
 	SnapshotName      string
 }
 
-func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, reg prometheus.Registerer) (*WorkspaceOperations, error) {
+func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, reg prometheus.Registerer) (WorkspaceOperations, error) {
 	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(reg, "_mk2")
 	if err != nil {
 		return nil, err
 	}
 
-	return &WorkspaceOperations{
+	return &DefaultWorkspaceOperations{
 		config:   config,
 		provider: provider,
 		metrics: &content.Metrics{
@@ -85,9 +100,9 @@ func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, 
 	}, nil
 }
 
-func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, options InitContentOptions) (string, error) {
-	ws, err := wso.provider.Create(ctx, options.Meta.InstanceId, filepath.Join(wso.provider.Location, options.Meta.InstanceId),
-		wso.creator(options.Meta.Owner, options.Meta.WorkspaceId, options.Meta.InstanceId, options.Initializer, false))
+func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, options InitOptions) (string, error) {
+	ws, err := wso.provider.Create(ctx, options.Meta.InstanceID, filepath.Join(wso.provider.Location, options.Meta.InstanceID),
+		wso.creator(options.Meta.Owner, options.Meta.WorkspaceID, options.Meta.InstanceID, options.Initializer, false))
 
 	if err != nil {
 		return "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
@@ -125,8 +140,8 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 		},
 		OWI: content.OWI{
 			Owner:       options.Meta.Owner,
-			WorkspaceID: options.Meta.WorkspaceId,
-			InstanceID:  options.Meta.InstanceId,
+			WorkspaceID: options.Meta.WorkspaceID,
+			InstanceID:  options.Meta.InstanceID,
 		},
 	}
 
@@ -149,22 +164,22 @@ func (wso *WorkspaceOperations) InitWorkspaceContent(ctx context.Context, option
 	return "", nil
 }
 
-func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, init *csapi.WorkspaceInitializer, storageDisabled bool) session.WorkspaceFactory {
+func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID string, init *csapi.WorkspaceInitializer, storageDisabled bool) session.WorkspaceFactory {
 	var checkoutLocation string
 	allLocations := csapi.GetCheckoutLocationsFromInitializer(init)
 	if len(allLocations) > 0 {
 		checkoutLocation = allLocations[0]
 	}
 
-	serviceDirName := instanceId + "-daemon"
+	serviceDirName := instanceID + "-daemon"
 	return func(ctx context.Context, location string) (res *session.Workspace, err error) {
 		return &session.Workspace{
 			Location:              location,
 			CheckoutLocation:      checkoutLocation,
 			CreatedAt:             time.Now(),
 			Owner:                 owner,
-			WorkspaceID:           workspaceId,
-			InstanceID:            instanceId,
+			WorkspaceID:           workspaceID,
+			InstanceID:            instanceID,
 			FullWorkspaceBackup:   false,
 			PersistentVolumeClaim: false,
 			RemoteStorageDisabled: storageDisabled,
@@ -176,10 +191,10 @@ func (wso *WorkspaceOperations) creator(owner, workspaceId, instanceId string, i
 	}
 }
 
-func (wso *WorkspaceOperations) BackupWorkspace(ctx context.Context, opts DisposeOptions) (*csapi.GitStatus, error) {
-	ws, err := wso.provider.Get(ctx, opts.Meta.InstanceId)
+func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts BackupOptions) (*csapi.GitStatus, error) {
+	ws, err := wso.provider.Get(ctx, opts.Meta.InstanceID)
 	if err != nil {
-		return nil, fmt.Errorf("cannot find workspace %s during DisposeWorkspace: %w", opts.Meta.InstanceId, err)
+		return nil, fmt.Errorf("cannot find workspace %s during DisposeWorkspace: %w", opts.Meta.InstanceID, err)
 	}
 
 	if ws.RemoteStorageDisabled {
@@ -196,7 +211,7 @@ func (wso *WorkspaceOperations) BackupWorkspace(ctx context.Context, opts Dispos
 
 	err = wso.uploadWorkspaceContent(ctx, ws, opts.SnapshotName)
 	if err != nil {
-		return nil, fmt.Errorf("final backup failed for workspace %s", opts.Meta.InstanceId)
+		return nil, fmt.Errorf("final backup failed for workspace %s", opts.Meta.InstanceID)
 	}
 
 	var repo *csapi.GitStatus
@@ -215,7 +230,7 @@ func (wso *WorkspaceOperations) BackupWorkspace(ctx context.Context, opts Dispos
 	return repo, nil
 }
 
-func (wso *WorkspaceOperations) DeleteWorkspace(ctx context.Context, instanceID string) error {
+func (wso *DefaultWorkspaceOperations) DeleteWorkspace(ctx context.Context, instanceID string) error {
 	ws, err := wso.provider.Get(ctx, instanceID)
 	if err != nil {
 		return fmt.Errorf("cannot find workspace %s during DisposeWorkspace: %w", instanceID, err)
@@ -235,10 +250,10 @@ func (wso *WorkspaceOperations) DeleteWorkspace(ctx context.Context, instanceID 
 	return nil
 }
 
-func (wso *WorkspaceOperations) SnapshotIDs(ctx context.Context, workspaceID string) (snapshotUrl, snapshotName string, err error) {
-	sess, err := wso.provider.Get(ctx, workspaceID)
+func (wso *DefaultWorkspaceOperations) SnapshotIDs(ctx context.Context, instanceID string) (snapshotUrl, snapshotName string, err error) {
+	sess, err := wso.provider.Get(ctx, instanceID)
 	if err != nil {
-		return "", "", fmt.Errorf("cannot find workspace %s during SnapshotName: %w", workspaceID, err)
+		return "", "", fmt.Errorf("cannot find workspace %s during SnapshotName: %w", instanceID, err)
 	}
 
 	baseName := fmt.Sprintf("snapshot-%d", time.Now().UnixNano())
@@ -252,7 +267,7 @@ func (wso *WorkspaceOperations) SnapshotIDs(ctx context.Context, workspaceID str
 	return rs.Qualify(snapshotName), snapshotName, nil
 }
 
-func (wso *WorkspaceOperations) TakeSnapshot(ctx context.Context, workspaceID, snapshotName string) (err error) {
+func (wso *DefaultWorkspaceOperations) Snapshot(ctx context.Context, workspaceID, snapshotName string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "TakeSnapshot")
 	span.SetTag("workspace", workspaceID)
@@ -298,7 +313,7 @@ func ensureCleanSlate(location string) error {
 	return nil
 }
 
-func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts DisposeOptions) (err error) {
+func (wso *DefaultWorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts BackupOptions) (err error) {
 	// currently we're only uploading prebuild log files
 	logFiles, err := logs.ListPrebuildLogFiles(ctx, opts.WorkspaceLocation)
 	if err != nil {
@@ -310,7 +325,7 @@ func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts Di
 		return xerrors.Errorf("cannot use configured storage: %w", err)
 	}
 
-	err = rs.Init(ctx, opts.Meta.Owner, opts.Meta.WorkspaceId, opts.Meta.InstanceId)
+	err = rs.Init(ctx, opts.Meta.Owner, opts.Meta.WorkspaceID, opts.Meta.InstanceID)
 	if err != nil {
 		return xerrors.Errorf("cannot use configured storage: %w", err)
 	}
@@ -342,7 +357,7 @@ func (wso *WorkspaceOperations) uploadWorkspaceLogs(ctx context.Context, opts Di
 	return err
 }
 
-func (wso *WorkspaceOperations) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName string) error {
+func (wso *DefaultWorkspaceOperations) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName string) error {
 	// Avoid too many simultaneous backups in order to avoid excessive memory utilization.
 	var timedOut bool
 	waitStart := time.Now()

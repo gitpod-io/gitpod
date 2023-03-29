@@ -57,13 +57,13 @@ type WorkspaceController struct {
 	client.Client
 	NodeName                string
 	maxConcurrentReconciles int
-	operations              *WorkspaceOperations
+	operations              WorkspaceOperations
 	metrics                 *workspaceMetrics
 	secretNamespace         string
 	recorder                record.EventRecorder
 }
 
-func NewWorkspaceController(c client.Client, recorder record.EventRecorder, nodeName, secretNamespace string, maxConcurrentReconciles int, ops *WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
+func NewWorkspaceController(c client.Client, recorder record.EventRecorder, nodeName, secretNamespace string, maxConcurrentReconciles int, ops WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
 	metrics := newWorkspaceMetrics()
 	reg.Register(metrics)
 
@@ -172,11 +172,11 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 		}
 
 		initStart := time.Now()
-		failure, initErr := wsc.operations.InitWorkspaceContent(ctx, InitContentOptions{
+		failure, initErr := wsc.operations.InitWorkspace(ctx, InitOptions{
 			Meta: WorkspaceMeta{
 				Owner:       ws.Spec.Ownership.Owner,
-				WorkspaceId: ws.Spec.Ownership.WorkspaceID,
-				InstanceId:  ws.Name,
+				WorkspaceID: ws.Spec.Ownership.WorkspaceID,
+				InstanceID:  ws.Name,
 			},
 			Initializer: init,
 			Headless:    ws.IsHeadless(),
@@ -269,11 +269,11 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		}
 	}
 
-	gitStatus, disposeErr := wsc.operations.BackupWorkspace(ctx, DisposeOptions{
+	gitStatus, disposeErr := wsc.operations.BackupWorkspace(ctx, BackupOptions{
 		Meta: WorkspaceMeta{
 			Owner:       ws.Spec.Ownership.Owner,
-			WorkspaceId: ws.Spec.Ownership.WorkspaceID,
-			InstanceId:  ws.Name,
+			WorkspaceID: ws.Spec.Ownership.WorkspaceID,
+			InstanceID:  ws.Name,
 		},
 		WorkspaceLocation: ws.Spec.WorkspaceLocation,
 		SnapshotName:      snapshotName,
