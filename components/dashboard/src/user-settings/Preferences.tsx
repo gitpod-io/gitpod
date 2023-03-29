@@ -37,7 +37,7 @@ export default function Preferences() {
 
             const updatedUser = await updateDotfileRepo.mutateAsync(dotfileRepo);
             setUser(updatedUser);
-            toast("Your dotfiles repository was updated");
+            toast("Dotfiles configuration was successfully updated.");
         },
         [updateDotfileRepo, dotfileRepo, setUser, toast],
     );
