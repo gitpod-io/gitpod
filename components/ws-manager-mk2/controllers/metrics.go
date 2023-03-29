@@ -186,6 +186,10 @@ func (m *controllerMetrics) countTotalRestoreFailures(log *logr.Logger, ws *work
 	counter.Inc()
 }
 
+func (m *controllerMetrics) containsWorkspace(ws *workspacev1.Workspace) bool {
+	return m.cache.Contains(ws.Name)
+}
+
 func (m *controllerMetrics) rememberWorkspace(ws *workspacev1.Workspace, state *metricState) {
 	var s metricState
 	if state != nil {

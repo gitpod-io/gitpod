@@ -148,6 +148,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
+	if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped && !r.metrics.containsWorkspace(workspace) {
+		// If the workspace hasn't stopped yet, and we don't know about this workspace yet, remember it.
+		r.metrics.rememberWorkspace(workspace, nil)
+	}
+
 	if len(workspacePods.Items) == 0 {
 		// if there isn't a workspace pod and we're not currently deleting this workspace,// create one.
 		switch {
@@ -193,7 +198,6 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 				r.Recorder.Event(workspace, corev1.EventTypeNormal, "Creating", "")
 			}
-			r.metrics.rememberWorkspace(workspace, nil)
 
 		case workspace.Status.Phase == workspacev1.WorkspacePhaseStopped:
 			if err := r.deleteWorkspaceSecrets(ctx, workspace); err != nil {
