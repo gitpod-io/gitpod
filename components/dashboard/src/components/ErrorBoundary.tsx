@@ -5,7 +5,8 @@
  */
 
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { FC, lazy, Suspense } from "react";
+import { QueryErrorResetBoundary } from "@tanstack/react-query";
+import { FC, lazy, Suspense, useCallback } from "react";
 import { ErrorBoundary, FallbackProps, ErrorBoundaryProps } from "react-error-boundary";
 import { AppLoading } from "../app/AppLoading";
 import gitpodIcon from "../icons/gitpod.svg";
@@ -19,15 +20,20 @@ const Setup = lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 // or others that we let bubble up to the top
 export const TopLevelErrorBoundary: FC = ({ children }) => {
     return (
-        <ErrorBoundary FallbackComponent={TopLevelErrorFallback} onReset={handleReset} onError={handleError}>
-            {children}
-        </ErrorBoundary>
+        <QueryErrorResetBoundary>
+            {({ reset }) => (
+                // Passing reset to onReset so any queries know to retry after boundary is reset
+                <ErrorBoundary FallbackComponent={TopLevelErrorFallback} onReset={reset} onError={handleError}>
+                    {children}
+                </ErrorBoundary>
+            )}
+        </QueryErrorResetBoundary>
     );
 };
 
 export const GitpodErrorBoundary: FC = ({ children }) => {
     return (
-        <ErrorBoundary FallbackComponent={DefaultErrorFallback} onReset={handleReset} onError={handleError}>
+        <ErrorBoundary FallbackComponent={DefaultErrorFallback} onError={handleError}>
             {children}
         </ErrorBoundary>
     );
@@ -41,24 +47,28 @@ const TopLevelErrorFallback: FC<FallbackProps> = ({ error, resetErrorBoundary })
 
     // Handle any expected errors here
     if (caughtError.code === ErrorCodes.NOT_AUTHENTICATED) {
-        return <Login />;
+        return <Login onLoggedIn={resetErrorBoundary} />;
     }
 
     if (caughtError.code === ErrorCodes.SETUP_REQUIRED) {
         return (
             <Suspense fallback={<AppLoading />}>
-                <Setup />
+                <Setup onComplete={resetErrorBoundary} />
             </Suspense>
         );
     }
 
     // Otherwise fall back to default error view
-    return <DefaultErrorFallback error={error} resetErrorBoundary={resetErrorBoundary} />;
+    return <DefaultErrorFallback error={error} />;
 };
 
-export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBoundary }) => {
+export const DefaultErrorFallback: FC<Pick<FallbackProps, "error">> = ({ error }) => {
     // adjust typing, as we may have caught an api error here w/ a code property
     const caughtError = error as CaughtError;
+
+    const handleReset = useCallback(() => {
+        window.location.reload();
+    }, []);
 
     const emailSubject = encodeURIComponent("Gitpod Dashboard Error");
     let emailBodyStr = `\n\nError: ${caughtError.message}`;
@@ -79,7 +89,7 @@ export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBound
                 .
             </Subheading>
             <div>
-                <button onClick={resetErrorBoundary}>Reload</button>
+                <button onClick={handleReset}>Reload</button>
             </div>
             <div>
                 {caughtError.code && (
@@ -91,10 +101,6 @@ export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBound
             </div>
         </div>
     );
-};
-
-export const handleReset: ErrorBoundaryProps["onReset"] = () => {
-    window.location.reload();
 };
 
 export const handleError: ErrorBoundaryProps["onError"] = async (error, info) => {
