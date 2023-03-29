@@ -53,7 +53,7 @@ export default function Preferences() {
                 const updatedUser = await getGitpodService().server.getLoggedInUser();
                 setUser(updatedUser);
 
-                toast("Your default workspace timeout was updated");
+                toast("Timeouts configuration was successfully updated.");
             } catch (e) {
                 // TODO: Convert this to an error style toast
                 alert("Cannot set custom workspace timeout: " + e.message);
