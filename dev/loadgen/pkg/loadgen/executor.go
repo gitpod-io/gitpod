@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"os"
 	"sync"
@@ -158,36 +157,45 @@ func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	w.Sub = append(w.Sub, cancel)
 
-	sub, err := w.C.Subscribe(ctx, &api.SubscribeRequest{
-		MustMatch: w.loadgenSessionFilter(),
-	})
-	if err != nil {
-		return nil, err
-	}
 	go func() {
 		defer close(res)
 		for {
-			resp, err := sub.Recv()
+			sub, err := w.C.Subscribe(ctx, &api.SubscribeRequest{
+				MustMatch: w.loadgenSessionFilter(),
+			})
 			if err != nil {
-				if err != io.EOF && status.Code(err) != codes.Canceled {
-					log.WithError(err).Warn("subscription failure")
-				}
-				return
-			}
-			status := resp.GetStatus()
-			if status == nil {
+				log.WithError(err).Warn("failed to subscribe to ws-manager, retrying...")
+				time.Sleep(5 * time.Second)
 				continue
 			}
 
-			res <- WorkspaceUpdate{
-				InstanceID:  status.Id,
-				WorkspaceID: status.Metadata.MetaId,
-				OwnerID:     status.Metadata.Owner,
-				Failed:      status.Conditions.Failed != "",
-				Phase:       status.Phase,
+			for {
+				resp, err := sub.Recv()
+				if err != nil {
+					if status.Code(err) != codes.Canceled {
+						log.WithError(err).Warn("lost connection to ws-manager, retrying...")
+						time.Sleep(5 * time.Second)
+						// Break and resubscribe.
+						break
+					}
+					return
+				}
+				status := resp.GetStatus()
+				if status == nil {
+					continue
+				}
+
+				res <- WorkspaceUpdate{
+					InstanceID:  status.Id,
+					WorkspaceID: status.Metadata.MetaId,
+					OwnerID:     status.Metadata.Owner,
+					Failed:      status.Conditions.Failed != "",
+					Phase:       status.Phase,
+				}
 			}
 		}
 	}()
+
 	return res, nil
 }
 
