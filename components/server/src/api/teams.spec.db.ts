@@ -6,7 +6,7 @@
 import { suite, test, timeout } from "mocha-typescript";
 import { APIUserService } from "./user";
 import { Container } from "inversify";
-import { TypeORM, testContainer } from "@gitpod/gitpod-db/lib";
+import { TeamDB, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";
 import { API } from "./server";
 import * as http from "http";
 import { createConnectTransport } from "@bufbuild/connect-node";
@@ -106,16 +106,14 @@ export class APITeamsServiceSpec {
     }
 
     @test async getTeam_happy() {
-        const created = await this.dbConn.getRepository(DBTeam).save({
-            id: uuidv4(),
-            name: "AwesomeTeam",
-            slug: "awsum",
-            creationTime: new Date().toISOString(),
-        });
+        const teamDB = this.container.get<TeamDB>(TeamDB);
+        const userDB = this.container.get<UserDB>(UserDB);
+        const user = await userDB.storeUser(await userDB.newUser());
+        const team = await teamDB.createTeam(user.id, "myteam");
 
         const response = await this.client.getTeam(
             new GetTeamRequest({
-                teamId: created.id,
+                teamId: team.id,
             }),
         );
         console.log("response", response);
