@@ -44,14 +44,13 @@ export class APITeamsService implements ServiceImpl<typeof TeamServiceInterface>
     public async getTeam(req: GetTeamRequest): Promise<GetTeamResponse> {
         const { teamId } = req;
 
-        console.log("handling get team", teamId);
+        console.log("Handling getTeam", teamId);
 
         if (!teamId || !validate(teamId)) {
             throw new ConnectError("Invalid argument: teamId", Code.InvalidArgument);
         }
 
         const team = await this.teamDB.findTeamById(teamId);
-        console.log(team);
         if (!team) {
             throw new ConnectError(`Team (ID: ${teamId}) does not exist`, Code.NotFound);
         }

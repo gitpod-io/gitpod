@@ -14,6 +14,7 @@ import { ConnectRouter } from "@bufbuild/connect";
 import { expressConnectMiddleware } from "@bufbuild/connect-express";
 import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
+import { AddressInfo } from "net";
 
 @injectable()
 export class API {
@@ -25,7 +26,7 @@ export class API {
         this.register(app);
 
         const server = app.listen(9877, () => {
-            log.info(`Connect API server listening on port: ${port}`);
+            log.info(`Connect API server listening on port: ${(server.address() as AddressInfo).port}`);
         });
 
         return server;
