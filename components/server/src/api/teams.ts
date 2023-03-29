@@ -56,7 +56,10 @@ export class APITeamsService implements ServiceImpl<typeof TeamServiceInterface>
         }
 
         const members = await this.teamDB.findMembersByTeam(teamId);
-        const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
+        let invite = await this.teamDB.findGenericInviteByTeamId(teamId);
+        if (!invite) {
+            invite = await this.teamDB.resetGenericInvite(teamId);
+        }
 
         return new GetTeamResponse({
             team: toAPITeam(team, members, invite),

@@ -117,6 +117,6 @@ export class APITeamsServiceSpec {
             }),
         );
         console.log("response", response);
-        expect(response.team).to.eq({});
+        expect(response.team).to.equal({});
     }
 }

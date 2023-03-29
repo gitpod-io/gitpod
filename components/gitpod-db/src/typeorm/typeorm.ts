@@ -6,7 +6,6 @@
 
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { injectable, inject, optional } from "inversify";
-import { Connection, ConnectionOptions, PrimaryColumnOptions, getConnectionManager, createConnection } from "typeorm";
 
 import { Connection, ConnectionOptions, PrimaryColumnOptions, getConnectionManager, createConnection } from "typeorm";
 import { Config } from "../config";
