@@ -563,4 +563,6 @@ export class UserService {
     async mayCreateOrJoinOrganization(user: User): Promise<boolean> {
         return !user.organizationId;
     }
+
+    async setLinkedInAccessToken(user: User, accessToken: string, expiresAt: string): Promise<void> {}
 }

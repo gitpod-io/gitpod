@@ -16,6 +16,7 @@ const (
 	licenseFilePath                        = "/gitpod/license"
 	chargebeeMountPath                     = "/chargebee"
 	stripeSecretMountPath                  = "/stripe-secret"
+	linkedInSecretMountPath                = "/linkedin-secret"
 	githubAppCertSecret                    = "github-app-cert-secret"
 	IAMSessionPort                         = common.ServerIAMSessionPort
 	IAMSessionPortName                     = "session"

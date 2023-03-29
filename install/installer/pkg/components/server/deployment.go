@@ -206,6 +206,29 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	})
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.LinkedInSecret != "" {
+			linkedInSecret := cfg.WebApp.Server.LinkedInSecret
+
+			volumes = append(volumes,
+				corev1.Volume{
+					Name: "linkedin-secret",
+					VolumeSource: corev1.VolumeSource{
+						Secret: &corev1.SecretVolumeSource{
+							SecretName: linkedInSecret,
+						},
+					},
+				})
+
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      "linkedin-secret",
+				MountPath: linkedInSecretMountPath,
+				ReadOnly:  true,
+			})
+		}
+		return nil
+	})
+
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.GithubApp != nil {
 			volumes = append(volumes,
 				corev1.Volume{

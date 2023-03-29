@@ -6,16 +6,20 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useState } from "react";
+import { useLinkedIn } from "react-linkedin-login-oauth2";
+import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { OnboardingStep } from "./OnboardingStep";
+import SignInWithLinkedIn from "../images/sign-in-with-linkedin.svg";
 
 type Props = {
     user: User;
+    linkedInClientId: string;
     onComplete(user: User): void;
 };
-export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
+export const StepUserInfo: FC<Props> = ({ user, linkedInClientId, onComplete }) => {
     const updateUser = useUpdateCurrentUserMutation();
     // attempt to split provided name for default input values
     const { first, last } = getInitialNameParts(user);
@@ -24,6 +28,17 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
     const [lastName, setLastName] = useState(last);
     // Email purposefully not pre-filled
     const [emailAddress, setEmailAddress] = useState("");
+
+    const { linkedInLogin } = useLinkedIn({
+        clientId: linkedInClientId,
+        redirectUri: `${window.location.origin}/linkedin`,
+        onSuccess: (code) => {
+            console.log("success", code);
+        },
+        onError: (error) => {
+            console.log("error", error);
+        },
+    });
 
     const handleSubmit = useCallback(async () => {
         const additionalData = user.additionalData || {};
@@ -55,6 +70,12 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
     const emailError = useOnBlurError("Please enter your email address", !!emailAddress);
 
     const isValid = [firstNameError, lastNameError, emailError].every((e) => e.isValid);
+
+    // FIXME: might be cleaner to have this in a dedicated /linkedin route instead of relying on the onboarding to show up again
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("code") && params.get("state")) {
+        return <LinkedInCallback />;
+    }
 
     return (
         <OnboardingStep
@@ -102,6 +123,20 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
                 onChange={setEmailAddress}
                 required
             />
+
+            <div>
+                <p className="text-gray-500 text-sm mt-4">
+                    Verify your account by connecting with LinkedIn and receive 500 credits per month. 🎁
+                </p>
+                <button className="primary" onClick={linkedInLogin}>
+                    <img
+                        src={SignInWithLinkedIn}
+                        alt="Sign in with Linked In"
+                        style={{ maxWidth: "180px", cursor: "pointer" }}
+                    />
+                    Connect with LinkedIn
+                </button>
+            </div>
         </OnboardingStep>
     );
 };

@@ -26,6 +26,7 @@ export type Config = Omit<
     | "chargebeeProviderOptionsFile"
     | "stripeSecretsFile"
     | "stripeConfigFile"
+    | "linkedInSecretsFile"
     | "licenseFile"
     | "patSigningKeyFile"
 > & {
@@ -33,6 +34,7 @@ export type Config = Omit<
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
     stripeSecrets?: { publishableKey: string; secretKey: string };
+    linkedInSecrets?: { clientId: string; clientSecret: string };
     builtinAuthProvidersConfigured: boolean;
     inactivityPeriodForReposInDays?: number;
 
@@ -207,6 +209,11 @@ export interface ConfigSerialized {
     enablePayment?: boolean;
 
     /**
+     * LinkedIn OAuth2 configuration
+     */
+    linkedInSecretsFile?: string;
+
+    /**
      * Number of prebuilds that can be started in a given time period.
      * Key '*' specifies the default rate limit for a cloneURL, unless overriden by a specific cloneURL.
      */
@@ -291,6 +298,16 @@ export namespace ConfigFile {
                 log.error("Could not load Stripe secrets", error);
             }
         }
+        let linkedInSecrets: { clientId: string; clientSecret: string } | undefined;
+        if (config.linkedInSecretsFile) {
+            try {
+                linkedInSecrets = JSON.parse(
+                    fs.readFileSync(filePathTelepresenceAware(config.linkedInSecretsFile), "utf-8"),
+                );
+            } catch (error) {
+                log.error("Could not load LinkedIn secrets", error);
+            }
+        }
         let license = config.license;
         const licenseFile = config.licenseFile;
         if (licenseFile) {
@@ -336,6 +353,7 @@ export namespace ConfigFile {
             builtinAuthProvidersConfigured,
             chargebeeProviderOptions,
             stripeSecrets,
+            linkedInSecrets,
             twilioConfig,
             license,
             workspaceGarbageCollection: {
