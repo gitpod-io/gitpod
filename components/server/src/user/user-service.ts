@@ -137,7 +137,12 @@ export class UserService {
         if (userUpdate) {
             userUpdate(newUser);
         }
-        newUser.identities.push(identity);
+        // HINT: we need to specify `deleted: false` here, so that any attempt to reuse the same
+        // entry would converge to a valid state. The identities are identified by the external
+        // `authId`, and if accounts are deleted, such entries are soft-deleted until the periodic
+        // deleter will take care of them. Reuse of soft-deleted entries would lead to an invalid
+        // state. This measure of prevention is considered in the period deleter as well.
+        newUser.identities.push({ ...identity, deleted: false });
         this.handleNewUser(newUser, isFirstUser);
         newUser = await this.userDb.storeUser(newUser);
         if (token) {
