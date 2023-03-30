@@ -16,13 +16,18 @@ export class PeriodicDbDeleter {
     @inject(GitpodTableDescriptionProvider) protected readonly tableProvider: GitpodTableDescriptionProvider;
     @inject(TypeORM) protected readonly typeORM: TypeORM;
 
-    start() {
+    start(shouldRunFn: () => Promise<boolean>) {
         log.info("[PeriodicDbDeleter] Start ...");
-        this.sync().catch((err) => log.error("[PeriodicDbDeleter] sync failed", err));
+        this.sync(shouldRunFn).catch((err) => log.error("[PeriodicDbDeleter] sync failed", err));
     }
 
-    protected async sync() {
+    protected async sync(shouldRunFn: () => Promise<boolean>) {
         const doSync = async () => {
+            const shouldRun = await shouldRunFn();
+            if (!shouldRun) {
+                return;
+            }
+
             const tickID = new Date().toISOString();
             log.info("[PeriodicDbDeleter] Starting to collect deleted rows.", {
                 periodicDeleterTickId: tickID,
