@@ -37,7 +37,6 @@ export default function SelectIDE(props: SelectIDEProps) {
             const additionalData = user?.additionalData || {};
             const ideSettings = additionalData.ideSettings || {};
 
-            // Avoid mutating user object in state for updates
             const updates = {
                 additionalData: {
                     ...additionalData,
