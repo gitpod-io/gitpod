@@ -20,7 +20,6 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
-	redis "github.com/go-redis/redis/v8"
 	httpapi "github.com/ipfs/go-ipfs-http-client"
 	oldcmds "github.com/ipfs/kubo/commands"
 	config "github.com/ipfs/kubo/config"
@@ -30,6 +29,7 @@ import (
 	"github.com/ipfs/kubo/repo/fsrepo"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/opencontainers/go-digest"
+	redis "github.com/redis/go-redis/v9"
 
 	rfapi "github.com/gitpod-io/gitpod/registry-facade/api"
 )

@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/content"
-	redis "github.com/go-redis/redis/v8"
-	"github.com/go-redis/redismock/v8"
+	"github.com/go-redis/redismock/v9"
 	"github.com/google/go-cmp/cmp"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	redis "github.com/redis/go-redis/v9"
 )
 
 func TestRedisBlobStore_Info(t *testing.T) {
