@@ -41,6 +41,7 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 		  "usd": ""
 		}
 	   },
+	   "serverAddress": "server.test-namespace.svc.cluster.local:9877",
        "server": {
          "services": {
            "grpc": {
