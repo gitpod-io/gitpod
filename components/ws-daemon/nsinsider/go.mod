@@ -6,7 +6,7 @@ replace github.com/seccomp/libseccomp-golang => github.com/gitpod-io/libseccomp-
 
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/google/nftables v0.0.0-20220729163259-ec1e802faf94
+	github.com/google/nftables v0.1.0
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/vishvananda/netlink v1.1.1-0.20210330154013-f5de75959ad5
 	golang.org/x/sys v0.3.0
