@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
@@ -23,7 +24,8 @@ import (
 )
 
 const (
-	configCatModule = "gitpod.configcat"
+	configCatModule    = "gitpod.configcat"
+	configCatConfigDir = "/data/configcat/"
 )
 
 var (
@@ -49,6 +51,8 @@ type ConfigCat struct {
 	// pollInterval sets after how much time a configuration is considered stale.
 	pollInterval time.Duration
 
+	fromConfigMap bool
+
 	configCache map[string]*configCache
 	m           sync.RWMutex
 
@@ -69,14 +73,20 @@ func (c *ConfigCat) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	if !pathRegex.MatchString(r.URL.Path) {
 		return next.ServeHTTP(w, r)
 	}
+	arr := strings.Split(r.URL.Path, "/")
+	configVersion := arr[len(arr)-1]
+
+	if c.fromConfigMap {
+		http.ServeFile(w, r, path.Join(configCatConfigDir, configVersion))
+		return nil
+	}
 	w.Header().Set("Content-Type", "application/json")
 	if c.sdkKey == "" {
 		w.Write(DefaultConfig)
 		return nil
 	}
 	etag := r.Header.Get("If-None-Match")
-	arr := strings.Split(r.URL.Path, "/")
-	configVersion := arr[len(arr)-1]
+
 	config := c.getConfigWithCache(configVersion)
 	if etag != "" && config.hash == etag {
 		w.WriteHeader(http.StatusNotModified)
@@ -94,7 +104,12 @@ func (c *ConfigCat) Provision(ctx caddy.Context) error {
 	c.configCache = make(map[string]*configCache)
 
 	c.sdkKey = os.Getenv("CONFIGCAT_SDK_KEY")
+	c.fromConfigMap = os.Getenv("CONFIGCAT_FROM_CONFIGMAP") == "true"
 	if c.sdkKey == "" {
+		return nil
+	}
+	if c.fromConfigMap {
+		c.logger.Info("serve configcat configuare from configmap")
 		return nil
 	}
 

@@ -435,9 +435,10 @@ func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
 
 func ConfigcatProxyEnv(ctx *RenderContext) []corev1.EnvVar {
 	var (
-		sdkKey       string
-		baseUrl      string
-		pollInterval string
+		sdkKey        string
+		baseUrl       string
+		pollInterval  string
+		fromConfigMap string
 	)
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.ConfigcatKey != "" {
@@ -446,6 +447,7 @@ func ConfigcatProxyEnv(ctx *RenderContext) []corev1.EnvVar {
 		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil && cfg.WebApp.ProxyConfig.Configcat != nil {
 			baseUrl = cfg.WebApp.ProxyConfig.Configcat.BaseUrl
 			pollInterval = cfg.WebApp.ProxyConfig.Configcat.PollInterval
+			fromConfigMap = cfg.WebApp.ProxyConfig.Configcat.FromConfigMap
 		}
 		return nil
 	})
@@ -453,21 +455,34 @@ func ConfigcatProxyEnv(ctx *RenderContext) []corev1.EnvVar {
 	if sdkKey == "" {
 		return nil
 	}
-
-	return []corev1.EnvVar{
+	envs := []corev1.EnvVar{
 		{
 			Name:  "CONFIGCAT_SDK_KEY",
 			Value: sdkKey,
 		},
-		{
-			Name:  "CONFIGCAT_BASE_URL",
-			Value: baseUrl,
-		},
-		{
-			Name:  "CONFIGCAT_POLL_INTERVAL",
-			Value: pollInterval,
-		},
 	}
+
+	if fromConfigMap != "" {
+		envs = append(envs,
+			corev1.EnvVar{
+				Name:  "CONFIGCAT_FROM_CONFIGMAP",
+				Value: "true",
+			},
+		)
+	} else {
+		envs = append(envs,
+			corev1.EnvVar{
+				Name:  "CONFIGCAT_BASE_URL",
+				Value: baseUrl,
+			},
+			corev1.EnvVar{
+				Name:  "CONFIGCAT_POLL_INTERVAL",
+				Value: pollInterval,
+			},
+		)
+	}
+
+	return envs
 }
 
 func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
