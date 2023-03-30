@@ -150,9 +150,9 @@ function ContextMenu(props: ContextMenuProps) {
                                 );
                             } else {
                                 return (
-                                    <div key={key} onClick={e.onClick}>
+                                    <button key={key} onClick={e.onClick} className="reset">
                                         {entry}
-                                    </div>
+                                    </button>
                                 );
                             }
                         })
