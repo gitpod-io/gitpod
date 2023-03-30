@@ -58,7 +58,7 @@ export class PeriodicDbDeleter {
                 }
             }
             await Promise.all(pendingDeletions);
-            log.info("[PeriodicDbDeleter] Finished .", {
+            log.info("[PeriodicDbDeleter] Finished deleting records.", {
                 periodicDeleterTickId: tickID,
             });
         };
