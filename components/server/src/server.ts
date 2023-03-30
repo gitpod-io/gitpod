@@ -336,7 +336,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         }
         const areWeLeader = await this.qorum.areWeLeader();
         if (areWeLeader) {
+            log.info("[PeriodicDbDeleter] Current instance is leader, starting periodic deleter.");
             this.periodicDbDeleter.start();
+        } else {
+            log.info("[PeriodicDbDeleter] Current instance is not the leader, periodic deleter will not run.");
         }
     }
 
