@@ -13,13 +13,14 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { OnboardingStep } from "./OnboardingStep";
 import SignInWithLinkedIn from "../images/sign-in-with-linkedin.svg";
+import { Button } from "../components/Button";
+import { LinkedInBanner } from "./LinkedInBanner";
 
 type Props = {
     user: User;
-    linkedInClientId: string;
     onComplete(user: User): void;
 };
-export const StepUserInfo: FC<Props> = ({ user, linkedInClientId, onComplete }) => {
+export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
     const updateUser = useUpdateCurrentUserMutation();
     // attempt to split provided name for default input values
     const { first, last } = getInitialNameParts(user);
@@ -28,17 +29,6 @@ export const StepUserInfo: FC<Props> = ({ user, linkedInClientId, onComplete }) 
     const [lastName, setLastName] = useState(last);
     // Email purposefully not pre-filled
     const [emailAddress, setEmailAddress] = useState("");
-
-    const { linkedInLogin } = useLinkedIn({
-        clientId: linkedInClientId,
-        redirectUri: `${window.location.origin}/linkedin`,
-        onSuccess: (code) => {
-            console.log("success", code);
-        },
-        onError: (error) => {
-            console.log("error", error);
-        },
-    });
 
     const handleSubmit = useCallback(async () => {
         const additionalData = user.additionalData || {};
@@ -124,19 +114,7 @@ export const StepUserInfo: FC<Props> = ({ user, linkedInClientId, onComplete }) 
                 required
             />
 
-            <div>
-                <p className="text-gray-500 text-sm mt-4">
-                    Verify your account by connecting with LinkedIn and receive 500 credits per month. 🎁
-                </p>
-                <button className="primary" onClick={linkedInLogin}>
-                    <img
-                        src={SignInWithLinkedIn}
-                        alt="Sign in with Linked In"
-                        style={{ maxWidth: "180px", cursor: "pointer" }}
-                    />
-                    Connect with LinkedIn
-                </button>
-            </div>
+            <LinkedInBanner />
         </OnboardingStep>
     );
 };

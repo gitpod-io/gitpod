@@ -40,14 +40,6 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
 
     const [step, setStep] = useState(STEPS.ONE);
     const [completingError, setCompletingError] = useState("");
-    const [linkedInClientId, setLinkedInClientId] = useState("");
-
-    useEffect(() => {
-        (async () => {
-            const clientId = await getGitpodService().server.getLinkedInClientId();
-            setLinkedInClientId(clientId);
-        })();
-    }, []);
 
     // We track this state here so we can persist it at the end of the flow instead of when it's selected
     // This is because setting the ide is how we indicate a user has onboarded, and want to defer that until the end
@@ -142,7 +134,6 @@ const UserOnboarding: FunctionComponent<Props> = ({ user }) => {
                     {step === STEPS.ONE && (
                         <StepUserInfo
                             user={user}
-                            linkedInClientId={linkedInClientId}
                             onComplete={(updatedUser) => {
                                 setUser(updatedUser);
                                 setStep(STEPS.TWO);
