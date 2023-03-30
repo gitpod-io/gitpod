@@ -17,7 +17,7 @@ export class PeriodicDbDeleter {
     @inject(TypeORM) protected readonly typeORM: TypeORM;
 
     start() {
-        log.error("[PeriodicDbDeleter] Start ...");
+        log.info("[PeriodicDbDeleter] Start ...");
         this.sync().catch((err) => log.error("[PeriodicDbDeleter] sync failed", err));
     }
 
