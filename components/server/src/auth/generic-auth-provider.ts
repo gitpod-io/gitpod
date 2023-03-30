@@ -445,16 +445,18 @@ export class GenericAuthProvider implements AuthProvider {
         }
 
         if (flowContext) {
+            const logPayload = {
+                withIdentity: TosFlow.WithIdentity.is(flowContext) ? flowContext.candidate : undefined,
+                withUser: TosFlow.WithUser.is(flowContext) ? User.censor(flowContext.user) : undefined,
+                ...defaultLogPayload,
+            };
             if (
                 TosFlow.WithIdentity.is(flowContext) ||
                 (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)
             ) {
                 // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
                 // account yet, as we require to accept the terms first.
-                log.info(context, `(${strategyName}) Redirect to /api/tos`, {
-                    info: flowContext,
-                    ...defaultLogPayload,
-                });
+                log.info(context, `(${strategyName}) Redirect to /api/tos`, logPayload);
 
                 // attach the sign up info to the session, in order to proceed after acceptance of terms
                 await TosFlow.attach(request.session!, flowContext);
@@ -463,10 +465,7 @@ export class GenericAuthProvider implements AuthProvider {
                 return;
             } else {
                 const { user, elevateScopes } = flowContext as TosFlow.WithUser;
-                log.info(context, `(${strategyName}) Directly log in and proceed.`, {
-                    info: flowContext,
-                    ...defaultLogPayload,
-                });
+                log.info(context, `(${strategyName}) Directly log in and proceed.`, logPayload);
 
                 // Complete login
                 const { host, returnTo } = authFlow;
