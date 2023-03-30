@@ -65,7 +65,7 @@ export class PeriodicDbDeleter {
         for (const i in rows) {
             const row = rows[i];
             const whereClause = whereClauseFn(row);
-            deletions.push(`DELETE FROM ${table.name} WHERE ${whereClause};`);
+            deletions.push(`DELETE FROM ${table.name} WHERE ${whereClause} AND ${deletionColumn} = true;`);
         }
 
         return result;
