@@ -51,6 +51,7 @@ function SelectableCardSolid(props: SelectableCardSolidProps) {
                     checked={props.selected}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
+                    aria-label={props.title}
                 />
             </div>
             {props.children}
