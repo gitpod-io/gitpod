@@ -32,7 +32,7 @@ export class PeriodicDbDeleter {
             for (const table of sortedTables) {
                 const rowsForTableToDelete = await this.collectRowsToBeDeleted(table);
                 log.info(
-                    `[PeriodicDbDeleter] Identified ${rowsForTableToDelete.deletions} entries in ${rowsForTableToDelete.table} to be deleted.`,
+                    `[PeriodicDbDeleter] Identified ${rowsForTableToDelete.deletions.length} entries in ${rowsForTableToDelete.table} to be deleted.`,
                     {
                         periodicDeleterTickId: tickID,
                     },
