@@ -74,10 +74,7 @@ func New(config ClientConfig) (*Client, error) {
 func NewWithHTTPClient(config ClientConfig, c *http.Client) (*Client, error) {
 	sc := &client.API{}
 
-	sc.Init(config.SecretKey, stripe.NewBackends(&http.Client{
-		Transport: http.DefaultTransport,
-		Timeout:   10 * time.Second,
-	}))
+	sc.Init(config.SecretKey, stripe.NewBackends(c))
 
 	return &Client{sc: sc}, nil
 }

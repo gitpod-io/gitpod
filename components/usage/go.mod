@@ -3,8 +3,10 @@ module github.com/gitpod-io/gitpod/usage
 go 1.19
 
 require (
+	github.com/bufbuild/connect-go v1.5.2
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/components/gitpod-db/go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/components/public-api/go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
@@ -16,6 +18,7 @@ require (
 	github.com/stripe/stripe-go/v72 v72.114.0
 	google.golang.org/grpc v1.52.3
 	google.golang.org/protobuf v1.28.1
+	gopkg.in/dnaeon/go-vcr.v3 v3.1.2
 	gorm.io/gorm v1.24.1
 )
 

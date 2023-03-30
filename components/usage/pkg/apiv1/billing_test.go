@@ -7,14 +7,54 @@ package apiv1
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
+	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
+	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	stripe_api "github.com/stripe/stripe-go/v72"
+	"gopkg.in/dnaeon/go-vcr.v3/cassette"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 )
+
+func TestBillingService_OnChargeDispute(t *testing.T) {
+	r, err := recorder.New("fixtures/stripe_on_charge_dispute")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop() // Make sure recorder is stopped once done with it
+
+	// Add a hook which removes Authorization headers from all requests
+	hook := func(i *cassette.Interaction) error {
+		delete(i.Request.Headers, "Authorization")
+		return nil
+	}
+	r.AddHook(hook, recorder.AfterCaptureHook)
+
+	if r.Mode() != recorder.ModeRecordOnce {
+		t.Fatal("Recorder should be in ModeRecordOnce")
+	}
+
+	client := r.GetDefaultClient()
+	stripeClient, err := stripe.NewWithHTTPClient(stripe.ClientConfig{
+		SecretKey: "testkey",
+	}, client)
+	require.NoError(t, err)
+
+	svc := &BillingService{
+		stripeClient: stripeClient,
+	}
+
+	resp, err := svc.OnChargeDispute(context.Background(), &v1.OnChargeDisputeRequest{
+		DisputeId: "dp_1MrLJpAyBDPbWrhawbWHEIDL",
+	})
+	fmt.Println(resp)
+	require.NoError(t, err)
+}
 
 func TestBalancesForStripeCostCenters(t *testing.T) {
 	attributionIDForStripe := db.NewUserAttributionID(uuid.New().String())
