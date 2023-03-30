@@ -194,7 +194,7 @@ func (r *PodReconciler) Reconcile(ctx context.Context, req reconcile.Request) (r
 		return reconcile.Result{}, err
 	}
 
-	if !IsPodReady(&pod) {
+	if !IsPodReady(pod) {
 		// not ready. Wait until the next update.
 		return reconcile.Result{}, nil
 	}
@@ -285,8 +285,11 @@ func checkRegistryFacade(host, port string) error {
 		Transport: transport,
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
 	dummyURL := fmt.Sprintf("https://%v:%v/v2/remote/not-a-valid-image/manifests/latest", host, port)
-	req, err := http.NewRequest(http.MethodGet, dummyURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, dummyURL, nil)
 	if err != nil {
 		return fmt.Errorf("building HTTP request: %v", err)
 	}
@@ -309,7 +312,6 @@ func newDefaultTransport() *http.Transport {
 	return &http.Transport{
 		DialContext: (&net.Dialer{
 			Timeout:   1 * time.Second,
-			KeepAlive: 1 * time.Second,
 			DualStack: false,
 		}).DialContext,
 		MaxIdleConns:          0,
