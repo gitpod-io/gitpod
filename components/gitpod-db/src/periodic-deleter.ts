@@ -17,27 +17,50 @@ export class PeriodicDbDeleter {
     @inject(TypeORM) protected readonly typeORM: TypeORM;
 
     start() {
-        log.error("[PeriodicDbDeleter] Start ...");
+        log.info("[PeriodicDbDeleter] Start ...");
         this.sync().catch((err) => log.error("[PeriodicDbDeleter] sync failed", err));
     }
 
     protected async sync() {
         const doSync = async () => {
+            const tickID = new Date().toISOString();
+            log.info("[PeriodicDbDeleter] Starting to collect deleted rows.", {
+                periodicDeleterTickId: tickID,
+            });
             const sortedTables = this.tableProvider.getSortedTables();
             const toBeDeleted: { table: string; deletions: string[] }[] = [];
             for (const table of sortedTables) {
-                toBeDeleted.push(await this.collectRowsToBeDeleted(table));
+                const rowsForTableToDelete = await this.collectRowsToBeDeleted(table);
+                log.info(
+                    `[PeriodicDbDeleter] Identified ${rowsForTableToDelete.deletions.length} entries in ${rowsForTableToDelete.table} to be deleted.`,
+                    {
+                        periodicDeleterTickId: tickID,
+                    },
+                );
+                toBeDeleted.push(rowsForTableToDelete);
             }
             // when collecting the deletions do so in the inverse order as during update (delete dependency targes first)
             const pendingDeletions: Promise<void>[] = [];
             for (const { deletions } of toBeDeleted.reverse()) {
                 for (const deletion of deletions) {
                     pendingDeletions.push(
-                        this.query(deletion).catch((err) => log.error(`[PeriodicDbDeleter] sync error`, err)),
+                        this.query(deletion).catch((err) =>
+                            log.error(
+                                `[PeriodicDbDeleter] sync error`,
+                                {
+                                    periodicDeleterTickId: tickID,
+                                    query: deletion,
+                                },
+                                err,
+                            ),
+                        ),
                     );
                 }
             }
             await Promise.all(pendingDeletions);
+            log.info("[PeriodicDbDeleter] Finished deleting records.", {
+                periodicDeleterTickId: tickID,
+            });
         };
         repeat(doSync, 30000); // deletion is never time-critical, so we should ensure we do not spam ourselves
     }
