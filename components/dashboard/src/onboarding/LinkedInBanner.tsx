@@ -6,7 +6,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import classNames from "classnames";
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
 import { useLinkedIn } from "react-linkedin-login-oauth2";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
