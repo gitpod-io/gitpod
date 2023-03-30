@@ -31,6 +31,9 @@ type Executor interface {
 	// StopAll stops all workspaces started by the executor
 	StopAll(ctx context.Context) error
 
+	// Health checks the workspace health, and returns an error if it's unhealthy.
+	Health(instanceID string) error
+
 	// Dump dumps the executor state to a file
 	Dump(path string) error
 }
@@ -98,6 +101,10 @@ func (fe *FakeExecutor) produceUpdates(spec *StartWorkspaceSpec) {
 // Observe observes all workspaces started by the excecutor
 func (fe *FakeExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 	return fe.updates, nil
+}
+
+func (fe *FakeExecutor) Health(instanceID string) error {
+	return nil
 }
 
 // StopAll stops all workspaces started by the executor
@@ -197,6 +204,30 @@ func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 	}()
 
 	return res, nil
+}
+
+func (w *WsmanExecutor) Health(instanceID string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	ws, err := w.C.DescribeWorkspace(ctx, &api.DescribeWorkspaceRequest{
+		Id: instanceID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to describe workspace: %w", err)
+	}
+
+	if ws.Status.Phase != api.WorkspacePhase_RUNNING {
+		return fmt.Errorf("workspace isn't Running: %s", api.WorkspacePhase_name[int32(ws.Status.Phase)])
+	}
+
+	if failure := ws.Status.Conditions.Failed; failure != "" {
+		return fmt.Errorf("workspace failed: %s", failure)
+	}
+
+	// TODO: Exec into the workspace (as the gitpod user) and run some checks, e.g. git, docker, ls root file system, etc.
+
+	return nil
 }
 
 // StopAll stops all workspaces started by the executor
