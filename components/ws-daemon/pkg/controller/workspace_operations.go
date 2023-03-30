@@ -17,13 +17,11 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
-	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
-	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
@@ -476,68 +474,6 @@ func (wso *DefaultWorkspaceOperations) uploadWorkspaceContent(ctx context.Contex
 	}
 
 	return nil
-}
-
-// UpdateGitStatus attempts to update the LastGitStatus from the workspace's local working copy.
-func (wsc *WorkspaceController) UpdateGitStatus(ctx context.Context, ws *workspacev1.Workspace, s *session.Workspace) (res *csapi.GitStatus, err error) {
-	var loc string
-	loc = s.Location
-	if loc == "" {
-		// FWB workspaces don't have `Location` set, but rather ServiceLocDaemon and ServiceLocNode.
-		// We'd can't easily produce the Git status, because in this context `mark` isn't mounted, and `upper`
-		// only contains the full git working copy if the content was just initialised.
-		// Something like
-		//   loc = filepath.Join(s.ServiceLocDaemon, "mark", "workspace")
-		// does not work.
-		//
-		// TODO(cw): figure out a way to get ahold of the Git status.
-		glog.WithField("loc", loc).WithFields(s.OWI()).Debug("not updating Git status of FWB workspace")
-		return
-	}
-
-	loc = filepath.Join(loc, s.CheckoutLocation)
-	if !git.IsWorkingCopy(loc) {
-		glog.WithField("loc", loc).WithField("checkout location", s.CheckoutLocation).WithFields(s.OWI()).Debug("did not find a Git working copy - not updating Git status")
-		return nil, nil
-	}
-
-	c := git.Client{Location: loc}
-
-	stat, err := c.Status(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	lastGitStatus := toGitStatus(stat)
-
-	err = s.Persist()
-	if err != nil {
-		glog.WithError(err).Warn("cannot persist latest Git status")
-		err = nil
-	}
-
-	return lastGitStatus, err
-}
-
-func toGitStatus(s *git.Status) *csapi.GitStatus {
-	limit := func(entries []string) []string {
-		if len(entries) > maxPendingChanges {
-			return append(entries[0:maxPendingChanges], fmt.Sprintf("... and %d more", len(entries)-maxPendingChanges))
-		}
-
-		return entries
-	}
-
-	return &csapi.GitStatus{
-		Branch:               s.BranchHead,
-		LatestCommit:         s.LatestCommit,
-		UncommitedFiles:      limit(s.UncommitedFiles),
-		TotalUncommitedFiles: int64(len(s.UncommitedFiles)),
-		UntrackedFiles:       limit(s.UntrackedFiles),
-		TotalUntrackedFiles:  int64(len(s.UntrackedFiles)),
-		UnpushedCommits:      limit(s.UnpushedCommits),
-		TotalUnpushedCommits: int64(len(s.UnpushedCommits)),
-	}
 }
 
 func retryIfErr(ctx context.Context, attempts int, log *logrus.Entry, op func(ctx context.Context) error) (err error) {

@@ -999,6 +999,7 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 			Admission:  admissionLevel,
 			OwnerToken: ws.Status.OwnerToken,
 		},
+		Repo: convertGitStatus(ws.Status.GitStatus),
 	}
 
 	return res
@@ -1011,6 +1012,22 @@ func getConditionMessageIfTrue(conds []metav1.Condition, tpe string) string {
 		}
 	}
 	return ""
+}
+
+func convertGitStatus(gs *workspacev1.GitStatus) *csapi.GitStatus {
+	if gs == nil {
+		return nil
+	}
+	return &csapi.GitStatus{
+		Branch:               gs.Branch,
+		LatestCommit:         gs.LatestCommit,
+		UncommitedFiles:      gs.UncommitedFiles,
+		TotalUncommitedFiles: gs.TotalUncommitedFiles,
+		UntrackedFiles:       gs.UntrackedFiles,
+		TotalUntrackedFiles:  gs.TotalUntrackedFiles,
+		UnpushedCommits:      gs.UnpushedCommits,
+		TotalUnpushedCommits: gs.TotalUnpushedCommits,
+	}
 }
 
 func convertCondition(conds []metav1.Condition, tpe string) wsmanapi.WorkspaceConditionBool {
