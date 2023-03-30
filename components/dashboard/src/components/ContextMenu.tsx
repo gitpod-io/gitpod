@@ -94,23 +94,17 @@ function ContextMenu(props: ContextMenuProps) {
 
     return (
         <div className="relative">
-            <div
-                className="cursor-pointer"
+            <button
+                title="Expand actions menu"
+                className="cursor-pointer reset"
                 onClick={() => {
                     toggleExpanded();
                     // Don't use `e.stopPropagation();` because that prevents that clicks on other context menus closes this one.
                     setSkipClickHandler(true);
                 }}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                        toggleExpanded();
-                        setSkipClickHandler(true);
-                    }
-                }}
-                tabIndex={0}
             >
                 {children}
-            </div>
+            </button>
             {expanded ? (
                 <div
                     className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated ${
