@@ -58,6 +58,7 @@
     button.reset {
         @apply bg-transparent hover:bg-transparent font-normal rounded-none;
         padding: unset;
+        text-align: start;
     }
     button.secondary {
         @apply bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-100 hover:text-gray-600;
