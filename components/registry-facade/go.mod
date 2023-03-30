@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/alicebob/miniredis/v2 v2.30.0
 	github.com/containerd/containerd v1.6.18
-	github.com/docker/cli v20.10.17+incompatible
+	github.com/docker/cli v23.0.2+incompatible
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/registry-facade/api v0.0.0-00010101000000-000000000000
@@ -29,9 +29,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.14.0
 	github.com/redis/go-redis/v9 v9.0.2
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.4.0
-	golang.org/x/net v0.5.0
+	golang.org/x/net v0.7.0
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
 	google.golang.org/grpc v1.52.3
 	k8s.io/apimachinery v0.24.4
@@ -42,7 +42,7 @@ require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.0 // indirect
 	github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 // indirect
 	github.com/Stebalien/go-bitfield v0.0.1 // indirect
-	github.com/alecthomas/units v0.0.0-20210927113745-59d0afb8317a // indirect
+	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
 	github.com/alexbrainman/goissue34681 v0.0.0-20191006012335-3fc7a47baff5 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
@@ -74,7 +74,7 @@ require (
 	github.com/francoispqt/gojay v1.2.13 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.1 // indirect
-	github.com/go-kit/log v0.2.0 // indirect
+	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -221,7 +221,7 @@ require (
 	github.com/pbnjay/memory v0.0.0-20210728143218-7b4eea64cf58 // indirect
 	github.com/polydawn/refmt v0.0.0-20201211092308-30ac6d18308e // indirect
 	github.com/prometheus/client_model v0.3.0 // indirect
-	github.com/prometheus/common v0.37.0 // indirect
+	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/prometheus/statsd_exporter v0.21.0 // indirect
 	github.com/raulk/go-watchdog v1.3.0 // indirect
@@ -264,10 +264,10 @@ require (
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/exp v0.0.0-20221106115401-f9659909a136 // indirect
 	golang.org/x/mod v0.6.0 // indirect
-	golang.org/x/oauth2 v0.0.0-20221014153046-6fdb5e3db783 // indirect
+	golang.org/x/oauth2 v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	golang.org/x/tools v0.2.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
