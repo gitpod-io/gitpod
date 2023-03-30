@@ -61,8 +61,6 @@ export class APIUserServiceSpec {
 
         for (let scenario of scenarios) {
             try {
-                console.log("blockUser", scenario);
-                console.log("sut", sut);
                 await sut.blockUser(scenario);
                 expect.fail("blockUser did not throw an exception");
             } catch (err) {

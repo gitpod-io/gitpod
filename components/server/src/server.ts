@@ -52,12 +52,7 @@ import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-c
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
-import { expressConnectMiddleware } from "@bufbuild/connect-express";
-import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
-import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
-import { APIUserService } from "./api/user";
-import { ConnectRouter } from "@bufbuild/connect";
-import { APITeamService } from "./api/teams";
+import { API } from "./api/server";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -99,8 +94,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected iamSessionApp?: express.Application;
     protected iamSessionAppServer?: http.Server;
 
-    @inject(APIUserService) protected readonly apiUserService: APIUserService;
-    @inject(APITeamService) protected readonly apiTeamService: APITeamService;
+    @inject(API) protected readonly api: API;
     protected apiServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();
@@ -399,20 +393,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
-        {
-            const apiApp = express();
-            apiApp.use(
-                expressConnectMiddleware({
-                    routes: (router: ConnectRouter) => {
-                        router.service(UserServiceDefinition, this.apiUserService);
-                        router.service(TeamsServiceDefinition, this.apiTeamService);
-                    },
-                }),
-            );
-            this.apiServer = apiApp.listen(9877, () => {
-                log.info(`Connect API server listening on: ${<AddressInfo>this.apiServer!.address()}`);
-            });
-        }
+        this.apiServer = this.api.listen(9877);
 
         this.debugApp.start();
     }
