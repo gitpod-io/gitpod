@@ -28,7 +28,7 @@ function SelectableCardSolid(props: SelectableCardSolidProps) {
     return (
         <div
             className={`rounded-xl px-3 py-3 flex flex-col cursor-pointer group transition ease-in-out ${
-                isFocused ? "focus:ring-2 focus:ring-blue-500" : ""
+                isFocused ? "ring-2 ring-blue-500" : ""
             } ${
                 props.selected
                     ? "bg-gray-800 dark:bg-gray-100"
