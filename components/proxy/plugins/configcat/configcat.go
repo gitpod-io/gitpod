@@ -68,6 +68,23 @@ func (ConfigCat) CaddyModule() caddy.ModuleInfo {
 	}
 }
 
+func ServeFromFile(w http.ResponseWriter, r *http.Request, fileName string) {
+	fp := path.Join(configCatConfigDir, fileName)
+	d, err := os.Stat(fp)
+	if err != nil {
+		w.Write(DefaultConfig)
+		return
+	}
+	requestEtag := r.Header.Get("If-None-Match")
+	etag := fmt.Sprintf(`W/"%x-%x"`, d.ModTime().Unix(), d.Size())
+	if requestEtag != "" && requestEtag == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("ETag", etag)
+	http.ServeFile(w, r, fp)
+}
+
 // ServeHTTP implements caddyhttp.MiddlewareHandler.
 func (c *ConfigCat) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	if !pathRegex.MatchString(r.URL.Path) {
@@ -77,9 +94,10 @@ func (c *ConfigCat) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	configVersion := arr[len(arr)-1]
 
 	if c.fromConfigMap {
-		http.ServeFile(w, r, path.Join(configCatConfigDir, configVersion))
+		ServeFromFile(w, r, configVersion)
 		return nil
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	if c.sdkKey == "" {
 		w.Write(DefaultConfig)
