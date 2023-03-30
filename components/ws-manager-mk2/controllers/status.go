@@ -148,7 +148,10 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	case pod.Status.Phase == corev1.PodRunning:
 		var ready bool
 		for _, cs := range pod.Status.ContainerStatuses {
-			if cs.Ready {
+			if cs.Ready || cs.State.Terminated != nil {
+				// If container is terminated, it's been ready, we don't want to move back to initializing.
+				// We will reconcile the termination state once the pod phase is updated to reflect the
+				// terminated container.
 				ready = true
 				break
 			}
@@ -259,7 +262,11 @@ func extractFailure(ws *workspacev1.Workspace, pod *corev1.Pod) (string, *worksp
 				}
 			} else if terminationState.Reason == "Completed" && !isPodBeingDeleted(pod) {
 				if ws.IsHeadless() {
-					// headless workspaces are expected to finish
+					// headless workspaces are expected to finish. But if they have a termination message,
+					// there was a failure.
+					if terminationState.Message != "" {
+						return terminationState.Message, nil
+					}
 					return "", nil
 				}
 				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that", cs.Name), nil
