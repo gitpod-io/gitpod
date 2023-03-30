@@ -43,6 +43,9 @@ type Config struct {
 
 	// StripePrices configure which Stripe Price IDs should be used
 	StripePrices stripe.StripePrices `json:"stripePrices"`
+
+	// Where to find the gRPC/Connect APIs on the server component
+	ServerAddress string `json:"serverAddress"`
 }
 
 func Start(cfg Config, version string) error {

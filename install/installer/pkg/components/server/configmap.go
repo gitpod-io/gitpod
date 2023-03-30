@@ -6,9 +6,7 @@ package server
 
 import (
 	"fmt"
-	"net"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -273,9 +271,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"shareSnapshot":    {Group: "inWorkspaceUserAction"},
 			},
 		},
-		ContentServiceAddr:           net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", contentservice.Component, ctx.Namespace), strconv.Itoa(contentservice.RPCPort)),
-		UsageServiceAddr:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
-		IDEServiceAddr:               net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", ideservice.Component, ctx.Namespace), strconv.Itoa(ideservice.GRPCServicePort)),
+		ContentServiceAddr:           common.ClusterAddress(contentservice.Component, ctx.Namespace, contentservice.RPCPort),
+		UsageServiceAddr:             common.ClusterAddress(usage.Component, ctx.Namespace, usage.GRPCServicePort),
+		IDEServiceAddr:               common.ClusterAddress(ideservice.Component, ctx.Namespace, ideservice.GRPCServicePort),
 		MaximumEventLoopLag:          0.35,
 		CodeSync:                     CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
