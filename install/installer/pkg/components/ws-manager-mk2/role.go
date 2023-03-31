@@ -102,6 +102,18 @@ var controllerRules = []rbacv1.PolicyRule{
 	},
 }
 
+var controllerClusterRules = []rbacv1.PolicyRule{
+	{
+		APIGroups: []string{""},
+		Resources: []string{"nodes"},
+		Verbs: []string{
+			"get",
+			"list",
+			"watch",
+		},
+	},
+}
+
 // ConfigMap, Leases, and Events access is required for leader-election.
 var leaderElectionRules = []rbacv1.PolicyRule{
 	{
@@ -149,6 +161,15 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Labels:    labels,
 			},
 			Rules: controllerRules,
+		},
+
+		&rbacv1.ClusterRole{
+			TypeMeta: common.TypeMetaClusterRole,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:   Component,
+				Labels: labels,
+			},
+			Rules: controllerClusterRules,
 		},
 	}, nil
 }
