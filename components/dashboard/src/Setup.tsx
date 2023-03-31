@@ -4,12 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "./components/Button";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "./components/Modal";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { GitIntegrationModal } from "./user-settings/Integrations";
 
-export default function Setup() {
+type Props = {
+    onComplete?: () => void;
+};
+export default function Setup({ onComplete }: Props) {
     const [showModal, setShowModal] = useState<boolean>(false);
 
     useEffect(() => {
@@ -22,16 +26,21 @@ export default function Setup() {
         })();
     }, []);
 
-    const acceptAndContinue = () => {
+    const acceptAndContinue = useCallback(() => {
         setShowModal(true);
-    };
+    }, []);
 
-    const onAuthorize = (payload?: string) => {
-        // run without await, so the integrated closing of new tab isn't blocked
-        (async () => {
-            window.location.href = gitpodHostUrl.asDashboard().toString();
-        })();
-    };
+    const onAuthorize = useCallback(
+        (payload?: string) => {
+            onComplete && onComplete();
+
+            // run without await, so the integrated closing of new tab isn't blocked
+            (async () => {
+                window.location.href = gitpodHostUrl.asDashboard().toString();
+            })();
+        },
+        [onComplete],
+    );
 
     const headerText = "Configure a Git integration with a GitLab, GitHub, or Bitbucket instance.";
 
@@ -61,9 +70,9 @@ export default function Setup() {
                         </div>
                     </ModalBody>
                     <ModalFooter>
-                        <button className={"ml-2"} onClick={() => acceptAndContinue()}>
+                        <Button className={"ml-2"} onClick={acceptAndContinue}>
                             Continue
-                        </button>
+                        </Button>
                     </ModalFooter>
                 </Modal>
             )}
