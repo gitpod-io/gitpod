@@ -170,6 +170,12 @@ export const AppRoutes = () => {
         return <Redirect to={"/new/" + search + hash} />;
     }
 
+    // TODO(gpl): Hack to maintain email links after subscriptions are cancelled
+    if (location.pathname.startsWith(switchToPAYGPathMain)) {
+        window.location.href = `https://www.gitpod.io/docs/configure/billing`;
+        return <div></div>;
+    }
+
     return (
         <Route>
             <div className="container">
