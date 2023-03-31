@@ -57,7 +57,7 @@ export const CheckboxInput: FC<CheckboxInputProps> = ({
                 type="checkbox"
                 className={classNames(
                     "h-4 w-4 mt-1 rounded cursor-pointer border-2 dark:filter-invert",
-                    "focus:ring-2 focus:border-gray-900 ring-blue-400 dark:focus:border-gray-800",
+                    "focus:ring-2 ring-blue-400",
                     "border-gray-600 dark:border-gray-900 bg-transparent",
                     { "bg-gray-600 dark:bg-gray-900": checked },
                 )}
