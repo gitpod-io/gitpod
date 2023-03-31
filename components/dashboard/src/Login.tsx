@@ -6,7 +6,7 @@
 
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
-import { useContext, useEffect, useState, useMemo, useCallback, FC } from "react";
+import { useContext, useEffect, useState, useMemo, useCallback } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName, getSafeURLRedirect } from "./provider-utils";
@@ -47,10 +47,7 @@ export function hasVisitedMarketingWebsiteBefore() {
     return document.cookie.match("gitpod-marketing-website-visited=true");
 }
 
-type LoginProps = {
-    onLoggedIn?: () => void;
-};
-export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
+export function Login() {
     const { setUser } = useContext(UserContext);
 
     const urlHash = useMemo(() => getURLHash(), []);
@@ -99,8 +96,6 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
         async (payload?: string) => {
             updateUser().catch(console.error);
 
-            onLoggedIn && onLoggedIn();
-
             // Check for a valid returnTo in payload
             const safeReturnTo = getSafeURLRedirect(payload);
             if (safeReturnTo) {
@@ -108,7 +103,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                 window.location.replace(safeReturnTo);
             }
         },
-        [onLoggedIn, updateUser],
+        [updateUser],
     );
 
     const openLogin = useCallback(
@@ -266,4 +261,4 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
             </div>
         </div>
     );
-};
+}

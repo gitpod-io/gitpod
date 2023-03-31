@@ -4,16 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useEffect, useState } from "react";
-import { Button } from "./components/Button";
+import { useEffect, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "./components/Modal";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { GitIntegrationModal } from "./user-settings/Integrations";
 
-type Props = {
-    onComplete?: () => void;
-};
-export default function Setup({ onComplete }: Props) {
+export default function Setup() {
     const [showModal, setShowModal] = useState<boolean>(false);
 
     useEffect(() => {
@@ -26,21 +22,16 @@ export default function Setup({ onComplete }: Props) {
         })();
     }, []);
 
-    const acceptAndContinue = useCallback(() => {
+    const acceptAndContinue = () => {
         setShowModal(true);
-    }, []);
+    };
 
-    const onAuthorize = useCallback(
-        (payload?: string) => {
-            onComplete && onComplete();
-
-            // run without await, so the integrated closing of new tab isn't blocked
-            (async () => {
-                window.location.href = gitpodHostUrl.asDashboard().toString();
-            })();
-        },
-        [onComplete],
-    );
+    const onAuthorize = (payload?: string) => {
+        // run without await, so the integrated closing of new tab isn't blocked
+        (async () => {
+            window.location.href = gitpodHostUrl.asDashboard().toString();
+        })();
+    };
 
     const headerText = "Configure a Git integration with a GitLab, GitHub, or Bitbucket instance.";
 
@@ -70,9 +61,9 @@ export default function Setup({ onComplete }: Props) {
                         </div>
                     </ModalBody>
                     <ModalFooter>
-                        <Button className={"ml-2"} onClick={acceptAndContinue}>
+                        <button className={"ml-2"} onClick={() => acceptAndContinue()}>
                             Continue
-                        </Button>
+                        </button>
                     </ModalFooter>
                 </Modal>
             )}
