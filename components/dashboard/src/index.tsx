@@ -23,8 +23,7 @@ import { getURLHash, isGitpodIo } from "./utils";
 import { isWebsiteSlug } from "./utils";
 import { setupQueryClientProvider } from "./data/setup";
 import { ConfettiContextProvider } from "./contexts/ConfettiContext";
-import { QueryErrorBoundary } from "./components/error-boundaries/QueryErrorBoundary";
-import { ReloadPageErrorBoundary } from "./components/error-boundaries/ReloadPageErrorBoundary";
+import { GitpodErrorBoundary } from "./components/ErrorBoundary";
 import "./index.css";
 
 const bootApp = () => {
@@ -57,34 +56,31 @@ const bootApp = () => {
     // Render the App
     ReactDOM.render(
         <React.StrictMode>
-            <ReloadPageErrorBoundary>
+            <GitpodErrorBoundary>
                 <GitpodQueryClientProvider>
-                    {/* This needs to be inside of the GitpodQueryClientProvider so it can reset queries if needed */}
-                    <QueryErrorBoundary>
-                        <ConfettiContextProvider>
-                            <UserContextProvider>
-                                <AdminContextProvider>
-                                    <PaymentContextProvider>
-                                        <LicenseContextProvider>
-                                            <ProjectContextProvider>
-                                                <ThemeContextProvider>
-                                                    <BrowserRouter>
-                                                        <StartWorkspaceModalContextProvider>
-                                                            <FeatureFlagContextProvider>
-                                                                <App />
-                                                            </FeatureFlagContextProvider>
-                                                        </StartWorkspaceModalContextProvider>
-                                                    </BrowserRouter>
-                                                </ThemeContextProvider>
-                                            </ProjectContextProvider>
-                                        </LicenseContextProvider>
-                                    </PaymentContextProvider>
-                                </AdminContextProvider>
-                            </UserContextProvider>
-                        </ConfettiContextProvider>
-                    </QueryErrorBoundary>
+                    <ConfettiContextProvider>
+                        <UserContextProvider>
+                            <AdminContextProvider>
+                                <PaymentContextProvider>
+                                    <LicenseContextProvider>
+                                        <ProjectContextProvider>
+                                            <ThemeContextProvider>
+                                                <BrowserRouter>
+                                                    <StartWorkspaceModalContextProvider>
+                                                        <FeatureFlagContextProvider>
+                                                            <App />
+                                                        </FeatureFlagContextProvider>
+                                                    </StartWorkspaceModalContextProvider>
+                                                </BrowserRouter>
+                                            </ThemeContextProvider>
+                                        </ProjectContextProvider>
+                                    </LicenseContextProvider>
+                                </PaymentContextProvider>
+                            </AdminContextProvider>
+                        </UserContextProvider>
+                    </ConfettiContextProvider>
                 </GitpodQueryClientProvider>
-            </ReloadPageErrorBoundary>
+            </GitpodErrorBoundary>
         </React.StrictMode>,
         document.getElementById("root"),
     );
