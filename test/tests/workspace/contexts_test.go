@@ -145,6 +145,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 
 			for _, ff := range ffs {
 				for _, test := range tests {
+					test := test
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
 						report.SetupReport(t, report.FeatureContentInit, fmt.Sprintf("Test to open %v", test.ContextURL))
 						if test.Skip {

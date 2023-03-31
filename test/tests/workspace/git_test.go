@@ -141,6 +141,7 @@ func TestGitActions(t *testing.T) {
 
 			for _, ff := range ffs {
 				for _, test := range tests {
+					test := test
 					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
 						t.Parallel()
 						if test.Skip {
