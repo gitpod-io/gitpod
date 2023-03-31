@@ -4,25 +4,30 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC } from "react";
+import { FC, useCallback } from "react";
 import { ErrorBoundary, FallbackProps, ErrorBoundaryProps } from "react-error-boundary";
-import gitpodIcon from "../icons/gitpod.svg";
-import { getGitpodService } from "../service/service";
-import { Heading1, Subheading } from "./typography/headings";
+import gitpodIcon from "../../icons/gitpod.svg";
+import { getGitpodService } from "../../service/service";
+import { Heading1, Subheading } from "../typography/headings";
 
-export const GitpodErrorBoundary: FC = ({ children }) => {
+export type CaughtError = Error & { code?: number };
+
+// Catches any unexpected errors w/ a UI to reload the page. Also reports errors to api
+export const ReloadPageErrorBoundary: FC = ({ children }) => {
     return (
-        <ErrorBoundary FallbackComponent={DefaultErrorFallback} onReset={handleReset} onError={handleError}>
+        <ErrorBoundary FallbackComponent={ReloadPageErrorFallback} onError={handleError}>
             {children}
         </ErrorBoundary>
     );
 };
 
-type CaughtError = Error & { code?: number };
-
-export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBoundary }) => {
+export const ReloadPageErrorFallback: FC<Pick<FallbackProps, "error">> = ({ error }) => {
     // adjust typing, as we may have caught an api error here w/ a code property
     const caughtError = error as CaughtError;
+
+    const handleReset = useCallback(() => {
+        window.location.reload();
+    }, []);
 
     const emailSubject = encodeURIComponent("Gitpod Dashboard Error");
     let emailBodyStr = `\n\nError: ${caughtError.message}`;
@@ -43,9 +48,9 @@ export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBound
                 .
             </Subheading>
             <div>
-                <button onClick={resetErrorBoundary}>Reload</button>
+                <button onClick={handleReset}>Reload</button>
             </div>
-            <div>
+            <div className="flex flex-col items-center space-y-2">
                 {caughtError.code && (
                     <span>
                         <strong>Code:</strong> {caughtError.code}
@@ -55,10 +60,6 @@ export const DefaultErrorFallback: FC<FallbackProps> = ({ error, resetErrorBound
             </div>
         </div>
     );
-};
-
-export const handleReset: ErrorBoundaryProps["onReset"] = () => {
-    window.location.reload();
 };
 
 export const handleError: ErrorBoundaryProps["onError"] = async (error, info) => {
