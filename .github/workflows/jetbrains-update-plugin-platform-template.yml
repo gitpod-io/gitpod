@@ -56,13 +56,16 @@ jobs:
                 echo "MINOR: $MINOR"
                 LATEST_VERSION="$MAJOR.$MINOR-EAP-CANDIDATE-SNAPSHOT"
                 echo "Latest platform version: $LATEST_VERSION"
-                echo "::set-output name=result::$LATEST_VERSION"
+
+                echo "::set-output name=sinceBuild::$MAJOR.$MINOR"
+                echo "::set-output name=untilBuild::$MAJOR.*"
                 echo "::set-output name=majorVersion::$MAJOR_VERSION"
+                echo "::set-output name=result::$LATEST_VERSION"
             - name: Update ${{ inputs.gradlePropertiesPath }}
               if: ${{ steps.latest-version.outputs.result != steps.current-version.outputs.result }}
               run: |
-                  PLUGIN_SINCE_BUILD=$(echo "${{ steps.latest-version.outputs.result }}" | sed 's/-EAP-CANDIDATE-SNAPSHOT//' | sed 's/-CUSTOM-SNAPSHOT//')
-                  sed -i "s/pluginSinceBuild=.*/pluginSinceBuild=$PLUGIN_SINCE_BUILD/" ${{ inputs.gradlePropertiesPath }}
+                  sed -i "s/pluginSinceBuild=.*/pluginSinceBuild=${{ steps.latest-version.outputs.sinceBuild }}/" ${{ inputs.gradlePropertiesPath }}
+                  sed -i "s/pluginUntilBuild=.*/pluginUntilBuild=${{ steps.latest-version.outputs.untilBuild }}/" ${{ inputs.gradlePropertiesPath }}
                   sed -i "s/pluginVerifierIdeVersions=.*/pluginVerifierIdeVersions=${{ steps.latest-version.outputs.majorVersion }}/" ${{ inputs.gradlePropertiesPath }}
                   sed -i 's/platformVersion=${{ steps.current-version.outputs.result }}/platformVersion=${{ steps.latest-version.outputs.result }}/' ${{ inputs.gradlePropertiesPath }}
                   git diff

@@ -68,8 +68,14 @@ jobs:
           sudo update-rc.d xvfb defaults
           sudo service xvfb start
       - name: Get leeway cache version
+        env:
+          TEST_USE_LATEST: ${{ inputs.use_latest }}
         run: |
-          leeway collect | grep components/ide/jetbrains/gateway-plugin:publish-latest > gateway.version
+          if [ $TEST_USE_LATEST = "false" ]; then
+            leeway collect | grep components/ide/jetbrains/gateway-plugin:publish-stable > gateway.version
+          else
+            leeway collect | grep components/ide/jetbrains/gateway-plugin:publish-latest > gateway.version
+          fi
       - name: Cache leeway build
         id: cache-npm
         uses: actions/cache@v3
