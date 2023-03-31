@@ -38,6 +38,7 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 		WithLabel("component", "server").
 		Assess("it can instrument a workspace", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			for _, test := range tests {
+				test := test
 				t.Run(test.ContextURL, func(t *testing.T) {
 					report.SetupReport(t, report.FeatureExample, "this is the example test for instrumenting a workspace")
 

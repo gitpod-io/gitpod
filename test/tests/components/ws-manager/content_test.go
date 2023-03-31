@@ -57,6 +57,7 @@ func TestBackup(t *testing.T) {
 				*/
 			}
 			for _, test := range tests {
+				test := test
 				t.Run(test.Name, func(t *testing.T) {
 					t.Parallel()
 
@@ -406,6 +407,7 @@ func TestMissingBackup(t *testing.T) {
 				// {Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
 			for _, test := range tests {
+				test := test
 				t.Run(test.Name+"_backup_init", func(t *testing.T) {
 					t.Parallel()
 
