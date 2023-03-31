@@ -55,79 +55,180 @@
       "type": "row"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
       "fieldConfig": {
         "defaults": {
-          "links": []
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 0,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Running"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Pending"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Creating"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Initializing"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Stopping"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*Stopped"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#565656",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 11,
         "w": 8,
         "x": 0,
         "y": 1
       },
-      "hiddenSeries": false,
       "id": 44,
-      "legend": {
-        "alignAsTable": true,
-        "avg": false,
-        "current": true,
-        "max": false,
-        "min": false,
-        "show": true,
-        "sort": "current",
-        "sortDesc": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "9.3.6",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "repeatDirection": "h",
-      "seriesOverrides": [
-        {
-          "$$hashKey": "object:115",
-          "alias": "REGULAR",
-          "color": "#73BF69"
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
         },
-        {
-          "$$hashKey": "object:116",
-          "alias": "PREBUILD",
-          "color": "#5794F2"
-        },
-        {
-          "$$hashKey": "object:117",
-          "alias": "PROBE",
-          "color": "#B877D9"
-        },
-        {
-          "$$hashKey": "object:118",
-          "alias": "Regular Not Active",
-          "color": "#FADE2A"
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
         }
-      ],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      },
+      "pluginVersion": "9.4.3",
+      "repeatDirection": "h",
       "targets": [
         {
           "datasource": {
@@ -142,39 +243,8 @@
           "refId": "A"
         }
       ],
-      "thresholds": [],
-      "timeRegions": [],
       "title": "Workspace count",
-      "tooltip": {
-        "shared": true,
-        "sort": 2,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "mode": "time",
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:143",
-          "decimals": 0,
-          "format": "short",
-          "logBase": 1,
-          "min": "0",
-          "show": true
-        },
-        {
-          "$$hashKey": "object:144",
-          "format": "reqps",
-          "logBase": 1,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false
-      }
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -309,111 +379,140 @@
       "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "decimals": 2,
       "fieldConfig": {
         "defaults": {
-          "links": []
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "decimals": 2,
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* failed"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".* regular-stop"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 11,
         "w": 8,
         "x": 16,
         "y": 1
       },
-      "hiddenSeries": false,
       "id": 51,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "max": true,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
       "links": [],
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "9.3.6",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
+      "pluginVersion": "9.4.3",
       "repeatDirection": "h",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": true,
       "targets": [
         {
           "datasource": {
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(\n  rate(gitpod_ws_manager_mk2_workspace_stops_total{cluster=~\"$cluster\"}[1m])\n) by (cluster, reason)",
+          "expr": "sum(\n  rate(gitpod_ws_manager_mk2_workspace_stops_total{cluster=~\"$cluster\"}[$__rate_interval])\n) by (cluster, reason)",
           "interval": "",
           "legendFormat": "{{cluster}} - {{reason}}",
           "range": true,
           "refId": "C"
         }
       ],
-      "thresholds": [],
-      "timeRegions": [],
       "title": "Workspace Stops",
-      "tooltip": {
-        "shared": true,
-        "sort": 2,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "mode": "time",
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:253",
-          "decimals": 2,
-          "format": "ops",
-          "logBase": 1,
-          "min": "0",
-          "show": true
-        },
-        {
-          "$$hashKey": "object:254",
-          "format": "none",
-          "logBase": 1,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false
-      }
+      "type": "timeseries"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
@@ -421,32 +520,27 @@
       "description": "Avg is shown here, just so we know that we are configuring our buckets right.\n\nMore info about how avg can help us with bucket configuration can be seen at Tom Wilkie's RED Method talk.",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
           "links": []
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 9,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 12
       },
-      "hiddenSeries": false,
       "id": 45,
-      "legend": {
-        "alignAsTable": true,
-        "avg": false,
-        "current": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
       "links": [
         {
           "targetBlank": true,
@@ -454,142 +548,89 @@
           "url": "https://youtu.be/zk77VS98Em8?t=908"
         }
       ],
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "calculate": false,
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "reverse": false,
+          "scale": "exponential",
+          "scheme": "Greens",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "tooltip": {
+          "show": true,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "s"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "9.3.6",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
+      "pluginVersion": "9.4.3",
       "repeatDirection": "h",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
       "targets": [
         {
           "datasource": {
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, \n  sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"REGULAR\"}[5m])\n  ) by (cluster, type, le)\n)",
+          "expr": "sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"Regular\"}[5m])\n  ) by (le)",
+          "format": "heatmap",
           "interval": "",
-          "legendFormat": "{{cluster}} - {{type}} - 99th Percentile",
+          "legendFormat": "{{le}}",
           "queryType": "randomWalk",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "uid": "$datasource"
-          },
-          "editorMode": "code",
-          "expr": "histogram_quantile(0.95, \n  sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"REGULAR\"}[5m])\n  ) by (cluster, type, le)\n)",
-          "interval": "",
-          "legendFormat": "{{cluster}} - {{type}} - 95th Percentile",
-          "queryType": "randomWalk",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "uid": "$datasource"
-          },
-          "editorMode": "code",
-          "expr": "histogram_quantile(0.50, \n  sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"REGULAR\"}[5m])\n  ) by (cluster, type, le)\n)",
-          "interval": "",
-          "legendFormat": "{{cluster}} - {{type}} - 50th Percentile",
-          "queryType": "randomWalk",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "uid": "$datasource"
-          },
-          "editorMode": "code",
-          "expr": "  sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_sum{cluster=~\"$cluster\",type=\"REGULAR\"}[5m])\n  ) by (cluster)\n  /\n    sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_count{cluster=~\"$cluster\",type=\"REGULAR\"}[5m])\n  ) by (cluster)",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "{{cluster}} - avg",
-          "queryType": "randomWalk",
-          "range": true,
-          "refId": "D"
         }
       ],
-      "thresholds": [],
-      "timeRegions": [],
       "title": "Regular workspace startup time",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "mode": "time",
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:308",
-          "format": "s",
-          "logBase": 1,
-          "min": "0",
-          "show": true
-        },
-        {
-          "$$hashKey": "object:309",
-          "format": "reqps",
-          "logBase": 1,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false
-      }
+      "type": "heatmap"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
       "datasource": {
         "type": "prometheus",
         "uid": "$datasource"
       },
-      "description": "Avg is shown here, just so we know that we are configuring our buckets right.\n\nMore info about how avg can help us with bucket configuration can be seen at Tom Wilkie's RED Method talk.",
+      "description": "",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
           "links": []
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
         "h": 9,
-        "w": 8,
-        "x": 8,
+        "w": 6,
+        "x": 6,
         "y": 12
       },
-      "hiddenSeries": false,
-      "id": 52,
-      "legend": {
-        "alignAsTable": true,
-        "avg": false,
-        "current": true,
-        "max": true,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 1,
+      "id": 166,
       "links": [
         {
           "targetBlank": true,
@@ -597,103 +638,248 @@
           "url": "https://youtu.be/zk77VS98Em8?t=908"
         }
       ],
-      "nullPointMode": "null",
       "options": {
-        "alertThreshold": true
+        "calculate": false,
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "reverse": false,
+          "scale": "exponential",
+          "scheme": "Greens",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "tooltip": {
+          "show": true,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "s"
+        }
       },
-      "percentage": false,
-      "pluginVersion": "9.3.6",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
+      "pluginVersion": "9.4.3",
       "repeatDirection": "h",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
       "targets": [
         {
           "datasource": {
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, \n  sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"PROBE\"}[1m])\n  ) by (cluster, type, le)\n)",
+          "expr": "sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"ImageBuild\"}[5m])\n  ) by (le)",
+          "format": "heatmap",
           "interval": "",
-          "legendFormat": "{{cluster}} - {{type}} - 99th Percentile",
+          "legendFormat": "{{le}}",
           "queryType": "randomWalk",
           "range": true,
           "refId": "A"
+        }
+      ],
+      "title": "ImageBuild startup time",
+      "type": "heatmap"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            }
+          },
+          "links": []
         },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 12,
+        "y": 12
+      },
+      "id": 172,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "How avg help us configure representative Prometheus histogram buckets",
+          "url": "https://youtu.be/zk77VS98Em8?t=908"
+        }
+      ],
+      "options": {
+        "calculate": false,
+        "cellGap": 1,
+        "color": {
+          "exponent": 0.5,
+          "fill": "dark-orange",
+          "mode": "scheme",
+          "reverse": false,
+          "scale": "exponential",
+          "scheme": "Greens",
+          "steps": 64
+        },
+        "exemplars": {
+          "color": "rgba(255,0,255,0.7)"
+        },
+        "filterValues": {
+          "le": 1e-9
+        },
+        "legend": {
+          "show": true
+        },
+        "rowsFrame": {
+          "layout": "auto"
+        },
+        "tooltip": {
+          "show": true,
+          "yHistogram": false
+        },
+        "yAxis": {
+          "axisPlacement": "left",
+          "reverse": false,
+          "unit": "s"
+        }
+      },
+      "pluginVersion": "9.4.3",
+      "repeatDirection": "h",
+      "targets": [
         {
           "datasource": {
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, \n  sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"PROBE\"}[1m])\n  ) by (cluster, type, le)\n)",
+          "expr": "sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"Prebuild\"}[5m])\n  ) by (le)",
+          "format": "heatmap",
           "interval": "",
-          "legendFormat": "{{cluster}} - {{type}} - 95th Percentile",
+          "legendFormat": "{{le}}",
           "queryType": "randomWalk",
           "range": true,
-          "refId": "B"
+          "refId": "A"
+        }
+      ],
+      "title": "Prebuild startup time",
+      "type": "heatmap"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "ops"
         },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 18,
+        "y": 12
+      },
+      "id": 162,
+      "links": [],
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.4.3",
+      "repeatDirection": "h",
+      "targets": [
         {
           "datasource": {
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, \n  sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"PROBE\"}[1m])\n  ) by (cluster, type, le)\n)",
+          "expr": "sum(\n  rate(gitpod_ws_manager_mk2_workspace_failure_total{cluster=~\"$cluster\"}[$__rate_interval])\n) by (cluster)",
           "interval": "",
-          "legendFormat": "{{cluster}} - {{type}} - 50th Percentile",
-          "queryType": "randomWalk",
+          "legendFormat": "{{cluster}}",
           "range": true,
           "refId": "C"
-        },
-        {
-          "datasource": {
-            "uid": "$datasource"
-          },
-          "editorMode": "code",
-          "expr": "  sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_sum{cluster=~\"$cluster\",type=\"PROBE\"}[1m])\n  ) by (cluster)\n  /\n    sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_count{cluster=~\"$cluster\",type=\"PROBE\"}[1m])\n  ) by (cluster)",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "{{cluster}} - avg",
-          "queryType": "randomWalk",
-          "range": true,
-          "refId": "D"
         }
       ],
-      "thresholds": [],
-      "timeRegions": [],
-      "title": "Probe workspace startup time",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "mode": "time",
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:363",
-          "format": "s",
-          "logBase": 1,
-          "min": "0",
-          "show": true
-        },
-        {
-          "$$hashKey": "object:364",
-          "format": "reqps",
-          "logBase": 1,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false
-      }
+      "title": "Workspace Failures",
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -752,7 +938,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "9.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -850,7 +1036,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "9.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -949,7 +1135,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "9.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1047,7 +1233,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "9.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1327,7 +1513,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "9.4.3",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1451,7 +1637,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "9.4.3",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1552,7 +1738,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "9.4.3",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1667,7 +1853,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.6",
+      "pluginVersion": "9.4.3",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1771,7 +1957,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 77
+        "y": 68
       },
       "id": 16,
       "panels": [],
@@ -1832,8 +2018,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1848,7 +2033,7 @@
         "h": 7,
         "w": 10,
         "x": 0,
-        "y": 78
+        "y": 69
       },
       "id": 76,
       "options": {
@@ -1896,7 +2081,7 @@
         "h": 7,
         "w": 7,
         "x": 10,
-        "y": 78
+        "y": 69
       },
       "hiddenSeries": false,
       "id": 2,
@@ -1988,7 +2173,7 @@
         "h": 7,
         "w": 7,
         "x": 17,
-        "y": 78
+        "y": 69
       },
       "hiddenSeries": false,
       "id": 4,
@@ -2092,7 +2277,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 85
+        "y": 76
       },
       "hiddenSeries": false,
       "id": 6,
@@ -2182,7 +2367,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 85
+        "y": 76
       },
       "hiddenSeries": false,
       "id": 8,
@@ -2271,7 +2456,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 92
+        "y": 83
       },
       "hiddenSeries": false,
       "id": 10,
@@ -2369,7 +2554,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 92
+        "y": 83
       },
       "hiddenSeries": false,
       "id": 57,
@@ -2467,7 +2652,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 92
+        "y": 83
       },
       "hiddenSeries": false,
       "id": 59,
@@ -2566,7 +2751,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 99
+        "y": 90
       },
       "hiddenSeries": false,
       "id": 36,
@@ -2657,7 +2842,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 99
+        "y": 90
       },
       "hiddenSeries": false,
       "id": 55,
@@ -2767,7 +2952,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 99
+        "y": 90
       },
       "hiddenSeries": false,
       "id": 40,
@@ -2877,7 +3062,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 108
+        "y": 99
       },
       "id": 22,
       "panels": [],
@@ -2908,7 +3093,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 109
+        "y": 100
       },
       "hiddenSeries": false,
       "id": 32,
@@ -3002,7 +3187,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 109
+        "y": 100
       },
       "hiddenSeries": false,
       "id": 34,
@@ -3102,7 +3287,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 118
+        "y": 109
       },
       "hiddenSeries": false,
       "id": 26,
@@ -3199,7 +3384,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 118
+        "y": 109
       },
       "hiddenSeries": false,
       "id": 61,
@@ -3296,7 +3481,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 127
+        "y": 118
       },
       "hiddenSeries": false,
       "id": 24,
@@ -3387,7 +3572,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 127
+        "y": 118
       },
       "hiddenSeries": false,
       "id": 63,
@@ -3486,7 +3671,8 @@
     }
   ],
   "refresh": "30s",
-  "schemaVersion": 37,
+  "revision": 1,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [
     "gitpod-mixin"
