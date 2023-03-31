@@ -3,7 +3,7 @@ module github.com/gitpod-io/gitpod/components/public-api/go
 go 1.19
 
 require (
-	github.com/bufbuild/connect-go v1.0.0
+	github.com/bufbuild/connect-go v1.5.2
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.8.1
 	google.golang.org/grpc v1.52.3
