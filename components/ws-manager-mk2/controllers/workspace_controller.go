@@ -337,10 +337,11 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopped {
 		r.metrics.countWorkspaceStop(&log, workspace)
 
-		if !lastState.recordedStartFailure && !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)) {
+		everReady := wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady))
+		if !lastState.recordedStartFailure && !everReady {
 			// Workspace never became ready, count as a startup failure.
 			r.metrics.countWorkspaceStartFailures(&log, workspace)
-			lastState.recordedStartFailure = true
+			// No need to record in metricState, as we're forgetting the workspace state next anyway.
 		}
 
 		// Forget about this workspace, no more state updates will be recorded after this.

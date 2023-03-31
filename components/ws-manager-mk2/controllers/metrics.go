@@ -28,6 +28,18 @@ const (
 	workspaceRestoresFailureTotal string = "workspace_restores_failure_total"
 )
 
+type StopReason string
+
+const (
+	StopReasonFailed       = "failed"
+	StopReasonStartFailure = "start-failure"
+	StopReasonAborted      = "aborted"
+	StopReasonOutOfSpace   = "out-of-space"
+	StopReasonTimeout      = "timeout"
+	StopReasonTabClosed    = "tab-closed"
+	StopReasonRegular      = "regular-stop"
+)
+
 type controllerMetrics struct {
 	startupTimeHistVec           *prometheus.HistogramVec
 	totalStartsFailureCounterVec *prometheus.CounterVec
@@ -147,10 +159,29 @@ func (m *controllerMetrics) countWorkspaceFailure(log *logr.Logger, ws *workspac
 }
 
 func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1.Workspace) {
+	var reason string
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)); c != nil {
+		reason = StopReasonFailed
+		if !wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)) {
+			// Don't record 'failed' if there was a start failure.
+			reason = StopReasonStartFailure
+		} else if strings.Contains(c.Message, "Pod ephemeral local storage usage exceeds the total limit of containers") {
+			reason = StopReasonOutOfSpace
+		}
+	} else if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) {
+		reason = StopReasonAborted
+	} else if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) {
+		reason = StopReasonTimeout
+	} else if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed)) {
+		reason = StopReasonTabClosed
+	} else {
+		reason = StopReasonRegular
+	}
+
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues("unknown", tpe, class)
+	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe, class)
 	if err != nil {
 		log.Error(err, "could not count workspace stop", "reason", "unknown", "type", tpe, "class", class)
 	}

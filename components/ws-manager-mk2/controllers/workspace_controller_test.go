@@ -95,7 +95,7 @@ var _ = Describe("WorkspaceController", func() {
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				starts:   1,
 				restores: 1,
-				stops:    1,
+				stops:    map[StopReason]int{StopReasonRegular: 1},
 				backups:  1,
 			})
 		})
@@ -117,7 +117,7 @@ var _ = Describe("WorkspaceController", func() {
 				startFailures:   1,
 				failures:        1,
 				restoreFailures: 1,
-				stops:           1,
+				stops:           map[StopReason]int{StopReasonStartFailure: 1},
 			})
 		})
 
@@ -133,7 +133,7 @@ var _ = Describe("WorkspaceController", func() {
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				startFailures: 1,
-				stops:         1,
+				stops:         map[StopReason]int{StopReasonRegular: 1},
 			})
 		})
 
@@ -158,7 +158,7 @@ var _ = Describe("WorkspaceController", func() {
 				backups:        1,
 				backupFailures: 1,
 				failures:       1,
-				stops:          1,
+				stops:          map[StopReason]int{StopReasonFailed: 1},
 			})
 		})
 
@@ -192,7 +192,7 @@ var _ = Describe("WorkspaceController", func() {
 				restores:      1,
 				startFailures: 0,
 				failures:      1,
-				stops:         1,
+				stops:         map[StopReason]int{StopReasonFailed: 1},
 				backups:       1,
 			})
 		})
@@ -215,7 +215,7 @@ var _ = Describe("WorkspaceController", func() {
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				restores: 1,
-				stops:    1,
+				stops:    map[StopReason]int{StopReasonTimeout: 1},
 				backups:  1,
 			})
 		})
@@ -238,7 +238,7 @@ var _ = Describe("WorkspaceController", func() {
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				restores: 1,
-				stops:    1,
+				stops:    map[StopReason]int{StopReasonAborted: 1},
 			})
 		})
 
@@ -267,7 +267,7 @@ var _ = Describe("WorkspaceController", func() {
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				restores: 1,
-				stops:    1,
+				stops:    map[StopReason]int{StopReasonRegular: 1},
 				backups:  1,
 			})
 		})
@@ -608,7 +608,7 @@ type metricCounts struct {
 	starts          int
 	startFailures   int
 	failures        int
-	stops           int
+	stops           map[StopReason]int
 	backups         int
 	backupFailures  int
 	restores        int
@@ -624,15 +624,21 @@ func collectHistCount(h prometheus.Histogram) uint64 {
 	return pb.Histogram.GetSampleCount()
 }
 
+var stopReasons = []StopReason{StopReasonFailed, StopReasonStartFailure, StopReasonAborted, StopReasonOutOfSpace, StopReasonTimeout, StopReasonTabClosed, StopReasonRegular}
+
 func collectMetricCounts(wsMetrics *controllerMetrics, ws *workspacev1.Workspace) metricCounts {
 	tpe := string(ws.Spec.Type)
 	cls := ws.Spec.Class
 	startHist := wsMetrics.startupTimeHistVec.WithLabelValues(tpe, cls).(prometheus.Histogram)
+	stopCounts := make(map[StopReason]int)
+	for _, reason := range stopReasons {
+		stopCounts[reason] = int(testutil.ToFloat64(wsMetrics.totalStopsCounterVec.WithLabelValues(string(reason), tpe, cls)))
+	}
 	return metricCounts{
 		starts:          int(collectHistCount(startHist)),
 		startFailures:   int(testutil.ToFloat64(wsMetrics.totalStartsFailureCounterVec.WithLabelValues(tpe, cls))),
 		failures:        int(testutil.ToFloat64(wsMetrics.totalFailuresCounterVec.WithLabelValues(tpe, cls))),
-		stops:           int(testutil.ToFloat64(wsMetrics.totalStopsCounterVec.WithLabelValues("unknown", tpe, cls))),
+		stops:           stopCounts,
 		backups:         int(testutil.ToFloat64(wsMetrics.totalBackupCounterVec.WithLabelValues(tpe, cls))),
 		backupFailures:  int(testutil.ToFloat64(wsMetrics.totalBackupFailureCounterVec.WithLabelValues(tpe, cls))),
 		restores:        int(testutil.ToFloat64(wsMetrics.totalRestoreCounterVec.WithLabelValues(tpe, cls))),
@@ -646,7 +652,9 @@ func expectMetricsDelta(initial metricCounts, cur metricCounts, expectedDelta me
 	Expect(cur.starts-initial.starts).To(Equal(expectedDelta.starts), "expected metric count delta for starts")
 	Expect(cur.startFailures-initial.startFailures).To(Equal(expectedDelta.startFailures), "expected metric count delta for startFailures")
 	Expect(cur.failures-initial.failures).To(Equal(expectedDelta.failures), "expected metric count delta for failures")
-	Expect(cur.stops-initial.stops).To(Equal(expectedDelta.stops), "expected metric count delta for stops")
+	for _, reason := range stopReasons {
+		Expect(cur.stops[reason]-initial.stops[reason]).To(Equal(expectedDelta.stops[reason]), "expected metric count delta for stops with reason %s", reason)
+	}
 	Expect(cur.backups-initial.backups).To(Equal(expectedDelta.backups), "expected metric count delta for backups")
 	Expect(cur.backupFailures-initial.backupFailures).To(Equal(expectedDelta.backupFailures), "expected metric count delta for backupFailures")
 	Expect(cur.restores-initial.restores).To(Equal(expectedDelta.restores), "expected metric count delta for restores")
