@@ -29,6 +29,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -86,7 +87,7 @@ type WorkspaceManagerServer struct {
 // This function then publishes to subscribers.
 func (wsm *WorkspaceManagerServer) OnWorkspaceReconcile(ctx context.Context, ws *workspacev1.Workspace) {
 	wsm.subs.PublishToSubscribers(ctx, &wsmanapi.SubscribeResponse{
-		Status: extractWorkspaceStatus(ws),
+		Status: wsm.extractWorkspaceStatus(ws),
 	})
 }
 
@@ -132,6 +133,15 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			return nil, status.Errorf(codes.InvalidArgument, "invalid timeout: %v", err)
 		}
 		timeout = &metav1.Duration{Duration: d}
+	}
+
+	var closedTimeout *metav1.Duration
+	if req.Spec.ClosedTimeout != "" {
+		d, err := time.ParseDuration(req.Spec.ClosedTimeout)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid closed timeout: %v", err)
+		}
+		closedTimeout = &metav1.Duration{Duration: d}
 	}
 
 	var admissionLevel workspacev1.AdmissionLevel
@@ -243,7 +253,8 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			WorkspaceLocation: req.Spec.WorkspaceLocation,
 			Git:               git,
 			Timeout: workspacev1.TimeoutSpec{
-				Time: timeout,
+				Time:          timeout,
+				ClosedTimeout: closedTimeout,
 			},
 			Admission: workspacev1.AdmissionSpec{
 				Level: admissionLevel,
@@ -393,7 +404,7 @@ func (wsm *WorkspaceManagerServer) GetWorkspaces(ctx context.Context, req *wsman
 			continue
 		}
 
-		res = append(res, extractWorkspaceStatus(&ws))
+		res = append(res, wsm.extractWorkspaceStatus(&ws))
 	}
 
 	return &wsmanapi.GetWorkspacesResponse{Status: res}, nil
@@ -410,7 +421,7 @@ func (wsm *WorkspaceManagerServer) DescribeWorkspace(ctx context.Context, req *w
 	}
 
 	result := &wsmanapi.DescribeWorkspaceResponse{
-		Status: extractWorkspaceStatus(&ws),
+		Status: wsm.extractWorkspaceStatus(&ws),
 	}
 
 	lastActivity := wsm.activity.GetLastActivity(req.Id)
@@ -506,10 +517,18 @@ func (wsm *WorkspaceManagerServer) SetTimeout(ctx context.Context, req *wsmanapi
 		return nil, status.Errorf(codes.InvalidArgument, "invalid duration: %v", err)
 	}
 
-	err = wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
-		ws.Spec.Timeout.Time = &metav1.Duration{Duration: duration}
-		return nil
-	})
+	if req.Type == wsmanapi.TimeoutType_WORKSPACE_TIMEOUT {
+		err = wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
+			ws.Spec.Timeout.Time = &metav1.Duration{Duration: duration}
+			ws.Spec.Timeout.ClosedTimeout = &metav1.Duration{Duration: time.Duration(0)}
+			return nil
+		})
+	} else if req.Type == api.TimeoutType_CLOSED_TIMEOUT {
+		err = wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
+			ws.Spec.Timeout.ClosedTimeout = &metav1.Duration{Duration: duration}
+			return nil
+		})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -898,7 +917,7 @@ func extractWorkspaceTokenData(spec *wsmanapi.StartWorkspaceSpec) map[string]str
 	return secrets
 }
 
-func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus {
+func (wsm *WorkspaceManagerServer) extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus {
 	version, _ := strconv.ParseUint(ws.ResourceVersion, 10, 64)
 
 	var tpe wsmanapi.WorkspaceType
@@ -911,9 +930,14 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 		tpe = wsmanapi.WorkspaceType_REGULAR
 	}
 
-	var timeout string
+	timeout := wsm.Config.Timeouts.RegularWorkspace.String()
 	if ws.Spec.Timeout.Time != nil {
 		timeout = ws.Spec.Timeout.Time.Duration.String()
+	}
+
+	closedTimeout := wsm.Config.Timeouts.AfterClose.String()
+	if ws.Spec.Timeout.ClosedTimeout != nil {
+		closedTimeout = ws.Spec.Timeout.ClosedTimeout.Duration.String()
 	}
 
 	var phase wsmanapi.WorkspacePhase
@@ -981,6 +1005,7 @@ func extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus
 			Url:            ws.Status.URL,
 			Type:           tpe,
 			Timeout:        timeout,
+			ClosedTimeout:  closedTimeout,
 		},
 		Phase: phase,
 		Conditions: &wsmanapi.WorkspaceConditions{

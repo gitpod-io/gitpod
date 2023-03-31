@@ -202,7 +202,19 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 			}
 			return decide(start, timeout, activityNone)
 		} else if isClosed {
-			return decide(*lastActivity, timeouts.AfterClose, activityClosed)
+			reason := func() string {
+				afterClosed := timeouts.AfterClose
+				if customClosedTimeout := ws.Spec.Timeout.ClosedTimeout; customClosedTimeout != nil {
+					afterClosed = util.Duration(customClosedTimeout.Duration)
+					if afterClosed == 0 {
+						return ""
+					}
+				}
+				return decide(*lastActivity, afterClosed, activityClosed)
+			}()
+			if reason != "" {
+				return reason
+			}
 		}
 		return decide(*lastActivity, timeout, activity)
 
