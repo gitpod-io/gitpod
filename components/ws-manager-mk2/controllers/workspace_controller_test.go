@@ -79,7 +79,7 @@ var _ = Describe("WorkspaceController", func() {
 			expectSecretCleanup(envSecret)
 			expectSecretCleanup(tokenSecret)
 
-			markContentReady(ws)
+			markReady(ws)
 
 			requestStop(ws)
 
@@ -107,13 +107,7 @@ var _ = Describe("WorkspaceController", func() {
 
 			By("adding ws init failure condition")
 			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
-				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-					Type:               string(workspacev1.WorkspaceConditionContentReady),
-					Status:             metav1.ConditionFalse,
-					Message:            "some failure",
-					Reason:             workspacev1.ReasonInitializationFailure,
-					LastTransitionTime: metav1.Now(),
-				})
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionFalse, workspacev1.ReasonInitializationFailure, "some failure"))
 			})
 
 			// On init failure, expect workspace cleans up without a backup.
@@ -121,6 +115,7 @@ var _ = Describe("WorkspaceController", func() {
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				startFailures:   1,
+				failures:        1,
 				restoreFailures: 1,
 				stops:           1,
 			})
@@ -137,7 +132,8 @@ var _ = Describe("WorkspaceController", func() {
 			expectWorkspaceCleanup(ws, pod)
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
-				stops: 1,
+				startFailures: 1,
+				stops:         1,
 			})
 		})
 
@@ -146,7 +142,7 @@ var _ = Describe("WorkspaceController", func() {
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
-			markContentReady(ws)
+			markReady(ws)
 
 			// Stop the workspace.
 			requestStop(ws)
@@ -161,6 +157,7 @@ var _ = Describe("WorkspaceController", func() {
 				restores:       1,
 				backups:        1,
 				backupFailures: 1,
+				failures:       1,
 				stops:          1,
 			})
 		})
@@ -170,7 +167,7 @@ var _ = Describe("WorkspaceController", func() {
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
-			markContentReady(ws)
+			markReady(ws)
 
 			// Update Pod with failed exit status.
 			updateObjWithRetries(k8sClient, pod, true, func(pod *corev1.Pod) {
@@ -193,7 +190,8 @@ var _ = Describe("WorkspaceController", func() {
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
 				restores:      1,
-				startFailures: 1,
+				startFailures: 0,
+				failures:      1,
 				stops:         1,
 				backups:       1,
 			})
@@ -204,15 +202,11 @@ var _ = Describe("WorkspaceController", func() {
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
-			markContentReady(ws)
+			markReady(ws)
 
 			By("adding Timeout condition")
 			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
-				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-					Type:               string(workspacev1.WorkspaceConditionTimeout),
-					Status:             metav1.ConditionTrue,
-					LastTransitionTime: metav1.Now(),
-				})
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionTimeout(""))
 			})
 
 			expectFinalizerAndMarkBackupCompleted(ws, pod)
@@ -231,20 +225,12 @@ var _ = Describe("WorkspaceController", func() {
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
-			markContentReady(ws)
+			markReady(ws)
 
 			// Update Pod with stop and abort conditions.
 			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
-				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-					Type:               string(workspacev1.WorkspaceConditionAborted),
-					Status:             metav1.ConditionTrue,
-					LastTransitionTime: metav1.Now(),
-				})
-				ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-					Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
-					Status:             metav1.ConditionTrue,
-					LastTransitionTime: metav1.Now(),
-				})
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionAborted(""))
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionStoppedByRequest(""))
 			})
 
 			// Expect cleanup without a backup.
@@ -266,7 +252,7 @@ var _ = Describe("WorkspaceController", func() {
 			m := collectMetricCounts(wsMetrics, ws)
 			pod := createWorkspaceExpectPod(ws)
 
-			markContentReady(ws)
+			markReady(ws)
 
 			Expect(k8sClient.Delete(ctx, ws)).To(Succeed())
 
@@ -428,24 +414,16 @@ func requestStop(ws *workspacev1.Workspace) {
 	GinkgoHelper()
 	By("adding stop signal")
 	updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
-		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionStoppedByRequest),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-		})
+		ws.Status.SetCondition(workspacev1.NewWorkspaceConditionStoppedByRequest(""))
 	})
 }
 
-func markContentReady(ws *workspacev1.Workspace) {
+func markReady(ws *workspacev1.Workspace) {
 	GinkgoHelper()
 	By("adding content ready condition")
 	updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
-		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionContentReady),
-			Status:             metav1.ConditionTrue,
-			Reason:             workspacev1.ReasonInitializationSuccess,
-			LastTransitionTime: metav1.Now(),
-		})
+		ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, workspacev1.ReasonInitializationSuccess, ""))
+		ws.Status.SetCondition(workspacev1.NewWorkspaceConditionEverReady())
 	})
 }
 
@@ -463,12 +441,7 @@ func expectFinalizerAndMarkBackupCompleted(ws *workspacev1.Workspace, pod *corev
 
 	By("signalling backup completed")
 	updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
-		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionBackupComplete),
-			Status:             metav1.ConditionTrue,
-			Reason:             "BackupComplete",
-			LastTransitionTime: metav1.Now(),
-		})
+		ws.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupComplete())
 	})
 }
 
@@ -484,14 +457,9 @@ func expectFinalizerAndMarkBackupFailed(ws *workspacev1.Workspace, pod *corev1.P
 		return controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName), nil
 	}, duration, interval).Should(BeTrue(), "missing gitpod finalizer on pod, expected one to wait for backup to succeed")
 
-	By("signalling backup completed")
+	By("signalling backup failed")
 	updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
-		ws.Status.Conditions = wsk8s.AddUniqueCondition(ws.Status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionBackupFailure),
-			Status:             metav1.ConditionTrue,
-			Reason:             "BackupFailed",
-			LastTransitionTime: metav1.Now(),
-		})
+		ws.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupFailure(""))
 	})
 }
 
@@ -639,6 +607,7 @@ func createSecret(name, namespace string) *corev1.Secret {
 type metricCounts struct {
 	starts          int
 	startFailures   int
+	failures        int
 	stops           int
 	backups         int
 	backupFailures  int
@@ -662,6 +631,7 @@ func collectMetricCounts(wsMetrics *controllerMetrics, ws *workspacev1.Workspace
 	return metricCounts{
 		starts:          int(collectHistCount(startHist)),
 		startFailures:   int(testutil.ToFloat64(wsMetrics.totalStartsFailureCounterVec.WithLabelValues(tpe, cls))),
+		failures:        int(testutil.ToFloat64(wsMetrics.totalFailuresCounterVec.WithLabelValues(tpe, cls))),
 		stops:           int(testutil.ToFloat64(wsMetrics.totalStopsCounterVec.WithLabelValues("unknown", tpe, cls))),
 		backups:         int(testutil.ToFloat64(wsMetrics.totalBackupCounterVec.WithLabelValues(tpe, cls))),
 		backupFailures:  int(testutil.ToFloat64(wsMetrics.totalBackupFailureCounterVec.WithLabelValues(tpe, cls))),
@@ -675,6 +645,7 @@ func expectMetricsDelta(initial metricCounts, cur metricCounts, expectedDelta me
 	By("checking metrics have been recorded")
 	Expect(cur.starts-initial.starts).To(Equal(expectedDelta.starts), "expected metric count delta for starts")
 	Expect(cur.startFailures-initial.startFailures).To(Equal(expectedDelta.startFailures), "expected metric count delta for startFailures")
+	Expect(cur.failures-initial.failures).To(Equal(expectedDelta.failures), "expected metric count delta for failures")
 	Expect(cur.stops-initial.stops).To(Equal(expectedDelta.stops), "expected metric count delta for stops")
 	Expect(cur.backups-initial.backups).To(Equal(expectedDelta.backups), "expected metric count delta for backups")
 	Expect(cur.backupFailures-initial.backupFailures).To(Equal(expectedDelta.backupFailures), "expected metric count delta for backupFailures")

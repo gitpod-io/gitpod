@@ -98,13 +98,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 
 	if failure != "" && !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
 		// workspaces can fail only once - once there is a failed condition set, stick with it
-		workspace.Status.Conditions = wsk8s.AddUniqueCondition(workspace.Status.Conditions, metav1.Condition{
-			Type:               string(workspacev1.WorkspaceConditionFailed),
-			Status:             metav1.ConditionTrue,
-			LastTransitionTime: metav1.Now(),
-			Message:            failure,
-		})
-
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionFailed(failure))
 		r.Recorder.Event(workspace, corev1.EventTypeWarning, "Failed", failure)
 	}
 
@@ -146,19 +140,30 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		}
 
 	case pod.Status.Phase == corev1.PodRunning:
-		var ready bool
-		for _, cs := range pod.Status.ContainerStatuses {
-			if cs.Ready {
-				ready = true
-				break
-			}
-		}
-		if ready {
-			// workspace is ready - hence content init is done
+		everReady := wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady))
+		if everReady {
+			// If the workspace has been ready before, stay in a Running state, even
+			// if the workspace container is not ready anymore. This is to avoid the workspace
+			// moving back to Initializing and becoming unusable.
 			workspace.Status.Phase = workspacev1.WorkspacePhaseRunning
 		} else {
-			// workspace has not become ready yet - it must be initializing then.
-			workspace.Status.Phase = workspacev1.WorkspacePhaseInitializing
+			var ready bool
+			for _, cs := range pod.Status.ContainerStatuses {
+				if cs.Ready {
+					ready = true
+					break
+				}
+			}
+			if ready {
+				// workspace is ready - hence content init is done
+				workspace.Status.Phase = workspacev1.WorkspacePhaseRunning
+				if !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)) {
+					workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionEverReady())
+				}
+			} else {
+				// workspace has not become ready yet - it must be initializing then.
+				workspace.Status.Phase = workspacev1.WorkspacePhaseInitializing
+			}
 		}
 
 	case workspace.IsHeadless() && (pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed):
