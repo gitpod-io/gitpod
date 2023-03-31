@@ -17,15 +17,21 @@ type Middleware func(handler http.Handler) http.Handler
 func NewLoggingMiddleware() Middleware {
 	return func(next http.Handler) http.Handler {
 		logging := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := log.ToContext(r.Context(), log.Log.WithContext(r.Context()))
+			log.AddFields(ctx, logrus.Fields{
+				"protocol": "http",
+				"uri":      r.RequestURI,
+				"method":   r.Method,
+			})
+
 			start := time.Now()
 			next.ServeHTTP(w, r)
 			duration := time.Since(start)
 
-			log.WithFields(logrus.Fields{
-				"uri":      r.RequestURI,
-				"method":   r.Method,
-				"duration": duration,
-			}).Debug("Handled HTTP request")
+			log.AddFields(ctx, logrus.Fields{
+				"duration_seconds": duration.Seconds(),
+			})
+			log.Extract(ctx).Debug("Handled HTTP request")
 		})
 
 		return logging
