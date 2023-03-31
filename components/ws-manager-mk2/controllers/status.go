@@ -148,10 +148,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	case pod.Status.Phase == corev1.PodRunning:
 		var ready bool
 		for _, cs := range pod.Status.ContainerStatuses {
-			if cs.Ready || cs.State.Terminated != nil {
-				// If container is terminated, it's been ready, we don't want to move back to initializing.
-				// We will reconcile the termination state once the pod phase is updated to reflect the
-				// terminated container.
+			if cs.Ready {
 				ready = true
 				break
 			}
