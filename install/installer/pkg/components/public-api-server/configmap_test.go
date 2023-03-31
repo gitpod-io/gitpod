@@ -55,7 +55,7 @@ func TestConfigMap(t *testing.T) {
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
 		DatabaseConfigPath:                "/secrets/database-config",
 		Redis: config.RedisConfiguration{
-			Address: fmt.Sprintf("%s:%d", redis.Component, redis.Port),
+			Address: fmt.Sprintf("%s.%s.svc.cluster.local:%d", redis.Component, ctx.Namespace, redis.Port),
 		},
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
