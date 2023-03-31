@@ -202,13 +202,21 @@ func extractFailure(ws *workspacev1.Workspace, pod *corev1.Pod) (string, *worksp
 	// Check for content init failure.
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c != nil {
 		if c.Status == metav1.ConditionFalse && c.Reason == workspacev1.ReasonInitializationFailure {
-			return c.Message, nil
+			msg := c.Message
+			if msg == "" {
+				msg = "Content initialization failed for an unknown reason"
+			}
+			return msg, nil
 		}
 	}
 
 	// Check for backup failure.
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)); c != nil {
-		return c.Message, nil
+		msg := c.Message
+		if msg == "" {
+			msg = "Backup failed for an unknown reason"
+		}
+		return msg, nil
 	}
 
 	status := pod.Status
