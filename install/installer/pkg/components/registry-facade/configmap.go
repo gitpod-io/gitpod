@@ -25,17 +25,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		redisCache *regfac.RedisCacheConfig
 	)
 
-	remoteSpecProviders := []*regfac.RSProvider{
-		{
-			Addr: fmt.Sprintf("dns:///ws-manager:%d", wsmanager.RPCPort),
-			TLS: &regfac.TLS{
-				Authority:   "/ws-manager-client-tls-certs/ca.crt",
-				Certificate: "/ws-manager-client-tls-certs/tls.crt",
-				PrivateKey:  "/ws-manager-client-tls-certs/tls.key",
-			},
-		},
-	}
-
+	var remoteSpecProviders []*regfac.RSProvider
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -67,6 +57,15 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					Authority:   "/ws-manager-mk2-client-tls-certs/ca.crt",
 					Certificate: "/ws-manager-mk2-client-tls-certs/tls.crt",
 					PrivateKey:  "/ws-manager-mk2-client-tls-certs/tls.key",
+				},
+			})
+		} else {
+			remoteSpecProviders = append(remoteSpecProviders, &regfac.RSProvider{
+				Addr: fmt.Sprintf("dns:///ws-manager:%d", wsmanager.RPCPort),
+				TLS: &regfac.TLS{
+					Authority:   "/ws-manager-client-tls-certs/ca.crt",
+					Certificate: "/ws-manager-client-tls-certs/tls.crt",
+					PrivateKey:  "/ws-manager-client-tls-certs/tls.key",
 				},
 			})
 		}
