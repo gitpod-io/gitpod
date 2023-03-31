@@ -65,9 +65,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var wsmanSecret string
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace != nil && ucfg.Workspace.UseWsmanagerMk2 {
-			wsmanSecret = wsmanager.TLSSecretNameClient
-		} else {
 			wsmanSecret = wsmanagermk2.TLSSecretNameClient
+		} else {
+			wsmanSecret = wsmanager.TLSSecretNameClient
 		}
 		return nil
 	})
