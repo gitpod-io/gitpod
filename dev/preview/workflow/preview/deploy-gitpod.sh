@@ -378,6 +378,17 @@ diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" stripe-api-keys.secret.yaml
 rm -f stripe-api-keys.secret.yaml
 
 #
+# configureLinkedIn
+#
+kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret linked-in -o yaml > linked-in.secret.yaml
+yq w -i linked-in.secret.yaml metadata.namespace "default"
+yq d -i linked-in.secret.yaml metadata.creationTimestamp
+yq d -i linked-in.secret.yaml metadata.uid
+yq d -i linked-in.secret.yaml metadata.resourceVersion
+diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" linked-in.secret.yaml
+rm -f linked-in.secret.yaml
+
+#
 # configureSSHGateway
 #
 kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" --namespace keys get secret host-key -o yaml \
