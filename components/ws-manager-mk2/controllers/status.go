@@ -16,6 +16,7 @@ import (
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -91,7 +92,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		workspace.Status.OwnerToken = ownerToken
 	}
 
-	failure, phase := extractFailure(workspace, pod)
+	failure, phase := r.extractFailure(ctx, workspace, pod)
 	if phase != nil {
 		workspace.Status.Phase = *phase
 	}
@@ -193,7 +194,7 @@ func isDisposalFinished(ws *workspacev1.Workspace) bool {
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then
 // one should extract the phase themselves. If the pod has not failed, this function returns "", nil.
 // This failure is then stored in the Failed condition on the workspace.
-func extractFailure(ws *workspacev1.Workspace, pod *corev1.Pod) (string, *workspacev1.WorkspacePhase) {
+func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev1.Workspace, pod *corev1.Pod) (string, *workspacev1.WorkspacePhase) {
 	// Check for content init failure.
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c != nil {
 		if c.Status == metav1.ConditionFalse && c.Reason == workspacev1.ReasonInitializationFailure {
@@ -248,6 +249,18 @@ func extractFailure(ws *workspacev1.Workspace, pod *corev1.Pod) (string, *worksp
 					// then it must have been/be running. If we did not force the phase here,
 					// we'd be in unknown.
 					phase = workspacev1.WorkspacePhaseRunning
+				}
+
+				if terminationState.ExitCode == containerKilledExitCode && terminationState.Reason == "ContainerStatusUnknown" {
+					// For some reason, the pod is killed with unknown container status and no taints on the underlying node.
+					// Therefore, we skip extracting the failure from the terminated message.
+					// ref: https://github.com/gitpod-io/gitpod/issues/12021
+					var node corev1.Node
+					if ws.Status.Runtime != nil && ws.Status.Runtime.NodeName != "" {
+						if err := r.Get(ctx, types.NamespacedName{Namespace: "", Name: ws.Status.Runtime.NodeName}, &node); err == nil && len(node.Spec.Taints) == 0 {
+							return "", nil
+						}
+					}
 				}
 
 				// the container itself told us why it was terminated - use that as failure reason
