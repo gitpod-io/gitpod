@@ -125,7 +125,7 @@ func (s *TeamService) ListTeams(ctx context.Context, req *connect.Request[v1.Lis
 	for res := range resultsChan {
 		if res.err != nil {
 			log.Extract(ctx).WithError(err).Error("Failed to populate team with details.")
-			return nil, err
+			return nil, res.err
 		}
 
 		resultMap[res.team.GetId()] = res.team
