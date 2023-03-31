@@ -934,7 +934,7 @@ func (wsm *WorkspaceManagerServer) extractWorkspaceStatus(ws *workspacev1.Worksp
 		tpe = wsmanapi.WorkspaceType_REGULAR
 	}
 
-	var timeout string
+	timeout := wsm.Config.Timeouts.RegularWorkspace.String()
 	if ws.Spec.Timeout.Time != nil {
 		timeout = ws.Spec.Timeout.Time.Duration.String()
 	}
