@@ -45,7 +45,18 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 	}
 	spec, err := sp.GetSpec(ctx, name)
 	if err != nil {
-		log.WithError(err).WithField("specProvName", spname).WithField("name", name).Error("cannot get spec")
+		// treat invalid names from node-labeler as debug, not errors
+		// ref: https://github.com/gitpod-io/gitpod/blob/1a3c4b0bb6f13fe38481d21ddd146747c1a1935f/components/node-labeler/cmd/run.go#L291
+		var isNodeLabeler bool
+		if name == "not-a-valid-image" {
+			isNodeLabeler = true
+		}
+		if isNodeLabeler {
+			log.WithError(err).WithField("specProvName", spname).WithField("name", name).Info("this was node-labeler, we expected no spec")
+		} else {
+			log.WithError(err).WithField("specProvName", spname).WithField("name", name).Error("cannot get spec")
+		}
+
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			respondWithError(w, distv2.ErrorCodeManifestUnknown)
 		})
