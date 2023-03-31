@@ -59,6 +59,10 @@ func NewLogInterceptor(entry *logrus.Entry) connect.UnaryInterceptorFunc {
 }
 
 func filterHeaders(headers http.Header) http.Header {
+	if headers == nil {
+		return nil
+	}
+
 	cloned := headers.Clone()
 	cloned.Del("Authorization")
 	cloned.Del("Cookie")

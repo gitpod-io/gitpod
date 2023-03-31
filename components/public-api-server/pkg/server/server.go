@@ -18,6 +18,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/go-chi/chi/v5"
+	chi_middleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 
@@ -176,6 +177,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 	}
 
 	rootHandler := chi.NewRouter()
+	rootHandler.Use(chi_middleware.Recoverer)
 	rootHandler.Use(middleware.NewLoggingMiddleware())
 
 	handlerOptions := []connect.HandlerOption{
