@@ -137,15 +137,11 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 
 	var closedTimeout *metav1.Duration
 	if req.Spec.ClosedTimeout != "" {
-		if req.Spec.ClosedTimeout == "0" {
-			closedTimeout = &metav1.Duration{Duration: 0}
-		} else {
-			d, err := time.ParseDuration(req.Spec.ClosedTimeout)
-			if err != nil {
-				return nil, status.Errorf(codes.InvalidArgument, "invalid timeout: %v", err)
-			}
-			closedTimeout = &metav1.Duration{Duration: d}
+		d, err := time.ParseDuration(req.Spec.ClosedTimeout)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid closed timeout: %v", err)
 		}
+		closedTimeout = &metav1.Duration{Duration: d}
 	}
 
 	var admissionLevel workspacev1.AdmissionLevel

@@ -215,7 +215,6 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 			if reason != "" {
 				return reason
 			}
-			return decide(*lastActivity, timeouts.AfterClose, activityClosed)
 		}
 		return decide(*lastActivity, timeout, activity)
 
