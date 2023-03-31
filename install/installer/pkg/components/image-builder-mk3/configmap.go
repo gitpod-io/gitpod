@@ -41,12 +41,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	var workspaceManagerAddress string
+	workspaceManagerAddress := fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort)
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace != nil && ucfg.Workspace.UseWsmanagerMk2 {
 			workspaceManagerAddress = fmt.Sprintf("%s:%d", common.WSManagerMk2Component, wsmanager.RPCPort)
-		} else {
-			workspaceManagerAddress = fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort)
 		}
 
 		return nil
