@@ -86,7 +86,7 @@ export class PeriodicDbDeleter {
         const { deletionColumn, primaryKeys } = table;
         const markedAsDeletedQuery = `SELECT ${primaryKeys.join(", ")} FROM ${
             table.name
-        } WHERE ${deletionColumn} = true LIMIT 500;`;
+        } WHERE ${deletionColumn} = true LIMIT 100;`;
         const rows = await this.query(markedAsDeletedQuery);
 
         const whereClauseFn = (row: any) => primaryKeys.map((pk) => `${pk}='${row[pk]}'`).join(" AND ");
