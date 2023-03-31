@@ -35,7 +35,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		volumes = append(volumes, corev1.Volume{
 			Name: common.ImageBuilderVolumeTLSCerts,
 			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{SecretName: common.ImageBuilderTLSSecretWsman},
+				Secret: &corev1.SecretVolumeSource{SecretName: common.ImageBuilderTLSSecret},
 			},
 		})
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
