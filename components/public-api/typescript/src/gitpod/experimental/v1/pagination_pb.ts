@@ -61,4 +61,3 @@ export class Pagination extends Message<Pagination> {
     return proto3.util.equals(Pagination, a, b);
   }
 }
-

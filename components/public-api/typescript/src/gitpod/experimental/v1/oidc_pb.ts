@@ -872,4 +872,3 @@ export class DeleteClientConfigResponse extends Message<DeleteClientConfigRespon
     return proto3.util.equals(DeleteClientConfigResponse, a, b);
   }
 }
-

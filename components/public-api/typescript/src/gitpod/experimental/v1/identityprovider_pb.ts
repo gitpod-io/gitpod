@@ -91,4 +91,3 @@ export class GetIDTokenResponse extends Message<GetIDTokenResponse> {
     return proto3.util.equals(GetIDTokenResponse, a, b);
   }
 }
-

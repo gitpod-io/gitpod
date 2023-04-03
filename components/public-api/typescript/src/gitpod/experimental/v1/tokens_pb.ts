@@ -562,4 +562,3 @@ export class DeletePersonalAccessTokenResponse extends Message<DeletePersonalAcc
     return proto3.util.equals(DeletePersonalAccessTokenResponse, a, b);
   }
 }
-

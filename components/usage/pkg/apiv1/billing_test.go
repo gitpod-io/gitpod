@@ -10,8 +10,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
+	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
@@ -22,22 +24,7 @@ import (
 )
 
 func TestBillingService_OnChargeDispute(t *testing.T) {
-	r, err := recorder.New("fixtures/stripe_on_charge_dispute")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop() // Make sure recorder is stopped once done with it
-
-	// Add a hook which removes Authorization headers from all requests
-	hook := func(i *cassette.Interaction) error {
-		delete(i.Request.Headers, "Authorization")
-		return nil
-	}
-	r.AddHook(hook, recorder.AfterCaptureHook)
-
-	if r.Mode() != recorder.ModeRecordOnce {
-		t.Fatal("Recorder should be in ModeRecordOnce")
-	}
+	r := NewStripeRecorder(t, "stripe_on_charge_dispute")
 
 	client := r.GetDefaultClient()
 	stripeClient, err := stripe.NewWithHTTPClient(stripe.ClientConfig{
@@ -54,6 +41,60 @@ func TestBillingService_OnChargeDispute(t *testing.T) {
 	})
 	fmt.Println(resp)
 	require.NoError(t, err)
+}
+
+func NewStripeRecorder(t *testing.T, name string) *recorder.Recorder {
+	t.Helper()
+
+	r, err := recorder.New(fmt.Sprintf("fixtures/%s", name))
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		r.Stop()
+	})
+
+	// Add a hook which removes Authorization headers from all requests
+	hook := func(i *cassette.Interaction) error {
+		delete(i.Request.Headers, "Authorization")
+		return nil
+	}
+	r.AddHook(hook, recorder.AfterCaptureHook)
+
+	if r.Mode() != recorder.ModeRecordOnce {
+		require.Fail(t, "Recorder should be in ModeRecordOnce")
+	}
+
+	return r
+}
+
+type StubTeamsService struct {
+	t *testing.T
+	v1connect.TeamsServiceClient
+}
+
+func (s *StubTeamsService) CreateTeam(context.Context, *connect.Request[v1.CreateTeamRequest]) (*connect.Response[v1.CreateTeamResponse], error) {
+
+}
+func (s *StubTeamsService) GetTeam(context.Context, *connect.Request[v1.GetTeamRequest]) (*connect.Response[v1.GetTeamResponse], error) {
+
+}
+func (s *StubTeamsService) ListTeams(context.Context, *connect.Request[v1.ListTeamsRequest]) (*connect.Response[v1.ListTeamsResponse], error) {
+
+}
+func (s *StubTeamsService) DeleteTeam(context.Context, *connect.Request[v1.DeleteTeamRequest]) (*connect.Response[v1.DeleteTeamResponse], error) {
+
+}
+func (s *StubTeamsService) JoinTeam(context.Context, *connect.Request[v1.JoinTeamRequest]) (*connect.Response[v1.JoinTeamResponse], error) {
+
+}
+func (s *StubTeamsService) ResetTeamInvitation(context.Context, *connect.Request[v1.ResetTeamInvitationRequest]) (*connect.Response[v1.ResetTeamInvitationResponse], error) {
+
+}
+func (s *StubTeamsService) UpdateTeamMember(context.Context, *connect.Request[v1.UpdateTeamMemberRequest]) (*connect.Response[v1.UpdateTeamMemberResponse], error) {
+
+}
+func (s *StubTeamsService) DeleteTeamMember(context.Context, *connect.Request[v1.DeleteTeamMemberRequest]) (*connect.Response[v1.DeleteTeamMemberResponse], error) {
+
 }
 
 func TestBalancesForStripeCostCenters(t *testing.T) {
