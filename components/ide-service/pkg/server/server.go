@@ -97,8 +97,54 @@ func (s *IDEServiceServer) register(grpcServer *grpc.Server) {
 }
 
 func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequest) (*api.GetConfigResponse, error) {
+	var userOptions []*config.IDEOption
+	if req.IdeSettings != "" {
+		var ideSettings *IDESettings
+
+		if err := json.Unmarshal([]byte(req.IdeSettings), &ideSettings); err != nil {
+			log.WithError(err).WithField("ideSetting", req.IdeSettings).Error("failed to parse ide settings")
+		} else {
+			for _, image := range ideSettings.InstalledImages {
+				// TODO latest channel support
+				option, err := resolveIDEImage(ctx, image, s.config.BlobserveURL)
+				if err != nil {
+					log.WithError(err).WithField("image", image).Error("failed to resolve user ide image")
+					continue
+				}
+				userOptions = append(userOptions, option)
+			}
+		}
+	}
+
+	if len(userOptions) == 0 {
+		return &api.GetConfigResponse{
+			Content: s.parsedIDEConfigContent,
+		}, nil
+	}
+
+	var config *config.IDEConfig
+	if err := json.Unmarshal([]byte(s.parsedIDEConfigContent), &config); err != nil {
+		log.WithError(err).Error("cannot parse ide config")
+		return &api.GetConfigResponse{
+			Content: s.parsedIDEConfigContent,
+		}, nil
+	}
+
+	for i, option := range userOptions {
+		option.OrderKey = fmt.Sprintf("u-%d", i)
+		config.IdeOptions.Options[option.ID] = *option
+	}
+
+	configContent, err := json.Marshal(config)
+	if err != nil {
+		log.WithError(err).Error("cannot marshal ide config")
+		return &api.GetConfigResponse{
+			Content: s.parsedIDEConfigContent,
+		}, nil
+	}
+
 	return &api.GetConfigResponse{
-		Content: s.parsedIDEConfigContent,
+		Content: string(configContent),
 	}, nil
 }
 
@@ -182,8 +228,9 @@ func grpcProbe(cfg baseserver.ServerConfiguration) func() error {
 }
 
 type IDESettings struct {
-	DefaultIde       string `json:"defaultIde,omitempty"`
-	UseLatestVersion bool   `json:"useLatestVersion,omitempty"`
+	DefaultIde       string   `json:"defaultIde,omitempty"`
+	UseLatestVersion bool     `json:"useLatestVersion,omitempty"`
+	InstalledImages  []string `json:"installedImages,omitempty"`
 }
 
 type WorkspaceContext struct {

@@ -18,7 +18,10 @@ service IDEService {
     }
 }
 
-message GetConfigRequest {}
+message GetConfigRequest {
+    User user = 1;
+    string ide_settings = 2;
+}
 
 message GetConfigResponse {
     string content = 1;

@@ -16,6 +16,7 @@ import (
 type ServiceConfiguration struct {
 	Server        *baseserver.Configuration `json:"server,omitempty"`
 	IDEConfigPath string                    `json:"ideConfigPath"`
+	BlobserveURL  string                    `json:"blobserveURL"`
 }
 
 func Read(fn string) (*ServiceConfiguration, error) {

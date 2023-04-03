@@ -106,3 +106,22 @@ func checkIDEExistsInOptions(c config.IDEConfig, ideId string, ideType config.ID
 	}
 	return nil
 }
+
+func resolveIDEImage(ctx context.Context, ref string, blobserveURL string) (*config.IDEOption, error) {
+	image, err := oci_tool.Resolve(ctx, ref)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot resolve image digest: %w", err)
+	}
+	labels, err := oci_tool.ResolveIDELabels(ctx, image, blobserveURL)
+	if err != nil {
+		return nil, err
+	}
+	return &config.IDEOption{
+		ID:           labels.ID,
+		Type:         config.IDEType(labels.Type),
+		ImageVersion: labels.Version,
+		Image:        image,
+		Title:        labels.Title,
+		Logo:         labels.Icon,
+	}, nil
+}

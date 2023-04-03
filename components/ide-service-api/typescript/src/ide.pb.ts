@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -56,6 +56,8 @@ export function workspaceTypeToNumber(object: WorkspaceType): number {
 }
 
 export interface GetConfigRequest {
+  user: User | undefined;
+  ideSettings: string;
 }
 
 export interface GetConfigResponse {
@@ -95,11 +97,17 @@ export interface ResolveWorkspaceConfigResponse {
 }
 
 function createBaseGetConfigRequest(): GetConfigRequest {
-  return {};
+  return { user: undefined, ideSettings: "" };
 }
 
 export const GetConfigRequest = {
-  encode(_: GetConfigRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+  encode(message: GetConfigRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.user !== undefined) {
+      User.encode(message.user, writer.uint32(10).fork()).ldelim();
+    }
+    if (message.ideSettings !== "") {
+      writer.uint32(18).string(message.ideSettings);
+    }
     return writer;
   },
 
@@ -110,6 +118,12 @@ export const GetConfigRequest = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          message.user = User.decode(reader, reader.uint32());
+          break;
+        case 2:
+          message.ideSettings = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -118,17 +132,24 @@ export const GetConfigRequest = {
     return message;
   },
 
-  fromJSON(_: any): GetConfigRequest {
-    return {};
+  fromJSON(object: any): GetConfigRequest {
+    return {
+      user: isSet(object.user) ? User.fromJSON(object.user) : undefined,
+      ideSettings: isSet(object.ideSettings) ? String(object.ideSettings) : "",
+    };
   },
 
-  toJSON(_: GetConfigRequest): unknown {
+  toJSON(message: GetConfigRequest): unknown {
     const obj: any = {};
+    message.user !== undefined && (obj.user = message.user ? User.toJSON(message.user) : undefined);
+    message.ideSettings !== undefined && (obj.ideSettings = message.ideSettings);
     return obj;
   },
 
-  fromPartial(_: DeepPartial<GetConfigRequest>): GetConfigRequest {
+  fromPartial(object: DeepPartial<GetConfigRequest>): GetConfigRequest {
     const message = createBaseGetConfigRequest();
+    message.user = (object.user !== undefined && object.user !== null) ? User.fromPartial(object.user) : undefined;
+    message.ideSettings = object.ideSettings ?? "";
     return message;
   },
 };

@@ -27,6 +27,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 		IDEConfigPath: "/ide-config/config.json",
+		BlobserveURL:  fmt.Sprintf("https://ide.%s/blobserve", ctx.Config.Domain),
 	}
 
 	fc, err := common.ToJSONString(cfg)

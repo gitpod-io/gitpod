@@ -32,22 +32,31 @@ export class IDEService {
     @inject(ConfigCatClientFactory)
     protected readonly configCatClientFactory: ConfigCatClientFactory;
 
-    private cacheConfig?: IDEConfig;
-
-    async getIDEConfig(): Promise<IDEConfig> {
-        try {
-            let resp = await this.ideService.getConfig({});
-            let config: IDEConfig = JSON.parse(resp.content);
-            this.cacheConfig = config;
-            return config;
-        } catch (e) {
-            console.error("failed get ide config:", e);
-            if (this.cacheConfig == null) {
-                throw new Error("failed get ide config:" + e.message);
-            } else {
-                return this.cacheConfig;
+    async getIDEConfig(user: User): Promise<IDEConfig> {
+        const resp = await this.resolveUserConfiguration({
+            user: {
+                id: user.id,
+                email: User.getPrimaryEmail(user),
+            },
+            ideSettings: JSON.stringify(user.additionalData?.ideSettings),
+        });
+        const config: IDEConfig = JSON.parse(resp.content);
+        return config;
+    }
+    private async resolveUserConfiguration(
+        req: IdeServiceApi.GetConfigRequest,
+    ): Promise<IdeServiceApi.GetConfigResponse> {
+        for (let attempt = 0; attempt < 15; attempt++) {
+            if (attempt != 0) {
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+            try {
+                return await this.ideService.getConfig(req);
+            } catch (e) {
+                console.error("ide-service: failed to resolve user config: ", e);
             }
         }
+        throw new Error("failed to resolve user IDE configuration");
     }
 
     migrateSettings(user: User): IDESettings | undefined {

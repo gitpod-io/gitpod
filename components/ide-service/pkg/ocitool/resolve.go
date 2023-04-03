@@ -9,12 +9,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"strings"
 	"time"
 
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/distribution/reference"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"golang.org/x/xerrors"
 )
 
 func Resolve(ctx context.Context, ref string) (string, error) {
@@ -72,23 +74,65 @@ func interactiveFetchManifestOrIndex(ctx context.Context, res remotes.Resolver, 
 }
 
 func ResolveIDEVersion(ctx context.Context, ref string) (string, error) {
+	labels, err := resolveIDELabels(ctx, ref)
+	if err != nil {
+		return "", err
+	}
+	return labels.Version, nil
+}
+
+func ResolveIDELabels(ctx context.Context, ref string, blobserveURL string) (*IDELabels, error) {
+	labels, err := resolveIDELabels(ctx, ref)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot resolve image labels: %w", err)
+	}
+	if labels.ID == "" {
+		begin := strings.LastIndex(ref, "/")
+		end := strings.LastIndex(ref, ":")
+		if end == -1 {
+			end = len(ref)
+		}
+		labels.ID = ref[begin+1 : end]
+	}
+	if labels.Type != "browser" && labels.Type != "desktop" {
+		labels.Type = "desktop"
+	}
+	if labels.Title == "" {
+		labels.Title = labels.ID
+	}
+	if labels.Icon != "" {
+		labels.Icon = asBlobserveURL(blobserveURL, ref, labels.Icon)
+	}
+	return labels, err
+}
+
+func asBlobserveURL(blobserveURL string, image string, path string) string {
+	return fmt.Sprintf("%s/%s%s%s",
+		blobserveURL,
+		image,
+		"/__files__",
+		path,
+	)
+}
+
+func resolveIDELabels(ctx context.Context, ref string) (*IDELabels, error) {
 	newCtx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
 	res := docker.NewResolver(docker.ResolverOptions{})
 
 	name, mf, err := interactiveFetchManifestOrIndex(newCtx, res, ref)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	fetcher, err := res.Fetcher(ctx, name)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	cfgin, err := fetcher.Fetch(ctx, mf.Config)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer cfgin.Close()
 
@@ -96,15 +140,24 @@ func ResolveIDEVersion(ctx context.Context, ref string) (string, error) {
 
 	err = json.NewDecoder(cfgin).Decode(&tmp)
 	if err != nil {
-		return "", nil
+		return nil, nil
 	}
-	return tmp.Config.Labels.Version, nil
+	return &tmp.Config.Labels, nil
+}
+
+type IDELabels struct {
+	ID      string `json:"io.gitpod.ide.id,omitempty"`
+	Type    string `json:"io.gitpod.ide.type,omitempty"`
+	Version string `json:"io.gitpod.ide.version,omitempty"`
+	Title   string `json:"io.gitpod.ide.title,omitempty"`
+	Icon    string `json:"io.gitpod.ide.logo,omitempty"`
+
+	// TODO: should be rather one label encoding metadata, i.e.
+	// Metadata string `json:"io.gitpod.ide.metadata,omitempty"`
 }
 
 type ManifestJSON struct {
 	Config struct {
-		Labels struct {
-			Version string `json:"io.gitpod.ide.version"`
-		} `json:"Labels"`
+		Labels IDELabels `json:"Labels"`
 	} `json:"config"`
 }
