@@ -28,8 +28,8 @@ type IDEOptions struct {
 }
 
 type IDEOption struct {
-	// ID of the IDE, e.g. 'code' or 'intellij'.
-	ID string `json:"id,omitempty"`
+	// Name of the IDE, e.g. 'code' or 'intellij'.
+	Name string `json:"id,omitempty"`
 	// OrderKey to ensure a stable order one can set an `orderKey`.
 	OrderKey string `json:"orderKey,omitempty"`
 	// Title with human readable text of the IDE (plain text only).

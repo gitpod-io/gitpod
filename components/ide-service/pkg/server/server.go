@@ -132,7 +132,7 @@ func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequ
 
 	for i, option := range userOptions {
 		option.OrderKey = fmt.Sprintf("u-%d", i)
-		config.IdeOptions.Options[option.ID] = *option
+		config.IdeOptions.Options[option.Name] = *option
 	}
 
 	configContent, err := json.Marshal(config)
@@ -154,7 +154,7 @@ func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
 		log.WithError(err).Warn("cannot read ide config file")
 		return
 	}
-	if config, err := ParseConfig(ctx, b); err != nil {
+	if config, err := ParseConfig(ctx, b, s.config.BlobserveURL); err != nil {
 		if !isInit {
 			log.WithError(err).Fatal("cannot parse ide config")
 		}

@@ -73,48 +73,63 @@ func interactiveFetchManifestOrIndex(ctx context.Context, res remotes.Resolver, 
 	return "", nil, nil
 }
 
-func ResolveIDEVersion(ctx context.Context, ref string) (string, error) {
-	labels, err := resolveIDELabels(ctx, ref)
+func ResolveIDEVersion(ctx context.Context, ref string, blobserveURL string) (string, error) {
+	manifest, err := ResolveIDEManifest(ctx, ref, blobserveURL)
 	if err != nil {
 		return "", err
 	}
-	return labels.Version, nil
+	return manifest.Version, nil
 }
 
-func ResolveIDELabels(ctx context.Context, ref string, blobserveURL string) (*IDELabels, error) {
+func ResolveIDEManifest(ctx context.Context, ref string, blobserveURL string) (*IDEManifest, error) {
 	labels, err := resolveIDELabels(ctx, ref)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot resolve image labels: %w", err)
 	}
-	if labels.ID == "" {
-		id := ref
-		end := strings.LastIndex(id, "@")
+	manifest := &IDEManifest{}
+	if labels.Version != "" {
+		manifest.Version = labels.Version
+	}
+	if labels.Manifest != "" {
+		err = json.Unmarshal([]byte(labels.Manifest), manifest)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot unmarshal manifest: %w", err)
+		}
+	}
+	if manifest.Name == "" {
+		name := ref
+		end := strings.LastIndex(name, "@")
 		if end != -1 {
-			id = id[:end]
+			name = name[:end]
 		}
-		end = strings.LastIndex(id, ":")
+		end = strings.LastIndex(name, ":")
 		if end == -1 {
-			end = len(id)
+			end = len(name)
 		}
-		begin := strings.LastIndex(id, "/")
-		labels.ID = ref[begin+1 : end]
+		begin := strings.LastIndex(name, "/")
+		manifest.Name = ref[begin+1 : end]
 	}
-	if labels.Type != "browser" && labels.Type != "desktop" {
-		labels.Type = "desktop"
+	if manifest.Kind != "browser" && manifest.Kind != "desktop" {
+		manifest.Kind = "desktop"
 	}
-	if labels.Title == "" {
-		labels.Title = labels.ID
+	if manifest.Title == "" {
+		manifest.Title = manifest.Name
 	}
-	if labels.Icon != "" {
-		labels.Icon = asBlobserveURL(blobserveURL, ref, labels.Icon)
-	}
-	return labels, err
+	manifest.Icon = resolveIcon(blobserveURL, ref, manifest)
+	return manifest, err
 }
 
-func asBlobserveURL(blobserveURL string, image string, path string) string {
+func resolveIcon(blobserveURL string, ref string, manifest *IDEManifest) string {
+	if manifest.Icon == "" {
+		return ""
+	}
+	path := manifest.Icon
+	if !strings.HasPrefix(manifest.Icon, "/") {
+		path = "/" + path
+	}
 	return fmt.Sprintf("%s/%s%s%s",
 		blobserveURL,
-		image,
+		ref,
 		"/__files__",
 		path,
 	)
@@ -151,14 +166,25 @@ func resolveIDELabels(ctx context.Context, ref string) (*IDELabels, error) {
 }
 
 type IDELabels struct {
-	ID      string `json:"io.gitpod.ide.id,omitempty"`
-	Type    string `json:"io.gitpod.ide.type,omitempty"`
-	Version string `json:"io.gitpod.ide.version,omitempty"`
-	Title   string `json:"io.gitpod.ide.title,omitempty"`
-	Icon    string `json:"io.gitpod.ide.logo,omitempty"`
+	Version  string `json:"io.gitpod.ide.version,omitempty"`
+	Manifest string `json:"io.gitpod.ide.manifest,omitempty"`
+}
 
-	// TODO: should be rather one label encoding metadata, i.e.
-	// Metadata string `json:"io.gitpod.ide.metadata,omitempty"`
+/*
+	{
+	    "name": "xterm",
+	    "kind": "browser",
+	    "version": "1.0.0",
+	    "title": "Terminal",
+	    "icon": "terminal.svg"
+	}
+*/
+type IDEManifest struct {
+	Name    string `json:"name,omitempty"`
+	Kind    string `json:"kind,omitempty"`
+	Version string `json:"version,omitempty"`
+	Title   string `json:"title,omitempty"`
+	Icon    string `json:"icon,omitempty"`
 }
 
 type ManifestJSON struct {

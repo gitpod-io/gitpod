@@ -21,7 +21,7 @@ import (
 var jsonScheme []byte
 
 // ParseConfig parse and validate ide config
-func ParseConfig(ctx context.Context, b []byte) (*config.IDEConfig, error) {
+func ParseConfig(ctx context.Context, b []byte, blobserveURL string) (*config.IDEConfig, error) {
 	var cfg config.IDEConfig
 	if err := json.Unmarshal(b, &cfg); err != nil {
 		return nil, xerrors.Errorf("cannot parse ide config: %w", err)
@@ -72,7 +72,7 @@ func ParseConfig(ctx context.Context, b []byte) (*config.IDEConfig, error) {
 				option.Image = resolved
 			}
 		}
-		if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.Image); err != nil {
+		if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.Image, blobserveURL); err != nil {
 			log.WithError(err).Error("ide config: cannot get version from image")
 		} else {
 			option.ImageVersion = resolvedVersion
@@ -84,7 +84,7 @@ func ParseConfig(ctx context.Context, b []byte) (*config.IDEConfig, error) {
 				log.WithField("ide", id).WithField("image", option.LatestImage).WithField("resolved", resolved).Info("ide config: resolved latest image digest")
 				option.LatestImage = resolved
 			}
-			if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.LatestImage); err != nil {
+			if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.LatestImage, blobserveURL); err != nil {
 				log.WithError(err).Error("ide config: cannot get version from image")
 			} else {
 				option.LatestImageVersion = resolvedVersion
@@ -112,16 +112,16 @@ func resolveIDEImage(ctx context.Context, ref string, blobserveURL string) (*con
 	if err != nil {
 		return nil, xerrors.Errorf("cannot resolve image digest: %w", err)
 	}
-	labels, err := oci_tool.ResolveIDELabels(ctx, image, blobserveURL)
+	manifest, err := oci_tool.ResolveIDEManifest(ctx, image, blobserveURL)
 	if err != nil {
 		return nil, err
 	}
 	return &config.IDEOption{
-		ID:           labels.ID,
-		Type:         config.IDEType(labels.Type),
-		ImageVersion: labels.Version,
+		Name:         manifest.Name,
+		Type:         config.IDEType(manifest.Kind),
+		ImageVersion: manifest.Version,
 		Image:        image,
-		Title:        labels.Title,
-		Logo:         labels.Icon,
+		Title:        manifest.Title,
+		Logo:         manifest.Icon,
 	}, nil
 }
