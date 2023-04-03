@@ -1,6 +1,5 @@
 {
     "Config": {
-        "gpRunImage": "",
         "supervisorImage": "eu.gcr.io/gitpod-core-dev/build/supervisor:commit-ff38b98b7dde4929159bcaeec68d178898dc2139",
         "ideOptions": {
             "options": {
@@ -12,7 +11,10 @@
                     "label": "Browser",
                     "image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9@sha256:9f8f3951386b5490e798308c84695fbf448721ef1febd1779ecd668c47fa601a",
                     "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9@sha256:9f8f3951386b5490e798308c84695fbf448721ef1febd1779ecd668c47fa601a",
-                    "resolveImageDigest": true
+                    "resolveImageDigest": true,
+                    "source": "default",
+                    "sourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9",
+                    "latestSourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-d6329814c2aa34c414574fd0d1301447d6fe82c9"
                 },
                 "code-desktop": {
                     "orderKey": "02",
@@ -20,7 +22,10 @@
                     "type": "desktop",
                     "logo": "https://ide.gitpod.io/image/ide-logo/vscode.svg",
                     "image": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:commit-c2b7421628ed5a5fb618817a4fd1549684659c2d",
-                    "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:commit-c2b7421628ed5a5fb618817a4fd1549684659c2d@sha256:d9e39323a5b517ad753a3daeccb7b8d66ed8727bc222fc63cc124f1563723639"
+                    "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:commit-c2b7421628ed5a5fb618817a4fd1549684659c2d@sha256:d9e39323a5b517ad753a3daeccb7b8d66ed8727bc222fc63cc124f1563723639",
+                    "source": "default",
+                    "sourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop:commit-c2b7421628ed5a5fb618817a4fd1549684659c2d",
+                    "latestSourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/code-desktop-insiders:commit-c2b7421628ed5a5fb618817a4fd1549684659c2d"
                 },
                 "goland": {
                     "orderKey": "05",
@@ -29,7 +34,10 @@
                     "logo": "https://ide.gitpod.io/image/ide-logo/golandLogo.svg",
                     "image": "eu.gcr.io/gitpod-core-dev/build/ide/goland:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df@sha256:665b0456e38cf75e7ca7f300b5fd73827065210df310c6b57d1b41f179af0c46",
                     "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/goland:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df@sha256:665b0456e38cf75e7ca7f300b5fd73827065210df310c6b57d1b41f179af0c46",
-                    "resolveImageDigest": true
+                    "resolveImageDigest": true,
+                    "source": "default",
+                    "sourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/goland:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+                    "latestSourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/goland:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df"
                 },
                 "intellij": {
                     "orderKey": "04",
@@ -37,7 +45,10 @@
                     "type": "desktop",
                     "logo": "https://ide.gitpod.io/image/ide-logo/intellijIdeaLogo.svg",
                     "image": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
-                    "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df@sha256:d7528b797a73835ebf51d976c0e73782f501acf08801ca3ad81bde72bc32df98"
+                    "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df@sha256:d7528b797a73835ebf51d976c0e73782f501acf08801ca3ad81bde72bc32df98",
+                    "source": "default",
+                    "sourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+                    "latestSourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/intellij:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df"
                 },
                 "phpstorm": {
                     "orderKey": "07",
@@ -45,7 +56,10 @@
                     "type": "desktop",
                     "logo": "https://ide.gitpod.io/image/ide-logo/phpstormLogo.svg",
                     "image": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
-                    "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df@sha256:5c6ef331fbf7379c970565d9d62b9ddfdfbc945c3acaa895020a551144ba42b4"
+                    "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df@sha256:5c6ef331fbf7379c970565d9d62b9ddfdfbc945c3acaa895020a551144ba42b4",
+                    "source": "default",
+                    "sourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+                    "latestSourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/phpstorm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df"
                 },
                 "pycharm": {
                     "orderKey": "06",
@@ -53,7 +67,10 @@
                     "type": "desktop",
                     "logo": "https://ide.gitpod.io/image/ide-logo/pycharmLogo.svg",
                     "image": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
-                    "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df@sha256:94e3e684420179fc7ea6bf4245c2c9de666babc4c1366e08cc56b744f27dd275"
+                    "latestImage": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df@sha256:94e3e684420179fc7ea6bf4245c2c9de666babc4c1366e08cc56b744f27dd275",
+                    "source": "default",
+                    "sourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df",
+                    "latestSourceRef": "eu.gcr.io/gitpod-core-dev/build/ide/pycharm:commit-9a6c79a91b2b1f583d5bcb7f9f1ef54ee977e0df"
                 }
             },
             "defaultIde": "code",
