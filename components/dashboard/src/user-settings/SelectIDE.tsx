@@ -34,17 +34,12 @@ export default function SelectIDE(props: SelectIDEProps) {
     const [useLatestVersion, setUseLatestVersion] = useState<boolean>(
         user?.additionalData?.ideSettings?.useLatestVersion ?? false,
     );
-    const [editorImage, setEditorImage] = useState<string>("");
 
     const actualUpdateUserIDEInfo = useCallback(
-        async (selectedIde: string, useLatestVersion: boolean, editorImage: string) => {
+        async (selectedIde: string, useLatestVersion: boolean) => {
             const additionalData = user?.additionalData || {};
             const ideSettings = additionalData.ideSettings || {};
-            const installedImages = new Set(ideSettings.installedImages);
-            if (editorImage.trim()) {
-                installedImages.add(editorImage);
-            }
-            const updates = {
+            const newUserData = await updateUser.mutateAsync({
                 additionalData: {
                     ...additionalData,
                     ideSettings: {
@@ -52,11 +47,9 @@ export default function SelectIDE(props: SelectIDEProps) {
                         settingVersion: "2.0",
                         defaultIde: selectedIde,
                         useLatestVersion: useLatestVersion,
-                        installedImages: [...installedImages],
                     },
                 },
-            };
-            const newUserData = await updateUser.mutateAsync(updates);
+            });
             setUser(newUserData);
         },
         [setUser, updateUser, user?.additionalData],
@@ -64,18 +57,18 @@ export default function SelectIDE(props: SelectIDEProps) {
 
     const actuallySetDefaultIde = useCallback(
         async (value: string) => {
-            await actualUpdateUserIDEInfo(value, useLatestVersion, editorImage);
+            await actualUpdateUserIDEInfo(value, useLatestVersion);
             setDefaultIde(value);
         },
-        [actualUpdateUserIDEInfo, useLatestVersion, editorImage],
+        [actualUpdateUserIDEInfo, useLatestVersion],
     );
 
     const actuallySetUseLatestVersion = useCallback(
         async (value: boolean) => {
-            await actualUpdateUserIDEInfo(defaultIde, value, editorImage);
+            await actualUpdateUserIDEInfo(defaultIde, value);
             setUseLatestVersion(value);
         },
-        [actualUpdateUserIDEInfo, defaultIde, editorImage],
+        [actualUpdateUserIDEInfo, defaultIde],
     );
 
     const [ideOptions, setIdeOptions] = useState<IDEOptions>();
@@ -83,17 +76,65 @@ export default function SelectIDE(props: SelectIDEProps) {
         getGitpodService().server.getIDEOptions().then(setIdeOptions);
     }, []);
 
+    //#region Custom Image Refs
     // TODO hide behind a feature flag
-    const saveEditorImage = useCallback(
+    const [customImageRef, setCustomImageRef] = useState<string>("");
+    const addCustomImageRef = useCallback(
         async (e) => {
             e.preventDefault();
             // TODO verify image first with resolveEditorImage
-            await actualUpdateUserIDEInfo(defaultIde, useLatestVersion, editorImage);
-            // TODO show success message
+            // show failure to the user if it doesn't work
+
+            const additionalData = user?.additionalData || {};
+            const ideSettings = additionalData.ideSettings || {};
+            const customImageRefs = new Set(ideSettings.customImageRefs);
+            if (customImageRef.trim()) {
+                customImageRefs.add(customImageRef);
+            }
+            const newUserData = await updateUser.mutateAsync({
+                additionalData: {
+                    ...additionalData,
+                    ideSettings: {
+                        ...ideSettings,
+                        settingVersion: "2.0",
+                        defaultIde: defaultIde,
+                        useLatestVersion: useLatestVersion,
+                        customImageRefs: [...customImageRefs],
+                    },
+                },
+            });
+            setUser(newUserData);
+            getGitpodService().server.getIDEOptions().then(setIdeOptions);
+            setCustomImageRef("");
+
+            // TODO show success message to user
+        },
+        [setUser, updateUser, user?.additionalData, defaultIde, useLatestVersion, customImageRef],
+    );
+    const removeCustomImageRef = useCallback(
+        async (customImageRef: string) => {
+            const additionalData = user?.additionalData || {};
+            const ideSettings = additionalData.ideSettings || {};
+            const customImageRefs = new Set(ideSettings.customImageRefs);
+            customImageRefs.delete(customImageRef);
+            const newUserData = await updateUser.mutateAsync({
+                additionalData: {
+                    ...additionalData,
+                    ideSettings: {
+                        ...ideSettings,
+                        settingVersion: "2.0",
+                        defaultIde: defaultIde,
+                        useLatestVersion: useLatestVersion,
+                        customImageRefs: [...customImageRefs],
+                    },
+                },
+            });
+            setUser(newUserData);
             getGitpodService().server.getIDEOptions().then(setIdeOptions);
         },
-        [actualUpdateUserIDEInfo, defaultIde, useLatestVersion, editorImage],
+        [setUser, updateUser, user?.additionalData, defaultIde, useLatestVersion],
     );
+    //#endregion
 
     //todo(ft): find a better way to group IDEs by vendor
     const shouldShowJetbrainsNotice = !["code", "code-desktop"].includes(defaultIde); // a really hacky way to get just JetBrains IDEs
@@ -106,9 +147,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                     onSelectionChange={actuallySetDefaultIde}
                     selectedIdeOption={defaultIde}
                     useLatest={useLatestVersion}
-                    onDelete={(option) => {
-                        // TODO: delete
-                    }}
+                    onDelete={removeCustomImageRef}
                 />
             </div>
 
@@ -161,15 +200,15 @@ export default function SelectIDE(props: SelectIDEProps) {
                 onChange={(e) => actuallySetUseLatestVersion(e.target.checked)}
             />
 
-            <form className="mt-4 max-w-xl" onSubmit={saveEditorImage}>
-                <h4>Editor Image</h4>
+            <form className="mt-4 max-w-xl" onSubmit={addCustomImageRef}>
+                <h4>Custom Editors</h4>
                 <span className="flex">
                     <input
                         type="text"
-                        value={editorImage}
+                        value={customImageRef}
                         className="w-96 h-9"
                         placeholder="e.g. eu.gcr.io/gitpod-core-dev/build/ide/xterm-web:latest"
-                        onChange={(e) => setEditorImage(e.target.value)}
+                        onChange={(e) => setCustomImageRef(e.target.value)}
                     />
                     <Button type="secondary" className="ml-2">
                         Save Changes
@@ -177,7 +216,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                 </span>
                 <div className="mt-1">
                     <p className="text-gray-500 dark:text-gray-400">
-                        Install an editor from the image in your personal account.
+                        Install a custom editor in your personal account.
                     </p>
                 </div>
             </form>

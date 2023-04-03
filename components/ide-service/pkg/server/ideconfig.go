@@ -64,6 +64,8 @@ func ParseConfig(ctx context.Context, b []byte, blobserveURL string) (*config.ID
 
 	// resolve image digest
 	for id, option := range cfg.IdeOptions.Options {
+		option.Source = "default"
+		option.SourceRef = option.Image
 		if option.ResolveImageDigest {
 			if resolved, err := oci_tool.Resolve(ctx, option.Image); err != nil {
 				log.WithError(err).Error("ide config: cannot resolve image digest")
@@ -78,6 +80,7 @@ func ParseConfig(ctx context.Context, b []byte, blobserveURL string) (*config.ID
 			option.ImageVersion = resolvedVersion
 		}
 		if option.LatestImage != "" {
+			option.LatestSourceRef = option.LatestImage
 			if resolved, err := oci_tool.Resolve(ctx, option.LatestImage); err != nil {
 				log.WithError(err).Error("ide config: cannot resolve latest image digest")
 			} else {
@@ -107,12 +110,12 @@ func checkIDEExistsInOptions(c config.IDEConfig, ideId string, ideType config.ID
 	return nil
 }
 
-func resolveIDEImage(ctx context.Context, ref string, blobserveURL string) (*config.IDEOption, error) {
-	image, err := oci_tool.Resolve(ctx, ref)
+func resolveIDEImage(ctx context.Context, sourceRef string, blobserveURL string, source string) (*config.IDEOption, error) {
+	ref, err := oci_tool.Resolve(ctx, sourceRef)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot resolve image digest: %w", err)
 	}
-	manifest, err := oci_tool.ResolveIDEManifest(ctx, image, blobserveURL)
+	manifest, err := oci_tool.ResolveIDEManifest(ctx, ref, blobserveURL)
 	if err != nil {
 		return nil, err
 	}
@@ -120,8 +123,10 @@ func resolveIDEImage(ctx context.Context, ref string, blobserveURL string) (*con
 		Name:         manifest.Name,
 		Type:         config.IDEType(manifest.Kind),
 		ImageVersion: manifest.Version,
-		Image:        image,
+		Image:        ref,
 		Title:        manifest.Title,
 		Logo:         manifest.Icon,
+		Source:       source,
+		SourceRef:    sourceRef,
 	}, nil
 }

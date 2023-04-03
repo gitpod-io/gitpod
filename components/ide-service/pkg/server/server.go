@@ -104,11 +104,11 @@ func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequ
 		if err := json.Unmarshal([]byte(req.IdeSettings), &ideSettings); err != nil {
 			log.WithError(err).WithField("ideSetting", req.IdeSettings).Error("failed to parse ide settings")
 		} else {
-			for _, image := range ideSettings.InstalledImages {
+			for _, customImageRef := range ideSettings.CustomImageRefs {
 				// TODO latest channel support
-				option, err := resolveIDEImage(ctx, image, s.config.BlobserveURL)
+				option, err := resolveIDEImage(ctx, customImageRef, s.config.BlobserveURL, "user")
 				if err != nil {
-					log.WithError(err).WithField("image", image).Error("failed to resolve user ide image")
+					log.WithError(err).WithField("image", customImageRef).Error("failed to resolve user ide image")
 					continue
 				}
 				userOptions = append(userOptions, option)
@@ -230,7 +230,7 @@ func grpcProbe(cfg baseserver.ServerConfiguration) func() error {
 type IDESettings struct {
 	DefaultIde       string   `json:"defaultIde,omitempty"`
 	UseLatestVersion bool     `json:"useLatestVersion,omitempty"`
-	InstalledImages  []string `json:"installedImages,omitempty"`
+	CustomImageRefs  []string `json:"customImageRefs,omitempty"`
 }
 
 type WorkspaceContext struct {

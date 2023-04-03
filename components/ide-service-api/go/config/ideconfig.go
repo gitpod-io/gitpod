@@ -29,7 +29,7 @@ type IDEOptions struct {
 
 type IDEOption struct {
 	// Name of the IDE, e.g. 'code' or 'intellij'.
-	Name string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 	// OrderKey to ensure a stable order one can set an `orderKey`.
 	OrderKey string `json:"orderKey,omitempty"`
 	// Title with human readable text of the IDE (plain text only).
@@ -67,6 +67,12 @@ type IDEOption struct {
 	ImageLayers []string `json:"imageLayers,omitempty"`
 	// LatestImageLayers for latest additional ide layers and dependencies
 	LatestImageLayers []string `json:"latestImageLayers,omitempty"`
+	// Source of the IDE, e.g. 'defautl' or 'user' settings.
+	Source string `json:"source,omitempty"`
+	// SourceRef is the source image ref of the resolved IDE image ref.
+	SourceRef string `json:"sourceRef,omitempty"`
+	// LatestSourceRef is the source image ref of the resolved latest IDE image ref.
+	LatestSourceRef string `json:"latestSourceRef,omitempty"`
 }
 
 type IDEClient struct {

@@ -63,6 +63,11 @@ export interface IDEClient {
 
 export interface IDEOption {
     /**
+     * The name of the IDE, e.g. `code` or 'intellij'.
+     */
+    name?: string;
+
+    /**
      * To ensure a stable order one can set an `orderKey`.
      */
     orderKey?: string;
@@ -144,4 +149,19 @@ export interface IDEOption {
      * LatestImageVersion the semantic version of the latest IDE image.
      */
     latestImageVersion?: string;
+
+    /**
+     * Source of the IDE option.
+     */
+    source: "default" | "user";
+
+    /**
+     * The source image ref of the resolved IDE image ref.
+     */
+    sourceRef?: string;
+
+    /**
+     * The latest source image ref of the resolved latest IDE image ref.
+     */
+    latestSourceRef?: string;
 }

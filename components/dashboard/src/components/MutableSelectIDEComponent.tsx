@@ -7,12 +7,12 @@
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { useCallback, useEffect } from "react";
 import Editor from "../icons/Editor.svg";
+import { Button } from "./Button";
 import { DropDown2, DropDown2Element } from "./DropDown2";
-import { ItemFieldContextMenu } from "./ItemsList";
 
 export interface MutableSelectIDEComponentProps {
     ideOptions?: IDEOptions;
-    onDelete?: (option: IDEOption) => void;
+    onDelete?: (customImageRef: string) => void;
     selectedIdeOption?: string;
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
@@ -89,7 +89,7 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
 interface IdeOptionElementProps {
     option: IDEOption | undefined;
     useLatest: boolean;
-    onDelete?: (option: IDEOption) => void;
+    onDelete?: (customImageRef: string) => void;
 }
 
 function capitalize(label?: string) {
@@ -164,21 +164,12 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
                 )}
                 {useLatest && <div className="ml-2 rounded-xl bg-gray-200 px-2">Latest</div>}
             </div>
-            {
-                // TODO add option.source like default, user, org, etc. instead of using orderKey
-                !!p.onDelete && option.orderKey?.startsWith("u-") && (
-                    <ItemFieldContextMenu
-                        menuEntries={[
-                            {
-                                title: "Delete",
-                                customFontStyle:
-                                    "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                onClick: () => p.onDelete!(option!),
-                            },
-                        ]}
-                    />
-                )
-            }
+            {!!p.onDelete && option.source === "user" && !!option.sourceRef && (
+                <>
+                    <div className="flex-grow" />
+                    <Button onClick={() => p.onDelete!(option!.sourceRef!)}>Delete</Button>
+                </>
+            )}
         </div>
     );
 }
