@@ -126,7 +126,11 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	r.updateMetrics(ctx, &workspace)
 	r.emitPhaseEvents(ctx, &workspace, oldStatus)
 
-	log.V(1).Info("updating workspace status", "status", workspace.Status)
+	var podStatus *corev1.PodStatus
+	if len(workspacePods.Items) > 0 {
+		podStatus = &workspacePods.Items[0].Status
+	}
+	log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
 		// log.WithValues("status", workspace).Error(err, "unable to update workspace status")
