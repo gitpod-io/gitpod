@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full:2023-03-24-02-48-18
 
-ENV TRIGGER_REBUILD 39
+ENV TRIGGER_REBUILD 40
 
 USER root
 
