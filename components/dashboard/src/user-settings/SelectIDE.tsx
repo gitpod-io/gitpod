@@ -4,14 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useContext, useEffect, useState } from "react";
-import { UserContext } from "../user-context";
-import CheckBox from "../components/CheckBox";
 import { User } from "@gitpod/gitpod-protocol";
-import SelectIDEComponent from "../components/SelectIDEComponent";
+import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
+import { useCallback, useContext, useEffect, useState } from "react";
+import { Button } from "../components/Button";
+import CheckBox from "../components/CheckBox";
+import MutableSelectIDEComponent from "../components/MutableSelectIDEComponent";
 import PillLabel from "../components/PillLabel";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
-import { Button } from "../components/Button";
+import { getGitpodService } from "../service/service";
+import { UserContext } from "../user-context";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -76,6 +78,11 @@ export default function SelectIDE(props: SelectIDEProps) {
         [actualUpdateUserIDEInfo, defaultIde, editorImage],
     );
 
+    const [ideOptions, setIdeOptions] = useState<IDEOptions>();
+    useEffect(() => {
+        getGitpodService().server.getIDEOptions().then(setIdeOptions);
+    }, []);
+
     // TODO hide behind a feature flag
     const saveEditorImage = useCallback(
         async (e) => {
@@ -83,6 +90,7 @@ export default function SelectIDE(props: SelectIDEProps) {
             // TODO verify image first with resolveEditorImage
             await actualUpdateUserIDEInfo(defaultIde, useLatestVersion, editorImage);
             // TODO show success message
+            getGitpodService().server.getIDEOptions().then(setIdeOptions);
         },
         [actualUpdateUserIDEInfo, defaultIde, useLatestVersion, editorImage],
     );
@@ -93,7 +101,8 @@ export default function SelectIDE(props: SelectIDEProps) {
     return (
         <>
             <div className="w-112 max-w-full my-4">
-                <SelectIDEComponent
+                <MutableSelectIDEComponent
+                    ideOptions={ideOptions}
                     onSelectionChange={actuallySetDefaultIde}
                     selectedIdeOption={defaultIde}
                     useLatest={useLatestVersion}
