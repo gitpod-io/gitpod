@@ -11,6 +11,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import PillLabel from "../components/PillLabel";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
+import { Button } from "../components/Button";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 interface SelectIDEProps {
@@ -31,12 +32,16 @@ export default function SelectIDE(props: SelectIDEProps) {
     const [useLatestVersion, setUseLatestVersion] = useState<boolean>(
         user?.additionalData?.ideSettings?.useLatestVersion ?? false,
     );
+    const [editorImage, setEditorImage] = useState<string>("");
 
     const actualUpdateUserIDEInfo = useCallback(
-        async (selectedIde: string, useLatestVersion: boolean) => {
+        async (selectedIde: string, useLatestVersion: boolean, editorImage: string) => {
             const additionalData = user?.additionalData || {};
             const ideSettings = additionalData.ideSettings || {};
-
+            const installedImages = new Set(ideSettings.installedImages);
+            if (editorImage.trim()) {
+                installedImages.add(editorImage);
+            }
             const updates = {
                 additionalData: {
                     ...additionalData,
@@ -45,6 +50,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                         settingVersion: "2.0",
                         defaultIde: selectedIde,
                         useLatestVersion: useLatestVersion,
+                        installedImages: [...installedImages],
                     },
                 },
             };
@@ -56,18 +62,29 @@ export default function SelectIDE(props: SelectIDEProps) {
 
     const actuallySetDefaultIde = useCallback(
         async (value: string) => {
-            await actualUpdateUserIDEInfo(value, useLatestVersion);
+            await actualUpdateUserIDEInfo(value, useLatestVersion, editorImage);
             setDefaultIde(value);
         },
-        [actualUpdateUserIDEInfo, useLatestVersion],
+        [actualUpdateUserIDEInfo, useLatestVersion, editorImage],
     );
 
     const actuallySetUseLatestVersion = useCallback(
         async (value: boolean) => {
-            await actualUpdateUserIDEInfo(defaultIde, value);
+            await actualUpdateUserIDEInfo(defaultIde, value, editorImage);
             setUseLatestVersion(value);
         },
-        [actualUpdateUserIDEInfo, defaultIde],
+        [actualUpdateUserIDEInfo, defaultIde, editorImage],
+    );
+
+    // TODO hide behind a feature flag
+    const saveEditorImage = useCallback(
+        async (e) => {
+            e.preventDefault();
+            // TODO verify image first with resolveEditorImage
+            await actualUpdateUserIDEInfo(defaultIde, useLatestVersion, editorImage);
+            // TODO show success message
+        },
+        [actualUpdateUserIDEInfo, defaultIde, useLatestVersion, editorImage],
     );
 
     //todo(ft): find a better way to group IDEs by vendor
@@ -131,6 +148,27 @@ export default function SelectIDE(props: SelectIDEProps) {
                 checked={useLatestVersion}
                 onChange={(e) => actuallySetUseLatestVersion(e.target.checked)}
             />
+
+            <form className="mt-4 max-w-xl" onSubmit={saveEditorImage}>
+                <h4>Editor Image</h4>
+                <span className="flex">
+                    <input
+                        type="text"
+                        value={editorImage}
+                        className="w-96 h-9"
+                        placeholder="e.g. eu.gcr.io/gitpod-core-dev/build/ide/xterm-web:latest"
+                        onChange={(e) => setEditorImage(e.target.value)}
+                    />
+                    <Button type="secondary" className="ml-2">
+                        Save Changes
+                    </Button>
+                </span>
+                <div className="mt-1">
+                    <p className="text-gray-500 dark:text-gray-400">
+                        Install an editor from the image in your personal account.
+                    </p>
+                </div>
+            </form>
         </>
     );
 }

@@ -323,6 +323,7 @@ export type IDESettings = {
     // DEPRECATED: Same with useDesktopIde.
     defaultDesktopIde?: string;
     useLatestVersion?: boolean;
+    installedImages?: string[];
 };
 
 export interface WorkspaceClasses {
