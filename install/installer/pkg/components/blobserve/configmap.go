@@ -104,6 +104,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Location: "/mnt/cache/blobserve",
 				MaxSize:  MaxSizeBytes,
 			},
+			// TODO: this is a temporary for demo, we will need to restict somehow based on IDEs
+			AllowAnyRepo: true,
 		},
 		AuthCfg:            "/mnt/pull-secret/pull-secret.json",
 		PProfAddr:          common.LocalhostAddressFromPort(baseserver.BuiltinDebugPort),
