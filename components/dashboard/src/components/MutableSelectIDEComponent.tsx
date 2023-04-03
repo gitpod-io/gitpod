@@ -8,9 +8,11 @@ import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol"
 import { useCallback, useEffect } from "react";
 import Editor from "../icons/Editor.svg";
 import { DropDown2, DropDown2Element } from "./DropDown2";
+import { ItemFieldContextMenu } from "./ItemsList";
 
 export interface MutableSelectIDEComponentProps {
     ideOptions?: IDEOptions;
+    onDelete?: (option: IDEOption) => void;
     selectedIdeOption?: string;
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
@@ -32,20 +34,22 @@ export default function MutableSelectIDEComponent(props: MutableSelectIDECompone
                 if (!props.useLatest) {
                     result.push({
                         id: ide.id,
-                        element: <IdeOptionElementInDropDown option={ide} useLatest={false} />,
+                        element: (
+                            <IdeOptionElementInDropDown option={ide} useLatest={false} onDelete={props.onDelete} />
+                        ),
                         isSelectable: true,
                     });
                 } else if (ide.latestImage) {
                     result.push({
                         id: ide.id + "-latest",
-                        element: <IdeOptionElementInDropDown option={ide} useLatest={true} />,
+                        element: <IdeOptionElementInDropDown option={ide} useLatest={true} onDelete={props.onDelete} />,
                         isSelectable: true,
                     });
                 }
             }
             return result;
         },
-        [ideOptions, props.useLatest],
+        [ideOptions, props.useLatest, props.onDelete],
     );
     const internalOnSelectionChange = (id: string) => {
         const { ide, useLatest } = parseId(id);
@@ -85,6 +89,7 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
 interface IdeOptionElementProps {
     option: IDEOption | undefined;
     useLatest: boolean;
+    onDelete?: (option: IDEOption) => void;
 }
 
 function capitalize(label?: string) {
@@ -134,6 +139,7 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
     if (!option) {
         return <></>;
     }
+
     const version = useLatest ? option.latestImageVersion : option.imageVersion;
     const label = capitalize(option.type);
 
@@ -158,6 +164,21 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
                 )}
                 {useLatest && <div className="ml-2 rounded-xl bg-gray-200 px-2">Latest</div>}
             </div>
+            {
+                // TODO add option.source like default, user, org, etc. instead of using orderKey
+                !!p.onDelete && option.orderKey?.startsWith("u-") && (
+                    <ItemFieldContextMenu
+                        menuEntries={[
+                            {
+                                title: "Delete",
+                                customFontStyle:
+                                    "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
+                                onClick: () => p.onDelete!(option!),
+                            },
+                        ]}
+                    />
+                )
+            }
         </div>
     );
 }

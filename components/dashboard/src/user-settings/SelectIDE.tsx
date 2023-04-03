@@ -106,6 +106,9 @@ export default function SelectIDE(props: SelectIDEProps) {
                     onSelectionChange={actuallySetDefaultIde}
                     selectedIdeOption={defaultIde}
                     useLatest={useLatestVersion}
+                    onDelete={(option) => {
+                        // TODO: delete
+                    }}
                 />
             </div>
 
