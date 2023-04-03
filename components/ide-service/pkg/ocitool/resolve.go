@@ -87,11 +87,16 @@ func ResolveIDELabels(ctx context.Context, ref string, blobserveURL string) (*ID
 		return nil, xerrors.Errorf("cannot resolve image labels: %w", err)
 	}
 	if labels.ID == "" {
-		begin := strings.LastIndex(ref, "/")
-		end := strings.LastIndex(ref, ":")
-		if end == -1 {
-			end = len(ref)
+		id := ref
+		end := strings.LastIndex(id, "@")
+		if end != -1 {
+			id = id[:end]
 		}
+		end = strings.LastIndex(id, ":")
+		if end == -1 {
+			end = len(id)
+		}
+		begin := strings.LastIndex(id, "/")
 		labels.ID = ref[begin+1 : end]
 	}
 	if labels.Type != "browser" && labels.Type != "desktop" {
