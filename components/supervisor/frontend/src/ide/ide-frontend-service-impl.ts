@@ -35,6 +35,12 @@ export function create(): IDEFrontendService {
     const toStop = new DisposableCollection();
     toStop.push(onDidChangeEmitter);
     const doStart = () => {
+        if (!capabilities.service) {
+            if (state == "ready") {
+                onDidChangeEmitter.fire();
+            }
+            return;
+        }
         if (!_delegate || state !== "ready") {
             return;
         }
