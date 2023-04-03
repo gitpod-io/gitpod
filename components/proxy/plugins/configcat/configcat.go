@@ -127,7 +127,7 @@ func (c *ConfigCat) Provision(ctx caddy.Context) error {
 		return nil
 	}
 	if c.fromConfigMap {
-		c.logger.Info("serve configcat configuare from configmap")
+		c.logger.Info("serving configcat configuration from configmap")
 		return nil
 	}
 
