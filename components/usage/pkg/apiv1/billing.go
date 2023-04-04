@@ -490,6 +490,10 @@ func (s *BillingService) OnChargeDispute(ctx context.Context, req *v1.OnChargeDi
 		}
 	}
 
+	if len(errs) > 0 {
+		return nil, status.Errorf(codes.Internal, "failed to block users: %v", errs)
+	}
+
 	return &v1.OnChargeDisputeResponse{}, nil
 }
 
