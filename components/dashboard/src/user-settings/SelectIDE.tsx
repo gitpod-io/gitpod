@@ -112,7 +112,9 @@ export default function SelectIDE(props: SelectIDEProps) {
         [setUser, updateUser, user?.additionalData, defaultIde, useLatestVersion, customImageRef],
     );
     const removeCustomImageRef = useCallback(
-        async (customImageRef: string) => {
+        async (customImageRef: string, e) => {
+            e.preventDefault();
+
             const additionalData = user?.additionalData || {};
             const ideSettings = additionalData.ideSettings || {};
             const customImageRefs = new Set(ideSettings.customImageRefs);

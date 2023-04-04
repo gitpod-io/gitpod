@@ -12,7 +12,7 @@ import { DropDown2, DropDown2Element } from "./DropDown2";
 
 export interface MutableSelectIDEComponentProps {
     ideOptions?: IDEOptions;
-    onDelete?: (customImageRef: string) => void;
+    onDelete?: (customImageRef: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
     selectedIdeOption?: string;
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
@@ -89,7 +89,7 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
 interface IdeOptionElementProps {
     option: IDEOption | undefined;
     useLatest: boolean;
-    onDelete?: (customImageRef: string) => void;
+    onDelete?: (customImageRef: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
 }
 
 function capitalize(label?: string) {
@@ -107,7 +107,7 @@ function IdeOptionElementSelected({ option, useLatest }: IdeOptionElementProps):
     }
 
     return (
-        <div className="flex" title={title}>
+        <div className="flex flex-grow" title={title}>
             <div className="mx-2 my-2">
                 <img className="w-8 filter-grayscale self-center" src={Editor} alt="logo" />
             </div>
@@ -167,7 +167,7 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
             {!!p.onDelete && option.source === "user" && !!option.sourceRef && (
                 <>
                     <div className="flex-grow" />
-                    <Button onClick={() => p.onDelete!(option!.sourceRef!)}>Delete</Button>
+                    <Button onClick={(e) => p.onDelete!(option!.sourceRef!, e)}>Delete</Button>
                 </>
             )}
         </div>
