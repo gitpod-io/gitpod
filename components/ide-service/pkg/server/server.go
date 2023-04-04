@@ -30,13 +30,16 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
+type ideConfigSnapshot struct {
+	content string
+	value   *config.IDEConfig
+}
+
 type IDEServiceServer struct {
-	config                 *config.ServiceConfiguration
-	originIDEConfig        []byte
-	parsedIDEConfigContent string
-	ideConfig              *config.IDEConfig
-	ideConfigFileName      string
-	experiemntsClient      experiments.Client
+	config            *config.ServiceConfiguration
+	ideConfig         *ideConfigSnapshot
+	ideConfigFileName string
+	experiemntsClient experiments.Client
 
 	api.UnimplementedIDEServiceServer
 }
@@ -96,56 +99,72 @@ func (s *IDEServiceServer) register(grpcServer *grpc.Server) {
 	api.RegisterIDEServiceServer(grpcServer, s)
 }
 
-func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequest) (*api.GetConfigResponse, error) {
-	var userOptions []*config.IDEOption
-	if req.IdeSettings != "" {
-		var ideSettings *IDESettings
+func parseIDESettings(ideSettings string) *IDESettings {
+	var settings IDESettings
+	if err := json.Unmarshal([]byte(ideSettings), &settings); err != nil {
+		log.WithError(err).WithField("ideSetting", ideSettings).Error("failed to parse ide settings")
+		return nil
+	}
+	return &settings
+}
 
-		if err := json.Unmarshal([]byte(req.IdeSettings), &ideSettings); err != nil {
-			log.WithError(err).WithField("ideSetting", req.IdeSettings).Error("failed to parse ide settings")
-		} else {
-			for _, customImageRef := range ideSettings.CustomImageRefs {
-				// TODO latest channel support
-				option, err := resolveIDEImage(ctx, customImageRef, s.config.BlobserveURL, "user")
-				if err != nil {
-					log.WithError(err).WithField("image", customImageRef).Error("failed to resolve user ide image")
-					continue
-				}
-				userOptions = append(userOptions, option)
+func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequest) (*api.GetConfigResponse, error) {
+	ideSettings := parseIDESettings(req.IdeSettings)
+	ideConfig := s.resolveConfig(ctx, ideSettings, false)
+	return &api.GetConfigResponse{
+		Content: ideConfig.content,
+	}, nil
+}
+
+func (s *IDEServiceServer) resolveConfig(ctx context.Context, ideSettings *IDESettings, skipMarshal bool) *ideConfigSnapshot {
+	// make a copy for ref ideConfig, it's safe because we replace ref in update config
+	ideConfig := s.ideConfig
+
+	var userOptions []*config.IDEOption
+	if ideSettings != nil {
+		for _, customImageRef := range ideSettings.CustomImageRefs {
+			// TODO latest channel support
+			option, err := resolveIDEImage(ctx, customImageRef, s.config.BlobserveURL, "user")
+			if err != nil {
+				log.WithError(err).WithField("image", customImageRef).Error("failed to resolve user ide image")
+				continue
 			}
+			userOptions = append(userOptions, option)
 		}
 	}
 
 	if len(userOptions) == 0 {
-		return &api.GetConfigResponse{
-			Content: s.parsedIDEConfigContent,
-		}, nil
+		return ideConfig
 	}
 
-	var config *config.IDEConfig
-	if err := json.Unmarshal([]byte(s.parsedIDEConfigContent), &config); err != nil {
+	var copyConfig *config.IDEConfig
+	if err := json.Unmarshal([]byte(ideConfig.content), &copyConfig); err != nil {
 		log.WithError(err).Error("cannot parse ide config")
-		return &api.GetConfigResponse{
-			Content: s.parsedIDEConfigContent,
-		}, nil
+		return ideConfig
 	}
 
 	for i, option := range userOptions {
 		option.OrderKey = fmt.Sprintf("u-%d", i)
-		config.IdeOptions.Options[option.Name] = *option
+		copyConfig.IdeOptions.Options[option.Name] = *option
 	}
 
-	configContent, err := json.Marshal(config)
+	if skipMarshal {
+		return &ideConfigSnapshot{
+			value:   copyConfig,
+			content: "",
+		}
+	}
+
+	copyContent, err := json.Marshal(copyConfig)
 	if err != nil {
 		log.WithError(err).Error("cannot marshal ide config")
-		return &api.GetConfigResponse{
-			Content: s.parsedIDEConfigContent,
-		}, nil
+		return ideConfig
 	}
 
-	return &api.GetConfigResponse{
-		Content: string(configContent),
-	}, nil
+	return &ideConfigSnapshot{
+		value:   copyConfig,
+		content: string(copyContent),
+	}
 }
 
 func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
@@ -166,10 +185,11 @@ func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
 			log.WithError(err).Error("cannot marshal ide config")
 			return
 		}
-		s.parsedIDEConfigContent = string(parsedConfig)
-		s.ideConfig = config
-		s.originIDEConfig = b
-
+		content := string(parsedConfig)
+		s.ideConfig = &ideConfigSnapshot{
+			value:   config,
+			content: content,
+		}
 		log.Info("ide config updated")
 	}
 }
@@ -282,8 +302,8 @@ func (s *IDEServiceServer) resolveReferrerIDE(ideConfig *config.IDEConfig, wsCtx
 func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.ResolveWorkspaceConfigRequest) (resp *api.ResolveWorkspaceConfigResponse, err error) {
 	log.WithField("req", req).Debug("receive ResolveWorkspaceConfig request")
 
-	// make a copy for ref ideConfig, it's safe because we replace ref in update config
-	ideConfig := s.ideConfig
+	ideSettings := parseIDESettings(req.IdeSettings)
+	ideConfig := s.resolveConfig(ctx, ideSettings, true).value
 
 	var defaultIde *config.IDEOption
 
@@ -317,14 +337,7 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 	}
 
 	if req.Type == api.WorkspaceType_REGULAR {
-		var ideSettings *IDESettings
 		var wsContext *WorkspaceContext
-
-		if req.IdeSettings != "" {
-			if err := json.Unmarshal([]byte(req.IdeSettings), &ideSettings); err != nil {
-				log.WithError(err).WithField("ideSetting", req.IdeSettings).Error("failed to parse ide settings")
-			}
-		}
 
 		if req.Context != "" {
 			if err := json.Unmarshal([]byte(req.Context), &wsContext); err != nil {
