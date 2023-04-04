@@ -167,7 +167,7 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
             {!!p.onDelete && option.source === "user" && !!option.sourceRef && (
                 <>
                     <div className="flex-grow" />
-                    <Button onClick={(e) => p.onDelete!(option!.sourceRef!, e)}>Delete</Button>
+                    <Button onClick={(e) => p.onDelete!(option!.sourceRef!, e)}>Uninstall</Button>
                 </>
             )}
         </div>
