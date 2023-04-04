@@ -42,3 +42,4 @@ export * from "./webhook-event-db";
 export * from "./typeorm/metrics";
 export * from "./personal-access-token-db";
 export * from "./typeorm/entity/db-personal-access-token";
+export * from "./election-db";
