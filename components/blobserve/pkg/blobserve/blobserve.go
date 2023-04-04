@@ -180,13 +180,16 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 
 	// The blobFor operation's context must be independent of this request. Even if we do not
 	// serve this request in time, we might want to serve another from the same ref in the future.
-	blobFS, hash, err := reg.refstore.BlobFor(context.Background(), ref, false)
+	blobFS, hash, blobWorkDir, err := reg.refstore.BlobFor(context.Background(), ref, false)
 	if err == errdefs.ErrNotFound {
 		http.Error(w, fmt.Sprintf("image %s not found: %q", html.EscapeString(ref), err), http.StatusNotFound)
 		return
 	} else if err != nil {
 		http.Error(w, fmt.Sprintf("internal error: %q", err), http.StatusInternalServerError)
 		return
+	}
+	if workdir == "" {
+		workdir = blobWorkDir
 	}
 
 	// warm-up, didn't need response content
@@ -287,7 +290,7 @@ func isNoWebsocketRequest(req *http.Request, match *mux.RouteMatch) bool {
 
 // Prepare downloads a blob and prepares it for use independently of any request
 func (reg *Server) Prepare(ctx context.Context, ref string) (err error) {
-	_, _, err = reg.refstore.BlobFor(ctx, ref, false)
+	_, _, _, err = reg.refstore.BlobFor(ctx, ref, false)
 	return
 }
 

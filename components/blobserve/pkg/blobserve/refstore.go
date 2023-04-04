@@ -6,6 +6,7 @@ package blobserve
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"sync"
 	"time"
@@ -89,7 +90,8 @@ func newRefStore(cfg blobserve_config.BlobServe, resolver ResolverProvider) (*re
 }
 
 type refstate struct {
-	Digest string
+	Digest  string
+	WorkDir string
 
 	ch chan error
 }
@@ -127,7 +129,7 @@ type BlobForOpts struct {
 	Modifier map[string]FileModifier
 }
 
-func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (fs http.FileSystem, hash string, err error) {
+func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (fs http.FileSystem, hash string, workDir string, err error) {
 	store.mu.RLock()
 	rs, exists := store.refcache[ref]
 	store.mu.RUnlock()
@@ -135,11 +137,11 @@ func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (
 	if exists {
 		err = rs.Wait(ctx)
 		if err != nil {
-			return nil, "", err
+			return nil, "", "", err
 		}
 	}
 	if !exists && readOnly {
-		return nil, "", errdefs.ErrNotFound
+		return nil, "", "", errdefs.ErrNotFound
 	}
 
 	blobState := blobUnknown
@@ -152,7 +154,7 @@ func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (
 		// if refcache thinks the blob should exist, but it doesn't, we force a redownload.
 		err = store.downloadBlobFor(ctx, ref, exists)
 		if err != nil {
-			return nil, "", err
+			return nil, "", "", err
 		}
 		store.mu.RLock()
 		rs = store.refcache[ref]
@@ -163,7 +165,7 @@ func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (
 		// We have to wait for the download to actually finish.
 		err = rs.Wait(ctx)
 		if err != nil {
-			return nil, "", err
+			return nil, "", "", err
 		}
 
 		// now that we've (re-)attempted to download the blob, it must exist.
@@ -176,10 +178,10 @@ func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (
 			WithField("digest", rs.Digest).
 			WithField("blobState", blobState).
 			Error("Blob could not be found for an unknown reason.")
-		return nil, "", errdefs.ErrUnknown
+		return nil, "", "", errdefs.ErrUnknown
 	}
 
-	return fs, rs.Digest, nil
+	return fs, rs.Digest, rs.WorkDir, nil
 }
 
 func (store *refstore) Close() {
@@ -244,12 +246,13 @@ func (store *refstore) handleRequest(ctx context.Context, ref string, force bool
 
 	resolver := store.Resolver()
 
-	layer, err := resolveRef(ctx, ref, resolver)
+	layer, workDir, err := resolveRef(ctx, ref, resolver)
 	if err != nil {
 		return err
 	}
 	digest := layer.Digest.Hex()
 	rs.Digest = digest
+	rs.WorkDir = workDir
 
 	fetcher, err := resolver.Fetcher(ctx, ref)
 	if err != nil {
@@ -296,28 +299,82 @@ func (store *refstore) handleRequest(ctx context.Context, ref string, force bool
 	}
 }
 
-func resolveRef(ctx context.Context, ref string, resolver remotes.Resolver) (*ociv1.Descriptor, error) {
+func resolveRef(ctx context.Context, ref string, resolver remotes.Resolver) (*ociv1.Descriptor, string, error) {
 	_, desc, err := resolver.Resolve(ctx, ref)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	fetcher, err := resolver.Fetcher(ctx, ref)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	manifest, _, err := registry.DownloadManifest(ctx, registry.AsFetcherFunc(fetcher), desc)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	layerCount := len(manifest.Layers)
 	if layerCount <= 0 {
 		log.WithField("ref", ref).Error("image has no layers - cannot serve its blob")
-		return nil, errdefs.ErrNotFound
+		return nil, "", errdefs.ErrNotFound
 	}
 	if layerCount > 1 {
 		log.WithField("ref", ref).Warn("image has more than one layers - serving from first layer only")
 	}
 	blobLayer := manifest.Layers[0]
-	return &blobLayer, nil
+
+	config, err := fetcher.Fetch(ctx, manifest.Config)
+	if err != nil {
+		return nil, "", err
+	}
+	defer config.Close()
+
+	var tmp ManifestJSON
+
+	err = json.NewDecoder(config).Decode(&tmp)
+	if err != nil {
+		return nil, "", xerrors.Errorf("cannot unmarshal image config: %w", err)
+	}
+
+	workDir := ""
+	if tmp.Config.Labels.Manifest != "" {
+		manifest := &IDEManifest{}
+		err = json.Unmarshal([]byte(tmp.Config.Labels.Manifest), manifest)
+		if err != nil {
+			return nil, "", xerrors.Errorf("cannot unmarshal IDE manifest: %w", err)
+		}
+		if manifest.Name != "" {
+			workDir = "/ide/" + manifest.Name
+		}
+	}
+
+	return &blobLayer, workDir, nil
+}
+
+// TODO get rid of duplication with ide-service via common package
+type ManifestJSON struct {
+	Config struct {
+		Labels IDELabels `json:"Labels"`
+	} `json:"config"`
+}
+
+type IDELabels struct {
+	Manifest string `json:"io.gitpod.ide.manifest,omitempty"`
+}
+
+/*
+	{
+	    "name": "xterm",
+	    "kind": "browser",
+	    "version": "1.0.0",
+	    "title": "Terminal",
+	    "icon": "terminal.svg"
+	}
+*/
+type IDEManifest struct {
+	Name    string `json:"name,omitempty"`
+	Kind    string `json:"kind,omitempty"`
+	Version string `json:"version,omitempty"`
+	Title   string `json:"title,omitempty"`
+	Icon    string `json:"icon,omitempty"`
 }

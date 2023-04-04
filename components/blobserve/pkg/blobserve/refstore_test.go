@@ -27,6 +27,7 @@ func TestBlobFor(t *testing.T) {
 		refDescriptor = "gitpod.io/test:tag"
 		hashManifest  = "5de870aced7e6c182a10e032e94de15893c95edd80d9cc20348b0f1627826d93"
 		hashLayer     = "4970405cb2a3a461cc00fd755712beded51919d7e69270d7d10d0dcf5e209714"
+		hashConfig    = "09e6b4a8e713124233a2722329aa18ccc27457e892482af80544d3f50c408ecc"
 	)
 	var (
 		provideDescriptor = func() ([]byte, error) {
@@ -38,7 +39,7 @@ func TestBlobFor(t *testing.T) {
 		}
 		descriptorLayer = ociv1.Descriptor{
 			MediaType: ociv1.MediaTypeImageLayerGzip,
-			Digest:    "sha256:4970405cb2a3a461cc00fd755712beded51919d7e69270d7d10d0dcf5e209714",
+			Digest:    "sha256:" + hashLayer,
 			Size:      10,
 		}
 		provideManifest = func() ([]byte, error) {
@@ -46,7 +47,15 @@ func TestBlobFor(t *testing.T) {
 				Layers: []ociv1.Descriptor{
 					descriptorLayer,
 				},
+				Config: ociv1.Descriptor{
+					MediaType: ociv1.MediaTypeImageConfig,
+					Digest:    "sha256:" + hashConfig,
+					Size:      10,
+				},
 			})
+		}
+		provideConfig = func() ([]byte, error) {
+			return json.Marshal(ociv1.ImageConfig{})
 		}
 		provideLayer = func() ([]byte, error) {
 			out := bytes.NewBuffer(nil)
@@ -80,17 +89,18 @@ func TestBlobFor(t *testing.T) {
 			FetchableContent: map[string]provider{
 				refDescriptor: provideDescriptor,
 				hashManifest:  provideManifest,
+				hashConfig:    provideConfig,
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) (err error) {
-				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
 
 				// fetching again with an empty fake fetcher should work just fine - everything is cached now
 				s.Resolver = func() remotes.Resolver { return &fakeFetcher{} }
-				_, hash, err := s.BlobFor(context.Background(), refDescriptor, false)
+				_, hash, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 
 				if diff := cmp.Diff(hashLayer, hash); diff != "" {
 					t.Errorf("unexpected blob hash (-want +got):\n%s", diff)
@@ -126,6 +136,7 @@ func TestBlobFor(t *testing.T) {
 			FetchableContent: map[string]provider{
 				refDescriptor: provideDescriptor,
 				hashManifest:  provideManifest,
+				hashConfig:    provideConfig,
 			},
 			Expectation: Expectation{
 				Error: hashLayer + " not found",
@@ -136,8 +147,15 @@ func TestBlobFor(t *testing.T) {
 			FetchableContent: map[string]provider{
 				refDescriptor: provideDescriptor,
 				hashManifest: func() ([]byte, error) {
-					return json.Marshal(ociv1.Manifest{})
+					return json.Marshal(ociv1.Manifest{
+						Config: ociv1.Descriptor{
+							MediaType: ociv1.MediaTypeImageConfig,
+							Digest:    "sha256:" + hashConfig,
+							Size:      10,
+						},
+					})
 				},
+				hashConfig: provideConfig,
 			},
 			Expectation: Expectation{
 				Error: "not found",
@@ -157,9 +175,16 @@ func TestBlobFor(t *testing.T) {
 								Size:      10,
 							},
 						},
+						Config: ociv1.Descriptor{
+							MediaType: ociv1.MediaTypeImageConfig,
+							Digest:    "sha256:" + hashConfig,
+							Size:      10,
+						},
 					})
 				},
-				hashLayer: provideLayer,
+				"ff20094863725f7f1a6b06b281d009143c1510f1985ff87bc0229816ac3e853c": provideConfig,
+				hashLayer:  provideLayer,
+				hashConfig: provideConfig,
 			},
 			Expectation: Expectation{
 				Content: map[string]blobstate{hashLayer: blobReady},
@@ -173,9 +198,10 @@ func TestBlobFor(t *testing.T) {
 			FetchableContent: map[string]provider{
 				refDescriptor: provideDescriptor,
 				hashManifest:  provideManifest,
+				hashConfig:    provideConfig,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) (err error) {
-				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err == nil {
 					return xerrors.Errorf("found layer although we shouldn't have")
 				}
@@ -184,11 +210,12 @@ func TestBlobFor(t *testing.T) {
 						Content: map[string]provider{
 							refDescriptor: provideDescriptor,
 							hashManifest:  provideManifest,
+							hashConfig:    provideConfig,
 							hashLayer:     provideLayer,
 						},
 					}
 				}
-				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
@@ -224,6 +251,7 @@ func TestBlobFor(t *testing.T) {
 						Content: map[string]provider{
 							refDescriptor: provideDescriptor,
 							hashManifest:  provideManifest,
+							hashConfig:    provideConfig,
 							hashLayer:     provideLayer,
 						},
 					}
@@ -236,7 +264,7 @@ func TestBlobFor(t *testing.T) {
 						if i == 100 {
 							close(run)
 						}
-						_, _, err := s.BlobFor(ctx, refDescriptor, false)
+						_, _, _, err := s.BlobFor(ctx, refDescriptor, false)
 						if err != nil {
 							return xerrors.Errorf("client %03d: %w", i, err)
 						}
@@ -256,14 +284,15 @@ func TestBlobFor(t *testing.T) {
 			FetchableContent: map[string]provider{
 				refDescriptor: provideDescriptor,
 				hashManifest:  provideManifest,
+				hashConfig:    provideConfig,
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) error {
-				_, _, err := s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
-				_, _, err = s.BlobFor(context.Background(), refDescriptor, true)
+				_, _, _, err = s.BlobFor(context.Background(), refDescriptor, true)
 				if err != nil {
 					return err
 				}
@@ -279,10 +308,11 @@ func TestBlobFor(t *testing.T) {
 			FetchableContent: map[string]provider{
 				refDescriptor: provideDescriptor,
 				hashManifest:  provideManifest,
+				hashConfig:    provideConfig,
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) error {
-				_, _, err := s.BlobFor(context.Background(), refDescriptor, true)
+				_, _, _, err := s.BlobFor(context.Background(), refDescriptor, true)
 				if err != nil {
 					return err
 				}
@@ -297,17 +327,18 @@ func TestBlobFor(t *testing.T) {
 			FetchableContent: map[string]provider{
 				refDescriptor: provideDescriptor,
 				hashManifest:  provideManifest,
+				hashConfig:    provideConfig,
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) error {
-				_, _, err := s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
 
 				delete(s.blobspace.(*inMemoryBlobspace).Content, hashLayer)
 
-				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
@@ -325,17 +356,18 @@ func TestBlobFor(t *testing.T) {
 			FetchableContent: map[string]provider{
 				refDescriptor: provideDescriptor,
 				hashManifest:  provideManifest,
+				hashConfig:    provideConfig,
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) error {
-				_, _, err := s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
 
 				delete(s.blobspace.(*inMemoryBlobspace).Content, hashLayer)
 
-				_, _, err = s.BlobFor(context.Background(), refDescriptor, true)
+				_, _, _, err = s.BlobFor(context.Background(), refDescriptor, true)
 				if err != nil {
 					return err
 				}
@@ -353,6 +385,7 @@ func TestBlobFor(t *testing.T) {
 			FetchableContent: map[string]provider{
 				refDescriptor: provideDescriptor,
 				hashManifest:  provideManifest,
+				hashConfig:    provideConfig,
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) error {
@@ -362,13 +395,13 @@ func TestBlobFor(t *testing.T) {
 				bs.Adder = func(ctx context.Context, name string, in io.Reader) (err error) {
 					return xerrors.Errorf("failed to download")
 				}
-				_, _, err := s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 				if err == nil {
 					return xerrors.Errorf("first download didn't fail")
 				}
 
 				bs.Adder = oadd
-				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
@@ -413,7 +446,7 @@ func TestBlobFor(t *testing.T) {
 
 			var err error
 			if test.ExtraAction == nil {
-				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 			} else {
 				err = test.ExtraAction(t, s)
 			}

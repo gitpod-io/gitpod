@@ -93,7 +93,7 @@ func ResolveIDEManifest(ctx context.Context, ref string, blobserveURL string) (*
 	if labels.Manifest != "" {
 		err = json.Unmarshal([]byte(labels.Manifest), manifest)
 		if err != nil {
-			return nil, xerrors.Errorf("cannot unmarshal manifest: %w", err)
+			return nil, xerrors.Errorf("cannot unmarshal IDE manifest: %w", err)
 		}
 	}
 	if manifest.Name == "" {
