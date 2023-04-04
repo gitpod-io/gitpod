@@ -48,7 +48,7 @@ server = "https://%v:%v"
 
 [host."https://%v:%v"]
     capabilities = ["pull", "resolve"]
-    #ca = "%v"
+    ca = "%v"
     # skip verifications of the registry's certificate chain and host name when set to true
     skip_verify = true
 `, hostname, port, hostname, port, filepath.Join(regDirectory, "ca.crt"))
