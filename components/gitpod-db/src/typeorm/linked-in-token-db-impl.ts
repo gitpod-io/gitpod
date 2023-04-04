@@ -21,4 +21,12 @@ export class LinkedInTokenDBImpl implements LinkedInTokenDB {
     protected async getRepo(): Promise<Repository<DBLinkedInToken>> {
         return (await this.getEntityManager()).getRepository<DBLinkedInToken>(DBLinkedInToken);
     }
+
+    public async storeToken(userId: string, token: string): Promise<void> {
+        const repo = await this.getRepo();
+        const dbToken = new DBLinkedInToken();
+        dbToken.userId = userId;
+        dbToken.token = { token };
+        await repo.save(dbToken);
+    }
 }

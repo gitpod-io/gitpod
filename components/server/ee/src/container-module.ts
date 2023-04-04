@@ -62,6 +62,7 @@ import { EntitlementServiceLicense } from "./billing/entitlement-service-license
 import { EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { UsageService, UsageServiceImpl, NoOpUsageService } from "../../src/user/usage-service";
+import { LinkedInService } from "./user/linkedin-service";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -135,4 +136,5 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
             return new NoOpUsageService();
         })
         .inSingletonScope();
+    bind(LinkedInService).toSelf().inSingletonScope();
 });

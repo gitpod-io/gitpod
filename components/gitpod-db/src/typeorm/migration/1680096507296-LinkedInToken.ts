@@ -12,7 +12,7 @@ const TABLE_NAME = "d_b_linked_in_token";
 export class LinkedInToken1680096507296 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(
-            `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (id char(36) NOT NULL, _lastModified timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
+            `CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (id char(36) NOT NULL, userId char(36) NOT NULL, token text NOT NULL, _lastModified timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
         );
     }
 
