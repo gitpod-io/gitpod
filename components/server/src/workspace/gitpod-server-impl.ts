@@ -3669,6 +3669,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getIDToken(): Promise<void> {}
     public async resolveContext(ctx: TraceContextWithSpan, contextUrl: string): Promise<WorkspaceContext> {
         const user = this.checkAndBlockUser("resolveContext");
-        return this.contextParser.handle(ctx, user, contextUrl);
+        const normalizedCtxURL = this.contextParser.normalizeContextURL(contextUrl);
+        return this.contextParser.handle(ctx, user, normalizedCtxURL);
     }
 }
