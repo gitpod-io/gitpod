@@ -93,10 +93,18 @@ export class IDEService {
         const workspaceType =
             workspace.type === "prebuild" ? IdeServiceApi.WorkspaceType.PREBUILD : IdeServiceApi.WorkspaceType.REGULAR;
 
+        let ideSettings = user.additionalData?.ideSettings;
+        if (userSelectedIdeSettings) {
+            ideSettings = {
+                ...user.additionalData?.ideSettings,
+                ...userSelectedIdeSettings,
+            };
+        }
+
         const req: IdeServiceApi.ResolveWorkspaceConfigRequest = {
             type: workspaceType,
             context: JSON.stringify(workspace.context),
-            ideSettings: JSON.stringify(userSelectedIdeSettings || user.additionalData?.ideSettings),
+            ideSettings: JSON.stringify(ideSettings),
             workspaceConfig: JSON.stringify(workspace.config),
             user: {
                 id: user.id,
