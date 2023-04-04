@@ -744,3 +744,4 @@ export class BlockUserResponse extends Message<BlockUserResponse> {
     return proto3.util.equals(BlockUserResponse, a, b);
   }
 }
+
