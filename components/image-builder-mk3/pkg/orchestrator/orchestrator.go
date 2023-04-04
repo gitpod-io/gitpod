@@ -444,6 +444,9 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 			// build is done
 			o.clearListener(buildID)
 			o.metrics.BuildDone(update.Status == protocol.BuildStatus_done_success)
+			if update.Status != protocol.BuildStatus_done_success {
+				log.WithField("UserID", req.GetTriggeredBy()).Error("image build done failed for user")
+			}
 			break
 		}
 	}
