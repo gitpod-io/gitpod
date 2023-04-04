@@ -151,9 +151,9 @@ export interface IDEOption {
     latestImageVersion?: string;
 
     /**
-     * Source of the IDE option.
+     * Source of the IDE option, undefined is default.
      */
-    source: "default" | "user";
+    source?: "default" | "user";
 
     /**
      * The source image ref of the resolved IDE image ref.
