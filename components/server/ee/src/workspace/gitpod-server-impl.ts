@@ -965,7 +965,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                     prebuiltWorkspace,
                 };
                 return result;
-            } else if (prebuiltWorkspace.state === "queued" || prebuiltWorkspace.state === "building") {
+            } else if (prebuiltWorkspace.state === "queued") {
+                // waiting for a prebuild that has not even started yet, doesn't make sense.
+                // starting a workspace from git will be faster anyway
+                return;
+            } else if (prebuiltWorkspace.state === "building") {
                 if (ignoreRunningPrebuild) {
                     // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
                     return;
@@ -986,22 +990,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
                 const wsi = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceID);
                 if (!wsi || wsi.stoppedTime !== undefined) {
-                    if (prebuiltWorkspace.state === "queued") {
-                        if (Date.now() - Date.parse(prebuiltWorkspace.creationTime) > 1000 * 60) {
-                            // queued for long than a minute? Let's retrigger
-                            console.warn("Retriggering queued prebuild.", prebuiltWorkspace);
-                            try {
-                                const project = prebuiltWorkspace.projectId
-                                    ? await this.projectDB.findProjectById(prebuiltWorkspace.projectId)
-                                    : undefined;
-                                await this.prebuildManager.retriggerPrebuild(ctx, user, project, workspaceID);
-                            } catch (err) {
-                                console.error(err);
-                            }
-                        }
-                        return makeResult(wsi!.id);
-                    }
-
                     return;
                 }
 
