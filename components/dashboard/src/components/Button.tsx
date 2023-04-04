@@ -20,6 +20,7 @@ type Props = {
     ref?: RefObject<HTMLButtonElement>;
     htmlType?: "button" | "submit" | "reset";
     onClick?: ButtonOnClickHandler;
+    onMouseDown?: React.DOMAttributes<HTMLButtonElement>["onMouseDown"];
 };
 
 // Allow w/ or w/o handling event argument
@@ -36,6 +37,7 @@ export const Button: FC<Props> = ({
     size,
     children,
     onClick,
+    onMouseDown,
 }) => {
     return (
         <button
@@ -73,6 +75,7 @@ export const Button: FC<Props> = ({
             disabled={disabled}
             autoFocus={autoFocus}
             onClick={onClick}
+            onMouseDown={onMouseDown}
         >
             <ButtonContent loading={loading}>{children}</ButtonContent>
         </button>

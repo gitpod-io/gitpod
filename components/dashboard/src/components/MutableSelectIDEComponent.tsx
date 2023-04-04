@@ -107,7 +107,7 @@ function IdeOptionElementSelected({ option, useLatest }: IdeOptionElementProps):
     }
 
     return (
-        <div className="flex flex-grow" title={title}>
+        <div className="flex" title={title}>
             <div className="mx-2 my-2">
                 <img className="w-8 filter-grayscale self-center" src={Editor} alt="logo" />
             </div>
@@ -144,7 +144,7 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
     const label = capitalize(option.type);
 
     return (
-        <div className="flex" title={option.title}>
+        <div className="flex flex-grow" title={option.title}>
             <div className="mx-2 my-2">
                 <img className="w-8 filter-grayscale self-center" src={option.logo} alt="logo" />
             </div>
@@ -167,7 +167,12 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
             {!!p.onDelete && option.source === "user" && !!option.sourceRef && (
                 <>
                     <div className="flex-grow" />
-                    <Button onClick={(e) => p.onDelete!(option!.sourceRef!, e)}>Uninstall</Button>
+                    <Button
+                        onClick={(e) => p.onDelete!(option!.sourceRef!, e)}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        Uninstall
+                    </Button>
                 </>
             )}
         </div>

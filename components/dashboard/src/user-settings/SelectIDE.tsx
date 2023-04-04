@@ -114,6 +114,7 @@ export default function SelectIDE(props: SelectIDEProps) {
     const removeCustomImageRef = useCallback(
         async (customImageRef: string, e) => {
             e.preventDefault();
+            e.stopPropagation();
 
             const additionalData = user?.additionalData || {};
             const ideSettings = additionalData.ideSettings || {};
