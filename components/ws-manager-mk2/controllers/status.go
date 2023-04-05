@@ -168,7 +168,10 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		}
 
 	case workspace.IsHeadless() && (pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed):
-		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
+		// Don't start disposal if maintenance mode is enabled.
+		if !r.maintenance.IsEnabled() {
+			workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
+		}
 
 		if isDisposalFinished(workspace) {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped

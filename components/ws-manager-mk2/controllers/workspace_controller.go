@@ -103,12 +103,6 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	log.Info("reconciling workspace", "ws", req.NamespacedName)
-	if r.maintenance.IsEnabled() {
-		// Don't reconcile workspaces in maintenance mode, to prevent Pod creation and deletion.
-		// Requeue after some time to ensure we do still reconcile this workspace when
-		// maintenance mode ends.
-		return ctrl.Result{RequeueAfter: maintenanceRequeue}, nil
-	}
 
 	var workspacePods corev1.PodList
 	err := r.List(ctx, &workspacePods, client.InNamespace(req.Namespace), client.MatchingFields{wsOwnerKey: req.Name})
