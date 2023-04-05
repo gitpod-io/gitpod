@@ -127,7 +127,6 @@ func (s *IDEServiceServer) resolveConfig(ctx context.Context, ideSettings *IDESe
 	var userOptions []*config.IDEOption
 	if ideSettings != nil {
 		for _, customImageRef := range ideSettings.CustomImageRefs {
-			// TODO latest channel support
 			option, err := s.resolveIDEOption(ctx, customImageRef, "user")
 			if err != nil {
 				log.WithError(err).WithField("image", customImageRef).Error("failed to resolve user ide image")

@@ -115,23 +115,47 @@ func checkIDEExistsInOptions(c config.IDEConfig, ideId string, ideType config.ID
 }
 
 func (s *IDEServiceServer) resolveIDEOption(ctx context.Context, sourceRef string, source string) (*config.IDEOption, error) {
-	ref, err := s.resolveIDEImage(ctx, sourceRef)
+	image, err := s.resolveIDEImage(ctx, sourceRef)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot resolve image digest: %w", err)
 	}
-	manifest, err := s.resolveIDEManifest(ctx, ref)
+	manifest, err := s.resolveIDEManifest(ctx, image)
 	if err != nil {
 		return nil, err
 	}
+	imageVersion := manifest.Version
+
+	var latestImage, latestSourceRef, latestImageVersion string
+	if manifest.Latest != "" && manifest.Latest != sourceRef {
+		latestSourceRef = manifest.Latest
+		latestImage, err = s.resolveIDEImage(ctx, latestSourceRef)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot resolve image digest: %w", err)
+		}
+		latestImageVersion, err = s.resolveIDEVersion(ctx, latestImage)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot resolve image version: %w", err)
+		}
+	} else {
+		latestSourceRef = sourceRef
+		latestImage = image
+		latestImageVersion = imageVersion
+	}
 	return &config.IDEOption{
-		Name:         manifest.Name,
-		Type:         config.IDEType(manifest.Kind),
-		ImageVersion: manifest.Version,
-		Image:        ref,
-		Title:        manifest.Title,
-		Logo:         manifest.Icon,
-		Source:       source,
+		Source: source,
+
 		SourceRef:    sourceRef,
+		Image:        image,
+		ImageVersion: imageVersion,
+
+		LatestSourceRef:    latestSourceRef,
+		LatestImage:        latestImage,
+		LatestImageVersion: latestImageVersion,
+
+		Name:  manifest.Name,
+		Type:  config.IDEType(manifest.Kind),
+		Title: manifest.Title,
+		Logo:  manifest.Icon,
 	}, nil
 }
 
@@ -150,6 +174,7 @@ func (s *IDEServiceServer) resolveIDEVersion(ctx context.Context, ref string) (s
 	    "version": "1.0.0",
 	    "title": "Terminal",
 	    "icon": "terminal.svg"
+		"latest": "docker.io/gitpod/xterm:latest"
 	}
 */
 type IDEManifest struct {
@@ -158,6 +183,7 @@ type IDEManifest struct {
 	Version string `json:"version,omitempty"`
 	Title   string `json:"title,omitempty"`
 	Icon    string `json:"icon,omitempty"`
+	Latest  string `json:"latest,omitempty"`
 }
 
 // TOOD evict on memory limit, maybe use reddis better to share between both instances of ide service
