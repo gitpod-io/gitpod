@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, ContextURL, GitpodServer, WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { CommitContext, ContextURL, GitpodServer, WithReferrerContext, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -123,7 +123,6 @@ export function CreateWorkspacePage() {
             }
 
             const organizationId = currentOrg?.id;
-            console.log("organizationId: " + JSON.stringify(organizationId));
             if (!organizationId && !!user?.additionalData?.isMigratedToTeamOnlyAttribution) {
                 // We need an organizationId for this group of users
                 console.warn("Skipping createWorkspace");
@@ -131,6 +130,14 @@ export function CreateWorkspacePage() {
             }
 
             try {
+                if (
+                    createWorkspaceMutation.isLoading ||
+                    ((createWorkspaceMutation.data?.existingWorkspaces?.length || 0) > 0 &&
+                        !opts.ignoreRunningWorkspaceOnSameCommit)
+                ) {
+                    console.log("Skipping duplicate createWorkspace call.");
+                    return;
+                }
                 const result = await createWorkspaceMutation.mutateAsync({
                     contextUrl: contextURL,
                     organizationId,
@@ -147,11 +154,36 @@ export function CreateWorkspacePage() {
                 console.log(error);
             }
         },
-        [createWorkspaceMutation, history, contextURL, selectedIde, selectedWsClass, currentOrg?.id, user?.additionalData?.isMigratedToTeamOnlyAttribution, useLatestIde],
+        [
+            createWorkspaceMutation,
+            history,
+            contextURL,
+            selectedIde,
+            selectedWsClass,
+            currentOrg?.id,
+            user?.additionalData?.isMigratedToTeamOnlyAttribution,
+            useLatestIde,
+        ],
     );
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
+
+    // if the context URL has a referrer prefix, we set the referrerIde as the selected IDE and immediately start a workspace.
+    useEffect(() => {
+        if (workspaceContext.data && WithReferrerContext.is(workspaceContext.data)) {
+            let options: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl"> | undefined;
+            if (workspaceContext.data.referrerIde) {
+                setSelectedIde(workspaceContext.data.referrerIde);
+                options = {
+                    ideSettings: {
+                        defaultIde: workspaceContext.data.referrerIde,
+                    },
+                };
+            }
+            createWorkspace(options);
+        }
+    }, [workspaceContext.data, createWorkspace]);
 
     if (SelectAccountPayload.is(selectAccountError)) {
         return (
