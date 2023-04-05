@@ -344,7 +344,11 @@ func resolveRef(ctx context.Context, ref string, resolver remotes.Resolver) (*oc
 			return nil, "", xerrors.Errorf("cannot unmarshal IDE manifest: %w", err)
 		}
 		if manifest.Name != "" {
-			workDir = "/ide/" + manifest.Name
+			if manifest.Kind == "desktop" {
+				workDir = "/ide-desktop/" + manifest.Name
+			} else {
+				workDir = "/ide/" + manifest.Name
+			}
 		}
 	}
 
