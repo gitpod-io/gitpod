@@ -57,7 +57,6 @@ import { ProjectDB } from "./project-db";
 import { ProjectDBImpl } from "./typeorm/project-db-impl";
 import { PersonalAccessTokenDB } from "./personal-access-token-db";
 import { EntityManager } from "typeorm";
-import { OssAllowListDB } from "./oss-allowlist-db";
 import { TypeORMInstallationAdminImpl } from "./typeorm/installation-admin-db-impl";
 import { InstallationAdminDB } from "./installation-admin-db";
 import { TeamSubscription2DB } from "./team-subscription-2-db";
