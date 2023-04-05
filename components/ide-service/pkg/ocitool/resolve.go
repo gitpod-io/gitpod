@@ -96,7 +96,7 @@ func ResolveIDELabels(ctx context.Context, ref string) (*IDELabels, error) {
 
 	err = json.NewDecoder(cfgin).Decode(&tmp)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	return &tmp.Config.Labels, nil
 }

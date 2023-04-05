@@ -71,7 +71,7 @@ func (s *IDEServiceServer) parseConfig(ctx context.Context, b []byte) (*config.I
 		option.Source = "default"
 		option.SourceRef = option.Image
 		if option.ResolveImageDigest {
-			if resolved, err := oci_tool.Resolve(ctx, option.Image); err != nil {
+			if resolved, err := s.resolveIDEImage(ctx, option.Image); err != nil {
 				log.WithError(err).Error("ide config: cannot resolve image digest")
 			} else {
 				log.WithField("ide", id).WithField("image", option.Image).WithField("resolved", resolved).Info("ide config: resolved latest image digest")
@@ -85,7 +85,7 @@ func (s *IDEServiceServer) parseConfig(ctx context.Context, b []byte) (*config.I
 		}
 		if option.LatestImage != "" {
 			option.LatestSourceRef = option.LatestImage
-			if resolved, err := oci_tool.Resolve(ctx, option.LatestImage); err != nil {
+			if resolved, err := s.resolveIDEImage(ctx, option.LatestImage); err != nil {
 				log.WithError(err).Error("ide config: cannot resolve latest image digest")
 			} else {
 				log.WithField("ide", id).WithField("image", option.LatestImage).WithField("resolved", resolved).Info("ide config: resolved latest image digest")
@@ -114,8 +114,8 @@ func checkIDEExistsInOptions(c config.IDEConfig, ideId string, ideType config.ID
 	return nil
 }
 
-func (s *IDEServiceServer) resolveIDEImage(ctx context.Context, sourceRef string, source string) (*config.IDEOption, error) {
-	ref, err := oci_tool.Resolve(ctx, sourceRef)
+func (s *IDEServiceServer) resolveIDEOption(ctx context.Context, sourceRef string, source string) (*config.IDEOption, error) {
+	ref, err := s.resolveIDEImage(ctx, sourceRef)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot resolve image digest: %w", err)
 	}
@@ -161,8 +161,30 @@ type IDEManifest struct {
 }
 
 // TOOD evict on memory limit, maybe use reddis better to share between both instances of ide service
+func (s *IDEServiceServer) resolveIDEImage(ctx context.Context, ref string) (string, error) {
+	cacheItem, _ := s.cache.Value(ref)
+	if cacheItem != nil {
+		image, ok := cacheItem.Data().(string)
+		if ok {
+			return image, nil
+		}
+		err, ok := cacheItem.Data().(error)
+		if ok {
+			return "", err
+		}
+	}
+	image, err := oci_tool.Resolve(ctx, ref)
+	if err != nil {
+		s.cache.Add(ref, 10*time.Minute, err)
+		return "", err
+	}
+	s.cache.Add(ref, 10*time.Minute, image)
+	return image, nil
+}
+
+// TOOD evict on memory limit, maybe use reddis better to share between both instances of ide service
 func (s *IDEServiceServer) resolveIDEManifest(ctx context.Context, ref string) (*IDEManifest, error) {
-	cacheItem, _ := s.manifestCache.Value(ref)
+	cacheItem, _ := s.cache.Value(ref)
 	if cacheItem != nil {
 		m, ok := cacheItem.Data().(*IDEManifest)
 		if ok {
@@ -173,7 +195,7 @@ func (s *IDEServiceServer) resolveIDEManifest(ctx context.Context, ref string) (
 	if err != nil {
 		return nil, err
 	}
-	s.manifestCache.Add(ref, 24*time.Hour, m)
+	s.cache.Add(ref, 24*time.Hour, m)
 	return m, nil
 }
 

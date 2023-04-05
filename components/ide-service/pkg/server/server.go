@@ -41,7 +41,7 @@ type IDEServiceServer struct {
 	ideConfig         *ideConfigSnapshot
 	ideConfigFileName string
 	experiemntsClient experiments.Client
-	manifestCache     *cache2go.CacheTable
+	cache             *cache2go.CacheTable
 
 	api.UnimplementedIDEServiceServer
 }
@@ -94,7 +94,7 @@ func New(cfg *config.ServiceConfiguration) *IDEServiceServer {
 		config:            cfg,
 		ideConfigFileName: fn,
 		experiemntsClient: experiments.NewClient(),
-		manifestCache:     cache2go.Cache("manifests"),
+		cache:             cache2go.Cache("manifests"),
 	}
 	return s
 }
@@ -128,7 +128,7 @@ func (s *IDEServiceServer) resolveConfig(ctx context.Context, ideSettings *IDESe
 	if ideSettings != nil {
 		for _, customImageRef := range ideSettings.CustomImageRefs {
 			// TODO latest channel support
-			option, err := s.resolveIDEImage(ctx, customImageRef, "user")
+			option, err := s.resolveIDEOption(ctx, customImageRef, "user")
 			if err != nil {
 				log.WithError(err).WithField("image", customImageRef).Error("failed to resolve user ide image")
 				continue
