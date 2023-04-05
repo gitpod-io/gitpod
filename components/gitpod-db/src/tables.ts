@@ -264,12 +264,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_oss_allow_list",
-            primaryKeys: ["identity"],
-            deletionColumn: "deleted",
-            timeColumn: "_lastModified",
-        },
-        {
             name: "d_b_project_env_var",
             primaryKeys: ["id", "projectId"],
             deletionColumn: "deleted",
