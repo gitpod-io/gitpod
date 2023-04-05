@@ -72,7 +72,8 @@ func ServeFromFile(w http.ResponseWriter, r *http.Request, fileName string) {
 	fp := path.Join(configCatConfigDir, fileName)
 	d, err := os.Stat(fp)
 	if err != nil {
-		w.Write(DefaultConfig)
+		// This should only happen before deploying the FF resource, and logging would not be helpful, hence we can fallback to the default values.
+		_, _ = w.Write(DefaultConfig)
 		return
 	}
 	requestEtag := r.Header.Get("If-None-Match")
@@ -100,7 +101,7 @@ func (c *ConfigCat) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 
 	w.Header().Set("Content-Type", "application/json")
 	if c.sdkKey == "" {
-		w.Write(DefaultConfig)
+		_, _ = w.Write(DefaultConfig)
 		return nil
 	}
 	etag := r.Header.Get("If-None-Match")
