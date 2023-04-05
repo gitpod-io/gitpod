@@ -52,8 +52,10 @@ func ParseConfig(ctx context.Context, b []byte, blobserveURL string) (*config.ID
 	}
 
 	for clientId, client := range cfg.IdeOptions.Clients {
-		if err := checkIDEExistsInOptions(cfg, client.DefaultDesktopIDE, config.IDETypeDesktop, fmt.Sprintf("client %s DefaultDesktopIDE", clientId)); err != nil {
-			return nil, err
+		if client.DefaultDesktopIDE != "" {
+			if err := checkIDEExistsInOptions(cfg, client.DefaultDesktopIDE, config.IDETypeDesktop, fmt.Sprintf("client %s DefaultDesktopIDE", clientId)); err != nil {
+				return nil, err
+			}
 		}
 		for _, ideId := range client.DesktopIDEs {
 			if err := checkIDEExistsInOptions(cfg, ideId, config.IDETypeDesktop, fmt.Sprintf("client %s DesktopIDEs %s", clientId, ideId)); err != nil {
