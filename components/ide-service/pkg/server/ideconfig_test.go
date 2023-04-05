@@ -35,7 +35,8 @@ func TestParseConfig(t *testing.T) {
 				return &gold{Err: err.Error()}
 			}
 
-			config, err := ParseConfig(context.Background(), b, "")
+			s := New(&config.ServiceConfiguration{})
+			config, err := s.parseConfig(context.Background(), b)
 			if err != nil {
 				return &gold{Err: err.Error()}
 			}

@@ -9,6 +9,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ide-service-api/config"
@@ -20,8 +22,8 @@ import (
 //go:embed schema.json
 var jsonScheme []byte
 
-// ParseConfig parse and validate ide config
-func ParseConfig(ctx context.Context, b []byte, blobserveURL string) (*config.IDEConfig, error) {
+// parseConfig parse and validate ide config
+func (s *IDEServiceServer) parseConfig(ctx context.Context, b []byte) (*config.IDEConfig, error) {
 	var cfg config.IDEConfig
 	if err := json.Unmarshal(b, &cfg); err != nil {
 		return nil, xerrors.Errorf("cannot parse ide config: %w", err)
@@ -76,7 +78,7 @@ func ParseConfig(ctx context.Context, b []byte, blobserveURL string) (*config.ID
 				option.Image = resolved
 			}
 		}
-		if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.Image, blobserveURL); err != nil {
+		if resolvedVersion, err := s.resolveIDEVersion(ctx, option.Image); err != nil {
 			log.WithError(err).Error("ide config: cannot get version from image")
 		} else {
 			option.ImageVersion = resolvedVersion
@@ -89,7 +91,7 @@ func ParseConfig(ctx context.Context, b []byte, blobserveURL string) (*config.ID
 				log.WithField("ide", id).WithField("image", option.LatestImage).WithField("resolved", resolved).Info("ide config: resolved latest image digest")
 				option.LatestImage = resolved
 			}
-			if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.LatestImage, blobserveURL); err != nil {
+			if resolvedVersion, err := s.resolveIDEVersion(ctx, option.LatestImage); err != nil {
 				log.WithError(err).Error("ide config: cannot get version from image")
 			} else {
 				option.LatestImageVersion = resolvedVersion
@@ -112,12 +114,12 @@ func checkIDEExistsInOptions(c config.IDEConfig, ideId string, ideType config.ID
 	return nil
 }
 
-func resolveIDEImage(ctx context.Context, sourceRef string, blobserveURL string, source string) (*config.IDEOption, error) {
+func (s *IDEServiceServer) resolveIDEImage(ctx context.Context, sourceRef string, source string) (*config.IDEOption, error) {
 	ref, err := oci_tool.Resolve(ctx, sourceRef)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot resolve image digest: %w", err)
 	}
-	manifest, err := oci_tool.ResolveIDEManifest(ctx, ref, blobserveURL)
+	manifest, err := s.resolveIDEManifest(ctx, ref)
 	if err != nil {
 		return nil, err
 	}
@@ -131,4 +133,100 @@ func resolveIDEImage(ctx context.Context, sourceRef string, blobserveURL string,
 		Source:       source,
 		SourceRef:    sourceRef,
 	}, nil
+}
+
+func (s *IDEServiceServer) resolveIDEVersion(ctx context.Context, ref string) (string, error) {
+	manifest, err := s.resolveIDEManifest(ctx, ref)
+	if err != nil {
+		return "", err
+	}
+	return manifest.Version, nil
+}
+
+/*
+	{
+	    "name": "xterm",
+	    "kind": "browser",
+	    "version": "1.0.0",
+	    "title": "Terminal",
+	    "icon": "terminal.svg"
+	}
+*/
+type IDEManifest struct {
+	Name    string `json:"name,omitempty"`
+	Kind    string `json:"kind,omitempty"`
+	Version string `json:"version,omitempty"`
+	Title   string `json:"title,omitempty"`
+	Icon    string `json:"icon,omitempty"`
+}
+
+// TOOD evict on memory limit, maybe use reddis better to share between both instances of ide service
+func (s *IDEServiceServer) resolveIDEManifest(ctx context.Context, ref string) (*IDEManifest, error) {
+	cacheItem, _ := s.manifestCache.Value(ref)
+	if cacheItem != nil {
+		m, ok := cacheItem.Data().(*IDEManifest)
+		if ok {
+			return m, nil
+		}
+	}
+	m, err := s.doResolveIDEManifest(ctx, ref)
+	if err != nil {
+		return nil, err
+	}
+	s.manifestCache.Add(ref, 24*time.Hour, m)
+	return m, nil
+}
+
+func (s *IDEServiceServer) doResolveIDEManifest(ctx context.Context, ref string) (*IDEManifest, error) {
+	labels, err := oci_tool.ResolveIDELabels(ctx, ref)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot resolve image labels: %w", err)
+	}
+	manifest := &IDEManifest{}
+	if labels.Version != "" {
+		manifest.Version = labels.Version
+	}
+	if labels.Manifest != "" {
+		err = json.Unmarshal([]byte(labels.Manifest), manifest)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot unmarshal IDE manifest: %w", err)
+		}
+	}
+	if manifest.Name == "" {
+		name := ref
+		end := strings.LastIndex(name, "@")
+		if end != -1 {
+			name = name[:end]
+		}
+		end = strings.LastIndex(name, ":")
+		if end == -1 {
+			end = len(name)
+		}
+		begin := strings.LastIndex(name, "/")
+		manifest.Name = ref[begin+1 : end]
+	}
+	if manifest.Kind != "browser" && manifest.Kind != "desktop" {
+		manifest.Kind = "desktop"
+	}
+	if manifest.Title == "" {
+		manifest.Title = manifest.Name
+	}
+	manifest.Icon = s.resolveIcon(ref, manifest)
+	return manifest, err
+}
+
+func (s *IDEServiceServer) resolveIcon(ref string, manifest *IDEManifest) string {
+	if manifest.Icon == "" {
+		return ""
+	}
+	path := manifest.Icon
+	if !strings.HasPrefix(manifest.Icon, "/") {
+		path = "/" + path
+	}
+	return fmt.Sprintf("%s/%s%s%s",
+		s.config.BlobserveURL,
+		ref,
+		"/__files__",
+		path,
+	)
 }

@@ -23,6 +23,7 @@ import (
 	api "github.com/gitpod-io/gitpod/ide-service-api"
 	"github.com/gitpod-io/gitpod/ide-service-api/config"
 	"github.com/heptiolabs/healthcheck"
+	"github.com/muesli/cache2go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -40,6 +41,7 @@ type IDEServiceServer struct {
 	ideConfig         *ideConfigSnapshot
 	ideConfigFileName string
 	experiemntsClient experiments.Client
+	manifestCache     *cache2go.CacheTable
 
 	api.UnimplementedIDEServiceServer
 }
@@ -87,10 +89,12 @@ func New(cfg *config.ServiceConfiguration) *IDEServiceServer {
 	if err != nil {
 		log.WithField("path", cfg.IDEConfigPath).WithError(err).Fatal("cannot convert ide config path to abs path")
 	}
+
 	s := &IDEServiceServer{
 		config:            cfg,
 		ideConfigFileName: fn,
 		experiemntsClient: experiments.NewClient(),
+		manifestCache:     cache2go.Cache("manifests"),
 	}
 	return s
 }
@@ -124,7 +128,7 @@ func (s *IDEServiceServer) resolveConfig(ctx context.Context, ideSettings *IDESe
 	if ideSettings != nil {
 		for _, customImageRef := range ideSettings.CustomImageRefs {
 			// TODO latest channel support
-			option, err := resolveIDEImage(ctx, customImageRef, s.config.BlobserveURL, "user")
+			option, err := s.resolveIDEImage(ctx, customImageRef, "user")
 			if err != nil {
 				log.WithError(err).WithField("image", customImageRef).Error("failed to resolve user ide image")
 				continue
@@ -173,7 +177,7 @@ func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
 		log.WithError(err).Warn("cannot read ide config file")
 		return
 	}
-	if config, err := ParseConfig(ctx, b, s.config.BlobserveURL); err != nil {
+	if config, err := s.parseConfig(ctx, b); err != nil {
 		if !isInit {
 			log.WithError(err).Fatal("cannot parse ide config")
 		}
