@@ -1591,3 +1591,11 @@ export interface StripeConfig {
     individualUsagePriceIds: { [currency: string]: string };
     teamUsagePriceIds: { [currency: string]: string };
 }
+
+export interface LinkedInProfile {
+    id: string;
+    firstName: string;
+    lastName: string;
+    profilePicture: string;
+    emailAddress: string;
+}

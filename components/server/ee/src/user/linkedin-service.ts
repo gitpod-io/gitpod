@@ -5,6 +5,7 @@
  */
 
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { LinkedInProfile } from "@gitpod/gitpod-protocol/src/protocol";
 import { inject, injectable } from "inversify";
 import fetch from "node-fetch";
 import { ResponseError } from "vscode-jsonrpc";
@@ -35,5 +36,10 @@ export class LinkedInService {
             throw new Error(data.error_description);
         }
         return data;
+    }
+
+    // TODO(janx): retrieve LinkedIn profile, profile pic, and email address: https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin
+    async getLinkedInProfile(): Promise<LinkedInProfile> {
+        throw new Error("Not implemented");
     }
 }

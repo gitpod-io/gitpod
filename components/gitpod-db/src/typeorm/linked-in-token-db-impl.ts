@@ -4,29 +4,33 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { LinkedInProfile } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { Repository } from "typeorm";
-import { LinkedInTokenDB } from "../linked-in-token-db";
-import { DBLinkedInToken } from "./entity/db-linked-in-token";
+import { v4 as uuidv4 } from "uuid";
+import { LinkedInProfileDB } from "../linked-in-profile-db";
+import { DBLinkedInProfile } from "./entity/db-linked-in-profile";
 import { TypeORM } from "./typeorm";
 
 @injectable()
-export class LinkedInTokenDBImpl implements LinkedInTokenDB {
+export class LinkedInProfileDBImpl implements LinkedInProfileDB {
     @inject(TypeORM) typeORM: TypeORM;
 
     protected async getEntityManager() {
         return (await this.typeORM.getConnection()).manager;
     }
 
-    protected async getRepo(): Promise<Repository<DBLinkedInToken>> {
-        return (await this.getEntityManager()).getRepository<DBLinkedInToken>(DBLinkedInToken);
+    protected async getRepo(): Promise<Repository<DBLinkedInProfile>> {
+        return (await this.getEntityManager()).getRepository<DBLinkedInProfile>(DBLinkedInProfile);
     }
 
-    public async storeToken(userId: string, token: string): Promise<void> {
+    public async storeProfile(userId: string, profile: LinkedInProfile): Promise<void> {
         const repo = await this.getRepo();
-        const dbToken = new DBLinkedInToken();
-        dbToken.userId = userId;
-        dbToken.token = { token };
-        await repo.save(dbToken);
+        // TODO(janx): check if profile with same LinkedIn ID already exists
+        await repo.save({
+            id: uuidv4(),
+            userId,
+            profile,
+        });
     }
 }

@@ -4,5 +4,5 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-export const LinkedInTokenDB = Symbol("LinkedInTokenDB");
-export interface LinkedInTokenDB {}
+export const LinkedInProfileDB = Symbol("LinkedInProfileDB");
+export interface LinkedInProfileDB {}

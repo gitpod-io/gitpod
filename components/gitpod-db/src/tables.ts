@@ -335,7 +335,7 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             deletionColumn: "deleted",
         },
         {
-            name: "d_b_linked_in_token",
+            name: "d_b_linked_in_profile",
             primaryKeys: ["id"],
             timeColumn: "_lastModified",
         },
