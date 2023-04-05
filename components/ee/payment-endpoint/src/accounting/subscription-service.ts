@@ -92,29 +92,6 @@ export class SubscriptionService {
         });
     }
 
-    /**
-     * Subscribes the given user to the "Professional Open Source" plan if they are not already
-     * @param user
-     * @param now
-     */
-    async checkAndSubscribeToOssSubscription(user: User, now: Date): Promise<void> {
-        const userId = user.id;
-
-        // don't override but keep an existing, not-yet cancelled Prof. OSS subscription
-        const subs = await this.getNotYetCancelledSubscriptions(user, now.toISOString());
-        const uncancelledOssSub = subs.find(
-            (s) => s.planId === Plans.FREE_OPEN_SOURCE.chargebeeId && !s.cancellationDate,
-        );
-        if (uncancelledOssSub) {
-            log.debug({ userId: userId }, "already has professional OSS subscription");
-            return;
-        }
-
-        const subscription = await this.subscribe(userId, Plans.FREE_OPEN_SOURCE, undefined, now.toISOString());
-        log.debug({ userId: userId }, "create new OSS subscription", { subscription });
-        return;
-    }
-
     async addCredit(userId: string, amount: number, date: string, expiryDate?: string): Promise<AccountEntry> {
         const entry = <AccountEntry>{
             userId,

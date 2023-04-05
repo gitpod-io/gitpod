@@ -39,19 +39,4 @@ export class UserServiceEE extends UserService {
 
         return true;
     }
-
-    async checkAutomaticOssEligibility(user: User): Promise<boolean> {
-        const idsWithHost = user.identities
-            .map((id) => {
-                const hostContext = this.hostContextProvider.findByAuthProviderId(id.authProviderId);
-                if (!hostContext) {
-                    return undefined;
-                }
-                const info = hostContext.authProvider.info;
-                return `${info.host}/${id.authName}`;
-            })
-            .filter((i) => !!i) as string[];
-
-        return this.OssAllowListDb.hasAny(idsWithHost);
-    }
 }

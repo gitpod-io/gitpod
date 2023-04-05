@@ -364,11 +364,6 @@ export class UserService {
         // return !!accepted && (accepted.termsRevision === terms.revision);
     }
 
-    async checkAutomaticOssEligibility(user: User): Promise<boolean> {
-        // EE implementation
-        return false;
-    }
-
     async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {
         if (params.user && params.user.blocked) {
             return true;

@@ -58,7 +58,6 @@ import { ProjectDBImpl } from "./typeorm/project-db-impl";
 import { PersonalAccessTokenDB } from "./personal-access-token-db";
 import { EntityManager } from "typeorm";
 import { OssAllowListDB } from "./oss-allowlist-db";
-import { OssAllowListDBImpl } from "./typeorm/oss-allowlist-db-impl";
 import { TypeORMInstallationAdminImpl } from "./typeorm/installation-admin-db-impl";
 import { InstallationAdminDB } from "./installation-admin-db";
 import { TeamSubscription2DB } from "./team-subscription-2-db";
@@ -164,7 +163,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
     bind(EduEmailDomainDB).to(EduEmailDomainDBImpl).inSingletonScope();
     bind(LicenseDB).to(LicenseDBImpl).inSingletonScope();
-    bind(OssAllowListDB).to(OssAllowListDBImpl).inSingletonScope();
     bind(UserToTeamMigrationService).toSelf().inSingletonScope();
     bind(WorkspaceOrganizationIdMigration).toSelf().inSingletonScope();
     bind(Synchronizer).toSelf().inSingletonScope();
