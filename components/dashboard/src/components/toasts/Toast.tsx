@@ -5,7 +5,7 @@
  */
 
 import classNames from "classnames";
-import { FC, useCallback, useEffect } from "react";
+import { FC, useCallback, useEffect, useRef } from "react";
 import { useId } from "../../hooks/useId";
 import { ToastEntry } from "./reducer";
 
@@ -15,6 +15,7 @@ type Props = ToastEntry & {
 
 export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true, onRemove }) => {
     const elId = useId();
+    const hideTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleRemove = useCallback(
         (e) => {
@@ -30,15 +31,37 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
             return;
         }
 
-        const timeout = setTimeout(() => {
+        hideTimeout.current = setTimeout(() => {
             onRemove(id);
         }, duration);
 
         return () => {
-            clearTimeout(timeout);
+            if (hideTimeout.current) {
+                clearTimeout(hideTimeout.current);
+            }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const onMouseEnter = useCallback(() => {
+        if (hideTimeout.current) {
+            clearTimeout(hideTimeout.current);
+        }
+    }, []);
+
+    const onMouseLeave = useCallback(() => {
+        if (!autoHide) {
+            return;
+        }
+
+        if (hideTimeout.current) {
+            clearTimeout(hideTimeout.current);
+        }
+
+        hideTimeout.current = setTimeout(() => {
+            onRemove(id);
+        }, duration);
+    }, [autoHide, duration, id, onRemove]);
 
     return (
         <div
@@ -50,6 +73,8 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
                 "text-white dark:text-gray-800",
                 "transition-transform animate-toast-in-right",
             )}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
             role="alert"
             aria-labelledby={elId}
         >
