@@ -30,6 +30,7 @@ export default function Preferences() {
 
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
+    const [timeoutUpdating, setTimeoutUpdating] = useState(false);
 
     const saveDotfileRepo = useCallback(
         async (e) => {
@@ -37,7 +38,7 @@ export default function Preferences() {
 
             const updatedUser = await updateDotfileRepo.mutateAsync(dotfileRepo);
             setUser(updatedUser);
-            toast("Dotfiles configuration was successfully updated.");
+            toast("Your dotfiles repository was updated.");
         },
         [updateDotfileRepo, dotfileRepo, setUser, toast],
     );
@@ -45,7 +46,9 @@ export default function Preferences() {
     const saveWorkspaceTimeout = useCallback(
         async (e) => {
             e.preventDefault();
+            setTimeoutUpdating(true);
 
+            // TODO: Convert this to a mutation
             try {
                 await getGitpodService().server.updateWorkspaceTimeoutSetting({ workspaceTimeout: workspaceTimeout });
 
@@ -53,10 +56,12 @@ export default function Preferences() {
                 const updatedUser = await getGitpodService().server.getLoggedInUser();
                 setUser(updatedUser);
 
-                toast("Timeouts configuration was successfully updated.");
+                toast("Your default workspace timeout was updated.");
             } catch (e) {
                 // TODO: Convert this to an error style toast
                 alert("Cannot set custom workspace timeout: " + e.message);
+            } finally {
+                setTimeoutUpdating(false);
             }
         },
         [toast, setUser, workspaceTimeout],
@@ -98,6 +103,7 @@ export default function Preferences() {
                                 />
                             </div>
                             <Button
+                                loading={updateDotfileRepo.isLoading}
                                 disabled={
                                     updateDotfileRepo.isLoading ||
                                     (dotfileRepo === user?.additionalData?.dotfileRepo ?? "")
@@ -143,6 +149,7 @@ export default function Preferences() {
                                         />
                                     </div>
                                     <Button
+                                        loading={timeoutUpdating}
                                         disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
                                     >
                                         Save

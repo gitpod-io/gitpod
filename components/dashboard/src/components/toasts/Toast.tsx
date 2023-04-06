@@ -45,7 +45,7 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
             className={classNames(
                 "relative flex justify-between items-center",
                 "w-full md:w-96 max-w-full",
-                "p-6 border-1 md:rounded",
+                "p-4 md:rounded-md",
                 "bg-gray-800 dark:bg-gray-100",
                 "text-white dark:text-gray-800",
                 "transition-transform animate-toast-in-right",
@@ -53,18 +53,20 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
             role="alert"
             aria-labelledby={elId}
         >
-            <p id={elId}>{message}</p>
+            <p className="text-white dark:text-gray-800" id={elId}>
+                {message}
+            </p>
             <button
                 className={classNames(
                     "cursor-pointer p-2",
                     "bg-transparent hover:bg-transparent",
-                    "text-white hover:text-gray-200 dark:text-gray-800 dark:hover:text-gray-600",
+                    "text-white hover:text-gray-300 dark:text-gray-800 dark:hover:text-gray-600",
                 )}
                 onClick={handleRemove}
             >
                 <svg version="1.1" width="10px" height="10px" viewBox="0 0 100 100">
-                    <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="10px" />
-                    <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="10px" />
+                    <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="20" />
+                    <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="20" />
                 </svg>
             </button>
         </div>

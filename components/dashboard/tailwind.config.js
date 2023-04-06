@@ -56,7 +56,7 @@ module.exports = {
                 },
             },
             animation: {
-                "toast-in-right": "toast-in-right 0.5s",
+                "toast-in-right": "toast-in-right 0.3s ease-in-out",
             },
         },
         fontFamily: {
