@@ -7,7 +7,6 @@
 import { useCallback, useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
-import { trackEvent } from "../Analytics";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
@@ -16,49 +15,56 @@ import { Heading2, Subheading } from "../components/typography/headings";
 import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
 import { Button } from "../components/Button";
 import SelectIDE from "./SelectIDE";
+import { InputField } from "../components/forms/InputField";
+import { TextInput } from "../components/forms/TextInputField";
+import { useToast } from "../components/toasts/Toasts";
+import { useUpdateCurrentUserDotfileRepoMutation } from "../data/current-user/update-mutation";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
 export default function Preferences() {
+    const { toast } = useToast();
     const { user, setUser } = useContext(UserContext);
     const maySetTimeout = useUserMaySetTimeout();
+    const updateDotfileRepo = useUpdateCurrentUserDotfileRepoMutation();
 
     const [dotfileRepo, setDotfileRepo] = useState<string>(user?.additionalData?.dotfileRepo || "");
     const [workspaceTimeout, setWorkspaceTimeout] = useState<string>(user?.additionalData?.workspaceTimeout ?? "");
+    const [timeoutUpdating, setTimeoutUpdating] = useState(false);
 
     const saveDotfileRepo = useCallback(
         async (e) => {
             e.preventDefault();
 
-            const prevDotfileRepo = user?.additionalData?.dotfileRepo || "";
-            const additionalData = {
-                ...(user?.additionalData || {}),
-                dotfileRepo,
-            };
-            const updatedUser = await getGitpodService().server.updateLoggedInUser({ additionalData });
+            const updatedUser = await updateDotfileRepo.mutateAsync(dotfileRepo);
             setUser(updatedUser);
-
-            if (dotfileRepo !== prevDotfileRepo) {
-                trackEvent("dotfile_repo_changed", {
-                    previous: prevDotfileRepo,
-                    current: dotfileRepo,
-                });
-            }
+            toast("Your dotfiles repository was updated.");
         },
-        [dotfileRepo, setUser, user?.additionalData],
+        [updateDotfileRepo, dotfileRepo, setUser, toast],
     );
 
     const saveWorkspaceTimeout = useCallback(
         async (e) => {
             e.preventDefault();
+            setTimeoutUpdating(true);
 
+            // TODO: Convert this to a mutation
             try {
                 await getGitpodService().server.updateWorkspaceTimeoutSetting({ workspaceTimeout: workspaceTimeout });
+
+                // TODO: Once current user is in react-query, we can instead invalidate the query vs. refetching here
+                const updatedUser = await getGitpodService().server.getLoggedInUser();
+                setUser(updatedUser);
+
+                toast("Your default workspace timeout was updated.");
             } catch (e) {
+                // TODO: Convert this to an error style toast
                 alert("Cannot set custom workspace timeout: " + e.message);
+            } finally {
+                setTimeoutUpdating(false);
             }
         },
-        [workspaceTimeout],
+        [toast, setUser, workspaceTimeout],
     );
 
     return (
@@ -82,34 +88,37 @@ export default function Preferences() {
 
                 <Heading2 className="mt-12">Dotfiles</Heading2>
                 <Subheading>Customize workspaces using dotfiles.</Subheading>
+
                 <form className="mt-4 max-w-xl" onSubmit={saveDotfileRepo}>
-                    <h4>Repository URL</h4>
-                    <span className="flex">
-                        <input
-                            type="text"
-                            value={dotfileRepo}
-                            className="w-96 h-9"
-                            placeholder="e.g. https://github.com/username/dotfiles"
-                            onChange={(e) => setDotfileRepo(e.target.value)}
-                        />
-                        <Button type="secondary" className="ml-2">
-                            Save Changes
-                        </Button>
-                    </span>
-                    <div className="mt-1">
-                        <p className="text-gray-500 dark:text-gray-400">
-                            Add a repository URL that includes dotfiles. Gitpod will
-                            <br />
-                            clone and install your dotfiles for every new workspace.
-                        </p>
-                    </div>
+                    <InputField
+                        label="Repository URL"
+                        hint="Add a repository URL that includes dotfiles. Gitpod will clone and install your dotfiles for every new workspace."
+                    >
+                        <div className="flex space-x-2">
+                            <div className="flex-grow">
+                                <TextInput
+                                    value={dotfileRepo}
+                                    placeholder="e.g. https://github.com/username/dotfiles"
+                                    onChange={setDotfileRepo}
+                                />
+                            </div>
+                            <Button
+                                loading={updateDotfileRepo.isLoading}
+                                disabled={
+                                    updateDotfileRepo.isLoading ||
+                                    (dotfileRepo === user?.additionalData?.dotfileRepo ?? "")
+                                }
+                            >
+                                Save
+                            </Button>
+                        </div>
+                    </InputField>
                 </form>
 
                 <Heading2 className="mt-12">Timeouts</Heading2>
                 <Subheading>Workspaces will stop after a period of inactivity without any user input.</Subheading>
-                <div className="mt-4 max-w-xl">
-                    <h4>Default Workspace Timeout</h4>
 
+                <div className="mt-4 max-w-xl">
                     {!maySetTimeout.isLoading && maySetTimeout.data === false && (
                         <Alert type="message">
                             Upgrade organization{" "}
@@ -122,24 +131,31 @@ export default function Preferences() {
 
                     {maySetTimeout.data === true && (
                         <form onSubmit={saveWorkspaceTimeout}>
-                            <span className="flex">
-                                <input
-                                    type="text"
-                                    className="w-96 h-9"
-                                    value={workspaceTimeout}
-                                    placeholder="e.g. 30m"
-                                    onChange={(e) => setWorkspaceTimeout(e.target.value)}
-                                />
-                                <Button type="secondary" className="ml-2">
-                                    Save Changes
-                                </Button>
-                            </span>
-                            <div className="mt-1">
-                                <p className="text-gray-500 dark:text-gray-400">
-                                    Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
-                                    <span className="font-semibold">2h</span>.
-                                </p>
-                            </div>
+                            <InputField
+                                label="Default Workspace Timeout"
+                                hint={
+                                    <span>
+                                        Use minutes or hours, like <span className="font-semibold">30m</span> or{" "}
+                                        <span className="font-semibold">2h</span>
+                                    </span>
+                                }
+                            >
+                                <div className="flex space-x-2">
+                                    <div className="flex-grow">
+                                        <TextInput
+                                            value={workspaceTimeout}
+                                            placeholder="e.g. 30m"
+                                            onChange={setWorkspaceTimeout}
+                                        />
+                                    </div>
+                                    <Button
+                                        loading={timeoutUpdating}
+                                        disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
+                                    >
+                                        Save
+                                    </Button>
+                                </div>
+                            </InputField>
                         </form>
                     )}
                 </div>
