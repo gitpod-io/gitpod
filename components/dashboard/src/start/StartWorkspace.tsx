@@ -521,6 +521,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                         <div className="flex flex-col text-center m-auto text-sm w-72 text-gray-400">
                             {client.installationSteps.map((step) => (
                                 <div
+                                    key={step}
                                     dangerouslySetInnerHTML={{
                                         // eslint-disable-next-line no-template-curly-in-string
                                         __html: step.replaceAll("${OPEN_LINK_LABEL}", openLinkLabel),

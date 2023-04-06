@@ -4,14 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, ContextURL, GitpodServer, WithReferrerContext, WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { CommitContext, GitpodServer, WithReferrerContext } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import { Button } from "../components/Button";
-import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
@@ -21,6 +20,7 @@ import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
+import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
 import { openAuthorizeWindow } from "../provider-utils";
 import { gitpodHostUrl } from "../service/service";
@@ -29,6 +29,7 @@ import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { StartWorkspaceError } from "../start/StartPage";
 import { useCurrentUser } from "../user-context";
 import { SelectAccountModal } from "../user-settings/SelectAccountModal";
+import { WorkspaceEntry } from "./WorkspaceEntry";
 
 export const useNewCreateWorkspacePage = () => {
     const { startWithOptions } = useFeatureFlags();
@@ -40,6 +41,7 @@ export function CreateWorkspacePage() {
     const user = useCurrentUser();
     const currentOrg = useCurrentOrg().data;
     const projects = useListProjectsQuery();
+    const workspaces = useListWorkspacesQuery({ limit: 50, orgId: currentOrg?.id });
     const location = useLocation();
     const history = useHistory();
     const props = StartWorkspaceOptions.parseSearchParams(location.search);
@@ -101,13 +103,28 @@ export function CreateWorkspacePage() {
     );
     const [errorIde, setErrorIde] = useState<string | undefined>(undefined);
 
-    const [existingWorkspaces, setExistingWorkspaces] = useState<WorkspaceInfo[]>([]);
+    const existingWorkspaces = useMemo(() => {
+        if (!workspaces.data || !CommitContext.is(workspaceContext.data)) {
+            return [];
+        }
+        return workspaces.data.filter(
+            (ws) =>
+                ws.latestInstance?.status?.phase === "running" &&
+                CommitContext.is(ws.workspace.context) &&
+                CommitContext.is(workspaceContext.data) &&
+                ws.workspace.context.repository.cloneUrl === workspaceContext.data.repository.cloneUrl &&
+                ws.workspace.context.revision === workspaceContext.data.revision,
+        );
+    }, [workspaces.data, workspaceContext.data]);
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload | undefined>(undefined);
 
     const createWorkspace = useCallback(
         async (options?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) => {
             // add options from search params
             const opts = options || {};
+
+            // we already have shown running workspaces to the user
+            opts.ignoreRunningWorkspaceOnSameCommit = true;
 
             if (!opts.workspaceClass) {
                 opts.workspaceClass = selectedWsClass;
@@ -130,11 +147,7 @@ export function CreateWorkspacePage() {
             }
 
             try {
-                if (
-                    createWorkspaceMutation.isLoading ||
-                    ((createWorkspaceMutation.data?.existingWorkspaces?.length || 0) > 0 &&
-                        !opts.ignoreRunningWorkspaceOnSameCommit)
-                ) {
+                if (createWorkspaceMutation.isLoading || createWorkspaceMutation.isSuccess) {
                     console.log("Skipping duplicate createWorkspace call.");
                     return;
                 }
@@ -147,8 +160,6 @@ export function CreateWorkspacePage() {
                     window.location.href = result.workspaceURL;
                 } else if (result.createdWorkspaceId) {
                     history.push(`/start/#${result.createdWorkspaceId}`);
-                } else if (result.existingWorkspaces && result.existingWorkspaces.length > 0) {
-                    setExistingWorkspaces(result.existingWorkspaces);
                 }
             } catch (error) {
                 console.log(error);
@@ -246,6 +257,24 @@ export function CreateWorkspacePage() {
                         {isLoading ? "Loading ..." : isStarting ? "Creating Workspace ..." : "New Workspace"}
                     </Button>
                 </div>
+                {existingWorkspaces.length > 0 && (
+                    <div className="w-full flex flex-col justify-end px-6">
+                        <p className="mt-6 text-center text-base">Running workspaces on this revision</p>
+                        <>
+                            {existingWorkspaces.map((w) => {
+                                return (
+                                    <a
+                                        key={w.workspace.id}
+                                        href={w.latestInstance?.ideUrl || `/start/${w.workspace.id}}`}
+                                        className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex"
+                                    >
+                                        <WorkspaceEntry info={w} shortVersion={true} />
+                                    </a>
+                                );
+                            })}
+                        </>
+                    </div>
+                )}
                 <div>
                     <StatusMessage
                         error={createWorkspaceMutation.error as StartWorkspaceError}
@@ -257,14 +286,6 @@ export function CreateWorkspacePage() {
                     />
                 </div>
             </div>
-            {existingWorkspaces.length > 0 && (
-                <ExistingWorkspaceModal
-                    existingWorkspaces={existingWorkspaces}
-                    createWorkspace={createWorkspace}
-                    isStarting={isStarting}
-                    onClose={() => setExistingWorkspaces([])}
-                />
-            )}
         </div>
     );
 }
@@ -382,63 +403,4 @@ const StatusMessage: FunctionComponent<StatusMessageProps> = ({
         default:
             return <p className="text-base text-gitpod-red w-96">Unknown Error: {JSON.stringify(error, null, 2)}</p>;
     }
-};
-
-interface ExistingWorkspaceModalProps {
-    existingWorkspaces: WorkspaceInfo[];
-    onClose: () => void;
-    isStarting: boolean;
-    createWorkspace: (opts: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) => void;
-}
-
-const ExistingWorkspaceModal: FunctionComponent<ExistingWorkspaceModalProps> = ({
-    existingWorkspaces,
-    onClose,
-    isStarting,
-    createWorkspace,
-}) => {
-    return (
-        <Modal visible={true} closeable={true} onClose={onClose}>
-            <ModalHeader>Running Workspaces</ModalHeader>
-            <ModalBody>
-                <p className="mt-1 mb-2 text-base">
-                    You already have running workspaces with the same context. You can open an existing one or open a
-                    new workspace.
-                </p>
-                <>
-                    {existingWorkspaces.map((w) => {
-                        const normalizedContextUrl =
-                            ContextURL.getNormalizedURL(w.workspace)?.toString() || "undefined";
-                        return (
-                            <a
-                                key={w.workspace.id}
-                                href={w.latestInstance?.ideUrl || `/start/${w.workspace.id}}`}
-                                className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1"
-                            >
-                                <div className="w-full">
-                                    <p className="text-base text-black dark:text-gray-100 font-bold">
-                                        {w.workspace.id}
-                                    </p>
-                                    <p className="truncate" title={normalizedContextUrl}>
-                                        {normalizedContextUrl}
-                                    </p>
-                                </div>
-                            </a>
-                        );
-                    })}
-                </>
-            </ModalBody>
-            <ModalFooter>
-                <button className="secondary" onClick={onClose}>
-                    Cancel
-                </button>
-                <Button
-                    loading={isStarting}
-                    onClick={() => createWorkspace({ ignoreRunningWorkspaceOnSameCommit: true })}
-                >
-                    {isStarting ? "Creating Workspace ..." : "New Workspace"}
-                </Button>
-            </ModalFooter>
-        </Modal>
-    );
 };
