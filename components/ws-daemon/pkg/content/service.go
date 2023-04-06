@@ -69,7 +69,7 @@ type WorkspaceService struct {
 type WorkspaceExistenceCheck func(instanceID string) bool
 
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
-func NewWorkspaceService(ctx context.Context, cfg Config, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, cgroupMountPoint string, reg prometheus.Registerer) (res *WorkspaceService, err error) {
+func NewWorkspaceService(ctx context.Context, cfg Config, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, cgroupMountPoint string, reg prometheus.Registerer, workspaceCIDR string) (res *WorkspaceService, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
@@ -86,7 +86,9 @@ func NewWorkspaceService(ctx context.Context, cfg Config, runtime container.Runt
 	}
 
 	// read all session json files
-	store, err := session.NewStore(ctx, cfg.WorkingArea, WorkspaceLifecycleHooks(cfg, wec, uidmapper, xfs, cgroupMountPoint))
+	store, err := session.NewStore(ctx, cfg.WorkingArea,
+		WorkspaceLifecycleHooks(cfg, workspaceCIDR, wec, uidmapper, xfs, cgroupMountPoint),
+	)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create session store: %w", err)
 	}

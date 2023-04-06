@@ -46,6 +46,10 @@ func ClusterValidation(cfg *Config) cluster.ValidationChecks {
 		if scr := cfg.Workspace.RegistryFacade.RedisCache.PasswordSecret; scr != "" {
 			res = append(res, cluster.CheckSecret(scr, cluster.CheckSecretRequiredData("password")))
 		}
+
+		if cfg.Workspace.WorkspaceCIDR != "" {
+			res = append(res, cluster.CheckWorkspaceCIDR(cfg.Workspace.WorkspaceCIDR))
+		}
 	}
 
 	return res

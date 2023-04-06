@@ -7,6 +7,8 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/netip"
 	"strings"
 
 	"github.com/Masterminds/semver"
@@ -290,4 +292,65 @@ func checkNamespaceExists(ctx context.Context, config *rest.Config, namespace st
 	}
 
 	return nil, nil
+}
+
+func CheckWorkspaceCIDR(networkCIDR string) ValidationCheck {
+	return ValidationCheck{
+		Name:        "workspace CIDR is present and valid",
+		Description: "ensures the workspace CIDR contains a valid network address range",
+		Check: func(ctx context.Context, config *rest.Config, namespace string) ([]ValidationError, error) {
+			netIP, ipNet, err := net.ParseCIDR(networkCIDR)
+			if err != nil {
+				return []ValidationError{
+					{
+						Message: fmt.Sprintf("invalid workspace CIDR: %v", err),
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			ipNet.Mask.Size()
+			mask, _ := ipNet.Mask.Size()
+			if mask > 30 {
+				return []ValidationError{
+					{
+						Message: "the workspace CIDR does not have a mask less than or equal to /30",
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			addr, err := netip.ParseAddr(netIP.String())
+			if err != nil {
+				return []ValidationError{
+					{
+						Message: fmt.Sprintf("invalid workspace CIDR: %v", err),
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			vethIp := addr.Next()
+			if !vethIp.IsValid() {
+				return []ValidationError{
+					{
+						Message: fmt.Sprintf("workspace CIDR is not big enough (%v)", networkCIDR),
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			cethIp := vethIp.Next()
+			if !cethIp.IsValid() {
+				return []ValidationError{
+					{
+						Message: fmt.Sprintf("workspace CIDR is not big enough (%v)", networkCIDR),
+						Type:    ValidationStatusError,
+					},
+				}, nil
+			}
+
+			return nil, nil
+		},
+	}
 }

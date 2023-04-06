@@ -68,6 +68,8 @@ type WorkspaceConfig struct {
 	WorkspaceURLTemplate     string   `json:"workspaceURLTemplate,omitempty"`
 	WorkspacePortURLTemplate string   `json:"workspacePortURLTemplate,omitempty"`
 
+	WorkspaceCIDR string `json:"workspaceCIDR,omitempty"`
+
 	CPULimits struct {
 		Enabled          bool              `json:"enabled"`
 		NodeCPUBandwidth resource.Quantity `json:"nodeBandwidth"`

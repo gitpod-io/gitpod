@@ -194,6 +194,7 @@ func NewDaemon(config Config) (*Daemon, error) {
 
 		hooks := content.WorkspaceLifecycleHooks(
 			contentCfg,
+			config.Runtime.WorkspaceCIDR,
 			func(instanceID string) bool { return true },
 			&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
 			xfs,
@@ -239,6 +240,7 @@ func NewDaemon(config Config) (*Daemon, error) {
 		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
 		config.CPULimit.CGroupBasePath,
 		wrappedReg,
+		config.Runtime.WorkspaceCIDR,
 	)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create content service: %w", err)

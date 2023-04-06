@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/netip"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -268,22 +269,25 @@ func main() {
 						Name:     "target-pid",
 						Required: true,
 					},
+					&cli.StringFlag{
+						Name:     "workspace-cidr",
+						Required: true,
+					},
 				},
 				Action: func(c *cli.Context) error {
 					containerIf, vethIf, cethIf := "eth0", "veth0", "eth0"
-					mask := net.IPv4Mask(255, 255, 255, 0)
-					vethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 1),
-						Mask: mask,
+					networkCIDR := c.String("workspace-cidr")
+
+					vethIp, cethIp, mask, err := processWorkspaceCIDR(networkCIDR)
+					if err != nil {
+						return xerrors.Errorf("parsing workspace CIDR (%v):%v", networkCIDR, err)
 					}
-					cethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 2),
-						Mask: mask,
+
+					vethIpNet := net.IPNet{
+						IP:   net.ParseIP(vethIp.String()),
+						Mask: mask.Mask,
 					}
-					masqueradeAddr := net.IPNet{
-						IP:   vethIp.IP.Mask(mask),
-						Mask: mask,
-					}
+
 					targetPid := c.Int("target-pid")
 
 					eth0, err := netlink.LinkByName(containerIf)
@@ -308,7 +312,7 @@ func main() {
 					if err != nil {
 						return xerrors.Errorf("cannot found %q netns failed: %v", vethIf, err)
 					}
-					if err := netlink.AddrAdd(vethLink, &netlink.Addr{IPNet: &vethIp}); err != nil {
+					if err := netlink.AddrAdd(vethLink, &netlink.Addr{IPNet: &vethIpNet}); err != nil {
 						return xerrors.Errorf("failed to add IP address to %q: %v", vethIf, err)
 					}
 					if err := netlink.LinkSetUp(vethLink); err != nil {
@@ -329,29 +333,10 @@ func main() {
 						Type:     nftables.ChainTypeNAT,
 					})
 
-					// ip saddr 10.0.5.0/24 oifname "eth0" masquerade
 					nc.AddRule(&nftables.Rule{
 						Table: nat,
 						Chain: postrouting,
 						Exprs: []expr.Any{
-							&expr.Payload{
-								DestRegister: 1,
-								Base:         expr.PayloadBaseNetworkHeader,
-								Offset:       12,
-								Len:          net.IPv4len,
-							},
-							&expr.Bitwise{
-								SourceRegister: 1,
-								DestRegister:   1,
-								Len:            net.IPv4len,
-								Mask:           masqueradeAddr.Mask,
-								Xor:            net.IPv4Mask(0, 0, 0, 0),
-							},
-							&expr.Cmp{
-								Op:       expr.CmpOpEq,
-								Register: 1,
-								Data:     masqueradeAddr.IP.To4(),
-							},
 							&expr.Meta{Key: expr.MetaKeyOIFNAME, Register: 1},
 							&expr.Cmp{
 								Op:       expr.CmpOpEq,
@@ -408,7 +393,7 @@ func main() {
 
 							&expr.Immediate{
 								Register: 2,
-								Data:     cethIp.IP.To4(),
+								Data:     cethIp.To4(),
 							},
 							&expr.NAT{
 								Type:        expr.NATTypeDestNAT,
@@ -418,7 +403,6 @@ func main() {
 							},
 						},
 					})
-
 					if err := nc.Flush(); err != nil {
 						return xerrors.Errorf("failed to apply nftables: %v", err)
 					}
@@ -429,23 +413,31 @@ func main() {
 			{
 				Name:  "setup-peer-veth",
 				Usage: "set up a peer veth",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "workspace-cidr",
+						Required: true,
+					},
+				},
 				Action: func(c *cli.Context) error {
 					cethIf := "eth0"
-					mask := net.IPv4Mask(255, 255, 255, 0)
-					cethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 2),
-						Mask: mask,
+
+					networkCIDR := c.String("workspace-cidr")
+					vethIp, cethIp, mask, err := processWorkspaceCIDR(networkCIDR)
+					if err != nil {
+						return xerrors.Errorf("parsing workspace CIDR (%v):%v", networkCIDR, err)
 					}
-					vethIp := net.IPNet{
-						IP:   net.IPv4(10, 0, 5, 1),
-						Mask: mask,
+
+					cethIpNet := net.IPNet{
+						IP:   net.ParseIP(cethIp.String()),
+						Mask: mask.Mask,
 					}
 
 					cethLink, err := netlink.LinkByName(cethIf)
 					if err != nil {
 						return xerrors.Errorf("cannot found %q netns failed: %v", cethIf, err)
 					}
-					if err := netlink.AddrAdd(cethLink, &netlink.Addr{IPNet: &cethIp}); err != nil {
+					if err := netlink.AddrAdd(cethLink, &netlink.Addr{IPNet: &cethIpNet}); err != nil {
 						return xerrors.Errorf("failed to add IP address to %q: %v", cethIf, err)
 					}
 					if err := netlink.LinkSetUp(cethLink); err != nil {
@@ -462,7 +454,7 @@ func main() {
 
 					defaultGw := netlink.Route{
 						Scope: netlink.SCOPE_UNIVERSE,
-						Gw:    vethIp.IP,
+						Gw:    vethIp,
 					}
 					if err := netlink.RouteReplace(&defaultGw); err != nil {
 						return xerrors.Errorf("failed to set up deafult gw: %v", err)
@@ -687,3 +679,27 @@ const (
 	// FlagAtRecursive: Apply to the entire subtree: https://elixir.bootlin.com/linux/latest/source/include/uapi/linux/fcntl.h#L112
 	flagAtRecursive = 0x8000
 )
+
+func processWorkspaceCIDR(networkCIDR string) (net.IP, net.IP, *net.IPNet, error) {
+	netIP, mask, err := net.ParseCIDR(networkCIDR)
+	if err != nil {
+		return nil, nil, nil, xerrors.Errorf("cannot configure workspace CIDR: %w", err)
+	}
+
+	addr, err := netip.ParseAddr(netIP.String())
+	if err != nil {
+		return nil, nil, nil, xerrors.Errorf("cannot configure workspace CIDR: %w", err)
+	}
+
+	vethIp := addr.Next()
+	if !vethIp.IsValid() {
+		return nil, nil, nil, xerrors.Errorf("workspace CIDR is not big enough (%v)", networkCIDR)
+	}
+
+	cethIp := vethIp.Next()
+	if !cethIp.IsValid() {
+		return nil, nil, nil, xerrors.Errorf("workspace CIDR is not big enough (%v)", networkCIDR)
+	}
+
+	return net.ParseIP(vethIp.String()), net.ParseIP(cethIp.String()), mask, nil
+}

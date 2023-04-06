@@ -67,6 +67,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	var wscontroller daemon.WorkspaceControllerConfig
 
+	// default workspace network CIDR (and fallback)
+	workspaceCIDR := "10.0.5.0/30"
+
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -105,6 +108,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		wscontroller.WorkingAreaSuffix = "-mk2"
 		wscontroller.MaxConcurrentReconciles = 15
 
+		if ucfg.Workspace.WorkspaceCIDR != "" {
+			workspaceCIDR = ucfg.Workspace.WorkspaceCIDR
+		}
+
 		return nil
 	})
 
@@ -123,6 +130,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						SocketPath: "/mnt/containerd/containerd.sock",
 					},
 				},
+				WorkspaceCIDR: workspaceCIDR,
 			},
 			Content: content.Config{
 				WorkingArea:     "/mnt/workingarea",
