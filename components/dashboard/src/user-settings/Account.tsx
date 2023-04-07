@@ -91,7 +91,9 @@ export default function Account() {
                     </ProfileInformation>
                 </form>
                 <Heading2 className="mt-12">Delete Account</Heading2>
-                <Subheading>This action will remove all the data associated with your account in Gitpod.</Subheading>
+                <Subheading className="mb-3">
+                    This action will remove all the data associated with your account in Gitpod.
+                </Subheading>
                 <Button type="danger.secondary" onClick={() => setModal(true)}>
                     Delete Account
                 </Button>
