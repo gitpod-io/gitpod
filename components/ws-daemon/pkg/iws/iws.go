@@ -84,7 +84,7 @@ var (
 )
 
 // ServeWorkspace establishes the IWS server for a workspace
-func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMountPoint string) func(ctx context.Context, ws *session.Workspace) error {
+func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMountPoint string, workspaceCIDR string) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
 		span, _ := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
 		defer tracing.FinishSpan(span, &err)
@@ -98,6 +98,7 @@ func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod, cgroupMount
 			Session:          ws,
 			FSShift:          fsshift,
 			CGroupMountPoint: cgroupMountPoint,
+			WorkspaceCIDR:    workspaceCIDR,
 		}
 		err = iws.Start()
 		if err != nil {
@@ -138,6 +139,8 @@ type InWorkspaceServiceServer struct {
 	Session          *session.Workspace
 	FSShift          api.FSShiftMethod
 	CGroupMountPoint string
+
+	WorkspaceCIDR string
 
 	srv  *grpc.Server
 	sckt io.Closer
@@ -361,7 +364,10 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 	}
 
 	err = nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "setup-pair-veths", "--target-pid", strconv.Itoa(int(req.Pid)))
+		c.Args = append(c.Args, "setup-pair-veths",
+			"--target-pid", strconv.Itoa(int(req.Pid)),
+			fmt.Sprintf("--workspace-cidr=%v", wbs.WorkspaceCIDR),
+		)
 	}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot setup a pair of veths")
@@ -373,7 +379,9 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
 	err = nsi.Nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "setup-peer-veth")
+		c.Args = append(c.Args, "setup-peer-veth",
+			fmt.Sprintf("--workspace-cidr=%v", wbs.WorkspaceCIDR),
+		)
 	}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot setup a peer veths")

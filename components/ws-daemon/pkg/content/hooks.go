@@ -23,10 +23,10 @@ import (
 )
 
 // WorkspaceLifecycleHooks configures the lifecycle hooks for all workspaces
-func WorkspaceLifecycleHooks(cfg Config, workspaceExistenceCheck WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, xfs *quota.XFS, cgroupMountPoint string) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
+func WorkspaceLifecycleHooks(cfg Config, workspaceCIDR string, workspaceExistenceCheck WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, xfs *quota.XFS, cgroupMountPoint string) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
 	// startIWS starts the in-workspace service for a workspace. This lifecycle hook is idempotent, hence can - and must -
 	// be called on initialization and ready. The on-ready hook exists only to support ws-daemon restarts.
-	startIWS := iws.ServeWorkspace(uidmapper, api.FSShiftMethod(cfg.UserNamespaces.FSShift), cgroupMountPoint)
+	startIWS := iws.ServeWorkspace(uidmapper, api.FSShiftMethod(cfg.UserNamespaces.FSShift), cgroupMountPoint, workspaceCIDR)
 
 	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
 		session.WorkspaceInitializing: {

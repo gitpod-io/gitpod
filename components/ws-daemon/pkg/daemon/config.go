@@ -43,6 +43,8 @@ type RuntimeConfig struct {
 	Kubeconfig          string            `json:"kubeconfig"`
 	KubernetesNamespace string            `json:"namespace"`
 	SecretsNamespace    string            `json:"secretsNamespace"`
+
+	WorkspaceCIDR string `json:"workspaceCIDR,omitempty"`
 }
 
 type IOLimitConfig struct {
