@@ -284,7 +284,7 @@ func main() {
 					}
 
 					vethIpNet := net.IPNet{
-						IP:   net.ParseIP(vethIp.String()),
+						IP:   vethIp,
 						Mask: mask.Mask,
 					}
 
@@ -429,7 +429,7 @@ func main() {
 					}
 
 					cethIpNet := net.IPNet{
-						IP:   net.ParseIP(cethIp.String()),
+						IP:   cethIp,
 						Mask: mask.Mask,
 					}
 
