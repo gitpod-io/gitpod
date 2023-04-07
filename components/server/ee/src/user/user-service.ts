@@ -8,13 +8,11 @@ import { UserService, CheckSignUpParams, CheckTermsParams } from "../../../src/u
 import { User } from "@gitpod/gitpod-protocol";
 import { inject } from "inversify";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { OssAllowListDB } from "@gitpod/gitpod-db/lib/oss-allowlist-db";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { Config } from "../../../src/config";
 
 export class UserServiceEE extends UserService {
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
-    @inject(OssAllowListDB) protected readonly OssAllowListDb: OssAllowListDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
 
@@ -38,20 +36,5 @@ export class UserServiceEE extends UserService {
         ///////////////////////////////////////////////////////////////////////////
 
         return true;
-    }
-
-    async checkAutomaticOssEligibility(user: User): Promise<boolean> {
-        const idsWithHost = user.identities
-            .map((id) => {
-                const hostContext = this.hostContextProvider.findByAuthProviderId(id.authProviderId);
-                if (!hostContext) {
-                    return undefined;
-                }
-                const info = hostContext.authProvider.info;
-                return `${info.host}/${id.authName}`;
-            })
-            .filter((i) => !!i) as string[];
-
-        return this.OssAllowListDb.hasAny(idsWithHost);
     }
 }

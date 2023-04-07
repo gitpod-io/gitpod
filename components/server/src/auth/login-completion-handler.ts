@@ -93,11 +93,6 @@ export class LoginCompletionHandler {
             );
         }
 
-        // Check for and automatically subscribe to Professional OpenSource subscription
-        /** no await */ this.checkForAndSubscribeToProfessionalOss(user).catch((err) => {
-            /** ignore */
-        });
-
         response.redirect(returnTo);
     }
 
@@ -114,15 +109,6 @@ export class LoginCompletionHandler {
                 }
             }
         }
-    }
-
-    protected async checkForAndSubscribeToProfessionalOss(user: User) {
-        const eligible = await this.userService.checkAutomaticOssEligibility(user);
-        log.debug({ userId: user.id }, "user eligible for OSS subscription?", { eligible });
-        if (!eligible) {
-            return;
-        }
-        await this.subscriptionService.checkAndSubscribeToOssSubscription(user, new Date());
     }
 }
 export namespace LoginCompletionHandler {
