@@ -155,7 +155,7 @@ func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
 	s.Conditions = wsk8s.AddUniqueCondition(s.Conditions, cond)
 }
 
-// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;BackupComplete;BackupFailure
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure
 type WorkspaceCondition string
 
 const (
@@ -187,6 +187,10 @@ const (
 
 	// ContentReady is true once the content initialisation is complete
 	WorkspaceConditionContentReady WorkspaceCondition = "ContentReady"
+
+	// EverReady is true if the workspace has ever been ready (content init
+	// succeeded and container is ready)
+	WorkspaceConditionEverReady WorkspaceCondition = "EverReady"
 
 	// BackupComplete is true once the backup has happened
 	WorkspaceConditionBackupComplete WorkspaceCondition = "BackupComplete"
@@ -269,6 +273,14 @@ func NewWorkspaceConditionContentReady(status metav1.ConditionStatus, reason, me
 		Status:             status,
 		Reason:             reason,
 		Message:            message,
+	}
+}
+
+func NewWorkspaceConditionEverReady() metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionEverReady),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
 	}
 }
 

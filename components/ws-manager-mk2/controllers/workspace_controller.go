@@ -310,18 +310,11 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	if !lastState.recordedInitFailure && wsk8s.ConditionWithStatusAndReason(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure) {
 		r.metrics.countTotalRestoreFailures(&log, workspace)
 		lastState.recordedInitFailure = true
-
-		if !lastState.recordedStartFailure {
-			r.metrics.countWorkspaceStartFailures(&log, workspace)
-			lastState.recordedStartFailure = true
-		}
 	}
 
-	if !lastState.recordedStartFailure && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
-		// Only record if there was no other start failure recorded yet, to ensure max one
-		// start failure gets recorded per workspace.
-		r.metrics.countWorkspaceStartFailures(&log, workspace)
-		lastState.recordedStartFailure = true
+	if !lastState.recordedFailure && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
+		r.metrics.countWorkspaceFailure(&log, workspace)
+		lastState.recordedFailure = true
 	}
 
 	if !lastState.recordedContentReady && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) {
@@ -347,6 +340,13 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopped {
 		r.metrics.countWorkspaceStop(&log, workspace)
+
+		everReady := wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady))
+		if !lastState.recordedStartFailure && !everReady {
+			// Workspace never became ready, count as a startup failure.
+			r.metrics.countWorkspaceStartFailures(&log, workspace)
+			// No need to record in metricState, as we're forgetting the workspace state next anyway.
+		}
 
 		// Forget about this workspace, no more state updates will be recorded after this.
 		r.metrics.forgetWorkspace(workspace)

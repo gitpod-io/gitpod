@@ -20,6 +20,7 @@ import (
 const (
 	workspaceStartupSeconds       string = "workspace_startup_seconds"
 	workspaceStartFailuresTotal   string = "workspace_starts_failure_total"
+	workspaceFailuresTotal        string = "workspace_failure_total"
 	workspaceStopsTotal           string = "workspace_stops_total"
 	workspaceBackupsTotal         string = "workspace_backups_total"
 	workspaceBackupFailuresTotal  string = "workspace_backups_failure_total"
@@ -27,9 +28,22 @@ const (
 	workspaceRestoresFailureTotal string = "workspace_restores_failure_total"
 )
 
+type StopReason string
+
+const (
+	StopReasonFailed       = "failed"
+	StopReasonStartFailure = "start-failure"
+	StopReasonAborted      = "aborted"
+	StopReasonOutOfSpace   = "out-of-space"
+	StopReasonTimeout      = "timeout"
+	StopReasonTabClosed    = "tab-closed"
+	StopReasonRegular      = "regular-stop"
+)
+
 type controllerMetrics struct {
 	startupTimeHistVec           *prometheus.HistogramVec
 	totalStartsFailureCounterVec *prometheus.CounterVec
+	totalFailuresCounterVec      *prometheus.CounterVec
 	totalStopsCounterVec         *prometheus.CounterVec
 
 	totalBackupCounterVec         *prometheus.CounterVec
@@ -63,6 +77,12 @@ func newControllerMetrics(r *WorkspaceReconciler) (*controllerMetrics, error) {
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      workspaceStartFailuresTotal,
 			Help:      "total number of workspaces that failed to start",
+		}, []string{"type", "class"}),
+		totalFailuresCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      workspaceFailuresTotal,
+			Help:      "total number of workspaces that had a failed condition",
 		}, []string{"type", "class"}),
 		totalStopsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
@@ -126,11 +146,42 @@ func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *wo
 	counter.Inc()
 }
 
-func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1.Workspace) {
+func (m *controllerMetrics) countWorkspaceFailure(log *logr.Logger, ws *workspacev1.Workspace) {
 	class := ws.Spec.Class
 	tpe := string(ws.Spec.Type)
 
-	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues("unknown", tpe, class)
+	counter, err := m.totalFailuresCounterVec.GetMetricWithLabelValues(tpe, class)
+	if err != nil {
+		log.Error(err, "could not count workspace failure", "type", tpe, "class", class)
+	}
+
+	counter.Inc()
+}
+
+func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1.Workspace) {
+	var reason string
+	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)); c != nil {
+		reason = StopReasonFailed
+		if !wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)) {
+			// Don't record 'failed' if there was a start failure.
+			reason = StopReasonStartFailure
+		} else if strings.Contains(c.Message, "Pod ephemeral local storage usage exceeds the total limit of containers") {
+			reason = StopReasonOutOfSpace
+		}
+	} else if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) {
+		reason = StopReasonAborted
+	} else if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) {
+		reason = StopReasonTimeout
+	} else if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed)) {
+		reason = StopReasonTabClosed
+	} else {
+		reason = StopReasonRegular
+	}
+
+	class := ws.Spec.Class
+	tpe := string(ws.Spec.Type)
+
+	counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe, class)
 	if err != nil {
 		log.Error(err, "could not count workspace stop", "reason", "unknown", "type", tpe, "class", class)
 	}
@@ -210,6 +261,7 @@ type metricState struct {
 	recordedStartTime       bool
 	recordedInitFailure     bool
 	recordedStartFailure    bool
+	recordedFailure         bool
 	recordedContentReady    bool
 	recordedBackupFailed    bool
 	recordedBackupCompleted bool
@@ -223,7 +275,8 @@ func newMetricState(ws *workspacev1.Workspace) metricState {
 		// each workspace.
 		recordedStartTime:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
 		recordedInitFailure:     wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure),
-		recordedStartFailure:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)),
+		recordedStartFailure:    ws.Status.Phase == workspacev1.WorkspacePhaseStopped && !wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)),
+		recordedFailure:         wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)),
 		recordedContentReady:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)),
 		recordedBackupFailed:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)),
 		recordedBackupCompleted: wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)),
@@ -245,6 +298,7 @@ func (m *controllerMetrics) Describe(ch chan<- *prometheus.Desc) {
 	m.startupTimeHistVec.Describe(ch)
 	m.totalStopsCounterVec.Describe(ch)
 	m.totalStartsFailureCounterVec.Describe(ch)
+	m.totalFailuresCounterVec.Describe(ch)
 
 	m.totalBackupCounterVec.Describe(ch)
 	m.totalBackupFailureCounterVec.Describe(ch)
@@ -260,6 +314,7 @@ func (m *controllerMetrics) Collect(ch chan<- prometheus.Metric) {
 	m.startupTimeHistVec.Collect(ch)
 	m.totalStopsCounterVec.Collect(ch)
 	m.totalStartsFailureCounterVec.Collect(ch)
+	m.totalFailuresCounterVec.Collect(ch)
 
 	m.totalBackupCounterVec.Collect(ch)
 	m.totalBackupFailureCounterVec.Collect(ch)
