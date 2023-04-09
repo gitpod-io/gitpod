@@ -1,6 +1,7 @@
 # Change Log
 
 ## March 2023
+- Revert "handle api errors in error boundary" ([#17111](https://github.com/gitpod-io/gitpod/pull/17111)) - [@AlexTugarev](https://github.com/AlexTugarev)
 - Update JetBrains IDE images to most recent stable version. ([#17043](https://github.com/gitpod-io/gitpod/pull/17043)) - [@roboquat](https://github.com/roboquat)
 - Allow to disable workspace sharing in team settings ([#17042](https://github.com/gitpod-io/gitpod/pull/17042)) - [@akosyakov](https://github.com/akosyakov), [@easyCZ](https://github.com/easyCZ), [@mustard-mh](https://github.com/mustard-mh), [@selfcontained](https://github.com/selfcontained)
 - Update JetBrains IDE images to most recent stable version. ([#16989](https://github.com/gitpod-io/gitpod/pull/16989)) - [@roboquat](https://github.com/roboquat)
