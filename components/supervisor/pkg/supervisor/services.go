@@ -45,10 +45,11 @@ type RegisterableRESTService interface {
 }
 
 type DesktopIDEStatus struct {
-	Link     string `json:"link"`
-	Label    string `json:"label"`
-	ClientID string `json:"clientID,omitempty"`
-	Kind     string `json:"kind,omitempty"`
+	Link              string   `json:"link"`
+	Label             string   `json:"label"`
+	ClientID          string   `json:"clientID,omitempty"`
+	Kind              string   `json:"kind,omitempty"`
+	InstallationSteps []string `json:"installationSteps,omitempty"`
 }
 
 type ideReadyState struct {
@@ -170,6 +171,7 @@ func (s *statusService) IDEStatus(ctx context.Context, req *api.IDEStatusRequest
 			desktopStatus.Label = i.Label
 			desktopStatus.ClientID = i.ClientID
 			desktopStatus.Kind = i.Kind
+			desktopStatus.InstallationSteps = i.InstallationSteps
 		}
 		ok = ok && okR
 	}

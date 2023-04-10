@@ -108,7 +108,13 @@ LoadingFrame.load().then(async (loading) => {
         });
         //#endregion
 
-        type DesktopIDEStatus = { link: string; label: string; clientID?: string; kind?: String };
+        type DesktopIDEStatus = {
+            link: string;
+            label: string;
+            clientID?: string;
+            kind?: string;
+            installationSteps?: string[];
+        };
         let isDesktopIde: undefined | boolean = undefined;
         let ideStatus: undefined | { desktop: DesktopIDEStatus } = undefined;
 
@@ -140,7 +146,8 @@ LoadingFrame.load().then(async (loading) => {
                                 desktopIDE: {
                                     link: ideStatus.desktop.link,
                                     label: ideStatus.desktop.label || "Open Desktop IDE",
-                                    clientID: ideStatus.desktop.clientID!,
+                                    clientID: ideStatus.desktop.clientID,
+                                    installationSteps: ideStatus.desktop.installationSteps,
                                 },
                             });
                             if (!desktopRedirected) {
@@ -256,7 +263,7 @@ LoadingFrame.load().then(async (loading) => {
         }
         if (!isWorkspaceInstancePhase("running")) {
             if (debugWorkspace && frontendDashboardServiceClient.latestInfo) {
-                window.open('', '_self')?.close()
+                window.open("", "_self")?.close();
             }
             await new Promise<void>((resolve) => {
                 frontendDashboardServiceClient.onInfoUpdate((status) => {
@@ -269,8 +276,8 @@ LoadingFrame.load().then(async (loading) => {
         const supervisorServiceClient = SupervisorServiceClient.get();
         if (debugWorkspace) {
             supervisorServiceClient.supervisorWillShutdown.then(() => {
-                window.open('', '_self')?.close()
-            })
+                window.open("", "_self")?.close();
+            });
         }
         const [ideStatus] = await Promise.all([
             supervisorServiceClient.ideReady,

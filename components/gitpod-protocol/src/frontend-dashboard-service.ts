@@ -63,9 +63,10 @@ export namespace IDEFrontendDashboardService {
     export interface SetStateData {
         ideFrontendFailureCause?: string;
         desktopIDE?: {
-            clientID: string;
+            clientID?: string;
             link: string;
             label?: string;
+            installationSteps?: string[];
         };
     }
 

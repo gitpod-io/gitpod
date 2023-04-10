@@ -31,6 +31,15 @@ import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { workspacesService } from "../service/public-api";
+import DOMPurify from "dompurify";
+
+DOMPurify.addHook("afterSanitizeAttributes", function (node) {
+    if (node.tagName && node.tagName.toLowerCase() === "a") {
+        node.setAttribute("class", "gp-link");
+        node.setAttribute("target", "_blank");
+        node.setAttribute("rel", "noreferrer noopener");
+    }
+});
 
 const sessionId = v4();
 
@@ -94,6 +103,7 @@ export interface StartWorkspaceState {
         link: string;
         label: string;
         clientID?: string;
+        installationSteps?: string[];
     };
     ideOptions?: IDEOptions;
     isSSHModalVisible?: boolean;
@@ -124,7 +134,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                         const label = data.desktopIDE.label || "Open Desktop IDE";
                         const clientID = data.desktopIDE.clientID;
                         const link = data.desktopIDE?.link;
-                        this.setState({ desktopIde: { link, label, clientID } });
+                        const installationSteps = data.desktopIDE?.installationSteps;
+                        this.setState({ desktopIde: { link, label, clientID, installationSteps } });
                     }
                 }),
             );
@@ -515,15 +526,25 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                     phase = StartPhase.IdeReady;
                     const openLink = this.state.desktopIde.link;
                     const openLinkLabel = this.state.desktopIde.label;
-                    const clientID = this.state.desktopIde.clientID;
-                    const client = clientID ? this.state.ideOptions?.clients?.[clientID] : undefined;
-                    const installationSteps = client?.installationSteps?.length && (
+                    let installationSteps = this.state.desktopIde.installationSteps;
+                    if (!installationSteps) {
+                        const clientID = this.state.desktopIde.clientID;
+                        const client = clientID ? this.state.ideOptions?.clients?.[clientID] : undefined;
+                        installationSteps = client?.installationSteps;
+                    }
+                    const installationStepsDiv = installationSteps?.length && (
                         <div className="flex flex-col text-center m-auto text-sm w-72 text-gray-400">
-                            {client.installationSteps.map((step) => (
+                            {installationSteps.map((step) => (
                                 <div
                                     dangerouslySetInnerHTML={{
                                         // eslint-disable-next-line no-template-curly-in-string
-                                        __html: step.replaceAll("${OPEN_LINK_LABEL}", openLinkLabel),
+                                        __html: DOMPurify.sanitize(
+                                            step.replaceAll("${OPEN_LINK_LABEL}", openLinkLabel),
+                                            {
+                                                ALLOWED_TAGS: ["b", "a"],
+                                                ALLOWED_ATTR: ["href"],
+                                            },
+                                        ),
                                     }}
                                 />
                             ))}
@@ -545,7 +566,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                     </a>
                                 </div>
                             </div>
-                            {installationSteps}
+                            {installationStepsDiv}
                             <div className="mt-10 justify-center flex space-x-2">
                                 <ContextMenu
                                     menuEntries={[
