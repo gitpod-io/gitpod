@@ -11,14 +11,14 @@ defaultArgs:
   codeVersion: 1.77.0
   codeQuality: stable
   noVerifyJBPlugin: false
-  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2022.3.3.tar.gz"
-  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2022.3.4.tar.gz"
-  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2022.3.3.tar.gz"
-  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2022.3.3.tar.gz"
-  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2022.3.3.tar.gz"
-  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2022.3.4.tar.gz"
-  riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2022.3.3.tar.gz"
-  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2022.3.3.tar.gz"
+  intellijDownloadUrl: "https://download.jetbrains.com/idea/ideaIU-2023.1.tar.gz"
+  golandDownloadUrl: "https://download.jetbrains.com/go/goland-2023.1.tar.gz"
+  pycharmDownloadUrl: "https://download.jetbrains.com/python/pycharm-professional-2023.1.tar.gz"
+  phpstormDownloadUrl: "https://download.jetbrains.com/webide/PhpStorm-2023.1.tar.gz"
+  rubymineDownloadUrl: "https://download.jetbrains.com/ruby/RubyMine-2023.1.tar.gz"
+  webstormDownloadUrl: "https://download.jetbrains.com/webstorm/WebStorm-2023.1.tar.gz"
+  riderDownloadUrl: "https://download.jetbrains.com/rider/JetBrains.Rider-2023.1.tar.gz"
+  clionDownloadUrl: "https://download.jetbrains.com/cpp/CLion-2023.1.1.tar.gz"
   jbBackendVersion: "latest"
   REPLICATED_API_TOKEN: ""
   REPLICATED_APP: ""
