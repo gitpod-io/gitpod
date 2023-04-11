@@ -36,16 +36,6 @@ export interface ContextMenuEntry {
 function ContextMenu(props: ContextMenuProps) {
     const [expanded, setExpanded] = useState(false);
 
-    const { changeMenuState } = props;
-
-    useEffect(() => {
-        return () => {
-            if (changeMenuState) {
-                changeMenuState(!expanded);
-            }
-        };
-    }, [expanded]);
-
     const toggleExpanded = () => {
         setExpanded(!expanded);
         if (props.changeMenuState) {
@@ -80,6 +70,7 @@ function ContextMenu(props: ContextMenuProps) {
             window.removeEventListener("keydown", keydownHandler);
             window.removeEventListener("click", clickHandler);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Empty array ensures that effect is only run on mount and unmount
 
     // Default 'children' is the three dots hamburger button.

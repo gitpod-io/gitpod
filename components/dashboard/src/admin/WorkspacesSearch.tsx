@@ -66,12 +66,14 @@ export function WorkspaceSearch(props: Props) {
         } else {
             setCurrentWorkspaceState(undefined);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
     useEffect(() => {
         if (props.user) {
             search();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [props.user]);
 
     if (currentWorkspace) {

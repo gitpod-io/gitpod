@@ -4,11 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useEffect, useState } from "react";
-import { getGitpodService } from "../service/service";
+import { useState } from "react";
 import { trackEvent } from "../Analytics";
 import WorkspaceClass from "../components/WorkspaceClass";
-import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
 import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 
 interface SelectWorkspaceClassProps {

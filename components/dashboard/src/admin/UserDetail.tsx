@@ -473,7 +473,7 @@ function renderBillingModeProperty(billingMode?: BillingMode): JSX.Element {
                     >
                         <p className="flex justify-left text-gitpod-red">
                             <span>UBP blocked by:</span>
-                            <img className="m-2" src={CaretDown} />
+                            <img className="m-2" src={CaretDown} alt="caret icon pointing down" />
                         </p>
                     </ContextMenu>
                 )}

@@ -35,6 +35,7 @@ export default function ConfirmationModal(props: {
     const buttonDisabled = useRef(props.buttonDisabled);
     useEffect(() => {
         buttonDisabled.current = props.buttonDisabled;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (

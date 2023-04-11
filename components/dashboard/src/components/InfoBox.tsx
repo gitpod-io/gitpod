@@ -14,7 +14,7 @@ export default function InfoBox(p: { className?: string; children?: React.ReactN
                 (p.className || "")
             }
         >
-            <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
+            <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} alt="info icon" />
             <span>{p.children}</span>
         </div>
     );

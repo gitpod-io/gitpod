@@ -108,7 +108,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                 e.preventDefault();
             }
         },
-        [filteredOptions, props, selectedElementTemp, setFocussedElement, showDropDown, toggleDropDown],
+        [filteredOptions, props, search, selectedElementTemp, setFocussedElement, showDropDown, toggleDropDown],
     );
 
     const handleBlur = useCallback(

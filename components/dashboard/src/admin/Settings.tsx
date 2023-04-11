@@ -44,6 +44,7 @@ export default function Settings() {
             const setting = await getGitpodService().server.adminGetSettings();
             setAdminSettings(setting);
         })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const actuallySetTelemetryPrefs = async (value: InstallationAdminSettings) => {
