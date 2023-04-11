@@ -46,6 +46,7 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.1 // indirect
+	github.com/bufbuild/connect-go v1.5.2 // indirect
 	github.com/bugsnag/bugsnag-go v1.5.3 // indirect
 	github.com/bugsnag/panicwrap v1.2.0 // indirect
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
