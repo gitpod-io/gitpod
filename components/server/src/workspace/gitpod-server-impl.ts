@@ -1136,6 +1136,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             logContext = { userId: user.id };
 
+            //TODO(se) remove this implicit check and let instead clients do the checking.
             // Credit check runs in parallel with the other operations up until we start consuming resources.
             // Make sure to await for the creditCheck promise in the right places.
             const runningInstancesPromise = this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
@@ -3669,6 +3670,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getIDToken(): Promise<void> {}
     public async resolveContext(ctx: TraceContextWithSpan, contextUrl: string): Promise<WorkspaceContext> {
         const user = this.checkAndBlockUser("resolveContext");
-        return this.contextParser.handle(ctx, user, contextUrl);
+        const normalizedCtxURL = this.contextParser.normalizeContextURL(contextUrl);
+        return this.contextParser.handle(ctx, user, normalizedCtxURL);
     }
 }

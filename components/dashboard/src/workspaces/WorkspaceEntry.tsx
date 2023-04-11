@@ -13,12 +13,14 @@ import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
+import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
 
 type Props = {
     info: WorkspaceInfo;
+    shortVersion?: boolean;
 };
 
-export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
+export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion }) => {
     const [menuActive, setMenuActive] = useState(false);
 
     const workspace = info.workspace;
@@ -63,32 +65,36 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info }) => {
                     </a>
                 </Tooltip>
             </ItemField>
-            <ItemField className="w-4/12 flex flex-col my-auto">
-                <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
-                    {workspace.description}
-                </div>
-                <a href={normalizedContextUrl}>
-                    <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">
-                        {normalizedContextUrlDescription}
-                    </div>
-                </a>
-            </ItemField>
-            <ItemField className="w-2/12 flex flex-col my-auto">
-                <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
-                    <Tooltip content={currentBranch}>{currentBranch}</Tooltip>
-                </div>
-                <div className="mr-auto">
-                    <PendingChangesDropdown workspaceInstance={info.latestInstance} />
-                </div>
-            </ItemField>
-            <ItemField className="w-2/12 flex my-auto">
-                <Tooltip content={`Created ${dayjs(info.workspace.creationTime).fromNow()}`}>
-                    <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
-                        {dayjs(WorkspaceInfo.lastActiveISODate(info)).fromNow()}
-                    </div>
-                </Tooltip>
-            </ItemField>
-            <WorkspaceEntryOverflowMenu changeMenuState={changeMenuState} info={info} />
+            {!shortVersion && (
+                <>
+                    <ItemField className="w-4/12 flex flex-col my-auto">
+                        <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
+                            {workspace.description}
+                        </div>
+                        <a href={normalizedContextUrl}>
+                            <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">
+                                {normalizedContextUrlDescription}
+                            </div>
+                        </a>
+                    </ItemField>
+                    <ItemField className="w-2/12 flex flex-col my-auto">
+                        <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
+                            <Tooltip content={currentBranch}>{currentBranch}</Tooltip>
+                        </div>
+                        <div className="mr-auto">
+                            <PendingChangesDropdown workspaceInstance={info.latestInstance} />
+                        </div>
+                    </ItemField>
+                    <ItemField className="w-2/12 flex my-auto">
+                        <Tooltip content={`Created ${dayjs(info.workspace.creationTime).fromNow()}`}>
+                            <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">
+                                {dayjs(WorkspaceInfo.lastActiveISODate(info)).fromNow()}
+                            </div>
+                        </Tooltip>
+                    </ItemField>
+                    <WorkspaceEntryOverflowMenu changeMenuState={changeMenuState} info={info} />
+                </>
+            )}
         </Item>
     );
 };
