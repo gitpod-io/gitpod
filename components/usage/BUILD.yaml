@@ -5,10 +5,12 @@ packages:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
+      - "**/fixtures/*.yaml"
     deps:
       - components/gitpod-db/go:lib
       - components/common-go:lib
       - components/usage-api/go:lib
+      - components/public-api/go:lib
       - components/content-service-api/go:lib
       - components/gitpod-db/go:init-testdb
     env:
@@ -24,6 +26,7 @@ packages:
       - components/gitpod-db/go:lib
       - components/common-go:lib
       - components/usage-api/go:lib
+      - components/public-api/go:lib
       - components/content-service-api/go:lib
       - components/gitpod-db/go:init-testdb
     srcs:

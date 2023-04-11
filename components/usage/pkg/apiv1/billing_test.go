@@ -7,14 +7,153 @@ package apiv1
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
+	"github.com/bufbuild/connect-go"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
+	experimental_v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
+	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
+	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
+	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	stripe_api "github.com/stripe/stripe-go/v72"
+	"gopkg.in/dnaeon/go-vcr.v3/cassette"
+	"gopkg.in/dnaeon/go-vcr.v3/recorder"
 )
+
+func TestBillingService_OnChargeDispute(t *testing.T) {
+	r := NewStripeRecorder(t, "stripe_on_charge_dispute")
+
+	client := r.GetDefaultClient()
+	stripeClient, err := stripe.NewWithHTTPClient(stripe.ClientConfig{
+		SecretKey: "testkey",
+	}, client)
+	require.NoError(t, err)
+
+	stubUserService := &StubUserService{}
+	svc := &BillingService{
+		stripeClient: stripeClient,
+		teamsService: &StubTeamsService{},
+		userService:  stubUserService,
+	}
+
+	_, err = svc.OnChargeDispute(context.Background(), &v1.OnChargeDisputeRequest{
+		DisputeId: "dp_1MrLJpAyBDPbWrhawbWHEIDL",
+	})
+	require.NoError(t, err)
+
+	require.Equal(t, stubUserService.blockedUsers, []string{"owner_id"})
+}
+
+func NewStripeRecorder(t *testing.T, name string) *recorder.Recorder {
+	t.Helper()
+
+	r, err := recorder.New(fmt.Sprintf("fixtures/%s", name))
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		r.Stop()
+	})
+
+	// Add a hook which removes Authorization headers from all requests
+	hook := func(i *cassette.Interaction) error {
+		delete(i.Request.Headers, "Authorization")
+		return nil
+	}
+	r.AddHook(hook, recorder.AfterCaptureHook)
+
+	if r.Mode() != recorder.ModeRecordOnce {
+		require.Fail(t, "Recorder should be in ModeRecordOnce")
+	}
+
+	return r
+}
+
+type StubTeamsService struct {
+	v1connect.TeamsServiceClient
+}
+
+func (s *StubTeamsService) CreateTeam(context.Context, *connect.Request[experimental_v1.CreateTeamRequest]) (*connect.Response[experimental_v1.CreateTeamResponse], error) {
+	return nil, nil
+}
+
+func (s *StubTeamsService) GetTeam(ctx context.Context, req *connect.Request[experimental_v1.GetTeamRequest]) (*connect.Response[experimental_v1.GetTeamResponse], error) {
+	// generate a stub which returns a team
+	team := &experimental_v1.Team{
+		Id: req.Msg.GetTeamId(),
+		Members: []*experimental_v1.TeamMember{
+			{
+				UserId: "owner_id",
+				Role:   experimental_v1.TeamRole_TEAM_ROLE_OWNER,
+			},
+			{
+				UserId: "non_owner_id",
+				Role:   experimental_v1.TeamRole_TEAM_ROLE_MEMBER,
+			},
+		},
+	}
+
+	return connect.NewResponse(&experimental_v1.GetTeamResponse{
+		Team: team,
+	}), nil
+}
+
+func (s *StubTeamsService) ListTeams(context.Context, *connect.Request[experimental_v1.ListTeamsRequest]) (*connect.Response[experimental_v1.ListTeamsResponse], error) {
+	return nil, nil
+}
+func (s *StubTeamsService) DeleteTeam(context.Context, *connect.Request[experimental_v1.DeleteTeamRequest]) (*connect.Response[experimental_v1.DeleteTeamResponse], error) {
+	return nil, nil
+}
+func (s *StubTeamsService) JoinTeam(context.Context, *connect.Request[experimental_v1.JoinTeamRequest]) (*connect.Response[experimental_v1.JoinTeamResponse], error) {
+	return nil, nil
+}
+func (s *StubTeamsService) ResetTeamInvitation(context.Context, *connect.Request[experimental_v1.ResetTeamInvitationRequest]) (*connect.Response[experimental_v1.ResetTeamInvitationResponse], error) {
+	return nil, nil
+}
+func (s *StubTeamsService) UpdateTeamMember(context.Context, *connect.Request[experimental_v1.UpdateTeamMemberRequest]) (*connect.Response[experimental_v1.UpdateTeamMemberResponse], error) {
+	return nil, nil
+}
+func (s *StubTeamsService) DeleteTeamMember(context.Context, *connect.Request[experimental_v1.DeleteTeamMemberRequest]) (*connect.Response[experimental_v1.DeleteTeamMemberResponse], error) {
+	return nil, nil
+}
+
+type StubUserService struct {
+	blockedUsers []string
+}
+
+func (s *StubUserService) GetAuthenticatedUser(context.Context, *connect.Request[experimental_v1.GetAuthenticatedUserRequest]) (*connect.Response[experimental_v1.GetAuthenticatedUserResponse], error) {
+	return nil, nil
+}
+
+// ListSSHKeys lists the public SSH keys.
+func (s *StubUserService) ListSSHKeys(context.Context, *connect.Request[experimental_v1.ListSSHKeysRequest]) (*connect.Response[experimental_v1.ListSSHKeysResponse], error) {
+	return nil, nil
+}
+
+// CreateSSHKey adds a public SSH key.
+func (s *StubUserService) CreateSSHKey(context.Context, *connect.Request[experimental_v1.CreateSSHKeyRequest]) (*connect.Response[experimental_v1.CreateSSHKeyResponse], error) {
+	return nil, nil
+}
+
+// GetSSHKey retrieves an ssh key by ID.
+func (s *StubUserService) GetSSHKey(context.Context, *connect.Request[experimental_v1.GetSSHKeyRequest]) (*connect.Response[experimental_v1.GetSSHKeyResponse], error) {
+	return nil, nil
+}
+
+// DeleteSSHKey removes a public SSH key.
+func (s *StubUserService) DeleteSSHKey(context.Context, *connect.Request[experimental_v1.DeleteSSHKeyRequest]) (*connect.Response[experimental_v1.DeleteSSHKeyResponse], error) {
+	return nil, nil
+}
+func (s *StubUserService) GetGitToken(context.Context, *connect.Request[experimental_v1.GetGitTokenRequest]) (*connect.Response[experimental_v1.GetGitTokenResponse], error) {
+	return nil, nil
+}
+func (s *StubUserService) BlockUser(ctx context.Context, req *connect.Request[experimental_v1.BlockUserRequest]) (*connect.Response[experimental_v1.BlockUserResponse], error) {
+	s.blockedUsers = append(s.blockedUsers, req.Msg.GetUserId())
+	return connect.NewResponse(&experimental_v1.BlockUserResponse{}), nil
+}
 
 func TestBalancesForStripeCostCenters(t *testing.T) {
 	attributionIDForStripe := db.NewUserAttributionID(uuid.New().String())

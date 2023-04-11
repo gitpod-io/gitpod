@@ -6,6 +6,7 @@ package server
 
 import (
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gitpod-io/gitpod/usage/pkg/scheduler"
@@ -18,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/gitpod-io/gitpod/usage/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
@@ -171,10 +173,14 @@ func Start(cfg Config, version string) error {
 func registerGRPCServices(srv *baseserver.Server, conn *gorm.DB, stripeClient *stripe.Client, pricer *apiv1.WorkspacePricer, cfg Config) error {
 	ccManager := db.NewCostCenterManager(conn, cfg.DefaultSpendingLimit)
 	v1.RegisterUsageServiceServer(srv.GRPC(), apiv1.NewUsageService(conn, pricer, ccManager))
+
+	teamsService := v1connect.NewTeamsServiceClient(http.DefaultClient, fmt.Sprintf("http://%s", cfg.ServerAddress))
+	userService := v1connect.NewUserServiceClient(http.DefaultClient, fmt.Sprintf("http://%s", cfg.ServerAddress))
+
 	if stripeClient == nil {
 		v1.RegisterBillingServiceServer(srv.GRPC(), &apiv1.BillingServiceNoop{})
 	} else {
-		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient, conn, ccManager, cfg.StripePrices))
+		v1.RegisterBillingServiceServer(srv.GRPC(), apiv1.NewBillingService(stripeClient, conn, ccManager, cfg.StripePrices, teamsService, userService))
 	}
 	return nil
 }

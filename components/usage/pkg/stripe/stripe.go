@@ -74,10 +74,7 @@ func New(config ClientConfig) (*Client, error) {
 func NewWithHTTPClient(config ClientConfig, c *http.Client) (*Client, error) {
 	sc := &client.API{}
 
-	sc.Init(config.SecretKey, stripe.NewBackends(&http.Client{
-		Transport: http.DefaultTransport,
-		Timeout:   10 * time.Second,
-	}))
+	sc.Init(config.SecretKey, stripe.NewBackends(c))
 
 	return &Client{sc: sc}, nil
 }
@@ -422,6 +419,27 @@ func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID st
 	}
 
 	return customer, nil
+}
+
+func (c *Client) GetDispute(ctx context.Context, disputeID string) (dispute *stripe.Dispute, err error) {
+	now := time.Now()
+	reportStripeRequestStarted("dispute_get")
+	defer func() {
+		reportStripeRequestCompleted("dispute_get", err, time.Since(now))
+	}()
+	params := &stripe.DisputeParams{
+		Params: stripe.Params{
+			Context: ctx,
+		},
+	}
+	params.AddExpand("payment_intent.customer")
+
+	dispute, err = c.sc.Disputes.Get(disputeID, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve dispute ID: %s", disputeID)
+	}
+
+	return dispute, nil
 }
 
 type PaymentHoldResult string
