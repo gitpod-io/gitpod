@@ -76,12 +76,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"If you don't see an open dialog in your browser, make sure you have the <a target='_blank' class='gp-link' href='https://www.gitpod.io/docs/ides-and-editors/jetbrains-gateway#getting-started-jetbrains-gateway'>JetBrains Gateway with Gitpod Plugin</a> installed on your machine, and then click <b>${OPEN_LINK_LABEL}</b> below.",
 					},
 				},
-				// TODO: should be contributed by IDE plugin
-				"jetbrains": {
-					InstallationSteps: []string{
-						"Allow opening <a target='_blank' class='gp-link' href='https://www.jetbrains.com/toolbox-app/'>Toolbox App</a> in the browser dialog. If you don't see a dialog, click <b>${OPEN_LINK_LABEL}</b> below.",
-					},
-				},
 			},
 			Options: map[string]ide_config.IDEOption{
 				"code": {
