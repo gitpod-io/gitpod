@@ -2680,9 +2680,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     async connectWithLinkedIn(ctx: TraceContextWithSpan, code: string): Promise<void> {
         traceAPIParams(ctx, { code });
-        const user = this.checkAndBlockUser("connectWithLinkedIn");
-        const { accessToken, expiresAt } = await this.linkedInService.getAccessToken(code);
-        await this.userService.setLinkedInAccessToken(user, accessToken, expiresAt);
+        this.checkAndBlockUser("connectWithLinkedIn");
+        const { accessToken } = await this.linkedInService.getAccessToken(code);
+        const profile = await this.linkedInService.getLinkedInProfile(accessToken);
+        log.info("Got LinkedIn profile:", { profile });
     }
 
     // (SaaS) – admin

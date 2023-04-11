@@ -24,7 +24,7 @@ export const LinkedInBanner: FC<Props> = () => {
         async () => {
             return (await getGitpodService().server.getLinkedInClientId()) || "";
         },
-        { enabled: false },
+        { enabled: true },
     );
 
     const { linkedInLogin } = useLinkedIn({

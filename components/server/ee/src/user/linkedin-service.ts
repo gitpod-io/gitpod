@@ -6,6 +6,7 @@
 
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { LinkedInProfile } from "@gitpod/gitpod-protocol/src/protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import fetch from "node-fetch";
 import { ResponseError } from "vscode-jsonrpc";
@@ -38,8 +39,43 @@ export class LinkedInService {
         return data;
     }
 
-    // TODO(janx): retrieve LinkedIn profile, profile pic, and email address: https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin
-    async getLinkedInProfile(): Promise<LinkedInProfile> {
-        throw new Error("Not implemented");
+    // Retrieve the user's profile from LinkedIn using the following API:
+    // https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin
+    async getLinkedInProfile(accessToken: string): Promise<LinkedInProfile> {
+        const profileUrl =
+            "https://api.linkedin.com/v2/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))";
+        const emailUrl = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";
+        // Fetch both the user's profile and email address in parallel
+        const [profileResponse, emailResponse] = await Promise.all([
+            fetch(profileUrl, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }),
+            fetch(emailUrl, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            }),
+        ]);
+        const profileData = await profileResponse.json();
+        if (profileData.error) {
+            throw new Error(profileData.error_description);
+        }
+        const emailData = await emailResponse.json();
+        if (emailData.error) {
+            throw new Error(emailData.error_description);
+        }
+        log.info("Got LinkedIn data", { profileData, emailData });
+
+        return {
+            id: profileData.id,
+            firstName: "",
+            lastName: "",
+            profilePicture: "",
+            emailAddress: emailData.elements[0]["handle~"].emailAddress,
+        };
     }
 }
