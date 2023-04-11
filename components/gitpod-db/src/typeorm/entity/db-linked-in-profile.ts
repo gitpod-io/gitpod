@@ -22,4 +22,7 @@ export class DBLinkedInProfile {
         nullable: false,
     })
     profile: LinkedInProfile;
+
+    @Column("varchar")
+    creationTime: string;
 }
