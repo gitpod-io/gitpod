@@ -32,6 +32,14 @@ export const LinkedInBanner: FC<Props> = () => {
         redirectUri: `${window.location.origin}/linkedin`,
         onSuccess: (code) => {
             console.log("success", code);
+            getGitpodService()
+                .server.connectWithLinkedIn(code)
+                .then(() => {
+                    console.log("LinkedIn connected");
+                })
+                .catch((error) => {
+                    console.error("LinkedIn connection failed", error);
+                });
         },
         onError: (error) => {
             console.log("error", error);

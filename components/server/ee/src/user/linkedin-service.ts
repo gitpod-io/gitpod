@@ -36,6 +36,7 @@ export class LinkedInService {
         if (data.error) {
             throw new Error(data.error_description);
         }
+        log.info("Got LinkedIn access token", { data });
         return data;
     }
 
@@ -75,7 +76,7 @@ export class LinkedInService {
             firstName: "",
             lastName: "",
             profilePicture: "",
-            emailAddress: emailData.elements[0]["handle~"].emailAddress,
+            emailAddress: "",
         };
     }
 }
