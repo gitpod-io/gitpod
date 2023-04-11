@@ -102,9 +102,8 @@ export default function SelectIDE(props: SelectIDEProps) {
                     </a>
                 </p>
             )}
-            
+
             <CheckboxInput
-                value="Enable latest release"
                 label="Latest Release (Unstable)"
                 hint={
                     <span>

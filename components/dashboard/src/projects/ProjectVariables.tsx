@@ -173,7 +173,6 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                 </div>
                 <CheckboxInputContainer>
                     <CheckboxInput
-                        value="Hide Variable"
                         label="Hide Variable in Workspaces"
                         hint="Unset this environment variable so that it's not accessible from the terminal in workspaces."
                         checked={censored}

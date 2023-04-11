@@ -67,7 +67,6 @@ export default function Settings() {
                 </p>
                 <CheckboxInputContainer>
                     <CheckboxInput
-                        value="Enable usage telemetry"
                         label="Enable usage telemetry"
                         hint="Enable usage telemetry on your Gitpod instance. A preview of your telemetry is available
                         below."
@@ -81,7 +80,6 @@ export default function Settings() {
                     />
 
                     <CheckboxInput
-                        value="Include customer ID"
                         label="Include customer ID in telemetry"
                         hint="Include an optional customer ID in usage telemetry to provide individualized support."
                         checked={adminSettings?.sendCustomerID ?? false}

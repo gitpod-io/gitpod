@@ -126,7 +126,6 @@ export default function ProjectSettingsView() {
             )}
             <CheckboxInputContainer>
                 <CheckboxInput
-                    value="Enable Incremental Prebuilds"
                     label="Enable Incremental Prebuilds"
                     hint={
                         <span>
@@ -142,14 +141,12 @@ export default function ProjectSettingsView() {
                     onChange={(checked) => updateProjectSettings({ useIncrementalPrebuilds: checked })}
                 />
                 <CheckboxInput
-                    value="Cancel Prebuilds"
                     label="Cancel Prebuilds on Outdated Commits"
                     hint="Cancel pending or running prebuilds on the same branch when new commits are pushed."
                     checked={!project.settings?.keepOutdatedPrebuildsRunning}
                     onChange={(checked) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !checked })}
                 />
                 <CheckboxInput
-                    value="Use last successful Prebuild"
                     label={
                         <span>
                             Use Last Successful Prebuild{" "}

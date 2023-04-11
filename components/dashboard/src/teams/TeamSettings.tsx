@@ -148,7 +148,6 @@ export default function TeamSettingsPage() {
                     <Heading2 className="pt-12">Collaboration & Sharing</Heading2>
                     <CheckboxInputContainer>
                         <CheckboxInput
-                            value="allow workspace sharing"
                             label="Workspace Sharing"
                             hint="Allow workspaces created within an Organization to share the workspace with any authenticated user."
                             checked={!settings?.workspaceSharingDisabled}

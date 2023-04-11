@@ -429,13 +429,7 @@ export default function UserDetail(p: { user: User }) {
                     className="mt-0"
                 >
                     {flags.map((e) => (
-                        <CheckboxInput
-                            value="edit feature flags"
-                            key={e.title}
-                            label={e.title}
-                            checked={!!e.checked}
-                            onChange={e.onClick}
-                        />
+                        <CheckboxInput key={e.title} label={e.title} checked={!!e.checked} onChange={e.onClick} />
                     ))}
                 </CheckboxInputField>
             </Modal>
@@ -454,13 +448,7 @@ export default function UserDetail(p: { user: User }) {
                     className="mt-0"
                 >
                     {rop.map((e) => (
-                        <CheckboxInput
-                            value="edit user permissions"
-                            key={e.title}
-                            label={e.title}
-                            checked={!!e.checked}
-                            onChange={e.onClick}
-                        />
+                        <CheckboxInput key={e.title} label={e.title} checked={!!e.checked} onChange={e.onClick} />
                     ))}
                 </CheckboxInputField>
             </Modal>

@@ -85,7 +85,6 @@ export default function Notifications() {
                 <Heading2>Email Notification Preferences</Heading2>
                 <CheckboxInputContainer>
                     <CheckboxInput
-                        value="notify"
                         label="Account Notifications [required]"
                         hint="Receive essential emails about changes to your account"
                         checked={true}
@@ -93,21 +92,18 @@ export default function Notifications() {
                         onChange={(checked) => {}}
                     />
                     <CheckboxInput
-                        value="toggle onboarding mails"
                         label="Onboarding guide"
                         hint="In the first weeks after you sign up, we'll guide you through the product, so you can get the most out of it"
                         checked={isOnboardingMail}
                         onChange={toggleOnboardingMail}
                     />
                     <CheckboxInput
-                        value="toggle changelog mails"
                         label="Changelog"
                         hint="Be the first to learn about new features and overall product improvements"
                         checked={isChangelogMail}
                         onChange={toggleChangelogMail}
                     />
                     <CheckboxInput
-                        value="toggle developer experience mails"
                         label="Developer Experience & Product Tips"
                         hint="Bring back joy and speed to your workflows"
                         checked={isDevXMail}
