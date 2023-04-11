@@ -112,6 +112,7 @@ import { API } from "./api/server";
 import { LinkedInService } from "./linkedin-service";
 import { AuthJWT } from "./auth/jwt";
 import { SnapshotService } from "./workspace/snapshot-service";
+import { APIWorkspacesService } from "./api/workspaces";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -313,6 +314,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     // grpc / Connect API
     bind(APIUserService).toSelf().inSingletonScope();
     bind(APITeamsService).toSelf().inSingletonScope();
+    bind(APIWorkspacesService).toSelf().inSingletonScope();
     bind(API).toSelf().inSingletonScope();
 
     bind(AuthJWT).toSelf().inSingletonScope();
