@@ -245,6 +245,7 @@ export function CreateWorkspacePage() {
                     <Button
                         onClick={onClickCreate}
                         autoFocus={true}
+                        size="block"
                         loading={isStarting || isLoading}
                         disabled={
                             !contextURL ||
