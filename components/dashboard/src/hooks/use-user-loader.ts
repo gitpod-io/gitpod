@@ -26,7 +26,8 @@ export const useUserLoader = () => {
         },
         // We'll let an ErrorBoundary catch the error
         useErrorBoundary: true,
-        // Don't retry, if response is an error, user needs to login
+        // It's important we don't retry as we want to show the login screen as quickly as possible if a 401
+        // TODO: In the future we can consider retrying for non 401 errors
         retry: false,
         cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         staleTime: 1000 * 60 * 60 * 1, // 1 hour
