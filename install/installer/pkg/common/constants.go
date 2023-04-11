@@ -40,6 +40,7 @@ const (
 	ServerComponent                 = "server"
 	ServerIAMSessionPort            = 9876
 	ServerInstallationAdminPort     = 9000
+	ServerGRPCAPIPort               = 9877
 	SystemNodeCritical              = "system-node-critical"
 	PaymentEndpointComponent        = "payment-endpoint"
 	PublicApiComponent              = "public-api-server"

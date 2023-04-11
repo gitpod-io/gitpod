@@ -37,6 +37,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ForUsers:            1_000_000_000,
 			MinForUsersOnStripe: 0,
 		},
+		ServerAddress: common.ClusterAddress(common.ServerComponent, ctx.Namespace, common.ServerGRPCAPIPort),
 	}
 
 	expWebAppConfig := common.ExperimentalWebappConfig(ctx)

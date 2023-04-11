@@ -6,8 +6,6 @@ package public_api_server
 
 import (
 	"fmt"
-	"net"
-	"strconv"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"k8s.io/utils/pointer"
@@ -52,15 +50,15 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	cfg := config.Configuration{
 		PublicURL:                         fmt.Sprintf("https://api.%s", ctx.Config.Domain),
-		GitpodServiceURL:                  fmt.Sprintf("ws://%s.%s.svc.cluster.local:%d", server.Component, ctx.Namespace, server.ContainerPort),
+		GitpodServiceURL:                  common.ClusterURL("ws", server.Component, ctx.Namespace, server.ContainerPort),
 		OIDCClientJWTSigningSecretPath:    oidcClientJWTSigningSecretPath,
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,
-		BillingServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", usage.Component, ctx.Namespace), strconv.Itoa(usage.GRPCServicePort)),
-		SessionServiceAddress:             net.JoinHostPort(fmt.Sprintf("%s.%s.svc.cluster.local", common.ServerComponent, ctx.Namespace), strconv.Itoa(common.ServerIAMSessionPort)),
+		BillingServiceAddress:             common.ClusterAddress(usage.Component, ctx.Namespace, usage.GRPCServicePort),
+		SessionServiceAddress:             common.ClusterAddress(common.ServerComponent, ctx.Namespace, common.ServerIAMSessionPort),
 		DatabaseConfigPath:                databaseSecretMountPath,
 		Redis: config.RedisConfiguration{
-			Address: fmt.Sprintf("%s:%d", redis.Component, redis.Port),
+			Address: common.ClusterAddress(redis.Component, ctx.Namespace, redis.Port),
 		},
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{

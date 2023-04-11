@@ -31,5 +31,5 @@ const (
 	AdminCredentialsSecretKey       = "admin.json"
 
 	GRPCAPIName = "grpc"
-	GRPCAPIPort = 9877
+	GRPCAPIPort = common.ServerGRPCAPIPort
 )
