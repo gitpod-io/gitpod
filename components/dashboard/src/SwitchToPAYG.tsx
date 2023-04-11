@@ -59,6 +59,7 @@ type PageState = {
 };
 
 function SwitchToPAYG() {
+    // TODO: remove this comment - added to test build
     const { switchToPAYG } = useContext(FeatureFlagContext);
     const { currency } = useContext(PaymentContext);
 
