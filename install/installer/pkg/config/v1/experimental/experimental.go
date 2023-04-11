@@ -284,6 +284,8 @@ type ProxyConfig struct {
 
 	Configcat *ConfigcatProxyConfig `json:"configcat,omitempty"`
 
+	AnalyticsPlugin *AnalyticsPluginConfig `json:"analyticsPlugin,omitempty"`
+
 	FrontendDevEnabled bool `json:"frontendDevEnabled"`
 }
 
@@ -291,6 +293,10 @@ type ConfigcatProxyConfig struct {
 	BaseUrl       string `json:"baseUrl"`
 	PollInterval  string `json:"pollInterval"`
 	FromConfigMap string `json:"fromConfigMap"`
+}
+
+type AnalyticsPluginConfig struct {
+	SegmentKey string `json:"segmentKey"`
 }
 
 type PublicAPIConfig struct {

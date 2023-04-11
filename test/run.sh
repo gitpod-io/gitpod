@@ -22,10 +22,6 @@ optarg=""
 while getopts rs-: opt; do
   optarg="${!OPTIND}"
   [[ "$opt" = - ]] && opt="-$OPTARG"
-
-  # trim traling whitespace in optarg
-  optarg="${optarg%"${optarg##*[![:space:]]}"}"
-
   case "-$opt" in
     -r|--report)
       REPORT=${optarg}
