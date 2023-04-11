@@ -27,6 +27,7 @@ import { PaymentContext } from "../payment-context";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query";
+import { LinkButton } from "../components/LinkButton";
 
 type PlanWithOriginalPrice = Plan & { originalPrice?: number };
 type Pending = { pendingSince: number };
@@ -394,14 +395,7 @@ export default function PlansPage() {
                 <p className="text-green-600">
                     Downgrade scheduled
                     <br />
-                    {/* TODO: change these <a> to use a LinkButton component once we have it */}
-                    <a
-                        className="text-blue-light leading-6"
-                        href="javascript:void(0)"
-                        onClick={() => confirmCancelDowngrade()}
-                    >
-                        Cancel
-                    </a>
+                    <LinkButton onClick={() => confirmCancelDowngrade()}>Cancel</LinkButton>
                 </p>
             );
         } else if (pendingDowngradePlan?.chargebeeId === targetPlan.chargebeeId) {
@@ -457,13 +451,7 @@ export default function PlansPage() {
                 <p className="text-green-600">
                     Downgrade scheduled
                     <br />
-                    <a
-                        className="text-blue-light leading-6"
-                        href="javascript:void(0)"
-                        onClick={() => confirmCancelDowngrade()}
-                    >
-                        Cancel
-                    </a>
+                    <LinkButton onClick={() => confirmCancelDowngrade()}>Cancel</LinkButton>
                 </p>
             );
         } else if (pendingDowngradePlan?.chargebeeId === targetPlan.chargebeeId) {
@@ -528,13 +516,7 @@ export default function PlansPage() {
                 <p className="text-green-600">
                     Downgrade scheduled
                     <br />
-                    <a
-                        className="text-blue-light leading-6"
-                        href="javascript:void(0)"
-                        onClick={() => confirmCancelDowngrade()}
-                    >
-                        Cancel
-                    </a>
+                    <LinkButton onClick={() => confirmCancelDowngrade()}>Cancel</LinkButton>
                 </p>
             );
         } else if (pendingDowngradePlan?.chargebeeId === targetPlan.chargebeeId) {
@@ -671,38 +653,23 @@ export default function PlansPage() {
                         <progress value="0" max="100" />
                     )}
                     <p className="text-sm">
-                        <a
-                            className={`gp-link ${isChargebeeCustomer ? "" : "invisible"}`}
-                            href="javascript:void(0)"
+                        <LinkButton
+                            className={isChargebeeCustomer ? "" : "invisible"}
                             onClick={() => {
                                 ChargebeeClient.getOrCreate().then((chargebeeClient) => chargebeeClient.openPortal());
                             }}
                         >
                             Billing
-                        </a>
+                        </LinkButton>
                         {!!accountStatement && Plans.isFreePlan(currentPlan.chargebeeId) && (
                             <span className="pl-6">
                                 {currency === "EUR" ? (
                                     <>
-                                        € /{" "}
-                                        <a
-                                            className="text-blue-light hover:underline"
-                                            href="javascript:void(0)"
-                                            onClick={() => setCurrency("USD")}
-                                        >
-                                            $
-                                        </a>
+                                        € / <LinkButton onClick={() => setCurrency("USD")}>$</LinkButton>
                                     </>
                                 ) : (
                                     <>
-                                        <a
-                                            className="text-blue-light hover:underline"
-                                            href="javascript:void(0)"
-                                            onClick={() => setCurrency("EUR")}
-                                        >
-                                            €
-                                        </a>{" "}
-                                        / $
+                                        <LinkButton onClick={() => setCurrency("EUR")}>€</LinkButton> / $
                                     </>
                                 )}
                             </span>
