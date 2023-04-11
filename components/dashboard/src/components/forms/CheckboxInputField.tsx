@@ -5,7 +5,7 @@
  */
 
 import classNames from "classnames";
-import { FC, ReactNode, useCallback } from "react";
+import React, { FC, ReactNode, useCallback } from "react";
 import { useId } from "../../hooks/useId";
 import { InputField } from "./InputField";
 import { InputFieldHint } from "./InputFieldHint";
@@ -25,11 +25,11 @@ export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({ label, error, 
 
 type CheckboxInputProps = {
     id?: string;
-    value: string;
+    value?: string;
     checked: boolean;
     disabled?: boolean;
-    label: string | React.ReactNode;
-    hint?: string | React.ReactNode;
+    label: React.ReactNode;
+    hint?: React.ReactNode;
     onChange: (checked: boolean) => void;
 };
 export const CheckboxInput: FC<CheckboxInputProps> = ({
@@ -51,26 +51,33 @@ export const CheckboxInput: FC<CheckboxInputProps> = ({
         [onChange],
     );
 
+    const inputProps: React.InputHTMLAttributes<HTMLInputElement> = {
+        id: elementId,
+        checked: checked,
+        disabled,
+        onChange: handleChange,
+    };
+
+    if (value) {
+        inputProps.value = value;
+    }
+
     return (
         <label className="flex space-x-2 justify-start items-start" htmlFor={elementId}>
             <input
                 type="checkbox"
                 className={classNames(
-                    "h-4 w-4 mt-1 rounded cursor-pointer border-2 dark:filter-invert",
+                    "h-4 w-4 mt-0.5 rounded cursor-pointer border-2 dark:filter-invert",
                     "focus:ring-2 ring-blue-400",
                     "border-gray-600 dark:border-gray-900 bg-transparent",
                     { "bg-gray-600 dark:bg-gray-900": checked },
                 )}
-                value={value}
-                id={elementId}
-                checked={checked}
-                disabled={disabled}
-                onChange={handleChange}
+                {...inputProps}
             />
             <div className="flex flex-col">
                 <span
                     className={classNames(
-                        "text-md font-semibold cursor-pointer",
+                        "text-sm font-semibold cursor-pointer",
                         disabled ? "text-gray-400 dark:text-gray-400" : "text-gray-600 dark:text-gray-100",
                     )}
                 >

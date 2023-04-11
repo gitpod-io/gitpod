@@ -302,7 +302,6 @@ function Details(props: {
 
             <CheckboxInputContainer>
                 <CheckboxInput
-                    value="Block Users"
                     label="Block Users"
                     hint="Block any user that tries to open a workspace for a repository URL that matches this RegEx."
                     checked={props.br.blockUser}

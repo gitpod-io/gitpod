@@ -453,7 +453,7 @@ export default function UserDetail(p: { user: User }) {
                     label="Edit user permissions by adding or removing roles for this user."
                     className="mt-0"
                 >
-                    {flags.map((e) => (
+                    {rop.map((e) => (
                         <CheckboxInput
                             value="edit user permissions"
                             key={e.title}
