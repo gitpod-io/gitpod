@@ -30,6 +30,7 @@ export const poll = async <T>(
             }
             return;
         }
+        // eslint-disable-next-line no-loop-func
         await new Promise((resolve) => setTimeout(resolve, delayInSeconds * 1000));
         if (opts.token?.cancelled) {
             return;
