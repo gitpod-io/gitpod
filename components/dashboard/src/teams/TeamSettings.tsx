@@ -8,7 +8,7 @@ import { OrganizationSettings } from "@gitpod/gitpod-protocol";
 import React, { useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
-import CheckBox from "../components/CheckBox";
+import { CheckboxInputContainer, CheckboxInput } from "../components/forms/CheckboxInputField";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { TextInputField } from "../components/forms/TextInputField";
 import { Heading2, Subheading } from "../components/typography/headings";
@@ -146,19 +146,16 @@ export default function TeamSettingsPage() {
                     </Button>
 
                     <Heading2 className="pt-12">Collaboration & Sharing</Heading2>
-                    <CheckBox
-                        title={<span>Workspace Sharing</span>}
-                        desc={
-                            <span>
-                                Allow workspaces creаted within an Organization to share the workspace with any authenticated user.
-                            </span>
-                        }
-                        checked={!settings?.workspaceSharingDisabled}
-                        onChange={({ target }) =>
-                            handleUpdateTeamSettings({ workspaceSharingDisabled: !target.checked })
-                        }
-                        disabled={isLoading}
-                    />
+                    <CheckboxInputContainer>
+                        <CheckboxInput
+                            value="allow workspace sharing"
+                            label="Workspace Sharing"
+                            hint="Allow workspaces created within an Organization to share the workspace with any authenticated user."
+                            checked={!settings?.workspaceSharingDisabled}
+                            onChange={(checked) => handleUpdateTeamSettings({ workspaceSharingDisabled: !checked })}
+                            disabled={isLoading}
+                        />
+                    </CheckboxInputContainer>
                 </form>
 
                 <Heading2 className="pt-12">Delete Organization</Heading2>

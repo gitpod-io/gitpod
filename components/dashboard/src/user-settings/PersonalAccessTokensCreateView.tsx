@@ -10,7 +10,7 @@ import { useContext, useEffect, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
-import CheckBox from "../components/CheckBox";
+import { CheckboxInput, CheckboxInputContainer } from "../components/forms/CheckboxInputField";
 import DateSelector from "../components/DateSelector";
 import { SpinnerOverlayLoader } from "../components/Loader";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
@@ -237,15 +237,15 @@ function PersonalAccessTokenCreateView() {
                             )}
                             <div>
                                 <h4>Permission</h4>
-                                <div className="space-y-2">
+                                <CheckboxInputContainer className="mt-0">
                                     {AllPermissions.map((item) => (
-                                        <CheckBox
-                                            className=""
-                                            title={item.name}
-                                            desc={item.description}
+                                        <CheckboxInput
+                                            value={item.name}
+                                            label={item.name}
+                                            hint={item.description}
                                             checked={item.scopes.every((s) => token.scopes.has(s))}
-                                            onChange={(e) => {
-                                                if (e.target.checked) {
+                                            onChange={(checked) => {
+                                                if (checked) {
                                                     update({}, item.scopes);
                                                 } else {
                                                     update({}, undefined, item.scopes);
@@ -253,7 +253,7 @@ function PersonalAccessTokenCreateView() {
                                             }}
                                         />
                                     ))}
-                                </div>
+                                </CheckboxInputContainer>
                             </div>
                         </div>
                     </div>
