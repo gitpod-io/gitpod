@@ -44,7 +44,7 @@
     "@testing-library/jest-dom": "^5.11.10",
     "@testing-library/react": "^11.2.6",
     "@testing-library/user-event": "^12.1.10",
-    "@types/dompurify": "^3.0.1",
+    "@types/dompurify": "^2.3.3",
     "@types/jest": "^26.0.22",
     "@types/js-cookie": "^2.2.7",
     "@types/node": "^16.11.0",
