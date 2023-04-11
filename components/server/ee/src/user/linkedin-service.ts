@@ -5,8 +5,9 @@
  */
 
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { LinkedInProfile } from "@gitpod/gitpod-protocol/src/protocol";
+import { LinkedInProfile, User } from "@gitpod/gitpod-protocol/src/protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { LinkedInProfileDB } from "@gitpod/gitpod-db/lib";
 import { inject, injectable } from "inversify";
 import fetch from "node-fetch";
 import { ResponseError } from "vscode-jsonrpc";
@@ -15,8 +16,15 @@ import { Config } from "../../../src/config";
 @injectable()
 export class LinkedInService {
     @inject(Config) protected readonly config: Config;
+    @inject(LinkedInProfileDB) protected readonly linkedInProfileDB: LinkedInProfileDB;
 
-    async getAccessToken(code: string) {
+    async connectWithLinkedIn(user: User, code: string): Promise<LinkedInProfile> {
+        const accessToken = await this.getAccessToken(code);
+        const profile = await this.getLinkedInProfile(accessToken);
+        return profile;
+    }
+
+    private async getAccessToken(code: string) {
         const { clientId, clientSecret } = this.config.linkedInSecrets || {};
         if (!clientId || !clientSecret) {
             throw new ResponseError(
@@ -36,13 +44,12 @@ export class LinkedInService {
         if (data.error) {
             throw new Error(data.error_description);
         }
-        log.info("Got LinkedIn access token", { data });
-        return data;
+        return data.access_token;
     }
 
     // Retrieve the user's profile from LinkedIn using the following API:
     // https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin
-    async getLinkedInProfile(accessToken: string): Promise<LinkedInProfile> {
+    private async getLinkedInProfile(accessToken: string): Promise<LinkedInProfile> {
         const profileUrl =
             "https://api.linkedin.com/v2/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))";
         const emailUrl = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";

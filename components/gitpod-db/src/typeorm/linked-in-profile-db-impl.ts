@@ -31,6 +31,7 @@ export class LinkedInProfileDBImpl implements LinkedInProfileDB {
             id: uuidv4(),
             userId,
             profile,
+            creationTime: new Date().toISOString(),
         });
     }
 }
