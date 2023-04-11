@@ -23,6 +23,7 @@ import (
 	"k8s.io/utils/pointer"
 )
 
+const wsManagerClientTlsVolume = "ws-manager-client-tls-certs"
 const wsManagerMk2ClientTlsVolume = "ws-manager-mk2-client-tls-certs"
 
 func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
@@ -45,11 +46,24 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 			},
+			{
+				Name: wsManagerClientTlsVolume,
+				VolumeSource: corev1.VolumeSource{
+					Secret: &corev1.SecretVolumeSource{
+						SecretName: wsmanager.TLSSecretNameClient,
+					},
+				},
+			},
 		}
 		volumeMounts = []corev1.VolumeMount{
 			{
 				Name:      "config-certificates",
 				MountPath: "/mnt/certificates",
+			},
+			{
+				Name:      wsManagerClientTlsVolume,
+				MountPath: "/ws-manager-client-tls-certs",
+				ReadOnly:  true,
 			},
 		}
 	)
@@ -115,6 +129,16 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 
 		if ucfg.Workspace.UseWsmanagerMk2 {
+			var vs []corev1.Volume
+			for _, v := range volumes {
+				if v.Name == wsManagerClientTlsVolume {
+					continue
+				}
+
+				vs = append(vs, v)
+			}
+			volumes = vs
+
 			volumes = append(volumes, corev1.Volume{
 				Name: wsManagerMk2ClientTlsVolume,
 				VolumeSource: corev1.VolumeSource{
@@ -123,6 +147,16 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 			})
+
+			var vm []corev1.VolumeMount
+			for _, v := range volumeMounts {
+				if v.Name == wsManagerClientTlsVolume {
+					continue
+				}
+
+				vm = append(vm, v)
+			}
+			volumeMounts = vm
 
 			volumeMounts = append(volumeMounts, corev1.VolumeMount{
 				Name:      wsManagerMk2ClientTlsVolume,
@@ -236,11 +270,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									ReadOnly:  true,
 								},
 								{
-									Name:      "ws-manager-client-tls-certs",
-									MountPath: "/ws-manager-client-tls-certs",
-									ReadOnly:  true,
-								},
-								{
 									Name:      name,
 									MountPath: "/mnt/pull-secret",
 								},
@@ -281,19 +310,14 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 						{
 							Name:         "cache",
 							VolumeSource: corev1.VolumeSource{EmptyDir: &corev1.EmptyDirVolumeSource{}},
-						}, {
+						},
+						{
 							Name: "config",
 							VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{Name: Component},
 							}},
-						}, {
-							Name: "ws-manager-client-tls-certs",
-							VolumeSource: corev1.VolumeSource{
-								Secret: &corev1.SecretVolumeSource{
-									SecretName: wsmanager.TLSSecretNameClient,
-								},
-							},
-						}, {
+						},
+						{
 							Name: name,
 							VolumeSource: corev1.VolumeSource{
 								Secret: &corev1.SecretVolumeSource{
@@ -301,7 +325,8 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 									Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
 								},
 							},
-						}, {
+						},
+						{
 							Name: "hostfs",
 							VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
 								Path: "/",
