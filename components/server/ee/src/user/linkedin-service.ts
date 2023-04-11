@@ -83,7 +83,7 @@ export class LinkedInService {
             firstName: "",
             lastName: "",
             profilePicture: "",
-            emailAddress: "",
+            emailAddress: emailData.elements[0]["handle~"].emailAddress,
         };
     }
 }

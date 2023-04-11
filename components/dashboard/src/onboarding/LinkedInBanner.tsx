@@ -30,6 +30,7 @@ export const LinkedInBanner: FC<Props> = () => {
     const { linkedInLogin } = useLinkedIn({
         clientId: clientID || "",
         redirectUri: `${window.location.origin}/linkedin`,
+        scope: "r_liteprofile r_emailaddress",
         onSuccess: (code) => {
             console.log("success", code);
             getGitpodService()
