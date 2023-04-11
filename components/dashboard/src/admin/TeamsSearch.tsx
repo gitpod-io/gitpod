@@ -52,6 +52,7 @@ export function TeamsSearch() {
         } else {
             setCurrentTeam(undefined);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
     if (currentTeam) {

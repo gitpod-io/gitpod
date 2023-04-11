@@ -5,7 +5,7 @@
  */
 
 import EventEmitter from "events";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useState } from "react";
 import {
     WorkspaceInstance,
     DisposableCollection,
@@ -32,18 +32,21 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
     const [logsEmitter] = useState(new EventEmitter());
     const [prebuild, setPrebuild] = useState<PrebuildWithStatus | undefined>();
 
-    function handlePrebuildUpdate(prebuild: PrebuildWithStatus) {
-        if (prebuild.info.buildWorkspaceId === props.workspaceId) {
-            setPrebuild(prebuild);
+    const handlePrebuildUpdate = useCallback(
+        (prebuild: PrebuildWithStatus) => {
+            if (prebuild.info.buildWorkspaceId === props.workspaceId) {
+                setPrebuild(prebuild);
 
-            // In case the Prebuild got "aborted" or "time(d)out" we want to user to proceed anyway
-            if (props.onIgnorePrebuild && (prebuild.status === "aborted" || prebuild.status === "timeout")) {
-                props.onIgnorePrebuild();
+                // In case the Prebuild got "aborted" or "time(d)out" we want to user to proceed anyway
+                if (props.onIgnorePrebuild && (prebuild.status === "aborted" || prebuild.status === "timeout")) {
+                    props.onIgnorePrebuild();
+                }
+                // TODO(gpl) We likely want to move the "happy path" logic (for status "available")
+                // here as well at some point. For that to work we need a "registerPrebuildUpdate(prebuildId)" API
             }
-            // TODO(gpl) We likely want to move the "happy path" logic (for status "available")
-            // here as well at some point. For that to work we need a "registerPrebuildUpdate(prebuildId)" API
-        }
-    }
+        },
+        [props],
+    );
 
     useEffect(() => {
         const disposables = new DisposableCollection();
@@ -105,7 +108,7 @@ export default function PrebuildLogs(props: PrebuildLogsProps) {
         return function cleanup() {
             disposables.dispose();
         };
-    }, [logsEmitter, props.workspaceId]);
+    }, [handlePrebuildUpdate, logsEmitter, props.workspaceId]);
 
     useEffect(() => {
         const workspaceId = props.workspaceId;

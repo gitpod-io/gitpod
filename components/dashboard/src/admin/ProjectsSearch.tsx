@@ -50,6 +50,7 @@ export function ProjectsSearch() {
         } else {
             setCurrentProject(undefined);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
     useEffect(() => {

@@ -40,6 +40,7 @@ export default function UserSearch() {
         } else {
             setCurrentUserState(undefined);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location]);
 
     if (currentUser) {

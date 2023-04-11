@@ -78,6 +78,7 @@ export default function MonacoEditor(props: MonacoEditorProps) {
             });
         }
         return () => editorRef.current?.dispose();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
