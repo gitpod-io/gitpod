@@ -5,6 +5,7 @@ packages:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
+      - "**/fixtures/*.yaml"
     deps:
       - components/gitpod-db/go:lib
       - components/common-go:lib
