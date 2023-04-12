@@ -47,6 +47,7 @@ import {
     PrebuildEvent,
     OpenPrebuildContext,
     AppNotification,
+    LinkedInProfile,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -2678,11 +2679,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return clientId;
     }
 
-    async connectWithLinkedIn(ctx: TraceContextWithSpan, code: string): Promise<void> {
+    async connectWithLinkedIn(ctx: TraceContextWithSpan, code: string): Promise<LinkedInProfile> {
         traceAPIParams(ctx, { code });
         const user = this.checkAndBlockUser("connectWithLinkedIn");
         const profile = await this.linkedInService.connectWithLinkedIn(user, code);
-        log.info("Got LinkedIn profile:", { profile });
+        return profile;
     }
 
     // (SaaS) – admin

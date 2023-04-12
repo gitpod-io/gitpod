@@ -26,12 +26,19 @@ export class LinkedInProfileDBImpl implements LinkedInProfileDB {
 
     public async storeProfile(userId: string, profile: LinkedInProfile): Promise<void> {
         const repo = await this.getRepo();
-        // TODO(janx): check if profile with same LinkedIn ID already exists
+        const existingProfile = await repo
+            .createQueryBuilder("p")
+            .where('JSON_EXTRACT(`p`.`profile`, "$.id") = :id', { id: profile.id })
+            .getOne();
+        if (existingProfile && existingProfile.userId !== userId) {
+            throw new Error(`LinkedIn profile ${profile.id} is already associated with another user.`);
+        }
+
         await repo.save({
-            id: uuidv4(),
+            id: existingProfile?.id || uuidv4(),
             userId,
             profile,
-            creationTime: new Date().toISOString(),
+            creationTime: existingProfile?.creationTime || new Date().toISOString(),
         });
     }
 }

@@ -21,6 +21,7 @@ export class LinkedInService {
     async connectWithLinkedIn(user: User, code: string): Promise<LinkedInProfile> {
         const accessToken = await this.getAccessToken(code);
         const profile = await this.getLinkedInProfile(accessToken);
+        await this.linkedInProfileDB.storeProfile(user.id, profile);
         return profile;
     }
 
@@ -42,7 +43,7 @@ export class LinkedInService {
         });
         const data = await response.json();
         if (data.error) {
-            throw new Error(data.error_description);
+            throw new Error("Could not get LinkedIn access token: " + data.error_description);
         }
         return data.access_token;
     }
@@ -53,6 +54,7 @@ export class LinkedInService {
         const profileUrl =
             "https://api.linkedin.com/v2/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))";
         const emailUrl = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";
+
         // Fetch both the user's profile and email address in parallel
         const [profileResponse, emailResponse] = await Promise.all([
             fetch(profileUrl, {
@@ -68,22 +70,66 @@ export class LinkedInService {
                 },
             }),
         ]);
+
         const profileData = await profileResponse.json();
         if (profileData.error) {
-            throw new Error(profileData.error_description);
+            throw new Error("Could not get LinkedIn lite profile: " + profileData.error_description);
         }
+        if (!profileData.id) {
+            throw new Error("Missing LinkedIn profile ID");
+        }
+
         const emailData = await emailResponse.json();
         if (emailData.error) {
-            throw new Error(emailData.error_description);
+            throw new Error("Could not get LinkedIn email address: " + emailData.error_description);
         }
-        log.info("Got LinkedIn data", { profileData, emailData });
+        if (!emailData.elements || emailData.elements.length < 1 || !emailData.elements[0]["handle~"]?.emailAddress) {
+            throw new Error("Missing LinkedIn email address");
+        }
 
-        return {
+        const profile: LinkedInProfile = {
             id: profileData.id,
             firstName: "",
             lastName: "",
             profilePicture: "",
             emailAddress: emailData.elements[0]["handle~"].emailAddress,
         };
+
+        try {
+            if (
+                typeof profileData.firstName?.localized === "object" &&
+                Object.values(profileData.firstName?.localized).length > 0
+            ) {
+                // If there are multiple first name localizations, just pick the first one
+                profile.firstName = String(Object.values(profileData.firstName.localized)[0]);
+            }
+        } catch (error) {
+            log.error("Error getting LinkedIn first name", error);
+        }
+
+        try {
+            if (
+                typeof profileData.lastName?.localized === "object" &&
+                Object.values(profileData.lastName?.localized).length > 0
+            ) {
+                // If there are multiple last name localizations, just pick the first one
+                profile.lastName = String(Object.values(profileData.lastName.localized)[0]);
+            }
+        } catch (error) {
+            log.error("Error getting LinkedIn last name", error);
+        }
+
+        try {
+            if (profileData.profilePicture && profileData.profilePicture["displayImage~"]?.elements?.length > 0) {
+                // If there are multiple image sizes, just pick the first one (seems to be always the smallest size)
+                profile.profilePicture = String(
+                    profileData.profilePicture["displayImage~"].elements[0].identifiers[0].identifier,
+                );
+            }
+        } catch (error) {
+            log.error("Error getting LinkedIn profile picture", error);
+        }
+
+        return profile;
     }
 }

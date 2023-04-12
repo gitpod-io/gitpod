@@ -165,6 +165,7 @@ import { ConfigurationService } from "../config/configuration-service";
 import {
     AdditionalUserData,
     EnvVarWithValue,
+    LinkedInProfile,
     ProjectEnvVar,
     WorkspaceTimeoutSetting,
 } from "@gitpod/gitpod-protocol/lib/protocol";
@@ -3580,7 +3581,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 
-    async connectWithLinkedIn(ctx: TraceContextWithSpan, code: string): Promise<void> {
+    async connectWithLinkedIn(ctx: TraceContextWithSpan, code: string): Promise<LinkedInProfile> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
 
