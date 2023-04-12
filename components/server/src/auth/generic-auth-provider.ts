@@ -398,7 +398,6 @@ export class GenericAuthProvider implements AuthProvider {
          * incoming `/callback` request:
          *
          * - redirect to handle/display errors
-         * - redirect to terms acceptance request page
          * - call `request.login` on new sessions
          * - redirect to `returnTo` (from request parameter)
          */
@@ -460,7 +459,6 @@ export class GenericAuthProvider implements AuthProvider {
      * - `access_token` is provided
      * - it's expected to fetch the user info (see `fetchAuthUserSetup`)
      * - it's expected to handle the state persisted in the database in order to find/create/update the user instance
-     * - it's expected to identify missing requirements, e.g. missing terms acceptance
      * - finally, it's expected to call `done` and provide the computed result in order to finalize the auth process
      */
     protected async verify(
