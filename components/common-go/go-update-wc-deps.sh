@@ -12,7 +12,7 @@ COMPONENTS_TO_TEST=( )
 
 # an associative array to describe dependencies we'd like to search for and update to
 declare -A WORKSPACE_CLUSTER_DEPENDENCIES
-WORKSPACE_CLUSTER_DEPENDENCIES["github.com/containerd/containerd"]="1.6.18"
+WORKSPACE_CLUSTER_DEPENDENCIES["github.com/containerd/containerd"]="1.6.20"
 WORKSPACE_CLUSTER_DEPENDENCIES["github.com/moby/buildkit"]="0.11.4"
 
 # loop through keys of each associative array
