@@ -21,6 +21,7 @@ export class LinkedInService {
     async connectWithLinkedIn(user: User, code: string): Promise<LinkedInProfile> {
         const accessToken = await this.getAccessToken(code);
         const profile = await this.getLinkedInProfile(accessToken);
+        // Note: The unique mapping from LinkedIn profile to Gitpod user is guaranteed by the DB.
         await this.linkedInProfileDB.storeProfile(user.id, profile);
         return profile;
     }

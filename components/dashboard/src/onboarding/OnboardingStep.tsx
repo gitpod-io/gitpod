@@ -16,6 +16,8 @@ type Props = {
     isSaving?: boolean;
     error?: string;
     onSubmit(): void;
+    submitButtonText?: string;
+    submitButtonType?: "primary" | "secondary" | "danger" | "danger.secondary";
 };
 export const OnboardingStep: FC<Props> = ({
     title,
@@ -25,6 +27,8 @@ export const OnboardingStep: FC<Props> = ({
     error,
     children,
     onSubmit,
+    submitButtonText,
+    submitButtonType,
 }) => {
     const handleSubmit = useCallback(
         async (e: FormEvent<HTMLFormElement>) => {
@@ -51,8 +55,13 @@ export const OnboardingStep: FC<Props> = ({
                 {error && <Alert type="error">{error}</Alert>}
 
                 <div className="mt-8">
-                    <Button htmlType="submit" disabled={!isValid || isSaving} size="block">
-                        Continue
+                    <Button
+                        htmlType="submit"
+                        type={submitButtonType || "primary"}
+                        disabled={!isValid || isSaving}
+                        size="block"
+                    >
+                        {submitButtonText || "Continue"}
                     </Button>
                 </div>
             </form>

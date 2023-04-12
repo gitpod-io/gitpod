@@ -12,9 +12,12 @@ import Alert from "../components/Alert";
 import { Button } from "../components/Button";
 import SignInWithLinkedIn from "../images/sign-in-with-linkedin.svg";
 import { getGitpodService } from "../service/service";
+import { LinkedInProfile } from "@gitpod/gitpod-protocol";
 
-type Props = {};
-export const LinkedInBanner: FC<Props> = () => {
+type Props = {
+    onSuccess(profile: LinkedInProfile): void;
+};
+export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
     const {
         data: clientID,
         isLoading,
@@ -35,15 +38,15 @@ export const LinkedInBanner: FC<Props> = () => {
             console.log("success", code);
             getGitpodService()
                 .server.connectWithLinkedIn(code)
-                .then(() => {
-                    console.log("LinkedIn connected");
+                .then((profile) => {
+                    onSuccess(profile);
                 })
                 .catch((error) => {
                     console.error("LinkedIn connection failed", error);
                 });
         },
         onError: (error) => {
-            console.log("error", error);
+            console.error("error", error);
         },
     });
 

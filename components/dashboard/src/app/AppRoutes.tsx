@@ -48,6 +48,7 @@ import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "../onboarding/UserOnboarding";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { useCurrentUser } from "../user-context";
+import { LinkedInCallback } from "react-linkedin-login-oauth2";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -120,6 +121,10 @@ export const AppRoutes = () => {
 
     if (isWhatsNewShown) {
         return <WhatsNew onClose={() => setWhatsNewShown(false)} />;
+    }
+
+    if (location.pathname === "/linkedin" && search.get("code") && search.get("state")) {
+        return <LinkedInCallback />;
     }
 
     // Show new signup flow if:
