@@ -70,6 +70,7 @@
     "is-reachable": "^5.2.1",
     "js-yaml": "^3.10.0",
     "json-stream": "^1.0.0",
+    "jsonwebtoken": "^9.0.0",
     "lodash.debounce": "^4.0.8",
     "longjohn": "^0.2.12",
     "minio": "^7.0.12",

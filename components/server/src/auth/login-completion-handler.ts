@@ -18,6 +18,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
 import { UserService } from "../user/user-service";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
+import * as jwt from "jsonwebtoken";
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -93,6 +94,15 @@ export class LoginCompletionHandler {
             );
         }
 
+        const jwt = newSessionJWT(user.id);
+
+        response.cookie("_gitpod_jwt_", jwt, {
+            maxAge: 7 * 24 * 60 * 60,
+            httpOnly: true,
+            sameSite: "lax",
+            secure: true,
+        });
+
         response.redirect(returnTo);
     }
 
@@ -118,4 +128,23 @@ export namespace LoginCompletionHandler {
         authHost?: string;
         elevateScopes?: string[];
     }
+}
+
+export async function newSessionJWT(userID: string): Promise<string> {
+    const payload = {
+        // subject
+        sub: userID,
+        // issuer
+        iss: "gitpod.io",
+    };
+    const temporaryTestKeyForExperimentation = "my-secret";
+
+    return new Promise((resolve, reject) => {
+        jwt.sign(payload, temporaryTestKeyForExperimentation, { algorithm: "HS256" }, function (err, token) {
+            if (err || !token) {
+                return reject(err);
+            }
+            return resolve(token);
+        });
+    });
 }
