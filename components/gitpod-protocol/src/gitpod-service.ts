@@ -30,6 +30,7 @@ import {
     EnvVarWithValue,
     WorkspaceTimeoutSetting,
     WorkspaceContext,
+    LinkedInProfile,
 } from "./protocol";
 import {
     Team,
@@ -307,6 +308,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     getBillingModeForUser(): Promise<BillingMode>;
     getBillingModeForTeam(teamId: string): Promise<BillingMode>;
+
+    getLinkedInClientId(): Promise<string>;
+    connectWithLinkedIn(code: string): Promise<LinkedInProfile>;
 
     /**
      * Analytics

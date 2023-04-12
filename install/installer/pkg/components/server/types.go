@@ -36,6 +36,7 @@ type ConfigSerialized struct {
 	StripeSecretsFile                 string   `json:"stripeSecretsFile"`
 	StripeConfigFile                  string   `json:"stripeConfigFile"`
 	EnablePayment                     bool     `json:"enablePayment"`
+	LinkedInSecretsFile               string   `json:"linkedInSecretsFile"`
 	PATSigningKeyFile                 string   `json:"patSigningKeyFile"`
 	ShowSetupModal                    bool     `json:"showSetupModal"`
 

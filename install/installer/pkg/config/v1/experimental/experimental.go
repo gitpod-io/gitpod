@@ -261,6 +261,7 @@ type ServerConfig struct {
 	ChargebeeSecret                   string            `json:"chargebeeSecret"`
 	StripeSecret                      string            `json:"stripeSecret"`
 	StripeConfig                      string            `json:"stripeConfig"`
+	LinkedInSecret                    string            `json:"linkedInSecret"`
 	DisableDynamicAuthProviderLogin   bool              `json:"disableDynamicAuthProviderLogin"`
 	EnableLocalApp                    *bool             `json:"enableLocalApp"`
 	RunDbDeleter                      *bool             `json:"runDbDeleter"`

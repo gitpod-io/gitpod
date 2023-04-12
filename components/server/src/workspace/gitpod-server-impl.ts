@@ -165,6 +165,7 @@ import { ConfigurationService } from "../config/configuration-service";
 import {
     AdditionalUserData,
     EnvVarWithValue,
+    LinkedInProfile,
     ProjectEnvVar,
     WorkspaceTimeoutSetting,
 } from "@gitpod/gitpod-protocol/lib/protocol";
@@ -204,6 +205,7 @@ import { increaseDashboardErrorBoundaryCounter, reportCentralizedPermsValidation
 import { RegionService } from "./region-service";
 import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { EnvVarService } from "./env-var-service";
+import { LinkedInService } from "../linkedin-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -246,6 +248,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthorizationService) protected readonly authorizationService: AuthorizationService;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(LinkedInService) protected readonly linkedInService: LinkedInService;
 
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
 
@@ -3575,6 +3578,26 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         return BillingMode.NONE;
+    }
+
+    async getLinkedInClientId(ctx: TraceContextWithSpan): Promise<string> {
+        traceAPIParams(ctx, {});
+        this.checkAndBlockUser("getLinkedInClientID");
+        const clientId = this.config.linkedInSecrets?.clientId;
+        if (!clientId) {
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                "LinkedIn is not properly configured (no Client ID)",
+            );
+        }
+        return clientId;
+    }
+
+    async connectWithLinkedIn(ctx: TraceContextWithSpan, code: string): Promise<LinkedInProfile> {
+        traceAPIParams(ctx, { code });
+        const user = this.checkAndBlockUser("connectWithLinkedIn");
+        const profile = await this.linkedInService.connectWithLinkedIn(user, code);
+        return profile;
     }
 
     //

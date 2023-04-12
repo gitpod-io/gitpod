@@ -4,12 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
+import { LinkedInProfile, User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useState } from "react";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { OnboardingStep } from "./OnboardingStep";
+import { LinkedInBanner } from "./LinkedInBanner";
 
 type Props = {
     user: User;
@@ -50,11 +51,23 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
         }
     }, [emailAddress, firstName, lastName, onComplete, updateUser, user.additionalData]);
 
+    const onLinkedInSuccess = async (profile: LinkedInProfile) => {
+        if (!firstName && profile.firstName) {
+            setFirstName(profile.firstName);
+        }
+        if (!lastName && profile.lastName) {
+            setLastName(profile.lastName);
+        }
+        if (!emailAddress && profile.emailAddress) {
+            setEmailAddress(profile.emailAddress);
+        }
+        handleSubmit();
+    };
+
     const firstNameError = useOnBlurError("Please enter a value", !!firstName);
     const lastNameError = useOnBlurError("Please enter a value", !!lastName);
-    const emailError = useOnBlurError("Please enter your email address", !!emailAddress);
 
-    const isValid = [firstNameError, lastNameError, emailError].every((e) => e.isValid);
+    const isValid = [firstNameError, lastNameError].every((e) => e.isValid);
 
     return (
         <OnboardingStep
@@ -64,6 +77,8 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
             isValid={isValid}
             isSaving={updateUser.isLoading}
             onSubmit={handleSubmit}
+            submitButtonText="Continue with 100 credits per month"
+            submitButtonType="secondary"
         >
             {user.avatarUrl && (
                 <div className="my-4 flex justify-center">
@@ -93,15 +108,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
                 />
             </div>
 
-            <TextInputField
-                value={emailAddress}
-                label="Work Email"
-                type="email"
-                error={emailError.message}
-                onBlur={emailError.onBlur}
-                onChange={setEmailAddress}
-                required
-            />
+            <LinkedInBanner onSuccess={onLinkedInSuccess} />
         </OnboardingStep>
     );
 };

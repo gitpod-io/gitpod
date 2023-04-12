@@ -280,6 +280,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		EnablePayment:                chargebeeSecret != "" || stripeSecret != "" || stripeConfig != "",
 		ChargebeeProviderOptionsFile: fmt.Sprintf("%s/providerOptions", chargebeeMountPath),
 		StripeSecretsFile:            fmt.Sprintf("%s/apikeys", stripeSecretMountPath),
+		LinkedInSecretsFile:          fmt.Sprintf("%s/linkedin", linkedInSecretMountPath),
 		InsecureNoDomain:             false,
 		PrebuildLimiter: PrebuildRateLimiters{
 			// default limit for all cloneURLs

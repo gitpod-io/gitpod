@@ -224,6 +224,8 @@ const defaultFunctions: FunctionsConfig = {
     listUsage: { group: "default", points: 1 },
     getBillingModeForTeam: { group: "default", points: 1 },
     getBillingModeForUser: { group: "default", points: 1 },
+    getLinkedInClientId: { group: "default", points: 1 },
+    connectWithLinkedIn: { group: "default", points: 1 },
     tsAddMembersToOrg: { group: "default", points: 1 },
 
     trackEvent: { group: "default", points: 1 },
