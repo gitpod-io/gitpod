@@ -41,6 +41,6 @@ func (p *WorkspacePricer) CreditsPerMinuteForClass(workspaceClass string) float6
 	if creditsForClass, ok := p.creditMinutesByWorkspaceClass[workspaceClass]; ok {
 		return creditsForClass
 	}
-	log.Errorf("no credit minutes configured for workspace class %q - using default", workspaceClass)
+	log.Errorf("No credit minutes configured for workspace class %q - using default price of %v credits per minute", workspaceClass, defaultPrice)
 	return defaultPrice
 }
