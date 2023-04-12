@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full:2023-03-24-02-48-18
 
-ENV TRIGGER_REBUILD 39
+ENV TRIGGER_REBUILD 40
 
 USER root
 
@@ -247,7 +247,10 @@ RUN sudo apt-add-repository -y ppa:fish-shell/release-3 && \
     sudo apt install -y fish
 
 # Install tmux + tmuxinator
-RUN brew install tmux tmuxinator
+RUN brew install tmux tmuxinator\
+
+# Install redis-server
+RUN brew install redis@7.0
 
 # Copy our own tools
 ENV NEW_KUBECDL=2
