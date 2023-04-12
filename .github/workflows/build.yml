@@ -37,6 +37,7 @@ jobs:
       with_werft: ${{ steps.output.outputs.with-werft }}
       with_integration_tests: ${{ steps.output.outputs.with_integration_tests }}
       latest_ide_version: ${{ contains( steps.pr-details.outputs.pr_body, '[x] latest-ide-version=true') }}
+      leeway_cache_bucket: ${{ steps.output.outputs.leeway_cache_bucket }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -63,12 +64,15 @@ jobs:
         id: output
         env:
           PR_DESC: '${{ steps.pr-details.outputs.pr_body }}'
+          MAIN_BRANCH: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
         shell: bash
         run: |
           {
             echo "workspace_feature_flags=$(echo "$PR_DESC" | grep -oP '(?<=\[X\] workspace-feature-flags).*')"
             echo "with_integration_tests=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] with-integration-tests=).*')"
+            echo "leeway_cache_bucket=$([[ "$MAIN_BRANCH"  = "true" ]] && echo "gitpod-core-leeway-cache-main" || echo "gitpod-core-leeway-cache-branch")"
           } >> $GITHUB_OUTPUT
+
 
   build-previewctl:
     name: Build previewctl
@@ -157,6 +161,7 @@ jobs:
       env:
         DB_HOST: "mysql"
         DB_PORT: "23306"
+        LEEWAY_REMOTE_CACHE_BUCKET: '${{ needs.configuration.outputs.leeway_cache_bucket }}'
     steps:
       - uses: actions/checkout@v3
       - name: Configure workspace
