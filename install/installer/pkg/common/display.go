@@ -25,7 +25,6 @@ var sortOrder = []string{
 	"Issuer",
 	"Certificate",
 	"LimitRange",
-	"PodSecurityPolicy",
 	"PodDisruptionBudget",
 	"ServiceAccount",
 	"Secret",

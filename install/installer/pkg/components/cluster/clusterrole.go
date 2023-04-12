@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	v1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -35,56 +34,6 @@ func clusterrole(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 	}
-
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Common != nil && cfg.Common.UsePodSecurityPolicies {
-			resources = append(resources,
-				&v1.ClusterRole{
-					TypeMeta: common.TypeMetaClusterRole,
-					ObjectMeta: metav1.ObjectMeta{
-						Name: fmt.Sprintf("%s-ns-psp:privileged", ctx.Namespace),
-					},
-					Rules: []v1.PolicyRule{
-						{
-							APIGroups:     []string{"policy"},
-							Resources:     []string{"podsecuritypolicies"},
-							Verbs:         []string{"use"},
-							ResourceNames: []string{fmt.Sprintf("%s-ns-privileged", ctx.Namespace)},
-						},
-					},
-				},
-				&v1.ClusterRole{
-					TypeMeta: common.TypeMetaClusterRole,
-					ObjectMeta: metav1.ObjectMeta{
-						Name: fmt.Sprintf("%s-ns-psp:restricted-root-user", ctx.Namespace),
-					},
-					Rules: []v1.PolicyRule{
-						{
-							APIGroups:     []string{"policy"},
-							Resources:     []string{"podsecuritypolicies"},
-							Verbs:         []string{"use"},
-							ResourceNames: []string{fmt.Sprintf("%s-ns-restricted-root-user", ctx.Namespace)},
-						},
-					},
-				},
-				&v1.ClusterRole{
-					TypeMeta: common.TypeMetaClusterRole,
-					ObjectMeta: metav1.ObjectMeta{
-						Name: fmt.Sprintf("%s-ns-psp:unprivileged", ctx.Namespace),
-					},
-					Rules: []v1.PolicyRule{
-						{
-							APIGroups:     []string{"policy"},
-							Resources:     []string{"podsecuritypolicies"},
-							Verbs:         []string{"use"},
-							ResourceNames: []string{fmt.Sprintf("%s-ns-unprivileged", ctx.Namespace)},
-						},
-					},
-				},
-			)
-		}
-		return nil
-	})
 
 	return resources, nil
 }

@@ -369,7 +369,6 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			Affinity:                     affinity,
 			SecurityContext: &corev1.PodSecurityContext{
 				// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
-				// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
 				SeccompProfile: &corev1.SeccompProfile{
 					Type:             corev1.SeccompProfileTypeLocalhost,
 					LocalhostProfile: pointer.String(sctx.Config.SeccompProfile),

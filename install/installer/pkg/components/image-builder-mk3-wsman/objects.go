@@ -23,7 +23,6 @@ var Objects common.RenderFunc = func(cfg *common.RenderContext) ([]runtime.Objec
 	}
 
 	return common.CompositeRenderFunc(
-		clusterrole,
 		configmap,
 		deployment,
 		networkpolicy,

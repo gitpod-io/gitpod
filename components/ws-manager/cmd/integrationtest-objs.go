@@ -45,7 +45,6 @@ func init() {
 
 var desiredObjTypes = []string{
 	"ServiceAccount",
-	"PodSecurityPolicy",
 }
 
 func getIntegrationTestPrerequisiteObjects(out io.Writer, namespace, gpHelmChartPath, version string) error {
