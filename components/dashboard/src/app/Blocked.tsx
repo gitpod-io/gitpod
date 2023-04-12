@@ -17,7 +17,7 @@ export const Blocked: FunctionComponent = () => {
             </Heading1>
             <Subheading className="mt-4 mb-8 w-96 mx-auto">
                 Please contact support if you think this is an error. See also{" "}
-                <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/terms/">
+                <a className="gp-link" href="https://www.gitpod.io/terms/">
                     terms of service
                 </a>
                 .
