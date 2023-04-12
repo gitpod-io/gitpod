@@ -9,7 +9,7 @@ import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import Alert from "../components/Alert";
-import CheckBox from "../components/CheckBox";
+import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { Delayed } from "../components/Delayed";
@@ -213,13 +213,13 @@ function GitProviders() {
         }
         setEditModal(undefined);
     };
-    const onChangeScopeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const onChangeScopeHandler = (checked: boolean, scope: string) => {
         if (!editModal) {
             return;
         }
-        const scope = e.target.name;
+
         const nextScopes = new Set(editModal.nextScopes);
-        if (e.target.checked) {
+        if (checked) {
             nextScopes.add(scope);
         } else {
             nextScopes.delete(scope);
@@ -301,20 +301,20 @@ function GitProviders() {
                 <Modal visible={true} onClose={() => setEditModal(undefined)}>
                     <ModalHeader>Edit Permissions</ModalHeader>
                     <ModalBody>
-                        <div className="text-gray-500">Configure provider permissions.</div>
-                        {(editModal.provider.scopes || []).map((scope) => (
-                            <div key={`scope-${scope}`}>
-                                <CheckBox
-                                    name={scope}
-                                    desc={getDescriptionForScope(scope)}
-                                    title={scope}
-                                    key={`scope-checkbox-${scope}`}
+                        <CheckboxListField label="Configure provider permissions.">
+                            {(editModal.provider.scopes || []).map((scope) => (
+                                <CheckboxInputField
+                                    key={scope}
+                                    value={scope}
+                                    label={scope}
+                                    hint={getDescriptionForScope(scope)}
                                     checked={editModal.nextScopes.has(scope)}
                                     disabled={editModal.provider.requirements?.default.includes(scope)}
-                                    onChange={onChangeScopeHandler}
-                                ></CheckBox>
-                            </div>
-                        ))}
+                                    topMargin={false}
+                                    onChange={(checked) => onChangeScopeHandler(checked, scope)}
+                                />
+                            ))}
+                        </CheckboxListField>
                     </ModalBody>
                     <ModalFooter>
                         <button

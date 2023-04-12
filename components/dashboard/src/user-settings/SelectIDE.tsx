@@ -6,7 +6,7 @@
 
 import { useCallback, useContext, useEffect, useState } from "react";
 import { UserContext } from "../user-context";
-import CheckBox from "../components/CheckBox";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { User } from "@gitpod/gitpod-protocol";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import PillLabel from "../components/PillLabel";
@@ -103,9 +103,9 @@ export default function SelectIDE(props: SelectIDEProps) {
                 </p>
             )}
 
-            <CheckBox
-                title="Latest Release (Unstable)"
-                desc={
+            <CheckboxInputField
+                label="Latest Release (Unstable)"
+                hint={
                     <span>
                         Use the latest version for each editor.{" "}
                         <a
@@ -129,7 +129,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                     </span>
                 }
                 checked={useLatestVersion}
-                onChange={(e) => actuallySetUseLatestVersion(e.target.checked)}
+                onChange={(checked) => actuallySetUseLatestVersion(checked)}
             />
         </>
     );

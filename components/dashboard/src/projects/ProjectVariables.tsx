@@ -8,7 +8,7 @@ import { Project, ProjectEnvVar } from "@gitpod/gitpod-protocol";
 import { useEffect, useState } from "react";
 import { Redirect } from "react-router";
 import Alert from "../components/Alert";
-import CheckBox from "../components/CheckBox";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
@@ -171,14 +171,12 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                         onChange={(e) => setValue(e.target.value)}
                     />
                 </div>
-                <div className="mt-4">
-                    <CheckBox
-                        title="Hide Variable in Workspaces"
-                        desc="Unset this environment variable so that it's not accessible from the terminal in workspaces."
-                        checked={censored}
-                        onChange={() => setCensored(!censored)}
-                    />
-                </div>
+                <CheckboxInputField
+                    label="Hide Variable in Workspaces"
+                    hint="Unset this environment variable so that it's not accessible from the terminal in workspaces."
+                    checked={censored}
+                    onChange={() => setCensored(!censored)}
+                />
                 {!censored && (
                     <div className="mt-4">
                         <InfoBox>

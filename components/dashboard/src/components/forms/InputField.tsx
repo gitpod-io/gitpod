@@ -13,26 +13,29 @@ type Props = {
     id?: string;
     hint?: ReactNode;
     error?: ReactNode;
+    topMargin?: boolean;
     className?: string;
 };
 
-export const InputField: FunctionComponent<Props> = memo(({ label, id, hint, error, className, children }) => {
-    return (
-        <div className={classNames("mt-4 flex flex-col space-y-2", className)}>
-            {label && (
-                <label
-                    className={classNames(
-                        "text-md font-semibold dark:text-gray-400",
-                        error ? "text-red-600" : "text-gray-600",
-                    )}
-                    htmlFor={id}
-                >
-                    {label}
-                </label>
-            )}
-            {children}
-            {error && <span className="text-red-500 text-sm">{error}</span>}
-            {hint && <InputFieldHint>{hint}</InputFieldHint>}
-        </div>
-    );
-});
+export const InputField: FunctionComponent<Props> = memo(
+    ({ label, id, hint, error, topMargin = true, className, children }) => {
+        return (
+            <div className={classNames("flex flex-col space-y-2", { "mt-4": topMargin }, className)}>
+                {label && (
+                    <label
+                        className={classNames(
+                            "text-md font-semibold dark:text-gray-400",
+                            error ? "text-red-600" : "text-gray-600",
+                        )}
+                        htmlFor={id}
+                    >
+                        {label}
+                    </label>
+                )}
+                {children}
+                {error && <span className="text-red-500 text-sm">{error}</span>}
+                {hint && <InputFieldHint>{hint}</InputFieldHint>}
+            </div>
+        );
+    },
+);

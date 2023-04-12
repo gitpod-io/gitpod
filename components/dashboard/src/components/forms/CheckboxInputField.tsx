@@ -10,12 +10,14 @@ import { useId } from "../../hooks/useId";
 import { InputField } from "./InputField";
 import { InputFieldHint } from "./InputFieldHint";
 
-type CheckboxInputFieldProps = {
+type CheckboxListFieldProps = {
     label: string;
     error?: ReactNode;
     className?: string;
 };
-export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({ label, error, className, children }) => {
+
+// CheckboxListField is a wrapper for a list of related CheckboxInputField components.
+export const CheckboxListField: FC<CheckboxListFieldProps> = ({ label, error, className, children }) => {
     return (
         <InputField label={label} className={className} error={error}>
             <div className="space-y-2 ml-2">{children}</div>
@@ -23,22 +25,26 @@ export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({ label, error, 
     );
 };
 
-type CheckboxInputProps = {
+type CheckboxInputFieldProps = {
     id?: string;
-    value: string;
+    value?: string;
     checked: boolean;
     disabled?: boolean;
-    label: string;
-    hint?: string;
+    label: ReactNode;
+    hint?: ReactNode;
+    error?: ReactNode;
+    topMargin?: boolean;
     onChange: (checked: boolean) => void;
 };
-export const CheckboxInput: FC<CheckboxInputProps> = ({
+export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({
     id,
     value,
     label,
     hint,
+    error,
     checked,
     disabled = false,
+    topMargin = true,
     onChange,
 }) => {
     const maybeId = useId();
@@ -52,33 +58,36 @@ export const CheckboxInput: FC<CheckboxInputProps> = ({
     );
 
     return (
-        <label className="flex space-x-2 justify-start items-start" htmlFor={elementId}>
-            <input
-                type="checkbox"
-                className={classNames(
-                    "h-4 w-4 mt-0.5 rounded cursor-pointer border-2 dark:filter-invert",
-                    "focus:ring-2 focus:border-gray-900 ring-blue-400 dark:focus:border-gray-800",
-                    "border-gray-600 dark:border-gray-900 bg-transparent",
-                    { "bg-gray-600 dark:bg-gray-900": checked },
-                )}
-                value={value}
-                id={elementId}
-                checked={checked}
-                disabled={disabled}
-                onChange={handleChange}
-            />
-            <div className="flex flex-col">
-                <span
+        // Intentionally not passing label and hint to InputField because we want to render them differently for checkboxes.
+        <InputField error={error} topMargin={topMargin}>
+            <label className="flex space-x-2 justify-start items-start max-w-lg" htmlFor={elementId}>
+                <input
+                    type="checkbox"
                     className={classNames(
-                        "text-sm font-semibold cursor-pointer",
-                        disabled ? "text-gray-400 dark:text-gray-400" : "text-gray-600 dark:text-gray-100",
+                        "h-4 w-4 mt-0.5 rounded cursor-pointer border-2 dark:filter-invert",
+                        "focus:ring-2 ring-blue-400",
+                        "border-gray-600 dark:border-gray-900 bg-transparent",
+                        { "bg-gray-600 dark:bg-gray-900": checked },
                     )}
-                >
-                    {label}
-                </span>
+                    id={elementId}
+                    checked={checked}
+                    disabled={disabled}
+                    value={value}
+                    onChange={handleChange}
+                />
+                <div className="flex flex-col">
+                    <span
+                        className={classNames(
+                            "text-sm font-semibold cursor-pointer",
+                            disabled ? "text-gray-400 dark:text-gray-400" : "text-gray-600 dark:text-gray-100",
+                        )}
+                    >
+                        {label}
+                    </span>
 
-                {hint && <InputFieldHint disabled={disabled}>{hint}</InputFieldHint>}
-            </div>
-        </label>
+                    {hint && <InputFieldHint disabled={disabled}>{hint}</InputFieldHint>}
+                </div>
+            </label>
+        </InputField>
     );
 };
