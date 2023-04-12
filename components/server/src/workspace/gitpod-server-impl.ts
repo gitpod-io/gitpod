@@ -205,6 +205,7 @@ import { increaseDashboardErrorBoundaryCounter, reportCentralizedPermsValidation
 import { RegionService } from "./region-service";
 import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { EnvVarService } from "./env-var-service";
+import { LinkedInService } from "../linkedin-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -247,6 +248,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthorizationService) protected readonly authorizationService: AuthorizationService;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(LinkedInService) protected readonly linkedInService: LinkedInService;
 
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
 
@@ -3578,11 +3580,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getLinkedInClientId(ctx: TraceContextWithSpan): Promise<string> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+        traceAPIParams(ctx, {});
+        this.checkAndBlockUser("getLinkedInClientID");
+        const clientId = this.config.linkedInSecrets?.clientId;
+        if (!clientId) {
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                "LinkedIn is not properly configured (no Client ID)",
+            );
+        }
+        return clientId;
     }
 
     async connectWithLinkedIn(ctx: TraceContextWithSpan, code: string): Promise<LinkedInProfile> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+        traceAPIParams(ctx, { code });
+        const user = this.checkAndBlockUser("connectWithLinkedIn");
+        const profile = await this.linkedInService.connectWithLinkedIn(user, code);
+        return profile;
     }
 
     //

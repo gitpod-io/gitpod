@@ -54,7 +54,7 @@ export const OnboardingStep: FC<Props> = ({
 
                 {error && <Alert type="error">{error}</Alert>}
 
-                <div className="mt-8">
+                <div className="mt-4">
                     <Button
                         htmlType="submit"
                         type={submitButtonType || "primary"}

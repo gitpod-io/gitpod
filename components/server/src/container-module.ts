@@ -116,6 +116,7 @@ import { EnvVarService } from "./workspace/env-var-service";
 import { APIUserService } from "./api/user";
 import { APITeamsService } from "./api/teams";
 import { API } from "./api/server";
+import { LinkedInService } from "./linkedin-service";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -307,6 +308,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(UsageServiceImpl).toSelf().inSingletonScope();
     bind(UsageService).toService(UsageServiceImpl);
     bind(UbpResetOnCancel).toSelf().inSingletonScope();
+
+    bind(LinkedInService).toSelf().inSingletonScope();
 
     // IAM Support
     bind(IamSessionApp).toSelf().inSingletonScope();

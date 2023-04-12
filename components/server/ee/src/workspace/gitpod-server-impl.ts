@@ -47,7 +47,6 @@ import {
     PrebuildEvent,
     OpenPrebuildContext,
     AppNotification,
-    LinkedInProfile,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -101,7 +100,6 @@ import { ChargebeeCouponComputer } from "../user/coupon-computer";
 import { ChargebeeService } from "../user/chargebee-service";
 import { Chargebee as chargebee } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import { StripeService } from "../user/stripe-service";
-import { LinkedInService } from "../user/linkedin-service";
 
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
@@ -163,7 +161,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(UserCounter) protected readonly userCounter: UserCounter;
 
     @inject(UserService) protected readonly userService: UserService;
-    @inject(LinkedInService) protected readonly linkedInService: LinkedInService;
 
     @inject(UsageServiceDefinition.name)
     protected readonly usageService: UsageServiceClient;
@@ -2664,26 +2661,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         const { team } = await this.guardTeamOperation(teamId, "get", "not_implemented");
 
         return this.billingModes.getBillingModeForTeam(team, new Date());
-    }
-
-    async getLinkedInClientId(ctx: TraceContextWithSpan): Promise<string> {
-        traceAPIParams(ctx, {});
-        this.checkAndBlockUser("getLinkedInClientID");
-        const clientId = this.config.linkedInSecrets?.clientId;
-        if (!clientId) {
-            throw new ResponseError(
-                ErrorCodes.INTERNAL_SERVER_ERROR,
-                "LinkedIn is not properly configured (no Client ID)",
-            );
-        }
-        return clientId;
-    }
-
-    async connectWithLinkedIn(ctx: TraceContextWithSpan, code: string): Promise<LinkedInProfile> {
-        traceAPIParams(ctx, { code });
-        const user = this.checkAndBlockUser("connectWithLinkedIn");
-        const profile = await this.linkedInService.connectWithLinkedIn(user, code);
-        return profile;
     }
 
     // (SaaS) – admin

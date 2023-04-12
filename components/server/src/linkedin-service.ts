@@ -11,7 +11,7 @@ import { LinkedInProfileDB } from "@gitpod/gitpod-db/lib";
 import { inject, injectable } from "inversify";
 import fetch from "node-fetch";
 import { ResponseError } from "vscode-jsonrpc";
-import { Config } from "../../../src/config";
+import { Config } from "./config";
 
 @injectable()
 export class LinkedInService {
