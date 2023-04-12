@@ -44,7 +44,6 @@ export function isValidFunctionName(name: string): boolean {
 
 const defaultFunctions: FunctionsConfig = {
     getLoggedInUser: { group: "default", points: 1 },
-    getTerms: { group: "default", points: 1 },
     updateLoggedInUser: { group: "default", points: 1 },
     sendPhoneNumberVerificationToken: { group: "phoneVerification", points: 1 },
     verifyPhoneNumberVerificationToken: { group: "phoneVerification", points: 1 },

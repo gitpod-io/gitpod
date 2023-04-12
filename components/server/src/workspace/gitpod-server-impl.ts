@@ -142,7 +142,6 @@ import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from "../auth/
 import { Config } from "../config";
 import { NotFoundError, UnauthorizedError } from "../errors";
 import { RepoURL } from "../repohost/repo-url";
-import { TermsProvider } from "../terms/terms-provider";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
 import { UserDeletionService } from "../user/user-deletion-service";
@@ -252,8 +251,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(IClientDataPrometheusAdapter) protected readonly clientDataPrometheusAdapter: IClientDataPrometheusAdapter;
 
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-
-    @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
 
     @inject(CachingBlobServiceClientProvider)
     protected readonly blobServiceClientProvider: CachingBlobServiceClientProvider;
@@ -3310,12 +3307,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             context: event.context,
         };
         this.analytics.identify(identifyMessage);
-    }
-
-    async getTerms(ctx: TraceContext): Promise<Terms> {
-        // Terms are publicly available, thus no user check here.
-
-        return this.termsProvider.getCurrent();
     }
 
     async getIDEOptions(ctx: TraceContext): Promise<IDEOptions> {
