@@ -17,7 +17,7 @@ require (
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.9
-	github.com/google/nftables v0.0.0-20220906152720-cbeb0fb1eccf
+	github.com/google/nftables v0.1.0
 	github.com/google/uuid v1.3.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
 	github.com/opencontainers/go-digest v1.0.0
