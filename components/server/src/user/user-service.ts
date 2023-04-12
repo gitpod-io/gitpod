@@ -315,15 +315,6 @@ export class UserService {
         return [AttributionId.create(user)].concat(result);
     }
 
-    /**
-     * This might throw `AuthException`s.
-     *
-     * @param params
-     */
-    async checkSignUp(params: CheckSignUpParams) {
-        // no-op
-    }
-
     async checkTermsAcceptanceRequired(params: CheckTermsParams): Promise<boolean> {
         // // todo@alex: clarify if this would be a loophole for Gitpod SH.
         // // if (params.config.requireTOS === false) {

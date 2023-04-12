@@ -29,7 +29,6 @@ import { TokenProvider } from "../user/token-provider";
 import { UserService } from "../user/user-service";
 import { AuthProviderService } from "./auth-provider-service";
 import { LoginCompletionHandler } from "./login-completion-handler";
-import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from "../prometheus-metrics";
 import { OutgoingHttpHeaders } from "http2";
 
@@ -365,7 +364,6 @@ export class GenericAuthProvider implements AuthProvider {
             // e.g. "access_denied"
             // Clean up the session
             await AuthFlow.clear(request.session);
-            await TosFlow.clear(request.session);
 
             increaseLoginCounter("failed", this.host);
             return this.sendCompletionRedirectWithError(response, {
@@ -387,7 +385,7 @@ export class GenericAuthProvider implements AuthProvider {
             response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
         }
-        const [err, userOrIdentity, flowContext] = result;
+        const [err, userOrIdentity] = result;
 
         /*
          * (3) this callback function is called after the "verify" function as the final step in the authentication process in passport.
@@ -412,7 +410,6 @@ export class GenericAuthProvider implements AuthProvider {
 
         if (err) {
             await AuthFlow.clear(request.session);
-            await TosFlow.clear(request.session);
 
             if (SelectAccountException.is(err)) {
                 return this.sendCompletionRedirectWithError(response, err.payload);
@@ -442,40 +439,6 @@ export class GenericAuthProvider implements AuthProvider {
                 err,
             });
             return this.sendCompletionRedirectWithError(response, { error: `${message} ${err.message}` });
-        }
-
-        if (flowContext) {
-            const logPayload = {
-                withIdentity: TosFlow.WithIdentity.is(flowContext) ? flowContext.candidate : undefined,
-                withUser: TosFlow.WithUser.is(flowContext) ? User.censor(flowContext.user) : undefined,
-                ...defaultLogPayload,
-            };
-            if (
-                TosFlow.WithIdentity.is(flowContext) ||
-                (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)
-            ) {
-                // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
-                // account yet, as we require to accept the terms first.
-                log.info(context, `(${strategyName}) Redirect to /api/tos`, logPayload);
-
-                // attach the sign up info to the session, in order to proceed after acceptance of terms
-                await TosFlow.attach(request.session!, flowContext);
-
-                response.redirect(this.config.hostUrl.withApi({ pathname: "/tos", search: "mode=login" }).toString());
-                return;
-            } else {
-                const { user, elevateScopes } = flowContext as TosFlow.WithUser;
-                log.info(context, `(${strategyName}) Directly log in and proceed.`, logPayload);
-
-                // Complete login
-                const { host, returnTo } = authFlow;
-                await this.loginCompletionHandler.complete(request, response, {
-                    user,
-                    returnToUrl: returnTo,
-                    authHost: host,
-                    elevateScopes,
-                });
-            }
         }
     }
 
@@ -509,7 +472,6 @@ export class GenericAuthProvider implements AuthProvider {
         _done: VerifyCallbackInternal,
     ) {
         const done = _done as VerifyCallback;
-        let flowContext: VerifyResult;
         const { strategyName, params: config } = this;
         const clientInfo = getRequestingClientInfo(req);
         const authProviderId = this.authProviderId;
@@ -604,51 +566,11 @@ export class GenericAuthProvider implements AuthProvider {
             );
 
             if (currentGitpodUser) {
-                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({
-                    config,
-                    identity: candidate,
-                    user: currentGitpodUser,
-                });
-                const elevateScopes = authFlow.overrideScopes
-                    ? undefined
-                    : await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
-                const isBlocked = await this.userService.isBlocked({ user: currentGitpodUser });
-
                 await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
                 await this.userService.updateUserEnvVarsOnLogin(currentGitpodUser, envVars); // derived from AuthProvider
-
-                flowContext = <TosFlow.WithUser>{
-                    user: User.censor(currentGitpodUser),
-                    isBlocked,
-                    termsAcceptanceRequired,
-                    returnToUrl: authFlow.returnTo,
-                    authHost: this.host,
-                    elevateScopes,
-                };
-            } else {
-                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({
-                    config,
-                    identity: candidate,
-                });
-
-                // `checkSignUp` might throgh `AuthError`s with the intention to block the signup process.
-                await this.userService.checkSignUp({ config, identity: candidate });
-
-                const isBlocked = await this.userService.isBlocked({ primaryEmail });
-                const { githubIdentity, githubToken } = this.createGhProxyIdentity(candidate);
-                flowContext = <TosFlow.WithIdentity>{
-                    candidate,
-                    token,
-                    authUser,
-                    envVars,
-                    additionalIdentity: githubIdentity,
-                    additionalToken: githubToken,
-                    authHost: this.host,
-                    isBlocked,
-                    termsAcceptanceRequired,
-                };
             }
-            done(undefined, currentGitpodUser || candidate, flowContext);
+
+            done(undefined, currentGitpodUser || candidate);
         } catch (err) {
             log.error(`(${strategyName}) Exception in verify function`, err, { ...defaultLogPayload, err, authFlow });
             done(err, undefined);
@@ -809,8 +731,6 @@ export class GenericAuthProvider implements AuthProvider {
     };
 }
 
-export type VerifyResult = TosFlow.WithIdentity | TosFlow.WithUser;
-
 interface GenericOAuthStrategyOptions {
     scope?: string | string[];
     /**
@@ -830,8 +750,8 @@ interface GenericOAuthStrategyOptions {
 /**
  * Refinement of OAuth2Strategy.VerifyCallback
  */
-type VerifyCallbackInternal = (err?: Error | undefined, user?: User, info?: VerifyResult) => void;
-type VerifyCallback = (err?: Error | undefined, user?: User | Identity, info?: VerifyResult) => void;
+type VerifyCallbackInternal = (err?: Error | undefined, user?: User) => void;
+type VerifyCallback = (err?: Error | undefined, user?: User | Identity) => void;
 
 export interface StrategyOptionsWithRequest
     extends OAuth2Strategy.StrategyOptionsWithRequest,
