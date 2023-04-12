@@ -21,22 +21,16 @@ import { URL } from "url";
 import { saveSession, getRequestingClientInfo, destroySession } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { AuthFlow } from "../auth/auth-provider";
 import { LoginCompletionHandler } from "../auth/login-completion-handler";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { TosCookie } from "./tos-cookie";
-import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from "../prometheus-metrics";
-import { v4 as uuidv4 } from "uuid";
 import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
-import { trackSignup } from "../analytics";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { EnforcementControllerServerFactory } from "./enforcement-endpoint";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
 import { VerificationService } from "../auth/verification-service";
-import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import * as fs from "fs/promises";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
@@ -46,7 +40,6 @@ export class UserController {
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(Authenticator) protected readonly authenticator: Authenticator;
     @inject(Config) protected readonly config: Config;
-    @inject(TosCookie) protected readonly tosCookie: TosCookie;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(UserService) protected readonly userService: UserService;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
@@ -64,9 +57,6 @@ export class UserController {
         const router = express.Router();
 
         router.get("/login", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            // Clean up
-            this.tosCookie.unset(res);
-
             if (req.isAuthenticated()) {
                 log.info({ sessionId: req.sessionID }, "(Auth) User is already authenticated.", { "login-flow": true });
                 // redirect immediately
@@ -537,232 +527,8 @@ export class UserController {
 
             res.sendStatus(403);
         });
-        router.get("/tos", async (req: express.Request, res: express.Response) => {
-            const mode = req.query["mode"] as "login" | "update" | unknown;
-            const clientInfo = getRequestingClientInfo(req);
-            let tosFlowInfo = TosFlow.get(req.session);
-            const authFlow = AuthFlow.get(req.session);
-
-            const logContext = LogContext.from({ user: req.user, request: req });
-            const logPayload = { session: req.session, clientInfo, tosFlowInfo, authFlow, mode };
-
-            const redirectOnInvalidRequest = async () => {
-                // just don't forget
-                this.tosCookie.unset(res);
-                await AuthFlow.clear(req.session);
-                await TosFlow.clear(req.session);
-
-                log.info(logContext, "(TOS) Invalid request. (/tos)", logPayload);
-                res.redirect(this.getSorryUrl("Oops! Something went wrong. (invalid request)"));
-            };
-
-            if (mode !== "login" && mode !== "update") {
-                await redirectOnInvalidRequest();
-                return;
-            }
-
-            if (mode === "login") {
-                if (!authFlow || !TosFlow.is(tosFlowInfo)) {
-                    await redirectOnInvalidRequest();
-                    return;
-                }
-
-                // in a special case of the signup process, we're redirecting to /tos even if not required.
-                if (TosFlow.WithIdentity.is(tosFlowInfo) && tosFlowInfo.termsAcceptanceRequired === false) {
-                    log.info(logContext, "(TOS) Not required.", logPayload);
-                    await this.handleTosProceedForNewUser(req, res, authFlow, tosFlowInfo);
-                    return;
-                }
-            } else {
-                // we are in tos update process
-
-                const user = User.is(req.user) ? req.user : undefined;
-                if (!user) {
-                    await redirectOnInvalidRequest();
-                    return;
-                }
-
-                // initializing flow here!
-                tosFlowInfo = <TosFlow.WithUser>{
-                    user: User.censor(user),
-                    returnToUrl: req.query.returnTo,
-                };
-            }
-
-            // attaching a random identifier for this web flow to test if it's present in `/tos/proceed` handler
-            const flowId = uuidv4();
-            tosFlowInfo.flowId = flowId;
-            await TosFlow.attach(req.session!, tosFlowInfo);
-
-            const isUpdate = !TosFlow.WithIdentity.is(tosFlowInfo);
-            const userInfo = tosFlowUserInfo(tosFlowInfo);
-            const tosHints = {
-                flowId,
-                isUpdate, // indicate whether to show the "we've updated ..." message
-                userInfo, // let us render the avatar on the dashboard page
-            };
-            this.tosCookie.set(res, tosHints);
-
-            log.info(logContext, "(TOS) Redirecting to /tos.", { tosHints, ...logPayload });
-            res.redirect(this.config.hostUrl.with(() => ({ pathname: "/tos/" })).toString());
-        });
-        const tosFlowUserInfo = (tosFlowInfo: TosFlow) => {
-            if (TosFlow.WithIdentity.is(tosFlowInfo)) {
-                tosFlowInfo.authUser.authName;
-                return {
-                    name: tosFlowInfo.authUser.name || tosFlowInfo.authUser.authName,
-                    avatarUrl: tosFlowInfo.authUser.avatarUrl,
-                    authHost: tosFlowInfo.authHost,
-                    authName: tosFlowInfo.authUser.authName,
-                };
-            }
-            if (TosFlow.WithUser.is(tosFlowInfo)) {
-                return {
-                    name: tosFlowInfo.user.name,
-                    avatarUrl: tosFlowInfo.user.avatarUrl,
-                };
-            }
-        };
-        router.post("/tos/proceed", async (req: express.Request, res: express.Response) => {
-            // just don't forget
-            this.tosCookie.unset(res);
-
-            const clientInfo = getRequestingClientInfo(req);
-            const tosFlowInfo = TosFlow.get(req.session);
-            const authFlow = AuthFlow.get(req.session);
-            const isInLoginProcess = !!authFlow;
-
-            const logContext = LogContext.from({ user: req.user, request: req });
-            const logPayload = { session: req.session, clientInfo, tosFlowInfo, authFlow };
-
-            const redirectOnInvalidSession = async () => {
-                await AuthFlow.clear(req.session);
-                await TosFlow.clear(req.session);
-
-                log.info(logContext, "(TOS) Invalid session. (/tos/proceed)", logPayload);
-                res.redirect(this.getSorryUrl("Oops! Something went wrong. (invalid session)"));
-            };
-
-            if (!TosFlow.is(tosFlowInfo)) {
-                await redirectOnInvalidSession();
-                return;
-            }
-
-            // detaching the (random) identifier of this webflow
-            const flowId = tosFlowInfo.flowId;
-            delete tosFlowInfo.flowId;
-            await TosFlow.attach(req.session!, tosFlowInfo);
-
-            // let's assume if the form is re-submitted a second time, we need to abort the process, because
-            // otherwise we potentially create accounts for the same provider identity twice.
-            //
-            // todo@alex: check if it's viable to test the flow ids for a single submission, instead of detaching
-            // from the session.
-            if (typeof flowId !== "string") {
-                await redirectOnInvalidSession();
-                return;
-            }
-
-            const agreeTOS = req.body.agreeTOS;
-            if (!agreeTOS) {
-                // The user did not accept the terms.
-                // A redirect to /logout will wipe the session, which in case of a signup will ensure
-                // that no user data remains in the system.
-                log.info(logContext, "(TOS) User did NOT agree. Redirecting to /logout.", logPayload);
-
-                res.redirect(this.config.hostUrl.withApi({ pathname: "/logout" }).toString());
-                // todo@alex: consider redirecting to a info page (returnTo param)
-
-                return;
-            }
-
-            // The user has approved the terms.
-            log.info(logContext, "(TOS) User did agree.", logPayload);
-
-            if (TosFlow.WithIdentity.is(tosFlowInfo)) {
-                if (!authFlow) {
-                    await redirectOnInvalidSession();
-                    return;
-                }
-
-                // there is a possibility, that a competing browser session already created a new user account
-                // for this provider identity, thus we need to check again, in order to avoid created unreachable accounts
-                const user = await this.userService.findUserForLogin({ candidate: tosFlowInfo.candidate });
-                if (user) {
-                    log.info(`(TOS) User was created in a parallel browser session, let's login...`, { logPayload });
-                    await this.loginCompletionHandler.complete(req, res, {
-                        user,
-                        authHost: tosFlowInfo.authHost,
-                        returnToUrl: authFlow.returnTo,
-                    });
-                } else {
-                    await this.handleTosProceedForNewUser(req, res, authFlow, tosFlowInfo, req.body);
-                }
-
-                return;
-            }
-
-            if (TosFlow.WithUser.is(tosFlowInfo)) {
-                const { user, returnToUrl } = tosFlowInfo;
-
-                await this.userService.acceptCurrentTerms(user);
-
-                if (isInLoginProcess) {
-                    await this.loginCompletionHandler.complete(req, res, { ...tosFlowInfo });
-                } else {
-                    let returnTo = returnToUrl || this.config.hostUrl.asDashboard().toString();
-                    res.redirect(returnTo);
-                }
-            }
-        });
 
         return router;
-    }
-
-    protected async handleTosProceedForNewUser(
-        req: express.Request,
-        res: express.Response,
-        authFlow: AuthFlow,
-        tosFlowInfo: TosFlow.WithIdentity,
-        tosProceedParams?: any,
-    ) {
-        const { candidate, token } = tosFlowInfo;
-        const { returnTo, host } = authFlow;
-        const user = await this.userService.createUser({
-            identity: candidate,
-            token,
-            userUpdate: (user) => this.updateNewUserAfterTos(user, tosFlowInfo, tosProceedParams),
-        });
-
-        const { additionalIdentity, additionalToken, envVars } = tosFlowInfo;
-        if (additionalIdentity && additionalToken) {
-            await this.userService.updateUserIdentity(user, additionalIdentity, additionalToken);
-        }
-
-        if (user.blocked) {
-            log.warn({ user: user.id }, "user blocked on signup");
-        }
-
-        await this.userService.updateUserEnvVarsOnLogin(user, envVars);
-        await this.userService.acceptCurrentTerms(user);
-
-        /** no await */ trackSignup(user, req, this.analytics).catch((err) =>
-            log.warn({ userId: user.id }, "trackSignup", err),
-        );
-
-        await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnTo, authHost: host });
-    }
-
-    protected updateNewUserAfterTos(newUser: User, tosFlowInfo: TosFlow.WithIdentity, tosProceedParams?: any) {
-        const { authUser } = tosFlowInfo;
-        newUser.name = authUser.authName;
-        newUser.fullName = authUser.name || undefined;
-        newUser.avatarUrl = authUser.avatarUrl;
-        newUser.blocked = newUser.blocked || tosFlowInfo.isBlocked;
-        if (authUser.created_at && isDateSmaller(authUser.created_at, daysBefore(new Date().toISOString(), 30))) {
-            // people with an account older than 30 days are treated as trusted
-            this.verificationService.markVerified(newUser);
-        }
     }
 
     protected getSorryUrl(message: string) {

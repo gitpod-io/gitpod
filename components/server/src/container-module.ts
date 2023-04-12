@@ -67,7 +67,6 @@ import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { BearerAuth } from "./auth/bearer-authenticator";
 import { TermsProvider } from "./terms/terms-provider";
-import { TosCookie } from "./user/tos-cookie";
 import * as grpc from "@grpc/grpc-js";
 import { CodeSyncService } from "./code-sync/code-sync-service";
 import { ContentServiceStorageClient } from "./storage/content-service-client";
@@ -131,7 +130,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(Authenticator).toSelf().inSingletonScope();
     bind(LoginCompletionHandler).toSelf().inSingletonScope();
-    bind(TosCookie).toSelf().inSingletonScope();
 
     bind(SessionHandlerProvider).toSelf().inSingletonScope();
     bind(Server).toSelf().inSingletonScope();
