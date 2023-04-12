@@ -6,7 +6,7 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useMemo, useState } from "react";
-import { CheckboxInput, CheckboxInputField } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import { SelectInputField } from "../components/forms/SelectInputField";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutation";
@@ -189,13 +189,14 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 onBlur={websiteError.onBlur}
             />
 
-            <CheckboxInputField label="I'm exploring Gitpod...">
+            <CheckboxListField label="I'm exploring Gitpod...">
                 {explorationReasonsOptions.map((o) => (
-                    <CheckboxInput
+                    <CheckboxInputField
                         key={o.value}
                         value={o.value}
                         label={o.label}
                         checked={explorationReasons.includes(o.value)}
+                        topMargin={false}
                         onChange={(checked) => {
                             if (checked) {
                                 addExplorationReason(o.value);
@@ -205,7 +206,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                         }}
                     />
                 ))}
-            </CheckboxInputField>
+            </CheckboxListField>
 
             {explorationReasons.includes(EXPLORE_REASON_WORK) && (
                 <SelectInputField
@@ -223,13 +224,14 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                 </SelectInputField>
             )}
 
-            <CheckboxInputField label="I'm signing up for Gitpod for...">
+            <CheckboxListField label="I'm signing up for Gitpod for...">
                 {signupGoalsOptions.map((o) => (
-                    <CheckboxInput
+                    <CheckboxInputField
                         key={o.value}
                         value={o.value}
                         label={o.label}
                         checked={signupGoals.includes(o.value)}
+                        topMargin={false}
                         onChange={(checked) => {
                             if (checked) {
                                 addSignupGoal(o.value);
@@ -239,7 +241,7 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                         }}
                     />
                 ))}
-            </CheckboxInputField>
+            </CheckboxListField>
 
             {signupGoals.includes(SIGNUP_GOALS_OTHER) && (
                 <TextInputField

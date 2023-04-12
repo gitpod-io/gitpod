@@ -7,7 +7,7 @@
 import { useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
-import { CheckboxInputContainer, CheckboxInput } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { identifyUser } from "../Analytics";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Heading2 } from "../components/typography/headings";
@@ -83,33 +83,31 @@ export default function Notifications() {
         <div>
             <PageWithSettingsSubMenu>
                 <Heading2>Email Notification Preferences</Heading2>
-                <CheckboxInputContainer>
-                    <CheckboxInput
-                        label="Account Notifications [required]"
-                        hint="Receive essential emails about changes to your account"
-                        checked={true}
-                        disabled={true}
-                        onChange={(checked) => {}}
-                    />
-                    <CheckboxInput
-                        label="Onboarding guide"
-                        hint="In the first weeks after you sign up, we'll guide you through the product, so you can get the most out of it"
-                        checked={isOnboardingMail}
-                        onChange={toggleOnboardingMail}
-                    />
-                    <CheckboxInput
-                        label="Changelog"
-                        hint="Be the first to learn about new features and overall product improvements"
-                        checked={isChangelogMail}
-                        onChange={toggleChangelogMail}
-                    />
-                    <CheckboxInput
-                        label="Developer Experience & Product Tips"
-                        hint="Bring back joy and speed to your workflows"
-                        checked={isDevXMail}
-                        onChange={toggleDevXMail}
-                    />
-                </CheckboxInputContainer>
+                <CheckboxInputField
+                    label="Account Notifications [required]"
+                    hint="Receive essential emails about changes to your account"
+                    checked={true}
+                    disabled={true}
+                    onChange={(checked) => {}}
+                />
+                <CheckboxInputField
+                    label="Onboarding guide"
+                    hint="In the first weeks after you sign up, we'll guide you through the product, so you can get the most out of it"
+                    checked={isOnboardingMail}
+                    onChange={toggleOnboardingMail}
+                />
+                <CheckboxInputField
+                    label="Changelog"
+                    hint="Be the first to learn about new features and overall product improvements"
+                    checked={isChangelogMail}
+                    onChange={toggleChangelogMail}
+                />
+                <CheckboxInputField
+                    label="Developer Experience & Product Tips"
+                    hint="Bring back joy and speed to your workflows"
+                    checked={isDevXMail}
+                    onChange={toggleDevXMail}
+                />
             </PageWithSettingsSubMenu>
         </div>
     );

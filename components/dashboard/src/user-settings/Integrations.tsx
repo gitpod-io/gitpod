@@ -9,7 +9,7 @@ import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useContext, useEffect, useState } from "react";
 import Alert from "../components/Alert";
-import { CheckboxInput, CheckboxInputContainer } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { Delayed } from "../components/Delayed";
@@ -301,20 +301,20 @@ function GitProviders() {
                 <Modal visible={true} onClose={() => setEditModal(undefined)}>
                     <ModalHeader>Edit Permissions</ModalHeader>
                     <ModalBody>
-                        <div className="text-gray-500">Configure provider permissions.</div>
-                        {(editModal.provider.scopes || []).map((scope) => (
-                            <CheckboxInputContainer key={`scope-${scope}`} className="mt-0">
-                                <CheckboxInput
+                        <CheckboxListField label="Configure provider permissions.">
+                            {(editModal.provider.scopes || []).map((scope) => (
+                                <CheckboxInputField
+                                    key={scope}
                                     value={scope}
                                     label={scope}
                                     hint={getDescriptionForScope(scope)}
-                                    key={`scope-checkbox-${scope}`}
                                     checked={editModal.nextScopes.has(scope)}
                                     disabled={editModal.provider.requirements?.default.includes(scope)}
+                                    topMargin={false}
                                     onChange={(checked) => onChangeScopeHandler(checked, scope)}
                                 />
-                            </CheckboxInputContainer>
-                        ))}
+                            ))}
+                        </CheckboxListField>
                     </ModalBody>
                     <ModalFooter>
                         <button

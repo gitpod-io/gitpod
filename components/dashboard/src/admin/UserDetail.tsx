@@ -25,7 +25,7 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import CaretDown from "../icons/CaretDown.svg";
 import ContextMenu from "../components/ContextMenu";
-import { CheckboxInput, CheckboxInputField } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import { CostCenterJSON, CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 import { Heading2, Subheading } from "../components/typography/headings";
 
@@ -424,14 +424,20 @@ export default function UserDetail(p: { user: User }) {
                     </button>,
                 ]}
             >
-                <CheckboxInputField
+                <CheckboxListField
                     label="Edit feature access by adding or removing feature flags for this user."
                     className="mt-0"
                 >
                     {flags.map((e) => (
-                        <CheckboxInput key={e.title} label={e.title} checked={!!e.checked} onChange={e.onClick} />
+                        <CheckboxInputField
+                            key={e.title}
+                            label={e.title}
+                            checked={!!e.checked}
+                            topMargin={false}
+                            onChange={e.onClick}
+                        />
                     ))}
-                </CheckboxInputField>
+                </CheckboxListField>
             </Modal>
             <Modal
                 visible={editRoles}
@@ -443,14 +449,20 @@ export default function UserDetail(p: { user: User }) {
                     </button>,
                 ]}
             >
-                <CheckboxInputField
+                <CheckboxListField
                     label="Edit user permissions by adding or removing roles for this user."
                     className="mt-0"
                 >
                     {rop.map((e) => (
-                        <CheckboxInput key={e.title} label={e.title} checked={!!e.checked} onChange={e.onClick} />
+                        <CheckboxInputField
+                            key={e.title}
+                            label={e.title}
+                            checked={!!e.checked}
+                            topMargin={false}
+                            onChange={e.onClick}
+                        />
                     ))}
-                </CheckboxInputField>
+                </CheckboxListField>
             </Modal>
         </>
     );

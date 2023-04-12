@@ -7,7 +7,7 @@
 import React, { useContext } from "react";
 import { TelemetryData, InstallationAdminSettings } from "@gitpod/gitpod-protocol";
 import { AdminContext } from "../admin-context";
-import { CheckboxInput, CheckboxInputContainer } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { getGitpodService } from "../service/service";
 import { useEffect, useState } from "react";
 import InfoBox from "../components/InfoBox";
@@ -65,32 +65,30 @@ export default function Settings() {
                         Read our Privacy Policy
                     </a>
                 </p>
-                <CheckboxInputContainer>
-                    <CheckboxInput
-                        label="Enable usage telemetry"
-                        hint="Enable usage telemetry on your Gitpod instance. A preview of your telemetry is available
+                <CheckboxInputField
+                    label="Enable usage telemetry"
+                    hint="Enable usage telemetry on your Gitpod instance. A preview of your telemetry is available
                         below."
-                        checked={adminSettings?.sendTelemetry ?? false}
-                        onChange={(checked) =>
-                            actuallySetTelemetryPrefs({
-                                ...adminSettings,
-                                sendTelemetry: checked,
-                            } as InstallationAdminSettings)
-                        }
-                    />
+                    checked={adminSettings?.sendTelemetry ?? false}
+                    onChange={(checked) =>
+                        actuallySetTelemetryPrefs({
+                            ...adminSettings,
+                            sendTelemetry: checked,
+                        } as InstallationAdminSettings)
+                    }
+                />
 
-                    <CheckboxInput
-                        label="Include customer ID in telemetry"
-                        hint="Include an optional customer ID in usage telemetry to provide individualized support."
-                        checked={adminSettings?.sendCustomerID ?? false}
-                        onChange={(checked) =>
-                            actuallySetTelemetryPrefs({
-                                ...adminSettings,
-                                sendCustomerID: checked,
-                            } as InstallationAdminSettings)
-                        }
-                    />
-                </CheckboxInputContainer>
+                <CheckboxInputField
+                    label="Include customer ID in telemetry"
+                    hint="Include an optional customer ID in usage telemetry to provide individualized support."
+                    checked={adminSettings?.sendCustomerID ?? false}
+                    onChange={(checked) =>
+                        actuallySetTelemetryPrefs({
+                            ...adminSettings,
+                            sendCustomerID: checked,
+                        } as InstallationAdminSettings)
+                    }
+                />
                 <Heading2 className="mt-4">Telemetry preview</Heading2>
                 <InfoBox>
                     <pre>{JSON.stringify(telemetryData, null, 2)}</pre>

@@ -11,7 +11,7 @@ import { AdminPageHeader } from "./AdminPageHeader";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import ConfirmationModal from "../components/ConfirmationModal";
 import Modal from "../components/Modal";
-import { CheckboxInput, CheckboxInputContainer } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { ItemFieldContextMenu } from "../components/ItemsList";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import Alert from "../components/Alert";
@@ -300,19 +300,17 @@ function Details(props: {
                 />
             </div>
 
-            <CheckboxInputContainer>
-                <CheckboxInput
-                    label="Block Users"
-                    hint="Block any user that tries to open a workspace for a repository URL that matches this RegEx."
-                    checked={props.br.blockUser}
-                    disabled={!props.update}
-                    onChange={(checked) => {
-                        if (!!props.update) {
-                            props.update({ blockUser: checked });
-                        }
-                    }}
-                />
-            </CheckboxInputContainer>
+            <CheckboxInputField
+                label="Block Users"
+                hint="Block any user that tries to open a workspace for a repository URL that matches this RegEx."
+                checked={props.br.blockUser}
+                disabled={!props.update}
+                onChange={(checked) => {
+                    if (!!props.update) {
+                        props.update({ blockUser: checked });
+                    }
+                }}
+            />
         </div>
     );
 }

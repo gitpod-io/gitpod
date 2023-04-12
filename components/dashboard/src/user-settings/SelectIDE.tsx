@@ -6,7 +6,7 @@
 
 import { useCallback, useContext, useEffect, useState } from "react";
 import { UserContext } from "../user-context";
-import { CheckboxInput } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { User } from "@gitpod/gitpod-protocol";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import PillLabel from "../components/PillLabel";
@@ -103,7 +103,7 @@ export default function SelectIDE(props: SelectIDEProps) {
                 </p>
             )}
 
-            <CheckboxInput
+            <CheckboxInputField
                 label="Latest Release (Unstable)"
                 hint={
                     <span>

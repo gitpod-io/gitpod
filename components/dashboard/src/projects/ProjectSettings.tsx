@@ -10,7 +10,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
-import { CheckboxInputContainer, CheckboxInput } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
@@ -124,49 +124,47 @@ export default function ProjectSettingsView() {
                     </div>
                 </Alert>
             )}
-            <CheckboxInputContainer>
-                <CheckboxInput
-                    label="Enable Incremental Prebuilds"
-                    hint={
-                        <span>
-                            When possible, use an earlier successful prebuild as a base to create new prebuilds. This
-                            can make your prebuilds significantly faster, especially if they normally take longer than
-                            10 minutes.{" "}
-                            <a className="gp-link" href="https://www.gitpod.io/changelog/faster-incremental-prebuilds">
-                                Learn more
-                            </a>
-                        </span>
-                    }
-                    checked={project.settings?.useIncrementalPrebuilds ?? false}
-                    onChange={(checked) => updateProjectSettings({ useIncrementalPrebuilds: checked })}
-                />
-                <CheckboxInput
-                    label="Cancel Prebuilds on Outdated Commits"
-                    hint="Cancel pending or running prebuilds on the same branch when new commits are pushed."
-                    checked={!project.settings?.keepOutdatedPrebuildsRunning}
-                    onChange={(checked) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !checked })}
-                />
-                <CheckboxInput
-                    label={
-                        <span>
-                            Use Last Successful Prebuild{" "}
-                            <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
-                                Alpha
-                            </PillLabel>
-                        </span>
-                    }
-                    hint="Skip waiting for prebuilds in progress and use the last successful prebuild from previous
+            <CheckboxInputField
+                label="Enable Incremental Prebuilds"
+                hint={
+                    <span>
+                        When possible, use an earlier successful prebuild as a base to create new prebuilds. This can
+                        make your prebuilds significantly faster, especially if they normally take longer than 10
+                        minutes.{" "}
+                        <a className="gp-link" href="https://www.gitpod.io/changelog/faster-incremental-prebuilds">
+                            Learn more
+                        </a>
+                    </span>
+                }
+                checked={project.settings?.useIncrementalPrebuilds ?? false}
+                onChange={(checked) => updateProjectSettings({ useIncrementalPrebuilds: checked })}
+            />
+            <CheckboxInputField
+                label="Cancel Prebuilds on Outdated Commits"
+                hint="Cancel pending or running prebuilds on the same branch when new commits are pushed."
+                checked={!project.settings?.keepOutdatedPrebuildsRunning}
+                onChange={(checked) => updateProjectSettings({ keepOutdatedPrebuildsRunning: !checked })}
+            />
+            <CheckboxInputField
+                label={
+                    <span>
+                        Use Last Successful Prebuild{" "}
+                        <PillLabel type="warn" className="font-semibold mt-2 ml-2 py-0.5 px-2 self-center">
+                            Alpha
+                        </PillLabel>
+                    </span>
+                }
+                hint="Skip waiting for prebuilds in progress and use the last successful prebuild from previous
                     commits on the same branch."
-                    checked={!!project.settings?.allowUsingPreviousPrebuilds}
-                    onChange={(checked) =>
-                        updateProjectSettings({
-                            allowUsingPreviousPrebuilds: checked,
-                            // we are disabling prebuild cancellation when incremental workspaces are enabled
-                            keepOutdatedPrebuildsRunning: checked || project?.settings?.keepOutdatedPrebuildsRunning,
-                        })
-                    }
-                />
-            </CheckboxInputContainer>
+                checked={!!project.settings?.allowUsingPreviousPrebuilds}
+                onChange={(checked) =>
+                    updateProjectSettings({
+                        allowUsingPreviousPrebuilds: checked,
+                        // we are disabling prebuild cancellation when incremental workspaces are enabled
+                        keepOutdatedPrebuildsRunning: checked || project?.settings?.keepOutdatedPrebuildsRunning,
+                    })
+                }
+            />
             <div className="flex mt-4 max-w-2xl">
                 <div className="flex flex-col ml-6">
                     <label

@@ -10,7 +10,7 @@ import { useContext, useEffect, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
-import { CheckboxInput, CheckboxInputContainer } from "../components/forms/CheckboxInputField";
+import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import DateSelector from "../components/DateSelector";
 import { SpinnerOverlayLoader } from "../components/Loader";
 import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
@@ -236,14 +236,14 @@ function PersonalAccessTokenCreateView() {
                                 />
                             )}
                             <div>
-                                <h4>Permission</h4>
-                                <CheckboxInputContainer className="mt-0">
+                                <CheckboxListField label="Permission">
                                     {AllPermissions.map((item) => (
-                                        <CheckboxInput
+                                        <CheckboxInputField
                                             value={item.name}
                                             label={item.name}
                                             hint={item.description}
                                             checked={item.scopes.every((s) => token.scopes.has(s))}
+                                            topMargin={false}
                                             onChange={(checked) => {
                                                 if (checked) {
                                                     update({}, item.scopes);
@@ -253,7 +253,7 @@ function PersonalAccessTokenCreateView() {
                                             }}
                                         />
                                     ))}
-                                </CheckboxInputContainer>
+                                </CheckboxListField>
                             </div>
                         </div>
                     </div>
