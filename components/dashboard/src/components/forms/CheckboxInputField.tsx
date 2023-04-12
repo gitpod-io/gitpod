@@ -5,7 +5,7 @@
  */
 
 import classNames from "classnames";
-import { FC, InputHTMLAttributes, ReactNode, useCallback } from "react";
+import { FC, ReactNode, useCallback } from "react";
 import { useId } from "../../hooks/useId";
 import { InputField } from "./InputField";
 import { InputFieldHint } from "./InputFieldHint";
@@ -57,17 +57,6 @@ export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({
         [onChange],
     );
 
-    const inputProps: InputHTMLAttributes<HTMLInputElement> = {
-        id: elementId,
-        checked: checked,
-        disabled,
-        onChange: handleChange,
-    };
-
-    if (value) {
-        inputProps.value = value;
-    }
-
     return (
         // Intentionally not passing label and hint to InputField because we want to render them differently for checkboxes.
         <InputField error={error} topMargin={topMargin}>
@@ -80,7 +69,11 @@ export const CheckboxInputField: FC<CheckboxInputFieldProps> = ({
                         "border-gray-600 dark:border-gray-900 bg-transparent",
                         { "bg-gray-600 dark:bg-gray-900": checked },
                     )}
-                    {...inputProps}
+                    id={elementId}
+                    checked={checked}
+                    disabled={disabled}
+                    value={value}
+                    onChange={handleChange}
                 />
                 <div className="flex flex-col">
                     <span
