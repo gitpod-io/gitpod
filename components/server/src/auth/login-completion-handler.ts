@@ -94,7 +94,7 @@ export class LoginCompletionHandler {
             );
         }
 
-        const jwt = newSessionJWT(user.id);
+        const jwt = await newSessionJWT(user.id);
 
         response.cookie("_gitpod_jwt_", jwt, {
             maxAge: 7 * 24 * 60 * 60,
