@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -54,6 +53,12 @@ func (c *Client) CancelSubscription(ctx context.Context, subscriptionId string) 
 }
 
 func (c *Client) OnChargeDispute(ctx context.Context, disputeID string) error {
-	log.Infof("Handling stripe charge dispute ID: %s", disputeID)
-	return fmt.Errorf("unimplemented")
+	_, err := c.b.OnChargeDispute(ctx, &v1.OnChargeDisputeRequest{
+		DisputeId: disputeID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed RPC to billing service: %s", err)
+	}
+
+	return nil
 }
