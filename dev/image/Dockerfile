@@ -247,7 +247,7 @@ RUN sudo apt-add-repository -y ppa:fish-shell/release-3 && \
     sudo apt install -y fish
 
 # Install tmux + tmuxinator
-RUN brew install tmux tmuxinator\
+RUN brew install tmux tmuxinator
 
 # Install redis-server
 RUN brew install redis@7.0
