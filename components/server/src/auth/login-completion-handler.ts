@@ -12,7 +12,6 @@ import { Config } from "../config";
 import { AuthFlow } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { AuthProviderService } from "./auth-provider-service";
-import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from "../prometheus-metrics";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
@@ -50,7 +49,6 @@ export class LoginCompletionHandler {
             });
         } catch (err) {
             // Clean up the session & avoid loops
-            await TosFlow.clear(request.session);
             await AuthFlow.clear(request.session);
 
             if (authHost) {
@@ -82,7 +80,6 @@ export class LoginCompletionHandler {
         }
 
         // Clean up the session & avoid loops
-        await TosFlow.clear(request.session);
         await AuthFlow.clear(request.session);
 
         if (authHost) {

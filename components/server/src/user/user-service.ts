@@ -13,7 +13,6 @@ import { Config } from "../config";
 import { AuthProviderParams, AuthUser } from "../auth/auth-provider";
 import { BlockedUserFilter } from "../auth/blocked-user-filter";
 import { v4 as uuidv4 } from "uuid";
-import { TermsProvider } from "../terms/terms-provider";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
@@ -66,7 +65,6 @@ export class UserService {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
     @inject(TermsAcceptanceDB) protected readonly termsAcceptanceDb: TermsAcceptanceDB;
-    @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
     @inject(ProjectDB) protected readonly projectDb: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(StripeService) protected readonly stripeService: StripeService;
@@ -313,46 +311,6 @@ export class UserService {
             return result;
         }
         return [AttributionId.create(user)].concat(result);
-    }
-
-    async checkTermsAcceptanceRequired(params: CheckTermsParams): Promise<boolean> {
-        // // todo@alex: clarify if this would be a loophole for Gitpod SH.
-        // // if (params.config.requireTOS === false) {
-        // //     // AuthProvider config might disable terms acceptance
-        // //     return false;
-        // // }
-
-        // const { user } = params;
-        // if (!user) {
-        //     const userCount = await this.userDb.getUserCount();
-        //     if (userCount === 0) {
-        //         // the very first user, which will become admin, needs to accept the terms. always.
-        //         return true;
-        //     }
-        // }
-
-        // // admin users need to accept the terms.
-        // if (user && user.rolesOrPermissions && user.rolesOrPermissions.some(r => r === "admin")) {
-        //     return (await this.checkTermsAccepted(user)) === false;
-        // }
-
-        // // non-admin users won't need to accept the terms.
-        return false;
-    }
-
-    async acceptCurrentTerms(user: User) {
-        const terms = this.termsProvider.getCurrent();
-        return await this.termsAcceptanceDb.updateAcceptedRevision(user.id, terms.revision);
-    }
-
-    async checkTermsAccepted(user: User) {
-        // disabled terms acceptance check for now
-
-        return true;
-
-        // const terms = this.termsProvider.getCurrent();
-        // const accepted = await this.termsAcceptanceDb.getAcceptedRevision(user.id);
-        // return !!accepted && (accepted.termsRevision === terms.revision);
     }
 
     async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {

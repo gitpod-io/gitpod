@@ -9,8 +9,6 @@ import { GitpodServerImpl } from "../../src/workspace/gitpod-server-impl";
 import { GitpodServerEEImpl } from "./workspace/gitpod-server-impl";
 import { Server } from "../../src/server";
 import { ServerEE } from "./server";
-import { UserService } from "../../src/user/user-service";
-import { UserServiceEE } from "./user/user-service";
 import { HostContainerMapping } from "../../src/auth/host-container-mapping";
 import { HostContainerMappingEE } from "./auth/host-container-mapping";
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
@@ -65,7 +63,6 @@ import { UsageService, UsageServiceImpl, NoOpUsageService } from "../../src/user
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
-    rebind(UserService).to(UserServiceEE).inSingletonScope();
     rebind(WorkspaceFactory).to(WorkspaceFactoryEE).inSingletonScope();
     rebind(MonitoringEndpointsApp).to(MonitoringEndpointsAppEE).inSingletonScope();
 

@@ -472,7 +472,7 @@ export class GenericAuthProvider implements AuthProvider {
         _done: VerifyCallbackInternal,
     ) {
         const done = _done as VerifyCallback;
-        const { strategyName, params: config } = this;
+        const { strategyName } = this;
         const clientInfo = getRequestingClientInfo(req);
         const authProviderId = this.authProviderId;
         const authFlow = AuthFlow.get(req.session)!; // asserted in `callback` allready
