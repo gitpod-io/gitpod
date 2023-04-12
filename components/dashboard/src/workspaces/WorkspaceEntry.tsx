@@ -13,7 +13,6 @@ import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
-import { projectsPathInstallGitHubApp } from "../projects/projects.routes";
 
 type Props = {
     info: WorkspaceInfo;
