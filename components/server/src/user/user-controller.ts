@@ -27,6 +27,7 @@ import { increaseLoginCounter } from "../prometheus-metrics";
 import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
+import { UserDeletionService } from "../../ee/src/user/user-deletion-service";
 import { EnforcementControllerServerFactory } from "./enforcement-endpoint";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
@@ -50,6 +51,7 @@ export class UserController {
     @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
     @inject(WorkspaceManagerClientProvider)
     protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
+    @inject(UserDeletionService) protected readonly userDeletionService: UserDeletionService;
     @inject(EnforcementControllerServerFactory) private readonly serverFactory: EnforcementControllerServerFactory;
     @inject(VerificationService) protected readonly verificationService: VerificationService;
 
@@ -251,6 +253,10 @@ export class UserController {
 
             // clear cookies
             this.sessionHandlerProvider.clearSessionCookie(res, this.config);
+
+            // terminate all running workspaces
+            const user = req.user as User;
+            await this.userDeletionService.stopWorkspaces(user);
 
             // then redirect
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
