@@ -69,7 +69,7 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
                 </div>
                 <Button
                     className="w-full flex items-center justify-center space-x-2"
-                    onClick={linkedInLogin}
+                    onClick={(event) => { event.preventDefault(); linkedInLogin(); }}
                     disabled={isLoading || !clientID}
                 >
                     <img src={SignInWithLinkedIn} width={20} height={20} alt="Sign in with Linked In" />
