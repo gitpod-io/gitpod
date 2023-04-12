@@ -110,16 +110,11 @@ jobs:
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
-                  labels: "team: IDE,editor: jetbrains,do-not-merge/hold"
+                  labels: "team: IDE,editor: jetbrains"
                   team-reviewers: "engineering-ide"
                   token: ${{ secrets.roboquatRepoPat }}
                   committer: Robo Quat <roboquat@gitpod.io>
                   author: Robo Quat <roboquat@gitpod.io>
-            - name: Approve Pull Request for Gateway Plugin (EAP)
-              if: ${{ inputs.pluginId == 'latest-gateway-plugin' && steps.create-gateway-pr.outputs.pull-request-number }}
-              uses: hmarr/auto-approve-action@v3
-              with:
-                  pull-request-number: ${{ steps.create-gateway-pr.outputs.pull-request-number }}
             - name: Create Pull Request for Backend Plugin
               id: create-backend-pr
               if: ${{ contains(inputs.pluginId, 'backend-plugin') && steps.latest-version.outputs.result != steps.current-version.outputs.result }}
@@ -158,16 +153,11 @@ jobs:
                       _This PR was created automatically with GitHub Actions using [this](https://github.com/gitpod-io/gitpod/blob/main/.github/workflows/jetbrains-update-plugin-platform-template.yml) template._
                   commit-message: "Update Platform Version of ${{ inputs.pluginName }} to ${{ steps.latest-version.outputs.result }}"
                   branch: "jetbrains/${{ inputs.pluginId }}-platform"
-                  labels: "team: IDE,editor: jetbrains,do-not-merge/hold"
+                  labels: "team: IDE,editor: jetbrains"
                   team-reviewers: "engineering-ide"
                   token: ${{ secrets.roboquatRepoPat }}
                   committer: Robo Quat <roboquat@gitpod.io>
                   author: Robo Quat <roboquat@gitpod.io>
-            - name: Approve Pull Request for Backend Plugin
-              if: ${{ steps.create-backend-pr.outputs.pull-request-number }}
-              uses: hmarr/auto-approve-action@v3
-              with:
-                  pull-request-number: ${{ steps.create-backend-pr.outputs.pull-request-number }}
             - name: Get previous job's status
               id: lastrun
               uses: filiptronicek/get-last-job-status@main

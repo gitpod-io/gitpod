@@ -72,6 +72,9 @@ jobs:
                   commit-message: "[JetBrains] Update IDE images to new build version"
                   branch: "jetbrains/update-stable-ides"
                   labels: "team: IDE,editor: jetbrains"
+                  token: ${{ secrets.ROBOQUAT_REPO_PAT }}
+                  committer: Robo Quat <roboquat@gitpod.io>
+                  author: Robo Quat <roboquat@gitpod.io>
             - name: Get previous job's status
               id: lastrun
               uses: filiptronicek/get-last-job-status@main
