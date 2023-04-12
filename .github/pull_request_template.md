@@ -17,6 +17,7 @@ Fixes #
   See https://www.notion.so/gitpod/Release-Notes-513a74fdd23b4cb1b3b3aefb1d34a3e0
 -->
 ```release-note
+NONE
 ```
 
 ## Documentation
