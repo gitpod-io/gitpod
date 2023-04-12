@@ -74,6 +74,10 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
         // TODO: Once connect-node supports middlewares, lift the tracing into the middleware.
         const trace = {};
         await this.userService.blockUser(userId, true);
+        log.info(`Blocked user ${userId}.`, {
+            userId,
+            reason,
+        });
 
         const stoppedWorkspaces = await this.workspaceStarter.stopRunningWorkspacesForUser(
             trace,
@@ -83,7 +87,8 @@ export class APIUserService implements ServiceImpl<typeof UserServiceInterface> 
         );
 
         log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to BlockUser.`, {
-            userId: userId,
+            userId,
+            reason,
             workspaceIds: stoppedWorkspaces.map((w) => w.id),
         });
 
