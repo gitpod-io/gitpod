@@ -39,7 +39,8 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
                 ...additionalData,
                 profile: {
                     ...profile,
-                    emailAddress,
+                    // If still no email provided, default to "primary" email
+                    emailAddress: emailAddress || User.getPrimaryEmail(user),
                     lastUpdatedDetailsNudge: new Date().toISOString(),
                 },
             },
@@ -51,7 +52,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
         } catch (e) {
             console.error(e);
         }
-    }, [emailAddress, firstName, lastName, onComplete, updateUser, user.additionalData]);
+    }, [emailAddress, firstName, lastName, onComplete, updateUser, user]);
 
     const onLinkedInSuccess = useCallback(
         async (profile: LinkedInProfile) => {
