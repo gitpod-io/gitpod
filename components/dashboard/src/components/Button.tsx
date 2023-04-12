@@ -8,7 +8,7 @@ import classNames from "classnames";
 import { FC, RefObject } from "react";
 import SpinnerWhite from "../icons/SpinnerWhite.svg";
 
-type Props = {
+export type ButtonProps = {
     // TODO: determine if we want danger.secondary
     type?: "primary" | "secondary" | "danger" | "danger.secondary";
     // TODO: determine how to handle small/medium (block does w-full atm)
@@ -25,7 +25,7 @@ type Props = {
 // Allow w/ or w/o handling event argument
 type ButtonOnClickHandler = React.DOMAttributes<HTMLButtonElement>["onClick"] | (() => void);
 
-export const Button: FC<Props> = ({
+export const Button: FC<ButtonProps> = ({
     type = "primary",
     className,
     htmlType,

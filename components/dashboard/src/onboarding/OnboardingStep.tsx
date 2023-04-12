@@ -6,7 +6,7 @@
 
 import { FC, FormEvent, useCallback } from "react";
 import Alert from "../components/Alert";
-import { Button } from "../components/Button";
+import { Button, ButtonProps } from "../components/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
 
 type Props = {
@@ -17,7 +17,7 @@ type Props = {
     error?: string;
     onSubmit(): void;
     submitButtonText?: string;
-    submitButtonType?: "primary" | "secondary" | "danger" | "danger.secondary";
+    submitButtonType?: ButtonProps["type"];
 };
 export const OnboardingStep: FC<Props> = ({
     title,
