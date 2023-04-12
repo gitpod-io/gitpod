@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 	"sync"
@@ -49,6 +50,8 @@ type ConfigCat struct {
 	// pollInterval sets after how much time a configuration is considered stale.
 	pollInterval time.Duration
 
+	configCatConfigDir string
+
 	configCache map[string]*configCache
 	m           sync.RWMutex
 
@@ -64,19 +67,44 @@ func (ConfigCat) CaddyModule() caddy.ModuleInfo {
 	}
 }
 
+func (c *ConfigCat) ServeFromFile(w http.ResponseWriter, r *http.Request, fileName string) {
+	fp := path.Join(c.configCatConfigDir, fileName)
+	d, err := os.Stat(fp)
+	if err != nil {
+		// This should only happen before deploying the FF resource, and logging would not be helpful, hence we can fallback to the default values.
+		_, _ = w.Write(DefaultConfig)
+		return
+	}
+	requestEtag := r.Header.Get("If-None-Match")
+	etag := fmt.Sprintf(`W/"%x-%x"`, d.ModTime().Unix(), d.Size())
+	if requestEtag != "" && requestEtag == etag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("ETag", etag)
+	http.ServeFile(w, r, fp)
+}
+
 // ServeHTTP implements caddyhttp.MiddlewareHandler.
 func (c *ConfigCat) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
 	if !pathRegex.MatchString(r.URL.Path) {
 		return next.ServeHTTP(w, r)
 	}
+	arr := strings.Split(r.URL.Path, "/")
+	configVersion := arr[len(arr)-1]
+
+	if c.configCatConfigDir != "" {
+		c.ServeFromFile(w, r, configVersion)
+		return nil
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	if c.sdkKey == "" {
-		w.Write(DefaultConfig)
+		_, _ = w.Write(DefaultConfig)
 		return nil
 	}
 	etag := r.Header.Get("If-None-Match")
-	arr := strings.Split(r.URL.Path, "/")
-	configVersion := arr[len(arr)-1]
+
 	config := c.getConfigWithCache(configVersion)
 	if etag != "" && config.hash == etag {
 		w.WriteHeader(http.StatusNotModified)
@@ -94,7 +122,12 @@ func (c *ConfigCat) Provision(ctx caddy.Context) error {
 	c.configCache = make(map[string]*configCache)
 
 	c.sdkKey = os.Getenv("CONFIGCAT_SDK_KEY")
+	c.configCatConfigDir = os.Getenv("CONFIGCAT_DIR")
 	if c.sdkKey == "" {
+		return nil
+	}
+	if c.configCatConfigDir != "" {
+		c.logger.Info("serving configcat configuration from local directory")
 		return nil
 	}
 

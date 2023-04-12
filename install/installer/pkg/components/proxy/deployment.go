@@ -103,6 +103,21 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil {
 			frontendDevEnabled = cfg.WebApp.ProxyConfig.FrontendDevEnabled
 		}
+		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil && cfg.WebApp.ProxyConfig.Configcat != nil && cfg.WebApp.ProxyConfig.Configcat.FromConfigMap != "" {
+			volumes = append(volumes, corev1.Volume{
+				Name: "configcat",
+				VolumeSource: corev1.VolumeSource{
+					ConfigMap: &corev1.ConfigMapVolumeSource{
+						LocalObjectReference: corev1.LocalObjectReference{Name: cfg.WebApp.ProxyConfig.Configcat.FromConfigMap},
+						Optional:             pointer.Bool(true),
+					},
+				},
+			})
+			volumeMounts = append(volumeMounts, corev1.VolumeMount{
+				Name:      "configcat",
+				MountPath: "/data/configcat",
+			})
+		}
 		return nil
 	})
 

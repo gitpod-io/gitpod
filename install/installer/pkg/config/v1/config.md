@@ -147,6 +147,7 @@ Additional config parameters that are in experimental state
 |`experimental.webapp.proxy.serviceType`||N|  |  @deprecated use components.proxy.service.serviceType instead|
 |`experimental.webapp.proxy.configcat.baseUrl`|string|N|  ||
 |`experimental.webapp.proxy.configcat.pollInterval`|string|N|  ||
+|`experimental.webapp.proxy.configcat.fromConfigMap`|string|N|  ||
 |`experimental.webapp.wsManagerBridge.skipSelf`|bool|N|  ||
 |`experimental.webapp.tracing.samplerType`|string|N| `const`, `probabilistic`, `rateLimiting`, `remote` |Values taken from https://github.com/jaegertracing/jaeger-client-go/blob/967f9c36f0fa5a2617c9a0993b03f9a3279fadc8/config/config.go#L71|
 |`experimental.webapp.tracing.samplerParam`|float64|N|  ||

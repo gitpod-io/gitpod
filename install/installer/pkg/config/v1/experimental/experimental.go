@@ -287,8 +287,9 @@ type ProxyConfig struct {
 }
 
 type ConfigcatProxyConfig struct {
-	BaseUrl      string `json:"baseUrl"`
-	PollInterval string `json:"pollInterval"`
+	BaseUrl       string `json:"baseUrl"`
+	PollInterval  string `json:"pollInterval"`
+	FromConfigMap string `json:"fromConfigMap"`
 }
 
 type PublicAPIConfig struct {
