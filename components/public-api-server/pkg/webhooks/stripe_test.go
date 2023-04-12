@@ -23,11 +23,8 @@ import (
 
 // https://stripe.com/docs/api/events/types
 const (
-	invoiceUpdatedEventType     = "invoice.updated"
-	invoiceFinalizedEventType   = "invoice.finalized"
-	customerCreatedEventType    = "customer.created"
-	customerSubscriptionDeleted = "customer.subscription.deleted"
-	chargeDisputeCreated        = "charge.dispute.created"
+	invoiceUpdatedEventType  = "invoice.updated"
+	customerCreatedEventType = "customer.created"
 )
 
 const (
@@ -55,7 +52,7 @@ func TestWebhookAcceptsPostRequests(t *testing.T) {
 
 	srv := baseServerWithStripeWebhook(t, &billingservice.NoOpClient{})
 
-	payload := payloadForStripeEvent(t, invoiceFinalizedEventType)
+	payload := payloadForStripeEvent(t, InvoiceFinalizedEventType)
 
 	url := fmt.Sprintf("%s%s", srv.HTTPAddress(), "/webhook")
 
@@ -80,11 +77,11 @@ func TestWebhookIgnoresIrrelevantEvents_NoopClient(t *testing.T) {
 		ExpectedStatusCode int
 	}{
 		{
-			EventType:          invoiceFinalizedEventType,
+			EventType:          InvoiceFinalizedEventType,
 			ExpectedStatusCode: http.StatusOK,
 		},
 		{
-			EventType:          customerSubscriptionDeleted,
+			EventType:          CustomerSubscriptionDeletedEventType,
 			ExpectedStatusCode: http.StatusOK,
 		},
 		{
@@ -96,7 +93,7 @@ func TestWebhookIgnoresIrrelevantEvents_NoopClient(t *testing.T) {
 			ExpectedStatusCode: http.StatusBadRequest,
 		},
 		{
-			EventType:          chargeDisputeCreated,
+			EventType:          ChargeDisputeCreatedEventType,
 			ExpectedStatusCode: http.StatusOK,
 		},
 	}
@@ -134,7 +131,7 @@ func TestWebhookInvokesFinalizeInvoiceRPC(t *testing.T) {
 
 	url := fmt.Sprintf("%s%s", srv.HTTPAddress(), "/webhook")
 
-	payload := payloadForStripeEvent(t, invoiceFinalizedEventType)
+	payload := payloadForStripeEvent(t, InvoiceFinalizedEventType)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
 	require.NoError(t, err)
 
@@ -154,7 +151,7 @@ func TestWebhookInvokesCancelSubscriptionRPC(t *testing.T) {
 
 	url := fmt.Sprintf("%s%s", srv.HTTPAddress(), "/webhook")
 
-	payload := payloadForStripeEvent(t, customerSubscriptionDeleted)
+	payload := payloadForStripeEvent(t, CustomerSubscriptionDeletedEventType)
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
 	require.NoError(t, err)
 

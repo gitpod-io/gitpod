@@ -15,6 +15,12 @@ import (
 
 const maxBodyBytes = int64(65536)
 
+const (
+	InvoiceFinalizedEventType            = "invoice.finalized"
+	CustomerSubscriptionDeletedEventType = "customer.subscription.deleted"
+	ChargeDisputeCreatedEventType        = "charge.dispute.created"
+)
+
 type webhookHandler struct {
 	billingService         billingservice.Interface
 	stripeWebhookSignature string
@@ -58,7 +64,7 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	switch event.Type {
-	case "invoice.finalized":
+	case InvoiceFinalizedEventType:
 		invoiceID, ok := event.Data.Object["id"].(string)
 		if !ok {
 			log.Error("failed to find invoice id in Stripe event payload")
@@ -72,7 +78,7 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	case "customer.subscription.deleted":
+	case CustomerSubscriptionDeletedEventType:
 		subscriptionID, ok := event.Data.Object["id"].(string)
 		if !ok {
 			log.Error("failed to find subscriptionId id in Stripe event payload")
@@ -85,7 +91,7 @@ func (h *webhookHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-	case "charge.dispute.created":
+	case ChargeDisputeCreatedEventType:
 		log.Info("Handling charge dispute")
 		disputeID, ok := event.Data.Object["id"].(string)
 		if !ok {
