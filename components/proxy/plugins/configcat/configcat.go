@@ -24,8 +24,7 @@ import (
 )
 
 const (
-	configCatModule    = "gitpod.configcat"
-	configCatConfigDir = "/data/configcat/"
+	configCatModule = "gitpod.configcat"
 )
 
 var (
@@ -51,7 +50,7 @@ type ConfigCat struct {
 	// pollInterval sets after how much time a configuration is considered stale.
 	pollInterval time.Duration
 
-	fromConfigMap bool
+	configCatConfigDir string
 
 	configCache map[string]*configCache
 	m           sync.RWMutex
@@ -68,8 +67,8 @@ func (ConfigCat) CaddyModule() caddy.ModuleInfo {
 	}
 }
 
-func ServeFromFile(w http.ResponseWriter, r *http.Request, fileName string) {
-	fp := path.Join(configCatConfigDir, fileName)
+func (c *ConfigCat) ServeFromFile(w http.ResponseWriter, r *http.Request, fileName string) {
+	fp := path.Join(c.configCatConfigDir, fileName)
 	d, err := os.Stat(fp)
 	if err != nil {
 		// This should only happen before deploying the FF resource, and logging would not be helpful, hence we can fallback to the default values.
@@ -94,8 +93,8 @@ func (c *ConfigCat) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	arr := strings.Split(r.URL.Path, "/")
 	configVersion := arr[len(arr)-1]
 
-	if c.fromConfigMap {
-		ServeFromFile(w, r, configVersion)
+	if c.configCatConfigDir != "" {
+		c.ServeFromFile(w, r, configVersion)
 		return nil
 	}
 
@@ -123,12 +122,12 @@ func (c *ConfigCat) Provision(ctx caddy.Context) error {
 	c.configCache = make(map[string]*configCache)
 
 	c.sdkKey = os.Getenv("CONFIGCAT_SDK_KEY")
-	c.fromConfigMap = os.Getenv("CONFIGCAT_FROM_CONFIGMAP") == "true"
+	c.configCatConfigDir = os.Getenv("CONFIGCAT_DIR")
 	if c.sdkKey == "" {
 		return nil
 	}
-	if c.fromConfigMap {
-		c.logger.Info("serving configcat configuration from configmap")
+	if c.configCatConfigDir != "" {
+		c.logger.Info("serving configcat configuration from local directory")
 		return nil
 	}
 

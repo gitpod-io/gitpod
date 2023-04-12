@@ -465,8 +465,8 @@ func ConfigcatProxyEnv(ctx *RenderContext) []corev1.EnvVar {
 	if fromConfigMap != "" {
 		envs = append(envs,
 			corev1.EnvVar{
-				Name:  "CONFIGCAT_FROM_CONFIGMAP",
-				Value: "true",
+				Name:  "CONFIGCAT_DIR",
+				Value: "/data/configcat/",
 			},
 		)
 	} else {
