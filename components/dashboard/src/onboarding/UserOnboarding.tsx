@@ -5,7 +5,7 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { FunctionComponent, useCallback, useContext, useEffect, useState } from "react";
+import { FunctionComponent, useCallback, useContext, useState } from "react";
 import gitpodIcon from "../icons/gitpod.svg";
 import { Separator } from "../components/Separator";
 import { useHistory, useLocation } from "react-router";
