@@ -255,7 +255,7 @@ export function CreateWorkspacePage() {
                         onClick={onClickCreate}
                         autoFocus={true}
                         size="block"
-                        loading={isStarting || isLoading}
+                        loading={isStarting}
                         disabled={
                             !contextURL ||
                             contextURL.length === 0 ||
@@ -264,7 +264,7 @@ export function CreateWorkspacePage() {
                             !!workspaceContext.error
                         }
                     >
-                        {isLoading ? "Loading ..." : isStarting ? "Creating Workspace ..." : "New Workspace"}
+                        {isStarting ? "Creating Workspace ..." : "New Workspace"}
                     </Button>
                 </div>
                 {existingWorkspaces.length > 0 && (
