@@ -123,7 +123,7 @@ func (g GitClient) Commit(dir string, message string, all bool) error {
 		return err
 	}
 	if resp.ExitCode != 0 {
-		return fmt.Errorf("commit returned rc: %d err: %v", resp.ExitCode, resp.Stderr)
+		return fmt.Errorf("commit returned rc: %d, out: %v, err: %v", resp.ExitCode, resp.Stdout, resp.Stderr)
 	}
 	return nil
 }
