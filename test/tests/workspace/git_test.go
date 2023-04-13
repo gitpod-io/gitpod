@@ -35,7 +35,7 @@ func TestGitActions(t *testing.T) {
 	tests := []GitTest{
 		{
 			Name:          "create, add and commit",
-			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
+			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
 			Action: func(rsa *integration.RpcClient, git integration.GitClient, workspaceRoot string) (err error) {
 				var resp agent.ExecResponse
