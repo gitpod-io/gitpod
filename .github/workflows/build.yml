@@ -23,7 +23,7 @@ jobs:
         if: github.event_name == 'pull_request' && github.event.action == 'opened'
         id: build-status-comment
         with:
-          github-token: ${{github.token}}
+          github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
             const output = `🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\`
             `* 🏷️ **Name** - ${{github.head_ref}}\`
@@ -378,7 +378,7 @@ jobs:
       id: update-comment
       uses: actions/github-script@v6
       with:
-        github-token: ${{ github.token }}
+        github-token: ${{secrets.GITHUB_TOKEN}}
         script: |
           const output = `🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\`
             `* 🏷️ **Name** - ${{github.head_ref}}\`
