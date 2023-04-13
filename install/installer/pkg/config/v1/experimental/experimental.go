@@ -45,8 +45,6 @@ type CommonConfig struct {
 	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
 	// @deprecated use a secret instead in messageBus.credentials
 	StaticMessagebusPassword string `json:"staticMessagebusPassword"`
-	// @deprecated PodSecurityPolicies are deprecated in k8s 1.21 and removed in 1.25
-	UsePodSecurityPolicies bool `json:"usePodSecurityPolicies"`
 }
 
 type PodConfig struct {

@@ -180,6 +180,5 @@ Additional config parameters that are in experimental state
 |`experimental.ide.ideMetrics.enabledErrorReporting`|bool|N|  ||
 |`experimental.common.podConfig`||N|  ||
 |`experimental.common.staticMessagebusPassword`|string|N|  ||
-|`experimental.common.usePodSecurityPolicies`|bool|N|  |  @deprecated PodSecurityPolicies are deprecated in k8s 1.21 and removed in 1.25|
 |`experimental.telemetry.data`||N|  ||
 |`experimental.agentSmith`||N|  ||

@@ -65,12 +65,6 @@ var deprecatedFields = map[string]deprecatedField{
 			return val != "", "***" // Redact the password
 		},
 	},
-	"experimental.common.usePodSecurityPolicies": {
-		Selector: func(cfg *Config) (bool, any) {
-			usePSPs := cfg.Experimental.Common.UsePodSecurityPolicies
-			return usePSPs, usePSPs
-		},
-	},
 	"experimental.ide.resolveLatest": {
 		Selector: func(cfg *Config) (bool, any) {
 			val := cfg.Experimental.IDE.ResolveLatest
