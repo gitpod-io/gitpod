@@ -20,7 +20,6 @@ jobs:
     steps:
       - name: Create comment
         uses: actions/github-script@v6
-        if: github.event_name == 'pull_request'
         id: build-status-comment
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
