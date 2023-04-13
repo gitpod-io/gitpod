@@ -96,6 +96,16 @@ export function CreateWorkspacePage() {
         }
     }, [project, props.workspaceClass]);
 
+    // In addition to updating state, we want to update the url hash as well
+    // This allows the contextURL to persist if user changes orgs, or copies/shares url
+    const handleContextURLChange = useCallback(
+        (newContextURL: string) => {
+            setContextURL(newContextURL);
+            history.replace(`#${newContextURL}`);
+        },
+        [history],
+    );
+
     const onSelectEditorChange = useCallback(
         (ide: string, useLatest: boolean) => {
             setSelectedIde(ide);
@@ -219,7 +229,7 @@ export function CreateWorkspacePage() {
                 </div>
                 <div className="-mx-6 px-6 mt-6 w-full">
                     <div className="pt-3">
-                        <RepositoryFinder setSelection={setContextURL} initialValue={contextURL} />
+                        <RepositoryFinder setSelection={handleContextURLChange} initialValue={contextURL} />
                         <ErrorMessage
                             error={
                                 (createWorkspaceMutation.error as StartWorkspaceError) ||
