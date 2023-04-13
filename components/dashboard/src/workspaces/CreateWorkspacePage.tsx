@@ -30,6 +30,7 @@ import { StartWorkspaceError } from "../start/StartPage";
 import { useCurrentUser } from "../user-context";
 import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { WorkspaceEntry } from "./WorkspaceEntry";
+import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 
 export const useNewCreateWorkspacePage = () => {
     const { startWithOptions } = useFeatureFlags();
@@ -125,6 +126,7 @@ export function CreateWorkspacePage() {
 
             // we already have shown running workspaces to the user
             opts.ignoreRunningWorkspaceOnSameCommit = true;
+            opts.ignoreRunningPrebuild = true;
 
             if (!opts.workspaceClass) {
                 opts.workspaceClass = selectedWsClass;
@@ -216,29 +218,35 @@ export function CreateWorkspacePage() {
                 </div>
                 <div className="-mx-6 px-6 mt-6 w-full">
                     <div className="pt-3">
-                        {workspaceContext.error && (
-                            <div className="text-red-500 text-sm">
-                                {workspaceContext.error.message} URL was: {contextURL}
-                            </div>
-                        )}
                         <RepositoryFinder setSelection={setContextURL} initialValue={contextURL} />
+                        <ErrorMessage
+                            error={
+                                (createWorkspaceMutation.error as StartWorkspaceError) ||
+                                (workspaceContext.error as StartWorkspaceError)
+                            }
+                            setSelectAccountError={setSelectAccountError}
+                            reset={() => {
+                                createWorkspaceMutation.reset();
+                            }}
+                            createWorkspace={createWorkspace}
+                        />
                     </div>
                     <div className="pt-3">
-                        {errorIde && <div className="text-red-500 text-sm">{errorIde}</div>}
                         <SelectIDEComponent
                             onSelectionChange={onSelectEditorChange}
                             setError={setErrorIde}
                             selectedIdeOption={selectedIde}
                             useLatest={useLatestIde}
                         />
+                        {errorIde && <div className="text-red-500 text-sm">{errorIde}</div>}
                     </div>
                     <div className="pt-3">
-                        {errorWsClass && <div className="text-red-500 text-sm">{errorWsClass}</div>}
                         <SelectWorkspaceClassComponent
                             onSelectionChange={setSelectedWsClass}
                             setError={setErrorWsClass}
                             selectedWorkspaceClass={selectedWsClass}
                         />
+                        {errorWsClass && <div className="text-red-500 text-sm">{errorWsClass}</div>}
                     </div>
                 </div>
                 <div className="w-full flex justify-end mt-6 space-x-2 px-6">
@@ -275,16 +283,6 @@ export function CreateWorkspacePage() {
                         </>
                     </div>
                 )}
-                <div>
-                    <StatusMessage
-                        error={createWorkspaceMutation.error as StartWorkspaceError}
-                        setSelectAccountError={setSelectAccountError}
-                        reset={() => {
-                            createWorkspaceMutation.reset();
-                        }}
-                        createWorkspace={createWorkspace}
-                    />
-                </div>
             </div>
         </div>
     );
@@ -322,7 +320,7 @@ interface StatusMessageProps {
     setSelectAccountError: (error?: SelectAccountPayload) => void;
     createWorkspace: (opts: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) => void;
 }
-const StatusMessage: FunctionComponent<StatusMessageProps> = ({
+const ErrorMessage: FunctionComponent<StatusMessageProps> = ({
     error,
     reset,
     setSelectAccountError,
@@ -333,74 +331,109 @@ const StatusMessage: FunctionComponent<StatusMessageProps> = ({
     }
     switch (error.code) {
         case ErrorCodes.CONTEXT_PARSE_ERROR:
-            return (
-                <div className="text-center">
-                    <p className="text-base mt-2">
-                        Are you trying to open a Git repository from a self-managed git hoster?{" "}
-                        <a className="text-blue" href={gitpodHostUrl.asAccessControl().toString()}>
-                            Add integration
-                        </a>
-                    </p>
-                </div>
+            return renderError(
+                `Are you trying to open a Git repository from a self-managed git hoster?`,
+                "Add integration",
+                gitpodHostUrl.asAccessControl().toString(),
             );
         case ErrorCodes.INVALID_GITPOD_YML:
-            return (
-                <div className="mt-2 flex flex-col space-y-8">
-                    <button
-                        className=""
-                        onClick={() => {
-                            createWorkspace({ forceDefaultConfig: true });
-                        }}
-                    >
-                        Continue with default configuration
-                    </button>
-                </div>
-            );
+            return renderError(`The gitpod.yml is invalid.`, `Use default config`, undefined, () => {
+                createWorkspace({ forceDefaultConfig: true });
+            });
         case ErrorCodes.NOT_AUTHENTICATED:
-            return (
-                <div className="mt-2 flex flex-col space-y-8">
-                    <button
-                        className=""
-                        onClick={() => {
-                            tryAuthorize(error?.data.host, error?.data.scopes).then((payload) =>
-                                setSelectAccountError(payload),
-                            );
-                        }}
-                    >
-                        Authorize with {error.data.host}
-                    </button>
-                </div>
-            );
+            return renderError("You are not authenticated.", `Authorize with ${error.data.host}`, undefined, () => {
+                tryAuthorize(error?.data.host, error?.data.scopes).then((payload) => setSelectAccountError(payload));
+            });
+        case ErrorCodes.NOT_FOUND:
+            return <RepositoryNotFound error={error} />;
         case ErrorCodes.PERMISSION_DENIED:
-            return <p className="text-base text-gitpod-red w-96">Access is not allowed</p>;
+            return renderError(`Access is not allowed`);
         case ErrorCodes.USER_BLOCKED:
             window.location.href = "/blocked";
             return <></>;
-        case ErrorCodes.NOT_FOUND:
-            return <p className="text-base text-gitpod-red w-96">{error.message}</p>;
         case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
             return <LimitReachedParallelWorkspacesModal />;
         case ErrorCodes.NOT_ENOUGH_CREDIT:
             return <LimitReachedOutOfHours />;
         case ErrorCodes.INVALID_COST_CENTER:
-            return (
-                <div>
-                    <p className="text-base text-gitpod-red w-96">
-                        The organization <b>{error.data}</b> is not valid.
-                    </p>
-                </div>
-            );
+            return renderError(`The organization '${error.data}' is not valid.`);
         case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
             return <UsageLimitReachedModal onClose={reset} hints={error?.data} />;
-        case ErrorCodes.PROJECT_REQUIRED:
-            return (
-                <p className="text-base text-gitpod-red w-96">
-                    <a className="gp-link" href="https://www.gitpod.io/docs/configure/projects">
-                        Learn more about projects
-                    </a>
-                </p>
-            );
         default:
-            return <p className="text-base text-gitpod-red w-96">Unknown Error: {JSON.stringify(error, null, 2)}</p>;
+            return renderError(error.message || JSON.stringify(error));
     }
 };
+
+function renderError(message: string, linkText?: string, linkHref?: string, linkOnClick?: () => void) {
+    return (
+        <div className="mt-2 flex space-x-1">
+            <p className="text-sm text-gitpod-red">{message}</p>
+            {linkText &&
+                (linkHref ? (
+                    <a className="gp-link whitespace-nowrap text-sm" href={linkHref}>
+                        {linkText}
+                    </a>
+                ) : (
+                    <p className="gp-link whitespace-nowrap text-sm" onClick={linkOnClick}>
+                        {linkText}
+                    </p>
+                ))}
+        </div>
+    );
+}
+
+export function RepositoryNotFound(p: { error: StartWorkspaceError }) {
+    const { host, owner, userIsOwner, userScopes, lastUpdate } = p.error.data;
+    const authProviders = useAuthProviders();
+    const authProvider = authProviders?.data?.find((a) => a.host === host);
+    if (!authProvider) {
+        return null;
+    }
+
+    // TODO: this should be aware of already granted permissions
+    const missingScope = authProvider.authProviderType === "GitHub" ? "repo" : "read_repository";
+    const authorizeURL = gitpodHostUrl
+        .withApi({
+            pathname: "/authorize",
+            search: `returnTo=${encodeURIComponent(window.location.toString())}&host=${host}&scopes=${missingScope}`,
+        })
+        .toString();
+
+    if (!userScopes.includes(missingScope)) {
+        return renderError(
+            "The repository may be private. Please authorize Gitpod to access private repositories.",
+            "Grant access",
+            authorizeURL,
+        );
+    }
+
+    if (userIsOwner) {
+        return renderError("The repository was not found in your account.");
+    }
+
+    let updatedRecently = false;
+    if (lastUpdate && typeof lastUpdate === "string") {
+        try {
+            const minutes = (Date.now() - Date.parse(lastUpdate)) / 1000 / 60;
+            updatedRecently = minutes < 5;
+        } catch {
+            // ignore
+        }
+    }
+
+    if (!updatedRecently) {
+        return renderError(
+            `Permission to access private repositories has been granted. If you are a member of{" "}
+                '${owner}', please try to request access for Gitpod.`,
+            "Request access",
+            authorizeURL,
+        );
+    }
+
+    return renderError(
+        `Your access token was updated recently. Please try again if the repository exists and Gitpod was
+            approved for '${owner}'.`,
+        "Authorize again",
+        authorizeURL,
+    );
+}

@@ -30,6 +30,7 @@ import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { StartWorkspaceOptions } from "./start-workspace-options";
 import { useLocation } from "react-router";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -382,6 +383,7 @@ export function LimitReachedOutOfHours() {
 
 export function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
     const [statusMessage, setStatusMessage] = useState<React.ReactNode>();
+    const authProviders = useAuthProviders();
     const { host, owner, repoName, userIsOwner, userScopes, lastUpdate } = p.error.data;
     const repoFullName = owner && repoName ? `${owner}/${repoName}` : "";
 
@@ -394,7 +396,7 @@ export function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
             console.log("userScopes", userScopes);
             console.log("lastUpdate", lastUpdate);
 
-            const authProvider = (await getGitpodService().server.getAuthProviders()).find((p) => p.host === host);
+            const authProvider = authProviders.data?.find((p) => p.host === host);
             if (!authProvider) {
                 return;
             }

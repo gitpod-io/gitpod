@@ -24,6 +24,7 @@ import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 import { SSOLoginForm } from "./login/SSOLoginForm";
+import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
 
 function Item(props: { icon: string; iconSize?: string; text: string }) {
     const iconSize = props.iconSize || 28;
@@ -52,9 +53,8 @@ export function Login() {
 
     const urlHash = useMemo(() => getURLHash(), []);
 
-    const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
+    const authProviders = useAuthProviders();
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-    const [providerFromContext, setProviderFromContext] = useState<AuthProviderInfo>();
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
 
@@ -70,18 +70,10 @@ export function Login() {
         }
     }, [urlHash]);
 
-    useEffect(() => {
-        (async () => {
-            setAuthProviders(await getGitpodService().server.getAuthProviders());
-        })();
-    }, []);
-
-    useEffect(() => {
-        if (hostFromContext && authProviders) {
-            const providerFromContext = authProviders.find((provider) => provider.host === hostFromContext);
-            setProviderFromContext(providerFromContext);
-        }
-    }, [hostFromContext, authProviders]);
+    let providerFromContext: AuthProviderInfo | undefined;
+    if (hostFromContext && authProviders.data) {
+        providerFromContext = authProviders.data.find((provider) => provider.host === hostFromContext);
+    }
 
     const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
 
@@ -209,7 +201,7 @@ export function Login() {
                                     <button
                                         key={"button" + providerFromContext.host}
                                         className="btn-login flex-none w-56 h-10 p-0 inline-flex"
-                                        onClick={() => openLogin(providerFromContext.host)}
+                                        onClick={() => openLogin(providerFromContext!.host)}
                                     >
                                         {iconForAuthProvider(providerFromContext.authProviderType)}
                                         <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
@@ -217,7 +209,7 @@ export function Login() {
                                         </span>
                                     </button>
                                 ) : (
-                                    authProviders.map((ap) => (
+                                    authProviders.data?.map((ap) => (
                                         <button
                                             key={"button" + ap.host}
                                             className="btn-login flex-none w-56 h-10 p-0 inline-flex"

@@ -9,11 +9,17 @@ import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 
 export function useWorkspaceContext(contextUrl?: string) {
-    const query = useQuery<WorkspaceContext | null, Error>(["workspace-context", contextUrl], () => {
-        if (!contextUrl) {
-            return null;
-        }
-        return getGitpodService().server.resolveContext(contextUrl);
-    });
+    const query = useQuery<WorkspaceContext | null, Error>(
+        ["workspace-context", contextUrl],
+        () => {
+            if (!contextUrl) {
+                return null;
+            }
+            return getGitpodService().server.resolveContext(contextUrl);
+        },
+        {
+            retry: false,
+        },
+    );
     return query;
 }

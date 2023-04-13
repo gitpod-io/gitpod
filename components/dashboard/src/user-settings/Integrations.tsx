@@ -29,6 +29,7 @@ import { AuthEntryItem } from "./AuthEntryItem";
 import { IntegrationEntryItem } from "./IntegrationItemEntry";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { SelectAccountModal } from "./SelectAccountModal";
+import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 
 export default function Integrations() {
     return (
@@ -45,7 +46,7 @@ export default function Integrations() {
 function GitProviders() {
     const { user, setUser } = useContext(UserContext);
 
-    const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
+    const authProviders = useAuthProviders();
     const [allScopes, setAllScopes] = useState<Map<string, string[]>>(new Map());
     const [disconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
     const [editModal, setEditModal] = useState<
@@ -54,20 +55,11 @@ function GitProviders() {
     const [selectAccountModal, setSelectAccountModal] = useState<SelectAccountPayload | undefined>(undefined);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
 
-    useEffect(() => {
-        updateAuthProviders();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const updateAuthProviders = useCallback(async () => {
-        setAuthProviders(await getGitpodService().server.getAuthProviders());
-    }, []);
-
     const updateCurrentScopes = useCallback(async () => {
         if (user) {
             const scopesByProvider = new Map<string, string[]>();
             const connectedProviders = user.identities.map((i) =>
-                authProviders.find((ap) => ap.authProviderId === i.authProviderId),
+                authProviders.data?.find((ap) => ap.authProviderId === i.authProviderId),
             );
             for (let provider of connectedProviders) {
                 if (!provider) {
@@ -106,7 +98,7 @@ function GitProviders() {
                     separator: true,
                 });
             }
-            const connectedWithSecondProvider = authProviders.some(
+            const connectedWithSecondProvider = authProviders.data?.some(
                 (p) => p.authProviderId !== provider.authProviderId && isConnected(p.authProviderId),
             );
             if (connectedWithSecondProvider) {
@@ -340,8 +332,8 @@ function GitProviders() {
                 </a>
             </Subheading>
             <ItemsList className="pt-6">
-                {authProviders &&
-                    authProviders.map((ap) => (
+                {authProviders.data &&
+                    authProviders.data.map((ap) => (
                         <AuthEntryItem
                             key={ap.authProviderId}
                             isConnected={isConnected}
