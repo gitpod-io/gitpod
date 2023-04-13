@@ -39,6 +39,7 @@ jobs:
       latest_ide_version: ${{ contains( steps.pr-details.outputs.pr_body, '[x] latest-ide-version=true') }}
       leeway_cache_bucket: ${{ steps.output.outputs.leeway_cache_bucket }}
       pr_number: ${{ steps.pr-details.outputs.number }}
+      pr_body: ${{ steps.pr-details.outputs.pr_body }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -115,69 +116,6 @@ jobs:
           export LEEWAY_WORKSPACE_ROOT="$(pwd)"
           leeway build dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}"
           echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}" -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
-
-  update_pr_desc:
-    name: Update PR summary
-    needs: [ configuration ]
-    if: needs.configuration.outputs.pr_number != ''
-    concurrency:
-      group: ${{ github.head_ref || github.ref_name }}-update-pr-desc
-    runs-on: [ self-hosted ]
-    container:
-        image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
-        volumes:
-          - /var/tmp:/var/tmp
-          - /tmp:/tmp
-    steps:
-      - uses: actions/checkout@v3
-      - name: Configure workspace
-        run: |
-          sudo chown -R gitpod:gitpod /__t
-          # Needed by docker/login-action
-          sudo chmod goa+rw /var/run/docker.sock
-      - name: Set outputs
-        id: outputs
-        shell: bash
-        env:
-          HOME: /home/gitpod
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
-        run: |
-          # Authenticate with GCP so we can use the Leeway cache
-          export PREVIEW_ENV_DEV_SA_KEY_PATH="$HOME/.config/gcloud/preview-environment-dev-sa.json"
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-          leeway run dev/preview/previewctl:install
-
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-
-          summary=$(previewctl report | base64)
-          echo "summary<<$EOF" >> $GITHUB_OUTPUT
-          echo "$summary" >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
-      - uses: actions/github-script@v6
-        with:
-          script: |
-            const prNumber = ${{ needs.configuration.outputs.pr_number }};
-
-            const summaryEncoded = `${{ steps.outputs.outputs.summary }}`;
-            const summary = Buffer.from(summaryEncoded, 'base64').toString('utf8');
-
-            const { data: pr } = await github.rest.pulls.get({
-              ...context.repo,
-              pull_number: prNumber,
-            });
-
-            const prBody = pr.body;
-
-            const newBody = prBody.replace('gitpod:summary', summary);
-
-            await github.rest.pulls.update({
-              ...context.repo,
-              pull_number: prNumber,
-              body: newBody,
-            });
 
   infrastructure:
     needs: [ configuration, build-previewctl ]
@@ -408,6 +346,29 @@ jobs:
           with_dedicated_emulation: ${{needs.configuration.outputs.with_dedicated_emulation}}
           analytics: ${{needs.configuration.outputs.analytics}}
           workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
+      - uses: actions/github-script@v6
+        if: needs.configuration.outputs.pr_number != '' && contains(needs.configuration.outputs.pr_body, 'gitpod:summary')
+        with:
+          script: |
+            const prNumber = ${{ needs.configuration.outputs.pr_number }};
+
+            const summaryEncoded = `${{ steps.deploy-gitpod.outputs.report }}`;
+            const summary = Buffer.from(summaryEncoded, 'base64').toString('utf8');
+
+            const { data: pr } = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: prNumber,
+            });
+
+            const prBody = pr.body;
+
+            const newBody = prBody.replace('gitpod:summary', summary);
+
+            await github.rest.pulls.update({
+              ...context.repo,
+              pull_number: prNumber,
+              body: newBody,
+            });
 
   monitoring:
     name: "Install Monitoring Satellite"

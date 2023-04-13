@@ -39,3 +39,10 @@ done
 previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 10m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 leeway run dev/preview:deploy-gitpod
 previewctl report >> "${GITHUB_STEP_SUMMARY}"
+
+report=$(previewctl report | base64)
+{
+  echo "report<<$EOF"
+  echo "$report"
+  echo "$EOF"
+} >> "$GITHUB_OUTPUT"
