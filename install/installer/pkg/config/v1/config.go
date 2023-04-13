@@ -180,8 +180,9 @@ type Observability struct {
 }
 
 type Analytics struct {
-	SegmentKey string `json:"segmentKey"`
-	Writer     string `json:"writer"`
+	SegmentKey      string `json:"segmentKey"`
+	Writer          string `json:"writer"`
+	SegmentEndpoint string `json:"segmentEndpoint,omitempty"`
 }
 
 type Tracing struct {

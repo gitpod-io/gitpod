@@ -463,8 +463,10 @@ if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
 
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer segment
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.segmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
+  yq w -i "${INSTALLER_CONFIG_PATH}" analytics.segmentEndpoint "https://${DOMAIN}/analytics"
   # configure proxy analyitcs plugin
-  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.analyticsPlugin.segmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
+  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.analyticsPlugin.trustedSegmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
+  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.analyticsPlugin.untrustedSegmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
 
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"

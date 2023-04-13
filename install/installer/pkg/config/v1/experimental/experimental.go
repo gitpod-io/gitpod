@@ -296,7 +296,8 @@ type ConfigcatProxyConfig struct {
 }
 
 type AnalyticsPluginConfig struct {
-	SegmentKey string `json:"segmentKey"`
+	TrustedSegmentKey   string `json:"trustedSegmentKey"`
+	UntrustedSegmentKey string `json:"untrustedSegmentKey"`
 }
 
 type PublicAPIConfig struct {

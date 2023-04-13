@@ -5,6 +5,7 @@
 package analytics
 
 import (
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -30,8 +31,14 @@ func init() {
 	httpcaddyfile.RegisterHandlerDirective(moduleName, parseCaddyfile)
 }
 
+type segmentProxy struct {
+	segmentKey string
+	http.Handler
+}
+
 type Analytics struct {
-	reverseProxy http.Handler
+	trustedProxy   *segmentProxy
+	untrustedProxy *segmentProxy
 }
 
 // CaddyModule returns the Caddy module information.
@@ -46,12 +53,6 @@ func (Analytics) CaddyModule() caddy.ModuleInfo {
 func (a *Analytics) Provision(ctx caddy.Context) error {
 	logger := ctx.Logger(a)
 
-	segmentKey := os.Getenv("ANALYTICS_PLUGIN_SEGMENT_KEY")
-	if segmentKey == "" {
-		logger.Warn("no segment key configured, skipping")
-		return nil
-	}
-
 	segmentEndponit, err := url.Parse(segment.DefaultEndpoint)
 	if err != nil {
 		logger.Error("failed to parse segment endpoint", zap.Error(err))
@@ -64,16 +65,22 @@ func (a *Analytics) Provision(ctx caddy.Context) error {
 		return nil
 	}
 
-	logger.Info("configuring analytics proxy", zap.String("endpoint", segmentEndponit.String()))
+	untrustedSegmentKey := os.Getenv("ANALYTICS_PLUGIN_UNTRUSTED_SEGMENT_KEY")
+	if untrustedSegmentKey != "" {
+		a.untrustedProxy = newSegmentProxy(segmentEndponit, errorLog, untrustedSegmentKey)
+	}
 
+	trustedSegmentKey := os.Getenv("ANALYTICS_PLUGIN_TRUSTED_SEGMENT_KEY")
+	if trustedSegmentKey != "" {
+		a.trustedProxy = newSegmentProxy(segmentEndponit, errorLog, trustedSegmentKey)
+	}
+
+	return nil
+}
+
+func newSegmentProxy(segmentEndponit *url.URL, errorLog *log.Logger, segmentKey string) *segmentProxy {
 	reverseProxy := httputil.NewSingleHostReverseProxy(segmentEndponit)
 	reverseProxy.ErrorLog = errorLog
-
-	defaultDirector := reverseProxy.Director
-	reverseProxy.Director = func(req *http.Request) {
-		req.SetBasicAuth(segmentKey, "")
-		defaultDirector(req)
-	}
 
 	// configure transport to ensure that requests
 	// can be processed without staling connections
@@ -89,18 +96,29 @@ func (a *Analytics) Provision(ctx caddy.Context) error {
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
-
-	a.reverseProxy = http.StripPrefix("/analytics", reverseProxy)
-
-	return nil
+	return &segmentProxy{
+		segmentKey: segmentKey,
+		Handler:    http.StripPrefix("/analytics", reverseProxy),
+	}
 }
 
 func (a *Analytics) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
-	if a.reverseProxy == nil {
+	segmentKey, _, ok := r.BasicAuth()
+	if !ok {
 		return next.ServeHTTP(w, r)
 	}
-	a.reverseProxy.ServeHTTP(w, r)
-	return nil
+	if a.trustedProxy != nil && segmentKey == a.trustedProxy.segmentKey {
+		a.trustedProxy.ServeHTTP(w, r)
+		return nil
+	}
+	if a.untrustedProxy != nil && (segmentKey == "" || segmentKey == a.untrustedProxy.segmentKey) {
+		if segmentKey == "" {
+			r.SetBasicAuth(a.untrustedProxy.segmentKey, "")
+		}
+		a.untrustedProxy.ServeHTTP(w, r)
+		return nil
+	}
+	return next.ServeHTTP(w, r)
 }
 
 // UnmarshalCaddyfile implements Caddyfile.Unmarshaler.
