@@ -31,6 +31,7 @@ import { useCurrentUser } from "../user-context";
 import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { VerifyModal } from "../start/VerifyModal";
 
 export const useNewCreateWorkspacePage = () => {
     const { startWithOptions } = useFeatureFlags();
@@ -360,6 +361,8 @@ const ErrorMessage: FunctionComponent<StatusMessageProps> = ({
             return renderError(`The organization '${error.data}' is not valid.`);
         case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
             return <UsageLimitReachedModal onClose={reset} hints={error?.data} />;
+        case ErrorCodes.NEEDS_VERIFICATION:
+            return <VerifyModal />;
         default:
             return renderError(error.message || JSON.stringify(error));
     }
