@@ -7,6 +7,7 @@ tracing:
     preview.name: ${PREVIEW_NAME}
 certmanager:
   installServiceMonitors: true
+  namespace: cert-manager
 pyrra:
   install: true
 prometheus:
