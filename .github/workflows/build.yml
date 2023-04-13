@@ -19,34 +19,33 @@ jobs:
       group: ${{ github.head_ref || github.ref_name }}-configuration
     steps:
       - name: Create comment
-        uses: peter-evans/create-or-update-comment@v3
-        with:
-          issue-number: ${{github.event.issue.number}}
-          body: |
-            🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\n
-            * 🏷️ **Name** - ${{github.head_ref}}\n
-            * 🔖 **Latest commit** - ${{github.sha}}\n
-            * 📚 **Documentation** - See our [internal documentation](https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39) for information on how to interact with your preview environment.\n
-            * 📄 **Logs** - [_View build logs_](${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}})\n
-          reactions: rocket
-
-        # uses: actions/github-script@v6
-        # # if: github.event_name == 'pull_request' && github.event.action == 'opened'
-        # id: build-status-comment
+        # uses: peter-evans/create-or-update-comment@v3
         # with:
-        #   github-token: ${{secrets.GITHUB_TOKEN}}
-        #   script: |
-        #     const output = `🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\`
-        #     `* 🏷️ **Name** - ${{github.head_ref}}\`
-        #     `* 🔖 **Latest commit** - ${{github.sha}}\`
-        #     `* 📚 **Documentation** - See our [internal documentation](https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39) for information on how to interact with your preview environment.`
-        #     `* 📄 **Logs** - [_View build logs_](${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}})\`;
-        #     github.issues.createComment({
-        #     issue_number: context.issue.number,
-        #     owner: context.repo.owner,
-        #     repo: context.repo.repo,
-        #     body: output
-        #     });
+        #   issue-number: ${{github.event.issue.number}}
+        #   body: |
+        #     🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\n
+        #     * 🏷️ **Name** - ${{github.head_ref}}\n
+        #     * 🔖 **Latest commit** - ${{github.sha}}\n
+        #     * 📚 **Documentation** - See our [internal documentation](https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39) for information on how to interact with your preview environment.\n
+        #     * 📄 **Logs** - [_View build logs_](${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}})\n
+        #   reactions: rocket
+        uses: actions/github-script@v6
+        # if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        id: build-status-comment
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const output = `🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\`
+            `* 🏷️ **Name** - ${{github.head_ref}}\`
+            `* 🔖 **Latest commit** - ${{github.sha}}\`
+            `* 📚 **Documentation** - See our [internal documentation](https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39) for information on how to interact with your preview environment.`
+            `* 📄 **Logs** - [_View build logs_](${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}})\`;
+            github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+            });
   configuration:
     name: Configure job parameters
     runs-on: [ self-hosted ]
@@ -386,35 +385,35 @@ jobs:
     runs-on: [ self-hosted ]
     steps:
     - name: Update comment
-      uses: peter-evans/create-or-update-comment@v3
-      with:
-        comment-id: ${{ steps.build-status-comment.outputs.comment-id }}
-        body: |
-          🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\n
-          * 🏷️ **Name** - ${{github.head_ref}}\n
-          * 🔖 **Latest commit** - ${{github.sha}}\n
-          * 🔗 **URL** - [Preview Environment](${{steps.deploy-gitpod.outputs.url}})\n
-          * 📚 **Documentation** - See our [internal documentation](https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39) for information on how to interact with your preview environment.\n
-          * 📄 **Logs** - [_View build logs_](${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}})
-        reactions: hooray
-
-      # uses: actions/github-script@v6
+      # uses: peter-evans/create-or-update-comment@v3
       # with:
-      #   github-token: ${{secrets.GITHUB_TOKEN}}
-      #   script: |
-      #     const output = `🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\`
-      #       `* 🏷️ **Name** - ${{github.head_ref}}\`
-      #       `* 🔖 **Latest commit** - ${{github.sha}}\`
-      #       `* 🔗 **URL** - [Preview Environment](${{steps.deploy-gitpod.outputs.url}})\`
-      #       `* 📚 **Documentation** - See our [internal documentation](https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39) for information on how to interact with your preview environment.`
-      #       `* 📄 **Logs** - [_View build logs_](${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}})\`;
-      #     github.rest.issues.updateComment({
-      #       issue_number: ${{ github.event.issue.number }},
-      #       owner: context.repo.owner,
-      #       repo: context.repo.repo,
-      #       comment_id: ${{steps.build-status-comment.outputs.comment-id}},
-      #       body: commentBody
-      #     })
+      #   comment-id: ${{ steps.build-status-comment.outputs.comment-id }}
+      #   body: |
+      #     🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\n
+      #     * 🏷️ **Name** - ${{github.head_ref}}\n
+      #     * 🔖 **Latest commit** - ${{github.sha}}\n
+      #     * 🔗 **URL** - [Preview Environment](${{steps.deploy-gitpod.outputs.url}})\n
+      #     * 📚 **Documentation** - See our [internal documentation](https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39) for information on how to interact with your preview environment.\n
+      #     * 📄 **Logs** - [_View build logs_](${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}})
+      #   reactions: hooray
+
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: |
+          const output = `🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\`
+            `* 🏷️ **Name** - ${{github.head_ref}}\`
+            `* 🔖 **Latest commit** - ${{github.sha}}\`
+            `* 🔗 **URL** - [Preview Environment](${{steps.deploy-gitpod.outputs.url}})\`
+            `* 📚 **Documentation** - See our [internal documentation](https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39) for information on how to interact with your preview environment.`
+            `* 📄 **Logs** - [_View build logs_](${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}})\`;
+          github.rest.issues.updateComment({
+            issue_number: ${{ github.event.issue.number }},
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            comment_id: ${{steps.build-status-comment.outputs.comment-id}},
+            body: commentBody
+          })
   monitoring:
     name: "Install Monitoring Satellite"
     needs: [ infrastructure, build-previewctl ]
