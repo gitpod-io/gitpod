@@ -21,7 +21,7 @@ jobs:
       - name: Create comment
         uses: peter-evans/create-or-update-comment@v3
         with:
-          issue-number: ${{github.event.number}}
+          issue-number: ${{github.event.issue.number}}
           body: |
             🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\n
             * 🏷️ **Name** - ${{github.head_ref}}\n
