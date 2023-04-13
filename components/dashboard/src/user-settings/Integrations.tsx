@@ -70,7 +70,7 @@ function GitProviders() {
             }
             setAllScopes(scopesByProvider);
         }
-    }, [authProviders, user]);
+    }, [authProviders.data, user]);
 
     useEffect(() => {
         updateCurrentScopes();

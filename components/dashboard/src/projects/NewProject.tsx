@@ -67,11 +67,11 @@ export default function NewProject() {
                 }
             }
         }
-    }, [user, authProviders, selectedProviderHost]);
+    }, [user, authProviders.data, selectedProviderHost]);
 
     useEffect(() => {
         setIsGitHubWebhooksUnauthorized(false);
-        if (!authProviders || !selectedProviderHost || isGitHubAppEnabled) {
+        if (!authProviders.data || !selectedProviderHost || isGitHubAppEnabled) {
             return;
         }
         const ap = authProviders.data?.find((ap) => ap.host === selectedProviderHost);
@@ -85,7 +85,7 @@ export default function NewProject() {
                     setIsGitHubWebhooksUnauthorized(true);
                 }
             });
-    }, [authProviders, isGitHubAppEnabled, selectedProviderHost]);
+    }, [authProviders.data, isGitHubAppEnabled, selectedProviderHost]);
 
     useEffect(() => {
         if (selectedRepo && user) {

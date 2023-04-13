@@ -386,7 +386,7 @@ function renderError(message: string, linkText?: string, linkHref?: string, link
 export function RepositoryNotFound(p: { error: StartWorkspaceError }) {
     const { host, owner, userIsOwner, userScopes, lastUpdate } = p.error.data;
     const authProviders = useAuthProviders();
-    const authProvider = authProviders?.data?.find((a) => a.host === host);
+    const authProvider = authProviders.data?.find((a) => a.host === host);
     if (!authProvider) {
         return null;
     }
