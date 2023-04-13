@@ -35,10 +35,9 @@ jobs:
         with:
           github-token: ${{secrets.GITHUB_TOKEN}}
           script: |
-            github.rest.issues.createComment({
+            await github.rest.issues.createComment({
+              ...context.repo,
               issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
               body: `🏗️ Gitpod is deploying to your Preview Environment. It will take a few minutes to get ready.\n* 🏷️ **Name** - ${{github.head_ref}}\n* 🔖 **Latest commit** - ${{github.sha}}\n* 📚 **Documentation** - See our [internal documentation](https://www.notion.so/gitpod/6debd359591b43688b52f76329d04010#7c1ce80ab31a41e29eff2735e38eec39) for information on how to interact with your preview environment.\n* 📄 **Logs** - [_View build logs_](${{github.server_url}}/${{github.repository}}/actions/runs/${{github.run_id}})\n`
             });
   configuration:
