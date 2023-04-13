@@ -15,11 +15,11 @@ import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { getGitpodService } from "../service/service";
-import SelectWorkspaceClass from "../user-settings/selectClass";
 import { ProjectContext, useCurrentProject } from "./project-context";
 import { getProjectSettingsMenu, getProjectTabs } from "./projects.routes";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { RemoveProjectModal } from "./RemoveProjectModal";
+import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
 
 export function ProjectSettingsPage(props: { project?: Project; children?: React.ReactNode }) {
     return (
@@ -97,10 +97,12 @@ export default function ProjectSettingsView() {
             <Heading2>Prebuilds</Heading2>
             <Subheading>Choose the workspace machine type for your prebuilds.</Subheading>
             {BillingMode.canSetWorkspaceClass(billingMode) ? (
-                <SelectWorkspaceClass
-                    workspaceClass={project.settings?.workspaceClasses?.prebuild}
-                    setWorkspaceClass={setWorkspaceClassForPrebuild}
-                />
+                <div className="max-w-md">
+                    <SelectWorkspaceClassComponent
+                        selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
+                        onSelectionChange={setWorkspaceClassForPrebuild}
+                    />
+                </div>
             ) : (
                 <Alert type="message" className="mt-4">
                     <div className="flex flex-col">
@@ -201,10 +203,12 @@ export default function ProjectSettingsView() {
                 <Heading2 className="mt-12">Workspaces</Heading2>
                 <Subheading>Choose the workspace machine type for your workspaces.</Subheading>
                 {BillingMode.canSetWorkspaceClass(billingMode) ? (
-                    <SelectWorkspaceClass
-                        workspaceClass={project.settings?.workspaceClasses?.regular}
-                        setWorkspaceClass={setWorkspaceClass}
-                    />
+                    <div className="max-w-md">
+                        <SelectWorkspaceClassComponent
+                            selectedWorkspaceClass={project.settings?.workspaceClasses?.regular}
+                            onSelectionChange={setWorkspaceClass}
+                        />
+                    </div>
                 ) : (
                     <Alert type="message" className="mt-4">
                         <div className="flex flex-col">
