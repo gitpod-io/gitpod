@@ -1303,27 +1303,43 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 createdWorkspaceId: workspace.id,
             };
         } catch (error) {
-            if (NotFoundError.is(error)) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "Repository not found.", error.data);
-            }
-            if (UnauthorizedError.is(error)) {
-                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
-            }
-            if (InvalidGitpodYMLError.is(error)) {
-                throw new ResponseError(ErrorCodes.INVALID_GITPOD_YML, error.message);
-            }
-
-            const errorCode = this.parseErrorCode(error);
-            if (errorCode) {
-                // specific errors will be handled in create-workspace.tsx
-                throw error;
-            }
-            log.debug(logContext, error);
-            throw new ResponseError(
-                ErrorCodes.CONTEXT_PARSE_ERROR,
-                error && error.message ? error.message : `Cannot create workspace for URL: ${normalizedContextUrl}`,
-            );
+            this.handleError(error, logContext, normalizedContextUrl);
+            throw error;
         }
+    }
+
+    public async resolveContext(ctx: TraceContextWithSpan, contextUrl: string): Promise<WorkspaceContext> {
+        const user = this.checkAndBlockUser("resolveContext");
+        const normalizedCtxURL = this.contextParser.normalizeContextURL(contextUrl);
+        try {
+            return await this.contextParser.handle(ctx, user, normalizedCtxURL);
+        } catch (error) {
+            this.handleError(error, { userId: user.id }, normalizedCtxURL);
+            throw error;
+        }
+    }
+
+    private handleError(error: any, logContext: LogContext, normalizedContextUrl: string) {
+        if (NotFoundError.is(error)) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Repository not found.", error.data);
+        }
+        if (UnauthorizedError.is(error)) {
+            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
+        }
+        if (InvalidGitpodYMLError.is(error)) {
+            throw new ResponseError(ErrorCodes.INVALID_GITPOD_YML, error.message);
+        }
+
+        const errorCode = this.parseErrorCode(error);
+        if (errorCode) {
+            // specific errors will be handled in create-workspace.tsx
+            throw error;
+        }
+        log.debug(logContext, error);
+        throw new ResponseError(
+            ErrorCodes.CONTEXT_PARSE_ERROR,
+            error && error.message ? error.message : `Cannot create workspace for URL: ${normalizedContextUrl}`,
+        );
     }
 
     /**
@@ -3691,9 +3707,4 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getIDToken(): Promise<void> {}
-    public async resolveContext(ctx: TraceContextWithSpan, contextUrl: string): Promise<WorkspaceContext> {
-        const user = this.checkAndBlockUser("resolveContext");
-        const normalizedCtxURL = this.contextParser.normalizeContextURL(contextUrl);
-        return this.contextParser.handle(ctx, user, normalizedCtxURL);
-    }
 }

@@ -23,6 +23,7 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { projectsPathNew } from "./projects.routes";
 import { Heading1, Subheading } from "../components/typography/headings";
+import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 
 export default function NewProject() {
     const currentTeam = useCurrentOrg()?.data;
@@ -39,24 +40,25 @@ export default function NewProject() {
 
     const [project, setProject] = useState<Project | undefined>();
 
-    const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
+    const authProviders = useAuthProviders();
     const [isGitHubAppEnabled, setIsGitHubAppEnabled] = useState<boolean>();
     const [isGitHubWebhooksUnauthorized, setIsGitHubWebhooksUnauthorized] = useState<boolean>();
 
     useEffect(() => {
         const { server } = getGitpodService();
-        Promise.all([
-            server.getAuthProviders().then((v) => () => setAuthProviders(v)),
-            server.isGitHubAppEnabled().then((v) => () => setIsGitHubAppEnabled(v)),
-        ]).then((setters) => setters.forEach((s) => s()));
+        Promise.all([server.isGitHubAppEnabled().then((v) => () => setIsGitHubAppEnabled(v))]).then((setters) =>
+            setters.forEach((s) => s()),
+        );
     }, []);
 
     useEffect(() => {
-        if (user && authProviders && selectedProviderHost === undefined) {
+        if (user && authProviders.data && selectedProviderHost === undefined) {
             for (let i = user.identities.length - 1; i >= 0; i--) {
                 const candidate = user.identities[i];
                 if (candidate) {
-                    const authProvider = authProviders.find((ap) => ap.authProviderId === candidate.authProviderId);
+                    const authProvider = authProviders.data.find(
+                        (ap) => ap.authProviderId === candidate.authProviderId,
+                    );
                     const host = authProvider?.host;
                     if (host) {
                         setSelectedProviderHost(host);
@@ -72,7 +74,7 @@ export default function NewProject() {
         if (!authProviders || !selectedProviderHost || isGitHubAppEnabled) {
             return;
         }
-        const ap = authProviders.find((ap) => ap.host === selectedProviderHost);
+        const ap = authProviders.data?.find((ap) => ap.host === selectedProviderHost);
         if (!ap || ap.authProviderType !== "GitHub") {
             return;
         }
@@ -164,7 +166,7 @@ export default function NewProject() {
     };
 
     const authorize = () => {
-        const ap = authProviders.find((ap) => ap.host === selectedProviderHost);
+        const ap = authProviders.data?.find((ap) => ap.host === selectedProviderHost);
         if (!ap) {
             return;
         }
@@ -487,7 +489,7 @@ export default function NewProject() {
         }
 
         if (showGitProviders) {
-            return <GitProviders onHostSelected={onGitProviderSeleted} authProviders={authProviders} />;
+            return <GitProviders onHostSelected={onGitProviderSeleted} authProviders={authProviders.data || []} />;
         }
 
         return renderRepos();
