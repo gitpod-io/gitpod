@@ -3,7 +3,7 @@ module github.com/gitpod-io/gitpod/blobserve
 go 1.19
 
 require (
-	github.com/containerd/containerd v1.6.18
+	github.com/containerd/containerd v1.6.20
 	github.com/docker/cli v23.0.2+incompatible
 	github.com/docker/distribution v2.8.1+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
@@ -11,7 +11,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/gorilla/mux v1.8.0
 	github.com/heptiolabs/healthcheck v0.0.0-20211123025425-613501dd5deb
-	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799
+	github.com/opencontainers/image-spec v1.1.0-rc2.0.20221005185240-3a7f492d3f1b
 	github.com/prometheus/client_golang v1.14.0
 	github.com/spf13/cobra v1.4.0
 	golang.org/x/sync v0.1.0
