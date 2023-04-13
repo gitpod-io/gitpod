@@ -41,7 +41,7 @@ kubectl \
 kubectl \
     --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
     --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
-    create ns certmanager --dry-run=client -o yaml \
+    create ns cert-manager --dry-run=client -o yaml \
 | kubectl \
     --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" \
     --context "${PREVIEW_K3S_KUBE_CONTEXT}" \
