@@ -196,6 +196,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	_, _, adminCredentialsPath := getAdminCredentials()
 
+	_, _, authPKI := getAuthPKI()
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -297,6 +299,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			CredentialsPath:         adminCredentialsPath,
 		},
 		ShowSetupModal: showSetupModal,
+		Auth: AuthConfig{
+			PKI: authPKI,
+		},
 	}
 
 	fc, err := common.ToJSONString(scfg)

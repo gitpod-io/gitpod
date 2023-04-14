@@ -13,32 +13,33 @@ import (
 
 // ConfigSerialized interface from components/server/src/config.ts
 type ConfigSerialized struct {
-	Version                           string   `json:"version"`
-	HostURL                           string   `json:"hostUrl"`
-	InstallationShortname             string   `json:"installationShortname"`
-	DevBranch                         string   `json:"devBranch"`
-	InsecureNoDomain                  bool     `json:"insecureNoDomain"`
-	License                           string   `json:"license"`
-	DefinitelyGpDisabled              bool     `json:"definitelyGpDisabled"`
-	EnableLocalApp                    bool     `json:"enableLocalApp"`
-	DisableDynamicAuthProviderLogin   bool     `json:"disableDynamicAuthProviderLogin"`
-	MaxEnvvarPerUserCount             int32    `json:"maxEnvvarPerUserCount"`
-	MaxConcurrentPrebuildsPerRef      int32    `json:"maxConcurrentPrebuildsPerRef"`
-	MakeNewUsersAdmin                 bool     `json:"makeNewUsersAdmin"`
-	DefaultBaseImageRegistryWhitelist []string `json:"defaultBaseImageRegistryWhitelist"`
-	RunDbDeleter                      bool     `json:"runDbDeleter"`
-	ContentServiceAddr                string   `json:"contentServiceAddr"`
-	UsageServiceAddr                  string   `json:"usageServiceAddr"`
-	IDEServiceAddr                    string   `json:"ideServiceAddr"`
-	MaximumEventLoopLag               float64  `json:"maximumEventLoopLag"`
-	VSXRegistryUrl                    string   `json:"vsxRegistryUrl"`
-	ChargebeeProviderOptionsFile      string   `json:"chargebeeProviderOptionsFile"`
-	StripeSecretsFile                 string   `json:"stripeSecretsFile"`
-	StripeConfigFile                  string   `json:"stripeConfigFile"`
-	EnablePayment                     bool     `json:"enablePayment"`
-	LinkedInSecretsFile               string   `json:"linkedInSecretsFile"`
-	PATSigningKeyFile                 string   `json:"patSigningKeyFile"`
-	ShowSetupModal                    bool     `json:"showSetupModal"`
+	Version                           string     `json:"version"`
+	HostURL                           string     `json:"hostUrl"`
+	InstallationShortname             string     `json:"installationShortname"`
+	DevBranch                         string     `json:"devBranch"`
+	InsecureNoDomain                  bool       `json:"insecureNoDomain"`
+	License                           string     `json:"license"`
+	DefinitelyGpDisabled              bool       `json:"definitelyGpDisabled"`
+	EnableLocalApp                    bool       `json:"enableLocalApp"`
+	DisableDynamicAuthProviderLogin   bool       `json:"disableDynamicAuthProviderLogin"`
+	MaxEnvvarPerUserCount             int32      `json:"maxEnvvarPerUserCount"`
+	MaxConcurrentPrebuildsPerRef      int32      `json:"maxConcurrentPrebuildsPerRef"`
+	MakeNewUsersAdmin                 bool       `json:"makeNewUsersAdmin"`
+	DefaultBaseImageRegistryWhitelist []string   `json:"defaultBaseImageRegistryWhitelist"`
+	RunDbDeleter                      bool       `json:"runDbDeleter"`
+	ContentServiceAddr                string     `json:"contentServiceAddr"`
+	UsageServiceAddr                  string     `json:"usageServiceAddr"`
+	IDEServiceAddr                    string     `json:"ideServiceAddr"`
+	MaximumEventLoopLag               float64    `json:"maximumEventLoopLag"`
+	VSXRegistryUrl                    string     `json:"vsxRegistryUrl"`
+	ChargebeeProviderOptionsFile      string     `json:"chargebeeProviderOptionsFile"`
+	StripeSecretsFile                 string     `json:"stripeSecretsFile"`
+	StripeConfigFile                  string     `json:"stripeConfigFile"`
+	EnablePayment                     bool       `json:"enablePayment"`
+	LinkedInSecretsFile               string     `json:"linkedInSecretsFile"`
+	PATSigningKeyFile                 string     `json:"patSigningKeyFile"`
+	ShowSetupModal                    bool       `json:"showSetupModal"`
+	Auth                              AuthConfig `json:"auth"`
 
 	WorkspaceHeartbeat         WorkspaceHeartbeat         `json:"workspaceHeartbeat"`
 	WorkspaceDefaults          WorkspaceDefaults          `json:"workspaceDefaults"`
@@ -63,6 +64,23 @@ type ConfigSerialized struct {
 }
 type CodeSyncResources struct {
 	RevLimit int32 `json:"revLimit"`
+}
+
+type AuthConfig struct {
+	PKI AuthPKIConfig `json:"pki"`
+}
+
+type AuthPKIConfig struct {
+	// Signing KeyPair is always used to issue new auth tokens
+	Signing KeyPair `json:"signing"`
+
+	// Validating KeyPairs are used for checking validity only
+	Validating []KeyPair `json:"validating,omitempty"`
+}
+
+type KeyPair struct {
+	PrivateKeyPath string `json:"privateKeyPath"`
+	PublicKeyPath  string `json:"publicKeyPath"`
 }
 
 type CodeSync struct {

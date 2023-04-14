@@ -30,6 +30,7 @@ func TestConfigMap(t *testing.T) {
 		JWTSecret                         string
 		SessionSecret                     string
 		GitHubApp                         experimental.GithubApp
+		Auth                              AuthConfig
 	}
 
 	expectation := Expectation{
@@ -51,6 +52,14 @@ func TestConfigMap(t *testing.T) {
 			MarketplaceName: "some-marketplace-name",
 			WebhookSecret:   "some-webhook-secret",
 			CertSecretName:  "some-cert-secret-name",
+		},
+		Auth: AuthConfig{
+			PKI: AuthPKIConfig{
+				Signing: KeyPair{
+					PrivateKeyPath: "/secrets/auth-pki/signing/tls.key",
+					PublicKeyPath:  "/secrets/auth-pki/signing/tls.crt",
+				},
+			},
 		},
 	}
 
@@ -122,6 +131,7 @@ func TestConfigMap(t *testing.T) {
 			WebhookSecret:   config.GitHubApp.WebhookSecret,
 			CertSecretName:  config.GitHubApp.CertSecretName,
 		},
+		Auth: config.Auth,
 	}
 
 	assert.Equal(t, expectation, actual)

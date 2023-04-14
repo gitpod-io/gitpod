@@ -7,12 +7,14 @@ package server
 import (
 	"fmt"
 	"math"
+	"path"
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -55,4 +57,37 @@ func authPKI(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 	}, nil
+}
+
+func getAuthPKI() ([]corev1.Volume, []corev1.VolumeMount, AuthPKIConfig) {
+
+	dir := "/secrets/auth-pki"
+	signingDir := path.Join(dir, "signing")
+
+	volumes := []corev1.Volume{
+		{
+			Name: "auth-pki-signing",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: AuthPKISecretName,
+				},
+			},
+		},
+	}
+
+	mounts := []corev1.VolumeMount{
+		{
+			Name:      "auth-pki-signing",
+			MountPath: signingDir,
+			ReadOnly:  true,
+		},
+	}
+
+	cfg := AuthPKIConfig{
+		Signing: KeyPair{
+			PrivateKeyPath: path.Join(signingDir, "tls.key"),
+			PublicKeyPath:  path.Join(signingDir, "tls.crt"),
+		},
+	}
+	return volumes, mounts, cfg
 }

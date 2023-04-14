@@ -281,6 +281,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	volumes = append(volumes, adminCredentialsVolume)
 	volumeMounts = append(volumeMounts, adminCredentialsMount)
 
+	authPKIVolumes, authPKIMounts, _ := getAuthPKI()
+	volumes = append(volumes, authPKIVolumes...)
+	volumeMounts = append(volumeMounts, authPKIMounts...)
+
 	return []runtime.Object{
 		&appsv1.Deployment{
 			TypeMeta: common.TypeMetaDeployment,
