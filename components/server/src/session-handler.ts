@@ -66,13 +66,6 @@ export class SessionHandlerProvider {
         return `${derived}v2_`;
     }
 
-    static getOldCookieName(config: Config) {
-        return config.hostUrl
-            .toString()
-            .replace(/https?/, "")
-            .replace(/[\W_]+/g, "_");
-    }
-
     static getJWTCookieName(hostURL: GitpodHostUrl) {
         const derived = hostURL
             .toString()
@@ -88,6 +81,8 @@ export class SessionHandlerProvider {
         delete options.expires;
         delete options.maxAge;
         res.clearCookie(name, options);
+
+        res.clearCookie(SessionHandlerProvider.getJWTCookieName(this.config.hostUrl));
     }
 
     protected createStore(): any | undefined {
