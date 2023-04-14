@@ -13,12 +13,14 @@ import { AuthFlow } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { AuthProviderService } from "./auth-provider-service";
 import { TosFlow } from "../terms/tos-flow";
-import { increaseLoginCounter } from "../prometheus-metrics";
+import { increaseLoginCounter, reportJWTCookieIssued } from "../prometheus-metrics";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
 import { UserService } from "../user/user-service";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import * as jwt from "jsonwebtoken";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { SessionHandlerProvider } from "../session-handler";
+import { AuthJWT } from "./jwt";
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -31,6 +33,7 @@ export class LoginCompletionHandler {
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(UserService) protected readonly userService: UserService;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
+    @inject(AuthJWT) protected readonly authJWT: AuthJWT;
 
     async complete(
         request: express.Request,
@@ -94,14 +97,25 @@ export class LoginCompletionHandler {
             );
         }
 
-        const jwt = await newSessionJWT(user.id);
+        const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "jwtSessionCookieEnabled",
+            false,
+            {
+                user: user,
+            },
+        );
+        if (isJWTCookieExperimentEnabled) {
+            const token = await this.authJWT.sign(user.id, {});
 
-        response.cookie("_gitpod_jwt_", jwt, {
-            maxAge: 7 * 24 * 60 * 60,
-            httpOnly: true,
-            sameSite: "lax",
-            secure: true,
-        });
+            response.cookie(SessionHandlerProvider.getJWTCookieName(this.config.hostUrl), token, {
+                maxAge: 7 * 24 * 60 * 60, // 7 days
+                httpOnly: true,
+                sameSite: "lax",
+                secure: true,
+            });
+
+            reportJWTCookieIssued();
+        }
 
         response.redirect(returnTo);
     }
@@ -128,23 +142,4 @@ export namespace LoginCompletionHandler {
         authHost?: string;
         elevateScopes?: string[];
     }
-}
-
-export async function newSessionJWT(userID: string): Promise<string> {
-    const payload = {
-        // subject
-        sub: userID,
-        // issuer
-        iss: "gitpod.io",
-    };
-    const temporaryTestKeyForExperimentation = "my-secret";
-
-    return new Promise((resolve, reject) => {
-        jwt.sign(payload, temporaryTestKeyForExperimentation, { algorithm: "HS256" }, function (err, token) {
-            if (err || !token) {
-                return reject(err);
-            }
-            return resolve(token);
-        });
-    });
 }

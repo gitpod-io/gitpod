@@ -7,6 +7,7 @@
 import * as jsonwebtoken from "jsonwebtoken";
 import { Config } from "../config";
 import { inject, injectable } from "inversify";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const algorithm: jsonwebtoken.Algorithm = "RS512";
 
@@ -33,9 +34,18 @@ export class AuthJWT {
     }
 
     async verify(encoded: string): Promise<object> {
+        // When we verify an encoded token, we verify it using all available public keys
+        // That is, we check the following:
+        //  * The current signing public key
+        //  * All other validating public keys, in order
+        //
+        // We do this to allow for key-rotation. But tokens already issued would fail to validate
+        // if the signing key was changed. To accept older sessions, which are still valid
+        // we need to check for older keys also.
+        const validatingPublicKeys = this.config.auth.pki.validating.map((keypair) => keypair.publicKey);
         const publicKeys = [
             this.config.auth.pki.signing.publicKey, // signing key is checked first
-            ...this.config.auth.pki.validating.map((keypair) => keypair.publicKey),
+            ...validatingPublicKeys,
         ];
 
         let lastErr;
@@ -46,10 +56,14 @@ export class AuthJWT {
                 });
                 return decoded;
             } catch (err) {
+                log.debug(`Failed to verify JWT token using public key.`, err);
                 lastErr = err;
             }
         }
 
+        log.error(`Failed to verify JWT using any available public key.`, lastErr, {
+            publicKeyCount: publicKeys.length,
+        });
         throw lastErr;
     }
 }
@@ -65,25 +79,6 @@ async function verify(
                 return reject(err);
             }
             resolve(decoded);
-        });
-    });
-}
-
-export async function newSessionJWT(userID: string): Promise<string> {
-    const payload = {
-        // subject
-        sub: userID,
-        // issuer
-        iss: "gitpod.io",
-    };
-    const temporaryTestKeyForExperimentation = "my-secret";
-
-    return new Promise((resolve, reject) => {
-        jsonwebtoken.sign(payload, temporaryTestKeyForExperimentation, { algorithm: "HS256" }, function (err, token) {
-            if (err || !token) {
-                return reject(err);
-            }
-            return resolve(token);
         });
     });
 }
