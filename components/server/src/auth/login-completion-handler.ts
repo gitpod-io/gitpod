@@ -108,7 +108,7 @@ export class LoginCompletionHandler {
             const token = await this.authJWT.sign(user.id, {});
 
             response.cookie(SessionHandlerProvider.getJWTCookieName(this.config.hostUrl), token, {
-                maxAge: 7 * 24 * 60 * 60, // 7 days
+                maxAge: this.config.session.maxAgeMs,
                 httpOnly: true,
                 sameSite: "lax",
                 secure: true,

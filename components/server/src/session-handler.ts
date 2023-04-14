@@ -53,7 +53,7 @@ export class SessionHandlerProvider {
             path: "/", // default
             httpOnly: true, // default
             secure: false, // default, TODO SSL! Config proxy
-            maxAge: config.session.maxAgeMs, // configured in Helm chart, defaults to 3 days.
+            maxAge: config.session.maxAgeMs,
             sameSite: "lax", // default: true. "Lax" needed for OAuth.
         };
     }
