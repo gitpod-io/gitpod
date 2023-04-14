@@ -34,6 +34,7 @@ interface Props {
 
 // Guard against multiple calls to subscripe (per page load)
 let didAlreadyCallSubscribe = false;
+let didStartVerification = false;
 
 export default function UsageBasedBillingConfig({ attributionId, hideSubheading = false }: Props) {
     const currentOrg = useCurrentOrg().data;
@@ -53,6 +54,12 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
 
     // Stripe-controlled parameters
     const location = useLocation();
+
+    // Hold verification
+    const [showHoldVerificationModal, setShowHoldVerificationModal] = useState<boolean>(false);
+    const [holdPaymentIntentInfo, setHoldPaymentIntentInfo] = useState<
+        { paymentIntentId: string; paymentIntentClientSecret: string } | undefined
+    >();
 
     const now = useMemo(() => dayjs().utc(true), []);
     const [billingCycleFrom, setBillingCycleFrom] = useState<dayjs.Dayjs>(now.startOf("month"));
@@ -96,35 +103,57 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const setupIntentId = params.get("setup_intent");
         const redirectStatus = params.get("redirect_status");
-        if (setupIntentId && redirectStatus) {
-            subscribeToStripe({
-                setupIntentId,
-                redirectStatus,
-            });
+        const step = params.get("step");
+
+        if (step === "verification") {
+            if (!attributionId) {
+                return;
+            }
+
+            // Guard against multiple execution following the pattern here: https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application
+            if (didStartVerification) {
+                console.log("didStartVerification, skipping this time.");
+                return;
+            }
+            didStartVerification = true;
+            console.log("didStartVerification false, first run.");
+
+            getGitpodService()
+                .server.createHoldPaymentIntent(attributionId)
+                .then((r) => setHoldPaymentIntentInfo(r)); // TODO(gpl): error handling, brittle
+            setShowHoldVerificationModal(true);
+        }
+        if (step === "subscribe") {
+            if (!attributionId) {
+                return;
+            }
+
+            if (redirectStatus !== "succeeded") {
+                // TODO(gpl) We have to handle external validation errors (3DS, iDEAL) for both steps: verification and subscribe
+                return;
+            }
+
+            const holdPaymentIntentId = holdPaymentIntentInfo?.paymentIntentId;
+            subscribeToStripe({ attributionId, holdPaymentIntentId });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const subscribeToStripe = useCallback(
-        (stripeParams: { setupIntentId: string; redirectStatus: string }) => {
-            if (!attributionId) {
-                return;
-            }
-            const { setupIntentId, redirectStatus } = stripeParams;
-            if (redirectStatus !== "succeeded") {
-                // TODO(gpl) We have to handle external validation errors (3DS, e.g.) here
+        (opts: { attributionId: string; holdPaymentIntentId?: string }) => {
+            const { attributionId, holdPaymentIntentId } = opts;
+            if (!holdPaymentIntentId) {
                 return;
             }
 
             // Guard against multiple execution following the pattern here: https://react.dev/learn/you-might-not-need-an-effect#initializing-the-application
             if (didAlreadyCallSubscribe) {
-                console.log("didAlreadyCallSubscribe, skipping this time.");
+                console.log("didAlreadyCallSubscripe, skipping this time.");
                 return;
             }
             didAlreadyCallSubscribe = true;
-            console.log("didAlreadyCallSubscribe false, first run.");
+            console.log("didAlreadyCallSubscripe false, first run.");
 
             window.history.replaceState({}, "", location.pathname);
             (async () => {
@@ -139,7 +168,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                     }
                     const newLimit = await getGitpodService().server.subscribeToStripe(
                         attributionId,
-                        setupIntentId,
+                        holdPaymentIntentId,
                         limit,
                     );
                     if (newLimit) {
@@ -169,7 +198,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 }
             })();
         },
-        [attrId?.kind, attributionId, currentOrg, location.pathname, refreshSubscriptionDetails],
+        [attrId?.kind, currentOrg, location.pathname, refreshSubscriptionDetails],
     );
 
     const showSpinner = !attributionId || isLoadingStripeSubscription || !!pendingStripeSubscription;
@@ -203,6 +232,8 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
         return usageLimit > 500 ? "Open Source" : "Free";
     }, [usageLimit]);
 
+    const params = new URLSearchParams(location.search);
+    const setupIntentId = params.get("setup_intent");
     return (
         <div className="mb-16">
             {!hideSubheading && (
@@ -355,8 +386,19 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                     </div>
                 )}
             </div>
-            {!!attributionId && showBillingSetupModal && (
-                <BillingSetupModal attributionId={attributionId} onClose={() => setShowBillingSetupModal(false)} />
+            {!!attributionId && !!setupIntentId && showBillingSetupModal && (
+                <BillingSetupModal
+                    attributionId={attributionId}
+                    setupIntentId={setupIntentId}
+                    onClose={() => setShowBillingSetupModal(false)}
+                />
+            )}
+            {!!attributionId && !!holdPaymentIntentInfo?.paymentIntentClientSecret && showHoldVerificationModal && (
+                <HoldVerificationModal
+                    attributionId={attributionId}
+                    holdPaymentIntentClientSecret={holdPaymentIntentInfo.paymentIntentClientSecret}
+                    onClose={() => setShowBillingSetupModal(false)}
+                />
             )}
             {showUpdateLimitModal && (
                 <UpdateLimitModal
@@ -374,7 +416,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     );
 }
 
-export function BillingSetupModal(props: { attributionId: string; onClose: () => void }) {
+export function BillingSetupModal(props: { attributionId: string; setupIntentId: string; onClose: () => void }) {
     const { isDark } = useContext(ThemeContext);
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
     const [stripeSetupIntentClientSecret, setStripeSetupIntentClientSecret] = useState<string | undefined>();
@@ -404,11 +446,104 @@ export function BillingSetupModal(props: { attributionId: string; onClose: () =>
                             clientSecret: stripeSetupIntentClientSecret,
                         }}
                     >
-                        <CreditCardInputForm attributionId={props.attributionId} />
+                        <PaymentInputForm attributionId={props.attributionId} setupIntentId={props.setupIntentId} />
                     </Elements>
                 )}
             </div>
         </Modal>
+    );
+}
+
+export function HoldVerificationModal(props: {
+    attributionId: string;
+    holdPaymentIntentClientSecret: string;
+    onClose: () => void;
+}) {
+    const { isDark } = useContext(ThemeContext);
+    const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
+
+    useEffect(() => {
+        const { server } = getGitpodService();
+        server.getStripePublishableKey().then((v) => setStripePromise(loadStripe(v)));
+    }, []);
+
+    return (
+        <Modal visible={true} onClose={props.onClose}>
+            <Heading2 className="flex">Verify Payment Method</Heading2>
+            <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-2 -mx-6 px-6 flex flex-col">
+                {!stripePromise && (
+                    <div className="h-80 flex items-center justify-center">
+                        <Spinner className="h-5 w-5 animate-spin" />
+                    </div>
+                )}
+                {!!stripePromise && (
+                    <Elements
+                        stripe={stripePromise}
+                        options={{
+                            appearance: getStripeAppearance(isDark),
+                            clientSecret: props.holdPaymentIntentClientSecret,
+                        }}
+                    >
+                        <HoldVerificationForm attributionId={props.attributionId} />
+                    </Elements>
+                )}
+            </div>
+        </Modal>
+    );
+}
+
+function HoldVerificationForm(props: { attributionId: string }) {
+    const stripe = useStripe();
+    const elements = useElements();
+    const [errorMessage, setErrorMessage] = useState<string | undefined>();
+
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        const attrId = AttributionId.parse(props.attributionId);
+        if (!stripe || !elements || !attrId) {
+            return;
+        }
+        setErrorMessage(undefined);
+        try {
+            const url = new URL(window.location.href);
+            url.searchParams.set("step", "subscribe");
+
+            // Event though we might not request a payment right away, we want to use this sync opportunity to prepare clients as much as possible.
+            // E.g., if they have to go through a flow like 3DS or iDEAL, they should do it ("online flow"), instead of ending up in the (email-based) "offline flow".
+            const result = await stripe.confirmPayment({
+                elements,
+                confirmParams: {
+                    return_url: url.toString(),
+                },
+            });
+            if (result.error) {
+                // Show error to your customer (for example, payment details incomplete)
+                throw result.error;
+            } else {
+                // Your customer will be redirected to your `return_url`. For some payment
+                // methods like iDEAL, your customer will be redirected to an intermediate
+                // site first to authorize the payment, then redirected to the `return_url`.
+                console.log("RESULT: " + JSON.stringify(result));
+            }
+        } catch (error) {
+            console.error("Failed to submit form.", error);
+            let message = `Failed to submit form. ${error?.message || String(error)}`;
+            setErrorMessage(message);
+        }
+    };
+
+    return (
+        <form className="mt-4 flex-grow flex flex-col" onSubmit={handleSubmit}>
+            {errorMessage && (
+                <Alert className="mb-4" closable={false} showIcon={true} type="error">
+                    {errorMessage}
+                </Alert>
+            )}
+            <PaymentElement id="payment-element" options={{ readOnly: true }} />
+            <div className="mt-4 flex-grow flex justify-end items-end">
+                <Spinner className="h-5 w-5 animate-spin filter brightness-150" />
+            </div>
+        </form>
     );
 }
 
@@ -418,7 +553,7 @@ function getStripeAppearance(isDark?: boolean): Appearance {
     };
 }
 
-function CreditCardInputForm(props: { attributionId: string }) {
+function PaymentInputForm(props: { attributionId: string; setupIntentId: string }) {
     const stripe = useStripe();
     const elements = useElements();
     const { currency, setCurrency } = useContext(PaymentContext);
@@ -436,10 +571,15 @@ function CreditCardInputForm(props: { attributionId: string }) {
         try {
             // Create Stripe customer with currency
             await getGitpodService().server.createStripeCustomerIfNeeded(props.attributionId, currency);
+
+            // Make sure that after we return, proceed with the next step
+            const url = new URL(window.location.href);
+            url.searchParams.set("step", "verification");
+
             const result = await stripe.confirmSetup({
                 elements,
                 confirmParams: {
-                    return_url: window.location.href,
+                    return_url: url.toString(),
                 },
             });
             if (result.error) {
@@ -450,6 +590,11 @@ function CreditCardInputForm(props: { attributionId: string }) {
                 // methods like iDEAL, your customer will be redirected to an intermediate
                 // site first to authorize the payment, then redirected to the `return_url`.
             }
+
+            await getGitpodService().server.setDefaultPaymentMethod({
+                attributionId: props.attributionId,
+                setupIntentId: props.setupIntentId,
+            });
         } catch (error) {
             console.error("Failed to submit form.", error);
             let message = `Failed to submit form. ${error?.message || String(error)}`;
@@ -472,7 +617,7 @@ function CreditCardInputForm(props: { attributionId: string }) {
                     {errorMessage}
                 </Alert>
             )}
-            <PaymentElement />
+            <PaymentElement id="payment-element" options={{}} />
             <div className="mt-4 flex-grow flex justify-end items-end">
                 <div className="flex-grow flex space-x-1">
                     <span>Currency:</span>
