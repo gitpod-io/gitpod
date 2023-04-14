@@ -91,6 +91,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	authPKIVolumes, authPKIMounts, _ := getAuthPKI()
+	volumes = append(volumes, authPKIVolumes...)
+	volumeMounts = append(volumeMounts, authPKIMounts...)
+
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
 	return []runtime.Object{
 		&appsv1.Deployment{

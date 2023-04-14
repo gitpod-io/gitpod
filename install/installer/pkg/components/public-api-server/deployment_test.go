@@ -91,5 +91,13 @@ func TestDeployment_ServerArguments(t *testing.T) {
 				},
 			},
 		},
-	}, dpl.Spec.Template.Spec.Volumes, "must bind config as a volume")
+		{
+			Name: "auth-pki-signing",
+			VolumeSource: corev1.VolumeSource{
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: "auth-pki",
+				},
+			},
+		},
+	}, dpl.Spec.Template.Spec.Volumes, "must bind volumes")
 }

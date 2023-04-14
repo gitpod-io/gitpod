@@ -31,7 +31,7 @@ func authPKI(ctx *common.RenderContext) ([]runtime.Object, error) {
 		&certmanagerv1.Certificate{
 			TypeMeta: common.TypeMetaCertificate,
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      AuthPKISecretName,
+				Name:      common.AuthPKISecretName,
 				Namespace: ctx.Namespace,
 				Labels:    common.DefaultLabels(Component),
 			},
@@ -39,7 +39,7 @@ func authPKI(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Duration: &metav1.Duration{
 					Duration: time.Duration(math.MaxInt64), // never expire automatically
 				},
-				SecretName: AuthPKISecretName,
+				SecretName: common.AuthPKISecretName,
 				DNSNames:   serverAltNames,
 				IssuerRef: cmmeta.ObjectReference{
 					Name:  common.CertManagerCAIssuer,
@@ -69,7 +69,7 @@ func getAuthPKI() ([]corev1.Volume, []corev1.VolumeMount, AuthPKIConfig) {
 			Name: "auth-pki-signing",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: AuthPKISecretName,
+					SecretName: common.AuthPKISecretName,
 				},
 			},
 		},

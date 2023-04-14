@@ -48,6 +48,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	_, _, databaseSecretMountPath := common.DatabaseEnvSecret(ctx.Config)
 
+	_, _, authPKI := getAuthPKI()
+
 	cfg := config.Configuration{
 		PublicURL:                         fmt.Sprintf("https://api.%s", ctx.Config.Domain),
 		GitpodServiceURL:                  common.ClusterURL("ws", server.Component, ctx.Namespace, server.ContainerPort),
@@ -59,6 +61,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		DatabaseConfigPath:                databaseSecretMountPath,
 		Redis: config.RedisConfiguration{
 			Address: common.ClusterAddress(redis.Component, ctx.Namespace, redis.Port),
+		},
+		Auth: config.AuthConfiguration{
+			PKI: authPKI,
 		},
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
