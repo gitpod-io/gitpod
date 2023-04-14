@@ -69,7 +69,7 @@ func getAuthPKI() ([]corev1.Volume, []corev1.VolumeMount, AuthPKIConfig) {
 			Name: "auth-pki-signing",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: AuthPKISecretName,
+					SecretName: common.AuthPKISecretName,
 				},
 			},
 		},
