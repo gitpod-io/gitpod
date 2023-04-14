@@ -74,8 +74,14 @@ func (g GitClient) ConfigSafeDirectory() error {
 	return nil
 }
 
-func (g GitClient) ConfigUserName(dir string) error {
-	args := []string{"config", "--local", "user.name", "integration-test"}
+func (g GitClient) ConfigUserName(dir string, username string) error {
+	var userName string
+	if username == "" {
+		userName = "integration-test"
+	} else {
+		userName = username
+	}
+	args := []string{"config", "--local", "user.name", userName}
 	var resp agent.ExecResponse
 	err := g.rpcClient.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
 		Dir:     dir,
@@ -108,10 +114,13 @@ func (g GitClient) ConfigUserEmail(dir string, files ...string) error {
 	return nil
 }
 
-func (g GitClient) Commit(dir string, message string, all bool) error {
+func (g GitClient) Commit(dir string, message string, all bool, moreArgs ...string) error {
 	args := []string{"commit", "-m", message}
 	if all {
 		args = append(args, "--all")
+	}
+	if moreArgs != nil {
+		args = append(args, moreArgs...)
 	}
 	var resp agent.ExecResponse
 	err := g.rpcClient.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
