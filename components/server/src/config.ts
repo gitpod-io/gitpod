@@ -50,10 +50,12 @@ export type Config = Omit<
         // Public/Private key for signing authenticated sessions
         pki: {
             signing: {
+                id: string;
                 privateKey: string;
                 publicKey: string;
             };
             validating: {
+                id: string;
                 privateKey: string;
                 publicKey: string;
             }[];
@@ -271,6 +273,7 @@ export interface AuthPKIConfig {
 }
 
 export interface KeyPair {
+    id: string;
     publicKeyPath: string;
     privateKeyPath: string;
 }
@@ -377,11 +380,13 @@ export namespace ConfigFile {
 
         const authPKI: Config["auth"]["pki"] = {
             signing: {
+                id: config.auth.pki.signing.id,
                 privateKey: fs.readFileSync(filePathTelepresenceAware(config.auth.pki.signing.privateKeyPath), "utf-8"),
                 publicKey: fs.readFileSync(filePathTelepresenceAware(config.auth.pki.signing.publicKeyPath), "utf-8"),
             },
             validating:
                 config.auth.pki.validating?.map((keypair) => ({
+                    id: keypair.id,
                     privateKey: fs.readFileSync(filePathTelepresenceAware(keypair.privateKeyPath), "utf-8"),
                     publicKey: fs.readFileSync(filePathTelepresenceAware(keypair.publicKeyPath), "utf-8"),
                 })) || [],

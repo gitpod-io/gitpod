@@ -7,6 +7,7 @@ package public_api_server
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -91,7 +92,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	authPKIVolumes, authPKIMounts, _ := getAuthPKI()
+	authPKIVolumes, authPKIMounts, _ := auth.GetPKI()
 	volumes = append(volumes, authPKIVolumes...)
 	volumeMounts = append(volumeMounts, authPKIMounts...)
 

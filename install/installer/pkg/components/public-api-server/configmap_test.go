@@ -60,6 +60,7 @@ func TestConfigMap(t *testing.T) {
 		Auth: config.AuthConfiguration{
 			PKI: config.AuthPKIConfiguration{
 				Signing: config.KeyPair{
+					ID:             "0001",
 					PublicKeyPath:  "/secrets/auth-pki/signing/tls.crt",
 					PrivateKeyPath: "/secrets/auth-pki/signing/tls.key",
 				},

@@ -54,6 +54,7 @@ type AuthPKIConfiguration struct {
 }
 
 type KeyPair struct {
+	ID             string `json:"id"`
 	PublicKeyPath  string `json:"publicKeyPath"`
 	PrivateKeyPath string `json:"privateKeyPath"`
 }

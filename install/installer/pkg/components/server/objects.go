@@ -60,5 +60,4 @@ var Objects = common.CompositeRenderFunc(
 		},
 	}),
 	common.DefaultServiceAccount(Component),
-	authPKI,
 )

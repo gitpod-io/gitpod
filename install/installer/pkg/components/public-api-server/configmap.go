@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/server"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
@@ -48,7 +49,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	_, _, databaseSecretMountPath := common.DatabaseEnvSecret(ctx.Config)
 
-	_, _, authPKI := getAuthPKI()
+	_, _, authPKI := auth.GetPKI()
 
 	cfg := config.Configuration{
 		PublicURL:                         fmt.Sprintf("https://api.%s", ctx.Config.Domain),
@@ -63,7 +64,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Address: common.ClusterAddress(redis.Component, ctx.Namespace, redis.Port),
 		},
 		Auth: config.AuthConfiguration{
-			PKI: authPKI,
+			PKI: config.AuthPKIConfiguration{
+				Signing: config.KeyPair{
+					ID:             authPKI.Signing.ID,
+					PublicKeyPath:  authPKI.Signing.PublicKeyPath,
+					PrivateKeyPath: authPKI.Signing.PrivateKeyPath,
+				},
+			},
 		},
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{

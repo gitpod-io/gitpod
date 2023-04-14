@@ -12,6 +12,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/spicedb"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
@@ -281,7 +282,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	volumes = append(volumes, adminCredentialsVolume)
 	volumeMounts = append(volumeMounts, adminCredentialsMount)
 
-	authPKIVolumes, authPKIMounts, _ := getAuthPKI()
+	authPKIVolumes, authPKIMounts, _ := auth.GetPKI()
 	volumes = append(volumes, authPKIVolumes...)
 	volumeMounts = append(volumeMounts, authPKIMounts...)
 
