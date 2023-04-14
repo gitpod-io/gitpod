@@ -55,6 +55,34 @@ func TestServeHTTP(t *testing.T) {
 			providedSegmentKey:         "other-key",
 			expectedResponseBodyPrefix: "mock",
 		},
+		{
+			name:                       "both keys empty",
+			trustedSegmentKey:          "",
+			untrustedSegmentKey:        "",
+			providedSegmentKey:         "",
+			expectedResponseBodyPrefix: "mock",
+		},
+		{
+			name:                       "only trusted key empty",
+			trustedSegmentKey:          "",
+			untrustedSegmentKey:        "untrusted-key",
+			providedSegmentKey:         "",
+			expectedResponseBodyPrefix: "untrusted",
+		},
+		{
+			name:                       "only untrusted key empty",
+			trustedSegmentKey:          "trusted-key",
+			untrustedSegmentKey:        "",
+			providedSegmentKey:         "",
+			expectedResponseBodyPrefix: "mock",
+		},
+		{
+			name:                       "both keys empty, provided key not empty",
+			trustedSegmentKey:          "",
+			untrustedSegmentKey:        "",
+			providedSegmentKey:         "other-key",
+			expectedResponseBodyPrefix: "mock",
+		},
 	}
 
 	for _, tt := range tests {
