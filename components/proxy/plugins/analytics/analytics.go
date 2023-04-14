@@ -68,8 +68,8 @@ func (a *Analytics) Provision(ctx caddy.Context) error {
 	return nil
 }
 
-func newSegmentProxy(segmentEndponit *url.URL, errorLog *log.Logger) http.Handler {
-	reverseProxy := httputil.NewSingleHostReverseProxy(segmentEndponit)
+func newSegmentProxy(segmentEndpoint *url.URL, errorLog *log.Logger) http.Handler {
+	reverseProxy := httputil.NewSingleHostReverseProxy(segmentEndpoint)
 	reverseProxy.ErrorLog = errorLog
 
 	// configure transport to ensure that requests
@@ -90,15 +90,14 @@ func newSegmentProxy(segmentEndponit *url.URL, errorLog *log.Logger) http.Handle
 }
 
 func (a *Analytics) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
-	segmentKey, _, ok := r.BasicAuth()
-	if !ok {
-		return next.ServeHTTP(w, r)
-	}
-	if a.trustedSegmentKey != "" && segmentKey == a.trustedSegmentKey {
+	segmentKey, _, _ := r.BasicAuth()
+	shouldProxyToTrustedSegment := a.trustedSegmentKey != "" && segmentKey == a.trustedSegmentKey
+	if shouldProxyToTrustedSegment {
 		a.segmentProxy.ServeHTTP(w, r)
 		return nil
 	}
-	if a.untrustedSegmentKey != "" && (segmentKey == "" || segmentKey == a.untrustedSegmentKey) {
+	shouldProxyToUntrustedSegment := a.untrustedSegmentKey != "" && (segmentKey == "" || segmentKey == a.untrustedSegmentKey)
+	if shouldProxyToUntrustedSegment {
 		if segmentKey == "" {
 			r.SetBasicAuth(a.untrustedSegmentKey, "")
 		}

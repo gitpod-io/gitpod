@@ -91,6 +91,7 @@ require (
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stoewer/go-strcase v1.2.0 // indirect
+	github.com/stretchr/testify v1.8.2 // indirect
 	github.com/tailscale/tscert v0.0.0-20230124224810-c6dc1f4049b2 // indirect
 	github.com/urfave/cli v1.22.12 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
