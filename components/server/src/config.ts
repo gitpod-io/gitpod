@@ -29,6 +29,7 @@ export type Config = Omit<
     | "linkedInSecretsFile"
     | "licenseFile"
     | "patSigningKeyFile"
+    | "auth"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
@@ -43,6 +44,20 @@ export type Config = Omit<
         loginKey?: string;
         // Absolute file path pointing to a file which contains admin credentials, encoded as JSON.
         credentialsPath: string;
+    };
+
+    auth: {
+        // Public/Private key for signing authenticated sessions
+        pki: {
+            signing: {
+                privateKey: string;
+                publicKey: string;
+            };
+            validating: {
+                privateKey: string;
+                publicKey: string;
+            }[];
+        };
     };
 };
 
@@ -244,6 +259,20 @@ export interface ConfigSerialized {
      * This is the same signing key used by Public API
      */
     patSigningKeyFile?: string;
+
+    auth: {
+        pki: AuthPKIConfig;
+    };
+}
+
+export interface AuthPKIConfig {
+    signing: KeyPair;
+    validating?: KeyPair[];
+}
+
+export interface KeyPair {
+    publicKeyPath: string;
+    privateKeyPath: string;
 }
 
 export namespace ConfigFile {
@@ -346,6 +375,18 @@ export namespace ConfigFile {
             }
         }
 
+        const authPKI: Config["auth"]["pki"] = {
+            signing: {
+                privateKey: fs.readFileSync(filePathTelepresenceAware(config.auth.pki.signing.privateKeyPath), "utf-8"),
+                publicKey: fs.readFileSync(filePathTelepresenceAware(config.auth.pki.signing.publicKeyPath), "utf-8"),
+            },
+            validating:
+                config.auth.pki.validating?.map((keypair) => ({
+                    privateKey: fs.readFileSync(filePathTelepresenceAware(keypair.privateKeyPath), "utf-8"),
+                    publicKey: fs.readFileSync(filePathTelepresenceAware(keypair.publicKeyPath), "utf-8"),
+                })) || [],
+        };
+
         return {
             ...config,
             hostUrl,
@@ -367,6 +408,9 @@ export namespace ConfigFile {
             admin: {
                 ...config.admin,
                 credentialsPath: config.admin.credentialsPath,
+            },
+            auth: {
+                pki: authPKI,
             },
         };
     }
