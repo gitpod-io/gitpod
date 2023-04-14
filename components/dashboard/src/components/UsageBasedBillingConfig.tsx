@@ -103,11 +103,15 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
+        const setupIntentId = params.get("setup_intent");
         const redirectStatus = params.get("redirect_status");
         const step = params.get("step");
 
         if (step === "verification") {
             if (!attributionId) {
+                return;
+            }
+            if (!setupIntentId) {
                 return;
             }
 
@@ -119,9 +123,15 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
             didStartVerification = true;
             console.log("didStartVerification false, first run.");
 
-            getGitpodService()
-                .server.createHoldPaymentIntent(attributionId)
-                .then((r) => setHoldPaymentIntentInfo(r)); // TODO(gpl): error handling, brittle
+            (async () => {
+                await getGitpodService().server.setDefaultPaymentMethod({
+                    attributionId,
+                    setupIntentId,
+                });
+
+                const holdPaymentInfo = await getGitpodService().server.createHoldPaymentIntent(attributionId);
+                setHoldPaymentIntentInfo(holdPaymentInfo); // TODO(gpl): error handling, brittle
+            })();
             setShowHoldVerificationModal(true);
         }
         if (step === "subscribe") {
@@ -232,8 +242,6 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
         return usageLimit > 500 ? "Open Source" : "Free";
     }, [usageLimit]);
 
-    const params = new URLSearchParams(location.search);
-    const setupIntentId = params.get("setup_intent");
     return (
         <div className="mb-16">
             {!hideSubheading && (
@@ -386,12 +394,8 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                     </div>
                 )}
             </div>
-            {!!attributionId && !!setupIntentId && showBillingSetupModal && (
-                <BillingSetupModal
-                    attributionId={attributionId}
-                    setupIntentId={setupIntentId}
-                    onClose={() => setShowBillingSetupModal(false)}
-                />
+            {!!attributionId && showBillingSetupModal && (
+                <BillingSetupModal attributionId={attributionId} onClose={() => setShowBillingSetupModal(false)} />
             )}
             {!!attributionId && !!holdPaymentIntentInfo?.paymentIntentClientSecret && showHoldVerificationModal && (
                 <HoldVerificationModal
@@ -416,7 +420,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     );
 }
 
-export function BillingSetupModal(props: { attributionId: string; setupIntentId: string; onClose: () => void }) {
+export function BillingSetupModal(props: { attributionId: string; onClose: () => void }) {
     const { isDark } = useContext(ThemeContext);
     const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
     const [stripeSetupIntentClientSecret, setStripeSetupIntentClientSecret] = useState<string | undefined>();
@@ -446,7 +450,7 @@ export function BillingSetupModal(props: { attributionId: string; setupIntentId:
                             clientSecret: stripeSetupIntentClientSecret,
                         }}
                     >
-                        <PaymentInputForm attributionId={props.attributionId} setupIntentId={props.setupIntentId} />
+                        <PaymentInputForm attributionId={props.attributionId} />
                     </Elements>
                 )}
             </div>
@@ -553,7 +557,7 @@ function getStripeAppearance(isDark?: boolean): Appearance {
     };
 }
 
-function PaymentInputForm(props: { attributionId: string; setupIntentId: string }) {
+function PaymentInputForm(props: { attributionId: string }) {
     const stripe = useStripe();
     const elements = useElements();
     const { currency, setCurrency } = useContext(PaymentContext);
@@ -590,11 +594,6 @@ function PaymentInputForm(props: { attributionId: string; setupIntentId: string 
                 // methods like iDEAL, your customer will be redirected to an intermediate
                 // site first to authorize the payment, then redirected to the `return_url`.
             }
-
-            await getGitpodService().server.setDefaultPaymentMethod({
-                attributionId: props.attributionId,
-                setupIntentId: props.setupIntentId,
-            });
         } catch (error) {
             console.error("Failed to submit form.", error);
             let message = `Failed to submit form. ${error?.message || String(error)}`;
