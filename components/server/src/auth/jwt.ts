@@ -15,25 +15,18 @@ const algorithm: jsonwebtoken.Algorithm = "RS512";
 export class AuthJWT {
     @inject(Config) protected config: Config;
 
-    async sign(subject: string, payload: object | Buffer, expiresIn: string = `${24 * 7}h`) {
+    async sign(subject: string, payload: object | Buffer, expiresIn: string = `${24 * 7}h`): Promise<string> {
         const opts: jsonwebtoken.SignOptions = {
             algorithm,
             expiresIn,
-            issuer: this.config.hostUrl.toString(),
+            issuer: this.config.hostUrl.url.hostname,
             subject,
         };
 
-        return new Promise((resolve, reject) => {
-            jsonwebtoken.sign(payload, this.config.auth.pki.signing.privateKey, opts, (err, encoded) => {
-                if (err || !encoded) {
-                    return reject(err);
-                }
-                return resolve(encoded);
-            });
-        });
+        return sign(payload, this.config.auth.pki.signing.privateKey, opts);
     }
 
-    async verify(encoded: string): Promise<object> {
+    async verify(encoded: string): Promise<jsonwebtoken.JwtPayload> {
         // When we verify an encoded token, we verify it using all available public keys
         // That is, we check the following:
         //  * The current signing public key
@@ -48,8 +41,11 @@ export class AuthJWT {
             ...validatingPublicKeys,
         ];
 
+        console.log("verifying with keys", publicKeys);
         let lastErr;
+        let c = 0;
         for (let publicKey of publicKeys) {
+            console.log("trying ", c, publicKey);
             try {
                 const decoded = verify(encoded, publicKey, {
                     algorithms: [algorithm],
@@ -59,6 +55,7 @@ export class AuthJWT {
                 log.debug(`Failed to verify JWT token using public key.`, err);
                 lastErr = err;
             }
+            c += 1;
         }
 
         log.error(`Failed to verify JWT using any available public key.`, lastErr, {
@@ -68,7 +65,22 @@ export class AuthJWT {
     }
 }
 
-async function verify(
+export async function sign(
+    payload: string | object | Buffer,
+    secret: jsonwebtoken.Secret,
+    opts: jsonwebtoken.SignOptions,
+): Promise<string> {
+    return new Promise((resolve, reject) => {
+        jsonwebtoken.sign(payload, secret, opts, (err, encoded) => {
+            if (err || !encoded) {
+                return reject(err);
+            }
+            return resolve(encoded);
+        });
+    });
+}
+
+export async function verify(
     encoded: string,
     publicKey: string,
     opts: jsonwebtoken.VerifyOptions,
