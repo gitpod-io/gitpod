@@ -180,6 +180,29 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 	}, nil
 }
 
+func (s *BillingService) SetDefaultPaymentMethod(ctx context.Context, req *v1.SetDefaultPaymentMethodRequest) (*v1.SetDefaultPaymentMethodResponse, error) {
+	attributionID, err := db.ParseAttributionID(req.GetAttributionId())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
+	}
+
+	customer, err := s.GetStripeCustomer(ctx, &v1.GetStripeCustomerRequest{
+		Identifier: &v1.GetStripeCustomerRequest_AttributionId{
+			AttributionId: string(attributionID),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.stripeClient.SetDefaultPaymentForCustomer(ctx, customer.Customer.Id, req.SetupIntentId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to set default payment for customer ID %s", customer.Customer.Id)
+	}
+
+	return &v1.SetDefaultPaymentMethodResponse{}, nil
+}
+
 func (s *BillingService) CreateHoldPaymentIntent(ctx context.Context, req *v1.CreateHoldPaymentIntentRequest) (*v1.CreateHoldPaymentIntentResponse, error) {
 	attributionID, err := db.ParseAttributionID(req.GetAttributionId())
 	if err != nil {
@@ -226,11 +249,6 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	_, err = s.stripeClient.SetDefaultPaymentForCustomer(ctx, customer.Customer.Id, req.SetupIntentId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Failed to set default payment for customer ID %s", customer.Customer.Id)
 	}
 
 	stripeCustomer, err := s.stripeClient.GetCustomer(ctx, customer.Customer.Id)

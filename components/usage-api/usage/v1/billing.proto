@@ -22,6 +22,8 @@ service BillingService {
 
   rpc CreateStripeCustomer(CreateStripeCustomerRequest) returns (CreateStripeCustomerResponse) {};
 
+  rpc SetDefaultPaymentMethod(SetDefaultPaymentMethodRequest) returns (SetDefaultPaymentMethodResponse) {};
+
   // CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify the payment method/creditability of this user on first signup, before we create the subscription
   rpc CreateHoldPaymentIntent(CreateHoldPaymentIntentRequest) returns (CreateHoldPaymentIntentResponse) {};
 
@@ -84,6 +86,14 @@ message CreateStripeCustomerResponse {
   StripeCustomer customer = 1;
 }
 
+message SetDefaultPaymentMethodRequest {
+  string attribution_id = 1;
+  string setup_intent_id = 2;
+}
+
+message SetDefaultPaymentMethodResponse {
+}
+
 message CreateHoldPaymentIntentRequest {
   string attribution_id = 1;
 }
@@ -95,7 +105,7 @@ message CreateHoldPaymentIntentResponse {
 
 message CreateStripeSubscriptionRequest {
   string attribution_id = 1;
-  string setup_intent_id = 2;
+  reserved 2;
   int64 usage_limit = 3;
   string hold_payment_intent_id = 4;
 }

@@ -236,12 +236,12 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     findStripeSubscriptionId(attributionId: string): Promise<string | undefined>;
     getPriceInformation(attributionId: string): Promise<string | undefined>;
     createStripeCustomerIfNeeded(attributionId: string, currency: string): Promise<void>;
+    setDefaultPaymentMethod(opts: { attributionId: string; setupIntentId: string }): Promise<void>;
     createHoldPaymentIntent(
         attributionId: string,
     ): Promise<{ paymentIntentId: string; paymentIntentClientSecret: string }>;
     subscribeToStripe(
         attributionId: string,
-        setupIntentId: string,
         holdPaymentIntentId: string,
         usageLimit: number,
     ): Promise<number | undefined>;

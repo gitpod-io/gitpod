@@ -1113,13 +1113,46 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    async setDefaultPaymentMethod(
+        ctx: TraceContext,
+        opts: { attributionId: string; setupIntentId: string },
+    ): Promise<void> {
+        const user = this.checkAndBlockUser("setDefaultPaymentMethod");
+        traceAPIParams(ctx, opts);
+        const { attributionId, setupIntentId } = opts;
+
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+        if (!setupIntentId) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid setupIntentId: ${setupIntentId}`);
+        }
+
+        try {
+            await this.ensureStripeApiIsAllowedIfNecessary(user, attrId);
+
+            await this.billingService.setDefaultPaymentMethod({ attributionId, setupIntentId });
+        } catch (error) {
+            log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
+            if (error instanceof ClientError) {
+                throw new ResponseError(error.code, error.details);
+            }
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to subscribe '${attributionId}' to Stripe`,
+            );
+        }
+    }
+
     async createHoldPaymentIntent(
         ctx: TraceContext,
         attributionId: string,
     ): Promise<{ paymentIntentId: string; paymentIntentClientSecret: string }> {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
-            log.error(`Invalid attribution id: ${attributionId}`);
+            log.error(`Invalid attribution id`);
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
@@ -1147,7 +1180,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     async subscribeToStripe(
         ctx: TraceContext,
         attributionId: string,
-        setupIntentId: string,
         holdPaymentIntentId: string,
         usageLimit: number,
     ): Promise<number | undefined> {
@@ -1177,7 +1209,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
             await this.billingService.createStripeSubscription({
                 attributionId,
-                setupIntentId,
                 holdPaymentIntentId,
                 usageLimit,
             });
