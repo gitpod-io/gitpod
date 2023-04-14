@@ -32,6 +32,9 @@ type Configuration struct {
 	// Redis configures the connection to Redis
 	Redis RedisConfiguration `json:"redis"`
 
+	// Authentication configuration
+	Auth AuthConfiguration `json:"auth"`
+
 	Server *baseserver.Configuration `json:"server,omitempty"`
 }
 
@@ -39,4 +42,18 @@ type RedisConfiguration struct {
 
 	// Address configures the redis connection of this component
 	Address string `json:"address"`
+}
+
+type AuthConfiguration struct {
+	PKI AuthPKIConfiguration `json:"pki"`
+}
+
+type AuthPKIConfiguration struct {
+	Signing    KeyPair   `json:"signing"`
+	Validating []KeyPair `json:"validating"`
+}
+
+type KeyPair struct {
+	PublicKeyPath  string `json:"publicKeyPath"`
+	PrivateKeyPath string `json:"privateKeyPath"`
 }

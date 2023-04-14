@@ -57,6 +57,14 @@ func TestConfigMap(t *testing.T) {
 		Redis: config.RedisConfiguration{
 			Address: fmt.Sprintf("%s.%s.svc.cluster.local:%d", redis.Component, ctx.Namespace, redis.Port),
 		},
+		Auth: config.AuthConfiguration{
+			PKI: config.AuthPKIConfiguration{
+				Signing: config.KeyPair{
+					PublicKeyPath:  "/secrets/auth-pki/signing/tls.crt",
+					PrivateKeyPath: "/secrets/auth-pki/signing/tls.key",
+				},
+			},
+		},
 		Server: &baseserver.Configuration{
 			Services: baseserver.ServicesConfiguration{
 				GRPC: &baseserver.ServerConfiguration{

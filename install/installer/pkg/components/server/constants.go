@@ -31,8 +31,6 @@ const (
 	AdminCredentialsSecretMountPath = "/credentials/admin"
 	AdminCredentialsSecretKey       = "admin.json"
 
-	AuthPKISecretName = "auth-pki"
-
 	GRPCAPIName = "grpc"
 	GRPCAPIPort = common.ServerGRPCAPIPort
 )

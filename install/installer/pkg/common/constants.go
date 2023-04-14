@@ -61,6 +61,7 @@ const (
 	WorkspaceSecretsNamespace   = "workspace-secrets"
 	AnnotationConfigChecksum    = "gitpod.io/checksum_config"
 	DatabaseConfigMountPath     = "/secrets/database-config"
+	AuthPKISecretName           = "auth-pki"
 )
 
 var (
