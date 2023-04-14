@@ -260,6 +260,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 {showSpinner && (
                     <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
+                        {/* TODO: Fix wobbly spinner */}
                         <Spinner className="m-2 h-5 w-5 animate-spin" />
                     </div>
                 )}
