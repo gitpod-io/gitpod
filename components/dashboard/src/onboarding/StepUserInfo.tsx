@@ -87,7 +87,7 @@ export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
             isValid={isValid}
             isSaving={updateUser.isLoading}
             onSubmit={handleSubmit}
-            submitButtonText={linkedinConnectionForOnboarding ? "Continue with 100 credits per month" : undefined}
+            submitButtonText={linkedinConnectionForOnboarding ? "Continue with 10 hours per month" : undefined}
             submitButtonType={linkedinConnectionForOnboarding ? "secondary" : undefined}
         >
             {user.avatarUrl && (

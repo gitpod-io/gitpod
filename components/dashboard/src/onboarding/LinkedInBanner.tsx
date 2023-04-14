@@ -63,7 +63,7 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
                     <span className="text-4xl">🎁</span>
                     {/* TODO: Shouldn't need a fixed width here, but was hard to center otherwise  */}
                     <p className="w-64 text-base text-gray-500 dark:text-gray-100">
-                        Receive <strong>500 credits</strong> per month by connecting your <strong>LinkedIn</strong>{" "}
+                        Receive <strong>50 hours</strong> of usage per month by connecting your <strong>LinkedIn</strong>{" "}
                         account.
                     </p>
                 </div>
