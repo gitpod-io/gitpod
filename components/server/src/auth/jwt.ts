@@ -41,8 +41,11 @@ export class AuthJWT {
             ...validatingPublicKeys,
         ];
 
+        console.log("verifying with keys", publicKeys);
         let lastErr;
+        let c = 0;
         for (let publicKey of publicKeys) {
+            console.log("trying ", c, publicKey);
             try {
                 const decoded = await verify(encoded, publicKey, {
                     algorithms: [algorithm],
@@ -52,6 +55,7 @@ export class AuthJWT {
                 log.debug(`Failed to verify JWT token using public key.`, err);
                 lastErr = err;
             }
+            c += 1;
         }
 
         log.error(`Failed to verify JWT using any available public key.`, lastErr, {

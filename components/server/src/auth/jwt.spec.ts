@@ -50,7 +50,11 @@ class TestAuthJWT {
         });
 
         expect(decoded["sub"]).to.equal(subject);
+<<<<<<< HEAD
         expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
+=======
+        expect(decoded["iss"]).to.equal("mp-server-d7650ec945.preview.gitpod-dev.com");
+>>>>>>> 15ab23327 (fix)
     }
 
     @test
@@ -63,7 +67,11 @@ class TestAuthJWT {
         const decoded = await sut.verify(encoded);
 
         expect(decoded["sub"]).to.equal(subject);
+<<<<<<< HEAD
         expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
+=======
+        expect(decoded["iss"]).to.equal("mp-server-d7650ec945.preview.gitpod-dev.com");
+>>>>>>> 15ab23327 (fix)
     }
 
     @test
@@ -74,7 +82,11 @@ class TestAuthJWT {
         const encoded = await sign({}, this.config.auth.pki.validating[1].privateKey, {
             algorithm: "RS512",
             expiresIn: "1d",
+<<<<<<< HEAD
             issuer: this.config.hostUrl.toStringWoRootSlash(),
+=======
+            issuer: this.config.hostUrl.url.hostname,
+>>>>>>> 15ab23327 (fix)
             subject,
         });
 
@@ -82,7 +94,11 @@ class TestAuthJWT {
         const decoded = await sut.verify(encoded);
 
         expect(decoded["sub"]).to.equal(subject);
+<<<<<<< HEAD
         expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
+=======
+        expect(decoded["iss"]).to.equal("mp-server-d7650ec945.preview.gitpod-dev.com");
+>>>>>>> 15ab23327 (fix)
     }
 }
 
