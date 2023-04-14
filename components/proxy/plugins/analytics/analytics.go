@@ -31,14 +31,10 @@ func init() {
 	httpcaddyfile.RegisterHandlerDirective(moduleName, parseCaddyfile)
 }
 
-type segmentProxy struct {
-	segmentKey string
-	http.Handler
-}
-
 type Analytics struct {
-	trustedProxy   *segmentProxy
-	untrustedProxy *segmentProxy
+	segmentProxy        http.Handler
+	trustedSegmentKey   string
+	untrustedSegmentKey string
 }
 
 // CaddyModule returns the Caddy module information.
@@ -65,20 +61,14 @@ func (a *Analytics) Provision(ctx caddy.Context) error {
 		return nil
 	}
 
-	untrustedSegmentKey := os.Getenv("ANALYTICS_PLUGIN_UNTRUSTED_SEGMENT_KEY")
-	if untrustedSegmentKey != "" {
-		a.untrustedProxy = newSegmentProxy(segmentEndponit, errorLog, untrustedSegmentKey)
-	}
-
-	trustedSegmentKey := os.Getenv("ANALYTICS_PLUGIN_TRUSTED_SEGMENT_KEY")
-	if trustedSegmentKey != "" {
-		a.trustedProxy = newSegmentProxy(segmentEndponit, errorLog, trustedSegmentKey)
-	}
+	a.segmentProxy = newSegmentProxy(segmentEndponit, errorLog)
+	a.untrustedSegmentKey = os.Getenv("ANALYTICS_PLUGIN_UNTRUSTED_SEGMENT_KEY")
+	a.trustedSegmentKey = os.Getenv("ANALYTICS_PLUGIN_TRUSTED_SEGMENT_KEY")
 
 	return nil
 }
 
-func newSegmentProxy(segmentEndponit *url.URL, errorLog *log.Logger, segmentKey string) *segmentProxy {
+func newSegmentProxy(segmentEndponit *url.URL, errorLog *log.Logger) http.Handler {
 	reverseProxy := httputil.NewSingleHostReverseProxy(segmentEndponit)
 	reverseProxy.ErrorLog = errorLog
 
@@ -96,10 +86,7 @@ func newSegmentProxy(segmentEndponit *url.URL, errorLog *log.Logger, segmentKey 
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
 	}
-	return &segmentProxy{
-		segmentKey: segmentKey,
-		Handler:    http.StripPrefix("/analytics", reverseProxy),
-	}
+	return http.StripPrefix("/analytics", reverseProxy)
 }
 
 func (a *Analytics) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhttp.Handler) error {
@@ -107,15 +94,15 @@ func (a *Analytics) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 	if !ok {
 		return next.ServeHTTP(w, r)
 	}
-	if a.trustedProxy != nil && segmentKey == a.trustedProxy.segmentKey {
-		a.trustedProxy.ServeHTTP(w, r)
+	if a.trustedSegmentKey != "" && segmentKey == a.trustedSegmentKey {
+		a.segmentProxy.ServeHTTP(w, r)
 		return nil
 	}
-	if a.untrustedProxy != nil && (segmentKey == "" || segmentKey == a.untrustedProxy.segmentKey) {
+	if a.untrustedSegmentKey != "" && (segmentKey == "" || segmentKey == a.untrustedSegmentKey) {
 		if segmentKey == "" {
-			r.SetBasicAuth(a.untrustedProxy.segmentKey, "")
+			r.SetBasicAuth(a.untrustedSegmentKey, "")
 		}
-		a.untrustedProxy.ServeHTTP(w, r)
+		a.segmentProxy.ServeHTTP(w, r)
 		return nil
 	}
 	return next.ServeHTTP(w, r)
