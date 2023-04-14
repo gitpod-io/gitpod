@@ -7,7 +7,6 @@
 import { User } from "@gitpod/gitpod-protocol";
 import React, { useContext, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "react-router";
-import { AppNotifications } from "../AppNotifications";
 import Menu from "../menu/Menu";
 import OAuthClientApproval from "../OauthClientApproval";
 import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/projects.routes";
@@ -186,7 +185,6 @@ export const AppRoutes = () => {
             <div className="container">
                 <Menu />
                 {isLocalPreview() && <LocalPreviewAlert />}
-                {!location.pathname.startsWith("/switch-to-payg") && <AppNotifications />}
                 <Switch>
                     <Route path="/new" exact component={CreateWorkspacePage} />
                     <Route path={projectsPathNew} exact component={NewProject} />
