@@ -74,14 +74,6 @@ export class SessionHandlerProvider {
         return `${derived}jwt_`;
     }
 
-    static getJWTCookieName(hostURL: GitpodHostUrl) {
-        const derived = hostURL
-            .toString()
-            .replace(/https?/, "")
-            .replace(/[\W_]+/g, "_");
-        return `${derived}jwt_`;
-    }
-
     public clearSessionCookie(res: express.Response, config: Config): void {
         // http://expressjs.com/en/api.html#res.clearCookie
         const name = SessionHandlerProvider.getCookieName(config);
