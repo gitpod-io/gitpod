@@ -5,23 +5,20 @@
  */
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { Appearance, loadStripe, Stripe } from "@stripe/stripe-js";
 import dayjs from "dayjs";
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as Check } from "../images/check-circle.svg";
-import { PaymentContext } from "../payment-context";
 import { getGitpodService } from "../service/service";
-import { ThemeContext } from "../theme-context";
 import Alert from "./Alert";
 import { Heading2, Subheading } from "./typography/headings";
+import { Button } from "./Button";
+import { BillingSetupModal } from "./billing/BillingSetupModal";
+import { HoldVerificationModal } from "./billing/HoldVerificationModal";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -362,7 +359,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                                         </button>
                                     </a>
                                 )}
-                                <button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</button>
+                                <Button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</Button>
                             </div>
                         </div>
                     </>
@@ -402,7 +399,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 <HoldVerificationModal
                     attributionId={attributionId}
                     holdPaymentIntentClientSecret={holdPaymentIntentInfo.paymentIntentClientSecret}
-                    onClose={() => setShowBillingSetupModal(false)}
+                    onClose={() => setShowHoldVerificationModal(false)}
                 />
             )}
             {showUpdateLimitModal && (
@@ -418,231 +415,6 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 />
             )}
         </div>
-    );
-}
-
-export function BillingSetupModal(props: { attributionId: string; onClose: () => void }) {
-    const { isDark } = useContext(ThemeContext);
-    const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
-    const [stripeSetupIntentClientSecret, setStripeSetupIntentClientSecret] = useState<string | undefined>();
-
-    useEffect(() => {
-        const { server } = getGitpodService();
-        Promise.all([
-            server.getStripePublishableKey().then((v) => () => setStripePromise(loadStripe(v))),
-            server.getStripeSetupIntentClientSecret().then((v) => () => setStripeSetupIntentClientSecret(v)),
-        ]).then((setters) => setters.forEach((s) => s()));
-    }, []);
-
-    return (
-        <Modal visible={true} onClose={props.onClose}>
-            <Heading2 className="flex">Upgrade Plan</Heading2>
-            <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-2 -mx-6 px-6 flex flex-col">
-                {(!stripePromise || !stripeSetupIntentClientSecret) && (
-                    <div className="h-80 flex items-center justify-center">
-                        <Spinner className="h-5 w-5 animate-spin" />
-                    </div>
-                )}
-                {!!stripePromise && !!stripeSetupIntentClientSecret && (
-                    <Elements
-                        stripe={stripePromise}
-                        options={{
-                            appearance: getStripeAppearance(isDark),
-                            clientSecret: stripeSetupIntentClientSecret,
-                        }}
-                    >
-                        <PaymentInputForm attributionId={props.attributionId} />
-                    </Elements>
-                )}
-            </div>
-        </Modal>
-    );
-}
-
-export function HoldVerificationModal(props: {
-    attributionId: string;
-    holdPaymentIntentClientSecret: string;
-    onClose: () => void;
-}) {
-    const { isDark } = useContext(ThemeContext);
-    const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | undefined>();
-
-    useEffect(() => {
-        const { server } = getGitpodService();
-        server.getStripePublishableKey().then((v) => setStripePromise(loadStripe(v)));
-    }, []);
-
-    return (
-        <Modal visible={true} onClose={props.onClose}>
-            <Heading2 className="flex">Verify Payment Method</Heading2>
-            <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-2 -mx-6 px-6 flex flex-col">
-                {!stripePromise && (
-                    <div className="h-80 flex items-center justify-center">
-                        <Spinner className="h-5 w-5 animate-spin" />
-                    </div>
-                )}
-                {!!stripePromise && (
-                    <Elements
-                        stripe={stripePromise}
-                        options={{
-                            appearance: getStripeAppearance(isDark),
-                            clientSecret: props.holdPaymentIntentClientSecret,
-                        }}
-                    >
-                        <HoldVerificationForm attributionId={props.attributionId} />
-                    </Elements>
-                )}
-            </div>
-        </Modal>
-    );
-}
-
-function HoldVerificationForm(props: { attributionId: string }) {
-    const stripe = useStripe();
-    const elements = useElements();
-    const [errorMessage, setErrorMessage] = useState<string | undefined>();
-
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        const attrId = AttributionId.parse(props.attributionId);
-        if (!stripe || !elements || !attrId) {
-            return;
-        }
-        setErrorMessage(undefined);
-        try {
-            const url = new URL(window.location.href);
-            url.searchParams.set("step", "subscribe");
-
-            // Event though we might not request a payment right away, we want to use this sync opportunity to prepare clients as much as possible.
-            // E.g., if they have to go through a flow like 3DS or iDEAL, they should do it ("online flow"), instead of ending up in the (email-based) "offline flow".
-            const result = await stripe.confirmPayment({
-                elements,
-                confirmParams: {
-                    return_url: url.toString(),
-                },
-            });
-            if (result.error) {
-                // Show error to your customer (for example, payment details incomplete)
-                throw result.error;
-            } else {
-                // Your customer will be redirected to your `return_url`. For some payment
-                // methods like iDEAL, your customer will be redirected to an intermediate
-                // site first to authorize the payment, then redirected to the `return_url`.
-                console.log("RESULT: " + JSON.stringify(result));
-            }
-        } catch (error) {
-            console.error("Failed to submit form.", error);
-            let message = `Failed to submit form. ${error?.message || String(error)}`;
-            setErrorMessage(message);
-        }
-    };
-
-    return (
-        <form className="mt-4 flex-grow flex flex-col" onSubmit={handleSubmit}>
-            {errorMessage && (
-                <Alert className="mb-4" closable={false} showIcon={true} type="error">
-                    {errorMessage}
-                </Alert>
-            )}
-            <PaymentElement id="payment-element" options={{ readOnly: true }} />
-            <div className="mt-4 flex-grow flex justify-end items-end">
-                <Spinner className="h-5 w-5 animate-spin filter brightness-150" />
-            </div>
-        </form>
-    );
-}
-
-function getStripeAppearance(isDark?: boolean): Appearance {
-    return {
-        theme: isDark ? "night" : "stripe",
-    };
-}
-
-function PaymentInputForm(props: { attributionId: string }) {
-    const stripe = useStripe();
-    const elements = useElements();
-    const { currency, setCurrency } = useContext(PaymentContext);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [errorMessage, setErrorMessage] = useState<string | undefined>();
-
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        const attrId = AttributionId.parse(props.attributionId);
-        if (!stripe || !elements || !attrId) {
-            return;
-        }
-        setErrorMessage(undefined);
-        setIsLoading(true);
-        try {
-            // Create Stripe customer with currency
-            await getGitpodService().server.createStripeCustomerIfNeeded(props.attributionId, currency);
-
-            // Make sure that after we return, proceed with the next step
-            const url = new URL(window.location.href);
-            url.searchParams.set("step", "verification");
-
-            const result = await stripe.confirmSetup({
-                elements,
-                confirmParams: {
-                    return_url: url.toString(),
-                },
-            });
-            if (result.error) {
-                // Show error to your customer (for example, payment details incomplete)
-                throw result.error;
-            } else {
-                // Your customer will be redirected to your `return_url`. For some payment
-                // methods like iDEAL, your customer will be redirected to an intermediate
-                // site first to authorize the payment, then redirected to the `return_url`.
-            }
-        } catch (error) {
-            console.error("Failed to submit form.", error);
-            let message = `Failed to submit form. ${error?.message || String(error)}`;
-            if (error && error.code === ErrorCodes.SUBSCRIPTION_ERROR) {
-                message =
-                    error.data?.hint === "currency"
-                        ? error.message
-                        : "Failed to subscribe. Please contact support@gitpod.io";
-            }
-            setErrorMessage(message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <form className="mt-4 flex-grow flex flex-col" onSubmit={handleSubmit}>
-            {errorMessage && (
-                <Alert className="mb-4" closable={false} showIcon={true} type="error">
-                    {errorMessage}
-                </Alert>
-            )}
-            <PaymentElement id="payment-element" options={{}} />
-            <div className="mt-4 flex-grow flex justify-end items-end">
-                <div className="flex-grow flex space-x-1">
-                    <span>Currency:</span>
-                    <DropDown
-                        customClasses="w-32"
-                        renderAsLink={true}
-                        activeEntry={currency}
-                        entries={[
-                            {
-                                title: "EUR",
-                                onClick: () => setCurrency("EUR"),
-                            },
-                            {
-                                title: "USD",
-                                onClick: () => setCurrency("USD"),
-                            },
-                        ]}
-                    />
-                </div>
-                <button className="my-0 flex items-center space-x-2" disabled={!stripe || isLoading}>
-                    <span>Add Payment Method</span>
-                    {isLoading && <Spinner className="h-5 w-5 animate-spin filter brightness-150" />}
-                </button>
-            </div>
-        </form>
     );
 }
 

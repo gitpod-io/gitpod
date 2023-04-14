@@ -139,10 +139,11 @@ export const ModalBody = ({ children, hideDivider = false, noScroll = false }: M
 };
 
 type ModalFooterProps = {
+    className?: string;
     alert?: ReactNode;
     children: ReactNode;
 };
-export const ModalFooter: FC<ModalFooterProps> = ({ alert, children }) => {
+export const ModalFooter: FC<ModalFooterProps> = ({ className, alert, children }) => {
     return (
         <>
             {alert}
@@ -156,7 +157,7 @@ export const ModalFooter: FC<ModalFooterProps> = ({ alert, children }) => {
                     "bg-white dark:bg-gray-900 rounded-b-xl",
                 )}
             >
-                <div className="flex justify-end space-x-2">{children}</div>
+                <div className={classNames("flex items-center justify-end space-x-2", className)}>{children}</div>
             </div>
         </>
     );
