@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent } from "react";
+import { FunctionComponent, useCallback } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { OrgIcon, OrgIconProps } from "../components/org-icon/OrgIcon";
 import { useCurrentUser } from "../user-context";
@@ -13,6 +13,7 @@ import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
+import { useLocation } from "react-router";
 
 export interface OrganizationSelectorProps {}
 
@@ -23,6 +24,7 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
     const { data: userBillingMode } = useUserBillingMode();
     const { data: orgBillingMode } = useOrgBillingMode();
     const { showUsageView } = useFeatureFlags();
+    const getOrgURL = useGetOrgURL();
 
     const userFullName = user?.fullName || user?.name || "...";
 
@@ -117,7 +119,7 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
             // marking as active for styles
             active: true,
             separator: true,
-            link: `/?org=${org.id}`,
+            link: getOrgURL(org.id),
         }));
 
     const userMigrated = user?.additionalData?.isMigratedToTeamOnlyAttribution ?? false;
@@ -137,7 +139,7 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
                       // marking as active for styles
                       active: true,
                       separator: true,
-                      link: `/?org=0`,
+                      link: getOrgURL("0"),
                   },
               ]
             : []),
@@ -262,5 +264,28 @@ const CurrentOrgEntry: FunctionComponent<CurrentOrgEntryProps> = ({ title, subti
                 />
             </svg>
         </div>
+    );
+};
+
+// Determine url to use when switching orgs
+// Maintains the current location & context url (hash) when on the new workspace page
+const useGetOrgURL = () => {
+    const location = useLocation();
+
+    return useCallback(
+        (orgID: string) => {
+            // Default to root path when switching orgs
+            let path = "/";
+            let hash = "";
+
+            // If we're on the new workspace page, try to maintain the location and context url
+            if (/^\/new(\/$)?$/.test(location.pathname)) {
+                path = `/new`;
+                hash = location.hash;
+            }
+
+            return `${path}?org=${encodeURIComponent(orgID)}${hash}`;
+        },
+        [location.hash, location.pathname],
     );
 };
