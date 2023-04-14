@@ -75,8 +75,6 @@ export interface GitpodClient {
 
     onPrebuildUpdate(update: PrebuildWithStatus): void;
 
-    onNotificationUpdated(): void;
-
     onCreditAlert(creditAlert: CreditAlert): void;
 
     //#region propagating reconnection to iframe
@@ -320,11 +318,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     identifyUser(event: RemoteIdentifyMessage): Promise<void>;
 
     /**
-     * Frontend notifications
-     */
-    getNotifications(): Promise<AppNotification[]>;
-
-    /**
      * Frontend metrics
      */
     reportErrorBoundary(url: string, message: string): Promise<void>;
@@ -337,20 +330,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * getIDToken - doesn't actually do anything, just used to authenticat/authorise
      */
     getIDToken(): Promise<void>;
-}
-
-export interface AppNotification {
-    message: string;
-    action?: {
-        url: string;
-        label: string;
-    };
-    notClosable?: boolean;
-}
-export namespace AppNotification {
-    export function is(data: any): data is AppNotification {
-        return data && typeof data === "object" && data.hasOwnProperty("message");
-    }
 }
 
 export interface RateLimiterError {
@@ -636,18 +615,6 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
             if (client.onCreditAlert) {
                 try {
                     client.onCreditAlert(creditAlert);
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-        }
-    }
-
-    onNotificationUpdated(): void {
-        for (const client of this.clients) {
-            if (client.onNotificationUpdated) {
-                try {
-                    client.onNotificationUpdated();
                 } catch (error) {
                     console.error(error);
                 }

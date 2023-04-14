@@ -237,7 +237,6 @@ const defaultFunctions: FunctionsConfig = {
     listAvailableUsageAttributionIds: { group: "default", points: 1 },
     getCostCenter: { group: "default", points: 1 },
     setUsageLimit: { group: "default", points: 1 },
-    getNotifications: { group: "default", points: 1 },
     getSupportedWorkspaceClasses: { group: "default", points: 1 },
     maySetTimeout: { group: "default", points: 1 },
     updateWorkspaceTimeoutSetting: { group: "default", points: 1 },

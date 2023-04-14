@@ -46,7 +46,6 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     PrebuildEvent,
     OpenPrebuildContext,
-    AppNotification,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
@@ -184,7 +183,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
         this.listenToCreditAlerts();
         this.listenForPrebuildUpdates().catch((err) => log.error("error registering for prebuild updates", err));
-        this.listenForSubscriptionUpdates().catch((err) => log.error("error registering for prebuild updates", err));
     }
 
     protected async listenForPrebuildUpdates() {
@@ -210,32 +208,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         // TODO(at) we need to keep the list of accessible project up to date
-    }
-
-    protected async listenForSubscriptionUpdates() {
-        if (!this.user) {
-            return;
-        }
-        const teamIds = (await this.teamDB.findTeamsByUser(this.user.id)).map(({ id }) =>
-            AttributionId.render({ kind: "team", teamId: id }),
-        );
-        for (const attributionId of [AttributionId.render({ kind: "user", userId: this.user.id }), ...teamIds]) {
-            this.disposables.push(
-                this.localMessageBroker.listenForSubscriptionUpdates(
-                    attributionId,
-                    (ctx: TraceContext, attributionId: AttributionId) =>
-                        TraceContext.withSpan(
-                            "forwardSubscriptionUpdateToClient",
-                            (ctx) => {
-                                traceClientMetadata(ctx, this.clientMetadata);
-                                TraceContext.setJsonRPCMetadata(ctx, "onSubscriptionUpdate");
-                                this.client?.onNotificationUpdated();
-                            },
-                            ctx,
-                        ),
-                ),
-            );
-        }
     }
 
     protected async getAccessibleProjects() {
@@ -2243,8 +2215,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 },
             });
 
-            this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
-
             return costCenter?.spendingLimit;
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
@@ -2351,82 +2321,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 billingStrategy: response.costCenter.billingStrategy,
             },
         });
-
-        this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
-    }
-
-    async getNotifications(ctx: TraceContext): Promise<AppNotification[]> {
-        const result = await super.getNotifications(ctx);
-        const user = this.checkAndBlockUser("getNotifications");
-
-        try {
-            const billingMode = await this.billingModes.getBillingModeForUser(user, new Date());
-            if (billingMode.mode === "usage-based") {
-                const attributionId: AttributionId = User.getDefaultAttributionId(user);
-                const limit = await this.userService.checkUsageLimitReached(
-                    user,
-                    attributionId.kind === "team" ? attributionId.teamId : undefined,
-                );
-                await this.guardCostCenterAccess(ctx, user.id, limit.attributionId, "get");
-
-                switch (limit.attributionId.kind) {
-                    case "user": {
-                        if (limit.reached) {
-                            result.unshift({
-                                message: `You have reached your usage limit.`,
-                                action: {
-                                    url: "/user/billing",
-                                    label: "Extend usage limit",
-                                },
-                            });
-                        } else if (limit.almostReached) {
-                            result.unshift({
-                                message: `You have reached 80% or more of your usage limit.`,
-                                action: {
-                                    url: "/user/billing",
-                                    label: "Extend usage limit",
-                                },
-                            });
-                        }
-                        break;
-                    }
-                    case "team": {
-                        const teamOrUser = await this.teamDB.findTeamById(limit.attributionId.teamId);
-                        if (teamOrUser) {
-                            if (limit.reached) {
-                                result.unshift({
-                                    message: `Your team '${teamOrUser?.name}' has reached its usage limit.`,
-                                    action: {
-                                        url: "/billing",
-                                        label: "Extend usage limit",
-                                    },
-                                });
-                            } else if (limit.almostReached) {
-                                result.unshift({
-                                    message: `Your team '${teamOrUser?.name}' has reached 80% or more of its usage limit.`,
-                                    action: {
-                                        url: "/billing",
-                                        label: "Extend usage limit",
-                                    },
-                                });
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        } catch (error) {
-            log.warn({ userId: user.id }, "Could not get usage-based notifications for user", { error });
-        }
-
-        try {
-            const paygNotifications = await this.calculatePayAsYouGoNotifications(user);
-            result.unshift(...paygNotifications);
-        } catch (err) {
-            log.warn({ userId: user.id }, "Could not calculate PAYG nudges for user", err);
-        }
-
-        return result;
     }
 
     /**
@@ -2436,117 +2330,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return await this.configCatClientFactory().getValueAsync("switchToPAYG", false, {
             user,
         });
-    }
-
-    protected async calculatePayAsYouGoNotifications(user: User): Promise<AppNotification[]> {
-        const isEnabled = await this.configCatClientFactory().getValueAsync("showPaygNotifications", false, {
-            user: this.user,
-        });
-        if (!isEnabled) {
-            return [];
-        }
-
-        const switchToPAYG = await this.isEnabledSwitchToPAYG(this.user);
-
-        const result: AppNotification[] = [];
-        const now = new Date();
-        const cbSubscriptions = await this.subscriptionService.getActivePaidSubscription(user.id, now);
-        // Personal subscription
-        const cbPersonalSubscriptions = cbSubscriptions.filter(
-            (s) =>
-                Plans.isPersonalPlan(s.planId) &&
-                !Plans.isFreePlan(s.planId) &&
-                !Subscription.isCancelled(s, now.toISOString()), // We only care about existing, active, not-yet-cancelled subs
-        );
-
-        // Old "Team Subscription"
-        const cbOwnedTeamSubscriptions = (
-            await this.teamSubscriptionDB.findTeamSubscriptions({ userId: user.id })
-        ).filter(
-            (ts) =>
-                TeamSubscription.isActive(ts, now.toISOString()) &&
-                !TeamSubscription.isCancelled(ts, now.toISOString()),
-        );
-
-        // "Team Subscription 2" (already attached to an Organization)
-        const cbOwnedTeamSubscriptions2 = [];
-        const teams = await this.teamDB.findTeamsByUser(user.id);
-        for (const team of teams) {
-            const ts2 = await this.teamSubscription2DB.findForTeam(team.id, now.toISOString());
-            if (
-                !ts2 ||
-                !TeamSubscription2.isActive(ts2, now.toISOString()) ||
-                TeamSubscription2.isCancelled(ts2, now.toISOString())
-            ) {
-                // We only care about existing, active, not-yet-cancelled subs
-                continue;
-            }
-
-            const teamMembership = await this.teamDB.findTeamMembership(user.id, team.id);
-            if (!teamMembership || teamMembership.deleted || teamMembership.role !== "owner") {
-                // We only care about subscriptions owned by this user
-                continue;
-            }
-            cbOwnedTeamSubscriptions2.push({
-                ownedTeamSubscription2: ts2,
-                team,
-            });
-        }
-
-        // Add nudges, last has highest priority
-        for (const personalSubscription of cbPersonalSubscriptions) {
-            const plan = Plans.getById(personalSubscription.planId);
-            if (!plan) {
-                continue;
-            }
-            const url = switchToPAYG
-                ? `/switch-to-payg?personalSubscription=${personalSubscription.uid}`
-                : "https://www.gitpod.io/docs/configure/billing#configure-personal-billing";
-            result.unshift({
-                message: `Your personal '${plan.name}' subscription will be discontinued on March, 31st.`,
-                action: {
-                    url,
-                    label: "Switch to pay-as-you-go",
-                },
-                notClosable: true,
-            });
-        }
-        for (const ownedTeamSubscription of cbOwnedTeamSubscriptions) {
-            const plan = Plans.getById(ownedTeamSubscription.planId);
-            if (!plan) {
-                continue;
-            }
-            const url = switchToPAYG
-                ? `/switch-to-payg?teamSubscription=${ownedTeamSubscription.id}`
-                : "https://www.gitpod.io/docs/configure/billing/org-plans";
-            result.unshift({
-                message: `Your Team Subscription '${plan.name}' will be discontinued on March, 31st.`,
-                action: {
-                    url,
-                    label: "Switch to pay-as-you-go",
-                },
-                notClosable: true,
-            });
-        }
-        for (const { ownedTeamSubscription2, team } of cbOwnedTeamSubscriptions2) {
-            const plan = Plans.getById(ownedTeamSubscription2.planId);
-            if (!plan) {
-                continue;
-            }
-            const url = switchToPAYG
-                ? `/switch-to-payg?org=${team.id}&teamSubscription2=${team.id}` /** yes, team.id */
-                : "https://www.gitpod.io/docs/configure/billing#configure-organization-billing";
-            result.unshift({
-                message: `Your '${plan.name}' subscription for Organization '${team.name}' will be discontinued on March, 31st.`,
-                action: {
-                    url,
-                    label: "Switch to pay-as-you-go",
-                },
-                notClosable: true,
-            });
-        }
-
-        return result;
     }
 
     async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
@@ -2984,8 +2767,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 billingStrategy: response.costCenter.billingStrategy,
             },
         });
-
-        this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch((e) => log.error(e));
     }
 
     async adminListUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {

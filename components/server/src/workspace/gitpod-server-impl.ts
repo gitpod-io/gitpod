@@ -78,7 +78,6 @@ import {
     SSHPublicKeyValue,
     UserSSHPublicKeyValue,
     PrebuildEvent,
-    AppNotification,
 } from "@gitpod/gitpod-protocol";
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -178,7 +177,6 @@ import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { EntitlementService } from "../billing/entitlement-service";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
-import { MessageBusIntegration } from "./messagebus-integration";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import * as grpc from "@grpc/grpc-js";
 import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
@@ -274,7 +272,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(VerificationService) protected readonly verificationService: VerificationService;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
-    @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
 
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
@@ -3569,7 +3566,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             const attrId = AttributionId.parse(usageAttributionId);
             if (attrId) {
                 await this.userService.setUsageAttribution(user, usageAttributionId);
-                this.messageBus.notifyOnSubscriptionUpdate(ctx, attrId).catch();
             }
         } catch (error) {
             log.error({ userId: user.id }, "Cannot set usage attribution", error, { usageAttributionId });
@@ -3628,11 +3624,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
      */
     protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
         return this.imagebuilderClientProvider.getClient(user, workspace, instance);
-    }
-
-    async getNotifications(ctx: TraceContext): Promise<AppNotification[]> {
-        this.checkAndBlockUser("getNotifications");
-        return [];
     }
 
     async reportErrorBoundary(ctx: TraceContextWithSpan, url: string, message: string): Promise<void> {

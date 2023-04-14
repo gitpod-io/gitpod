@@ -17,7 +17,6 @@ import { useLocalStorage } from "./hooks/use-local-storage";
 import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { useConfetti } from "./contexts/ConfettiContext";
-import { resetAllNotifications } from "./AppNotifications";
 import { Currency, Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import ContextMenu, { ContextMenuEntry } from "./components/ContextMenu";
 import CaretDown from "./icons/CaretDown.svg";
@@ -339,7 +338,6 @@ function SwitchToPAYG() {
                     confettiDropped = true;
 
                     // Hooray and confetti!
-                    resetAllNotifications();
                     dropConfetti();
                 }
                 return;
