@@ -11,7 +11,10 @@ import { log } from "./logging";
 export function newAnalyticsWriterFromEnv(): IAnalyticsWriter {
     switch (process.env.GITPOD_ANALYTICS_WRITER) {
         case "segment":
-            return new SegmentAnalyticsWriter(process.env.GITPOD_ANALYTICS_SEGMENT_KEY || "");
+            return new SegmentAnalyticsWriter(
+                process.env.GITPOD_ANALYTICS_SEGMENT_KEY || "",
+                process.env.GITPOD_ANALYTICS_SEGMENT_ENDPOINT || "",
+            );
         case "log":
             return new LogAnalyticsWriter();
         default:
@@ -22,8 +25,10 @@ export function newAnalyticsWriterFromEnv(): IAnalyticsWriter {
 class SegmentAnalyticsWriter implements IAnalyticsWriter {
     protected readonly analytics: Analytics;
 
-    constructor(writeKey: string) {
-        this.analytics = new Analytics(writeKey);
+    constructor(writeKey: string, endpoint: string) {
+        this.analytics = new Analytics(writeKey, {
+            host: endpoint,
+        });
     }
 
     identify(msg: IdentifyMessage) {
