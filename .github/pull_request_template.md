@@ -1,6 +1,10 @@
 ## Description
 <!-- Describe your changes in detail -->
 
+#### Preview status
+
+gitpod:summary
+
 ## Related Issue(s)
 <!-- List the issue(s) this PR solves -->
 Fixes #

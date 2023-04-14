@@ -38,6 +38,8 @@ jobs:
       with_integration_tests: ${{ steps.output.outputs.with_integration_tests }}
       latest_ide_version: ${{ contains( steps.pr-details.outputs.pr_body, '[x] latest-ide-version=true') }}
       leeway_cache_bucket: ${{ steps.output.outputs.leeway_cache_bucket }}
+      pr_number: ${{ steps.pr-details.outputs.number }}
+      pr_body: ${{ steps.pr-details.outputs.pr_body }}
     steps:
       - name: "Determine Branch"
         id: branches
@@ -344,6 +346,29 @@ jobs:
           with_dedicated_emulation: ${{needs.configuration.outputs.with_dedicated_emulation}}
           analytics: ${{needs.configuration.outputs.analytics}}
           workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
+      - uses: actions/github-script@v6
+        if: needs.configuration.outputs.pr_number != '' && contains(needs.configuration.outputs.pr_body, 'gitpod:summary')
+        with:
+          script: |
+            const prNumber = ${{ needs.configuration.outputs.pr_number }};
+
+            const summaryEncoded = `${{ steps.deploy-gitpod.outputs.report }}`;
+            const summary = Buffer.from(summaryEncoded, 'base64').toString('utf8');
+
+            const { data: pr } = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: prNumber,
+            });
+
+            const prBody = pr.body;
+
+            const newBody = prBody.replace('gitpod:summary', summary);
+
+            await github.rest.pulls.update({
+              ...context.repo,
+              pull_number: prNumber,
+              body: newBody,
+            });
 
   monitoring:
     name: "Install Monitoring Satellite"
