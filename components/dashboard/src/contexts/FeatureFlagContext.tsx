@@ -29,7 +29,6 @@ const defaultFeatureFlags = {
     // Default to true to enable on gitpod dedicated until ff support is added for dedicated
     orgGitAuthProviders: true,
     userGitAuthProviders: false,
-    switchToPAYG: false,
     newSignupFlow: false,
     linkedinConnectionForOnboarding: false,
 };
@@ -50,7 +49,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [oidcServiceEnabled, setOidcServiceEnabled] = useState<boolean>(false);
     const [orgGitAuthProviders, setOrgGitAuthProviders] = useState<boolean>(false);
     const [userGitAuthProviders, setUserGitAuthProviders] = useState<boolean>(false);
-    const [switchToPAYG, setSwitchToPAYG] = useState<boolean>(false);
     const [newSignupFlow, setNewSignupFlow] = useState<boolean>(false);
     const [linkedinConnectionForOnboarding, setLinkedinConnectionForOnboarding] = useState<boolean>(false);
 
@@ -71,7 +69,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 // Default to true to enable on gitpod dedicated until ff support is added for dedicated
                 orgGitAuthProviders: { defaultValue: true, setter: setOrgGitAuthProviders },
                 userGitAuthProviders: { defaultValue: false, setter: setUserGitAuthProviders },
-                switchToPAYG: { defaultValue: false, setter: setSwitchToPAYG },
                 newSignupFlow: { defaultValue: false, setter: setNewSignupFlow },
                 linkedinConnectionForOnboarding: { defaultValue: false, setter: setLinkedinConnectionForOnboarding },
             };
@@ -122,7 +119,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
             orgGitAuthProviders,
             userGitAuthProviders,
             newSignupFlow,
-            switchToPAYG,
             linkedinConnectionForOnboarding,
         };
     }, [
@@ -135,7 +131,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         showUsageView,
         showUseLastSuccessfulPrebuild,
         startWithOptions,
-        switchToPAYG,
         usePublicApiWorkspacesService,
         userGitAuthProviders,
     ]);

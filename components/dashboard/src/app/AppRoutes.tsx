@@ -92,7 +92,6 @@ const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admi
 const License = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/License"));
 const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
 const UserOnboarding = React.lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
-const SwitchToPAYG = React.lazy(() => import(/* webpackPrefetch: true */ "../SwitchToPAYG"));
 
 export const AppRoutes = () => {
     const hash = getURLHash();
@@ -174,12 +173,6 @@ export const AppRoutes = () => {
         return <Redirect to={"/new/" + search + hash} />;
     }
 
-    // TODO(gpl): Hack to maintain email links after subscriptions are cancelled
-    if (location.pathname.startsWith(switchToPAYGPathMain)) {
-        window.location.href = `https://www.gitpod.io/docs/configure/billing`;
-        return <div></div>;
-    }
-
     return (
         <Route>
             <div className="container">
@@ -191,11 +184,14 @@ export const AppRoutes = () => {
                     <Route path="/open">
                         <Redirect to="/new" />
                     </Route>
+                    {/* TODO(gpl): Remove once we don't need the redirect anymore */}
+                    <Route path={[switchToPAYGPathMain]} exact>
+                        <Redirect to={"/billing"} />
+                    </Route>
                     <Route path="/setup" exact component={Setup} />
                     <Route path={workspacesPathMain} exact component={Workspaces} />
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={usagePathMain} exact component={Usage} />
-                    <Route path={switchToPAYGPathMain} exact component={SwitchToPAYG} />
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
                     <Route path={settingsPathNotifications} exact component={Notifications} />
                     <Route path={settingsPathBilling} exact component={Billing} />
