@@ -35,7 +35,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 	}
-
 	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
 			return nil
@@ -61,14 +60,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 
 		if ucfg.Workspace.UseWsmanagerMk2 {
-			remoteSpecProviders = append(remoteSpecProviders, &regfac.RSProvider{
-				Addr: fmt.Sprintf("dns:///ws-manager-mk2:%d", wsmanagermk2.RPCPort),
-				TLS: &regfac.TLS{
-					Authority:   "/ws-manager-mk2-client-tls-certs/ca.crt",
-					Certificate: "/ws-manager-mk2-client-tls-certs/tls.crt",
-					PrivateKey:  "/ws-manager-mk2-client-tls-certs/tls.key",
+			remoteSpecProviders = []*regfac.RSProvider{
+				{
+					Addr: fmt.Sprintf("dns:///ws-manager-mk2:%d", wsmanagermk2.RPCPort),
+					TLS: &regfac.TLS{
+						Authority:   "/ws-manager-mk2-client-tls-certs/ca.crt",
+						Certificate: "/ws-manager-mk2-client-tls-certs/tls.crt",
+						PrivateKey:  "/ws-manager-mk2-client-tls-certs/tls.key",
+					},
 				},
-			})
+			}
 		}
 
 		return nil

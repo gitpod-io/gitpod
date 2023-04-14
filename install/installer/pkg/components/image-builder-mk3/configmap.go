@@ -18,6 +18,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
+	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,9 +41,18 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
+	workspaceManagerAddress := fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort)
+	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
+		if ucfg.Workspace != nil && ucfg.Workspace.UseWsmanagerMk2 {
+			workspaceManagerAddress = fmt.Sprintf("%s:%d", common.WSManagerMk2Component, wsmanager.RPCPort)
+		}
+
+		return nil
+	})
+
 	orchestrator := config.Configuration{
 		WorkspaceManager: config.WorkspaceManagerConfig{
-			Address: fmt.Sprintf("%s:%d", wsmanager.Component, wsmanager.RPCPort),
+			Address: workspaceManagerAddress,
 			TLS: config.TLS{
 				Authority:   "/wsman-certs/ca.crt",
 				Certificate: "/wsman-certs/tls.crt",
