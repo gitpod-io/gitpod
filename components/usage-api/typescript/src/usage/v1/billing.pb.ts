@@ -60,6 +60,14 @@ export interface CreateStripeCustomerResponse {
   customer: StripeCustomer | undefined;
 }
 
+export interface SetDefaultPaymentMethodRequest {
+  attributionId: string;
+  setupIntentId: string;
+}
+
+export interface SetDefaultPaymentMethodResponse {
+}
+
 export interface CreateHoldPaymentIntentRequest {
   attributionId: string;
 }
@@ -71,7 +79,6 @@ export interface CreateHoldPaymentIntentResponse {
 
 export interface CreateStripeSubscriptionRequest {
   attributionId: string;
-  setupIntentId: string;
   usageLimit: number;
   holdPaymentIntentId: string;
 }
@@ -661,6 +668,103 @@ export const CreateStripeCustomerResponse = {
   },
 };
 
+function createBaseSetDefaultPaymentMethodRequest(): SetDefaultPaymentMethodRequest {
+  return { attributionId: "", setupIntentId: "" };
+}
+
+export const SetDefaultPaymentMethodRequest = {
+  encode(message: SetDefaultPaymentMethodRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    if (message.setupIntentId !== "") {
+      writer.uint32(18).string(message.setupIntentId);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetDefaultPaymentMethodRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetDefaultPaymentMethodRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        case 2:
+          message.setupIntentId = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): SetDefaultPaymentMethodRequest {
+    return {
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      setupIntentId: isSet(object.setupIntentId) ? String(object.setupIntentId) : "",
+    };
+  },
+
+  toJSON(message: SetDefaultPaymentMethodRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.setupIntentId !== undefined && (obj.setupIntentId = message.setupIntentId);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<SetDefaultPaymentMethodRequest>): SetDefaultPaymentMethodRequest {
+    const message = createBaseSetDefaultPaymentMethodRequest();
+    message.attributionId = object.attributionId ?? "";
+    message.setupIntentId = object.setupIntentId ?? "";
+    return message;
+  },
+};
+
+function createBaseSetDefaultPaymentMethodResponse(): SetDefaultPaymentMethodResponse {
+  return {};
+}
+
+export const SetDefaultPaymentMethodResponse = {
+  encode(_: SetDefaultPaymentMethodResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): SetDefaultPaymentMethodResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseSetDefaultPaymentMethodResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): SetDefaultPaymentMethodResponse {
+    return {};
+  },
+
+  toJSON(_: SetDefaultPaymentMethodResponse): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<SetDefaultPaymentMethodResponse>): SetDefaultPaymentMethodResponse {
+    const message = createBaseSetDefaultPaymentMethodResponse();
+    return message;
+  },
+};
+
 function createBaseCreateHoldPaymentIntentRequest(): CreateHoldPaymentIntentRequest {
   return { attributionId: "" };
 }
@@ -770,16 +874,13 @@ export const CreateHoldPaymentIntentResponse = {
 };
 
 function createBaseCreateStripeSubscriptionRequest(): CreateStripeSubscriptionRequest {
-  return { attributionId: "", setupIntentId: "", usageLimit: 0, holdPaymentIntentId: "" };
+  return { attributionId: "", usageLimit: 0, holdPaymentIntentId: "" };
 }
 
 export const CreateStripeSubscriptionRequest = {
   encode(message: CreateStripeSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.attributionId !== "") {
       writer.uint32(10).string(message.attributionId);
-    }
-    if (message.setupIntentId !== "") {
-      writer.uint32(18).string(message.setupIntentId);
     }
     if (message.usageLimit !== 0) {
       writer.uint32(24).int64(message.usageLimit);
@@ -800,9 +901,6 @@ export const CreateStripeSubscriptionRequest = {
         case 1:
           message.attributionId = reader.string();
           break;
-        case 2:
-          message.setupIntentId = reader.string();
-          break;
         case 3:
           message.usageLimit = longToNumber(reader.int64() as Long);
           break;
@@ -820,7 +918,6 @@ export const CreateStripeSubscriptionRequest = {
   fromJSON(object: any): CreateStripeSubscriptionRequest {
     return {
       attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
-      setupIntentId: isSet(object.setupIntentId) ? String(object.setupIntentId) : "",
       usageLimit: isSet(object.usageLimit) ? Number(object.usageLimit) : 0,
       holdPaymentIntentId: isSet(object.holdPaymentIntentId) ? String(object.holdPaymentIntentId) : "",
     };
@@ -829,7 +926,6 @@ export const CreateStripeSubscriptionRequest = {
   toJSON(message: CreateStripeSubscriptionRequest): unknown {
     const obj: any = {};
     message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.setupIntentId !== undefined && (obj.setupIntentId = message.setupIntentId);
     message.usageLimit !== undefined && (obj.usageLimit = Math.round(message.usageLimit));
     message.holdPaymentIntentId !== undefined && (obj.holdPaymentIntentId = message.holdPaymentIntentId);
     return obj;
@@ -838,7 +934,6 @@ export const CreateStripeSubscriptionRequest = {
   fromPartial(object: DeepPartial<CreateStripeSubscriptionRequest>): CreateStripeSubscriptionRequest {
     const message = createBaseCreateStripeSubscriptionRequest();
     message.attributionId = object.attributionId ?? "";
-    message.setupIntentId = object.setupIntentId ?? "";
     message.usageLimit = object.usageLimit ?? 0;
     message.holdPaymentIntentId = object.holdPaymentIntentId ?? "";
     return message;
@@ -1182,6 +1277,14 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
+    setDefaultPaymentMethod: {
+      name: "SetDefaultPaymentMethod",
+      requestType: SetDefaultPaymentMethodRequest,
+      requestStream: false,
+      responseType: SetDefaultPaymentMethodResponse,
+      responseStream: false,
+      options: {},
+    },
     /** CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify the payment method/creditability of this user on first signup, before we create the subscription */
     createHoldPaymentIntent: {
       name: "CreateHoldPaymentIntent",
@@ -1254,6 +1357,10 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: CreateStripeCustomerRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<CreateStripeCustomerResponse>>;
+  setDefaultPaymentMethod(
+    request: SetDefaultPaymentMethodRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<SetDefaultPaymentMethodResponse>>;
   /** CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify the payment method/creditability of this user on first signup, before we create the subscription */
   createHoldPaymentIntent(
     request: CreateHoldPaymentIntentRequest,
@@ -1309,6 +1416,10 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<CreateStripeCustomerRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<CreateStripeCustomerResponse>;
+  setDefaultPaymentMethod(
+    request: DeepPartial<SetDefaultPaymentMethodRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<SetDefaultPaymentMethodResponse>;
   /** CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify the payment method/creditability of this user on first signup, before we create the subscription */
   createHoldPaymentIntent(
     request: DeepPartial<CreateHoldPaymentIntentRequest>,

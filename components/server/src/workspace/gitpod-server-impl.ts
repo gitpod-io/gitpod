@@ -3504,6 +3504,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async createStripeCustomerIfNeeded(ctx: TraceContext, attributionId: string, currency: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+    async setDefaultPaymentMethod(
+        ctx: TraceContext,
+        opts: { attributionId: string; setupIntentId: string },
+    ): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
     async createHoldPaymentIntent(
         ctx: TraceContext,
         attributionId: string,
@@ -3513,7 +3519,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async subscribeToStripe(
         ctx: TraceContext,
         attributionId: string,
-        setupIntentId: string,
         holdPaymentIntentId: string,
         usageLimit: number,
     ): Promise<number | undefined> {
