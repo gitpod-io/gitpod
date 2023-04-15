@@ -38,21 +38,14 @@ jobs:
         steps:
             # sometimes auth fails with:
             # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
+            - name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v1
             - id: auth
               uses: google-github-actions/auth@v1
               continue-on-error: true
               with:
                   token_format: access_token
                   credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            # so we retry on failure
-            - id: auth-retry
-              uses: google-github-actions/auth@v1
-              if: steps.auth.outcome == 'failure'
-              with:
-                  token_format: access_token
-                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            - name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@v1
             # do this step as early as possible, so that Slack Notify failure has the secret
             - name: Get Secrets from GCP
               id: "secrets"
