@@ -14,6 +14,7 @@ import (
 	"k8s.io/utils/pointer"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
@@ -54,8 +55,9 @@ func TestConfigMap(t *testing.T) {
 			CertSecretName:  "some-cert-secret-name",
 		},
 		Auth: AuthConfig{
-			PKI: AuthPKIConfig{
-				Signing: KeyPair{
+			PKI: auth.PKIConfig{
+				Signing: auth.KeyPair{
+					ID:             "0001",
 					PrivateKeyPath: "/secrets/auth-pki/signing/tls.key",
 					PublicKeyPath:  "/secrets/auth-pki/signing/tls.crt",
 				},
