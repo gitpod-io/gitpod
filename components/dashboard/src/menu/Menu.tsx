@@ -32,7 +32,7 @@ interface Entry {
 export default function Menu() {
     const user = useCurrentUser();
     const location = useLocation();
-    const { setCurrency, setIsStudent, setIsChargebeeCustomer } = useContext(PaymentContext);
+    const { setCurrency, setIsStudent } = useContext(PaymentContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
     useEffect(() => {
@@ -43,9 +43,8 @@ export default function Menu() {
                 setCurrency(countries[v]?.currency === "EUR" ? "EUR" : "USD");
             }),
             server.isStudent().then((v) => () => setIsStudent(v)),
-            server.isChargebeeCustomer().then((v) => () => setIsChargebeeCustomer(v)),
         ]).then((setters) => setters.forEach((s) => s()));
-    }, [setCurrency, setIsChargebeeCustomer, setIsStudent]);
+    }, [setCurrency, setIsStudent]);
 
     const adminMenu: Entry = useMemo(
         () => ({

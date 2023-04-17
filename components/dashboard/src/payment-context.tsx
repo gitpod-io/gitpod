@@ -12,19 +12,15 @@ const PaymentContext = createContext<{
     setCurrency: React.Dispatch<Currency>;
     isStudent?: boolean;
     setIsStudent: React.Dispatch<boolean>;
-    isChargebeeCustomer?: boolean;
-    setIsChargebeeCustomer: React.Dispatch<boolean>;
 }>({
     currency: "USD",
     setCurrency: () => null,
     setIsStudent: () => null,
-    setIsChargebeeCustomer: () => null,
 });
 
 const PaymentContextProvider: React.FC = ({ children }) => {
     const [currency, setCurrency] = useState<Currency>("USD");
     const [isStudent, setIsStudent] = useState<boolean>();
-    const [isChargebeeCustomer, setIsChargebeeCustomer] = useState<boolean>();
 
     return (
         <PaymentContext.Provider
@@ -33,8 +29,6 @@ const PaymentContextProvider: React.FC = ({ children }) => {
                 setCurrency,
                 isStudent,
                 setIsStudent,
-                isChargebeeCustomer,
-                setIsChargebeeCustomer,
             }}
         >
             {children}
