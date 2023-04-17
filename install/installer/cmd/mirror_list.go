@@ -26,6 +26,8 @@ type mirrorListRepo struct {
 var mirrorListOpts struct {
 	ConfigFN          string
 	ExcludeThirdParty bool
+	Repository        string
+	Domain            string
 }
 
 // mirrorListCmd represents the mirror list command
@@ -63,6 +65,14 @@ image to the "target" repo`,
 			return err
 		}
 
+		if mirrorListOpts.Repository != "" {
+			cfg.Repository = mirrorListOpts.Repository
+		}
+
+		if mirrorListOpts.Domain != "" {
+			cfg.Domain = mirrorListOpts.Domain
+		}
+
 		images, err := generateMirrorList(cfgVersion, cfg)
 		if err != nil {
 			return err
@@ -84,6 +94,8 @@ func init() {
 
 	mirrorListCmd.Flags().BoolVar(&mirrorListOpts.ExcludeThirdParty, "exclude-third-party", false, "exclude non-Gitpod images")
 	mirrorListCmd.Flags().StringVarP(&mirrorListOpts.ConfigFN, "config", "c", os.Getenv("GITPOD_INSTALLER_CONFIG"), "path to the config file")
+	mirrorListCmd.Flags().StringVar(&mirrorListOpts.Repository, "repository", "", "overwrite the registry in the config")
+	mirrorListCmd.Flags().StringVar(&mirrorListOpts.Domain, "domain", "", "overwrite the domain in the config")
 }
 
 func renderAllKubernetesObject(cfgVersion string, cfg *configv1.Config) ([]string, error) {
