@@ -12,8 +12,6 @@ import {
     User,
     WorkspaceFeatureFlags,
 } from "@gitpod/gitpod-protocol";
-import { AccountStatement, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
-import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import Modal from "../components/Modal";
@@ -23,8 +21,6 @@ import Property from "./Property";
 import { AdminPageHeader } from "./AdminPageHeader";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import CaretDown from "../icons/CaretDown.svg";
-import ContextMenu from "../components/ContextMenu";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import { CostCenterJSON, CostCenter_BillingStrategy } from "@gitpod/gitpod-protocol/lib/usage";
 import { Heading2, Subheading } from "../components/typography/headings";
@@ -33,7 +29,6 @@ export default function UserDetail(p: { user: User }) {
     const [activity, setActivity] = useState(false);
     const [user, setUser] = useState(p.user);
     const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
-    const [accountStatement, setAccountStatement] = useState<AccountStatement>();
     const [costCenter, setCostCenter] = useState<CostCenterJSON>();
     const [usageBalance, setUsageBalance] = useState<number>(0);
     const [usageLimit, setUsageLimit] = useState<number>();
@@ -47,12 +42,6 @@ export default function UserDetail(p: { user: User }) {
 
     const initialize = () => {
         setUser(user);
-        getGitpodService()
-            .server.adminGetAccountStatement(user.id)
-            .then(setAccountStatement)
-            .catch((e) => {
-                console.error(e);
-            });
         getGitpodService().server.adminIsStudent(user.id).then(setIsStudent);
         const attributionId = AttributionId.render(AttributionId.create(user));
         getGitpodService().server.adminGetBillingMode(attributionId).then(setBillingMode);
@@ -123,23 +112,6 @@ export default function UserDetail(p: { user: User }) {
     const flags = getFlags(user, updateUser);
     const rop = getRopEntries(user, updateUser);
 
-    const downloadAccountStatement = async () => {
-        if (!accountStatement) {
-            return;
-        }
-        try {
-            const blob = new Blob([JSON.stringify(accountStatement)], { type: "application/json" });
-            const fileDownloadUrl = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = fileDownloadUrl;
-            link.setAttribute("download", "AccountStatement.json");
-            document.body.appendChild(link);
-            link.click();
-        } catch (error) {
-            console.error(`Error downloading account statement `, error);
-        }
-    };
-
     function renderUserBillingProperties(): JSX.Element {
         if (billingMode?.mode === "none") {
             return <></>; // nothing to show here atm
@@ -165,42 +137,6 @@ export default function UserDetail(p: { user: User }) {
         ];
 
         switch (billingMode?.mode) {
-            case "chargebee":
-                properties.push(
-                    <Property
-                        name="Remaining Hours"
-                        actions={
-                            accountStatement && [
-                                {
-                                    label: "Download Account Statement",
-                                    onClick: () => downloadAccountStatement(),
-                                },
-                                {
-                                    label: "Grant 20 Extra Hours",
-                                    onClick: async () => {
-                                        await getGitpodService().server.adminGrantExtraHours(user.id, 20);
-                                        setAccountStatement(
-                                            await getGitpodService().server.adminGetAccountStatement(user.id),
-                                        );
-                                    },
-                                },
-                            ]
-                        }
-                    >
-                        {accountStatement?.remainingHours ? accountStatement?.remainingHours.toString() : "---"}
-                    </Property>,
-                );
-                properties.push(
-                    <Property name="Plan">
-                        {accountStatement?.subscriptions
-                            ? accountStatement.subscriptions
-                                  .filter((s) => !s.deleted && Subscription.isActive(s, new Date().toISOString()))
-                                  .map((s) => Plans.getById(s.planId)?.name)
-                                  .join(", ")
-                            : "---"}
-                    </Property>,
-                );
-                break;
             case "usage-based":
                 properties.push(
                     <Property name="Stripe Subscription" actions={[]}>
@@ -471,29 +407,9 @@ export default function UserDetail(p: { user: User }) {
 function renderBillingModeProperty(billingMode?: BillingMode): JSX.Element {
     const text = billingMode?.mode || "---";
 
-    let blockingTeamNames = [];
-    if (billingMode?.mode === "chargebee" && !!billingMode.teamNames && !billingMode.canUpgradeToUBB) {
-        const itemStyle = "text-gray-400 dark:text-gray-500 text-left font-normal";
-        for (const teamName of billingMode.teamNames) {
-            blockingTeamNames.push({ title: teamName, customFontStyle: itemStyle });
-        }
-    }
     return (
         <Property name="Billing Mode">
-            <>
-                {text}
-                {blockingTeamNames.length > 0 && (
-                    <ContextMenu
-                        menuEntries={blockingTeamNames}
-                        customClasses="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0"
-                    >
-                        <p className="flex justify-left text-gitpod-red">
-                            <span>UBP blocked by:</span>
-                            <img className="m-2" src={CaretDown} alt="caret icon pointing down" />
-                        </p>
-                    </ContextMenu>
-                )}
-            </>
+            <>{text}</>
         </Property>
     );
 }
