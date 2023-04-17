@@ -228,6 +228,7 @@ func (s *statusService) PortsStatus(req *api.PortsStatusRequest, srv api.StatusS
 
 	sub, err := s.Ports.Subscribe()
 	if err == ports.ErrTooManySubscriptions {
+		log.WithError(err).Warn("potentially leaking subscription to port status")
 		return status.Error(codes.ResourceExhausted, "too many subscriptions")
 	}
 	if err != nil {
@@ -268,6 +269,7 @@ func (s *statusService) TasksStatus(req *api.TasksStatusRequest, srv api.StatusS
 
 	sub := s.Tasks.Subscribe()
 	if sub == nil {
+		log.Warn("potentially leaking subscription to tasks status: too many subscriptions")
 		return status.Error(codes.ResourceExhausted, "too many subscriptions")
 	}
 	defer sub.Close()
