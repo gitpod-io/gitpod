@@ -12,11 +12,9 @@ import { Config } from "../config";
 import { AuthFlow } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { AuthProviderService } from "./auth-provider-service";
-import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter, reportJWTCookieIssued } from "../prometheus-metrics";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
-import { UserService } from "../user/user-service";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { SessionHandlerProvider } from "../session-handler";
@@ -31,7 +29,6 @@ export class LoginCompletionHandler {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-    @inject(UserService) protected readonly userService: UserService;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
 
@@ -54,7 +51,6 @@ export class LoginCompletionHandler {
             });
         } catch (err) {
             // Clean up the session & avoid loops
-            await TosFlow.clear(request.session);
             await AuthFlow.clear(request.session);
 
             if (authHost) {
@@ -86,7 +82,6 @@ export class LoginCompletionHandler {
         }
 
         // Clean up the session & avoid loops
-        await TosFlow.clear(request.session);
         await AuthFlow.clear(request.session);
 
         if (authHost) {
