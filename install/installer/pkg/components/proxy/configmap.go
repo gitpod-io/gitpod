@@ -38,9 +38,6 @@ var vhostOpenVSXTmpl []byte
 //go:embed templates/configmap/vhost.ide-proxy.tpl
 var ideProxyTmpl []byte
 
-//go:embed templates/configmap/vhost.payment-endpoint.tpl
-var vhostPaymentEndpointTmpl []byte
-
 type commonTpl struct {
 	Domain       string
 	ReverseProxy string
@@ -99,19 +96,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil, err
 	}
 
-	paymentEndpoint, err := renderTemplate(vhostPaymentEndpointTmpl, commonTpl{
-		Domain:       ctx.Config.Domain,
-		ReverseProxy: fmt.Sprintf("payment-endpoint.%s.%s:%d", ctx.Namespace, kubeDomain, 3002), // todo(sje): get port from (future) config
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	data := map[string]string{
-		"vhost.empty":            *empty,
-		"vhost.open-vsx":         *openVSX,
-		"vhost.payment-endpoint": *paymentEndpoint,
-		"vhost.ide-proxy":        *ideProxy,
+		"vhost.empty":     *empty,
+		"vhost.open-vsx":  *openVSX,
+		"vhost.ide-proxy": *ideProxy,
 	}
 
 	if ctx.Config.ObjectStorage.CloudStorage == nil {

@@ -131,7 +131,6 @@ Additional config parameters that are in experimental state
 |`experimental.webapp.server.githubApp.marketplaceName`|string|N|  ||
 |`experimental.webapp.server.githubApp.webhookSecret`|string|N|  ||
 |`experimental.webapp.server.githubApp.certSecretName`|string|N|  ||
-|`experimental.webapp.server.chargebeeSecret`|string|N|  ||
 |`experimental.webapp.server.stripeSecret`|string|N|  ||
 |`experimental.webapp.server.stripeConfig`|string|N|  ||
 |`experimental.webapp.server.disableDynamicAuthProviderLogin`|bool|N|  ||

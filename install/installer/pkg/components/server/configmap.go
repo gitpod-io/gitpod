@@ -78,14 +78,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		defaultBaseImageRegistryWhitelist = allowList
 	}
 
-	chargebeeSecret := ""
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
-			chargebeeSecret = cfg.WebApp.Server.ChargebeeSecret
-		}
-		return nil
-	})
-
 	stripeSecret := ""
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
@@ -280,7 +272,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		MaximumEventLoopLag:          0.35,
 		CodeSync:                     CodeSync{},
 		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
-		EnablePayment:                chargebeeSecret != "" || stripeSecret != "" || stripeConfig != "",
+		EnablePayment:                stripeSecret != "" || stripeConfig != "",
 		ChargebeeProviderOptionsFile: fmt.Sprintf("%s/providerOptions", chargebeeMountPath),
 		StripeSecretsFile:            fmt.Sprintf("%s/apikeys", stripeSecretMountPath),
 		LinkedInSecretsFile:          fmt.Sprintf("%s/linkedin", linkedInSecretMountPath),

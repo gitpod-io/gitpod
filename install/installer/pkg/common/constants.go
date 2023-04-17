@@ -42,7 +42,6 @@ const (
 	ServerInstallationAdminPort = 9000
 	ServerGRPCAPIPort           = 9877
 	SystemNodeCritical          = "system-node-critical"
-	PaymentEndpointComponent    = "payment-endpoint"
 	PublicApiComponent          = "public-api-server"
 	UsageComponent              = "usage"
 	WSManagerComponent          = "ws-manager"
