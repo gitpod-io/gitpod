@@ -30,6 +30,8 @@ class WorkspaceDBSpec {
     readonly userId = "12345";
     readonly projectAID = "projectA";
     readonly projectBID = "projectB";
+    readonly orgidA = "orgA";
+    readonly orgidB = "orgB";
     readonly ws: Workspace = {
         id: "1",
         type: "regular",
@@ -44,6 +46,7 @@ class WorkspaceDBSpec {
         contextURL: "example.org",
         description: "blabla",
         ownerId: this.userId,
+        organizationId: this.orgidA,
     };
     readonly wsi1: WorkspaceInstance = {
         workspaceId: this.ws.id,
@@ -107,6 +110,7 @@ class WorkspaceDBSpec {
         contextURL: "https://github.com/gitpod-io/gitpod",
         description: "Gitpod",
         ownerId: this.userId,
+        organizationId: this.orgidA,
     };
     readonly ws2i1: WorkspaceInstance = {
         workspaceId: this.ws2.id,
@@ -146,6 +150,7 @@ class WorkspaceDBSpec {
         contextURL: "example.org",
         description: "blabla",
         ownerId: this.userId,
+        organizationId: this.orgidB,
     };
     readonly ws3i1: WorkspaceInstance = {
         workspaceId: this.ws3.id,
@@ -191,6 +196,7 @@ class WorkspaceDBSpec {
     public async testStoreUndefinedOrganizationId() {
         const workspace: Workspace = {
             ...this.ws,
+            organizationId: undefined,
         };
         const instance = {
             ...this.wsi1,
@@ -752,6 +758,39 @@ class WorkspaceDBSpec {
                 ownerId,
             },
         ]);
+    }
+
+    @test(timeout(10000))
+    public async findWorkspacesByOrganizationId() {
+        await this.db.store(this.ws);
+        await this.db.store(this.ws2);
+        await this.db.store(this.ws3);
+        let result = await this.db.find({
+            userId: this.userId,
+            organizationId: this.orgidA,
+        });
+
+        expect(result.length).to.eq(2);
+        for (const ws of result) {
+            expect(ws.workspace.organizationId).to.equal(this.orgidA);
+        }
+
+        result = await this.db.find({
+            userId: this.userId,
+            organizationId: this.orgidB,
+        });
+
+        expect(result.length).to.eq(1);
+        for (const ws of result) {
+            expect(ws.workspace.organizationId).to.equal(this.orgidB);
+        }
+
+        result = await this.db.find({
+            userId: this.userId,
+            organizationId: "no-org",
+        });
+
+        expect(result.length).to.eq(0);
     }
 }
 module.exports = new WorkspaceDBSpec();
