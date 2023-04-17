@@ -5,7 +5,7 @@
  */
 
 import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { useCurrentOrg } from "../organizations/orgs-query";
 import { useCurrentUser } from "../../user-context";
@@ -58,4 +58,9 @@ export const useListWorkspacesQuery = ({ limit }: UseListWorkspacesQueryArgs) =>
     });
 };
 
-export const getListWorkspacesQueryKey = (orgId?: string) => ["workspaces", "list", orgId || "noorg"];
+export function getListWorkspacesQueryKey(orgId?: string) {
+    if (!orgId) {
+        return ["workspaces", "list"];
+    }
+    return ["workspaces", "list", orgId];
+}

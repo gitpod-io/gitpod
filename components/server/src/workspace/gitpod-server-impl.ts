@@ -1316,6 +1316,36 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
+    public async moveWorkspace(ctx: TraceContext, workspaceId: string, targetOrganizationId: string): Promise<void> {
+        const user = this.checkAndBlockUser("moveWorkspace");
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
+        const targetMembershipPromise = this.teamDB.findTeamMembership(user.id, targetOrganizationId);
+        if (workspace.organizationId) {
+            const membership = await this.teamDB.findTeamMembership(user.id, workspace.organizationId);
+            if (membership?.role !== "owner") {
+                throw new ResponseError(
+                    ErrorCodes.PERMISSION_DENIED,
+                    "You can't move this workspace, ask an owner of the organization.",
+                );
+            }
+        } else {
+            // legacy mode: if this workspace is not owned by an org, we check the user
+            if (workspace.ownerId !== user.id) {
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "You can't move this workspace.");
+            }
+        }
+        const targetMembership = await targetMembershipPromise;
+        if (!targetMembership) {
+            throw new ResponseError(
+                ErrorCodes.PERMISSION_DENIED,
+                "You can't move the workspace to the specified organization, because you are not a member of it.",
+            );
+        }
+        // actually move the workspace
+        workspace.organizationId = targetOrganizationId;
+        await this.workspaceDb.trace(ctx).store(workspace);
+    }
+
     private handleError(error: any, logContext: LogContext, normalizedContextUrl: string) {
         if (NotFoundError.is(error)) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Repository not found.", error.data);

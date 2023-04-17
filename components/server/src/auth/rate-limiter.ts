@@ -76,6 +76,7 @@ const defaultFunctions: FunctionsConfig = {
     startWorkspace: { group: "startWorkspace", points: 1 },
     stopWorkspace: { group: "default", points: 1 },
     deleteWorkspace: { group: "default", points: 1 },
+    moveWorkspace: { group: "default", points: 1 },
     setWorkspaceDescription: { group: "default", points: 1 },
     controlAdmission: { group: "default", points: 1 },
     updateWorkspaceUserPin: { group: "default", points: 1 },

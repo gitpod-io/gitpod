@@ -16,6 +16,9 @@ import { getGitpodService } from "../service/service";
 import ConnectToSSHModal from "./ConnectToSSHModal";
 import { DeleteWorkspaceModal } from "./DeleteWorkspaceModal";
 import { RenameWorkspaceModal } from "./RenameWorkspaceModal";
+import { MoveWorkspaceModal, useCanMoveWorkspace } from "./MoveWorkspaceModal";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
+import { useCurrentUser } from "../user-context";
 
 type WorkspaceEntryOverflowMenuProps = {
     info: WorkspaceInfo;
@@ -28,8 +31,10 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
 }) => {
     const [isDeleteModalVisible, setDeleteModalVisible] = useState(false);
     const [isRenameModalVisible, setRenameModalVisible] = useState(false);
+    const [isMoveModalVisible, setMoveModalVisible] = useState(false);
     const [isSSHModalVisible, setSSHModalVisible] = useState(false);
     const [ownerToken, setOwnerToken] = useState("");
+    const user = useCurrentUser();
 
     const stopWorkspace = useStopWorkspaceMutation();
     const toggleWorkspaceShared = useToggleWorkspaceSharedMutation();
@@ -37,6 +42,8 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
 
     const workspace = info.workspace;
     const state: WorkspaceInstancePhase = info.latestInstance?.status?.phase || "stopped";
+    const canMoveWorkspace =
+        useCanMoveWorkspace() && state === "stopped" && !!user?.additionalData?.isMigratedToTeamOnlyAttribution;
 
     //TODO: shift this into ConnectToSSHModal
     const handleConnectViaSSHClick = useCallback(async () => {
@@ -133,6 +140,14 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
         },
     );
 
+    if (canMoveWorkspace) {
+        menuEntries.push({
+            title: "Move",
+            customFontStyle: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
+            onClick: () => setMoveModalVisible(true),
+        });
+    }
+
     return (
         <>
             <ItemFieldContextMenu changeMenuState={changeMenuState} menuEntries={menuEntries} />
@@ -141,6 +156,9 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
             )}
             {isRenameModalVisible && (
                 <RenameWorkspaceModal workspace={workspace} onClose={() => setRenameModalVisible(false)} />
+            )}
+            {isMoveModalVisible && (
+                <MoveWorkspaceModal workspace={workspace} onClose={() => setMoveModalVisible(false)} />
             )}
             {isSSHModalVisible && info.latestInstance && ownerToken !== "" && (
                 <ConnectToSSHModal

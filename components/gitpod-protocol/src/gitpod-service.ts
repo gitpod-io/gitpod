@@ -134,6 +134,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     setWorkspaceDescription(id: string, desc: string): Promise<void>;
     controlAdmission(id: string, level: GitpodServer.AdmissionLevel): Promise<void>;
     resolveContext(contextUrl: string): Promise<WorkspaceContext>;
+    moveWorkspace(workspaceId: string, targetOrganizationId: string): Promise<void>;
 
     updateWorkspaceUserPin(id: string, action: GitpodServer.PinAction): Promise<void>;
     sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void>;
