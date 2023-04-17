@@ -26,8 +26,8 @@ class TestAuthJWT {
         hostUrl: new GitpodHostUrl("https://mp-server-d7650ec945.preview.gitpod-dev.com"),
         auth: {
             pki: {
-                signing: toKeyPair(this.signingKeyPair),
-                validating: [toKeyPair(this.validatingKeyPair1), toKeyPair(this.validatingKeyPair2)],
+                signing: toKeyPair("0001", this.signingKeyPair),
+                validating: [toKeyPair("0002", this.validatingKeyPair1), toKeyPair("0003", this.validatingKeyPair2)],
             },
         },
     } as Config;
@@ -44,17 +44,14 @@ class TestAuthJWT {
 
         const subject = "user-id";
         const encoded = await sut.sign(subject, {});
+        console.log("encoded", encoded);
 
         const decoded = await verify(encoded, this.config.auth.pki.signing.publicKey, {
             algorithms: ["RS512"],
         });
 
         expect(decoded["sub"]).to.equal(subject);
-<<<<<<< HEAD
         expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
-=======
-        expect(decoded["iss"]).to.equal("mp-server-d7650ec945.preview.gitpod-dev.com");
->>>>>>> 15ab23327 (fix)
     }
 
     @test
@@ -67,26 +64,20 @@ class TestAuthJWT {
         const decoded = await sut.verify(encoded);
 
         expect(decoded["sub"]).to.equal(subject);
-<<<<<<< HEAD
         expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
-=======
-        expect(decoded["iss"]).to.equal("mp-server-d7650ec945.preview.gitpod-dev.com");
->>>>>>> 15ab23327 (fix)
     }
 
     @test
     async test_verify_validates_older_keys() {
         const sut = this.container.get<AuthJWT>(AuthJWT);
 
+        const keypair = this.config.auth.pki.validating[1];
         const subject = "user-id";
-        const encoded = await sign({}, this.config.auth.pki.validating[1].privateKey, {
+        const encoded = await sign({}, keypair.privateKey, {
             algorithm: "RS512",
             expiresIn: "1d",
-<<<<<<< HEAD
             issuer: this.config.hostUrl.toStringWoRootSlash(),
-=======
-            issuer: this.config.hostUrl.url.hostname,
->>>>>>> 15ab23327 (fix)
+            keyid: keypair.id,
             subject,
         });
 
@@ -94,19 +85,20 @@ class TestAuthJWT {
         const decoded = await sut.verify(encoded);
 
         expect(decoded["sub"]).to.equal(subject);
-<<<<<<< HEAD
         expect(decoded["iss"]).to.equal("https://mp-server-d7650ec945.preview.gitpod-dev.com");
-=======
-        expect(decoded["iss"]).to.equal("mp-server-d7650ec945.preview.gitpod-dev.com");
->>>>>>> 15ab23327 (fix)
     }
 }
 
-function toKeyPair(kp: crypto.KeyPairKeyObjectResult): {
+function toKeyPair(
+    id: string,
+    kp: crypto.KeyPairKeyObjectResult,
+): {
+    id: string;
     privateKey: string;
     publicKey: string;
 } {
     return {
+        id,
         privateKey: kp.privateKey
             .export({
                 type: "pkcs1",

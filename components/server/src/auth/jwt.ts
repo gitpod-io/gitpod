@@ -7,7 +7,6 @@
 import * as jsonwebtoken from "jsonwebtoken";
 import { Config } from "../config";
 import { inject, injectable } from "inversify";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 const algorithm: jsonwebtoken.Algorithm = "RS512";
 
@@ -21,43 +20,39 @@ export class AuthJWT {
             expiresIn,
             issuer: this.config.hostUrl.toStringWoRootSlash(),
             subject,
+            keyid: this.config.auth.pki.signing.id,
         };
 
         return sign(payload, this.config.auth.pki.signing.privateKey, opts);
     }
 
     async verify(encoded: string): Promise<jsonwebtoken.JwtPayload> {
-        // When we verify an encoded token, we verify it using all available public keys
-        // That is, we check the following:
-        //  * The current signing public key
-        //  * All other validating public keys, in order
-        //
-        // We do this to allow for key-rotation. But tokens already issued would fail to validate
-        // if the signing key was changed. To accept older sessions, which are still valid
-        // we need to check for older keys also.
-        const validatingPublicKeys = this.config.auth.pki.validating.map((keypair) => keypair.publicKey);
-        const publicKeys = [
-            this.config.auth.pki.signing.publicKey, // signing key is checked first
-            ...validatingPublicKeys,
-        ];
+        const keypairs = [this.config.auth.pki.signing, ...this.config.auth.pki.validating];
+        const publicKeysByID = keypairs.reduce<{ [id: string]: string }>((byID, keypair) => {
+            byID[keypair.id] = keypair.publicKey;
+            return byID;
+        }, {});
 
-        let lastErr;
-        for (let publicKey of publicKeys) {
-            try {
-                const decoded = await verify(encoded, publicKey, {
-                    algorithms: [algorithm],
-                });
-                return decoded;
-            } catch (err) {
-                log.debug(`Failed to verify JWT token using public key.`, err);
-                lastErr = err;
-            }
+        // When we verify an encoded token, we first read the Key ID from the payload (without verifying the signature)
+        // and then lookup the appropriate key from out collection of available keys.
+
+        const decodedWithVerification = decodeWithoutVerification(encoded);
+        const keyID = decodedWithVerification.header.kid;
+
+        if (!keyID) {
+            throw new Error("JWT token does not contain kid (key id) property.");
         }
 
-        log.error(`Failed to verify JWT using any available public key.`, lastErr, {
-            publicKeyCount: publicKeys.length,
+        if (!publicKeysByID[keyID]) {
+            throw new Error("JWT was signed with an unknown key id");
+        }
+
+        // Given we know which keyid this token was presumably signed with, let's verify the token using the public key.
+        const verified = await verify(encoded, publicKeysByID[keyID], {
+            algorithms: [algorithm],
         });
-        throw lastErr;
+
+        return verified;
     }
 }
 
@@ -89,4 +84,16 @@ export async function verify(
             resolve(decoded);
         });
     });
+}
+
+export function decodeWithoutVerification(encoded: string, options?: jsonwebtoken.DecodeOptions): jsonwebtoken.Jwt {
+    const decoded = jsonwebtoken.decode(encoded, { ...options, complete: true });
+    if (!decoded) {
+        throw new Error("Failed to decode JWT");
+    }
+    if (typeof decoded === "string") {
+        throw new Error("Decoded JWT was a string, JSON payload required.");
+    }
+
+    return decoded;
 }
