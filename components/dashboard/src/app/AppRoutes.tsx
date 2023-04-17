@@ -54,7 +54,6 @@ const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../works
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Notifications"));
 const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Billing"));
-const Plans = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Plans"));
 const ChargebeeTeams = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/ChargebeeTeams"));
 const EnvironmentVariables = React.lazy(
     () => import(/* webpackPrefetch: true */ "../user-settings/EnvironmentVariables"),
@@ -185,7 +184,7 @@ export const AppRoutes = () => {
                         <Redirect to="/new" />
                     </Route>
                     {/* TODO(gpl): Remove once we don't need the redirect anymore */}
-                    <Route path={[switchToPAYGPathMain]} exact>
+                    <Route path={[switchToPAYGPathMain, settingsPathPlans]} exact>
                         <Redirect to={"/billing"} />
                     </Route>
                     <Route path="/setup" exact component={Setup} />
@@ -195,7 +194,6 @@ export const AppRoutes = () => {
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
                     <Route path={settingsPathNotifications} exact component={Notifications} />
                     <Route path={settingsPathBilling} exact component={Billing} />
-                    <Route path={settingsPathPlans} exact component={Plans} />
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
                     <Route path={settingsPathSSHKeys} exact component={SSHKeys} />
                     <Route path={settingsPathPersonalAccessTokens} exact component={PersonalAccessTokens} />
