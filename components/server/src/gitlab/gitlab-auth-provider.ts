@@ -54,7 +54,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
         return `https://${this.params.host}`;
     }
 
-    protected readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {
+    protected async readAuthUserSetup(accessToken: string, tokenResponse: object) {
         const api = GitLab.create({
             oauthToken: accessToken,
             host: this.baseURL,
@@ -95,7 +95,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                 throw error;
             }
         }
-    };
+    }
 
     protected readScopesFromVerifyParams(params: any) {
         if (params && typeof params.scope === "string") {

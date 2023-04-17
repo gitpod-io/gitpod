@@ -55,7 +55,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
         return `https://${this.params.host}`;
     }
 
-    protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {
+    protected async readAuthUserSetup(accessToken: string, _tokenResponse: object) {
         try {
             const options = {
                 notice: false,
@@ -89,7 +89,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
             log.error(`(${this.strategyName}) Reading current user info failed`, error, { error });
             throw error;
         }
-    };
+    }
 
     protected normalizeScopes(scopes: string[]) {
         const set = new Set(scopes);

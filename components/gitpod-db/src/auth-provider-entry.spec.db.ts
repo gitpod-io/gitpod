@@ -51,7 +51,6 @@ export class AuthProviderEntryDBSpec {
                 callBackUrl: "example.org/some/callback",
                 authorizationUrl: "example.org/some/auth",
                 settingsUrl: "example.org/settings",
-                configURL: "example.org/config",
                 clientId: "clientId",
                 clientSecret: "clientSecret",
                 tokenUrl: "example.org/get/token",
@@ -100,7 +99,7 @@ export class AuthProviderEntryDBSpec {
         const loadedAp = await this.db.findByHost(ap.host);
         expect(loadedAp, "findByHost()").to.deep.equal(ap);
         expect(loadedAp?.oauthRevision, "findByHost()").to.equal(
-            "b05eb3256a101f6cbca1d8885c8ee241891582e78c567b7305f097ab3556d5f0",
+            "3d1390670fd19c27157d046960c3d7c46df81db642302dea1a9fe86cf0594361",
         );
     }
 

@@ -11,10 +11,8 @@ import * as OAuth2Strategy from "passport-oauth2";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { AuthProviderInfo, Identity, Token, User } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import fetch from "node-fetch";
 import { oauth2tokenCallback, OAuth2 } from "oauth";
 import { URL } from "url";
-import { runInNewContext } from "vm";
 import { AuthFlow, AuthProvider, AuthUser } from "../auth/auth-provider";
 import { AuthProviderParams, AuthUserSetup } from "../auth/auth-provider";
 import {
@@ -64,7 +62,7 @@ import { VerificationService } from "../auth/verification-service";
  *
  */
 @injectable()
-export class GenericAuthProvider implements AuthProvider {
+export abstract class GenericAuthProvider implements AuthProvider {
     @inject(AuthProviderParams) params: AuthProviderParams;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(UserDB) protected userDb: UserDB;
@@ -77,7 +75,6 @@ export class GenericAuthProvider implements AuthProvider {
 
     @postConstruct()
     init() {
-        this.initAuthUserSetup();
         log.info(`(${this.strategyName}) Initialized.`, { sanitizedStrategyOptions: this.sanitizedStrategyOptions });
     }
 
@@ -149,7 +146,7 @@ export class GenericAuthProvider implements AuthProvider {
         return scopes;
     }
 
-    protected readAuthUserSetup?: (accessToken: string, tokenResponse: object) => Promise<AuthUserSetup>;
+    protected abstract readAuthUserSetup(accessToken: string, tokenResponse: object): Promise<AuthUserSetup>;
 
     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
         const handler = passport.authenticate(this.getStrategy() as any, {
@@ -225,71 +222,6 @@ export class GenericAuthProvider implements AuthProvider {
         } catch (error) {
             log.error(`(${this.strategyName}) Failed to refresh token!`, { error });
             throw error;
-        }
-    }
-
-    protected initAuthUserSetup() {
-        if (this.readAuthUserSetup) {
-            // it's defined in subclass
-            return;
-        }
-        const { configFn, configURL } = this.oauthConfig;
-        if (configURL) {
-            this.readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {
-                try {
-                    const fetchResult = await fetch(configURL, {
-                        timeout: 10000,
-                        method: "POST",
-                        headers: {
-                            Accept: "application/json",
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            accessToken,
-                            tokenResponse,
-                        }),
-                    });
-                    if (fetchResult.ok) {
-                        const jsonResult = await fetchResult.json();
-                        return jsonResult as AuthUserSetup;
-                    } else {
-                        throw new Error(fetchResult.statusText);
-                    }
-                } catch (error) {
-                    log.error(`(${this.strategyName}) Failed to fetch from "configURL"`, {
-                        error,
-                        configURL,
-                    });
-                    throw new Error("Error while reading user profile.");
-                }
-            };
-            return;
-        }
-        if (configFn) {
-            this.readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {
-                let promise: Promise<AuthUserSetup>;
-                try {
-                    promise = runInNewContext(
-                        `tokenResponse = ${JSON.stringify(
-                            tokenResponse,
-                        )} || {}; (${configFn})("${accessToken}", tokenResponse)`,
-                        { fetch, console },
-                        { filename: `${this.strategyName}-fetchAuthUser`, timeout: 5000 },
-                    );
-                } catch (error) {
-                    log.error(`(${this.strategyName}) Failed to call "fetchAuthUserSetup"`, {
-                        error,
-                        configFn,
-                    });
-                    throw new Error("Error with the Auth Provider Configuration.");
-                }
-                try {
-                    return await promise;
-                } catch (error) {
-                    log.error(`(${this.strategyName}) Failed to run "configFn"`, { error, configFn });
-                    throw new Error("Error while reading user profile.");
-                }
-            };
         }
     }
 
@@ -563,10 +495,7 @@ export class GenericAuthProvider implements AuthProvider {
 
         try {
             const tokenResponseObject = this.ensureIsObject(tokenResponse);
-            const { authUser, currentScopes, envVars } = await this.fetchAuthUserSetup(
-                accessToken,
-                tokenResponseObject,
-            );
+            const { authUser, currentScopes, envVars } = await this.readAuthUserSetup(accessToken, tokenResponseObject);
             const { authName, primaryEmail } = authUser;
             candidate = { authProviderId, ...authUser };
 
@@ -722,13 +651,6 @@ export class GenericAuthProvider implements AuthProvider {
 
     protected get tokenUsername(): string {
         return "oauth2";
-    }
-
-    protected async fetchAuthUserSetup(accessToken: string, tokenResponse: object): Promise<AuthUserSetup> {
-        if (!this.readAuthUserSetup) {
-            throw new Error(`(${this.strategyName}) is missing configuration for reading of user information.`);
-        }
-        return this.readAuthUserSetup(accessToken, tokenResponse);
     }
 
     protected ensureIsObject(value: any): object {
