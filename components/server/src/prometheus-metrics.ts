@@ -25,6 +25,7 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(centralizedPermissionsValidationsTotal);
     registry.registerMetric(spicedbClientLatency);
     registry.registerMetric(dashboardErrorBoundary);
+    registry.registerMetric(jwtCookieIssued);
 }
 
 const loginCounter = new prometheusClient.Counter({
@@ -55,6 +56,15 @@ const apiConnectionCounter = new prometheusClient.Counter({
 
 export function increaseApiConnectionCounter() {
     apiConnectionCounter.inc();
+}
+
+const jwtCookieIssued = new prometheusClient.Counter({
+    name: "gitpod_server_jwt_cookie_issued_total",
+    help: "Total number of JWT cookies issued for login sessions",
+});
+
+export function reportJWTCookieIssued() {
+    jwtCookieIssued.inc();
 }
 
 const apiConnectionClosedCounter = new prometheusClient.Counter({

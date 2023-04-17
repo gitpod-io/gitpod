@@ -117,6 +117,7 @@ import { APIUserService } from "./api/user";
 import { APITeamsService } from "./api/teams";
 import { API } from "./api/server";
 import { LinkedInService } from "./linkedin-service";
+import { AuthJWT } from "./auth/jwt";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -324,4 +325,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(APIUserService).toSelf().inSingletonScope();
     bind(APITeamsService).toSelf().inSingletonScope();
     bind(API).toSelf().inSingletonScope();
+
+    bind(AuthJWT).toSelf().inSingletonScope();
 });
