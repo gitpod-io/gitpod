@@ -5,14 +5,13 @@
  */
 
 import { injectable, inject } from "inversify";
-import { User, Identity, UserEnvVarValue, Token } from "@gitpod/gitpod-protocol";
+import { User, Identity, Token } from "@gitpod/gitpod-protocol";
 import { ProjectDB, TeamDB, TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
 import { AuthProviderParams, AuthUser } from "../auth/auth-provider";
 import { BlockedUserFilter } from "../auth/blocked-user-filter";
-import { v4 as uuidv4 } from "uuid";
 import { TermsProvider } from "../terms/terms-provider";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
@@ -332,46 +331,6 @@ export class UserService {
         // no-op
     }
 
-    async checkTermsAcceptanceRequired(params: CheckTermsParams): Promise<boolean> {
-        // // todo@alex: clarify if this would be a loophole for Gitpod SH.
-        // // if (params.config.requireTOS === false) {
-        // //     // AuthProvider config might disable terms acceptance
-        // //     return false;
-        // // }
-
-        // const { user } = params;
-        // if (!user) {
-        //     const userCount = await this.userDb.getUserCount();
-        //     if (userCount === 0) {
-        //         // the very first user, which will become admin, needs to accept the terms. always.
-        //         return true;
-        //     }
-        // }
-
-        // // admin users need to accept the terms.
-        // if (user && user.rolesOrPermissions && user.rolesOrPermissions.some(r => r === "admin")) {
-        //     return (await this.checkTermsAccepted(user)) === false;
-        // }
-
-        // // non-admin users won't need to accept the terms.
-        return false;
-    }
-
-    async acceptCurrentTerms(user: User) {
-        const terms = this.termsProvider.getCurrent();
-        return await this.termsAcceptanceDb.updateAcceptedRevision(user.id, terms.revision);
-    }
-
-    async checkTermsAccepted(user: User) {
-        // disabled terms acceptance check for now
-
-        return true;
-
-        // const terms = this.termsProvider.getCurrent();
-        // const accepted = await this.termsAcceptanceDb.getAcceptedRevision(user.id);
-        // return !!accepted && (accepted.termsRevision === terms.revision);
-    }
-
     async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {
         if (params.user && params.user.blocked) {
             return true;
@@ -431,41 +390,6 @@ export class UserService {
 
         await this.userDb.storeUser(user);
         await this.userDb.storeSingleToken(candidate, token);
-    }
-
-    async updateUserEnvVarsOnLogin(user: User, envVars?: UserEnvVarValue[]) {
-        if (!envVars) {
-            return;
-        }
-        const userId = user.id;
-        const currentEnvVars = await this.userDb.getEnvVars(userId);
-        const findEnvVar = (name: string, repositoryPattern: string) =>
-            currentEnvVars.find((env) => env.repositoryPattern === repositoryPattern && env.name === name);
-        for (const { name, value, repositoryPattern } of envVars) {
-            try {
-                const existingEnvVar = findEnvVar(name, repositoryPattern);
-                await this.userDb.setEnvVar(
-                    existingEnvVar
-                        ? {
-                              ...existingEnvVar,
-                              value,
-                          }
-                        : {
-                              repositoryPattern,
-                              name,
-                              userId,
-                              id: uuidv4(),
-                              value,
-                          },
-                );
-            } catch (error) {
-                log.error(`Failed update user EnvVar on login!`, {
-                    error,
-                    user: User.censor(user),
-                    envVar: { name, value, repositoryPattern },
-                });
-            }
-        }
     }
 
     async deauthorize(user: User, authProviderId: string) {

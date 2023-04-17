@@ -448,17 +448,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
         }
     }
-    protected termsAccepted: boolean | undefined;
-    protected async checkTermsAcceptance() {
-        if (!this.termsAccepted) {
-            if (this.user) {
-                this.termsAccepted = await this.userService.checkTermsAccepted(this.user);
-            }
-        }
-        if (!this.termsAccepted) {
-            throw new ResponseError(ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED, "You need to accept the terms.");
-        }
-    }
 
     public async updateLoggedInUser(ctx: TraceContext, partialUser: Partial<User>): Promise<User> {
         traceAPIParams(ctx, {}); // partialUser contains PII
@@ -749,7 +738,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceWI(ctx, { workspaceId });
 
         const user = this.checkAndBlockUser("startWorkspace", undefined, { workspaceId });
-        await this.checkTermsAcceptance();
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
         const mayStartPromise = this.mayStartWorkspace(
@@ -1132,7 +1120,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         try {
             const user = this.checkAndBlockUser("createWorkspace", { options });
-            await this.checkTermsAcceptance();
 
             logContext = { userId: user.id };
 
