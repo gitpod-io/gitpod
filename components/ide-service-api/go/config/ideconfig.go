@@ -44,6 +44,8 @@ type IDEOption struct {
 	Notes []string `json:"notes,omitempty"`
 	// Hidden this IDE option is not visible in the IDE preferences.
 	Hidden bool `json:"hidden,omitempty"`
+	// Experimental this IDE option is to only be shown to some users
+	Experimental bool `json:"experimental,omitempty"`
 	// Image ref to the IDE image.
 	Image string `json:"image"`
 	// LatestImage ref to the IDE image, this image ref always resolve to digest.
