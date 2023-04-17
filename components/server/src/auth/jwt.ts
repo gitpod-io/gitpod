@@ -36,8 +36,8 @@ export class AuthJWT {
         // When we verify an encoded token, we first read the Key ID from the payload (without verifying the signature)
         // and then lookup the appropriate key from out collection of available keys.
 
-        const decodedWithVerification = decodeWithoutVerification(encoded);
-        const keyID = decodedWithVerification.header.kid;
+        const decodedWithoutVerification = decodeWithoutVerification(encoded);
+        const keyID = decodedWithoutVerification.header.kid;
 
         if (!keyID) {
             throw new Error("JWT token does not contain kid (key id) property.");
