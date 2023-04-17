@@ -33,9 +33,8 @@ export class AuthJWT {
             return byID;
         }, {});
 
-        // When we verify an encoded token, we first read the Key ID from the payload (without verifying the signature)
+        // When we verify an encoded token, we first read the Key ID from the token header (without verifying the signature)
         // and then lookup the appropriate key from out collection of available keys.
-
         const decodedWithoutVerification = decodeWithoutVerification(encoded);
         const keyID = decodedWithoutVerification.header.kid;
 
