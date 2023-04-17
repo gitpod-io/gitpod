@@ -26,8 +26,8 @@ class TestAuthJWT {
         hostUrl: new GitpodHostUrl("https://mp-server-d7650ec945.preview.gitpod-dev.com"),
         auth: {
             pki: {
-                signing: toKeyPair(this.signingKeyPair),
-                validating: [toKeyPair(this.validatingKeyPair1), toKeyPair(this.validatingKeyPair2)],
+                signing: toKeyPair("0001", this.signingKeyPair),
+                validating: [toKeyPair("0002", this.validatingKeyPair1), toKeyPair("0003", this.validatingKeyPair2)],
             },
         },
     } as Config;
@@ -44,6 +44,7 @@ class TestAuthJWT {
 
         const subject = "user-id";
         const encoded = await sut.sign(subject, {});
+        console.log("encoded", encoded);
 
         const decoded = await verify(encoded, this.config.auth.pki.signing.publicKey, {
             algorithms: ["RS512"],
@@ -70,11 +71,13 @@ class TestAuthJWT {
     async test_verify_validates_older_keys() {
         const sut = this.container.get<AuthJWT>(AuthJWT);
 
+        const keypair = this.config.auth.pki.validating[1];
         const subject = "user-id";
-        const encoded = await sign({}, this.config.auth.pki.validating[1].privateKey, {
+        const encoded = await sign({}, keypair.privateKey, {
             algorithm: "RS512",
             expiresIn: "1d",
             issuer: this.config.hostUrl.toStringWoRootSlash(),
+            keyid: keypair.id,
             subject,
         });
 
@@ -86,11 +89,16 @@ class TestAuthJWT {
     }
 }
 
-function toKeyPair(kp: crypto.KeyPairKeyObjectResult): {
+function toKeyPair(
+    id: string,
+    kp: crypto.KeyPairKeyObjectResult,
+): {
+    id: string;
     privateKey: string;
     publicKey: string;
 } {
     return {
+        id,
         privateKey: kp.privateKey
             .export({
                 type: "pkcs1",
