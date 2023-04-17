@@ -54,8 +54,6 @@ const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../works
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Notifications"));
 const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Billing"));
-const Plans = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Plans"));
-const ChargebeeTeams = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/ChargebeeTeams"));
 const EnvironmentVariables = React.lazy(
     () => import(/* webpackPrefetch: true */ "../user-settings/EnvironmentVariables"),
 );
@@ -185,7 +183,7 @@ export const AppRoutes = () => {
                         <Redirect to="/new" />
                     </Route>
                     {/* TODO(gpl): Remove once we don't need the redirect anymore */}
-                    <Route path={[switchToPAYGPathMain]} exact>
+                    <Route path={[switchToPAYGPathMain, settingsPathPlans, "/old-team-plans", "/teams"]} exact>
                         <Redirect to={"/billing"} />
                     </Route>
                     <Route path="/setup" exact component={Setup} />
@@ -195,7 +193,6 @@ export const AppRoutes = () => {
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
                     <Route path={settingsPathNotifications} exact component={Notifications} />
                     <Route path={settingsPathBilling} exact component={Billing} />
-                    <Route path={settingsPathPlans} exact component={Plans} />
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
                     <Route path={settingsPathSSHKeys} exact component={SSHKeys} />
                     <Route path={settingsPathPersonalAccessTokens} exact component={PersonalAccessTokens} />
@@ -242,10 +239,6 @@ export const AppRoutes = () => {
                             <Subheading className="mt-4 text-gitpod-red">{decodeURIComponent(getURLHash())}</Subheading>
                         </div>
                     </Route>
-                    <Route exact path="/teams">
-                        <Redirect to="/old-team-plans" />
-                    </Route>
-                    <Route exact path="/old-team-plans" component={ChargebeeTeams} />
                     {/* TODO remove the /teams/join navigation after a few weeks */}
                     <Route exact path="/teams/join" component={JoinTeam} />
                     <Route exact path="/orgs/new" component={NewTeam} />
