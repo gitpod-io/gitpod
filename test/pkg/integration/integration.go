@@ -35,8 +35,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"k8s.io/kubectl/pkg/cmd/cp"
 	kubectlcp "k8s.io/kubectl/pkg/cmd/cp"
 	kubectlexec "k8s.io/kubectl/pkg/cmd/exec"
+	"k8s.io/kubectl/pkg/cmd/util"
 	"sigs.k8s.io/e2e-framework/klient"
 
 	ide "github.com/gitpod-io/gitpod/ide-service-api/config"
@@ -69,10 +71,26 @@ func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*by
 	for count := 0; ; count++ {
 		ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
 		copyOptions := kubectlcp.NewCopyOptions(ioStreams)
-		copyOptions.Clientset = p.Clientset
 		copyOptions.ClientConfig = p.RestConfig
 		copyOptions.Container = containername
-		err := copyOptions.Run([]string{src, dst})
+		configFlags := genericclioptions.NewConfigFlags(false)
+		f := util.NewFactory(configFlags)
+		cmd := cp.NewCmdCp(f, ioStreams)
+		err := copyOptions.Complete(f, cmd, []string{src, dst})
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		c := rest.CopyConfig(p.RestConfig)
+		cs, err := kubernetes.NewForConfig(c)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		copyOptions.ClientConfig = c
+		copyOptions.Clientset = cs
+
+		err = copyOptions.Run()
 		if err != nil {
 			if !shouldRetry(count, err) {
 				return nil, nil, nil, fmt.Errorf("could not run copy operation: %v", err)
