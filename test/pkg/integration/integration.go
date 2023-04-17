@@ -71,7 +71,6 @@ func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*by
 	for count := 0; ; count++ {
 		ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
 		copyOptions := kubectlcp.NewCopyOptions(ioStreams)
-		copyOptions.Clientset = p.Clientset
 		copyOptions.ClientConfig = p.RestConfig
 		copyOptions.Container = containername
 		configFlags := genericclioptions.NewConfigFlags(false)
@@ -81,6 +80,15 @@ func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*by
 		if err != nil {
 			return nil, nil, nil, err
 		}
+
+		c := rest.CopyConfig(p.RestConfig)
+		cs, err := kubernetes.NewForConfig(c)
+		if err != nil {
+			return nil, nil, nil, err
+		}
+
+		copyOptions.ClientConfig = c
+		copyOptions.Clientset = cs
 
 		err = copyOptions.Run()
 		if err != nil {
