@@ -21,6 +21,7 @@ import (
 const (
 	NotifierMaxPendingNotifications   = 120
 	SubscriberMaxPendingNotifications = 100
+	SubscriberMaxSubscriptions        = 10
 )
 
 // NewNotificationService creates a new notification service.
@@ -85,6 +86,7 @@ func (srv *NotificationService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint
 // Notify sends a notification to the user.
 func (srv *NotificationService) Notify(ctx context.Context, req *api.NotifyRequest) (*api.NotifyResponse, error) {
 	if len(srv.pendingNotifications) >= NotifierMaxPendingNotifications {
+		log.Warnf("Max number of pending notifications exceeded (%d)", NotifierMaxPendingNotifications)
 		return nil, status.Error(codes.ResourceExhausted, "Max number of pending notifications exceeded")
 	}
 
@@ -173,6 +175,11 @@ func (srv *NotificationService) Subscribe(req *api.SubscribeRequest, resp api.No
 func (srv *NotificationService) subscribeLocked(req *api.SubscribeRequest, resp api.NotificationService_SubscribeServer) *subscription {
 	srv.mutex.Lock()
 	defer srv.mutex.Unlock()
+
+	if len(srv.subscriptions) >= SubscriberMaxSubscriptions {
+		log.Warnf("potentially leaking subscription: max number exceeded (%d)", SubscriberMaxSubscriptions)
+	}
+
 	// account for some back pressure
 	capacity := len(srv.pendingNotifications)
 	if SubscriberMaxPendingNotifications > capacity {
