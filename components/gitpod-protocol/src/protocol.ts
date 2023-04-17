@@ -1515,7 +1515,6 @@ export interface OAuth2Config {
 
     readonly settingsUrl?: string;
     readonly authorizationParams?: { [key: string]: string };
-    readonly configURL?: string;
 }
 
 export namespace AuthProviderEntry {

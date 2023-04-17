@@ -61,7 +61,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
         return this.params.host === "github.com" ? "https://api.github.com" : `https://${this.params.host}/api/v3`;
     }
 
-    protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {
+    protected async readAuthUserSetup(accessToken: string, _tokenResponse: object) {
         const api = new Octokit({
             auth: accessToken,
             request: {
@@ -130,7 +130,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             log.error(`(${this.strategyName}) Reading current user info failed`, error, { error });
             throw error;
         }
-    };
+    }
 
     protected normalizeScopes(scopes: string[]) {
         const set = new Set(scopes);

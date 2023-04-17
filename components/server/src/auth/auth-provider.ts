@@ -16,10 +16,7 @@ export interface AuthProviderParams extends AuthProviderEntry {
     readonly builtin: boolean; // true, if `ownerId` == ""
     readonly verified: boolean; // true, if `status` == "verified"
 
-    readonly oauth: OAuth2Config & {
-        // extending:
-        readonly configFn?: string;
-    };
+    readonly oauth: OAuth2Config;
 
     // for special auth providers only
     readonly params?: {
