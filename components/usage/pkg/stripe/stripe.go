@@ -375,9 +375,10 @@ func (c *Client) CreateHoldPaymentIntent(ctx context.Context, customer *stripe.C
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card", // TODO(gpl) paymentMethod: Would be great to abstract over "card" by looking up the registered paymentMethod on the customer here
 		}),
-		PaymentMethod: stripe.String(customer.InvoiceSettings.DefaultPaymentMethod.ID),
-		CaptureMethod: stripe.String(string(stripe.PaymentIntentCaptureMethodManual)),
-		Confirm:       stripe.Bool(true),
+		PaymentMethod:    stripe.String(customer.InvoiceSettings.DefaultPaymentMethod.ID),
+		CaptureMethod:    stripe.String(string(stripe.PaymentIntentCaptureMethodManual)),
+		Confirm:          stripe.Bool(true),
+		SetupFutureUsage: stripe.String(string(stripe.PaymentIntentSetupFutureUsageOffSession)),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create hold payment intent: %w", err)
