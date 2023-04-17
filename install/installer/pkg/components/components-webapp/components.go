@@ -6,6 +6,7 @@ package componentswebapp
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/dashboard"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/database"
@@ -35,6 +36,7 @@ var Objects = common.CompositeRenderFunc(
 	usage.Objects,
 	spicedb.Objects,
 	redis.Objects,
+	auth.Objects,
 )
 
 var Helm = common.CompositeHelmFunc(

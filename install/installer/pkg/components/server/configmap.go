@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	ideservice "github.com/gitpod-io/gitpod/installer/pkg/components/ide-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
@@ -196,7 +197,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	_, _, adminCredentialsPath := getAdminCredentials()
 
-	_, _, authPKI := getAuthPKI()
+	_, _, authPKI := auth.GetPKI()
 
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{

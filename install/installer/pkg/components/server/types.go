@@ -6,6 +6,7 @@ package server
 
 import (
 	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 )
 
@@ -67,20 +68,7 @@ type CodeSyncResources struct {
 }
 
 type AuthConfig struct {
-	PKI AuthPKIConfig `json:"pki"`
-}
-
-type AuthPKIConfig struct {
-	// Signing KeyPair is always used to issue new auth tokens
-	Signing KeyPair `json:"signing"`
-
-	// Validating KeyPairs are used for checking validity only
-	Validating []KeyPair `json:"validating,omitempty"`
-}
-
-type KeyPair struct {
-	PrivateKeyPath string `json:"privateKeyPath"`
-	PublicKeyPath  string `json:"publicKeyPath"`
+	PKI auth.PKIConfig `json:"pki"`
 }
 
 type CodeSync struct {

@@ -1,8 +1,8 @@
-// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
-package server
+package auth
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func authPKI(ctx *common.RenderContext) ([]runtime.Object, error) {
+func keypair(ctx *common.RenderContext) ([]runtime.Object, error) {
 	serverAltNames := []string{
 		fmt.Sprintf("gitpod.%s", ctx.Namespace),
 		fmt.Sprintf("%s.%s.svc", Component, ctx.Namespace),
@@ -59,8 +59,7 @@ func authPKI(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}, nil
 }
 
-func getAuthPKI() ([]corev1.Volume, []corev1.VolumeMount, AuthPKIConfig) {
-
+func GetPKI() ([]corev1.Volume, []corev1.VolumeMount, PKIConfig) {
 	dir := "/secrets/auth-pki"
 	signingDir := path.Join(dir, "signing")
 
@@ -83,11 +82,26 @@ func getAuthPKI() ([]corev1.Volume, []corev1.VolumeMount, AuthPKIConfig) {
 		},
 	}
 
-	cfg := AuthPKIConfig{
+	cfg := PKIConfig{
 		Signing: KeyPair{
+			ID:             "0001",
 			PrivateKeyPath: path.Join(signingDir, "tls.key"),
 			PublicKeyPath:  path.Join(signingDir, "tls.crt"),
 		},
 	}
 	return volumes, mounts, cfg
+}
+
+type PKIConfig struct {
+	// Signing KeyPair is always used to issue new auth tokens
+	Signing KeyPair `json:"signing"`
+
+	// Validating KeyPairs are used for checking validity only
+	Validating []KeyPair `json:"validating,omitempty"`
+}
+
+type KeyPair struct {
+	ID             string `json:"id"`
+	PrivateKeyPath string `json:"privateKeyPath"`
+	PublicKeyPath  string `json:"publicKeyPath"`
 }
