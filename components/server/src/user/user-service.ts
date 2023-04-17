@@ -148,6 +148,14 @@ export class UserService {
         if (token) {
             await this.userDb.storeSingleToken(identity, token);
         }
+
+        if (
+            await this.configCatClientFactory().getValueAsync("migrate_new_users", false, {
+                user: newUser,
+            })
+        ) {
+            await this.migrationService.migrateUser(newUser);
+        }
         return newUser;
     }
     protected handleNewUser(newUser: User, isFirstUser: boolean) {
