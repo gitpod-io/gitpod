@@ -30,13 +30,7 @@ echo "Use node pool index $NODE_POOL_INDEX"
 # Optional params
 # default, no, we do not add feature flags, file is empty
 DEFAULT_FEATURE_FLAGS=$(cat /tmp/defaultFeatureFlags)
-# if payment is configured: Append the YAML objects
-if [[ -f "/tmp/payment" ]] ; then
-   echo "found /tmp/payment, appending to k8s.yaml now"
-   # do not make any assumptions about new lines
-   printf \\n'---'\\n >> k8s.yaml
-   cat "/tmp/payment" >> k8s.yaml
-fi
+
 # if public-api is configured: Append the YAML objects
 if [[ -f "/tmp/public-api" ]] ; then
    echo "found /tmp/public-api, appending to k8s.yaml now"

@@ -27,12 +27,6 @@ pod:
   - name: prometheus-remote-write-auth
     secret:
       secretName: prometheus-remote-write-auth
-  - name: payment-provider-secret
-    secret:
-      secretName: payment-provider-secret
-  - name: payment-webhook-secret
-    secret:
-      secretName: payment-webhook-secret
   - name: go-build-cache
     hostPath:
       path: /mnt/disks/ssd0/go-build-cache
@@ -90,12 +84,6 @@ pod:
       readOnly: true
     - name: gcp-sa-release
       mountPath: /mnt/secrets/gcp-sa-release
-      readOnly: true
-    - name: payment-webhook-secret
-      mountPath: /mnt/secrets/payment-webhook-config
-      readOnly: true
-    - name: payment-provider-secret
-      mountPath: /mnt/secrets/payment-provider-config
       readOnly: true
     - name: go-build-cache
       mountPath: /go-build-cache

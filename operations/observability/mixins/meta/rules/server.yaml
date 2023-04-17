@@ -99,7 +99,7 @@ spec:
 
     - alert: WebAppServicesCrashlooping
       # Reasoning: alert if any pod is restarting more than 3 times / 5 minutes.
-      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|messagebus|payment-endpoint|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster) > 3
+      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|messagebus|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster) > 3
       for: 5m
       labels:
         # sent to the team internal channel until we fine tuned it

@@ -562,7 +562,6 @@ touch /tmp/defaultFeatureFlags
 for feature in ${GITPOD_WORKSPACE_FEATURE_FLAGS}; do
   # post-process.sh looks for /tmp/defaultFeatureFlags
   # each "flag" string gets added to the configmap
-  # also watches aout for /tmp/payment
   echo "$feature" >> /tmp/defaultFeatureFlags
 done
 
