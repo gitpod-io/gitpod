@@ -497,11 +497,6 @@ fi
 
 
 #
-# chargebee
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.chargebeeSecret" "chargebee-config"
-
-#
 # Stripe
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "stripe-api-keys"
