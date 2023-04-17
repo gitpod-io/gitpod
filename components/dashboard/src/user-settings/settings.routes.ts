@@ -11,7 +11,6 @@ export const settingsPathAccount = "/user/account";
 export const settingsPathIntegrations = "/user/integrations";
 export const settingsPathNotifications = "/user/notifications";
 export const settingsPathBilling = "/user/billing";
-export const settingsPathPlans = "/user/plans";
 export const settingsPathPreferences = "/user/preferences";
 export const settingsPathVariables = "/user/variables";
 export const settingsPathPersonalAccessTokens = "/user/tokens";
@@ -24,3 +23,4 @@ export const settingsPathSSHKeys = "/user/keys";
 // Let's keep them around until end of July to have meaningful redirects
 // TODO(gpl): Cleanup afterwards
 export const switchToPAYGPathMain = "/switch-to-payg";
+export const settingsPathPlans = "/user/plans";

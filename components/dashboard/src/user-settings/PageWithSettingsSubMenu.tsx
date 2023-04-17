@@ -20,7 +20,6 @@ import {
     settingsPathPersonalAccessTokenCreate,
     settingsPathPersonalAccessTokenEdit,
     settingsPathPersonalAccessTokens,
-    settingsPathPlans,
     settingsPathPreferences,
     settingsPathSSHKeys,
     settingsPathVariables,
@@ -95,25 +94,6 @@ function renderBillingMenuEntries(user?: User, billingMode?: BillingMode) {
     switch (billingMode.mode) {
         case "none":
             return [];
-        case "chargebee":
-            return [
-                {
-                    title: "Plans",
-                    link: [settingsPathPlans],
-                },
-                {
-                    title: "Team Plans (deprecated)",
-                    link: ["/old-team-plans"],
-                },
-                ...(BillingMode.showUsageBasedBilling(billingMode)
-                    ? [
-                          {
-                              title: "Billing",
-                              link: [settingsPathBilling],
-                          },
-                      ]
-                    : []),
-            ];
         case "usage-based":
             return [
                 {
@@ -130,5 +110,7 @@ function renderBillingMenuEntries(user?: User, billingMode?: BillingMode) {
                       ]
                     : []),
             ];
+        default:
+            return [];
     }
 }
