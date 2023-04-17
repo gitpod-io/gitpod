@@ -99,9 +99,15 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	var frontendDevEnabled bool
+	var trustedSegmentKey string
+	var untrustedSegmentKey string
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil {
 			frontendDevEnabled = cfg.WebApp.ProxyConfig.FrontendDevEnabled
+			if cfg.WebApp.ProxyConfig.AnalyticsPlugin != nil {
+				trustedSegmentKey = cfg.WebApp.ProxyConfig.AnalyticsPlugin.TrustedSegmentKey
+				untrustedSegmentKey = cfg.WebApp.ProxyConfig.AnalyticsPlugin.UntrustedSegmentKey
+			}
 		}
 		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil && cfg.WebApp.ProxyConfig.Configcat != nil && cfg.WebApp.ProxyConfig.Configcat.FromConfigMap != "" {
 			volumes = append(volumes, corev1.Volume{
@@ -258,6 +264,12 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								}, {
 									Name:  "WORKSPACE_HANDLER_FILE",
 									Value: strings.ToLower(string(ctx.Config.Kind)),
+								}, {
+									Name:  "ANALYTICS_PLUGIN_TRUSTED_SEGMENT_KEY",
+									Value: trustedSegmentKey,
+								}, {
+									Name:  "ANALYTICS_PLUGIN_UNTRUSTED_SEGMENT_KEY",
+									Value: untrustedSegmentKey,
 								}},
 							)),
 						}},

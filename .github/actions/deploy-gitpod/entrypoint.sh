@@ -32,7 +32,7 @@ export PREVIEW_NAME
 for var in WSMANAGER_MK2 WITH_DEDICATED_EMU ANALYTICS WORKSPACE_FEATURE_FLAGS; do
   input_var="INPUT_${var}"
   if [[ -n "${!input_var:-}" ]];then
-    export GITPOD_${var}=${!input_var}
+    export "GITPOD_${var}"="${!input_var}"
   fi
 done
 

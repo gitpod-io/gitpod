@@ -16,6 +16,7 @@ RUN xcaddy build v2.6.3 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/workspacedownload=/plugins/workspacedownload \
   --with github.com/gitpod-io/gitpod/proxy/plugins/headlesslogdownload=/plugins/headlesslogdownload \
   --with github.com/gitpod-io/gitpod/proxy/plugins/configcat=/plugins/configcat \
+  --with github.com/gitpod-io/gitpod/proxy/plugins/analytics=/plugins/analytics \
   --with github.com/gitpod-io/gitpod/proxy/plugins/logif=/plugins/logif \
   --with github.com/gitpod-io/gitpod/proxy/plugins/jsonselect=/plugins/jsonselect \
   --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel \

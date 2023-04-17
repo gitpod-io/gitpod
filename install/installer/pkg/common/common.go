@@ -230,6 +230,9 @@ func AnalyticsEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	}, {
 		Name:  "GITPOD_ANALYTICS_SEGMENT_KEY",
 		Value: cfg.Analytics.SegmentKey,
+	}, {
+		Name:  "GITPOD_ANALYTICS_SEGMENT_ENDPOINT",
+		Value: cfg.Analytics.SegmentEndpoint,
 	}}
 }
 

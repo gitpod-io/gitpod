@@ -456,24 +456,34 @@ yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templat
 #
 if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
   GITPOD_ANALYTICS_SEGMENT_TOKEN="$(readWerftSecret "segment-staging-write-key" "token")"
+  if [[ -z "${GITPOD_ANALYTICS_SEGMENT_TOKEN}" ]]; then
+    echo "GITPOD_ANALYTICS_SEGMENT_TOKEN is empty"
+    exit 1
+  fi
+
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer segment
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.segmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
+  yq w -i "${INSTALLER_CONFIG_PATH}" analytics.segmentEndpoint "https://${DOMAIN}/analytics"
+  # configure proxy analyitcs plugin
+  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.analyticsPlugin.trustedSegmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
+  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.analyticsPlugin.untrustedSegmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
+
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_KEY"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_KEY).value' "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
 
   # add to default workspace class
   yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_KEY"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_KEY).value' "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
 
   # add to small workspace class
   yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_KEY"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_KEY).value' "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
 else
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer ""
 fi

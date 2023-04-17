@@ -31,7 +31,7 @@ jobs:
       publish_to_jbmp: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-jb-marketplace') }}
       with_ws_manager_mk2: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-ws-manager-mk2') }}
       with_dedicated_emulation: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-dedicated-emulation') }}
-      analytics: ${{ contains( steps.pr-details.outputs.pr_body, '[X] analytics') }}
+      analytics: ${{ steps.output.outputs.analytics }}
       workspace_feature_flags: ${{ steps.output.outputs.workspace_feature_flags }}
       pr_no_diff_skip: ${{ steps.pr-diff.outputs.pr_no_diff_skip }}
       with_werft: ${{ steps.output.outputs.with-werft }}
@@ -70,11 +70,11 @@ jobs:
         shell: bash
         run: |
           {
-            echo "workspace_feature_flags=$(echo "$PR_DESC" | grep -oP '(?<=\[X\] workspace-feature-flags).*')"
-            echo "with_integration_tests=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] with-integration-tests=).*')"
+            echo "workspace_feature_flags=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] workspace-feature-flags=).*?(?=\s*$)')"
+            echo "with_integration_tests=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] with-integration-tests=).*?(?=\s*$)')"
+            echo "analytics=$(echo "$PR_DESC" | grep -oiP '(?<=\[x\] analytics=).*?(?=\s*$)')"
             echo "leeway_cache_bucket=$([[ "$MAIN_BRANCH"  = "true" ]] && echo "gitpod-core-leeway-cache-main" || echo "gitpod-core-leeway-cache-branch")"
           } >> $GITHUB_OUTPUT
-
 
   build-previewctl:
     name: Build previewctl

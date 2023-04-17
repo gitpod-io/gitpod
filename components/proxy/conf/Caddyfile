@@ -16,6 +16,7 @@
 	order gitpod.workspace_download before redir
 	order gitpod.headless_log_download before rewrite
 	order gitpod.configcat before rewrite
+	order gitpod.analytics before rewrite
 	order gitpod.sec_websocket_key before header
 	order gitpod.frontend_dev after forward_auth
 
@@ -206,6 +207,14 @@ https://{$GITPOD_DOMAIN} {
 			any_domain true
 		}
 		gitpod.configcat
+	}
+
+	@analytics path /analytics*
+	handle @analytics {
+		gitpod.cors_origin {
+			any_domain true
+		}
+		gitpod.analytics
 	}
 
 	@backend_wss {
