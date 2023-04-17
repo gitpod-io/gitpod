@@ -19,7 +19,7 @@ export class AuthJWT {
         const opts: jsonwebtoken.SignOptions = {
             algorithm,
             expiresIn,
-            issuer: this.config.hostUrl.url.hostname,
+            issuer: this.config.hostUrl.toStringWoRootSlash(),
             subject,
         };
 
