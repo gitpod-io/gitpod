@@ -21,7 +21,6 @@ type FeatureFlagsType = {
 const defaultFeatureFlags = {
     startWithOptions: false,
     showUsageView: false,
-    isUsageBasedBillingEnabled: false,
     showUseLastSuccessfulPrebuild: false,
     usePublicApiWorkspacesService: false,
     enablePersonalAccessTokens: false,
@@ -42,7 +41,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const currentOrg = useCurrentOrg();
     const [startWithOptions, setStartWithOptions] = useState<boolean>(false);
     const [showUsageView, setShowUsageView] = useState<boolean>(false);
-    const [isUsageBasedBillingEnabled, setIsUsageBasedBillingEnabled] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
     const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
     const [usePublicApiWorkspacesService, setUsePublicApiWorkspacesService] = useState<boolean>(false);
@@ -58,7 +56,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
             const featureFlags: FeatureFlagConfig = {
                 start_with_options: { defaultValue: false, setter: setStartWithOptions },
                 usage_view: { defaultValue: false, setter: setShowUsageView },
-                isUsageBasedBillingEnabled: { defaultValue: false, setter: setIsUsageBasedBillingEnabled },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
                 personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
                 publicApiExperimentalWorkspaceService: {
@@ -111,7 +108,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         return {
             startWithOptions,
             showUsageView,
-            isUsageBasedBillingEnabled,
             showUseLastSuccessfulPrebuild,
             enablePersonalAccessTokens,
             usePublicApiWorkspacesService,
@@ -123,7 +119,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         };
     }, [
         enablePersonalAccessTokens,
-        isUsageBasedBillingEnabled,
         linkedinConnectionForOnboarding,
         newSignupFlow,
         oidcServiceEnabled,

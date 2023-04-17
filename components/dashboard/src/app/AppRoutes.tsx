@@ -69,7 +69,7 @@ const NewTeam = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/Ne
 const JoinTeam = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/JoinTeam"));
 const Members = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/Members"));
 const TeamSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamSettings"));
-const TeamBilling = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamBilling"));
+const TeamUsageBasedBilling = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/TeamUsageBasedBilling"));
 const SSO = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/SSO"));
 const TeamGitIntegrations = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/GitIntegrationsPage"));
 const NewProject = React.lazy(() => import(/* webpackPrefetch: true */ "../projects/NewProject"));
@@ -250,7 +250,7 @@ export const AppRoutes = () => {
                     <OrgRequiredRoute exact path="/settings" component={TeamSettings} />
                     <OrgRequiredRoute exact path="/settings/git" component={TeamGitIntegrations} />
                     {/* TODO: migrate other org settings pages underneath /settings prefix so we can utilize nested routes */}
-                    <OrgRequiredRoute exact path="/billing" component={TeamBilling} />
+                    <OrgRequiredRoute exact path="/billing" component={TeamUsageBasedBilling} />
                     <OrgRequiredRoute exact path="/sso" component={SSO} />
 
                     <Route exact path={`/projects/:projectSlug`} component={Project} />
