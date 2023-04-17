@@ -572,22 +572,6 @@ for feature in ${GITPOD_WORKSPACE_FEATURE_FLAGS}; do
 done
 
 #
-# configurePayment
-#
-SERVICE_WAITER_VERSION="$(yq r /tmp/versions.yaml 'components.serviceWaiter.version')"
-PAYMENT_ENDPOINT_VERSION="$(yq r /tmp/versions.yaml 'components.paymentEndpoint.version')"
-
-# 2. render chargebee-config and payment-endpoint
-rm -f /tmp/payment
-for manifest in "$ROOT"/.werft/jobs/build/payment/*.yaml; do
-  sed "s/\${NAMESPACE}/${PREVIEW_NAMESPACE}/g" "$manifest" \
-  | sed "s/\${PAYMENT_ENDPOINT_VERSION}/${PAYMENT_ENDPOINT_VERSION}/g" \
-  | sed "s/\${SERVICE_WAITER_VERSION}/${SERVICE_WAITER_VERSION}/g" \
-  >> /tmp/payment
-  echo "---" >> /tmp/payment
-done
-
-#
 # configurePublicAPI
 #
 
@@ -606,7 +590,6 @@ WITH_VM=true "$ROOT/.werft/jobs/build/installer/post-process.sh" "${PREVIEW_NAME
 #
 # Cleanup from post-processing
 #
-rm -f /tmp/payment
 rm -f /tmp/defaultFeatureFlags
 rm -f /tmp/public-api
 
@@ -635,7 +618,7 @@ rm -f "${INSTALLER_RENDER_PATH}"
 # =========================
 # Wait for objects to be ready
 # =========================
-for item in deployment.apps/blobserve deployment.apps/content-service deployment.apps/dashboard deployment.apps/ide-metrics deployment.apps/ide-proxy deployment.apps/ide-service deployment.apps/image-builder-mk3 deployment.apps/minio deployment.apps/node-labeler deployment.apps/payment-endpoint deployment.apps/proxy deployment.apps/public-api-server deployment.apps/redis deployment.apps/server deployment.apps/spicedb deployment.apps/usage deployment.apps/ws-manager deployment.apps/ws-manager-bridge deployment.apps/ws-proxy statefulset.apps/messagebus statefulset.apps/mysql statefulset.apps/openvsx-proxy daemonset.apps/agent-smith daemonset.apps/fluent-bit daemonset.apps/registry-facade daemonset.apps/ws-daemon; do
+for item in deployment.apps/blobserve deployment.apps/content-service deployment.apps/dashboard deployment.apps/ide-metrics deployment.apps/ide-proxy deployment.apps/ide-service deployment.apps/image-builder-mk3 deployment.apps/minio deployment.apps/node-labeler deployment.apps/proxy deployment.apps/public-api-server deployment.apps/redis deployment.apps/server deployment.apps/spicedb deployment.apps/usage deployment.apps/ws-manager deployment.apps/ws-manager-bridge deployment.apps/ws-proxy statefulset.apps/messagebus statefulset.apps/mysql statefulset.apps/openvsx-proxy daemonset.apps/agent-smith daemonset.apps/fluent-bit daemonset.apps/registry-facade daemonset.apps/ws-daemon; do
   kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" rollout status "${item}" --namespace="${PREVIEW_NAMESPACE}"
 done
 
