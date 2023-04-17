@@ -7,23 +7,36 @@
 import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
+import { useCurrentOrg } from "../organizations/orgs-query";
+import { useCurrentUser } from "../../user-context";
 
 export type ListWorkspacesQueryResult = WorkspaceInfo[];
 
 type UseListWorkspacesQueryArgs = {
     limit: number;
-    orgId?: string;
 };
 
+export function useOrganizationIdForWorkspaceList() {
+    const user = useCurrentUser();
+    const currentOrg = useCurrentOrg();
+    let organizationId = currentOrg.data?.id;
+    if (!user?.additionalData?.isMigratedToTeamOnlyAttribution) {
+        organizationId = undefined;
+    }
+    return organizationId;
+}
+
 export const useListWorkspacesQuery = ({ limit }: UseListWorkspacesQueryArgs) => {
+    const organizationId = useOrganizationIdForWorkspaceList();
     return useQuery<ListWorkspacesQueryResult>({
-        queryKey: getListWorkspacesQueryKey(),
+        queryKey: getListWorkspacesQueryKey(organizationId),
         queryFn: async () => {
             // TODO: Can we update the backend api to sort & rank pinned over non-pinned for us?
             const [infos, pinned] = await Promise.all([
                 getGitpodService().server.getWorkspaces({
                     limit,
                     includeWithoutProject: true,
+                    organizationId,
                 }),
                 // Additional fetch for pinned workspaces
                 // see also: https://github.com/gitpod-io/gitpod/issues/4488
@@ -31,6 +44,7 @@ export const useListWorkspacesQuery = ({ limit }: UseListWorkspacesQueryArgs) =>
                     limit,
                     pinnedOnly: true,
                     includeWithoutProject: true,
+                    organizationId,
                 }),
             ]);
 
@@ -44,4 +58,4 @@ export const useListWorkspacesQuery = ({ limit }: UseListWorkspacesQueryArgs) =>
     });
 };
 
-export const getListWorkspacesQueryKey = () => ["workspaces", "list"];
+export const getListWorkspacesQueryKey = (orgId?: string) => ["workspaces", "list", orgId || "noorg"];

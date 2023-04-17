@@ -456,6 +456,7 @@ export namespace GitpodServer {
         pinnedOnly?: boolean;
         projectId?: string | string[];
         includeWithoutProject?: boolean;
+        organizationId?: string;
     }
     export interface GetAccountStatementOptions {
         date?: string;

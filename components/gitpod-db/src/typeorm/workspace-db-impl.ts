@@ -224,6 +224,9 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         if (options.pinnedOnly) {
             qb.andWhere("ws.pinned = true");
         }
+        if (options.organizationId) {
+            qb.andWhere("ws.organizationId = :organizationId", { organizationId: options.organizationId });
+        }
         const projectIds = typeof options.projectId === "string" ? [options.projectId] : options.projectId;
         if (projectIds !== undefined) {
             if (projectIds.length === 0 && !options.includeWithoutProject) {

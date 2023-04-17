@@ -8,15 +8,20 @@ import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getGitpodService } from "../../service/service";
-import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
+import {
+    getListWorkspacesQueryKey,
+    ListWorkspacesQueryResult,
+    useOrganizationIdForWorkspaceList,
+} from "./list-workspaces-query";
 
 export const useListenToWorkspacesWSMessages = () => {
     const queryClient = useQueryClient();
+    const organizationId = useOrganizationIdForWorkspaceList();
 
     useEffect(() => {
         const disposable = getGitpodService().registerClient({
             onInstanceUpdate: (instance: WorkspaceInstance) => {
-                const queryKey = getListWorkspacesQueryKey();
+                const queryKey = getListWorkspacesQueryKey(organizationId);
                 let foundWorkspaces = false;
 
                 // Update the workspace with the latest instance
@@ -44,5 +49,5 @@ export const useListenToWorkspacesWSMessages = () => {
         return () => {
             disposable.dispose();
         };
-    }, [queryClient]);
+    }, [organizationId, queryClient]);
 };

@@ -43,7 +43,7 @@ export function CreateWorkspacePage() {
     const user = useCurrentUser();
     const currentOrg = useCurrentOrg().data;
     const projects = useListProjectsQuery();
-    const workspaces = useListWorkspacesQuery({ limit: 50, orgId: currentOrg?.id });
+    const workspaces = useListWorkspacesQuery({ limit: 50 });
     const location = useLocation();
     const history = useHistory();
     const props = StartWorkspaceOptions.parseSearchParams(location.search);
