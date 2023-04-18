@@ -17094,15 +17094,6 @@ svgo@^1.0.0, svgo@^1.2.2:
     unquote "~1.1.1"
     util.promisify "~1.0.0"
 
-swot-js@^1.0.3:
-  version "1.0.7"
-  resolved "https://registry.npmjs.org/swot-js/-/swot-js-1.0.7.tgz"
-  integrity sha512-eQYUVF5y2CB5ZoGGUk7QlW79f+w31qLFvhb+EBOn4PBRt5SRqiSe99h0TxVd7XuUL9xG+fNtqgIZF2q3kQn7aQ==
-  dependencies:
-    chai "^1.9.2"
-    underscore "^1.7.0"
-    walk "^2.3.4"
-
 symbol-tree@^3.2.4:
   version "3.2.4"
   resolved "https://registry.npmjs.org/symbol-tree/-/symbol-tree-3.2.4.tgz"
