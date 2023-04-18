@@ -22,13 +22,7 @@ import { PrebuildRateLimiters } from "./workspace/prebuild-rate-limiter";
 export const Config = Symbol("Config");
 export type Config = Omit<
     ConfigSerialized,
-    | "hostUrl"
-    | "stripeSecretsFile"
-    | "stripeConfigFile"
-    | "linkedInSecretsFile"
-    | "licenseFile"
-    | "patSigningKeyFile"
-    | "auth"
+    "hostUrl" | "stripeSecretsFile" | "stripeConfigFile" | "linkedInSecretsFile" | "patSigningKeyFile" | "auth"
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
@@ -108,10 +102,6 @@ export interface ConfigSerialized {
     installationShortname: string;
     devBranch?: string;
     insecureNoDomain: boolean;
-
-    // Use one or other - licenseFile reads from a file and populates license
-    license?: string;
-    licenseFile?: string;
 
     workspaceHeartbeat: {
         intervalSeconds: number;
@@ -336,11 +326,7 @@ export namespace ConfigFile {
                 log.error("Could not load LinkedIn secrets", error);
             }
         }
-        let license = config.license;
-        const licenseFile = config.licenseFile;
-        if (licenseFile) {
-            license = fs.readFileSync(filePathTelepresenceAware(licenseFile), "utf-8");
-        }
+
         let inactivityPeriodForReposInDays: number | undefined;
         if (typeof config.inactivityPeriodForReposInDays === "number") {
             if (config.inactivityPeriodForReposInDays >= 1) {
@@ -396,7 +382,6 @@ export namespace ConfigFile {
             stripeSecrets,
             linkedInSecrets,
             twilioConfig,
-            license,
             workspaceGarbageCollection: {
                 ...config.workspaceGarbageCollection,
                 startDate: config.workspaceGarbageCollection.startDate
