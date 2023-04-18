@@ -87,7 +87,6 @@ export const GitpodServer = Symbol("GitpodServer");
 export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, LicenseService, IDEServer {
     // User related API
     getLoggedInUser(): Promise<User>;
-    getTerms(): Promise<Terms>;
     updateLoggedInUser(user: Partial<User>): Promise<User>;
     sendPhoneNumberVerificationToken(phoneNumber: string): Promise<void>;
     verifyPhoneNumberVerificationToken(phoneNumber: string, token: string): Promise<boolean>;
