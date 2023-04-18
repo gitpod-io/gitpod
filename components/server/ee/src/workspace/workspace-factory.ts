@@ -23,7 +23,6 @@ import {
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
-import { UserCounter } from "../user/user-counter";
 import { increasePrebuildsStartedCounter } from "../../../src/prometheus-metrics";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
 import { EntitlementService } from "../../../src/billing/entitlement-service";
@@ -32,7 +31,6 @@ import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(UserCounter) protected readonly userCounter: UserCounter;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
 
