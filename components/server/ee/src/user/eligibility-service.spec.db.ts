@@ -23,7 +23,6 @@ import {
 } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { EMailDomainService, EMailDomainServiceImpl } from "../auth/email-domain-service";
 import { TokenProvider } from "../../../src/user/token-provider";
-import { AccountStatementProvider } from "./account-statement-provider";
 
 const localTestContainer = testContainer.createChild();
 localTestContainer.bind(EligibilityService).toSelf().inSingletonScope();
@@ -52,7 +51,6 @@ localTestContainer.bind(TokenProvider).toDynamicValue(
         },
 );
 
-localTestContainer.bind(AccountStatementProvider).toSelf().inRequestScope();
 localTestContainer.bind(AccountServiceImpl).toSelf().inSingletonScope();
 localTestContainer.bind(AccountService).toService(AccountServiceImpl);
 

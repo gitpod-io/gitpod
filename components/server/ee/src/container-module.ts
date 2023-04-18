@@ -32,7 +32,6 @@ import {
 } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { StripeService } from "./user/stripe-service";
 import { EligibilityService } from "./user/eligibility-service";
-import { AccountStatementProvider } from "./user/account-statement-provider";
 import { UserDeletionService } from "../../src/user/user-deletion-service";
 import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
 import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
@@ -80,7 +79,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
     rebind(BlockedUserFilter).toService(EMailDomainService);
     bind(SnapshotService).toSelf().inSingletonScope();
-    bind(AccountStatementProvider).toSelf().inSingletonScope();
 
     bind(UserDeletionServiceEE).toSelf().inSingletonScope();
     rebind(UserDeletionService).to(UserDeletionServiceEE).inSingletonScope();

@@ -10,7 +10,6 @@ import { TokenProvider } from "../../../src/user/token-provider";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { AccountStatementProvider } from "./account-statement-provider";
 import { EMailDomainService } from "../auth/email-domain-service";
 import fetch from "node-fetch";
 import { Config } from "../../../src/config";
@@ -35,7 +34,6 @@ export class EligibilityService {
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(EMailDomainService) protected readonly domainService: EMailDomainService;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
-    @inject(AccountStatementProvider) protected readonly accountStatementProvider: AccountStatementProvider;
     @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
     @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
 
