@@ -1809,34 +1809,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return { instance, workspace };
     }
 
-    async getUserStorageResource(
-        ctx: TraceContext,
-        options: GitpodServer.GetUserStorageResourceOptions,
-    ): Promise<string> {
-        traceAPIParams(ctx, { options });
-
-        const uri = options.uri;
-        const userId = this.checkUser("getUserStorageResource", { uri: options.uri }).id;
-
-        await this.guardAccess({ kind: "userStorage", uri, userID: userId }, "get");
-
-        return await this.userStorageResourcesDB.get(userId, uri);
-    }
-
-    async updateUserStorageResource(
-        ctx: TraceContext,
-        options: GitpodServer.UpdateUserStorageResourceOptions,
-    ): Promise<void> {
-        traceAPIParams(ctx, { options: censor(options, "content") }); // because may contain PII, and size (arbitrary files are stored here)
-
-        const { uri, content } = options;
-        const userId = this.checkAndBlockUser("updateUserStorageResource", { uri: options.uri }).id;
-
-        await this.guardAccess({ kind: "userStorage", uri, userID: userId }, "update");
-
-        await this.userStorageResourcesDB.update(userId, uri, content);
-    }
-
     async isGitHubAppEnabled(ctx: TraceContext): Promise<boolean> {
         this.checkAndBlockUser();
         return !!this.config.githubApp?.enabled;

@@ -61,8 +61,6 @@ type APIInterface interface {
 	GetOpenPorts(ctx context.Context, workspaceID string) (res []*WorkspaceInstancePort, err error)
 	OpenPort(ctx context.Context, workspaceID string, port *WorkspaceInstancePort) (res *WorkspaceInstancePort, err error)
 	ClosePort(ctx context.Context, workspaceID string, port float32) (err error)
-	GetUserStorageResource(ctx context.Context, options *GetUserStorageResourceOptions) (res string, err error)
-	UpdateUserStorageResource(ctx context.Context, options *UpdateUserStorageResourceOptions) (err error)
 	GetWorkspaceEnvVars(ctx context.Context, workspaceID string) (res []*EnvVar, err error)
 	GetEnvVars(ctx context.Context) (res []*EnvVar, err error)
 	SetEnvVar(ctx context.Context, variable *UserEnvVarValue) (err error)
@@ -184,10 +182,6 @@ const (
 	FunctionOpenPort FunctionName = "openPort"
 	// FunctionClosePort is the name of the closePort function
 	FunctionClosePort FunctionName = "closePort"
-	// FunctionGetUserStorageResource is the name of the getUserStorageResource function
-	FunctionGetUserStorageResource FunctionName = "getUserStorageResource"
-	// FunctionUpdateUserStorageResource is the name of the updateUserStorageResource function
-	FunctionUpdateUserStorageResource FunctionName = "updateUserStorageResource"
 	// FunctionGetEnvVars is the name of the getEnvVars function
 	FunctionGetEnvVars FunctionName = "getEnvVars"
 	// FunctionSetEnvVar is the name of the setEnvVar function
@@ -1080,44 +1074,6 @@ func (gp *APIoverJSONRPC) ClosePort(ctx context.Context, workspaceID string, por
 	return
 }
 
-// GetUserStorageResource calls getUserStorageResource on the server
-func (gp *APIoverJSONRPC) GetUserStorageResource(ctx context.Context, options *GetUserStorageResourceOptions) (res string, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, options)
-
-	var result string
-	err = gp.C.Call(ctx, "getUserStorageResource", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
-// UpdateUserStorageResource calls updateUserStorageResource on the server
-func (gp *APIoverJSONRPC) UpdateUserStorageResource(ctx context.Context, options *UpdateUserStorageResourceOptions) (err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, options)
-
-	err = gp.C.Call(ctx, "updateUserStorageResource", _params, nil)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
 // GetWorkspaceEnvVars calls GetWorkspaceEnvVars on the server
 func (gp *APIoverJSONRPC) GetWorkspaceEnvVars(ctx context.Context, workspaceID string) (res []*EnvVar, err error) {
 	if gp == nil {
@@ -1645,11 +1601,6 @@ type UserInfo struct {
 	Name string `json:"name,omitempty"`
 }
 
-// GetUserStorageResourceOptions is the GetUserStorageResourceOptions message type
-type GetUserStorageResourceOptions struct {
-	URI string `json:"uri,omitempty"`
-}
-
 // GetWorkspacesOptions is the GetWorkspacesOptions message type
 type GetWorkspacesOptions struct {
 	Limit        float64 `json:"limit,omitempty"`
@@ -2136,12 +2087,6 @@ type SendHeartBeatOptions struct {
 	InstanceID    string  `json:"instanceId,omitempty"`
 	RoundTripTime float64 `json:"roundTripTime,omitempty"`
 	WasClosed     bool    `json:"wasClosed,omitempty"`
-}
-
-// UpdateUserStorageResourceOptions is the UpdateUserStorageResourceOptions message type
-type UpdateUserStorageResourceOptions struct {
-	Content string `json:"content,omitempty"`
-	URI     string `json:"uri,omitempty"`
 }
 
 // AdditionalUserData is the AdditionalUserData message type
