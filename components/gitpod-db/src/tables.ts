@@ -187,11 +187,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_theia_plugin",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-        },
-        {
             name: "d_b_user_env_var",
             primaryKeys: ["id", "userId"],
             timeColumn: "_lastModified",
