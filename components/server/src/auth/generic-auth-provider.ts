@@ -336,7 +336,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
          * incoming `/callback` request:
          *
          * - redirect to handle/display errors
-         * - redirect to terms acceptance request page
          * - call `request.login` on new sessions
          * - redirect to `returnTo` (from request parameter)
          */

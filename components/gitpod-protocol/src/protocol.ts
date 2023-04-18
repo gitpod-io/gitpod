@@ -1550,21 +1550,6 @@ export interface Configuration {
     readonly garbageCollectionStartDate: number;
 }
 
-export interface TermsAcceptanceEntry {
-    readonly userId: string;
-    readonly termsRevision: string;
-    readonly acceptionTime: string;
-}
-
-export interface Terms {
-    readonly revision: string;
-    readonly activeSince: string;
-    readonly adminOnlyTerms: boolean;
-    readonly updateMessage: string;
-    readonly content: string;
-    readonly formElements?: object;
-}
-
 export interface StripeConfig {
     individualUsagePriceIds: { [currency: string]: string };
     teamUsagePriceIds: { [currency: string]: string };

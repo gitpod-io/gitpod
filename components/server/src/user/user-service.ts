@@ -35,11 +35,6 @@ export interface CheckSignUpParams {
     identity: Identity;
 }
 
-export interface CheckTermsParams {
-    config: AuthProviderParams;
-    identity?: Identity;
-    user?: User;
-}
 export interface CreateUserParams {
     identity: Identity;
     token?: Token;
