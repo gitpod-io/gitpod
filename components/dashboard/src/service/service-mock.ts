@@ -230,16 +230,10 @@ const gitpodServiceMock = createServiceMock({
             },
         ];
     },
-    getShowPaymentUI: async () => {
-        return false;
-    },
     getClientRegion: async () => {
         return "europe-west-1";
     },
     isStudent: async () => {
-        return false;
-    },
-    isChargebeeCustomer: async () => {
         return false;
     },
     getSuggestedContextURLs: async () => {

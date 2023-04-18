@@ -77,7 +77,6 @@ import {
     UserSSHPublicKeyValue,
     PrebuildEvent,
 } from "@gitpod/gitpod-protocol";
-import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
     AdminBlockUserRequest,
@@ -95,13 +94,6 @@ import {
 } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import {
-    TeamSubscription,
-    TeamSubscription2,
-    TeamSubscriptionSlot,
-    TeamSubscriptionSlotResolved,
-} from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { Cancelable } from "@gitpod/gitpod-protocol/lib/util/cancelable";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
@@ -2309,7 +2301,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const result = await this.teamDB.addMemberToTeam(user.id, invite.teamId);
         const team = await this.teamDB.findTeamById(invite.teamId);
         if (result !== "already_member") {
-            await this.onTeamMemberAdded(user.id, invite.teamId);
             this.analytics.track({
                 userId: user.id,
                 event: "team_joined",
@@ -2368,7 +2359,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new Error(`Could not find membership for user '${userId}' in organization '${teamId}'`);
         }
         await this.teamDB.removeMemberFromTeam(userId, teamId);
-        await this.onTeamMemberRemoved(userId, teamId, membership.id);
         this.analytics.track({
             userId: user.id,
             event: "team_user_removed",
@@ -2483,7 +2473,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // TODO: delete setting
         await this.teamDB.deleteTeam(teamId);
-        await this.onTeamDeleted(teamId);
 
         return this.analytics.track({
             userId: user.id,
@@ -3326,142 +3315,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     //#region gitpod.io concerns
     //
-    async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async adminSetProfessionalOpenSource(ctx: TraceContext, userId: string, shouldGetProfOSS: boolean): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
     async adminIsStudent(ctx: TraceContext, userId: string): Promise<boolean> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async adminAddStudentEmailDomain(ctx: TraceContext, userId: string, domain: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
-    async adminGrantExtraHours(ctx: TraceContext, userId: string, extraHours: number): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
     async adminGetBillingMode(ctx: TraceContextWithSpan, attributionId: string): Promise<BillingMode> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async isStudent(ctx: TraceContext): Promise<boolean> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async getAccountStatement(
-        ctx: TraceContext,
-        options: GitpodServer.GetAccountStatementOptions,
-    ): Promise<AccountStatement | undefined> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async getRemainingUsageHours(ctx: TraceContext): Promise<number> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async getChargebeeSiteId(ctx: TraceContext): Promise<string> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async createPortalSession(ctx: TraceContext): Promise<{}> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async createTeamPortalSession(ctx: TraceContext, teamId: string): Promise<{}> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async teamCheckout(ctx: TraceContext, teamId: string, planId: string): Promise<{}> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async getAvailableCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async getAppliedCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async getShowPaymentUI(ctx: TraceContext): Promise<boolean> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async isChargebeeCustomer(ctx: TraceContext): Promise<boolean> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async subscriptionUpgradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async subscriptionDowngradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async subscriptionCancel(ctx: TraceContext, subscriptionId: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async subscriptionCancelDowngrade(ctx: TraceContext, subscriptionId: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async getTeamSubscription(ctx: TraceContext, teamId: string): Promise<TeamSubscription2 | undefined> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async cancelTeamSubscription(ctx: TraceContext, teamId: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
-        // Extension point for EE
-    }
-    protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
-        // Extension point for EE
-    }
-    protected async onTeamDeleted(teamId: string): Promise<void> {
-        // Extension point for EE
-    }
-    async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async tsCancel(ctx: TraceContext, teamSubscriptionId: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async tsGetSlots(ctx: TraceContext): Promise<TeamSubscriptionSlotResolved[]> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async tsAddMembersToOrg(ctx: TraceContext, teamSubscriptionId: string, organizationId: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async tsGetUnassignedSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-    ): Promise<TeamSubscriptionSlot | undefined> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async tsAddSlots(ctx: TraceContext, teamSubscriptionId: string, quantity: number): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async tsAssignSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-        teamSubscriptionSlotId: string,
-        identityStr: string | undefined,
-    ): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async tsReassignSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-        teamSubscriptionSlotId: string,
-        newIdentityStr: string,
-    ): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async tsDeactivateSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-        teamSubscriptionSlotId: string,
-    ): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async tsReactivateSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-        teamSubscriptionSlotId: string,
-    ): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {

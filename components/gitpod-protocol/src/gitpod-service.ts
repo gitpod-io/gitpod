@@ -53,14 +53,6 @@ import { WebSocketConnectionProvider } from "./messaging/browser/connection";
 import { PermissionName } from "./permission";
 import { LicenseService } from "./license-protocol";
 import { Emitter } from "./util/event";
-import { AccountStatement, CreditAlert } from "./accounting-protocol";
-import { GithubUpgradeURL, PlanCoupon } from "./payment-protocol";
-import {
-    TeamSubscription,
-    TeamSubscription2,
-    TeamSubscriptionSlot,
-    TeamSubscriptionSlotResolved,
-} from "./team-subscription-protocol";
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
 import { ListUsageRequest, ListUsageResponse, CostCenterJSON } from "./usage";
@@ -73,8 +65,6 @@ export interface GitpodClient {
     onWorkspaceImageBuildLogs: WorkspaceImageBuild.LogCallback;
 
     onPrebuildUpdate(update: PrebuildWithStatus): void;
-
-    onCreditAlert(creditAlert: CreditAlert): void;
 
     //#region propagating reconnection to iframe
     notifyDidOpenConnection(): void;
@@ -242,50 +232,10 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * gitpod.io concerns
      */
     isStudent(): Promise<boolean>;
-    /**
-     *
-     */
-    getAccountStatement(options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement | undefined>;
-    getRemainingUsageHours(): Promise<number>;
 
     /**
-     *
+     * Stripe/Usage
      */
-    getChargebeeSiteId(): Promise<string>;
-    createPortalSession(): Promise<{}>;
-    createTeamPortalSession(teamId: string): Promise<{}>;
-    checkout(planId: string, planQuantity?: number): Promise<{}>;
-    teamCheckout(teamId: string, planId: string): Promise<{}>;
-    getAvailableCoupons(): Promise<PlanCoupon[]>;
-    getAppliedCoupons(): Promise<PlanCoupon[]>;
-
-    getShowPaymentUI(): Promise<boolean>;
-    isChargebeeCustomer(): Promise<boolean>;
-
-    subscriptionUpgradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void>;
-    subscriptionDowngradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void>;
-    subscriptionCancel(subscriptionId: string): Promise<void>;
-    subscriptionCancelDowngrade(subscriptionId: string): Promise<void>;
-
-    getTeamSubscription(teamId: string): Promise<TeamSubscription2 | undefined>;
-    cancelTeamSubscription(teamId: string): Promise<void>;
-    tsCancel(teamSubscriptionId: string): Promise<void>;
-    tsGet(): Promise<TeamSubscription[]>;
-    tsGetSlots(): Promise<TeamSubscriptionSlotResolved[]>;
-    tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined>;
-    tsAddSlots(teamSubscriptionId: string, quantity: number): Promise<void>;
-    tsAssignSlot(
-        teamSubscriptionId: string,
-        teamSubscriptionSlotId: string,
-        identityStr: string | undefined,
-    ): Promise<void>;
-    tsReassignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void>;
-    tsDeactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
-    tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
-    tsAddMembersToOrg(teamSubscriptionId: string, organizationId: string): Promise<void>;
-
-    getGithubUpgradeUrls(): Promise<GithubUpgradeURL[]>;
-
     getStripePublishableKey(): Promise<string>;
     getStripeSetupIntentClientSecret(): Promise<string>;
     findStripeSubscriptionId(attributionId: string): Promise<string | undefined>;
@@ -602,18 +552,6 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
             if (client.notifyDidCloseConnection) {
                 try {
                     client.notifyDidCloseConnection();
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-        }
-    }
-
-    onCreditAlert(creditAlert: CreditAlert): void {
-        for (const client of this.clients) {
-            if (client.onCreditAlert) {
-                try {
-                    client.onCreditAlert(creditAlert);
                 } catch (error) {
                     console.error(error);
                 }

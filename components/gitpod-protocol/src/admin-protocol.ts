@@ -10,7 +10,6 @@ import { FindPrebuildsParams } from "./gitpod-service";
 import { Project, Team, PrebuildWithStatus, TeamMemberInfo, TeamMemberRole } from "./teams-projects-protocol";
 import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
-import { AccountStatement } from "./accounting-protocol";
 import { BillingMode } from "./billing-mode";
 import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "./usage";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
@@ -46,11 +45,8 @@ export interface AdminServer {
     adminFindPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
     adminSetLicense(key: string): Promise<void>;
 
-    adminGetAccountStatement(userId: string): Promise<AccountStatement>;
-    adminSetProfessionalOpenSource(userId: string, shouldGetProfOSS: boolean): Promise<void>;
     adminIsStudent(userId: string): Promise<boolean>;
     adminAddStudentEmailDomain(userId: string, domain: string): Promise<void>;
-    adminGrantExtraHours(userId: string, extraHours: number): Promise<void>;
     adminGetBillingMode(attributionId: string): Promise<BillingMode>;
 
     adminGetSettings(): Promise<InstallationAdminSettings>;
