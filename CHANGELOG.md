@@ -1,6 +1,7 @@
 # Change Log
 
 ## April 2023
+- Update JetBrains IDE images to most recent stable version. ([#17187](https://github.com/gitpod-io/gitpod/pull/17187)) - [@mustard-mh](https://github.com/mustard-mh), [@roboquat](https://github.com/roboquat)
 - Update new workspace button style ([#17165](https://github.com/gitpod-io/gitpod/pull/17165)) - [@gtsiolis](https://github.com/gtsiolis)
 - Implement user account verification with LinkedIn during onboarding ([#17074](https://github.com/gitpod-io/gitpod/pull/17074)) - [@jankeromnes](https://github.com/jankeromnes), [@selfcontained](https://github.com/selfcontained)
 
