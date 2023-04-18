@@ -100,15 +100,6 @@ function renderBillingMenuEntries(user?: User, billingMode?: BillingMode) {
                     title: "Billing",
                     link: [settingsPathBilling],
                 },
-                // We need to allow access to "Organization Plans" here, at least for owners.
-                ...(BillingMode.showTeamSubscriptionUI(billingMode)
-                    ? [
-                          {
-                              title: "Team Plans (deprecated)",
-                              link: ["/old-team-plans"],
-                          },
-                      ]
-                    : []),
             ];
         default:
             return [];

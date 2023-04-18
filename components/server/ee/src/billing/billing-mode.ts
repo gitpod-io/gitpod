@@ -7,15 +7,10 @@
 import { inject, injectable } from "inversify";
 
 import { Team, User } from "@gitpod/gitpod-protocol";
-import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { Config } from "../../../src/config";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { TeamDB, TeamSubscription2DB, TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
-import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
+import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { TeamSubscription, TeamSubscription2 } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { UsageService } from "../../../src/user/usage-service";
 
@@ -27,24 +22,12 @@ export interface BillingModes {
 }
 
 /**
- *
- * Some rules for how we decide about BillingMode someone is in:
- *  - Teams: Do they have either:
- *    - Chargebee subscription              => cb
- *    - UBB (& maybe Stripe subscription):  => ubb
- *  - Users: Do they have either:
- *    - personal Chargebee subscription     => cb
- *    - personal Stripe Subscription        => ubb
- *    - at least one Stripe Team seat       => ubb
+ * Decides on a per org (legcay: also per-user) basis which BillingMode to use: "none" or "usage-based"
  */
 @injectable()
 export class BillingModesImpl implements BillingModes {
     @inject(Config) protected readonly config: Config;
-    @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
-    @inject(SubscriptionService) protected readonly subscriptionSvc: SubscriptionService;
     @inject(UsageService) protected readonly usageService: UsageService;
-    @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
-    @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(UserDB) protected readonly userDB: UserDB;
 
@@ -71,193 +54,20 @@ export class BillingModesImpl implements BillingModes {
             return { mode: "none" };
         }
 
-        // Is Usage Based Billing enabled for this user or not?
-        const teams = await this.teamDB.findTeamsByUser(user.id);
-        let isUsageBasedBillingEnabled = false;
-        if (teams.length > 0) {
-            for (const team of teams) {
-                // Checking here doesn't actually block on every team as the flags are fetched once and catched, subsequent calls are non-blocking.
-                const isEnabled = await this.configCatClientFactory().getValueAsync(
-                    "isUsageBasedBillingEnabled",
-                    false,
-                    {
-                        user,
-                        teamId: team.id,
-                        teamName: team.name,
-                    },
-                );
-                if (isEnabled) {
-                    isUsageBasedBillingEnabled = true;
-                    break;
-                }
-            }
-            // No need to check the user, because ConfigCat rules would have already flagged them with one of the calls above.
-        } else {
-            isUsageBasedBillingEnabled = await this.configCatClientFactory().getValueAsync(
-                "isUsageBasedBillingEnabled",
-                false,
-                {
-                    user,
-                },
-            );
-        }
-
-        // 1.1 Gather data: Stripe: Active personal subsciption?
-        let hasUbbPersonal = false;
-        const billingStrategy = await this.usageService.getCurrentBillingStategy({ kind: "user", userId: user.id });
-        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-            hasUbbPersonal = true;
-        }
-
-        // 1.2 UBB enabled?
-        if (!isUsageBasedBillingEnabled && !hasUbbPersonal) {
-            // UBB is not enabled: definitely chargebee
-            // EXCEPT we're doing a rollback
-            return { mode: "chargebee" };
-        }
-
-        // 2.1 Gather data: Chargebee personal
-        // Chargebee takes precedence
-        const cbSubscriptions = await this.subscriptionSvc.getActivePaidSubscription(user.id, now);
-        const cbTeamSubscriptions = cbSubscriptions.filter((s) => Subscription.isOldTeamSubscription(s));
-        const cbPersonalSubscriptions = cbSubscriptions.filter(
-            (s) => Plans.isPersonalPlan(s.planId) && !Plans.isFreePlan(s.planId),
-        );
-        const cbOwnedTeamSubscriptions = (
-            await this.teamSubscriptionDb.findTeamSubscriptions({ userId: user.id })
-        ).filter((ts) => TeamSubscription.isActive(ts, now.toISOString()));
-
-        // 2.2 Gather data: Chargebee team memberships/plans
-        // UBB overrides wins if there is _any_. But if there is none, use the existing Chargebee subscription.
-        const teamsModes = await Promise.all(teams.map((t) => this.getBillingModeForTeam(t, now)));
-        const hasUbbPaidTeamMembership = teamsModes.some((tm) => tm.mode === "usage-based" && !!tm.paid);
-        const hasCbPaidTeamMembership = teamsModes.some((tm) => tm.mode === "chargebee" && !!tm.paid);
-        const hasCbPaidTeamSeat = cbTeamSubscriptions.length > 0;
-        const hasCbPaidTeamSubscription = cbOwnedTeamSubscriptions.length > 0;
-
-        function usageBased() {
-            const result: BillingMode = { mode: "usage-based" };
-            if (hasCbPaidTeamMembership) {
-                result.hasChargebeeTeamPlan = true;
-            }
-            if (hasCbPaidTeamSeat || hasCbPaidTeamSubscription) {
-                result.hasChargebeeTeamSubscription = true;
-            }
-            return result;
-        }
-
-        // 3.1: Personal UBB overrules everything
-        if (hasUbbPersonal) {
-            // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
-            return usageBased();
-        }
-
-        // 3.2: Personal CB takes 2nd precedence
-        let canUpgradeToUBB: boolean | undefined = undefined;
-        if (cbPersonalSubscriptions.length > 0) {
-            if (cbPersonalSubscriptions.every((s) => Subscription.isCancelled(s, now.toISOString()))) {
-                // The user has one or more paid subscriptions, but all of them have already been cancelled
-                canUpgradeToUBB = true;
-            } else {
-                // The user has at least one paid personal subscription
-                return {
-                    mode: "chargebee",
-                };
-            }
-        }
-
-        // 3.3: 3rd is UBB membership
-        if (hasUbbPaidTeamMembership) {
-            // UBB is greedy: once a user has at least a paid team membership, they should benefit from it!
-            return usageBased();
-        }
-
-        // 3.4: 4th (fallback): Any CB seat/membership get's the rest
-        if (hasCbPaidTeamMembership || hasCbPaidTeamSeat) {
-            // Q: How to test the free-tier, then? A: Make sure you have no CB paid seats anymore
-            // For that we lists all Team Subscriptions/Team Memberships that are "blocking" you, and display them in the UI somewhere.
-            const result: BillingMode = { mode: "chargebee", canUpgradeToUBB }; // UBB is enabled, but no seat nor subscription yet.
-
-            const teamNames = [];
-            for (const tm of teamsModes) {
-                if (tm.mode === "chargebee" && tm.teamNames) {
-                    teamNames.push(`Team Membership: ${tm.teamNames}`);
-                }
-            }
-            const tsOwners = await Promise.all(cbTeamSubscriptions.map((s) => this.mapTeamSubscriptionToOwnerName(s)));
-            for (const owner of tsOwners) {
-                if (!owner) {
-                    continue;
-                }
-                const [ts, ownerName] = owner;
-                teamNames.push(`Team Subscription '${Plans.getById(ts.planId)?.name}' (owner: ${ownerName})`);
-            }
-            if (teamNames.length > 0) {
-                result.teamNames = teamNames;
-            }
-
-            return result;
-        }
-
-        // UBB free tier
-        return usageBased();
-    }
-
-    protected async mapTeamSubscriptionToOwnerName(s: Subscription): Promise<[TeamSubscription, string] | undefined> {
-        if (!s || !s.teamSubscriptionSlotId) {
-            return undefined;
-        }
-        const ts = await this.teamSubscriptionDb.findTeamSubscriptionBySlotId(s.teamSubscriptionSlotId!);
-        if (!ts) {
-            return undefined;
-        }
-        const user = await this.userDB.findUserById(ts.userId);
-        if (!user) {
-            return undefined;
-        }
-        return [ts, user.name || user.fullName || "---"];
+        // "paid" is not set here, just as before. Also, it's we should remove this whole method once the org-migration is done, and center all capabilities around Organizations
+        return {
+            mode: "usage-based",
+        };
     }
 
     async getBillingModeForTeam(team: Team, _now: Date): Promise<BillingMode> {
         if (!this.config.enablePayment) {
-            // Payment is not enabled. E.g. Self-Hosted.
+            // Payment is not enabled. E.g. Dedicated
             return { mode: "none" };
         }
-        const now = _now.toISOString();
 
-        // Is Usage Based Billing enabled for this team?
-        const isUsageBasedBillingEnabled = await this.configCatClientFactory().getValueAsync(
-            "isUsageBasedBillingEnabled",
-            false,
-            {
-                teamId: team.id,
-                teamName: team.name,
-            },
-        );
-
-        // 1. Check Chargebee: Any TeamSubscription2 (old Team Subscriptions are not relevant here, as they are not associated with a team)
-        const teamSubscription = await this.teamSubscription2Db.findForTeam(team.id, now);
-        if (teamSubscription && TeamSubscription2.isActive(teamSubscription, now)) {
-            if (TeamSubscription2.isCancelled(teamSubscription, now)) {
-                // The team has a paid subscription, but it's already cancelled, and UBB enabled
-                return { mode: "chargebee", canUpgradeToUBB: isUsageBasedBillingEnabled };
-            }
-
-            return { mode: "chargebee", teamNames: [team.name], paid: true };
-        }
-
-        // 2. UBP enabled OR respective BillingStrategy?
         const billingStrategy = await this.usageService.getCurrentBillingStategy(AttributionId.create(team));
-        if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE || isUsageBasedBillingEnabled) {
-            // Now we're usage-based. We only have to figure out whether we have a paid plan yet or not.
-            const result: BillingMode = { mode: "usage-based" };
-            if (billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-                result.paid = true;
-            }
-            return result;
-        }
-
-        // 3. Default case if none is enabled: fall back to Chargebee
-        return { mode: "chargebee" };
+        const paid = billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
+        return { mode: "usage-based", paid };
     }
 }
