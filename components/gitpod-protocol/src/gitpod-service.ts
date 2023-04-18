@@ -14,7 +14,6 @@ import {
     AuthProviderInfo,
     Token,
     UserEnvVarValue,
-    Terms,
     Configuration,
     UserInfo,
     GitpodTokenType,
