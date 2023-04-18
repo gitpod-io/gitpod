@@ -143,7 +143,6 @@ import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
 import { UserDeletionService } from "../user/user-deletion-service";
 import { UserService } from "../user/user-service";
-import { IClientDataPrometheusAdapter } from "./client-data-prometheus-adapter";
 import { ContextParser } from "./context-parser-service";
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
 import { WorkspaceDeletionService } from "./workspace-deletion-service";
@@ -244,8 +243,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(LinkedInService) protected readonly linkedInService: LinkedInService;
 
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
-
-    @inject(IClientDataPrometheusAdapter) protected readonly clientDataPrometheusAdapter: IClientDataPrometheusAdapter;
 
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
 
@@ -985,14 +982,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             const client = await this.workspaceManagerClientProvider.get(wsi.region);
             await client.markActive(ctx, req);
-
-            if (options && options.roundTripTime && Number.isFinite(options.roundTripTime)) {
-                this.clientDataPrometheusAdapter.storeWorkspaceRoundTripTimeSample(
-                    user,
-                    instanceId,
-                    options.roundTripTime,
-                );
-            }
         } catch (e) {
             if (e.message && typeof e.message === "string" && (e.message as String).endsWith("does not exist")) {
                 // This is an old tab with open workspace: drop silently
