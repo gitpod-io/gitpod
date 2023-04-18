@@ -256,7 +256,6 @@ type ServerConfig struct {
 	OAuthServer                       OAuthServer       `json:"oauthServer"`
 	Session                           Session           `json:"session"`
 	GithubApp                         *GithubApp        `json:"githubApp"`
-	_                                 string            `json:"chargebeeSecret"`
 	StripeSecret                      string            `json:"stripeSecret"`
 	StripeConfig                      string            `json:"stripeConfig"`
 	LinkedInSecret                    string            `json:"linkedInSecret"`

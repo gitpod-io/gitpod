@@ -266,17 +266,16 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"shareSnapshot":    {Group: "inWorkspaceUserAction"},
 			},
 		},
-		ContentServiceAddr:           common.ClusterAddress(contentservice.Component, ctx.Namespace, contentservice.RPCPort),
-		UsageServiceAddr:             common.ClusterAddress(usage.Component, ctx.Namespace, usage.GRPCServicePort),
-		IDEServiceAddr:               common.ClusterAddress(ideservice.Component, ctx.Namespace, ideservice.GRPCServicePort),
-		MaximumEventLoopLag:          0.35,
-		CodeSync:                     CodeSync{},
-		VSXRegistryUrl:               fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
-		EnablePayment:                stripeSecret != "" || stripeConfig != "",
-		ChargebeeProviderOptionsFile: fmt.Sprintf("%s/providerOptions", chargebeeMountPath),
-		StripeSecretsFile:            fmt.Sprintf("%s/apikeys", stripeSecretMountPath),
-		LinkedInSecretsFile:          fmt.Sprintf("%s/linkedin", linkedInSecretMountPath),
-		InsecureNoDomain:             false,
+		ContentServiceAddr:  common.ClusterAddress(contentservice.Component, ctx.Namespace, contentservice.RPCPort),
+		UsageServiceAddr:    common.ClusterAddress(usage.Component, ctx.Namespace, usage.GRPCServicePort),
+		IDEServiceAddr:      common.ClusterAddress(ideservice.Component, ctx.Namespace, ideservice.GRPCServicePort),
+		MaximumEventLoopLag: 0.35,
+		CodeSync:            CodeSync{},
+		VSXRegistryUrl:      fmt.Sprintf("https://open-vsx.%s", ctx.Config.Domain), // todo(sje): or "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}" if not using OpenVSX proxy
+		EnablePayment:       stripeSecret != "" || stripeConfig != "",
+		StripeSecretsFile:   fmt.Sprintf("%s/apikeys", stripeSecretMountPath),
+		LinkedInSecretsFile: fmt.Sprintf("%s/linkedin", linkedInSecretMountPath),
+		InsecureNoDomain:    false,
 		PrebuildLimiter: PrebuildRateLimiters{
 			// default limit for all cloneURLs
 			"*": PrebuildRateLimiterConfig{

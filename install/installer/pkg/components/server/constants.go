@@ -14,7 +14,6 @@ const (
 	ContainerPortName                      = "http"
 	authProviderFilePath                   = "/gitpod/auth-providers"
 	licenseFilePath                        = "/gitpod/license"
-	chargebeeMountPath                     = "/chargebee"
 	stripeSecretMountPath                  = "/stripe-secret"
 	linkedInSecretMountPath                = "/linkedin-secret"
 	githubAppCertSecret                    = "github-app-cert-secret"
