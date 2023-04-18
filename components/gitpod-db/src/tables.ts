@@ -110,12 +110,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_user_message_view_entry",
-            primaryKeys: ["id"],
-            timeColumn: "viewedAt",
-            dependencies: ["d_b_user"],
-        },
-        {
             name: "d_b_user_storage_resource",
             primaryKeys: ["userId", "uri"],
             timeColumn: "_lastModified",
