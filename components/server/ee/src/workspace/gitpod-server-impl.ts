@@ -73,7 +73,7 @@ import {
     Usage_Kind,
 } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { UserService } from "../../../src/user/user-service";
-import { AccountingDB, EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
+import { EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
 import { StripeService } from "../user/stripe-service";
 
 import { GitHubAppSupport } from "../github/github-app-support";
@@ -108,7 +108,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     // per-user state
     @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
 
-    @inject(AccountingDB) protected readonly accountingDB: AccountingDB;
     @inject(EduEmailDomainDB) protected readonly eduDomainDb: EduEmailDomainDB;
 
     @inject(StripeService) protected readonly stripeService: StripeService;
