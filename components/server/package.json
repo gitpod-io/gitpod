@@ -34,7 +34,6 @@
     "@gitpod/content-service": "0.1.5",
     "@gitpod/gitpod-db": "0.1.5",
     "@gitpod/gitpod-messagebus": "0.1.5",
-    "@gitpod/gitpod-payment-endpoint": "0.1.5",
     "@gitpod/gitpod-protocol": "0.1.5",
     "@gitpod/ide-service-api": "0.1.5",
     "@gitpod/image-builder": "0.1.5",

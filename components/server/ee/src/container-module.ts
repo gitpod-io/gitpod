@@ -23,22 +23,8 @@ import { IPrefixContextParser } from "../../src/workspace/context-parser";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
-import { AccountService } from "@gitpod/gitpod-payment-endpoint/lib/accounting/account-service";
-import {
-    AccountServiceImpl,
-    SubscriptionService,
-    TeamSubscriptionService,
-    TeamSubscription2Service,
-} from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import {
-    ChargebeeProvider,
-    ChargebeeProviderOptions,
-    UpgradeHelper,
-} from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
-import { ChargebeeService } from "./user/chargebee-service";
 import { StripeService } from "./user/stripe-service";
 import { EligibilityService } from "./user/eligibility-service";
-import { AccountStatementProvider } from "./user/account-statement-provider";
 import { UserDeletionService } from "../../src/user/user-deletion-service";
 import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
 import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
@@ -86,27 +72,11 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
     rebind(BlockedUserFilter).toService(EMailDomainService);
     bind(SnapshotService).toSelf().inSingletonScope();
-    bind(AccountStatementProvider).toSelf().inSingletonScope();
 
     bind(UserDeletionServiceEE).toSelf().inSingletonScope();
     rebind(UserDeletionService).to(UserDeletionServiceEE).inSingletonScope();
 
-    // acounting
-    bind(AccountService).to(AccountServiceImpl).inSingletonScope();
-    bind(SubscriptionService).toSelf().inSingletonScope();
-    bind(TeamSubscriptionService).toSelf().inSingletonScope();
-    bind(TeamSubscription2Service).toSelf().inSingletonScope();
-
     // payment/billing
-    bind(ChargebeeProvider).toSelf().inSingletonScope();
-    bind(ChargebeeProviderOptions)
-        .toDynamicValue((ctx) => {
-            const config = ctx.container.get<Config>(Config);
-            return config.chargebeeProviderOptions;
-        })
-        .inSingletonScope();
-    bind(UpgradeHelper).toSelf().inSingletonScope();
-    bind(ChargebeeService).toSelf().inSingletonScope();
     bind(StripeService).toSelf().inSingletonScope();
 
     bind(EntitlementServiceLicense).toSelf().inSingletonScope();

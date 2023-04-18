@@ -11,7 +11,6 @@ import { NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
 
 import { RateLimiterConfig } from "./auth/rate-limiter";
 import { CodeSyncConfig } from "./code-sync/code-sync-service";
-import { ChargebeeProviderOptions } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -26,7 +25,6 @@ export type Config = Omit<
 > & {
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
-    chargebeeProviderOptions?: ChargebeeProviderOptions;
     stripeSecrets?: { publishableKey: string; secretKey: string };
     linkedInSecrets?: { clientId: string; clientSecret: string };
     builtinAuthProvidersConfigured: boolean;
