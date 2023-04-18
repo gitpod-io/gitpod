@@ -23,8 +23,6 @@ import { IPrefixContextParser } from "../../src/workspace/context-parser";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
-import { MonitoringEndpointsAppEE } from "./monitoring-endpoint-ee";
-import { MonitoringEndpointsApp } from "../../src/monitoring-endpoints";
 import { AccountService } from "@gitpod/gitpod-payment-endpoint/lib/accounting/account-service";
 import {
     AccountServiceImpl,
@@ -62,7 +60,6 @@ import { UsageService, UsageServiceImpl, NoOpUsageService } from "../../src/user
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
     rebind(WorkspaceFactory).to(WorkspaceFactoryEE).inSingletonScope();
-    rebind(MonitoringEndpointsApp).to(MonitoringEndpointsAppEE).inSingletonScope();
 
     bind(PrebuildManager).toSelf().inSingletonScope();
     bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
