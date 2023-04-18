@@ -33,7 +33,6 @@ type Components struct {
 	InstallationTelemetry Versioned `json:"installationTelemetry"`
 	IntegrationTests      Versioned `json:"integrationTests"`
 	OpenVSXProxy          Versioned `json:"openVSXProxy"`
-	PaymentEndpoint       Versioned `json:"paymentEndpoint"`
 	Proxy                 Versioned `json:"proxy"`
 	PublicAPIServer       Versioned `json:"public-api-server"`
 	RefreshCredential     Versioned `json:"refreshCredential"`
