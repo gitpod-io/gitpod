@@ -399,7 +399,6 @@
             "dashboard",
             "db",
             "messagebus",
-            "payment-endpoint",
             "proxy",
             "server",
             "ws-manager-bridge"
@@ -409,7 +408,6 @@
             "dashboard",
             "db",
             "messagebus",
-            "payment-endpoint",
             "proxy",
             "server",
             "ws-manager-bridge"
@@ -450,11 +448,6 @@
           },
           {
             "selected": true,
-            "text": "payment-endpoint",
-            "value": "payment-endpoint"
-          },
-          {
-            "selected": true,
             "text": "proxy",
             "value": "proxy"
           },
@@ -479,7 +472,7 @@
             "value": "image-builder-mk3"
           }
         ],
-        "query": "content-service, dashboard, db, messagebus, payment-endpoint, proxy, server, ws-manager-bridge, image-builder, image-builder-mk3",
+        "query": "content-service, dashboard, db, messagebus, proxy, server, ws-manager-bridge, image-builder, image-builder-mk3",
         "queryValue": "",
         "skipUrlSync": false,
         "type": "custom"
