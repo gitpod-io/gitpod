@@ -582,9 +582,12 @@ export class TypeORMUserDBImpl implements UserDB {
     }
 
     async countUsagesOfPhoneNumber(phoneNumber: string): Promise<number> {
+        const twoWeeksAgo = new Date();
+        twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
         return (await this.getUserRepo())
             .createQueryBuilder()
             .where("verificationPhoneNumber = :phoneNumber", { phoneNumber })
+            .andWhere("creationDate > :date", { date: twoWeeksAgo.toISOString() })
             .getCount();
     }
 
