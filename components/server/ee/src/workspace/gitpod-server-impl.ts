@@ -1021,17 +1021,24 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async findStripeSubscriptionId(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
+        const user = this.checkAndBlockUser("findStripeSubscriptionId");
+
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
-        this.checkAndBlockUser("findStripeSubscriptionId");
-
         try {
             if (attrId.kind == "team") {
                 await this.guardTeamOperation(attrId.teamId, "get", "not_implemented");
+            } else {
+                if (attrId.userId !== user.id) {
+                    throw new ResponseError(
+                        ErrorCodes.PERMISSION_DENIED,
+                        "Cannot get subscription id for another user",
+                    );
+                }
             }
             const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(attributionId);
             return subscriptionId;
@@ -1131,16 +1138,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         setupIntentId: string,
         usageLimit: number,
     ): Promise<number | undefined> {
+        const user = this.checkAndBlockUser("subscribeToStripe");
+
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
-        this.checkAndBlockUser("subscribeToStripe");
         try {
             if (attrId.kind === "team") {
                 await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
+            } else {
+                if (attrId.userId !== user.id) {
+                    throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot sign up for another user");
+                }
             }
 
             const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
