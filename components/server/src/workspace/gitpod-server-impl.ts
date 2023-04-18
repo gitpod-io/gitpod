@@ -1251,6 +1251,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 context = prebuiltWorkspace;
             }
 
+            await mayStartWorkspacePromise;
             const workspace = await this.workspaceFactory.createForContext(
                 ctx,
                 user,
@@ -1259,7 +1260,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 context,
                 normalizedContextUrl,
             );
-            await mayStartWorkspacePromise;
             try {
                 await this.guardAccess({ kind: "workspace", subject: workspace }, "create");
             } catch (err) {
