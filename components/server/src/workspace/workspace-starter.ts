@@ -275,9 +275,21 @@ export class WorkspaceStarter {
                 }
             }
 
-            const ideConfig = await this.resolveIDEConfiguration(ctx, workspace, user, options.ideSettings);
+            let ideSettings = options.ideSettings;
 
-            // create and store instance
+            // if no explicit ideSettings are passed, we use the one from the last workspace instance
+            if (lastValidWorkspaceInstance) {
+                const ideConfig = lastValidWorkspaceInstance.configuration?.ideConfig;
+                if (ideConfig?.desktopIdeAlias) {
+                    ideSettings = {
+                        defaultIde: ideConfig.desktopIdeAlias,
+                        useLatestVersion: !!ideConfig.useLatest,
+                    };
+                }
+            }
+            const ideConfig = await this.resolveIDEConfiguration(ctx, workspace, user, ideSettings);
+
+            // create an instance
             let instance = await this.newInstance(
                 ctx,
                 workspace,
@@ -286,7 +298,7 @@ export class WorkspaceStarter {
                 project,
                 options.excludeFeatureFlags || [],
                 ideConfig,
-                options.workspaceClass,
+                options.workspaceClass || lastValidWorkspaceInstance?.workspaceClass,
             );
             // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
             await this.synchronizer.synchronized("startws-" + workspace.id, "server", async () => {
