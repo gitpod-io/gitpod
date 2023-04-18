@@ -30,12 +30,6 @@ import {
     TeamSubscriptionService,
     TeamSubscription2Service,
 } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import {
-    ChargebeeProvider,
-    ChargebeeProviderOptions,
-    UpgradeHelper,
-} from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
-import { ChargebeeService } from "./user/chargebee-service";
 import { StripeService } from "./user/stripe-service";
 import { EligibilityService } from "./user/eligibility-service";
 import { AccountStatementProvider } from "./user/account-statement-provider";
@@ -98,15 +92,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(TeamSubscription2Service).toSelf().inSingletonScope();
 
     // payment/billing
-    bind(ChargebeeProvider).toSelf().inSingletonScope();
-    bind(ChargebeeProviderOptions)
-        .toDynamicValue((ctx) => {
-            const config = ctx.container.get<Config>(Config);
-            return config.chargebeeProviderOptions;
-        })
-        .inSingletonScope();
-    bind(UpgradeHelper).toSelf().inSingletonScope();
-    bind(ChargebeeService).toSelf().inSingletonScope();
     bind(StripeService).toSelf().inSingletonScope();
 
     bind(EntitlementServiceLicense).toSelf().inSingletonScope();
