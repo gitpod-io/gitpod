@@ -21,11 +21,6 @@ import { OneTimeSecretDB } from "./one-time-secret-db";
 import { TypeORMAppInstallationDBImpl } from "./typeorm/app-installation-db-impl";
 import { AppInstallationDB } from "./app-installation-db";
 import { TypeORMOneTimeSecretDBImpl } from "./typeorm/one-time-secret-db-impl";
-import { PendingGithubEventDB, TransactionalPendingGithubEventDBFactory } from "./pending-github-event-db";
-import {
-    TransactionalPendingGithubEventDBImpl,
-    TypeORMPendingGithubEventDBImpl,
-} from "./typeorm/pending-github-event-db-impl";
 import { GitpodTableDescriptionProvider, TableDescriptionProvider } from "./tables";
 import { PeriodicDbDeleter } from "./periodic-deleter";
 import { CodeSyncResourceDB } from "./typeorm/code-sync-resource-db";
@@ -35,22 +30,15 @@ import { WorkspaceClusterDB } from "./workspace-cluster-db";
 import { AuthCodeRepositoryDB } from "./typeorm/auth-code-repository-db";
 import { AuthProviderEntryDB } from "./auth-provider-entry-db";
 import { AuthProviderEntryDBImpl } from "./typeorm/auth-provider-entry-db-impl";
-import { TeamSubscriptionDB } from "./team-subscription-db";
-import { AccountingDB, TransactionalAccountingDBFactory } from "./accounting-db";
 import { EmailDomainFilterDB } from "./email-domain-filter-db";
 import { EmailDomainFilterDBImpl } from "./typeorm/email-domain-filter-db-impl";
-import { TeamSubscriptionDBImpl } from "./typeorm/team-subscription-db-impl";
-import { TransactionalAccountingDBImpl, TypeORMAccountingDBImpl } from "./typeorm/accounting-db-impl";
 import { TeamDB } from "./team-db";
 import { TeamDBImpl } from "./typeorm/team-db-impl";
 import { ProjectDB } from "./project-db";
 import { ProjectDBImpl } from "./typeorm/project-db-impl";
 import { PersonalAccessTokenDB } from "./personal-access-token-db";
-import { EntityManager } from "typeorm";
 import { TypeORMInstallationAdminImpl } from "./typeorm/installation-admin-db-impl";
 import { InstallationAdminDB } from "./installation-admin-db";
-import { TeamSubscription2DB } from "./team-subscription-2-db";
-import { TeamSubscription2DBImpl } from "./typeorm/team-subscription-2-db-impl";
 import { TypeORMBlockedRepositoryDBImpl } from "./typeorm/blocked-repository-db-impl";
 import { BlockedRepositoryDB } from "./blocked-repository-db";
 import { WebhookEventDB } from "./webhook-event-db";
@@ -96,14 +84,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(OneTimeSecretDB).toService(TypeORMOneTimeSecretDBImpl);
     bindDbWithTracing(TracedOneTimeSecretDB, bind, OneTimeSecretDB).inSingletonScope();
 
-    bind(TypeORMPendingGithubEventDBImpl).toSelf().inSingletonScope();
-    bind(PendingGithubEventDB).toService(TypeORMPendingGithubEventDBImpl);
-    bind(TransactionalPendingGithubEventDBFactory).toFactory((ctx) => {
-        return (manager: EntityManager) => {
-            return new TransactionalPendingGithubEventDBImpl(manager);
-        };
-    });
-
     encryptionModule(bind, unbind, isBound, rebind);
     bind(KeyProviderConfig)
         .toDynamicValue((ctx) => {
@@ -135,14 +115,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(PersonalAccessTokenDB).toService(PersonalAccessTokenDBImpl);
 
     // com concerns
-    bind(AccountingDB).to(TypeORMAccountingDBImpl).inSingletonScope();
-    bind(TransactionalAccountingDBFactory).toFactory((ctx) => {
-        return (manager: EntityManager) => {
-            return new TransactionalAccountingDBImpl(manager);
-        };
-    });
-    bind(TeamSubscriptionDB).to(TeamSubscriptionDBImpl).inSingletonScope();
-    bind(TeamSubscription2DB).to(TeamSubscription2DBImpl).inSingletonScope();
     bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
     bind(UserToTeamMigrationService).toSelf().inSingletonScope();
     bind(WorkspaceOrganizationIdMigration).toSelf().inSingletonScope();
