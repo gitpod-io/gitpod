@@ -23,7 +23,6 @@ export * from "./app-installation-db";
 export * from "./user-storage-resources-db";
 export * from "./one-time-secret-db";
 export * from "./auth-provider-entry-db";
-export * from "./license-db";
 export * from "./pending-github-event-db";
 export * from "./typeorm/typeorm";
 export * from "./accounting-db";
