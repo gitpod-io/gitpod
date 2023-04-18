@@ -5,15 +5,11 @@
  */
 
 import { Project, ProjectSettings } from "@gitpod/gitpod-protocol";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import { useHistory } from "react-router";
-import { Link } from "react-router-dom";
-import Alert from "../components/Alert";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import PillLabel from "../components/PillLabel";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { getGitpodService } from "../service/service";
 import { ProjectContext, useCurrentProject } from "./project-context";
 import { getProjectSettingsMenu, getProjectTabs } from "./projects.routes";
@@ -37,18 +33,8 @@ export function ProjectSettingsPage(props: { project?: Project; children?: React
 export default function ProjectSettingsView() {
     const { setProject } = useContext(ProjectContext);
     const { project } = useCurrentProject();
-    const [billingMode, setBillingMode] = useState<BillingMode | undefined>(undefined);
     const [showRemoveModal, setShowRemoveModal] = useState(false);
-    const team = useCurrentOrg().data;
     const history = useHistory();
-
-    useEffect(() => {
-        if (team) {
-            getGitpodService().server.getBillingModeForTeam(team.id).then(setBillingMode);
-        } else {
-            getGitpodService().server.getBillingModeForUser().then(setBillingMode);
-        }
-    }, [team]);
 
     const updateProjectSettings = useCallback(
         (settings: ProjectSettings) => {
@@ -96,36 +82,12 @@ export default function ProjectSettingsView() {
         <ProjectSettingsPage project={project}>
             <Heading2>Prebuilds</Heading2>
             <Subheading>Choose the workspace machine type for your prebuilds.</Subheading>
-            {BillingMode.canSetWorkspaceClass(billingMode) ? (
-                <div className="max-w-md">
-                    <SelectWorkspaceClassComponent
-                        selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
-                        onSelectionChange={setWorkspaceClassForPrebuild}
-                    />
-                </div>
-            ) : (
-                <Alert type="message" className="mt-4">
-                    <div className="flex flex-col">
-                        <span>
-                            To access{" "}
-                            <a
-                                className="gp-link"
-                                href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes"
-                            >
-                                large workspaces
-                            </a>{" "}
-                            and{" "}
-                            <a className="gp-link" href="https://www.gitpod.io/docs/configure/billing/pay-as-you-go">
-                                pay-as-you-go
-                            </a>
-                            , first cancel your existing plan.
-                        </span>
-                        <Link className="mt-2" to={project.teamId ? "/billing" : "/plans"}>
-                            <button>Go to {project.teamId ? "Organization" : "Personal"} Billing</button>
-                        </Link>
-                    </div>
-                </Alert>
-            )}
+            <div className="max-w-md">
+                <SelectWorkspaceClassComponent
+                    selectedWorkspaceClass={project.settings?.workspaceClasses?.prebuild}
+                    onSelectionChange={setWorkspaceClassForPrebuild}
+                />
+            </div>
             <CheckboxInputField
                 label="Enable Incremental Prebuilds"
                 hint={
@@ -202,39 +164,12 @@ export default function ProjectSettingsView() {
             <div>
                 <Heading2 className="mt-12">Workspaces</Heading2>
                 <Subheading>Choose the workspace machine type for your workspaces.</Subheading>
-                {BillingMode.canSetWorkspaceClass(billingMode) ? (
-                    <div className="max-w-md">
-                        <SelectWorkspaceClassComponent
-                            selectedWorkspaceClass={project.settings?.workspaceClasses?.regular}
-                            onSelectionChange={setWorkspaceClass}
-                        />
-                    </div>
-                ) : (
-                    <Alert type="message" className="mt-4">
-                        <div className="flex flex-col">
-                            <span>
-                                To access{" "}
-                                <a
-                                    className="gp-link"
-                                    href="https://www.gitpod.io/docs/configure/workspaces/workspace-classes"
-                                >
-                                    large workspaces
-                                </a>{" "}
-                                and{" "}
-                                <a
-                                    className="gp-link"
-                                    href="https://www.gitpod.io/docs/configure/billing/pay-as-you-go"
-                                >
-                                    pay-as-you-go
-                                </a>
-                                , first cancel your existing plan.
-                            </span>
-                            <Link className="mt-2" to={project.teamId ? "../billing" : "/plans"}>
-                                <button>Go to {project.teamId ? "Organization" : "Personal"} Billing</button>
-                            </Link>
-                        </div>
-                    </Alert>
-                )}
+                <div className="max-w-md">
+                    <SelectWorkspaceClassComponent
+                        selectedWorkspaceClass={project.settings?.workspaceClasses?.regular}
+                        onSelectionChange={setWorkspaceClass}
+                    />
+                </div>
             </div>
             <div className="">
                 <Heading2 className="mt-12">Remove Project</Heading2>
