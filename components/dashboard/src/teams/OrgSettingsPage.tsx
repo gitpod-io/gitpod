@@ -88,7 +88,7 @@ function getTeamSettingsMenu(params: {
         });
     }
     if (billingMode?.mode !== "none") {
-        // The Billing page contains both chargebee and usage-based components, so: always show them!
+        // The Billing page handles billing mode itself, so: always show it!
         result.push({
             title: "Billing",
             link: ["/billing"],

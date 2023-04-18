@@ -183,7 +183,19 @@ export const AppRoutes = () => {
                         <Redirect to="/new" />
                     </Route>
                     {/* TODO(gpl): Remove once we don't need the redirect anymore */}
-                    <Route path={[switchToPAYGPathMain, settingsPathPlans, "/old-team-plans", "/teams"]} exact>
+                    <Route
+                        path={[
+                            switchToPAYGPathMain,
+                            settingsPathPlans,
+                            "/old-team-plans",
+                            "/teams",
+                            "/subscription",
+                            "/usage",
+                            "/upgrade-subscription",
+                            "/plans",
+                        ]}
+                        exact
+                    >
                         <Redirect to={"/billing"} />
                     </Route>
                     <Route path="/setup" exact component={Setup} />
@@ -226,9 +238,6 @@ export const AppRoutes = () => {
                     </Route>
                     <Route path={["/access-control"]} exact>
                         <Redirect to={settingsPathIntegrations} />
-                    </Route>
-                    <Route path={["/subscription", "/usage", "/upgrade-subscription"]} exact>
-                        <Redirect to={settingsPathPlans} />
                     </Route>
                     <Route path={["/admin"]} exact>
                         <Redirect to="/admin/users" />
@@ -275,9 +284,6 @@ export const AppRoutes = () => {
                     </Route>
                     <Route path="/billing" exact>
                         <Redirect to={settingsPathBilling} />
-                    </Route>
-                    <Route path="/plans" exact>
-                        <Redirect to={settingsPathPlans} />
                     </Route>
                     <Route path="/preferences" exact>
                         <Redirect to={settingsPathPreferences} />
