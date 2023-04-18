@@ -6,9 +6,9 @@
 
 import * as express from "express";
 import { injectable } from "inversify";
-import { registerServerMetrics } from "../../src/prometheus-metrics";
 import * as prometheusClient from "prom-client";
 import { registerDBMetrics } from "@gitpod/gitpod-db/lib";
+import { registerServerMetrics } from "./prometheus-metrics";
 
 @injectable()
 export class MonitoringEndpointsApp {
