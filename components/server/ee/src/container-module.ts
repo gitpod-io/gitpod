@@ -34,7 +34,6 @@ import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { Config } from "../../src/config";
 import { SnapshotService } from "./workspace/snapshot-service";
 import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
-import { UserCounter } from "./user/user-counter";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { EntitlementService } from "../../src/billing/entitlement-service";
 import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
@@ -60,8 +59,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
     bind(BitbucketServerApp).toSelf().inSingletonScope();
     bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
-
-    bind(UserCounter).toSelf().inSingletonScope();
 
     // GitpodServerImpl (stateful per user)
     rebind(GitpodServerImpl).to(GitpodServerEEImpl).inRequestScope();

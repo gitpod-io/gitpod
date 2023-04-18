@@ -83,7 +83,6 @@ import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/websocket-connection-manager";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
-import { UserCounter } from "../user/user-counter";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
@@ -119,8 +118,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(Config) protected readonly config: Config;
 
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
-
-    @inject(UserCounter) protected readonly userCounter: UserCounter;
 
     @inject(UserService) protected readonly userService: UserService;
 
