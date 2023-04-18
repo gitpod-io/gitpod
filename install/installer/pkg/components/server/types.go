@@ -33,7 +33,6 @@ type ConfigSerialized struct {
 	IDEServiceAddr                    string     `json:"ideServiceAddr"`
 	MaximumEventLoopLag               float64    `json:"maximumEventLoopLag"`
 	VSXRegistryUrl                    string     `json:"vsxRegistryUrl"`
-	ChargebeeProviderOptionsFile      string     `json:"chargebeeProviderOptionsFile"`
 	StripeSecretsFile                 string     `json:"stripeSecretsFile"`
 	StripeConfigFile                  string     `json:"stripeConfigFile"`
 	EnablePayment                     bool       `json:"enablePayment"`
