@@ -43,7 +43,6 @@ import {
     SetWorkspaceTimeoutResult,
     StartPrebuildContext,
     StartWorkspaceResult,
-    Terms,
     Token,
     User,
     UserEnvVar,
