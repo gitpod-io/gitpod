@@ -54,5 +54,4 @@ export function bindDbWithTracing<T>(traceKey: string | symbol, bind: interfaces
 
 export const TracedWorkspaceDB = Symbol("TracedWorkspaceDB");
 export const TracedUserDB = Symbol("TracedUserDB");
-export const TracedLicenseDB = Symbol("TracedLicenseDB");
 export const TracedOneTimeSecretDB = Symbol("TracedOneTimeSecretDB");

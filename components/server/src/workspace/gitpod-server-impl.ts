@@ -2878,10 +2878,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
-    async adminSetLicense(ctx: TraceContext, key: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
-    }
-
     async adminGetSettings(ctx: TraceContext): Promise<InstallationAdminSettings> {
         traceAPIParams(ctx, {});
 

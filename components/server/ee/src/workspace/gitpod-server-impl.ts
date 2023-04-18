@@ -56,11 +56,9 @@ import {
     SetTimeoutRequest,
 } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { v4 as uuidv4 } from "uuid";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LicenseValidationResult } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
-import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { EligibilityService } from "../user/eligibility-service";
@@ -102,7 +100,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
-    @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
 
     // per-user state
     @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
@@ -975,14 +972,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         } finally {
             ctx.span.finish();
         }
-    }
-
-    async adminSetLicense(ctx: TraceContext, key: string): Promise<void> {
-        traceAPIParams(ctx, {}); // don't trace the actual key
-
-        await this.guardAdminAccess("adminGetWorkspaces", { key }, Permission.ADMIN_API);
-
-        await this.licenseDB.store(uuidv4(), key);
     }
 
     public async isStudent(ctx: TraceContext): Promise<boolean> {
