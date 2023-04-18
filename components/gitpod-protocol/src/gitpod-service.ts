@@ -229,11 +229,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     guessGitTokenScopes(params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes>;
 
     /**
-     * gitpod.io concerns
-     */
-    isStudent(): Promise<boolean>;
-
-    /**
      * Stripe/Usage
      */
     getStripePublishableKey(): Promise<string>;

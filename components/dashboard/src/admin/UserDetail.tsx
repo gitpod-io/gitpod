@@ -35,14 +35,12 @@ export default function UserDetail(p: { user: User }) {
     const [editSpendingLimit, setEditSpendingLimit] = useState<boolean>(false);
     const [creditNote, setCreditNote] = useState<{ credits: number; note?: string }>({ credits: 0 });
     const [editAddCreditNote, setEditAddCreditNote] = useState<boolean>(false);
-    const [isStudent, setIsStudent] = useState<boolean>();
     const [editFeatureFlags, setEditFeatureFlags] = useState(false);
     const [editRoles, setEditRoles] = useState(false);
     const userRef = useRef(user);
 
     const initialize = () => {
         setUser(user);
-        getGitpodService().server.adminIsStudent(user.id).then(setIsStudent);
         const attributionId = AttributionId.render(AttributionId.create(user));
         getGitpodService().server.adminGetBillingMode(attributionId).then(setBillingMode);
         getGitpodService().server.adminGetCostCenter(attributionId).then(setCostCenter);
@@ -67,21 +65,6 @@ export default function UserDetail(p: { user: User }) {
         } finally {
             setActivity(false);
         }
-    };
-
-    const addStudentDomain = async () => {
-        if (!emailDomain) {
-            console.log("cannot add student's email domain because there is none!");
-            return;
-        }
-
-        await updateUser(async (u) => {
-            await getGitpodService().server.adminAddStudentEmailDomain(u.id, emailDomain);
-            await getGitpodService()
-                .server.adminIsStudent(u.id)
-                .then((isStud) => setIsStudent(isStud));
-            return u;
-        });
     };
 
     const verifyUser = async () => {
@@ -117,24 +100,7 @@ export default function UserDetail(p: { user: User }) {
             return <></>; // nothing to show here atm
         }
 
-        const properties: JSX.Element[] = [
-            <Property
-                name="Student"
-                actions={
-                    !isStudent && emailDomain && !["gmail.com", "yahoo.com", "hotmail.com"].includes(emailDomain)
-                        ? [
-                              {
-                                  label: `Make '${emailDomain}' a student domain`,
-                                  onClick: addStudentDomain,
-                              },
-                          ]
-                        : undefined
-                }
-            >
-                {isStudent === undefined ? "---" : isStudent ? "Enabled" : "Disabled"}
-            </Property>,
-            renderBillingModeProperty(billingMode),
-        ];
+        const properties: JSX.Element[] = [renderBillingModeProperty(billingMode)];
 
         switch (billingMode?.mode) {
             case "usage-based":
