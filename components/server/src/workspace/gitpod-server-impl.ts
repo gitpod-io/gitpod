@@ -157,7 +157,6 @@ import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import { PartialProject, OrganizationSettings } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
-import { ConfigurationService } from "../config/configuration-service";
 import {
     AdditionalUserData,
     EnvVarWithValue,
@@ -259,8 +258,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(ProjectsService) protected readonly projectsService: ProjectsService;
-
-    @inject(ConfigurationService) protected readonly configurationService: ConfigurationService;
 
     @inject(IDEService) protected readonly ideService: IDEService;
 
