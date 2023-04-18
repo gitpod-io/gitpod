@@ -10,7 +10,6 @@ import { FindPrebuildsParams } from "./gitpod-service";
 import { Project, Team, PrebuildWithStatus, TeamMemberInfo, TeamMemberRole } from "./teams-projects-protocol";
 import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
-import { AccountStatement } from "./accounting-protocol";
 import { BillingMode } from "./billing-mode";
 import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "./usage";
 import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
