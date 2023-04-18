@@ -34,7 +34,6 @@ import {
     WorkspaceInstance,
     EduEmailDomain,
     ProviderRepository,
-    Queue,
     PrebuildWithStatus,
     CreateProjectParams,
     Project,
@@ -63,11 +62,8 @@ import { LicenseValidationResult } from "@gitpod/gitpod-protocol/lib/license-pro
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
-import { AccountStatement, CreditAlert, Subscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { EligibilityService } from "../user/eligibility-service";
-import { AccountStatementProvider } from "../user/account-statement-provider";
-import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
 import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     CostCenter,
@@ -76,28 +72,8 @@ import {
     UsageServiceClient,
     Usage_Kind,
 } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import {
-    AssigneeIdentityIdentifier,
-    TeamSubscription,
-    TeamSubscription2,
-    TeamSubscriptionSlot,
-    TeamSubscriptionSlotResolved,
-} from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
-import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
-import * as pThrottle from "p-throttle";
-import { formatDate } from "@gitpod/gitpod-protocol/lib/util/date-time";
-import { FindUserByIdentityStrResult, UserService } from "../../../src/user/user-service";
-import {
-    AccountService,
-    SubscriptionService,
-    TeamSubscriptionService,
-    TeamSubscription2Service,
-} from "@gitpod/gitpod-payment-endpoint/lib/accounting";
-import { AccountingDB, TeamSubscriptionDB, TeamSubscription2DB, EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
-import { ChargebeeProvider, UpgradeHelper } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
-import { ChargebeeCouponComputer } from "../user/coupon-computer";
-import { ChargebeeService } from "../user/chargebee-service";
-import { Chargebee as chargebee } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
+import { UserService } from "../../../src/user/user-service";
+import { AccountingDB, EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
 import { StripeService } from "../user/stripe-service";
 
 import { GitHubAppSupport } from "../github/github-app-support";
@@ -131,22 +107,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
 
     // per-user state
     @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
-    @inject(AccountStatementProvider) protected readonly accountStatementProvider: AccountStatementProvider;
 
-    @inject(AccountService) protected readonly accountService: AccountService;
-    @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(AccountingDB) protected readonly accountingDB: AccountingDB;
     @inject(EduEmailDomainDB) protected readonly eduDomainDb: EduEmailDomainDB;
 
-    @inject(TeamSubscription2DB) protected readonly teamSubscription2DB: TeamSubscription2DB;
-    @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDB: TeamSubscriptionDB;
-    @inject(TeamSubscriptionService) protected readonly teamSubscriptionService: TeamSubscriptionService;
-    @inject(TeamSubscription2Service) protected readonly teamSubscription2Service: TeamSubscription2Service;
-
-    @inject(ChargebeeProvider) protected readonly chargebeeProvider: ChargebeeProvider;
-    @inject(UpgradeHelper) protected readonly upgradeHelper: UpgradeHelper;
-    @inject(ChargebeeCouponComputer) protected readonly couponComputer: ChargebeeCouponComputer;
-    @inject(ChargebeeService) protected readonly chargebeeService: ChargebeeService;
     @inject(StripeService) protected readonly stripeService: StripeService;
 
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
@@ -181,7 +145,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     ): void {
         super.initialize(client, user, accessGuard, clientMetadata, connectionCtx, clientHeaderFields);
 
-        this.listenToCreditAlerts();
         this.listenForPrebuildUpdates().catch((err) => log.error("error registering for prebuild updates", err));
     }
 
@@ -223,40 +186,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         allProjects.push(...(await this.projectsService.getUserProjects(this.user.id)).map((p) => p.id));
         return allProjects;
-    }
-
-    /**
-     * todo: the credit alert parts are migrated, but remain unused
-     */
-    protected listenToCreditAlerts(): void {
-        if (!this.user || !this.client) {
-            return;
-        }
-        this.disposables.push(
-            this.localMessageBroker.listenToCreditAlerts(
-                this.user.id,
-                (ctx: TraceContext, creditAlert: CreditAlert) => {
-                    TraceContext.withSpan(
-                        "forwardCreditAlertToClient",
-                        async (ctx) => {
-                            traceClientMetadata(ctx, this.clientMetadata);
-                            TraceContext.setJsonRPCMetadata(ctx, "onCreditAlert");
-
-                            this.client?.onCreditAlert(creditAlert);
-                            if (creditAlert.remainingUsageHours < 1e-6) {
-                                const runningInstances = await this.workspaceDb
-                                    .trace(ctx)
-                                    .findRegularRunningInstances(creditAlert.userId);
-                                runningInstances.forEach(
-                                    async (instance) => await this.stopWorkspace(ctx, instance.workspaceId),
-                                );
-                            }
-                        },
-                        ctx,
-                    );
-                },
-            ),
-        );
     }
 
     protected async mayStartWorkspace(
@@ -1060,975 +989,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         await this.licenseDB.store(uuidv4(), key);
     }
 
-    // (SaaS) – accounting
-    public async getAccountStatement(
-        ctx: TraceContext,
-        options: GitpodServer.GetAccountStatementOptions,
-    ): Promise<AccountStatement> {
-        traceAPIParams(ctx, { options });
-
-        const user = this.checkUser("getAccountStatement");
-        const now = options.date || new Date().toISOString();
-        return this.accountStatementProvider.getAccountStatement(user.id, now);
-    }
-
-    public async getRemainingUsageHours(ctx: TraceContext): Promise<number> {
-        const user = this.checkUser("getRemainingUsageHours");
-        const runningInstancesPromise = this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
-        return this.accountStatementProvider.getRemainingUsageHours(
-            user.id,
-            new Date().toISOString(),
-            runningInstancesPromise,
-        );
-    }
-
-    // (SaaS) – payment/billing
-    async getAvailableCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
-        const user = this.checkUser("getAvailableCoupons");
-        const couponIds = await this.couponComputer.getAvailableCouponIds(user);
-        return this.getChargebeePlanCoupons(ctx, couponIds);
-    }
-
-    async getAppliedCoupons(ctx: TraceContext): Promise<PlanCoupon[]> {
-        const user = this.checkUser("getAppliedCoupons");
-        const couponIds = await this.couponComputer.getAppliedCouponIds(user, new Date());
-        return this.getChargebeePlanCoupons(ctx, couponIds);
-    }
-
-    // chargebee
-    async getChargebeeSiteId(ctx: TraceContext): Promise<string> {
-        this.checkUser("getChargebeeSiteId");
-        if (!this.config.chargebeeProviderOptions) {
-            log.error("config error: expected chargebeeProviderOptions but found none!");
-            return "none";
-        }
-        return this.config.chargebeeProviderOptions.site;
-    }
-
     public async isStudent(ctx: TraceContext): Promise<boolean> {
         const user = this.checkUser("isStudent");
         return this.eligibilityService.isStudent(user);
-    }
-
-    // TODO(gpl) Should we deprecate this entirely to more clearly distinguish between "license" and "paid"?
-    async getShowPaymentUI(ctx: TraceContext): Promise<boolean> {
-        this.checkUser("getShowPaymentUI");
-        return !!this.config.enablePayment;
-    }
-
-    async isChargebeeCustomer(ctx: TraceContext): Promise<boolean> {
-        const user = this.checkUser("isChargebeeCustomer");
-
-        return await new Promise<boolean>((resolve, reject) => {
-            this.chargebeeProvider.customer.retrieve(user.id).request((error, result) => {
-                if (error) {
-                    // the error is of no use to the client - they can't do anything about it.
-                    resolve(false);
-                } else {
-                    resolve(true);
-                }
-            });
-        });
-    }
-
-    protected async getChargebeePlanCoupons(ctx: TraceContext, couponIds: string[]) {
-        traceAPIParams(ctx, { couponIds });
-
-        const chargebeeCoupons = await Promise.all(
-            couponIds.map(
-                (c) =>
-                    new Promise<chargebee.Coupon | undefined>((resolve, reject) =>
-                        this.chargebeeProvider.coupon.retrieve(c).request((err, res) => {
-                            if (!!err) {
-                                log.error({}, "could not retrieve coupon: " + err.message, { coupon: c });
-                                resolve(undefined);
-                            } else if (!!res) {
-                                resolve(res.coupon);
-                            } else {
-                                resolve(undefined);
-                            }
-                        }),
-                    ),
-            ),
-        );
-
-        const result: PlanCoupon[] = [];
-        for (const coupon of chargebeeCoupons) {
-            if (!coupon) {
-                continue;
-            }
-            if (!coupon.plan_ids) {
-                // This coupon does not apply to any plan - we can't use it here
-                continue;
-            }
-            if (!coupon.discount_percentage) {
-                // For the time being we only support percentage discount coupons here.
-                // This may change once we need something else.
-                continue;
-            }
-
-            for (const planID of coupon.plan_ids) {
-                const plan = Plans.getById(planID);
-                if (!plan) {
-                    continue;
-                }
-
-                let newPrice = (plan.pricePerMonth * 100) / (100 - coupon.discount_percentage);
-                result.push({
-                    description: coupon.name,
-                    newPrice,
-                    chargebeePlanID: planID,
-                });
-            }
-        }
-
-        return result;
-    }
-
-    async createPortalSession(ctx: TraceContext): Promise<{}> {
-        const user = this.checkUser("createPortalSession");
-        const logContext = { userId: user.id };
-
-        return await new Promise((resolve, reject) => {
-            this.chargebeeProvider.portal_session
-                .create({
-                    customer: {
-                        id: user.id,
-                    },
-                })
-                .request(function (error: any, result: any) {
-                    if (error) {
-                        log.error(logContext, "User portal session creation error", error);
-                        reject(error);
-                    } else {
-                        log.debug(logContext, "User portal session created");
-                        resolve(result.portal_session);
-                    }
-                });
-        });
-    }
-
-    async createTeamPortalSession(ctx: TraceContext, teamId: string): Promise<{}> {
-        traceAPIParams(ctx, { teamId });
-
-        this.checkUser("createTeamPortalSession");
-
-        const team = await this.teamDB.findTeamById(teamId);
-        if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
-        }
-        const members = await this.teamDB.findMembersByTeam(team.id);
-        await this.guardAccess({ kind: "team", subject: team, members }, "update");
-
-        return await new Promise((resolve, reject) => {
-            this.chargebeeProvider.portal_session
-                .create({
-                    customer: {
-                        id: "team:" + team.id,
-                    },
-                })
-                .request(function (error: any, result: any) {
-                    if (error) {
-                        log.error("Team portal session creation error", error);
-                        reject(error);
-                    } else {
-                        log.debug("Team portal session created");
-                        resolve(result.portal_session);
-                    }
-                });
-        });
-    }
-
-    async checkout(ctx: TraceContext, planId: string, planQuantity?: number): Promise<{}> {
-        traceAPIParams(ctx, { planId, planQuantity });
-
-        const user = this.checkUser("checkout");
-        const logContext = { userId: user.id };
-        await this.ensureChargebeeApiIsAllowed({ user });
-
-        // Throws an error if not the case
-        await this.ensureIsEligibleForPlan(user, planId);
-
-        const coupon = await this.findAvailableCouponForPlan(user, planId);
-
-        try {
-            const email = User.getPrimaryEmail(user);
-            if (!email) {
-                throw new Error("No identity with primary email for user");
-            }
-
-            return new Promise((resolve, reject) => {
-                this.chargebeeProvider.hosted_page
-                    .checkout_new({
-                        customer: {
-                            id: user.id,
-                            email,
-                        },
-                        subscription: {
-                            plan_id: planId,
-                            plan_quantity: planQuantity,
-                            coupon,
-                        },
-                    })
-                    .request((error: any, result: any) => {
-                        if (error) {
-                            log.error(logContext, "Checkout page error", error);
-                            reject(error);
-                        } else {
-                            log.debug(logContext, "Checkout page initiated");
-                            resolve(result.hosted_page);
-                        }
-                    });
-            });
-        } catch (err) {
-            log.error(logContext, "Checkout error", err);
-            throw err;
-        }
-    }
-
-    async teamCheckout(ctx: TraceContext, teamId: string, planId: string): Promise<{}> {
-        traceAPIParams(ctx, { teamId, planId });
-
-        const user = this.checkUser("teamCheckout");
-
-        const team = await this.teamDB.findTeamById(teamId);
-        if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
-        }
-        await this.ensureChargebeeApiIsAllowed({ team });
-        const members = await this.teamDB.findMembersByTeam(team.id);
-        await this.guardAccess({ kind: "team", subject: team, members }, "update");
-
-        const coupon = await this.findAvailableCouponForPlan(user, planId);
-
-        const email = User.getPrimaryEmail(user);
-        return new Promise((resolve, reject) => {
-            this.chargebeeProvider.hosted_page
-                .checkout_new({
-                    customer: {
-                        id: "team:" + team.id,
-                        email,
-                    },
-                    subscription: {
-                        plan_id: planId,
-                        plan_quantity: members.length,
-                        coupon,
-                    },
-                })
-                .request((error: any, result: any) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    resolve(result.hosted_page);
-                });
-        });
-    }
-
-    protected async findAvailableCouponForPlan(user: User, planId: string): Promise<string | undefined> {
-        const couponNames = await this.couponComputer.getAvailableCouponIds(user);
-        const chargbeeCoupons = await Promise.all(
-            couponNames.map(
-                (c) =>
-                    new Promise<chargebee.Coupon | undefined>((resolve, reject) =>
-                        this.chargebeeProvider.coupon.retrieve(c).request((err, res) => {
-                            if (!!err) {
-                                log.error({}, "could not retrieve coupon: " + err.message, { coupon: c });
-                                resolve(undefined);
-                            } else if (!!res) {
-                                resolve(res.coupon);
-                            } else {
-                                resolve(undefined);
-                            }
-                        }),
-                    ),
-            ),
-        );
-        const applicableCoupon = chargbeeCoupons
-            .filter((c) => c && c.discount_percentage && c.plan_ids && c.plan_ids.indexOf(planId) != -1)
-            .sort((a, b) => (a!.discount_percentage! < b!.discount_percentage! ? -1 : 1))[0];
-        return applicableCoupon ? applicableCoupon.id : undefined;
-    }
-
-    async subscriptionUpgradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
-        traceAPIParams(ctx, { subscriptionId, chargebeePlanId });
-
-        const user = this.checkUser("subscriptionUpgradeTo");
-        await this.ensureChargebeeApiIsAllowed({ user });
-        await this.ensureIsEligibleForPlan(user, chargebeePlanId);
-        await this.doUpdateUserPaidSubscription(user.id, subscriptionId, chargebeePlanId, false);
-    }
-
-    async subscriptionDowngradeTo(ctx: TraceContext, subscriptionId: string, chargebeePlanId: string): Promise<void> {
-        traceAPIParams(ctx, { subscriptionId, chargebeePlanId });
-
-        const user = this.checkUser("subscriptionDowngradeTo");
-        await this.ensureChargebeeApiIsAllowed({ user });
-        await this.ensureIsEligibleForPlan(user, chargebeePlanId);
-        await this.doUpdateUserPaidSubscription(user.id, subscriptionId, chargebeePlanId, true);
-    }
-
-    protected async ensureIsEligibleForPlan(user: User, chargebeePlanId: string): Promise<void> {
-        const p = Plans.getById(chargebeePlanId);
-        if (!p) {
-            log.error({ userId: user.id }, "Invalid plan", { planId: chargebeePlanId });
-            throw new Error(`Invalid plan: ${chargebeePlanId}`);
-        }
-
-        if (p.type === "student") {
-            const isStudent = await this.eligibilityService.isStudent(user);
-            if (!isStudent) {
-                throw new ResponseError(
-                    ErrorCodes.PLAN_ONLY_ALLOWED_FOR_STUDENTS,
-                    "This plan is only allowed for students",
-                );
-            }
-        }
-    }
-
-    async subscriptionCancel(ctx: TraceContext, subscriptionId: string): Promise<void> {
-        traceAPIParams(ctx, { subscriptionId });
-
-        const user = this.checkUser("subscriptionCancel");
-        const chargebeeSubscriptionId = await this.doGetUserPaidSubscription(user.id, subscriptionId);
-        await this.chargebeeService.cancelSubscription(
-            chargebeeSubscriptionId,
-            { userId: user.id },
-            { subscriptionId, chargebeeSubscriptionId },
-        );
-    }
-
-    async subscriptionCancelDowngrade(ctx: TraceContext, subscriptionId: string): Promise<void> {
-        traceAPIParams(ctx, { subscriptionId });
-
-        const user = this.checkUser("subscriptionCancelDowngrade");
-        await this.ensureChargebeeApiIsAllowed({ user });
-        await this.doCancelDowngradeUserPaidSubscription(user.id, subscriptionId);
-    }
-
-    protected async doUpdateUserPaidSubscription(
-        userId: string,
-        subscriptionId: string,
-        newPlanId: string,
-        applyEndOfTerm: boolean,
-    ) {
-        const chargebeeSubscriptionId = await this.doGetUserPaidSubscription(userId, subscriptionId);
-        return this.doUpdateSubscription(userId, chargebeeSubscriptionId, {
-            plan_id: newPlanId,
-            end_of_term: applyEndOfTerm,
-        });
-    }
-
-    protected async doUpdateSubscription(
-        userId: string,
-        chargebeeSubscriptionId: string,
-        update: Partial<chargebee.SubscriptionUpdateParams> = {},
-    ) {
-        const logContext = { userId };
-        const logPayload = { chargebeeSubscriptionId, update };
-        return await new Promise<void>((resolve, reject) => {
-            this.chargebeeProvider.subscription
-                .update(chargebeeSubscriptionId, {
-                    ...update,
-                })
-                .request((error: any, result: any) => {
-                    if (error) {
-                        log.error(logContext, "Chargebee Subscription update error", error, logPayload);
-                        reject(error);
-                    } else {
-                        log.debug(logContext, "Chargebee Subscription updated", logPayload);
-                        resolve();
-                    }
-                });
-        });
-    }
-
-    protected async doCancelDowngradeUserPaidSubscription(userId: string, subscriptionId: string) {
-        const chargebeeSubscriptionId = await this.doGetUserPaidSubscription(userId, subscriptionId);
-        const logContext = { userId };
-        const logPayload = { subscriptionId, chargebeeSubscriptionId };
-        return await new Promise<void>((resolve, reject) => {
-            this.chargebeeProvider.subscription
-                .remove_scheduled_changes(chargebeeSubscriptionId)
-                .request((error: any, result: any) => {
-                    if (error) {
-                        log.error(
-                            logContext,
-                            "Chargebee remove scheduled change to Subscription error",
-                            error,
-                            logPayload,
-                        );
-                        reject(error);
-                    } else {
-                        log.debug(logContext, "Chargebee scheduled change to Subscription removed", logPayload);
-                        resolve();
-                    }
-                });
-        });
-    }
-
-    protected async doGetUserPaidSubscription(userId: string, subscriptionId: string) {
-        const subscription = await this.internalGetSubscription(subscriptionId, userId);
-        const chargebeeSubscriptionId = subscription.paymentReference;
-        if (!chargebeeSubscriptionId) {
-            const err = new Error(`SubscriptionId ${subscriptionId} has no paymentReference!`);
-            log.error({ userId: userId }, err, { subscriptionId });
-            throw err;
-        }
-        return chargebeeSubscriptionId;
-    }
-
-    // Team Subscriptions 2
-    async getTeamSubscription(ctx: TraceContext, teamId: string): Promise<TeamSubscription2 | undefined> {
-        this.checkUser("getTeamSubscription");
-        await this.guardTeamOperation(teamId, "get", "not_implemented");
-        return this.teamSubscription2DB.findForTeam(teamId, new Date().toISOString());
-    }
-
-    async cancelTeamSubscription(ctx: TraceContext, teamId: string): Promise<void> {
-        this.checkUser("cancelTeamSubscription", { teamId });
-
-        await this.guardTeamOperation(teamId, "update", "not_implemented");
-        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, new Date().toISOString());
-        if (!ts2) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Cannot find Team Subscription!");
-        }
-
-        const chargebeeSubscriptionId = ts2.paymentReference;
-        await this.chargebeeService.cancelSubscription(
-            chargebeeSubscriptionId,
-            {},
-            { teamId, chargebeeSubscriptionId },
-        );
-
-        // Cancellation of team memberships is handled here: https://github.com/gitpod-io/gitpod/blob/5c90cd56572f55749b39e5b7134ff6be6f247357/components/ee/payment-endpoint/src/chargebee/team-subscription-handler.ts#L136-L139
-    }
-
-    protected async onTeamMemberAdded(userId: string, teamId: string): Promise<void> {
-        const now = new Date();
-        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
-        if (ts2) {
-            await this.updateTeamSubscriptionQuantity(ts2);
-            await this.teamSubscription2Service.addTeamMemberSubscription(ts2, userId);
-        }
-    }
-
-    protected async onTeamMemberRemoved(userId: string, teamId: string, teamMembershipId: string): Promise<void> {
-        const now = new Date();
-        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
-        if (ts2) {
-            await this.updateTeamSubscriptionQuantity(ts2);
-            await this.teamSubscription2Service.cancelTeamMemberSubscription(ts2, userId, teamMembershipId, now);
-        }
-    }
-
-    protected async onTeamDeleted(teamId: string): Promise<void> {
-        const now = new Date();
-        const ts2 = await this.teamSubscription2DB.findForTeam(teamId, now.toISOString());
-        if (ts2) {
-            const chargebeeSubscriptionId = ts2.paymentReference;
-            await this.chargebeeService.cancelSubscription(
-                chargebeeSubscriptionId,
-                {},
-                { teamId, chargebeeSubscriptionId },
-            );
-        }
-        if (this.config.enablePayment) {
-            const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
-                AttributionId.render({ kind: "team", teamId: teamId }),
-            );
-            if (subscriptionId) {
-                await this.stripeService.cancelSubscription(subscriptionId);
-            }
-        }
-    }
-
-    protected async updateTeamSubscriptionQuantity(teamSubscription: TeamSubscription2): Promise<void> {
-        const members = await this.teamDB.findMembersByTeam(teamSubscription.teamId);
-        const newQuantity = members.length;
-        try {
-            // We only charge for upgrades in the Chargebee callback, to avoid race conditions.
-            await this.doUpdateSubscription("", teamSubscription.paymentReference, {
-                plan_quantity: newQuantity,
-                end_of_term: false,
-            });
-        } catch (err) {
-            if (chargebee.ApiError.is(err) && err.type === "payment") {
-                throw new ResponseError(ErrorCodes.PAYMENT_ERROR, `${err.api_error_code}: ${err.message}`);
-            }
-        }
-    }
-
-    // Team Subscriptions (legacy)
-    async tsGet(ctx: TraceContext): Promise<TeamSubscription[]> {
-        const user = this.checkUser("tsGet");
-        return this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
-    }
-
-    async tsCancel(ctx: TraceContext, teamSubscriptionId: string): Promise<void> {
-        traceAPIParams(ctx, { teamSubscriptionId });
-        const user = this.checkUser("tsCancel");
-
-        try {
-            const allTS = await this.teamSubscriptionDB.findTeamSubscriptionsForUser(user.id, new Date().toISOString());
-            const ts = allTS.find((ts) => ts.id === teamSubscriptionId);
-            if (!ts) {
-                log.error({ userId: user.id }, "Cannot cancel: unknown Team Subscription (legacy)", {
-                    teamSubscriptionId,
-                });
-                return;
-            }
-
-            await this.chargebeeService.cancelSubscription(
-                ts.paymentReference,
-                {},
-                {
-                    teamSubscriptionId,
-                    kind: "Team Subscription (legacy)",
-                },
-            );
-        } catch (err) {
-            throw new ResponseError(ErrorCodes.PAYMENT_ERROR, `${err.api_error_code}: ${err.message}`);
-        }
-    }
-
-    async tsGetSlots(ctx: TraceContext): Promise<TeamSubscriptionSlotResolved[]> {
-        const user = this.checkUser("tsGetSlots");
-        return this.teamSubscriptionService.findTeamSubscriptionSlotsBy(user.id, new Date());
-    }
-
-    async tsAddMembersToOrg(ctx: TraceContext, teamSubscriptionId: string, organizationId: string): Promise<void> {
-        const user = this.checkUser("tsAddMembersToOrg");
-
-        // Add logging to help us identify trouble with this operation very easily
-        try {
-            log.info({ userId: user.id }, "tsAddMembersToOrg: Started", { teamSubscriptionId, organizationId });
-
-            // TeamSubscription
-            const ts = await this.teamSubscriptionDB.findTeamSubscriptionById(teamSubscriptionId);
-            if (!ts || ts.userId !== user.id) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "Cannot find TeamSubscription");
-            }
-
-            // Organization
-            const { team, members } = await this.guardTeamOperation(organizationId, "update", "org_write");
-            const teamOwner = members.find((m) => m.userId === user.id && m.role === "owner");
-            if (!teamOwner) {
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "You are not an owner of this Organization");
-            }
-
-            // Take all slots, identify the members, and add to the Organization
-            const slots = await this.teamSubscriptionDB.findSlotsByTeamSubscriptionId(teamSubscriptionId);
-            const adds = [];
-            for (const slot of slots) {
-                if (!slot.assigneeId) {
-                    // Totally ok, it's just not assigned atm.
-                    continue;
-                }
-                adds.push(this.teamDB.addMemberToTeam(slot.assigneeId, team.id));
-            }
-            await Promise.all(adds);
-
-            log.info({ userId: user.id }, "tsAddMembersToOrg: DONE", { teamSubscriptionId, organizationId });
-        } catch (err) {
-            log.error({ userId: user.id }, "tsAddMembersToOrg: ERROR", err, { teamSubscriptionId, organizationId });
-            throw err;
-        }
-    }
-
-    async tsGetUnassignedSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-    ): Promise<TeamSubscriptionSlot | undefined> {
-        traceAPIParams(ctx, { teamSubscriptionId });
-
-        this.checkUser("tsGetUnassignedSlot");
-        const slots = await this.teamSubscriptionService.findUnassignedSlots(teamSubscriptionId);
-        return slots[0];
-    }
-
-    // Get the current number of "active" slots in a team subscription (count all "assigned" and "unassigned", but not "deactivated" or "cancelled").
-    protected async tsGetActiveSlotQuantity(teamSubscriptionId: string): Promise<number> {
-        const slots = await this.teamSubscriptionDB.findSlotsByTeamSubscriptionId(teamSubscriptionId);
-        return slots.filter(TeamSubscriptionSlot.isActive).length;
-    }
-
-    async tsAddSlots(ctx: TraceContext, teamSubscriptionId: string, addQuantity: number): Promise<void> {
-        traceAPIParams(ctx, { teamSubscriptionId, addQuantity });
-
-        const user = this.checkAndBlockUser("tsAddSlots");
-        const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
-
-        if (addQuantity <= 0) {
-            const err = new Error(`Invalid quantity!`);
-            log.error({ userId: user.id }, err, { teamSubscriptionId, addQuantity });
-            throw err;
-        }
-
-        const oldQuantity = await this.tsGetActiveSlotQuantity(teamSubscriptionId);
-        const newQuantity = oldQuantity + addQuantity;
-        try {
-            const now = new Date();
-            await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
-            await this.doChargeForTeamSubscriptionUpgrade(ts, oldQuantity, newQuantity, now.toISOString());
-            await this.teamSubscriptionService.addSlots(ts, addQuantity);
-        } catch (err) {
-            if (chargebee.ApiError.is(err) && err.type === "payment") {
-                throw new ResponseError(ErrorCodes.PAYMENT_ERROR, `${err.api_error_code}: ${err.message}`);
-            }
-            log.error({ userId: user.id }, "tsAddSlots", err);
-        }
-    }
-
-    async tsAssignSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-        teamSubscriptionSlotId: string,
-        identityStr: string | undefined,
-    ): Promise<void> {
-        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId }); // identityStr contains PII
-
-        const user = this.checkAndBlockUser("tsAssignSlot");
-        // assigning a slot can be done by third users
-        const ts = await this.internalGetTeamSubscription(teamSubscriptionId, identityStr ? user.id : undefined);
-        const logCtx = { userId: user.id };
-
-        try {
-            // Verify assignee:
-            //  - must be existing Gitpod user, uniquely identifiable per GitHub/GitLab/Bitbucket name
-            //  - in case of Student Subscription: Must be a student
-            const assigneeInfo: FindUserByIdentityStrResult = identityStr
-                ? await this.findAssignee(logCtx, identityStr)
-                : await this.getAssigneeInfo(ctx, user);
-            const { user: assignee, identity: assigneeIdentity, authHost } = assigneeInfo;
-            // check here that current user is either the assignee or assigner.
-            await this.ensureMayGetAssignedToTS(ts, user, assignee);
-
-            const assigneeIdentifier: AssigneeIdentityIdentifier = {
-                identity: { authHost, authName: assigneeIdentity.authName },
-            };
-            await this.teamSubscriptionService.assignSlot(
-                ts,
-                teamSubscriptionSlotId,
-                assignee,
-                assigneeIdentifier,
-                new Date(),
-            );
-        } catch (err) {
-            log.debug(logCtx, "tsAssignSlot", err);
-            throw err;
-        }
-    }
-
-    // Find an (identity, authHost) tuple that uniquely identifies a user (to generate an `identityStr`).
-    protected async getAssigneeInfo(ctx: TraceContext, user: User) {
-        const authProviders = await this.getAuthProviders(ctx);
-        for (const identity of user.identities) {
-            const provider = authProviders.find((p) => p.authProviderId === identity.authProviderId);
-            if (provider && provider.host) {
-                return { user, identity, authHost: provider.host };
-            }
-        }
-        throw new ResponseError(
-            ErrorCodes.TEAM_SUBSCRIPTION_ASSIGNMENT_FAILED,
-            "Could not find a unique identifier for assignee.",
-        );
-    }
-
-    protected async ensureMayGetAssignedToTS(ts: TeamSubscription, user: User, assignee: User) {
-        if (user.id !== ts.userId && user.id !== assignee.id) {
-            throw new ResponseError(
-                ErrorCodes.PERMISSION_DENIED,
-                "Only the owner or the assignee may assign a team subscription!",
-            );
-        }
-        const slots = await this.teamSubscriptionDB.findSlotsByAssignee(assignee.id);
-        const now = new Date().toISOString();
-        const assignedSlots = slots.filter((slot) => TeamSubscriptionSlot.status(slot, now) === "assigned");
-        if (assignedSlots.length > 0) {
-            if (assignedSlots.some((slot) => slot.teamSubscriptionId === ts.id)) {
-                throw new ResponseError(
-                    ErrorCodes.TEAM_SUBSCRIPTION_ASSIGNMENT_FAILED,
-                    `The assignee already has a slot in this team subsciption.`,
-                );
-            } else {
-                throw new ResponseError(
-                    ErrorCodes.TEAM_SUBSCRIPTION_ASSIGNMENT_FAILED,
-                    `Can not assign a slot in the team subsciption because the assignee already has a slot in another team subscription.`,
-                );
-            }
-        }
-        await this.ensureIsEligibleForPlan(assignee, ts.planId);
-    }
-
-    async tsReassignSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-        teamSubscriptionSlotId: string,
-        newIdentityStr: string,
-    ): Promise<void> {
-        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId }); // newIdentityStr contains PII
-
-        const user = this.checkAndBlockUser("tsReassignSlot");
-        const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
-        const logCtx = { userId: user.id };
-        const assigneeInfo = await this.findAssignee(logCtx, newIdentityStr);
-
-        try {
-            const now = new Date();
-            const { user: assignee, identity: assigneeIdentity, authHost } = assigneeInfo;
-            const assigneeIdentifier: AssigneeIdentityIdentifier = {
-                identity: { authHost, authName: assigneeIdentity.authName },
-            };
-            await this.teamSubscriptionService.reassignSlot(
-                ts,
-                teamSubscriptionSlotId,
-                assignee,
-                assigneeIdentifier,
-                now,
-            );
-        } catch (err) {
-            log.error(logCtx, "tsReassignSlot", err);
-        }
-    }
-
-    protected readonly findAssigneeThrottler = pThrottle({ limit: 1, interval: 1000 });
-    protected readonly findAssigneeThrottled: pThrottle.ThrottledFunction<any[], FindUserByIdentityStrResult> =
-        this.findAssigneeThrottler(
-            async (logCtx: LogContext, identityStr: string): Promise<FindUserByIdentityStrResult> => {
-                let assigneeInfo = undefined;
-                try {
-                    assigneeInfo = await this.userService.findUserByIdentityStr(identityStr);
-                } catch (err) {
-                    log.error(logCtx, err);
-                }
-                if (!assigneeInfo) {
-                    throw new ResponseError(ErrorCodes.TEAM_SUBSCRIPTION_ASSIGNMENT_FAILED, `Gitpod user not found`, {
-                        msg: `Gitpod user not found`,
-                    });
-                }
-                return assigneeInfo;
-            },
-        );
-
-    protected async findAssignee(logCtx: LogContext, identityStr: string) {
-        return await this.findAssigneeThrottled(logCtx, identityStr);
-    }
-
-    protected updateTeamSubscriptionQueue = new Queue();
-
-    async tsDeactivateSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-        teamSubscriptionSlotId: string,
-    ): Promise<void> {
-        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId });
-
-        const user = this.checkAndBlockUser("tsDeactivateSlot");
-        const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
-
-        this.updateTeamSubscriptionQueue
-            .enqueue(async () => {
-                // Check number of currently active slots
-                const newQuantity = (await this.tsGetActiveSlotQuantity(teamSubscriptionId)) - 1;
-                try {
-                    const now = new Date();
-                    // Downgrade by 1 unit
-                    await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
-                    await this.teamSubscriptionService.deactivateSlot(ts, teamSubscriptionSlotId, now);
-                } catch (err) {
-                    log.error({ userId: user.id }, "tsDeactivateSlot", err);
-                }
-            })
-            .catch((err) => {
-                /** ignore */
-            });
-    }
-
-    async tsReactivateSlot(
-        ctx: TraceContext,
-        teamSubscriptionId: string,
-        teamSubscriptionSlotId: string,
-    ): Promise<void> {
-        traceAPIParams(ctx, { teamSubscriptionId, teamSubscriptionSlotId });
-
-        const user = this.checkAndBlockUser("tsReactivateSlot");
-        const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
-
-        this.updateTeamSubscriptionQueue
-            .enqueue(async () => {
-                // Check number of currently active slots
-                const newQuantity = (await this.tsGetActiveSlotQuantity(teamSubscriptionId)) + 1;
-                try {
-                    const now = new Date();
-                    // Upgrade by 1 unit (but don't charge again!)
-                    await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
-                    await this.teamSubscriptionService.reactivateSlot(ts, teamSubscriptionSlotId, now);
-                } catch (err) {
-                    log.error({ userId: user.id }, "tsReactivateSlot", err);
-                }
-            })
-            .catch((err) => {
-                /** ignore */
-            });
-    }
-
-    async getGithubUpgradeUrls(ctx: TraceContext): Promise<GithubUpgradeURL[]> {
-        const user = this.checkUser("getGithubUpgradeUrls");
-        const ghidentity = user.identities.find((i) => i.authProviderId == "Public-GitHub");
-        if (!ghidentity) {
-            log.debug({ userId: user.id }, "user has no GitHub identity - cannot provide plan upgrade URLs");
-            return [];
-        }
-        const produceUpgradeURL = (planID: number) =>
-            `https://www.github.com/marketplace/${this.config.githubApp?.marketplaceName}/upgrade/${planID}/${ghidentity.authId}`;
-
-        // GitHub plans are USD
-        return Plans.getAvailablePlans("USD")
-            .filter((p) => !!p.githubId && !!p.githubPlanNumber)
-            .map((p) => <GithubUpgradeURL>{ url: produceUpgradeURL(p.githubPlanNumber!), planID: p.githubId! });
-    }
-
-    protected async doChargeForTeamSubscriptionUpgrade(
-        ts: TeamSubscription,
-        oldQuantity: number,
-        newQuantity: number,
-        upgradeTimestamp: string,
-    ) {
-        const chargebeeSubscriptionId = ts.paymentReference!; // Was checked before
-
-        if (oldQuantity < newQuantity) {
-            // Upgrade: Charge for it!
-            const pricePerUnitInCents = await this.getPricePerUnitInCents(ts, chargebeeSubscriptionId);
-            const diffInCents = pricePerUnitInCents * (newQuantity - oldQuantity);
-            const description = `Difference on Upgrade from '${oldQuantity}' to '${newQuantity}' units (${formatDate(
-                upgradeTimestamp,
-            )})`;
-            await this.upgradeHelper.chargeForUpgrade(
-                ts.userId,
-                chargebeeSubscriptionId,
-                diffInCents,
-                description,
-                upgradeTimestamp,
-            );
-        }
-    }
-
-    protected async getPricePerUnitInCents(ts: TeamSubscription, chargebeeSubscriptionId: string): Promise<number> {
-        const chargebeeSubscription = await this.getChargebeeSubscription(
-            { userId: ts.userId },
-            chargebeeSubscriptionId,
-        );
-        const subscriptionPlanUnitPriceInCents = chargebeeSubscription.plan_unit_price;
-        if (subscriptionPlanUnitPriceInCents === undefined) {
-            const plan = Plans.getById(ts.planId)!;
-            return plan.pricePerMonth * 100;
-        } else {
-            return subscriptionPlanUnitPriceInCents;
-        }
-    }
-
-    protected async getChargebeeSubscription(
-        logCtx: LogContext,
-        chargebeeSubscriptionId: string,
-    ): Promise<chargebee.Subscription> {
-        const logPayload = { chargebeeSubscriptionId: chargebeeSubscriptionId };
-        const retrieveResult = await new Promise<chargebee.SubscriptionRetrieveResult>((resolve, reject) => {
-            this.chargebeeProvider.subscription
-                .retrieve(chargebeeSubscriptionId)
-                .request(function (error: any, result: any) {
-                    if (error) {
-                        log.error(logCtx, "Retrieve subscription: error", error, logPayload);
-                        reject(error);
-                    } else {
-                        log.debug(logCtx, "Retrieve subscription: successful", logPayload);
-                        resolve(result);
-                    }
-                });
-        });
-        return retrieveResult.subscription;
-    }
-
-    protected async doUpdateTeamSubscription(
-        userId: string,
-        teamSubscriptionId: string,
-        newQuantity: number,
-        applyEndOfTerm: boolean,
-    ) {
-        const logContext = { userId };
-        const teamSubscription = await this.internalGetTeamSubscription(teamSubscriptionId, userId);
-        const chargebeeSubscriptionId = teamSubscription.paymentReference;
-        if (!chargebeeSubscriptionId) {
-            const err = new Error(`TeamSubscriptionId ${teamSubscriptionId} has no paymentReference!`);
-            log.error(logContext, err, { teamSubscriptionId });
-            throw err;
-        }
-        await this.doUpdateSubscription(userId, chargebeeSubscriptionId, {
-            plan_quantity: newQuantity,
-            end_of_term: applyEndOfTerm,
-        });
-    }
-
-    /**
-     * Checks access permissions and throws ResponseError on failure
-     * @param id
-     * @param userId
-     */
-    protected async internalGetTeamSubscription(id: string, userId?: string): Promise<TeamSubscription> {
-        const teamSubscription = await this.teamSubscriptionDB.findTeamSubscriptionById(id);
-        if (!teamSubscription) {
-            const msg = `No team subscription with id '${id}' found.`;
-            log.error({ userId }, msg);
-            throw new Error(msg);
-        }
-        if (userId && userId !== teamSubscription.userId) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Only the owner may access a team subscription!");
-        }
-        return teamSubscription;
-    }
-
-    protected async internalGetSubscription(id: string, userId: string): Promise<Subscription> {
-        const subscription = await this.accountingDB.findSubscriptionById(id);
-        if (!subscription) {
-            const msg = `No subscription with id '${id}' found.`;
-            log.error({ userId }, msg);
-            throw new Error(msg);
-        }
-        if (userId !== subscription.userId) {
-            const err = new ResponseError(ErrorCodes.PERMISSION_DENIED, "Only the owner may access a subscription!");
-            log.error({ userId }, err);
-            throw err;
-        }
-        return subscription;
-    }
-
-    protected async ensureChargebeeApiIsAllowed(sub: { user?: User; team?: Team }): Promise<void> {
-        await this.ensureBillingMode(sub, (m) => m.mode === "chargebee");
-    }
-
-    protected async ensureStripeApiIsAllowed(sub: { user?: User; team?: Team }): Promise<void> {
-        await this.ensureBillingMode(
-            sub,
-            // Stripe is allowed when you either are on the usage-based side already, or you can switch to)
-            (m) => m.mode === "usage-based" || (m.mode === "chargebee" && !!m.canUpgradeToUBB),
-        );
-    }
-
-    protected async ensureBillingMode(
-        subject: { user?: User; team?: Team },
-        predicate: (m: BillingMode) => boolean,
-    ): Promise<void> {
-        let billingMode: BillingMode | undefined = undefined;
-        if (subject.user) {
-            billingMode = await this.billingModes.getBillingModeForUser(subject.user, new Date());
-        } else if (subject.team) {
-            billingMode = await this.billingModes.getBillingModeForTeam(subject.team, new Date());
-        }
-
-        if (billingMode && predicate(billingMode)) {
-            return;
-        }
-        throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
     }
 
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {
@@ -2087,10 +1050,9 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!attrId) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
-        let team: Team | undefined;
+
         if (attrId.kind === "team") {
-            team = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
-            await this.ensureStripeApiIsAllowed({ team });
+            await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
         } else {
             if (attrId.userId !== user.id) {
                 throw new ResponseError(
@@ -2098,7 +1060,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                     "Cannot get pricing information for another user",
                 );
             }
-            await this.ensureStripeApiIsAllowed({ user });
         }
         return this.stripeService.getPriceInformation(attributionId);
     }
@@ -2110,23 +1071,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
 
-        const switchToPAYG = await this.isEnabledSwitchToPAYG(user);
-
         let team: Team | undefined;
         if (attrId.kind === "team") {
             team = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
-            if (!switchToPAYG) {
-                await this.ensureStripeApiIsAllowed({ team });
-            }
         } else {
             if (attrId.userId !== user.id) {
                 throw new ResponseError(
                     ErrorCodes.PERMISSION_DENIED,
                     "Cannot create Stripe customer profile for another user",
                 );
-            }
-            if (!switchToPAYG) {
-                await this.ensureStripeApiIsAllowed({ user });
             }
         }
 
@@ -2184,21 +1137,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
-        const user = this.checkAndBlockUser("subscribeToStripe");
-        const switchToPAYG = await this.isEnabledSwitchToPAYG(user);
-
-        let team: Team | undefined;
+        this.checkAndBlockUser("subscribeToStripe");
         try {
             if (attrId.kind === "team") {
-                team = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
-                if (!switchToPAYG) {
-                    await this.ensureStripeApiIsAllowed({ team });
-                }
-            } else {
-                if (!switchToPAYG) {
-                    await this.ensureStripeApiIsAllowed({ user });
-                }
+                await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
             }
+
             const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
             if (!customerId) {
                 throw new Error(`No Stripe customer profile for '${attributionId}'`);
@@ -2229,23 +1173,21 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {
+        this.checkAndBlockUser("getStripePortalUrl");
+
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
-        const user = this.checkAndBlockUser("getStripePortalUrl");
-
         let returnUrl = this.config.hostUrl
             .with(() => ({ pathname: `/billing`, search: `org=${attrId.kind === "team" ? attrId.teamId : "0"}` }))
             .toString();
         if (attrId.kind === "user") {
-            await this.ensureStripeApiIsAllowed({ user });
             returnUrl = this.config.hostUrl.with(() => ({ pathname: `/user/billing`, search: `org=0` })).toString();
         } else if (attrId.kind === "team") {
-            const team = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
-            await this.ensureStripeApiIsAllowed({ team });
+            await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
         }
         let url: string;
         try {
@@ -2320,15 +1262,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 spendingLimit: usageLimit,
                 billingStrategy: response.costCenter.billingStrategy,
             },
-        });
-    }
-
-    /**
-     * The "switchToPAYG" flag controls the nudge of subscribers to switch to PAYG.
-     */
-    protected async isEnabledSwitchToPAYG(user: User | undefined) {
-        return await this.configCatClientFactory().getValueAsync("switchToPAYG", false, {
-            user,
         });
     }
 
@@ -2447,41 +1380,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // (SaaS) – admin
-    async adminGetAccountStatement(ctx: TraceContext, userId: string): Promise<AccountStatement> {
-        traceAPIParams(ctx, { userId });
-
-        const user = this.checkAndBlockUser("adminGetAccountStatement");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
-
-        return await this.accountService.getAccountStatement(userId, new Date().toISOString());
-    }
-
-    async adminSetProfessionalOpenSource(ctx: TraceContext, userId: string, shouldGetProfOSS: boolean): Promise<void> {
-        traceAPIParams(ctx, { userId, shouldGetProfOSS });
-
-        const user = this.checkAndBlockUser("adminSetProfessionalOpenSource");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
-
-        if (shouldGetProfOSS) {
-            await this.subscriptionService.subscribe(
-                userId,
-                Plans.FREE_OPEN_SOURCE,
-                undefined,
-                new Date().toISOString(),
-            );
-        } else {
-            await this.subscriptionService.unsubscribe(
-                userId,
-                new Date().toISOString(),
-                Plans.FREE_OPEN_SOURCE.chargebeeId,
-            );
-        }
-    }
-
     async adminIsStudent(ctx: TraceContext, userId: string): Promise<boolean> {
         traceAPIParams(ctx, { userId });
 
@@ -2505,17 +1403,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             domain: domain.toLowerCase(),
         };
         return this.eduDomainDb.storeDomainEntry(domainEntry);
-    }
-
-    async adminGrantExtraHours(ctx: TraceContext, userId: string, extraHours: number): Promise<void> {
-        traceAPIParams(ctx, { userId, extraHours });
-
-        const user = this.checkAndBlockUser("adminGrantExtraHours");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
-
-        await this.subscriptionService.addCredit(userId, extraHours, new Date().toISOString());
     }
 
     async adminGetBillingMode(ctx: TraceContextWithSpan, attributionId: string): Promise<BillingMode> {
