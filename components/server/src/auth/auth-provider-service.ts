@@ -61,7 +61,6 @@ export class AuthProviderService {
             builtin: false,
             disallowLogin: !!oap.organizationId,
             // hiddenOnDashboard: true, // i.e. show only if it's used
-            loginContextMatcher: `https://${oap.host}/`,
             oauth: {
                 ...oap.oauth,
                 clientId: oap.oauth.clientId || "no",

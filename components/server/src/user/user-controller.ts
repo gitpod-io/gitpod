@@ -14,23 +14,18 @@ import { Config } from "../config";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AuthorizationService } from "./authorization-service";
 import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
-import { UserService } from "./user-service";
 import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SessionHandlerProvider } from "../session-handler";
 import { URL } from "url";
 import { saveSession, getRequestingClientInfo, destroySession } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { LoginCompletionHandler } from "../auth/login-completion-handler";
-import { TosCookie } from "./tos-cookie";
 import { increaseLoginCounter } from "../prometheus-metrics";
 import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
-import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { EnforcementControllerServerFactory } from "./enforcement-endpoint";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
-import { VerificationService } from "../auth/verification-service";
 import * as fs from "fs/promises";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
@@ -40,26 +35,17 @@ export class UserController {
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(Authenticator) protected readonly authenticator: Authenticator;
     @inject(Config) protected readonly config: Config;
-    @inject(TosCookie) protected readonly tosCookie: TosCookie;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
-    @inject(UserService) protected readonly userService: UserService;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(SessionHandlerProvider) protected readonly sessionHandlerProvider: SessionHandlerProvider;
-    @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
-    @inject(WorkspaceManagerClientProvider)
-    protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(EnforcementControllerServerFactory) private readonly serverFactory: EnforcementControllerServerFactory;
-    @inject(VerificationService) protected readonly verificationService: VerificationService;
 
     get apiRouter(): express.Router {
         const router = express.Router();
 
         router.get("/login", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            // Clean up
-            this.tosCookie.unset(res);
-
             if (req.isAuthenticated()) {
                 log.info({ sessionId: req.sessionID }, "(Auth) User is already authenticated.", { "login-flow": true });
                 // redirect immediately
@@ -547,32 +533,6 @@ export class UserController {
 
         // read current auth provider configs
         const authProviderConfigs = this.hostContextProvider.getAll().map((hc) => hc.authProvider.params);
-
-        // Special Context exception
-        if (returnToURL) {
-            const authProviderForSpecialContext = authProviderConfigs.find((c) => {
-                if (c.loginContextMatcher) {
-                    try {
-                        const matcher = new RegExp(c.loginContextMatcher);
-                        return matcher.test(returnToURL);
-                    } catch {
-                        /* */
-                    }
-                }
-                return false;
-            });
-            if (authProviderForSpecialContext) {
-                // the `host` param will be used by the authenticator to delegate to the auth provider
-                req.query.host = authProviderForSpecialContext.host;
-
-                log.debug({ sessionId: req.sessionID }, `Using "${authProviderForSpecialContext.type}" for login ...`, {
-                    "login-flow": true,
-                    query: req.query,
-                    authProviderForSpecialContext,
-                });
-                return;
-            }
-        }
 
         // Use the single available auth provider
         const authProvidersOnDashboard = authProviderConfigs

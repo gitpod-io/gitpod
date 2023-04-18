@@ -95,7 +95,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
             hiddenOnDashboard,
             disallowLogin,
             description,
-            loginContextMatcher,
         } = this.params;
         return {
             authProviderId: id,
@@ -106,7 +105,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
             host,
             icon,
             hiddenOnDashboard,
-            loginContextMatcher,
             disallowLogin,
             description,
             scopes,

@@ -1476,7 +1476,6 @@ export interface AuthProviderInfo {
     readonly verified: boolean;
     readonly isReadonly?: boolean;
     readonly hiddenOnDashboard?: boolean;
-    readonly loginContextMatcher?: string;
     readonly disallowLogin?: boolean;
     readonly icon?: string;
     readonly description?: string;

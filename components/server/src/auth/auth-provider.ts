@@ -28,7 +28,6 @@ export interface AuthProviderParams extends AuthProviderEntry {
 
     // properties to control behavior
     readonly hiddenOnDashboard?: boolean;
-    readonly loginContextMatcher?: string;
     readonly disallowLogin?: boolean;
     readonly requireTOS?: boolean;
 
