@@ -11,8 +11,6 @@ import { TypeORMWorkspaceDBImpl, TransactionalWorkspaceDbImpl } from "./typeorm/
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { UserDB } from "./user-db";
 import { Config } from "./config";
-import { UserMessageViewsDB } from "./user-message-views-db";
-import { TypeORMUserMessageViewsDBImpl } from "./typeorm/user-message-views-db-impl";
 import { UserStorageResourcesDB } from "./user-storage-resources-db";
 import { TypeORMUserStorageResourcesDBImpl } from "./typeorm/user-storage-resources-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
@@ -97,9 +95,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope();
     bind(WorkspaceDB).toService(TypeORMWorkspaceDBImpl);
     bindDbWithTracing(TracedWorkspaceDB, bind, WorkspaceDB).inSingletonScope();
-
-    bind(TypeORMUserMessageViewsDBImpl).toSelf().inSingletonScope();
-    bind(UserMessageViewsDB).toService(TypeORMUserMessageViewsDBImpl);
 
     bind(TypeORMUserStorageResourcesDBImpl).toSelf().inSingletonScope();
     bind(UserStorageResourcesDB).toService(TypeORMUserStorageResourcesDBImpl);
