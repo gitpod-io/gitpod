@@ -11,7 +11,7 @@ import { NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
 
 import { RateLimiterConfig } from "./auth/rate-limiter";
 import { CodeSyncConfig } from "./code-sync/code-sync-service";
-import { ChargebeeProviderOptions, readOptionsFromFile } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
+import { ChargebeeProviderOptions } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -23,7 +23,6 @@ export const Config = Symbol("Config");
 export type Config = Omit<
     ConfigSerialized,
     | "hostUrl"
-    | "chargebeeProviderOptionsFile"
     | "stripeSecretsFile"
     | "stripeConfigFile"
     | "linkedInSecretsFile"
@@ -220,7 +219,6 @@ export interface ConfigSerialized {
     /**
      * Payment related options
      */
-    chargebeeProviderOptionsFile?: string;
     stripeSecretsFile?: string;
     stripeConfigFile?: string;
     enablePayment?: boolean;
@@ -317,9 +315,7 @@ export namespace ConfigFile {
         authProviderConfigs = normalizeAuthProviderParams(authProviderConfigs);
 
         const builtinAuthProvidersConfigured = authProviderConfigs.length > 0;
-        const chargebeeProviderOptions = readOptionsFromFile(
-            filePathTelepresenceAware(config.chargebeeProviderOptionsFile || ""),
-        );
+
         let stripeSecrets: { publishableKey: string; secretKey: string } | undefined;
         if (config.enablePayment && config.stripeSecretsFile) {
             try {
@@ -397,7 +393,6 @@ export namespace ConfigFile {
             hostUrl,
             authProviderConfigs,
             builtinAuthProvidersConfigured,
-            chargebeeProviderOptions,
             stripeSecrets,
             linkedInSecrets,
             twilioConfig,
