@@ -159,7 +159,6 @@ const defaultFunctions: FunctionsConfig = {
     adminGetProjectById: { group: "default", points: 1 },
     adminFindPrebuilds: { group: "default", points: 1 },
     adminGetLicense: { group: "default", points: 1 },
-    adminSetLicense: { group: "default", points: 1 },
     adminGetSettings: { group: "default", points: 1 },
     adminUpdateSettings: { group: "default", points: 1 },
     adminGetTelemetryData: { group: "default", points: 1 },

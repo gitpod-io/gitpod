@@ -43,7 +43,6 @@ export interface AdminServer {
     adminGetProjectById(id: string): Promise<Project | undefined>;
 
     adminFindPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
-    adminSetLicense(key: string): Promise<void>;
 
     adminIsStudent(userId: string): Promise<boolean>;
     adminAddStudentEmailDomain(userId: string, domain: string): Promise<void>;
