@@ -7,14 +7,12 @@
 import { inject, injectable } from "inversify";
 
 import { FileProvider } from "./file-provider";
-import { LanguagesProvider } from "./languages-provider";
 import { RepositoryProvider } from "./repository-provider";
 import { RepositoryService } from "./repo-service";
 
 @injectable()
 export class RepositoryHost {
     @inject(FileProvider) fileProvider: FileProvider;
-    @inject(LanguagesProvider) languagesProvider: LanguagesProvider;
     @inject(RepositoryProvider) repositoryProvider: RepositoryProvider;
     @inject(RepositoryService) repositoryService: RepositoryService;
 }
