@@ -6,7 +6,10 @@ package metrics
 
 import (
 	"fmt"
+	"net/http"
+	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -43,4 +46,77 @@ func (m *SupervisorMetrics) Register(registry *prometheus.Registry) error {
 		}
 	}
 	return nil
+}
+
+type HttpMetrics struct {
+	httpRequestsTotal                *prometheus.CounterVec
+	httpRequestsDuration             *prometheus.HistogramVec
+	webSocketConnectionAttemptsTotal *prometheus.CounterVec
+}
+
+func NewHttpMetrics() *HttpMetrics {
+	return &HttpMetrics{
+		httpRequestsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "supervisor_http_requests_total",
+			Help: "Total number of HTTP requests",
+		}, []string{"method", "resource", "status"}),
+		httpRequestsDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name: "supervisor_http_requests_duration_seconds",
+			Help: "Duration of HTTP requests in seconds",
+			// it should be aligned with https://github.com/gitpod-io/gitpod/blob/196a109eee50bfb7da2c6b858a3e78f2a2d0b26f/install/installer/pkg/components/ide-metrics/configmap.go#L199
+			Buckets: []float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600},
+		}, []string{"method", "resource", "status"}),
+		webSocketConnectionAttemptsTotal: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "supervisor_websocket_connection_attempts_total",
+			Help: "Total number of WebSocket connection attempts",
+		}, []string{"resource", "status"}),
+	}
+}
+
+func (metrics *HttpMetrics) Describe(ch chan<- *prometheus.Desc) {
+	metrics.httpRequestsTotal.Describe(ch)
+	metrics.httpRequestsDuration.Describe(ch)
+	metrics.webSocketConnectionAttemptsTotal.Describe(ch)
+}
+
+func (metrics *HttpMetrics) Collect(ch chan<- prometheus.Metric) {
+	metrics.httpRequestsTotal.Collect(ch)
+	metrics.httpRequestsDuration.Collect(ch)
+	metrics.webSocketConnectionAttemptsTotal.Collect(ch)
+}
+
+func (metrics *HttpMetrics) ToResource(path string) string {
+	return path
+}
+
+func (metrics *HttpMetrics) Track(transport http.RoundTripper) http.RoundTripper {
+	return &instrumentedTransport{
+		metrics:   metrics,
+		transport: transport,
+	}
+}
+
+type instrumentedTransport struct {
+	metrics   *HttpMetrics
+	transport http.RoundTripper
+}
+
+func (t *instrumentedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	start := time.Now()
+	resp, err := t.transport.RoundTrip(req)
+
+	resource := t.metrics.ToResource(req.URL.Path)
+	statusCode := http.StatusBadGateway
+	if resp != nil {
+		statusCode = resp.StatusCode
+	}
+
+	if websocket.IsWebSocketUpgrade(req) {
+		t.metrics.webSocketConnectionAttemptsTotal.WithLabelValues(resource, fmt.Sprintf("%d", statusCode)).Inc()
+	} else {
+		t.metrics.httpRequestsTotal.WithLabelValues(req.Method, resource, fmt.Sprintf("%d", statusCode)).Inc()
+		t.metrics.httpRequestsDuration.WithLabelValues(req.Method, resource, fmt.Sprintf("%d", statusCode)).Observe(time.Since(start).Seconds())
+	}
+
+	return resp, err
 }

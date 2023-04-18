@@ -1169,6 +1169,9 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		streamInterceptors = append(streamInterceptors, grpc_logrus.StreamServerInterceptor(log.Log))
 	}
 
+	ideURL, _ := url.Parse(fmt.Sprintf("http://localhost:%d", cfg.IDEPort))
+	ideProxy := httputil.NewSingleHostReverseProxy(ideURL)
+
 	if metricsReporter != nil {
 		grpcMetrics := grpc_prometheus.NewServerMetrics()
 		grpcMetrics.EnableHandlingTimeHistogram(
@@ -1181,9 +1184,17 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		err = metricsReporter.Registry.Register(grpcMetrics)
 		if err != nil {
 			log.WithError(err).Error("supervisor: failed to register grpc metrics")
-		} else {
-			go metricsReporter.Report(ctx)
 		}
+
+		httpMetrics := metrics.NewHttpMetrics()
+		err = metricsReporter.Registry.Register(httpMetrics)
+		if err != nil {
+			log.WithError(err).Error("supervisor: failed to register http metrics")
+		} else {
+			ideProxy.Transport = httpMetrics.Track(ideProxy.Transport)
+		}
+
+		go metricsReporter.Report(ctx)
 	}
 
 	opts = append(opts,
@@ -1230,8 +1241,7 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	routes.Handle("/metrics", promhttp.HandlerFor(metricsGatherer, promhttp.HandlerOpts{}))
 	routes.Handle("/metrics/", metrics)
 
-	ideURL, _ := url.Parse(fmt.Sprintf("http://localhost:%d", cfg.IDEPort))
-	routes.Handle("/", httputil.NewSingleHostReverseProxy(ideURL))
+	routes.Handle("/", ideProxy)
 	routes.Handle("/_supervisor/frontend/", http.StripPrefix("/_supervisor/frontend", http.FileServer(http.Dir(cfg.StaticConfig.FrontendLocation))))
 
 	routes.Handle("/_supervisor/v1/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
