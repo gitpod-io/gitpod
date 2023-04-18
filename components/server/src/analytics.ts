@@ -6,19 +6,12 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { Request } from "express";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import * as crypto from "crypto";
 import { clientIp } from "./express-util";
 
-export async function trackLogin(
-    user: User,
-    request: Request,
-    authHost: string,
-    analytics: IAnalyticsWriter,
-    subscriptionService: SubscriptionService,
-) {
+export async function trackLogin(user: User, request: Request, authHost: string, analytics: IAnalyticsWriter) {
     // make new complete identify call for each login
-    await fullIdentify(user, request, analytics, subscriptionService);
+    await fullIdentify(user, request, analytics);
     const ip = clientIp(request);
     const ua = request.headers["user-agent"];
 
@@ -72,21 +65,11 @@ export function maskIp(ip?: string) {
     return octets?.length == 4 ? octets.slice(0, 3).concat(["0"]).join(".") : undefined;
 }
 
-async function fullIdentify(
-    user: User,
-    request: Request,
-    analytics: IAnalyticsWriter,
-    subscriptionService?: SubscriptionService,
-) {
+async function fullIdentify(user: User, request: Request, analytics: IAnalyticsWriter) {
     // makes a full identify call for authenticated users
     const coords = request.get("x-glb-client-city-lat-long")?.split(", ");
     const ip = clientIp(request);
     const ua = request.headers["user-agent"];
-    var subscriptionIDs: string[] = [];
-    const subscriptions = await subscriptionService?.getNotYetCancelledSubscriptions(user, new Date().toISOString());
-    if (subscriptions) {
-        subscriptionIDs = subscriptions.filter((sub) => !!sub.planId).map((sub) => sub.planId!);
-    }
     analytics.identify({
         anonymousId: getAnonymousId(request) || createCookielessId(ip, ua),
         userId: user.id,
@@ -109,7 +92,6 @@ async function fullIdentify(
             unsubscribed_onboarding: user.additionalData?.emailNotificationSettings?.allowsOnboardingMail === false,
             unsubscribed_changelog: user.additionalData?.emailNotificationSettings?.allowsChangelogMail === false,
             unsubscribed_devx: user.additionalData?.emailNotificationSettings?.allowsDevXMail === false,
-            subscriptions: subscriptionIDs,
         },
     });
 }

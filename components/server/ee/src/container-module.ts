@@ -23,13 +23,6 @@ import { IPrefixContextParser } from "../../src/workspace/context-parser";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
-import { AccountService } from "@gitpod/gitpod-payment-endpoint/lib/accounting/account-service";
-import {
-    AccountServiceImpl,
-    SubscriptionService,
-    TeamSubscriptionService,
-    TeamSubscription2Service,
-} from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { StripeService } from "./user/stripe-service";
 import { EligibilityService } from "./user/eligibility-service";
 import { UserDeletionService } from "../../src/user/user-deletion-service";
@@ -82,12 +75,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
 
     bind(UserDeletionServiceEE).toSelf().inSingletonScope();
     rebind(UserDeletionService).to(UserDeletionServiceEE).inSingletonScope();
-
-    // acounting
-    bind(AccountService).to(AccountServiceImpl).inSingletonScope();
-    bind(SubscriptionService).toSelf().inSingletonScope();
-    bind(TeamSubscriptionService).toSelf().inSingletonScope();
-    bind(TeamSubscription2Service).toSelf().inSingletonScope();
 
     // payment/billing
     bind(StripeService).toSelf().inSingletonScope();

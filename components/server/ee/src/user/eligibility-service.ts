@@ -5,11 +5,10 @@
  */
 
 import { inject, injectable } from "inversify";
-import { TeamDB, TeamSubscription2DB, TeamSubscriptionDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { TokenProvider } from "../../../src/user/token-provider";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { EMailDomainService } from "../auth/email-domain-service";
 import fetch from "node-fetch";
 import { Config } from "../../../src/config";
@@ -31,11 +30,8 @@ export class EligibilityService {
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(TeamDB) protected readonly teamDb: TeamDB;
-    @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(EMailDomainService) protected readonly domainService: EMailDomainService;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
-    @inject(TeamSubscriptionDB) protected readonly teamSubscriptionDb: TeamSubscriptionDB;
-    @inject(TeamSubscription2DB) protected readonly teamSubscription2Db: TeamSubscription2DB;
 
     /**
      * Whether the given user is recognized as a student within Gitpod
