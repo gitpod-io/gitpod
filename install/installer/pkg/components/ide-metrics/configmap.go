@@ -250,6 +250,38 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+		{
+			Name: "supervisor_http_requests_total",
+			Help: "Total number of HTTP requests.",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "method",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "resource",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "status",
+					AllowValues: []string{"*"},
+				},
+			},
+		},
+		{
+			Name: "supervisor_websocket_connection_attempts_total",
+			Help: "Total number of websocket connection attempts.",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "resource",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "status",
+					AllowValues: []string{"*"},
+				},
+			},
+		},
 	}
 
 	histogramMetrics := []config.HistogramMetricsConfiguration{
@@ -364,6 +396,25 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			Buckets: []float64{0.1, 0.2, 0.5, 1, 2, 5, 10},
+		},
+		{
+			Name: "supervisor_http_requests_duration_seconds",
+			Help: "Duration of HTTP requests in seconds.",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "method",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "resource",
+					AllowValues: []string{"*"},
+				},
+				{
+					Name:        "status",
+					AllowValues: []string{"*"},
+				},
+			},
+			Buckets: []float64{.005, .025, .05, .1, .5, 1, 2.5, 5, 30, 60, 120, 240, 600},
 		},
 	}
 
