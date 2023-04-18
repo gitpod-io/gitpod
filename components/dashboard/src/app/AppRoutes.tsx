@@ -190,7 +190,6 @@ export const AppRoutes = () => {
                             "/old-team-plans",
                             "/teams",
                             "/subscription",
-                            "/usage",
                             "/upgrade-subscription",
                             "/plans",
                         ]}
