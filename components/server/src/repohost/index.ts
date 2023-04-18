@@ -5,7 +5,6 @@
  */
 
 export * from "./file-provider";
-export * from "./languages-provider";
 export * from "./repository-host";
 export * from "./repository-provider";
 export * from "./repo-url";
