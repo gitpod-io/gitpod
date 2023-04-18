@@ -37,7 +37,6 @@ import {
     ChargebeeProviderOptions,
     UpgradeHelper,
 } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
-import { ChargebeeCouponComputer } from "./user/coupon-computer";
 import { ChargebeeService } from "./user/chargebee-service";
 import { StripeService } from "./user/stripe-service";
 import { EligibilityService } from "./user/eligibility-service";
@@ -110,7 +109,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
         })
         .inSingletonScope();
     bind(UpgradeHelper).toSelf().inSingletonScope();
-    bind(ChargebeeCouponComputer).toSelf().inSingletonScope();
     bind(ChargebeeService).toSelf().inSingletonScope();
     bind(StripeService).toSelf().inSingletonScope();
 
