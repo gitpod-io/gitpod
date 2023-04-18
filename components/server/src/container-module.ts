@@ -17,10 +17,6 @@ import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
 import { ConfigProvider } from "./workspace/config-provider";
 import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { MessageBusHelper, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
-import {
-    IClientDataPrometheusAdapter,
-    ClientDataPrometheusAdapterImpl,
-} from "./workspace/client-data-prometheus-adapter";
 import { ConfigurationService } from "./config/configuration-service";
 import { IContextParser, IPrefixContextParser } from "./workspace/context-parser";
 import { ContextParser } from "./workspace/context-parser-service";
@@ -156,8 +152,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
     bind(MessageBusIntegration).toSelf().inSingletonScope();
     bind(LocalMessageBroker).to(LocalRabbitMQBackedMessageBroker).inSingletonScope();
-
-    bind(IClientDataPrometheusAdapter).to(ClientDataPrometheusAdapterImpl).inSingletonScope();
 
     bind(GitpodServerImpl).toSelf();
     bind(WebsocketConnectionManager)
