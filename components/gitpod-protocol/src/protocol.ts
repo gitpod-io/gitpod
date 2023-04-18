@@ -1550,27 +1550,6 @@ export interface Configuration {
     readonly garbageCollectionStartDate: number;
 }
 
-export interface TheiaPlugin {
-    id: string;
-    pluginName: string;
-    pluginId?: string;
-    /**
-     * Id of the user which uploaded this plugin.
-     */
-    userId?: string;
-    bucketName: string;
-    path: string;
-    hash?: string;
-    state: TheiaPlugin.State;
-}
-export namespace TheiaPlugin {
-    export enum State {
-        Uploading = "uploading",
-        Uploaded = "uploaded",
-        CheckinFailed = "checkin-failed",
-    }
-}
-
 export interface TermsAcceptanceEntry {
     readonly userId: string;
     readonly termsRevision: string;
