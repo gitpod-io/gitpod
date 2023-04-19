@@ -16,10 +16,9 @@ import (
 type TeamMembership struct {
 	ID uuid.UUID `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
 
-	TeamID         uuid.UUID          `gorm:"column:teamId;type:char;size:36;" json:"teamId"`
-	UserID         uuid.UUID          `gorm:"column:userId;type:char;size:36;" json:"userId"`
-	Role           TeamMembershipRole `gorm:"column:role;type:varchar;size:255;" json:"role"`
-	SubscriptionID uuid.UUID          `gorm:"column:subscriptionId;type:char;size:36;" json:"subscriptionId"`
+	TeamID uuid.UUID          `gorm:"column:teamId;type:char;size:36;" json:"teamId"`
+	UserID uuid.UUID          `gorm:"column:userId;type:char;size:36;" json:"userId"`
+	Role   TeamMembershipRole `gorm:"column:role;type:varchar;size:255;" json:"role"`
 
 	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	// Read-only (-> property).

@@ -18,11 +18,10 @@ func TestTeamMembership_WriteRead(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
 	membership := &db.TeamMembership{
-		ID:             uuid.New(),
-		TeamID:         uuid.New(),
-		UserID:         uuid.New(),
-		Role:           db.TeamMembershipRole_Member,
-		SubscriptionID: uuid.New(),
+		ID:     uuid.New(),
+		TeamID: uuid.New(),
+		UserID: uuid.New(),
+		Role:   db.TeamMembershipRole_Member,
 	}
 
 	tx := conn.Create(membership)

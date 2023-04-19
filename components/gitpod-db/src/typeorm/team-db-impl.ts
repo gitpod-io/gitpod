@@ -295,21 +295,6 @@ export class TeamDBImpl implements TeamDB {
         await membershipRepo.save(membership);
     }
 
-    public async setTeamMemberSubscription(userId: string, teamId: string, subscriptionId: string): Promise<void> {
-        const teamRepo = await this.getTeamRepo();
-        const team = await teamRepo.findOne(teamId);
-        if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
-        }
-        const membershipRepo = await this.getMembershipRepo();
-        const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
-        if (!membership) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this organization");
-        }
-        membership.subscriptionId = subscriptionId;
-        await membershipRepo.save(membership);
-    }
-
     public async removeMemberFromTeam(userId: string, teamId: string): Promise<void> {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
