@@ -199,12 +199,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         if (!!result.needsVerification) {
             throw new ResponseError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
         }
-        if (!!result.oufOfCredits) {
-            throw new ResponseError(
-                ErrorCodes.NOT_ENOUGH_CREDIT,
-                `Not enough monthly workspace hours. Please upgrade your account to get more hours for your workspaces.`,
-            );
-        }
         if (!!result.usageLimitReachedOnCostCenter) {
             throw new ResponseError(ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED, "Increase usage limit and try again.", {
                 attributionId: result.usageLimitReachedOnCostCenter,

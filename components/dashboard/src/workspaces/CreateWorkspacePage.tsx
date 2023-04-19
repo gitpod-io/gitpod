@@ -24,7 +24,7 @@ import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
 import { openAuthorizeWindow } from "../provider-utils";
 import { gitpodHostUrl } from "../service/service";
-import { LimitReachedOutOfHours, LimitReachedParallelWorkspacesModal } from "../start/CreateWorkspace";
+import { LimitReachedParallelWorkspacesModal } from "../start/CreateWorkspace";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { StartWorkspaceError } from "../start/StartPage";
 import { useCurrentUser } from "../user-context";
@@ -365,8 +365,6 @@ const ErrorMessage: FunctionComponent<StatusMessageProps> = ({
             return <></>;
         case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
             return <LimitReachedParallelWorkspacesModal />;
-        case ErrorCodes.NOT_ENOUGH_CREDIT:
-            return <LimitReachedOutOfHours />;
         case ErrorCodes.INVALID_COST_CENTER:
             return renderError(`The organization '${error.data}' is not valid.`);
         case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:

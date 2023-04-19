@@ -201,10 +201,6 @@ export function CreateWorkspace({ contextUrl }: CreateWorkspaceProps) {
                 phase = StartPhase.Stopped;
                 statusMessage = <LimitReachedParallelWorkspacesModal />;
                 break;
-            case ErrorCodes.NOT_ENOUGH_CREDIT:
-                phase = StartPhase.Stopped;
-                statusMessage = <LimitReachedOutOfHours />;
-                break;
             case ErrorCodes.INVALID_COST_CENTER:
                 phase = StartPhase.Stopped;
                 statusMessage = (
@@ -365,17 +361,6 @@ export function LimitReachedParallelWorkspacesModal() {
             <p className="mt-1 mb-2 text-base dark:text-gray-400">
                 You have reached the limit of parallel running workspaces for your account. Please, upgrade or stop one
                 of the running workspaces.
-            </p>
-        </LimitReachedModal>
-    );
-}
-
-export function LimitReachedOutOfHours() {
-    return (
-        <LimitReachedModal>
-            <p className="mt-1 mb-2 text-base dark:text-gray-400">
-                You have reached the limit of monthly workspace hours for your account. Please upgrade to get more hours
-                for your workspaces.
             </p>
         </LimitReachedModal>
     );
