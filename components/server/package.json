@@ -86,7 +86,6 @@
     "rate-limiter-flexible": "^2.3.6",
     "reflect-metadata": "^0.1.10",
     "stripe": "^9.0.0",
-    "swot-js": "^1.0.3",
     "twilio": "^3.78.0",
     "uuid": "^8.3.2",
     "vscode-ws-jsonrpc": "^0.2.0",

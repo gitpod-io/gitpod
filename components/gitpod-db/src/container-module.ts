@@ -38,8 +38,6 @@ import { AuthProviderEntryDBImpl } from "./typeorm/auth-provider-entry-db-impl";
 import { TeamSubscriptionDB } from "./team-subscription-db";
 import { AccountingDB, TransactionalAccountingDBFactory } from "./accounting-db";
 import { EmailDomainFilterDB } from "./email-domain-filter-db";
-import { EduEmailDomainDB } from "./edu-email-domain-db";
-import { EduEmailDomainDBImpl } from "./typeorm/edu-email-domain-db-impl";
 import { EmailDomainFilterDBImpl } from "./typeorm/email-domain-filter-db-impl";
 import { TeamSubscriptionDBImpl } from "./typeorm/team-subscription-db-impl";
 import { TransactionalAccountingDBImpl, TypeORMAccountingDBImpl } from "./typeorm/accounting-db-impl";
@@ -146,7 +144,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(TeamSubscriptionDB).to(TeamSubscriptionDBImpl).inSingletonScope();
     bind(TeamSubscription2DB).to(TeamSubscription2DBImpl).inSingletonScope();
     bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
-    bind(EduEmailDomainDB).to(EduEmailDomainDBImpl).inSingletonScope();
     bind(UserToTeamMigrationService).toSelf().inSingletonScope();
     bind(WorkspaceOrganizationIdMigration).toSelf().inSingletonScope();
     bind(Synchronizer).toSelf().inSingletonScope();

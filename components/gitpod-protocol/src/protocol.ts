@@ -685,10 +685,6 @@ export interface EmailDomainFilterEntry {
     negative: boolean;
 }
 
-export interface EduEmailDomain {
-    domain: string;
-}
-
 export type AppInstallationPlatform = "github";
 export type AppInstallationState = "claimed.user" | "claimed.platform" | "installed" | "uninstalled";
 export interface AppInstallation {

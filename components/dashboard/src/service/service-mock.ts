@@ -233,9 +233,6 @@ const gitpodServiceMock = createServiceMock({
     getClientRegion: async () => {
         return "europe-west-1";
     },
-    isStudent: async () => {
-        return false;
-    },
     getSuggestedContextURLs: async () => {
         return [];
     },

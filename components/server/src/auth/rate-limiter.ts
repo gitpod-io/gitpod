@@ -179,9 +179,6 @@ const defaultFunctions: FunctionsConfig = {
 
     accessHeadlessLogs: { group: "default", points: 1 },
 
-    adminAddStudentEmailDomain: { group: "default", points: 1 },
-    adminIsStudent: { group: "default", points: 1 },
-    isStudent: { group: "default", points: 1 },
     getStripePublishableKey: { group: "default", points: 1 },
     getStripeSetupIntentClientSecret: { group: "default", points: 1 },
     findStripeSubscriptionId: { group: "default", points: 1 },

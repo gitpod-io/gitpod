@@ -32,7 +32,6 @@ import {
     CommitContext,
     PrebuiltWorkspace,
     WorkspaceInstance,
-    EduEmailDomain,
     ProviderRepository,
     PrebuildWithStatus,
     CreateProjectParams,
@@ -61,7 +60,6 @@ import { LicenseValidationResult } from "@gitpod/gitpod-protocol/lib/license-pro
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
-import { EligibilityService } from "../user/eligibility-service";
 import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     CostCenter,
@@ -71,7 +69,6 @@ import {
     Usage_Kind,
 } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { UserService } from "../../../src/user/user-service";
-import { EduEmailDomainDB } from "@gitpod/gitpod-db/lib";
 import { StripeService } from "../user/stripe-service";
 
 import { GitHubAppSupport } from "../github/github-app-support";
@@ -102,10 +99,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
 
     // per-user state
-    @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
-
-    @inject(EduEmailDomainDB) protected readonly eduDomainDb: EduEmailDomainDB;
-
     @inject(StripeService) protected readonly stripeService: StripeService;
 
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
@@ -974,11 +967,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    public async isStudent(ctx: TraceContext): Promise<boolean> {
-        const user = this.checkUser("isStudent");
-        return this.eligibilityService.isStudent(user);
-    }
-
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {
         this.checkAndBlockUser("getStripePublishableKey");
         const publishableKey = this.config.stripeSecrets?.publishableKey;
@@ -1377,31 +1365,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
     }
 
     // (SaaS) – admin
-    async adminIsStudent(ctx: TraceContext, userId: string): Promise<boolean> {
-        traceAPIParams(ctx, { userId });
-
-        const user = this.checkAndBlockUser("adminIsStudent");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
-
-        return this.eligibilityService.isStudent(userId);
-    }
-
-    async adminAddStudentEmailDomain(ctx: TraceContext, userId: string, domain: string): Promise<void> {
-        traceAPIParams(ctx, { userId, domain });
-
-        const user = this.checkAndBlockUser("adminAddStudentEmailDomain");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
-
-        const domainEntry: EduEmailDomain = {
-            domain: domain.toLowerCase(),
-        };
-        return this.eduDomainDb.storeDomainEntry(domainEntry);
-    }
-
     async adminGetBillingMode(ctx: TraceContextWithSpan, attributionId: string): Promise<BillingMode> {
         traceAPIParams(ctx, { attributionId });
 

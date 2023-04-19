@@ -32,19 +32,16 @@ interface Entry {
 export default function Menu() {
     const user = useCurrentUser();
     const location = useLocation();
-    const { setCurrency, setIsStudent } = useContext(PaymentContext);
+    const { setCurrency } = useContext(PaymentContext);
     const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
     useEffect(() => {
         const { server } = getGitpodService();
-        Promise.all([
-            server.getClientRegion().then((v) => () => {
-                // @ts-ignore
-                setCurrency(countries[v]?.currency === "EUR" ? "EUR" : "USD");
-            }),
-            server.isStudent().then((v) => () => setIsStudent(v)),
-        ]).then((setters) => setters.forEach((s) => s()));
-    }, [setCurrency, setIsStudent]);
+        server.getClientRegion().then((v) => {
+            // @ts-ignore
+            setCurrency(countries[v]?.currency === "EUR" ? "EUR" : "USD");
+        });
+    }, [setCurrency]);
 
     const adminMenu: Entry = useMemo(
         () => ({

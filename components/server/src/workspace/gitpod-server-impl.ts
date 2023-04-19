@@ -3300,16 +3300,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     //#region gitpod.io concerns
     //
-    async adminIsStudent(ctx: TraceContext, userId: string): Promise<boolean> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async adminAddStudentEmailDomain(ctx: TraceContext, userId: string, domain: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
     async adminGetBillingMode(ctx: TraceContextWithSpan, attributionId: string): Promise<BillingMode> {
-        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
-    }
-    async isStudent(ctx: TraceContext): Promise<boolean> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {

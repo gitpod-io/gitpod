@@ -24,7 +24,6 @@ import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-p
 import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { StripeService } from "./user/stripe-service";
-import { EligibilityService } from "./user/eligibility-service";
 import { UserDeletionService } from "../../src/user/user-deletion-service";
 import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
 import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
@@ -62,7 +61,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
 
     // GitpodServerImpl (stateful per user)
     rebind(GitpodServerImpl).to(GitpodServerEEImpl).inRequestScope();
-    bind(EligibilityService).toSelf().inRequestScope();
 
     // various
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
