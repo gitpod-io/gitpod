@@ -12,9 +12,6 @@ const (
 	// 401 Unauthorized
 	NOT_AUTHENTICATED = 401
 
-	// 402 Payment Required
-	NOT_ENOUGH_CREDIT = 402
-
 	// 403 Forbidden
 	PERMISSION_DENIED = 403
 
@@ -27,20 +24,32 @@ const (
 	// 410 No User
 	SETUP_REQUIRED = 410
 
+	// 411 No User
+	NEEDS_VERIFICATION = 411
+
 	// 429 Too Many Requests
 	TOO_MANY_REQUESTS = 429
 
 	// 430 Repository not whitelisted (custom status code)
 	REPOSITORY_NOT_WHITELISTED = 430
 
+	// 440 Prebuilds now always require a project (custom status code)
+	PROJECT_REQUIRED = 440
+
+	// 451 Out of credits
+	PAYMENT_SPENDING_LIMIT_REACHED = 451
+
+	// 451 Error creating a subscription
+	SUBSCRIPTION_ERROR = 452
+
+	// 455 Invalid cost center (custom status code)
+	INVALID_COST_CENTER = 455
+
 	// 460 Context Parse Error (custom status code)
 	CONTEXT_PARSE_ERROR = 460
 
 	// 461 Invalid gitpod yml
 	INVALID_GITPOD_YML = 461
-
-	// 450 Payment error
-	PAYMENT_ERROR = 450
 
 	// 470 User Blocked (custom status code)
 	USER_BLOCKED = 470
@@ -51,14 +60,8 @@ const (
 	// 472 Terms Acceptance Required (custom status code)
 	USER_TERMS_ACCEPTANCE_REQUIRED = 472
 
-	// 480 Plan does not allow private repos
-	PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS = 480
-
 	// 481 Professional plan is required for this operation
 	PLAN_PROFESSIONAL_REQUIRED = 481
-
-	// 485 Plan is only allowed for students
-	PLAN_ONLY_ALLOWED_FOR_STUDENTS = 485
 
 	// 490 Too Many Running Workspace
 	TOO_MANY_RUNNING_WORKSPACES = 490
@@ -75,15 +78,12 @@ const (
 	// 601 SaaS Feature
 	SAAS_FEATURE = 601
 
-	// 610 Invalid Team Subscription Quantity
-	TEAM_SUBSCRIPTION_INVALID_QUANTITY = 610
-
-	// 620 Team Subscription Assignment Failed
-	TEAM_SUBSCRIPTION_ASSIGNMENT_FAILED = 620
-
 	// 630 Snapshot Error
 	SNAPSHOT_ERROR = 630
 
 	// 640 Headless logs are not available (yet)
 	HEADLESS_LOG_NOT_YET_AVAILABLE = 640
+
+	// 650 Invalid Value
+	INVALID_VALUE = 650
 )

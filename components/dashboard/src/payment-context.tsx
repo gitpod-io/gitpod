@@ -5,7 +5,8 @@
  */
 
 import React, { createContext, useState } from "react";
-import { Currency } from "@gitpod/gitpod-protocol/lib/plans";
+
+export type Currency = "USD" | "EUR";
 
 const PaymentContext = createContext<{
     currency: Currency;

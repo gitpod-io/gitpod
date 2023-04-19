@@ -16,8 +16,6 @@ import { injectable } from "inversify";
 
 export interface MayStartWorkspaceResult {
     hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
-    //** Out of Chargebee credits? */
-    oufOfCredits?: boolean;
 
     needsVerification?: boolean;
 
