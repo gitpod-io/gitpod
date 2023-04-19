@@ -88,7 +88,6 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					ImageLayers:       []string{codeWebExtensionImage, codeHelperImage},
 					LatestImage:       resolveLatestImage(ide.CodeIDEImage, "nightly", ctx.VersionManifest.Components.Workspace.CodeImage),
 					LatestImageLayers: []string{codeWebExtensionImage, codeHelperImage},
-					Experimental:      true,
 				},
 				codeDesktop: {
 					OrderKey:    "02",
