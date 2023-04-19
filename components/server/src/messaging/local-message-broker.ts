@@ -11,7 +11,6 @@ import {
     PrebuildWithStatus,
     WorkspaceInstance,
 } from "@gitpod/gitpod-protocol";
-import { CreditAlert } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
@@ -19,9 +18,6 @@ import { MessageBusIntegration } from "../workspace/messagebus-integration";
 
 export interface PrebuildUpdateListener {
     (ctx: TraceContext, evt: PrebuildWithStatus): void;
-}
-export interface CreditAlertListener {
-    (ctx: TraceContext, alert: CreditAlert): void;
 }
 export interface HeadlessWorkspaceEventListener {
     (ctx: TraceContext, evt: HeadlessWorkspaceEvent): void;
@@ -37,8 +33,6 @@ export interface LocalMessageBroker {
     stop(): Promise<void>;
 
     listenForPrebuildUpdates(projectId: string, listener: PrebuildUpdateListener): Disposable;
-
-    listenToCreditAlerts(userId: string, listener: CreditAlertListener): Disposable;
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable;
 
@@ -66,7 +60,6 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
     @inject(MessageBusIntegration) protected readonly messageBusIntegration: MessageBusIntegration;
 
     protected prebuildUpdateListeners: Map<string, PrebuildUpdateListener[]> = new Map();
-    protected creditAlertsListeners: Map<string, CreditAlertListener[]> = new Map();
     protected headlessWorkspaceEventListeners: Map<string, HeadlessWorkspaceEventListener[]> = new Map();
     protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
 
@@ -95,21 +88,6 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
                     }
                 },
             ),
-        );
-        this.disposables.push(
-            this.messageBusIntegration.listenToCreditAlerts(undefined, (ctx: TraceContext, alert: CreditAlert) => {
-                TraceContext.setOWI(ctx, { userId: alert.userId });
-
-                const listeners = this.creditAlertsListeners.get(alert.userId) || [];
-                for (const l of listeners) {
-                    try {
-                        l(ctx, alert);
-                    } catch (err) {
-                        TraceContext.setError(ctx, err);
-                        log.error({ userId: alert.userId }, "listenToCreditAlerts", err, { alert });
-                    }
-                }
-            }),
         );
         this.disposables.push(
             this.messageBusIntegration.listenForPrebuildUpdatableQueue(
@@ -159,10 +137,6 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
 
     listenForPrebuildUpdates(projectId: string, listener: PrebuildUpdateListener): Disposable {
         return this.doRegister(projectId, listener, this.prebuildUpdateListeners);
-    }
-
-    listenToCreditAlerts(userId: string, listener: CreditAlertListener): Disposable {
-        return this.doRegister(userId, listener, this.creditAlertsListeners);
     }
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
