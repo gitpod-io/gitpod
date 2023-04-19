@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -90,6 +91,8 @@ func (metrics *HttpMetrics) ToResource(path string) string {
 }
 
 func (metrics *HttpMetrics) Track(transport http.RoundTripper) http.RoundTripper {
+	// TODO remove only for debugging
+	log.Info("instrumenting http transport")
 	return &instrumentedTransport{
 		metrics:   metrics,
 		transport: transport,
@@ -110,6 +113,9 @@ func (t *instrumentedTransport) RoundTrip(req *http.Request) (*http.Response, er
 	if resp != nil {
 		statusCode = resp.StatusCode
 	}
+
+	// TODO remove only for debugging
+	log.Infof("http request %s %s %d %f", req.Method, resource, statusCode, time.Since(start).Seconds())
 
 	if websocket.IsWebSocketUpgrade(req) {
 		t.metrics.webSocketConnectionAttemptsTotal.WithLabelValues(resource, fmt.Sprintf("%d", statusCode)).Inc()

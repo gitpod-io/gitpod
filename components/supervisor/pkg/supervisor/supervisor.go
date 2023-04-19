@@ -1191,6 +1191,8 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		if err != nil {
 			log.WithError(err).Error("supervisor: failed to register http metrics")
 		} else {
+			// TODO remove only for debugging
+			log.Info("supervisor: registered http metrics")
 			ideProxy.Transport = httpMetrics.Track(ideProxy.Transport)
 		}
 
