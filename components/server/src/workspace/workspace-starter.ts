@@ -563,18 +563,11 @@ export class WorkspaceStarter {
             };
             doStartWorkspace().catch((err) => ideUrlPromise.reject(err));
 
-            const noWaitForWsMan = await getExperimentsClientForBackend().getValueAsync(
-                "do_not_wait_for_ws_manager",
-                false,
-                { user },
-            );
             const intervalHandle = repeat(async () => {
-                if (noWaitForWsMan) {
-                    const inst = await this.workspaceDb.trace(ctx).findInstanceById(instance.id);
-                    if (inst?.ideUrl && !ideUrlPromise.isResolved) {
-                        logSuccess(false);
-                        ideUrlPromise.resolve(inst?.ideUrl);
-                    }
+                const inst = await this.workspaceDb.trace(ctx).findInstanceById(instance.id);
+                if (inst?.ideUrl && !ideUrlPromise.isResolved) {
+                    logSuccess(false);
+                    ideUrlPromise.resolve(inst?.ideUrl);
                 }
             }, 50);
 
