@@ -11,9 +11,6 @@ export namespace ErrorCodes {
     // 401 Unauthorized
     export const NOT_AUTHENTICATED = 401;
 
-    // 402 Payment Required
-    export const NOT_ENOUGH_CREDIT = 402;
-
     // 403 Forbidden
     export const PERMISSION_DENIED = 403;
 
@@ -37,9 +34,6 @@ export namespace ErrorCodes {
 
     // 440 Prebuilds now always require a project (custom status code)
     export const PROJECT_REQUIRED = 440;
-
-    // 450 Payment error
-    export const PAYMENT_ERROR = 450;
 
     // 451 Out of credits
     export const PAYMENT_SPENDING_LIMIT_REACHED = 451;
@@ -65,14 +59,8 @@ export namespace ErrorCodes {
     // 472 Terms Acceptance Required (custom status code)
     export const USER_TERMS_ACCEPTANCE_REQUIRED = 472;
 
-    // 480 Plan does not allow private repos
-    export const PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS = 480;
-
     // 481 Professional plan is required for this operation
     export const PLAN_PROFESSIONAL_REQUIRED = 481;
-
-    // 485 Plan is only allowed for students
-    export const PLAN_ONLY_ALLOWED_FOR_STUDENTS = 485;
 
     // 490 Too Many Running Workspace
     export const TOO_MANY_RUNNING_WORKSPACES = 490;
@@ -88,12 +76,6 @@ export namespace ErrorCodes {
 
     // 601 SaaS Feature
     export const SAAS_FEATURE = 601;
-
-    // 610 Invalid Team Subscription Quantity
-    export const TEAM_SUBSCRIPTION_INVALID_QUANTITY = 610;
-
-    // 620 Team Subscription Assignment Failed
-    export const TEAM_SUBSCRIPTION_ASSIGNMENT_FAILED = 620;
 
     // 630 Snapshot Error
     export const SNAPSHOT_ERROR = 630;
