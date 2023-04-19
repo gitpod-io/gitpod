@@ -64,12 +64,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_pending_github_event",
-            primaryKeys: ["id"],
-            timeColumn: "creationDate",
-            deletionColumn: "deleted",
-        },
-        {
             name: "d_b_volume_snapshot",
             primaryKeys: ["id"],
             timeColumn: "_lastModified",
