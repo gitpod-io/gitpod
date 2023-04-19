@@ -71,7 +71,7 @@ export default function SelectIDE(props: SelectIDEProps) {
     );
 
     //todo(ft): find a better way to group IDEs by vendor
-    const shouldShowJetbrainsNotice = !["code", "code-desktop"].includes(defaultIde); // a really hacky way to get just JetBrains IDEs
+    const shouldShowJetbrainsNotice = !["code", "code-desktop", "xterm"].includes(defaultIde); // a really hacky way to get just JetBrains IDEs
 
     return (
         <>
