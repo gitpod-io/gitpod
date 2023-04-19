@@ -20,7 +20,6 @@ type FeatureFlagsType = {
 
 const defaultFeatureFlags = {
     startWithOptions: false,
-    showUsageView: false,
     showUseLastSuccessfulPrebuild: false,
     usePublicApiWorkspacesService: false,
     enablePersonalAccessTokens: false,
@@ -40,7 +39,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const { project } = useContext(ProjectContext);
     const currentOrg = useCurrentOrg();
     const [startWithOptions, setStartWithOptions] = useState<boolean>(false);
-    const [showUsageView, setShowUsageView] = useState<boolean>(false);
     const [showUseLastSuccessfulPrebuild, setShowUseLastSuccessfulPrebuild] = useState<boolean>(false);
     const [enablePersonalAccessTokens, setPersonalAccessTokensEnabled] = useState<boolean>(false);
     const [usePublicApiWorkspacesService, setUsePublicApiWorkspacesService] = useState<boolean>(false);
@@ -55,7 +53,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         (async () => {
             const featureFlags: FeatureFlagConfig = {
                 start_with_options: { defaultValue: false, setter: setStartWithOptions },
-                usage_view: { defaultValue: false, setter: setShowUsageView },
                 showUseLastSuccessfulPrebuild: { defaultValue: false, setter: setShowUseLastSuccessfulPrebuild },
                 personalAccessTokensEnabled: { defaultValue: false, setter: setPersonalAccessTokensEnabled },
                 publicApiExperimentalWorkspaceService: {
@@ -107,7 +104,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const flags = useMemo(() => {
         return {
             startWithOptions,
-            showUsageView,
             showUseLastSuccessfulPrebuild,
             enablePersonalAccessTokens,
             usePublicApiWorkspacesService,
@@ -123,7 +119,6 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         newSignupFlow,
         oidcServiceEnabled,
         orgGitAuthProviders,
-        showUsageView,
         showUseLastSuccessfulPrebuild,
         startWithOptions,
         usePublicApiWorkspacesService,
