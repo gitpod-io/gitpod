@@ -174,7 +174,7 @@ export class PrebuildManager {
                     }
                 }
             }
-            if (project && context.ref && !project.settings?.keepOutdatedPrebuildsRunning) {
+            if (context.ref && !project.settings?.keepOutdatedPrebuildsRunning) {
                 try {
                     await this.abortPrebuildsForBranch({ span }, project, user, context.ref);
                 } catch (e) {
@@ -222,17 +222,10 @@ export class PrebuildManager {
                 }
             }
 
-            let organizationId = (await this.teamDB.findTeamById(project.id))?.id;
-            if (!user.additionalData?.isMigratedToTeamOnlyAttribution) {
-                // If the user is not migrated to team-only attribution, we retrieve the organization from the attribution logic.
-                const attributionId = await this.userService.getWorkspaceUsageAttributionId(user, project.id);
-                organizationId = attributionId.kind === "team" ? attributionId.teamId : undefined;
-            }
-
             const workspace = await this.workspaceFactory.createForContext(
                 { span },
                 user,
-                organizationId,
+                project.teamId,
                 project,
                 prebuildContext,
                 context.normalizedContextURL!,
