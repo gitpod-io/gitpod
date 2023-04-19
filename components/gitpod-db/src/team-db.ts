@@ -32,7 +32,6 @@ export interface TeamDB {
     updateTeam(teamId: string, team: Pick<Team, "name">): Promise<Team>;
     addMemberToTeam(userId: string, teamId: string): Promise<"added" | "already_member">;
     setTeamMemberRole(userId: string, teamId: string, role: TeamMemberRole): Promise<void>;
-    setTeamMemberSubscription(userId: string, teamId: string, subscriptionId: string): Promise<void>;
     removeMemberFromTeam(userId: string, teamId: string): Promise<void>;
     findTeamMembershipInviteById(inviteId: string): Promise<TeamMembershipInvite>;
     findGenericInviteByTeamId(teamId: string): Promise<TeamMembershipInvite | undefined>;
