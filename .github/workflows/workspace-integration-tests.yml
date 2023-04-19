@@ -233,6 +233,7 @@ jobs:
               uses: test-summary/action@v2
               with:
                   paths: "test/tests/**/TEST-*.xml"
+                  show: "all"
               if: always()
             - name: Slack Notification
               uses: rtCamp/action-slack-notify@v2
