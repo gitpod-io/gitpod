@@ -44,7 +44,6 @@ export interface JobConfig {
     recreatePreview: boolean;
     recreateVm: boolean;
     withWerft: boolean;
-    useWsManagerMk2: boolean;
     withGceVm: boolean;
 }
 
@@ -127,7 +126,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     }
     const certIssuer = buildConfig["cert-issuer"];
 
-    const useWsManagerMk2 = "with-wsman-mk2" in buildConfig;
     const repository: Repository = {
         owner: context.Repository.owner,
         repo: context.Repository.repo,
@@ -187,7 +185,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         recreateVm,
         withWerft,
         withDedicatedEmulation,
-        useWsManagerMk2,
         withGceVm,
     };
 
