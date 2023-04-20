@@ -488,13 +488,7 @@ else
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer ""
 fi
 
-#
-# wsManagerMk2
-#
-if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
-  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
-fi
-
+yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
 
 #
 # Stripe

@@ -42,7 +42,6 @@ gitpod:summary
 
 - [ ] analytics=segment
 - [ ] with-dedicated-emulation
-- [ ] with-ws-manager-mk2
 - [ ] workspace-feature-flags
   Add desired feature flags to the end of the line above, space separated
 </details>
