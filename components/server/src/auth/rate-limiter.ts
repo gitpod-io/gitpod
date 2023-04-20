@@ -183,6 +183,7 @@ const defaultFunctions: FunctionsConfig = {
     getStripeSetupIntentClientSecret: { group: "default", points: 1 },
     findStripeSubscriptionId: { group: "default", points: 1 },
     createStripeCustomerIfNeeded: { group: "default", points: 1 },
+    createHoldPaymentIntent: { group: "default", points: 1 },
     subscribeToStripe: { group: "default", points: 1 },
     getStripePortalUrl: { group: "default", points: 1 },
     getPriceInformation: { group: "default", points: 1 },
