@@ -40,4 +40,6 @@ export interface TeamDB {
 
     findOrgSettings(teamId: string): Promise<OrganizationSettings | undefined>;
     setOrgSettings(teamId: string, settings: Partial<OrganizationSettings>): Promise<void>;
+
+    someOrgWithSSOExists(): Promise<boolean>;
 }
