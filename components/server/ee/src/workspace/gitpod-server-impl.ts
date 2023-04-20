@@ -1099,25 +1099,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
-    protected async ensureStripeApiIsAllowedIfNecessary(user: User, attrId: AttributionId): Promise<void> {
-        const switchToPAYG = await this.isEnabledSwitchToPAYG(user);
-        if (attrId.kind === "team") {
-            const team = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
-            if (!switchToPAYG) {
-                await this.ensureStripeApiIsAllowed({ team });
-            }
-        } else {
-            if (!switchToPAYG) {
-                await this.ensureStripeApiIsAllowed({ user });
-            }
-        }
-    }
-
     async setDefaultPaymentMethod(
         ctx: TraceContext,
         opts: { attributionId: string; setupIntentId: string },
     ): Promise<void> {
-        const user = this.checkAndBlockUser("setDefaultPaymentMethod");
+        this.checkAndBlockUser("setDefaultPaymentMethod");
+
         traceAPIParams(ctx, opts);
         const { attributionId, setupIntentId } = opts;
 
@@ -1131,8 +1118,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         try {
-            await this.ensureStripeApiIsAllowedIfNecessary(user, attrId);
-
             await this.billingService.setDefaultPaymentMethod({ attributionId, setupIntentId });
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
@@ -1150,16 +1135,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         ctx: TraceContext,
         attributionId: string,
     ): Promise<{ paymentIntentId: string; paymentIntentClientSecret: string }> {
+        this.checkAndBlockUser("createHoldPaymentIntent");
+
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id`);
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
-        const user = this.checkAndBlockUser("createHoldPaymentIntent");
         try {
-            await this.ensureStripeApiIsAllowedIfNecessary(user, attrId);
-
             const response = await this.billingService.createHoldPaymentIntent({ attributionId: attributionId });
             return {
                 paymentIntentId: response.paymentIntentId,
@@ -1192,8 +1176,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
 
         try {
-            await this.ensureStripeApiIsAllowedIfNecessary(user, attrId);
-
             if (attrId.kind === "team") {
                 await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
             } else {
