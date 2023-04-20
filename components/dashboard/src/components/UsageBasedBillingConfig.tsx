@@ -6,7 +6,7 @@
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import dayjs from "dayjs";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import Modal from "../components/Modal";
@@ -19,6 +19,7 @@ import { Heading2, Subheading } from "./typography/headings";
 import { Button } from "./Button";
 import { BillingSetupModal } from "./billing/BillingSetupModal";
 import { HoldVerificationModal } from "./billing/HoldVerificationModal";
+import { PaymentContext } from "../payment-context";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -48,6 +49,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     const [pendingStripeSubscription, setPendingStripeSubscription] = useState<PendingStripeSubscription | undefined>(
         undefined,
     );
+    const { currency } = useContext(PaymentContext);
 
     // Stripe-controlled parameters
     const location = useLocation();
@@ -101,9 +103,11 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const setupIntentId = params.get("setup_intent");
+        const paymentIntentId = params.get("payment_intent");
         const redirectStatus = params.get("redirect_status");
         const step = params.get("step");
 
+        // TODO: Can hopefully remove this step if the hold payment intent can be used to also create the subscription
         if (step === "verification") {
             if (!attributionId) {
                 return;
@@ -131,24 +135,44 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
             })();
             setShowHoldVerificationModal(true);
         }
+        // TODO: can we put this in a component in a nested-route, i.e. `/billing/subscribe`?
         if (step === "subscribe") {
-            if (!attributionId) {
+            if (!attributionId || !paymentIntentId) {
+                console.log('no attribution or payment intent id, skipping "subscribe" step');
                 return;
             }
 
             if (redirectStatus !== "succeeded") {
                 // TODO(gpl) We have to handle external validation errors (3DS, iDEAL) for both steps: verification and subscribe
+                // https://stripe.com/docs/payments/3d-secure#check-status
                 return;
             }
 
-            const holdPaymentIntentId = holdPaymentIntentInfo?.paymentIntentId;
-            subscribeToStripe({ attributionId, holdPaymentIntentId });
+            // const holdPaymentIntentId = holdPaymentIntentInfo?.paymentIntentId;
+            subscribeToStripe({ attributionId, holdPaymentIntentId: paymentIntentId });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // TODO: rename this
+    const handleAddPaymentClick = useCallback(async () => {
+        if (!attributionId) {
+            return;
+        }
+
+        // Create stripe customer if needed
+        await getGitpodService().server.createStripeCustomerIfNeeded(attributionId, currency);
+
+        // create payment intent for hold and for subscription
+        const holdPaymentInfo = await getGitpodService().server.createHoldPaymentIntent(attributionId);
+
+        setHoldPaymentIntentInfo(holdPaymentInfo);
+        setShowHoldVerificationModal(true);
+    }, [attributionId, currency]);
+
     const subscribeToStripe = useCallback(
         (opts: { attributionId: string; holdPaymentIntentId?: string }) => {
+            console.log("subscribeToStripe", opts);
             const { attributionId, holdPaymentIntentId } = opts;
             if (!holdPaymentIntentId) {
                 return;
@@ -257,8 +281,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 {showSpinner && (
                     <div className="flex flex-col mt-4 h-52 p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
                         <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Balance</div>
-                        {/* TODO: Fix wobbly spinner */}
-                        <Spinner className="m-2 h-5 w-5 animate-spin" />
+                        <Spinner className="m-2 animate-spin" />
                     </div>
                 )}
                 {showBalance && (
@@ -359,7 +382,9 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                                         </button>
                                     </a>
                                 )}
-                                <Button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</Button>
+                                {/* <Button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</Button> */}
+                                {/* <Button onClick={() => setShowHoldVerificationModal(true)}>Upgrade Plan</Button> */}
+                                <Button onClick={handleAddPaymentClick}>Upgrade Plan</Button>
                             </div>
                         </div>
                     </>
@@ -397,8 +422,8 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
             )}
             {!!attributionId && !!holdPaymentIntentInfo?.paymentIntentClientSecret && showHoldVerificationModal && (
                 <HoldVerificationModal
+                    clientSecret={holdPaymentIntentInfo?.paymentIntentClientSecret}
                     attributionId={attributionId}
-                    holdPaymentIntentClientSecret={holdPaymentIntentInfo.paymentIntentClientSecret}
                     onClose={() => setShowHoldVerificationModal(false)}
                 />
             )}
