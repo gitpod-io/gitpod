@@ -6,7 +6,7 @@
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
-import { FC, useCallback, useContext } from "react";
+import { FC, useCallback, useContext, useMemo } from "react";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert } from "../Modal";
 import { ReactComponent as Spinner } from "../../icons/Spinner.svg";
 import { ThemeContext } from "../../theme-context";
@@ -15,15 +15,32 @@ import { getStripeAppearance } from "./BillingSetupModal";
 import { useStripePromise } from "./use-stripe-promise";
 import { Button } from "../Button";
 import { useMutation } from "@tanstack/react-query";
+import { getGitpodService } from "../../service/service";
+import { PaymentContext } from "../../payment-context";
 
 type Props = {
     attributionId: string;
-    holdPaymentIntentClientSecret: string;
+    clientSecret: string;
     onClose: () => void;
 };
-export const HoldVerificationModal: FC<Props> = ({ attributionId, holdPaymentIntentClientSecret, onClose }) => {
+export const HoldVerificationModal: FC<Props> = ({ attributionId, clientSecret, onClose }) => {
     const { isDark } = useContext(ThemeContext);
     const { stripePromise } = useStripePromise();
+    const { currency } = useContext(PaymentContext);
+
+    console.log("currency", currency);
+    const elementsOptions = useMemo(
+        () => ({
+            appearance: getStripeAppearance(isDark),
+            mode: "subscription",
+            // paymentMethodCreation: "manual",
+            amount: 1000,
+            currency: "usd",
+            setupFutureUsage: "off_session",
+            clientSecret: clientSecret,
+        }),
+        [clientSecret, isDark],
+    );
 
     return (
         <Modal visible={true} onClose={onClose}>
@@ -36,13 +53,7 @@ export const HoldVerificationModal: FC<Props> = ({ attributionId, holdPaymentInt
                 </ModalBody>
             )}
             {!!stripePromise && (
-                <Elements
-                    stripe={stripePromise}
-                    options={{
-                        appearance: getStripeAppearance(isDark),
-                        clientSecret: holdPaymentIntentClientSecret,
-                    }}
-                >
+                <Elements stripe={stripePromise} options={elementsOptions}>
                     <HoldVerificationForm attributionId={attributionId} />
                 </Elements>
             )}
@@ -50,17 +61,19 @@ export const HoldVerificationModal: FC<Props> = ({ attributionId, holdPaymentInt
     );
 };
 
-function HoldVerificationForm(props: { attributionId: string }) {
+function HoldVerificationForm({ attributionId }: { attributionId: string }) {
     const stripe = useStripe();
     const elements = useElements();
+    const { currency } = useContext(PaymentContext);
 
     const confirmPayment = useMutation(async () => {
-        const attrId = AttributionId.parse(props.attributionId);
+        const attrId = AttributionId.parse(attributionId);
         if (!stripe || !elements || !attrId) {
             return;
         }
 
         try {
+            // TODO: look into using a nested sub-route for this instead of query param
             const url = new URL(window.location.href);
             url.searchParams.set("step", "subscribe");
 
