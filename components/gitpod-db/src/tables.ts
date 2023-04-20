@@ -64,12 +64,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_pending_github_event",
-            primaryKeys: ["id"],
-            timeColumn: "creationDate",
-            deletionColumn: "deleted",
-        },
-        {
             name: "d_b_volume_snapshot",
             primaryKeys: ["id"],
             timeColumn: "_lastModified",
@@ -80,22 +74,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             primaryKeys: ["id"],
             timeColumn: "updatedAt",
             deletionColumn: "deleted",
-        },
-        {
-            name: "d_b_account_entry",
-            primaryKeys: ["uid"],
-            timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_subscription",
-            primaryKeys: ["uid"],
-            timeColumn: "_lastModified",
-            dependencies: ["d_b_user"],
-        },
-        {
-            name: "d_b_subscription_additional_data",
-            primaryKeys: ["paymentReference"],
-            timeColumn: "lastModified",
         },
         {
             name: "d_b_identity",
@@ -163,16 +141,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             name: "d_b_token_entry",
             primaryKeys: ["uid"],
             deletionColumn: "deleted",
-            timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_team_subscription",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_team_subscription_slot",
-            primaryKeys: ["id"],
             timeColumn: "_lastModified",
         },
         {
@@ -257,12 +225,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
         {
             name: "d_b_project_usage",
             primaryKeys: ["projectId"],
-            deletionColumn: "deleted",
-            timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_team_subscription2",
-            primaryKeys: ["id"],
             deletionColumn: "deleted",
             timeColumn: "_lastModified",
         },
