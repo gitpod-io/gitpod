@@ -531,6 +531,7 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 	result = append(result, corev1.EnvVar{Name: "GITPOD_HOST", Value: sctx.Config.GitpodHostURL})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_URL", Value: wsUrl})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_CLUSTER_HOST", Value: sctx.Config.WorkspaceClusterHost})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_CLASS", Value: sctx.Workspace.Spec.Class})
 	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_ENDPOINT", Value: fmt.Sprintf(":%d", sctx.SupervisorPort)})
 	// TODO(ak) remove THEIA_WEBVIEW_EXTERNAL_ENDPOINT and THEIA_MINI_BROWSER_HOST_PATTERN when Theia is removed
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
@@ -559,7 +560,9 @@ func createWorkspaceEnvironment(sctx *startWorkspaceContext) ([]corev1.EnvVar, e
 			"GITPOD_TASKS",
 			"GITPOD_RESOLVED_EXTENSIONS",
 			"GITPOD_EXTERNAL_EXTENSIONS",
-			"GITPOD_IDE_ALIAS":
+			"GITPOD_WORKSPACE_CLASS_INFO",
+			"GITPOD_IDE_ALIAS",
+			"GITPOD_RLIMIT_CORE":
 			// these variables are allowed - don't skip them
 		default:
 			if strings.HasPrefix(e.Name, "GITPOD_") {
