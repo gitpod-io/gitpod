@@ -380,7 +380,7 @@ func (c *Client) CreateHoldPaymentIntent(ctx context.Context, customer *stripe.C
 		// Place a hold on the funds when the customer authorizes the payment
 		CaptureMethod: stripe.String(string(stripe.PaymentIntentCaptureMethodManual)),
 		// TODO: determine if we need this since we confirm this intent from the browser
-		Confirm:          stripe.Bool(true),
+		// Confirm:          stripe.Bool(true),
 		SetupFutureUsage: stripe.String(string(stripe.PaymentIntentSetupFutureUsageOffSession)),
 	})
 	if err != nil {
