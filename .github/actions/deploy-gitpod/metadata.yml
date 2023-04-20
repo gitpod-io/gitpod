@@ -17,7 +17,7 @@ inputs:
         description: "Use WS Manager MK2"
         required: false
     with_dedicated_emu:
-        description: "Dedicated Auth"
+        description: "Dedicated Config"
         required: false
     with_ee_licencse:
         description: "Use EE license"
