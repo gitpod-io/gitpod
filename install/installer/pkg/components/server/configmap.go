@@ -287,7 +287,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		InactivityPeriodForReposInDays: inactivityPeriodForReposInDays,
 		PATSigningKeyFile:              personalAccessTokenSigningKeyPath,
 		Admin: AdminConfig{
-			GrantFirstUserAdminRole: true, // existing default
+			GrantFirstUserAdminRole: false, // Use AdminCredentialsPath to seed the installation with admin credentials
 			CredentialsPath:         adminCredentialsPath,
 		},
 		ShowSetupModal: showSetupModal,
