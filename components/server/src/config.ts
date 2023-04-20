@@ -163,7 +163,6 @@ export interface ConfigSerialized {
     showSetupModal: boolean;
 
     admin: {
-        grantFirstUserAdminRole: boolean;
         credentialsPath: string;
     };
 
