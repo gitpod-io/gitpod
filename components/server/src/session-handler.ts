@@ -16,6 +16,8 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { reportSessionHasJWT } from "./prometheus-metrics";
 
 @injectable()
 export class SessionHandlerProvider {
@@ -40,7 +42,25 @@ export class SessionHandlerProvider {
 
         options.store = this.createStore();
 
-        this.sessionHandler = session(options);
+        this.sessionHandler = async (req: express.Request, res: express.Response) => {
+            const user = req.user;
+            const isJWTCookieEnabled = await getExperimentsClientForBackend().getValueAsync(
+                "jwtSessionCookieEnabled",
+                false,
+                {
+                    user,
+                },
+            );
+
+            if (isJWTCookieEnabled) {
+                const jwt = req.cookies[SessionHandlerProvider.getJWTCookieName(this.config.hostUrl)];
+                const containedJWT = !!jwt;
+
+                reportSessionHasJWT(containedJWT);
+            }
+
+            return session(options);
+        };
     }
 
     protected getCookieOptions(config: Config): express.CookieOptions {
