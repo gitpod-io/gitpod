@@ -24,10 +24,8 @@ import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-p
 import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { StripeService } from "./user/stripe-service";
-import { UserDeletionService } from "../../src/user/user-deletion-service";
 import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
 import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
-import { UserDeletionServiceEE } from "./user/user-deletion-service";
 import { GitHubAppSupport } from "./github/github-app-support";
 import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { Config } from "../../src/config";
@@ -67,9 +65,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
     rebind(BlockedUserFilter).toService(EMailDomainService);
     bind(SnapshotService).toSelf().inSingletonScope();
-
-    bind(UserDeletionServiceEE).toSelf().inSingletonScope();
-    rebind(UserDeletionService).to(UserDeletionServiceEE).inSingletonScope();
 
     // payment/billing
     bind(StripeService).toSelf().inSingletonScope();
