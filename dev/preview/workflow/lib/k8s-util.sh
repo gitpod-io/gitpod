@@ -13,11 +13,11 @@ function waitUntilAllPodsAreReady {
   namespace="$3"
 
   echo "Waiting until all pods in namespace ${namespace} are Running/Succeeded/Completed."
-  local attemps=0
+  local attempts=0
   local successful=false
-  while [ ${attemps} -lt 200 ]
+  while [ ${attempts} -lt 200 ]
   do
-    attemps=$((attemps+1))
+    attempts=$((attempts+1))
     set +e
     pods=$(
       kubectl \
@@ -61,7 +61,7 @@ function waitUntilAllPodsAreReady {
       break
     fi
 
-    echo "Uneady pods: $unreadyPods"
+    echo "Unready pods: $unreadyPods"
     echo "Sleeping 10 seconds before checking again"
     sleep 10
   done
