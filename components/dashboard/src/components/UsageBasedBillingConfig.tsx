@@ -164,8 +164,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // TODO: rename this
-    const handleAddPaymentClick = useCallback(async () => {
+    const handleUpgradePlan = useCallback(async () => {
         if (!attributionId) {
             return;
         }
@@ -394,7 +393,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                                 )}
                                 {/* <Button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</Button> */}
                                 {/* <Button onClick={() => setShowHoldVerificationModal(true)}>Upgrade Plan</Button> */}
-                                <Button onClick={handleAddPaymentClick}>Upgrade Plan</Button>
+                                <Button onClick={handleUpgradePlan}>Upgrade Plan</Button>
                             </div>
                         </div>
                     </>
