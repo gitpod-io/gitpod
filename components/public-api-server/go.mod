@@ -12,7 +12,6 @@ require (
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/usage-api v0.0.0-00010101000000-000000000000
 	github.com/go-chi/chi/v5 v5.0.8
-	github.com/golang-jwt/jwt/v4 v4.4.3
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.9
