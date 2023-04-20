@@ -6,10 +6,11 @@ package apiv1
 
 import (
 	"context"
-	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	connect "github.com/bufbuild/connect-go"
@@ -53,7 +54,12 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	err = assertIssuerIsReachable(req.Msg.GetConfig().GetOidcConfig().GetIssuer())
+	oidcConfig := req.Msg.GetConfig().GetOidcConfig()
+	err = assertIssuerIsReachable(ctx, oidcConfig.GetIssuer())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	err = assertIssuerProvidesDiscovery(ctx, oidcConfig.GetIssuer())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -69,8 +75,6 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 	}
 
 	oauth2Config := req.Msg.GetConfig().GetOauth2Config()
-	oidcConfig := req.Msg.GetConfig().GetOidcConfig()
-
 	data, err := db.EncryptJSON(s.cipher, toDbOIDCSpec(oauth2Config, oidcConfig))
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to encrypt oidc client config.")
@@ -326,10 +330,10 @@ func toDbOIDCSpec(oauth2Config *v1.OAuth2Config, oidcConfig *v1.OIDCConfig) db.O
 	}
 }
 
-func assertIssuerIsReachable(host string) error {
+func assertIssuerIsReachable(ctx context.Context, issuer string) error {
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		Proxy:           http.ProxyFromEnvironment,
+		// TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy: http.ProxyFromEnvironment,
 	}
 	client := &http.Client{
 		Transport: tr,
@@ -340,13 +344,56 @@ func assertIssuerIsReachable(host string) error {
 		},
 	}
 
-	resp, err := client.Get(host)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, issuer, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 	resp.Body.Close()
 	if resp.StatusCode > 499 {
 		return fmt.Errorf("returned status %d", resp.StatusCode)
+	}
+	return nil
+}
+
+func assertIssuerProvidesDiscovery(ctx context.Context, issuer string) error {
+	tr := &http.Transport{
+		// TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		Proxy: http.ProxyFromEnvironment,
+	}
+	client := &http.Client{
+		Transport: tr,
+
+		// never follow redirects
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, issuer+"/.well-known/openid-configuration", nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("The identity providers needs to support OIDC Discovery.")
+	}
+	if !strings.Contains(resp.Header.Get("Content-Type"), "application/json") {
+		return fmt.Errorf("OIDC Discovery configuration is of unexpected content type.")
+	}
+
+	var config map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&config)
+	if err != nil {
+		return fmt.Errorf("OIDC Discovery configuration is not parsable.")
 	}
 	return nil
 }
