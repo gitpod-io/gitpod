@@ -362,6 +362,10 @@ func (c *Client) CreateHoldPaymentIntent(ctx context.Context, customer *stripe.C
 		return nil, fmt.Errorf("no customer specified")
 	}
 
+	if customer.InvoiceSettings.DefaultPaymentMethod == nil {
+		return nil, fmt.Errorf("no default payment method specified for customer %s", customer.ID)
+	}
+
 	currency := customer.Metadata["preferredCurrency"]
 	if currency == "" {
 		currency = string(stripe.CurrencyUSD)
@@ -375,8 +379,11 @@ func (c *Client) CreateHoldPaymentIntent(ctx context.Context, customer *stripe.C
 		PaymentMethodTypes: stripe.StringSlice([]string{
 			"card", // TODO(gpl) paymentMethod: Would be great to abstract over "card" by looking up the registered paymentMethod on the customer here
 		}),
-		PaymentMethod:    stripe.String(customer.InvoiceSettings.DefaultPaymentMethod.ID),
-		CaptureMethod:    stripe.String(string(stripe.PaymentIntentCaptureMethodManual)),
+		// TODO: make sure we set the default payment method when creating the subscription
+		PaymentMethod: stripe.String(customer.InvoiceSettings.DefaultPaymentMethod.ID),
+		// Place a hold on the funds when the customer authorizes the payment
+		CaptureMethod: stripe.String(string(stripe.PaymentIntentCaptureMethodManual)),
+		// TODO: determine if we need this since we confirm this intent from the browser
 		Confirm:          stripe.Bool(true),
 		SetupFutureUsage: stripe.String(string(stripe.PaymentIntentSetupFutureUsageOffSession)),
 	})
@@ -414,27 +421,27 @@ func (c *Client) CreateSubscription(ctx context.Context, customerID string, pric
 	return subscription, err
 }
 
-func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID string, setupIntentId string) (*stripe.Customer, error) {
+func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID string, paymentIntentId string) (*stripe.Customer, error) {
 	if customerID == "" {
 		return nil, fmt.Errorf("no customerID specified")
 	}
 
-	if setupIntentId == "" {
+	if paymentIntentId == "" {
 		return nil, fmt.Errorf("no setupIntentID specified")
 	}
 
-	setupIntent, err := c.sc.SetupIntents.Get(setupIntentId, &stripe.SetupIntentParams{
+	paymentIntent, err := c.sc.PaymentIntents.Get(paymentIntentId, &stripe.PaymentIntentParams{
 		Params: stripe.Params{
 			Context: ctx,
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to retrieve setup intent with id %s", setupIntentId)
+		return nil, fmt.Errorf("Failed to retrieve setup intent with id %s", paymentIntentId)
 	}
 
-	paymentMethod, err := c.sc.PaymentMethods.Attach(setupIntent.PaymentMethod.ID, &stripe.PaymentMethodAttachParams{Customer: &customerID})
+	paymentMethod, err := c.sc.PaymentMethods.Attach(paymentIntent.PaymentMethod.ID, &stripe.PaymentMethodAttachParams{Customer: &customerID})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to attach payment method to setup intent ID %s", setupIntentId)
+		return nil, fmt.Errorf("Failed to attach payment method to payment intent ID %s", paymentIntentId)
 	}
 
 	customer, _ := c.sc.Customers.Update(customerID, &stripe.CustomerParams{

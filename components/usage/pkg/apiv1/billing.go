@@ -195,6 +195,7 @@ func (s *BillingService) SetDefaultPaymentMethod(ctx context.Context, req *v1.Se
 		return nil, err
 	}
 
+	// TODO: rename SetupIntentId to PaymentIntentId
 	_, err = s.stripeClient.SetDefaultPaymentForCustomer(ctx, customer.Customer.Id, req.SetupIntentId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Failed to set default payment for customer ID %s", customer.Customer.Id)

@@ -148,8 +148,18 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 return;
             }
 
-            // const holdPaymentIntentId = holdPaymentIntentInfo?.paymentIntentId;
-            subscribeToStripe({ attributionId, holdPaymentIntentId: paymentIntentId });
+            // TODO: need error handling around this
+            (async () => {
+                // Set our default payment method
+                await getGitpodService().server.setDefaultPaymentMethod({
+                    attributionId,
+                    // TODO: rename this field to paymentIntentId
+                    setupIntentId: paymentIntentId,
+                });
+
+                // create subscription
+                subscribeToStripe({ attributionId, holdPaymentIntentId: paymentIntentId });
+            })();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
