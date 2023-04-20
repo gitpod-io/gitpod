@@ -362,10 +362,6 @@ func (c *Client) CreateHoldPaymentIntent(ctx context.Context, customer *stripe.C
 		return nil, fmt.Errorf("no customer specified")
 	}
 
-	if customer.InvoiceSettings.DefaultPaymentMethod == nil {
-		return nil, fmt.Errorf("no default payment method specified for customer %s", customer.ID)
-	}
-
 	currency := customer.Metadata["preferredCurrency"]
 	if currency == "" {
 		currency = string(stripe.CurrencyUSD)
@@ -380,7 +376,7 @@ func (c *Client) CreateHoldPaymentIntent(ctx context.Context, customer *stripe.C
 			"card", // TODO(gpl) paymentMethod: Would be great to abstract over "card" by looking up the registered paymentMethod on the customer here
 		}),
 		// TODO: make sure we set the default payment method when creating the subscription
-		PaymentMethod: stripe.String(customer.InvoiceSettings.DefaultPaymentMethod.ID),
+		// PaymentMethod: stripe.String(customer.InvoiceSettings.DefaultPaymentMethod.ID),
 		// Place a hold on the funds when the customer authorizes the payment
 		CaptureMethod: stripe.String(string(stripe.PaymentIntentCaptureMethodManual)),
 		// TODO: determine if we need this since we confirm this intent from the browser
