@@ -35,11 +35,19 @@ func TestServeHTTP(t *testing.T) {
 			expectedResponseBodyPrefix: "trusted",
 		},
 		{
-			name:                       "untrusted segment key",
+			name:                       "untrusted dummy segment key",
 			trustedSegmentKey:          "trusted-key",
 			untrustedSegmentKey:        "untrusted-key",
-			providedSegmentKey:         "untrusted-key",
+			providedSegmentKey:         dummyUntrustedSegmentKey,
 			expectedResponseBodyPrefix: "untrusted",
+		},
+		{
+			name:                "untrusted segment key",
+			trustedSegmentKey:   "trusted-key",
+			untrustedSegmentKey: "untrusted-key",
+			providedSegmentKey:  "untrusted-key",
+			// on purpose to ensure that cliens remove references to untrusted keys
+			expectedResponseBodyPrefix: "mock",
 		},
 		{
 			name:                       "empty segment key",
@@ -66,7 +74,7 @@ func TestServeHTTP(t *testing.T) {
 			name:                       "only trusted key empty",
 			trustedSegmentKey:          "",
 			untrustedSegmentKey:        "untrusted-key",
-			providedSegmentKey:         "",
+			providedSegmentKey:         dummyUntrustedSegmentKey,
 			expectedResponseBodyPrefix: "untrusted",
 		},
 		{

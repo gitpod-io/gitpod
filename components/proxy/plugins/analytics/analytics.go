@@ -24,6 +24,8 @@ import (
 
 const (
 	moduleName = "gitpod.analytics"
+	// static key for untrusted segment requests
+	dummyUntrustedSegmentKey = "untrusted-dummy-key"
 )
 
 func init() {
@@ -96,11 +98,9 @@ func (a *Analytics) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddy
 		a.segmentProxy.ServeHTTP(w, r)
 		return nil
 	}
-	shouldProxyToUntrustedSegment := a.untrustedSegmentKey != "" && (segmentKey == "" || segmentKey == a.untrustedSegmentKey)
+	shouldProxyToUntrustedSegment := a.untrustedSegmentKey != "" && (segmentKey == "" || segmentKey == dummyUntrustedSegmentKey)
 	if shouldProxyToUntrustedSegment {
-		if segmentKey == "" {
-			r.SetBasicAuth(a.untrustedSegmentKey, "")
-		}
+		r.SetBasicAuth(a.untrustedSegmentKey, "")
 		a.segmentProxy.ServeHTTP(w, r)
 		return nil
 	}
