@@ -15,8 +15,6 @@ import { getStripeAppearance } from "./BillingSetupModal";
 import { useStripePromise } from "./use-stripe-promise";
 import { Button } from "../Button";
 import { useMutation } from "@tanstack/react-query";
-import { getGitpodService } from "../../service/service";
-import { PaymentContext } from "../../payment-context";
 
 type Props = {
     attributionId: string;
@@ -26,17 +24,10 @@ type Props = {
 export const HoldVerificationModal: FC<Props> = ({ attributionId, clientSecret, onClose }) => {
     const { isDark } = useContext(ThemeContext);
     const { stripePromise } = useStripePromise();
-    const { currency } = useContext(PaymentContext);
 
-    console.log("currency", currency);
     const elementsOptions = useMemo(
         () => ({
             appearance: getStripeAppearance(isDark),
-            mode: "subscription",
-            // paymentMethodCreation: "manual",
-            amount: 1000,
-            currency: "usd",
-            setupFutureUsage: "off_session",
             clientSecret: clientSecret,
         }),
         [clientSecret, isDark],
@@ -64,7 +55,6 @@ export const HoldVerificationModal: FC<Props> = ({ attributionId, clientSecret, 
 function HoldVerificationForm({ attributionId }: { attributionId: string }) {
     const stripe = useStripe();
     const elements = useElements();
-    const { currency } = useContext(PaymentContext);
 
     const confirmPayment = useMutation(async () => {
         const attrId = AttributionId.parse(attributionId);
