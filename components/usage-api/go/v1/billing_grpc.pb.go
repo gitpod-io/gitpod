@@ -38,6 +38,9 @@ type BillingServiceClient interface {
 	// GetStripeCustomer retrieves a Stripe Customer
 	GetStripeCustomer(ctx context.Context, in *GetStripeCustomerRequest, opts ...grpc.CallOption) (*GetStripeCustomerResponse, error)
 	CreateStripeCustomer(ctx context.Context, in *CreateStripeCustomerRequest, opts ...grpc.CallOption) (*CreateStripeCustomerResponse, error)
+	// CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify
+	// the payment method/creditability of this user on first signup, before we create the subscription
+	CreateHoldPaymentIntent(ctx context.Context, in *CreateHoldPaymentIntentRequest, opts ...grpc.CallOption) (*CreateHoldPaymentIntentResponse, error)
 	CreateStripeSubscription(ctx context.Context, in *CreateStripeSubscriptionRequest, opts ...grpc.CallOption) (*CreateStripeSubscriptionResponse, error)
 	// GetPriceInformation returns the price information for a given attribtion id
 	GetPriceInformation(ctx context.Context, in *GetPriceInformationRequest, opts ...grpc.CallOption) (*GetPriceInformationResponse, error)
@@ -98,6 +101,15 @@ func (c *billingServiceClient) CreateStripeCustomer(ctx context.Context, in *Cre
 	return out, nil
 }
 
+func (c *billingServiceClient) CreateHoldPaymentIntent(ctx context.Context, in *CreateHoldPaymentIntentRequest, opts ...grpc.CallOption) (*CreateHoldPaymentIntentResponse, error) {
+	out := new(CreateHoldPaymentIntentResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/CreateHoldPaymentIntent", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *billingServiceClient) CreateStripeSubscription(ctx context.Context, in *CreateStripeSubscriptionRequest, opts ...grpc.CallOption) (*CreateStripeSubscriptionResponse, error) {
 	out := new(CreateStripeSubscriptionResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.BillingService/CreateStripeSubscription", in, out, opts...)
@@ -141,6 +153,9 @@ type BillingServiceServer interface {
 	// GetStripeCustomer retrieves a Stripe Customer
 	GetStripeCustomer(context.Context, *GetStripeCustomerRequest) (*GetStripeCustomerResponse, error)
 	CreateStripeCustomer(context.Context, *CreateStripeCustomerRequest) (*CreateStripeCustomerResponse, error)
+	// CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify
+	// the payment method/creditability of this user on first signup, before we create the subscription
+	CreateHoldPaymentIntent(context.Context, *CreateHoldPaymentIntentRequest) (*CreateHoldPaymentIntentResponse, error)
 	CreateStripeSubscription(context.Context, *CreateStripeSubscriptionRequest) (*CreateStripeSubscriptionResponse, error)
 	// GetPriceInformation returns the price information for a given attribtion id
 	GetPriceInformation(context.Context, *GetPriceInformationRequest) (*GetPriceInformationResponse, error)
@@ -167,6 +182,9 @@ func (UnimplementedBillingServiceServer) GetStripeCustomer(context.Context, *Get
 }
 func (UnimplementedBillingServiceServer) CreateStripeCustomer(context.Context, *CreateStripeCustomerRequest) (*CreateStripeCustomerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateStripeCustomer not implemented")
+}
+func (UnimplementedBillingServiceServer) CreateHoldPaymentIntent(context.Context, *CreateHoldPaymentIntentRequest) (*CreateHoldPaymentIntentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateHoldPaymentIntent not implemented")
 }
 func (UnimplementedBillingServiceServer) CreateStripeSubscription(context.Context, *CreateStripeSubscriptionRequest) (*CreateStripeSubscriptionResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateStripeSubscription not implemented")
@@ -280,6 +298,24 @@ func _BillingService_CreateStripeCustomer_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BillingService_CreateHoldPaymentIntent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateHoldPaymentIntentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BillingServiceServer).CreateHoldPaymentIntent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.BillingService/CreateHoldPaymentIntent",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BillingServiceServer).CreateHoldPaymentIntent(ctx, req.(*CreateHoldPaymentIntentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BillingService_CreateStripeSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateStripeSubscriptionRequest)
 	if err := dec(in); err != nil {
@@ -360,6 +396,10 @@ var BillingService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateStripeCustomer",
 			Handler:    _BillingService_CreateStripeCustomer_Handler,
+		},
+		{
+			MethodName: "CreateHoldPaymentIntent",
+			Handler:    _BillingService_CreateHoldPaymentIntent_Handler,
 		},
 		{
 			MethodName: "CreateStripeSubscription",
