@@ -1223,7 +1223,24 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 context = prebuiltWorkspace;
             }
 
-            await mayStartWorkspacePromise;
+            try {
+                await mayStartWorkspacePromise;
+            } catch (error) {
+                // if the user is not migrated, yet, and the selected organization doesn't have credits, we fall back to what is set on the user preferences
+                // can be deleted when everyone is migrated
+                if (
+                    !user.additionalData?.isMigratedToTeamOnlyAttribution &&
+                    error instanceof ResponseError &&
+                    error.code === ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED
+                ) {
+                    const attributionId = await this.userService.getWorkspaceUsageAttributionId(user, project?.id);
+                    organizationId = attributionId.kind === "team" ? attributionId.teamId : undefined;
+                    // verify again with the updated organizationId
+                    await this.mayStartWorkspace(ctx, user, organizationId, runningInstancesPromise);
+                } else {
+                    throw error;
+                }
+            }
             const workspace = await this.workspaceFactory.createForContext(
                 ctx,
                 user,
