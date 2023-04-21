@@ -4,7 +4,9 @@
 
 package config
 
-import "github.com/gitpod-io/gitpod/common-go/baseserver"
+import (
+	"github.com/gitpod-io/gitpod/common-go/baseserver"
+)
 
 type Configuration struct {
 	// PublicURL is the URL under which the API server is publicly reachable
@@ -45,7 +47,13 @@ type RedisConfiguration struct {
 }
 
 type AuthConfiguration struct {
-	PKI AuthPKIConfiguration `json:"pki"`
+	PKI     AuthPKIConfiguration `json:"pki"`
+	Session SessionConfig        `json:"session"`
+}
+
+type SessionConfig struct {
+	LifetimeSeconds int64  `json:"lifetimeSeconds"`
+	Issuer          string `json:"issuer"`
 }
 
 type AuthPKIConfiguration struct {

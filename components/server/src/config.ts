@@ -51,6 +51,11 @@ export type Config = Omit<
                 publicKey: string;
             }[];
         };
+
+        session: {
+            lifetimeSeconds: number;
+            issuer: string;
+        };
     };
 };
 
