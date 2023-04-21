@@ -1508,7 +1508,6 @@ export class WorkspaceStarter {
         const scopes = [
             "function:getWorkspace",
             "function:getLoggedInUser",
-            "function:getPortAuthenticationToken",
             "function:getWorkspaceOwner",
             "function:getWorkspaceUsers",
             "function:isWorkspaceOwner",

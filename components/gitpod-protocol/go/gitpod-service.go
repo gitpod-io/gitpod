@@ -36,7 +36,6 @@ type APIInterface interface {
 	GetConfiguration(ctx context.Context) (res *Configuration, err error)
 	GetGitpodTokenScopes(ctx context.Context, tokenHash string) (res []string, err error)
 	GetToken(ctx context.Context, query *GetTokenSearchOptions) (res *Token, err error)
-	GetPortAuthenticationToken(ctx context.Context, workspaceID string) (res *Token, err error)
 	DeleteAccount(ctx context.Context) (err error)
 	GetClientRegion(ctx context.Context) (res string, err error)
 	HasPermission(ctx context.Context, permission *PermissionName) (res bool, err error)
@@ -134,8 +133,6 @@ const (
 	FunctionGetGitpodTokenScopes FunctionName = "getGitpodTokenScopes"
 	// FunctionGetToken is the name of the getToken function
 	FunctionGetToken FunctionName = "getToken"
-	// FunctionGetPortAuthenticationToken is the name of the getPortAuthenticationToken function
-	FunctionGetPortAuthenticationToken FunctionName = "getPortAuthenticationToken"
 	// FunctionDeleteAccount is the name of the deleteAccount function
 	FunctionDeleteAccount FunctionName = "deleteAccount"
 	// FunctionGetClientRegion is the name of the getClientRegion function
@@ -589,26 +586,6 @@ func (gp *APIoverJSONRPC) GetToken(ctx context.Context, query *GetTokenSearchOpt
 
 	var result Token
 	err = gp.C.Call(ctx, "getToken", _params, &result)
-	if err != nil {
-		return
-	}
-	res = &result
-
-	return
-}
-
-// GetPortAuthenticationToken calls getPortAuthenticationToken on the server
-func (gp *APIoverJSONRPC) GetPortAuthenticationToken(ctx context.Context, workspaceID string) (res *Token, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, workspaceID)
-
-	var result Token
-	err = gp.C.Call(ctx, "getPortAuthenticationToken", _params, &result)
 	if err != nil {
 		return
 	}

@@ -58,7 +58,6 @@ const defaultFunctions: FunctionsConfig = {
     getConfiguration: { group: "default", points: 1 },
     getGitpodTokenScopes: { group: "default", points: 1 },
     getToken: { group: "default", points: 1 },
-    getPortAuthenticationToken: { group: "default", points: 1 },
     deleteAccount: { group: "default", points: 1 },
     getClientRegion: { group: "default", points: 1 },
     hasPermission: { group: "default", points: 1 },
