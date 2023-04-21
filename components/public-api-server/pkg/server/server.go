@@ -126,6 +126,11 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		log.Info("No Personal Access Token signign key specified, PersonalAccessToken service will be disabled.")
 	}
 
+	_, err = auth.NewJWTFromAuthPKI(cfg.Auth.PKI, 7*24*time.Hour, "TODO")
+	if err != nil {
+		return fmt.Errorf("failed to setup JWT signer/verifier: %w", err)
+	}
+
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
 	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, stateJWT)
