@@ -1099,10 +1099,41 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
     }
 
+    async createHoldPaymentIntent(
+        ctx: TraceContext,
+        attributionId: string,
+    ): Promise<{ paymentIntentId: string; paymentIntentClientSecret: string }> {
+        this.checkAndBlockUser("createHoldPaymentIntent");
+
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id`);
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
+
+        try {
+            const response = await this.billingService.createHoldPaymentIntent({ attributionId: attributionId });
+            return {
+                paymentIntentId: response.paymentIntentId,
+                paymentIntentClientSecret: response.paymentIntentClientSecret,
+            };
+        } catch (error) {
+            log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
+            if (error instanceof ClientError) {
+                throw new ResponseError(error.code, error.details);
+            }
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to subscribe '${attributionId}' to Stripe`,
+            );
+        }
+    }
+
     async subscribeToStripe(
         ctx: TraceContext,
         attributionId: string,
         setupIntentId: string,
+        paymentIntentId: string,
         usageLimit: number,
     ): Promise<number | undefined> {
         const user = this.checkAndBlockUser("subscribeToStripe");
@@ -1127,7 +1158,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 throw new Error(`No Stripe customer profile for '${attributionId}'`);
             }
 
-            await this.billingService.createStripeSubscription({ attributionId, setupIntentId, usageLimit });
+            await this.billingService.createStripeSubscription({
+                attributionId,
+                setupIntentId,
+                paymentIntentId,
+                usageLimit,
+            });
 
             // Creating a cost center for this customer
             const { costCenter } = await this.usageService.setCostCenter({

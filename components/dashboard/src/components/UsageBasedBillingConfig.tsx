@@ -140,6 +140,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                     const newLimit = await getGitpodService().server.subscribeToStripe(
                         attributionId,
                         setupIntentId,
+                        "", // TODO: pass paymentIntentId
                         limit,
                     );
                     if (newLimit) {
