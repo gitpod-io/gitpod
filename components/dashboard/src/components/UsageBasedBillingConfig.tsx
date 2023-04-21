@@ -23,6 +23,8 @@ import { Heading2, Subheading } from "./typography/headings";
 import { useStripeAppearance } from "./billing/use-stripe-appearance";
 import { useStripePromise } from "./billing/use-stripe-promise";
 import { AddPaymentMethodModal } from "./billing/AddPaymentMethodModal";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
+import { Button } from "./Button";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -48,6 +50,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     const [priceInformation, setPriceInformation] = useState<string | undefined>();
     const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
     const { currency } = useCurrency();
+    const { paymentVerificationFlow } = useFeatureFlags();
     // state for payment Intent flow
     const [showAddPaymentMethodModal, setShowAddPaymentMethodModal] = useState<boolean>(false);
     const [paymentIntent, setPaymentIntent] = useState<
@@ -354,7 +357,15 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                                         </button>
                                     </a>
                                 )}
-                                <button onClick={() => setShowBillingSetupModal(true)}>Upgrade Plan</button>
+                                <Button
+                                    onClick={() =>
+                                        paymentVerificationFlow
+                                            ? handleAddPaymentMethod()
+                                            : setShowBillingSetupModal(true)
+                                    }
+                                >
+                                    Upgrade Plan
+                                </Button>
                             </div>
                         </div>
                     </>
