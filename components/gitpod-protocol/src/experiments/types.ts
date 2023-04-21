@@ -22,8 +22,12 @@ export interface Attributes {
 
     // Currently selected Gitpod Team ID (mapped to "custom.team_id")
     teamId?: string;
+
     // Currently selected Gitpod Team Name (mapped to "custom.team_name")
     teamName?: string;
+
+    // Host name of the Gitpod installation (mapped to "custom.gitpod_host")
+    gitpodHost?: string;
 }
 
 export interface Client {

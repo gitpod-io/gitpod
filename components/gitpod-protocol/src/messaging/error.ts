@@ -26,6 +26,9 @@ export namespace ErrorCodes {
     // 411 No User
     export const NEEDS_VERIFICATION = 411;
 
+    // 412 Dedicated Cell is in "onboarding" mode
+    export const ONBOARDING_IN_PROGRESS = 412;
+
     // 429 Too Many Requests
     export const TOO_MANY_REQUESTS = 429;
 

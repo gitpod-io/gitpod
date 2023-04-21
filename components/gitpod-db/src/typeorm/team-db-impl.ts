@@ -365,4 +365,12 @@ export class TeamDBImpl implements TeamDB {
             repo.save(team);
         }
     }
+
+    public async someOrgWithSSOExists(): Promise<boolean> {
+        const repo = await this.getOrgSettingsRepo();
+        const result = await repo.query(
+            `select org.id from d_b_team as org inner join d_b_oidc_client_config as oidc on org.id = oidc.organizationId limit 1;`,
+        );
+        return result.length === 1;
+    }
 }

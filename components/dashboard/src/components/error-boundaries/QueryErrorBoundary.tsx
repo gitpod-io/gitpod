@@ -15,6 +15,7 @@ import { isGitpodIo } from "../../utils";
 import { CaughtError } from "./ReloadPageErrorBoundary";
 
 const Setup = lazy(() => import(/* webpackPrefetch: true */ "../../Setup"));
+const DedicatedOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../../DedicatedOnboarding"));
 
 // Error boundary intended to catch and handle expected errors from api calls
 export const QueryErrorBoundary: FC = ({ children }) => {
@@ -48,6 +49,15 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
         }
 
         return <Login onLoggedIn={resetErrorBoundary} />;
+    }
+
+    // Setup needed before proceeding
+    if (caughtError.code === ErrorCodes.ONBOARDING_IN_PROGRESS) {
+        return (
+            <Suspense fallback={<AppLoading />}>
+                <DedicatedOnboarding onComplete={resetErrorBoundary} />
+            </Suspense>
+        );
     }
 
     // Setup needed before proceeding

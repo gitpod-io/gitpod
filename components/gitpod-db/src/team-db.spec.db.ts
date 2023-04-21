@@ -7,6 +7,7 @@
 import * as chai from "chai";
 const expect = chai.expect;
 import { suite, test, timeout } from "mocha-typescript";
+import { v4 as uuidv4 } from "uuid";
 
 import { testContainer } from "./test-container";
 import { TeamDBImpl } from "./typeorm/team-db-impl";
@@ -16,6 +17,7 @@ import { DBTeam } from "./typeorm/entity/db-team";
 import { DBTeamMembership } from "./typeorm/entity/db-team-membership";
 import { DBUser } from "./typeorm/entity/db-user";
 import { DBIdentity } from "./typeorm/entity/db-identity";
+import { Connection } from "typeorm";
 
 @suite
 class TeamDBSpec {
@@ -37,6 +39,7 @@ class TeamDBSpec {
         await manager.getRepository(DBTeamMembership).delete({});
         await manager.getRepository(DBUser).delete({});
         await manager.getRepository(DBIdentity).delete({});
+        await manager.query("delete from d_b_oidc_client_config;");
     }
 
     @test(timeout(10000))
@@ -150,6 +153,31 @@ class TeamDBSpec {
         const searchTerm = "first";
         const result = await this.db.findTeams(0, 10, "creationTime", "DESC", searchTerm);
         expect(result.rows.length).to.eq(1);
+    }
+
+    @test(timeout(10000))
+    public async test_someOrgWithSSOExists() {
+        expect(await this.db.someOrgWithSSOExists(), "case 1: empty db").to.be.false;
+
+        const user = await this.userDb.newUser();
+        const org = await this.db.createTeam(user.id, "Some Org");
+        expect(await this.db.someOrgWithSSOExists(), "case 2: org without sso").to.be.false;
+
+        await this.exec(async (c) => {
+            await c.query("INSERT INTO d_b_oidc_client_config (id, issuer, organizationId, data) VALUES (?,?,?,?)", [
+                uuidv4(),
+                "https://issuer.local",
+                org.id,
+                "{}",
+            ]);
+        });
+        expect(await this.db.someOrgWithSSOExists(), "case 3: org with sso").to.be.true;
+    }
+
+    protected async exec(queryFn: (connection: Connection) => Promise<void>) {
+        const typeorm = testContainer.get<TypeORM>(TypeORM);
+        const connection = await typeorm.getConnection();
+        await queryFn(connection);
     }
 }
 

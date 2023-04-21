@@ -357,9 +357,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     protected checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): User {
-        if (this.showSetupCondition?.value) {
+        // Old self-hosted mode did not require a session, therefore it's checked first.
+        // But we need to make sure, it's not triggered if the new Dedicated Onboarding is active.
+        if (this.showSetupCondition?.value && !this.showOnboardingFlowCondition?.value) {
             throw new ResponseError(ErrorCodes.SETUP_REQUIRED, "Setup required.");
         }
+
+        // Generally, a user session is required.
         if (!this.user) {
             throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
         }
@@ -377,6 +381,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
             log.debug(userContext, methodName, payload);
         }
+
+        // A session is required to continue with an activated onboarding flow.
+        if (this.showOnboardingFlowCondition?.value) {
+            throw new ResponseError(ErrorCodes.ONBOARDING_IN_PROGRESS, "Dedicated Onboarding Flow in progress.");
+        }
+
         return this.user;
     }
 
@@ -403,7 +413,26 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     protected showSetupCondition: { value: boolean } | undefined = undefined;
+    protected showOnboardingFlowCondition: { value: boolean } | undefined = undefined;
     protected async doUpdateUser(): Promise<void> {
+        // Conditionally enable Dedicated Onboarding Flow
+        const enableDedicatedOnboardingFlow = await this.configCatClientFactory().getValueAsync(
+            "enableDedicatedOnboardingFlow",
+            false,
+            {
+                gitpodHost: new URL(this.config.hostUrl.toString()).host,
+            },
+        );
+        if (enableDedicatedOnboardingFlow) {
+            const someOrgWithSSOExists = await this.teamDB.someOrgWithSSOExists();
+            const shouldShowOnboardingFlow = !someOrgWithSSOExists;
+            this.showOnboardingFlowCondition = { value: shouldShowOnboardingFlow };
+            if (shouldShowOnboardingFlow) {
+                console.log(`Dedicated Onboarding flow is active.`);
+            }
+        } else {
+            this.showOnboardingFlowCondition = { value: false };
+        }
         // execute the check for the setup to be shown until the setup is not required.
         // cf. evaluation of the condition in `checkUser`
         if (!this.config.showSetupModal) {
