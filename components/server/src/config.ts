@@ -255,6 +255,10 @@ export interface ConfigSerialized {
 
     auth: {
         pki: AuthPKIConfig;
+        session: {
+            lifetimeSeconds: number;
+            issuer: string;
+        };
     };
 }
 
@@ -399,6 +403,7 @@ export namespace ConfigFile {
             },
             auth: {
                 pki: authPKI,
+                session: config.auth.session,
             },
         };
     }
