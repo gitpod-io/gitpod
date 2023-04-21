@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
@@ -92,6 +92,7 @@ export interface ResolveWorkspaceConfigResponse {
   /** control whether to configure default IDE for a user */
   refererIde: string;
   tasks: string;
+  ideSettings: string;
 }
 
 function createBaseGetConfigRequest(): GetConfigRequest {
@@ -382,7 +383,15 @@ export const ResolveWorkspaceConfigRequest = {
 };
 
 function createBaseResolveWorkspaceConfigResponse(): ResolveWorkspaceConfigResponse {
-  return { envvars: [], supervisorImage: "", webImage: "", ideImageLayers: [], refererIde: "", tasks: "" };
+  return {
+    envvars: [],
+    supervisorImage: "",
+    webImage: "",
+    ideImageLayers: [],
+    refererIde: "",
+    tasks: "",
+    ideSettings: "",
+  };
 }
 
 export const ResolveWorkspaceConfigResponse = {
@@ -404,6 +413,9 @@ export const ResolveWorkspaceConfigResponse = {
     }
     if (message.tasks !== "") {
       writer.uint32(50).string(message.tasks);
+    }
+    if (message.ideSettings !== "") {
+      writer.uint32(58).string(message.ideSettings);
     }
     return writer;
   },
@@ -433,6 +445,9 @@ export const ResolveWorkspaceConfigResponse = {
         case 6:
           message.tasks = reader.string();
           break;
+        case 7:
+          message.ideSettings = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -449,6 +464,7 @@ export const ResolveWorkspaceConfigResponse = {
       ideImageLayers: Array.isArray(object?.ideImageLayers) ? object.ideImageLayers.map((e: any) => String(e)) : [],
       refererIde: isSet(object.refererIde) ? String(object.refererIde) : "",
       tasks: isSet(object.tasks) ? String(object.tasks) : "",
+      ideSettings: isSet(object.ideSettings) ? String(object.ideSettings) : "",
     };
   },
 
@@ -468,6 +484,7 @@ export const ResolveWorkspaceConfigResponse = {
     }
     message.refererIde !== undefined && (obj.refererIde = message.refererIde);
     message.tasks !== undefined && (obj.tasks = message.tasks);
+    message.ideSettings !== undefined && (obj.ideSettings = message.ideSettings);
     return obj;
   },
 
@@ -479,6 +496,7 @@ export const ResolveWorkspaceConfigResponse = {
     message.ideImageLayers = object.ideImageLayers?.map((e) => e) || [];
     message.refererIde = object.refererIde ?? "";
     message.tasks = object.tasks ?? "";
+    message.ideSettings = object.ideSettings ?? "";
     return message;
   },
 };
