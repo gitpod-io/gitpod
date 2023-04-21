@@ -3327,7 +3327,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getIDEOptions(ctx: TraceContext): Promise<IDEOptions> {
-        const ideConfig = await this.ideService.getIDEConfig();
+        const user = this.checkUser("identifyUser");
+        const ideConfig = await this.ideService.getIDEConfig({ user });
         return ideConfig.ideOptions;
     }
 

@@ -34,9 +34,9 @@ export class IDEService {
 
     private cacheConfig?: IDEConfig;
 
-    async getIDEConfig(): Promise<IDEConfig> {
+    async getIDEConfig(request: IdeServiceApi.GetConfigRequest): Promise<IDEConfig> {
         try {
-            let resp = await this.ideService.getConfig({});
+            let resp = await this.ideService.getConfig(request);
             let config: IDEConfig = JSON.parse(resp.content);
             this.cacheConfig = config;
             return config;
