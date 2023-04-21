@@ -150,13 +150,6 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
 
             // TODO: need error handling around this
             (async () => {
-                // Set our default payment method
-                await getGitpodService().server.setDefaultPaymentMethod({
-                    attributionId,
-                    // TODO: rename this field to paymentIntentId
-                    setupIntentId: paymentIntentId,
-                });
-
                 // create subscription
                 subscribeToStripe({ attributionId, holdPaymentIntentId: paymentIntentId });
             })();
@@ -208,7 +201,9 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                     }
                     const newLimit = await getGitpodService().server.subscribeToStripe(
                         attributionId,
+                        "",
                         holdPaymentIntentId,
+                        // @ts-ignore
                         limit,
                     );
                     if (newLimit) {
