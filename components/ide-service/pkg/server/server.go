@@ -287,6 +287,7 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 
 		userIdeName := ""
 		useLatest := false
+		resultingIdeName := ideConfig.IdeOptions.DefaultIde
 
 		if ideSettings != nil {
 			userIdeName = ideSettings.DefaultIde
@@ -314,7 +315,7 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 		if userIdeName != "" {
 			if ide, ok := ideConfig.IdeOptions.Options[userIdeName]; ok {
 				chosenIDE = &ide
-
+				resultingIdeName = userIdeName
 				// TODO: Currently this variable reflects the IDE selected in
 				// user's settings for backward compatibility but in the future
 				// we want to make it represent the actual IDE.
@@ -340,9 +341,11 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 			resp.IdeImageLayers = getUserImageLayers(chosenIDE)
 		}
 
+		// TODO (se) this should be handled on the surface (i.e. server or even dashboard) and not passed as a special workspace context down here.
 		ideName, referrer := s.resolveReferrerIDE(ideConfig, wsContext, userIdeName)
 		if ideName != "" {
 			resp.RefererIde = ideName
+			resultingIdeName = ideName
 			desktopImageLayer = getUserIDEImage(referrer)
 			desktopUserImageLayers = getUserImageLayers(referrer)
 		}
@@ -351,6 +354,23 @@ func (s *IDEServiceServer) ResolveWorkspaceConfig(ctx context.Context, req *api.
 			resp.IdeImageLayers = append(resp.IdeImageLayers, desktopImageLayer)
 			resp.IdeImageLayers = append(resp.IdeImageLayers, desktopUserImageLayers...)
 		}
+
+		// we are returning the actually used ide name here, which might be different from the user's choice
+		ideSettingsEncoded := new(bytes.Buffer)
+		enc := json.NewEncoder(ideSettingsEncoded)
+		enc.SetEscapeHTML(false)
+
+		resultingIdeSettings := &IDESettings{
+			DefaultIde:       resultingIdeName,
+			UseLatestVersion: useLatest,
+		}
+
+		err = enc.Encode(resultingIdeSettings)
+		if err != nil {
+			log.WithError(err).Error("cannot marshal ideSettings")
+		}
+
+		resp.IdeSettings = ideSettingsEncoded.String()
 	}
 
 	jbGW, ok := ideConfig.IdeOptions.Clients["jetbrains-gateway"]

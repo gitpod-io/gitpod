@@ -318,11 +318,11 @@ export interface EmailNotificationSettings {
 export type IDESettings = {
     settingVersion?: string;
     defaultIde?: string;
+    useLatestVersion?: boolean;
     // DEPRECATED: Use defaultIde after `settingVersion: 2.0`, no more specialify desktop or browser.
     useDesktopIde?: boolean;
     // DEPRECATED: Same with useDesktopIde.
     defaultDesktopIde?: string;
-    useLatestVersion?: boolean;
 };
 
 export interface WorkspaceClasses {

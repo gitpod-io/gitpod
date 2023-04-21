@@ -57,4 +57,5 @@ message ResolveWorkspaceConfigResponse {
     // control whether to configure default IDE for a user
     string referer_ide = 5;
     string tasks = 6;
+    string ide_settings = 7;
 }

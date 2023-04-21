@@ -275,9 +275,20 @@ export class WorkspaceStarter {
                 }
             }
 
-            const ideConfig = await this.resolveIDEConfiguration(ctx, workspace, user, options.ideSettings);
+            let ideSettings = options.ideSettings;
 
-            // create and store instance
+            // if no explicit ideSettings are passed, we use the one from the last workspace instance
+            if (lastValidWorkspaceInstance) {
+                const ideConfig = lastValidWorkspaceInstance.configuration?.ideConfig;
+                if (ideConfig?.ide) {
+                    ideSettings = {
+                        defaultIde: ideConfig.ide,
+                        useLatestVersion: !!ideConfig.useLatest,
+                    };
+                }
+            }
+            const ideConfig = await this.resolveIDEConfiguration(ctx, workspace, user, ideSettings);
+            // create an instance
             let instance = await this.newInstance(
                 ctx,
                 workspace,
@@ -376,12 +387,12 @@ export class WorkspaceStarter {
             }
 
             const resp = await this.ideService.resolveWorkspaceConfig(workspace, user, userSelectedIdeSettings);
-            if (!user.additionalData?.ideSettings && resp.refererIde) {
+            if (!user.additionalData?.ideSettings && WithReferrerContext.is(workspace.context)) {
                 // A user does not have IDE settings configured yet configure it with a referrer ide as default.
                 const additionalData = user?.additionalData || {};
                 const settings = additionalData.ideSettings || {};
                 settings.settingVersion = "2.0";
-                settings.defaultIde = resp.refererIde;
+                settings.defaultIde = workspace.context.referrerIde;
                 additionalData.ideSettings = settings;
                 user.additionalData = additionalData;
                 this.userDB
@@ -818,6 +829,15 @@ export class WorkspaceStarter {
                     useLatest: user.additionalData?.ideSettings?.useLatestVersion,
                 },
             };
+            if (ideConfig.ideSettings && ideConfig.ideSettings.trim() !== "") {
+                try {
+                    const ideSettings: IDESettings = JSON.parse(ideConfig.ideSettings);
+                    configuration.ideConfig!.ide = ideSettings.defaultIde;
+                    configuration.ideConfig!.useLatest = !!ideSettings.useLatestVersion;
+                } catch (error) {
+                    log.error({ userId: user.id, workspaceId: workspace.id }, "cannot parse ideSettings", error);
+                }
+            }
 
             const billingTier = await this.entitlementService.getBillingTier(user);
 
