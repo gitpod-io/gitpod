@@ -7,13 +7,14 @@
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { FC, useCallback, useMemo } from "react";
-import Modal, { ModalBody, ModalFooter, ModalFooterAlert } from "../Modal";
+import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../Modal";
 import { ReactComponent as Spinner } from "../../icons/Spinner.svg";
-import { Heading2 } from "../typography/headings";
 import { useStripePromise } from "./use-stripe-promise";
 import { Button } from "../Button";
 import { useMutation } from "@tanstack/react-query";
 import { useStripeAppearance } from "./use-stripe-appearance";
+import DropDown from "../DropDown";
+import { useCurrency } from "../../payment-context";
 
 type Props = {
     attributionId: string;
@@ -34,7 +35,7 @@ export const AddPaymentMethodModal: FC<Props> = ({ attributionId, clientSecret, 
 
     return (
         <Modal visible={true} onClose={onClose}>
-            <Heading2 className="flex">Add Payment Method</Heading2>
+            <ModalHeader>Add Payment Method</ModalHeader>
             {!stripePromise && (
                 <ModalBody>
                     <div className="h-80 flex items-center justify-center">
@@ -44,16 +45,17 @@ export const AddPaymentMethodModal: FC<Props> = ({ attributionId, clientSecret, 
             )}
             {!!stripePromise && (
                 <Elements stripe={stripePromise} options={elementsOptions}>
-                    <HoldVerificationForm attributionId={attributionId} />
+                    <AddPaymentMethodForm attributionId={attributionId} />
                 </Elements>
             )}
         </Modal>
     );
 };
 
-function HoldVerificationForm({ attributionId }: { attributionId: string }) {
+function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
     const stripe = useStripe();
     const elements = useElements();
+    const { currency, setCurrency } = useCurrency();
 
     const confirmPayment = useMutation(async () => {
         const attrId = AttributionId.parse(attributionId);
@@ -62,9 +64,7 @@ function HoldVerificationForm({ attributionId }: { attributionId: string }) {
         }
 
         try {
-            // TODO: look into using a nested sub-route for this instead of query param
             const url = new URL(window.location.href);
-            url.searchParams.set("step", "subscribe");
 
             // Event though we might not request a payment right away, we want to use this sync opportunity to prepare clients as much as possible.
             // E.g., if they have to go through a flow like 3DS or iDEAL, they should do it ("online flow"), instead of ending up in the (email-based) "offline flow".
@@ -74,7 +74,6 @@ function HoldVerificationForm({ attributionId }: { attributionId: string }) {
                     return_url: url.toString(),
                 },
             });
-            console.log("confirmPayment", result);
             if (result.error) {
                 // Show error to your customer (for example, payment details incomplete)
                 throw result.error;
@@ -85,8 +84,8 @@ function HoldVerificationForm({ attributionId }: { attributionId: string }) {
                 console.log("RESULT: " + JSON.stringify(result));
             }
         } catch (error) {
-            console.error("Failed to submit form.", error);
-            let message = `Failed to submit form. ${error?.message || String(error)}`;
+            console.error("Unable to confirm payment method.", error);
+            let message = error?.message || String(error) || "Unable to confirm your payment method.";
             throw new Error(message);
         }
     });
@@ -102,9 +101,14 @@ function HoldVerificationForm({ attributionId }: { attributionId: string }) {
     return (
         <form onSubmit={handleSubmit}>
             <ModalBody>
+                <p className="mb-4">
+                    This card will be used for future charges. We'll be placing a 1.00 hold on it that we'll immediately
+                    release in order to verify your payment method.
+                </p>
                 <PaymentElement id="payment-element" />
             </ModalBody>
             <ModalFooter
+                className="justify-between"
                 alert={
                     confirmPayment.isError && (
                         <ModalFooterAlert closable={false} type="danger">
@@ -113,6 +117,24 @@ function HoldVerificationForm({ attributionId }: { attributionId: string }) {
                     )
                 }
             >
+                <div className="flex items-center space-x-1">
+                    <span>Currency:</span>
+                    <DropDown
+                        customClasses="w-32"
+                        renderAsLink={true}
+                        activeEntry={currency}
+                        entries={[
+                            {
+                                title: "EUR",
+                                onClick: () => setCurrency("EUR"),
+                            },
+                            {
+                                title: "USD",
+                                onClick: () => setCurrency("USD"),
+                            },
+                        ]}
+                    />
+                </div>
                 <Button disabled={!stripe} loading={confirmPayment.isLoading}>
                     Confirm
                 </Button>

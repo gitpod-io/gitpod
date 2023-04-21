@@ -25,6 +25,8 @@ import { useStripePromise } from "./billing/use-stripe-promise";
 import { AddPaymentMethodModal } from "./billing/AddPaymentMethodModal";
 import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { Button } from "./Button";
+import { useCreateHoldPaymentIntentMutation } from "../data/billing/create-hold-payment-intent-mutation";
+import { useToast } from "./toasts/Toasts";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -49,13 +51,10 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
     const [priceInformation, setPriceInformation] = useState<string | undefined>();
     const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
-    const { currency } = useCurrency();
     const { paymentVerificationFlow } = useFeatureFlags();
-    // state for payment Intent flow
+    const createPaymentIntent = useCreateHoldPaymentIntentMutation();
     const [showAddPaymentMethodModal, setShowAddPaymentMethodModal] = useState<boolean>(false);
-    const [paymentIntent, setPaymentIntent] = useState<
-        { paymentIntentId: string; paymentIntentClientSecret: string } | undefined
-    >();
+    const { toast } = useToast();
 
     // Stripe-controlled parameters
     const location = useLocation();
@@ -100,21 +99,19 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
         refreshSubscriptionDetails(attributionId);
     }, [attributionId, refreshSubscriptionDetails]);
 
-    // TODO: wire this up to upgrade button behind new ff
     const handleAddPaymentMethod = useCallback(async () => {
         if (!attributionId) {
             return;
         }
 
-        // Create stripe customer if needed
-        await getGitpodService().server.createStripeCustomerIfNeeded(attributionId, currency);
-
-        // create payment intent for hold and for subscription
-        const holdPaymentIntent = await getGitpodService().server.createHoldPaymentIntent(attributionId);
-
-        setPaymentIntent(holdPaymentIntent);
-        setShowAddPaymentMethodModal(true);
-    }, [attributionId, currency]);
+        try {
+            createPaymentIntent.mutateAsync(attributionId);
+            setShowAddPaymentMethodModal(true);
+        } catch (e) {
+            console.error(e);
+            toast(e.message || "Oh no, there was a problem with your payment service.");
+        }
+    }, [attributionId, createPaymentIntent, toast]);
 
     // Handle stripe setup-intent or payment-intent redirect flow
     useEffect(() => {
@@ -141,7 +138,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
             const { setupIntentId, paymentIntentId, redirectStatus } = stripeParams;
 
             // Should be one or the other
-            if (!setupIntentId || !paymentIntentId) {
+            if (!setupIntentId && !paymentIntentId) {
                 return;
             }
 
@@ -171,14 +168,16 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 }
                 const newLimit = await getGitpodService().server.subscribeToStripe(
                     attributionId,
-                    setupIntentId,
-                    "", // TODO: pass paymentIntentId
+                    setupIntentId || "",
+                    paymentIntentId || "",
                     limit,
                 );
                 if (newLimit) {
                     setUsageLimit(newLimit);
                 }
 
+                // TODO: should change this to setTimeout, and to only schedule the next poll at the end of the current one
+                // otherwise we can queue up many pending requests if they take longer than 1 second for some reason
                 //refresh every second until we get a subscriptionId
                 const interval = setInterval(async () => {
                     try {
@@ -358,6 +357,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                                     </a>
                                 )}
                                 <Button
+                                    loading={createPaymentIntent.isLoading}
                                     onClick={() =>
                                         paymentVerificationFlow
                                             ? handleAddPaymentMethod()
@@ -401,10 +401,10 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
             {!!attributionId && showBillingSetupModal && (
                 <BillingSetupModal attributionId={attributionId} onClose={() => setShowBillingSetupModal(false)} />
             )}
-            {attributionId && paymentIntent && showAddPaymentMethodModal && (
+            {attributionId && createPaymentIntent.data && showAddPaymentMethodModal && (
                 <AddPaymentMethodModal
                     attributionId={attributionId}
-                    clientSecret={paymentIntent?.paymentIntentClientSecret}
+                    clientSecret={createPaymentIntent.data.paymentIntentClientSecret}
                     onClose={() => setShowAddPaymentMethodModal(false)}
                 />
             )}

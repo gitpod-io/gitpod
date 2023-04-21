@@ -6,7 +6,7 @@
 
 import { loadStripe } from "@stripe/stripe-js/pure";
 import { useEffect, useState } from "react";
-import { useStripePublishableKey } from "../../data/billing-mode/stripe-key-query";
+import { useStripePublishableKey } from "../../data/billing/stripe-key-query";
 
 export const useStripePromise = () => {
     const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | undefined>();
