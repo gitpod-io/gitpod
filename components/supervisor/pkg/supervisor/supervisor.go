@@ -1235,8 +1235,7 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	routes.Handle("/_supervisor/frontend/", http.StripPrefix("/_supervisor/frontend", http.FileServer(http.Dir(cfg.StaticConfig.FrontendLocation))))
 
 	routes.Handle("/_supervisor/v1/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") {
-			websocket.IsWebSocketUpgrade(r)
+		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") || websocket.IsWebSocketUpgrade(r) {
 			http.StripPrefix("/_supervisor/v1", grpcWebServer).ServeHTTP(w, r)
 		} else {
 			http.StripPrefix("/_supervisor", restMux).ServeHTTP(w, r)
@@ -1259,7 +1258,6 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		}
 		tunnelOverWebSocket(tunneled, conn)
 	}))
-	routes.Handle("/_supervisor/frontend", http.FileServer(http.Dir(cfg.FrontendLocation)))
 	if cfg.DebugEnable {
 		routes.Handle("/_supervisor/debug/tunnels", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			rw.Header().Set("X-Content-Type-Options", "nosniff")
