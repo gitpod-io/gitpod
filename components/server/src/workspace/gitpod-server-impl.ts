@@ -419,7 +419,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const enableDedicatedOnboardingFlow = await this.configCatClientFactory().getValueAsync(
             "enableDedicatedOnboardingFlow",
             false,
-            {},
+            {
+                gitpodHost: new URL(this.config.hostUrl.toString()).host,
+            },
         );
         if (enableDedicatedOnboardingFlow) {
             const someOrgWithSSOExists = await this.teamDB.someOrgWithSSOExists();

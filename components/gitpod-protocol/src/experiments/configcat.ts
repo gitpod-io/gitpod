@@ -14,6 +14,7 @@ export const PROJECT_ID_ATTRIBUTE = "project_id";
 export const TEAM_ID_ATTRIBUTE = "team_id";
 export const TEAM_NAME_ATTRIBUTE = "team_name";
 export const BILLING_TIER_ATTRIBUTE = "billing_tier";
+export const GITPOD_HOST = "gitpod_host";
 
 export class ConfigCatClient implements Client {
     private client: IConfigCatClient;
@@ -50,6 +51,9 @@ export function attributesToUser(attributes: Attributes): ConfigCatUser {
     }
     if (attributes.billingTier) {
         custom[BILLING_TIER_ATTRIBUTE] = attributes.billingTier;
+    }
+    if (attributes.gitpodHost) {
+        custom[GITPOD_HOST] = attributes.gitpodHost;
     }
 
     return new ConfigCatUser(userId, email, "", custom);
