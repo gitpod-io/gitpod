@@ -42,21 +42,13 @@ export class SessionHandlerProvider {
 
         options.store = this.createStore();
 
-        this.sessionHandler = async (req: express.Request, res: express.Response) => {
-            const isJWTCookieEnabled = await getExperimentsClientForBackend().getValueAsync(
-                "jwtSessionCookieEnabled",
-                false,
-                {},
-            );
+        this.sessionHandler = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            const jwt = req.cookies[SessionHandlerProvider.getJWTCookieName(this.config.hostUrl)];
+            const containedJWT = !!jwt;
 
-            if (isJWTCookieEnabled && req.cookies) {
-                const jwt = req.cookies[SessionHandlerProvider.getJWTCookieName(this.config.hostUrl)];
-                const containedJWT = !!jwt;
+            reportSessionHasJWT(containedJWT);
 
-                reportSessionHasJWT(containedJWT);
-            }
-
-            return session(options);
+            return session(options)(req, res, next);
         };
     }
 
