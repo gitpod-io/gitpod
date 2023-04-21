@@ -19,14 +19,16 @@ import (
 )
 
 type WorkspaceProvider struct {
-	hooks    map[session.WorkspaceState][]session.WorkspaceLivecycleHook
-	Location string
+	hooks      map[session.WorkspaceState][]session.WorkspaceLivecycleHook
+	Location   string
+	workspaces map[string]struct{}
 }
 
 func NewWorkspaceProvider(hooks map[session.WorkspaceState][]session.WorkspaceLivecycleHook, location string) *WorkspaceProvider {
 	return &WorkspaceProvider{
-		hooks:    hooks,
-		Location: location,
+		hooks:      hooks,
+		Location:   location,
+		workspaces: make(map[string]struct{}),
 	}
 }
 
@@ -48,6 +50,7 @@ func (wf *WorkspaceProvider) Create(ctx context.Context, instanceID, location st
 	if err != nil {
 		return nil, err
 	}
+	wf.workspaces[instanceID] = struct{}{}
 
 	return ws, nil
 }
@@ -63,6 +66,11 @@ func (wf *WorkspaceProvider) Get(ctx context.Context, instanceID string) (*sessi
 		ws.NonPersistentAttrs = make(map[string]interface{})
 	}
 
+	if _, ok := wf.workspaces[instanceID]; ok {
+		return ws, nil
+	}
+
+	log.Infof("Reconnecting workspace %s to IWS", instanceID)
 	err = wf.runLifecycleHooks(ctx, ws, session.WorkspaceReady)
 	if err != nil {
 		return nil, err
