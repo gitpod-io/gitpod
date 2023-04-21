@@ -17,6 +17,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Config } from "../config";
 import { StripeService } from "../../ee/src/user/stripe-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { BillingModes } from "../../ee/src/billing/billing-mode";
 
 @injectable()
 export class UserDeletionService {
@@ -33,6 +34,7 @@ export class UserDeletionService {
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(StripeService) protected readonly stripeService: StripeService;
+    @inject(BillingModes) protected readonly billingMode: BillingModes;
 
     /**
      * This method deletes a User logically. The contract here is that after running this method without receiving an
@@ -50,7 +52,8 @@ export class UserDeletionService {
             log.debug({ userId: id }, "Is deleted but markDeleted already set. Continuing.");
         }
 
-        if (this.config.enablePayment) {
+        const billingMode = await this.billingMode.getBillingModeForUser(user, new Date());
+        if (billingMode.mode === "usage-based") {
             let subscriptionId;
             try {
                 // Also cancel any usage-based (Stripe) subscription
