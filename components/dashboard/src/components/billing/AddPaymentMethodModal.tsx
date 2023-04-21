@@ -68,20 +68,14 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
 
             // Event though we might not request a payment right away, we want to use this sync opportunity to prepare clients as much as possible.
             // E.g., if they have to go through a flow like 3DS or iDEAL, they should do it ("online flow"), instead of ending up in the (email-based) "offline flow".
-            const result = await stripe.confirmPayment({
+            const { error } = await stripe.confirmPayment({
                 elements,
                 confirmParams: {
                     return_url: url.toString(),
                 },
             });
-            if (result.error) {
-                // Show error to your customer (for example, payment details incomplete)
-                throw result.error;
-            } else {
-                // Your customer will be redirected to your `return_url`. For some payment
-                // methods like iDEAL, your customer will be redirected to an intermediate
-                // site first to authorize the payment, then redirected to the `return_url`.
-                console.log("RESULT: " + JSON.stringify(result));
+            if (error) {
+                throw error;
             }
         } catch (error) {
             console.error("Unable to confirm payment method.", error);

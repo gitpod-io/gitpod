@@ -130,6 +130,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // TODO: put this in a useMutation()
     const subscribeToStripe = useCallback(
         async (stripeParams: { setupIntentId?: string; paymentIntentId?: string; redirectStatus: string }) => {
             if (!attributionId) {
@@ -176,8 +177,8 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                     setUsageLimit(newLimit);
                 }
 
-                // TODO: should change this to setTimeout, and to only schedule the next poll at the end of the current one
-                // otherwise we can queue up many pending requests if they take longer than 1 second for some reason
+                // TODO: should change this to setTimeouts, reschedule at end of check, and wrap it in a Promise,
+                // otherwise we can queue up many pending requests if they take longer than 1 second
                 //refresh every second until we get a subscriptionId
                 const interval = setInterval(async () => {
                     try {
