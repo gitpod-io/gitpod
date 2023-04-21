@@ -43,16 +43,13 @@ export class SessionHandlerProvider {
         options.store = this.createStore();
 
         this.sessionHandler = async (req: express.Request, res: express.Response) => {
-            const user = req.user;
             const isJWTCookieEnabled = await getExperimentsClientForBackend().getValueAsync(
                 "jwtSessionCookieEnabled",
                 false,
-                {
-                    user,
-                },
+                {},
             );
 
-            if (isJWTCookieEnabled) {
+            if (isJWTCookieEnabled && req.cookies) {
                 const jwt = req.cookies[SessionHandlerProvider.getJWTCookieName(this.config.hostUrl)];
                 const containedJWT = !!jwt;
 
