@@ -36,6 +36,9 @@ export class PeriodicDbDeleter {
             const toBeDeleted: { table: string; deletions: string[] }[] = [];
             for (const table of sortedTables) {
                 const rowsForTableToDelete = await this.collectRowsToBeDeleted(table);
+                if (rowsForTableToDelete.deletions.length === 0) {
+                    continue;
+                }
                 log.info(
                     `[PeriodicDbDeleter] Identified ${rowsForTableToDelete.deletions.length} entries in ${rowsForTableToDelete.table} to be deleted.`,
                     {
