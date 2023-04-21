@@ -474,7 +474,7 @@ func (c *Client) CreateHoldPaymentIntent(ctx context.Context, customer *stripe.C
 		Currency: stripe.String(currency),
 		Customer: stripe.String(customer.ID),
 		PaymentMethodTypes: stripe.StringSlice([]string{
-			"card", // TODO(gpl) paymentMethod: Would be great to abstract over "card" by looking up the registered paymentMethod on the customer here
+			"card",
 		}),
 		// Place a hold on the funds when the customer authorizes the payment
 		CaptureMethod: stripe.String(string(stripe.PaymentIntentCaptureMethodManual)),
