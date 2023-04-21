@@ -31,6 +31,8 @@ type Attributes struct {
 
 	// this is vscode header `x-market-client-id`
 	VSCodeClientID string
+
+	GitpodHost string
 }
 
 type ClientOpt func(o *options)
