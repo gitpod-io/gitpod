@@ -201,12 +201,14 @@ func (s *BillingService) CreateHoldPaymentIntent(ctx context.Context, req *v1.Cr
 		return nil, status.Errorf(codes.Internal, "Failed to get customer from stripe.")
 	}
 
-	holdPaymentIntent, err := s.stripeClient.CreateHoldPaymentIntent(ctx, stripeCustomer, 1000)
+	// Create a payment intent for 1.00 to test the card with a hold
+	holdPaymentIntent, err := s.stripeClient.CreateHoldPaymentIntent(ctx, stripeCustomer, 100)
 	if err != nil {
 		log.WithError(err).Errorf("Failed to create a payment intent to for playing a hold.")
 		return nil, status.Errorf(codes.Internal, "Failed to create a payment intent to for playing a hold.")
 	}
 
+	// This gets passed to the client where it can be confirmed/verified by the user
 	return &v1.CreateHoldPaymentIntentResponse{
 		PaymentIntentId:           holdPaymentIntent.ID,
 		PaymentIntentClientSecret: holdPaymentIntent.ClientSecret,
