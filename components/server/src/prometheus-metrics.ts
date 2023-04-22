@@ -26,6 +26,7 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(spicedbClientLatency);
     registry.registerMetric(dashboardErrorBoundary);
     registry.registerMetric(jwtCookieIssued);
+    registry.registerMetric(sessionsWithJWTs);
 }
 
 const loginCounter = new prometheusClient.Counter({
@@ -65,6 +66,16 @@ const jwtCookieIssued = new prometheusClient.Counter({
 
 export function reportJWTCookieIssued() {
     jwtCookieIssued.inc();
+}
+
+const sessionsWithJWTs = new prometheusClient.Counter({
+    name: "gitpod_server_sessions_with_jwts_total",
+    help: "Total number of sessions which did/or did not contain JWTs",
+    labelNames: ["present"],
+});
+
+export function reportSessionHasJWT(jwtPresent: boolean) {
+    sessionsWithJWTs.inc({ present: `${jwtPresent}` });
 }
 
 const apiConnectionClosedCounter = new prometheusClient.Counter({

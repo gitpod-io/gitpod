@@ -76,7 +76,7 @@ class TestAuthJWT {
         const encoded = await sign({}, keypair.privateKey, {
             algorithm: "RS512",
             expiresIn: "1d",
-            issuer: this.config.hostUrl.toStringWoRootSlash(),
+            issuer: "https://mp-server-d7650ec945.preview.gitpod-dev.com",
             keyid: keypair.id,
             subject,
         });
