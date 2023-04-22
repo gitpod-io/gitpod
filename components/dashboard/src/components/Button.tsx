@@ -5,7 +5,7 @@
  */
 
 import classNames from "classnames";
-import { FC, RefObject } from "react";
+import { FC, forwardRef } from "react";
 import SpinnerWhite from "../icons/SpinnerWhite.svg";
 
 export type ButtonProps = {
@@ -17,7 +17,6 @@ export type ButtonProps = {
     loading?: boolean;
     className?: string;
     autoFocus?: boolean;
-    ref?: RefObject<HTMLButtonElement>;
     htmlType?: "button" | "submit" | "reset";
     onClick?: ButtonOnClickHandler;
 };
@@ -25,18 +24,17 @@ export type ButtonProps = {
 // Allow w/ or w/o handling event argument
 type ButtonOnClickHandler = React.DOMAttributes<HTMLButtonElement>["onClick"] | (() => void);
 
-export const Button: FC<ButtonProps> = ({
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     type = "primary",
     className,
     htmlType,
     disabled = false,
     loading = false,
     autoFocus = false,
-    ref,
     size,
     children,
     onClick,
-}) => {
+}, ref? ) => {
     return (
         <button
             type={htmlType}
@@ -77,7 +75,7 @@ export const Button: FC<ButtonProps> = ({
             <ButtonContent loading={loading}>{children}</ButtonContent>
         </button>
     );
-};
+});
 
 // TODO: Consider making this a LoadingButton variant instead
 type ButtonContentProps = {
