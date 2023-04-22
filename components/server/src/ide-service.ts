@@ -36,8 +36,8 @@ export class IDEService {
 
     async getIDEConfig(request: IdeServiceApi.GetConfigRequest): Promise<IDEConfig> {
         try {
-            let resp = await this.ideService.getConfig(request);
-            let config: IDEConfig = JSON.parse(resp.content);
+            const response = await this.ideService.getConfig(request);
+            const config: IDEConfig = JSON.parse(response.content);
             this.cacheConfig = config;
             return config;
         } catch (e) {
