@@ -34,7 +34,7 @@ export class IDEService {
 
     private cacheConfig?: IDEConfig;
 
-    async getIDEConfig(request: { id: string; email?: string }): Promise<IDEConfig> {
+    async getIDEConfig(request: { user: { id: string; email?: string } }): Promise<IDEConfig> {
         try {
             const response = await this.ideService.getConfig(request);
             const config: IDEConfig = JSON.parse(response.content);
