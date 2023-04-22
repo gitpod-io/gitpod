@@ -98,10 +98,15 @@ func (s *IDEServiceServer) register(grpcServer *grpc.Server) {
 
 func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequest) (*api.GetConfigResponse, error) {
 	configCatClient := experiments.NewClient()
-	experimentalIdesEnabled := configCatClient.GetBoolValue(ctx, "experimentalIdes", false, experiments.Attributes{
+	attributes := experiments.Attributes{
 		UserID:    req.User.Id,
-		UserEmail: *req.User.Email,
-	})
+		UserEmail: "",
+	}
+
+	if req.User.Email != nil {
+		attributes.UserEmail = *req.User.Email
+	}
+	experimentalIdesEnabled := configCatClient.GetBoolValue(ctx, "experimentalIdes", false, attributes)
 
 	if experimentalIdesEnabled {
 		// We can return everything
