@@ -14,11 +14,13 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
 	goidc "github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
@@ -27,11 +29,13 @@ import (
 )
 
 type Service struct {
-	dbConn   *gorm.DB
-	cipher   db.Cipher
-	stateJWT *StateJWT
+	dbConn *gorm.DB
+	cipher db.Cipher
 
-	// verifierByIssuer      map[string]*goidc.IDTokenVerifier
+	// jwts
+	stateExpiry    time.Duration
+	signerVerifier jws.SignerVerifier
+
 	sessionServiceAddress string
 
 	// TODO(at) remove by enhancing test setups
@@ -57,14 +61,15 @@ type AuthFlowResult struct {
 	Claims  map[string]interface{} `json:"claims"`
 }
 
-func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher, stateJWT *StateJWT) *Service {
+func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher, signerVerifier jws.SignerVerifier, stateExpiry time.Duration) *Service {
 	return &Service{
 		sessionServiceAddress: sessionServiceAddress,
 
 		dbConn: dbConn,
 		cipher: cipher,
 
-		stateJWT: stateJWT,
+		signerVerifier: signerVerifier,
+		stateExpiry:    stateExpiry,
 	}
 }
 
@@ -98,18 +103,24 @@ func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, retur
 }
 
 func (s *Service) encodeStateParam(state StateParam) (string, error) {
-	encodedState, err := s.stateJWT.Encode(StateClaims{
-		ClientConfigID: state.ClientConfigID,
-		ReturnToURL:    state.ReturnToURL,
-	})
-	return encodedState, err
+	now := time.Now().UTC()
+	expiry := now.Add(s.stateExpiry)
+	token := NewStateJWT(state.ClientConfigID, state.ReturnToURL, now, expiry)
+
+	signed, err := s.signerVerifier.Sign(token)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign jwt: %w", err)
+	}
+	return signed, nil
 }
 
 func (s *Service) decodeStateParam(encodedToken string) (StateParam, error) {
-	claims, err := s.stateJWT.Decode(encodedToken)
+	claims := &StateClaims{}
+	_, err := s.signerVerifier.Verify(encodedToken, claims)
 	if err != nil {
-		return StateParam{}, err
+		return StateParam{}, fmt.Errorf("failed to verify state token: %w", err)
 	}
+
 	return StateParam{
 		ClientConfigID: claims.ClientConfigID,
 		ReturnToURL:    claims.ReturnToURL,
