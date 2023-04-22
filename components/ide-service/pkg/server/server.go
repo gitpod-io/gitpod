@@ -100,12 +100,9 @@ func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequ
 	configCatClient := experiments.NewClient()
 	attributes := experiments.Attributes{
 		UserID:    req.User.Id,
-		UserEmail: "",
+		UserEmail: req.User.GetEmail(),
 	}
 
-	if req.User.Email != nil {
-		attributes.UserEmail = *req.User.Email
-	}
 	experimentalIdesEnabled := configCatClient.GetBoolValue(ctx, "experimentalIdes", false, attributes)
 
 	if experimentalIdesEnabled {
