@@ -5,11 +5,10 @@
  */
 
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { DropDown2, DropDown2Element } from "./DropDown2";
 import Editor from "../icons/Editor.svg";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 
 interface SelectIDEComponentProps {
     selectedIdeOption?: string;
@@ -18,15 +17,12 @@ interface SelectIDEComponentProps {
     setError?: (error?: string) => void;
 }
 
-function filteredIdeOptions(ideOptions: IDEOptions, experimentalTurnedOn: boolean) {
-    return IDEOptions.asArray(ideOptions)
-        .filter((x) => !x.hidden)
-        .filter((x) => (x.experimental ? experimentalTurnedOn : true));
+function filteredIdeOptions(ideOptions: IDEOptions) {
+    return IDEOptions.asArray(ideOptions).filter((x) => !x.hidden);
 }
 
 export default function SelectIDEComponent(props: SelectIDEComponentProps) {
     const [ideOptions, setIdeOptions] = useState<IDEOptions>();
-    const { experimentalIdes } = useContext(FeatureFlagContext);
 
     useEffect(() => {
         getGitpodService().server.getIDEOptions().then(setIdeOptions);
@@ -36,7 +32,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             if (!ideOptions) {
                 return [];
             }
-            const options = filteredIdeOptions(ideOptions, experimentalIdes);
+            const options = filteredIdeOptions(ideOptions);
             const result: DropDown2Element[] = [];
             for (const ide of options.filter((ide) =>
                 `${ide.label}${ide.title}${ide.notes}${ide.id}`.toLowerCase().includes(search.toLowerCase()),
@@ -57,7 +53,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             }
             return result;
         },
-        [experimentalIdes, ideOptions, props.useLatest],
+        [ideOptions, props.useLatest],
     );
     const internalOnSelectionChange = (id: string) => {
         const { ide, useLatest } = parseId(id);

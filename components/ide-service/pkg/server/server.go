@@ -36,7 +36,7 @@ type IDEServiceServer struct {
 	parsedIDEConfigContent string
 	ideConfig              *config.IDEConfig
 	ideConfigFileName      string
-	experiemntsClient      experiments.Client
+	experimentsClient      experiments.Client
 
 	api.UnimplementedIDEServiceServer
 }
@@ -87,7 +87,7 @@ func New(cfg *config.ServiceConfiguration) *IDEServiceServer {
 	s := &IDEServiceServer{
 		config:            cfg,
 		ideConfigFileName: fn,
-		experiemntsClient: experiments.NewClient(),
+		experimentsClient: experiments.NewClient(),
 	}
 	return s
 }
@@ -97,9 +97,37 @@ func (s *IDEServiceServer) register(grpcServer *grpc.Server) {
 }
 
 func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequest) (*api.GetConfigResponse, error) {
-	return &api.GetConfigResponse{
-		Content: s.parsedIDEConfigContent,
-	}, nil
+	configCatClient := experiments.NewClient()
+	attributes := experiments.Attributes{
+		UserID:    req.User.Id,
+		UserEmail: req.User.GetEmail(),
+	}
+
+	experimentalIdesEnabled := configCatClient.GetBoolValue(ctx, "experimentalIdes", false, attributes)
+
+	if experimentalIdesEnabled {
+		// We can return everything
+		return &api.GetConfigResponse{
+			Content: s.parsedIDEConfigContent,
+		}, nil
+	} else {
+		for key, ide := range s.ideConfig.IdeOptions.Options {
+			if ide.Experimental && !experimentalIdesEnabled {
+				delete(s.ideConfig.IdeOptions.Options, key)
+			}
+		}
+
+		parsedConfig, err := json.Marshal(s.ideConfig)
+		if err != nil {
+			log.WithError(err).Error("cannot marshal ide config")
+			return nil, err
+		}
+		s.parsedIDEConfigContent = string(parsedConfig)
+
+		return &api.GetConfigResponse{
+			Content: s.parsedIDEConfigContent,
+		}, nil
+	}
 }
 
 func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
