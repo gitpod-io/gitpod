@@ -36,7 +36,7 @@ type IDEServiceServer struct {
 	parsedIDEConfigContent string
 	ideConfig              *config.IDEConfig
 	ideConfigFileName      string
-	experiemntsClient      experiments.Client
+	experimentsClient      experiments.Client
 
 	api.UnimplementedIDEServiceServer
 }
@@ -87,7 +87,7 @@ func New(cfg *config.ServiceConfiguration) *IDEServiceServer {
 	s := &IDEServiceServer{
 		config:            cfg,
 		ideConfigFileName: fn,
-		experiemntsClient: experiments.NewClient(),
+		experimentsClient: experiments.NewClient(),
 	}
 	return s
 }
