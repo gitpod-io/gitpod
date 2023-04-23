@@ -348,14 +348,6 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 		defaultServerOpts = []GitpodServerOpt{WithGitpodUser(username)}
 	}
 
-	// set IDESettings defaults, just incase the consumer hasn't
-	if opts.IDESettings == nil {
-		opts.IDESettings = &protocol.IDESettings{
-			DefaultIde:       "code",
-			UseLatestVersion: false,
-		}
-	}
-
 	parallelLimiter <- struct{}{}
 	defer func() {
 		if err != nil && stopWs == nil {
@@ -373,10 +365,13 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 
 	var resp *protocol.WorkspaceCreationResult
 	for i := 0; i < 3; i++ {
-		t.Logf("attempt to create the workspace: %s, with defaultIde: %s", opts.ContextURL, opts.IDESettings.DefaultIde)
+		u, _ := api.GetUserId(username)
+		t.Logf("attempt to create the workspace as user %v, with context %v\n", u, opts.ContextURL)
 
+		teams, _ := server.GetTeams(cctx)
 		resp, err = server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
 			ContextURL:                         opts.ContextURL,
+			OrganizationId:                     teams[0].ID,
 			IgnoreRunningPrebuild:              true,
 			IgnoreRunningWorkspaceOnSameCommit: true,
 			StartWorkspaceOptions: protocol.StartWorkspaceOptions{
