@@ -139,13 +139,15 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	}
 
 	if registerErr := register(srv, &registerDependencies{
-		connPool:    connPool,
-		expClient:   expClient,
-		dbConn:      dbConn,
-		signer:      signer,
-		cipher:      cipherSet,
-		oidcService: oidcService,
-		idpService:  idpService,
+		connPool:          connPool,
+		expClient:         expClient,
+		dbConn:            dbConn,
+		signer:            signer,
+		cipher:            cipherSet,
+		oidcService:       oidcService,
+		idpService:        idpService,
+		sessionCookieName: cfg.Auth.Session.Cookie.Name,
+		jwtVerifier:       sessionJWT,
 	}); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
@@ -165,10 +167,14 @@ type registerDependencies struct {
 	cipher      db.Cipher
 	oidcService *oidc.Service
 	idpService  *identityprovider.Service
+
+	jwtVerifier       auth.JWTVerifier
+	sessionCookieName string
 }
 
 func register(srv *baseserver.Server, deps *registerDependencies) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
+	auth.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
 	err := connectMetrics.Register(srv.MetricsRegistry())
@@ -186,6 +192,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 			NewLogInterceptor(log.Log),
 			auth.NewServerInterceptor(),
 			origin.NewInterceptor(),
+			auth.NewJWTCookieInterceptor(deps.expClient, deps.sessionCookieName, deps.jwtVerifier),
 		),
 	}
 
