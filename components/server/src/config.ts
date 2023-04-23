@@ -55,7 +55,11 @@ export type Config = Omit<
         session: {
             lifetimeSeconds: number;
             issuer: string;
+<<<<<<< HEAD
             cookie: CookieConfig;
+=======
+            cookieName: string;
+>>>>>>> 3f003471c ([installer] Add cookie name to config)
         };
     };
 };
