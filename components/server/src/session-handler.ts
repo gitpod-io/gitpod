@@ -15,7 +15,6 @@ const MySQLStore = mysqlstore(session);
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 @injectable()
 export class SessionHandlerProvider {
@@ -66,12 +65,8 @@ export class SessionHandlerProvider {
         return `${derived}v2_`;
     }
 
-    static getJWTCookieName(hostURL: GitpodHostUrl) {
-        const derived = hostURL
-            .toString()
-            .replace(/https?/, "")
-            .replace(/[\W_]+/g, "_");
-        return `${derived}jwt_`;
+    static getJWTCookieName(config: Config) {
+        return config.auth.session.cookieName;
     }
 
     public clearSessionCookie(res: express.Response, config: Config): void {
@@ -82,7 +77,7 @@ export class SessionHandlerProvider {
         delete options.maxAge;
         res.clearCookie(name, options);
 
-        res.clearCookie(SessionHandlerProvider.getJWTCookieName(this.config.hostUrl));
+        res.clearCookie(SessionHandlerProvider.getJWTCookieName(this.config));
     }
 
     protected createStore(): any | undefined {

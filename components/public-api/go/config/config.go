@@ -54,6 +54,7 @@ type AuthConfiguration struct {
 type SessionConfig struct {
 	LifetimeSeconds int64  `json:"lifetimeSeconds"`
 	Issuer          string `json:"issuer"`
+	CookieName      string `json:"cookieName"`
 }
 
 type AuthPKIConfiguration struct {

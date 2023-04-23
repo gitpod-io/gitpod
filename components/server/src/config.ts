@@ -55,6 +55,7 @@ export type Config = Omit<
         session: {
             lifetimeSeconds: number;
             issuer: string;
+            cookieName: string;
         };
     };
 };
@@ -258,6 +259,7 @@ export interface ConfigSerialized {
         session: {
             lifetimeSeconds: number;
             issuer: string;
+            cookieName: string;
         };
     };
 }

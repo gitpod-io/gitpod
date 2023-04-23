@@ -6,6 +6,7 @@ package auth
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -23,6 +24,7 @@ type SessionConfig struct {
 	// How long shoud the session be valid for?
 	LifetimeSeconds int64  `json:"lifetimeSeconds"`
 	Issuer          string `json:"issuer"`
+	CookieName      string `json:"cookieName"`
 }
 
 func GetConfig(ctx *common.RenderContext) ([]corev1.Volume, []corev1.VolumeMount, Config) {
@@ -32,6 +34,13 @@ func GetConfig(ctx *common.RenderContext) ([]corev1.Volume, []corev1.VolumeMount
 		Session: SessionConfig{
 			LifetimeSeconds: int64((7 * 24 * time.Hour).Seconds()),
 			Issuer:          fmt.Sprintf("https://%s", ctx.Config.Domain),
+			CookieName:      cookieNameFromDomain(ctx.Config.Domain),
 		},
 	}
+}
+
+func cookieNameFromDomain(domain string) string {
+	// replace all non-word characters with underscores
+	derived := regexp.MustCompile(`[\W_]+`).ReplaceAllString(domain, "_")
+	return "_" + derived + "_jwt_"
 }

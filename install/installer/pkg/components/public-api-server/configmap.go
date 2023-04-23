@@ -74,6 +74,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Session: config.SessionConfig{
 				LifetimeSeconds: authCfg.Session.LifetimeSeconds,
 				Issuer:          authCfg.Session.Issuer,
+				CookieName:      authCfg.Session.CookieName,
 			},
 		},
 		Server: &baseserver.Configuration{
