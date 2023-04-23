@@ -66,7 +66,7 @@ export class SessionHandlerProvider {
     }
 
     static getJWTCookieName(config: Config) {
-        return config.auth.session.cookieName;
+        return config.auth.session.cookie.name;
     }
 
     public clearSessionCookie(res: express.Response, config: Config): void {

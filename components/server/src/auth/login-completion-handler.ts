@@ -100,11 +100,11 @@ export class LoginCompletionHandler {
         if (isJWTCookieExperimentEnabled) {
             const token = await this.authJWT.sign(user.id, {});
 
-            response.cookie(SessionHandlerProvider.getJWTCookieName(this.config.hostUrl), token, {
-                maxAge: this.config.session.maxAgeMs,
-                httpOnly: true,
-                sameSite: "lax",
-                secure: true,
+            response.cookie(SessionHandlerProvider.getJWTCookieName(this.config), token, {
+                maxAge: this.config.auth.session.cookie.maxAge,
+                httpOnly: this.config.auth.session.cookie.httpOnly,
+                sameSite: this.config.auth.session.cookie.sameSite,
+                secure: this.config.auth.session.cookie.secure,
             });
 
             reportJWTCookieIssued();

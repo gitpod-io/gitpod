@@ -22,19 +22,34 @@ type Config struct {
 
 type SessionConfig struct {
 	// How long shoud the session be valid for?
-	LifetimeSeconds int64  `json:"lifetimeSeconds"`
-	Issuer          string `json:"issuer"`
-	CookieName      string `json:"cookieName"`
+	LifetimeSeconds int64        `json:"lifetimeSeconds"`
+	Issuer          string       `json:"issuer"`
+	Cookie          CookieConfig `json:"cookie"`
+}
+
+type CookieConfig struct {
+	Name     string `json:"name"`
+	MaxAge   int64  `json:"maxAge"`
+	SameSite string `json:"sameSite"`
+	Secure   bool   `json:"secure"`
+	HTTPOnly bool   `json:"httpOnly"`
 }
 
 func GetConfig(ctx *common.RenderContext) ([]corev1.Volume, []corev1.VolumeMount, Config) {
 	volumes, mounts, pki := getPKI()
+	lifetime := int64((7 * 24 * time.Hour).Seconds())
 	return volumes, mounts, Config{
 		PKI: pki,
 		Session: SessionConfig{
-			LifetimeSeconds: int64((7 * 24 * time.Hour).Seconds()),
+			LifetimeSeconds: lifetime,
 			Issuer:          fmt.Sprintf("https://%s", ctx.Config.Domain),
-			CookieName:      cookieNameFromDomain(ctx.Config.Domain),
+			Cookie: CookieConfig{
+				Name:     cookieNameFromDomain(ctx.Config.Domain),
+				MaxAge:   lifetime,
+				SameSite: "lax",
+				Secure:   true,
+				HTTPOnly: true,
+			},
 		},
 	}
 }
