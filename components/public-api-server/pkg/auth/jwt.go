@@ -178,6 +178,11 @@ func NewJWTCookieInterceptor(exp experiments.Client, cookieName string, verifier
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+			validJWT := false
+			defer func() {
+				reportRequestWithJWT(validJWT)
+			}()
+
 			if req.Spec().IsClient {
 				return next(ctx, req)
 			}
@@ -206,7 +211,7 @@ func NewJWTCookieInterceptor(exp experiments.Client, cookieName string, verifier
 				return next(ctx, req)
 			}
 
-			reportRequestWithJWT(claims != nil)
+			validJWT = claims != nil
 
 			return next(ctx, req)
 		})
