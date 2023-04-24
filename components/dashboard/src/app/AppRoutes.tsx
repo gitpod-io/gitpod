@@ -86,7 +86,6 @@ const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ "..
 const AdminSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/Settings"));
 const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/ProjectsSearch"));
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/TeamsSearch"));
-const License = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/License"));
 const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
 const UserOnboarding = React.lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
 
@@ -224,7 +223,6 @@ export const AppRoutes = () => {
                     <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
                     <AdminRoute path="/admin/projects" component={ProjectsSearch} />
                     <AdminRoute path="/admin/blocked-repositories" component={BlockedRepositories} />
-                    <AdminRoute path="/admin/license" component={License} />
                     <AdminRoute path="/admin/settings" component={AdminSettings} />
 
                     <Route path={["/", "/login"]} exact>

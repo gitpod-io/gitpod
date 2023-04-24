@@ -9,7 +9,6 @@ export * from "./gitpod-service";
 export * from "./util/disposable";
 export * from "./util/event";
 export * from "./util/queue";
-export * from "./license-protocol";
 export * from "./workspace-instance";
 export * from "./permission";
 export * from "./admin-protocol";

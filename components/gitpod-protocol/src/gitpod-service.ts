@@ -51,7 +51,6 @@ import { AdminServer } from "./admin-protocol";
 import { GitpodHostUrl } from "./util/gitpod-host-url";
 import { WebSocketConnectionProvider } from "./messaging/browser/connection";
 import { PermissionName } from "./permission";
-import { LicenseService } from "./license-protocol";
 import { Emitter } from "./util/event";
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
@@ -73,7 +72,7 @@ export interface GitpodClient {
 }
 
 export const GitpodServer = Symbol("GitpodServer");
-export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, LicenseService, IDEServer {
+export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, IDEServer {
     // User related API
     getLoggedInUser(): Promise<User>;
     updateLoggedInUser(user: Partial<User>): Promise<User>;

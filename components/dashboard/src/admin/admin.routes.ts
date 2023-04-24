@@ -42,9 +42,5 @@ export function getAdminSettingsMenu() {
             title: "General",
             link: ["/admin/settings"],
         },
-        {
-            title: "License",
-            link: ["/admin/license"],
-        },
     ];
 }

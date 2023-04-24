@@ -78,8 +78,6 @@ Config defines the v1 version structure of the gitpod config file
 |`authProviders[ ].name`|string|Y|  ||
 |`blockNewUsers.enabled`|bool|N|  ||
 |`blockNewUsers.passlist[ ]`|[]string|N|  |  Passlist []string `json:"passlist" validate:"min=1,unique,dive,fqdn"`|
-|`license.kind`|string|N| `secret` ||
-|`license.name`|string|Y|  ||
 |`sshGatewayHostKey.kind`|string|N| `secret` ||
 |`sshGatewayHostKey.name`|string|Y|  ||
 |`disableDefinitelyGp`|bool|N|  ||

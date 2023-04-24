@@ -88,11 +88,6 @@ import {
     AdminModifyRoleOrPermissionRequest,
     WorkspaceAndInstance,
 } from "@gitpod/gitpod-protocol/lib/admin-protocol";
-import {
-    GetLicenseInfoResult,
-    LicenseInfo,
-    LicenseValidationResult,
-} from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Cancelable } from "@gitpod/gitpod-protocol/lib/util/cancelable";
@@ -3252,22 +3247,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return await this.telemetryDataProvider.getTelemetryData();
     }
 
-    async getLicenseInfo(): Promise<GetLicenseInfoResult> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Licensing is implemented in Gitpod's Enterprise Edition`);
-    }
-
-    async adminGetLicense(ctx: TraceContext): Promise<LicenseInfo> {
-        traceAPIParams(ctx, {});
-
-        await this.guardAdminAccess("adminGetLicense", {}, Permission.ADMIN_API);
-
-        const userCount = await this.userDB.getUserCount(true);
-
-        return {
-            userCount: userCount,
-        };
-    }
-
     protected censorUser(user: User): User {
         const res = { ...user };
         delete res.additionalData;
@@ -3281,10 +3260,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return i;
         });
         return res;
-    }
-
-    async validateLicense(ctx: TraceContext): Promise<LicenseValidationResult> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Licensing is implemented in Gitpod's Enterprise Edition`);
     }
 
     async getOwnAuthProviders(ctx: TraceContext): Promise<AuthProviderEntry[]> {
