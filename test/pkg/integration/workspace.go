@@ -297,7 +297,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	stopWs = stopWsF(t, req.Id, req.Metadata.MetaId, api, req.Type == wsmanapi.WorkspaceType_PREBUILD)
 	defer func() {
 		if err != nil {
-			_, _ = stopWs(false, api)
+			_, _ = stopWs(true, api)
 		}
 	}()
 
@@ -453,7 +453,7 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 	stopWs = stopWsF(t, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api, false)
 	defer func() {
 		if err != nil {
-			_, _ = stopWs(false, api)
+			_, _ = stopWs(true, api)
 		}
 	}()
 
