@@ -11,7 +11,7 @@ export const Permissions = {
     enforcement: undefined,
     "privileged-ws": undefined,
     "registry-access": undefined,
-    "admin-role": undefined,
+    "admin-permissions": undefined,
     "admin-users": undefined,
     "admin-workspace-content": undefined,
     "admin-workspaces": undefined,
@@ -66,7 +66,7 @@ export namespace Permission {
     export const REGISTRY_ACCESS: PermissionName = "registry-access";
 
     /** The permission for administration and deletion of user data */
-    export const ADMIN_ROLE: PermissionName = "admin-role";
+    export const ADMIN_PERMISSIONS: PermissionName = "admin-permissions";
 
     /** The permission for accessing user data */
     export const ADMIN_USERS: PermissionName = "admin-users";
