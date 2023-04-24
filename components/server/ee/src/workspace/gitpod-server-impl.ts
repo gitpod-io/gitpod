@@ -8,7 +8,6 @@ import { injectable, inject } from "inversify";
 import { GitpodServerImpl, traceAPIParams, traceWI, censor } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext, TraceContextWithSpan } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import {
-    GitpodServer,
     GitpodClient,
     AdminGetListRequest,
     User,
@@ -38,7 +37,6 @@ import {
     Project,
     StartPrebuildResult,
     ClientHeaderFields,
-    Workspace,
     FindPrebuildsParams,
     TeamMemberRole,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
@@ -47,7 +45,6 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import {
-    TakeSnapshotRequest,
     AdmissionLevel,
     ControlAdmissionRequest,
     StopWorkspacePolicy,
