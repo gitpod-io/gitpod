@@ -189,11 +189,7 @@ import { RegionService } from "./region-service";
 import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { EnvVarService } from "./env-var-service";
 import { LinkedInService } from "../linkedin-service";
-<<<<<<< HEAD
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
-=======
-import { SnapshotService } from "./snapshot-service";
->>>>>>> 25a68a921 ([server] Move snapshot service out of EE)
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
