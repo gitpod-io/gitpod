@@ -77,6 +77,7 @@ import {
     UserSSHPublicKeyValue,
     PrebuildEvent,
     RoleOrPermission,
+    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
@@ -112,6 +113,7 @@ import {
     MarkActiveRequest,
     PortSpec,
     PortVisibility as ProtoPortVisibility,
+    SetTimeoutRequest,
     StopWorkspacePolicy,
     TakeSnapshotRequest,
     UpdateSSHKeyRequest,
@@ -159,7 +161,7 @@ import { InstallationAdminTelemetryDataProvider } from "../installation-admin/te
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { EntitlementService } from "../billing/entitlement-service";
+import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
@@ -1383,18 +1385,41 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return result;
     }
 
-    /**
-     * Extension point for implementing entitlement checks. Throws a ResponseError if not eligible.
-     * @param ctx
-     * @param user
-     * @param runningInstances
-     */
     protected async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
         organizationId: string | undefined,
         runningInstances: Promise<WorkspaceInstance[]>,
-    ): Promise<void> {}
+    ): Promise<void> {
+        let result: MayStartWorkspaceResult = {};
+        try {
+            result = await this.entitlementService.mayStartWorkspace(
+                user,
+                organizationId,
+                new Date(),
+                runningInstances,
+            );
+            TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
+            TraceContext.setError(ctx, err);
+            return; // we don't want to block workspace starts because of internal errors
+        }
+        if (!!result.needsVerification) {
+            throw new ResponseError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
+        }
+        if (!!result.usageLimitReachedOnCostCenter) {
+            throw new ResponseError(ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED, "Increase usage limit and try again.", {
+                attributionId: result.usageLimitReachedOnCostCenter,
+            });
+        }
+        if (!!result.hitParallelWorkspaceLimit) {
+            throw new ResponseError(
+                ErrorCodes.TOO_MANY_RUNNING_WORKSPACES,
+                `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`,
+            );
+        }
+    }
 
     public async getFeaturedRepositories(ctx: TraceContext): Promise<WhitelistedRepository[]> {
         const user = this.checkAndBlockUser("getFeaturedRepositories");
@@ -1554,17 +1579,100 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         workspaceId: string,
         duration: WorkspaceTimeoutDuration,
     ): Promise<SetWorkspaceTimeoutResult> {
-        throw new ResponseError(
-            ErrorCodes.EE_FEATURE,
-            `Custom workspace timeout is implemented in Gitpod's Enterprise Edition`,
-        );
+        traceAPIParams(ctx, { workspaceId, duration });
+        traceWI(ctx, { workspaceId });
+
+        const user = this.checkUser("setWorkspaceTimeout");
+
+        if (!(await this.entitlementService.maySetTimeout(user, new Date()))) {
+            throw new ResponseError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
+        }
+
+        let validatedDuration;
+        try {
+            validatedDuration = WorkspaceTimeoutDuration.validate(duration);
+        } catch (err) {
+            throw new ResponseError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
+        }
+
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
+        const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
+        const runningInstance = runningInstances.find((i) => i.workspaceId === workspaceId);
+        if (!runningInstance) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
+        }
+        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
+
+        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+
+        const req = new SetTimeoutRequest();
+        req.setId(runningInstance.id);
+        req.setDuration(validatedDuration);
+        await client.setTimeout(ctx, req);
+
+        return {
+            resetTimeoutOnWorkspaces: [workspace.id],
+            humanReadableDuration: this.goDurationToHumanReadable(validatedDuration),
+        };
     }
 
     public async getWorkspaceTimeout(ctx: TraceContext, workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
-        throw new ResponseError(
-            ErrorCodes.EE_FEATURE,
-            `Custom workspace timeout is implemented in Gitpod's Enterprise Edition`,
-        );
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
+
+        const user = this.checkUser("getWorkspaceTimeout");
+
+        const canChange = await this.entitlementService.maySetTimeout(user, new Date());
+
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
+        const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
+        if (!runningInstance) {
+            log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
+            const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
+            return { duration, canChange, humanReadableDuration: this.goDurationToHumanReadable(duration) };
+        }
+        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
+
+        const req = new DescribeWorkspaceRequest();
+        req.setId(runningInstance.id);
+
+        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
+        const desc = await client.describeWorkspace(ctx, req);
+        const duration = desc.getStatus()!.getSpec()!.getTimeout();
+
+        return { duration, canChange, humanReadableDuration: this.goDurationToHumanReadable(duration) };
+    }
+
+    goDurationToHumanReadable(goDuration: string): string {
+        const [, value, unit] = goDuration.match(/^(\d+)([mh])$/)!;
+        let duration = parseInt(value);
+
+        switch (unit) {
+            case "m":
+                duration *= 60;
+                break;
+            case "h":
+                duration *= 60 * 60;
+                break;
+        }
+
+        const hours = Math.floor(duration / 3600);
+        duration %= 3600;
+        const minutes = Math.floor(duration / 60);
+        duration %= 60;
+
+        let result = "";
+        if (hours) {
+            result += `${hours} hour${hours === 1 ? "" : "s"}`;
+            if (minutes) {
+                result += " and ";
+            }
+        }
+        if (minutes) {
+            result += `${minutes} minute${minutes === 1 ? "" : "s"}`;
+        }
+
+        return result;
     }
 
     public async getOpenPorts(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstancePort[]> {
