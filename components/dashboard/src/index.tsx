@@ -4,29 +4,29 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React from "react";
-import ReactDOM from "react-dom";
-import App from "./App";
-import { UserContextProvider } from "./user-context";
-import { AdminContextProvider } from "./admin-context";
-import { PaymentContextProvider } from "./payment-context";
-import { LicenseContextProvider } from "./license-context";
-import { ProjectContextProvider } from "./projects/project-context";
-import { ThemeContextProvider } from "./theme-context";
-import { FeatureFlagContextProvider } from "./contexts/FeatureFlagContext";
-import { StartWorkspaceModalContextProvider } from "./workspaces/start-workspace-modal-context";
-import { BrowserRouter } from "react-router-dom";
 import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import utc from "dayjs/plugin/utc";
-import { getURLHash, isGitpodIo } from "./utils";
-import { isWebsiteSlug } from "./utils";
-import { setupQueryClientProvider } from "./data/setup";
-import { ConfettiContextProvider } from "./contexts/ConfettiContext";
+import React from "react";
+import ReactDOM from "react-dom";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App";
+import { AdminContextProvider } from "./admin-context";
 import { QueryErrorBoundary } from "./components/error-boundaries/QueryErrorBoundary";
 import { ReloadPageErrorBoundary } from "./components/error-boundaries/ReloadPageErrorBoundary";
-import "./index.css";
 import { ToastContextProvider } from "./components/toasts/Toasts";
+import { ConfettiContextProvider } from "./contexts/ConfettiContext";
+import { FeatureFlagContextProvider } from "./contexts/FeatureFlagContext";
+import { setupQueryClientProvider } from "./data/setup";
+import "./index.css";
+import { LicenseContextProvider } from "./license-context";
+import { PaymentContextProvider } from "./payment-context";
+import { ProjectContextProvider } from "./projects/project-context";
+import { ThemeContextProvider } from "./theme-context";
+import { UserContextProvider } from "./user-context";
+import { getURLHash, isGitpodIo, isWebsiteSlug } from "./utils";
+import { StartWorkspaceModalContextProvider } from "./workspaces/start-workspace-modal-context";
 
 const bootApp = () => {
     // gitpod.io specific boot logic
@@ -54,6 +54,7 @@ const bootApp = () => {
     // Configure libraries
     dayjs.extend(relativeTime);
     dayjs.extend(utc);
+    dayjs.extend(duration);
 
     // Render the App
     ReactDOM.render(

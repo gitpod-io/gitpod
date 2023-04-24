@@ -152,6 +152,7 @@ const defaultFunctions: FunctionsConfig = {
     adminSetTeamMemberRole: { group: "default", points: 1 },
     adminGetWorkspaces: { group: "default", points: 1 },
     adminGetWorkspace: { group: "default", points: 1 },
+    adminGetWorkspaceInstances: { group: "default", points: 1 },
     adminForceStopWorkspace: { group: "default", points: 1 },
     adminRestoreSoftDeletedWorkspace: { group: "default", points: 1 },
     adminGetProjectsBySearchTerm: { group: "default", points: 1 },
