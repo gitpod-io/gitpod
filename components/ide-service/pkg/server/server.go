@@ -145,16 +145,8 @@ func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
 				nonExperimentalIdeOptions[key] = ide
 			}
 		}
-		parsedNonExperimentalConfig, err := json.Marshal(nonExperimentalIdeOptions)
-		if err != nil {
-			log.WithError(err).Error("cannot marshal non-experimental ide config")
-			return
-		}
 
-		s.parsedIDEConfigContent = string(parsedConfig)
-		s.ideConfig = ideConfig
-
-		s.nonExperimentalIDEConfig = &config.IDEConfig{
+		nonExperimentalConfig := &config.IDEConfig{
 			SupervisorImage: ideConfig.SupervisorImage,
 			IdeOptions: config.IDEOptions{
 				Options:           nonExperimentalIdeOptions,
@@ -163,6 +155,17 @@ func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
 				Clients:           ideConfig.IdeOptions.Clients,
 			},
 		}
+
+		parsedNonExperimentalConfig, err := json.Marshal(nonExperimentalConfig)
+		if err != nil {
+			log.WithError(err).Error("cannot marshal non-experimental ide config")
+			return
+		}
+
+		s.parsedIDEConfigContent = string(parsedConfig)
+		s.ideConfig = ideConfig
+
+		s.nonExperimentalIDEConfig = nonExperimentalConfig
 		s.parsedIDENonExperimental = string(parsedNonExperimentalConfig)
 
 		s.originIDEConfig = b
