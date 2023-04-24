@@ -7,8 +7,7 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-  label:
-    name: Update image digest
+  build:
     runs-on: ubuntu-20.04
     permissions:
       contents: write
