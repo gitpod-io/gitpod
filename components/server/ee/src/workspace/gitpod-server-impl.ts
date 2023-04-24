@@ -12,16 +12,9 @@ import {
     AdminGetListRequest,
     User,
     Team,
-    TeamMemberInfo,
     AdminGetListResult,
     Permission,
     AdminBlockUserRequest,
-    AdminModifyRoleOrPermissionRequest,
-    RoleOrPermission,
-    AdminModifyPermanentWorkspaceFeatureFlagRequest,
-    UserFeatureSettings,
-    AdminGetWorkspacesRequest,
-    WorkspaceAndInstance,
     GetWorkspaceTimeoutResult,
     WorkspaceTimeoutDuration,
     SetWorkspaceTimeoutResult,
@@ -38,7 +31,6 @@ import {
     StartPrebuildResult,
     ClientHeaderFields,
     FindPrebuildsParams,
-    TeamMemberRole,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     PrebuildEvent,
     OpenPrebuildContext,
@@ -56,7 +48,6 @@ import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LicenseValidationResult } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
-import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import {
     CostCenter,
