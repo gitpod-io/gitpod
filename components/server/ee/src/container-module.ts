@@ -21,8 +21,6 @@ import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { IncrementalPrebuildsService } from "./prebuilds/incremental-prebuilds-service";
 import { IPrefixContextParser } from "../../src/workspace/context-parser";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
-import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
-import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { StripeService } from "./user/stripe-service";
 import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
 import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
@@ -41,7 +39,6 @@ import { UsageService, UsageServiceImpl, NoOpUsageService } from "../../src/user
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
-    rebind(WorkspaceFactory).to(WorkspaceFactoryEE).inSingletonScope();
 
     bind(PrebuildManager).toSelf().inSingletonScope();
     bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
