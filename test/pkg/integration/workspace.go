@@ -369,9 +369,17 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 		t.Logf("attempt to create the workspace as user %v, with context %v\n", u, opts.ContextURL)
 
 		teams, _ := server.GetTeams(cctx)
+		var orgId string
+		if len(teams) == 0 {
+			// hack: there might be a better value to use here
+			orgId = u
+		} else {
+			orgId = teams[0].ID
+		}
+
 		resp, err = server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
 			ContextURL:                         opts.ContextURL,
-			OrganizationId:                     teams[0].ID,
+			OrganizationId:                     orgId,
 			IgnoreRunningPrebuild:              true,
 			IgnoreRunningWorkspaceOnSameCommit: true,
 			StartWorkspaceOptions: protocol.StartWorkspaceOptions{
