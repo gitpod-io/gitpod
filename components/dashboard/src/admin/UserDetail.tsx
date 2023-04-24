@@ -55,9 +55,6 @@ export default function UserDetail(p: { user: User }) {
         setUsageLimit(costCenter.spendingLimit);
     }, [costCenter, user]);
 
-    const email = User.getPrimaryEmail(p.user);
-    const emailDomain = email ? email.split("@")[email.split("@").length - 1] : undefined;
-
     const updateUser: UpdateUserFunction = async (fun) => {
         setActivity(true);
         try {

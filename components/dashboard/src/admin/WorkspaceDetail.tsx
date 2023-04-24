@@ -7,7 +7,6 @@
 import { User, WorkspaceAndInstance, ContextURL, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import dayjs from "dayjs";
-import duration from "dayjs/plugin/duration";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heading2, Subheading } from "../components/typography/headings";
