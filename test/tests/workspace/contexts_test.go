@@ -134,6 +134,11 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 					defer api.Done(t)
 
+					_, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
+
 					nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
 					if err != nil {
 						t.Fatal(err)
