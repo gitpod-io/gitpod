@@ -15,10 +15,6 @@ const MySQLStore = mysqlstore(session);
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
-<<<<<<< HEAD
-=======
-import { reportSessionHasJWT } from "./prometheus-metrics";
->>>>>>> 3f003471c ([installer] Add cookie name to config)
 
 @injectable()
 export class SessionHandlerProvider {
