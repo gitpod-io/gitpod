@@ -57,7 +57,7 @@ const (
 )
 
 func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer, activity *activity.WorkspaceActivity, maintenance maintenance.Maintenance) *WorkspaceManagerServer {
-	metrics := newWorkspaceMetrics()
+	metrics := newWorkspaceMetrics(cfg.Namespace, clnt, activity)
 	reg.MustRegister(metrics)
 
 	return &WorkspaceManagerServer{
@@ -1293,9 +1293,10 @@ func (subs *subscriptions) OnChange(ctx context.Context, status *wsmanapi.Worksp
 
 type workspaceMetrics struct {
 	totalStartsCounterVec *prometheus.CounterVec
+	workspaceActivityVec  *workspaceActivityVec
 }
 
-func newWorkspaceMetrics() *workspaceMetrics {
+func newWorkspaceMetrics(namespace string, k8s client.Client, activity *activity.WorkspaceActivity) *workspaceMetrics {
 	return &workspaceMetrics{
 		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "gitpod",
@@ -1303,6 +1304,7 @@ func newWorkspaceMetrics() *workspaceMetrics {
 			Name:      "workspace_starts_total",
 			Help:      "total number of workspaces started",
 		}, []string{"type", "class"}),
+		workspaceActivityVec: newWorkspaceActivityVec(namespace, k8s, activity),
 	}
 }
 
@@ -1320,9 +1322,81 @@ func (m *workspaceMetrics) recordWorkspaceStart(ws *workspacev1.Workspace) {
 // Describe implements Collector. It will send exactly one Desc to the provided channel.
 func (m *workspaceMetrics) Describe(ch chan<- *prometheus.Desc) {
 	m.totalStartsCounterVec.Describe(ch)
+	m.workspaceActivityVec.Describe(ch)
 }
 
 // Collect implements Collector.
 func (m *workspaceMetrics) Collect(ch chan<- prometheus.Metric) {
 	m.totalStartsCounterVec.Collect(ch)
+	m.workspaceActivityVec.Collect(ch)
+}
+
+type workspaceActivityVec struct {
+	*prometheus.GaugeVec
+	name               string
+	workspaceNamespace string
+	k8s                client.Client
+	activity           *activity.WorkspaceActivity
+}
+
+func newWorkspaceActivityVec(workspaceNamespace string, k8s client.Client, activity *activity.WorkspaceActivity) *workspaceActivityVec {
+	opts := prometheus.GaugeOpts{
+		Namespace: "gitpod",
+		Subsystem: "ws_manager_mk2",
+		Name:      "workspace_activity_total",
+		Help:      "total number of active workspaces",
+	}
+	return &workspaceActivityVec{
+		GaugeVec:           prometheus.NewGaugeVec(opts, []string{"active"}),
+		name:               prometheus.BuildFQName(opts.Namespace, opts.Subsystem, opts.Name),
+		workspaceNamespace: workspaceNamespace,
+		k8s:                k8s,
+		activity:           activity,
+	}
+}
+
+func (wav *workspaceActivityVec) Collect(ch chan<- prometheus.Metric) {
+	active, notActive, err := wav.getWorkspaceActivityCounts()
+	if err != nil {
+		log.WithError(err).Errorf("cannot determine active/inactive counts - %s will be inaccurate", wav.name)
+		return
+	}
+
+	activeGauge, err := wav.GetMetricWithLabelValues("true")
+	if err != nil {
+		log.WithError(err).Error("cannot get active gauge count - this is an internal configuration error and should not happen")
+		return
+	}
+
+	notActiveGauge, err := wav.GetMetricWithLabelValues("false")
+	if err != nil {
+		log.WithError(err).Error("cannot get not-active gauge count - this is an internal configuration error and should not happen")
+		return
+	}
+
+	activeGauge.Set(float64(active))
+	notActiveGauge.Set(float64(notActive))
+	wav.GaugeVec.Collect(ch)
+}
+
+func (wav *workspaceActivityVec) getWorkspaceActivityCounts() (active, notActive int, err error) {
+	var workspaces workspacev1.WorkspaceList
+	if err = wav.k8s.List(context.Background(), &workspaces, client.InNamespace(wav.workspaceNamespace)); err != nil {
+		return 0, 0, err
+	}
+
+	for _, ws := range workspaces.Items {
+		if ws.Spec.Type != workspacev1.WorkspaceTypeRegular {
+			continue
+		}
+
+		hasActivity := wav.activity.GetLastActivity(ws.Name) != nil
+		if hasActivity {
+			active++
+		} else {
+			notActive++
+		}
+	}
+
+	return
 }
