@@ -3493,7 +3493,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
         traceAPIParams(ctx, { userId });
 
-        await this.guardAdminAccess("adminDeleteUser", { id: userId }, Permission.ADMIN_ROLE);
+        await this.guardAdminAccess("adminDeleteUser", { id: userId }, Permission.ADMIN_PERMISSIONS);
 
         try {
             await this.userDeletionService.deleteUser(userId);
@@ -3520,7 +3520,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
         traceAPIParams(ctx, { req });
 
-        await this.guardAdminAccess("adminModifyRoleOrPermission", { req }, Permission.ADMIN_ROLE);
+        await this.guardAdminAccess("adminModifyRoleOrPermission", { req }, Permission.ADMIN_PERMISSIONS);
 
         const target = await this.userDB.findUserById(req.id);
         if (!target) {
