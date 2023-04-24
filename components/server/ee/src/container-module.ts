@@ -59,7 +59,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
 
     // various
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
-    bind(SnapshotService).toSelf().inSingletonScope();
 
     // payment/billing
     bind(StripeService).toSelf().inSingletonScope();
