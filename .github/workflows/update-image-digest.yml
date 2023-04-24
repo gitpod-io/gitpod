@@ -18,6 +18,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set git identity
+        run: |
+          git config --global user.name $GITHUB_USER
+          git config --global user.email $GITHUB_EMAIL
+        env:
+          GITHUB_USER: roboquat
+          GITHUB_EMAIL: roboquat@gitpod.io
+
       - uses: imjasonh/setup-crane@v0.1
 
       - name: Check if an update is available
@@ -65,7 +74,7 @@ jobs:
         uses: peter-evans/create-pull-request@923ad837f191474af6b1721408744feb989a4c27 # v4
         if: ${{ steps.create_pr.outputs.create_pr == 'true' }}
         with:
-          token: ${{ inputs.token }}
+          token: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
           commit-message: update index
           title: "Update images digests"
           body: |
