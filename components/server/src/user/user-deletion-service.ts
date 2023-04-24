@@ -16,7 +16,7 @@ import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Config } from "../config";
 import { StripeService } from "../../ee/src/user/stripe-service";
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { BillingModes } from "../../ee/src/billing/billing-mode";
 
 @injectable()
 export class UserDeletionService {
@@ -33,6 +33,7 @@ export class UserDeletionService {
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(StripeService) protected readonly stripeService: StripeService;
+    @inject(BillingModes) protected readonly billingMode: BillingModes;
 
     /**
      * This method deletes a User logically. The contract here is that after running this method without receiving an
@@ -50,20 +51,10 @@ export class UserDeletionService {
             log.debug({ userId: id }, "Is deleted but markDeleted already set. Continuing.");
         }
 
-        if (this.config.enablePayment) {
-            let subscriptionId;
-            try {
-                // Also cancel any usage-based (Stripe) subscription
-                subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
-                    AttributionId.render({ kind: "user", userId: user.id }),
-                );
-                if (subscriptionId) {
-                    await this.stripeService.cancelSubscription(subscriptionId);
-                }
-            } catch (error) {
-                log.error("Error cancelling Stripe user subscription", error, { subscriptionId });
-                throw new Error(`Failed to cancel stripe subscription. ${error}`);
-            }
+        const billingMode = await this.billingMode.getBillingModeForUser(user, new Date());
+        if (billingMode.mode === "usage-based") {
+            // Also cancel any usage-based (Stripe) subscription
+            await this.stripeService.cancelSubscriptionForUser(user.id);
         }
 
         // Stop all workspaces

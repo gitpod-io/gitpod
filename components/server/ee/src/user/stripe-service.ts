@@ -16,6 +16,7 @@ import {
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 @injectable()
 export class StripeService {
@@ -98,7 +99,22 @@ export class StripeService {
         return priceInformation.humanReadableDescription;
     }
 
-    async cancelSubscription(subscriptionId: string): Promise<void> {
+    async cancelSubscriptionForUser(userId: string) {
+        let subscriptionId;
+        try {
+            subscriptionId = await this.findUncancelledSubscriptionByAttributionId(
+                AttributionId.render({ kind: "user", userId }),
+            );
+            if (subscriptionId) {
+                await this.cancelSubscription(subscriptionId);
+            }
+        } catch (error) {
+            log.error("Error cancelling Stripe user subscription", error, { subscriptionId });
+            throw new Error(`Failed to cancel stripe subscription. ${error}`);
+        }
+    }
+
+    protected async cancelSubscription(subscriptionId: string): Promise<void> {
         await reportStripeOutcome("subscriptions_cancel", () => {
             return this.getStripe().subscriptions.del(subscriptionId, { invoice_now: true });
         });
