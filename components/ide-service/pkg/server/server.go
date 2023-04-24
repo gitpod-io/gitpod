@@ -105,27 +105,36 @@ func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequ
 
 	experimentalIdesEnabled := configCatClient.GetBoolValue(ctx, "experimentalIdes", false, attributes)
 
+	ideOptions := s.ideConfig.IdeOptions.Options
+
 	if experimentalIdesEnabled {
 		// We can return everything
 		return &api.GetConfigResponse{
 			Content: s.parsedIDEConfigContent,
 		}, nil
 	} else {
-		for key, ide := range s.ideConfig.IdeOptions.Options {
-			if ide.Experimental && !experimentalIdesEnabled {
-				delete(s.ideConfig.IdeOptions.Options, key)
+		newIdeOptions := make(map[string]config.IDEOption)
+		for key, ide := range ideOptions {
+			if !ide.Experimental || experimentalIdesEnabled {
+				newIdeOptions[key] = ide
 			}
 		}
 
-		parsedConfig, err := json.Marshal(s.ideConfig)
+		newConfig := config.IDEConfig{
+			IdeOptions: config.IDEOptions{
+				Options: newIdeOptions,
+			},
+		}
+
+		parsedConfig, err := json.Marshal(newConfig)
 		if err != nil {
 			log.WithError(err).Error("cannot marshal ide config")
 			return nil, err
 		}
-		s.parsedIDEConfigContent = string(parsedConfig)
+		parsedIDEConfigContent := string(parsedConfig)
 
 		return &api.GetConfigResponse{
-			Content: s.parsedIDEConfigContent,
+			Content: parsedIDEConfigContent,
 		}, nil
 	}
 }
