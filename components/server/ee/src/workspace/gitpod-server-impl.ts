@@ -5,16 +5,13 @@
  */
 
 import { injectable, inject } from "inversify";
-import { GitpodServerImpl, traceAPIParams, traceWI, censor } from "../../../src/workspace/gitpod-server-impl";
+import { GitpodServerImpl, traceAPIParams, traceWI } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext, TraceContextWithSpan } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import {
     GitpodClient,
-    AdminGetListRequest,
     User,
     Team,
-    AdminGetListResult,
     Permission,
-    AdminBlockUserRequest,
     GetWorkspaceTimeoutResult,
     WorkspaceTimeoutDuration,
     SetWorkspaceTimeoutResult,
