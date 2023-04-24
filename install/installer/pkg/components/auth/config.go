@@ -44,6 +44,7 @@ func GetConfig(ctx *common.RenderContext) ([]corev1.Volume, []corev1.VolumeMount
 			LifetimeSeconds: lifetime,
 			Issuer:          fmt.Sprintf("https://%s", ctx.Config.Domain),
 			Cookie: CookieConfig{
+				// Caution: changing these have security implications for the application. Make sure you understand what you're doing.
 				Name:     cookieNameFromDomain(ctx.Config.Domain),
 				MaxAge:   lifetime,
 				SameSite: "lax",
