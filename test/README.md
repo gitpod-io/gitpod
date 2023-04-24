@@ -90,7 +90,7 @@ cd test
 go test -v ./... \
     -kubeconfig=/home/gitpod/.kube/config \
     -namespace=default \
-    -run TestAdminBlockUser
+    -run TestWorkspaceInstrumentation
 ```
 
 # Tips
