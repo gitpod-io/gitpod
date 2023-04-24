@@ -53,20 +53,21 @@ export class WorkspaceFactory {
         context: WorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
+        if (user.additionalData?.isMigratedToTeamOnlyAttribution && !organizationId) {
+            throw new ResponseError(ErrorCodes.INVALID_VALUE, "Cannot create workspace without organization.");
+        }
+
         if (StartPrebuildContext.is(context)) {
             return this.createForStartPrebuild(ctx, user, organizationId, context, normalizedContextURL);
         } else if (PrebuiltWorkspaceContext.is(context)) {
             return this.createForPrebuiltWorkspace(ctx, user, organizationId, project, context, normalizedContextURL);
-        }
-
-        if (user.additionalData?.isMigratedToTeamOnlyAttribution && !organizationId) {
-            throw new ResponseError(ErrorCodes.INVALID_VALUE, "Cannot create workspace without organization.");
         }
         if (SnapshotContext.is(context)) {
             return this.createForSnapshot(ctx, user, organizationId, context);
         } else if (CommitContext.is(context)) {
             return this.createForCommit(ctx, user, organizationId, project, context, normalizedContextURL);
         }
+
         log.error({ userId: user.id }, "Couldn't create workspace for context", context);
         throw new Error("Couldn't create workspace for context");
     }
