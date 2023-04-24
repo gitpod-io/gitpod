@@ -97,7 +97,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	if err != nil {
 		return fmt.Errorf("failed to setup JWS Keyset: %w", err)
 	}
-	_, err = jws.NewRSA256(keyset)
+	rsa256, err := jws.NewRSA256(keyset)
 	if err != nil {
 		return fmt.Errorf("failed to setup jws.RSA256: %w", err)
 	}
@@ -139,15 +139,15 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	}
 
 	if registerErr := register(srv, &registerDependencies{
-		connPool:          connPool,
-		expClient:         expClient,
-		dbConn:            dbConn,
-		signer:            signer,
-		cipher:            cipherSet,
-		oidcService:       oidcService,
-		idpService:        idpService,
-		sessionCookieName: cfg.Auth.Session.Cookie.Name,
-		jwtVerifier:       sessionJWT,
+		connPool:        connPool,
+		expClient:       expClient,
+		dbConn:          dbConn,
+		signer:          signer,
+		cipher:          cipherSet,
+		oidcService:     oidcService,
+		idpService:      idpService,
+		authCfg:         cfg.Auth,
+		sessionVerifier: rsa256,
 	}); registerErr != nil {
 		return fmt.Errorf("failed to register services: %w", registerErr)
 	}
@@ -168,8 +168,8 @@ type registerDependencies struct {
 	oidcService *oidc.Service
 	idpService  *identityprovider.Service
 
-	jwtVerifier       auth.JWTVerifier
-	sessionCookieName string
+	sessionVerifier jws.SignerVerifier
+	authCfg         config.AuthConfiguration
 }
 
 func register(srv *baseserver.Server, deps *registerDependencies) error {
@@ -192,7 +192,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 			NewLogInterceptor(log.Log),
 			auth.NewServerInterceptor(),
 			origin.NewInterceptor(),
-			auth.NewJWTCookieInterceptor(deps.expClient, deps.sessionCookieName, deps.jwtVerifier),
+			auth.NewJWTCookieInterceptor(deps.expClient, deps.authCfg.Session.Cookie.Name, deps.authCfg.Session.Issuer, deps.sessionVerifier),
 		),
 	}
 
