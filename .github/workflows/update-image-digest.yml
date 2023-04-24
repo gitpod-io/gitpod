@@ -5,6 +5,9 @@ on:
   schedule:
     # At the start of every day
     - cron: "0 0 * * *"
+  pull_request:
+    types: [ opened, edited ]
+  push:
 
 jobs:
   build:
