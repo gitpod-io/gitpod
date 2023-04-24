@@ -7,6 +7,7 @@ package public_api_server
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -64,6 +65,10 @@ func TestConfigMap(t *testing.T) {
 					PublicKeyPath:  "/secrets/auth-pki/signing/tls.crt",
 					PrivateKeyPath: "/secrets/auth-pki/signing/tls.key",
 				},
+			},
+			Session: config.SessionConfig{
+				LifetimeSeconds: int64((24 * 7 * time.Hour).Seconds()),
+				Issuer:          "https://test.domain.everything.awesome.is",
 			},
 		},
 		Server: &baseserver.Configuration{

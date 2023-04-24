@@ -14,11 +14,16 @@ const algorithm: jsonwebtoken.Algorithm = "RS512";
 export class AuthJWT {
     @inject(Config) protected config: Config;
 
-    async sign(subject: string, payload: object | Buffer, expiresIn: string = `${24 * 7}h`): Promise<string> {
+    async sign(
+        subject: string,
+        payload: object | Buffer,
+        expirySeconds: number = this.config.auth.session.lifetimeSeconds,
+        issuer: string = this.config.auth.session.issuer,
+    ): Promise<string> {
         const opts: jsonwebtoken.SignOptions = {
             algorithm,
-            expiresIn,
-            issuer: this.config.hostUrl.toStringWoRootSlash(),
+            expiresIn: expirySeconds,
+            issuer,
             subject,
             keyid: this.config.auth.pki.signing.id,
         };

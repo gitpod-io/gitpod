@@ -59,7 +59,7 @@ func keypair(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}, nil
 }
 
-func GetPKI() ([]corev1.Volume, []corev1.VolumeMount, PKIConfig) {
+func getPKI() ([]corev1.Volume, []corev1.VolumeMount, PKIConfig) {
 	dir := "/secrets/auth-pki"
 	signingDir := path.Join(dir, "signing")
 

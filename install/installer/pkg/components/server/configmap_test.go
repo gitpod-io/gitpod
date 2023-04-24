@@ -7,6 +7,7 @@ package server
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +32,7 @@ func TestConfigMap(t *testing.T) {
 		JWTSecret                         string
 		SessionSecret                     string
 		GitHubApp                         experimental.GithubApp
-		Auth                              AuthConfig
+		Auth                              auth.Config
 	}
 
 	expectation := Expectation{
@@ -54,7 +55,7 @@ func TestConfigMap(t *testing.T) {
 			WebhookSecret:   "some-webhook-secret",
 			CertSecretName:  "some-cert-secret-name",
 		},
-		Auth: AuthConfig{
+		Auth: auth.Config{
 			PKI: auth.PKIConfig{
 				Signing: auth.KeyPair{
 					ID:             "0001",
@@ -62,10 +63,15 @@ func TestConfigMap(t *testing.T) {
 					PublicKeyPath:  "/secrets/auth-pki/signing/tls.crt",
 				},
 			},
+			Session: auth.SessionConfig{
+				LifetimeSeconds: int64((7 * 24 * time.Hour).Seconds()),
+				Issuer:          "https://awesome.domain",
+			},
 		},
 	}
 
 	ctx, err := common.NewRenderContext(config.Config{
+		Domain: "awesome.domain",
 		Workspace: config.Workspace{
 			WorkspaceImage: expectation.WorkspaceImage,
 		},

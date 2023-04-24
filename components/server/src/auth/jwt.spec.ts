@@ -9,7 +9,6 @@ import { AuthJWT, sign, verify } from "./jwt";
 import { Container } from "inversify";
 import { Config } from "../config";
 import * as crypto from "crypto";
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import * as chai from "chai";
 
 const expect = chai.expect;
@@ -23,11 +22,14 @@ class TestAuthJWT {
     private validatingKeyPair2 = crypto.generateKeyPairSync("rsa", { modulusLength: 2048 });
 
     private config: Config = {
-        hostUrl: new GitpodHostUrl("https://mp-server-d7650ec945.preview.gitpod-dev.com"),
         auth: {
             pki: {
                 signing: toKeyPair("0001", this.signingKeyPair),
                 validating: [toKeyPair("0002", this.validatingKeyPair1), toKeyPair("0003", this.validatingKeyPair2)],
+            },
+            session: {
+                issuer: "https://mp-server-d7650ec945.preview.gitpod-dev.com",
+                lifetimeSeconds: 7 * 24 * 60 * 60,
             },
         },
     } as Config;
@@ -76,7 +78,7 @@ class TestAuthJWT {
         const encoded = await sign({}, keypair.privateKey, {
             algorithm: "RS512",
             expiresIn: "1d",
-            issuer: this.config.hostUrl.toStringWoRootSlash(),
+            issuer: this.config.auth.session.issuer,
             keyid: keypair.id,
             subject,
         });

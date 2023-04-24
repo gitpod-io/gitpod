@@ -49,7 +49,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	_, _, databaseSecretMountPath := common.DatabaseEnvSecret(ctx.Config)
 
-	_, _, authPKI := auth.GetPKI()
+	_, _, authCfg := auth.GetConfig(ctx)
 
 	cfg := config.Configuration{
 		PublicURL:                         fmt.Sprintf("https://api.%s", ctx.Config.Domain),
@@ -66,10 +66,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Auth: config.AuthConfiguration{
 			PKI: config.AuthPKIConfiguration{
 				Signing: config.KeyPair{
-					ID:             authPKI.Signing.ID,
-					PublicKeyPath:  authPKI.Signing.PublicKeyPath,
-					PrivateKeyPath: authPKI.Signing.PrivateKeyPath,
+					ID:             authCfg.PKI.Signing.ID,
+					PublicKeyPath:  authCfg.PKI.Signing.PublicKeyPath,
+					PrivateKeyPath: authCfg.PKI.Signing.PrivateKeyPath,
 				},
+			},
+			Session: config.SessionConfig{
+				LifetimeSeconds: authCfg.Session.LifetimeSeconds,
+				Issuer:          authCfg.Session.Issuer,
 			},
 		},
 		Server: &baseserver.Configuration{
