@@ -128,3 +128,18 @@
 /CHANGELOG.md
 /components/ide/jetbrains/backend-plugin/gradle-latest.properties
 /components/ide/jetbrains/gateway-plugin/gradle-latest.properties
+
+#
+# Add so that teams assert we're not breaking each other's integration tests
+/test/pkg/agent @gitpod-io/engineering-workspace
+/test/pkg/integration @gitpod-io/engineering-ide @gitpod-io/engineering-workspace
+/test/pkg/report @gitpod-io/engineering-workspace
+/test/tests/workspace @gitpod-io/engineering-workspace
+/test/tests/smoke-test @gitpod-io/engineering-ide @gitpod-io/engineering-workspace
+/test/tests/ide @gitpod-io/engineering-ide
+/test/tests/components/content-service @gitpod-io/engineering-workspace
+/test/tests/components/database @gitpod-io/engineering-webapp
+/test/tests/components/image-builder @gitpod-io/engineering-workspace
+/test/tests/components/server @gitpod-io/engineering-webapp
+/test/tests/components/ws-daemon @gitpod-io/engineering-workspace
+/test/tests/components/ws-manager @gitpod-io/engineering-workspace
