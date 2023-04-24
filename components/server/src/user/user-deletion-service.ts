@@ -16,7 +16,6 @@ import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Config } from "../config";
 import { StripeService } from "../../ee/src/user/stripe-service";
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingModes } from "../../ee/src/billing/billing-mode";
 
 @injectable()
@@ -54,19 +53,8 @@ export class UserDeletionService {
 
         const billingMode = await this.billingMode.getBillingModeForUser(user, new Date());
         if (billingMode.mode === "usage-based") {
-            let subscriptionId;
-            try {
-                // Also cancel any usage-based (Stripe) subscription
-                subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
-                    AttributionId.render({ kind: "user", userId: user.id }),
-                );
-                if (subscriptionId) {
-                    await this.stripeService.cancelSubscription(subscriptionId);
-                }
-            } catch (error) {
-                log.error("Error cancelling Stripe user subscription", error, { subscriptionId });
-                throw new Error(`Failed to cancel stripe subscription. ${error}`);
-            }
+            // Also cancel any usage-based (Stripe) subscription
+            await this.stripeService.cancelSubscriptionForUser(user.id);
         }
 
         // Stop all workspaces
