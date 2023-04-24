@@ -17,6 +17,7 @@ import (
 type Key struct {
 	ID      string
 	Private *rsa.PrivateKey
+	Raw     []byte
 	// We don't need PublicKey because we can derive the public key from the private key
 }
 
@@ -51,7 +52,7 @@ func NewKeySetFromAuthPKI(pki config.AuthPKIConfiguration) (KeySet, error) {
 }
 
 func readKeyPair(keypair config.KeyPair) (Key, error) {
-	pk, err := readPrivateKeyFromFile(keypair.PrivateKeyPath)
+	pk, raw, err := readPrivateKeyFromFile(keypair.PrivateKeyPath)
 	if err != nil {
 		return Key{}, err
 	}
@@ -59,21 +60,22 @@ func readKeyPair(keypair config.KeyPair) (Key, error) {
 	return Key{
 		ID:      keypair.ID,
 		Private: pk,
+		Raw:     raw,
 	}, nil
 }
 
-func readPrivateKeyFromFile(filepath string) (*rsa.PrivateKey, error) {
+func readPrivateKeyFromFile(filepath string) (*rsa.PrivateKey, []byte, error) {
 	bytes, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read private key from %s: %w", filepath, err)
+		return nil, nil, fmt.Errorf("failed to read private key from %s: %w", filepath, err)
 	}
 
 	block, _ := pem.Decode(bytes)
 	parseResult, _ := x509.ParsePKCS8PrivateKey(block.Bytes)
 	key, ok := parseResult.(*rsa.PrivateKey)
 	if !ok {
-		return nil, fmt.Errorf("file %s does not contain RSA Private Key", filepath)
+		return nil, nil, fmt.Errorf("file %s does not contain RSA Private Key", filepath)
 	}
 
-	return key, nil
+	return key, bytes, nil
 }

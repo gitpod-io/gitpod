@@ -229,8 +229,7 @@ func setupOIDCServiceForTests(t *testing.T) (*Service, *gorm.DB) {
 	sessionServerAddress := newFakeSessionServer(t)
 
 	keyset := jwstest.GenerateKeySet(t)
-	signerVerifier, err := jws.NewRSA256(keyset)
-	require.NoError(t, err)
+	signerVerifier := jws.NewHS256FromKeySet(keyset)
 
 	service := NewService(sessionServerAddress, dbConn, cipher, signerVerifier, 5*time.Minute)
 	service.skipVerifyIdToken = true

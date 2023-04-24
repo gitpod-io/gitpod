@@ -19,7 +19,7 @@ type StateClaims struct {
 }
 
 func NewStateJWT(clientConfigID string, returnURL string, issuedAt, expiry time.Time) *jwt.Token {
-	return jwt.NewWithClaims(jwt.SigningMethodRS256, &StateClaims{
+	return jwt.NewWithClaims(jwt.SigningMethodHS256, &StateClaims{
 		ClientConfigID: clientConfigID,
 		ReturnToURL:    returnURL,
 		RegisteredClaims: jwt.RegisteredClaims{

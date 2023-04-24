@@ -97,10 +97,11 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	if err != nil {
 		return fmt.Errorf("failed to setup JWS Keyset: %w", err)
 	}
-	rsa256, err := jws.NewRSA256(keyset)
+	_, err = jws.NewRSA256(keyset)
 	if err != nil {
 		return fmt.Errorf("failed to setup jws.RSA256: %w", err)
 	}
+	hs256 := jws.NewHS256FromKeySet(keyset)
 
 	var stripeWebhookHandler http.Handler = webhooks.NewNoopWebhookHandler()
 	if cfg.StripeWebhookSigningSecretPath != "" {
@@ -127,7 +128,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, rsa256, 5*time.Minute)
+	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, hs256, 5*time.Minute)
 
 	if redisClient == nil {
 		return fmt.Errorf("no Redis configiured")

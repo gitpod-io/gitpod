@@ -20,6 +20,7 @@ func TestNewStateJWT(t *testing.T) {
 		expiry         = issuedAt.Add(5 * time.Minute)
 	)
 	token := NewStateJWT(clientConfigID, returnURL, issuedAt, expiry)
+	require.Equal(t, jwt.SigningMethodHS256, token.Method)
 	require.Equal(t, &StateClaims{
 		ClientConfigID: clientConfigID,
 		ReturnToURL:    returnURL,
