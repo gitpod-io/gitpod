@@ -416,7 +416,7 @@ func (c *ComponentAPI) GetUserId(user string) (userId string, err error) {
 	if user == "" {
 		row = db.QueryRow(`SELECT id FROM d_b_user WHERE NOT id = "` + gitpodBuiltinUserID + `" AND blocked = FALSE AND markedDeleted = FALSE`)
 	} else {
-		row = db.QueryRow("SELECT id FROM d_b_user WHERE name = ?", user)
+		row = db.QueryRow("SELECT id FROM d_b_user WHERE name = ? AND blocked != 1 and markedDeleted != 1", user)
 	}
 
 	var id string
