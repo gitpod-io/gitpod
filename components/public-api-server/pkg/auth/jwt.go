@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/components/public-api/go/config"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -174,7 +175,7 @@ func readPrivateKeyFromFile(filepath string) (*rsa.PrivateKey, error) {
 	return key, nil
 }
 
-func NewJWTCookieInterceptor(exp experiments.Client, cookieName string, verifier JWTVerifier) connect.UnaryInterceptorFunc {
+func NewJWTCookieInterceptor(exp experiments.Client, cookieName string, expectedIssuer string, verifier jws.Verifier) connect.UnaryInterceptorFunc {
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
@@ -205,7 +206,7 @@ func NewJWTCookieInterceptor(exp experiments.Client, cookieName string, verifier
 				return next(ctx, req)
 			}
 
-			claims, _, err := verifier.Verify(jwtSessionCookie.Value)
+			claims, err := VerifySessionJWT(jwtSessionCookie.Value, verifier, expectedIssuer)
 			if err != nil {
 				log.Extract(ctx).WithError(err).Warnf("Failed to verify JWT session token")
 				return next(ctx, req)
