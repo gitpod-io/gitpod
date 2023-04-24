@@ -31,12 +31,14 @@ import (
 )
 
 type IDEServiceServer struct {
-	config                 *config.ServiceConfiguration
-	originIDEConfig        []byte
-	parsedIDEConfigContent string
-	ideConfig              *config.IDEConfig
-	ideConfigFileName      string
-	experimentsClient      experiments.Client
+	config                   *config.ServiceConfiguration
+	originIDEConfig          []byte
+	parsedIDEConfigContent   string
+	parsedIDENonExperimental string
+	ideConfig                *config.IDEConfig
+	nonExperimentalIDEConfig *config.IDEConfig
+	ideConfigFileName        string
+	experimentsClient        experiments.Client
 
 	api.UnimplementedIDEServiceServer
 }
@@ -105,36 +107,13 @@ func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequ
 
 	experimentalIdesEnabled := configCatClient.GetBoolValue(ctx, "experimentalIdes", false, attributes)
 
-	ideOptions := s.ideConfig.IdeOptions.Options
-
 	if experimentalIdesEnabled {
-		// We can return everything
 		return &api.GetConfigResponse{
 			Content: s.parsedIDEConfigContent,
 		}, nil
 	} else {
-		newIdeOptions := make(map[string]config.IDEOption)
-		for key, ide := range ideOptions {
-			if !ide.Experimental || experimentalIdesEnabled {
-				newIdeOptions[key] = ide
-			}
-		}
-
-		newConfig := config.IDEConfig{
-			IdeOptions: config.IDEOptions{
-				Options: newIdeOptions,
-			},
-		}
-
-		parsedConfig, err := json.Marshal(newConfig)
-		if err != nil {
-			log.WithError(err).Error("cannot marshal ide config")
-			return nil, err
-		}
-		parsedIDEConfigContent := string(parsedConfig)
-
 		return &api.GetConfigResponse{
-			Content: parsedIDEConfigContent,
+			Content: s.parsedIDENonExperimental,
 		}, nil
 	}
 }
@@ -145,20 +124,47 @@ func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
 		log.WithError(err).Warn("cannot read ide config file")
 		return
 	}
-	if config, err := ParseConfig(ctx, b); err != nil {
+	if ideConfig, err := ParseConfig(ctx, b); err != nil {
 		if !isInit {
 			log.WithError(err).Fatal("cannot parse ide config")
 		}
 		log.WithError(err).Error("cannot parse ide config")
 		return
 	} else {
-		parsedConfig, err := json.Marshal(config)
+		parsedConfig, err := json.Marshal(ideConfig)
 		if err != nil {
 			log.WithError(err).Error("cannot marshal ide config")
 			return
 		}
+
+		// Precompute the config without experimental IDEs
+		ideOptions := ideConfig.IdeOptions.Options
+		nonExperimentalIdeOptions := make(map[string]config.IDEOption)
+		for key, ide := range ideOptions {
+			if !ide.Experimental {
+				nonExperimentalIdeOptions[key] = ide
+			}
+		}
+		parsedNonExperimentalConfig, err := json.Marshal(nonExperimentalIdeOptions)
+		if err != nil {
+			log.WithError(err).Error("cannot marshal non-experimental ide config")
+			return
+		}
+
 		s.parsedIDEConfigContent = string(parsedConfig)
-		s.ideConfig = config
+		s.ideConfig = ideConfig
+
+		s.nonExperimentalIDEConfig = &config.IDEConfig{
+			SupervisorImage: ideConfig.SupervisorImage,
+			IdeOptions: config.IDEOptions{
+				Options:           nonExperimentalIdeOptions,
+				DefaultIde:        ideConfig.IdeOptions.DefaultIde,
+				DefaultDesktopIde: ideConfig.IdeOptions.DefaultDesktopIde,
+				Clients:           ideConfig.IdeOptions.Clients,
+			},
+		}
+		s.parsedIDENonExperimental = string(parsedNonExperimentalConfig)
+
 		s.originIDEConfig = b
 
 		log.Info("ide config updated")
