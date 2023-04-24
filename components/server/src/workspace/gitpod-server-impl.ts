@@ -117,6 +117,7 @@ import {
     PortSpec,
     PortVisibility as ProtoPortVisibility,
     StopWorkspacePolicy,
+    TakeSnapshotRequest,
     UpdateSSHKeyRequest,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as crypto from "crypto";
@@ -191,6 +192,7 @@ import { RegionService } from "./region-service";
 import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { EnvVarService } from "./env-var-service";
 import { LinkedInService } from "../linkedin-service";
+import { SnapshotService } from "./snapshot-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -219,6 +221,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
 
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
+    @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
     @inject(WorkspaceManagerClientProvider)
     protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(ImageBuilderClientProvider) protected imagebuilderClientProvider: ImageBuilderClientProvider;
@@ -1870,22 +1873,77 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async takeSnapshot(ctx: TraceContext, options: GitpodServer.TakeSnapshotOptions): Promise<string> {
-        throw new ResponseError(
-            ErrorCodes.EE_FEATURE,
-            `Snapshot support is implemented in Gitpod's Enterprise Edition`,
-        );
+        traceAPIParams(ctx, { options });
+        const { workspaceId, dontWait } = options;
+        traceWI(ctx, { workspaceId });
+
+        const user = this.checkAndBlockUser("takeSnapshot");
+
+        const workspace = await this.guardSnaphotAccess(ctx, user.id, workspaceId);
+
+        const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
+        if (!instance) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
+        }
+        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
+
+        const client = await this.workspaceManagerClientProvider.get(instance.region);
+        const request = new TakeSnapshotRequest();
+        request.setId(instance.id);
+        request.setReturnImmediately(true);
+
+        // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
+        const resp = await client.takeSnapshot(ctx, request);
+
+        const snapshot = await this.snapshotService.createSnapshot(options, resp.getUrl());
+
+        // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
+        const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
+        if (!dontWait) {
+            // this mimicks the old behavior: wait until the snapshot is through
+            await this.internalDoWaitForWorkspace(waitOpts);
+        } else {
+            // start driving the snapshot immediately
+            this.internalDoWaitForWorkspace(waitOpts).catch((err) =>
+                log.error({ userId: user.id, workspaceId: workspaceId }, "internalDoWaitForWorkspace", err),
+            );
+        }
+
+        return snapshot.id;
     }
 
+    /**
+     * @param snapshotId
+     * @throws ResponseError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
+     */
     async waitForSnapshot(ctx: TraceContext, snapshotId: string): Promise<void> {
-        throw new ResponseError(
-            ErrorCodes.EE_FEATURE,
-            `Snapshot support is implemented in Gitpod's Enterprise Edition`,
-        );
+        traceAPIParams(ctx, { snapshotId });
+
+        const user = this.checkAndBlockUser("waitForSnapshot");
+
+        const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(snapshotId);
+        if (!snapshot) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`);
+        }
+        const snapshotWorkspace = await this.guardSnaphotAccess(ctx, user.id, snapshot.originalWorkspaceId);
+        await this.internalDoWaitForWorkspace({ workspaceOwner: snapshotWorkspace.ownerId, snapshot });
     }
 
     async getSnapshots(ctx: TraceContext, workspaceId: string): Promise<string[]> {
-        // this is an EE feature. Throwing an exception here would break the dashboard though.
-        return [];
+        traceAPIParams(ctx, { workspaceId });
+        traceWI(ctx, { workspaceId });
+
+        const user = this.checkAndBlockUser("getSnapshots");
+
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        if (!workspace || workspace.ownerId !== user.id) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
+        }
+
+        const snapshots = await this.workspaceDb.trace(ctx).findSnapshotsByWorkspaceId(workspaceId);
+        await Promise.all(snapshots.map((s) => this.guardAccess({ kind: "snapshot", subject: s, workspace }, "get")));
+
+        return snapshots.map((s) => s.id);
     }
 
     async getWorkspaceEnvVars(ctx: TraceContext, workspaceId: string): Promise<EnvVarWithValue[]> {
@@ -2126,6 +2184,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return [];
         }
         return await this.projectsService.getProjectEnvironmentVariables(projectId);
+    }
+
+    protected async guardSnaphotAccess(ctx: TraceContext, userId: string, workspaceId: string): Promise<Workspace> {
+        traceAPIParams(ctx, { userId, workspaceId });
+
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        if (!workspace || workspace.ownerId !== userId) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
+        }
+        await this.guardAccess({ kind: "snapshot", subject: undefined, workspace }, "create");
+
+        return workspace;
     }
 
     protected async guardTeamOperation(

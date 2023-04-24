@@ -29,7 +29,6 @@ import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-
 import { GitHubAppSupport } from "./github/github-app-support";
 import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { Config } from "../../src/config";
-import { SnapshotService } from "./workspace/snapshot-service";
 import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { EntitlementService } from "../../src/billing/entitlement-service";
@@ -64,7 +63,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
     rebind(BlockedUserFilter).toService(EMailDomainService);
-    bind(SnapshotService).toSelf().inSingletonScope();
 
     // payment/billing
     bind(StripeService).toSelf().inSingletonScope();

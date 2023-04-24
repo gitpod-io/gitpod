@@ -111,6 +111,7 @@ import { APITeamsService } from "./api/teams";
 import { API } from "./api/server";
 import { LinkedInService } from "./linkedin-service";
 import { AuthJWT } from "./auth/jwt";
+import { SnapshotService } from "./workspace/snapshot-service";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -136,6 +137,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ConfigProvider).toSelf().inSingletonScope();
     bind(ConfigurationService).toSelf().inSingletonScope();
 
+    bind(SnapshotService).toSelf().inSingletonScope();
     bind(WorkspaceFactory).toSelf().inSingletonScope();
     bind(WorkspaceDeletionService).toSelf().inSingletonScope();
     bind(WorkspaceStarter).toSelf().inSingletonScope();

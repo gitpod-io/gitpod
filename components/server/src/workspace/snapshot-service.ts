@@ -8,10 +8,10 @@ import { inject, injectable } from "inversify";
 import { v4 as uuidv4 } from "uuid";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Disposable, GitpodServer, Snapshot } from "@gitpod/gitpod-protocol";
-import { StorageClient } from "../../../src/storage/storage-client";
-import { ConsensusLeaderQorum } from "../../../src/consensus/consensus-leader-quorum";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { StorageClient } from "../storage/storage-client";
+import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
 
 const SNAPSHOT_TIMEOUT_SECONDS = 60 * 30;
 const SNAPSHOT_POLL_INTERVAL_SECONDS = 5;
