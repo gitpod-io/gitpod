@@ -12,15 +12,11 @@ import {
     User,
     Team,
     Permission,
-    GetWorkspaceTimeoutResult,
-    WorkspaceTimeoutDuration,
-    SetWorkspaceTimeoutResult,
     WorkspaceContext,
     WorkspaceCreationResult,
     PrebuiltWorkspaceContext,
     CommitContext,
     PrebuiltWorkspace,
-    WorkspaceInstance,
     ProviderRepository,
     PrebuildWithStatus,
     CreateProjectParams,
@@ -28,17 +24,11 @@ import {
     StartPrebuildResult,
     ClientHeaderFields,
     FindPrebuildsParams,
-    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     PrebuildEvent,
     OpenPrebuildContext,
 } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
-import {
-    AdmissionLevel,
-    ControlAdmissionRequest,
-    DescribeWorkspaceRequest,
-    SetTimeoutRequest,
-} from "@gitpod/ws-manager/lib";
+import { AdmissionLevel, ControlAdmissionRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
@@ -61,7 +51,7 @@ import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/webs
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { URL } from "url";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
+import { EntitlementService } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { BillingModes } from "../billing/billing-mode";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
@@ -152,145 +142,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         }
         allProjects.push(...(await this.projectsService.getUserProjects(this.user.id)).map((p) => p.id));
         return allProjects;
-    }
-
-    protected async mayStartWorkspace(
-        ctx: TraceContext,
-        user: User,
-        organizationId: string | undefined,
-        runningInstances: Promise<WorkspaceInstance[]>,
-    ): Promise<void> {
-        await super.mayStartWorkspace(ctx, user, organizationId, runningInstances);
-
-        let result: MayStartWorkspaceResult = {};
-        try {
-            result = await this.entitlementService.mayStartWorkspace(
-                user,
-                organizationId,
-                new Date(),
-                runningInstances,
-            );
-            TraceContext.addNestedTags(ctx, { mayStartWorkspace: { result } });
-        } catch (err) {
-            log.error({ userId: user.id }, "EntitlementSerivce.mayStartWorkspace error", err);
-            TraceContext.setError(ctx, err);
-            return; // we don't want to block workspace starts because of internal errors
-        }
-        if (!!result.needsVerification) {
-            throw new ResponseError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
-        }
-        if (!!result.usageLimitReachedOnCostCenter) {
-            throw new ResponseError(ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED, "Increase usage limit and try again.", {
-                attributionId: result.usageLimitReachedOnCostCenter,
-            });
-        }
-        if (!!result.hitParallelWorkspaceLimit) {
-            throw new ResponseError(
-                ErrorCodes.TOO_MANY_RUNNING_WORKSPACES,
-                `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`,
-            );
-        }
-    }
-
-    goDurationToHumanReadable(goDuration: string): string {
-        const [, value, unit] = goDuration.match(/^(\d+)([mh])$/)!;
-        let duration = parseInt(value);
-
-        switch (unit) {
-            case "m":
-                duration *= 60;
-                break;
-            case "h":
-                duration *= 60 * 60;
-                break;
-        }
-
-        const hours = Math.floor(duration / 3600);
-        duration %= 3600;
-        const minutes = Math.floor(duration / 60);
-        duration %= 60;
-
-        let result = "";
-        if (hours) {
-            result += `${hours} hour${hours === 1 ? "" : "s"}`;
-            if (minutes) {
-                result += " and ";
-            }
-        }
-        if (minutes) {
-            result += `${minutes} minute${minutes === 1 ? "" : "s"}`;
-        }
-
-        return result;
-    }
-
-    public async setWorkspaceTimeout(
-        ctx: TraceContext,
-        workspaceId: string,
-        duration: WorkspaceTimeoutDuration,
-    ): Promise<SetWorkspaceTimeoutResult> {
-        traceAPIParams(ctx, { workspaceId, duration });
-        traceWI(ctx, { workspaceId });
-
-        const user = this.checkUser("setWorkspaceTimeout");
-
-        if (!(await this.entitlementService.maySetTimeout(user, new Date()))) {
-            throw new ResponseError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
-        }
-
-        let validatedDuration;
-        try {
-            validatedDuration = WorkspaceTimeoutDuration.validate(duration);
-        } catch (err) {
-            throw new ResponseError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
-        }
-
-        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
-        const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
-        const runningInstance = runningInstances.find((i) => i.workspaceId === workspaceId);
-        if (!runningInstance) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
-        }
-        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
-
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-
-        const req = new SetTimeoutRequest();
-        req.setId(runningInstance.id);
-        req.setDuration(validatedDuration);
-        await client.setTimeout(ctx, req);
-
-        return {
-            resetTimeoutOnWorkspaces: [workspace.id],
-            humanReadableDuration: this.goDurationToHumanReadable(validatedDuration),
-        };
-    }
-
-    public async getWorkspaceTimeout(ctx: TraceContext, workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
-        traceAPIParams(ctx, { workspaceId });
-        traceWI(ctx, { workspaceId });
-
-        const user = this.checkUser("getWorkspaceTimeout");
-
-        const canChange = await this.entitlementService.maySetTimeout(user, new Date());
-
-        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace(ctx));
-        const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
-        if (!runningInstance) {
-            log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
-            const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-            return { duration, canChange, humanReadableDuration: this.goDurationToHumanReadable(duration) };
-        }
-        await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
-
-        const req = new DescribeWorkspaceRequest();
-        req.setId(runningInstance.id);
-
-        const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-        const desc = await client.describeWorkspace(ctx, req);
-        const duration = desc.getStatus()!.getSpec()!.getTimeout();
-
-        return { duration, canChange, humanReadableDuration: this.goDurationToHumanReadable(duration) };
     }
 
     public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {
