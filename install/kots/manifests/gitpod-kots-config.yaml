@@ -24,7 +24,6 @@ data:
 
   # Secret names
   HTTP_PROXY_NAME: '{{repl if (ConfigOptionEquals "enable_proxy_settings" "1" ) }}http-proxy-settings{{repl end }}'
-  LICENSE_NAME: gitpod-license
   SSH_GATEWAY_HOST_KEY_NAME: ssh-gateway-host-key
 
   # Database settings

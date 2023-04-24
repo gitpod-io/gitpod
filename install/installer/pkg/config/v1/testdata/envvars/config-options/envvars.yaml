@@ -6,7 +6,6 @@ envvars:
   DOMAIN: test.gitpod.io
   DISTRIBUTION: distribution-name
   HTTP_PROXY_NAME: http-proxy-settings
-  LICENSE_NAME: gitpod-license
   LOCAL_REGISTRY_ADDRESS: mylocalregistry.com
   IMAGE_PULL_SECRET_NAME: image-pull-secret
   OPEN_VSX_URL: https://my-openvsx.com

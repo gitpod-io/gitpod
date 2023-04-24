@@ -12,9 +12,6 @@ domain: test.gitpod.io
 httpProxy:
   kind: secret
   name: http-proxy-settings
-license:
-  kind: secret
-  name: gitpod-license
 openVSX:
   url: https://my-openvsx.com
 sshGatewayHostKey:
