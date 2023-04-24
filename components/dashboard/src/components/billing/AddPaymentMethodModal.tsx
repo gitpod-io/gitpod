@@ -95,7 +95,7 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
     return (
         <form onSubmit={handleSubmit}>
             <ModalBody>
-                <Alert type="info" className="mb-4">
+                <Alert type="message" className="mb-4">
                     This card will be used for future charges. We'll be placing a 1.00 hold on it that we'll immediately
                     release in order to verify your payment method.
                 </Alert>
