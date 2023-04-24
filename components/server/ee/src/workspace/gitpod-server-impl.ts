@@ -726,6 +726,15 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         return result;
     }
 
+    async adminGetWorkspaceInstances(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstance[]> {
+        traceAPIParams(ctx, { workspaceId });
+
+        await this.guardAdminAccess("adminGetWorkspaceInstances", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
+
+        const result = await this.workspaceDb.trace(ctx).findInstances(workspaceId);
+        return result || [];
+    }
+
     async adminForceStopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
         traceAPIParams(ctx, { workspaceId });
 

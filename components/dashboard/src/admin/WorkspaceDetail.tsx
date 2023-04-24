@@ -4,9 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User, WorkspaceAndInstance, ContextURL } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceAndInstance, ContextURL, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import dayjs from "dayjs";
+import duration from "dayjs/plugin/duration";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heading2, Subheading } from "../components/typography/headings";
@@ -17,11 +18,13 @@ import Property from "./Property";
 
 export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance }) {
     const [workspace, setWorkspace] = useState(props.workspace);
+    const [workspaceInstances, setWorkspaceInstances] = useState<WorkspaceInstance[]>([]);
     const [activity, setActivity] = useState(false);
     const [user, setUser] = useState<User>();
     useEffect(() => {
         getGitpodService().server.adminGetUser(props.workspace.ownerId).then(setUser);
-    }, [props.workspace]);
+        getGitpodService().server.adminGetWorkspaceInstances(props.workspace.workspaceId).then(setWorkspaceInstances);
+    }, [props.workspace, workspace.workspaceId]);
 
     const stopWorkspace = async () => {
         try {
@@ -37,8 +40,12 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
     const reload = async () => {
         try {
             setActivity(true);
-            const ws = await getGitpodService().server.adminGetWorkspace(workspace.workspaceId);
+            const [ws, workspaceInstances] = await Promise.all([
+                await getGitpodService().server.adminGetWorkspace(workspace.workspaceId),
+                await getGitpodService().server.adminGetWorkspaceInstances(workspace.workspaceId),
+            ]);
             setWorkspace(ws);
+            setWorkspaceInstances(workspaceInstances);
         } finally {
             setActivity(false);
         }
@@ -83,7 +90,14 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                             <Property name="Created">
                                 {dayjs(workspace.workspaceCreationTime).format("MMM D, YYYY")}
                             </Property>
-                            <Property name="Last Start">{dayjs(workspace.instanceCreationTime).fromNow()}</Property>
+                            <Property name="User">
+                                <Link
+                                    className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
+                                    to={"/admin/users/" + props.workspace.ownerId}
+                                >
+                                    {user?.name || props.workspace.ownerId}
+                                </Link>
+                            </Property>
                             <Property name="Context">
                                 <a
                                     className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
@@ -94,14 +108,6 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                             </Property>
                         </div>
                         <div className="flex w-full mt-6">
-                            <Property name="User">
-                                <Link
-                                    className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
-                                    to={"/admin/users/" + props.workspace.ownerId}
-                                >
-                                    {user?.name || props.workspace.ownerId}
-                                </Link>
-                            </Property>
                             <Property name="Sharing">{workspace.shareable ? "Enabled" : "Disabled"}</Property>
                             <Property
                                 name="Soft Deleted"
@@ -125,17 +131,17 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                                     ? `'${workspace.softDeleted}' ${dayjs(workspace.softDeletedTime).fromNow()}`
                                     : "No"}
                             </Property>
+                            <Property name="Pinned">{workspace.pinned ? "Yes" : "No"}</Property>
                         </div>
                         <div className="flex w-full mt-12">
-                            <Property name="Latest Instance ID">
-                                <div className="overflow-scroll">{workspace.instanceId}</div>
+                            <Property name="Organization">
+                                <Link
+                                    className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
+                                    to={"/admin/orgs/" + workspace.organizationId}
+                                >
+                                    {workspace.organizationId}
+                                </Link>
                             </Property>
-                            <Property name="Region">{workspace.region}</Property>
-                            <Property name="Stopped">
-                                {workspace.stoppedTime ? dayjs(workspace.stoppedTime).fromNow() : "---"}
-                            </Property>
-                        </div>
-                        <div className="flex w-full mt-12">
                             <Property name="Node">
                                 <div className="overflow-scroll">{workspace.status.nodeName ?? "not assigned"}</div>
                             </Property>
@@ -144,6 +150,49 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                             </Property>
                         </div>
                     </div>
+                </div>
+                <div className="flex mt-20">
+                    <div className="flex-1">
+                        <div className="flex">
+                            <Heading2>Workspace Instances</Heading2>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex flex-col space-y-2">
+                    <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-b border-gray-200 dark:border-gray-800 mb-2">
+                        <span className="my-auto ml-3"></span>
+                        <div className="w-4/12">InstanceId</div>
+                        <div className="w-2/12">Started</div>
+                        <div className="w-2/12">Duration</div>
+                        <div className="w-2/12">Attributed</div>
+                    </div>
+                    {workspaceInstances
+                        .sort((a, b) => a.creationTime.localeCompare(b.creationTime) * -1)
+                        .map((wsi) => (
+                            <div className="px-6 py-3 flex justify-between text-sm text-gray-400 mb-2">
+                                <span className="my-1 ml-3">
+                                    <WorkspaceStatusIndicator instance={wsi} />
+                                </span>
+                                <div className="w-4/12">{wsi.id}</div>
+                                <div className="w-2/12">{dayjs(wsi.startedTime).fromNow()}</div>
+                                <div className="w-2/12">
+                                    {dayjs.duration(dayjs(wsi.stoppingTime).diff(wsi.startedTime)).humanize()}
+                                </div>
+                                <div className="w-2/12">
+                                    {wsi.usageAttributionId && wsi.usageAttributionId?.startsWith("team:") ? (
+                                        <Link
+                                            className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
+                                            to={"/admin/orgs/" + wsi.usageAttributionId.substring(5)}
+                                        >
+                                            {wsi.usageAttributionId.substring(5)}
+                                        </Link>
+                                    ) : (
+                                        "personal"
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    <div className="py-20"></div>
                 </div>
             </div>
         </>
