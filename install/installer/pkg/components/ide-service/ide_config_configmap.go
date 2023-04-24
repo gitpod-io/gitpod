@@ -34,6 +34,7 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	webstorm := "webstorm"
 	rider := "rider"
 	clion := "clion"
+	xterm := "xterm"
 
 	resolveLatestImage := func(name string, tag string, bundledLatest versions.Versioned) string {
 		resolveLatest := true
@@ -194,6 +195,18 @@ func ideConfigConfigmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					PluginLatestImage: jbPluginLatestImage,
 					ImageLayers:       []string{jbPluginImage, jbLauncherImage},
 					LatestImageLayers: []string{jbPluginLatestImage, jbLauncherImage},
+				},
+				xterm: {
+					OrderKey: "12",
+					Title:    "Terminal",
+					Type:     ide_config.IDETypeBrowser,
+					Logo:     getIdeLogoPath("terminal"),
+					Label:    "Insiders",
+					// todo(ft): implement proper versioning for xterm
+					Image:              ctx.ImageName(ctx.Config.Repository, ide.XtermIDEImage, "latest"),
+					LatestImage:        ctx.ImageName(ctx.Config.Repository, ide.XtermIDEImage, "latest"),
+					ResolveImageDigest: true,
+					Experimental:       true,
 				},
 			},
 			DefaultIde:        "code",

@@ -34,10 +34,10 @@ export class IDEService {
 
     private cacheConfig?: IDEConfig;
 
-    async getIDEConfig(): Promise<IDEConfig> {
+    async getIDEConfig(request: { user: { id: string; email?: string } }): Promise<IDEConfig> {
         try {
-            let resp = await this.ideService.getConfig({});
-            let config: IDEConfig = JSON.parse(resp.content);
+            const response = await this.ideService.getConfig(request);
+            const config: IDEConfig = JSON.parse(response.content);
             this.cacheConfig = config;
             return config;
         } catch (e) {
