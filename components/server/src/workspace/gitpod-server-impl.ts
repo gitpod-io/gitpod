@@ -76,6 +76,7 @@ import {
     SSHPublicKeyValue,
     UserSSHPublicKeyValue,
     PrebuildEvent,
+    RoleOrPermission,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
@@ -154,6 +155,7 @@ import {
     EnvVarWithValue,
     LinkedInProfile,
     ProjectEnvVar,
+    UserFeatureSettings,
     WorkspaceTimeoutSetting,
 } from "@gitpod/gitpod-protocol/lib/protocol";
 import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
@@ -2887,92 +2889,319 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         );
     }
 
-    async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    async adminGetUser(ctx: TraceContext, userId: string): Promise<User> {
+        traceAPIParams(ctx, { userId });
+
+        await this.guardAdminAccess("adminGetUser", { id: userId }, Permission.ADMIN_USERS);
+
+        let result: User | undefined;
+        try {
+            result = await this.userDB.findUserById(userId);
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+
+        if (!result) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+        }
+        return this.censorUser(result);
     }
 
-    adminGetBlockedRepositories(
+    async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
+        traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
+
+        await this.guardAdminAccess("adminGetUsers", { req }, Permission.ADMIN_USERS);
+
+        try {
+            const res = await this.userDB.findAllUsers(
+                req.offset,
+                req.limit,
+                req.orderBy,
+                req.orderDir === "asc" ? "ASC" : "DESC",
+                req.searchTerm,
+            );
+            res.rows = res.rows.map(this.censorUser);
+            return res;
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+    }
+
+    async adminGetBlockedRepositories(
         ctx: TraceContext,
         req: AdminGetListRequest<BlockedRepository>,
     ): Promise<AdminGetListResult<BlockedRepository>> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
+
+        await this.guardAdminAccess("adminGetBlockedRepositories", { req }, Permission.ADMIN_USERS);
+
+        try {
+            const res = await this.blockedRepostoryDB.findAllBlockedRepositories(
+                req.offset,
+                req.limit,
+                req.orderBy,
+                req.orderDir === "asc" ? "ASC" : "DESC",
+                req.searchTerm,
+            );
+            return res;
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
     }
 
-    adminCreateBlockedRepository(ctx: TraceContext, urlRegexp: string, blockUser: boolean): Promise<BlockedRepository> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    async adminCreateBlockedRepository(
+        ctx: TraceContext,
+        urlRegexp: string,
+        blockUser: boolean,
+    ): Promise<BlockedRepository> {
+        traceAPIParams(ctx, { urlRegexp, blockUser });
+
+        await this.guardAdminAccess("adminCreateBlockedRepository", { urlRegexp, blockUser }, Permission.ADMIN_USERS);
+
+        return await this.blockedRepostoryDB.createBlockedRepository(urlRegexp, blockUser);
     }
 
-    adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
-    }
+    async adminDeleteBlockedRepository(ctx: TraceContext, id: number): Promise<void> {
+        traceAPIParams(ctx, { id });
 
-    async adminGetUser(ctx: TraceContext, id: string): Promise<User> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        await this.guardAdminAccess("adminDeleteBlockedRepository", { id }, Permission.ADMIN_USERS);
+
+        await this.blockedRepostoryDB.deleteBlockedRepository(id);
     }
 
     async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        traceAPIParams(ctx, { req });
+
+        await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
+
+        const targetUser = await this.userService.blockUser(req.id, req.blocked);
+
+        const stoppedWorkspaces = await this.workspaceStarter.stopRunningWorkspacesForUser(
+            ctx,
+            req.id,
+            "user blocked by admin",
+            StopWorkspacePolicy.IMMEDIATELY,
+        );
+
+        log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to admin initiated block.`, {
+            userId: targetUser.id,
+            workspaceIds: stoppedWorkspaces.map((w) => w.id),
+        });
+
+        // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
+        // Returning `target` instead (which should be equivalent).
+        return this.censorUser(targetUser);
     }
 
-    async adminDeleteUser(ctx: TraceContext, _id: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
+        traceAPIParams(ctx, { userId });
+
+        await this.guardAdminAccess("adminDeleteUser", { id: userId }, Permission.ADMIN_USERS);
+
+        try {
+            await this.userDeletionService.deleteUser(userId);
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
     }
 
-    async adminVerifyUser(ctx: TraceContext, _id: string): Promise<User> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    async adminVerifyUser(ctx: TraceContext, userId: string): Promise<User> {
+        await this.guardAdminAccess("adminVerifyUser", { id: userId }, Permission.ADMIN_USERS);
+        try {
+            const user = await this.userDB.findUserById(userId);
+            if (!user) {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, `No user with id ${userId} found.`);
+            }
+            this.verificationService.markVerified(user);
+            await this.userDB.updateUserPartial(user);
+            return user;
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
     }
 
     async adminModifyRoleOrPermission(ctx: TraceContext, req: AdminModifyRoleOrPermissionRequest): Promise<User> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        traceAPIParams(ctx, { req });
+
+        await this.guardAdminAccess("adminModifyRoleOrPermission", { req }, Permission.ADMIN_USERS);
+
+        const target = await this.userDB.findUserById(req.id);
+        if (!target) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+        }
+
+        const rolesOrPermissions = new Set((target.rolesOrPermissions || []) as string[]);
+        req.rpp.forEach((e) => {
+            if (e.add) {
+                rolesOrPermissions.add(e.r as string);
+            } else {
+                rolesOrPermissions.delete(e.r as string);
+            }
+        });
+        target.rolesOrPermissions = Array.from(rolesOrPermissions.values()) as RoleOrPermission[];
+
+        await this.userDB.storeUser(target);
+        // For some reason, neither returning the result of `this.userDB.storeUser(target)` nor returning `target` work.
+        // The response never arrives the caller.
+        // Returning the following works at the cost of an additional DB query:
+        return this.censorUser((await this.userDB.findUserById(req.id))!);
     }
 
     async adminModifyPermanentWorkspaceFeatureFlag(
         ctx: TraceContext,
         req: AdminModifyPermanentWorkspaceFeatureFlagRequest,
     ): Promise<User> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        traceAPIParams(ctx, { req });
+
+        await this.guardAdminAccess("adminModifyPermanentWorkspaceFeatureFlag", { req }, Permission.ADMIN_USERS);
+        const target = await this.userDB.findUserById(req.id);
+        if (!target) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+        }
+
+        const featureSettings: UserFeatureSettings = target.featureFlags || {};
+        const featureFlags = new Set(featureSettings.permanentWSFeatureFlags || []);
+
+        req.changes.forEach((e) => {
+            if (e.add) {
+                featureFlags.add(e.featureFlag);
+            } else {
+                featureFlags.delete(e.featureFlag);
+            }
+        });
+        featureSettings.permanentWSFeatureFlags = Array.from(featureFlags);
+        target.featureFlags = featureSettings;
+
+        await this.userDB.storeUser(target);
+        // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
+        // Returning `target` instead (which should be equivalent).
+        return this.censorUser(target);
     }
 
     async adminGetWorkspaces(
         ctx: TraceContext,
         req: AdminGetWorkspacesRequest,
     ): Promise<AdminGetListResult<WorkspaceAndInstance>> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        traceAPIParams(ctx, { req });
+
+        await this.guardAdminAccess("adminGetWorkspaces", { req }, Permission.ADMIN_WORKSPACES);
+
+        return await this.workspaceDb
+            .trace(ctx)
+            .findAllWorkspaceAndInstances(
+                req.offset,
+                req.limit,
+                req.orderBy,
+                req.orderDir === "asc" ? "ASC" : "DESC",
+                req,
+            );
     }
 
-    async adminGetWorkspace(ctx: TraceContext, id: string): Promise<WorkspaceAndInstance> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    async adminGetWorkspace(ctx: TraceContext, workspaceId: string): Promise<WorkspaceAndInstance> {
+        traceAPIParams(ctx, { workspaceId });
+
+        await this.guardAdminAccess("adminGetWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
+
+        const result = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(workspaceId);
+        if (!result) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+        }
+        return result;
     }
 
     async adminGetWorkspaceInstances(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstance[]> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        traceAPIParams(ctx, { workspaceId });
+
+        await this.guardAdminAccess("adminGetWorkspaceInstances", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
+
+        const result = await this.workspaceDb.trace(ctx).findInstances(workspaceId);
+        return result || [];
     }
 
-    async adminForceStopWorkspace(ctx: TraceContext, id: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    async adminForceStopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
+        traceAPIParams(ctx, { workspaceId });
+
+        await this.guardAdminAccess("adminForceStopWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
+
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        if (workspace) {
+            await this.internalStopWorkspace(ctx, workspace, "stopped by admin", StopWorkspacePolicy.IMMEDIATELY, true);
+        }
     }
 
-    async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, id: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
+        traceAPIParams(ctx, { workspaceId });
+
+        await this.guardAdminAccess(
+            "adminRestoreSoftDeletedWorkspace",
+            { id: workspaceId },
+            Permission.ADMIN_WORKSPACES,
+        );
+
+        await this.workspaceDb.trace(ctx).transaction(async (db) => {
+            const ws = await db.findById(workspaceId);
+            if (!ws) {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, `No workspace with id '${workspaceId}' found.`);
+            }
+            if (!ws.softDeleted) {
+                return;
+            }
+            if (!!ws.contentDeletedTime) {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, "The workspace content was already garbage-collected.");
+            }
+            // @ts-ignore
+            ws.softDeleted = null;
+            ws.softDeletedTime = "";
+            ws.pinned = true;
+            await db.store(ws);
+        });
     }
 
     async adminGetProjectsBySearchTerm(
         ctx: TraceContext,
         req: AdminGetListRequest<Project>,
     ): Promise<AdminGetListResult<Project>> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        await this.guardAdminAccess("adminGetProjectsBySearchTerm", { req }, Permission.ADMIN_PROJECTS);
+        return await this.projectDB.findProjectsBySearchTerm(
+            req.offset,
+            req.limit,
+            req.orderBy,
+            req.orderDir === "asc" ? "ASC" : "DESC",
+            req.searchTerm as string,
+        );
     }
 
     async adminGetProjectById(ctx: TraceContext, id: string): Promise<Project | undefined> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        await this.guardAdminAccess("adminGetProjectById", { id }, Permission.ADMIN_PROJECTS);
+        return await this.projectDB.findProjectById(id);
     }
 
     async adminGetTeams(ctx: TraceContext, req: AdminGetListRequest<Team>): Promise<AdminGetListResult<Team>> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        await this.guardAdminAccess("adminGetTeams", { req }, Permission.ADMIN_WORKSPACES);
+
+        return await this.teamDB.findTeams(
+            req.offset,
+            req.limit,
+            req.orderBy,
+            req.orderDir === "asc" ? "ASC" : "DESC",
+            req.searchTerm as string,
+        );
+    }
+
+    async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
+        await this.guardAdminAccess("adminGetTeamById", { id }, Permission.ADMIN_WORKSPACES);
+        return await this.teamDB.findTeamById(id);
     }
 
     async adminGetTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        await this.guardAdminAccess("adminGetTeamMembers", { teamId }, Permission.ADMIN_WORKSPACES);
+
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        return members;
     }
 
     async adminSetTeamMemberRole(
@@ -2981,11 +3210,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         userId: string,
         role: TeamMemberRole,
     ): Promise<void> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
-    }
-
-    async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        await this.guardAdminAccess("adminSetTeamMemberRole", { teamId, userId, role }, Permission.ADMIN_WORKSPACES);
+        return this.teamDB.setTeamMemberRole(userId, teamId, role);
     }
 
     async adminFindPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
