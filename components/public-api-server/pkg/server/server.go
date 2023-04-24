@@ -33,6 +33,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/billingservice"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/identityprovider"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/oidc"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/origin"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/proxy"
@@ -92,6 +93,15 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		}
 	}
 
+	keyset, err := jws.NewKeySetFromAuthPKI(cfg.Auth.PKI)
+	if err != nil {
+		return fmt.Errorf("failed to setup JWS Keyset: %w", err)
+	}
+	_, err = jws.NewRSA256(keyset)
+	if err != nil {
+		return fmt.Errorf("failed to setup jws.RSA256: %w", err)
+	}
+
 	var stateJWT *oidc.StateJWT
 	if cfg.OIDCClientJWTSigningSecretPath != "" {
 		oidcClientJWTSigningSecret, err := readSecretFromFile(cfg.OIDCClientJWTSigningSecretPath)
@@ -124,11 +134,6 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 		signer = auth.NewHS256Signer([]byte(personalACcessTokenSigningKey))
 	} else {
 		log.Info("No Personal Access Token signign key specified, PersonalAccessToken service will be disabled.")
-	}
-
-	_, err = auth.NewJWTFromAuthPKI(cfg.Auth.PKI, 7*24*time.Hour, "TODO")
-	if err != nil {
-		return fmt.Errorf("failed to setup JWT signer/verifier: %w", err)
 	}
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
