@@ -359,7 +359,6 @@ fi
 #
 # configure dedicated emulation
 #
-
 if [[ "${GITPOD_WITH_DEDICATED_EMU}" == "true" ]]
 then
   # Suppress the Self-Hosted setup modal
@@ -369,13 +368,16 @@ fi
 #
 # configureStripeAPIKeys
 #
-kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret stripe-api-keys -o yaml > stripe-api-keys.secret.yaml
-yq w -i stripe-api-keys.secret.yaml metadata.namespace "default"
-yq d -i stripe-api-keys.secret.yaml metadata.creationTimestamp
-yq d -i stripe-api-keys.secret.yaml metadata.uid
-yq d -i stripe-api-keys.secret.yaml metadata.resourceVersion
-diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" stripe-api-keys.secret.yaml
-rm -f stripe-api-keys.secret.yaml
+if [[ "${GITPOD_WITH_DEDICATED_EMU}" != "true" ]]
+then
+  kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret stripe-api-keys -o yaml > stripe-api-keys.secret.yaml
+  yq w -i stripe-api-keys.secret.yaml metadata.namespace "default"
+  yq d -i stripe-api-keys.secret.yaml metadata.creationTimestamp
+  yq d -i stripe-api-keys.secret.yaml metadata.uid
+  yq d -i stripe-api-keys.secret.yaml metadata.resourceVersion
+  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" stripe-api-keys.secret.yaml
+  rm -f stripe-api-keys.secret.yaml
+fi
 
 #
 # configureLinkedIn
