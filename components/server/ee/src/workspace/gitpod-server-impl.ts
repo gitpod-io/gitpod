@@ -53,7 +53,6 @@ import {
 } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { LicenseValidationResult } from "@gitpod/gitpod-protocol/lib/license-protocol";
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
@@ -204,10 +203,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
                 `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`,
             );
         }
-    }
-
-    async validateLicense(ctx: TraceContext): Promise<LicenseValidationResult> {
-        return { valid: true };
     }
 
     goDurationToHumanReadable(goDuration: string): string {

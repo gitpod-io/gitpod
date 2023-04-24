@@ -20,7 +20,6 @@ import { ConfettiContextProvider } from "./contexts/ConfettiContext";
 import { FeatureFlagContextProvider } from "./contexts/FeatureFlagContext";
 import { setupQueryClientProvider } from "./data/setup";
 import "./index.css";
-import { LicenseContextProvider } from "./license-context";
 import { PaymentContextProvider } from "./payment-context";
 import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
@@ -68,19 +67,17 @@ const bootApp = () => {
                                 <UserContextProvider>
                                     <AdminContextProvider>
                                         <PaymentContextProvider>
-                                            <LicenseContextProvider>
-                                                <ProjectContextProvider>
-                                                    <ThemeContextProvider>
-                                                        <BrowserRouter>
-                                                            <StartWorkspaceModalContextProvider>
-                                                                <FeatureFlagContextProvider>
-                                                                    <App />
-                                                                </FeatureFlagContextProvider>
-                                                            </StartWorkspaceModalContextProvider>
-                                                        </BrowserRouter>
-                                                    </ThemeContextProvider>
-                                                </ProjectContextProvider>
-                                            </LicenseContextProvider>
+                                            <ProjectContextProvider>
+                                                <ThemeContextProvider>
+                                                    <BrowserRouter>
+                                                        <StartWorkspaceModalContextProvider>
+                                                            <FeatureFlagContextProvider>
+                                                                <App />
+                                                            </FeatureFlagContextProvider>
+                                                        </StartWorkspaceModalContextProvider>
+                                                    </BrowserRouter>
+                                                </ThemeContextProvider>
+                                            </ProjectContextProvider>
                                         </PaymentContextProvider>
                                     </AdminContextProvider>
                                 </UserContextProvider>

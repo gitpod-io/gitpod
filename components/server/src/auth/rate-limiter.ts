@@ -158,7 +158,6 @@ const defaultFunctions: FunctionsConfig = {
     adminGetProjectsBySearchTerm: { group: "default", points: 1 },
     adminGetProjectById: { group: "default", points: 1 },
     adminFindPrebuilds: { group: "default", points: 1 },
-    adminGetLicense: { group: "default", points: 1 },
     adminGetSettings: { group: "default", points: 1 },
     adminUpdateSettings: { group: "default", points: 1 },
     adminGetTelemetryData: { group: "default", points: 1 },
@@ -171,9 +170,6 @@ const defaultFunctions: FunctionsConfig = {
     adminListUsage: { group: "default", points: 1 },
     adminAddUsageCreditNote: { group: "default", points: 1 },
     adminGetUsageBalance: { group: "default", points: 1 },
-
-    validateLicense: { group: "default", points: 1 },
-    getLicenseInfo: { group: "default", points: 1 },
 
     accessCodeSyncStorage: { group: "default", points: 1 },
 
