@@ -51,6 +51,9 @@ packages:
         - ${imageRepoBase}/dashboard:${version}
         - ${imageRepoBase}/dashboard:commit-${__git_commit}
 scripts:
+  - name: lint
+    script: |-
+      yarn run lint
   - name: telepresence
     script: |-
       trap "kill 0" EXIT

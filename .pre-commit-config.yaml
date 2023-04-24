@@ -72,4 +72,12 @@ repos:
     hooks:
       - id: gitleaks
 
+  - repo: local
+    hooks:
+      - id: dashboard-linter
+        name: dashboard-linter
+        entry: leeway run components/dashboard:lint
+        language: system
+        pass_filenames: false
+
 exclude: ^install/installer/.*/.*\.golden$
