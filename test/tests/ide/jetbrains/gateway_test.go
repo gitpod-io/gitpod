@@ -82,10 +82,6 @@ func JetBrainsIDETest(ctx context.Context, t *testing.T, cfg *envconf.Config, id
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = api.MakeUserUnleashedPlan(username)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	t.Logf("connecting to server...")
 	server, err := api.GitpodServer(integration.WithGitpodUser(username))

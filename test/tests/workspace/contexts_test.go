@@ -136,10 +136,6 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 					if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
 						t.Fatal(err)
 					}
-
-					if err := api.MakeUserUnleashedPlan(username); err != nil {
-						t.Fatal(err)
-					}
 				}()
 			}
 
