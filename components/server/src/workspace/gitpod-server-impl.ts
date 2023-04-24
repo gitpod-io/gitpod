@@ -192,7 +192,7 @@ import { RegionService } from "./region-service";
 import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { EnvVarService } from "./env-var-service";
 import { LinkedInService } from "../linkedin-service";
-import { SnapshotService } from "./snapshot-service";
+import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -1944,6 +1944,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await Promise.all(snapshots.map((s) => this.guardAccess({ kind: "snapshot", subject: s, workspace }, "get")));
 
         return snapshots.map((s) => s.id);
+    }
+
+    protected async internalDoWaitForWorkspace(opts: WaitForSnapshotOptions) {
+        try {
+            await this.snapshotService.waitForSnapshot(opts);
+        } catch (err) {
+            // wrap in SNAPSHOT_ERROR to signal this call should not be retried.
+            throw new ResponseError(ErrorCodes.SNAPSHOT_ERROR, err.toString());
+        }
     }
 
     async getWorkspaceEnvVars(ctx: TraceContext, workspaceId: string): Promise<EnvVarWithValue[]> {
