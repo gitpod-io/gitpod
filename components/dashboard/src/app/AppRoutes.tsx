@@ -27,13 +27,12 @@ import {
     switchToPAYGPathMain,
     usagePathMain,
 } from "../user-settings/settings.routes";
-import { getURLHash, isGitpodIo, isLocalPreview } from "../utils";
+import { getURLHash, isGitpodIo } from "../utils";
 import { shouldSeeWhatsNew, WhatsNew } from "../whatsnew/WhatsNew";
 import { StartWorkspaceModal } from "../workspaces/StartWorkspaceModal";
 import { workspacesPathMain } from "../workspaces/workspaces.routes";
 import { AdminRoute } from "./AdminRoute";
 import { Blocked } from "./Blocked";
-import { LocalPreviewAlert } from "./LocalPreviewAlert";
 
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
@@ -175,7 +174,6 @@ export const AppRoutes = () => {
         <Route>
             <div className="container">
                 <Menu />
-                {isLocalPreview() && <LocalPreviewAlert />}
                 <Switch>
                     <Route path="/new" exact component={CreateWorkspacePage} />
                     <Route path={projectsPathNew} exact component={NewProject} />
