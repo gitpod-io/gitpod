@@ -24,8 +24,6 @@ import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-p
 import { WorkspaceFactory } from "../../src/workspace/workspace-factory";
 import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { StripeService } from "./user/stripe-service";
-import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
-import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
 import { GitHubAppSupport } from "./github/github-app-support";
 import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { Config } from "../../src/config";
@@ -61,8 +59,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
 
     // various
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
-    bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
-    rebind(BlockedUserFilter).toService(EMailDomainService);
 
     // payment/billing
     bind(StripeService).toSelf().inSingletonScope();

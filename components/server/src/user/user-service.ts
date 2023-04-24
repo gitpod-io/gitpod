@@ -11,7 +11,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
 import { AuthProviderParams, AuthUser } from "../auth/auth-provider";
-import { BlockedUserFilter } from "../auth/blocked-user-filter";
+import { BlockedUserService } from "../auth/blocked-user-filter";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
@@ -53,7 +53,7 @@ export interface UsageLimitReachedResult {
 
 @injectable()
 export class UserService {
-    @inject(BlockedUserFilter) protected readonly blockedUserFilter: BlockedUserFilter;
+    @inject(BlockedUserService) protected readonly blockedUserService: BlockedUserService;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
@@ -326,7 +326,7 @@ export class UserService {
             return true;
         }
         if (params.primaryEmail) {
-            return this.blockedUserFilter.isBlocked(params.primaryEmail);
+            return this.blockedUserService.isBlocked(params.primaryEmail);
         }
         return false;
     }

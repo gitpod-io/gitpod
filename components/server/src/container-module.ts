@@ -55,7 +55,7 @@ import { WorkspaceDownloadService } from "./workspace/workspace-download-service
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { OneTimeSecretServer } from "./one-time-secret-server";
 import { HostContainerMapping } from "./auth/host-container-mapping";
-import { BlockedUserFilter, NoOneBlockedUserFilter } from "./auth/blocked-user-filter";
+import { BlockedUserService } from "./auth/blocked-user-filter";
 import { AuthProviderService } from "./auth/auth-provider-service";
 import { HostContextProviderImpl } from "./auth/host-context-provider-impl";
 import { AuthProviderParams } from "./auth/auth-provider";
@@ -186,7 +186,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(GitTokenScopeGuesser).toSelf().inSingletonScope();
     bind(GitTokenValidator).toSelf().inSingletonScope();
 
-    bind(BlockedUserFilter).to(NoOneBlockedUserFilter).inSingletonScope();
+    bind(BlockedUserService).to(BlockedUserService).inSingletonScope();
 
     bind(MonitoringEndpointsApp).toSelf().inSingletonScope();
 
