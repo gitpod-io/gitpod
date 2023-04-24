@@ -7,6 +7,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
+import { useCurrentOrg } from "../organizations/orgs-query";
 
 type UpdateWorkspaceDescriptionArgs = {
     workspaceId: string;
@@ -14,13 +15,14 @@ type UpdateWorkspaceDescriptionArgs = {
 };
 export const useUpdateWorkspaceDescriptionMutation = () => {
     const queryClient = useQueryClient();
+    const org = useCurrentOrg();
 
     return useMutation({
         mutationFn: async ({ workspaceId, newDescription }: UpdateWorkspaceDescriptionArgs) => {
             return await getGitpodService().server.setWorkspaceDescription(workspaceId, newDescription);
         },
         onSuccess: (_, { workspaceId, newDescription }) => {
-            const queryKey = getListWorkspacesQueryKey();
+            const queryKey = getListWorkspacesQueryKey(org.data?.id);
 
             // pro-actively update workspace description rather than reload all workspaces
             queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {

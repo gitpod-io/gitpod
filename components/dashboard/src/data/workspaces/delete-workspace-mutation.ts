@@ -9,6 +9,7 @@ import { useFeatureFlags } from "../../contexts/FeatureFlagContext";
 import { workspacesService } from "../../service/public-api";
 import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
+import { useCurrentOrg } from "../organizations/orgs-query";
 
 type DeleteWorkspaceArgs = {
     workspaceId: string;
@@ -17,6 +18,7 @@ type DeleteWorkspaceArgs = {
 export const useDeleteWorkspaceMutation = () => {
     const queryClient = useQueryClient();
     const { usePublicApiWorkspacesService } = useFeatureFlags();
+    const org = useCurrentOrg();
 
     return useMutation({
         mutationFn: async ({ workspaceId }: DeleteWorkspaceArgs) => {
@@ -25,7 +27,7 @@ export const useDeleteWorkspaceMutation = () => {
                 : await getGitpodService().server.deleteWorkspace(workspaceId);
         },
         onSuccess: (_, { workspaceId }) => {
-            const queryKey = getListWorkspacesQueryKey();
+            const queryKey = getListWorkspacesQueryKey(org.data?.id);
 
             // Remove workspace from cache so it's reflected right away
             queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {
