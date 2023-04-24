@@ -19,7 +19,7 @@ import { GitHubTokenValidator } from "./github-token-validator";
 import { RepositoryService } from "../repohost/repo-service";
 import { GitHubService } from "../prebuilds/github-service";
 
-export const githubContainerModule = new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+export const githubContainerModule = new ContainerModule((bind, _unbind, _isBound, rebind) => {
     bind(RepositoryHost).toSelf().inSingletonScope();
     bind(GitHubRestApi).toSelf().inSingletonScope();
     bind(GitHubGraphQlEndpoint).toSelf().inSingletonScope();
@@ -34,5 +34,5 @@ export const githubContainerModule = new ContainerModule((bind, _unbind, _isBoun
     bind(GitHubTokenHelper).toSelf().inSingletonScope();
     bind(GitHubTokenValidator).toSelf().inSingletonScope();
     bind(IGitTokenValidator).toService(GitHubTokenValidator);
-    bind(RepositoryService).to(GitHubService).inSingletonScope();
+    rebind(RepositoryService).to(GitHubService).inSingletonScope();
 });
