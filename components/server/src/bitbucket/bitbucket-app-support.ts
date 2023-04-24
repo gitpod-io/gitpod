@@ -7,7 +7,7 @@
 // @ts-nocheck
 import { AuthProviderInfo, ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
-import { TokenProvider } from "../../../src/user/token-provider";
+import { TokenProvider } from "../user/token-provider";
 import { Bitbucket, Schema } from "bitbucket";
 import { URL } from "url";
 

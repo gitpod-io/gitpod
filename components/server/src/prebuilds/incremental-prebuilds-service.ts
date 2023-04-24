@@ -17,10 +17,10 @@ import {
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { WithCommitHistory } from "@gitpod/gitpod-protocol/src/protocol";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Config } from "../../../src/config";
-import { ConfigProvider } from "../../../src/workspace/config-provider";
-import { HostContextProvider } from "../../../src/auth/host-context-provider";
-import { ImageSourceProvider } from "../../../src/workspace/image-source-provider";
+import { Config } from "../config";
+import { ConfigProvider } from "../workspace/config-provider";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { ImageSourceProvider } from "../workspace/image-source-provider";
 
 @injectable()
 export class IncrementalPrebuildsService {

@@ -7,13 +7,13 @@
 import * as express from "express";
 import { postConstruct, injectable, inject } from "inversify";
 import { ProjectDB, TeamDB, UserDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
-import { PrebuildManager } from "../prebuilds/prebuild-manager";
-import { TokenService } from "../../../src/user/token-service";
+import { PrebuildManager } from "./prebuild-manager";
+import { TokenService } from "../user/token-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { CommitContext, CommitInfo, Project, StartPrebuildResult, User, WebhookEvent } from "@gitpod/gitpod-protocol";
-import { RepoURL } from "../../../src/repohost";
-import { HostContextProvider } from "../../../src/auth/host-context-provider";
-import { ContextParser } from "../../../src/workspace/context-parser-service";
+import { RepoURL } from "../repohost";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { ContextParser } from "../workspace/context-parser-service";
 
 @injectable()
 export class BitbucketServerApp {

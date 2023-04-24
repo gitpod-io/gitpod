@@ -18,7 +18,7 @@ import {
     WorkspaceConfig,
 } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { LocalMessageBroker } from "../../../src/messaging/local-message-broker";
+import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 
 export interface CheckRunInfo {

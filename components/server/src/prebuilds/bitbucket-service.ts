@@ -4,15 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { RepositoryService } from "../../../src/repohost/repo-service";
+import { RepositoryService } from "../repohost/repo-service";
 import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
-import { BitbucketApiFactory } from "../../../src/bitbucket/bitbucket-api-factory";
-import { AuthProviderParams } from "../../../src/auth/auth-provider";
+import { BitbucketApiFactory } from "../bitbucket/bitbucket-api-factory";
+import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketApp } from "./bitbucket-app";
-import { Config } from "../../../src/config";
-import { TokenService } from "../../../src/user/token-service";
-import { BitbucketContextParser } from "../../../src/bitbucket/bitbucket-context-parser";
+import { Config } from "../config";
+import { TokenService } from "../user/token-service";
+import { BitbucketContextParser } from "../bitbucket/bitbucket-context-parser";
 
 @injectable()
 export class BitbucketService extends RepositoryService {

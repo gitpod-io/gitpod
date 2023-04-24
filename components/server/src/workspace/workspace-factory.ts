@@ -33,7 +33,7 @@ import { RepoURL } from "../repohost";
 import { ConfigProvider } from "./config-provider";
 import { ImageSourceProvider } from "./image-source-provider";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
-import { IncrementalPrebuildsService } from "../../ee/src/prebuilds/incremental-prebuilds-service";
+import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
 import { increasePrebuildsStartedCounter } from "../prometheus-metrics";
 
 @injectable()

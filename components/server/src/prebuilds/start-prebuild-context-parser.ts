@@ -8,7 +8,7 @@ import { User, WorkspaceContext, ContextURL } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { injectable } from "inversify";
 import { ResponseError } from "vscode-ws-jsonrpc";
-import { IPrefixContextParser } from "../../../src/workspace/context-parser";
+import { IPrefixContextParser } from "../workspace/context-parser";
 
 @injectable()
 export class StartPrebuildContextParser implements IPrefixContextParser {
