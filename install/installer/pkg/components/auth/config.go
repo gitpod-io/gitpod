@@ -6,6 +6,7 @@ package auth
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -21,17 +22,41 @@ type Config struct {
 
 type SessionConfig struct {
 	// How long shoud the session be valid for?
-	LifetimeSeconds int64  `json:"lifetimeSeconds"`
-	Issuer          string `json:"issuer"`
+	LifetimeSeconds int64        `json:"lifetimeSeconds"`
+	Issuer          string       `json:"issuer"`
+	Cookie          CookieConfig `json:"cookie"`
+}
+
+type CookieConfig struct {
+	Name     string `json:"name"`
+	MaxAge   int64  `json:"maxAge"`
+	SameSite string `json:"sameSite"`
+	Secure   bool   `json:"secure"`
+	HTTPOnly bool   `json:"httpOnly"`
 }
 
 func GetConfig(ctx *common.RenderContext) ([]corev1.Volume, []corev1.VolumeMount, Config) {
 	volumes, mounts, pki := getPKI()
+	lifetime := int64((7 * 24 * time.Hour).Seconds())
 	return volumes, mounts, Config{
 		PKI: pki,
 		Session: SessionConfig{
-			LifetimeSeconds: int64((7 * 24 * time.Hour).Seconds()),
+			LifetimeSeconds: lifetime,
 			Issuer:          fmt.Sprintf("https://%s", ctx.Config.Domain),
+			Cookie: CookieConfig{
+				// Caution: changing these have security implications for the application. Make sure you understand what you're doing.
+				Name:     cookieNameFromDomain(ctx.Config.Domain),
+				MaxAge:   lifetime,
+				SameSite: "lax",
+				Secure:   true,
+				HTTPOnly: true,
+			},
 		},
 	}
+}
+
+func cookieNameFromDomain(domain string) string {
+	// replace all non-word characters with underscores
+	derived := regexp.MustCompile(`[\W_]+`).ReplaceAllString(domain, "_")
+	return "_" + derived + "_jwt_"
 }

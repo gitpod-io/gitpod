@@ -52,8 +52,17 @@ type AuthConfiguration struct {
 }
 
 type SessionConfig struct {
-	LifetimeSeconds int64  `json:"lifetimeSeconds"`
-	Issuer          string `json:"issuer"`
+	LifetimeSeconds int64        `json:"lifetimeSeconds"`
+	Issuer          string       `json:"issuer"`
+	Cookie          CookieConfig `json:"cookie"`
+}
+
+type CookieConfig struct {
+	Name     string `json:"name"`
+	MaxAge   int64  `json:"maxAge"`
+	SameSite string `json:"sameSite"`
+	Secure   bool   `json:"secure"`
+	HTTPOnly bool   `json:"httpOnly"`
 }
 
 type AuthPKIConfiguration struct {

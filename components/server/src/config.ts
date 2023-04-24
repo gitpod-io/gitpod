@@ -55,6 +55,7 @@ export type Config = Omit<
         session: {
             lifetimeSeconds: number;
             issuer: string;
+            cookie: CookieConfig;
         };
     };
 };
@@ -258,8 +259,17 @@ export interface ConfigSerialized {
         session: {
             lifetimeSeconds: number;
             issuer: string;
+            cookie: CookieConfig;
         };
     };
+}
+
+export interface CookieConfig {
+    name: string;
+    maxAge: number;
+    sameSite: boolean | "lax" | "strict" | "none";
+    secure: boolean;
+    httpOnly: boolean;
 }
 
 export interface AuthPKIConfig {
