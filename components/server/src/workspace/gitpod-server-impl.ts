@@ -2889,8 +2889,42 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         );
     }
 
+    async adminGetUser(ctx: TraceContext, userId: string): Promise<User> {
+        traceAPIParams(ctx, { userId });
+
+        await this.guardAdminAccess("adminGetUser", { id: userId }, Permission.ADMIN_USERS);
+
+        let result: User | undefined;
+        try {
+            result = await this.userDB.findUserById(userId);
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
+
+        if (!result) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+        }
+        return this.censorUser(result);
+    }
+
     async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        traceAPIParams(ctx, { req: censor(req, "searchTerm") }); // searchTerm may contain PII
+
+        await this.guardAdminAccess("adminGetUsers", { req }, Permission.ADMIN_USERS);
+
+        try {
+            const res = await this.userDB.findAllUsers(
+                req.offset,
+                req.limit,
+                req.orderBy,
+                req.orderDir === "asc" ? "ASC" : "DESC",
+                req.searchTerm,
+            );
+            res.rows = res.rows.map(this.censorUser);
+            return res;
+        } catch (e) {
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+        }
     }
 
     async adminGetBlockedRepositories(
@@ -2935,12 +2969,28 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.blockedRepostoryDB.deleteBlockedRepository(id);
     }
 
-    async adminGetUser(ctx: TraceContext, id: string): Promise<User> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
-    }
-
     async adminBlockUser(ctx: TraceContext, req: AdminBlockUserRequest): Promise<User> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        traceAPIParams(ctx, { req });
+
+        await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
+
+        const targetUser = await this.userService.blockUser(req.id, req.blocked);
+
+        const stoppedWorkspaces = await this.workspaceStarter.stopRunningWorkspacesForUser(
+            ctx,
+            req.id,
+            "user blocked by admin",
+            StopWorkspacePolicy.IMMEDIATELY,
+        );
+
+        log.info(`Stopped ${stoppedWorkspaces.length} workspaces in response to admin initiated block.`, {
+            userId: targetUser.id,
+            workspaceIds: stoppedWorkspaces.map((w) => w.id),
+        });
+
+        // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
+        // Returning `target` instead (which should be equivalent).
+        return this.censorUser(targetUser);
     }
 
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
@@ -3060,11 +3110,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async adminGetWorkspaceInstances(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstance[]> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+        traceAPIParams(ctx, { workspaceId });
+
+        await this.guardAdminAccess("adminGetWorkspaceInstances", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
+
+        const result = await this.workspaceDb.trace(ctx).findInstances(workspaceId);
+        return result || [];
     }
 
-    async adminForceStopWorkspace(ctx: TraceContext, id: string): Promise<void> {
-        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    async adminForceStopWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
+        traceAPIParams(ctx, { workspaceId });
+
+        await this.guardAdminAccess("adminForceStopWorkspace", { id: workspaceId }, Permission.ADMIN_WORKSPACES);
+
+        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
+        if (workspace) {
+            await this.internalStopWorkspace(ctx, workspace, "stopped by admin", StopWorkspacePolicy.IMMEDIATELY, true);
+        }
     }
 
     async adminRestoreSoftDeletedWorkspace(ctx: TraceContext, workspaceId: string): Promise<void> {
@@ -3126,6 +3188,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         );
     }
 
+    async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
+        await this.guardAdminAccess("adminGetTeamById", { id }, Permission.ADMIN_WORKSPACES);
+        return await this.teamDB.findTeamById(id);
+    }
+
     async adminGetTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
         await this.guardAdminAccess("adminGetTeamMembers", { teamId }, Permission.ADMIN_WORKSPACES);
 
@@ -3145,11 +3212,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {
         await this.guardAdminAccess("adminSetTeamMemberRole", { teamId, userId, role }, Permission.ADMIN_WORKSPACES);
         return this.teamDB.setTeamMemberRole(userId, teamId, role);
-    }
-
-    async adminGetTeamById(ctx: TraceContext, id: string): Promise<Team | undefined> {
-        await this.guardAdminAccess("adminGetTeamById", { id }, Permission.ADMIN_WORKSPACES);
-        return await this.teamDB.findTeamById(id);
     }
 
     async adminFindPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
