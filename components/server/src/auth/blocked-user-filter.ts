@@ -4,27 +4,23 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { injectable } from "inversify";
+import { EmailDomainFilterDB } from "@gitpod/gitpod-db/lib";
+import { inject, injectable } from "inversify";
 
-export const BlockedUserFilter = Symbol("BlockedUserFilter");
-
-/**
- * BlockedUserFilter is used during the signup of a user do filter out users who
- * have previously been blocked from the service.
- */
-export interface BlockedUserFilter {
-    /**
-     * isBlocked returns true if the email is blocked and the user cannot sign up.
-     */
-    isBlocked(primaryEmail: string): Promise<boolean>;
-}
-
-/**
- * NoOneBlockedUserFilter blocks no one
- */
 @injectable()
-export class NoOneBlockedUserFilter implements BlockedUserFilter {
-    async isBlocked(primaryEmail: string): Promise<boolean> {
-        return false;
+export class BlockedUserService {
+    @inject(EmailDomainFilterDB) protected readonly domainFilterDb: EmailDomainFilterDB;
+
+    async isBlocked(email: string): Promise<boolean> {
+        const { domain } = this.parseMail(email);
+        return this.domainFilterDb.isBlocked(domain);
+    }
+
+    protected parseMail(email: string): { user: string; domain: string } {
+        const parts = email.split("@");
+        if (parts.length !== 2) {
+            throw new Error("Invalid E-Mail address: " + email);
+        }
+        return { user: parts[0], domain: parts[1].toLowerCase() };
     }
 }
