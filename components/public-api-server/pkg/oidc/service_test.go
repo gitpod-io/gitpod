@@ -17,6 +17,8 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws/jwstest"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
@@ -223,11 +225,13 @@ func setupOIDCServiceForTests(t *testing.T) (*Service, *gorm.DB) {
 
 	dbConn := dbtest.ConnectForTests(t)
 	cipher := dbtest.CipherSet(t)
-	stateJWT := newTestStateJWT([]byte("ANY KEY"), 5*time.Minute)
 
 	sessionServerAddress := newFakeSessionServer(t)
 
-	service := NewService(sessionServerAddress, dbConn, cipher, stateJWT)
+	keyset := jwstest.GenerateKeySet(t)
+	signerVerifier := jws.NewHS256FromKeySet(keyset)
+
+	service := NewService(sessionServerAddress, dbConn, cipher, signerVerifier, 5*time.Minute)
 	service.skipVerifyIdToken = true
 	return service, dbConn
 }

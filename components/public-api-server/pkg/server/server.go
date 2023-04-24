@@ -101,17 +101,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	if err != nil {
 		return fmt.Errorf("failed to setup jws.RSA256: %w", err)
 	}
-
-	var stateJWT *oidc.StateJWT
-	if cfg.OIDCClientJWTSigningSecretPath != "" {
-		oidcClientJWTSigningSecret, err := readSecretFromFile(cfg.OIDCClientJWTSigningSecretPath)
-		if err != nil {
-			return fmt.Errorf("failed to read JWT signing secret for OIDC flows: %w", err)
-		}
-		stateJWT = oidc.NewStateJWT([]byte(oidcClientJWTSigningSecret))
-	} else {
-		log.Info("No JWT signing secret for OIDC flows is configured.")
-	}
+	hs256 := jws.NewHS256FromKeySet(keyset)
 
 	var stripeWebhookHandler http.Handler = webhooks.NewNoopWebhookHandler()
 	if cfg.StripeWebhookSigningSecretPath != "" {
@@ -138,7 +128,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 
 	srv.HTTPMux().Handle("/stripe/invoices/webhook", handlers.ContentTypeHandler(stripeWebhookHandler, "application/json"))
 
-	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, stateJWT)
+	oidcService := oidc.NewService(cfg.SessionServiceAddress, dbConn, cipherSet, hs256, 5*time.Minute)
 
 	if redisClient == nil {
 		return fmt.Errorf("no Redis configiured")
