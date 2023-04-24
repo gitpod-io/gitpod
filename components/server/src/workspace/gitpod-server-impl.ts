@@ -633,21 +633,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    public async getPortAuthenticationToken(ctx: TraceContext, workspaceId: string): Promise<Token> {
-        traceAPIParams(ctx, { workspaceId });
-        traceWI(ctx, { workspaceId });
-
-        const user = this.checkAndBlockUser("getPortAuthenticationToken", { workspaceId });
-
-        const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
-        await this.guardAccess({ kind: "workspace", subject: workspace! }, "get");
-
-        const token = await this.tokenProvider.getFreshPortAuthenticationToken(user, workspaceId);
-        await this.guardAccess({ kind: "token", subject: token, tokenOwnerID: user.id }, "create");
-
-        return token;
-    }
-
     public async deleteAccount(ctx: TraceContext): Promise<void> {
         const user = this.checkAndBlockUser("deleteAccount");
         await this.guardAccess({ kind: "user", subject: user! }, "delete");

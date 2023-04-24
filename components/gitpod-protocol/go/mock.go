@@ -506,21 +506,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetOwnerToken(ctx, workspaceID interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOwnerToken", reflect.TypeOf((*MockAPIInterface)(nil).GetOwnerToken), ctx, workspaceID)
 }
 
-// GetPortAuthenticationToken mocks base method.
-func (m *MockAPIInterface) GetPortAuthenticationToken(ctx context.Context, workspaceID string) (*Token, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPortAuthenticationToken", ctx, workspaceID)
-	ret0, _ := ret[0].(*Token)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPortAuthenticationToken indicates an expected call of GetPortAuthenticationToken.
-func (mr *MockAPIInterfaceMockRecorder) GetPortAuthenticationToken(ctx, workspaceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPortAuthenticationToken", reflect.TypeOf((*MockAPIInterface)(nil).GetPortAuthenticationToken), ctx, workspaceID)
-}
-
 // GetSSHPublicKeys mocks base method.
 func (m *MockAPIInterface) GetSSHPublicKeys(ctx context.Context) ([]*UserSSHPublicKeyValue, error) {
 	m.ctrl.T.Helper()
