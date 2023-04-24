@@ -8,6 +8,7 @@ import { GitpodServer } from "@gitpod/gitpod-protocol";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
+import { useCurrentOrg } from "../organizations/orgs-query";
 
 type ToggleWorkspaceSharedArgs = {
     workspaceId: string;
@@ -16,13 +17,14 @@ type ToggleWorkspaceSharedArgs = {
 
 export const useToggleWorkspaceSharedMutation = () => {
     const queryClient = useQueryClient();
+    const org = useCurrentOrg();
 
     return useMutation({
         mutationFn: async ({ workspaceId, level }: ToggleWorkspaceSharedArgs) => {
             return await getGitpodService().server.controlAdmission(workspaceId, level);
         },
         onSuccess: (_, { workspaceId, level }) => {
-            const queryKey = getListWorkspacesQueryKey();
+            const queryKey = getListWorkspacesQueryKey(org.data?.id);
 
             // Update workspace.shareable to the level we set so it's reflected immediately
             queryClient.setQueryData<ListWorkspacesQueryResult>(queryKey, (oldWorkspacesData) => {
