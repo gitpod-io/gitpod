@@ -138,7 +138,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
             }
             const { setupIntentId, paymentIntentId, redirectStatus } = stripeParams;
 
-            // Should be one or the other
+            // Should be at least one intent id
             if (!setupIntentId && !paymentIntentId) {
                 return;
             }

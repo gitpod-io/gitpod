@@ -15,6 +15,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useStripeAppearance } from "./use-stripe-appearance";
 import DropDown from "../DropDown";
 import { useCurrency } from "../../payment-context";
+import Alert from "../Alert";
 
 type Props = {
     attributionId: string;
@@ -36,14 +37,13 @@ export const AddPaymentMethodModal: FC<Props> = ({ attributionId, clientSecret, 
     return (
         <Modal visible={true} onClose={onClose}>
             <ModalHeader>Add Payment Method</ModalHeader>
-            {!stripePromise && (
+            {!stripePromise ? (
                 <ModalBody>
                     <div className="h-80 flex items-center justify-center">
-                        <Spinner className="h-5 w-5 animate-spin" />
+                        <Spinner className="animate-spin" />
                     </div>
                 </ModalBody>
-            )}
-            {!!stripePromise && (
+            ) : (
                 <Elements stripe={stripePromise} options={elementsOptions}>
                     <AddPaymentMethodForm attributionId={attributionId} />
                 </Elements>
@@ -95,10 +95,10 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
     return (
         <form onSubmit={handleSubmit}>
             <ModalBody>
-                <p className="mb-4">
+                <Alert type="info" className="mb-4">
                     This card will be used for future charges. We'll be placing a 1.00 hold on it that we'll immediately
                     release in order to verify your payment method.
-                </p>
+                </Alert>
                 <PaymentElement id="payment-element" />
             </ModalBody>
             <ModalFooter
