@@ -12,7 +12,6 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { GithubApp } from "./prebuilds/github-app";
-import { SnapshotService } from "./workspace/snapshot-service";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 
@@ -21,17 +20,10 @@ export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Se
     @inject(GitLabApp) protected readonly gitLabApp: GitLabApp;
     @inject(BitbucketApp) protected readonly bitbucketApp: BitbucketApp;
     @inject(BitbucketServerApp) protected readonly bitbucketServerApp: BitbucketServerApp;
-    @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
     @inject(GitHubEnterpriseApp) protected readonly gitHubEnterpriseApp: GitHubEnterpriseApp;
 
     public async init(app: express.Application) {
         await super.init(app);
-
-        if (!this.config.completeSnapshotJob?.disabled) {
-            // Start Snapshot Service
-            log.info("Starting snapshot completion job...");
-            await this.snapshotService.start();
-        }
     }
 
     protected async registerRoutes(app: express.Application): Promise<void> {

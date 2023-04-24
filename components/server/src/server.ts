@@ -53,6 +53,7 @@ import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
 import { API } from "./api/server";
+import { SnapshotService } from "./workspace/snapshot-service";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -82,6 +83,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
     @inject(WebhookEventGarbageCollector) protected readonly webhookEventGarbageCollector: WebhookEventGarbageCollector;
     @inject(LongRunningMigrationService) protected readonly migrationService: LongRunningMigrationService;
+    @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
     @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
 
@@ -309,6 +311,12 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         this.webhookEventGarbageCollector
             .start()
             .catch((err) => log.error("webhook-event-gc: error during startup", err));
+
+        if (!this.config.completeSnapshotJob?.disabled) {
+            // Start Snapshot Service
+            log.info("Starting snapshot completion job...");
+            await this.snapshotService.start();
+        }
 
         this.app = app;
 
