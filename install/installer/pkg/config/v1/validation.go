@@ -42,8 +42,9 @@ var ObjectRefKindList = map[ObjectRefKind]struct{}{
 }
 
 var FSShiftMethodList = map[FSShiftMethod]struct{}{
-	FSShiftFuseFS:  {},
-	FSShiftShiftFS: {},
+	FSShiftFuseFS:     {},
+	FSShiftShiftFS:    {},
+	FSShiftIDMappedFS: {},
 }
 
 // LoadValidationFuncs load custom validation functions for this version of the config API

@@ -391,8 +391,9 @@ type Proxy struct {
 type FSShiftMethod string
 
 const (
-	FSShiftFuseFS  FSShiftMethod = "fuse"
-	FSShiftShiftFS FSShiftMethod = "shiftfs"
+	FSShiftFuseFS     FSShiftMethod = "fuse"
+	FSShiftShiftFS    FSShiftMethod = "shiftfs"
+	FSShiftIDMappedFS FSShiftMethod = "idmapped"
 )
 
 type BlockNewUsers struct {
