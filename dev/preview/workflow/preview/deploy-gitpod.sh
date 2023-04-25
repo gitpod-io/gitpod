@@ -539,6 +539,7 @@ installer --debug-version-file="/tmp/versions.yaml" validate config --config "$I
 log_info "Rendering manifests"
 installer --debug-version-file="/tmp/versions.yaml" render \
   --use-experimental-config \
+  --seed=200 \
   --namespace "${PREVIEW_NAMESPACE}" \
   --config "${INSTALLER_CONFIG_PATH}" > "${INSTALLER_RENDER_PATH}"
 
