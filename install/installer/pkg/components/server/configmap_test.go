@@ -16,6 +16,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
@@ -33,6 +34,7 @@ func TestConfigMap(t *testing.T) {
 		SessionSecret                     string
 		GitHubApp                         experimental.GithubApp
 		Auth                              auth.Config
+		Redis                             redis.Configuration
 	}
 
 	expectation := Expectation{
@@ -74,6 +76,9 @@ func TestConfigMap(t *testing.T) {
 					HTTPOnly: true,
 				},
 			},
+		},
+		Redis: redis.Configuration{
+			Address: "redis.test_namespace.svc.cluster.local:6379",
 		},
 	}
 
@@ -146,7 +151,8 @@ func TestConfigMap(t *testing.T) {
 			WebhookSecret:   config.GitHubApp.WebhookSecret,
 			CertSecretName:  config.GitHubApp.CertSecretName,
 		},
-		Auth: config.Auth,
+		Auth:  config.Auth,
+		Redis: config.Redis,
 	}
 
 	assert.Equal(t, expectation, actual)

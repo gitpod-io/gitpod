@@ -125,6 +125,7 @@ import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { IncrementalPrebuildsService } from "./prebuilds/incremental-prebuilds-service";
+import { RedisMutex } from "./mutex/redlock";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -343,4 +344,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
     bind(BitbucketServerApp).toSelf().inSingletonScope();
     bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
+
+    bind(RedisMutex).toSelf().inSingletonScope();
 });

@@ -262,6 +262,10 @@ export interface ConfigSerialized {
             cookie: CookieConfig;
         };
     };
+
+    redis: {
+        address: string;
+    };
 }
 
 export interface CookieConfig {

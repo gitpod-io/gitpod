@@ -18,3 +18,13 @@ func Objects(ctx *common.RenderContext) ([]runtime.Object, error) {
 		networkpolicy,
 	)(ctx)
 }
+
+type Configuration struct {
+	Address string `json:"address"`
+}
+
+func GetConfiguration(ctx *common.RenderContext) Configuration {
+	return Configuration{
+		Address: common.ClusterAddress(Component, ctx.Namespace, Port),
+	}
+}

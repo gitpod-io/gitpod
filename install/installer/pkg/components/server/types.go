@@ -7,6 +7,7 @@ package server
 import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 )
 
@@ -61,7 +62,10 @@ type ConfigSerialized struct {
 	PrebuildLimiter                PrebuildRateLimiters `json:"prebuildLimiter"`
 	WorkspaceClasses               []WorkspaceClass     `json:"workspaceClasses"`
 	InactivityPeriodForReposInDays int                  `json:"inactivityPeriodForReposInDays"`
+
+	Redis redis.Configuration `json:"redis"`
 }
+
 type CodeSyncResources struct {
 	RevLimit int32 `json:"revLimit"`
 }
