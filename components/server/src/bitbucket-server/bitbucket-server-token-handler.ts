@@ -13,7 +13,7 @@ import { BitbucketServerOAuthScopes } from "./bitbucket-server-oauth-scopes";
 
 @injectable()
 export class BitbucketServerTokenHelper {
-    @inject(AuthProviderParams) readonly config: AuthProviderParams;
+    // @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
 
     async getCurrentToken(user: User) {

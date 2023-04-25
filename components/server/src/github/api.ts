@@ -14,11 +14,12 @@ import { GarbageCollectedCache } from "@gitpod/gitpod-protocol/lib/util/garbage-
 import { injectable, inject } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitHubScope } from "./scopes";
-import { AuthProviderParams } from "../auth/auth-provider";
 import { GitHubTokenHelper } from "./github-token-helper";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 
 import { URL } from "url";
+import { HostContext } from "../auth/host-context";
+import { Config } from "../config";
 
 export class GitHubApiError extends Error {
     constructor(public readonly response: OctokitResponse<any>) {
@@ -34,21 +35,21 @@ export namespace GitHubApiError {
 
 @injectable()
 export class GitHubGraphQlEndpoint {
-    @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(GitHubTokenHelper) protected readonly tokenHelper: GitHubTokenHelper;
 
     public async getFileContents(
+        hostContext: HostContext,
         user: User,
         org: string,
         name: string,
         commitish: string,
         path: string,
     ): Promise<string | undefined> {
-        const githubToken = await this.tokenHelper.getTokenWithScopes(user, [
+        const host = hostContext.host;
+        const githubToken = await this.tokenHelper.getTokenWithScopes(user, host, [
             /* TODO: check if private_repo has to be required */
         ]);
         const token = githubToken.value;
-        const { host } = this.config;
         const urlString =
             host === "github.com"
                 ? `https://raw.githubusercontent.com/${org}/${name}/${commitish}/${path}`
@@ -75,14 +76,12 @@ export class GitHubGraphQlEndpoint {
      * | v4 | https://[YOUR_HOST]/api/graphql          | https://api.github.com/graphql |
      * +----+------------------------------------------+--------------------------------+
      */
-    get baseURLv4() {
-        return this.config.host === "github.com"
-            ? "https://api.github.com/graphql"
-            : `https://${this.config.host}/api/graphql`;
+    protected baseURLv4(host: string) {
+        return host === "github.com" ? "https://api.github.com/graphql" : `https://${host}/api/graphql`;
     }
 
-    public async runQuery<T>(user: User, query: string, variables?: object): Promise<QueryResult<T>> {
-        const githubToken = await this.tokenHelper.getTokenWithScopes(user, [
+    public async runQuery<T>(user: User, host: string, query: string, variables?: object): Promise<QueryResult<T>> {
+        const githubToken = await this.tokenHelper.getTokenWithScopes(user, host, [
             /* TODO: check if private_repo has to be required */
         ]);
         const token = githubToken.value;
@@ -90,11 +89,11 @@ export class GitHubGraphQlEndpoint {
             query: query.trim(),
             variables,
         };
-        return this.runQueryWithToken(token, request);
+        return this.runQueryWithToken(host, token, request);
     }
 
-    async runQueryWithToken<T>(token: string, request: object): Promise<QueryResult<T>> {
-        const response = await fetch(this.baseURLv4, {
+    async runQueryWithToken<T>(host: string, token: string, request: object): Promise<QueryResult<T>> {
+        const response = await fetch(this.baseURLv4(host), {
             timeout: 15000,
             method: "POST",
             body: JSON.stringify(request),
@@ -138,25 +137,32 @@ export interface QueryLocation {
 
 @injectable()
 export class GitHubRestApi {
-    @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(GitHubTokenHelper) protected readonly tokenHelper: GitHubTokenHelper;
-    public async create(userOrToken: User | string) {
+    @inject(Config) protected readonly config: Config;
+
+    public async create(userOrToken: User | string, host: string) {
         let token: string | undefined;
         if (typeof userOrToken === "string") {
             token = userOrToken;
         } else {
             const githubToken = await this.tokenHelper.getTokenWithScopes(
                 userOrToken,
+                host,
                 GitHubScope.Requirements.DEFAULT,
             );
             token = githubToken.value;
         }
-        const api = new Octokit(this.getGitHubOptions(token));
+        const api = new Octokit(this.getGitHubOptions(token, host));
         return api;
     }
 
+    private _userAgent: string | undefined;
+
     protected get userAgent() {
-        return (this.config.oauth && new URL(this.config.oauth?.callBackUrl)?.hostname) || "GitPod unknown";
+        if (!this._userAgent) {
+            this._userAgent = new URL(this.config.hostUrl.toString())?.hostname || "Gitpod";
+        }
+        return this._userAgent;
     }
 
     /**
@@ -167,27 +173,28 @@ export class GitHubRestApi {
      * | v4 | https://[YOUR_HOST]/api/graphql          | https://api.github.com/graphql |
      * +----+------------------------------------------+--------------------------------+
      */
-    get baseURL() {
-        return this.config.host === "github.com" ? "https://api.github.com" : `https://${this.config.host}/api/v3`;
+    protected baseURL(host: string) {
+        return host === "github.com" ? "https://api.github.com" : `https://${host}/api/v3`;
     }
 
-    protected getGitHubOptions(auth: string): OctokitOptions {
+    protected getGitHubOptions(auth: string, host: string): OctokitOptions {
         return {
             auth,
             request: {
                 timeout: 5000,
             },
-            baseUrl: this.baseURL,
+            baseUrl: this.baseURL(host),
             userAgent: this.userAgent,
         };
     }
 
     public async run<R>(
         userOrToken: User | string,
+        host: string,
         operation: (api: Octokit) => Promise<OctokitResponse<R>>,
     ): Promise<OctokitResponse<R>> {
         const before = new Date().getTime();
-        const userApi = await this.create(userOrToken);
+        const userApi = await this.create(userOrToken, host);
 
         try {
             const response = await operation(userApi);
@@ -210,13 +217,14 @@ export class GitHubRestApi {
     public async runWithCache(
         key: string,
         user: User,
+        host: string,
         operation: (api: Octokit) => Promise<OctokitResponse<any>>,
     ): Promise<OctokitResponse<any>> {
         const result = new Deferred<OctokitResponse<any>>();
         const before = new Date().getTime();
-        const cacheKey = `${this.config.host}-${key}`;
+        const cacheKey = `${user.id}-${host}-${key}`;
         const cachedResponse = this.cachedResponses.get(cacheKey);
-        const api = await this.create(user);
+        const api = await this.create(user, host);
 
         // using hooks in Octokits lifecycle for caching results
         // cf. https://github.com/octokit/rest.js/blob/master/docs/src/pages/api/06_hooks.md
@@ -264,19 +272,21 @@ export class GitHubRestApi {
 
     public async getRepository(
         user: User,
+        host: string,
         params: RestEndpointMethodTypes["repos"]["get"]["parameters"],
     ): Promise<Repository> {
         const key = `getRepository:${params.owner}/${params.repo}:${user.id}`;
-        const response = await this.runWithCache(key, user, (api) => api.repos.get(params));
+        const response = await this.runWithCache(key, user, host, (api) => api.repos.get(params));
         return response.data;
     }
 
     public async getBranch(
         user: User,
+        host: string,
         params: RestEndpointMethodTypes["repos"]["getBranch"]["parameters"],
     ): Promise<Branch> {
         const key = `getBranch:${params.owner}/${params.repo}/${params.branch}:${user.id}`;
-        const getBranchResponse = (await this.runWithCache(key, user, (api) =>
+        const getBranchResponse = (await this.runWithCache(key, user, host, (api) =>
             api.repos.getBranch(params),
         )) as RestEndpointMethodTypes["repos"]["getBranch"]["response"];
         const {
@@ -285,7 +295,7 @@ export class GitHubRestApi {
             _links: { html },
         } = getBranchResponse.data;
 
-        const commit = await this.getCommit(user, { ...params, ref: sha });
+        const commit = await this.getCommit(user, host, { ...params, ref: sha });
 
         return {
             name,
@@ -296,10 +306,11 @@ export class GitHubRestApi {
 
     public async getBranches(
         user: User,
+        host: string,
         params: RestEndpointMethodTypes["repos"]["listBranches"]["parameters"],
     ): Promise<Branch[]> {
         const key = `getBranches:${params.owner}/${params.repo}:${user.id}`;
-        const listBranchesResponse = (await this.runWithCache(key, user, (api) =>
+        const listBranchesResponse = (await this.runWithCache(key, user, host, (api) =>
             api.repos.listBranches(params),
         )) as RestEndpointMethodTypes["repos"]["listBranches"]["response"];
 
@@ -309,10 +320,10 @@ export class GitHubRestApi {
             const {
                 commit: { sha },
             } = branch;
-            const commit = await this.getCommit(user, { ...params, ref: sha });
+            const commit = await this.getCommit(user, host, { ...params, ref: sha });
 
             const key = `getBranch:${params.owner}/${params.repo}/${params.branch}:${user.id}`;
-            const getBranchResponse = (await this.runWithCache(key, user, (api) =>
+            const getBranchResponse = (await this.runWithCache(key, user, host, (api) =>
                 api.repos.listBranches(params),
             )) as RestEndpointMethodTypes["repos"]["getBranch"]["response"];
             const htmlUrl = getBranchResponse.data._links.html;
@@ -329,10 +340,11 @@ export class GitHubRestApi {
 
     public async getCommit(
         user: User,
+        host: string,
         params: RestEndpointMethodTypes["repos"]["getCommit"]["parameters"],
     ): Promise<CommitInfo> {
         const key = `getCommit:${params.owner}/${params.repo}/${params.ref}:${user.id}`;
-        const getCommitResponse = (await this.runWithCache(key, user, (api) =>
+        const getCommitResponse = (await this.runWithCache(key, user, host, (api) =>
             api.repos.getCommit(params),
         )) as RestEndpointMethodTypes["repos"]["getCommit"]["response"];
         const { sha, commit, author } = getCommitResponse.data;

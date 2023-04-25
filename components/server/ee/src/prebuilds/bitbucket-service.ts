@@ -20,7 +20,7 @@ export class BitbucketService extends RepositoryService {
 
     @inject(BitbucketApiFactory) protected api: BitbucketApiFactory;
     @inject(Config) protected readonly config: Config;
-    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
+    // @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
     @inject(TokenService) protected tokenService: TokenService;
     @inject(BitbucketContextParser) protected bitbucketContextParser: BitbucketContextParser;
 

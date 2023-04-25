@@ -30,7 +30,7 @@ import { GitLabTokenHelper } from "./gitlab-token-helper";
 
 @injectable()
 export class GitLabApi {
-    @inject(AuthProviderParams) readonly config: AuthProviderParams;
+    // @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(GitLabTokenHelper) protected readonly tokenHelper: GitLabTokenHelper;
 
     async create(userOrToken: User | string) {

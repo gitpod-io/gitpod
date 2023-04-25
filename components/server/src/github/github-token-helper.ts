@@ -5,7 +5,6 @@
  */
 
 import { injectable, inject } from "inversify";
-import { AuthProviderParams } from "../auth/auth-provider";
 import { User, Token } from "@gitpod/gitpod-protocol";
 import { UnauthorizedError } from "../errors";
 import { GitHubScope } from "./scopes";
@@ -13,12 +12,11 @@ import { TokenProvider } from "../user/token-provider";
 
 @injectable()
 export class GitHubTokenHelper {
-    @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
 
-    async getCurrentToken(user: User) {
+    async getCurrentToken(user: User, host: string) {
         try {
-            return await this.getTokenWithScopes(user, [
+            return await this.getTokenWithScopes(user, host, [
                 /* any scopes */
             ]);
         } catch {
@@ -26,8 +24,7 @@ export class GitHubTokenHelper {
         }
     }
 
-    async getTokenWithScopes(user: User, requiredScopes: string[]) {
-        const { host } = this.config;
+    async getTokenWithScopes(user: User, host: string, requiredScopes: string[]) {
         try {
             const token = await this.tokenProvider.getTokenForHost(user, host);
             if (this.containsScopes(token, requiredScopes)) {

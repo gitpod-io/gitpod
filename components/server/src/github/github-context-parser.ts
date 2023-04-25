@@ -22,21 +22,24 @@ import { IContextParser, IssueContexts, AbstractContextParser } from "../workspa
 import { GitHubScope } from "./scopes";
 import { GitHubTokenHelper } from "./github-token-helper";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { HostContext } from "../auth/host-context";
 
 @injectable()
 export class GithubContextParser extends AbstractContextParser implements IContextParser {
     @inject(GitHubGraphQlEndpoint) protected readonly githubQueryApi: GitHubGraphQlEndpoint;
     @inject(GitHubTokenHelper) protected readonly tokenHelper: GitHubTokenHelper;
 
-    protected get authProviderId() {
-        return this.config.id;
-    }
-
-    public async handle(ctx: TraceContext, user: User, contextUrl: string): Promise<CommitContext> {
+    public async handle(
+        ctx: TraceContext,
+        hostContext: HostContext,
+        user: User,
+        contextUrl: string,
+    ): Promise<CommitContext> {
         const span = TraceContext.startSpan("GithubContextParser.handle", ctx);
 
+        const host = hostContext.host;
         try {
-            const { host, owner, repoName, moreSegments } = await this.parseURL(user, contextUrl);
+            const { owner, repoName, moreSegments } = await this.parseURL(hostContext, user, contextUrl);
             if (moreSegments.length > 0) {
                 switch (moreSegments[0]) {
                     case "pull": {
@@ -87,16 +90,16 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             return await this.handleDefaultContext({ span }, user, host, owner, repoName);
         } catch (error) {
             if (error && error.code === 401) {
-                const token = await this.tokenHelper.getCurrentToken(user);
+                const token = await this.tokenHelper.getCurrentToken(user, host);
                 if (token) {
                     const scopes = token.scopes;
                     // most likely the token needs to be updated after revoking by user.
-                    throw UnauthorizedError.create(this.config.host, scopes, "http-unauthorized");
+                    throw UnauthorizedError.create(hostContext.host, scopes, "http-unauthorized");
                 }
                 // todo@alex: this is very unlikely. is coercing it into a valid case helpful?
                 // here, GH API responded with a 401 code, and we are missing a token. OTOH, a missing token would not lead to a request.
                 throw UnauthorizedError.create(
-                    this.config.host,
+                    hostContext.host,
                     GitHubScope.Requirements.PUBLIC_REPO,
                     "missing-identity",
                 );
@@ -119,6 +122,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         try {
             const result: any = await this.githubQueryApi.runQuery(
                 user,
+                host,
                 `
                 query {
                     repository(name: "${repoName}", owner: "${owner}") {
@@ -137,9 +141,9 @@ export class GithubContextParser extends AbstractContextParser implements IConte
 
             if (result.data.repository === null) {
                 throw await NotFoundError.create(
-                    await this.tokenHelper.getCurrentToken(user),
+                    await this.tokenHelper.getCurrentToken(user, host),
                     user,
-                    this.config.host,
+                    host,
                     owner,
                     repoName,
                 );
@@ -187,6 +191,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 const pathExpression = JSON.stringify(`${branchNameOrCommitHash}:${path}`);
                 const result: any = await this.githubQueryApi.runQuery(
                     user,
+                    host,
                     `
                     query {
                         repository(name: "${repoName}", owner: "${owner}") {
@@ -221,9 +226,9 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 const repo = result.data.repository;
                 if (repo === null) {
                     throw await NotFoundError.create(
-                        await this.tokenHelper.getCurrentToken(user),
+                        await this.tokenHelper.getCurrentToken(user, host),
                         user,
-                        this.config.host,
+                        host,
                         owner,
                         repoName,
                     );
@@ -295,6 +300,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         try {
             const result: any = await this.githubQueryApi.runQuery(
                 user,
+                host,
                 `
                 query {
                     repository(name: "${repoName}", owner: "${owner}") {
@@ -319,9 +325,9 @@ export class GithubContextParser extends AbstractContextParser implements IConte
 
             if (result.data.repository === null) {
                 throw await NotFoundError.create(
-                    await this.tokenHelper.getCurrentToken(user),
+                    await this.tokenHelper.getCurrentToken(user, host),
                     user,
-                    this.config.host,
+                    host,
                     owner,
                     repoName,
                 );
@@ -364,6 +370,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         try {
             const result: any = await this.githubQueryApi.runQuery(
                 user,
+                host,
                 `
                 query {
                     repository(name: "${repoName}", owner: "${owner}") {
@@ -408,9 +415,9 @@ export class GithubContextParser extends AbstractContextParser implements IConte
 
             if (result.data.repository === null) {
                 throw await NotFoundError.create(
-                    await this.tokenHelper.getCurrentToken(user),
+                    await this.tokenHelper.getCurrentToken(user, host),
                     user,
-                    this.config.host,
+                    host,
                     owner,
                     repoName,
                 );
@@ -466,6 +473,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         try {
             const result: any = await this.githubQueryApi.runQuery(
                 user,
+                host,
                 `
                 query {
                     repository(name: "${repoName}", owner: "${owner}") {
@@ -487,9 +495,9 @@ export class GithubContextParser extends AbstractContextParser implements IConte
 
             if (result.data.repository === null) {
                 throw await NotFoundError.create(
-                    await this.tokenHelper.getCurrentToken(user),
+                    await this.tokenHelper.getCurrentToken(user, host),
                     user,
-                    this.config.host,
+                    host,
                     owner,
                     repoName,
                 );

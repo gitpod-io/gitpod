@@ -5,11 +5,11 @@
  */
 
 import * as express from "express";
-import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
+import { User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { saveSession } from "../express-util";
 import { Session } from "../express";
 
-import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
+import { HostContext } from "./host-context";
 
 export const AuthProviderParams = Symbol("AuthProviderParams");
 export interface AuthProviderParams extends AuthProviderEntry {
@@ -33,6 +33,12 @@ export interface AuthProviderParams extends AuthProviderEntry {
 
     readonly description: string;
     readonly icon: string;
+
+    readonly requirements?: {
+        readonly default: string[];
+        readonly publicRepo: string[];
+        readonly privateRepo: string[];
+    };
 }
 export function parseAuthProviderParamsFromEnv(json: object): AuthProviderParams[] {
     if (Array.isArray(json)) {
@@ -60,7 +66,6 @@ export interface AuthUserSetup {
     authUser: AuthUser;
     blockUser?: boolean;
     currentScopes: string[];
-    envVars?: UserEnvVarValue[];
 }
 
 export interface AuthUser {
@@ -75,13 +80,33 @@ export interface AuthUser {
 
 export const AuthProvider = Symbol("AuthProvider");
 export interface AuthProvider {
-    readonly authProviderId: string;
-    readonly params: AuthProviderParams;
-    readonly info: AuthProviderInfo;
-    readonly authCallbackPath: string;
-    callback(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void>;
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scopes?: string[]): void;
-    refreshToken?(user: User): Promise<void>;
+    // readonly authProviderId: string;
+    // readonly params: AuthProviderParams;
+    // readonly info: AuthProviderInfo;
+    // readonly authCallbackPath: string;
+
+    readonly type: string;
+
+    readonly scopeRequirements: {
+        readonly default: string[];
+        readonly publicRepo: string[];
+        readonly privateRepo: string[];
+    };
+
+    callback(
+        hostContext: HostContext,
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+    ): Promise<void>;
+    authorize(
+        hostContext: HostContext,
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        scopes?: string[],
+    ): void;
+    refreshToken?(hostContext: HostContext, user: User): Promise<void>;
 }
 
 export interface AuthFlow {

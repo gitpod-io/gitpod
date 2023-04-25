@@ -4,17 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { HostContext } from "./host-context";
+import { HostContext, HostServices } from "./host-context";
 import { interfaces, injectable, inject } from "inversify";
-import { AuthProviderParams } from "./auth-provider";
+import { AuthProvider } from "./auth-provider";
 import { Config } from "../config";
 import { AuthProviderService } from "./auth-provider-service";
-import { HostContextProvider, HostContextProviderFactory } from "./host-context-provider";
+import { HostContextProvider, HostServicesFactory } from "./host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { HostContainerMapping } from "./host-container-mapping";
-import { RepositoryService } from "../repohost/repo-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { IContextParser } from "../workspace/context-parser";
 
 @injectable()
 export class HostContextProviderImpl implements HostContextProvider {
@@ -27,8 +27,8 @@ export class HostContextProviderImpl implements HostContextProvider {
     @inject(AuthProviderService)
     protected authProviderService: AuthProviderService;
 
-    @inject(HostContextProviderFactory)
-    protected factory: HostContextProviderFactory;
+    @inject(HostServicesFactory)
+    protected hostServicesFactory: HostServicesFactory;
 
     async init() {
         await this.ensureInitialized();
@@ -71,55 +71,55 @@ export class HostContextProviderImpl implements HostContextProvider {
         }
     }
 
-    protected async updateDynamicHosts(ctx: TraceContext) {
-        const knownOAuthRevisions = Array.from(this.dynamicHosts.entries())
-            .map(([_, hostContext]) => hostContext.authProvider.params.oauthRevision)
-            .filter((rev) => !!rev) as string[];
-        const newAndUpdatedAuthProviders = await this.authProviderService.getAllAuthProviders(knownOAuthRevisions);
-        ctx.span?.setTag("updateDynamicHosts.newAndUpdatedAuthProviders", newAndUpdatedAuthProviders.length);
+    // protected async updateDynamicHosts(ctx: TraceContext) {
+    //     const knownOAuthRevisions = Array.from(this.dynamicHosts.entries())
+    //         .map(([_, hostContext]) => hostContext.authProvider.params.oauthRevision)
+    //         .filter((rev) => !!rev) as string[];
+    //     const newAndUpdatedAuthProviders = await this.authProviderService.getAllAuthProviders(knownOAuthRevisions);
+    //     ctx.span?.setTag("updateDynamicHosts.newAndUpdatedAuthProviders", newAndUpdatedAuthProviders.length);
 
-        for (const config of newAndUpdatedAuthProviders) {
-            const { host } = config;
+    //     for (const config of newAndUpdatedAuthProviders) {
+    //         const { host } = config;
 
-            const existingContext = this.dynamicHosts.get(host);
-            const existingConfig = existingContext && existingContext.authProvider.params;
-            if (existingConfig && config.id === existingConfig.id) {
-                const sameHost = config.host === existingConfig.host;
-                if (!sameHost) {
-                    log.warn("Ignoring host update for dynamic Auth Provider: " + host, { config, existingConfig });
-                    continue;
-                }
-                const sameOwner = config.ownerId === existingConfig.ownerId;
-                const sameStatus = config.status === existingConfig.status;
-                const sameOAuthRevision =
-                    !!config.oauthRevision && existingConfig.oauthRevision === config.oauthRevision;
-                if (sameOwner && sameStatus && sameOAuthRevision) {
-                    continue;
-                }
-                log.debug("Updating existing dynamic Auth Provider: " + host, { config, existingConfig });
-            } else {
-                log.debug("Creating new dynamic Auth Provider: " + host, { config });
-            }
+    //         const existingContext = this.dynamicHosts.get(host);
+    //         const existingConfig = existingContext && existingContext.authProvider.params;
+    //         if (existingConfig && config.id === existingConfig.id) {
+    //             const sameHost = config.host === existingConfig.host;
+    //             if (!sameHost) {
+    //                 log.warn("Ignoring host update for dynamic Auth Provider: " + host, { config, existingConfig });
+    //                 continue;
+    //             }
+    //             const sameOwner = config.ownerId === existingConfig.ownerId;
+    //             const sameStatus = config.status === existingConfig.status;
+    //             const sameOAuthRevision =
+    //                 !!config.oauthRevision && existingConfig.oauthRevision === config.oauthRevision;
+    //             if (sameOwner && sameStatus && sameOAuthRevision) {
+    //                 continue;
+    //             }
+    //             log.debug("Updating existing dynamic Auth Provider: " + host, { config, existingConfig });
+    //         } else {
+    //             log.debug("Creating new dynamic Auth Provider: " + host, { config });
+    //         }
 
-            const container = this.factory.createHostContext(config);
-            if (container) {
-                this.dynamicHosts.set(host, container);
-            } else {
-                log.warn("Did not update dynamic Auth Provider " + host, { config });
-            }
-        }
+    //         const container = this.factory.createHostContext(config);
+    //         if (container) {
+    //             this.dynamicHosts.set(host, container);
+    //         } else {
+    //             log.warn("Did not update dynamic Auth Provider " + host, { config });
+    //         }
+    //     }
 
-        // remove obsolete entries
-        const currentHosts = new Set(await this.authProviderService.getAllAuthProviderHosts());
-        ctx.span?.setTag("updateDynamicHosts.currentHostProviders", currentHosts.size);
-        // HINT: values of `currentHosts` are expected to be lower case
-        const tobeRemoved = [...this.dynamicHosts.keys()].filter((h) => !currentHosts.has(h));
-        for (const host of tobeRemoved) {
-            log.debug("Disposing dynamic Auth Provider: " + host);
+    //     // remove obsolete entries
+    //     const currentHosts = new Set(await this.authProviderService.getAllAuthProviderHosts());
+    //     ctx.span?.setTag("updateDynamicHosts.currentHostProviders", currentHosts.size);
+    //     // HINT: values of `currentHosts` are expected to be lower case
+    //     const tobeRemoved = [...this.dynamicHosts.keys()].filter((h) => !currentHosts.has(h));
+    //     for (const host of tobeRemoved) {
+    //         log.debug("Disposing dynamic Auth Provider: " + host);
 
-            this.dynamicHosts.delete(host);
-        }
-    }
+    //         this.dynamicHosts.delete(host);
+    //     }
+    // }
 
     getAll(): HostContext[] {
         this.ensureInitialized().catch((err) => {
@@ -143,25 +143,24 @@ export class HostContextProviderImpl implements HostContextProvider {
     }
 
     findByAuthProviderId(authProviderId: string): HostContext | undefined {
-        return this.getAll().find((h) => h.authProvider.authProviderId === authProviderId);
+        return this.getAll().find((h) => h.config.id === authProviderId);
     }
 
-    static createHostContext(
-        parentContainer: interfaces.Container,
-        authProviderConfig: AuthProviderParams,
-    ): HostContext | undefined {
+    static createHostServicesByType(parentContainer: interfaces.Container, type: string): HostServices | undefined {
         const container = parentContainer.createChild();
-        container.bind(AuthProviderParams).toConstantValue(authProviderConfig);
-        container.bind(HostContext).toSelf().inSingletonScope();
-        container.bind(RepositoryService).toSelf().inSingletonScope();
 
         const hostContainerMapping = parentContainer.get(HostContainerMapping);
-        const containerModules = hostContainerMapping.get(authProviderConfig.type);
-        if (!containerModules) {
+        const containerModule = hostContainerMapping.get(type);
+        if (!containerModule) {
             return undefined;
         }
 
-        containerModules.forEach((m) => container.load(m));
-        return container.get<HostContext>(HostContext);
+        container.load(containerModule);
+
+        return {
+            authProvider: container.get(AuthProvider),
+            contextParser: container.get(IContextParser),
+            // FIXME: add the rest of the services here as well
+        };
     }
 }

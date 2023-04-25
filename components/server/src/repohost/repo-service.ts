@@ -6,18 +6,19 @@
 
 import { ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { injectable } from "inversify";
+import { HostContext } from "../auth/host-context";
 
 @injectable()
 export class RepositoryService {
-    async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
+    async getRepositoriesForAutomatedPrebuilds(hostContext: HostContext, user: User): Promise<ProviderRepository[]> {
         return [];
     }
 
-    async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
+    async canInstallAutomatedPrebuilds(hostContext: HostContext, user: User, cloneUrl: string): Promise<boolean> {
         return false;
     }
 
-    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
+    async installAutomatedPrebuilds(hostContext: HostContext, user: User, cloneUrl: string): Promise<void> {
         throw new Error("unsupported");
     }
 }

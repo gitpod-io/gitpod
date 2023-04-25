@@ -71,8 +71,6 @@ export namespace User {
         const res = { ...user };
         delete res.additionalData;
         res.identities = res.identities.map((i) => {
-            delete i.tokens;
-
             // The user field is not in the Identity shape, but actually exists on DBIdentity.
             // Trying to push this object out via JSON RPC will fail because of the cyclic nature
             // of this field.
@@ -639,12 +637,8 @@ export interface Identity {
     authId: string;
     authName: string;
     primaryEmail?: string;
-    /** @deprecated */
-    tokens?: Token[];
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
-    // readonly identities cannot be modified by the user
-    readonly?: boolean;
 }
 
 export type IdentityLookup = Pick<Identity, "authProviderId" | "authId">;

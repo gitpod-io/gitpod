@@ -21,7 +21,7 @@ export class GitlabService extends RepositoryService {
 
     @inject(GitLabApi) protected api: GitLabApi;
     @inject(Config) protected readonly config: Config;
-    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
+    // @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
     @inject(TokenService) protected tokenService: TokenService;
     @inject(GitlabContextParser) protected gitlabContextParser: GitlabContextParser;
 

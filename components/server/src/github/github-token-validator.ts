@@ -15,7 +15,7 @@ export class GitHubTokenValidator implements IGitTokenValidator {
     @inject(GitHubGraphQlEndpoint) githubGraphQLEndpoint: GitHubGraphQlEndpoint;
 
     async checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult> {
-        const { token, owner, repo } = params;
+        const { token, owner, repo, host } = params;
         const repoFullName = `${owner}/${repo}`;
 
         const parsedRepoName = this.parseGitHubRepoName(repoFullName);
@@ -24,7 +24,7 @@ export class GitHubTokenValidator implements IGitTokenValidator {
         }
         let gitHubRepo;
         try {
-            gitHubRepo = await this.githubRestApi.run(token, (api) => api.repos.get(parsedRepoName));
+            gitHubRepo = await this.githubRestApi.run(token, host, (api) => api.repos.get(parsedRepoName));
         } catch (error) {
             if (GitHubApiError.is(error) && error.response?.status === 404) {
                 return { found: false };
@@ -57,7 +57,7 @@ export class GitHubTokenValidator implements IGitTokenValidator {
 				`.trim(),
             };
             try {
-                await this.githubGraphQLEndpoint.runQueryWithToken(token, request);
+                await this.githubGraphQLEndpoint.runQueryWithToken(host, token, request);
             } catch (error) {
                 const errors = error.result?.errors;
                 if (errors && errors[0] && (errors[0] as any)["type"] === "FORBIDDEN") {

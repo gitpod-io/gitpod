@@ -81,8 +81,7 @@ export class ProjectsService {
 
     protected getRepositoryProvider(project: Project) {
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
-        const repositoryProvider =
-            parsedUrl && this.hostContextProvider.get(parsedUrl.host)?.services?.repositoryProvider;
+        const repositoryProvider = parsedUrl && this.hostContextProvider.get(parsedUrl.host)?.repositoryProvider;
         return repositoryProvider;
     }
 
@@ -92,17 +91,18 @@ export class ProjectsService {
             return [];
         }
         const { owner, repo } = parsedUrl;
-        const repositoryProvider = this.getRepositoryProvider(project);
+        const hostContext = this.hostContextProvider.get(parsedUrl.host);
+        const repositoryProvider = parsedUrl && hostContext?.repositoryProvider;
         if (!repositoryProvider) {
             return [];
         }
-        const repository = await repositoryProvider.getRepo(user, owner, repo);
+        const repository = await repositoryProvider.getRepo(hostContext, user, owner, repo);
         const branches: Branch[] = [];
         if (branchName) {
-            const details = await repositoryProvider.getBranch(user, owner, repo, branchName);
+            const details = await repositoryProvider.getBranch(hostContext, user, owner, repo, branchName);
             branches.push(details);
         } else {
-            branches.push(...(await repositoryProvider.getBranches(user, owner, repo)));
+            branches.push(...(await repositoryProvider.getBranches(hostContext, user, owner, repo)));
         }
 
         const result: Project.BranchDetails[] = [];
@@ -173,28 +173,30 @@ export class ProjectsService {
         // Install the prebuilds webhook if possible
         let { userId, teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
+
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
-        const authProvider = hostContext && hostContext.authProvider.info;
-        const type = authProvider && authProvider.authProviderType;
+        const type = hostContext && hostContext.config.type;
+
+        // const type = authProvider && authProvider.authProviderType;
         if (
             type === "GitLab" ||
             type === "Bitbucket" ||
             type === "BitbucketServer" ||
-            (type === "GitHub" && (authProvider?.host !== "github.com" || !this.config.githubApp?.enabled))
+            (type === "GitHub" && (hostContext?.host !== "github.com" || !this.config.githubApp?.enabled))
         ) {
-            const repositoryService = hostContext?.services?.repositoryService;
+            const repositoryService = hostContext?.repositoryService;
             if (repositoryService) {
                 // Note: For GitLab, we expect .canInstallAutomatedPrebuilds() to always return true, because earlier
                 // in the project creation flow, we only propose repositories where the user is actually allowed to
                 // install a webhook.
-                if (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl)) {
+                if (await repositoryService.canInstallAutomatedPrebuilds(hostContext, installer, cloneUrl)) {
                     log.info("Update prebuild installation for project.", {
                         cloneUrl,
                         teamId,
                         userId,
                         installerId: installer.id,
                     });
-                    await repositoryService.installAutomatedPrebuilds(installer, cloneUrl);
+                    await repositoryService.installAutomatedPrebuilds(hostContext, installer, cloneUrl);
                 }
             }
         }

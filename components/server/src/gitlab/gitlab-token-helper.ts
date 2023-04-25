@@ -13,7 +13,7 @@ import { TokenProvider } from "../user/token-provider";
 
 @injectable()
 export class GitLabTokenHelper {
-    @inject(AuthProviderParams) readonly config: AuthProviderParams;
+    // @inject(AuthProviderParams) readonly config: AuthProviderParams;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
 
     async getCurrentToken(user: User) {

@@ -7,24 +7,21 @@
 import { injectable, interfaces } from "inversify";
 import { githubContainerModule } from "../github/github-container-module";
 import { gitlabContainerModule } from "../gitlab/gitlab-container-module";
-import { genericAuthContainerModule } from "./oauth-container-module";
 import { bitbucketContainerModule } from "../bitbucket/bitbucket-container-module";
 import { bitbucketServerContainerModule } from "../bitbucket-server/bitbucket-server-container-module";
 
 @injectable()
 export class HostContainerMapping {
-    public get(type: string): interfaces.ContainerModule[] | undefined {
+    public get(type: string): interfaces.ContainerModule | undefined {
         switch (type) {
             case "GitHub":
-                return [githubContainerModule];
+                return githubContainerModule;
             case "GitLab":
-                return [gitlabContainerModule];
-            case "OAuth":
-                return [genericAuthContainerModule];
+                return gitlabContainerModule;
             case "Bitbucket":
-                return [bitbucketContainerModule];
+                return bitbucketContainerModule;
             case "BitbucketServer":
-                return [bitbucketServerContainerModule];
+                return bitbucketServerContainerModule;
             default:
                 return undefined;
         }

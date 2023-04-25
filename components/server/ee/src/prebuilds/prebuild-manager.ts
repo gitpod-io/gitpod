@@ -20,7 +20,7 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { getCommitInfo, HostContextProvider } from "../../../src/auth/host-context-provider";
+import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
 import { ConfigProvider } from "../../../src/workspace/config-provider";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
@@ -39,6 +39,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UserService } from "../../../src/user/user-service";
 import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
 import { EnvVarService } from "../../../src/workspace/env-var-service";
+import { RepoURL } from "../../../src/repohost";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -241,12 +242,7 @@ export class PrebuildManager {
             if (project) {
                 let aCommitInfo = commitInfo;
                 if (!aCommitInfo) {
-                    aCommitInfo = await getCommitInfo(
-                        this.hostContextProvider,
-                        user,
-                        context.repository.cloneUrl,
-                        context.revision,
-                    );
+                    aCommitInfo = await this.getCommitInfo(user, context.repository.cloneUrl, context.revision);
                     if (!aCommitInfo) {
                         aCommitInfo = {
                             author: "unknown",
@@ -289,6 +285,21 @@ export class PrebuildManager {
         } finally {
             span.finish();
         }
+    }
+
+    protected async getCommitInfo(user: User, repoURL: string, commitSHA: string) {
+        const parsedRepo = RepoURL.parseRepoUrl(repoURL)!;
+        const hostCtx = this.hostContextProvider.get(parsedRepo.host);
+        let commitInfo: CommitInfo | undefined;
+        if (hostCtx?.repositoryProvider) {
+            commitInfo = await hostCtx?.repositoryProvider.getCommitInfo(
+                user,
+                parsedRepo.owner,
+                parsedRepo.repo,
+                commitSHA,
+            );
+        }
+        return commitInfo;
     }
 
     protected async checkUsageLimitReached(user: User, organizationId?: string): Promise<void> {

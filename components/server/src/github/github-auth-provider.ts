@@ -6,7 +6,6 @@
 
 import { injectable } from "inversify";
 import * as express from "express";
-import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitHubScope } from "./scopes";
 import { AuthUserSetup } from "../auth/auth-provider";
@@ -14,27 +13,28 @@ import { Octokit } from "@octokit/rest";
 import { GitHubApiError } from "./api";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
 import { oauthUrls } from "./github-urls";
+import { HostContext } from "../auth/host-context";
 
 @injectable()
 export class GitHubAuthProvider extends GenericAuthProvider {
-    get info(): AuthProviderInfo {
+    get type(): string {
+        return "GitHub";
+    }
+
+    get scopeRequirements() {
         return {
-            ...this.defaultInfo(),
-            scopes: GitHubScope.All,
-            requirements: {
-                default: GitHubScope.Requirements.DEFAULT,
-                publicRepo: GitHubScope.Requirements.PUBLIC_REPO,
-                privateRepo: GitHubScope.Requirements.PRIVATE_REPO,
-            },
+            default: GitHubScope.Requirements.DEFAULT,
+            publicRepo: GitHubScope.Requirements.PUBLIC_REPO,
+            privateRepo: GitHubScope.Requirements.PRIVATE_REPO,
         };
     }
 
     /**
      * Augmented OAuthConfig for GitHub
      */
-    protected get oauthConfig() {
-        const oauth = this.params.oauth!;
-        const defaultUrls = oauthUrls(this.params.host);
+    protected oauthConfig(hostContext: HostContext) {
+        const oauth = hostContext.config.oauth;
+        const defaultUrls = oauthUrls(hostContext.host);
         const scopeSeparator = ",";
         return <typeof oauth>{
             ...oauth!,
@@ -45,8 +45,14 @@ export class GitHubAuthProvider extends GenericAuthProvider {
         };
     }
 
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        super.authorize(req, res, next, scope ? scope : GitHubScope.Requirements.DEFAULT);
+    authorize(
+        hostContext: HostContext,
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        scope?: string[],
+    ): void {
+        super.authorize(hostContext, req, res, next, scope ? scope : GitHubScope.Requirements.DEFAULT);
     }
 
     /**
@@ -57,18 +63,19 @@ export class GitHubAuthProvider extends GenericAuthProvider {
      * | v4 | https://[YOUR_HOST]/api/graphql          | https://api.github.com/graphql |
      * +----+------------------------------------------+--------------------------------+
      */
-    protected get baseURL() {
-        return this.params.host === "github.com" ? "https://api.github.com" : `https://${this.params.host}/api/v3`;
+    protected baseURL(host: string) {
+        return host === "github.com" ? "https://api.github.com" : `https://${host}/api/v3`;
     }
 
-    protected async readAuthUserSetup(accessToken: string, _tokenResponse: object) {
+    protected async readAuthUserSetup(hostContext: HostContext, accessToken: string, _tokenResponse: object) {
+        const oauthConfig = hostContext.config.oauth;
         const api = new Octokit({
             auth: accessToken,
             request: {
                 timeout: 5000,
             },
-            userAgent: this.USER_AGENT,
-            baseUrl: this.baseURL,
+            userAgent: this.USER_AGENT(oauthConfig.callBackUrl),
+            baseUrl: this.baseURL(hostContext.host),
         });
         const fetchCurrentUser = async () => {
             const response = await api.users.getAuthenticated();
@@ -97,7 +104,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             // https://developer.github.com/apps/building-oauth-apps/understanding-scopes-for-oauth-apps/
             // e.g. X-OAuth-Scopes: repo, user
             const currentScopes = this.normalizeScopes(
-                (headers as any)["x-oauth-scopes"].split(this.oauthConfig.scopeSeparator!).map((s: string) => s.trim()),
+                (headers as any)["x-oauth-scopes"].split(oauthConfig.scopeSeparator!).map((s: string) => s.trim()),
             );
 
             const filterPrimaryEmail = (emails: typeof userEmails) => {

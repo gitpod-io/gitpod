@@ -23,7 +23,7 @@ import { ContextParser } from "./workspace/context-parser-service";
 import { SnapshotContextParser } from "./workspace/snapshot-context-parser";
 import { EnforcementController, EnforcementControllerServerFactory } from "./user/enforcement-endpoint";
 import { MessagebusConfiguration } from "@gitpod/gitpod-messagebus/lib/config";
-import { HostContextProvider, HostContextProviderFactory } from "./auth/host-context-provider";
+import { HostContextProvider, HostServicesFactory } from "./auth/host-context-provider";
 import { TokenService } from "./user/token-service";
 import { TokenProvider } from "./user/token-provider";
 import { UserService } from "./user/user-service";
@@ -191,10 +191,9 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(MonitoringEndpointsApp).toSelf().inSingletonScope();
 
     bind(HostContainerMapping).toSelf().inSingletonScope();
-    bind(HostContextProviderFactory)
+    bind(HostServicesFactory)
         .toDynamicValue(({ container }) => ({
-            createHostContext: (config: AuthProviderParams) =>
-                HostContextProviderImpl.createHostContext(container, config),
+            createHostServices: (type: string) => HostContextProviderImpl.createHostServicesByType(container, type),
         }))
         .inSingletonScope();
     bind(HostContextProvider).to(HostContextProviderImpl).inSingletonScope();

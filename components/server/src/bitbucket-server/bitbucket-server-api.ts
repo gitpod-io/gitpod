@@ -12,7 +12,7 @@ import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
 
 @injectable()
 export class BitbucketServerApi {
-    @inject(AuthProviderParams) protected readonly config: AuthProviderParams;
+    // @inject(AuthProviderParams) protected readonly config: AuthProviderParams;
     @inject(BitbucketServerTokenHelper) protected readonly tokenHelper: BitbucketServerTokenHelper;
 
     public async runQuery<T>(

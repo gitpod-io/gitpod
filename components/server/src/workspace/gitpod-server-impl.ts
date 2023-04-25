@@ -192,6 +192,7 @@ import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/
 import { EnvVarService } from "./env-var-service";
 import { LinkedInService } from "../linkedin-service";
 import { SnapshotService, WaitForSnapshotOptions } from "./snapshot-service";
+import { AuthProviderParams } from "../auth/auth-provider";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -441,9 +442,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             this.showSetupCondition = { value: false };
         }
         if (!this.showSetupCondition || this.showSetupCondition.value === true) {
-            const hasAnyStaticProviders = this.hostContextProvider
-                .getAll()
-                .some((hc) => hc.authProvider.params.builtin === true);
+            const hasAnyStaticProviders = this.hostContextProvider.getAll().some((hc) => hc.config.builtin === true);
             if (!hasAnyStaticProviders) {
                 const userCount = await this.userDB.getUserCount();
                 this.showSetupCondition = { value: userCount === 0 };
@@ -562,19 +561,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const { builtinAuthProvidersConfigured } = this.config;
 
         const hostContexts = this.hostContextProvider.getAll();
-        const authProviders = hostContexts.map((hc) => hc.authProvider.info);
+        const authProviders = hostContexts.map((hc) => hc.config);
 
-        const isBuiltIn = (info: AuthProviderInfo) => !info.ownerId;
-        const isNotHidden = (info: AuthProviderInfo) => !info.hiddenOnDashboard;
-        const isVerified = (info: AuthProviderInfo) => info.verified;
-        const isNotOrgProvider = (info: AuthProviderInfo) => !info.organizationId;
+        const isBuiltIn = (info: AuthProviderParams) => !info.ownerId;
+        const isNotHidden = (info: AuthProviderParams) => !info.hiddenOnDashboard;
+        const isVerified = (info: AuthProviderParams) => info.verified;
+        const isNotOrgProvider = (info: AuthProviderParams) => !info.organizationId;
 
         // if no user session is available, compute public information only
         if (!this.user) {
-            const toPublic = (info: AuthProviderInfo) =>
+            const toPublic = (info: AuthProviderParams) =>
                 <AuthProviderInfo>{
-                    authProviderId: info.authProviderId,
-                    authProviderType: info.authProviderType,
+                    authProviderId: info.id,
+                    authProviderType: info.type,
                     disallowLogin: info.disallowLogin,
                     host: info.host,
                     icon: info.icon,
@@ -590,20 +589,28 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // otherwise show all the details
         const result: AuthProviderInfo[] = [];
         for (const info of authProviders) {
-            const identity = this.user.identities.find((i) => i.authProviderId === info.authProviderId);
+            const item = <AuthProviderInfo>{
+                authProviderId: info.id,
+                authProviderType: info.type,
+                disallowLogin: info.disallowLogin,
+                host: info.host,
+                icon: info.icon,
+                description: info.description,
+            };
+            const identity = this.user.identities.find((i) => i.authProviderId === info.id);
             if (identity) {
-                result.push({ ...info, isReadonly: identity.readonly });
+                result.push(item);
                 continue;
             }
             if (info.ownerId === this.user.id) {
-                result.push(info);
+                result.push(item);
                 continue;
             }
             if (builtinAuthProvidersConfigured && !isBuiltIn(info)) {
                 continue;
             }
             if (isNotHidden(info) && isVerified(info)) {
-                result.push(info);
+                result.push(item);
             }
         }
         return result;
@@ -1186,16 +1193,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 const cloneUrl = context.actual.repository.cloneUrl;
                 const host = new URL(cloneUrl).hostname;
                 const hostContext = this.hostContextProvider.get(host);
-                const services = hostContext && hostContext.services;
-                if (!hostContext || !services) {
+                const repositoryService = hostContext && hostContext.repositoryService;
+                if (!hostContext || !repositoryService) {
                     console.error("Unknown host: " + host);
                 } else {
                     // on purpose to not await on that installation process, because it‘s not required of workspace start
                     // See https://github.com/gitpod-io/gitpod/pull/6420#issuecomment-953499632 for more detail
                     (async () => {
-                        if (await services.repositoryService.canInstallAutomatedPrebuilds(user, cloneUrl)) {
+                        if (await repositoryService.canInstallAutomatedPrebuilds(hostContext, user, cloneUrl)) {
                             console.log("Installing automated prebuilds for " + cloneUrl);
-                            await services.repositoryService.installAutomatedPrebuilds(user, cloneUrl);
+                            await repositoryService.installAutomatedPrebuilds(hostContext, user, cloneUrl);
                         }
                     })().catch((e) => console.error("Install automated prebuilds failed", e));
                 }
@@ -1436,12 +1443,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
                         const { host, owner, repo } = repoUrl;
                         const hostContext = this.hostContextProvider.get(host);
-                        if (!hostContext || !hostContext.services) {
+                        if (!hostContext || !hostContext.repositoryProvider) {
                             return undefined;
                         }
-                        const repoProvider = hostContext.services.repositoryProvider;
+                        const repoProvider = hostContext.repositoryProvider;
                         try {
-                            const repository = await repoProvider.getRepo(user, owner, repo);
+                            const repository = await repoProvider.getRepo(hostContext, user, owner, repo);
                             return {
                                 url: repository.webUrl,
                                 name: repository.name,
@@ -1505,12 +1512,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         authProviders.map(async (p) => {
                             try {
                                 const hostContext = this.hostContextProvider.get(p.host);
-                                const services = hostContext?.services;
-                                if (!services) {
+                                const repositoryProvider = hostContext?.repositoryProvider;
+                                if (!repositoryProvider) {
                                     log.error(logCtx, "Unsupported repository host: " + p.host);
                                     return;
                                 }
-                                const userRepos = await services.repositoryProvider.getUserRepos(user);
+                                const userRepos = await repositoryProvider.getUserRepos(hostContext, user);
                                 userRepos.forEach((r) =>
                                     suggestions.push({ url: r.replace(/\.git$/, ""), priority: 5 }),
                                 );
@@ -3359,8 +3366,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const res = { ...user };
         delete res.additionalData;
         res.identities = res.identities.map((i) => {
-            delete i.tokens;
-
             // The user field is not in the Identity shape, but actually exists on DBIdentity.
             // Trying to push this object out via JSON RPC will fail because of the cyclic nature
             // of this field.
@@ -3421,7 +3426,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
                 const hostContext = this.hostContextProvider.get(host);
                 if (hostContext) {
-                    const builtInExists = hostContext.authProvider.params.ownerId === undefined;
+                    const builtInExists = hostContext.config.ownerId === undefined;
                     log.debug(`Attempt to override existing auth provider.`, { entry, safeProvider, builtInExists });
                     throw new Error("Provider for this host already exists.");
                 }
@@ -3520,7 +3525,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             const hostContext = this.hostContextProvider.get(host);
             if (hostContext) {
-                const builtInExists = hostContext.authProvider.params.ownerId === undefined;
+                const builtInExists = hostContext.config.ownerId === undefined;
                 log.debug(`Attempt to override existing auth provider.`, { entry, newProvider, builtInExists });
                 throw new Error("Provider for this host already exists.");
             }

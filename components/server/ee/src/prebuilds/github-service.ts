@@ -8,11 +8,11 @@ import { RepositoryService } from "../../../src/repohost/repo-service";
 import { inject, injectable } from "inversify";
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "../../../src/github/api";
 import { GitHubEnterpriseApp } from "./github-enterprise-app";
-import { AuthProviderParams } from "../../../src/auth/auth-provider";
 import { GithubContextParser } from "../../../src/github/github-context-parser";
 import { ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { Config } from "../../../src/config";
 import { TokenService } from "../../../src/user/token-service";
+import { HostContext } from "../../../src/auth/host-context";
 
 @injectable()
 export class GitHubService extends RepositoryService {
@@ -21,7 +21,6 @@ export class GitHubService extends RepositoryService {
     @inject(GitHubGraphQlEndpoint) protected readonly githubQueryApi: GitHubGraphQlEndpoint;
     @inject(GitHubRestApi) protected readonly githubApi: GitHubRestApi;
     @inject(Config) protected readonly config: Config;
-    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
     @inject(TokenService) protected tokenService: TokenService;
     @inject(GithubContextParser) protected githubContextParser: GithubContextParser;
 
@@ -29,8 +28,9 @@ export class GitHubService extends RepositoryService {
     // return results in a stream, appending pages as being fetched (via callback below) OR
     // simply use octokit.request w/ basic paginated api funcs (return # of pages + return a single page),
     // so the UI can remain interactive vs. currently frozen for 5-10+ mins until all pages are fetched.
-    async getRepositoriesForAutomatedPrebuilds(user: User): Promise<ProviderRepository[]> {
-        const octokit = await this.githubApi.create(user);
+    async getRepositoriesForAutomatedPrebuilds(hostContext: HostContext, user: User): Promise<ProviderRepository[]> {
+        const host = hostContext.host;
+        const octokit = await this.githubApi.create(user, host);
         const repositories = await octokit.paginate(
             octokit.repos.listForAuthenticatedUser,
             { per_page: 100 },
@@ -53,17 +53,16 @@ export class GitHubService extends RepositoryService {
         return repositories;
     }
 
-    async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
-        const { host, owner, repoName: repo } = await this.githubContextParser.parseURL(user, cloneUrl);
-        if (host !== this.authProviderConfig.host) {
-            return false;
-        }
+    async canInstallAutomatedPrebuilds(hostContext: HostContext, user: User, cloneUrl: string): Promise<boolean> {
+        const { host, owner, repoName: repo } = await this.githubContextParser.parseURL(hostContext, user, cloneUrl);
+
         try {
             // You need "ADMIN" permission on a repository to be able to install a webhook.
             // Ref: https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/repository-roles-for-an-organization#permissions-for-each-role
             // Ref: https://docs.github.com/en/graphql/reference/enums#repositorypermission
             const result: any = await this.githubQueryApi.runQuery(
                 user,
+                host,
                 `
                 query {
                     repository(name: "${repo}", owner: "${owner}") {
@@ -78,12 +77,15 @@ export class GitHubService extends RepositoryService {
         }
     }
 
-    async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
-        const { owner, repoName: repo } = await this.githubContextParser.parseURL(user, cloneUrl);
-        const webhooks = (await this.githubApi.run(user, (gh) => gh.repos.listWebhooks({ owner, repo }))).data;
+    async installAutomatedPrebuilds(hostContext: HostContext, user: User, cloneUrl: string): Promise<void> {
+        const { owner, repoName: repo } = await this.githubContextParser.parseURL(hostContext, user, cloneUrl);
+        const host = hostContext.host;
+        const webhooks = (await this.githubApi.run(user, host, (gh) => gh.repos.listWebhooks({ owner, repo }))).data;
         for (const webhook of webhooks) {
             if (webhook.config.url === this.getHookUrl()) {
-                await this.githubApi.run(user, (gh) => gh.repos.deleteWebhook({ owner, repo, hook_id: webhook.id }));
+                await this.githubApi.run(user, host, (gh) =>
+                    gh.repos.deleteWebhook({ owner, repo, hook_id: webhook.id }),
+                );
             }
         }
         const tokenEntry = await this.tokenService.createGitpodToken(
@@ -96,7 +98,7 @@ export class GitHubService extends RepositoryService {
             content_type: "json",
             secret: user.id + "|" + tokenEntry.token.value,
         };
-        await this.githubApi.run(user, (gh) => gh.repos.createWebhook({ owner, repo, config }));
+        await this.githubApi.run(user, host, (gh) => gh.repos.createWebhook({ owner, repo, config }));
     }
 
     protected getHookUrl() {

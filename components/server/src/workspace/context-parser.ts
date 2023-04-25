@@ -6,49 +6,43 @@
 
 import { WorkspaceContext, User } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { inject, injectable } from "inversify";
-import { AuthProviderParams } from "../auth/auth-provider";
+import { injectable } from "inversify";
 import { URLSearchParams, URL } from "url";
+import { HostContext } from "../auth/host-context";
 
 export interface IContextParser {
-    normalize?(contextUrl: string): string | undefined;
-    canHandle(user: User, contextUrl: string): boolean;
-    handle(ctx: TraceContext, user: User, contextUrl: string): Promise<WorkspaceContext>;
+    normalize?(hostContext: HostContext, contextUrl: string): string | undefined;
+    canHandle(hostContext: HostContext, user: User, contextUrl: string): boolean;
+    handle(ctx: TraceContext, hostContext: HostContext, user: User, contextUrl: string): Promise<WorkspaceContext>;
 }
 export const IContextParser = Symbol("IContextParser");
 
 @injectable()
 export abstract class AbstractContextParser implements IContextParser {
-    @inject(AuthProviderParams) protected config: AuthProviderParams;
-
-    protected get host(): string {
-        return this.config.host;
-    }
-
-    public normalize(contextUrl: string): string | undefined {
+    public normalize(hostContext: HostContext, contextUrl: string): string | undefined {
         let url = contextUrl.trim();
-        if (url.startsWith(`${this.host}/`)) {
+        if (url.startsWith(`${hostContext.host}/`)) {
             url = `https://${url}`;
         }
-        if (url.startsWith(`git@${this.host}:`)) {
-            return `https://${this.host}/` + url.slice(`git@${this.host}:`.length);
+        if (url.startsWith(`git@${hostContext.host}:`)) {
+            return `https://${hostContext.host}/` + url.slice(`git@${hostContext.host}:`.length);
         }
-        if (url.startsWith(`https://${this.host}/`)) {
+        if (url.startsWith(`https://${hostContext.host}/`)) {
             return url;
         }
         return undefined;
     }
 
-    public canHandle(user: User, contextUrl: string): boolean {
-        return this.normalize(contextUrl) !== undefined;
+    public canHandle(hostContext: HostContext, user: User, contextUrl: string): boolean {
+        return this.normalize(hostContext, contextUrl) !== undefined;
     }
 
-    public async parseURL(user: User, contextUrl: string): Promise<URLParts> {
+    public async parseURL(hostContext: HostContext, user: User, contextUrl: string): Promise<URLParts> {
         const url = new URL(contextUrl);
         const pathname = url.pathname.replace(/^\//, "").replace(/\/$/, ""); // pathname without leading and trailing slash
         const segments = pathname.split("/");
 
-        const host = this.host; // as per contract, cf. `canHandle(user, contextURL)`
+        const host = hostContext.host; // as per contract, cf. `canHandle(user, contextURL)`
 
         const lenghtOfRelativePath = host.split("/").length - 1; // e.g. "123.123.123.123/gitlab" => length of 1
         if (lenghtOfRelativePath > 0) {
@@ -77,7 +71,12 @@ export abstract class AbstractContextParser implements IContextParser {
             : urlSegment;
     }
 
-    public abstract handle(ctx: TraceContext, user: User, contextUrl: string): Promise<WorkspaceContext>;
+    public abstract handle(
+        ctx: TraceContext,
+        hostContext: HostContext,
+        user: User,
+        contextUrl: string,
+    ): Promise<WorkspaceContext>;
 }
 
 export interface URLParts {
@@ -96,7 +95,7 @@ export interface URLParts {
  * and expects "othercontext" to be parsed and passed back.
  */
 export interface IPrefixContextParser {
-    normalize?(contextURL: string): string | undefined;
+    normalize?(hostContext: HostContext, contextURL: string): string | undefined;
     findPrefix(user: User, context: string): string | undefined;
     handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext>;
 }

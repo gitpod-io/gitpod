@@ -12,7 +12,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
 import { HostContextProvider } from "./host-context-provider";
-import { AuthProvider, AuthFlow } from "./auth-provider";
+import { AuthFlow } from "./auth-provider";
 import { TokenProvider } from "../user/token-provider";
 import { AuthProviderService } from "./auth-provider-service";
 import { UserService } from "../user/user-service";
@@ -74,21 +74,15 @@ export class Authenticator {
     protected async authCallbackHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (req.url.startsWith("/auth/")) {
             const hostContexts = this.hostContextProvider.getAll();
-            for (const { authProvider } of hostContexts) {
-                const authCallbackPath = authProvider.authCallbackPath;
-                if (req.url.startsWith(authCallbackPath)) {
-                    log.info(`Auth Provider Callback. Path: ${authCallbackPath}`);
-                    await authProvider.callback(req, res, next);
+            for (const hostContext of hostContexts) {
+                if (req.url.startsWith(hostContext.authCallbackPath)) {
+                    log.info(`Auth Callback Handler - Path: ${hostContext.authCallbackPath}`);
+                    await hostContext.authProvider.callback(hostContext, req, res, next);
                     return;
                 }
             }
         }
         return next();
-    }
-
-    protected async getAuthProviderForHost(host: string): Promise<AuthProvider | undefined> {
-        const hostContext = this.hostContextProvider.get(host);
-        return hostContext && hostContext.authProvider;
     }
 
     async authenticate(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
@@ -104,39 +98,41 @@ export class Authenticator {
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
         returnTo = returnTo || workspaceUrl;
         const host: string = req.query.host?.toString() || "";
-        const authProvider = host && (await this.getAuthProviderForHost(host));
+
+        const hostContext = !!host && this.hostContextProvider.get(host);
+        const authProvider = hostContext && hostContext.authProvider;
         if (!host || !authProvider) {
             log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { "login-flow": true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
         // Logins with organizational Git Auth is not permitted
-        if (authProvider.info.organizationId) {
+        if (hostContext.config.organizationId) {
             log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, {
                 "authorize-flow": true,
-                ap: authProvider.info,
+                host,
             });
             res.redirect(this.getSorryUrl(`Login with "${host}" is not permitted.`));
             return;
         }
-        if (this.config.disableDynamicAuthProviderLogin && !authProvider.params.builtin) {
-            log.info({ sessionId: req.sessionID }, `Auth Provider is not allowed.`, { ap: authProvider.info });
-            res.redirect(this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
+        if (this.config.disableDynamicAuthProviderLogin && !hostContext.config.builtin) {
+            log.info({ sessionId: req.sessionID }, `Auth Provider is not allowed.`, { host });
+            res.redirect(this.getSorryUrl(`Login with ${host} is not allowed.`));
             return;
         }
         if (!req.session) {
             // The session is missing entirely: count as client error
-            increaseLoginCounter("failed_client", authProvider.info.host);
+            increaseLoginCounter("failed_client", host);
             log.info({}, `No session.`, { "login-flow": true });
             res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
             return;
         }
 
-        if (!authProvider.info.verified && !(await this.isInSetupMode())) {
-            increaseLoginCounter("failed", authProvider.info.host);
+        if (!hostContext.config.verified && !(await this.isInSetupMode())) {
+            increaseLoginCounter("failed", host);
             log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, {
                 "login-flow": true,
-                ap: authProvider.info,
+                host,
             });
             res.redirect(this.getSorryUrl(`Login with "${host}" is not permitted.`));
             return;
@@ -148,15 +144,13 @@ export class Authenticator {
             returnTo,
         });
         // authenticate user
-        authProvider.authorize(req, res, next);
+        authProvider.authorize(hostContext, req, res, next);
     }
     protected async isInSetupMode() {
-        const hasAnyStaticProviders = this.hostContextProvider
-            .getAll()
-            .some((hc) => hc.authProvider.params.builtin === true);
-        if (hasAnyStaticProviders) {
-            return false;
-        }
+        // const hasAnyStaticProviders = this.hostContextProvider.getAll().some((hc) => hc.config.builtin === true);
+        // if (hasAnyStaticProviders) {
+        //     return false;
+        // }
         const noUser = (await this.userDb.getUserCount()) === 0;
         return noUser;
     }
@@ -171,7 +165,8 @@ export class Authenticator {
         const returnTo: string = req.query.returnTo?.toString() || this.config.hostUrl.asDashboard().toString();
         const host: string | undefined = req.query.host?.toString();
 
-        const authProvider = host && (await this.getAuthProviderForHost(host));
+        const hostContext = !!host && this.hostContextProvider.get(host);
+        const authProvider = hostContext && hostContext.authProvider;
 
         if (!host || !authProvider) {
             log.warn({ sessionId: req.sessionID }, `Bad request: missing parameters.`);
@@ -180,7 +175,7 @@ export class Authenticator {
         }
 
         try {
-            await this.userService.deauthorize(user, authProvider.authProviderId);
+            await this.userService.deauthorize(user, hostContext.config.id);
             res.redirect(returnTo);
         } catch (error) {
             next(error);
@@ -212,7 +207,10 @@ export class Authenticator {
         const host: string | undefined = req.query.host?.toString();
         const scopes: string = req.query.scopes?.toString() || "";
         const override = req.query.override === "true";
-        const authProvider = host && (await this.getAuthProviderForHost(host));
+
+        const hostContext = !!host && this.hostContextProvider.get(host);
+        const authProvider = hostContext && hostContext.authProvider;
+
         if (!returnTo || !host || !authProvider) {
             log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
@@ -220,12 +218,12 @@ export class Authenticator {
         }
 
         // For non-verified org auth provider, ensure user is an owner of the org
-        if (!authProvider.info.verified && authProvider.info.organizationId) {
-            const member = await this.teamDb.findTeamMembership(user.id, authProvider.info.organizationId);
+        if (!hostContext.config.verified && hostContext.config.organizationId) {
+            const member = await this.teamDb.findTeamMembership(user.id, hostContext.config.organizationId);
             if (member?.role !== "owner") {
                 log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, {
                     "authorize-flow": true,
-                    ap: authProvider.info,
+                    host,
                 });
                 res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
                 return;
@@ -233,22 +231,26 @@ export class Authenticator {
         }
 
         // For non-verified, non-org auth provider, ensure user is the owner of the auth provider
-        if (!authProvider.info.verified && !authProvider.info.organizationId && user.id !== authProvider.info.ownerId) {
+        if (
+            !hostContext.config.verified &&
+            !hostContext.config.organizationId &&
+            user.id !== hostContext.config.ownerId
+        ) {
             log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, {
                 "authorize-flow": true,
-                ap: authProvider.info,
+                host,
             });
             res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
             return;
         }
 
         // Ensure user is a member of the org
-        if (authProvider.info.organizationId) {
-            const member = await this.teamDb.findTeamMembership(user.id, authProvider.info.organizationId);
+        if (hostContext.config.organizationId) {
+            const member = await this.teamDb.findTeamMembership(user.id, hostContext.config.organizationId);
             if (!member) {
                 log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, {
                     "authorize-flow": true,
-                    ap: authProvider.info,
+                    host,
                 });
                 res.redirect(this.getSorryUrl(`Authorization with "${host}" is not permitted.`));
                 return;
@@ -262,18 +264,16 @@ export class Authenticator {
             .map((s) => s.trim())
             .filter((s) => s.length > 0);
         if (wantedScopes.length === 0) {
-            if (authProvider.info.requirements) {
-                wantedScopes = authProvider.info.requirements.default;
-            }
+            wantedScopes = authProvider.scopeRequirements.default;
         }
         // compute merged scopes
         if (!override) {
-            const currentScopes = await this.getCurrentScopes(req.user, authProvider);
+            const currentScopes = await this.getCurrentScopes(req.user, hostContext.host);
             wantedScopes = this.mergeScopes(currentScopes, wantedScopes);
             // in case user signed in with another identity, we need to ensure the merged scopes contain
             // all default needed to for proper authentication
-            if (currentScopes.length === 0 && authProvider.info.requirements) {
-                wantedScopes = this.mergeScopes(authProvider.info.requirements.default, wantedScopes);
+            if (currentScopes.length === 0 && authProvider.scopeRequirements) {
+                wantedScopes = this.mergeScopes(authProvider.scopeRequirements.default, wantedScopes);
             }
         }
         // authorize Gitpod
@@ -281,17 +281,17 @@ export class Authenticator {
             { sessionId: req.sessionID },
             `(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`,
         );
-        authProvider.authorize(req, res, next, wantedScopes);
+        authProvider.authorize(hostContext, req, res, next, wantedScopes);
     }
     protected mergeScopes(a: string[], b: string[]) {
         const set = new Set(a);
         b.forEach((s) => set.add(s));
         return Array.from(set).sort();
     }
-    protected async getCurrentScopes(user: any, authProvider: AuthProvider) {
+    protected async getCurrentScopes(user: any, host: string) {
         if (User.is(user)) {
             try {
-                const token = await this.tokenProvider.getTokenForHost(user, authProvider.params.host);
+                const token = await this.tokenProvider.getTokenForHost(user, host);
                 return token.scopes;
             } catch {
                 // no token
