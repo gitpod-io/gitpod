@@ -5,7 +5,6 @@
  */
 
 import { injectable, inject } from "inversify";
-import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { WorkspaceDeletionService } from "./workspace-deletion-service";
@@ -14,6 +13,8 @@ import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { RedisMutex } from "../mutex/redlock";
+import { ResourceLockedError } from "redlock";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:
@@ -22,10 +23,11 @@ import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
  */
 @injectable()
 export class WorkspaceGarbageCollector {
-    @inject(ConsensusLeaderQorum) protected readonly leaderQuorum: ConsensusLeaderQorum;
     @inject(WorkspaceDeletionService) protected readonly deletionService: WorkspaceDeletionService;
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(Config) protected readonly config: Config;
+
+    @inject(RedisMutex) protected readonly mutex: RedisMutex;
 
     public async start(): Promise<Disposable> {
         if (this.config.workspaceGarbageCollection.disabled) {
@@ -41,16 +43,40 @@ export class WorkspaceGarbageCollector {
     }
 
     public async garbageCollectWorkspacesIfLeader() {
-        if (await this.leaderQuorum.areWeLeader()) {
-            log.info("wsgc: we're leading the quorum. Collecting old workspaces");
-            this.softDeleteOldWorkspaces().catch((err) => log.error("wsgc: error during soft-deletion", err));
-            this.deleteWorkspaceContentAfterRetentionPeriod().catch((err) =>
-                log.error("wsgc: error during content deletion", err),
-            );
-            this.purgeWorkspacesAfterPurgeRetentionPeriod().catch((err) =>
-                log.error("wsgc: error during hard deletion of workspaces", err),
-            );
-            this.deleteOldPrebuilds().catch((err) => log.error("wsgc: error during prebuild deletion", err));
+        try {
+            await this.mutex.client().using(["workspace-gc"], 30 * 1000, async (signal) => {
+                log.info("wsgc: acquired workspace-gc lock. Collecting old workspaces");
+                try {
+                    await this.softDeleteOldWorkspaces();
+                } catch (err) {
+                    log.error("wsgc: error during soft-deletion", err);
+                }
+
+                try {
+                    await this.deleteWorkspaceContentAfterRetentionPeriod();
+                } catch (err) {
+                    log.error("wsgc: error during content deletion", err);
+                }
+
+                try {
+                    await this.purgeWorkspacesAfterPurgeRetentionPeriod();
+                } catch (err) {
+                    log.error("wsgc: error during hard deletion of workspaces", err);
+                }
+
+                try {
+                    await this.deleteOldPrebuilds();
+                } catch (err) {
+                    log.error("wsgc: error during prebuild deletion", err);
+                }
+            });
+        } catch (err) {
+            if (err instanceof ResourceLockedError) {
+                log.info("wsgc: failed to acquire workspace-gc lock, another instance already has the lock", err);
+                return;
+            }
+
+            log.error("wsgc: failed to acquire workspace-gc lock", err);
         }
     }
 
