@@ -11,7 +11,7 @@ import { Authenticator } from "./auth/authenticator";
 import { SessionHandlerProvider } from "./session-handler";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 import { WorkspaceFactory } from "./workspace/workspace-factory";
-import { UserController } from "./user/user-controller";
+import { ServerFactory, UserController } from "./user/user-controller";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
 import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
 import { ConfigProvider } from "./workspace/config-provider";
@@ -21,7 +21,6 @@ import { ConfigurationService } from "./config/configuration-service";
 import { IContextParser, IPrefixContextParser } from "./workspace/context-parser";
 import { ContextParser } from "./workspace/context-parser-service";
 import { SnapshotContextParser } from "./workspace/snapshot-context-parser";
-import { EnforcementController, EnforcementControllerServerFactory } from "./user/enforcement-endpoint";
 import { MessagebusConfiguration } from "@gitpod/gitpod-messagebus/lib/config";
 import { HostContextProvider, HostContextProviderFactory } from "./auth/host-context-provider";
 import { TokenService } from "./user/token-service";
@@ -157,9 +156,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WorkspaceStarter).toSelf().inSingletonScope();
     bind(ImageSourceProvider).toSelf().inSingletonScope();
 
+    bind(ServerFactory).toAutoFactory(GitpodServerImpl);
     bind(UserController).toSelf().inSingletonScope();
-    bind(EnforcementControllerServerFactory).toAutoFactory(GitpodServerImpl);
-    bind(EnforcementController).toSelf().inSingletonScope();
 
     bind(InstallationAdminController).toSelf().inSingletonScope();
 
