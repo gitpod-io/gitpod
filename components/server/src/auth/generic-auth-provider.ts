@@ -482,7 +482,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
     ) {
         const done = _done as VerifyCallback;
         let flowContext: VerifyResult;
-        const { strategyName, params: config } = this;
+        const { strategyName } = this;
         const clientInfo = getRequestingClientInfo(req);
         const authProviderId = this.authProviderId;
         const authFlow = AuthFlow.get(req.session)!; // asserted in `callback` allready
