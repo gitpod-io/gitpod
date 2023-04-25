@@ -91,7 +91,6 @@ func (m *WorkspaceManagerHeartbeat) sendIDEHeartbeatTelemetry(session *Session) 
 	// TODO: Identify if it's debug workspace or not
 	// propertics["debugWorkspace"] = "false"
 
-	log.WithField("properties", properties).Info("send ide heartbeat telemetry")
 	tracker.Track(analytics.TrackMessage{
 		Identity:   analytics.Identity{UserID: session.OwnerUserId},
 		Event:      "ide_heartbeat",
