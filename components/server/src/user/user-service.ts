@@ -355,17 +355,6 @@ export class UserService {
     }
 
     async onAfterUserLoad(user: User): Promise<User> {
-        try {
-            // migrate user to team only attribution
-            const shouldMigrate = this.configCatClientFactory().getValueAsync("team_only_attribution", false, {
-                user,
-            });
-            if (User.is(user) && (await this.migrationService.needsMigration(user)) && (await shouldMigrate)) {
-                return await this.migrationService.migrateUser(user);
-            }
-        } catch (error) {
-            log.error({ user }, `Migrating user to team-only attribution failed`);
-        }
         return user;
     }
 
