@@ -8,7 +8,6 @@ import { injectable, inject } from "inversify";
 import * as opentracing from "opentracing";
 import { UserDB, DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
-import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
