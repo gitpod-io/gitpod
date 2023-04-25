@@ -29,6 +29,7 @@ const defaultFeatureFlags = {
     userGitAuthProviders: false,
     newSignupFlow: false,
     linkedinConnectionForOnboarding: false,
+    paymentVerificationFlow: false,
 };
 
 const FeatureFlagContext = createContext<FeatureFlagsType>(defaultFeatureFlags);
@@ -47,6 +48,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [userGitAuthProviders, setUserGitAuthProviders] = useState<boolean>(false);
     const [newSignupFlow, setNewSignupFlow] = useState<boolean>(false);
     const [linkedinConnectionForOnboarding, setLinkedinConnectionForOnboarding] = useState<boolean>(false);
+    const [paymentVerificationFlow, setPaymentVerificationFlow] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -65,6 +67,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 userGitAuthProviders: { defaultValue: false, setter: setUserGitAuthProviders },
                 newSignupFlow: { defaultValue: false, setter: setNewSignupFlow },
                 linkedinConnectionForOnboarding: { defaultValue: false, setter: setLinkedinConnectionForOnboarding },
+                paymentVerificationFlow: { defaultValue: false, setter: setPaymentVerificationFlow },
             };
 
             for (const [flagName, config] of Object.entries(featureFlags)) {
@@ -112,17 +115,19 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
             userGitAuthProviders,
             newSignupFlow,
             linkedinConnectionForOnboarding,
+            paymentVerificationFlow,
         };
     }, [
+        startWithOptions,
+        showUseLastSuccessfulPrebuild,
         enablePersonalAccessTokens,
-        linkedinConnectionForOnboarding,
-        newSignupFlow,
+        usePublicApiWorkspacesService,
         oidcServiceEnabled,
         orgGitAuthProviders,
-        showUseLastSuccessfulPrebuild,
-        startWithOptions,
-        usePublicApiWorkspacesService,
         userGitAuthProviders,
+        newSignupFlow,
+        linkedinConnectionForOnboarding,
+        paymentVerificationFlow,
     ]);
 
     return <FeatureFlagContext.Provider value={flags}>{children}</FeatureFlagContext.Provider>;

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { createContext, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 
 export type Currency = "USD" | "EUR";
 
@@ -32,3 +32,7 @@ const PaymentContextProvider: React.FC = ({ children }) => {
 };
 
 export { PaymentContext, PaymentContextProvider };
+
+export const useCurrency = () => {
+    return useContext(PaymentContext);
+};
