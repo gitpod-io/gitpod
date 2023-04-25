@@ -67,12 +67,12 @@ class HeartbeatService : Disposable {
         while (isActive) {
             try {
                 manager.trackEvent("ide_heartbeat", mapOf(
-                    "clientKind" to "jetbrains"
-                    "totalCount" to totalCount
-                    "successfulCount" to successfulCount
-                    "workspaceId" to info.workspaceId
-                    "instanceId" to info.instanceId
-                    "gitpodHost" to info.gitpodApi.host
+                    "clientKind" to "jetbrains",
+                    "totalCount" to totalCount,
+                    "successfulCount" to successfulCount,
+                    "workspaceId" to info.workspaceId,
+                    "instanceId" to info.instanceId,
+                    "gitpodHost" to info.gitpodApi.host,
                     "debugWorkspace" to info.debug.toString()
                 ))
             } catch (t: Throwable) {
