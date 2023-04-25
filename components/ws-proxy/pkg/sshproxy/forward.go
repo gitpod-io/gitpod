@@ -119,6 +119,7 @@ func startHeartbeatingChannel(c ssh.Channel, heartbeat Heartbeat, session *Sessi
 		t:       time.NewTicker(30 * time.Second),
 		cancel:  cancel,
 	}
+	go heartbeat.ScheduleIDEHeartbeatTelemetry(ctx, session)
 	go func() {
 		for {
 			select {

@@ -135,9 +135,7 @@ var runCmd = &cobra.Command{
 				log.WithError(err).Fatal("cannot connect to ws-manager")
 			}
 
-			heartbeat = &sshproxy.WorkspaceManagerHeartbeat{
-				Client: wsmanapi.NewWorkspaceManagerClient(conn),
-			}
+			heartbeat = sshproxy.NewWorkspaceManagerHeartbeat(cfg.Proxy.GitpodInstallation.HostName, wsmanapi.NewWorkspaceManagerClient(conn))
 		}
 
 		// SSH Gateway
