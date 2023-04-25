@@ -14,8 +14,10 @@ export class RedisMutex {
     @inject(Config) protected config: Config;
 
     public client(): Redlock {
+        const [host, port] = this.config.redis.address.split(":");
         const redis = new RedisClient({
-            host: this.config.redis.address,
+            port: Number(port),
+            host,
             enableReadyCheck: true,
         });
         return new Redlock([redis], {
