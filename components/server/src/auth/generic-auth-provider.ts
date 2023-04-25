@@ -588,9 +588,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     elevateScopes,
                 };
             } else {
-                // `checkSignUp` might throgh `AuthError`s with the intention to block the signup process.
-                await this.userService.checkSignUp({ config, identity: candidate });
-
                 const isBlocked = await this.userService.isBlocked({ primaryEmail });
                 flowContext = <VerifyResult.WithIdentity>{
                     candidate,

@@ -10,7 +10,7 @@ import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
-import { AuthProviderParams, AuthUser } from "../auth/auth-provider";
+import { AuthUser } from "../auth/auth-provider";
 import { BlockedUserService } from "../auth/blocked-user-filter";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
@@ -27,11 +27,6 @@ export interface FindUserByIdentityStrResult {
     user: User;
     identity: Identity;
     authHost: string;
-}
-
-export interface CheckSignUpParams {
-    config: AuthProviderParams;
-    identity: Identity;
 }
 
 export interface CreateUserParams {
@@ -310,15 +305,6 @@ export class UserService {
             return result;
         }
         return [AttributionId.create(user)].concat(result);
-    }
-
-    /**
-     * This might throw `AuthException`s.
-     *
-     * @param params
-     */
-    async checkSignUp(params: CheckSignUpParams) {
-        // no-op
     }
 
     async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {
