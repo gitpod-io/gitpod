@@ -46,14 +46,29 @@ export class WorkspaceGarbageCollector {
         try {
             await this.mutex.client().using(["workspace-gc"], 30 * 1000, async (signal) => {
                 log.info("wsgc: acquired workspace-gc lock. Collecting old workspaces");
-                this.softDeleteOldWorkspaces().catch((err) => log.error("wsgc: error during soft-deletion", err));
-                this.deleteWorkspaceContentAfterRetentionPeriod().catch((err) =>
-                    log.error("wsgc: error during content deletion", err),
-                );
-                this.purgeWorkspacesAfterPurgeRetentionPeriod().catch((err) =>
-                    log.error("wsgc: error during hard deletion of workspaces", err),
-                );
-                this.deleteOldPrebuilds().catch((err) => log.error("wsgc: error during prebuild deletion", err));
+                try {
+                    await this.softDeleteOldWorkspaces();
+                } catch (err) {
+                    log.error("wsgc: error during soft-deletion", err);
+                }
+
+                try {
+                    await this.deleteWorkspaceContentAfterRetentionPeriod();
+                } catch (err) {
+                    log.error("wsgc: error during content deletion", err);
+                }
+
+                try {
+                    await this.purgeWorkspacesAfterPurgeRetentionPeriod();
+                } catch (err) {
+                    log.error("wsgc: error during hard deletion of workspaces", err);
+                }
+
+                try {
+                    await this.deleteOldPrebuilds();
+                } catch (err) {
+                    log.error("wsgc: error during prebuild deletion", err);
+                }
             });
         } catch (err) {
             if (err instanceof ResourceLockedError) {
