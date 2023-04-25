@@ -359,7 +359,6 @@ fi
 #
 # configure dedicated emulation
 #
-
 if [[ "${GITPOD_WITH_DEDICATED_EMU}" == "true" ]]
 then
   # Suppress the Self-Hosted setup modal
@@ -369,24 +368,35 @@ fi
 #
 # configureStripeAPIKeys
 #
-kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret stripe-api-keys -o yaml > stripe-api-keys.secret.yaml
-yq w -i stripe-api-keys.secret.yaml metadata.namespace "default"
-yq d -i stripe-api-keys.secret.yaml metadata.creationTimestamp
-yq d -i stripe-api-keys.secret.yaml metadata.uid
-yq d -i stripe-api-keys.secret.yaml metadata.resourceVersion
-diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" stripe-api-keys.secret.yaml
-rm -f stripe-api-keys.secret.yaml
+if [[ "${GITPOD_WITH_DEDICATED_EMU}" != "true" ]]
+then
+  kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret stripe-api-keys -o yaml > stripe-api-keys.secret.yaml
+  yq w -i stripe-api-keys.secret.yaml metadata.namespace "default"
+  yq d -i stripe-api-keys.secret.yaml metadata.creationTimestamp
+  yq d -i stripe-api-keys.secret.yaml metadata.uid
+  yq d -i stripe-api-keys.secret.yaml metadata.resourceVersion
+  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" stripe-api-keys.secret.yaml
+  rm -f stripe-api-keys.secret.yaml
+
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "stripe-api-keys"
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
+fi
 
 #
 # configureLinkedIn
 #
-kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret linked-in -o yaml > linked-in.secret.yaml
-yq w -i linked-in.secret.yaml metadata.namespace "default"
-yq d -i linked-in.secret.yaml metadata.creationTimestamp
-yq d -i linked-in.secret.yaml metadata.uid
-yq d -i linked-in.secret.yaml metadata.resourceVersion
-diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" linked-in.secret.yaml
-rm -f linked-in.secret.yaml
+if [[ "${GITPOD_WITH_DEDICATED_EMU}" != "true" ]]
+then
+  kubectl --kubeconfig "${DEV_KUBE_PATH}" --context "${DEV_KUBE_CONTEXT}" -n werft get secret linked-in -o yaml > linked-in.secret.yaml
+  yq w -i linked-in.secret.yaml metadata.namespace "default"
+  yq d -i linked-in.secret.yaml metadata.creationTimestamp
+  yq d -i linked-in.secret.yaml metadata.uid
+  yq d -i linked-in.secret.yaml metadata.resourceVersion
+  diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" linked-in.secret.yaml
+  rm -f linked-in.secret.yaml
+
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.linkedInSecret" "linked-in"
+fi
 
 #
 # configureSSHGateway
@@ -489,18 +499,6 @@ fi
 if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
   yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
 fi
-
-
-#
-# Stripe
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "stripe-api-keys"
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
-
-#
-# LinkedIn
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.linkedInSecret" "linked-in"
 
 #
 # Enable SpiceDB on all preview envs
