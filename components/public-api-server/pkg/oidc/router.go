@@ -47,8 +47,13 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 			returnToURL = "/"
 		}
 
+		activate := false
+		if r.URL.Query().Get("activate") != "" {
+			activate = true
+		}
+
 		redirectURL := getCallbackURL(r.Host)
-		startParams, err := s.GetStartParams(config, redirectURL, returnToURL)
+		startParams, err := s.GetStartParams(config, redirectURL, returnToURL, activate)
 		if err != nil {
 			http.Error(rw, "failed to start auth flow", http.StatusInternalServerError)
 			return
@@ -80,7 +85,7 @@ func newCallbackCookie(r *http.Request, name string, value string) *http.Cookie 
 // The OIDC callback handler depends on the state produced in the OAuth2 middleware
 func (s *Service) getCallbackHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		config, err := s.GetClientConfigFromCallbackRequest(r)
+		config, state, err := s.GetClientConfigFromCallbackRequest(r)
 		if err != nil {
 			log.Warn("client config not found: " + err.Error())
 			http.Error(rw, "config not found", http.StatusNotFound)
@@ -110,6 +115,15 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		}
 
 		log.WithField("id_token", result.IDToken).Trace("user verification was successful")
+
+		if state.Activate {
+			err = s.ActivateClientConfig(r.Context(), config)
+			if err != nil {
+				log.Warn("Failed to mark config as active: " + err.Error())
+				http.Error(rw, "Failed to mark config as active", http.StatusInternalServerError)
+				return
+			}
+		}
 
 		cookie, err := s.CreateSession(r.Context(), result, config.OrganizationID)
 		if err != nil {

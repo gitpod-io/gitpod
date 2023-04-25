@@ -45,7 +45,7 @@ func TestGetStartParams(t *testing.T) {
 		},
 	}
 
-	params, err := service.GetStartParams(config, redirectURL, "/")
+	params, err := service.GetStartParams(config, redirectURL, "/", false)
 
 	require.NoError(t, err)
 	require.NotNil(t, params.Nonce)
@@ -170,7 +170,7 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Location, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
-			config, err := service.GetClientConfigFromCallbackRequest(request)
+			config, _, err := service.GetClientConfigFromCallbackRequest(request)
 			if tc.ExpectedError == true {
 				require.Error(t, err)
 			}

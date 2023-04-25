@@ -81,11 +81,12 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, status.Errorf(codes.Internal, "Failed to store OIDC client config.")
 	}
 
-	created, err := db.CreateOIDCCLientConfig(ctx, s.dbConn, db.OIDCClientConfig{
+	created, err := db.CreateOIDCClientConfig(ctx, s.dbConn, db.OIDCClientConfig{
 		ID:             uuid.New(),
 		OrganizationID: organizationID,
 		Issuer:         oidcConfig.GetIssuer(),
 		Data:           data,
+		Active:         false,
 	})
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to store oidc client config in the database.")
@@ -303,6 +304,7 @@ func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor)
 		OidcConfig: &v1.OIDCConfig{
 			Issuer: config.Issuer,
 		},
+		Active: config.Active,
 	}, nil
 }
 

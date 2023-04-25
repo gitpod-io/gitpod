@@ -73,12 +73,13 @@ func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher,
 	}
 }
 
-func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, returnToURL string) (*StartParams, error) {
+func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, returnToURL string, activate bool) (*StartParams, error) {
 	// state is supposed to a) be present on client request as cookie header
 	// and b) to be mirrored by the IdP on callback requests.
 	stateParam := StateParam{
 		ClientConfigID: config.ID,
 		ReturnToURL:    returnToURL,
+		Activate:       activate,
 	}
 	state, err := s.encodeStateParam(stateParam)
 	if err != nil {
@@ -139,6 +140,8 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 	orgSlug := r.URL.Query().Get("orgSlug")
 	if orgSlug != "" {
 		dbEntry, err := db.GetOIDCClientConfigByOrgSlug(r.Context(), s.dbConn, orgSlug)
+		// dbEntry.Active
+		// dbEntry.OrganizationID
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
 		}
@@ -167,22 +170,30 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 	return nil, fmt.Errorf("failed to find OIDC config")
 }
 
-func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, error) {
+func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, *StateParam, error) {
 	stateParam := r.URL.Query().Get("state")
 	if stateParam == "" {
-		return nil, fmt.Errorf("missing state parameter")
+		return nil, nil, fmt.Errorf("missing state parameter")
 	}
 
 	state, err := s.decodeStateParam(stateParam)
 	if err != nil {
-		return nil, fmt.Errorf("bad state param")
+		return nil, nil, fmt.Errorf("bad state param")
 	}
 	config, _ := s.getConfigById(r.Context(), state.ClientConfigID)
 	if config != nil {
-		return config, nil
+		return config, &state, nil
 	}
 
-	return nil, fmt.Errorf("failed to find OIDC config on callback")
+	return nil, nil, fmt.Errorf("failed to find OIDC config on callback")
+}
+
+func (s *Service) ActivateClientConfig(ctx context.Context, config *ClientConfig) error {
+	uuid, err := uuid.Parse(config.ID)
+	if err != nil {
+		return err
+	}
+	return db.ActivateClientConfig(ctx, s.dbConn, uuid)
 }
 
 func (s *Service) getConfigById(ctx context.Context, id string) (*ClientConfig, error) {

@@ -22,6 +22,7 @@ type StateParam struct {
 	// Internal client ID
 	ClientConfigID string `json:"clientConfigId"`
 	ReturnToURL    string `json:"returnTo"`
+	Activate       bool   `json:"activate"`
 }
 
 type keyOAuth2Result struct{}
@@ -41,7 +42,7 @@ func GetOAuth2ResultFromContext(ctx context.Context) *OAuth2Result {
 
 func (s *Service) OAuth2Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		config, err := s.GetClientConfigFromCallbackRequest(r)
+		config, _, err := s.GetClientConfigFromCallbackRequest(r)
 		if err != nil {
 			log.Warn("client config not found: " + err.Error())
 			http.Error(rw, "config not found", http.StatusNotFound)
