@@ -23,7 +23,11 @@ type Heartbeat interface {
 
 type noHeartbeat struct{}
 
+var _ Heartbeat = &noHeartbeat{}
+
 func (noHeartbeat) SendHeartbeat(instanceID string, isClosed, ignoreIfActive bool) {}
+
+func (*noHeartbeat) ScheduleIDEHeartbeatTelemetry(ctx context.Context, session *Session) {}
 
 type WorkspaceManagerHeartbeat struct {
 	Client wsmanapi.WorkspaceManagerClient
