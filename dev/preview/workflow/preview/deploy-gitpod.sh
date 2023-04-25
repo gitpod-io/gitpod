@@ -377,6 +377,9 @@ then
   yq d -i stripe-api-keys.secret.yaml metadata.resourceVersion
   diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" stripe-api-keys.secret.yaml
   rm -f stripe-api-keys.secret.yaml
+
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "stripe-api-keys"
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
 fi
 
 #
@@ -391,6 +394,8 @@ then
   yq d -i linked-in.secret.yaml metadata.resourceVersion
   diff-apply "${PREVIEW_K3S_KUBE_CONTEXT}" linked-in.secret.yaml
   rm -f linked-in.secret.yaml
+
+  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.linkedInSecret" "linked-in"
 fi
 
 #
@@ -499,18 +504,6 @@ fi
 if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
   yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
 fi
-
-
-#
-# Stripe
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeSecret" "stripe-api-keys"
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.stripeConfig" "stripe-config"
-
-#
-# LinkedIn
-#
-yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.webapp.server.linkedInSecret" "linked-in"
 
 #
 # Enable SpiceDB on all preview envs
