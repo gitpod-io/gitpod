@@ -110,3 +110,39 @@ func TestGetOIDCClientConfigForOrganization(t *testing.T) {
 	})
 
 }
+
+func TestActivateClientConfig(t *testing.T) {
+
+	t.Run("not found when config does not exist", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		err := db.ActivateClientConfig(context.Background(), conn, uuid.New())
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("config which exists is marked as active", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		config := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
+			OrganizationID: uuid.New(),
+			Active:         false,
+		})[0]
+		configID := config.ID
+
+		config, err := db.GetOIDCClientConfig(context.Background(), conn, configID)
+		require.NoError(t, err)
+		require.Equal(t, false, config.Active)
+
+		err = db.ActivateClientConfig(context.Background(), conn, configID)
+		require.NoError(t, err)
+
+		config2, err := db.GetOIDCClientConfig(context.Background(), conn, configID)
+		require.NoError(t, err)
+		require.Equal(t, true, config2.Active)
+
+		err = db.ActivateClientConfig(context.Background(), conn, configID)
+		require.NoError(t, err)
+	})
+
+}

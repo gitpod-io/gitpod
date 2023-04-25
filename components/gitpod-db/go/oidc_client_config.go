@@ -23,6 +23,8 @@ type OIDCClientConfig struct {
 
 	Data EncryptedJSON[OIDCSpec] `gorm:"column:data;type:text;size:65535" json:"data"`
 
+	Active bool `gorm:"column:active;type:tinyint;default:0;" json:"active"`
+
 	LastModified time.Time `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 	// deleted is reserved for use by periodic deleter.
 	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
@@ -50,7 +52,7 @@ type OIDCSpec struct {
 	Scopes []string `json:"scopes"`
 }
 
-func CreateOIDCCLientConfig(ctx context.Context, conn *gorm.DB, cfg OIDCClientConfig) (OIDCClientConfig, error) {
+func CreateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cfg OIDCClientConfig) (OIDCClientConfig, error) {
 	if cfg.ID == uuid.Nil {
 		return OIDCClientConfig{}, errors.New("id must be set")
 	}
@@ -188,4 +190,21 @@ func GetOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug strin
 	}
 
 	return config, nil
+}
+
+func ActivateClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) error {
+	_, err := GetOIDCClientConfig(ctx, conn, id)
+	if err != nil {
+		return err
+	}
+
+	tx := conn.
+		WithContext(ctx).
+		Table((&OIDCClientConfig{}).TableName()).
+		Where("id = ?", id.String()).
+		Update("active", 1)
+	if tx.Error != nil {
+		return fmt.Errorf("failed to mark oidc client config as active (id: %s): %v", id.String(), tx.Error)
+	}
+	return nil
 }
