@@ -7,12 +7,12 @@
 import { inject, injectable } from "inversify";
 import Stripe from "stripe";
 import * as grpc from "@grpc/grpc-js";
-import { Config } from "../../../src/config";
+import { Config } from "../config";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
     observeStripeClientRequestsCompleted,
     stripeClientRequestsCompletedDurationSeconds,
-} from "../../../src/prometheus-metrics";
+} from "../prometheus-metrics";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";

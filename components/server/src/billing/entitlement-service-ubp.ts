@@ -16,17 +16,13 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
-import {
-    EntitlementService,
-    HitParallelWorkspaceLimit,
-    MayStartWorkspaceResult,
-} from "../../../src/billing/entitlement-service";
-import { Config } from "../../../src/config";
-import { UserService } from "../../../src/user/user-service";
+import { EntitlementService, HitParallelWorkspaceLimit, MayStartWorkspaceResult } from "./entitlement-service";
+import { Config } from "../config";
+import { UserService } from "../user/user-service";
 import { StripeService } from "../user/stripe-service";
 import { BillingModes } from "./billing-mode";
 import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { UsageService } from "../../../src/user/usage-service";
+import { UsageService } from "../user/usage-service";
 
 const MAX_PARALLEL_WORKSPACES_FREE = 4;
 const MAX_PARALLEL_WORKSPACES_PAID = 16;

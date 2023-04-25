@@ -6,8 +6,6 @@
   "scripts": {
     "start": "node ./dist/src/main.js",
     "start-inspect": "node --inspect=9229 ./dist/src/main.js",
-    "start-ee": "node --expose-gc ./dist/ee/src/main.js",
-    "start-ee-inspect": "node --inspect=9229 ./dist/ee/src/main.js",
     "prepare": "yarn clean && yarn build",
     "build": "yarn lint && npx tsc",
     "build:clean": "yarn clean && yarn build",
