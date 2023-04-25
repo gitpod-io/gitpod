@@ -56,6 +56,9 @@ export class UserToTeamMigrationService {
         while (!team && tries++ < 10) {
             try {
                 let name = user.fullName || user.name || user.id;
+                if (name.length > 64) {
+                    name = name.substring(0, 64);
+                }
                 if (tries > 1) {
                     name = name + " " + tries;
                 }
@@ -72,9 +75,6 @@ export class UserToTeamMigrationService {
         if (!team) {
             throw new ResponseError(ErrorCodes.CONFLICT, "Could not create team for user.", { userId: user.id });
         }
-        // add membership
-        await this.teamDB.addMemberToTeam(user.id, team.id);
-        await this.teamDB.setTeamMemberRole(user.id, team.id, "owner");
 
         const projects = await this.projectDB.findUserProjects(user.id);
         log.info(ctx, "Migrating projects.", { teamId: team.id, projects: projects.map((p) => p.id) });
