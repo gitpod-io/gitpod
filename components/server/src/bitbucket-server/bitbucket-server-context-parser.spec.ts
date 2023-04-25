@@ -44,7 +44,7 @@ class TestBitbucketServerContextParser {
                     createGitpodToken: async () => ({ token: { value: "foobar123-token" } }),
                 } as any);
                 bind(Config).toConstantValue({
-                    hostUrl: new GitpodHostUrl(),
+                    hostUrl: new GitpodHostUrl("https://gitpod.io"),
                 });
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => {

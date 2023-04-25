@@ -10,7 +10,7 @@ import {
     ContentStatusResponse,
 } from "@gitpod/supervisor-api-grpc/lib/status_pb";
 import { WorkspaceInfoResponse } from "@gitpod/supervisor-api-grpc/lib/info_pb";
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+import { workspaceUrl } from "../shared/urls";
 
 export class SupervisorServiceClient {
     private static _instance: SupervisorServiceClient | undefined;
@@ -41,7 +41,7 @@ export class SupervisorServiceClient {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         try {
-            const wsSupervisorStatusUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href).with((url) => {
+            const wsSupervisorStatusUrl = workspaceUrl.with(() => {
                 return {
                     pathname: "/_supervisor/v1/status/supervisor/willShutdown/true",
                 };
@@ -85,7 +85,7 @@ export class SupervisorServiceClient {
             wait = "";
         }
         try {
-            const wsSupervisorStatusUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href).with((url) => {
+            const wsSupervisorStatusUrl = workspaceUrl.with(() => {
                 return {
                     pathname: "/_supervisor/v1/status/" + kind + wait,
                 };
@@ -121,7 +121,7 @@ export class SupervisorServiceClient {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         try {
-            const getWorkspaceInfoUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href).with((url) => {
+            const getWorkspaceInfoUrl = workspaceUrl.with(() => {
                 return {
                     pathname: "_supervisor/v1/info/workspace",
                 };

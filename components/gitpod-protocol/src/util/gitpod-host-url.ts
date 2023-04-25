@@ -24,21 +24,20 @@ const workspaceUrlPrefixRegex = RegExp(`^(([0-9]{4,6}|debug)-)?${baseWorkspaceID
 export class GitpodHostUrl {
     readonly url: URL;
 
-    constructor(urlParam?: string | URL) {
-        if (urlParam === undefined || typeof urlParam === "string") {
-            this.url = new URL(urlParam || "https://gitpod.io");
+    constructor(url: string) {
+        const urlParam = url as any;
+        if (typeof urlParam === "string") {
+            // public constructor
+            this.url = new URL(url);
             this.url.search = "";
             this.url.hash = "";
             this.url.pathname = "";
         } else if (urlParam instanceof URL) {
+            // internal constructor, see with
             this.url = urlParam;
         } else {
             log.error("Unexpected urlParam", { urlParam });
         }
-    }
-
-    static fromWorkspaceUrl(url: string) {
-        return new GitpodHostUrl(new URL(url));
     }
 
     withWorkspacePrefix(workspaceId: string, region: string) {
