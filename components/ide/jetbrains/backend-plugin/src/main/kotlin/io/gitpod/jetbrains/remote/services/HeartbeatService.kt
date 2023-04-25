@@ -70,8 +70,6 @@ class HeartbeatService : Disposable {
                         "clientKind" to "jetbrains",
                         "totalCount" to totalCount,
                         "successfulCount" to successfulCount,
-                        "workspaceId" to info.workspaceId,
-                        "instanceId" to info.instanceId,
                         "gitpodHost" to info.gitpodApi.host,
                 // TODO: Identify if it's debug workspace
                 // "debugWorkspace" to "false"
