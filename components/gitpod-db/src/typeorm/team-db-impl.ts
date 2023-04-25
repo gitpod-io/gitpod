@@ -188,14 +188,25 @@ export class TeamDBImpl implements TeamDB {
         if (!name) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Name cannot be empty");
         }
-        if (!/^[A-Za-z0-9 '_-]+$/.test(name)) {
+        name = name.trim();
+        if (name.length < 3) {
             throw new ResponseError(
                 ErrorCodes.BAD_REQUEST,
-                "Please choose a name containing only letters, numbers, -, _, ', or spaces.",
+                "Please choose a name that is at least three characters long.",
             );
+        }
+        if (name.length > 64) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Please choose a name that is at most 64 characters long.");
         }
 
         let slug = slugify(name, { lower: true });
+
+        if (slug.length < 3) {
+            throw new ResponseError(
+                ErrorCodes.BAD_REQUEST,
+                "Please choose a name that is at least three characters long.",
+            );
+        }
 
         // Storing new entry in a TX to avoid potential dupes caused by racing requests.
         const em = await this.getEntityManager();

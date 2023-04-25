@@ -12,6 +12,8 @@ import { DBUser } from "./entity/db-user";
 import * as chai from "chai";
 import { TeamDB } from "../team-db";
 import { DBTeam } from "./entity/db-team";
+import { ResponseError } from "vscode-jsonrpc";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -41,5 +43,36 @@ export class TeamDBSpec {
         team.name = "Test Team 2";
         team = await this.teamDB.updateTeam(team.id, team);
         expect(team.name).to.be.eq("Test Team 2");
+    }
+
+    @test()
+    async testBadNames(): Promise<void> {
+        const user = await this.userDB.newUser();
+        try {
+            await this.teamDB.createTeam(user.id, "X");
+            expect.fail("Team name too short");
+        } catch (error) {
+            if (error instanceof ResponseError && error.code === ErrorCodes.BAD_REQUEST) {
+                // expected ResponseError of code BAD_REQUEST
+            } else {
+                expect.fail("Unexpected error: " + error);
+            }
+        }
+        try {
+            await this.teamDB.createTeam(
+                user.id,
+                "this is way too long for a team name, as we have a limit of 60 characters and this is 8 more than that. this is way too long for a team name, as we have a limit of 60 characters and this is 8 more than that",
+            );
+            expect.fail("Team name too long");
+        } catch (error) {
+            if (error instanceof ResponseError && error.code === ErrorCodes.BAD_REQUEST) {
+                // expected ResponseError of code BAD_REQUEST
+            } else {
+                expect.fail("Unexpected error: " + error);
+            }
+        }
+        let team = await this.teamDB.createTeam(user.id, "      I ♥ gitpod        ");
+        expect(team.name).to.be.eq("I ♥ gitpod");
+        expect(team.slug).to.be.eq("i-love-gitpod");
     }
 }
