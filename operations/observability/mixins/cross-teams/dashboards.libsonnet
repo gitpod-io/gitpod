@@ -16,6 +16,7 @@
     'gitpod-grpc-client.json': (import 'dashboards/gitpod-grpc-client.json'),
     'gitpod-connect-server.json': (import 'dashboards/gitpod-connect-server.json'),
     'gitpod-overview.json': (import 'dashboards/gitpod-overview.json'),
+    'gitpod-overview-mk2.json': (import 'dashboards/gitpod-overview-mk2.json'),
     'gitpod-nodes-overview.json': (import 'dashboards/gitpod-nodes-overview.json'),
     'gitpod-admin-node.json': (import 'dashboards/gitpod-admin-node.json'),
     'gitpod-admin-workspace.json': (import 'dashboards/gitpod-admin-workspace.json'),
