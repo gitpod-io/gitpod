@@ -88,7 +88,6 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         totalCount: 0,
         successfulCount: 0,
     };
-    private heartbeatTelemetryHandle: NodeJS.Timer;
 
     private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.SetStateData>();
     readonly onSetState = this.onDidChangeEmitter.event;
@@ -99,6 +98,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         private service: GitpodService,
         private clientWindow: Window,
     ) {
+        this.isWorkspaceRunning = false;
         this.processServerInfo();
         window.addEventListener("message", (event: MessageEvent) => {
             if (IDEFrontendDashboardService.isTrackEventData(event.data)) {
@@ -132,7 +132,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         const workspaceUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href);
         this.gitpodHost = workspaceUrl.withoutWorkspacePrefix().url.host;
         this.isDebugWorkspace = workspaceUrl.debugWorkspace;
-        this.heartbeatTelemetryHandle = setInterval(() => {
+        setInterval(() => {
             if (!this.instanceID || !this.isWorkspaceRunning) {
                 return;
             }
