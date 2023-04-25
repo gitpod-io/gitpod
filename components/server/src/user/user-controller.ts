@@ -27,7 +27,10 @@ import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
 import * as fs from "fs/promises";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ServerFactory } from "../workspace/gitpod-server-impl";
+import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
+
+export const ServerFactory = Symbol("ServerFactory");
+export type ServerFactory = () => GitpodServerImpl;
 
 @injectable()
 export class UserController {
