@@ -38,9 +38,9 @@ class HeartbeatService : Disposable {
                     current.connected && current.secondsSinceLastActivity <= maxIntervalInSeconds -> false
                     else -> null
                 }
-
                 if (wasClosed != null) {
                     manager.client.server.sendHeartBeat(SendHeartBeatOptions(info.instanceId, wasClosed)).await()
+                    successfulCount += 1
                     if (wasClosed) {
                         manager.trackEvent("ide_close_signal", mapOf(
                                 "clientKind" to "jetbrains"
@@ -49,10 +49,41 @@ class HeartbeatService : Disposable {
                 }
             } catch (t: Throwable) {
                 thisLogger().error("gitpod: failed to check activity:", t)
+            } finally {
+                totalCount += 1
             }
+
             delay(intervalInSeconds * 1000L)
         }
     }
 
-    override fun dispose() = job.cancel()
+    // define property to store successfulCount and totalCount
+    private val successfulCount = 0
+    private val totalCount = 0
+
+    // define job to start interval per 15 minutes
+    private val telemetryJob = GlobalScope.launch {
+        val info = manager.pendingInfo.await()
+        while (isActive) {
+            try {
+                manager.trackEvent("ide_heartbeat", mapOf(
+                    "clientKind" to "jetbrains"
+                    "totalCount" to totalCount
+                    "successfulCount" to successfulCount
+                    "workspaceId" to info.workspaceId
+                    "instanceId" to info.instanceId
+                    "gitpodHost" to info.gitpodApi.host
+                    "debugWorkspace" to info.debug.toString()
+                ))
+            } catch (t: Throwable) {
+                thisLogger().error("gitpod: failed to send hearbeat telemetry:", t)
+            }
+            delay(15 * 60 * 1000L)
+        }
+    }
+
+    override fun dispose() {
+        job.cancel()
+        telemetryJob.cancel()
+    }
 }
