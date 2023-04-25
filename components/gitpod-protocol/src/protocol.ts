@@ -123,6 +123,11 @@ export namespace User {
         if (!!user.organizationId) {
             return false;
         }
+        // If a user has already been onboarded
+        // Also, used to rule out "admin-user"
+        if (!!user.additionalData?.profile?.onboardedTimestamp) {
+            return false;
+        }
         return !hasPreferredIde(user);
     }
 
