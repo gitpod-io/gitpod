@@ -81,20 +81,20 @@ func (m *WorkspaceManagerHeartbeat) ScheduleIDEHeartbeatTelemetry(ctx context.Co
 }
 
 func (m *WorkspaceManagerHeartbeat) sendIDEHeartbeatTelemetry(session *Session) {
-	propertics := make(map[string]interface{})
-	propertics["clientKind"] = "ssh"
-	propertics["totalCount"] = m.totalCount
-	propertics["successfulCount"] = m.successfulCount
-	propertics["workspaceId"] = session.WorkspaceID
-	propertics["instanceId"] = session.InstanceID
-	propertics["gitpodHost"] = m.gitpodHost
+	properties := make(map[string]interface{})
+	properties["clientKind"] = "ssh"
+	properties["totalCount"] = m.totalCount
+	properties["successfulCount"] = m.successfulCount
+	properties["workspaceId"] = session.WorkspaceID
+	properties["instanceId"] = session.InstanceID
+	properties["gitpodHost"] = m.gitpodHost
 	// TODO: Identify if it's debug workspace or not
 	// propertics["debugWorkspace"] = "false"
 
 	tracker.Track(analytics.TrackMessage{
 		Identity:   analytics.Identity{UserID: session.OwnerUserId},
 		Event:      "ide_heartbeat",
-		Properties: propertics,
+		Properties: properties,
 	})
 	m.totalCount = 0
 	m.successfulCount = 0
