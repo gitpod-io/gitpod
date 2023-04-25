@@ -44,6 +44,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	_, _, databaseSecretMountPath := common.DatabaseEnvSecret(ctx.Config)
 
 	_, _, authCfg := auth.GetConfig(ctx)
+	redisCfg := redis.GetConfiguration(ctx)
 
 	cfg := config.Configuration{
 		PublicURL:                         fmt.Sprintf("https://api.%s", ctx.Config.Domain),
@@ -54,7 +55,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		SessionServiceAddress:             common.ClusterAddress(common.ServerComponent, ctx.Namespace, common.ServerIAMSessionPort),
 		DatabaseConfigPath:                databaseSecretMountPath,
 		Redis: config.RedisConfiguration{
-			Address: common.ClusterAddress(redis.Component, ctx.Namespace, redis.Port),
+			Address: redisCfg.Address,
 		},
 		Auth: config.AuthConfiguration{
 			PKI: config.AuthPKIConfiguration{

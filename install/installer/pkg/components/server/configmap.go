@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/installer/pkg/components/auth"
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	ideservice "github.com/gitpod-io/gitpod/installer/pkg/components/ide-service"
+	"github.com/gitpod-io/gitpod/installer/pkg/components/redis"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -292,6 +293,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		ShowSetupModal: showSetupModal,
 		Auth:           authCfg,
+		Redis:          redis.GetConfiguration(ctx),
 	}
 
 	fc, err := common.ToJSONString(scfg)
