@@ -13,7 +13,7 @@ import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser
 import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { UserController } from "./user/user-controller";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
-import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
+import { GitpodServerImpl, ServerFactory } from "./workspace/gitpod-server-impl";
 import { ConfigProvider } from "./workspace/config-provider";
 import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { MessageBusHelper, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
@@ -156,6 +156,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WorkspaceStarter).toSelf().inSingletonScope();
     bind(ImageSourceProvider).toSelf().inSingletonScope();
 
+    bind(ServerFactory).toAutoFactory(GitpodServerImpl);
     bind(UserController).toSelf().inSingletonScope();
 
     bind(InstallationAdminController).toSelf().inSingletonScope();

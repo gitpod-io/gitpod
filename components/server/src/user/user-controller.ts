@@ -23,11 +23,11 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { increaseLoginCounter } from "../prometheus-metrics";
 import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
-import { EnforcementControllerServerFactory } from "./enforcement-endpoint";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
 import * as fs from "fs/promises";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ServerFactory } from "../workspace/gitpod-server-impl";
 
 @injectable()
 export class UserController {
@@ -40,7 +40,7 @@ export class UserController {
     @inject(SessionHandlerProvider) protected readonly sessionHandlerProvider: SessionHandlerProvider;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
-    @inject(EnforcementControllerServerFactory) private readonly serverFactory: EnforcementControllerServerFactory;
+    @inject(ServerFactory) private readonly serverFactory: ServerFactory;
 
     get apiRouter(): express.Router {
         const router = express.Router();

@@ -212,6 +212,9 @@ export function censor<T>(obj: T, k: keyof T): T {
 
 export type GitpodServerWithTracing = InterfaceWithTraceContext<GitpodServer>;
 
+export const ServerFactory = Symbol("ServerFactory");
+export type ServerFactory = () => GitpodServerImpl;
+
 @injectable()
 export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(Config) protected readonly config: Config;
