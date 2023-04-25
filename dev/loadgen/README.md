@@ -18,7 +18,7 @@ You can find a short explanation of this tool in this [loom video](https://www.l
   ```
 - Port-forward ws-manager
   ```console
-  kubectl port-forward deployment/ws-manager 12001:8080
+  while true; do kubectl port-forward deployment/ws-manager 12001:8080; done
   ```
 - Compile loadgen
   ```console

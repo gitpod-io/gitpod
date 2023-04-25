@@ -102,6 +102,14 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		workspace.Status.Conditions = []metav1.Condition{}
 	}
 
+	if r.OnReconcile != nil {
+		// Publish to subscribers in a goroutine, to prevent blocking the main reconcile loop.
+		ws := workspace.DeepCopy()
+		go func() {
+			r.OnReconcile(ctx, ws)
+		}()
+	}
+
 	log.Info("reconciling workspace", "ws", req.NamespacedName)
 	if r.maintenance.IsEnabled() {
 		// Don't reconcile workspaces in maintenance mode, to prevent Pod creation and deletion.
@@ -140,10 +148,6 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	result, err := r.actOnStatus(ctx, &workspace, workspacePods)
 	if err != nil {
 		return result, err
-	}
-
-	if r.OnReconcile != nil {
-		r.OnReconcile(ctx, &workspace)
 	}
 
 	return ctrl.Result{}, nil
