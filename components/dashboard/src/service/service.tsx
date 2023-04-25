@@ -149,6 +149,8 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
                 event: IDEHeartbeatTelemetryEvent,
                 properties,
             });
+            this.heartbeatTelemetryData.successfulCount = 0;
+            this.heartbeatTelemetryData.totalCount = 0;
         }, IDE_HEARTBEAT_TELEMETRY_INTERVAL);
     }
 
