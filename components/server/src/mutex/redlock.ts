@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable, postConstruct } from "inversify";
+import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { Redis as RedisClient } from "ioredis";
 import Redlock from "redlock";
@@ -13,12 +13,12 @@ import Redlock from "redlock";
 export class RedisMutex {
     @inject(Config) protected config: Config;
 
-    private redlock: Redlock;
-
-    @postConstruct()
-    public init() {
-        const redis = new RedisClient({ host: this.config.redis.address });
-        const redlock = new Redlock([redis], {
+    public client(): Redlock {
+        const redis = new RedisClient({
+            host: this.config.redis.address,
+            enableReadyCheck: true,
+        });
+        return new Redlock([redis], {
             // The expected clock drift; for more details see:
             // http://redis.io/topics/distlock
             driftFactor: 0.01, // multiplied by lock ttl to determine drift time
@@ -39,11 +39,5 @@ export class RedisMutex {
             // attempted with the `using` API.
             automaticExtensionThreshold: 1 * 1000, // time in ms
         });
-
-        this.redlock = redlock;
-    }
-
-    public client(): Redlock {
-        return this.redlock;
     }
 }
