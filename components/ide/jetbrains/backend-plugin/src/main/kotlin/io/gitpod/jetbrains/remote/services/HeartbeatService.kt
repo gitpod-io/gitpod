@@ -20,6 +20,10 @@ class HeartbeatService : Disposable {
 
     private val manager = service<GitpodManager>()
 
+    // define property to store successfulCount and totalCount
+    private var successfulCount = 0
+    private var totalCount = 0
+
     private val job = GlobalScope.launch {
         val info = manager.pendingInfo.await()
         val intervalInSeconds = 30
@@ -57,26 +61,23 @@ class HeartbeatService : Disposable {
         }
     }
 
-    // define property to store successfulCount and totalCount
-    private val successfulCount = 0
-    private val totalCount = 0
-
     // define job to start interval per 15 minutes
     private val telemetryJob = GlobalScope.launch {
         val info = manager.pendingInfo.await()
         while (isActive) {
             try {
                 manager.trackEvent("ide_heartbeat", mapOf(
-                    "clientKind" to "jetbrains",
-                    "totalCount" to totalCount,
-                    "successfulCount" to successfulCount,
-                    "workspaceId" to info.workspaceId,
-                    "instanceId" to info.instanceId,
-                    "gitpodHost" to info.gitpodApi.host,
-                    "debugWorkspace" to info.debug.toString()
+                        "clientKind" to "jetbrains",
+                        "totalCount" to totalCount,
+                        "successfulCount" to successfulCount,
+                        "workspaceId" to info.workspaceId,
+                        "instanceId" to info.instanceId,
+                        "gitpodHost" to info.gitpodApi.host,
+                // TODO: Identify if it's debug workspace
+                // "debugWorkspace" to "false"
                 ))
             } catch (t: Throwable) {
-                thisLogger().error("gitpod: failed to send hearbeat telemetry:", t)
+                thisLogger().error("gitpod: failed to send heartbeat telemetry:", t)
             }
             delay(15 * 60 * 1000L)
         }
