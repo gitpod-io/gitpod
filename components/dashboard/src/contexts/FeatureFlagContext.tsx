@@ -30,6 +30,7 @@ const defaultFeatureFlags = {
     newSignupFlow: false,
     linkedinConnectionForOnboarding: false,
     paymentVerificationFlow: false,
+    orgOnlyAttribution: false,
 };
 
 const FeatureFlagContext = createContext<FeatureFlagsType>(defaultFeatureFlags);
@@ -49,6 +50,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
     const [newSignupFlow, setNewSignupFlow] = useState<boolean>(false);
     const [linkedinConnectionForOnboarding, setLinkedinConnectionForOnboarding] = useState<boolean>(false);
     const [paymentVerificationFlow, setPaymentVerificationFlow] = useState<boolean>(false);
+    const [orgOnlyAttribution, setOrgOnlyAttribution] = useState<boolean>(false);
 
     useEffect(() => {
         if (!user) return;
@@ -68,6 +70,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
                 newSignupFlow: { defaultValue: false, setter: setNewSignupFlow },
                 linkedinConnectionForOnboarding: { defaultValue: false, setter: setLinkedinConnectionForOnboarding },
                 paymentVerificationFlow: { defaultValue: false, setter: setPaymentVerificationFlow },
+                team_only_attribution: { defaultValue: false, setter: setOrgOnlyAttribution },
             };
 
             for (const [flagName, config] of Object.entries(featureFlags)) {
@@ -116,6 +119,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
             newSignupFlow,
             linkedinConnectionForOnboarding,
             paymentVerificationFlow,
+            orgOnlyAttribution,
         };
     }, [
         startWithOptions,
@@ -128,6 +132,7 @@ const FeatureFlagContextProvider: React.FC = ({ children }) => {
         newSignupFlow,
         linkedinConnectionForOnboarding,
         paymentVerificationFlow,
+        orgOnlyAttribution,
     ]);
 
     return <FeatureFlagContext.Provider value={flags}>{children}</FeatureFlagContext.Provider>;

@@ -198,6 +198,7 @@ import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
+import { UserToTeamMigrationService } from "@gitpod/gitpod-db/lib/user-to-team-migration-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -274,6 +275,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(EnvVarService)
     private readonly envVarService: EnvVarService;
+
+    @inject(UserToTeamMigrationService)
+    private readonly userToTeamMigrationService: UserToTeamMigrationService;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -644,6 +648,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getLoggedInUser(ctx: TraceContext): Promise<User> {
         await this.doUpdateUser();
         return this.checkUser("getLoggedInUser");
+    }
+
+    public async migrateLoggedInUserToOrgOnlyMode(ctx: TraceContext): Promise<User> {
+        await this.doUpdateUser();
+        const user = this.checkUser("migrateLoggedInUserToOrgOnlyMode");
+        if (!this.userToTeamMigrationService.needsMigration(user)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "User does not need migration.");
+        }
+        try {
+            await this.userToTeamMigrationService.migrateUser(user);
+            await this.doUpdateUser();
+            log.info({ userId: user.id }, "migrated user to org-only mode");
+            return this.user!;
+        } catch (error) {
+            console.error(error);
+            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to migrate user to org-only mode.");
+        }
     }
 
     protected showSetupCondition: { value: boolean } | undefined = undefined;
