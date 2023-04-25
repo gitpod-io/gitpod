@@ -4,15 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { RepositoryService } from "../../../src/repohost/repo-service";
+import { RepositoryService } from "../repohost/repo-service";
 import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
-import { GitLabApi, GitLab } from "../../../src/gitlab/api";
-import { AuthProviderParams } from "../../../src/auth/auth-provider";
+import { GitLabApi, GitLab } from "../gitlab/api";
+import { AuthProviderParams } from "../auth/auth-provider";
 import { GitLabApp } from "./gitlab-app";
-import { Config } from "../../../src/config";
-import { TokenService } from "../../../src/user/token-service";
-import { GitlabContextParser } from "../../../src/gitlab/gitlab-context-parser";
+import { Config } from "../config";
+import { TokenService } from "../user/token-service";
+import { GitlabContextParser } from "../gitlab/gitlab-context-parser";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()

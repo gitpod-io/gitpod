@@ -16,8 +16,10 @@ import { BitbucketServerFileProvider } from "./bitbucket-server-file-provider";
 import { BitbucketServerRepositoryProvider } from "./bitbucket-server-repository-provider";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
 import { BitbucketServerTokenValidator } from "./bitbucket-server-token-validator";
+import { RepositoryService } from "../repohost/repo-service";
+import { BitbucketServerService } from "../prebuilds/bitbucket-server-service";
 
-export const bitbucketServerContainerModule = new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+export const bitbucketServerContainerModule = new ContainerModule((bind, _unbind, _isBound, rebind) => {
     bind(RepositoryHost).toSelf().inSingletonScope();
     bind(BitbucketServerApi).toSelf().inSingletonScope();
     bind(BitbucketServerFileProvider).toSelf().inSingletonScope();
@@ -31,4 +33,5 @@ export const bitbucketServerContainerModule = new ContainerModule((bind, _unbind
     bind(BitbucketServerTokenHelper).toSelf().inSingletonScope();
     bind(BitbucketServerTokenValidator).toSelf().inSingletonScope();
     bind(IGitTokenValidator).toService(BitbucketServerTokenValidator);
+    rebind(RepositoryService).to(BitbucketServerService).inSingletonScope();
 });

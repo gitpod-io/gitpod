@@ -8,16 +8,16 @@ import { User } from "@gitpod/gitpod-protocol";
 import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { Container, ContainerModule } from "inversify";
 import { retries, suite, test, timeout } from "mocha-typescript";
-import { AuthProviderParams } from "../../../src/auth/auth-provider";
-import { HostContextProvider } from "../../../src/auth/host-context-provider";
-import { BitbucketServerApi } from "../../../src/bitbucket-server/bitbucket-server-api";
-import { BitbucketServerContextParser } from "../../../src/bitbucket-server/bitbucket-server-context-parser";
-import { BitbucketServerTokenHelper } from "../../../src/bitbucket-server/bitbucket-server-token-handler";
-import { TokenProvider } from "../../../src/user/token-provider";
+import { AuthProviderParams } from "../auth/auth-provider";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { BitbucketServerApi } from "../bitbucket-server/bitbucket-server-api";
+import { BitbucketServerContextParser } from "../bitbucket-server/bitbucket-server-context-parser";
+import { BitbucketServerTokenHelper } from "../bitbucket-server/bitbucket-server-token-handler";
+import { TokenProvider } from "../user/token-provider";
 import { BitbucketServerService } from "./bitbucket-server-service";
 import { expect } from "chai";
-import { Config } from "../../../src/config";
-import { TokenService } from "../../../src/user/token-service";
+import { Config } from "../config";
+import { TokenService } from "../user/token-service";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 @suite(timeout(10000), retries(1), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER"))

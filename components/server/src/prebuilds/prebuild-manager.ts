@@ -20,12 +20,12 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { getCommitInfo, HostContextProvider } from "../../../src/auth/host-context-provider";
-import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
-import { ConfigProvider } from "../../../src/workspace/config-provider";
-import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
-import { Config } from "../../../src/config";
-import { ProjectsService } from "../../../src/projects/projects-service";
+import { getCommitInfo, HostContextProvider } from "../auth/host-context-provider";
+import { WorkspaceFactory } from "../workspace/workspace-factory";
+import { ConfigProvider } from "../workspace/config-provider";
+import { WorkspaceStarter } from "../workspace/workspace-starter";
+import { Config } from "../config";
+import { ProjectsService } from "../projects/projects-service";
 import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 import { inject, injectable } from "inversify";
@@ -33,12 +33,12 @@ import * as opentracing from "opentracing";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { error } from "console";
 import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
-import { PrebuildRateLimiterConfig } from "../../../src/workspace/prebuild-rate-limiter";
+import { PrebuildRateLimiterConfig } from "../workspace/prebuild-rate-limiter";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { UserService } from "../../../src/user/user-service";
-import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
-import { EnvVarService } from "../../../src/workspace/env-var-service";
+import { UserService } from "../user/user-service";
+import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
+import { EnvVarService } from "../workspace/env-var-service";
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {

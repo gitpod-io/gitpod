@@ -113,6 +113,19 @@ import { LinkedInService } from "./linkedin-service";
 import { AuthJWT } from "./auth/jwt";
 import { SnapshotService } from "./workspace/snapshot-service";
 import { APIWorkspacesService } from "./api/workspaces";
+import { PrebuildManager } from "./prebuilds/prebuild-manager";
+import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
+import { GithubApp } from "./prebuilds/github-app";
+import { GitHubAppSupport } from "./github/github-app-support";
+import { GithubAppRules } from "./prebuilds/github-app-rules";
+import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
+import { GitLabApp } from "./prebuilds/gitlab-app";
+import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
+import { BitbucketApp } from "./prebuilds/bitbucket-app";
+import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
+import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
+import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
+import { IncrementalPrebuildsService } from "./prebuilds/incremental-prebuilds-service";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -318,4 +331,18 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(API).toSelf().inSingletonScope();
 
     bind(AuthJWT).toSelf().inSingletonScope();
+
+    bind(PrebuildManager).toSelf().inSingletonScope();
+    bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
+    bind(GithubApp).toSelf().inSingletonScope();
+    bind(GitHubAppSupport).toSelf().inSingletonScope();
+    bind(GithubAppRules).toSelf().inSingletonScope();
+    bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
+    bind(GitLabApp).toSelf().inSingletonScope();
+    bind(GitLabAppSupport).toSelf().inSingletonScope();
+    bind(BitbucketApp).toSelf().inSingletonScope();
+    bind(BitbucketAppSupport).toSelf().inSingletonScope();
+    bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
+    bind(BitbucketServerApp).toSelf().inSingletonScope();
+    bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
 });

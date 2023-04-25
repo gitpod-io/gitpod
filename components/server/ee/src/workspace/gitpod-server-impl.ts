@@ -7,31 +7,11 @@
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl, traceAPIParams, traceWI } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext, TraceContextWithSpan } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import {
-    GitpodClient,
-    User,
-    Team,
-    Permission,
-    WorkspaceContext,
-    WorkspaceCreationResult,
-    PrebuiltWorkspaceContext,
-    CommitContext,
-    PrebuiltWorkspace,
-    ProviderRepository,
-    PrebuildWithStatus,
-    CreateProjectParams,
-    Project,
-    StartPrebuildResult,
-    ClientHeaderFields,
-    FindPrebuildsParams,
-    PrebuildEvent,
-    OpenPrebuildContext,
-} from "@gitpod/gitpod-protocol";
+import { GitpodClient, User, Team, Permission, ClientHeaderFields } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import { AdmissionLevel, ControlAdmissionRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GuardedCostCenter, ResourceAccessGuard, ResourceAccessOp } from "../../../src/auth/resource-access";
 import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import {
@@ -41,15 +21,10 @@ import {
     UsageServiceClient,
     Usage_Kind,
 } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { UserService } from "../../../src/user/user-service";
 import { StripeService } from "../user/stripe-service";
 
-import { GitHubAppSupport } from "../github/github-app-support";
-import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { Config } from "../../../src/config";
-import { ClientMetadata, traceClientMetadata } from "../../../src/websocket/websocket-connection-manager";
-import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
-import { URL } from "url";
+import { ClientMetadata } from "../../../src/websocket/websocket-connection-manager";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { EntitlementService } from "../../../src/billing/entitlement-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
@@ -60,26 +35,14 @@ import {
     BillingServiceDefinition,
     StripeCustomer,
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
-import { IncrementalPrebuildsService } from "../prebuilds/incremental-prebuilds-service";
-import { ConfigProvider } from "../../../src/workspace/config-provider";
 import { ClientError } from "nice-grpc-common";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl {
-    @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
-    @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
-    @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
-
     // per-user state
     @inject(StripeService) protected readonly stripeService: StripeService;
 
-    @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
-    @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
-    @inject(BitbucketAppSupport) protected readonly bitbucketAppSupport: BitbucketAppSupport;
-
     @inject(Config) protected readonly config: Config;
-
-    @inject(UserService) protected readonly userService: UserService;
 
     @inject(UsageServiceDefinition.name)
     protected readonly usageService: UsageServiceClient;
@@ -100,60 +63,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
         clientHeaderFields: ClientHeaderFields,
     ): void {
         super.initialize(client, user, accessGuard, clientMetadata, connectionCtx, clientHeaderFields);
-
-        this.listenForPrebuildUpdates().catch((err) => log.error("error registering for prebuild updates", err));
-    }
-
-    protected async listenForPrebuildUpdates() {
-        // 'registering for prebuild updates for all projects this user has access to
-        const projects = await this.getAccessibleProjects();
-        for (const projectId of projects) {
-            this.disposables.push(
-                this.localMessageBroker.listenForPrebuildUpdates(
-                    projectId,
-                    (ctx: TraceContext, update: PrebuildWithStatus) =>
-                        TraceContext.withSpan(
-                            "forwardPrebuildUpdateToClient",
-                            (ctx) => {
-                                traceClientMetadata(ctx, this.clientMetadata);
-                                TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
-
-                                this.client?.onPrebuildUpdate(update);
-                            },
-                            ctx,
-                        ),
-                ),
-            );
-        }
-
-        // TODO(at) we need to keep the list of accessible project up to date
-    }
-
-    protected async getAccessibleProjects() {
-        if (!this.user) {
-            return [];
-        }
-
-        // update all project this user has access to
-        const allProjects: string[] = [];
-        const teams = await this.teamDB.findTeamsByUser(this.user.id);
-        for (const team of teams) {
-            allProjects.push(...(await this.projectsService.getTeamProjects(team.id)).map((p) => p.id));
-        }
-        allProjects.push(...(await this.projectsService.getUserProjects(this.user.id)).map((p) => p.id));
-        return allProjects;
-    }
-
-    public async isPrebuildDone(ctx: TraceContext, pwsId: string): Promise<boolean> {
-        traceAPIParams(ctx, { pwsId });
-
-        const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsId);
-        if (!pws) {
-            // there is no prebuild - that's as good one being done
-            return true;
-        }
-
-        return PrebuiltWorkspace.isDone(pws);
     }
 
     public async controlAdmission(ctx: TraceContext, workspaceId: string, level: "owner" | "everyone"): Promise<void> {
@@ -198,183 +107,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             workspace.shareable = level === "everyone";
             await db.store(workspace);
         });
-    }
-
-    protected async findPrebuiltWorkspace(
-        parentCtx: TraceContext,
-        user: User,
-        context: WorkspaceContext,
-        ignoreRunningPrebuild?: boolean,
-        allowUsingPreviousPrebuilds?: boolean,
-    ): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
-        const ctx = TraceContext.childContext("findPrebuiltWorkspace", parentCtx);
-        try {
-            if (!(CommitContext.is(context) && context.repository.cloneUrl && context.revision)) {
-                return;
-            }
-
-            const commitSHAs = CommitContext.computeHash(context);
-
-            const logCtx: LogContext = { userId: user.id };
-            const cloneUrl = context.repository.cloneUrl;
-            let prebuiltWorkspace: PrebuiltWorkspace | undefined;
-            const logPayload = {
-                allowUsingPreviousPrebuilds,
-                ignoreRunningPrebuild,
-                cloneUrl,
-                commit: commitSHAs,
-                prebuiltWorkspace,
-            };
-            if (OpenPrebuildContext.is(context)) {
-                prebuiltWorkspace = await this.workspaceDb.trace(ctx).findPrebuildByID(context.openPrebuildID);
-                if (
-                    prebuiltWorkspace?.cloneURL !== cloneUrl &&
-                    (ignoreRunningPrebuild || prebuiltWorkspace?.state === "available")
-                ) {
-                    // prevent users from opening arbitrary prebuilds this way - they must match the clone URL so that the resource guards are correct.
-                    return;
-                }
-            } else {
-                log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
-                prebuiltWorkspace = await this.workspaceDb
-                    .trace(ctx)
-                    .findPrebuiltWorkspaceByCommit(cloneUrl, commitSHAs);
-                if (!prebuiltWorkspace && allowUsingPreviousPrebuilds) {
-                    const { config } = await this.configProvider.fetchConfig({}, user, context);
-                    const history = await this.incrementalPrebuildsService.getCommitHistoryForContext(context, user);
-                    prebuiltWorkspace = await this.incrementalPrebuildsService.findGoodBaseForIncrementalBuild(
-                        context,
-                        config,
-                        history,
-                        user,
-                    );
-                }
-            }
-            if (!prebuiltWorkspace) {
-                return;
-            }
-
-            if (prebuiltWorkspace.state === "available") {
-                log.info(logCtx, `Found prebuilt workspace for ${cloneUrl}:${commitSHAs}`, logPayload);
-                const result: PrebuiltWorkspaceContext = {
-                    title: context.title,
-                    originalContext: context,
-                    prebuiltWorkspace,
-                };
-                return result;
-            } else if (prebuiltWorkspace.state === "queued") {
-                // waiting for a prebuild that has not even started yet, doesn't make sense.
-                // starting a workspace from git will be faster anyway
-                return;
-            } else if (prebuiltWorkspace.state === "building") {
-                if (ignoreRunningPrebuild) {
-                    // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
-                    return;
-                }
-
-                const workspaceID = prebuiltWorkspace.buildWorkspaceId;
-                const makeResult = (instanceID: string): WorkspaceCreationResult => {
-                    return <WorkspaceCreationResult>{
-                        runningWorkspacePrebuild: {
-                            prebuildID: prebuiltWorkspace!.id,
-                            workspaceID,
-                            instanceID,
-                            starting: "queued",
-                            sameCluster: false,
-                        },
-                    };
-                };
-
-                const wsi = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceID);
-                if (!wsi || wsi.stoppedTime !== undefined) {
-                    return;
-                }
-
-                // (AT) At this point we found a running/building prebuild, which might also include
-                // image build in current state.
-                //
-                // The owner's client connection is automatically registered to listen on instance updates.
-                // For the remaining client connections which would handle `createWorkspace` and end up here, it
-                // also would be reasonable to listen on the instance updates of a running prebuild, or image build.
-                //
-                // We need to be forwarded the WorkspaceInstanceUpdates in the frontend, because we do not have
-                // any other means to reliably learn about the status about image builds, yet.
-                // Once we have those, we should remove this.
-                //
-                const ws = await this.workspaceDb.trace(ctx).findById(workspaceID);
-                if (!!ws && !!wsi && ws.ownerId !== this.user?.id) {
-                    const resetListener = this.localMessageBroker.listenForWorkspaceInstanceUpdates(
-                        ws.ownerId,
-                        (ctx, instance) => {
-                            if (instance.id === wsi.id) {
-                                this.forwardInstanceUpdateToClient(ctx, instance);
-                                if (instance.status.phase === "stopped") {
-                                    resetListener.dispose();
-                                }
-                            }
-                        },
-                    );
-                    this.disposables.push(resetListener);
-                }
-
-                const result = makeResult(wsi.id);
-
-                const inSameCluster = wsi.region === this.config.installationShortname;
-                if (!inSameCluster) {
-                    /* We need to wait for this prebuild to finish before we return from here.
-                     * This creation mode is meant to be used once we have gone through default mode, have confirmation from the
-                     * message bus that the prebuild is done, and now only have to wait for dbsync to come through. Thus,
-                     * in this mode we'll poll the database until the prebuild is ready (or we time out).
-                     *
-                     * Note: This polling mechanism only makes sense if the prebuild runs in cluster different from ours.
-                     *       Otherwise there's no dbsync inbetween that we might have to wait for.
-                     *
-                     * DB sync interval is 2 seconds at the moment, we wait ten "ticks" for the data to be synchronized.
-                     */
-                    const finishedPrebuiltWorkspace = await this.pollDatabaseUntilPrebuildIsAvailable(
-                        ctx,
-                        prebuiltWorkspace.id,
-                        20000,
-                    );
-                    if (!finishedPrebuiltWorkspace) {
-                        log.warn(
-                            logCtx,
-                            "did not find a finished prebuild in the database despite waiting long enough after msgbus confirmed that the prebuild had finished",
-                            logPayload,
-                        );
-                        return;
-                    } else {
-                        return {
-                            title: context.title,
-                            originalContext: context,
-                            prebuiltWorkspace: finishedPrebuiltWorkspace,
-                        } as PrebuiltWorkspaceContext;
-                    }
-                }
-
-                /* This is the default mode behaviour: we present the running prebuild to the user so that they can see the logs
-                 * or choose to force the creation of a workspace.
-                 */
-                if (wsi.status.phase != "running") {
-                    result.runningWorkspacePrebuild!.starting = "starting";
-                } else {
-                    result.runningWorkspacePrebuild!.starting = "running";
-                }
-                log.info(
-                    logCtx,
-                    `Found prebuilding (starting=${
-                        result.runningWorkspacePrebuild!.starting
-                    }) workspace for ${cloneUrl}:${commitSHAs}`,
-                    logPayload,
-                );
-                return result;
-            }
-        } catch (e) {
-            TraceContext.setError(ctx, e);
-            throw e;
-        } finally {
-            ctx.span.finish();
-        }
     }
 
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {
@@ -824,196 +556,6 @@ export class GitpodServerEEImpl extends GitpodServerImpl {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
         }
         return this.billingModes.getBillingMode(parsedAttributionId, new Date());
-    }
-
-    // Projects
-    async getProviderRepositoriesForUser(
-        ctx: TraceContext,
-        params: { provider: string; hints?: object },
-    ): Promise<ProviderRepository[]> {
-        traceAPIParams(ctx, { params });
-
-        const user = this.checkAndBlockUser("getProviderRepositoriesForUser");
-
-        const repositories: ProviderRepository[] = [];
-        const providerHost = params.provider;
-        const provider = (await this.getAuthProviders(ctx)).find((ap) => ap.host === providerHost);
-
-        if (providerHost === "github.com" && this.config.githubApp?.enabled) {
-            repositories.push(...(await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params })));
-        } else if (provider?.authProviderType === "GitHub") {
-            const hostContext = this.hostContextProvider.get(providerHost);
-            if (hostContext?.services) {
-                repositories.push(
-                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user)),
-                );
-            }
-        } else if (providerHost === "bitbucket.org" && provider) {
-            repositories.push(...(await this.bitbucketAppSupport.getProviderRepositoriesForUser({ user, provider })));
-        } else if (provider?.authProviderType === "BitbucketServer") {
-            const hostContext = this.hostContextProvider.get(providerHost);
-            if (hostContext?.services) {
-                repositories.push(
-                    ...(await hostContext.services.repositoryService.getRepositoriesForAutomatedPrebuilds(user)),
-                );
-            }
-        } else if (provider?.authProviderType === "GitLab") {
-            repositories.push(...(await this.gitLabAppSupport.getProviderRepositoriesForUser({ user, provider })));
-        } else {
-            log.info({ userId: user.id }, `Unsupported provider: "${params.provider}"`, { params });
-        }
-        const projects = await this.projectsService.getProjectsByCloneUrls(repositories.map((r) => r.cloneUrl));
-
-        const cloneUrlToProject = new Map(projects.map((p) => [p.cloneUrl, p]));
-
-        for (const repo of repositories) {
-            const p = cloneUrlToProject.get(repo.cloneUrl);
-            const repoProvider = new URL(repo.cloneUrl).host.split(".")[0];
-
-            if (p) {
-                if (p.userId) {
-                    const owner = await this.userDB.findUserById(p.userId);
-                    if (owner) {
-                        const ownerProviderMatchingRepoProvider = owner.identities.find((identity, index) =>
-                            identity.authProviderId.toLowerCase().includes(repoProvider),
-                        );
-                        if (ownerProviderMatchingRepoProvider) {
-                            repo.inUse = {
-                                userName: ownerProviderMatchingRepoProvider?.authName,
-                            };
-                        }
-                    }
-                } else if (p.teamOwners && p.teamOwners[0]) {
-                    repo.inUse = {
-                        userName: p.teamOwners[0] || "somebody",
-                    };
-                }
-            }
-        }
-
-        return repositories;
-    }
-
-    public async getPrebuildEvents(ctx: TraceContext, projectId: string): Promise<PrebuildEvent[]> {
-        traceAPIParams(ctx, { projectId });
-        const user = this.checkAndBlockUser("getPrebuildEvents");
-
-        const project = await this.projectsService.getProject(projectId);
-        if (!project) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
-        }
-        await this.guardProjectOperation(user, projectId, "get");
-
-        const events = await this.projectsService.getPrebuildEvents(project.cloneUrl);
-        return events;
-    }
-
-    async triggerPrebuild(
-        ctx: TraceContext,
-        projectId: string,
-        branchName: string | null,
-    ): Promise<StartPrebuildResult> {
-        traceAPIParams(ctx, { projectId, branchName });
-
-        const user = this.checkAndBlockUser("triggerPrebuild");
-
-        const project = await this.projectsService.getProject(projectId);
-        if (!project) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
-        }
-        await this.guardProjectOperation(user, projectId, "update");
-
-        const branchDetails = !!branchName
-            ? await this.projectsService.getBranchDetails(user, project, branchName)
-            : (await this.projectsService.getBranchDetails(user, project)).filter((b) => b.isDefault);
-        if (branchDetails.length !== 1) {
-            log.debug({ userId: user.id }, "Cannot find branch details.", { project, branchName });
-            throw new ResponseError(
-                ErrorCodes.NOT_FOUND,
-                `Could not find ${!branchName ? "a default branch" : `branch '${branchName}'`} in repository ${
-                    project.cloneUrl
-                }`,
-            );
-        }
-        const contextURL = branchDetails[0].url;
-
-        const context = (await this.contextParser.handle(ctx, user, contextURL)) as CommitContext;
-
-        // HACK: treat manual triggered prebuild as a reset for the inactivity state
-        await this.projectDB.updateProjectUsage(project.id, {
-            lastWorkspaceStart: new Date().toISOString(),
-        });
-
-        const prebuild = await this.prebuildManager.startPrebuild(ctx, {
-            context,
-            user,
-            project,
-            forcePrebuild: true,
-        });
-
-        this.analytics.track({
-            userId: user.id,
-            event: "prebuild_triggered",
-            properties: {
-                context_url: contextURL,
-                clone_url: project.cloneUrl,
-                commit: context.revision,
-                branch: branchDetails[0].name,
-                project_id: project.id,
-            },
-        });
-
-        return prebuild;
-    }
-
-    async adminFindPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
-        traceAPIParams(ctx, { params });
-        await this.guardAdminAccess("adminFindPrebuilds", { params }, Permission.ADMIN_PROJECTS);
-
-        return this.projectsService.findPrebuilds(params);
-    }
-
-    async cancelPrebuild(ctx: TraceContext, projectId: string, prebuildId: string): Promise<void> {
-        traceAPIParams(ctx, { projectId, prebuildId });
-
-        const user = this.checkAndBlockUser("cancelPrebuild");
-
-        const project = await this.projectsService.getProject(projectId);
-        if (!project) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
-        }
-        await this.guardProjectOperation(user, projectId, "update");
-
-        const prebuild = await this.workspaceDb.trace(ctx).findPrebuildByID(prebuildId);
-        if (!prebuild) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Prebuild not found");
-        }
-        // Explicitly stopping the prebuild workspace now automaticaly cancels the prebuild
-        await this.stopWorkspace(ctx, prebuild.buildWorkspaceId);
-    }
-
-    public async createProject(ctx: TraceContext, params: CreateProjectParams): Promise<Project> {
-        // parameters are already traced in super call
-        const project = await super.createProject(ctx, params);
-
-        // update client registration for the logged in user
-        this.disposables.push(
-            this.localMessageBroker.listenForPrebuildUpdates(
-                project.id,
-                (ctx: TraceContext, update: PrebuildWithStatus) =>
-                    TraceContext.withSpan(
-                        "forwardPrebuildUpdateToClient",
-                        (ctx) => {
-                            traceClientMetadata(ctx, this.clientMetadata);
-                            TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
-
-                            this.client?.onPrebuildUpdate(update);
-                        },
-                        ctx,
-                    ),
-            ),
-        );
-        return project;
     }
 
     async adminGetCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenterJSON | undefined> {

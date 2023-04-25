@@ -8,7 +8,7 @@ import { Server, Probot, Context } from "probot";
 import { getPrivateKey } from "@probot/get-private-key";
 import * as fs from "fs-extra";
 import { injectable, inject } from "inversify";
-import { Config } from "../../../src/config";
+import { Config } from "../config";
 import {
     AppInstallationDB,
     TracedWorkspaceDB,
@@ -34,10 +34,10 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { PrebuildManager } from "./prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilt-status-maintainer";
 import { Options, ApplicationFunctionOptions } from "probot/lib/types";
-import { asyncHandler } from "../../../src/express-util";
-import { ContextParser } from "../../../src/workspace/context-parser-service";
-import { HostContextProvider } from "../../../src/auth/host-context-provider";
-import { RepoURL } from "../../../src/repohost";
+import { asyncHandler } from "../express-util";
+import { ContextParser } from "../workspace/context-parser-service";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { RepoURL } from "../repohost";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 

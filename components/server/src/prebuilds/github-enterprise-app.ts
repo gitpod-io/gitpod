@@ -9,16 +9,16 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { Buffer } from "buffer";
 import { postConstruct, injectable, inject } from "inversify";
 import { ProjectDB, TeamDB, UserDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
-import { PrebuildManager } from "../prebuilds/prebuild-manager";
+import { PrebuildManager } from "./prebuild-manager";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { TokenService } from "../../../src/user/token-service";
-import { HostContextProvider } from "../../../src/auth/host-context-provider";
+import { TokenService } from "../user/token-service";
+import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { CommitContext, CommitInfo, Project, StartPrebuildResult, User, WebhookEvent } from "@gitpod/gitpod-protocol";
 import { GitHubService } from "./github-service";
 import { URL } from "url";
-import { ContextParser } from "../../../src/workspace/context-parser-service";
-import { RepoURL } from "../../../src/repohost";
+import { ContextParser } from "../workspace/context-parser-service";
+import { RepoURL } from "../repohost";
 import { GithubAppRules } from "./github-app-rules";
 
 @injectable()

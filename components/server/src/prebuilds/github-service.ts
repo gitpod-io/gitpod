@@ -4,15 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { RepositoryService } from "../../../src/repohost/repo-service";
+import { RepositoryService } from "../repohost/repo-service";
 import { inject, injectable } from "inversify";
-import { GitHubGraphQlEndpoint, GitHubRestApi } from "../../../src/github/api";
+import { GitHubGraphQlEndpoint, GitHubRestApi } from "../github/api";
 import { GitHubEnterpriseApp } from "./github-enterprise-app";
-import { AuthProviderParams } from "../../../src/auth/auth-provider";
-import { GithubContextParser } from "../../../src/github/github-context-parser";
+import { AuthProviderParams } from "../auth/auth-provider";
+import { GithubContextParser } from "../github/github-context-parser";
 import { ProviderRepository, User } from "@gitpod/gitpod-protocol";
-import { Config } from "../../../src/config";
-import { TokenService } from "../../../src/user/token-service";
+import { Config } from "../config";
+import { TokenService } from "../user/token-service";
 
 @injectable()
 export class GitHubService extends RepositoryService {

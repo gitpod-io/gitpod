@@ -54,6 +54,11 @@ import { IamSessionApp } from "./iam/iam-session-app";
 import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
 import { API } from "./api/server";
 import { SnapshotService } from "./workspace/snapshot-service";
+import { GithubApp } from "./prebuilds/github-app";
+import { GitLabApp } from "./prebuilds/gitlab-app";
+import { BitbucketApp } from "./prebuilds/bitbucket-app";
+import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
+import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -75,6 +80,12 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService;
     @inject(HeadlessLogController) protected readonly headlessLogController: HeadlessLogController;
     @inject(DebugApp) protected readonly debugApp: DebugApp;
+
+    @inject(GithubApp) protected readonly githubApp: GithubApp;
+    @inject(GitLabApp) protected readonly gitLabApp: GitLabApp;
+    @inject(BitbucketApp) protected readonly bitbucketApp: BitbucketApp;
+    @inject(BitbucketServerApp) protected readonly bitbucketServerApp: BitbucketServerApp;
+    @inject(GitHubEnterpriseApp) protected readonly gitHubEnterpriseApp: GitHubEnterpriseApp;
 
     @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
@@ -365,6 +376,26 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             res.send(this.config.version);
         });
         app.use(this.oauthController.oauthRouter);
+
+        if (this.config.githubApp?.enabled && this.githubApp.server) {
+            log.info("Registered GitHub app at /apps/github");
+            app.use("/apps/github/", this.githubApp.server?.expressApp);
+            log.debug(`GitHub app ready under ${this.githubApp.server.expressApp.path()}`);
+        } else {
+            log.info("GitHub app disabled");
+        }
+
+        log.info("Registered GitLab app at " + GitLabApp.path);
+        app.use(GitLabApp.path, this.gitLabApp.router);
+
+        log.info("Registered Bitbucket app at " + BitbucketApp.path);
+        app.use(BitbucketApp.path, this.bitbucketApp.router);
+
+        log.info("Registered GitHub EnterpriseApp app at " + GitHubEnterpriseApp.path);
+        app.use(GitHubEnterpriseApp.path, this.gitHubEnterpriseApp.router);
+
+        log.info("Registered Bitbucket Server app at " + BitbucketServerApp.path);
+        app.use(BitbucketServerApp.path, this.bitbucketServerApp.router);
     }
 
     public async start(port: number) {

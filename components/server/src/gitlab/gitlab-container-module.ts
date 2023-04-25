@@ -16,8 +16,10 @@ import { GitlabContextParser } from "./gitlab-context-parser";
 import { GitlabRepositoryProvider } from "./gitlab-repository-provider";
 import { GitLabTokenHelper } from "./gitlab-token-helper";
 import { GitLabTokenValidator } from "./gitlab-token-validator";
+import { RepositoryService } from "../repohost/repo-service";
+import { GitlabService } from "../prebuilds/gitlab-service";
 
-export const gitlabContainerModule = new ContainerModule((bind, _unbind, _isBound, _rebind) => {
+export const gitlabContainerModule = new ContainerModule((bind, _unbind, _isBound, rebind) => {
     bind(RepositoryHost).toSelf().inSingletonScope();
     bind(GitLabApi).toSelf().inSingletonScope();
     bind(GitlabContextParser).toSelf().inSingletonScope();
@@ -31,4 +33,5 @@ export const gitlabContainerModule = new ContainerModule((bind, _unbind, _isBoun
     bind(GitLabTokenHelper).toSelf().inSingletonScope();
     bind(GitLabTokenValidator).toSelf().inSingletonScope();
     bind(IGitTokenValidator).toService(GitLabTokenValidator);
+    rebind(RepositoryService).to(GitlabService).inSingletonScope();
 });

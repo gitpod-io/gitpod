@@ -9,11 +9,11 @@ import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { expect } from "chai";
 import { Container, ContainerModule } from "inversify";
 import { suite, retries, test, timeout } from "mocha-typescript";
-import { AuthProviderParams } from "../../../src/auth/auth-provider";
-import { DevData } from "../../../src/dev/dev-data";
-import { GitLabApi } from "../../../src/gitlab/api";
-import { GitLabTokenHelper } from "../../../src/gitlab/gitlab-token-helper";
-import { TokenProvider } from "../../../src/user/token-provider";
+import { AuthProviderParams } from "../auth/auth-provider";
+import { DevData } from "../dev/dev-data";
+import { GitLabApi } from "./api";
+import { GitLabTokenHelper } from "./gitlab-token-helper";
+import { TokenProvider } from "../user/token-provider";
 import { GitLabAppSupport } from "./gitlab-app-support";
 
 @suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB"))

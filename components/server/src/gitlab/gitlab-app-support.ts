@@ -6,9 +6,9 @@
 
 import { AuthProviderInfo, ProviderRepository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
-import { TokenProvider } from "../../../src/user/token-provider";
 import { Gitlab } from "@gitbeaker/node";
-import { GitLab } from "../../../src/gitlab/api";
+import { GitLab } from "./api";
+import { TokenProvider } from "../user/token-provider";
 
 @injectable()
 export class GitLabAppSupport {
