@@ -152,7 +152,7 @@ export class UserService {
             newUser.blocked = newUser.blocked || !canPass;
         }
         if (!newUser.blocked && isFirstUser && this.config.admin.grantFirstUserAdminRole) {
-            newUser.rolesOrPermissions = ["admin"];
+            newUser.rolesOrPermissions = ["admin", "admin-permissions"];
         }
     }
 
