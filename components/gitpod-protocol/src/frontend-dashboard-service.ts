@@ -147,3 +147,15 @@ export namespace IDEFrontendDashboardService {
         return obj != null && typeof obj === "object" && obj.type === "ide-open-desktop";
     }
 }
+
+export const IDEHeartbeatTelemetryEvent = "ide_heartbeat";
+export interface IDEHeartbeatTelemetryData {
+    clientKind: "vscode-desktop" | "ssh" | "jetbrains" | "vscode-desktop" | "supervisor-frontend";
+    totalCount: number;
+    successfulCount: number;
+    workspaceId: string;
+    instanceId: string;
+    gitpodHost: string;
+    debugWorkspace: "true" | "false";
+}
+export const IDE_HEARTBEAT_TELEMETRY_INTERVAL = 900000; // 15 minutes
