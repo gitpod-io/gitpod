@@ -4,11 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { inject, postConstruct } from "inversify";
+import { inject, injectable, postConstruct } from "inversify";
 import { Config } from "../config";
 import { Redis as RedisClient } from "ioredis";
 import Redlock from "redlock";
 
+@injectable()
 export class RedisMutex {
     @inject(Config) protected config: Config;
 
