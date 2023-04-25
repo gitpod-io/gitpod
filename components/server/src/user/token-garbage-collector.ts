@@ -12,6 +12,8 @@ import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { RedisMutex } from "../mutex/redlock";
+import { ResourceLockedError } from "redlock";
 
 @injectable()
 export class TokenGarbageCollector {
@@ -19,18 +21,27 @@ export class TokenGarbageCollector {
 
     @inject(UserDB) protected readonly userDb: UserDB;
 
-    @inject(ConsensusLeaderQorum) protected readonly leaderQuorum: ConsensusLeaderQorum;
+    @inject(RedisMutex) protected readonly mutex: RedisMutex;
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
 
     public async start(intervalSeconds?: number): Promise<Disposable> {
         const intervalSecs = intervalSeconds || TokenGarbageCollector.GC_CYCLE_INTERVAL_SECONDS;
         return repeat(async () => {
             try {
-                if (await this.leaderQuorum.areWeLeader()) {
-                    await this.collectExpiredTokenEntries();
-                }
+                await this.mutex.client().using(["token-gc"], 10 * 1000, async (signal) => {
+                    try {
+                        await this.collectExpiredTokenEntries();
+                    } catch (err) {
+                        log.error("tokengc: failed to expire token entries", err);
+                    }
+                });
             } catch (err) {
-                log.error("token garbage collector", err);
+                if (err instanceof ResourceLockedError) {
+                    log.info("tokengc: failed to acquire token-gc lock, another instance already has the lock", err);
+                    return;
+                }
+
+                log.error("tokengc: failed to acquire workspace-gc lock", err);
             }
         }, intervalSecs * 1000);
     }
