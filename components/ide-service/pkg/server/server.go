@@ -99,13 +99,12 @@ func (s *IDEServiceServer) register(grpcServer *grpc.Server) {
 }
 
 func (s *IDEServiceServer) GetConfig(ctx context.Context, req *api.GetConfigRequest) (*api.GetConfigResponse, error) {
-	configCatClient := experiments.NewClient()
 	attributes := experiments.Attributes{
 		UserID:    req.User.Id,
 		UserEmail: req.User.GetEmail(),
 	}
 
-	experimentalIdesEnabled := configCatClient.GetBoolValue(ctx, "experimentalIdes", false, attributes)
+	experimentalIdesEnabled := s.experimentsClient.GetBoolValue(ctx, "experimentalIdes", false, attributes)
 
 	if experimentalIdesEnabled {
 		return &api.GetConfigResponse{
