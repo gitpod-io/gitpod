@@ -16,11 +16,13 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
 import { reportSessionWithJWT } from "./prometheus-metrics";
+import { AuthJWT } from "./auth/jwt";
 
 @injectable()
 export class SessionHandlerProvider {
     @inject(Config) protected readonly config: Config;
     @inject(DBConfig) protected readonly dbConfig: DBConfig;
+    @inject(AuthJWT) protected readonly authJWT: AuthJWT;
 
     public sessionHandler: express.RequestHandler;
 
@@ -44,16 +46,29 @@ export class SessionHandlerProvider {
             let hasJWTCookie = false;
             log.info("Session handler", {
                 cookies: req.cookies,
+                header: req.headers.cookie,
                 session: req.session.cookie,
             });
-            if (req.cookies) {
-                const jwtCookie = req.cookies[SessionHandlerProvider.getJWTCookieName(this.config)];
 
-                if (jwtCookie) {
-                    hasJWTCookie = true;
-                }
+            const cookies = parseCookieHeader(req.headers.cookie || "");
+            const jwtToken = cookies[SessionHandlerProvider.getJWTCookieName(this.config)];
+            if (jwtToken) {
+                // we handle the verification async, because we don't yet need to use it in the application
+                this.authJWT
+                    .verify(jwtToken)
+                    .then((claims) => {
+                        log.info("JWT Session token verified", {
+                            claims,
+                        });
+                        hasJWTCookie = true;
+                    })
+                    .catch((err) => {
+                        log.error("Failed to verify JWT Session token", err);
+                    })
+                    .finally(() => {
+                        reportSessionWithJWT(hasJWTCookie);
+                    });
             }
-            reportSessionWithJWT(hasJWTCookie);
 
             session(options)(req, res, next);
         };
@@ -110,4 +125,15 @@ export class SessionHandlerProvider {
             }
         });
     }
+}
+
+function parseCookieHeader(cookie: string): { [key: string]: string } {
+    return cookie
+        .split("; ")
+        .map((keypair) => keypair.split("="))
+        .reduce<{ [key: string]: string }>((aggregator, vals) => {
+            const [key, value] = vals;
+            aggregator[key] = value;
+            return aggregator;
+        }, {});
 }
