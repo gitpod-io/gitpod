@@ -34,7 +34,7 @@ require (
 	golang.org/x/net v0.7.0
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f
 	google.golang.org/grpc v1.52.3
-	k8s.io/apimachinery v0.26.2
+	k8s.io/apimachinery v0.26.3
 )
 
 require (
