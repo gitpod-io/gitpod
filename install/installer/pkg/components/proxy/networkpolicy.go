@@ -39,9 +39,6 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 				}, {
 					Protocol: common.TCPProtocol,
 					Port:     &intstr.IntOrString{IntVal: ContainerSSHPort},
-				}, {
-					Protocol: common.TCPProtocol,
-					Port:     &intstr.IntOrString{IntVal: ContainerAnalyticsPort},
 				}},
 			}, {
 				Ports: []networkingv1.NetworkPolicyPort{{
@@ -52,6 +49,16 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 					NamespaceSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
 						"chart": common.MonitoringChart,
 					}},
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.ServerComponent,
+					}},
+				}},
+			}, {
+				Ports: []networkingv1.NetworkPolicyPort{{
+					Protocol: common.TCPProtocol,
+					Port:     &intstr.IntOrString{IntVal: ContainerAnalyticsPort},
+				}},
+				From: []networkingv1.NetworkPolicyPeer{{
 					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
 						"component": common.ServerComponent,
 					}},
