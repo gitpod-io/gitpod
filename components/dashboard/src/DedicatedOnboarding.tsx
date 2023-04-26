@@ -48,7 +48,7 @@ export default function DedicatedOnboarding({ onComplete }: Props) {
                     </ModalFooter>
                 </Modal>
             )}
-            {showModal && <OIDCClientConfigModal onClose={() => {}} />}
+            {showModal && <OIDCClientConfigModal closeable={false} />}
         </div>
     );
 }

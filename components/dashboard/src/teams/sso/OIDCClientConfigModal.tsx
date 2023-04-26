@@ -19,10 +19,13 @@ import { gitpodHostUrl } from "../../service/service";
 
 type Props = {
     clientConfig?: OIDCClientConfig;
-    onClose: () => void;
+    closeable?: boolean;
+
+    onVerifyCompleted?: (result: any) => void;
+    onClose?: () => void;
 };
 
-export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
+export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, closeable = true, onClose = () => {} }) => {
     const { data: org } = useCurrentOrg();
     const upsertClientConfig = useUpsertOIDCClientMutation();
 
@@ -92,6 +95,7 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
     return (
         <Modal
             visible
+            closeable={closeable}
             onClose={onClose}
             onEnter={() => {
                 saveConfig();
@@ -137,9 +141,11 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
             <ModalFooter
                 alert={upsertClientConfig.isError ? <SaveErrorAlert error={upsertClientConfig.error as Error} /> : null}
             >
-                <Button type="secondary" onClick={onClose}>
-                    Cancel
-                </Button>
+                {closeable && (
+                    <Button type="secondary" onClick={onClose}>
+                        Cancel
+                    </Button>
+                )}
                 <Button onClick={saveConfig} disabled={!isValid} loading={upsertClientConfig.isLoading}>
                     Save
                 </Button>
