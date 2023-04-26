@@ -606,6 +606,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             .select(["ws.id", "ws.ownerId"])
             .where(`ws.contentDeletedTime != ''`)
             .andWhere(`ws.contentDeletedTime < :minPurgeTime`, { minPurgeTime })
+            .andWhere(`ws.deleted = 0`)
             .limit(limit);
         return await qb.getMany();
     }
