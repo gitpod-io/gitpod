@@ -54,7 +54,8 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	oidcConfig := req.Msg.GetConfig().GetOidcConfig()
+	config := req.Msg.GetConfig()
+	oidcConfig := config.GetOidcConfig()
 	err = assertIssuerIsReachable(ctx, oidcConfig.GetIssuer())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
@@ -74,19 +75,21 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	oauth2Config := req.Msg.GetConfig().GetOauth2Config()
+	oauth2Config := config.GetOauth2Config()
 	data, err := db.EncryptJSON(s.cipher, toDbOIDCSpec(oauth2Config, oidcConfig))
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to encrypt oidc client config.")
 		return nil, status.Errorf(codes.Internal, "Failed to store OIDC client config.")
 	}
 
+	active := config.GetActive()
+
 	created, err := db.CreateOIDCClientConfig(ctx, s.dbConn, db.OIDCClientConfig{
 		ID:             uuid.New(),
 		OrganizationID: organizationID,
 		Issuer:         oidcConfig.GetIssuer(),
 		Data:           data,
-		Active:         false,
+		Active:         active,
 	})
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to store oidc client config in the database.")
