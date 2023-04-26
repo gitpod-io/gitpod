@@ -40,7 +40,7 @@ export class SessionHandlerProvider {
 
         options.store = this.createStore();
 
-        this.sessionHandler = (req, res, next): express.RequestHandler => {
+        this.sessionHandler = (req, res, next) => {
             let hasJWTCookie = false;
             log.info("Session handler", {
                 cookies: req.cookies,
@@ -54,7 +54,7 @@ export class SessionHandlerProvider {
             }
             reportSessionWithJWT(hasJWTCookie);
 
-            return session(options);
+            session(options)(req, res, next);
         };
     }
 
