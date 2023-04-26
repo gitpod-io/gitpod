@@ -44,9 +44,6 @@ export class SessionHandlerProvider {
 
         this.sessionHandler = (req, res, next) => {
             let hasJWTCookie = false;
-            log.info("Session handler", {
-                header: req.headers.cookie,
-            });
 
             const cookies = parseCookieHeader(req.headers.cookie || "");
             const jwtToken = cookies[SessionHandlerProvider.getJWTCookieName(this.config)];
@@ -55,7 +52,7 @@ export class SessionHandlerProvider {
                 this.authJWT
                     .verify(jwtToken)
                     .then((claims) => {
-                        log.info("JWT Session token verified", {
+                        log.debug("JWT Session token verified", {
                             claims,
                         });
                         hasJWTCookie = true;
