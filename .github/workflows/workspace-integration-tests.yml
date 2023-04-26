@@ -3,11 +3,11 @@ on:
     workflow_dispatch:
         inputs:
             name:
-                required: true
-                description: "The name of the preview environment"
+                required: false
+                description: "The name of the preview environment. Leave empty to run against latest build on main"
             version:
-                required: true
-                description: "The version of Gitpod to install"
+                required: false
+                description: "The version of Gitpod to install (ignored if name is empty)"
             skip_deploy:
                 required: false
                 type: boolean
