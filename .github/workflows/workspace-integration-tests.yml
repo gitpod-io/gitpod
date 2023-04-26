@@ -35,7 +35,6 @@ jobs:
         outputs:
             name: ${{ steps.configuration.outputs.name }}
             version: ${{ steps.configuration.outputs.version }}
-            previewctl_hash: ${{ steps.set-previewctl-version.outputs.previewctl_version }}
         steps:
             # sometimes auth fails with:
             # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
@@ -93,17 +92,6 @@ jobs:
                           echo "version=$(gh run view "$RUNID" --log -R gitpod-io/gitpod | grep 'main-gha.[0-9]*' -o | head -n 1)"
                       } >> $GITHUB_OUTPUT
                   fi
-            - name: Set previewctl version
-              id: set-previewctl-version
-              run: |
-                PREVIEWCTL_VERSION=$(\
-                    gcloud container images list-tags eu.gcr.io/gitpod-core-dev/build/previewctl \
-                        --filter="tags:main-gha.*" \
-                        --limit=1 \
-                        --format=json \
-                    | jq --raw-output '.[0].tags[0]'
-                )
-                echo "previewctl_version=$PREVIEWCTL_VERSION" >> "$GITHUB_OUTPUT"
             - name: Slack Notification
               uses: rtCamp/action-slack-notify@v2
               if: failure()
@@ -126,7 +114,6 @@ jobs:
             name: ${{ needs.configuration.outputs.name }}
             sa_key: ${{ secrets.GCP_CREDENTIALS }}
             infrastructure_provider: gce
-            previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
             large_vm: true
         - name: Deploy Gitpod to the preview environment
           if: github.event.inputs.skip_deploy != 'true'
@@ -136,7 +123,6 @@ jobs:
             name: ${{ needs.configuration.outputs.name }}
             sa_key: ${{ secrets.GCP_CREDENTIALS }}
             version: ${{ needs.configuration.outputs.version}}
-            previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
             wsmanager_mk2: ${{ github.event.inputs.wsman_mk2 != 'false' }}
 
     check:
@@ -276,4 +262,3 @@ jobs:
           with:
               name: ${{ needs.configuration.outputs.name }}
               sa_key: ${{ secrets.GCP_CREDENTIALS }}
-              previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
