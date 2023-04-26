@@ -27,7 +27,7 @@ export class WebhookEventGarbageCollector {
         const intervalMs = WebhookEventGarbageCollector.GC_CYCLE_INTERVAL_SECONDS * 1000;
         return repeat(async () => {
             try {
-                await this.mutex.client().using(["workspace-gc"], intervalMs, async (signal) => {
+                await this.mutex.using(["workspace-gc"], intervalMs, async (signal) => {
                     log.info("webhook-event-gc: acquired workspace-gc lock. Collecting old workspaces");
                     try {
                         await this.collectObsoleteWebhookEvents();
@@ -37,7 +37,7 @@ export class WebhookEventGarbageCollector {
                 });
             } catch (err) {
                 if (err instanceof ResourceLockedError) {
-                    log.info(
+                    log.debug(
                         "webhook-event-gc: failed to acquire workspace-gc lock, another instance already has the lock",
                         err,
                     );
