@@ -145,7 +145,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             successfulCount: this.heartbeatTelemetryData.successfulCount,
             totalCount: this.heartbeatTelemetryData.totalCount,
             workspaceId: this.workspaceID,
-            instanceId: this.instanceID,
+            instanceId: this.instanceID ?? "",
             gitpodHost: this.gitpodHost,
             clientKind: "supervisor-frontend",
             debugWorkspace: String(this.isDebugWorkspace) as any,
