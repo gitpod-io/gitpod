@@ -360,7 +360,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         const intervalMs = 30 * 1000;
         repeat(async () => {
             try {
-                await this.mutex.client().using(["database-deleter"], intervalMs, async (signal) => {
+                await this.mutex.using(["database-deleter"], intervalMs, async (signal) => {
                     try {
                         await this.periodicDbDeleter.runOnce();
                     } catch (err) {
@@ -369,7 +369,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 });
             } catch (err) {
                 if (err instanceof ResourceLockedError) {
-                    log.info(
+                    log.debug(
                         "[PeriodicDbDeleter] failed to acquire database-deleter lock, another instance already has the lock",
                         err,
                     );
