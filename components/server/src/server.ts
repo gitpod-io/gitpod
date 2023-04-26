@@ -58,9 +58,9 @@ import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
-import { RedisMutex } from "./mutex/redlock";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { ResourceLockedError } from "redlock";
+import { RedisMutex } from "./redis/mutex";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -357,9 +357,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             return;
         }
 
+        const intervalMs = 30 * 1000;
         repeat(async () => {
             try {
-                await this.mutex.client().using(["database-deleter"], 30 * 1000, async (signal) => {
+                await this.mutex.client().using(["database-deleter"], intervalMs, async (signal) => {
                     try {
                         await this.periodicDbDeleter.runOnce();
                     } catch (err) {
@@ -377,7 +378,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
                 log.error("[PeriodicDbDeleter] failed to acquire database-deleter lock", err);
             }
-        }, 30000); // deletion is never time-critical, so we should ensure we do not spam ourselves
+        }, intervalMs); // deletion is never time-critical, so we should ensure we do not spam ourselves
     }
 
     protected async registerRoutes(app: express.Application) {
