@@ -96,6 +96,29 @@
       color: #A8A29E;
     }
 
+    /* Dark Theme */
+    .dark-body{
+      background-color: #222;
+    }
+
+    .dark-button{
+      border: none;
+      color: #F5F5F4;
+      background-color: #454545;
+    }
+
+    .dark-button:hover{
+      background-color: #555;
+    }
+
+    .dark-title{
+      color: #F5F5F4;
+    }
+
+    .dark-text{
+      color: #A8A29E;
+    }
+
   </style>
   <div id="root" style="display: flex; align-items: center; height: 100vh;">
     <div style="max-width: 64em; margin: auto; padding: 6em 2em; text-align: center;">
@@ -121,6 +144,19 @@
     </div>
   </div>
   <script>
+    //set dark theme
+    if(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      const body = document.body;
+      const button = document.button;
+      const title = document.getElementsByClassName("title");
+      const text = document.getElementsByClassName("text");
+
+      body.classList.toggle('dark-body');
+      button.classList.toggle('dark-button');
+      title.classList.toggle('dark-title');
+      text.classList.toggle('dark-text');
+    }
+
     let port = parseInt(window.location.hostname.split('-')[0], 10);
     if (port) {
       document.getElementById('port').textContent = port;
