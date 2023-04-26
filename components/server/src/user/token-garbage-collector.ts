@@ -11,7 +11,7 @@ import { Disposable } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { RedisMutex } from "../mutex/redlock";
+import { RedisMutex } from "../redis/mutex";
 import { ResourceLockedError } from "redlock";
 
 @injectable()
@@ -24,10 +24,10 @@ export class TokenGarbageCollector {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
 
     public async start(intervalSeconds?: number): Promise<Disposable> {
-        const intervalSecs = intervalSeconds || TokenGarbageCollector.GC_CYCLE_INTERVAL_SECONDS;
+        const intervalMs = (intervalSeconds || TokenGarbageCollector.GC_CYCLE_INTERVAL_SECONDS) * 1000;
         return repeat(async () => {
             try {
-                await this.mutex.client().using(["token-gc"], 10 * 1000, async (signal) => {
+                await this.mutex.client().using(["token-gc"], intervalMs, async (signal) => {
                     try {
                         await this.collectExpiredTokenEntries();
                     } catch (err) {
@@ -42,7 +42,7 @@ export class TokenGarbageCollector {
 
                 log.error("tokengc: failed to acquire workspace-gc lock", err);
             }
-        }, intervalSecs * 1000);
+        }, intervalMs);
     }
 
     protected async collectExpiredTokenEntries() {
