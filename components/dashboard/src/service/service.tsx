@@ -21,7 +21,7 @@ import {
     IDEFrontendDashboardService,
     IDEHeartbeatTelemetryData,
     IDEHeartbeatTelemetryEvent,
-    IDE_HEARTBEAT_TELEMETRY_INTERVAL,
+    IDE_HEARTBEAT_TELEMETRY_INTERVAL_MS,
 } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 
@@ -136,22 +136,26 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             if (!this.instanceID || !this.isWorkspaceRunning) {
                 return;
             }
-            const properties: IDEHeartbeatTelemetryData = {
-                successfulCount: this.heartbeatTelemetryData.successfulCount,
-                totalCount: this.heartbeatTelemetryData.totalCount,
-                workspaceId: this.workspaceID,
-                instanceId: this.instanceID,
-                gitpodHost: this.gitpodHost,
-                clientKind: "supervisor-frontend",
-                debugWorkspace: String(this.isDebugWorkspace) as any,
-            };
-            this.service.server.trackEvent({
-                event: IDEHeartbeatTelemetryEvent,
-                properties,
-            });
-            this.heartbeatTelemetryData.successfulCount = 0;
-            this.heartbeatTelemetryData.totalCount = 0;
-        }, IDE_HEARTBEAT_TELEMETRY_INTERVAL);
+            this.sendIDEHeartbeatTelemetry();
+        }, IDE_HEARTBEAT_TELEMETRY_INTERVAL_MS);
+    }
+
+    private async sendIDEHeartbeatTelemetry() {
+        const properties: IDEHeartbeatTelemetryData = {
+            successfulCount: this.heartbeatTelemetryData.successfulCount,
+            totalCount: this.heartbeatTelemetryData.totalCount,
+            workspaceId: this.workspaceID,
+            instanceId: this.instanceID,
+            gitpodHost: this.gitpodHost,
+            clientKind: "supervisor-frontend",
+            debugWorkspace: String(this.isDebugWorkspace) as any,
+        };
+        this.service.server.trackEvent({
+            event: IDEHeartbeatTelemetryEvent,
+            properties,
+        });
+        this.heartbeatTelemetryData.successfulCount = 0;
+        this.heartbeatTelemetryData.totalCount = 0;
     }
 
     private async processServerInfo() {
@@ -164,7 +168,11 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         this.ideCredentials = ideCredentials;
         const reconcile = () => {
             const info = this.parseInfo(listener.info);
-            this.isWorkspaceRunning = info.statusPhase === "running";
+            const isRunning = info.statusPhase === "running";
+            if (this.isWorkspaceRunning && !isRunning) {
+                this.sendIDEHeartbeatTelemetry();
+            }
+            this.isWorkspaceRunning = isRunning;
             this.latestInfo = info;
             const oldInstanceID = this.instanceID;
             this.instanceID = info.instanceId;
@@ -222,15 +230,19 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
     private activeHeartbeat(): void {
         if (this.instanceID) {
+            let hbSucceed = false;
             this.service.server
                 .sendHeartBeat({ instanceId: this.instanceID })
                 .then(() => {
-                    this.heartbeatTelemetryData.successfulCount++;
+                    hbSucceed = true;
                 })
                 .catch((e) => {
                     console.error("failed to send heartbeat:", e);
                 })
                 .finally(() => {
+                    if (hbSucceed) {
+                        this.heartbeatTelemetryData.successfulCount++;
+                    }
                     this.heartbeatTelemetryData.totalCount++;
                 });
         }
