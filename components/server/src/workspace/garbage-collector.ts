@@ -13,8 +13,8 @@ import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { RedisMutex } from "../mutex/redlock";
 import { ResourceLockedError } from "redlock";
+import { RedisMutex } from "../redis/mutex";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:
