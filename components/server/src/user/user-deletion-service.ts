@@ -106,7 +106,7 @@ export class UserDeletionService {
         });
     }
 
-    protected async stopWorkspaces(user: User) {
+    public async stopWorkspaces(user: User) {
         const runningWorkspaces = await this.workspaceDb.findRunningInstancesWithWorkspaces(undefined, user.id);
 
         await Promise.all(

@@ -27,13 +27,13 @@ import { increaseLoginCounter } from "../prometheus-metrics";
 import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import { UserDeletionService } from "../../ee/src/user/user-deletion-service";
 import { EnforcementControllerServerFactory } from "./enforcement-endpoint";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
 import { VerificationService } from "../auth/verification-service";
 import * as fs from "fs/promises";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { UserDeletionService } from "./user-deletion-service";
 
 @injectable()
 export class UserController {
