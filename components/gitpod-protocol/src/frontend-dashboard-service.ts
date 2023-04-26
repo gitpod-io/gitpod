@@ -158,4 +158,4 @@ export interface IDEHeartbeatTelemetryData {
     gitpodHost: string;
     debugWorkspace: "true" | "false";
 }
-export const IDE_HEARTBEAT_TELEMETRY_INTERVAL = 900000; // 15 minutes
+export const IDE_HEARTBEAT_TELEMETRY_INTERVAL_MS = 900000; // 15 minutes
