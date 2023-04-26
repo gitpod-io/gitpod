@@ -792,5 +792,17 @@ class WorkspaceDBSpec {
 
         expect(result.length).to.eq(0);
     }
+
+    @test(timeout(10000))
+    public async hardDeleteWorkspace() {
+        await this.db.store(this.ws);
+        await this.db.storeInstance(this.wsi1);
+        await this.db.storeInstance(this.wsi2);
+        let result = await this.db.findInstances(this.ws.id);
+        expect(result.length).to.eq(2);
+        await this.db.hardDeleteWorkspace(this.ws.id);
+        result = await this.db.findInstances(this.ws.id);
+        expect(result.length).to.eq(0);
+    }
 }
 module.exports = new WorkspaceDBSpec();

@@ -109,7 +109,7 @@ export class WorkspaceDeletionService {
      * @param ws
      * @param includeSnapshots
      */
-    protected async deleteWorkspaceStorage(
+    private async deleteWorkspaceStorage(
         ctx: TraceContext,
         ws: WorkspaceAndOwner,
         includeSnapshots: boolean,
