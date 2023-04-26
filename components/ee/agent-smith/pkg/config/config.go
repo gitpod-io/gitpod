@@ -172,7 +172,6 @@ type Config struct {
 
 	Enforcement       Enforcement        `json:"enforcement,omitempty"`
 	ExcessiveCPUCheck *ExcessiveCPUCheck `json:"excessiveCPUCheck,omitempty"`
-	SlackWebhooks     *SlackWebhooks     `json:"slackWebhooks,omitempty"`
 	Kubernetes        Kubernetes         `json:"kubernetes"`
 
 	ProbePath string `json:"probePath,omitempty"`
