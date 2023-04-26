@@ -9,14 +9,14 @@ import { UserDB, WorkspaceDB, UserStorageResourcesDB, TeamDB, ProjectDB } from "
 import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import { StopWorkspaceRequest, StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
+import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { WorkspaceDeletionService } from "../workspace/workspace-deletion-service";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Config } from "../config";
 import { StripeService } from "../../ee/src/user/stripe-service";
 import { BillingModes } from "../../ee/src/billing/billing-mode";
+import { WorkspaceStarter } from "../workspace/workspace-starter";
 
 @injectable()
 export class UserDeletionService {
@@ -27,9 +27,8 @@ export class UserDeletionService {
     @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(ProjectDB) protected readonly projectDb: ProjectDB;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
-    @inject(WorkspaceManagerClientProvider)
-    protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
+    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(StripeService) protected readonly stripeService: StripeService;
@@ -58,7 +57,12 @@ export class UserDeletionService {
         }
 
         // Stop all workspaces
-        await this.stopWorkspaces(user);
+        await this.workspaceStarter.stopRunningWorkspacesForUser(
+            {},
+            user.id,
+            "user deleted",
+            StopWorkspacePolicy.IMMEDIATELY,
+        );
 
         // Auth Providers
         const authProviders = await this.authProviderService.getAuthProvidersOfUser(user);
@@ -114,49 +118,6 @@ export class UserDeletionService {
                 name: "deleted-user",
             },
         });
-    }
-
-    protected async stopWorkspaces(user: User) {
-        const runningWorkspaces = await this.workspaceDb.findRunningInstancesWithWorkspaces(undefined, user.id);
-
-        await Promise.all(
-            runningWorkspaces.map(async (info) => {
-                const wsi = info.latestInstance;
-
-                log.info({ workspaceId: info.workspace.id, instanceId: wsi.id }, "Stopping workspace instance", {
-                    reason: "deleting user",
-                });
-
-                const req = new StopWorkspaceRequest();
-                req.setId(wsi.id);
-                req.setPolicy(StopWorkspacePolicy.NORMALLY);
-
-                try {
-                    const manager = await this.workspaceManagerClientProvider.get(wsi.region);
-                    await manager.stopWorkspace({}, req);
-                } catch (err) {
-                    log.debug(
-                        {
-                            userId: info.workspace.ownerId,
-                            workspaceId: info.workspace.id,
-                            instanceId: wsi.id,
-                        },
-                        "Unable to stop workspace on account deletion",
-                        err,
-                    );
-
-                    // We cannot find a workspace manager client for this instances' region, or there is any other error while stopping that workspace properly.
-                    // This might be the case if the workspace cluster which we try to stop an instance on is no longer registered.
-                    // This is bad state, but might happen anyway. Instead of failing, we mark the workspace instance as stopped.
-                    await this.workspaceDb.updateInstancePartial(wsi.id, {
-                        status: {
-                            ...wsi.status,
-                            phase: "stopped",
-                        },
-                    });
-                }
-            }),
-        );
     }
 
     protected anonymizeUser(user: User) {

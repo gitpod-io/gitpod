@@ -28,6 +28,8 @@ import { ResponseError } from "vscode-jsonrpc";
 import * as fs from "fs/promises";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
+import { WorkspaceStarter } from "../workspace/workspace-starter";
+import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -43,6 +45,7 @@ export class UserController {
     @inject(SessionHandlerProvider) protected readonly sessionHandlerProvider: SessionHandlerProvider;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
+    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(ServerFactory) private readonly serverFactory: ServerFactory;
 
     get apiRouter(): express.Router {
@@ -224,6 +227,17 @@ export class UserController {
             const logContext = LogContext.from({ user: req.user, request: req });
             const clientInfo = getRequestingClientInfo(req);
             const logPayload = { session: req.session, clientInfo };
+            log.info(logContext, "(Logout) Logging out.", logPayload);
+
+            // stop all running workspaces
+            const user = req.user as User;
+            if (user) {
+                this.workspaceStarter
+                    .stopRunningWorkspacesForUser({}, user.id, "logout", StopWorkspacePolicy.NORMALLY)
+                    .catch((error) =>
+                        log.error(logContext, "cannot stop workspaces on logout", { error, ...logPayload }),
+                    );
+            }
 
             let redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
 
