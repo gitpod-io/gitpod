@@ -27,7 +27,7 @@ export class TokenGarbageCollector {
         const intervalMs = (intervalSeconds || TokenGarbageCollector.GC_CYCLE_INTERVAL_SECONDS) * 1000;
         return repeat(async () => {
             try {
-                await this.mutex.client().using(["token-gc"], intervalMs, async (signal) => {
+                await this.mutex.using(["token-gc"], intervalMs, async (signal) => {
                     try {
                         await this.collectExpiredTokenEntries();
                     } catch (err) {
@@ -36,7 +36,7 @@ export class TokenGarbageCollector {
                 });
             } catch (err) {
                 if (err instanceof ResourceLockedError) {
-                    log.info("tokengc: failed to acquire token-gc lock, another instance already has the lock", err);
+                    log.debug("tokengc: failed to acquire token-gc lock, another instance already has the lock", err);
                     return;
                 }
 
