@@ -4,10 +4,10 @@ on:
         inputs:
             name:
                 required: false
-                description: "The name of the preview environment. Leave empty to run against latest build on main"
+                description: "The name of the preview environment, or leave empty to use a default name"
             version:
                 required: false
-                description: "The version of Gitpod to install (ignored if name is empty)"
+                description: "The version of Gitpod to install (use `latest` to target the latest build on main)"
             skip_deploy:
                 required: false
                 type: boolean
@@ -67,11 +67,19 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               run: |
-                  if [[ '${{ github.event.inputs.name }}' != '' && '${{ github.event.inputs.name }}' != 'latest' ]]; then
-                      # The workflow was triggered by workflow_dispatch
+                  if [[ '${{ github.event.inputs.name }}' != '' ]]; then
+                      {
+                          echo "name=${{ github.event.inputs.name }}"
+                      } >> $GITHUB_OUTPUT
+                  else
+                      {
+                          echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
+                      } >> $GITHUB_OUTPUT
+                  fi
+
+                  if [[ '${{ github.event.inputs.version }}' != 'latest' ]]; then
                       {
                           echo "version=${{ github.event.inputs.version }}"
-                          echo "name=${{ github.event.inputs.name }}"
                       } >> $GITHUB_OUTPUT
                   else
                       # others
@@ -83,7 +91,6 @@ jobs:
 
                       {
                           echo "version=$(gh run view "$RUNID" --log -R gitpod-io/gitpod | grep 'main-gha.[0-9]*' -o | head -n 1)"
-                          echo "name=workspace-integration-test-${{ github.run_id }}-${{ github.run_attempt }}"
                       } >> $GITHUB_OUTPUT
                   fi
             - name: Set previewctl version
