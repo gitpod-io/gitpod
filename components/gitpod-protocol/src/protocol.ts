@@ -169,7 +169,6 @@ export namespace User {
             email: User.getPrimaryEmail(user!) || "",
             company: user?.additionalData?.profile?.companyName,
             avatarURL: user?.avatarUrl,
-            companyWebsite: user?.additionalData?.profile?.companyWebsite,
             jobRole: user?.additionalData?.profile?.jobRole,
             jobRoleOther: user?.additionalData?.profile?.jobRoleOther,
             explorationReasons: user?.additionalData?.profile?.explorationReasons,
@@ -216,7 +215,6 @@ export namespace User {
         email: string;
         company?: string;
         avatarURL?: string;
-        companyWebsite?: string;
         jobRole?: string;
         jobRoleOther?: string;
         explorationReasons?: string[];
@@ -232,7 +230,6 @@ export namespace User {
                 before.email !== after.email ||
                 before.company !== after.company ||
                 before.avatarURL !== after.avatarURL ||
-                before.companyWebsite !== after.companyWebsite ||
                 before.jobRole !== after.jobRole ||
                 before.jobRoleOther !== after.jobRoleOther ||
                 // not checking explorationReasons or signupGoals atm as it's an array - need to check deep equality
@@ -296,8 +293,6 @@ export interface ProfileDetails {
     companyName?: string;
     // the user's email
     emailAddress?: string;
-    // the user's company website
-    companyWebsite?: string;
     // type of role user has in their job
     jobRole?: string;
     // freeform entry for job role user works in (when jobRole is "other")

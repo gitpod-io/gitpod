@@ -36,7 +36,6 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     );
     const [signupGoals, setSignupGoals] = useState<string[]>(user.additionalData?.profile?.signupGoals ?? []);
     const [signupGoalsOther, setSignupGoalsOther] = useState(user.additionalData?.profile?.signupGoalsOther ?? "");
-    const [companyWebsite, setCompanyWebsite] = useState(user.additionalData?.profile?.companyWebsite ?? "");
     const [companySize, setCompanySize] = useState(user.additionalData?.profile?.companySize ?? "");
 
     const addSignupGoal = useCallback(
@@ -108,7 +107,6 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
                     explorationReasons: filteredReasons,
                     signupGoals: filteredGoals,
                     signupGoalsOther,
-                    companyWebsite,
                     companySize,
                 },
             },
@@ -122,7 +120,6 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
         }
     }, [
         companySize,
-        companyWebsite,
         explorationReasons,
         explorationReasonsOptions,
         jobRole,
@@ -136,17 +133,12 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
     ]);
 
     const jobRoleError = useOnBlurError("Please select one", !!jobRole);
-    const websiteError = useOnBlurError("Please enter a valid url", !companyWebsite || isURL(companyWebsite));
     const companySizeError = useOnBlurError(
         "Please select one",
         !explorationReasons.includes(EXPLORE_REASON_WORK) || !!companySize,
     );
     const isValid =
-        jobRoleError.isValid &&
-        websiteError.isValid &&
-        companySizeError.isValid &&
-        signupGoals.length > 0 &&
-        explorationReasons.length > 0;
+        jobRoleError.isValid && companySizeError.isValid && signupGoals.length > 0 && explorationReasons.length > 0;
 
     return (
         <OnboardingStep
@@ -179,15 +171,6 @@ export const StepOrgInfo: FC<Props> = ({ user, onComplete }) => {
             {jobRole === JOB_ROLE_OTHER && (
                 <TextInputField value={jobRoleOther} onChange={setJobRoleOther} placeholder="Please share (optional)" />
             )}
-
-            <TextInputField
-                value={companyWebsite}
-                label="Company Website (optional)"
-                placeholder="example.com"
-                error={websiteError.message}
-                onChange={setCompanyWebsite}
-                onBlur={websiteError.onBlur}
-            />
 
             <CheckboxListField label="I'm exploring Gitpod...">
                 {explorationReasonsOptions.map((o) => (
