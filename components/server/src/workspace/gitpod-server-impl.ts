@@ -597,8 +597,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): User {
         // Old self-hosted mode did not require a session, therefore it's checked first.
         // But we need to make sure, it's not triggered if the new Dedicated Onboarding is active.
-        if (this.showSetupCondition?.value && !this.showOnboardingFlowCondition?.value) {
-            throw new ResponseError(ErrorCodes.SETUP_REQUIRED, "Setup required.");
+        // TODO(gpl): Remove the outer condition once we have an onboarding setup
+        if (!this.enableDedicatedOnboardingFlow) {
+            if (this.showSetupCondition?.value && !this.showOnboardingFlowCondition?.value) {
+                throw new ResponseError(ErrorCodes.SETUP_REQUIRED, "Setup required.");
+            }
         }
 
         // Generally, a user session is required.
@@ -621,9 +624,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         // A session is required to continue with an activated onboarding flow.
-        if (this.showOnboardingFlowCondition?.value) {
-            throw new ResponseError(ErrorCodes.ONBOARDING_IN_PROGRESS, "Dedicated Onboarding Flow in progress.");
-        }
+        // TODO(gpl): Re-enable once we have an onboarding setup view
+        // if (this.showOnboardingFlowCondition?.value) {
+        //     throw new ResponseError(ErrorCodes.ONBOARDING_IN_PROGRESS, "Dedicated Onboarding Flow in progress.");
+        // }
 
         return this.user;
     }
@@ -669,16 +673,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     protected showSetupCondition: { value: boolean } | undefined = undefined;
     protected showOnboardingFlowCondition: { value: boolean } | undefined = undefined;
+    protected enableDedicatedOnboardingFlow: boolean = false; // TODO(gpl): Remove once we have an onboarding setup
     protected async doUpdateUser(): Promise<void> {
         // Conditionally enable Dedicated Onboarding Flow
-        const enableDedicatedOnboardingFlow = await this.configCatClientFactory().getValueAsync(
+        this.enableDedicatedOnboardingFlow = await this.configCatClientFactory().getValueAsync(
             "enableDedicatedOnboardingFlow",
             false,
             {
                 gitpodHost: new URL(this.config.hostUrl.toString()).host,
             },
         );
-        if (enableDedicatedOnboardingFlow) {
+        if (this.enableDedicatedOnboardingFlow) {
             const someOrgWithSSOExists = await this.teamDB.someOrgWithSSOExists();
             const shouldShowOnboardingFlow = !someOrgWithSSOExists;
             this.showOnboardingFlowCondition = { value: shouldShowOnboardingFlow };
