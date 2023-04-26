@@ -76,7 +76,7 @@ func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher,
 func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, returnToURL string, activate bool) (*StartParams, error) {
 	// state is supposed to a) be present on client request as cookie header
 	// and b) to be mirrored by the IdP on callback requests.
-	stateParam := StateParam{
+	stateParam := StateParams{
 		ClientConfigID: config.ID,
 		ReturnToURL:    returnToURL,
 		Activate:       activate,
@@ -103,10 +103,10 @@ func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, retur
 	}, nil
 }
 
-func (s *Service) encodeStateParam(state StateParam) (string, error) {
+func (s *Service) encodeStateParam(state StateParams) (string, error) {
 	now := time.Now().UTC()
 	expiry := now.Add(s.stateExpiry)
-	token := NewStateJWT(state.ClientConfigID, state.ReturnToURL, now, expiry)
+	token := NewStateJWT(state, now, expiry)
 
 	signed, err := s.signerVerifier.Sign(token)
 	if err != nil {
@@ -115,17 +115,14 @@ func (s *Service) encodeStateParam(state StateParam) (string, error) {
 	return signed, nil
 }
 
-func (s *Service) decodeStateParam(encodedToken string) (StateParam, error) {
+func (s *Service) decodeStateParam(encodedToken string) (StateParams, error) {
 	claims := &StateClaims{}
 	_, err := s.signerVerifier.Verify(encodedToken, claims)
 	if err != nil {
-		return StateParam{}, fmt.Errorf("failed to verify state token: %w", err)
+		return StateParams{}, fmt.Errorf("failed to verify state token: %w", err)
 	}
 
-	return StateParam{
-		ClientConfigID: claims.ClientConfigID,
-		ReturnToURL:    claims.ReturnToURL,
-	}, nil
+	return claims.StateParams, nil
 }
 
 func randString(size int) (string, error) {
@@ -140,8 +137,6 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 	orgSlug := r.URL.Query().Get("orgSlug")
 	if orgSlug != "" {
 		dbEntry, err := db.GetOIDCClientConfigByOrgSlug(r.Context(), s.dbConn, orgSlug)
-		// dbEntry.Active
-		// dbEntry.OrganizationID
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
 		}
@@ -170,7 +165,7 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 	return nil, fmt.Errorf("failed to find OIDC config")
 }
 
-func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, *StateParam, error) {
+func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, *StateParams, error) {
 	stateParam := r.URL.Query().Get("state")
 	if stateParam == "" {
 		return nil, nil, fmt.Errorf("missing state parameter")

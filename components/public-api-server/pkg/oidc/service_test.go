@@ -133,13 +133,13 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	})
 	configID := config.ID.String()
 
-	state, err := service.encodeStateParam(StateParam{
+	state, err := service.encodeStateParam(StateParams{
 		ClientConfigID: configID,
 		ReturnToURL:    "",
 	})
 	require.NoError(t, err, "failed encode state param")
 
-	state_unknown, err := service.encodeStateParam(StateParam{
+	state_unknown, err := service.encodeStateParam(StateParams{
 		ClientConfigID: "UNKNOWN",
 		ReturnToURL:    "",
 	})

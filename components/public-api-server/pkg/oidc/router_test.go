@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
@@ -35,7 +36,7 @@ func TestRoute_start(t *testing.T) {
 			return http.ErrUseLastResponse
 		},
 	}
-	resp, err := client.Get(baseUrl + "/oidc/start?id=" + configId)
+	resp, err := client.Get(baseUrl + "/oidc/start?id=" + configId + "&activate=true")
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
@@ -43,6 +44,19 @@ func TestRoute_start(t *testing.T) {
 	redirectUrl, err := resp.Location()
 	require.NoError(t, err)
 	require.Contains(t, redirectUrl.String(), idpUrl, "should redirect to IdP")
+
+	state := redirectUrl.Query().Get("state")
+	require.NotEmpty(t, state, "should contain state param")
+
+	token, _, err := new(jwt.Parser).ParseUnverified(state, jwt.MapClaims{})
+	require.NoError(t, err, "state param should be a JWT")
+	claims, ok := token.Claims.(jwt.MapClaims)
+	require.True(t, ok)
+
+	stateParams, ok := claims["stateParams"].(map[string]interface{})
+	require.True(t, ok, "JWT is missing 'stateParams'")
+	require.Equal(t, true, stateParams["activate"], "`activate` is missing in state")
+	require.Equal(t, "/", stateParams["returnTo"], "`returnTo` is missing in state")
 }
 
 func TestRoute_callback(t *testing.T) {
@@ -93,7 +107,7 @@ type testServerParams struct {
 	clientID    string
 }
 
-func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParam, configId string, oidcService *Service) {
+func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParams, configId string, oidcService *Service) {
 	router := chi.NewRouter()
 	oidcService, dbConn := setupOIDCServiceForTests(t)
 	router.Mount("/oidc", Router(oidcService))
@@ -121,7 +135,7 @@ func newTestServer(t *testing.T, params testServerParams) (url string, state *St
 	config, _ := createConfig(t, dbConn, clientConfig)
 	configId = config.ID.String()
 
-	stateParam := &StateParam{
+	stateParam := &StateParams{
 		ClientConfigID: configId,
 		ReturnToURL:    params.returnToURL,
 	}

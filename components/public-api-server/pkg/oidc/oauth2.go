@@ -18,8 +18,8 @@ type OAuth2Result struct {
 	ReturnToURL    string
 }
 
-type StateParam struct {
-	// Internal client ID
+type StateParams struct {
+	// Internal client config ID
 	ClientConfigID string `json:"clientConfigId"`
 	ReturnToURL    string `json:"returnTo"`
 	Activate       bool   `json:"activate"`
