@@ -6,6 +6,7 @@ package sshproxy
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/analytics"
@@ -35,6 +36,7 @@ type WorkspaceManagerHeartbeat struct {
 	gitpodHost      string
 	totalCount      int
 	successfulCount int
+	counterMutex    sync.Mutex
 }
 
 var _ Heartbeat = &WorkspaceManagerHeartbeat{}
@@ -57,6 +59,8 @@ func (m *WorkspaceManagerHeartbeat) SendHeartbeat(instanceID string, isClosed, i
 		Closed:         isClosed,
 		IgnoreIfActive: ignoreIfActive,
 	})
+	m.counterMutex.Lock()
+	defer m.counterMutex.Unlock()
 	m.totalCount += 1
 	if err != nil {
 		log.WithError(err).Warn("cannot send heartbeat for workspace instance")
@@ -81,6 +85,8 @@ func (m *WorkspaceManagerHeartbeat) ScheduleIDEHeartbeatTelemetry(ctx context.Co
 }
 
 func (m *WorkspaceManagerHeartbeat) sendIDEHeartbeatTelemetry(session *Session) {
+	m.counterMutex.Lock()
+	defer m.counterMutex.Unlock()
 	properties := make(map[string]interface{})
 	properties["clientKind"] = "ssh"
 	properties["totalCount"] = m.totalCount
