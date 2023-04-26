@@ -5,14 +5,15 @@
  */
 
 import { inject, injectable } from "inversify";
-import Redlock from "redlock";
+import Redlock, { ExecutionError, RedlockAbortSignal, ResourceLockedError } from "redlock";
 import { RedisClient } from "./client";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class RedisMutex {
     @inject(RedisClient) protected redis: RedisClient;
 
-    public client(): Redlock {
+    private client(): Redlock {
         return new Redlock([this.redis.get()], {
             // The expected clock drift; for more details see:
             // http://redis.io/topics/distlock
@@ -34,5 +35,26 @@ export class RedisMutex {
             // attempted with the `using` API.
             automaticExtensionThreshold: 1 * 1000, // time in ms
         });
+    }
+
+    public async using<T>(
+        resources: string[],
+        duration: number,
+        routine: (signal: RedlockAbortSignal) => Promise<T>,
+    ): Promise<T> {
+        try {
+            return this.client().using(resources, duration, routine);
+        } catch (err) {
+            if (err instanceof ExecutionError) {
+                // Workaround for https://github.com/mike-marcacci/node-redlock/issues/168 and https://github.com/mike-marcacci/node-redlock/issues/169
+                if (err.message === "The operation was unable to achieve a quorum during its retry window") {
+                    log.debug("wsgc: failed to acquire workspace-gc lock, another instance already has the lock", err);
+
+                    throw new ResourceLockedError("operation was unable to achieve quorum");
+                }
+            }
+
+            throw err;
+        }
     }
 }

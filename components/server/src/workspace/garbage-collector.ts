@@ -45,7 +45,7 @@ export class WorkspaceGarbageCollector {
     public async garbageCollectWorkspacesIfLeader() {
         const initialLockDurationMs = this.config.workspaceGarbageCollection.intervalSeconds * 1000;
         try {
-            await this.mutex.client().using(["workspace-gc"], initialLockDurationMs, async (signal) => {
+            await this.mutex.using(["workspace-gc"], initialLockDurationMs, async (signal) => {
                 log.info("wsgc: acquired workspace-gc lock. Collecting old workspaces");
                 try {
                     await this.softDeleteOldWorkspaces();
@@ -73,7 +73,7 @@ export class WorkspaceGarbageCollector {
             });
         } catch (err) {
             if (err instanceof ResourceLockedError) {
-                log.info("wsgc: failed to acquire workspace-gc lock, another instance already has the lock", err);
+                log.debug("wsgc: failed to acquire workspace-gc lock, another instance already has the lock", err);
                 return;
             }
 
