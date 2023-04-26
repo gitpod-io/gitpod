@@ -72,15 +72,9 @@ func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher,
 	}
 }
 
-func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, returnToURL string, activate bool) (*StartParams, error) {
-	// state is supposed to a) be present on client request as cookie header
-	// and b) to be mirrored by the IdP on callback requests.
-	stateParam := StateParams{
-		ClientConfigID: config.ID,
-		ReturnToURL:    returnToURL,
-		Activate:       activate,
-	}
-	state, err := s.encodeStateParam(stateParam)
+func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, stateParams StateParams) (*StartParams, error) {
+	// the `state` is supposed to be passed through unmodified by the IdP.
+	state, err := s.encodeStateParam(stateParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode state")
 	}
@@ -91,7 +85,7 @@ func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, retur
 		return nil, fmt.Errorf("failed to create nonce")
 	}
 
-	// Nonce is the single option passed on to configure the consent page ATM.
+	// Configuring `AuthCodeOption`s, e.g. nonce
 	config.OAuth2Config.RedirectURL = redirectURL
 	authCodeURL := config.OAuth2Config.AuthCodeURL(state, goidc.Nonce(nonce))
 
