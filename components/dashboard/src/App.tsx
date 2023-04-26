@@ -11,8 +11,7 @@ import { useCurrentOrg } from "./data/organizations/orgs-query";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
-import { useFeatureFlags } from "./contexts/FeatureFlagContext";
-import { MigrationPage } from "./whatsnew/MigrationPage";
+import { MigrationPage, useShouldSeeMigrationPage } from "./whatsnew/MigrationPage";
 
 // Wrap the App in an ErrorBoundary to catch User/Org loading errors
 // This will also catch any errors that happen to bubble all the way up to the top
@@ -24,7 +23,7 @@ const AppWithErrorBoundary: FC = () => {
 const App: FC = () => {
     const { user, loading } = useUserLoader();
     const currentOrgQuery = useCurrentOrg();
-    const { orgOnlyAttribution } = useFeatureFlags();
+    const shouldSeeMigrationPage = useShouldSeeMigrationPage();
 
     // Setup analytics/tracking
     useAnalyticsTracking();
@@ -40,7 +39,7 @@ const App: FC = () => {
     }
 
     // If orgOnlyAttribution is enabled and the user hasn't been migrated, yet, we need to show the migration page
-    if (orgOnlyAttribution && !user.additionalData?.isMigratedToTeamOnlyAttribution) {
+    if (shouldSeeMigrationPage) {
         return <MigrationPage />;
     }
 

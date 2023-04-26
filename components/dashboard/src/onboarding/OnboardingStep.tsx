@@ -18,6 +18,9 @@ type Props = {
     onSubmit(): void;
     submitButtonText?: string;
     submitButtonType?: ButtonProps["type"];
+    onCancel?(): void;
+    cancelButtonText?: string;
+    cancelButtonType?: ButtonProps["type"];
 };
 export const OnboardingStep: FC<Props> = ({
     title,
@@ -29,6 +32,9 @@ export const OnboardingStep: FC<Props> = ({
     onSubmit,
     submitButtonText,
     submitButtonType,
+    onCancel,
+    cancelButtonText,
+    cancelButtonType,
 }) => {
     const handleSubmit = useCallback(
         async (e: FormEvent<HTMLFormElement>) => {
@@ -54,7 +60,18 @@ export const OnboardingStep: FC<Props> = ({
 
                 {error && <Alert type="error">{error}</Alert>}
 
-                <div className="mt-4">
+                <div className={"mt-4" + (onCancel ? " flex space-x-2" : "")}>
+                    {onCancel && (
+                        <Button
+                            htmlType="button"
+                            type={cancelButtonType || "secondary"}
+                            disabled={isSaving}
+                            size="block"
+                            onClick={onCancel}
+                        >
+                            {cancelButtonText || "Cancel"}
+                        </Button>
+                    )}
                     <Button
                         htmlType="submit"
                         type={submitButtonType || "primary"}
