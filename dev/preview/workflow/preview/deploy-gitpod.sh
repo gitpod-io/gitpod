@@ -468,7 +468,7 @@ if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
 
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer segment
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.segmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
-  yq w -i "${INSTALLER_CONFIG_PATH}" analytics.segmentEndpoint "https://${DOMAIN}/analytics"
+  yq w -i "${INSTALLER_CONFIG_PATH}" analytics.segmentEndpoint "http://proxy:9546/analytics"
   # configure proxy analyitcs plugin
   yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.analyticsPlugin.trustedSegmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"
   yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.analyticsPlugin.untrustedSegmentKey "${GITPOD_ANALYTICS_SEGMENT_TOKEN}"

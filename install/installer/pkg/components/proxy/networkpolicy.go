@@ -39,6 +39,9 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 				}, {
 					Protocol: common.TCPProtocol,
 					Port:     &intstr.IntOrString{IntVal: ContainerSSHPort},
+				}, {
+					Protocol: common.TCPProtocol,
+					Port:     &intstr.IntOrString{IntVal: ContainerAnalyticsPort},
 				}},
 			}, {
 				Ports: []networkingv1.NetworkPolicyPort{{

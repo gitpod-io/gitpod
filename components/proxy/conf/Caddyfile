@@ -139,6 +139,13 @@
 	}
 }
 
+# Internal analytics endpoint
+:9546 {
+	handle /analytics* {
+		gitpod.analytics
+	}
+}
+
 # public-api
 api.{$GITPOD_DOMAIN} {
 	log {
