@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { OnboardingStep } from "../onboarding/OnboardingStep";
 import { User } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
@@ -14,11 +14,67 @@ import gitpodIcon from "../icons/gitpod.svg";
 import { useContext } from "react";
 import { UserContext, useCurrentUser } from "../user-context";
 import { Heading3 } from "../components/typography/headings";
-import { Link } from "react-router-dom";
+import { useFeatureFlags } from "../contexts/FeatureFlagContext";
+
+namespace SkipMigration {
+    const key = "skip-migration";
+    interface SkipInfo {
+        validUntil: string;
+        timesSkipped: number;
+    }
+
+    function useGetSkipInfo() {
+        return useQuery([key], () => {
+            const skippedSerialized = window.localStorage.getItem(key);
+            const skipped = skippedSerialized ? (JSON.parse(skippedSerialized) as SkipInfo) : undefined;
+            return skipped || null;
+        });
+    }
+
+    export function useIsSkipped(): boolean {
+        const skipped = useGetSkipInfo();
+        return !!skipped.data && skipped.data.validUntil > new Date().toISOString();
+    }
+
+    export function useCanSkip(): boolean {
+        const skipped = useGetSkipInfo();
+        return !skipped.data || skipped.data.timesSkipped < 3;
+    }
+
+    export function useMarkSkipped() {
+        const queryClient = useQueryClient();
+        const currentSkip = useGetSkipInfo();
+        return useMutation({
+            mutationFn: async () => {
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const info: SkipInfo = {
+                    validUntil: tomorrow.toISOString(),
+                    timesSkipped: currentSkip.data ? currentSkip.data.timesSkipped + 1 : 1,
+                };
+                window.localStorage.setItem(key, JSON.stringify(info));
+                return info;
+            },
+            onSuccess: (info) => {
+                queryClient.invalidateQueries({ queryKey: [key] });
+            },
+        });
+    }
+}
+
+export function useShouldSeeMigrationPage(): boolean {
+    const user = useCurrentUser();
+    const isSkipped = SkipMigration.useIsSkipped();
+    const { orgOnlyAttribution } = useFeatureFlags();
+    return !!user && !user.additionalData?.isMigratedToTeamOnlyAttribution && orgOnlyAttribution && !isSkipped;
+}
 
 export function MigrationPage() {
     const migrateUsers = useMigrateUserMutation();
     const user = useCurrentUser();
+    const canSkip = SkipMigration.useCanSkip();
+    const markSkipped = SkipMigration.useMarkSkipped();
+    const skipForNow = canSkip ? markSkipped.mutate : undefined;
 
     return (
         <div className="container">
@@ -29,20 +85,22 @@ export function MigrationPage() {
                 <Separator />
                 <div className="mt-24">
                     <OnboardingStep
-                        title="It's now easier to collaborate"
-                        subtitle="Your personal account is now an organization."
+                        title="It's getting easier to collaborate"
+                        subtitle="Your personal account is turned into an organization."
                         isValid={true}
                         isSaving={migrateUsers.isLoading}
                         onSubmit={migrateUsers.mutateAsync}
+                        onCancel={skipForNow}
+                        cancelButtonText="Ask me later"
                     >
                         <Heading3>What's different?</Heading3>
                         <p className="text-gray-500 text-base mb-4">
                             Your personal account (<b>{user?.fullName || user?.name}</b>) is converted to an
-                            organization. Any workspaces, projects and configuration has been moved with it.
-                            Additionally, usage cost will now be attributed to the organization that owns the workspace,
-                            allowing for better cost control.{" "}
+                            organization. As part of this any of your personal workspaces, projects, and configurations
+                            are moved to that organization. Additionally, after this step usage cost is always
+                            attributed to the currently selected organization, allowing for better cost control.{" "}
                             <a className="gp-link" href="https://gitpod.io/blog/organizations">
-                                Learn more -&gt;
+                                Learn more →
                             </a>
                         </p>
                         <Heading3>Who has access to this organization?</Heading3>
