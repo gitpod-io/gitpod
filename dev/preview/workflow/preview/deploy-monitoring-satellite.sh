@@ -74,6 +74,9 @@ envsubst <"${ROOT}/dev/preview/workflow/config/monitoring-satellite.yaml" \
 echo "Setting default namespace to monitoring-satellite"
 kubens monitoring-satellite
 
+# remove PodSecurityPolicy rendered objects, we're using K3s 1.26, which doesn't support PSP anymore
+find "${manifests_dir}" -type f -iname "*PodSecurityPolicy*" -exec rm {} \;
+
 # we have to apply the CRDs first and wait until they are available before we can apply the rest
 find "${manifests_dir}" -name "*CustomResourceDefinition*" -exec kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" apply -f {} --server-side \;
 
