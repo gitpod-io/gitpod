@@ -41,4 +41,9 @@ export class LinkedInProfileDBImpl implements LinkedInProfileDB {
             creationTime: existingProfile?.creationTime || new Date().toISOString(),
         });
     }
+
+    public async deleteProfile(userId: string): Promise<void> {
+        const repo = await this.getRepo();
+        await repo.delete({ userId });
+    }
 }

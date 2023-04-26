@@ -9,4 +9,5 @@ import { LinkedInProfile } from "@gitpod/gitpod-protocol";
 export const LinkedInProfileDB = Symbol("LinkedInProfileDB");
 export interface LinkedInProfileDB {
     storeProfile(userId: string, profile: LinkedInProfile): Promise<void>;
+    deleteProfile(userId: string): Promise<void>;
 }

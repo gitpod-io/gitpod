@@ -17,6 +17,7 @@ import { Config } from "../config";
 import { StripeService } from "../../ee/src/user/stripe-service";
 import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
+import { LinkedInService } from "../linkedin-service";
 
 @injectable()
 export class UserDeletionService {
@@ -33,6 +34,7 @@ export class UserDeletionService {
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(StripeService) protected readonly stripeService: StripeService;
     @inject(BillingModes) protected readonly billingMode: BillingModes;
+    @inject(LinkedInService) protected readonly linkedInService: LinkedInService;
 
     /**
      * This method deletes a User logically. The contract here is that after running this method without receiving an
@@ -97,6 +99,8 @@ export class UserDeletionService {
             this.deleteTeamMemberships(id),
             // User projects
             this.deleteUserProjects(id),
+            // LinkedIn profile
+            this.deleteLinkedInProfile(id),
         ]);
 
         // Track the deletion Event for Analytics Purposes
@@ -179,6 +183,10 @@ export class UserDeletionService {
         const userProjects = await this.projectDb.findUserProjects(id);
 
         await Promise.all(userProjects.map((project) => this.projectDb.markDeleted(project.id)));
+    }
+
+    protected async deleteLinkedInProfile(userId: string) {
+        await this.linkedInService.deleteLinkedInProfile(userId);
     }
 
     anonymizeWorkspace(ws: Workspace) {

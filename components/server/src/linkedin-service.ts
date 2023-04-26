@@ -26,6 +26,10 @@ export class LinkedInService {
         return profile;
     }
 
+    async deleteLinkedInProfile(userId: string): Promise<void> {
+        await this.linkedInProfileDB.deleteProfile(userId);
+    }
+
     private async getAccessToken(code: string) {
         const { clientId, clientSecret } = this.config.linkedInSecrets || {};
         if (!clientId || !clientSecret) {
