@@ -23,7 +23,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestUsageService_ReconcileUsage(t *testing.T) {
+// TestRunAllUsageApiTests runs all tests sequentially to avoid race conditions on the DB
+func TestRunAllUsageApiTests(t *testing.T) {
+	t.Run("ReconcileUsage", testReconcileUsage)
+	t.Run("Reconcile", testReconcile)
+	t.Run("GetAndSetCostCenter", testGetAndSetCostCenter)
+	t.Run("ListUsage", testListUsage)
+	t.Run("AddUsageCreditNote", testAddUsageCreditNote)
+}
+
+func testReconcileUsage(t *testing.T) {
 	dbconn := dbtest.ConnectForTests(t)
 	from := time.Date(2022, 05, 1, 0, 00, 00, 00, time.UTC)
 	to := time.Date(2022, 05, 1, 1, 00, 00, 00, time.UTC)
@@ -95,7 +104,7 @@ func newUsageService(t *testing.T, dbconn *gorm.DB) v1.UsageServiceClient {
 	return client
 }
 
-func TestReconcile(t *testing.T) {
+func testReconcile(t *testing.T) {
 	now := time.Date(2022, 9, 1, 10, 0, 0, 0, time.UTC)
 	pricer, err := NewWorkspacePricer(map[string]float64{
 		"default":              0.1666666667,
@@ -249,7 +258,7 @@ func TestReconcile(t *testing.T) {
 	})
 }
 
-func TestGetAndSetCostCenter(t *testing.T) {
+func testGetAndSetCostCenter(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 	costCenterUpdates := []*v1.CostCenter{
 		{
@@ -287,7 +296,7 @@ func TestGetAndSetCostCenter(t *testing.T) {
 	}
 }
 
-func TestListUsage(t *testing.T) {
+func testListUsage(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
 	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
@@ -366,7 +375,7 @@ func TestListUsage(t *testing.T) {
 
 }
 
-func TestAddUSageCreditNote(t *testing.T) {
+func testAddUsageCreditNote(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
 	attributionID := db.NewTeamAttributionID(uuid.New().String())
