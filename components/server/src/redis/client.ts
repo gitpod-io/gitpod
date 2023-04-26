@@ -4,10 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { inject, postConstruct } from "inversify";
+import { inject, injectable, postConstruct } from "inversify";
 import { Redis } from "ioredis";
 import { Config } from "../config";
 
+@injectable()
 export class RedisClient {
     @inject(Config) protected config: Config;
 
