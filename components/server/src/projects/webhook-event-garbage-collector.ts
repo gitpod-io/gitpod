@@ -11,8 +11,8 @@ import { Disposable } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { RedisMutex } from "../mutex/redlock";
 import { ResourceLockedError } from "redlock";
+import { RedisMutex } from "../redis/mutex";
 
 @injectable()
 export class WebhookEventGarbageCollector {
@@ -23,11 +23,11 @@ export class WebhookEventGarbageCollector {
 
     @inject(RedisMutex) protected readonly mutex: RedisMutex;
 
-    public async start(intervalSeconds?: number): Promise<Disposable> {
-        const intervalSecs = intervalSeconds || WebhookEventGarbageCollector.GC_CYCLE_INTERVAL_SECONDS;
+    public async start(): Promise<Disposable> {
+        const intervalMs = WebhookEventGarbageCollector.GC_CYCLE_INTERVAL_SECONDS * 1000;
         return repeat(async () => {
             try {
-                await this.mutex.client().using(["workspace-gc"], 30 * 1000, async (signal) => {
+                await this.mutex.client().using(["workspace-gc"], intervalMs, async (signal) => {
                     log.info("webhook-event-gc: acquired workspace-gc lock. Collecting old workspaces");
                     try {
                         await this.collectObsoleteWebhookEvents();
@@ -46,7 +46,7 @@ export class WebhookEventGarbageCollector {
 
                 log.error("webhookgc: failed to acquire workspace-gc lock", err);
             }
-        }, intervalSecs * 1000);
+        }, intervalMs);
     }
 
     protected async collectObsoleteWebhookEvents() {
