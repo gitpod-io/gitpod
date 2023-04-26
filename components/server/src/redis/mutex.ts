@@ -5,22 +5,15 @@
  */
 
 import { inject, injectable } from "inversify";
-import { Config } from "../config";
-import { Redis as RedisClient } from "ioredis";
 import Redlock from "redlock";
+import { RedisClient } from "./client";
 
 @injectable()
 export class RedisMutex {
-    @inject(Config) protected config: Config;
+    @inject(RedisClient) protected redis: RedisClient;
 
     public client(): Redlock {
-        const [host, port] = this.config.redis.address.split(":");
-        const redis = new RedisClient({
-            port: Number(port),
-            host,
-            enableReadyCheck: true,
-        });
-        return new Redlock([redis], {
+        return new Redlock([this.redis.get()], {
             // The expected clock drift; for more details see:
             // http://redis.io/topics/distlock
             driftFactor: 0.01, // multiplied by lock ttl to determine drift time
