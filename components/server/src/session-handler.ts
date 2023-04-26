@@ -15,6 +15,7 @@ const MySQLStore = mysqlstore(session);
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
+import { reportJWTCookieIssued, reportSessionWithJWT } from "./prometheus-metrics";
 
 @injectable()
 export class SessionHandlerProvider {
@@ -39,7 +40,22 @@ export class SessionHandlerProvider {
 
         options.store = this.createStore();
 
-        this.sessionHandler = session(options);
+        this.sessionHandler = (req, res, next): express.RequestHandler => {
+            let hasJWTCookie = false;
+            log.info("Session handler", {
+                cookies: req.cookies,
+            });
+            if (req.cookies) {
+                const jwtCookie = req.cookies[SessionHandlerProvider.getJWTCookieName(this.config)];
+
+                if (jwtCookie) {
+                    hasJWTCookie = true;
+                }
+            }
+            reportSessionWithJWT(hasJWTCookie);
+
+            return session(options);
+        };
     }
 
     protected getCookieOptions(config: Config): express.CookieOptions {

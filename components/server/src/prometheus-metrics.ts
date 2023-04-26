@@ -58,6 +58,16 @@ export function increaseApiConnectionCounter() {
     apiConnectionCounter.inc();
 }
 
+const sessionsWithJWTs = new prometheusClient.Counter({
+    name: "gitpod_server_requests_with_jwt_sessions_total",
+    help: "Total amount of established API connections",
+    labelNames: ["with_jwt"],
+});
+
+export function reportSessionWithJWT(containedJWT: boolean) {
+    sessionsWithJWTs.inc({ with_jwt: `${containedJWT}` });
+}
+
 const jwtCookieIssued = new prometheusClient.Counter({
     name: "gitpod_server_jwt_cookie_issued_total",
     help: "Total number of JWT cookies issued for login sessions",
