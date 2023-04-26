@@ -178,7 +178,7 @@ func TestGitActions(t *testing.T) {
 							sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
 							defer sapi.Done(t)
 
-							_, err := stopWs(true, sapi)
+							_, err := stopWs(false, sapi)
 							if err != nil {
 								t.Fatal(err)
 							}
@@ -196,6 +196,7 @@ func TestGitActions(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
+						t.Log("test finished successfully")
 					})
 				}
 			}
