@@ -131,7 +131,7 @@ jobs:
             sa_key: ${{ secrets.GCP_CREDENTIALS }}
             version: ${{ needs.configuration.outputs.version}}
             previewctl_hash: ${{needs.configuration.outputs.previewctl_hash }}
-            wsmanager_mk2: ${{ github.event.inputs.wsman_mk2 != "false" }}
+            wsmanager_mk2: ${{ github.event.inputs.wsman_mk2 != 'false' }}
 
     check:
         name: Check for regressions
@@ -206,7 +206,7 @@ jobs:
                   WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
                   WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
 
-                  export WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 != "false" }}"
+                  export WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 != 'false' }}"
 
                   go install github.com/jstemmer/go-junit-report/v2@latest
 
@@ -251,7 +251,7 @@ jobs:
               env:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed (mk2: ${{ github.event.inputs.wsman_mk2 != "false" }})"
+                  SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed (mk2: ${{ github.event.inputs.wsman_mk2 != 'false' }})"
 
     delete:
       name: Delete preview environment
