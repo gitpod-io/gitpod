@@ -57,6 +57,27 @@ var runCmd = &cobra.Command{
 
 		reg := prometheus.NewRegistry()
 
+		var (
+			clientRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+				Name: "http_client_requests_total",
+				Help: "Counter of outgoing HTTP requests",
+			}, []string{"method", "code"})
+			clientRequestsDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+				Name:    "http_client_requests_duration_seconds",
+				Help:    "Histogram of outgoing HTTP request durations",
+				Buckets: prometheus.DefBuckets,
+			}, []string{"method", "code"})
+			serverRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+				Name: "http_server_requests_total",
+				Help: "Counter of incoming HTTP requests",
+			}, []string{"method", "code"})
+			serverRequestsDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+				Name:    "http_server_requests_duration_seconds",
+				Help:    "Histogram of incoming HTTP request durations",
+				Buckets: prometheus.DefBuckets,
+			}, []string{"method", "code"})
+		)
+
 		resolverProvider := func() remotes.Resolver {
 			var resolverOpts docker.ResolverOptions
 
@@ -65,13 +86,25 @@ var runCmd = &cobra.Command{
 			if dockerCfg != nil {
 				resolverOpts.Hosts = docker.ConfigureDefaultRegistries(
 					docker.WithAuthorizer(authorizerFromDockerConfig(dockerCfg)),
+					docker.WithClient(&http.Client{
+						Transport: promhttp.InstrumentRoundTripperCounter(clientRequestsTotal,
+							promhttp.InstrumentRoundTripperDuration(clientRequestsDuration,
+								http.DefaultTransport)),
+					}),
 				)
 			}
 
 			return docker.NewResolver(resolverOpts)
 		}
 
-		srv, err := blobserve.NewServer(cfg.BlobServe, resolverProvider)
+		srv, err := blobserve.NewServer(cfg.BlobServe, resolverProvider,
+			func(h http.Handler) http.Handler {
+				return promhttp.InstrumentHandlerCounter(serverRequestsTotal,
+					promhttp.InstrumentHandlerDuration(serverRequestsDuration,
+						h),
+				)
+			},
+		)
 		if err != nil {
 			log.WithError(err).Fatal("cannot create blob server")
 		}
@@ -84,6 +117,10 @@ var runCmd = &cobra.Command{
 			reg.MustRegister(
 				collectors.NewGoCollector(),
 				collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
+				clientRequestsTotal,
+				clientRequestsDuration,
+				serverRequestsTotal,
+				serverRequestsDuration,
 			)
 
 			handler := http.NewServeMux()
