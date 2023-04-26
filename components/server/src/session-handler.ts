@@ -44,6 +44,7 @@ export class SessionHandlerProvider {
             let hasJWTCookie = false;
             log.info("Session handler", {
                 cookies: req.cookies,
+                session: req.session.cookie,
             });
             if (req.cookies) {
                 const jwtCookie = req.cookies[SessionHandlerProvider.getJWTCookieName(this.config)];
