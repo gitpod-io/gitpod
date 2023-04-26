@@ -43,8 +43,9 @@ export class WorkspaceGarbageCollector {
     }
 
     public async garbageCollectWorkspacesIfLeader() {
+        const initialLockDuration = 5 * 60 * 1000;
         try {
-            await this.mutex.client().using(["workspace-gc"], 30 * 1000, async (signal) => {
+            await this.mutex.client().using(["workspace-gc"], initialLockDuration, async (signal) => {
                 log.info("wsgc: acquired workspace-gc lock. Collecting old workspaces");
                 try {
                     await this.softDeleteOldWorkspaces();
