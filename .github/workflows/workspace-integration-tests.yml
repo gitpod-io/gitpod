@@ -186,7 +186,7 @@ jobs:
                   args+=( "-kubeconfig=/home/gitpod/.kube/config" )
                   args+=( "-namespace=default" )
                   [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-                  args+=( "-timeout=60m" )
+                  args+=( "-timeout=90m" )
 
                   BASE_TESTS_DIR="$GITHUB_WORKSPACE/test/tests"
                   CONTENT_SERVICE_TESTS="$BASE_TESTS_DIR/components/content-service"
@@ -218,7 +218,8 @@ jobs:
                       fi
 
                       set +e
-                      go test -p 2 --parallel 2 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
+                      # running tests in parallel saves time, but is flakey.
+                      go test -p 1 --parallel 1 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
                       RC=${PIPESTATUS[0]}
                       set -e
 
