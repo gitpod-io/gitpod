@@ -45,9 +45,7 @@ export class SessionHandlerProvider {
         this.sessionHandler = (req, res, next) => {
             let hasJWTCookie = false;
             log.info("Session handler", {
-                cookies: req.cookies,
                 header: req.headers.cookie,
-                session: req.session.cookie,
             });
 
             const cookies = parseCookieHeader(req.headers.cookie || "");
