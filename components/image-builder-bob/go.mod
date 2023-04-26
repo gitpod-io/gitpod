@@ -63,16 +63,6 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
-// copied from https://github.com/moby/buildkit/blob/master/go.mod#L124-128
-replace (
-	github.com/docker/docker => github.com/docker/docker v20.10.3-0.20211208011758-87521affb077+incompatible
-	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace => github.com/tonistiigi/opentelemetry-go-contrib/instrumentation/net/http/httptrace/otelhttptrace v0.0.0-20211026174723-2f82a1e0c997
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp => github.com/tonistiigi/opentelemetry-go-contrib/instrumentation/net/http/otelhttp v0.0.0-20211026174723-2f82a1e0c997
-
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace => go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.0.1
-	go.opentelemetry.io/otel/sdk => go.opentelemetry.io/otel/sdk v1.0.1
-)
-
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
 replace k8s.io/api => k8s.io/api v0.26.2 // leeway indirect from components/common-go:lib
