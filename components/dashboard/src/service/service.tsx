@@ -17,7 +17,12 @@ import {
 import { WebSocketConnectionProvider } from "@gitpod/gitpod-protocol/lib/messaging/browser/connection";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { IDEFrontendDashboardService } from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
+import {
+    IDEFrontendDashboardService,
+    IDEHeartbeatTelemetryData,
+    IDEHeartbeatTelemetryEvent,
+    IDE_HEARTBEAT_TELEMETRY_INTERVAL_MS,
+} from "@gitpod/gitpod-protocol/lib/frontend-dashboard-service";
 import { RemoteTrackMessage } from "@gitpod/gitpod-protocol/lib/analytics";
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
@@ -76,6 +81,14 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
     private latestInfo?: IDEFrontendDashboardService.Status;
 
+    private gitpodHost: string;
+    private isDebugWorkspace: boolean;
+    private isWorkspaceRunning: boolean;
+    private heartbeatTelemetryData: Pick<IDEHeartbeatTelemetryData, "totalCount" | "successfulCount"> = {
+        totalCount: 0,
+        successfulCount: 0,
+    };
+
     private readonly onDidChangeEmitter = new Emitter<IDEFrontendDashboardService.SetStateData>();
     readonly onSetState = this.onDidChangeEmitter.event;
 
@@ -85,6 +98,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         private service: GitpodService,
         private clientWindow: Window,
     ) {
+        this.isWorkspaceRunning = false;
         this.processServerInfo();
         window.addEventListener("message", (event: MessageEvent) => {
             if (IDEFrontendDashboardService.isTrackEventData(event.data)) {
@@ -114,6 +128,34 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             const url = gitpodHostUrl.withApi({ pathname: `/auth/workspacePageClose/${this.instanceID}` }).toString();
             navigator.sendBeacon(url, blob);
         });
+
+        const workspaceUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href);
+        this.gitpodHost = workspaceUrl.withoutWorkspacePrefix().url.host;
+        this.isDebugWorkspace = workspaceUrl.debugWorkspace;
+        setInterval(() => {
+            if (!this.instanceID || !this.isWorkspaceRunning) {
+                return;
+            }
+            this.sendIDEHeartbeatTelemetry();
+        }, IDE_HEARTBEAT_TELEMETRY_INTERVAL_MS);
+    }
+
+    private async sendIDEHeartbeatTelemetry() {
+        const properties: IDEHeartbeatTelemetryData = {
+            successfulCount: this.heartbeatTelemetryData.successfulCount,
+            totalCount: this.heartbeatTelemetryData.totalCount,
+            workspaceId: this.workspaceID,
+            instanceId: this.instanceID ?? "",
+            gitpodHost: this.gitpodHost,
+            clientKind: "supervisor-frontend",
+            debugWorkspace: String(this.isDebugWorkspace) as any,
+        };
+        this.service.server.trackEvent({
+            event: IDEHeartbeatTelemetryEvent,
+            properties,
+        });
+        this.heartbeatTelemetryData.successfulCount = 0;
+        this.heartbeatTelemetryData.totalCount = 0;
     }
 
     private async processServerInfo() {
@@ -126,6 +168,11 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         this.ideCredentials = ideCredentials;
         const reconcile = () => {
             const info = this.parseInfo(listener.info);
+            const isRunning = info.statusPhase === "running";
+            if (this.isWorkspaceRunning && !isRunning) {
+                this.sendIDEHeartbeatTelemetry();
+            }
+            this.isWorkspaceRunning = isRunning;
             this.latestInfo = info;
             const oldInstanceID = this.instanceID;
             this.instanceID = info.instanceId;
@@ -183,7 +230,21 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
 
     private activeHeartbeat(): void {
         if (this.instanceID) {
-            this.service.server.sendHeartBeat({ instanceId: this.instanceID });
+            let hbSucceed = false;
+            this.service.server
+                .sendHeartBeat({ instanceId: this.instanceID })
+                .then(() => {
+                    hbSucceed = true;
+                })
+                .catch((e) => {
+                    console.error("failed to send heartbeat:", e);
+                })
+                .finally(() => {
+                    if (hbSucceed) {
+                        this.heartbeatTelemetryData.successfulCount++;
+                    }
+                    this.heartbeatTelemetryData.totalCount++;
+                });
         }
     }
 
