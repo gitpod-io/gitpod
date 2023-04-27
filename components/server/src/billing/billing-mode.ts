@@ -7,12 +7,12 @@
 import { inject, injectable } from "inversify";
 
 import { Team, User } from "@gitpod/gitpod-protocol";
-import { Config } from "../../../src/config";
+import { Config } from "../config";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { UsageService } from "../../../src/user/usage-service";
+import { UsageService } from "../user/usage-service";
 
 export const BillingModes = Symbol("BillingModes");
 export interface BillingModes {

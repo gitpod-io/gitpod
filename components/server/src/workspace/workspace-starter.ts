@@ -118,13 +118,13 @@ import { ContextParser } from "./context-parser-service";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceClassesConfig } from "./workspace-classes";
 import { EntitlementService } from "../billing/entitlement-service";
-import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { ResolvedEnvVars } from "./env-var-service";
 import { Synchronizer } from "@gitpod/gitpod-db/lib/typeorm/synchronizer";
+import { BillingModes } from "../billing/billing-mode";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;

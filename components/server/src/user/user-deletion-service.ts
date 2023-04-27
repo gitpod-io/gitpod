@@ -14,9 +14,9 @@ import { WorkspaceDeletionService } from "../workspace/workspace-deletion-servic
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { Config } from "../config";
-import { StripeService } from "../../ee/src/user/stripe-service";
-import { BillingModes } from "../../ee/src/billing/billing-mode";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
+import { StripeService } from "./stripe-service";
+import { BillingModes } from "../billing/billing-mode";
 
 @injectable()
 export class UserDeletionService {

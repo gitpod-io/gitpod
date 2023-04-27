@@ -87,7 +87,7 @@ import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspac
 import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { createChannel, createClient, createClientFactory } from "nice-grpc";
-import { CommunityEntitlementService, EntitlementService } from "./billing/entitlement-service";
+import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
@@ -97,7 +97,7 @@ import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-c
 import { LivenessController } from "./liveness/liveness-controller";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
-import { UsageService, UsageServiceImpl } from "./user/usage-service";
+import { NoOpUsageService, UsageService, UsageServiceImpl } from "./user/usage-service";
 import { OpenPrebuildPrefixContextParser } from "./workspace/open-prebuild-prefix-context-parser";
 import { contentServiceBinder } from "./util/content-service-sugar";
 import { retryMiddleware } from "nice-grpc-client-middleware-retry";
@@ -127,6 +127,10 @@ import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { IncrementalPrebuildsService } from "./prebuilds/incremental-prebuilds-service";
 import { RedisClient } from "./redis/client";
 import { RedisMutex } from "./redis/mutex";
+import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
+import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
+import { EntitlementServiceLicense } from "./billing/entitlement-service-license";
+import { StripeService } from "./user/stripe-service";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -298,8 +302,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         })
         .inSingletonScope();
 
-    bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();
-
     bind(ConfigCatClientFactory)
         .toDynamicValue((ctx) => {
             return () => getExperimentsClientForBackend();
@@ -345,6 +347,26 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
     bind(BitbucketServerApp).toSelf().inSingletonScope();
     bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
+
+    // payment/billing
+    bind(StripeService).toSelf().inSingletonScope();
+
+    bind(EntitlementServiceLicense).toSelf().inSingletonScope();
+    bind(EntitlementServiceUBP).toSelf().inSingletonScope();
+    bind(EntitlementServiceImpl).toSelf().inSingletonScope();
+    bind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
+    bind(BillingModes).to(BillingModesImpl).inSingletonScope();
+
+    // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
+    rebind(UsageService)
+        .toDynamicValue((ctx) => {
+            const config = ctx.container.get<Config>(Config);
+            if (config.enablePayment) {
+                return ctx.container.get<UsageServiceImpl>(UsageServiceImpl);
+            }
+            return new NoOpUsageService();
+        })
+        .inSingletonScope();
 
     bind(RedisClient).toSelf().inSingletonScope();
     bind(RedisMutex).toSelf().inSingletonScope();

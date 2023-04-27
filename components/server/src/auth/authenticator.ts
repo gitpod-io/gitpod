@@ -16,7 +16,7 @@ import { AuthProvider, AuthFlow } from "./auth-provider";
 import { TokenProvider } from "../user/token-provider";
 import { AuthProviderService } from "./auth-provider-service";
 import { UserService } from "../user/user-service";
-import { increaseLoginCounter } from "../../src/prometheus-metrics";
+import { increaseLoginCounter } from "../prometheus-metrics";
 
 @injectable()
 export class Authenticator {

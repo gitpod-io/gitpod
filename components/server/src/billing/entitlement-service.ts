@@ -8,11 +8,17 @@ import {
     User,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
-    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    WORKSPACE_TIMEOUT_DEFAULT_LONG,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
+import { Config } from "../config";
+import { BillingModes } from "./billing-mode";
+import { EntitlementServiceLicense } from "./entitlement-service-license";
+import { EntitlementServiceUBP } from "./entitlement-service-ubp";
+import { VerificationService } from "../auth/verification-service";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 export interface MayStartWorkspaceResult {
     hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
@@ -80,36 +86,127 @@ export interface EntitlementService {
 }
 
 /**
- * The default implementation that is used for the community edition.
+ * The default implementation for the Enterprise Edition (EE). It decides based on config which ruleset to choose for each call.
+ *
+ * As a last safety net for rolling this out, it swallows all errors and turns them into log statements.
  */
 @injectable()
-export class CommunityEntitlementService implements EntitlementService {
+export class EntitlementServiceImpl implements EntitlementService {
+    @inject(Config) protected readonly config: Config;
+    @inject(BillingModes) protected readonly billingModes: BillingModes;
+    @inject(EntitlementServiceLicense) protected readonly license: EntitlementServiceLicense;
+    @inject(EntitlementServiceUBP) protected readonly ubp: EntitlementServiceUBP;
+    @inject(VerificationService) protected readonly verificationService: VerificationService;
+
     async mayStartWorkspace(
         user: User,
         organizationId: string | undefined,
-        date: Date,
+        date: Date = new Date(),
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
-        return {};
+        try {
+            const verification = await this.verificationService.needsVerification(user);
+            if (verification) {
+                return {
+                    needsVerification: true,
+                };
+            }
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.mayStartWorkspace(user, organizationId, date, runningInstances);
+                case "usage-based":
+                    return this.ubp.mayStartWorkspace(user, organizationId, date, runningInstances);
+                default:
+                    throw new Error("Unsupported billing mode: " + (billingMode as any).mode); // safety net
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: mayStartWorkspace", err);
+            return {}; // When there is an EntitlementService error, we never want to break workspace starts
+        }
     }
 
-    async maySetTimeout(user: User, date: Date): Promise<boolean> {
-        return true;
+    async maySetTimeout(user: User, date: Date = new Date()): Promise<boolean> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.maySetTimeout(user, date);
+                case "usage-based":
+                    return this.ubp.maySetTimeout(user, date);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: maySetTimeout", err);
+            return true;
+        }
     }
 
-    async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
-        return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
+    async getDefaultWorkspaceTimeout(user: User, date: Date = new Date()): Promise<WorkspaceTimeoutDuration> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.getDefaultWorkspaceTimeout(user, date);
+                case "usage-based":
+                    return this.ubp.getDefaultWorkspaceTimeout(user, date);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: getDefaultWorkspaceTimeout", err);
+            return WORKSPACE_TIMEOUT_DEFAULT_LONG;
+        }
     }
 
-    async userGetsMoreResources(user: User): Promise<boolean> {
-        return false;
+    async userGetsMoreResources(user: User, date: Date = new Date()): Promise<boolean> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.userGetsMoreResources(user);
+                case "usage-based":
+                    return this.ubp.userGetsMoreResources(user);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: userGetsMoreResources", err);
+            return true;
+        }
     }
 
-    async limitNetworkConnections(user: User): Promise<boolean> {
-        return false;
+    /**
+     * Returns true if network connections should be limited
+     * @param user
+     */
+    async limitNetworkConnections(user: User, date: Date): Promise<boolean> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.limitNetworkConnections(user, date);
+                case "usage-based":
+                    return this.ubp.limitNetworkConnections(user, date);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: limitNetworkConnections", err);
+            return false;
+        }
     }
 
+    /**
+     * Returns true if network connections should be limited
+     * @param user
+     */
     async getBillingTier(user: User): Promise<BillingTier> {
-        return "free";
+        try {
+            const now = new Date();
+            const billingMode = await this.billingModes.getBillingModeForUser(user, now);
+            switch (billingMode.mode) {
+                case "none":
+                    return this.license.getBillingTier(user);
+                case "usage-based":
+                    return this.ubp.getBillingTier(user);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: getBillingTier", err);
+            return "paid";
+        }
     }
 }

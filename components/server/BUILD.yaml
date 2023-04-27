@@ -3,7 +3,6 @@ packages:
     type: yarn
     srcs:
       - "src/**"
-      - "ee/**"
       - "test/**"
       - package.json
       - mocha.opts
@@ -41,7 +40,6 @@ packages:
     type: yarn
     srcs:
       - "src/**"
-      - "ee/**"
       - "test/**"
       - package.json
       - mocha.opts
@@ -130,7 +128,7 @@ scripts:
       cd $PWD
       su --pty - gitpod -c "source $DST/env; cd $PWD; TELEPRESENCE_USE_DEPLOYMENT=1 telepresence --mount $DST/mounts --swap-deployment server \
                    --method inject-tcp \
-                   --run yarn start-ee-inspect"
+                   --run yarn start-inspect"
       EOF
       chmod +x $DST/run.sh
       sudo unshare -m --propagation=unchanged $DST/run.sh

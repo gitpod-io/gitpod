@@ -13,8 +13,8 @@ import {
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
 } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
-import { EntitlementService, MayStartWorkspaceResult } from "../../../src/billing/entitlement-service";
-import { Config } from "../../../src/config";
+import { EntitlementService, MayStartWorkspaceResult } from "./entitlement-service";
+import { Config } from "../config";
 
 @injectable()
 export class EntitlementServiceLicense implements EntitlementService {

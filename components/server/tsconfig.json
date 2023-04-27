@@ -22,12 +22,10 @@
         "skipLibCheck": true,
         "useUnknownInCatchVariables": false,
         "typeRoots": [
-            "../../node_modules/@types",
-            "./ee/src/typings"
+            "../../node_modules/@types"
         ]
     },
     "include": [
-        "src",
-        "ee/src"
+        "src"
     ]
 }

@@ -16,7 +16,7 @@ import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { StripeService } from "../../ee/src/user/stripe-service";
+import { StripeService } from "./stripe-service";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";

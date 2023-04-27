@@ -15,11 +15,11 @@ import * as chai from "chai";
 import { Container, ContainerModule } from "inversify";
 import { suite, test, timeout } from "mocha-typescript";
 import Stripe from "stripe";
-import { Config } from "../../../src/config";
+import { Config } from "../config";
 import { BillingModes, BillingModesImpl } from "./billing-mode";
 import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { UsageService } from "../../../src/user/usage-service";
+import { UsageService } from "../user/usage-service";
 chai.use(deepEqualInAnyOrder);
 const expect = chai.expect;
 
