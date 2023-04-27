@@ -110,7 +110,7 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		return r.Status().Update(ctx, &workspace)
 	}); err != nil {
 		log.Error(err, "Failed to update workspace status with Timeout condition")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to add timeout condition: %w", err)
 	}
 
 	r.recorder.Event(&workspace, corev1.EventTypeNormal, "TimedOut", timedout)

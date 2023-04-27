@@ -91,7 +91,7 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	snapshotURL, snapshotName, snapshotErr := ssc.operations.SnapshotIDs(ctx, snapshot.Spec.WorkspaceID)
 	if snapshotErr != nil {
-		return ctrl.Result{}, snapshotErr
+		return ctrl.Result{}, fmt.Errorf("failed to get snapshot name and URL: %w", snapshotErr)
 	}
 
 	err := retry.RetryOnConflict(retryParams, func() error {
@@ -106,7 +106,7 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if err != nil {
 		log.Error(err, "could not set snapshot url", "workspace", snapshot.Spec.WorkspaceID)
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("could not set snapshot url: %w", err)
 	}
 
 	snapshotErr = ssc.operations.Snapshot(ctx, snapshot.Spec.WorkspaceID, snapshotName)
@@ -130,6 +130,7 @@ func (ssc *SnapshotReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	if err != nil {
 		log.Error(err, "could not set completion status for snapshot", "workspace", snapshot.Spec.WorkspaceID)
+		err = fmt.Errorf("could not set completion status for snapshot: %w", err)
 	}
 
 	ssc.emitEvent(&snapshot, snapshotErr)

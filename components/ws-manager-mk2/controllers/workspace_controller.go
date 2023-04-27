@@ -122,13 +122,13 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err := r.List(ctx, &workspacePods, client.InNamespace(req.Namespace), client.MatchingFields{wsOwnerKey: req.Name})
 	if err != nil {
 		log.Error(err, "unable to list workspace pods")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to list workspace pods: %w", err)
 	}
 
 	oldStatus := workspace.Status.DeepCopy()
 	err = r.updateWorkspaceStatus(ctx, &workspace, workspacePods, r.Config)
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to compute latest workspace status: %w", err)
 	}
 
 	r.updateMetrics(ctx, &workspace)
@@ -141,13 +141,20 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
-		// log.WithValues("status", workspace).Error(err, "unable to update workspace status")
-		return ctrl.Result{Requeue: true}, err
+		if errors.IsConflict(err) {
+			// Conflicts are to be expected, don't return as an error to reduce noise in
+			// our error logging. We still want to requeue asap though.
+			// `Requeue: true` has the same requeuing behaviour as returning an error.
+			log.Info("failed to update workspace status due to conflict: %w", err)
+			return ctrl.Result{Requeue: true}, nil
+		} else {
+			return ctrl.Result{}, fmt.Errorf("failed to update workspace status: %w", err)
+		}
 	}
 
 	result, err := r.actOnStatus(ctx, &workspace, workspacePods)
 	if err != nil {
-		return result, err
+		return result, fmt.Errorf("failed to act on status: %w", err)
 	}
 
 	return ctrl.Result{}, nil
