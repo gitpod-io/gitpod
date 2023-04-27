@@ -4,7 +4,6 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
 import React, { useContext, useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "react-router";
 import Menu from "../menu/Menu";
@@ -42,12 +41,9 @@ import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-
 import { OrgRequiredRoute } from "./OrgRequiredRoute";
 import { WebsocketClients } from "./WebsocketClients";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
-import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "../onboarding/UserOnboarding";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { useCurrentUser } from "../user-context";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
-import { useFeatureFlag } from "../data/featureflag-query";
-import { useCheckDedicatedOnboarding } from "../hooks/use-check-dedicated-onboarding";
 import { useQueryParams } from "../hooks/use-query-param";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
@@ -89,25 +85,15 @@ const AdminSettings = React.lazy(() => import(/* webpackPrefetch: true */ "../ad
 const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/ProjectsSearch"));
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/TeamsSearch"));
 const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
-const UserOnboarding = React.lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
-const DedicatedOnboarding = React.lazy(
-    () => import(/* webpackPrefetch: true */ "../dedicated-onboarding/DedicatedOnboarding"),
-);
 
 export const AppRoutes = () => {
     const hash = getURLHash();
     const user = useCurrentUser();
-    const checkDedicatedOnboaring = useCheckDedicatedOnboarding();
     const { startWorkspaceModalProps, setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(user && shouldSeeWhatsNew(user));
     const newCreateWsPage = useNewCreateWorkspacePage();
     const location = useLocation();
-    const newSignupFlow = useFeatureFlag("newSignupFlow");
     const search = useQueryParams();
-
-    if (!user) {
-        return <></>;
-    }
 
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/blocked")) {
@@ -125,21 +111,6 @@ export const AppRoutes = () => {
 
     if (location.pathname === "/linkedin" && search.get("code") && search.get("state")) {
         return <LinkedInCallback />;
-    }
-
-    // Handle dedicated onboarding if necessary
-    if (!checkDedicatedOnboaring.isLoading && checkDedicatedOnboaring.needsOnboarding) {
-        return <DedicatedOnboarding />;
-    }
-
-    // Show new signup flow if:
-    // * feature flag enabled
-    // * User is onboarding (no ide selected yet) OR query param `onboarding=force` is set
-    const showNewSignupFlow =
-        newSignupFlow &&
-        (User.isOnboardingUser(user) || search.get(FORCE_ONBOARDING_PARAM) === FORCE_ONBOARDING_PARAM_VALUE);
-    if (showNewSignupFlow) {
-        return <UserOnboarding user={user} />;
     }
 
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)

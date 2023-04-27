@@ -5,25 +5,29 @@
  */
 
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useFeatureFlag } from "../data/featureflag-query";
 import { useOrganizations } from "../data/organizations/orgs-query";
 import { useQueryParams } from "./use-query-param";
 
-const FORCE_ONBOARDING_PARAM = "dedicated-onboarding";
-const FORCE_ONBOARDING_PARAM_VALUE = "force";
+const FORCE_SETUP_PARAM = "dedicated-setup";
+const FORCE_SETUP_PARAM_VALUE = "force";
 
-export const useCheckDedicatedOnboarding = () => {
+export const useCheckDedicatedSetup = () => {
     const orgs = useOrganizations();
     const authProviders = useAuthProviders();
     const params = useQueryParams();
+    const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
 
-    const forceOnboarding = params.get(FORCE_ONBOARDING_PARAM) === FORCE_ONBOARDING_PARAM_VALUE;
+    const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
 
     const hasOrgs = (orgs.data || [])?.length > 0;
     const hasAuthProviders = (authProviders.data || []).length > 0;
 
-    // If user belongs to no orgs or there are no auth providers, or flow is force w/ query param, show onboarding
+    // Show setup if:
+    // - query param set to force
+    // - or feature flag is on, and either no orgs or auth providers
     return {
-        needsOnboarding: !hasOrgs || !hasAuthProviders || forceOnboarding,
+        needsOnboarding: forceSetup || (enableDedicatedOnboardingFlow && (!hasOrgs || !hasAuthProviders)),
         isLoading: orgs.isLoading || authProviders.isLoading,
     };
 };

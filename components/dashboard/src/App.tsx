@@ -13,6 +13,7 @@ import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
 import { MigrationPage, useShouldSeeMigrationPage } from "./whatsnew/MigrationPage";
 import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
+import { AppBlockingFlows } from "./app/AppBlockingFlows";
 
 // Wrap the App in an ErrorBoundary to catch User/Org loading errors
 // This will also catch any errors that happen to bubble all the way up to the top
@@ -41,6 +42,7 @@ const App: FC = () => {
         return <Login />;
     }
 
+    // TODO: Can we shift this into AppBlockingFlows as well? Does it matter if we wait until org query finishes to show this?
     // If orgOnlyAttribution is enabled and the user hasn't been migrated, yet, we need to show the migration page
     if (shouldSeeMigrationPage) {
         return <MigrationPage />;
@@ -55,8 +57,11 @@ const App: FC = () => {
     // If we made it here, we have a logged in user w/ their teams. Yay.
     return (
         <Suspense fallback={<AppLoading />}>
-            {/* Use org id, or user id (for personal account) as key to force re-render on org change */}
-            <AppRoutes key={currentOrgQuery?.data?.id ?? user.id} />
+            {/* Any required onboarding flows will be handled here before rendering the main app layout & routes */}
+            <AppBlockingFlows>
+                {/* Use org id, or user id (for personal account) as key to force re-render on org change */}
+                <AppRoutes key={currentOrgQuery?.data?.id ?? user.id} />
+            </AppBlockingFlows>
         </Suspense>
     );
 };

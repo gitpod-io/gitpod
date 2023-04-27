@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useCallback, useEffect } from "react";
+import { FC, useCallback, useEffect } from "react";
 import { Button } from "../components/Button";
 import gitpodIcon from "../icons/gitpod.svg";
 import { Heading1, Subheading } from "../components/typography/headings";
@@ -13,7 +13,7 @@ import "./styles.css";
 type Props = {
     onComplete?: () => void;
 };
-export default function DedicatedOnboarding({ onComplete }: Props) {
+const DedicatedSetup: FC<Props> = ({ onComplete }) => {
     const handleGetStarted = useCallback(() => {
         console.log("getting started");
     }, []);
@@ -49,4 +49,6 @@ export default function DedicatedOnboarding({ onComplete }: Props) {
             </div>
         </div>
     );
-}
+};
+
+export default DedicatedSetup;
