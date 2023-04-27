@@ -73,9 +73,9 @@ jobs:
         with:
           token: ${{ secrets.ROBOQUAT_AUTOMATIC_CHANGELOG }}
           commit-message: update index
-          title: "Update images digests to %s", digestVal
+          title: "Update images digests"
           body: |
-            Update images digests
+            Update images digests using the latest version available for image/s
 
             ```release-note
             NONE
