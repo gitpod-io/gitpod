@@ -69,7 +69,6 @@ export function CreateWorkspacePage() {
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
     const workspaceContext = useWorkspaceContext(contextURL);
-    const isLoading = workspaceContext.isLoading || projects.isLoading;
 
     // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
