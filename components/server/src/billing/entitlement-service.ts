@@ -113,6 +113,7 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
+                    // if payment is not enabled users can start as many parallel workspaces as they want
                     return {};
                 case "usage-based":
                     return this.ubp.mayStartWorkspace(user, organizationId, date, runningInstances);
@@ -130,6 +131,7 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
+                    // when payment is disabled users can do everything
                     return true;
                 case "usage-based":
                     return this.ubp.maySetTimeout(user, date);
