@@ -303,7 +303,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	if err == nil {
 		wsc.metrics.recordFinalizeTime(time.Since(disposeStart).Seconds(), ws)
 	} else {
-		log.Error(err, "failed to set backup condition (disposeErr: %s): %w", disposeErr.Error(), err)
+		log.Error(err, "failed to set backup condition", "disposeErr", disposeErr)
 	}
 
 	if disposeErr != nil {

@@ -145,7 +145,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			// Conflicts are to be expected, don't return as an error to reduce noise in
 			// our error logging. We still want to requeue asap though.
 			// `Requeue: true` has the same requeuing behaviour as returning an error.
-			log.Info("failed to update workspace status due to conflict: %w", err)
+			log.Info("failed to update workspace status due to conflict", "error", err)
 			return ctrl.Result{Requeue: true}, nil
 		} else {
 			return ctrl.Result{}, fmt.Errorf("failed to update workspace status: %w", err)
