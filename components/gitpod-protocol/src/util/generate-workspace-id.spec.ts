@@ -16,7 +16,7 @@ class TestGenerateWorkspaceId {
     @test public async testGenerateWorkspaceId() {
         for (let i = 0; i < 10; i++) {
             const id = await generateWorkspaceID();
-            expect(new GitpodHostUrl().withWorkspacePrefix(id, "eu").workspaceId).to.equal(id);
+            expect(new GitpodHostUrl("https://gitpod.io").withWorkspacePrefix(id, "eu").workspaceId).to.equal(id);
         }
     }
 
@@ -50,7 +50,7 @@ class TestGenerateWorkspaceId {
         for (const d of data) {
             const id = await generateWorkspaceID(d[0], d[1]);
             expect(id).match(new RegExp("^" + d[2]));
-            expect(new GitpodHostUrl().withWorkspacePrefix(id, "eu").workspaceId).to.equal(id);
+            expect(new GitpodHostUrl("https://gitpod.io").withWorkspacePrefix(id, "eu").workspaceId).to.equal(id);
             expect(id.length <= 36, `"${id}" is longer than 36 chars (${id.length})`).to.be.true;
         }
     }
