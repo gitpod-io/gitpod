@@ -30,6 +30,7 @@ const (
 	// This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21).
 	workspacePortRegex = "(?P<" + workspacePortIdentifier + ">[0-9]+)-"
 
+	foreignContentIdentifier = "foreignContent"
 	debugWorkspaceIdentifier = "debugWorkspace"
 	debugWorkspaceRegex      = "(?P<" + debugWorkspaceIdentifier + ">debug-)?"
 
@@ -180,6 +181,12 @@ func matchForeignHostHeader(wsHostSuffix string, headerProvider hostHeaderProvid
 
 		result = true
 
+		if m.Vars == nil {
+			m.Vars = make(map[string]string)
+		}
+
+		m.Vars[foreignContentIdentifier] = "true"
+
 		var pathPrefix, workspaceID, workspacePort, debugWorkspace string
 		matches = pathPortRegex.FindStringSubmatch(req.URL.Path)
 		if len(matches) < 4 {
@@ -212,10 +219,6 @@ func matchForeignHostHeader(wsHostSuffix string, headerProvider hostHeaderProvid
 			return
 		}
 
-		if m.Vars == nil {
-			m.Vars = make(map[string]string)
-		}
-
 		m.Vars[workspacePathPrefixIdentifier] = strings.TrimRight(pathPrefix, "/")
 		m.Vars[workspaceIDIdentifier] = workspaceID
 		m.Vars[debugWorkspaceIdentifier] = debugWorkspace
@@ -228,9 +231,10 @@ func matchForeignHostHeader(wsHostSuffix string, headerProvider hostHeaderProvid
 func getWorkspaceCoords(req *http.Request) WorkspaceCoords {
 	vars := mux.Vars(req)
 	return WorkspaceCoords{
-		ID:    vars[workspaceIDIdentifier],
-		Port:  vars[workspacePortIdentifier],
-		Debug: vars[debugWorkspaceIdentifier] == "true",
+		ID:      vars[workspaceIDIdentifier],
+		Port:    vars[workspacePortIdentifier],
+		Debug:   vars[debugWorkspaceIdentifier] == "true",
+		Foreign: vars[foreignContentIdentifier] == "true",
 	}
 }
 
