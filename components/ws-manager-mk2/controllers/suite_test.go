@@ -105,13 +105,14 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 
 	conf := newTestConfig()
-	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), k8sManager.GetEventRecorderFor("workspace"), &conf, metrics.Registry, &fakeMaintenance{enabled: false})
+	maintenance := &fakeMaintenance{enabled: false}
+	wsReconciler, err := NewWorkspaceReconciler(k8sManager.GetClient(), k8sManager.GetScheme(), k8sManager.GetEventRecorderFor("workspace"), &conf, metrics.Registry, maintenance)
 	wsMetrics = wsReconciler.metrics
 	Expect(err).ToNot(HaveOccurred())
 	Expect(wsReconciler.SetupWithManager(k8sManager)).To(Succeed())
 
 	wsActivity = &activity.WorkspaceActivity{}
-	timeoutReconciler, err := NewTimeoutReconciler(k8sManager.GetClient(), k8sManager.GetEventRecorderFor("workspace"), conf, wsActivity)
+	timeoutReconciler, err := NewTimeoutReconciler(k8sManager.GetClient(), k8sManager.GetEventRecorderFor("workspace"), conf, wsActivity, maintenance)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(timeoutReconciler.SetupWithManager(k8sManager)).To(Succeed())
 

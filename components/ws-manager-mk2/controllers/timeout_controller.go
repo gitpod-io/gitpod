@@ -22,11 +22,12 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	wsactivity "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
+	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
-func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg config.Configuration, activity *wsactivity.WorkspaceActivity) (*TimeoutReconciler, error) {
+func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg config.Configuration, activity *wsactivity.WorkspaceActivity, maintenance maintenance.Maintenance) (*TimeoutReconciler, error) {
 	if cfg.HeartbeatInterval == 0 {
 		return nil, fmt.Errorf("invalid heartbeat interval, must not be 0")
 	}
@@ -42,6 +43,7 @@ func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg co
 		reconcileInterval: reconcileInterval,
 		ctrlStartTime:     time.Now().UTC(),
 		recorder:          recorder,
+		maintenance:       maintenance,
 	}, nil
 }
 
@@ -57,6 +59,7 @@ type TimeoutReconciler struct {
 	reconcileInterval time.Duration
 	ctrlStartTime     time.Time
 	recorder          record.EventRecorder
+	maintenance       maintenance.Maintenance
 }
 
 //+kubebuilder:rbac:groups=workspace.gitpod.io,resources=workspaces,verbs=get;list;watch;create;update;patch;delete
@@ -84,6 +87,13 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		// Workspace has already been marked as timed out.
 		// Return and don't requeue another reconciliation.
 		return ctrl.Result{}, nil
+	}
+
+	if r.maintenance.IsEnabled() {
+		// Don't reconcile timeouts in maintenance mode, to prevent workspace deletion.
+		// Requeue after some time to ensure we do still reconcile this workspace when
+		// maintenance mode ends.
+		return ctrl.Result{RequeueAfter: maintenanceRequeue}, nil
 	}
 
 	// The workspace hasn't timed out yet. After this point, we always
