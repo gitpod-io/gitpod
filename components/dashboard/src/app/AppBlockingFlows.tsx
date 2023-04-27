@@ -26,7 +26,6 @@ export const AppBlockingFlows: FC = ({ children }) => {
         return <></>;
     }
 
-    console.log("checkDedicatedOnboaring", checkDedicatedOnboaring);
     // Handle dedicated onboarding if necessary
     if (!checkDedicatedOnboaring.isLoading && checkDedicatedOnboaring.needsOnboarding) {
         return <DedicatedOnboarding />;
