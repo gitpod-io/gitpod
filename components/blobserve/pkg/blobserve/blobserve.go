@@ -33,8 +33,9 @@ type ResolverProvider func() remotes.Resolver
 
 // Server offers image blobs for download
 type Server struct {
-	Config   blobserve_config.BlobServe
-	Resolver ResolverProvider
+	Config     blobserve_config.BlobServe
+	Resolver   ResolverProvider
+	middleware mux.MiddlewareFunc
 
 	refstore *refstore
 }
@@ -81,16 +82,17 @@ var ReferenceRegexp = expression(reference.NameRegexp,
 	optional(literal("@"), reference.DigestRegexp))
 
 // NewServer creates a new blob server
-func NewServer(cfg blobserve_config.BlobServe, resolver ResolverProvider) (*Server, error) {
+func NewServer(cfg blobserve_config.BlobServe, resolver ResolverProvider, middleware mux.MiddlewareFunc) (*Server, error) {
 	refstore, err := newRefStore(cfg, resolver)
 	if err != nil {
 		return nil, err
 	}
 
 	s := &Server{
-		Config:   cfg,
-		Resolver: resolver,
-		refstore: refstore,
+		Config:     cfg,
+		Resolver:   resolver,
+		middleware: middleware,
+		refstore:   refstore,
 	}
 	for repo, repoCfg := range cfg.Repos {
 		for _, ver := range repoCfg.PrePull {
@@ -108,6 +110,7 @@ func NewServer(cfg blobserve_config.BlobServe, resolver ResolverProvider) (*Serv
 // Serve serves the registry on the given port
 func (reg *Server) Serve() error {
 	r := mux.NewRouter()
+	r.Use(reg.middleware)
 	// path must be at least `/image-name:tag` (tag required)
 	// could also be like `/my-reg.com:8080/my/special_alpine:1.2.3/`
 	// or `/my-reg.com:8080/alpine:1.2.3/additional/path/will/be/ignored.json`
