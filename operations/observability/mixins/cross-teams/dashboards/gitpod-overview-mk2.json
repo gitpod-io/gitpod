@@ -101,7 +101,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(avg_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"RUNNING\"}[7d]))",
+          "expr": "sum(avg_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\"}[7d]))",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Avg",
@@ -113,7 +113,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(min_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"RUNNING\"}[7d]))",
+          "expr": "sum(min_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\"}[7d]))",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Min",
@@ -125,7 +125,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(max_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"RUNNING\"}[7d]))",
+          "expr": "sum(max_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\"}[7d]))",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Max",
@@ -243,7 +243,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"RUNNING\"}) by (cluster,type)",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\"}) by (cluster,type)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{cluster}}: {{type}}",
@@ -365,7 +365,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"$cluster\", phase=\"RUNNING\"}) by (type)",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"$cluster\", phase=\"Running\"}) by (type)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ type }}",
@@ -665,7 +665,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\",type=\"REGULAR\"}[$__rate_interval])) by (le)",
+          "expr": "sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\",type=\"Regular\"}[$__rate_interval])) by (le)",
           "format": "heatmap",
           "intervalFactor": 2,
           "legendFormat": "{{le}}",
@@ -808,7 +808,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum by (type, phase)(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"$cluster\", phase!=\"RUNNING\"})",
+          "expr": "sum by (type, phase)(gitpod_ws_manager_mk2_workspace_phase_total{cluster=~\"$cluster\", phase!=\"Running\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{type}} - {{phase}}",
