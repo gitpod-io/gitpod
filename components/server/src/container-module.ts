@@ -87,7 +87,7 @@ import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspac
 import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
 import { createChannel, createClient, createClientFactory } from "nice-grpc";
-import { CommunityEntitlementService, EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
+import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
@@ -301,8 +301,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
                 });
         })
         .inSingletonScope();
-
-    bind(EntitlementService).to(CommunityEntitlementService).inSingletonScope();
 
     bind(ConfigCatClientFactory)
         .toDynamicValue((ctx) => {

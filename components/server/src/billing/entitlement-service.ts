@@ -8,7 +8,6 @@ import {
     User,
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
-    WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
@@ -209,40 +208,5 @@ export class EntitlementServiceImpl implements EntitlementService {
             log.error({ userId: user.id }, "EntitlementService error: getBillingTier", err);
             return "paid";
         }
-    }
-}
-
-/**
- * The default implementation that is used for the community edition.
- */
-@injectable()
-export class CommunityEntitlementService implements EntitlementService {
-    async mayStartWorkspace(
-        user: User,
-        organizationId: string | undefined,
-        date: Date,
-        runningInstances: Promise<WorkspaceInstance[]>,
-    ): Promise<MayStartWorkspaceResult> {
-        return {};
-    }
-
-    async maySetTimeout(user: User, date: Date): Promise<boolean> {
-        return true;
-    }
-
-    async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
-        return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-    }
-
-    async userGetsMoreResources(user: User): Promise<boolean> {
-        return false;
-    }
-
-    async limitNetworkConnections(user: User): Promise<boolean> {
-        return false;
-    }
-
-    async getBillingTier(user: User): Promise<BillingTier> {
-        return "free";
     }
 }
