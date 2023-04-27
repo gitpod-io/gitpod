@@ -27,9 +27,6 @@ const (
 	// 411 No User
 	NEEDS_VERIFICATION = 411
 
-	// 412 Dedicated Cell is in "onboarding" mode
-	ONBOARDING_IN_PROGRESS = 412
-
 	// 429 Too Many Requests
 	TOO_MANY_REQUESTS = 429
 

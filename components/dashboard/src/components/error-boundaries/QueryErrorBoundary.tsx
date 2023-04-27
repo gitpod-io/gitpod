@@ -52,15 +52,6 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
     }
 
     // Setup needed before proceeding
-    if (caughtError.code === ErrorCodes.ONBOARDING_IN_PROGRESS) {
-        return (
-            <Suspense fallback={<AppLoading />}>
-                <DedicatedOnboarding onComplete={resetErrorBoundary} />
-            </Suspense>
-        );
-    }
-
-    // Setup needed before proceeding
     if (caughtError.code === ErrorCodes.SETUP_REQUIRED) {
         return (
             <Suspense fallback={<AppLoading />}>
