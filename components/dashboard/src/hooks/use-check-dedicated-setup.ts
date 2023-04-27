@@ -25,7 +25,8 @@ export const useCheckDedicatedSetup = () => {
 
     // Show setup if:
     // - query param set to force
-    // - or feature flag is on, and either no orgs or auth providers
+    // - or
+    // - feature flag is on and either no orgs or no auth providers
     return {
         needsOnboarding: forceSetup || (enableDedicatedOnboardingFlow && (!hasOrgs || !hasAuthProviders)),
         isLoading: orgs.isLoading || authProviders.isLoading,
