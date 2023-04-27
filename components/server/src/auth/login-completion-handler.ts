@@ -101,7 +101,7 @@ export class LoginCompletionHandler {
             const token = await this.authJWT.sign(user.id, {});
 
             response.cookie(SessionHandlerProvider.getJWTCookieName(this.config), token, {
-                maxAge: this.config.auth.session.cookie.maxAge,
+                maxAge: this.config.auth.session.cookie.maxAge * 1000, // express does not match the HTTP spec and uses milliseconds
                 httpOnly: this.config.auth.session.cookie.httpOnly,
                 sameSite: this.config.auth.session.cookie.sameSite,
                 secure: this.config.auth.session.cookie.secure,
