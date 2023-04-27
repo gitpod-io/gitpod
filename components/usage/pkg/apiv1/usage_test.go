@@ -288,7 +288,6 @@ func TestGetAndSetCostCenter(t *testing.T) {
 }
 
 func TestListUsage(t *testing.T) {
-	conn := dbtest.ConnectForTests(t)
 
 	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
 	end := time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC)
@@ -328,10 +327,6 @@ func TestListUsage(t *testing.T) {
 		CreditCents:   1000,
 	})
 
-	dbtest.CreateUsageRecords(t, conn, draftBefore, nondraftBefore, draftInside, nonDraftInside, nonDraftAfter)
-
-	usageService := newUsageService(t, conn)
-
 	tests := []struct {
 		start, end time.Time
 		// expectations
@@ -346,7 +341,12 @@ func TestListUsage(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		t.Run(fmt.Sprintf("Running test no %d", i+1), func(t *testing.T) {
+		t.Run(fmt.Sprintf("test no %d", i+1), func(t *testing.T) {
+			conn := dbtest.ConnectForTests(t)
+			dbtest.CreateUsageRecords(t, conn, draftBefore, nondraftBefore, draftInside, nonDraftInside, nonDraftAfter)
+
+			usageService := newUsageService(t, conn)
+
 			metaData, err := usageService.ListUsage(context.Background(), &v1.ListUsageRequest{
 				AttributionId: string(attributionID),
 				From:          timestamppb.New(test.start),
@@ -367,12 +367,6 @@ func TestListUsage(t *testing.T) {
 }
 
 func TestAddUSageCreditNote(t *testing.T) {
-	conn := dbtest.ConnectForTests(t)
-
-	attributionID := db.NewTeamAttributionID(uuid.New().String())
-
-	usageService := newUsageService(t, conn)
-
 	tests := []struct {
 		credits     int32
 		userId      string
@@ -387,7 +381,11 @@ func TestAddUSageCreditNote(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		t.Run(fmt.Sprintf("Running test no %d", i+1), func(t *testing.T) {
+		t.Run(fmt.Sprintf("test no %d", i+1), func(t *testing.T) {
+			attributionID := db.NewTeamAttributionID(uuid.New().String())
+			conn := dbtest.ConnectForTests(t)
+			usageService := newUsageService(t, conn)
+
 			_, err := usageService.AddUsageCreditNote(context.Background(), &v1.AddUsageCreditNoteRequest{
 				AttributionId: string(attributionID),
 				Credits:       test.credits,
