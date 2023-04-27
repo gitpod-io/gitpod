@@ -11,17 +11,13 @@ import (
 )
 
 type StateClaims struct {
-	// Internal client ID
-	ClientConfigID string `json:"clientId"`
-	ReturnToURL    string `json:"returnTo"`
-
+	StateParams StateParams `json:"stateParams"`
 	jwt.RegisteredClaims
 }
 
-func NewStateJWT(clientConfigID string, returnURL string, issuedAt, expiry time.Time) *jwt.Token {
+func NewStateJWT(stateParams StateParams, issuedAt, expiry time.Time) *jwt.Token {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, &StateClaims{
-		ClientConfigID: clientConfigID,
-		ReturnToURL:    returnURL,
+		StateParams: stateParams,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiry),
 			IssuedAt:  jwt.NewNumericDate(issuedAt),

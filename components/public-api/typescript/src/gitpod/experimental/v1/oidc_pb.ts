@@ -78,6 +78,15 @@ export class OIDCClientConfig extends Message<OIDCClientConfig> {
    */
   status?: OIDCClientConfigStatus;
 
+  /**
+   * Whether this config can be used for sign-ins.
+   * Defaults to false.
+   * Optional.
+   *
+   * @generated from field: bool active = 9;
+   */
+  active = false;
+
   constructor(data?: PartialMessage<OIDCClientConfig>) {
     super();
     proto3.util.initPartial(data, this);
@@ -94,6 +103,7 @@ export class OIDCClientConfig extends Message<OIDCClientConfig> {
     { no: 6, name: "id_token_signing_alg_values_supported", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
     { no: 7, name: "creation_time", kind: "message", T: Timestamp },
     { no: 8, name: "status", kind: "message", T: OIDCClientConfigStatus },
+    { no: 9, name: "active", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OIDCClientConfig {
@@ -872,4 +882,3 @@ export class DeleteClientConfigResponse extends Message<DeleteClientConfigRespon
     return proto3.util.equals(DeleteClientConfigResponse, a, b);
   }
 }
-

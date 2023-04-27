@@ -19,11 +19,16 @@ func TestNewStateJWT(t *testing.T) {
 		issuedAt       = time.Now()
 		expiry         = issuedAt.Add(5 * time.Minute)
 	)
-	token := NewStateJWT(clientConfigID, returnURL, issuedAt, expiry)
-	require.Equal(t, jwt.SigningMethodHS256, token.Method)
-	require.Equal(t, &StateClaims{
+	token := NewStateJWT(StateParams{
 		ClientConfigID: clientConfigID,
 		ReturnToURL:    returnURL,
+	}, issuedAt, expiry)
+	require.Equal(t, jwt.SigningMethodHS256, token.Method)
+	require.Equal(t, &StateClaims{
+		StateParams: StateParams{
+			ClientConfigID: clientConfigID,
+			ReturnToURL:    returnURL,
+		},
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiry),
 			IssuedAt:  jwt.NewNumericDate(issuedAt),

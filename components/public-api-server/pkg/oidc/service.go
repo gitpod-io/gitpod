@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -73,14 +72,9 @@ func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher,
 	}
 }
 
-func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, returnToURL string) (*StartParams, error) {
-	// state is supposed to a) be present on client request as cookie header
-	// and b) to be mirrored by the IdP on callback requests.
-	stateParam := StateParam{
-		ClientConfigID: config.ID,
-		ReturnToURL:    returnToURL,
-	}
-	state, err := s.encodeStateParam(stateParam)
+func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, stateParams StateParams) (*StartParams, error) {
+	// the `state` is supposed to be passed through unmodified by the IdP.
+	state, err := s.encodeStateParam(stateParams)
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode state")
 	}
@@ -91,7 +85,7 @@ func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, retur
 		return nil, fmt.Errorf("failed to create nonce")
 	}
 
-	// Nonce is the single option passed on to configure the consent page ATM.
+	// Configuring `AuthCodeOption`s, e.g. nonce
 	config.OAuth2Config.RedirectURL = redirectURL
 	authCodeURL := config.OAuth2Config.AuthCodeURL(state, goidc.Nonce(nonce))
 
@@ -102,10 +96,10 @@ func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, retur
 	}, nil
 }
 
-func (s *Service) encodeStateParam(state StateParam) (string, error) {
+func (s *Service) encodeStateParam(state StateParams) (string, error) {
 	now := time.Now().UTC()
 	expiry := now.Add(s.stateExpiry)
-	token := NewStateJWT(state.ClientConfigID, state.ReturnToURL, now, expiry)
+	token := NewStateJWT(state, now, expiry)
 
 	signed, err := s.signerVerifier.Sign(token)
 	if err != nil {
@@ -114,17 +108,14 @@ func (s *Service) encodeStateParam(state StateParam) (string, error) {
 	return signed, nil
 }
 
-func (s *Service) decodeStateParam(encodedToken string) (StateParam, error) {
+func (s *Service) decodeStateParam(encodedToken string) (StateParams, error) {
 	claims := &StateClaims{}
 	_, err := s.signerVerifier.Verify(encodedToken, claims)
 	if err != nil {
-		return StateParam{}, fmt.Errorf("failed to verify state token: %w", err)
+		return StateParams{}, fmt.Errorf("failed to verify state token: %w", err)
 	}
 
-	return StateParam{
-		ClientConfigID: claims.ClientConfigID,
-		ReturnToURL:    claims.ReturnToURL,
-	}, nil
+	return claims.StateParams, nil
 }
 
 func randString(size int) (string, error) {
@@ -167,22 +158,30 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 	return nil, fmt.Errorf("failed to find OIDC config")
 }
 
-func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, error) {
+func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, *StateParams, error) {
 	stateParam := r.URL.Query().Get("state")
 	if stateParam == "" {
-		return nil, fmt.Errorf("missing state parameter")
+		return nil, nil, fmt.Errorf("missing state parameter")
 	}
 
 	state, err := s.decodeStateParam(stateParam)
 	if err != nil {
-		return nil, fmt.Errorf("bad state param")
+		return nil, nil, fmt.Errorf("bad state param")
 	}
 	config, _ := s.getConfigById(r.Context(), state.ClientConfigID)
 	if config != nil {
-		return config, nil
+		return config, &state, nil
 	}
 
-	return nil, fmt.Errorf("failed to find OIDC config on callback")
+	return nil, nil, fmt.Errorf("failed to find OIDC config on callback")
+}
+
+func (s *Service) ActivateClientConfig(ctx context.Context, config *ClientConfig) error {
+	uuid, err := uuid.Parse(config.ID)
+	if err != nil {
+		return err
+	}
+	return db.ActivateClientConfig(ctx, s.dbConn, uuid)
 }
 
 func (s *Service) getConfigById(ctx context.Context, id string) (*ClientConfig, error) {
@@ -296,7 +295,7 @@ func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult,
 		}
 		return nil, fmt.Errorf("unexpected count of cookies: %v", len(cookies))
 	}
-	message, _ := ioutil.ReadAll(res.Body)
+	message, _ := io.ReadAll(res.Body)
 	log.WithField("create-session-error", message).Error("Failed to create session (via server)")
 	return nil, fmt.Errorf("unexpected status code: %v", res.StatusCode)
 }

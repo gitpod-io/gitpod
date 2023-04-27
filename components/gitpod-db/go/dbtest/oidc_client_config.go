@@ -59,7 +59,7 @@ func CreateOIDCClientConfigs(t *testing.T, conn *gorm.DB, entries ...db.OIDCClie
 		records = append(records, record)
 		ids = append(ids, record.ID.String())
 
-		_, err := db.CreateOIDCCLientConfig(context.Background(), conn, record)
+		_, err := db.CreateOIDCClientConfig(context.Background(), conn, record)
 		require.NoError(t, err)
 	}
 

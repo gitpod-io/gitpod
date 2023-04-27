@@ -40,6 +40,11 @@ message OIDCClientConfig {
   // Describes the status of this configuration item.
   // Read-only.
   OIDCClientConfigStatus status = 8;
+
+  // Whether this config can be used for sign-ins.
+  // Defaults to false.
+  // Optional.
+  bool active = 9;
 }
 
 // The OIDC specific part of the client configuration.

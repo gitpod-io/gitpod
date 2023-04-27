@@ -45,7 +45,11 @@ func TestGetStartParams(t *testing.T) {
 		},
 	}
 
-	params, err := service.GetStartParams(config, redirectURL, "/")
+	params, err := service.GetStartParams(config, redirectURL, StateParams{
+		ClientConfigID: config.ID,
+		ReturnToURL:    "/",
+		Activate:       false,
+	})
 
 	require.NoError(t, err)
 	require.NotNil(t, params.Nonce)
@@ -133,13 +137,13 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	})
 	configID := config.ID.String()
 
-	state, err := service.encodeStateParam(StateParam{
+	state, err := service.encodeStateParam(StateParams{
 		ClientConfigID: configID,
 		ReturnToURL:    "",
 	})
 	require.NoError(t, err, "failed encode state param")
 
-	state_unknown, err := service.encodeStateParam(StateParam{
+	state_unknown, err := service.encodeStateParam(StateParams{
 		ClientConfigID: "UNKNOWN",
 		ReturnToURL:    "",
 	})
@@ -170,7 +174,7 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Location, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
-			config, err := service.GetClientConfigFromCallbackRequest(request)
+			config, _, err := service.GetClientConfigFromCallbackRequest(request)
 			if tc.ExpectedError == true {
 				require.Error(t, err)
 			}

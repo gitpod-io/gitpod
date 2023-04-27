@@ -145,6 +145,7 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 		config := &v1.OIDCClientConfig{
 			OrganizationId: organizationID.String(),
 			OidcConfig:     &v1.OIDCConfig{Issuer: issuer},
+			Active:         true,
 			Oauth2Config: &v1.OAuth2Config{
 				ClientId:     "test-id",
 				ClientSecret: "test-secret",
@@ -159,6 +160,7 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 		requireEqualProto(t, &v1.CreateClientConfigResponse{
 			Config: &v1.OIDCClientConfig{
 				Id:             response.Msg.Config.Id,
+				Active:         true,
 				OrganizationId: response.Msg.Config.OrganizationId,
 				Oauth2Config: &v1.OAuth2Config{
 					ClientId:     config.Oauth2Config.ClientId,
