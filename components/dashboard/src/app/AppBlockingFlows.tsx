@@ -15,6 +15,8 @@ import { useFeatureFlag } from "../data/featureflag-query";
 const UserOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
 const DedicatedOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../dedicated-setup/DedicatedSetup"));
 
+// This component handles any flows that should come after we've loaded the user/orgs, but before we render the normal app chrome.
+// Since this runs before the app is rendered, we should avoid adding any lengthy async calls that would delay the app from loading.
 export const AppBlockingFlows: FC = ({ children }) => {
     const user = useCurrentUser();
     const checkDedicatedOnboaring = useCheckDedicatedSetup();
