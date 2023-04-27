@@ -47,6 +47,7 @@ import { Heading1, Subheading } from "../components/typography/headings";
 import { useCurrentUser } from "../user-context";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useCheckDedicatedOnboarding } from "../hooks/use-check-dedicated-onboarding";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -88,10 +89,14 @@ const ProjectsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../a
 const TeamsSearch = React.lazy(() => import(/* webpackPrefetch: true */ "../admin/TeamsSearch"));
 const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
 const UserOnboarding = React.lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
+const DedicatedOnboarding = React.lazy(
+    () => import(/* webpackPrefetch: true */ "../dedicated-onboarding/DedicatedOnboarding"),
+);
 
 export const AppRoutes = () => {
     const hash = getURLHash();
     const user = useCurrentUser();
+    const checkDedicatedOnboaring = useCheckDedicatedOnboarding();
     const { startWorkspaceModalProps, setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(user && shouldSeeWhatsNew(user));
     const newCreateWsPage = useNewCreateWorkspacePage();
@@ -119,6 +124,11 @@ export const AppRoutes = () => {
 
     if (location.pathname === "/linkedin" && search.get("code") && search.get("state")) {
         return <LinkedInCallback />;
+    }
+
+    // Handle dedicated onboarding if necessary
+    if (!checkDedicatedOnboaring.isLoading && checkDedicatedOnboaring.needsOnboarding) {
+        return <DedicatedOnboarding />;
     }
 
     // Show new signup flow if:
