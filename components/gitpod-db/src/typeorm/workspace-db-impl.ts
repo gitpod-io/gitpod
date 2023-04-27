@@ -927,29 +927,23 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         const prebuild = await this.findPrebuildByWorkspaceID(workspaceId);
         if (prebuild !== undefined) {
             // There are prebuilds linked to this workspace. We need to delete these first.
-            const prebuildsDeleted = await (
-                await this.getPrebuiltWorkspaceRepo()
-            ).update({ id: prebuild.id }, { deleted: true });
+            const prebuildsDeleted = await (await this.getPrebuiltWorkspaceRepo()).delete({ id: prebuild.id });
             log.info(logCtx, `Hard deleted ${prebuildsDeleted.affected} prebuilds.`);
             reportPrebuiltWorkspacePurged(prebuildsDeleted.affected || 0);
 
-            const updatableDeletes = await (
-                await this.getPrebuiltWorkspaceUpdatableRepo()
-            ).update({ id: prebuild.id }, { deleted: true });
+            const updatableDeletes = await (await this.getPrebuiltWorkspaceUpdatableRepo()).delete({ id: prebuild.id });
             log.info(logCtx, `Hard deleted ${updatableDeletes.affected} prebuild updatables.`);
             reportPrebuiltWorkspaceUpdatablePurged(updatableDeletes.affected || 0);
 
-            const prebuildInfos = await (
-                await this.getPrebuildInfoRepo()
-            ).update({ prebuildId: prebuild.id }, { deleted: true });
+            const prebuildInfos = await (await this.getPrebuildInfoRepo()).delete({ prebuildId: prebuild.id });
             log.info(logCtx, `Hard deleted ${prebuildInfos.affected} prebuild infos.`);
             reportPrebuildInfoPurged(prebuildInfos.affected || 0);
         }
-        const instances = await (await this.getWorkspaceInstanceRepo()).update({ workspaceId }, { deleted: true });
+        const instances = await (await this.getWorkspaceInstanceRepo()).delete({ workspaceId });
         log.info(logCtx, `Hard deleted ${instances.affected} workspace instances.`);
         reportWorkspaceInstancePurged(instances.affected || 0);
 
-        const workspaces = await (await this.getWorkspaceRepo()).update(workspaceId, { deleted: true });
+        const workspaces = await (await this.getWorkspaceRepo()).delete({ id: workspaceId });
         log.info(logCtx, `Hard deleted ${workspaces.affected} workspaces.`);
         reportWorkspacePurged(workspaces.affected || 0);
     }
