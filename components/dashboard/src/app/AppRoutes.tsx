@@ -48,6 +48,7 @@ import { useCurrentUser } from "../user-context";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { useCheckDedicatedOnboarding } from "../hooks/use-check-dedicated-onboarding";
+import { useQueryParams } from "../hooks/use-query-param";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -102,11 +103,11 @@ export const AppRoutes = () => {
     const newCreateWsPage = useNewCreateWorkspacePage();
     const location = useLocation();
     const newSignupFlow = useFeatureFlag("newSignupFlow");
+    const search = useQueryParams();
 
     if (!user) {
         return <></>;
     }
-    const search = new URLSearchParams(location.search);
 
     // TODO: Add a Route for this instead of inspecting location manually
     if (location.pathname.startsWith("/blocked")) {
