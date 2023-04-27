@@ -8,12 +8,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path"
-
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/usage/pkg/server"
 	"github.com/spf13/cobra"
+	"os"
+	"path"
 )
 
 func init() {
