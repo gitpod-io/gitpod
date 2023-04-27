@@ -233,7 +233,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								ContainerPort: ContainerSSHPort,
 								Name:          ContainerSSHName,
 								Protocol:      *common.TCPProtocol,
-							}, prometheusPort},
+							}, prometheusPort, {
+								ContainerPort: ContainerAnalyticsPort,
+								Name:          ContainerAnalyticsName,
+							}},
 							SecurityContext: &corev1.SecurityContext{
 								Privileged:               pointer.Bool(false),
 								AllowPrivilegeEscalation: pointer.Bool(false),

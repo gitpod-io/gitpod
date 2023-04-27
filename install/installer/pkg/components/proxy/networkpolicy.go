@@ -53,6 +53,24 @@ func networkpolicy(ctx *common.RenderContext) ([]runtime.Object, error) {
 						"component": common.ServerComponent,
 					}},
 				}},
+			}, {
+				Ports: []networkingv1.NetworkPolicyPort{{
+					Protocol: common.TCPProtocol,
+					Port:     &intstr.IntOrString{IntVal: ContainerAnalyticsPort},
+				}},
+				From: []networkingv1.NetworkPolicyPeer{{
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.ServerComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.WSManagerBridgeComponent,
+					}},
+				}, {
+					PodSelector: &metav1.LabelSelector{MatchLabels: map[string]string{
+						"component": common.WSProxyComponent,
+					}},
+				}},
 			}},
 		},
 	}}, nil
