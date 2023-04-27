@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "license": "AGPL-3.0",
   "scripts": {
-    "start": "node ./dist/src/main.js",
-    "start-inspect": "node --inspect=9229 ./dist/src/main.js",
+    "start": "node ./dist/main.js",
+    "start-inspect": "node --inspect=9229 ./dist/main.js",
     "prepare": "yarn clean && yarn build",
     "build": "yarn lint && npx tsc",
     "build:clean": "yarn clean && yarn build",
