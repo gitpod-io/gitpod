@@ -6,7 +6,7 @@
 
 import { DisposableCollection } from "@gitpod/gitpod-protocol";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { inject, multiInject } from "inversify";
+import { inject, injectable, multiInject } from "inversify";
 import { RedisMutex } from "../redis/mutex";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ResourceLockedError } from "redlock";
@@ -21,6 +21,7 @@ export interface Job {
     run: () => Promise<void>;
 }
 
+@injectable()
 export class JobRunner {
     @multiInject(Job) protected jobs: Job[];
 
