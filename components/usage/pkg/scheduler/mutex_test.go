@@ -4,71 +4,55 @@
 
 package scheduler
 
-// func TestWithRefreshingMutex(t *testing.T) {
-// 	client := WithRedis(t)
+import (
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
 
-// 	pool := goredis.NewPool(client)
-// 	rs := redsync.New(pool)
+	"github.com/alicebob/miniredis/v2"
+	"github.com/go-redis/redis"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis"
+	"github.com/stretchr/testify/require"
+)
 
-// 	invocationCount := int32(0)
-// 	errCount := int32(0)
-// 	okCount := int32(0)
+func TestWithRefreshingMutex(t *testing.T) {
+	s := miniredis.RunT(t)
+	client := redis.NewClient(&redis.Options{Addr: s.Addr()})
 
-// 	wg := sync.WaitGroup{}
-// 	expiry := 2 * time.Second
-// 	for i := 0; i < 3; i++ {
-// 		wg.Add(1)
-// 		go func() {
-// 			defer wg.Done()
+	pool := goredis.NewPool(client)
+	rs := redsync.New(pool)
 
-// 			err := WithRefreshingMutex(rs, "mutex-name", expiry, func() error {
-// 				atomic.AddInt32(&invocationCount, 1)
-// 				time.Sleep(expiry + 1*time.Second)
+	invocationCount := int32(0)
+	errCount := int32(0)
+	okCount := int32(0)
 
-// 				return nil
-// 			})
-// 			if err != nil {
-// 				atomic.AddInt32(&errCount, 1)
-// 			} else {
-// 				atomic.AddInt32(&okCount, 1)
-// 			}
+	wg := sync.WaitGroup{}
+	expiry := 2 * time.Second
+	for i := 0; i < 3; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
 
-// 		}()
-// 	}
+			err := WithRefreshingMutex(rs, "mutex-name", expiry, func() error {
+				atomic.AddInt32(&invocationCount, 1)
+				time.Sleep(expiry + 1*time.Second)
 
-// 	wg.Wait()
+				return nil
+			})
+			if err != nil {
+				atomic.AddInt32(&errCount, 1)
+			} else {
+				atomic.AddInt32(&okCount, 1)
+			}
 
-// 	require.EqualValues(t, 1, invocationCount)
-// 	require.EqualValues(t, 2, errCount)
-// 	require.EqualValues(t, 1, okCount)
-// }
+		}()
+	}
 
-// func WithRedis(t *testing.T) *redis.Client {
-// 	t.Helper()
+	wg.Wait()
 
-// 	ctx := context.Background()
-// 	req := testcontainers.ContainerRequest{
-// 		Image:        "redis:7.0.10",
-// 		ExposedPorts: []string{"6379/tcp"},
-// 		WaitingFor:   wait.ForLog("Ready to accept connections"),
-// 	}
-// 	redisC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-// 		ContainerRequest: req,
-// 		Started:          true,
-// 		Logger:           log.Log.WithField("container", "redis"),
-// 	})
-// 	require.NoError(t, err)
-
-// 	t.Cleanup(func() {
-// 		require.NoError(t, redisC.Terminate(ctx))
-// 	})
-
-// 	ip, err := redisC.Endpoint(ctx, "")
-// 	require.NoError(t, err)
-
-// 	client := redis.NewClient(&redis.Options{
-// 		Addr: ip,
-// 	})
-
-// 	return client
-// }
+	require.EqualValues(t, 1, invocationCount)
+	require.EqualValues(t, 2, errCount)
+	require.EqualValues(t, 1, okCount)
+}
