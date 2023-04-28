@@ -29,15 +29,18 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
 
     return (
         <SetupLayout>
+            {/* TODO: extract this into SetupLayout and accept props to control progress indicator */}
+            <div className="flex flex-row space-x-2 mb-4">
+                <div className="w-5 h-5 bg-gray-400 rounded-full" />
+                <div className="w-5 h-5 border-2 border-dashed rounded-full border-gray-400" />
+            </div>
             <div className="mb-10">
                 <Heading1>Name your organization</Heading1>
                 <Subheading>
                     Your Gitpod organization allows you to manage settings, projects and collaborate with teammates.
                 </Subheading>
             </div>
-
             {createOrg.isError && <Alert type="danger">{createOrg.error.message}</Alert>}
-
             <TextInputField
                 label="Organization Name"
                 placeholder="e.g. ACME Inc"
@@ -47,7 +50,6 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
                 onChange={setOrgName}
                 onBlur={nameError.onBlur}
             />
-
             <div className="mt-6">
                 <Button
                     size="block"
