@@ -25,7 +25,7 @@ import { Heading2, Subheading } from "../components/typography/headings";
 import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function PersonalAccessTokens() {
-    const enablePersonalAccessTokens = !!useFeatureFlag("personalAccessTokensEnabled").data;
+    const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
 
     if (!enablePersonalAccessTokens) {
         return <Redirect to="/" />;

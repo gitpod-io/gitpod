@@ -14,7 +14,7 @@ type StopWorkspaceArgs = {
 };
 
 export const useStopWorkspaceMutation = () => {
-    const usePublicApiWorkspacesService = !!useFeatureFlag("publicApiExperimentalWorkspaceService").data;
+    const usePublicApiWorkspacesService = useFeatureFlag("publicApiExperimentalWorkspaceService");
 
     // No need to manually update workspace in cache here, we'll receive messages over the ws that will update it
     return useMutation({

@@ -33,7 +33,7 @@ interface EditPATData {
 const personalAccessTokenNameRegex = /^[a-zA-Z0-9-_ ]{3,63}$/;
 
 function PersonalAccessTokenCreateView() {
-    const enablePersonalAccessTokens = !!useFeatureFlag("personalAccessTokensEnabled").data;
+    const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
 
     const params = useParams<{ tokenId?: string }>();
     const history = useHistory<TokenInfo>();
