@@ -144,7 +144,7 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
     const url = gitpodHostUrl
         .with((url) => ({
             pathname: `/iam/oidc/start`,
-            search: `orgSlug=${orgSlug}&returnTo=${encodeURIComponent(returnTo)}`,
+            search: `${orgSlug ? "orgSlug=" + orgSlug + "&" : ""}returnTo=${encodeURIComponent(returnTo)}`,
         }))
         .toString();
 

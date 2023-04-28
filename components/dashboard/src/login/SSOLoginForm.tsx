@@ -4,40 +4,26 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import Alert from "../components/Alert";
 import { Button } from "../components/Button";
 import { TextInputField } from "../components/forms/TextInputField";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { openOIDCStartWindow } from "../provider-utils";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 type Props = {
+    singleOrgMode?: boolean;
     onSuccess: () => void;
 };
-export const SSOLoginForm: FC<Props> = ({ onSuccess }) => {
+export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
     const [orgSlug, setOrgSlug] = useState("");
     const [error, setError] = useState("");
-    const [showSSO, setShowSSO] = useState<boolean>(false);
-
-    useEffect(() => {
-        try {
-            const content = window.localStorage.getItem("gitpod-ui-experiments");
-            const object = content && JSON.parse(content);
-            if (object["ssoLogin"] === true) {
-                setShowSSO(true);
-            }
-        } catch {
-            // ignore as non-critical
-        }
-    }, []);
+    const oidcServiceEnabled = !!useFeatureFlag("oidcServiceEnabled").data;
 
     const openLoginWithSSO = useCallback(
         async (e) => {
             e.preventDefault();
-
-            if (!orgSlug.trim()) {
-                return;
-            }
 
             try {
                 await openOIDCStartWindow({
@@ -66,23 +52,29 @@ export const SSOLoginForm: FC<Props> = ({ onSuccess }) => {
     );
 
     // Don't render anything if not enabled
-    if (!showSSO) {
+    if (!oidcServiceEnabled) {
         return null;
     }
 
     return (
         <form onSubmit={openLoginWithSSO}>
             <div className="mt-10 space-y-2">
-                <TextInputField
-                    label="Organization Slug"
-                    placeholder="my-team"
-                    value={orgSlug}
-                    onChange={setOrgSlug}
-                    error={slugError.message}
-                    onBlur={slugError.onBlur}
-                />
-                <Button className="w-full" type="secondary" disabled={!orgSlug.trim() || !slugError.isValid}>
-                    Continue with SSO
+                {!singleOrgMode && (
+                    <TextInputField
+                        label="Organization Slug"
+                        placeholder="my-company"
+                        value={orgSlug}
+                        onChange={setOrgSlug}
+                        error={slugError.message}
+                        onBlur={slugError.onBlur}
+                    />
+                )}
+                <Button
+                    className="w-full"
+                    type="secondary"
+                    disabled={!singleOrgMode && (!orgSlug.trim() || !slugError.isValid)}
+                >
+                    Continue {singleOrgMode ? "" : "with SSO"}
                 </Button>
                 {error && <Alert type="info">{error}</Alert>}
             </div>

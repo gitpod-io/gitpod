@@ -137,6 +137,16 @@ func randString(size int) (string, error) {
 
 func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfig, error) {
 	orgSlug := r.URL.Query().Get("orgSlug")
+	idParam := r.URL.Query().Get("id")
+
+	// if no org slug is given, we assume the request is for the default org
+	if orgSlug == "" && idParam == "" {
+		org, err := db.GetTheSingleTeam(r.Context(), s.dbConn)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to find team: %w", err)
+		}
+		orgSlug = org.Slug
+	}
 	if orgSlug != "" {
 		dbEntry, err := db.GetOIDCClientConfigByOrgSlug(r.Context(), s.dbConn, orgSlug)
 		if err != nil {
@@ -151,7 +161,6 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 		return &config, nil
 	}
 
-	idParam := r.URL.Query().Get("id")
 	if idParam == "" {
 		return nil, fmt.Errorf("missing id parameter")
 	}
