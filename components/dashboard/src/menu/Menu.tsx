@@ -231,7 +231,7 @@ const UserMenu: FC<UserMenuProps> = ({ user, className, withAdminLink, withFeedb
                     },
                     ...extraSection,
                     {
-                        title: "Logout",
+                        title: "Log out",
                         href: gitpodHostUrl.asApiLogout().toString(),
                     },
                 ]}
