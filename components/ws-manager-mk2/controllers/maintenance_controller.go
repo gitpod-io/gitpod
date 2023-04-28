@@ -7,6 +7,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -67,7 +68,7 @@ func (r *MaintenanceReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 
 		log.Error(err, "unable to fetch configmap")
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to fetch configmap: %w", err)
 	}
 
 	configJson, ok := cm.Data["config.json"]

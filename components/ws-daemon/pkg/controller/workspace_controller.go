@@ -168,7 +168,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 
 		init, err := wsc.prepareInitializer(ctx, ws)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("failed to prepare initializer: %w", err)
 		}
 
 		initStart := time.Now()
@@ -199,6 +199,8 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 
 		if err == nil {
 			wsc.metrics.recordInitializeTime(time.Since(initStart).Seconds(), ws)
+		} else {
+			err = fmt.Errorf("failed to set content ready condition (failure: '%s'): %w", failure, err)
 		}
 
 		wsc.emitEvent(ws, "Content init", initErr)
@@ -247,7 +249,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	} else {
 		snapshotUrl, snapshotName, err = wsc.operations.SnapshotIDs(ctx, ws.Name)
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("failed to get snapshot name and URL: %w", err)
 		}
 
 		// ws-manager-bridge expects to receive the snapshot url while the workspace
@@ -265,7 +267,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		})
 
 		if err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, fmt.Errorf("failed to set snapshot URL: %w", err)
 		}
 	}
 
@@ -300,6 +302,8 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 
 	if err == nil {
 		wsc.metrics.recordFinalizeTime(time.Since(disposeStart).Seconds(), ws)
+	} else {
+		log.Error(err, "failed to set backup condition", "disposeErr", disposeErr)
 	}
 
 	if disposeErr != nil {
@@ -309,10 +313,10 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	err = wsc.operations.DeleteWorkspace(ctx, ws.Name)
 	if err != nil {
 		wsc.emitEvent(ws, "Backup", fmt.Errorf("failed to clean up workspace: %w", err))
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to clean up workspace: %w", err)
 	}
 
-	return ctrl.Result{}, err
+	return ctrl.Result{}, nil
 }
 
 func (wsc *WorkspaceController) prepareInitializer(ctx context.Context, ws *workspacev1.Workspace) (*csapi.WorkspaceInitializer, error) {

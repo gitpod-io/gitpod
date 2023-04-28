@@ -370,7 +370,7 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionAborted("StopWorkspaceRequest"))
 			return nil
 		}); err != nil {
-			log.Error(err, "failed to add Aborted condition to workspace")
+			log.WithError(err).WithFields(owi).Error("failed to add Aborted condition to workspace")
 		}
 	}
 	err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
