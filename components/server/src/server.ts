@@ -58,6 +58,9 @@ import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { ResourceLockedError } from "redlock";
+import { RedisMutex } from "./redis/mutex";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -95,6 +98,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
     @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
+
+    @inject(RedisMutex) protected readonly mutex: RedisMutex;
 
     @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
     @inject(OAuthController) protected readonly oauthController: OAuthController;
@@ -351,13 +356,29 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         if (!this.config.runDbDeleter) {
             return;
         }
-        this.periodicDbDeleter.start(async () => {
-            const areWeLeader = await this.qorum.areWeLeader();
-            log.info(
-                "[PeriodicDbDeleter]" + areWeLeader ? "Deleter should run." : "Current instance is not the leader",
-            );
-            return areWeLeader;
-        });
+
+        const intervalMs = 30 * 1000;
+        repeat(async () => {
+            try {
+                await this.mutex.using(["database-deleter"], intervalMs, async (signal) => {
+                    try {
+                        await this.periodicDbDeleter.runOnce();
+                    } catch (err) {
+                        log.error("[PeriodicDbDeleter] error during run", err);
+                    }
+                });
+            } catch (err) {
+                if (err instanceof ResourceLockedError) {
+                    log.debug(
+                        "[PeriodicDbDeleter] failed to acquire database-deleter lock, another instance already has the lock",
+                        err,
+                    );
+                    return;
+                }
+
+                log.error("[PeriodicDbDeleter] failed to acquire database-deleter lock", err);
+            }
+        }, intervalMs); // deletion is never time-critical, so we should ensure we do not spam ourselves
     }
 
     protected async registerRoutes(app: express.Application) {
