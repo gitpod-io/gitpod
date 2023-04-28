@@ -5,28 +5,21 @@
  */
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import DropDown from "../components/DropDown";
 import Modal from "../components/Modal";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as Check } from "../images/check-circle.svg";
-import { useCurrency } from "../payment-context";
 import { getGitpodService } from "../service/service";
 import Alert from "./Alert";
 import { Heading2, Subheading } from "./typography/headings";
-import { useStripeAppearance } from "./billing/use-stripe-appearance";
-import { useStripePromise } from "./billing/use-stripe-promise";
 import { AddPaymentMethodModal } from "./billing/AddPaymentMethodModal";
 import { Button } from "./Button";
 import { useCreateHoldPaymentIntentMutation } from "../data/billing/create-hold-payment-intent-mutation";
 import { useToast } from "./toasts/Toasts";
-import { useFeatureFlag } from "../data/featureflag-query";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -42,7 +35,6 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     const currentOrg = useCurrentOrg().data;
     const attrId = attributionId ? AttributionId.parse(attributionId) : undefined;
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
-    const [showBillingSetupModal, setShowBillingSetupModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoadingStripeSubscription, setIsLoadingStripeSubscription] = useState<boolean>(true);
     const [currentUsage, setCurrentUsage] = useState<number>(0);
@@ -51,7 +43,6 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
     const [priceInformation, setPriceInformation] = useState<string | undefined>();
     const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
-    const paymentVerificationFlow = useFeatureFlag("paymentVerificationFlow");
     const createPaymentIntent = useCreateHoldPaymentIntentMutation();
     const [showAddPaymentMethodModal, setShowAddPaymentMethodModal] = useState<boolean>(false);
     const { toast } = useToast();
@@ -109,19 +100,17 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
             setShowAddPaymentMethodModal(true);
         } catch (e) {
             console.error(e);
-            toast(e.message || "Oh no, there was a problem with your payment service.");
+            toast(e.message || "Oh no, there was a problem with our payment service.");
         }
     }, [attributionId, createPaymentIntent, toast]);
 
     // Handle stripe setup-intent or payment-intent redirect flow
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const setupIntentId = params.get("setup_intent");
         const paymentIntentId = params.get("payment_intent");
         const redirectStatus = params.get("redirect_status");
-        if ((setupIntentId || paymentIntentId) && redirectStatus) {
+        if (paymentIntentId && redirectStatus) {
             subscribeToStripe({
-                setupIntentId: setupIntentId || undefined,
                 paymentIntentId: paymentIntentId || undefined,
                 redirectStatus,
             });
@@ -132,14 +121,14 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
 
     // TODO: put this in a useMutation()
     const subscribeToStripe = useCallback(
-        async (stripeParams: { setupIntentId?: string; paymentIntentId?: string; redirectStatus: string }) => {
+        async (stripeParams: { paymentIntentId?: string; redirectStatus: string }) => {
             if (!attributionId) {
                 return;
             }
-            const { setupIntentId, paymentIntentId, redirectStatus } = stripeParams;
+            const { paymentIntentId, redirectStatus } = stripeParams;
 
             // Should be at least one intent id
-            if (!setupIntentId && !paymentIntentId) {
+            if (!paymentIntentId) {
                 return;
             }
 
@@ -169,7 +158,8 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 }
                 const newLimit = await getGitpodService().server.subscribeToStripe(
                     attributionId,
-                    setupIntentId || "",
+                    // TODO: remove this old setupIntentId placeholder once server is updated
+                    "",
                     paymentIntentId || "",
                     limit,
                 );
@@ -357,14 +347,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                                         </button>
                                     </a>
                                 )}
-                                <Button
-                                    loading={createPaymentIntent.isLoading}
-                                    onClick={() =>
-                                        paymentVerificationFlow
-                                            ? handleAddPaymentMethod()
-                                            : setShowBillingSetupModal(true)
-                                    }
-                                >
+                                <Button loading={createPaymentIntent.isLoading} onClick={handleAddPaymentMethod}>
                                     Upgrade Plan
                                 </Button>
                             </div>
@@ -399,9 +382,6 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                     </div>
                 )}
             </div>
-            {!!attributionId && showBillingSetupModal && (
-                <BillingSetupModal attributionId={attributionId} onClose={() => setShowBillingSetupModal(false)} />
-            )}
             {attributionId && createPaymentIntent.data && showAddPaymentMethodModal && (
                 <AddPaymentMethodModal
                     attributionId={attributionId}
@@ -422,126 +402,6 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                 />
             )}
         </div>
-    );
-}
-
-export function BillingSetupModal(props: { attributionId: string; onClose: () => void }) {
-    const appearance = useStripeAppearance();
-    const { stripePromise } = useStripePromise();
-    const [stripeSetupIntentClientSecret, setStripeSetupIntentClientSecret] = useState<string | undefined>();
-
-    useEffect(() => {
-        const { server } = getGitpodService();
-        Promise.all([
-            server.getStripeSetupIntentClientSecret().then((v) => () => setStripeSetupIntentClientSecret(v)),
-        ]).then((setters) => setters.forEach((s) => s()));
-    }, []);
-
-    return (
-        <Modal visible={true} onClose={props.onClose}>
-            <Heading2 className="flex">Upgrade Plan</Heading2>
-            <div className="border-t border-gray-200 dark:border-gray-700 mt-4 pt-2 -mx-6 px-6 flex flex-col">
-                {(!stripePromise || !stripeSetupIntentClientSecret) && (
-                    <div className="h-80 flex items-center justify-center">
-                        <Spinner className="h-5 w-5 animate-spin" />
-                    </div>
-                )}
-                {!!stripePromise && !!stripeSetupIntentClientSecret && (
-                    <Elements
-                        stripe={stripePromise}
-                        options={{
-                            appearance,
-                            clientSecret: stripeSetupIntentClientSecret,
-                        }}
-                    >
-                        <CreditCardInputForm attributionId={props.attributionId} />
-                    </Elements>
-                )}
-            </div>
-        </Modal>
-    );
-}
-
-function CreditCardInputForm(props: { attributionId: string }) {
-    const stripe = useStripe();
-    const elements = useElements();
-    const { currency, setCurrency } = useCurrency();
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [errorMessage, setErrorMessage] = useState<string | undefined>();
-
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        const attrId = AttributionId.parse(props.attributionId);
-        if (!stripe || !elements || !attrId) {
-            return;
-        }
-        setErrorMessage(undefined);
-        setIsLoading(true);
-        try {
-            // Create Stripe customer with currency
-            await getGitpodService().server.createStripeCustomerIfNeeded(props.attributionId, currency);
-            const result = await stripe.confirmSetup({
-                elements,
-                confirmParams: {
-                    return_url: window.location.href,
-                },
-            });
-            if (result.error) {
-                // Show error to your customer (for example, payment details incomplete)
-                throw result.error;
-            } else {
-                // Your customer will be redirected to your `return_url`. For some payment
-                // methods like iDEAL, your customer will be redirected to an intermediate
-                // site first to authorize the payment, then redirected to the `return_url`.
-            }
-        } catch (error) {
-            console.error("Failed to submit form.", error);
-            let message = `Failed to submit form. ${error?.message || String(error)}`;
-            if (error && error.code === ErrorCodes.SUBSCRIPTION_ERROR) {
-                message =
-                    error.data?.hint === "currency"
-                        ? error.message
-                        : "Failed to subscribe. Please contact support@gitpod.io";
-            }
-            setErrorMessage(message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <form className="mt-4 flex-grow flex flex-col" onSubmit={handleSubmit}>
-            {errorMessage && (
-                <Alert className="mb-4" closable={false} showIcon={true} type="error">
-                    {errorMessage}
-                </Alert>
-            )}
-            <PaymentElement />
-            <div className="mt-4 flex-grow flex justify-end items-end">
-                <div className="flex-grow flex space-x-1">
-                    <span>Currency:</span>
-                    <DropDown
-                        customClasses="w-32"
-                        renderAsLink={true}
-                        activeEntry={currency}
-                        entries={[
-                            {
-                                title: "EUR",
-                                onClick: () => setCurrency("EUR"),
-                            },
-                            {
-                                title: "USD",
-                                onClick: () => setCurrency("USD"),
-                            },
-                        ]}
-                    />
-                </div>
-                <button className="my-0 flex items-center space-x-2" disabled={!stripe || isLoading}>
-                    <span>Add Payment Method</span>
-                    {isLoading && <Spinner className="h-5 w-5 animate-spin filter brightness-150" />}
-                </button>
-            </div>
-        </form>
     );
 }
 
