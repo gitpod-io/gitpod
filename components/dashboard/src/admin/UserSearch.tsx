@@ -15,6 +15,7 @@ import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
 import UserDetail from "./UserDetail";
 import searchIcon from "../icons/search.svg";
+import Tooltip from "../components/Tooltip";
 
 export default function UserSearch() {
     const location = useLocation();
@@ -144,7 +145,11 @@ function UserEntry(p: { user: User }) {
                     </div>
                 </div>
                 <div className="flex w-5/12 self-center">
-                    <div className="text-sm w-full text-gray-400 truncate">{dayjs(p.user.creationDate).fromNow()}</div>
+                    <Tooltip content={dayjs(p.user.creationDate).format("MMM D, YYYY")}>
+                        <div className="text-sm w-full text-gray-400 truncate">
+                            {dayjs(p.user.creationDate).fromNow()}
+                        </div>
+                    </Tooltip>
                 </div>
             </div>
         </Link>

@@ -24,6 +24,7 @@ import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
 import { shortCommitMessage, toRemoteURL } from "./render-utils";
 import search from "../icons/search.svg";
+import Tooltip from "../components/Tooltip";
 
 export default function ProjectsPage() {
     const history = useHistory();
@@ -334,10 +335,21 @@ export default function ProjectsPage() {
                                                         <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1 truncate">
                                                             {shortCommitMessage(branch.changeTitle)}
                                                         </div>
-                                                        <p>
-                                                            {avatar}Authored {formatDate(branch.changeDate)} ·{" "}
-                                                            {branch.changeHash?.substring(0, 8)}
-                                                        </p>
+                                                        {branch.changeDate ? (
+                                                            <Tooltip
+                                                                content={dayjs(branch.changeDate).format("MMM D, YYYY")}
+                                                            >
+                                                                <p>
+                                                                    {avatar}Authored {formatDate(branch.changeDate)} ·{" "}
+                                                                    {branch.changeHash?.substring(0, 8)}
+                                                                </p>
+                                                            </Tooltip>
+                                                        ) : (
+                                                            <p>
+                                                                {avatar}Authored {formatDate(branch.changeDate)} ·{" "}
+                                                                {branch.changeHash?.substring(0, 8)}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                 </ItemField>
                                                 <ItemField className="flex items-center my-auto">

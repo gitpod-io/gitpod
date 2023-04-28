@@ -16,6 +16,7 @@ import { AdminPageHeader } from "./AdminPageHeader";
 import Pagination from "../Pagination/Pagination";
 import { SpinnerLoader } from "../components/Loader";
 import searchIcon from "../icons/search.svg";
+import Tooltip from "../components/Tooltip";
 
 export default function ProjectsSearchPage() {
     return (
@@ -155,9 +156,11 @@ export function ProjectsSearch() {
                         <div className="text-gray-500 dark:text-gray-100 truncate">{p.project.cloneUrl}</div>
                     </div>
                     <div className="flex w-2/12 self-center">
-                        <div className="text-sm w-full text-gray-400 truncate">
-                            {dayjs(p.project.creationTime).fromNow()}
-                        </div>
+                        <Tooltip content={dayjs(p.project.creationTime).format("MMM D, YYYY")}>
+                            <div className="text-sm w-full text-gray-400 truncate">
+                                {dayjs(p.project.creationTime).fromNow()}
+                            </div>
+                        </Tooltip>
                     </div>
                 </div>
             </Link>
