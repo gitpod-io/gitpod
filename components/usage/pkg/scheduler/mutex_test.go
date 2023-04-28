@@ -5,6 +5,7 @@
 package scheduler
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -35,7 +36,7 @@ func TestWithRefreshingMutex(t *testing.T) {
 		go func() {
 			defer wg.Done()
 
-			err := WithRefreshingMutex(rs, "mutex-name", expiry, func() error {
+			err := WithRefreshingMutex(context.Background(), rs, "mutex-name", expiry, func(_ context.Context) error {
 				atomic.AddInt32(&invocationCount, 1)
 				time.Sleep(expiry + 1*time.Second)
 

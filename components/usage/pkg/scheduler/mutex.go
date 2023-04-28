@@ -12,9 +12,7 @@ import (
 	"github.com/go-redsync/redsync/v4"
 )
 
-func WithRefreshingMutex(sync *redsync.Redsync, name string, expiry time.Duration, fn func() error) error {
-	ctx := context.Background()
-
+func WithRefreshingMutex(ctx context.Context, rs *redsync.Redsync, name string, expiry time.Duration, fn func(ctx context.Context) error) error {
 	logger := log.Log.WithField("mutexName", name).WithField("mutexExpiry", expiry)
 
 	// Refresh the mutex 10 seconds before it expires, or every 1 second at minimum
@@ -25,7 +23,7 @@ func WithRefreshingMutex(sync *redsync.Redsync, name string, expiry time.Duratio
 
 	done := make(chan struct{})
 
-	mutex := sync.NewMutex(name, redsync.WithExpiry(expiry), redsync.WithTries(1))
+	mutex := rs.NewMutex(name, redsync.WithExpiry(expiry), redsync.WithTries(1))
 
 	logger.Debug("Acquiring mutex")
 	if err := mutex.LockContext(ctx); err != nil {
@@ -41,18 +39,18 @@ func WithRefreshingMutex(sync *redsync.Redsync, name string, expiry time.Duratio
 
 	go func() {
 		logger.Debug("Running routine to refresh mutex lock if job runs longer than expiry.")
-		t := time.NewTicker(refreshThreshold)
+		ticker := time.NewTicker(refreshThreshold)
 
 		for {
 			select {
 			// either we're done, and we exit
 			case <-done:
 				logger.Debug("Job has completed, stopping mutex refresh routine.")
-				t.Stop()
+				ticker.Stop()
 				return
 
 			// or we're not yet done and need to extend the mutex
-			case <-t.C:
+			case <-ticker.C:
 				log.Debug("Extending mutex because job is still running.")
 				_, err := mutex.ExtendContext(ctx)
 				if err != nil {
@@ -65,7 +63,7 @@ func WithRefreshingMutex(sync *redsync.Redsync, name string, expiry time.Duratio
 	}()
 
 	logger.Debug("Running job inside mutex.")
-	fnErr := fn()
+	fnErr := fn(ctx)
 
 	// release the lock, it will be acquired on subsequent run, possibly by another instance of this job.
 	logger.Debug("Completed job inside mutex. Releasing mutex lock.")

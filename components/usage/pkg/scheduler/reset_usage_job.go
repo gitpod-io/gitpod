@@ -38,7 +38,7 @@ type ResetUsageJobSpec struct {
 func (j *ResetUsageJobSpec) Run() (err error) {
 	ctx := context.Background()
 
-	runErr := WithRefreshingMutex(j.sync, "reset-usage", j.mutexDuration, func() error {
+	runErr := WithRefreshingMutex(ctx, j.sync, "reset-usage", j.mutexDuration, func(ctx context.Context) error {
 		log.Info("Running reset usage job.")
 
 		_, err = j.usageClient.ResetUsage(ctx, &v1.ResetUsageRequest{})

@@ -50,7 +50,7 @@ func (r *LedgerJob) Run() (err error) {
 		WithField("from", hourAgo).
 		WithField("to", now)
 
-	runErr := WithRefreshingMutex(r.sync, "usage-ledger", r.mutexDuration, func() error {
+	runErr := WithRefreshingMutex(ctx, r.sync, "usage-ledger", r.mutexDuration, func(ctx context.Context) error {
 
 		logger.Info("Running ledger job. Reconciling usage records.")
 		_, err = r.usageClient.ReconcileUsage(ctx, &v1.ReconcileUsageRequest{
