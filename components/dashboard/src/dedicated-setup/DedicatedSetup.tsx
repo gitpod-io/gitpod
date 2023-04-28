@@ -37,7 +37,7 @@ const DedicatedSetup: FC<Props> = ({ onComplete }) => {
                     <Heading1>Let's get started</Heading1>
                     {/* TODO: verify this is the copy we want to use */}
                     <Subheading>
-                        Spin up fresh cloud development environments for each task, full automated, in seconds.
+                        Spin up fresh cloud development environments for each task, fully automated, in seconds.
                     </Subheading>
 
                     <div className="mt-6">
