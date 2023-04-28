@@ -129,7 +129,6 @@ import { RedisClient } from "./redis/client";
 import { RedisMutex } from "./redis/mutex";
 import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
-import { EntitlementServiceLicense } from "./billing/entitlement-service-license";
 import { StripeService } from "./user/stripe-service";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -351,7 +350,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     // payment/billing
     bind(StripeService).toSelf().inSingletonScope();
 
-    bind(EntitlementServiceLicense).toSelf().inSingletonScope();
     bind(EntitlementServiceUBP).toSelf().inSingletonScope();
     bind(EntitlementServiceImpl).toSelf().inSingletonScope();
     bind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();

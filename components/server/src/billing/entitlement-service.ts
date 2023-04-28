@@ -15,7 +15,6 @@ import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
 import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { BillingModes } from "./billing-mode";
-import { EntitlementServiceLicense } from "./entitlement-service-license";
 import { EntitlementServiceUBP } from "./entitlement-service-ubp";
 import { VerificationService } from "../auth/verification-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -94,7 +93,6 @@ export interface EntitlementService {
 export class EntitlementServiceImpl implements EntitlementService {
     @inject(Config) protected readonly config: Config;
     @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(EntitlementServiceLicense) protected readonly license: EntitlementServiceLicense;
     @inject(EntitlementServiceUBP) protected readonly ubp: EntitlementServiceUBP;
     @inject(VerificationService) protected readonly verificationService: VerificationService;
 
@@ -114,7 +112,8 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
-                    return this.license.mayStartWorkspace(user, organizationId, date, runningInstances);
+                    // if payment is not enabled users can start as many parallel workspaces as they want
+                    return {};
                 case "usage-based":
                     return this.ubp.mayStartWorkspace(user, organizationId, date, runningInstances);
                 default:
@@ -131,7 +130,8 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
-                    return this.license.maySetTimeout(user, date);
+                    // when payment is disabled users can do everything
+                    return true;
                 case "usage-based":
                     return this.ubp.maySetTimeout(user, date);
             }
@@ -146,7 +146,7 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
-                    return this.license.getDefaultWorkspaceTimeout(user, date);
+                    return WORKSPACE_TIMEOUT_DEFAULT_LONG;
                 case "usage-based":
                     return this.ubp.getDefaultWorkspaceTimeout(user, date);
             }
@@ -161,7 +161,8 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
-                    return this.license.userGetsMoreResources(user);
+                    // TODO(gpl) Not sure this makes sense, but it's the way it was before
+                    return false;
                 case "usage-based":
                     return this.ubp.userGetsMoreResources(user);
             }
@@ -180,7 +181,7 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingModeForUser(user, date);
             switch (billingMode.mode) {
                 case "none":
-                    return this.license.limitNetworkConnections(user, date);
+                    return false;
                 case "usage-based":
                     return this.ubp.limitNetworkConnections(user, date);
             }
@@ -200,7 +201,8 @@ export class EntitlementServiceImpl implements EntitlementService {
             const billingMode = await this.billingModes.getBillingModeForUser(user, now);
             switch (billingMode.mode) {
                 case "none":
-                    return this.license.getBillingTier(user);
+                    // TODO(gpl) Is this true? Cross-check this whole interface with Self-Hosted before next release!
+                    return "paid";
                 case "usage-based":
                     return this.ubp.getBillingTier(user);
             }
