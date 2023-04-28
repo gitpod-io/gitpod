@@ -29,7 +29,6 @@ import { getGitpodService, gitpodHostUrl, getIDEFrontendService, IDEFrontendServ
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import ConnectToSSHModal from "../workspaces/ConnectToSSHModal";
 import Alert from "../components/Alert";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { workspacesService } from "../service/public-api";
 
 const sessionId = v4();
@@ -101,8 +100,6 @@ export interface StartWorkspaceState {
 }
 
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
-    static contextType = FeatureFlagContext;
-
     private ideFrontendService: IDEFrontendService | undefined;
 
     constructor(props: StartWorkspaceProps) {

@@ -25,12 +25,12 @@ import PrebuildLogs from "../components/PrebuildLogs";
 import FeedbackComponent from "../feedback-form/FeedbackComponent";
 import { isGitpodIo } from "../utils";
 import { BillingAccountSelector } from "../components/BillingAccountSelector";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { StartWorkspaceOptions } from "./start-workspace-options";
 import { useLocation } from "react-router";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export interface CreateWorkspaceProps {
     contextUrl: string;
@@ -495,7 +495,7 @@ interface RunningPrebuildViewProps {
 
 function RunningPrebuildView(props: RunningPrebuildViewProps) {
     const workspaceId = props.runningPrebuild.workspaceID;
-    const { showUseLastSuccessfulPrebuild } = useContext(FeatureFlagContext);
+    const showUseLastSuccessfulPrebuild = !!useFeatureFlag("showUseLastSuccessfulPrebuild").data;
 
     useEffect(() => {
         const disposables = new DisposableCollection();

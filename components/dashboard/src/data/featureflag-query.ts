@@ -1,0 +1,51 @@
+/**
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
+ */
+
+import { Organization, Project, User } from "@gitpod/gitpod-protocol";
+import { useQuery } from "@tanstack/react-query";
+import { getExperimentsClient } from "../experiments/client";
+import { useCurrentProject } from "../projects/project-context";
+import { useCurrentUser } from "../user-context";
+import { useCurrentOrg } from "./organizations/orgs-query";
+
+const featureFlags = {
+    start_with_options: false,
+    showUseLastSuccessfulPrebuild: false,
+    usePublicApiWorkspacesService: false,
+    enablePersonalAccessTokens: false,
+    oidcServiceEnabled: false,
+    // Default to true to enable on gitpod dedicated until ff support is added for dedicated
+    orgGitAuthProviders: true,
+    userGitAuthProviders: false,
+    newSignupFlow: false,
+    linkedinConnectionForOnboarding: false,
+    paymentVerificationFlow: false,
+    team_only_attribution: false,
+};
+
+export const useFeatureFlag = (featureFlag: keyof typeof featureFlags) => {
+    const user = useCurrentUser();
+    const org = useCurrentOrg().data;
+    const project = useCurrentProject().project;
+
+    return useQuery<boolean>({
+        queryKey: queryKey(featureFlag, user, org, project),
+        queryFn: async () => {
+            const flagValue = await getExperimentsClient().getValueAsync(featureFlag, featureFlags[featureFlag], {
+                user,
+                projectId: project?.id,
+                teamId: org?.id,
+                teamName: org?.name,
+                gitpodHost: window.location.host,
+            });
+            return !!flagValue;
+        },
+    });
+};
+
+function queryKey(featureFlag: keyof typeof featureFlags, user?: User, org?: Organization, project?: Project) {
+    return ["featureFlag", featureFlag, user?.id || "", org?.id || "", project?.id || ""];
+}

@@ -6,14 +6,13 @@
 
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
 import dayjs from "dayjs";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
 import { Link } from "react-router-dom";
 import Alert from "../components/Alert";
 import { CheckboxInputField, CheckboxListField } from "../components/forms/CheckboxInputField";
 import DateSelector from "../components/DateSelector";
 import { SpinnerOverlayLoader } from "../components/Loader";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { AllPermissions, TokenAction, TokenExpirationDays, TokenInfo } from "./PersonalAccessTokens";
@@ -22,6 +21,7 @@ import ShowTokenModal from "./ShowTokenModal";
 import { Timestamp } from "@bufbuild/protobuf";
 import arrowDown from "../images/sort-arrow.svg";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 interface EditPATData {
     name: string;
@@ -33,7 +33,7 @@ interface EditPATData {
 const personalAccessTokenNameRegex = /^[a-zA-Z0-9-_ ]{3,63}$/;
 
 function PersonalAccessTokenCreateView() {
-    const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
+    const enablePersonalAccessTokens = !!useFeatureFlag("enablePersonalAccessTokens").data;
 
     const params = useParams<{ tokenId?: string }>();
     const history = useHistory<TokenInfo>();

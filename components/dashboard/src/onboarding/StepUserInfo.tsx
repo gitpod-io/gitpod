@@ -11,14 +11,14 @@ import { useUpdateCurrentUserMutation } from "../data/current-user/update-mutati
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { OnboardingStep } from "./OnboardingStep";
 import { LinkedInBanner } from "./LinkedInBanner";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 type Props = {
     user: User;
     onComplete(user: User): void;
 };
 export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
-    const { linkedinConnectionForOnboarding } = useFeatureFlags();
+    const linkedinConnectionForOnboarding = !!useFeatureFlag("linkedinConnectionForOnboarding").data;
     const updateUser = useUpdateCurrentUserMutation();
     // attempt to split provided name for default input values
     const { first, last } = getInitialNameParts(user);

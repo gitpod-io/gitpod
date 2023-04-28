@@ -5,10 +5,9 @@
  */
 
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { settingsPathPersonalAccessTokenCreate, settingsPathPersonalAccessTokenEdit } from "./settings.routes";
@@ -23,9 +22,10 @@ import TokenEntry from "./TokenEntry";
 import ShowTokenModal from "./ShowTokenModal";
 import Pagination from "../Pagination/Pagination";
 import { Heading2, Subheading } from "../components/typography/headings";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function PersonalAccessTokens() {
-    const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
+    const enablePersonalAccessTokens = !!useFeatureFlag("enablePersonalAccessTokens").data;
 
     if (!enablePersonalAccessTokens) {
         return <Redirect to="/" />;

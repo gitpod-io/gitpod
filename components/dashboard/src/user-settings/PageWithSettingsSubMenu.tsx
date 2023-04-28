@@ -6,9 +6,8 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { useContext, useMemo } from "react";
+import { useMemo } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { FeatureFlagContext } from "../contexts/FeatureFlagContext";
 import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query";
 import { useCurrentUser } from "../user-context";
 import {
@@ -24,6 +23,7 @@ import {
     settingsPathSSHKeys,
     settingsPathVariables,
 } from "./settings.routes";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export interface PageWithAdminSubMenuProps {
     children: React.ReactNode;
@@ -32,7 +32,7 @@ export interface PageWithAdminSubMenuProps {
 export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps) {
     const user = useCurrentUser();
     const userBillingMode = useUserBillingMode();
-    const { enablePersonalAccessTokens } = useContext(FeatureFlagContext);
+    const enablePersonalAccessTokens = !!useFeatureFlag("enablePersonalAccessTokens").data;
 
     const settingsMenu = useMemo(() => {
         return getSettingsMenu(user, userBillingMode.data, enablePersonalAccessTokens);
