@@ -4,11 +4,19 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import gitpodIcon from "../icons/gitpod.svg";
 import "./styles.css";
 
 export const SetupLayout: FC = ({ children }) => {
+    useEffect(() => {
+        document.body.classList.add("honeycomb-bg");
+
+        return () => {
+            document.body.classList.remove("honeycomb-bg");
+        };
+    }, []);
+
     return (
         <div className="container">
             <div className="app-container">
