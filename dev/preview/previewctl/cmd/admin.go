@@ -14,6 +14,7 @@ import (
 
 	"crypto/sha512"
 
+	"github.com/gitpod-io/gitpod/previewctl/pkg/preview"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/api/core/v1"
@@ -56,13 +57,16 @@ func newCreateAdminCredentialsCmd(logger *logrus.Logger) *cobra.Command {
 			if err != nil {
 				logger.WithError(err).Fatal("Failed to create admin credentials.")
 			}
-
+			previewName, err := preview.GetName(branch)
+			if err != nil {
+				return err
+			}
 			logger.
 				WithField("hash", creds.TokenHash).
 				WithField("algo", creds.Algo).
 				WithField("expires_unix", creds.ExpiresAt).
 				WithField("expires", time.Unix(creds.ExpiresAt, 0).Format(time.RFC3339)).
-				Infof("Created new admin credentials: %s", token)
+				Infof("Created new admin credentials: https://%s.preview.gitpod-dev.com/api/login/ots/admin/%s", previewName, token)
 			return nil
 		},
 	}
