@@ -11,9 +11,9 @@ import { Redirect } from "react-router";
 import Header from "../components/Header";
 import { SpinnerLoader } from "../components/Loader";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export interface OrgSettingsPageProps {
     children: React.ReactNode;
@@ -22,7 +22,8 @@ export interface OrgSettingsPageProps {
 export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     const org = useCurrentOrg();
     const orgBillingMode = useOrgBillingMode();
-    const { oidcServiceEnabled, orgGitAuthProviders } = useFeatureFlags();
+    const oidcServiceEnabled = !!useFeatureFlag("oidcServiceEnabled").data;
+    const orgGitAuthProviders = !!useFeatureFlag("orgGitAuthProviders").data;
 
     const menu = useMemo(
         () =>

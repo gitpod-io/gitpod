@@ -17,7 +17,6 @@ import { QueryErrorBoundary } from "./components/error-boundaries/QueryErrorBoun
 import { ReloadPageErrorBoundary } from "./components/error-boundaries/ReloadPageErrorBoundary";
 import { ToastContextProvider } from "./components/toasts/Toasts";
 import { ConfettiContextProvider } from "./contexts/ConfettiContext";
-import { FeatureFlagContextProvider } from "./contexts/FeatureFlagContext";
 import { setupQueryClientProvider } from "./data/setup";
 import "./index.css";
 import { PaymentContextProvider } from "./payment-context";
@@ -59,32 +58,30 @@ const bootApp = () => {
     ReactDOM.render(
         <React.StrictMode>
             <ReloadPageErrorBoundary>
-                <GitpodQueryClientProvider>
-                    {/* This needs to be inside of the GitpodQueryClientProvider so it can reset queries if needed */}
-                    <QueryErrorBoundary>
-                        <ConfettiContextProvider>
-                            <ToastContextProvider>
-                                <UserContextProvider>
-                                    <AdminContextProvider>
-                                        <PaymentContextProvider>
-                                            <ProjectContextProvider>
-                                                <ThemeContextProvider>
-                                                    <BrowserRouter>
+                <BrowserRouter>
+                    <GitpodQueryClientProvider>
+                        {/* This needs to be inside of the GitpodQueryClientProvider so it can reset queries if needed */}
+                        <QueryErrorBoundary>
+                            <ConfettiContextProvider>
+                                <ToastContextProvider>
+                                    <UserContextProvider>
+                                        <AdminContextProvider>
+                                            <PaymentContextProvider>
+                                                <ProjectContextProvider>
+                                                    <ThemeContextProvider>
                                                         <StartWorkspaceModalContextProvider>
-                                                            <FeatureFlagContextProvider>
-                                                                <App />
-                                                            </FeatureFlagContextProvider>
+                                                            <App />
                                                         </StartWorkspaceModalContextProvider>
-                                                    </BrowserRouter>
-                                                </ThemeContextProvider>
-                                            </ProjectContextProvider>
-                                        </PaymentContextProvider>
-                                    </AdminContextProvider>
-                                </UserContextProvider>
-                            </ToastContextProvider>
-                        </ConfettiContextProvider>
-                    </QueryErrorBoundary>
-                </GitpodQueryClientProvider>
+                                                    </ThemeContextProvider>
+                                                </ProjectContextProvider>
+                                            </PaymentContextProvider>
+                                        </AdminContextProvider>
+                                    </UserContextProvider>
+                                </ToastContextProvider>
+                            </ConfettiContextProvider>
+                        </QueryErrorBoundary>
+                    </GitpodQueryClientProvider>
+                </BrowserRouter>
             </ReloadPageErrorBoundary>
         </React.StrictMode>,
         document.getElementById("root"),

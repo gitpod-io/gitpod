@@ -14,7 +14,7 @@ import gitpodIcon from "../icons/gitpod.svg";
 import { useContext } from "react";
 import { UserContext, useCurrentUser } from "../user-context";
 import { Heading3 } from "../components/typography/headings";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 namespace SkipMigration {
     const key = "skip-migration";
@@ -65,7 +65,7 @@ namespace SkipMigration {
 export function useShouldSeeMigrationPage(): boolean {
     const user = useCurrentUser();
     const isSkipped = SkipMigration.useIsSkipped();
-    const { orgOnlyAttribution } = useFeatureFlags();
+    const orgOnlyAttribution = !!useFeatureFlag("team_only_attribution").data;
     return !!user && !user.additionalData?.isMigratedToTeamOnlyAttribution && orgOnlyAttribution && !isSkipped;
 }
 

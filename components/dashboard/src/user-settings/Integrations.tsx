@@ -18,7 +18,6 @@ import { ItemsList } from "../components/ItemsList";
 import { SpinnerLoader } from "../components/Loader";
 import Modal, { ModalBody, ModalHeader, ModalFooter } from "../components/Modal";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import copy from "../images/copy.svg";
 import exclamation from "../images/exclamation.svg";
 import { openAuthorizeWindow } from "../provider-utils";
@@ -30,6 +29,7 @@ import { IntegrationEntryItem } from "./IntegrationItemEntry";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { SelectAccountModal } from "./SelectAccountModal";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export default function Integrations() {
     return (
@@ -350,7 +350,7 @@ function GitProviders() {
 
 function GitIntegrations() {
     const { user } = useContext(UserContext);
-    const { userGitAuthProviders } = useFeatureFlags();
+    const userGitAuthProviders = !!useFeatureFlag("userGitAuthProviders").data;
 
     const [modal, setModal] = useState<
         | { mode: "new" }

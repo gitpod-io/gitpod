@@ -23,10 +23,10 @@ import { Heading2, Subheading } from "./typography/headings";
 import { useStripeAppearance } from "./billing/use-stripe-appearance";
 import { useStripePromise } from "./billing/use-stripe-promise";
 import { AddPaymentMethodModal } from "./billing/AddPaymentMethodModal";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { Button } from "./Button";
 import { useCreateHoldPaymentIntentMutation } from "../data/billing/create-hold-payment-intent-mutation";
 import { useToast } from "./toasts/Toasts";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -51,7 +51,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
     const [priceInformation, setPriceInformation] = useState<string | undefined>();
     const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
-    const { paymentVerificationFlow } = useFeatureFlags();
+    const paymentVerificationFlow = !!useFeatureFlag("paymentVerificationFlow").data;
     const createPaymentIntent = useCreateHoldPaymentIntentMutation();
     const [showAddPaymentMethodModal, setShowAddPaymentMethodModal] = useState<boolean>(false);
     const { toast } = useToast();

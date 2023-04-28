@@ -16,7 +16,6 @@ import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
 import { Heading1 } from "../components/typography/headings";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
-import { useFeatureFlags } from "../contexts/FeatureFlagContext";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
@@ -32,9 +31,10 @@ import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 import { VerifyModal } from "../start/VerifyModal";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export const useNewCreateWorkspacePage = () => {
-    const { startWithOptions } = useFeatureFlags();
+    const startWithOptions = !!useFeatureFlag("start_with_options").data;
     const user = useCurrentUser();
     return !!startWithOptions || !!user?.additionalData?.isMigratedToTeamOnlyAttribution;
 };
@@ -69,7 +69,6 @@ export function CreateWorkspacePage() {
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
     const workspaceContext = useWorkspaceContext(contextURL);
-    const isLoading = workspaceContext.isLoading || projects.isLoading;
 
     // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
