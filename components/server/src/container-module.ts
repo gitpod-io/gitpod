@@ -93,7 +93,7 @@ import {
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { VerificationService } from "./auth/verification-service";
-import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
+import { WebhookEventGarbageCollector } from "./jobs/webhook-gc";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
@@ -309,8 +309,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(VerificationService).toSelf().inSingletonScope();
 
-    bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
-
     bind(UsageServiceImpl).toSelf().inSingletonScope();
     bind(UsageService).toService(UsageServiceImpl);
 
@@ -359,6 +357,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(JobRunner).toSelf().inSingletonScope();
     bind(Job).to(WorkspaceGarbageCollector).inSingletonScope();
     bind(Job).to(TokenGarbageCollector).inSingletonScope();
+    bind(Job).to(WebhookEventGarbageCollector).inSingletonScope();
 
     // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
     rebind(UsageService)
