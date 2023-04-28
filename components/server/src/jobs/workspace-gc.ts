@@ -11,7 +11,7 @@ import * as opentracing from "opentracing";
 import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
-import { Job } from "./job";
+import { Job } from "./runner";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:

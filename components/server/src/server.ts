@@ -57,7 +57,7 @@ import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { RedisMutex } from "./redis/mutex";
-import { JobRunner } from "./jobs/job";
+import { JobRunner } from "./jobs/runner";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {

@@ -130,7 +130,7 @@ import { RedisMutex } from "./redis/mutex";
 import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { StripeService } from "./user/stripe-service";
-import { Job, JobRunner } from "./jobs/job";
+import { Job, JobRunner } from "./jobs/runner";
 import { DatabaseGarbageCollector } from "./jobs/database-gc";
 import { OTSGarbageCollector } from "./jobs/ots-gc";
 

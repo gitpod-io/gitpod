@@ -7,7 +7,7 @@
 import { PeriodicDbDeleter } from "@gitpod/gitpod-db/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { Job } from "./job";
+import { Job } from "./runner";
 import { Config } from "../config";
 
 @injectable()

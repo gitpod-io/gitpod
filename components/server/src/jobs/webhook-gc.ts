@@ -9,7 +9,7 @@ import * as opentracing from "opentracing";
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Job } from "./job";
+import { Job } from "./runner";
 
 @injectable()
 export class WebhookEventGarbageCollector implements Job {
