@@ -35,7 +35,7 @@ export class JobRunner {
             });
             disposables.push(
                 repeat(async () => {
-                    this.run(job);
+                    await this.run(job);
                 }, job.frequencyMs),
             );
         }

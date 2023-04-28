@@ -49,7 +49,7 @@ import { StorageClient } from "./storage/storage-client";
 import { ImageBuilderClientProvider, ImageBuilderClientCallMetrics } from "@gitpod/image-builder/lib";
 import { ImageSourceProvider } from "./workspace/image-source-provider";
 import { WorkspaceGarbageCollector } from "./jobs/workspace-gc";
-import { TokenGarbageCollector } from "./user/token-garbage-collector";
+import { TokenGarbageCollector } from "./jobs/token-gc";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { OneTimeSecretServer } from "./one-time-secret-server";
@@ -142,7 +142,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(TokenService).toSelf().inSingletonScope();
     bind(TokenProvider).toService(TokenService);
-    bind(TokenGarbageCollector).toSelf().inSingletonScope();
 
     bind(Authenticator).toSelf().inSingletonScope();
     bind(LoginCompletionHandler).toSelf().inSingletonScope();
@@ -359,6 +358,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     // Periodic jobs
     bind(JobRunner).toSelf().inSingletonScope();
     bind(Job).to(WorkspaceGarbageCollector).inSingletonScope();
+    bind(Job).to(TokenGarbageCollector).inSingletonScope();
 
     // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
     rebind(UsageService)
