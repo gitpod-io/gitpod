@@ -356,12 +356,12 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(BillingModes).to(BillingModesImpl).inSingletonScope();
 
     // Periodic jobs
+    bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
+    bind(TokenGarbageCollector).toSelf().inSingletonScope();
+    bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
+    bind(DatabaseGarbageCollector).toSelf().inSingletonScope();
+    bind(OTSGarbageCollector).toSelf().inSingletonScope();
     bind(JobRunner).toSelf().inSingletonScope();
-    bind(Job).to(WorkspaceGarbageCollector).inSingletonScope();
-    bind(Job).to(TokenGarbageCollector).inSingletonScope();
-    bind(Job).to(WebhookEventGarbageCollector).inSingletonScope();
-    bind(Job).to(DatabaseGarbageCollector).inSingletonScope();
-    bind(Job).to(OTSGarbageCollector).inSingletonScope();
 
     // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
     rebind(UsageService)

@@ -6,11 +6,16 @@
 
 import { DisposableCollection } from "@gitpod/gitpod-protocol";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { inject, injectable, multiInject } from "inversify";
+import { inject, injectable } from "inversify";
 import { RedisMutex } from "../redis/mutex";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ResourceLockedError } from "redlock";
 import { reportJobCompleted, reportJobStarted } from "../prometheus-metrics";
+import { DatabaseGarbageCollector } from "./database-gc";
+import { OTSGarbageCollector } from "./ots-gc";
+import { TokenGarbageCollector } from "./token-gc";
+import { WebhookEventGarbageCollector } from "./webhook-gc";
+import { WorkspaceGarbageCollector } from "./workspace-gc";
 
 export const Job = Symbol("Job");
 
@@ -23,14 +28,20 @@ export interface Job {
 
 @injectable()
 export class JobRunner {
-    @multiInject(Job) protected jobs: Job[];
-
     @inject(RedisMutex) protected mutex: RedisMutex;
+
+    @inject(DatabaseGarbageCollector) protected databaseGC: DatabaseGarbageCollector;
+    @inject(OTSGarbageCollector) protected otsGC: OTSGarbageCollector;
+    @inject(TokenGarbageCollector) protected tokenGC: TokenGarbageCollector;
+    @inject(WebhookEventGarbageCollector) protected webhookGC: WebhookEventGarbageCollector;
+    @inject(WorkspaceGarbageCollector) protected workspaceGC: WorkspaceGarbageCollector;
 
     public start(): DisposableCollection {
         const disposables = new DisposableCollection();
 
-        for (let job of this.jobs) {
+        const jobs: Job[] = [this.databaseGC, this.otsGC, this.tokenGC, this.webhookGC, this.workspaceGC];
+
+        for (let job of jobs) {
             log.info(`Registered job ${job.name} in job runner.`, {
                 job: job,
             });
