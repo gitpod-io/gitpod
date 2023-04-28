@@ -229,7 +229,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ConsensusLeaderMessenger).toService(RabbitMQConsensusLeaderMessenger);
     bind(ConsensusLeaderQorum).toSelf().inSingletonScope();
 
-    bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
     bind(WorkspaceDownloadService).toSelf().inSingletonScope();
     bind(LivenessController).toSelf().inSingletonScope();
 
