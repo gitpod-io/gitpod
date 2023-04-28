@@ -49,6 +49,7 @@ export class SessionHandlerProvider {
             const jwtToken = cookies[SessionHandlerProvider.getJWTCookieName(this.config)];
             if (jwtToken) {
                 // we handle the verification async, because we don't yet need to use it in the application
+                /* tslint:disable-next-line */
                 this.authJWT
                     .verify(jwtToken)
                     .then((claims) => {
