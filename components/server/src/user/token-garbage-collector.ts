@@ -8,10 +8,11 @@ import { injectable, inject } from "inversify";
 import * as opentracing from "opentracing";
 import { UserDB, DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
-import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { RedisMutex } from "../redis/mutex";
+import { ResourceLockedError } from "redlock";
 
 @injectable()
 export class TokenGarbageCollector {
@@ -19,20 +20,29 @@ export class TokenGarbageCollector {
 
     @inject(UserDB) protected readonly userDb: UserDB;
 
-    @inject(ConsensusLeaderQorum) protected readonly leaderQuorum: ConsensusLeaderQorum;
+    @inject(RedisMutex) protected readonly mutex: RedisMutex;
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
 
     public async start(intervalSeconds?: number): Promise<Disposable> {
-        const intervalSecs = intervalSeconds || TokenGarbageCollector.GC_CYCLE_INTERVAL_SECONDS;
+        const intervalMs = (intervalSeconds || TokenGarbageCollector.GC_CYCLE_INTERVAL_SECONDS) * 1000;
         return repeat(async () => {
             try {
-                if (await this.leaderQuorum.areWeLeader()) {
-                    await this.collectExpiredTokenEntries();
-                }
+                await this.mutex.using(["token-gc"], intervalMs, async (signal) => {
+                    try {
+                        await this.collectExpiredTokenEntries();
+                    } catch (err) {
+                        log.error("tokengc: failed to expire token entries", err);
+                    }
+                });
             } catch (err) {
-                log.error("token garbage collector", err);
+                if (err instanceof ResourceLockedError) {
+                    log.debug("tokengc: failed to acquire token-gc lock, another instance already has the lock", err);
+                    return;
+                }
+
+                log.error("tokengc: failed to acquire workspace-gc lock", err);
             }
-        }, intervalSecs * 1000);
+        }, intervalMs);
     }
 
     protected async collectExpiredTokenEntries() {
