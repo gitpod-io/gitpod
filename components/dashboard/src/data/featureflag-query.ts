@@ -31,7 +31,7 @@ export const useFeatureFlag = (featureFlag: keyof typeof featureFlags) => {
     const org = useCurrentOrg().data;
     const project = useCurrentProject().project;
 
-    return useQuery<boolean>({
+    const query = useQuery<boolean>({
         queryKey: queryKey(featureFlag, user, org, project),
         queryFn: async () => {
             const flagValue = await getExperimentsClient().getValueAsync(featureFlag, featureFlags[featureFlag], {
@@ -44,6 +44,7 @@ export const useFeatureFlag = (featureFlag: keyof typeof featureFlags) => {
             return !!flagValue;
         },
     });
+    return query.data !== undefined ? query.data : featureFlags[featureFlag];
 };
 
 function queryKey(featureFlag: keyof typeof featureFlags, user?: User, org?: Organization, project?: Project) {

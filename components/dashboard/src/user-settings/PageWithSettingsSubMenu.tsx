@@ -32,7 +32,7 @@ export interface PageWithAdminSubMenuProps {
 export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps) {
     const user = useCurrentUser();
     const userBillingMode = useUserBillingMode();
-    const enablePersonalAccessTokens = !!useFeatureFlag("personalAccessTokensEnabled").data;
+    const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
 
     const settingsMenu = useMemo(() => {
         return getSettingsMenu(user, userBillingMode.data, enablePersonalAccessTokens);

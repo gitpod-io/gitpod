@@ -34,7 +34,7 @@ import { VerifyModal } from "../start/VerifyModal";
 import { useFeatureFlag } from "../data/featureflag-query";
 
 export const useNewCreateWorkspacePage = () => {
-    const startWithOptions = !!useFeatureFlag("start_with_options").data;
+    const startWithOptions = useFeatureFlag("start_with_options");
     const user = useCurrentUser();
     return !!startWithOptions || !!user?.additionalData?.isMigratedToTeamOnlyAttribution;
 };

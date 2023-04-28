@@ -96,7 +96,7 @@ export const AppRoutes = () => {
     const [isWhatsNewShown, setWhatsNewShown] = useState(user && shouldSeeWhatsNew(user));
     const newCreateWsPage = useNewCreateWorkspacePage();
     const location = useLocation();
-    const newSignupFlow = !!useFeatureFlag("newSignupFlow").data;
+    const newSignupFlow = useFeatureFlag("newSignupFlow");
 
     if (!user) {
         return <></>;

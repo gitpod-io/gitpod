@@ -22,8 +22,8 @@ export interface OrgSettingsPageProps {
 export function OrgSettingsPage({ children }: OrgSettingsPageProps) {
     const org = useCurrentOrg();
     const orgBillingMode = useOrgBillingMode();
-    const oidcServiceEnabled = !!useFeatureFlag("oidcServiceEnabled").data;
-    const orgGitAuthProviders = !!useFeatureFlag("orgGitAuthProviders").data;
+    const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
+    const orgGitAuthProviders = useFeatureFlag("orgGitAuthProviders");
 
     const menu = useMemo(
         () =>

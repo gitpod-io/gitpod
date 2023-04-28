@@ -65,7 +65,7 @@ namespace SkipMigration {
 export function useShouldSeeMigrationPage(): boolean {
     const user = useCurrentUser();
     const isSkipped = SkipMigration.useIsSkipped();
-    const orgOnlyAttribution = !!useFeatureFlag("team_only_attribution").data;
+    const orgOnlyAttribution = useFeatureFlag("team_only_attribution");
     return !!user && !user.additionalData?.isMigratedToTeamOnlyAttribution && orgOnlyAttribution && !isSkipped;
 }
 

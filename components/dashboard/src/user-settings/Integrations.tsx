@@ -350,7 +350,7 @@ function GitProviders() {
 
 function GitIntegrations() {
     const { user } = useContext(UserContext);
-    const userGitAuthProviders = !!useFeatureFlag("userGitAuthProviders").data;
+    const userGitAuthProviders = useFeatureFlag("userGitAuthProviders");
 
     const [modal, setModal] = useState<
         | { mode: "new" }

@@ -495,7 +495,7 @@ interface RunningPrebuildViewProps {
 
 function RunningPrebuildView(props: RunningPrebuildViewProps) {
     const workspaceId = props.runningPrebuild.workspaceID;
-    const showUseLastSuccessfulPrebuild = !!useFeatureFlag("showUseLastSuccessfulPrebuild").data;
+    const showUseLastSuccessfulPrebuild = useFeatureFlag("showUseLastSuccessfulPrebuild");
 
     useEffect(() => {
         const disposables = new DisposableCollection();

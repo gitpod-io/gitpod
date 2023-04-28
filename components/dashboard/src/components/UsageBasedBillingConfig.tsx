@@ -51,7 +51,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
     const [priceInformation, setPriceInformation] = useState<string | undefined>();
     const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
-    const paymentVerificationFlow = !!useFeatureFlag("paymentVerificationFlow").data;
+    const paymentVerificationFlow = useFeatureFlag("paymentVerificationFlow");
     const createPaymentIntent = useCreateHoldPaymentIntentMutation();
     const [showAddPaymentMethodModal, setShowAddPaymentMethodModal] = useState<boolean>(false);
     const { toast } = useToast();

@@ -18,7 +18,7 @@ type Props = {
     onComplete(user: User): void;
 };
 export const StepUserInfo: FC<Props> = ({ user, onComplete }) => {
-    const linkedinConnectionForOnboarding = !!useFeatureFlag("linkedinConnectionForOnboarding").data;
+    const linkedinConnectionForOnboarding = useFeatureFlag("linkedinConnectionForOnboarding");
     const updateUser = useUpdateCurrentUserMutation();
     // attempt to split provided name for default input values
     const { first, last } = getInitialNameParts(user);

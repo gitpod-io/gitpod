@@ -17,7 +17,7 @@ type DeleteWorkspaceArgs = {
 
 export const useDeleteWorkspaceMutation = () => {
     const queryClient = useQueryClient();
-    const usePublicApiWorkspacesService = !!useFeatureFlag("publicApiExperimentalWorkspaceService").data;
+    const usePublicApiWorkspacesService = useFeatureFlag("publicApiExperimentalWorkspaceService");
     const org = useCurrentOrg();
 
     return useMutation({

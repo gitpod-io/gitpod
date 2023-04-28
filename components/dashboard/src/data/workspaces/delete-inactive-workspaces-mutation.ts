@@ -16,7 +16,7 @@ type DeleteInactiveWorkspacesArgs = {
 };
 export const useDeleteInactiveWorkspacesMutation = () => {
     const queryClient = useQueryClient();
-    const usePublicApiWorkspacesService = !!useFeatureFlag("publicApiExperimentalWorkspaceService").data;
+    const usePublicApiWorkspacesService = useFeatureFlag("publicApiExperimentalWorkspaceService");
     const org = useCurrentOrg();
 
     return useMutation({
