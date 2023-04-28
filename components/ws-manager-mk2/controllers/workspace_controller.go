@@ -110,7 +110,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}()
 	}
 
-	log.Info("reconciling workspace", "ws", req.NamespacedName)
+	log.Info("reconciling workspace", "ws", req.NamespacedName, "phase", workspace.Status.Phase)
 
 	var workspacePods corev1.PodList
 	err := r.List(ctx, &workspacePods, client.InNamespace(req.Namespace), client.MatchingFields{wsOwnerKey: req.Name})
