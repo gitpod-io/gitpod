@@ -205,7 +205,7 @@ jobs:
                   WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
                   WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
 
-                  export WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 }}"
+                  export WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 != 'false' }}"
 
                   go install github.com/jstemmer/go-junit-report/v2@latest
 
