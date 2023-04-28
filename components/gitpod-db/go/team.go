@@ -75,3 +75,23 @@ func GetTeamBySlug(ctx context.Context, conn *gorm.DB, slug string) (Team, error
 
 	return team, nil
 }
+
+func GetSingleTeam(ctx context.Context, conn *gorm.DB) (Team, error) {
+	var teams []Team
+
+	// find the single team and throw error if more than one team exists
+	tx := conn.WithContext(ctx).Find(&teams)
+
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return Team{}, fmt.Errorf("No single team found: %w", ErrorNotFound)
+		}
+		return Team{}, fmt.Errorf("Failed to retrieve team: %v", tx.Error)
+	}
+
+	if len(teams) > 1 {
+		return Team{}, fmt.Errorf("No single team found: %w", ErrorNotFound)
+	}
+
+	return teams[0], nil
+}
