@@ -21,14 +21,14 @@ export class DatabaseGarbageCollector implements Job {
 
     public async run(): Promise<void> {
         if (!this.config.runDbDeleter) {
-            log.info("Database deleter is disabled.");
+            log.info("database-gc: deleter is disabled");
             return;
         }
 
         try {
             await this.periodicDbDeleter.runOnce();
         } catch (err) {
-            log.error("[PeriodicDbDeleter] error during run", err);
+            log.error("database-gc: error during run", err);
             throw err;
         }
     }

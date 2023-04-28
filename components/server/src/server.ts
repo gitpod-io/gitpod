@@ -27,7 +27,7 @@ import { RabbitMQConsensusLeaderMessenger } from "./consensus/rabbitmq-consensus
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
-import { PeriodicDbDeleter, TypeORM } from "@gitpod/gitpod-db/lib";
+import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { OneTimeSecretServer } from "./one-time-secret-server";
 import { Disposable, DisposableCollection, GitpodClient, GitpodServer } from "@gitpod/gitpod-protocol";
 import { BearerAuth, isBearerAuthError } from "./auth/bearer-authenticator";
@@ -46,7 +46,6 @@ import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
-import { WebhookEventGarbageCollector } from "./jobs/webhook-gc";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
@@ -91,8 +90,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
-    @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
-    @inject(WebhookEventGarbageCollector) protected readonly webhookEventGarbageCollector: WebhookEventGarbageCollector;
     @inject(LongRunningMigrationService) protected readonly migrationService: LongRunningMigrationService;
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
