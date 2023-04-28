@@ -5,13 +5,10 @@
  */
 
 import { FC, lazy } from "react";
-import { User } from "@gitpod/gitpod-protocol";
-import { useCheckDedicatedSetup } from "../hooks/use-check-dedicated-setup";
-import { useQueryParams } from "../hooks/use-query-param";
+import { useCheckDedicatedSetup } from "../dedicated-setup/use-check-dedicated-setup";
 import { useCurrentUser } from "../user-context";
 import { MigrationPage, useShouldSeeMigrationPage } from "../whatsnew/MigrationPage";
-import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "../onboarding/UserOnboarding";
-import { useFeatureFlag } from "../data/featureflag-query";
+import { useShowUserOnboarding } from "../onboarding/use-show-user-onboarding";
 
 const UserOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
 const DedicatedOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../dedicated-setup/DedicatedSetup"));
@@ -21,9 +18,8 @@ const DedicatedOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../de
 export const AppBlockingFlows: FC = ({ children }) => {
     const user = useCurrentUser();
     const shouldSeeMigrationPage = useShouldSeeMigrationPage();
-    const checkDedicatedOnboaring = useCheckDedicatedSetup();
-    const newSignupFlow = useFeatureFlag("newSignupFlow");
-    const search = useQueryParams();
+    const checkDedicatedSetup = useCheckDedicatedSetup();
+    const showUserOnboarding = useShowUserOnboarding();
 
     // This shouldn't happen, but if it does don't render anything yet
     if (!user) {
@@ -36,17 +32,12 @@ export const AppBlockingFlows: FC = ({ children }) => {
     }
 
     // Handle dedicated onboarding if necessary
-    if (!checkDedicatedOnboaring.isLoading && checkDedicatedOnboaring.needsOnboarding) {
+    if (!checkDedicatedSetup.isLoading && checkDedicatedSetup.needsOnboarding) {
         return <DedicatedOnboarding />;
     }
 
-    // Show new signup flow if:
-    // * feature flag enabled
-    // * User is onboarding (no ide selected yet) OR query param `onboarding=force` is set
-    const showNewSignupFlow =
-        newSignupFlow &&
-        (User.isOnboardingUser(user) || search.get(FORCE_ONBOARDING_PARAM) === FORCE_ONBOARDING_PARAM_VALUE);
-    if (showNewSignupFlow) {
+    // New user onboarding flow
+    if (showUserOnboarding) {
         return <UserOnboarding user={user} />;
     }
 

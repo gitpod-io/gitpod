@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useQueryParams } from "./use-query-param";
+import { useQueryParams } from "../hooks/use-query-params";
 
 const FORCE_SETUP_PARAM = "dedicated-setup";
 const FORCE_SETUP_PARAM_VALUE = "force";

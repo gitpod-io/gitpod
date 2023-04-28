@@ -44,7 +44,7 @@ import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { useCurrentUser } from "../user-context";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
-import { useQueryParams } from "../hooks/use-query-param";
+import { useQueryParams } from "../hooks/use-query-params";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
