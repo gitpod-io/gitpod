@@ -210,6 +210,15 @@ func NewWorkspaceConditionDeployed() metav1.Condition {
 	}
 }
 
+func NewWorkspaceConditionHeadlessTaskFailed(message string) metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionsHeadlessTaskFailed),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+		Message:            message,
+	}
+}
+
 func NewWorkspaceConditionFailed(message string) metav1.Condition {
 	return metav1.Condition{
 		Type:               string(WorkspaceConditionFailed),
