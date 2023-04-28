@@ -24,6 +24,7 @@ const featureFlags = {
     linkedinConnectionForOnboarding: false,
     paymentVerificationFlow: false,
     team_only_attribution: false,
+    enableDedicatedOnboardingFlow: false,
 };
 
 export const useFeatureFlag = (featureFlag: keyof typeof featureFlags) => {

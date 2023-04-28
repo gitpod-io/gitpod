@@ -15,7 +15,6 @@ import { isGitpodIo } from "../../utils";
 import { CaughtError } from "./ReloadPageErrorBoundary";
 
 const Setup = lazy(() => import(/* webpackPrefetch: true */ "../../Setup"));
-const DedicatedOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../../DedicatedOnboarding"));
 
 // Error boundary intended to catch and handle expected errors from api calls
 export const QueryErrorBoundary: FC = ({ children }) => {

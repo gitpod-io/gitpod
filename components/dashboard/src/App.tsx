@@ -11,7 +11,7 @@ import { useCurrentOrg } from "./data/organizations/orgs-query";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
-import { MigrationPage, useShouldSeeMigrationPage } from "./whatsnew/MigrationPage";
+import { AppBlockingFlows } from "./app/AppBlockingFlows";
 
 // Wrap the App in an ErrorBoundary to catch User/Org loading errors
 // This will also catch any errors that happen to bubble all the way up to the top
@@ -23,7 +23,6 @@ const AppWithErrorBoundary: FC = () => {
 const App: FC = () => {
     const { user, loading } = useUserLoader();
     const currentOrgQuery = useCurrentOrg();
-    const shouldSeeMigrationPage = useShouldSeeMigrationPage();
 
     // Setup analytics/tracking
     useAnalyticsTracking();
@@ -38,11 +37,6 @@ const App: FC = () => {
         return <Login />;
     }
 
-    // If orgOnlyAttribution is enabled and the user hasn't been migrated, yet, we need to show the migration page
-    if (shouldSeeMigrationPage) {
-        return <MigrationPage />;
-    }
-
     // At this point we want to make sure that we never render AppRoutes prematurely, e.g. without finishing loading the orgs
     // This would cause us to re-render the whole App again soon after, creating havoc with all our "onMount" hooks.
     if (currentOrgQuery.isLoading) {
@@ -52,8 +46,11 @@ const App: FC = () => {
     // If we made it here, we have a logged in user w/ their teams. Yay.
     return (
         <Suspense fallback={<AppLoading />}>
-            {/* Use org id, or user id (for personal account) as key to force re-render on org change */}
-            <AppRoutes key={currentOrgQuery?.data?.id ?? user.id} />
+            {/* Any required onboarding flows will be handled here before rendering the main app layout & routes */}
+            <AppBlockingFlows>
+                {/* Use org id, or user id (for personal account) as key to force re-render on org change */}
+                <AppRoutes key={currentOrgQuery?.data?.id ?? user.id} />
+            </AppBlockingFlows>
         </Suspense>
     );
 };
