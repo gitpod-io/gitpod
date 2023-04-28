@@ -232,7 +232,7 @@ func extractBuildResponse(status *wsmanapi.WorkspaceStatus) *api.BuildResponse {
 		info = extractBuildStatus(status)
 		msg  = status.Message
 	)
-	if status.Phase == wsmanapi.WorkspacePhase_STOPPING {
+	if status.Phase == wsmanapi.WorkspacePhase_STOPPING || status.Phase == wsmanapi.WorkspacePhase_STOPPED {
 		if status.Conditions.Failed != "" {
 			msg = status.Conditions.Failed
 		} else if status.Conditions.HeadlessTaskFailed != "" {

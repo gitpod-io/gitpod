@@ -103,6 +103,15 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		r.Recorder.Event(workspace, corev1.EventTypeWarning, "Failed", failure)
 	}
 
+	if workspace.IsHeadless() && !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionsHeadlessTaskFailed)) {
+		for _, cs := range pod.Status.ContainerStatuses {
+			if cs.State.Terminated != nil && cs.State.Terminated.Message != "" {
+				workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionHeadlessTaskFailed(cs.State.Terminated.Message))
+				break
+			}
+		}
+	}
+
 	switch {
 	case isPodBeingDeleted(pod):
 		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
@@ -287,15 +296,10 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), &phase
 				}
 			} else if terminationState.Reason == "Completed" && !isPodBeingDeleted(pod) {
-				if ws.IsHeadless() {
-					// headless workspaces are expected to finish. But if they have a termination message,
-					// there was a failure.
-					if terminationState.Message != "" {
-						return terminationState.Message, nil
-					}
-					return "", nil
+				// Headless workspaces are expected to finish.
+				if !ws.IsHeadless() {
+					return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that", cs.Name), nil
 				}
-				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that", cs.Name), nil
 			} else if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerUnknownExitCode {
 				// if a container is terminated and it wasn't because of either:
 				//  - regular shutdown
