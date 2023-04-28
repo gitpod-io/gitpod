@@ -15,7 +15,6 @@ import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
 import { inject, injectable } from "inversify";
 import { Config } from "../config";
 import { BillingModes } from "./billing-mode";
-import { EntitlementServiceLicense } from "./entitlement-service-license";
 import { EntitlementServiceUBP } from "./entitlement-service-ubp";
 import { VerificationService } from "../auth/verification-service";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
