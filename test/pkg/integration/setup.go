@@ -230,5 +230,5 @@ func getNamespace(path string) (string, error) {
 }
 
 func UseWsmanMk2() bool {
-	return os.Getenv("WS_MANAGER_MK2") == "true"
+	return os.Getenv("WS_MANAGER_MK2") != "false"
 }
