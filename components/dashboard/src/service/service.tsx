@@ -124,7 +124,7 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             // send last heartbeat (wasClosed: true)
             const data = { sessionId: this.sessionId };
             const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-            const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
+            const gitpodHostUrl = new GitpodHostUrl(new URL(window.location.toString()));
             const url = gitpodHostUrl.withApi({ pathname: `/auth/workspacePageClose/${this.instanceID}` }).toString();
             navigator.sendBeacon(url, blob);
         });
