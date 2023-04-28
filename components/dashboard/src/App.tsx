@@ -12,7 +12,6 @@ import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
 import { MigrationPage, useShouldSeeMigrationPage } from "./whatsnew/MigrationPage";
-import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
 import { AppBlockingFlows } from "./app/AppBlockingFlows";
 
 // Wrap the App in an ErrorBoundary to catch User/Org loading errors
@@ -23,8 +22,6 @@ const AppWithErrorBoundary: FC = () => {
 
 // Top level Dashboard App component
 const App: FC = () => {
-    // Kick off this request early, as we'll need it to determine if we need to require sso config for dedicated onboarding
-    useAuthProviders();
     const { user, loading } = useUserLoader();
     const currentOrgQuery = useCurrentOrg();
     const shouldSeeMigrationPage = useShouldSeeMigrationPage();
