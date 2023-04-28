@@ -131,6 +131,8 @@ import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { StripeService } from "./user/stripe-service";
 import { Job, JobRunner } from "./jobs/job";
+import { DatabaseGarbageCollector } from "./jobs/database-gc";
+import { OTSGarbageCollector } from "./jobs/ots-gc";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -358,6 +360,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(Job).to(WorkspaceGarbageCollector).inSingletonScope();
     bind(Job).to(TokenGarbageCollector).inSingletonScope();
     bind(Job).to(WebhookEventGarbageCollector).inSingletonScope();
+    bind(Job).to(DatabaseGarbageCollector).inSingletonScope();
+    bind(Job).to(OTSGarbageCollector).inSingletonScope();
 
     // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
     rebind(UsageService)

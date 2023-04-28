@@ -1,0 +1,35 @@
+/**
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License.AGPL.txt in the project root for license information.
+ */
+
+import { PeriodicDbDeleter } from "@gitpod/gitpod-db/lib";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { inject, injectable } from "inversify";
+import { Job } from "./job";
+import { Config } from "../config";
+
+@injectable()
+export class DatabaseGarbageCollector implements Job {
+    @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
+    @inject(Config) protected readonly config: Config;
+
+    public name = "database-gc";
+    public lockId = ["database-gc"];
+    public frequencyMs = 30000; // every 30 seconds
+
+    public async run(): Promise<void> {
+        if (!this.config.runDbDeleter) {
+            log.info("Database deleter is disabled.");
+            return;
+        }
+
+        try {
+            await this.periodicDbDeleter.runOnce();
+        } catch (err) {
+            log.error("[PeriodicDbDeleter] error during run", err);
+            throw err;
+        }
+    }
+}
