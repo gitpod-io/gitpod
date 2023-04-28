@@ -17,7 +17,8 @@ const STEPS = {
     ORG_NAMING: "org-naming",
     SSO_SETUP: "sso-setup",
     COMPLETE: "complete",
-};
+} as const;
+type StepsValue = typeof STEPS[keyof typeof STEPS];
 
 type Props = {
     onComplete?: () => void;
@@ -25,16 +26,8 @@ type Props = {
 const DedicatedSetup: FC<Props> = ({ onComplete }) => {
     const { dropConfetti } = useConfetti();
     // TODO: try and determine what step we should start on based on current state, i.e. org/sso already exists
-    const [step, setStep] = useState<typeof STEPS[keyof typeof STEPS]>(STEPS.GETTING_STARTED);
+    const [step, setStep] = useState<StepsValue>(STEPS.GETTING_STARTED);
     const history = useHistory();
-
-    // useEffect(() => {
-    //     document.body.classList.add("honeycomb-bg");
-
-    //     return () => {
-    //         document.body.classList.remove("honeycomb-bg");
-    //     };
-    // }, []);
 
     const handleSetupComplete = useCallback(() => {
         // celebrate 🎉

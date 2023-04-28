@@ -17,7 +17,7 @@ type Props = {
     onComplete: () => void;
 };
 export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
-    // TODO: if there's already an org create, set initial value to current org
+    // TODO: if there's already an org created, set initial value to current org, or we could skip this step
     const [orgName, setOrgName] = useState("");
     const createOrg = useCreateOrgMutation();
 
