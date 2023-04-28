@@ -9,15 +9,12 @@ import * as opentracing from "opentracing";
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { RedisMutex } from "../redis/mutex";
 import { Job } from "./job";
 
 @injectable()
 export class WebhookEventGarbageCollector implements Job {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(WebhookEventDB) protected readonly db: WebhookEventDB;
-
-    @inject(RedisMutex) protected readonly mutex: RedisMutex;
 
     public name = "webhook-gc";
     public lockId = ["webhook-gc"];
