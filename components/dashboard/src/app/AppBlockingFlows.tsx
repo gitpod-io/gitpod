@@ -9,6 +9,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { useCheckDedicatedSetup } from "../hooks/use-check-dedicated-setup";
 import { useQueryParams } from "../hooks/use-query-param";
 import { useCurrentUser } from "../user-context";
+import { MigrationPage, useShouldSeeMigrationPage } from "../whatsnew/MigrationPage";
 import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "../onboarding/UserOnboarding";
 import { useFeatureFlag } from "../data/featureflag-query";
 
@@ -19,6 +20,7 @@ const DedicatedOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../de
 // Since this runs before the app is rendered, we should avoid adding any lengthy async calls that would delay the app from loading.
 export const AppBlockingFlows: FC = ({ children }) => {
     const user = useCurrentUser();
+    const shouldSeeMigrationPage = useShouldSeeMigrationPage();
     const checkDedicatedOnboaring = useCheckDedicatedSetup();
     const newSignupFlow = useFeatureFlag("newSignupFlow");
     const search = useQueryParams();
@@ -26,6 +28,11 @@ export const AppBlockingFlows: FC = ({ children }) => {
     // This shouldn't happen, but if it does don't render anything yet
     if (!user) {
         return <></>;
+    }
+
+    // If orgOnlyAttribution is enabled and the user hasn't been migrated, yet, we need to show the migration page
+    if (shouldSeeMigrationPage) {
+        return <MigrationPage />;
     }
 
     // Handle dedicated onboarding if necessary

@@ -11,7 +11,6 @@ import { useCurrentOrg } from "./data/organizations/orgs-query";
 import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
-import { MigrationPage, useShouldSeeMigrationPage } from "./whatsnew/MigrationPage";
 import { AppBlockingFlows } from "./app/AppBlockingFlows";
 
 // Wrap the App in an ErrorBoundary to catch User/Org loading errors
@@ -24,7 +23,6 @@ const AppWithErrorBoundary: FC = () => {
 const App: FC = () => {
     const { user, loading } = useUserLoader();
     const currentOrgQuery = useCurrentOrg();
-    const shouldSeeMigrationPage = useShouldSeeMigrationPage();
 
     // Setup analytics/tracking
     useAnalyticsTracking();
@@ -37,12 +35,6 @@ const App: FC = () => {
     // At this point if there's no user, they should Login
     if (!user) {
         return <Login />;
-    }
-
-    // TODO: Can we shift this into AppBlockingFlows as well? Does it matter if we wait until org query finishes to show this?
-    // If orgOnlyAttribution is enabled and the user hasn't been migrated, yet, we need to show the migration page
-    if (shouldSeeMigrationPage) {
-        return <MigrationPage />;
     }
 
     // At this point we want to make sure that we never render AppRoutes prematurely, e.g. without finishing loading the orgs
