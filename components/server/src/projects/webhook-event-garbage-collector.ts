@@ -8,31 +8,45 @@ import { injectable, inject } from "inversify";
 import * as opentracing from "opentracing";
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, WebhookEventDB } from "@gitpod/gitpod-db/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
-import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { ResourceLockedError } from "redlock";
+import { RedisMutex } from "../redis/mutex";
 
 @injectable()
 export class WebhookEventGarbageCollector {
     static readonly GC_CYCLE_INTERVAL_SECONDS = 4 * 60; // every 6 minutes
 
+    @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(WebhookEventDB) protected readonly db: WebhookEventDB;
 
-    @inject(ConsensusLeaderQorum) protected readonly leaderQuorum: ConsensusLeaderQorum;
-    @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
+    @inject(RedisMutex) protected readonly mutex: RedisMutex;
 
-    public async start(intervalSeconds?: number): Promise<Disposable> {
-        const intervalSecs = intervalSeconds || WebhookEventGarbageCollector.GC_CYCLE_INTERVAL_SECONDS;
+    public async start(): Promise<Disposable> {
+        const intervalMs = WebhookEventGarbageCollector.GC_CYCLE_INTERVAL_SECONDS * 1000;
         return repeat(async () => {
             try {
-                if (await this.leaderQuorum.areWeLeader()) {
-                    await this.collectObsoleteWebhookEvents();
-                }
+                await this.mutex.using(["workspace-gc"], intervalMs, async (signal) => {
+                    log.info("webhook-event-gc: acquired workspace-gc lock. Collecting old workspaces");
+                    try {
+                        await this.collectObsoleteWebhookEvents();
+                    } catch (err) {
+                        log.error("webhook-event-gc: failed to collect obsolte events", err);
+                    }
+                });
             } catch (err) {
-                log.error("webhook event garbage collector", err);
+                if (err instanceof ResourceLockedError) {
+                    log.debug(
+                        "webhook-event-gc: failed to acquire workspace-gc lock, another instance already has the lock",
+                        err,
+                    );
+                    return;
+                }
+
+                log.error("webhookgc: failed to acquire workspace-gc lock", err);
             }
-        }, intervalSecs * 1000);
+        }, intervalMs);
     }
 
     protected async collectObsoleteWebhookEvents() {
