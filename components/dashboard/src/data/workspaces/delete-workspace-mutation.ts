@@ -5,11 +5,11 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useFeatureFlags } from "../../contexts/FeatureFlagContext";
 import { workspacesService } from "../../service/public-api";
 import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
+import { useFeatureFlag } from "../featureflag-query";
 
 type DeleteWorkspaceArgs = {
     workspaceId: string;
@@ -17,7 +17,7 @@ type DeleteWorkspaceArgs = {
 
 export const useDeleteWorkspaceMutation = () => {
     const queryClient = useQueryClient();
-    const { usePublicApiWorkspacesService } = useFeatureFlags();
+    const usePublicApiWorkspacesService = !!useFeatureFlag("publicApiExperimentalWorkspaceService").data;
     const org = useCurrentOrg();
 
     return useMutation({
