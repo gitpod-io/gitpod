@@ -6,9 +6,8 @@
 
 import { FC, useCallback, useEffect } from "react";
 import { Button } from "../components/Button";
-import gitpodIcon from "../icons/gitpod.svg";
 import { Heading1, Subheading } from "../components/typography/headings";
-import "./styles.css";
+import { SetupLayout } from "./SetupLayout";
 
 type Props = {
     onComplete?: () => void;
@@ -27,27 +26,18 @@ const DedicatedSetup: FC<Props> = ({ onComplete }) => {
     }, []);
 
     return (
-        <div className="container">
-            <div className="app-container">
-                <div className="flex items-center justify-start items-center py-3 space-x-1">
-                    <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
-                    <span className="text-lg">Gitpod</span>
-                </div>
-                <div className="mt-24 max-w-sm">
-                    <Heading1>Let's get started</Heading1>
-                    {/* TODO: verify this is the copy we want to use */}
-                    <Subheading>
-                        Spin up fresh cloud development environments for each task, fully automated, in seconds.
-                    </Subheading>
+        <SetupLayout>
+            <Heading1>Let's get started</Heading1>
+            <Subheading>
+                Spin up fresh cloud development environments for each task, fully automated, in seconds.
+            </Subheading>
 
-                    <div className="mt-6">
-                        <Button size="block" onClick={handleGetStarted}>
-                            Get Started
-                        </Button>
-                    </div>
-                </div>
+            <div className="mt-6">
+                <Button size="block" onClick={handleGetStarted}>
+                    Get Started
+                </Button>
             </div>
-        </div>
+        </SetupLayout>
     );
 };
 
