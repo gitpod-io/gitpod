@@ -128,21 +128,18 @@ export class UserService {
         // state. This measure of prevention is considered in the period deleter as well.
         newUser.identities.push({ ...identity, deleted: false });
         this.handleNewUser(newUser, isFirstUser);
+        if (!newUser.organizationId) {
+            await this.teamDB.createTeam(newUser.id, newUser.fullName || newUser.name || "My Organization");
+        }
         newUser = await this.userDb.storeUser(newUser);
         if (token) {
             await this.userDb.storeSingleToken(identity, token);
         }
 
-        if (
-            await this.configCatClientFactory().getValueAsync("migrate_new_users", false, {
-                user: newUser,
-            })
-        ) {
-            await this.migrationService.migrateUser(newUser);
-        }
         return newUser;
     }
-    protected handleNewUser(newUser: User, isFirstUser: boolean) {
+
+    private handleNewUser(newUser: User, isFirstUser: boolean) {
         if (this.config.blockNewUsers.enabled) {
             const emailDomainInPasslist = (mail: string) =>
                 this.config.blockNewUsers.passlist.some((e) => mail.endsWith(`@${e}`));

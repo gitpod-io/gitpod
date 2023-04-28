@@ -144,7 +144,6 @@ export class UserToTeamMigrationService {
     }
 
     async needsMigration(user: User): Promise<boolean> {
-        const teams = await this.teamDB.findTeamsByUser(user.id);
-        return teams.length === 0 || !user.additionalData?.isMigratedToTeamOnlyAttribution;
+        return !user.additionalData?.isMigratedToTeamOnlyAttribution;
     }
 }
