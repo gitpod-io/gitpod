@@ -29,7 +29,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
                 separator: true,
             },
             {
-                title: "Login",
+                title: "Log in",
                 onClick: () => {
                     window.location.href = gitpodHostUrl
                         .with({ pathname: `/iam/oidc/start`, search: `id=${clientConfig.id}` })
