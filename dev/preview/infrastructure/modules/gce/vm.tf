@@ -69,9 +69,16 @@ data "kubernetes_secret" "harvester-k3s-dockerhub-pull-account" {
 }
 
 locals {
-  startup_script = templatefile("${path.module}/../../scripts/bootstrap-k3s.sh", {
+  bootstrap_script = templatefile("${path.module}/../../scripts/bootstrap-k3s.sh", {
     vm_name = var.preview_name
   })
+
+  trustmanager_script = file("${path.module}/../../scripts/install-trustmanager.sh")
+
+  startup_script = <<-EOT
+    ${local.bootstrap_script}
+    ${local.trustmanager_script}
+  EOT
 
   cloudinit_user_data = templatefile("${path.module}/cloudinit.yaml", {
     dockerhub_user      = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["username"]
