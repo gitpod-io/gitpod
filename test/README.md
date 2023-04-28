@@ -66,9 +66,9 @@ If you want to run an entire test suite, the easiest is to use `./test/run.sh`:
 
 If you're iterating on a single test, the easiest is to use `go test` directly.
 
-If your integration tests depends on having having a user token available, then you'll have to set `USER_NAME` and `USER_TOKEN`. This can be done a couple ways:
+If your integration tests depends on having having a user token available, then you'll have to set `USER_NAME` and `USER_TOKEN` environment variables. This can be done a couple ways:
 1. Get credentials persisted as secrets (either in Github Actions, or GCP Secret Manager via the `core-dev` project), which vary by job that trigger tests. Refer to `run.sh` for details.
-2. In your Gitpod (preview) environment, create a `USER_TOKEN` via your Gitpod user's User Settings, first setup any Integrations needed for the VCS, and then make an Access Token with Full Access permissions.
+2. In your Gitpod (preview) environment, log into the preview environment, set `USER_NAME` to the user you logged in with, and set `USER_TOKEN` to any (does not have to be valid).
 
 By default the workspace tests run against `ws-manager-mk2`, set `WS_MANAGER_MK2=false` to run against mk1.
 
