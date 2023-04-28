@@ -19,6 +19,7 @@ const (
 	teamIDAttribute         = "team_id"
 	teamNameAttribute       = "team_name"
 	vscodeClientIDAttribute = "vscode_client_id"
+	gitpodHost              = "gitpod_host"
 )
 
 func newConfigCatClient(config configcat.Config) *configCatClient {
@@ -78,6 +79,10 @@ func attributesToUser(attributes Attributes) *configcat.UserData {
 
 	if attributes.VSCodeClientID != "" {
 		custom[vscodeClientIDAttribute] = attributes.VSCodeClientID
+	}
+
+	if attributes.GitpodHost != "" {
+		custom[gitpodHost] = attributes.GitpodHost
 	}
 
 	return &configcat.UserData{
