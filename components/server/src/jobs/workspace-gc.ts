@@ -4,17 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from "inversify";
-import { Disposable } from "@gitpod/gitpod-protocol";
+import { injectable, inject, postConstruct } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { WorkspaceDeletionService } from "./workspace-deletion-service";
+import { WorkspaceDeletionService } from "../workspace/workspace-deletion-service";
 import * as opentracing from "opentracing";
 import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Config } from "../config";
-import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { ResourceLockedError } from "redlock";
-import { RedisMutex } from "../redis/mutex";
+import { Job } from "./job";
 
 /**
  * The WorkspaceGarbageCollector has two tasks:
@@ -22,51 +19,36 @@ import { RedisMutex } from "../redis/mutex";
  *  - actually delete softDeleted workspaces if they are older than a configured time (initially: 7)
  */
 @injectable()
-export class WorkspaceGarbageCollector {
+export class WorkspaceGarbageCollector implements Job {
     @inject(WorkspaceDeletionService) protected readonly deletionService: WorkspaceDeletionService;
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(Config) protected readonly config: Config;
 
-    @inject(RedisMutex) protected readonly mutex: RedisMutex;
+    public name = "workspace-gc";
+    public lockId = ["workspace-gc"];
+    public frequencyMs: number;
 
-    public async start(): Promise<Disposable> {
-        if (this.config.workspaceGarbageCollection.disabled) {
-            console.log("wsgc: Garbage collection is disabled");
-            return {
-                dispose: () => {},
-            };
-        }
-        return repeat(
-            async () => this.garbageCollectWorkspacesIfLeader(),
-            this.config.workspaceGarbageCollection.intervalSeconds * 1000,
-        );
+    @postConstruct()
+    protected init() {
+        this.frequencyMs = this.config.workspaceGarbageCollection.intervalSeconds * 1000;
     }
 
-    public async garbageCollectWorkspacesIfLeader() {
-        const initialLockDurationMs = this.config.workspaceGarbageCollection.intervalSeconds * 1000;
-        try {
-            await this.mutex.using(["workspace-gc"], initialLockDurationMs, async (signal) => {
-                log.info("wsgc: acquired workspace-gc lock. Collecting old workspaces");
-
-                await Promise.all([
-                    this.softDeleteOldWorkspaces().catch((err) => log.error("wsgc: error during soft-deletion", err)),
-                    this.deleteWorkspaceContentAfterRetentionPeriod().catch((err) =>
-                        log.error("wsgc: error during content deletion", err),
-                    ),
-                    this.purgeWorkspacesAfterPurgeRetentionPeriod().catch((err) =>
-                        log.error("wsgc: error during hard deletion of workspaces", err),
-                    ),
-                    this.deleteOldPrebuilds().catch((err) => log.error("wsgc: error during prebuild deletion", err)),
-                ]);
-            });
-        } catch (err) {
-            if (err instanceof ResourceLockedError) {
-                log.debug("wsgc: failed to acquire workspace-gc lock, another instance already has the lock", err);
-                return;
-            }
-
-            log.error("wsgc: failed to acquire workspace-gc lock", err);
+    public async run(): Promise<void> {
+        if (this.config.workspaceGarbageCollection.disabled) {
+            log.info("workspace-gc: Garbage collection disabled.");
+            return;
         }
+
+        await Promise.all([
+            this.softDeleteOldWorkspaces().catch((err) => log.error("workspace-gc: error during soft-deletion", err)),
+            this.deleteWorkspaceContentAfterRetentionPeriod().catch((err) =>
+                log.error("workspace-gc: error during content deletion", err),
+            ),
+            this.purgeWorkspacesAfterPurgeRetentionPeriod().catch((err) =>
+                log.error("workspace-gc: error during hard deletion of workspaces", err),
+            ),
+            this.deleteOldPrebuilds().catch((err) => log.error("workspace-gc: error during prebuild deletion", err)),
+        ]);
     }
 
     /**
@@ -74,7 +56,7 @@ export class WorkspaceGarbageCollector {
      */
     protected async softDeleteOldWorkspaces() {
         if (Date.now() < this.config.workspaceGarbageCollection.startDate) {
-            log.info("wsgc: garbage collection not yet active.");
+            log.info("workspace-gc: garbage collection not yet active.");
             return;
         }
 
@@ -90,7 +72,7 @@ export class WorkspaceGarbageCollector {
                 workspaces.map((ws) => this.deletionService.softDeleteWorkspace({ span }, ws, "gc")),
             );
 
-            log.info(`wsgc: successfully soft-deleted ${deletes.length} workspaces`);
+            log.info(`workspace-gc: successfully soft-deleted ${deletes.length} workspaces`);
             span.addTags({ nrOfCollectedWorkspaces: deletes.length });
         } catch (err) {
             TraceContext.setError({ span }, err);
@@ -113,7 +95,7 @@ export class WorkspaceGarbageCollector {
                 workspaces.map((ws) => this.deletionService.garbageCollectWorkspace({ span }, ws)),
             );
 
-            log.info(`wsgc: successfully deleted the content of ${deletes.length} workspaces`);
+            log.info(`workspace-gc: successfully deleted the content of ${deletes.length} workspaces`);
             span.addTags({ nrOfCollectedWorkspaces: deletes.length });
         } catch (err) {
             TraceContext.setError({ span }, err);
@@ -141,7 +123,7 @@ export class WorkspaceGarbageCollector {
                 workspaces.map((ws) => this.deletionService.hardDeleteWorkspace({ span }, ws.id)),
             );
 
-            log.info(`wsgc: successfully purged ${deletes.length} workspaces`);
+            log.info(`workspace-gc: successfully purged ${deletes.length} workspaces`);
             span.addTags({ nrOfCollectedWorkspaces: deletes.length });
         } catch (err) {
             TraceContext.setError({ span }, err);
@@ -164,7 +146,7 @@ export class WorkspaceGarbageCollector {
                 workspaces.map((ws) => this.deletionService.garbageCollectPrebuild({ span }, ws)),
             );
 
-            log.info(`wsgc: successfully deleted ${deletes.length} prebuilds`);
+            log.info(`workspace-gc: successfully deleted ${deletes.length} prebuilds`);
             span.addTags({ nrOfCollectedPrebuilds: deletes.length });
         } catch (err) {
             TraceContext.setError({ span }, err);

@@ -48,7 +48,7 @@ import { ConsensusLeaderQorum } from "./consensus/consensus-leader-quorum";
 import { StorageClient } from "./storage/storage-client";
 import { ImageBuilderClientProvider, ImageBuilderClientCallMetrics } from "@gitpod/image-builder/lib";
 import { ImageSourceProvider } from "./workspace/image-source-provider";
-import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
+import { WorkspaceGarbageCollector } from "./jobs/workspace-gc";
 import { TokenGarbageCollector } from "./user/token-garbage-collector";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
@@ -130,6 +130,7 @@ import { RedisMutex } from "./redis/mutex";
 import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { StripeService } from "./user/stripe-service";
+import { Job, JobRunner } from "./jobs/job";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -354,6 +355,10 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(EntitlementServiceImpl).toSelf().inSingletonScope();
     bind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
     bind(BillingModes).to(BillingModesImpl).inSingletonScope();
+
+    // Periodic jobs
+    bind(JobRunner).toSelf().inSingletonScope();
+    bind(Job).to(WorkspaceGarbageCollector).inSingletonScope();
 
     // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
     rebind(UsageService)

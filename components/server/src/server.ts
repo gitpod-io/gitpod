@@ -24,7 +24,6 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AddressInfo } from "net";
 import { ConsensusLeaderQorum } from "./consensus/consensus-leader-quorum";
 import { RabbitMQConsensusLeaderMessenger } from "./consensus/rabbitmq-consensus-leader-messenger";
-import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
@@ -61,6 +60,7 @@ import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { ResourceLockedError } from "redlock";
 import { RedisMutex } from "./redis/mutex";
+import { JobRunner } from "./jobs/job";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -88,9 +88,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(BitbucketServerApp) protected readonly bitbucketServerApp: BitbucketServerApp;
     @inject(GitHubEnterpriseApp) protected readonly gitHubEnterpriseApp: GitHubEnterpriseApp;
 
+    @inject(JobRunner) protected readonly jobRunner: JobRunner;
+
     @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
-    @inject(WorkspaceGarbageCollector) protected readonly workspaceGC: WorkspaceGarbageCollector;
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
     @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
     @inject(WebhookEventGarbageCollector) protected readonly webhookEventGarbageCollector: WebhookEventGarbageCollector;
@@ -309,8 +310,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         await this.consensusMessenger.connect();
         await this.qorum.start();
 
-        // Start workspace garbage collector
-        this.workspaceGC.start().catch((err) => log.error("wsgc: error during startup", err));
+        // Start periodic jobs
+        this.jobRunner.start();
 
         // Start one-time secret GC
         this.oneTimeSecretServer.startPruningExpiredSecrets();
