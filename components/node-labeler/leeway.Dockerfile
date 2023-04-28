@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:a7db49b55bd97c12cd686272325bbac236830111db336e084b89f5c816ab0537
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:6a95c6e758cc2ee66cade06fac05c8d374ac97ab554beecf05da307fd998d317
 
 COPY components-node-labeler--app/node-labeler /app/node-labeler
 
