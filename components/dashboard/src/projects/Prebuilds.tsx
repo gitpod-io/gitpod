@@ -23,6 +23,7 @@ import { Disposable } from "vscode-jsonrpc";
 import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
 import search from "../icons/search.svg";
+import Tooltip from "../components/Tooltip";
 
 export default function PrebuildsPage(props: { project?: Project; isAdminDashboard?: boolean }) {
     const currentProject = useCurrentProject();
@@ -222,7 +223,9 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
                                                         alt={p.info.startedBy}
                                                     />
                                                 )}
-                                                Triggered {formatDate(p.info.startedAt)}
+                                                <Tooltip content={dayjs(p.info.startedAt).format("MMM D, YYYY")}>
+                                                    Triggered {formatDate(p.info.startedAt)}
+                                                </Tooltip>
                                             </p>
                                         </div>
                                     </ItemField>
