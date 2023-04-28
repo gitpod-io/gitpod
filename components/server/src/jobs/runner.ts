@@ -43,7 +43,9 @@ export class JobRunner {
 
         for (let job of jobs) {
             log.info(`Registered job ${job.name} in job runner.`, {
-                job: job,
+                jobName: job.name,
+                frequencyMs: job.frequencyMs,
+                redisLockId: job.lockId,
             });
             disposables.push(
                 repeat(async () => {
