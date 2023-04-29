@@ -15,7 +15,7 @@ export const useShowUserOnboarding = () => {
     const search = useQueryParams();
     const newSignupFlow = useFeatureFlag("newSignupFlow");
 
-    if (!user) {
+    if (!user || User.isOrganizationOwned(user)) {
         return false;
     }
 
