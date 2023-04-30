@@ -24,7 +24,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 91,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -79,7 +78,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -94,7 +93,7 @@
           "refId": "A"
         }
       ],
-      "title": "Workspace Success Rate",
+      "title": "Workspace Success Rate Mk1",
       "type": "stat"
     },
     {
@@ -148,7 +147,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -216,7 +215,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -237,14 +236,42 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(\n  0.5, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "expr": "histogram_quantile(\n  0.75, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
           "hide": false,
-          "legendFormat": "P50",
+          "legendFormat": "P75",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "histogram_quantile(\n  0.50, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "P50",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "histogram_quantile(\n  0.25, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "P25",
+          "range": true,
+          "refId": "D"
         }
       ],
-      "title": "Workspace Startup Time",
+      "title": "Workspace Startup Time Mk1",
       "type": "stat"
     },
     {
@@ -296,7 +323,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -317,11 +344,39 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(\n  0.5, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "expr": "histogram_quantile(\n  0.75, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
           "hide": false,
-          "legendFormat": "P50",
+          "legendFormat": "P75",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "histogram_quantile(\n  0.50, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "P50",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "histogram_quantile(\n  0.25, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "P25",
+          "range": true,
+          "refId": "E"
         }
       ],
       "title": "Workspace Startup Time Mk2",
@@ -867,6 +922,6 @@
   "timezone": "",
   "title": "Success Criteria",
   "uid": "h2qYC3P4k",
-  "version": 7,
+  "version": 8,
   "weekStart": ""
 }
