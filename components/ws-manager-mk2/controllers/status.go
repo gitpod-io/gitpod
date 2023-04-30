@@ -157,13 +157,8 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			// moving back to Initializing and becoming unusable.
 			workspace.Status.Phase = workspacev1.WorkspacePhaseRunning
 		} else {
-			var ready bool
-			for _, cs := range pod.Status.ContainerStatuses {
-				if cs.Ready {
-					ready = true
-					break
-				}
-			}
+			ready := wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady))
+
 			if ready {
 				// workspace is ready - hence content init is done
 				workspace.Status.Phase = workspacev1.WorkspacePhaseRunning
