@@ -266,12 +266,13 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 			// we would not be here as we've checked for a DeletionTimestamp prior. So let's find out why the
 			// container is terminating.
 			if terminationState.ExitCode != 0 && terminationState.Message != "" {
-				var phase workspacev1.WorkspacePhase
+				var phase *workspacev1.WorkspacePhase
 				if !isPodBeingDeleted(pod) {
 					// If the wrote a termination message and is not currently being deleted,
 					// then it must have been/be running. If we did not force the phase here,
 					// we'd be in unknown.
-					phase = workspacev1.WorkspacePhaseRunning
+					running := workspacev1.WorkspacePhaseRunning
+					phase = &running
 				}
 
 				if terminationState.ExitCode == containerKilledExitCode && terminationState.Reason == "ContainerStatusUnknown" {
@@ -292,7 +293,7 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 				}
 
 				// the container itself told us why it was terminated - use that as failure reason
-				return extractFailureFromLogs([]byte(terminationState.Message)), &phase
+				return extractFailureFromLogs([]byte(terminationState.Message)), phase
 			} else if terminationState.Reason == "Error" {
 				if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerKilledExitCode {
 					phase := workspacev1.WorkspacePhaseRunning
