@@ -2052,10 +2052,7 @@ type UpdateOwnAuthProviderParams struct {
 // CreateWorkspaceOptions is the CreateWorkspaceOptions message type
 type CreateWorkspaceOptions struct {
 	StartWorkspaceOptions
-	ContextURL string `json:"contextUrl,omitempty"`
-	// references:
-	// https://github.com/gitpod-io/gitpod/pull/17040
-	// https://github.com/gitpod-io/gitpod/blob/90b7d658589fd6e9fb239ff239591b9f1218fc83/components/server/src/workspace/gitpod-server-impl.ts#L1227-L1235
+	ContextURL                         string `json:"contextUrl,omitempty"`
 	OrganizationId                     string `json:"organizationId,omitempty"`
 	IgnoreRunningWorkspaceOnSameCommit bool   `json:"ignoreRunningWorkspaceOnSameCommit,omitemopty"`
 	IgnoreRunningPrebuild              bool   `json:"ignoreRunningPrebuild,omitemopty"`
