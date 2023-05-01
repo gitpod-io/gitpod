@@ -12,18 +12,27 @@ import { Button } from "../components/Button";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { useCreateOrgMutation } from "../data/organizations/create-org-mutation";
 import Alert from "../components/Alert";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation";
 
 type Props = {
     onComplete: () => void;
 };
 export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
+    const org = useCurrentOrg();
+
     // TODO: if there's already an org created, set initial value to current org, or we could skip this step
-    const [orgName, setOrgName] = useState("");
+    const [orgName, setOrgName] = useState(org.data?.name ?? "");
     const createOrg = useCreateOrgMutation();
+    const updateOrg = useUpdateOrgMutation();
 
     const handleContinue = useCallback(() => {
-        createOrg.mutate({ name: orgName }, { onSuccess: onComplete });
-    }, [createOrg, onComplete, orgName]);
+        if (org.data) {
+            updateOrg.mutate({ name: orgName }, { onSuccess: onComplete });
+        } else {
+            createOrg.mutate({ name: orgName }, { onSuccess: onComplete });
+        }
+    }, [createOrg, onComplete, org.data, orgName, updateOrg]);
 
     const nameError = useOnBlurError("Please provide a name", orgName.trim().length > 0);
 
@@ -40,7 +49,9 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
                     Your Gitpod organization allows you to manage settings, projects and collaborate with teammates.
                 </Subheading>
             </div>
-            {createOrg.isError && <Alert type="danger">{createOrg.error.message}</Alert>}
+            {(createOrg.isError || updateOrg.isError) && (
+                <Alert type="danger">{createOrg.error?.message || updateOrg.error?.message}</Alert>
+            )}
             <TextInputField
                 label="Organization Name"
                 placeholder="e.g. ACME Inc"
@@ -55,7 +66,7 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
                     size="block"
                     onClick={handleContinue}
                     disabled={!nameError.isValid}
-                    loading={createOrg.isLoading}
+                    loading={createOrg.isLoading || updateOrg.isLoading}
                 >
                     Continue
                 </Button>
