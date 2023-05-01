@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": 90,
+  "id": 4,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -94,7 +94,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -177,7 +177,7 @@
         },
         "showUnfilled": true
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -236,7 +236,7 @@
         },
         "showUnfilled": true
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -318,7 +318,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -326,19 +326,14 @@
       "seriesOverrides": [
         {
           "$$hashKey": "object:146",
-          "alias": "REGULAR",
+          "alias": "Regular",
           "color": "#73BF69"
         },
         {
           "$$hashKey": "object:147",
-          "alias": "PREBUILD",
+          "alias": "Prebuild",
           "color": "#5794F2",
           "yaxis": 1
-        },
-        {
-          "$$hashKey": "object:148",
-          "alias": "PROBE",
-          "color": "#B877D9"
         },
         {
           "$$hashKey": "object:149",
@@ -347,7 +342,7 @@
         },
         {
           "$$hashKey": "object:389",
-          "alias": "IMAGEBUILD",
+          "alias": "ImageBuild",
           "color": "#6ED0E0",
           "dashLength": 8,
           "dashes": true,
@@ -484,7 +479,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -657,7 +652,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "repeat": "cluster",
       "targets": [
         {
@@ -752,7 +747,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -911,7 +906,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1121,9 +1116,13 @@
       },
       {
         "current": {
-          "selected": false,
-          "text": "All",
-          "value": "$__all"
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
         },
         "datasource": {
           "uid": "$datasource"
@@ -1181,6 +1180,6 @@
   "timezone": "utc",
   "title": "Gitpod / Overview Mk2",
   "uid": "nqIHyqPVk",
-  "version": 2,
+  "version": 1,
   "weekStart": ""
 }
