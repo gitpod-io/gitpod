@@ -21,8 +21,8 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
     const [orgName, setOrgName] = useState("");
     const createOrg = useCreateOrgMutation();
 
-    const handleContinue = useCallback(async () => {
-        createOrg.mutate({ name: orgName }, { onSuccess: () => onComplete() });
+    const handleContinue = useCallback(() => {
+        createOrg.mutate({ name: orgName }, { onSuccess: onComplete });
     }, [createOrg, onComplete, orgName]);
 
     const nameError = useOnBlurError("Please provide a name", orgName.trim().length > 0);
