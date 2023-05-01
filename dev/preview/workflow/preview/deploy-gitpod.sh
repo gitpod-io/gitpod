@@ -598,7 +598,10 @@ pushd temp-installer
 yq4 -s '.kind + "_" + (.metadata.namespace // "") + "_" + .metadata.name' "../${INSTALLER_RENDER_PATH}"
 rm .yml || true # this one is a leftover from the split
 # shellcheck disable=SC2038
-find . | xargs -n 1 -I {} -P 5 bash -c "diff-apply ${PREVIEW_K3S_KUBE_CONTEXT} {}"
+# Apply namespaces first, as other resources might depend on these and would fail to apply if its namespace doesn't exist.
+# The `|| test $? = 1` is to prevent grep from failing if no matches are found.
+find . | { grep "Namespace" || test $? = 1; } | xargs -r -n 1 -I {} -P 5 bash -c "diff-apply ${PREVIEW_K3S_KUBE_CONTEXT} {}"
+find . | grep --invert-match "Namespace" | xargs -r -n 1 -I {} -P 5 bash -c "diff-apply ${PREVIEW_K3S_KUBE_CONTEXT} {}"
 log_info "Applied all"
 popd
 rm -rf temp-installer
@@ -607,7 +610,11 @@ rm -f "${INSTALLER_RENDER_PATH}"
 # =========================
 # Wait for objects to be ready
 # =========================
-for item in deployment.apps/blobserve deployment.apps/content-service deployment.apps/dashboard deployment.apps/ide-metrics deployment.apps/ide-proxy deployment.apps/ide-service deployment.apps/image-builder-mk3 deployment.apps/minio deployment.apps/node-labeler deployment.apps/proxy deployment.apps/public-api-server deployment.apps/redis deployment.apps/server deployment.apps/spicedb deployment.apps/usage deployment.apps/ws-manager deployment.apps/ws-manager-bridge deployment.apps/ws-proxy statefulset.apps/messagebus statefulset.apps/mysql statefulset.apps/openvsx-proxy daemonset.apps/agent-smith daemonset.apps/fluent-bit daemonset.apps/registry-facade daemonset.apps/ws-daemon; do
+ws_man_deploy="deployment.apps/ws-manager"
+if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
+  ws_man_deploy="deployment.apps/ws-manager-mk2"
+fi
+for item in deployment.apps/blobserve deployment.apps/content-service deployment.apps/dashboard deployment.apps/ide-metrics deployment.apps/ide-proxy deployment.apps/ide-service deployment.apps/image-builder-mk3 deployment.apps/minio deployment.apps/node-labeler deployment.apps/proxy deployment.apps/public-api-server deployment.apps/redis deployment.apps/server deployment.apps/spicedb deployment.apps/usage "$ws_man_deploy" deployment.apps/ws-manager-bridge deployment.apps/ws-proxy statefulset.apps/messagebus statefulset.apps/mysql statefulset.apps/openvsx-proxy daemonset.apps/agent-smith daemonset.apps/fluent-bit daemonset.apps/registry-facade daemonset.apps/ws-daemon; do
   kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" rollout status "${item}" --namespace="${PREVIEW_NAMESPACE}"
 done
 

@@ -612,8 +612,6 @@ const (
 	ComponentWorkspace ComponentType = "workspace"
 	// ComponentImageBuilderMK3 points to the image-builder-mk3
 	ComponentImageBuilderMK3 ComponentType = "image-builder-mk3"
-	// ComponentImageBuilderMK3Wsman points to ws-manager-mk2's image-builder-mk3
-	ComponentImageBuilderMK3Wsman ComponentType = "image-builder-mk3-wsman"
 )
 
 func waitForPodRunningReady(c kubernetes.Interface, podName string, namespace string, timeout time.Duration) error {

@@ -145,7 +145,6 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 		imgBuilder := "image-builder-mk3"
 		wsman := "ws-manager"
 		if UseWsmanMk2() {
-			imgBuilder = "image-builder-mk3-wsman"
 			wsman = "ws-manager-mk2"
 		}
 

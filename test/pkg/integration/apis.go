@@ -1043,10 +1043,6 @@ func (c *ComponentAPI) ImageBuilder(opts ...APIImageBuilderOpt) (imgbldr.ImageBu
 	}
 
 	imgbuilder := ComponentImageBuilderMK3
-	if UseWsmanMk2() {
-		imgbuilder = ComponentImageBuilderMK3Wsman
-	}
-
 	err := func() error {
 		if c.imgbldStatus.Port == 0 {
 			c.imgbldStatusMu.Lock()
