@@ -14,7 +14,7 @@ type Props = {
 };
 export const SetupCompleteStep: FC<Props> = ({ onComplete }) => {
     return (
-        <SetupLayout>
+        <SetupLayout showOrg>
             <Heading1>Welcome to Gitpod</Heading1>
             <Subheading>Your teammates can now sign in to Gitpod using single sign-on (SSO).</Subheading>
 

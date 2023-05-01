@@ -95,17 +95,21 @@ export const useSaveSSOConfig = () => {
     const save = useCallback(
         async (ssoConfig: SSOConfig) => {
             if (!org) {
-                console.error("no current org selected");
-                return;
+                throw new Error("No current org selected");
             }
 
             if (!isValid(ssoConfig)) {
-                return;
+                throw new Error("Invalid SSO config");
             }
 
             const trimmedIssuer = ssoConfig.issuer.trim();
             const trimmedClientId = ssoConfig.clientId.trim();
             const trimmedClientSecret = ssoConfig.clientSecret.trim();
+
+            // TODO: remove this - hacking around that update doesn't work on the api atm
+            if (ssoConfig.id) {
+                return ssoConfig;
+            }
 
             return upsertClientConfig.mutateAsync({
                 config: !ssoConfig.id
