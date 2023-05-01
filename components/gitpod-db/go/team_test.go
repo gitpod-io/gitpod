@@ -56,3 +56,40 @@ func Test_GetTeamBySlug(t *testing.T) {
 	require.Equal(t, team.Name, read.Name)
 	require.Equal(t, team.Slug, read.Slug)
 }
+
+func Test_GetTheSingleTeam(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	conn.Delete(&db.Team{}, "1=1")
+
+	_, err := db.GetTheSingleTeam(context.Background(), conn)
+	require.Error(t, err)
+
+	// create a single team
+	team := db.Team{
+		ID:   uuid.New(),
+		Name: "Team1",
+		Slug: "team1",
+	}
+
+	_, err = db.CreateTeam(context.Background(), conn, team)
+	require.NoError(t, err)
+
+	read, err := db.GetTheSingleTeam(context.Background(), conn)
+	require.NoError(t, err)
+	require.Equal(t, team.Name, read.Name)
+	require.Equal(t, team.Slug, read.Slug)
+
+	// create a second team
+	team2 := db.Team{
+		ID:   uuid.New(),
+		Name: "Team1",
+		Slug: "team1",
+	}
+
+	_, err = db.CreateTeam(context.Background(), conn, team2)
+	require.NoError(t, err)
+
+	_, err = db.GetTheSingleTeam(context.Background(), conn)
+	require.Error(t, err)
+}

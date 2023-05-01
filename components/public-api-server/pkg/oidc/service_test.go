@@ -78,6 +78,12 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config:   &oauth2.Config{},
 	})
+	// create second org to emulate an installation with multiple orgs
+	createConfig(t, dbConn, &ClientConfig{
+		Issuer:         issuer,
+		VerifierConfig: &oidc.Config{},
+		OAuth2Config:   &oauth2.Config{},
+	})
 	configID := config.ID.String()
 
 	testCases := []struct {
@@ -89,6 +95,70 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 			Location:      "/start?word=abc",
 			ExpectedError: true,
 			ExpectedId:    "",
+		},
+		{
+			Location:      "/start?id=UNKNOWN",
+			ExpectedError: true,
+			ExpectedId:    "",
+		},
+		{
+			Location:      "/start?id=" + configID,
+			ExpectedError: false,
+			ExpectedId:    configID,
+		},
+		{
+			Location:      "/start?orgSlug=" + team.Slug,
+			ExpectedError: false,
+			ExpectedId:    configID,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Location, func(te *testing.T) {
+			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
+			config, err := service.GetClientConfigFromStartRequest(request)
+			if tc.ExpectedError == true {
+				require.Error(te, err)
+			}
+			if tc.ExpectedError != true {
+				require.NoError(te, err)
+				require.NotNil(te, config)
+				require.Equal(te, tc.ExpectedId, config.ID)
+			}
+		})
+	}
+
+	t.Cleanup(func() {
+		require.NoError(t, dbConn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+	})
+}
+
+func TestGetClientConfigFromStartRequestSingleOrg(t *testing.T) {
+	issuer := newFakeIdP(t)
+	service, dbConn := setupOIDCServiceForTests(t)
+	// make sure no other teams are in the db anymore
+	dbConn.Delete(&db.Team{}, "1=1")
+	config, team := createConfig(t, dbConn, &ClientConfig{
+		Issuer:         issuer,
+		VerifierConfig: &oidc.Config{},
+		OAuth2Config:   &oauth2.Config{},
+	})
+	configID := config.ID.String()
+
+	testCases := []struct {
+		Location      string
+		ExpectedError bool
+		ExpectedId    string
+	}{
+		{
+			Location:      "/start",
+			ExpectedError: false,
+			ExpectedId:    configID,
+		},
+		{
+			Location:      "/start?word=abc",
+			ExpectedError: false,
+			ExpectedId:    configID,
 		},
 		{
 			Location:      "/start?id=UNKNOWN",

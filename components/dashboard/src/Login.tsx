@@ -227,8 +227,10 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                         </button>
                                     ))
                                 )}
-
-                                <SSOLoginForm onSuccess={authorizeSuccessful} />
+                                <SSOLoginForm
+                                    onSuccess={authorizeSuccessful}
+                                    singleOrgMode={!!authProviders.data && authProviders.data.length === 0}
+                                />
                             </div>
                             {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
                         </div>
