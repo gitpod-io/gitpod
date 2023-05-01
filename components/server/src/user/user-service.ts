@@ -5,8 +5,8 @@
  */
 
 import { injectable, inject } from "inversify";
-import { User, Identity, Token } from "@gitpod/gitpod-protocol";
-import { ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { User, Identity, Token, AdditionalUserData } from "@gitpod/gitpod-protocol";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -128,18 +128,23 @@ export class UserService {
         // state. This measure of prevention is considered in the period deleter as well.
         newUser.identities.push({ ...identity, deleted: false });
         this.handleNewUser(newUser, isFirstUser);
-        newUser = await this.userDb.storeUser(newUser);
-        if (token) {
-            await this.userDb.storeSingleToken(identity, token);
-        }
-
         if (
             await this.configCatClientFactory().getValueAsync("migrate_new_users", false, {
                 user: newUser,
             })
         ) {
-            await this.migrationService.migrateUser(newUser);
+            // org-owned users have an org and the setup user should not get one automatically
+            if (newUser.organizationId || newUser.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
+                AdditionalUserData.set(newUser, { isMigratedToTeamOnlyAttribution: true });
+            } else {
+                await this.migrationService.migrateUser(newUser);
+            }
         }
+        newUser = await this.userDb.storeUser(newUser);
+        if (token) {
+            await this.userDb.storeSingleToken(identity, token);
+        }
+
         return newUser;
     }
     protected handleNewUser(newUser: User, isFirstUser: boolean) {
