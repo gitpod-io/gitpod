@@ -9,12 +9,12 @@ import { useMutation } from "@tanstack/react-query";
 import { useOrganizationsInvalidator } from "./orgs-query";
 import { publicApiTeamToProtocol, teamsService } from "../../service/public-api";
 
-type UpdateOrgArgs = Pick<Organization, "name" | "slug">;
+type CreateOrgArgs = Pick<Organization, "name">;
 
 export const useCreateOrgMutation = () => {
     const invalidateOrgs = useOrganizationsInvalidator();
 
-    return useMutation<Organization, Error, UpdateOrgArgs>({
+    return useMutation<Organization, Error, CreateOrgArgs>({
         mutationFn: async ({ name }) => {
             const { team } = await teamsService.createTeam({ name });
             if (!team) {
