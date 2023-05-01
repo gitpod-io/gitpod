@@ -12,6 +12,9 @@ import { useConfetti } from "../contexts/ConfettiContext";
 import { SetupCompleteStep } from "./SetupCompleteStep";
 import { useHistory } from "react-router";
 import { useOIDCClientsQuery } from "../data/oidc-clients/oidc-clients-query";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { Delayed } from "../components/Delayed";
+import { SpinnerLoader } from "../components/Loader";
 
 const STEPS = {
     GETTING_STARTED: "getting-started",
@@ -30,6 +33,7 @@ const DedicatedSetup: FC<Props> = ({ onComplete }) => {
     const [step, setStep] = useState<StepsValue>(STEPS.GETTING_STARTED);
     const history = useHistory();
 
+    const currentOrg = useCurrentOrg();
     const oidcClients = useOIDCClientsQuery();
 
     // if a config already exists, select first active, or first config
@@ -57,7 +61,16 @@ const DedicatedSetup: FC<Props> = ({ onComplete }) => {
         history.push("/settings/git");
     }, [history]);
 
+    if (currentOrg.isLoading || oidcClients.isLoading) {
+        return (
+            <Delayed>
+                <SpinnerLoader />
+            </Delayed>
+        );
+    }
+
     return (
+        // TODO: Shift step state down a level to allow defaulting based on org/sso config
         // TODO: Should we shift SetupLayout to render at this level?
         <>
             {step === STEPS.GETTING_STARTED && <GettingStartedStep onComplete={() => setStep(STEPS.ORG_NAMING)} />}
