@@ -4,50 +4,50 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect } from "react";
-import { Button } from "../components/Button";
-import gitpodIcon from "../icons/gitpod.svg";
-import { Heading1, Subheading } from "../components/typography/headings";
-import "./styles.css";
+import { FC, useCallback, useState } from "react";
+import { GettingStartedStep } from "./GettingStartedStep";
+import { OrgNamingStep } from "./OrgNamingStep";
+import { SSOSetupStep } from "./SSOSetupStep";
+import { useConfetti } from "../contexts/ConfettiContext";
+import { SetupCompleteStep } from "./SetupCompleteStep";
+import { useHistory } from "react-router";
+
+const STEPS = {
+    GETTING_STARTED: "getting-started",
+    ORG_NAMING: "org-naming",
+    SSO_SETUP: "sso-setup",
+    COMPLETE: "complete",
+} as const;
+type StepsValue = typeof STEPS[keyof typeof STEPS];
 
 type Props = {
     onComplete?: () => void;
 };
 const DedicatedSetup: FC<Props> = ({ onComplete }) => {
-    const handleGetStarted = useCallback(() => {
-        console.log("getting started");
-    }, []);
+    const { dropConfetti } = useConfetti();
+    // TODO: try and determine what step we should start on based on current state, i.e. org/sso already exists
+    const [step, setStep] = useState<StepsValue>(STEPS.GETTING_STARTED);
+    const history = useHistory();
 
-    useEffect(() => {
-        document.body.classList.add("honeycomb-bg");
+    const handleSetupComplete = useCallback(() => {
+        // celebrate 🎉
+        dropConfetti();
+        // Transition to completed view
+        setStep(STEPS.COMPLETE);
+    }, [dropConfetti]);
 
-        return () => {
-            document.body.classList.remove("honeycomb-bg");
-        };
-    }, []);
+    const handleEndSetup = useCallback(() => {
+        history.push("/settings/git");
+    }, [history]);
 
     return (
-        <div className="container">
-            <div className="app-container">
-                <div className="flex items-center justify-start items-center py-3 space-x-1">
-                    <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
-                    <span className="text-lg">Gitpod</span>
-                </div>
-                <div className="mt-24 max-w-sm">
-                    <Heading1>Let's get started</Heading1>
-                    {/* TODO: verify this is the copy we want to use */}
-                    <Subheading>
-                        Spin up fresh cloud development environments for each task, fully automated, in seconds.
-                    </Subheading>
-
-                    <div className="mt-6">
-                        <Button size="block" onClick={handleGetStarted}>
-                            Get Started
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        // TODO: Should we shift SetupLayout to render at this level?
+        <>
+            {step === STEPS.GETTING_STARTED && <GettingStartedStep onComplete={() => setStep(STEPS.ORG_NAMING)} />}
+            {step === STEPS.ORG_NAMING && <OrgNamingStep onComplete={() => setStep(STEPS.SSO_SETUP)} />}
+            {step === STEPS.SSO_SETUP && <SSOSetupStep onComplete={handleSetupComplete} />}
+            {step === STEPS.COMPLETE && <SetupCompleteStep onComplete={handleEndSetup} />}
+        </>
     );
 };
 
