@@ -599,8 +599,9 @@ yq4 -s '.kind + "_" + (.metadata.namespace // "") + "_" + .metadata.name' "../${
 rm .yml || true # this one is a leftover from the split
 # shellcheck disable=SC2038
 # Apply namespaces first, as other resources might depend on these and would fail to apply if its namespace doesn't exist.
-find . | grep "Namespace" | xargs -n 1 -I {} -P 5 bash -c "diff-apply ${PREVIEW_K3S_KUBE_CONTEXT} {}"
-find . | grep --invert-match "Namespace" | xargs -n 1 -I {} -P 5 bash -c "diff-apply ${PREVIEW_K3S_KUBE_CONTEXT} {}"
+# The `|| test $? = 1` is to prevent grep from failing if no matches are found.
+find . | { grep "Namespace" || test $? = 1; } | xargs -r -n 1 -I {} -P 5 bash -c "diff-apply ${PREVIEW_K3S_KUBE_CONTEXT} {}"
+find . | grep --invert-match "Namespace" | xargs -r -n 1 -I {} -P 5 bash -c "diff-apply ${PREVIEW_K3S_KUBE_CONTEXT} {}"
 log_info "Applied all"
 popd
 rm -rf temp-installer
