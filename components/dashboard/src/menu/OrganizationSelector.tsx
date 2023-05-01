@@ -13,16 +13,18 @@ import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useLocation } from "react-router";
+import { User } from "@gitpod/gitpod-protocol";
 
-export interface OrganizationSelectorProps {}
-
-export default function OrganizationSelector(p: OrganizationSelectorProps) {
+export default function OrganizationSelector() {
     const user = useCurrentUser();
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
     const { data: userBillingMode } = useUserBillingMode();
     const { data: orgBillingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
+
+    // we should have an API to ask for permissions, until then we duplicate the logic here
+    const canCreateOrgs = user && !User.isOrganizationOwned(user);
 
     const userFullName = user?.fullName || user?.name || "...";
 
@@ -142,25 +144,29 @@ export default function OrganizationSelector(p: OrganizationSelectorProps) {
               ]
             : []),
         ...otherOrgEntries,
-        {
-            title: "Create a new organization",
-            customContent: (
-                <div className="w-full text-gray-500 flex items-center">
-                    <span className="flex-1">New Organization</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5">
-                        <path
-                            fill="currentColor"
-                            fillRule="evenodd"
-                            d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z"
-                            clipRule="evenodd"
-                        />
-                    </svg>
-                </div>
-            ),
-            link: "/orgs/new",
-            // marking as active for styles
-            active: true,
-        },
+        ...(canCreateOrgs
+            ? [
+                  {
+                      title: "Create a new organization",
+                      customContent: (
+                          <div className="w-full text-gray-500 flex items-center">
+                              <span className="flex-1">New Organization</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5">
+                                  <path
+                                      fill="currentColor"
+                                      fillRule="evenodd"
+                                      d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z"
+                                      clipRule="evenodd"
+                                  />
+                              </svg>
+                          </div>
+                      ),
+                      link: "/orgs/new",
+                      // marking as active for styles
+                      active: true,
+                  },
+              ]
+            : []),
     ];
 
     const selectedTitle = currentOrg?.data ? currentOrg.data.name : userFullName;

@@ -131,6 +131,10 @@ export namespace User {
         return !hasPreferredIde(user);
     }
 
+    export function isOrganizationOwned(user: User) {
+        return !!user.organizationId;
+    }
+
     export function migrationIDESettings(user: User) {
         if (
             !user?.additionalData?.ideSettings ||
