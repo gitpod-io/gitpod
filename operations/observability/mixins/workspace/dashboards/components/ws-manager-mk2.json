@@ -24,7 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": null,
+  "id": 76,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -582,7 +582,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "repeatDirection": "h",
       "targets": [
         {
@@ -590,7 +590,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"Regular\"}[5m])\n  ) by (le)",
+          "expr": "sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"Regular\"}[$__rate_interval])\n  ) by (le)",
           "format": "heatmap",
           "interval": "",
           "legendFormat": "{{le}}",
@@ -672,7 +672,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "repeatDirection": "h",
       "targets": [
         {
@@ -680,7 +680,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"ImageBuild\"}[5m])\n  ) by (le)",
+          "expr": "sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"ImageBuild\"}[$__rate_interval])\n  ) by (le)",
           "format": "heatmap",
           "interval": "",
           "legendFormat": "{{le}}",
@@ -762,7 +762,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "repeatDirection": "h",
       "targets": [
         {
@@ -770,7 +770,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"Prebuild\"}[5m])\n  ) by (le)",
+          "expr": "sum(\n    rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{cluster=~\"$cluster\", type=\"Prebuild\"}[$__rate_interval])\n  ) by (le)",
           "format": "heatmap",
           "interval": "",
           "legendFormat": "{{le}}",
@@ -938,7 +938,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1036,7 +1036,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -1154,7 +1154,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.4.7",
       "targets": [
         {
           "datasource": {
@@ -1353,8 +1353,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "red",
@@ -1924,7 +1923,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 104
       },
       "id": 16,
       "panels": [],
@@ -2000,7 +1999,7 @@
         "h": 7,
         "w": 10,
         "x": 0,
-        "y": 69
+        "y": 105
       },
       "id": 76,
       "options": {
@@ -2048,7 +2047,7 @@
         "h": 7,
         "w": 7,
         "x": 10,
-        "y": 69
+        "y": 105
       },
       "hiddenSeries": false,
       "id": 2,
@@ -2140,7 +2139,7 @@
         "h": 7,
         "w": 7,
         "x": 17,
-        "y": 69
+        "y": 105
       },
       "hiddenSeries": false,
       "id": 4,
@@ -2244,7 +2243,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 76
+        "y": 112
       },
       "hiddenSeries": false,
       "id": 6,
@@ -2334,7 +2333,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 76
+        "y": 112
       },
       "hiddenSeries": false,
       "id": 8,
@@ -2423,7 +2422,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 83
+        "y": 119
       },
       "hiddenSeries": false,
       "id": 10,
@@ -2521,7 +2520,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 83
+        "y": 119
       },
       "hiddenSeries": false,
       "id": 57,
@@ -2619,7 +2618,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 83
+        "y": 119
       },
       "hiddenSeries": false,
       "id": 59,
@@ -2718,7 +2717,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 90
+        "y": 126
       },
       "hiddenSeries": false,
       "id": 36,
@@ -2809,7 +2808,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 90
+        "y": 126
       },
       "hiddenSeries": false,
       "id": 55,
@@ -2919,7 +2918,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 90
+        "y": 126
       },
       "hiddenSeries": false,
       "id": 40,
@@ -3029,7 +3028,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 99
+        "y": 135
       },
       "id": 22,
       "panels": [],
@@ -3060,7 +3059,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 100
+        "y": 136
       },
       "hiddenSeries": false,
       "id": 32,
@@ -3154,7 +3153,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 100
+        "y": 136
       },
       "hiddenSeries": false,
       "id": 34,
@@ -3254,7 +3253,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 109
+        "y": 145
       },
       "hiddenSeries": false,
       "id": 26,
@@ -3351,7 +3350,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 109
+        "y": 145
       },
       "hiddenSeries": false,
       "id": 61,
@@ -3448,7 +3447,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 118
+        "y": 154
       },
       "hiddenSeries": false,
       "id": 24,
@@ -3539,7 +3538,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 118
+        "y": 154
       },
       "hiddenSeries": false,
       "id": 63,
