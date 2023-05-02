@@ -151,7 +151,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return result, fmt.Errorf("failed to act on status: %w", err)
 	}
 
-	return ctrl.Result{}, nil
+	return result, nil
 }
 
 func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *workspacev1.Workspace, workspacePods corev1.PodList) (ctrl.Result, error) {

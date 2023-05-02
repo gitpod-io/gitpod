@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
@@ -17,7 +18,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -30,6 +30,10 @@ const (
 	// containerUnknownExitCode is the exit code containerd uses if it cannot determine the cause/exit status of
 	// a stopped container.
 	containerUnknownExitCode = 255
+
+	// headlessTaskFailedPrefix is the prefix of the pod termination message if a headless task failed (e.g. user error
+	// or aborted prebuild).
+	headlessTaskFailedPrefix = "headless task failed: "
 )
 
 func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspace *workspacev1.Workspace, pods corev1.PodList, cfg *config.Configuration) error {
@@ -114,18 +118,11 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 
 	switch {
 	case isPodBeingDeleted(pod):
-		workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
-
-		if controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName) {
-			if isDisposalFinished(workspace) {
-				workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
-			}
-
-		} else {
-			// We do this independently of the dispostal status because pods only get their finalizer
-			// once they're running. If they fail before they reach the running phase we'll never see
-			// a disposal status, hence would never stop the workspace.
+		if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping && isDisposalFinished(workspace) {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
+		} else if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped {
+			// Move to (or stay in) Stopping if not yet Stopped.
+			workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 		}
 
 	case pod.Status.Phase == corev1.PodPending:
@@ -177,13 +174,14 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		}
 
 	case workspace.IsHeadless() && (pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed):
-		// Don't start disposal if maintenance mode is enabled.
-		if !r.maintenance.IsEnabled() {
-			workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
-		}
-
-		if isDisposalFinished(workspace) {
+		if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping && isDisposalFinished(workspace) {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
+		} else if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped {
+			// Should be in Stopping phase, but isn't yet.
+			// Move to Stopping to start disposal, but only if maintenance mode is disabled.
+			if !r.maintenance.IsEnabled() {
+				workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
+			}
 		}
 
 	case pod.Status.Phase == corev1.PodUnknown:
@@ -268,12 +266,13 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 			// we would not be here as we've checked for a DeletionTimestamp prior. So let's find out why the
 			// container is terminating.
 			if terminationState.ExitCode != 0 && terminationState.Message != "" {
-				var phase workspacev1.WorkspacePhase
+				var phase *workspacev1.WorkspacePhase
 				if !isPodBeingDeleted(pod) {
 					// If the wrote a termination message and is not currently being deleted,
 					// then it must have been/be running. If we did not force the phase here,
 					// we'd be in unknown.
-					phase = workspacev1.WorkspacePhaseRunning
+					running := workspacev1.WorkspacePhaseRunning
+					phase = &running
 				}
 
 				if terminationState.ExitCode == containerKilledExitCode && terminationState.Reason == "ContainerStatusUnknown" {
@@ -288,8 +287,13 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 					}
 				}
 
+				if ws.IsHeadless() && strings.HasPrefix(terminationState.Message, headlessTaskFailedPrefix) {
+					// Headless task failed, not a workspace failure.
+					return "", nil
+				}
+
 				// the container itself told us why it was terminated - use that as failure reason
-				return extractFailureFromLogs([]byte(terminationState.Message)), &phase
+				return extractFailureFromLogs([]byte(terminationState.Message)), phase
 			} else if terminationState.Reason == "Error" {
 				if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerKilledExitCode {
 					phase := workspacev1.WorkspacePhaseRunning
