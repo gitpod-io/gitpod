@@ -4,13 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useContext } from "react";
+import { Link } from "react-router-dom";
 import { Heading2 } from "../components/typography/headings";
-import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./start-workspace-modal-context";
+import { StartWorkspaceModalKeyBinding } from "../App";
 
 export const EmptyWorkspacesContent = () => {
-    const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
-
     return (
         <div className="app-container flex flex-col space-y-2">
             <div className="px-6 py-3 flex flex-col text-gray-400 border-t border-gray-200 dark:border-gray-800">
@@ -32,10 +30,10 @@ export const EmptyWorkspacesContent = () => {
                             </a>
                         </div>
                         <span>
-                            <button onClick={() => setStartWorkspaceModalProps({})}>
+                            <Link to={"/new"}>
                                 New Workspace{" "}
                                 <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
-                            </button>
+                            </Link>
                         </span>
                     </>
                 </div>

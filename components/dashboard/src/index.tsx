@@ -24,7 +24,6 @@ import { ProjectContextProvider } from "./projects/project-context";
 import { ThemeContextProvider } from "./theme-context";
 import { UserContextProvider } from "./user-context";
 import { getURLHash, isGitpodIo, isWebsiteSlug } from "./utils";
-import { StartWorkspaceModalContextProvider } from "./workspaces/start-workspace-modal-context";
 
 const bootApp = () => {
     // gitpod.io specific boot logic
@@ -69,9 +68,7 @@ const bootApp = () => {
                                             <PaymentContextProvider>
                                                 <ProjectContextProvider>
                                                     <ThemeContextProvider>
-                                                        <StartWorkspaceModalContextProvider>
-                                                            <App />
-                                                        </StartWorkspaceModalContextProvider>
+                                                        <App />
                                                     </ThemeContextProvider>
                                                 </ProjectContextProvider>
                                             </PaymentContextProvider>

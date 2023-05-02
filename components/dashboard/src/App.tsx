@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { FC, Suspense } from "react";
+import React, { FC, Suspense, useEffect } from "react";
 import { AppLoading } from "./app/AppLoading";
 import { AppRoutes } from "./app/AppRoutes";
 import { useCurrentOrg } from "./data/organizations/orgs-query";
@@ -12,6 +12,7 @@ import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
 import { AppBlockingFlows } from "./app/AppBlockingFlows";
+import { useHistory } from "react-router";
 
 // Wrap the App in an ErrorBoundary to catch User/Org loading errors
 // This will also catch any errors that happen to bubble all the way up to the top
@@ -19,10 +20,26 @@ const AppWithErrorBoundary: FC = () => {
     return <App />;
 };
 
+export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}O`;
+
 // Top level Dashboard App component
 const App: FC = () => {
     const { user, loading } = useUserLoader();
     const currentOrgQuery = useCurrentOrg();
+    const history = useHistory();
+
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && event.key === "o") {
+                event.preventDefault();
+                history.push("/new");
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+        };
+    }, [history]);
 
     // Setup analytics/tracking
     useAnalyticsTracking();

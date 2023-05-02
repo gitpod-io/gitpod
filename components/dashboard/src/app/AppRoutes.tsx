@@ -4,10 +4,10 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { Redirect, Route, Switch, useLocation } from "react-router";
-import Menu from "../menu/Menu";
 import OAuthClientApproval from "../OauthClientApproval";
+import Menu from "../menu/Menu";
 import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/projects.routes";
 import { parseProps } from "../start/StartWorkspace";
 import {
@@ -27,24 +27,21 @@ import {
     usagePathMain,
 } from "../user-settings/settings.routes";
 import { getURLHash, isGitpodIo } from "../utils";
-import { shouldSeeWhatsNew, WhatsNew } from "../whatsnew/WhatsNew";
-import { StartWorkspaceModal } from "../workspaces/StartWorkspaceModal";
+import { WhatsNew, shouldSeeWhatsNew } from "../whatsnew/WhatsNew";
 import { workspacesPathMain } from "../workspaces/workspaces.routes";
 import { AdminRoute } from "./AdminRoute";
 import { Blocked } from "./Blocked";
 
 // TODO: Can we bundle-split/lazy load these like other pages?
 import { BlockedRepositories } from "../admin/BlockedRepositories";
+import { Heading1, Subheading } from "../components/typography/headings";
+import { useQueryParams } from "../hooks/use-query-params";
+import { useCurrentUser } from "../user-context";
 import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokensCreateView";
-import { CreateWorkspacePage, useNewCreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
-import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
+import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { OrgRequiredRoute } from "./OrgRequiredRoute";
 import { WebsocketClients } from "./WebsocketClients";
-import { StartWorkspaceOptions } from "../start/start-workspace-options";
-import { Heading1, Subheading } from "../components/typography/headings";
-import { useCurrentUser } from "../user-context";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
-import { useQueryParams } from "../hooks/use-query-params";
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
@@ -61,7 +58,6 @@ const PersonalAccessTokens = React.lazy(
     () => import(/* webpackPrefetch: true */ "../user-settings/PersonalAccessTokens"),
 );
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "../start/StartWorkspace"));
-const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ "../start/CreateWorkspace"));
 const NewTeam = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/NewTeam"));
 const JoinTeam = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/JoinTeam"));
 const Members = React.lazy(() => import(/* webpackPrefetch: true */ "../teams/Members"));
@@ -89,9 +85,7 @@ const Usage = React.lazy(() => import(/* webpackPrefetch: true */ "../Usage"));
 export const AppRoutes = () => {
     const hash = getURLHash();
     const user = useCurrentUser();
-    const { startWorkspaceModalProps, setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
     const [isWhatsNewShown, setWhatsNewShown] = useState(user && shouldSeeWhatsNew(user));
-    const newCreateWsPage = useNewCreateWorkspacePage();
     const location = useLocation();
     const search = useQueryParams();
 
@@ -116,11 +110,7 @@ export const AppRoutes = () => {
     // TODO: Try and encapsulate this in a route for "/" (check for hash in route component, render or redirect accordingly)
     const isCreation = location.pathname === "/" && hash !== "";
     if (isCreation) {
-        if (new URLSearchParams(location.search).has("showOptions") || newCreateWsPage) {
-            return <Redirect to={"/new" + location.pathname + location.search + location.hash} />;
-        } else {
-            return <CreateWorkspace contextUrl={hash} />;
-        }
+        return <Redirect to={"/new" + location.pathname + location.search + location.hash} />;
     }
 
     // TODO: Try and make this a <Route/> entry instead
@@ -136,19 +126,6 @@ export const AppRoutes = () => {
         url.pathname = "/";
         window.location.replace(url);
         return <div></div>;
-    }
-
-    if (newCreateWsPage && startWorkspaceModalProps) {
-        const search = StartWorkspaceOptions.toSearchParams({
-            ideSettings: {
-                defaultIde: startWorkspaceModalProps.ide,
-                useLatestVersion: startWorkspaceModalProps.uselatestIde,
-            },
-            workspaceClass: startWorkspaceModalProps.workspaceClass,
-        });
-        const hash = startWorkspaceModalProps.contextUrl ? "#" + startWorkspaceModalProps.contextUrl : "";
-        setStartWorkspaceModalProps(undefined);
-        return <Redirect to={"/new/" + search + hash} />;
     }
 
     return (
@@ -292,12 +269,6 @@ export const AppRoutes = () => {
                         }}
                     ></Route>
                 </Switch>
-                {startWorkspaceModalProps && !newCreateWsPage && (
-                    <StartWorkspaceModal
-                        {...startWorkspaceModalProps}
-                        onClose={startWorkspaceModalProps.onClose || (() => setStartWorkspaceModalProps(undefined))}
-                    />
-                )}
             </div>
             <WebsocketClients />
         </Route>

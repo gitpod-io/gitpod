@@ -7,7 +7,7 @@
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import dayjs from "dayjs";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Redirect, useHistory } from "react-router";
 import Alert from "../components/Alert";
 import Header from "../components/Header";
@@ -17,8 +17,6 @@ import NoAccess from "../icons/NoAccess.svg";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { useNewCreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
-import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
 import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
@@ -29,7 +27,6 @@ import Tooltip from "../components/Tooltip";
 export default function ProjectsPage() {
     const history = useHistory();
     const { project, loading } = useCurrentProject();
-    const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [isLoadingBranches, setIsLoadingBranches] = useState<boolean>(false);
@@ -42,8 +39,6 @@ export default function ProjectsPage() {
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
 
     const [showAuthBanner, setShowAuthBanner] = useState<{ host: string } | undefined>(undefined);
-
-    const isNewCreateWsPage = useNewCreateWorkspacePage();
 
     useEffect(() => {
         // project changed, reset state
@@ -385,19 +380,6 @@ export default function ProjectsPage() {
                                                     <ItemFieldContextMenu
                                                         className="py-0.5"
                                                         menuEntries={[
-                                                            ...(isNewCreateWsPage
-                                                                ? []
-                                                                : [
-                                                                      {
-                                                                          title: "New Workspace with ...",
-                                                                          onClick: () =>
-                                                                              setStartWorkspaceModalProps({
-                                                                                  contextUrl: branch.url,
-                                                                                  allowContextUrlChange: true,
-                                                                              }),
-                                                                          separator: true,
-                                                                      },
-                                                                  ]),
                                                             prebuild?.status === "queued" ||
                                                             prebuild?.status === "building"
                                                                 ? {
