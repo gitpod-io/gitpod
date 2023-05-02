@@ -4,6 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import parseDuration from "parse-duration";
+
 /**
  * Returns the <code>day</code>th of the next month from <code>formDate</code>.
  * If the next month does not have a <code>day</code>th, the last day of that
@@ -83,4 +85,35 @@ export function millisecondsToHours(milliseconds: number): number {
 
 export function hoursToMilliseconds(hours: number): number {
     return hours * 60 * 60 * 1000;
+}
+
+export function goDurationToHumanReadable(goDuration: string): string {
+    const durationMs = parseGoDurationToMs(goDuration);
+
+    let remainingMs = durationMs;
+    const hours = Math.floor(remainingMs / (60 * 60 * 1000));
+    remainingMs = remainingMs - hours * 60 * 60 * 1000;
+
+    const minutes = Math.floor(remainingMs / (60 * 1000));
+    remainingMs = remainingMs - minutes * 60 * 1000;
+
+    const seconds = Math.floor(remainingMs / 1000);
+    remainingMs = remainingMs - seconds * 1000;
+
+    const segments: string[] = [];
+    if (hours) {
+        segments.push(`${hours} hour${hours === 1 ? "" : "s"}`);
+    }
+    if (minutes) {
+        segments.push(`${minutes} minute${minutes === 1 ? "" : "s"}`);
+    }
+    if (seconds) {
+        segments.push(`${seconds} second${seconds === 1 ? "" : "s"}`);
+    }
+
+    return segments.join(" ");
+}
+
+export function parseGoDurationToMs(goDuration: string): number {
+    return parseDuration(goDuration);
 }

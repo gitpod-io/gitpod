@@ -217,6 +217,7 @@ import {
 } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
+import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2006,7 +2007,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         return {
             resetTimeoutOnWorkspaces: [workspace.id],
-            humanReadableDuration: this.goDurationToHumanReadable(validatedDuration),
+            humanReadableDuration: goDurationToHumanReadable(validatedDuration),
         };
     }
 
@@ -2023,7 +2024,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!runningInstance) {
             log.warn({ userId: user.id, workspaceId }, "Can only get keep-alive for running workspaces");
             const duration = WORKSPACE_TIMEOUT_DEFAULT_SHORT;
-            return { duration, canChange, humanReadableDuration: this.goDurationToHumanReadable(duration) };
+            return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "get");
 
@@ -2034,39 +2035,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const desc = await client.describeWorkspace(ctx, req);
         const duration = desc.getStatus()!.getSpec()!.getTimeout();
 
-        return { duration, canChange, humanReadableDuration: this.goDurationToHumanReadable(duration) };
-    }
-
-    goDurationToHumanReadable(goDuration: string): string {
-        const [, value, unit] = goDuration.match(/^(\d+)([mh])$/)!;
-        let duration = parseInt(value);
-
-        switch (unit) {
-            case "m":
-                duration *= 60;
-                break;
-            case "h":
-                duration *= 60 * 60;
-                break;
-        }
-
-        const hours = Math.floor(duration / 3600);
-        duration %= 3600;
-        const minutes = Math.floor(duration / 60);
-        duration %= 60;
-
-        let result = "";
-        if (hours) {
-            result += `${hours} hour${hours === 1 ? "" : "s"}`;
-            if (minutes) {
-                result += " and ";
-            }
-        }
-        if (minutes) {
-            result += `${minutes} minute${minutes === 1 ? "" : "s"}`;
-        }
-
-        return result;
+        return { duration, canChange, humanReadableDuration: goDurationToHumanReadable(duration) };
     }
 
     public async getOpenPorts(ctx: TraceContext, workspaceId: string): Promise<WorkspaceInstancePort[]> {
