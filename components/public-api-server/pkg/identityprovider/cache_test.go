@@ -192,4 +192,17 @@ func TestRedisCacheSigner(t *testing.T) {
 	if err != nil {
 		t.Errorf("Returned signer does not sign with currently set key")
 	}
+
+	err = client.FlushAll(context.Background()).Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = cache.Signer(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys := client.Keys(context.Background(), redisIDPKeyPrefix+"*").Val()
+	if len(keys) == 0 {
+		t.Error("getting a new signer did not repersist the key")
+	}
 }

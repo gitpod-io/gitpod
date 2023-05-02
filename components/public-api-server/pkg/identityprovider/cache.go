@@ -183,6 +183,17 @@ func (rc *RedisCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
 
+	err := rc.persistPublicKey(ctx, current)
+	if err != nil {
+		return err
+	}
+	rc.currentID = rc.keyID(current)
+	rc.current = current
+
+	return nil
+}
+
+func (rc *RedisCache) persistPublicKey(ctx context.Context, current *rsa.PrivateKey) error {
 	id := rc.keyID(current)
 
 	publicKeyJSON, err := serializePublicKeyAsJSONWebKey(id, &current.PublicKey)
@@ -195,8 +206,6 @@ func (rc *RedisCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
 	if err != nil {
 		return err
 	}
-	rc.currentID = id
-	rc.current = current
 
 	return nil
 }
@@ -207,9 +216,17 @@ func (rc *RedisCache) Signer(ctx context.Context) (jose.Signer, error) {
 		return nil, nil
 	}
 
-	err := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, redisCacheDefaultTTL).Err()
-	if err != nil {
+	resp := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, redisCacheDefaultTTL)
+	if err := resp.Err(); err != nil {
 		log.WithField("keyID", rc.currentID).WithError(err).Warn("cannot extend cached IDP public key TTL")
+	}
+	if !resp.Val() {
+		log.WithField("keyID", rc.currentID).Warn("cannot extend cached IDP public key TTL - trying to repersist")
+		err := rc.persistPublicKey(ctx, rc.current)
+		if err != nil {
+			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot repersist public key")
+			return nil, err
+		}
 	}
 
 	return jose.NewSigner(jose.SigningKey{
