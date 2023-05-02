@@ -189,7 +189,7 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	_, _, err = s.getUser(ctx, conn)
+	user, userID, err = s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}

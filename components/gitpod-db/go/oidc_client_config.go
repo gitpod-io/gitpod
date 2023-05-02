@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -192,6 +193,50 @@ func GetOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug strin
 	return config, nil
 }
 
+// UpdateOIDCClientConfig performs an update of the OIDC Client config.
+// Only non-zero fields specified in the struct are updated.
+func UpdateOIDCSpec(ctx context.Context, conn *gorm.DB, cipher Cipher, id uuid.UUID, update OIDCSpec) error {
+	if id == uuid.Nil {
+		return errors.New("id is a required field")
+	}
+
+	txErr := conn.
+		WithContext(ctx).
+		Transaction(func(tx *gorm.DB) error {
+			existing, err := GetOIDCClientConfig(ctx, conn, id)
+			if err != nil {
+				return err
+			}
+
+			decrypted, err := existing.Data.Decrypt(cipher)
+			if err != nil {
+				return fmt.Errorf("failed to decrypt oidc spec: %w", err)
+			}
+
+			updatedSpec := partialUpdateOIDCSpec(decrypted, update)
+
+			encrypted, err := EncryptJSON(cipher, updatedSpec)
+			if err != nil {
+				return fmt.Errorf("failed to encrypt oidc spec: %w", err)
+			}
+
+			existing.Data = encrypted
+
+			updateErr := tx.Model(&OIDCClientConfig{}).Updates(existing).Error
+			if err != nil {
+				return fmt.Errorf("failed to update OIDC client: %w", updateErr)
+			}
+			// return nil will commit the whole transaction
+			return nil
+		})
+
+	if txErr != nil {
+		return fmt.Errorf("failed to update oidc spec ID: %s: %w", id.String(), txErr)
+	}
+
+	return nil
+}
+
 func ActivateClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) error {
 	_, err := GetOIDCClientConfig(ctx, conn, id)
 	if err != nil {
@@ -207,4 +252,41 @@ func ActivateClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) erro
 		return fmt.Errorf("failed to mark oidc client config as active (id: %s): %v", id.String(), tx.Error)
 	}
 	return nil
+}
+
+func partialUpdateOIDCSpec(old, new OIDCSpec) OIDCSpec {
+	if new.ClientID != "" {
+		old.ClientID = new.ClientID
+	}
+
+	if new.ClientSecret != "" {
+		old.ClientSecret = new.ClientSecret
+	}
+
+	if new.RedirectURL != "" {
+		old.RedirectURL = new.RedirectURL
+	}
+
+	if oidcScopesEqual(old.Scopes, new.Scopes) {
+		old.Scopes = new.Scopes
+	}
+
+	return old
+}
+
+func oidcScopesEqual(old, new []string) bool {
+	if len(old) != len(new) {
+		return false
+	}
+
+	sort.Strings(old)
+	sort.Strings(new)
+
+	for i := 0; i < len(old); i++ {
+		if old[i] != new[i] {
+			return false
+		}
+	}
+
+	return true
 }
