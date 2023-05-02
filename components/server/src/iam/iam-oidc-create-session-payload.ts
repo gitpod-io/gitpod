@@ -14,7 +14,8 @@ export namespace OIDCCreateSessionPayload {
             "sub" in payload.claims &&
             "name" in payload.claims &&
             "email" in payload.claims &&
-            "organizationId" in payload
+            "organizationId" in payload &&
+            "oidcClientConfigId" in payload
         );
     }
 
@@ -34,10 +35,13 @@ export namespace OIDCCreateSessionPayload {
         if (isEmpty(payload.organizationId)) {
             throw new Error("OrganizationId is missing");
         }
+        if (isEmpty(payload.oidcClientConfigId)) {
+            throw new Error("OIDC client config id is missing");
+        }
     }
 
     function isEmpty(attribute: any) {
-        return typeof attribute !== "string" || attribute.length < 1;
+        return typeof attribute !== "string" || attribute.trim().length < 1;
     }
 }
 
@@ -63,4 +67,5 @@ export interface OIDCCreateSessionPayload {
         sub: string; // "1234567890"
     };
     organizationId: string; // TODO(gpl) Remove once we implemented either SKIM, or a proper UserService
+    oidcClientConfigId: string;
 }

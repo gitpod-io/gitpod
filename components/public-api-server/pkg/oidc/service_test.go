@@ -6,7 +6,9 @@ package oidc
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -21,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws/jwstest"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
@@ -294,6 +297,33 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 	require.NotNil(t, result)
 }
 
+func TestCreateSession(t *testing.T) {
+	service, _ := setupOIDCServiceForTests(t)
+
+	config := ClientConfig{
+		ID:             "foo1",
+		OrganizationID: "org1",
+	}
+
+	_, message, err := service.CreateSession(context.Background(), &AuthFlowResult{}, &config)
+	require.NoError(t, err, "failed to create session")
+
+	got := map[string]interface{}{}
+	err = json.Unmarshal([]byte(message), &got)
+	require.NoError(t, err, "failed to parse response")
+
+	expected := map[string]interface{}{
+		"claims":             nil,
+		"idToken":            nil,
+		"oidcClientConfigId": config.ID,
+		"organizationId":     config.OrganizationID,
+	}
+
+	if diff := cmp.Diff(expected, got); diff != "" {
+		t.Errorf("Unexpected create session payload (-want +got):\n%s", diff)
+	}
+}
+
 func setupOIDCServiceForTests(t *testing.T) (*Service, *gorm.DB) {
 	t.Helper()
 
@@ -355,6 +385,16 @@ func newFakeSessionServer(t *testing.T) string {
 			Expires:  time.Now().AddDate(0, 0, 1),
 		})
 		w.WriteHeader(http.StatusOK)
+
+		// mirroring back the request body for testing
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			body = []byte(err.Error())
+		}
+		_, err = w.Write(body)
+		if err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	t.Cleanup(ts.Close)

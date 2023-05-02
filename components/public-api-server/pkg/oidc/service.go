@@ -277,34 +277,42 @@ func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (
 	}, nil
 }
 
-func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult, organizationId string) (*http.Cookie, error) {
+func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult, clientConfig *ClientConfig) (*http.Cookie, string, error) {
 	type CreateSessionPayload struct {
 		AuthFlowResult
 		OrganizationID string `json:"organizationId"`
+		ClientConfigID string `json:"oidcClientConfigId"`
 	}
 	sessionPayload := CreateSessionPayload{
 		AuthFlowResult: *flowResult,
-		OrganizationID: organizationId,
+		OrganizationID: clientConfig.OrganizationID,
+		ClientConfigID: clientConfig.ID,
 	}
 	payload, err := json.Marshal(sessionPayload)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	url := fmt.Sprintf("http://%s/session", s.sessionServiceAddress)
 	res, err := http.Post(url, "application/json", bytes.NewReader(payload))
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, "", err
+	}
+	message := string(body)
 
 	if res.StatusCode == http.StatusOK {
 		cookies := res.Cookies()
 		if len(cookies) == 1 {
-			return cookies[0], nil
+			return cookies[0], message, nil
 		}
-		return nil, fmt.Errorf("unexpected count of cookies: %v", len(cookies))
+		return nil, message, fmt.Errorf("unexpected number of cookies: %v", len(cookies))
 	}
-	message, _ := io.ReadAll(res.Body)
+
 	log.WithField("create-session-error", message).Error("Failed to create session (via server)")
-	return nil, fmt.Errorf("unexpected status code: %v", res.StatusCode)
+	return nil, message, fmt.Errorf("unexpected status code: %v", res.StatusCode)
 }

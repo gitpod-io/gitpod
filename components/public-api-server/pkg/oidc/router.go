@@ -130,7 +130,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			}
 		}
 
-		cookie, err := s.CreateSession(r.Context(), result, config.OrganizationID)
+		cookie, _, err := s.CreateSession(r.Context(), result, config)
 		if err != nil {
 			log.Warn("Failed to create session: " + err.Error())
 			http.Error(rw, "Failed to create session", http.StatusInternalServerError)
