@@ -38,14 +38,8 @@ func MustUseRandomLocalAddress(t *testing.T) *ServerConfiguration {
 	t.Helper()
 
 	return &ServerConfiguration{
-		Address: fmt.Sprintf("localhost:%d", MustFindFreePort(t)),
+		Address: "localhost:0",
 	}
-}
-
-func MustFindFreePort(t *testing.T) int {
-	t.Helper()
-
-	return 0
 }
 
 // StartServerForTests starts the server for test purposes.

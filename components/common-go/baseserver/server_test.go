@@ -50,13 +50,13 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 			opts = append(opts, baseserver.WithUnderTest())
 			if test.StartHTTP {
 				opts = append(opts, baseserver.WithHTTP(&baseserver.ServerConfiguration{
-					Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
+					Address: "localhost:0",
 				}))
 			}
 
 			if test.StartGRPC {
 				opts = append(opts, baseserver.WithGRPC(&baseserver.ServerConfiguration{
-					Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
+					Address: "localhost:0",
 				}))
 			}
 
@@ -85,7 +85,7 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 func TestServer_Metrics_gRPC(t *testing.T) {
 	ctx := context.Background()
 	srv := baseserver.NewForTests(t, baseserver.WithGRPC(&baseserver.ServerConfiguration{
-		Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
+		Address: "localhost:0",
 	}))
 
 	// At this point, there must be metrics registry available for use
@@ -114,7 +114,7 @@ func TestServer_Metrics_gRPC(t *testing.T) {
 
 func TestServer_Metrics_HTTP(t *testing.T) {
 	srv := baseserver.NewForTests(t, baseserver.WithHTTP(&baseserver.ServerConfiguration{
-		Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
+		Address: "localhost:0",
 	}))
 
 	// At this point, there must be metrics registry available for use
