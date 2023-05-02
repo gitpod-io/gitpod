@@ -43,23 +43,37 @@ func MustUseRandomLocalAddress(t *testing.T) *ServerConfiguration {
 	}
 }
 
+const (
+	maxRetries = 5
+	retryDelay = 100 * time.Millisecond
+)
+
 func MustFindFreePort(t *testing.T) int {
 	t.Helper()
 
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		t.Fatalf("cannot find free port: %v", err)
-		return 0
+	for i := 0; i < maxRetries; i++ {
+		addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+		if err != nil {
+			if i < maxRetries-1 {
+				time.Sleep(retryDelay)
+			}
+			continue
+		}
+
+		l, err := net.ListenTCP("tcp", addr)
+		if err != nil {
+			if i < maxRetries-1 {
+				time.Sleep(retryDelay)
+			}
+			continue
+		}
+		defer l.Close()
+
+		return l.Addr().(*net.TCPAddr).Port
 	}
 
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		t.Fatalf("cannot find free port: %v", err)
-		return 0
-	}
-	defer l.Close()
-
-	return l.Addr().(*net.TCPAddr).Port
+	t.Fatalf("cannot find free port after %d retries", maxRetries)
+	return 0
 }
 
 // StartServerForTests starts the server for test purposes.
