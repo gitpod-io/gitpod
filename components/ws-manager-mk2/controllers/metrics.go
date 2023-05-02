@@ -275,7 +275,7 @@ func newMetricState(ws *workspacev1.Workspace) metricState {
 		// each workspace.
 		recordedStartTime:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
 		recordedInitFailure:     wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure),
-		recordedStartFailure:    ws.Status.Phase == workspacev1.WorkspacePhaseStopped && !wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)),
+		recordedStartFailure:    ws.Status.Phase == workspacev1.WorkspacePhaseStopped && isStartFailure(ws),
 		recordedFailure:         wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)),
 		recordedContentReady:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)),
 		recordedBackupFailed:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)),

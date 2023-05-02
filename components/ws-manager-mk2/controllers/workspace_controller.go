@@ -346,8 +346,7 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopped {
 		r.metrics.countWorkspaceStop(&log, workspace)
 
-		everReady := wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady))
-		if !lastState.recordedStartFailure && !everReady {
+		if !lastState.recordedStartFailure && isStartFailure(workspace) {
 			// Workspace never became ready, count as a startup failure.
 			r.metrics.countWorkspaceStartFailures(&log, workspace)
 			// No need to record in metricState, as we're forgetting the workspace state next anyway.
@@ -359,6 +358,15 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 	}
 
 	r.metrics.rememberWorkspace(workspace, &lastState)
+}
+
+func isStartFailure(ws *workspacev1.Workspace) bool {
+	// Consider workspaces that never became ready as start failures.
+	// Except for aborted prebuilds, as they can get aborted before becoming ready, which shouldn't be counted
+	// as a start failure.
+	everReady := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady))
+	isAborted := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted))
+	return !everReady && !isAborted
 }
 
 func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspacev1.Workspace, old *workspacev1.WorkspaceStatus) {

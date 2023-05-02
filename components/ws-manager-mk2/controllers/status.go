@@ -174,6 +174,14 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		}
 
 	case workspace.IsHeadless() && (pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed):
+		if pod.Status.Phase == corev1.PodSucceeded && !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)) {
+			// Fix for Prebuilds that instantly succeed (e.g. empty task), sometimes we don't observe the
+			// workspace `Running` phase for these, and never had the opportunity to add the EverReady condition.
+			// This would then cause a "start failure" in the metrics. So we retroactively add the EverReady
+			// condition here if the pod succeeded.
+			workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionEverReady())
+		}
+
 		if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping && isDisposalFinished(workspace) {
 			workspace.Status.Phase = workspacev1.WorkspacePhaseStopped
 		} else if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped {
