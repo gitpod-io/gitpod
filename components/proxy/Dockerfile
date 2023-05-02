@@ -22,7 +22,7 @@ RUN xcaddy build v2.6.3 \
   --with github.com/gitpod-io/gitpod/proxy/plugins/sshtunnel=/plugins/sshtunnel \
   --with github.com/gitpod-io/gitpod/proxy/plugins/frontend_dev=/plugins/frontend_dev
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:a7db49b55bd97c12cd686272325bbac236830111db336e084b89f5c816ab0537
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:f9d60d6615172e96dbdd39275ae8e77cb870a553ac77570cb27580d7a48d50b1
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
