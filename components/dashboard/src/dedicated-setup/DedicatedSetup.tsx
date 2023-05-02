@@ -82,8 +82,6 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config }) => {
     }, [history]);
 
     return (
-        // TODO: Shift step state down a level to allow defaulting based on org/sso config
-        // TODO: Should we shift SetupLayout to render at this level?
         <>
             {step === STEPS.GETTING_STARTED && <GettingStartedStep onComplete={() => setStep(STEPS.ORG_NAMING)} />}
             {step === STEPS.ORG_NAMING && <OrgNamingStep onComplete={() => setStep(STEPS.SSO_SETUP)} />}
