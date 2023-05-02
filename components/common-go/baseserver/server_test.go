@@ -49,15 +49,11 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 			var opts []baseserver.Option
 			opts = append(opts, baseserver.WithUnderTest())
 			if test.StartHTTP {
-				opts = append(opts, baseserver.WithHTTP(&baseserver.ServerConfiguration{
-					Address: "localhost:0",
-				}))
+				opts = append(opts, baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)))
 			}
 
 			if test.StartGRPC {
-				opts = append(opts, baseserver.WithGRPC(&baseserver.ServerConfiguration{
-					Address: "localhost:0",
-				}))
+				opts = append(opts, baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)))
 			}
 
 			srv, err := baseserver.New("test_server", opts...)
@@ -84,9 +80,7 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 
 func TestServer_Metrics_gRPC(t *testing.T) {
 	ctx := context.Background()
-	srv := baseserver.NewForTests(t, baseserver.WithGRPC(&baseserver.ServerConfiguration{
-		Address: "localhost:0",
-	}))
+	srv := baseserver.NewForTests(t, baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)))
 
 	// At this point, there must be metrics registry available for use
 	require.NotNil(t, srv.MetricsRegistry())
@@ -113,9 +107,7 @@ func TestServer_Metrics_gRPC(t *testing.T) {
 }
 
 func TestServer_Metrics_HTTP(t *testing.T) {
-	srv := baseserver.NewForTests(t, baseserver.WithHTTP(&baseserver.ServerConfiguration{
-		Address: "localhost:0",
-	}))
+	srv := baseserver.NewForTests(t, baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)))
 
 	// At this point, there must be metrics registry available for use
 	require.NotNil(t, srv.MetricsRegistry())
