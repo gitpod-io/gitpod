@@ -13,15 +13,19 @@ type Props = {
     onComplete: () => void;
 };
 export const SetupCompleteStep: FC<Props> = ({ onComplete }) => {
+    const url = document.location.origin;
+
     return (
-        <SetupLayout showOrg>
+        <SetupLayout showOrg showUser noMaxWidth>
             <Heading1>Welcome to Gitpod</Heading1>
             <Subheading>Your teammates can now sign in to Gitpod using single sign-on (SSO).</Subheading>
 
-            <p>placeholder step...</p>
+            <div className="mt-4">
+                <pre className="font-mono text-sm text-gray-500 dark:text-gray-600">{`> ${url}`}</pre>
+            </div>
 
-            <div className="mt-6">
-                <Button size="block" onClick={onComplete} disabled>
+            <div className="mt-6 max-w-md">
+                <Button size="block" onClick={onComplete}>
                     Add a Git Integration
                 </Button>
             </div>

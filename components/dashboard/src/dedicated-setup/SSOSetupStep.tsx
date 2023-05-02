@@ -17,7 +17,6 @@ import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/
 import { openOIDCStartWindow } from "../provider-utils";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
-import { LinkButton } from "../components/LinkButton";
 
 type Props = {
     config?: OIDCClientConfig;
@@ -40,11 +39,9 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
 
     const updateUser = useCallback(async () => {
         // TODO: should reset queries
-        console.log("updating logged in user");
         await getGitpodService().reconnect();
         const [user] = await Promise.all([getGitpodService().server.getLoggedInUser()]);
         setUser(user);
-        // markLoggedIn();
     }, [setUser]);
 
     const handleVerify = useCallback(async () => {
@@ -113,10 +110,6 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
                 <Button size="block" onClick={handleVerify} disabled={!configIsValid} loading={isLoading}>
                     Verify SSO Configuration
                 </Button>
-            </div>
-
-            <div className="mt-6">
-                <LinkButton onClick={onComplete}>surprise...</LinkButton>
             </div>
         </SetupLayout>
     );
