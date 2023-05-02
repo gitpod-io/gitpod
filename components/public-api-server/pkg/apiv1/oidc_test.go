@@ -348,7 +348,11 @@ func TestOIDCService_UpdateClientConfig_WithFeatureFlagDisabled(t *testing.T) {
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
-		_, err := client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{}))
+		_, err := client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{
+			Config: &v1.OIDCClientConfig{
+				Id: uuid.NewString(),
+			},
+		}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
