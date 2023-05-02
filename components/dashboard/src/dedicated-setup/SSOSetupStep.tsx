@@ -10,12 +10,11 @@ import { Heading1, Subheading } from "../components/typography/headings";
 import { SetupLayout } from "./SetupLayout";
 import check from "../images/check.svg";
 import Tooltip from "../components/Tooltip";
-import { SSOConfigForm, isValid, ssoConfigReducer, useSaveSSOConfig } from "./SSOConfigForm";
+import { SSOConfigForm, isValid, ssoConfigReducer, useSaveSSOConfig } from "../teams/sso/SSOConfigForm";
 import Alert from "../components/Alert";
 import { useToast } from "../components/toasts/Toasts";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { openOIDCStartWindow } from "../provider-utils";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { LinkButton } from "../components/LinkButton";
@@ -25,7 +24,6 @@ type Props = {
     onComplete: () => void;
 };
 export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
-    const org = useCurrentOrg();
     const { setUser } = useContext(UserContext);
     const [ssoLoginError, setSSOLoginError] = useState("");
     const { toast } = useToast();

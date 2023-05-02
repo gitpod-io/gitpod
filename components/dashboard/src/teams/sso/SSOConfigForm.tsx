@@ -5,14 +5,14 @@
  */
 
 import { FC, useCallback } from "react";
-import { InputWithCopy } from "../components/InputWithCopy";
-import { InputField } from "../components/forms/InputField";
-import { TextInputField } from "../components/forms/TextInputField";
-import { gitpodHostUrl } from "../service/service";
-import { useOnBlurError } from "../hooks/use-onblur-error";
+import { InputWithCopy } from "../../components/InputWithCopy";
+import { InputField } from "../../components/forms/InputField";
+import { TextInputField } from "../../components/forms/TextInputField";
+import { gitpodHostUrl } from "../../service/service";
+import { useOnBlurError } from "../../hooks/use-onblur-error";
 import isURL from "validator/lib/isURL";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
-import { useUpsertOIDCClientMutation } from "../data/oidc-clients/upsert-oidc-client-mutation";
+import { useCurrentOrg } from "../../data/organizations/orgs-query";
+import { useUpsertOIDCClientMutation } from "../../data/oidc-clients/upsert-oidc-client-mutation";
 
 type Props = {
     config: SSOConfig;
@@ -94,6 +94,9 @@ export const useSaveSSOConfig = () => {
 
     const save = useCallback(
         async (ssoConfig: SSOConfig) => {
+            if (upsertClientConfig.isLoading) {
+                throw new Error("Already saving");
+            }
             if (!org) {
                 throw new Error("No current org selected");
             }
