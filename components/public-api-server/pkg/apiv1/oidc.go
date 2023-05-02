@@ -206,7 +206,7 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 
 	if err := db.UpdateOIDCSpec(ctx, s.dbConn, s.cipher, clientConfigID, updateSpec); err != nil {
 		if errors.Is(err, db.ErrorNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s for Organization %s does not exist", clientConfigID.String(), organizationID.String()))
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s does not exist", clientConfigID.String()))
 		}
 
 		log.Extract(ctx).WithError(err).Error("Failed to update OIDC Client config.")
