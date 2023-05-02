@@ -53,6 +53,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
             }
 
             await openOIDCStartWindow({
+                activate: true,
                 configId: configId,
                 onSuccess: async () => {
                     await updateUser();

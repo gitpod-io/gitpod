@@ -132,10 +132,11 @@ function attachMessageListener({ onSuccess, onError }: WindowMessageHandler) {
 interface OpenOIDCStartWindowParams extends WindowMessageHandler {
     orgSlug?: string;
     configId?: string;
+    activate?: boolean;
 }
 
 async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
-    const { orgSlug, configId } = params;
+    const { orgSlug, configId, activate = false } = params;
     let search = "message=success";
     const redirectURL = getSafeURLRedirect();
     if (redirectURL) {
@@ -148,6 +149,9 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
     }
     if (configId) {
         searchParams.append("id", configId);
+    }
+    if (activate) {
+        searchParams.append("activate", "true");
     }
 
     const url = gitpodHostUrl
