@@ -918,6 +918,7 @@ func extractWorkspaceTokenData(spec *wsmanapi.StartWorkspaceSpec) map[string]str
 }
 
 func (wsm *WorkspaceManagerServer) extractWorkspaceStatus(ws *workspacev1.Workspace) *wsmanapi.WorkspaceStatus {
+	log := log.WithFields(log.OWI(ws.Spec.Ownership.Owner, ws.Spec.Ownership.WorkspaceID, ws.Name))
 	version, _ := strconv.ParseUint(ws.ResourceVersion, 10, 64)
 
 	var tpe wsmanapi.WorkspaceType
@@ -985,6 +986,30 @@ func (wsm *WorkspaceManagerServer) extractWorkspaceStatus(ws *workspacev1.Worksp
 		admissionLevel = wsmanapi.AdmissionLevel_ADMIT_OWNER_ONLY
 	}
 
+	ports := make([]*wsmanapi.PortSpec, 0, len(ws.Spec.Ports))
+	for _, p := range ws.Spec.Ports {
+		v := wsmanapi.PortVisibility_PORT_VISIBILITY_PRIVATE
+		if p.Visibility == workspacev1.AdmissionLevelEveryone {
+			v = wsmanapi.PortVisibility_PORT_VISIBILITY_PUBLIC
+		}
+		url, err := config.RenderWorkspacePortURL(wsm.Config.WorkspacePortURLTemplate, config.PortURLContext{
+			Host:          wsm.Config.GitpodHostURL,
+			ID:            ws.Name,
+			IngressPort:   fmt.Sprint(p.Port),
+			Prefix:        ws.Spec.Ownership.WorkspaceID,
+			WorkspacePort: fmt.Sprint(p.Port),
+		})
+		if err != nil {
+			log.WithError(err).WithField("port", p.Port).Error("cannot render public URL for port, excluding the port from the workspace status")
+			continue
+		}
+		ports = append(ports, &wsmanapi.PortSpec{
+			Port:       p.Port,
+			Visibility: v,
+			Url:        url,
+		})
+	}
+
 	res := &wsmanapi.WorkspaceStatus{
 		Id:            ws.Name,
 		StatusVersion: version,
@@ -995,6 +1020,8 @@ func (wsm *WorkspaceManagerServer) extractWorkspaceStatus(ws *workspacev1.Worksp
 			Annotations: ws.Annotations,
 		},
 		Spec: &wsmanapi.WorkspaceSpec{
+			Class:          ws.Spec.Class,
+			ExposedPorts:   ports,
 			WorkspaceImage: pointer.StringDeref(ws.Spec.Image.Workspace.Ref, ""),
 			IdeImage: &wsmanapi.IDEImage{
 				WebRef:        ws.Spec.Image.IDE.Web,
