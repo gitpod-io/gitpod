@@ -29,7 +29,7 @@ func TestServer_StartStop(t *testing.T) {
 	baseserver.StartServerForTests(t, srv)
 
 	require.Equal(t, "http://127.0.0.1:8765", srv.HTTPAddress())
-	require.Equal(t, "localhost:8766", srv.GRPCAddress())
+	require.Equal(t, "127.0.0.1:8766", srv.GRPCAddress())
 	require.NoError(t, srv.Close())
 }
 
