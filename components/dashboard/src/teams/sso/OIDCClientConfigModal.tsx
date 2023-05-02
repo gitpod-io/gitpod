@@ -73,7 +73,7 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                           id: clientConfig?.id,
                           organizationId: org.id,
                           oauth2Config: {
-                              clientId: trimmedClientSecret,
+                              clientId: trimmedClientId,
                               // TODO: determine how we should handle when user doesn't change their secret
                               clientSecret: clientSecret === "redacted" ? "" : trimmedClientSecret,
                           },

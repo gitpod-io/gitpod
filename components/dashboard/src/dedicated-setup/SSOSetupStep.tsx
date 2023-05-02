@@ -41,6 +41,8 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
     const { save, isLoading, isError, error } = useSaveSSOConfig();
 
     const updateUser = useCallback(async () => {
+        // TODO: should reset queries
+        console.log("updating logged in user");
         await getGitpodService().reconnect();
         const [user] = await Promise.all([getGitpodService().server.getLoggedInUser()]);
         setUser(user);
@@ -49,14 +51,20 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
 
     const handleVerify = useCallback(async () => {
         try {
-            const newConfig = await save(ssoConfig);
-            console.log("newConfig", newConfig);
+            let configId = ssoConfig.id;
+
+            const response = await save(ssoConfig);
+
+            // Create returns the new config, update does not
+            if ("config" in response && response.config) {
+                configId = response.config.id;
+            }
+
+            console.log("config response", response);
             toast("Your SSO configuration was saved");
 
-            // TODO: launch login flow to verify the config
             await openOIDCStartWindow({
-                // @ts-ignore
-                configId: newConfig.id,
+                configId: configId,
                 onSuccess: async () => {
                     await updateUser();
                     onComplete();
@@ -98,6 +106,8 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
                 </Subheading>
             </div>
             {isError && <Alert type="danger">{error?.message}</Alert>}
+
+            {ssoLoginError && <Alert type="danger">{ssoLoginError}</Alert>}
 
             <SSOConfigForm config={ssoConfig} onChange={dispatch} />
 

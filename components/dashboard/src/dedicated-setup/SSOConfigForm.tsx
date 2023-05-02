@@ -106,11 +106,6 @@ export const useSaveSSOConfig = () => {
             const trimmedClientId = ssoConfig.clientId.trim();
             const trimmedClientSecret = ssoConfig.clientSecret.trim();
 
-            // TODO: remove this - hacking around that update doesn't work on the api atm
-            if (ssoConfig.id) {
-                return ssoConfig;
-            }
-
             return upsertClientConfig.mutateAsync({
                 config: !ssoConfig.id
                     ? {
@@ -127,7 +122,7 @@ export const useSaveSSOConfig = () => {
                           id: ssoConfig.id,
                           organizationId: org.id,
                           oauth2Config: {
-                              clientId: trimmedClientSecret,
+                              clientId: trimmedClientId,
                               // TODO: determine how we should handle when user doesn't change their secret
                               clientSecret: ssoConfig.clientSecret === "redacted" ? "" : trimmedClientSecret,
                           },
