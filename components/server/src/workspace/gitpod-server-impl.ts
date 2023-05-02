@@ -3980,6 +3980,51 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
+    protected _getOnboardingState: GitpodServer.OnboardingState | undefined;
+
+    async getOnboardingState(ctx: TraceContext): Promise<GitpodServer.OnboardingState> {
+        this.checkAndBlockUser("getOnboardingState");
+
+        if (this._getOnboardingState) {
+            return this._getOnboardingState;
+        }
+
+        // A shortcut for gitpod.io, but also for Dedicated PoC.
+        // This is controlled by feature flag (per Gitpod host.)
+        if (!this.enableDedicatedOnboardingFlow) {
+            return {
+                isCompleted: true,
+                hasAnyOrg: true,
+            };
+        }
+
+        // Optimized check for completed setup
+        const hasAnyOrgWithActiveSSO = await this.teamDB.hasAnyOrgWithActiveSSO();
+        if (hasAnyOrgWithActiveSSO) {
+            // Let's cache the state at least per connection.
+            this._getOnboardingState = {
+                isCompleted: true,
+                hasAnyOrg: true,
+            };
+            return this._getOnboardingState;
+        }
+
+        // Find useful details about the state of the Gitpod installation.
+        const { rows } = await this.teamDB.findTeams(
+            0 /* offset */,
+            1 /* limit */,
+            "creationTime" /* order by */,
+            "ASC",
+            "" /* empty search term returns any */,
+        );
+        const hasAnyOrg = rows.length > 0;
+
+        return {
+            isCompleted: false,
+            hasAnyOrg,
+        };
+    }
+
     protected async guardWithFeatureFlag(flagName: string, teamId: string) {
         // Guard method w/ a feature flag check
         const isEnabled = await this.configCatClientFactory().getValueAsync(flagName, false, {

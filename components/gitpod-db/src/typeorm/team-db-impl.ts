@@ -66,6 +66,8 @@ export class TeamDBImpl implements TeamDB {
         const queryBuilder = teamRepo
             .createQueryBuilder("team")
             .where("LOWER(team.name) LIKE LOWER(:searchTerm)", { searchTerm: `%${searchTerm}%` })
+            .andWhere("deleted = 0")
+            .andWhere("markedDeleted = 0")
             .skip(offset)
             .take(limit)
             .orderBy(orderBy, orderDir);
@@ -377,10 +379,14 @@ export class TeamDBImpl implements TeamDB {
         }
     }
 
-    public async someOrgWithSSOExists(): Promise<boolean> {
-        const repo = await this.getOrgSettingsRepo();
+    public async hasAnyOrgWithActiveSSO(): Promise<boolean> {
+        const repo = await this.getTeamRepo();
         const result = await repo.query(
-            `select org.id from d_b_team as org inner join d_b_oidc_client_config as oidc on org.id = oidc.organizationId limit 1;`,
+            `select org.id from d_b_team as org inner join d_b_oidc_client_config as oidc on org.id = oidc.organizationId
+                where oidc.active = 1
+                and org.deleted = 0
+                and org.markedDeleted = 0
+                limit 1;`,
         );
         return result.length === 1;
     }
