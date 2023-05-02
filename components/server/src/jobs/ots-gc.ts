@@ -8,12 +8,10 @@ import { DBWithTracing, OneTimeSecretDB, TracedOneTimeSecretDB } from "@gitpod/g
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { Job } from "./runner";
-import { Config } from "../config";
 
 @injectable()
 export class OTSGarbageCollector implements Job {
     @inject(TracedOneTimeSecretDB) protected readonly oneTimeSecretDB: DBWithTracing<OneTimeSecretDB>;
-    @inject(Config) protected readonly config: Config;
 
     public name = "ots-gc";
     public lockId = ["ots-gc"];

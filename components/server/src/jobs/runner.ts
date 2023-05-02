@@ -47,11 +47,7 @@ export class JobRunner {
                 frequencyMs: job.frequencyMs,
                 redisLockId: job.lockId,
             });
-            disposables.push(
-                repeat(async () => {
-                    await this.run(job);
-                }, job.frequencyMs),
-            );
+            disposables.push(repeat(() => this.run(job), job.frequencyMs));
         }
 
         return disposables;
