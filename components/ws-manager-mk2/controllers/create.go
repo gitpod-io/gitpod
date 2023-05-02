@@ -435,7 +435,7 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 		readinessProbe = &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/_supervisor/v1/status/content/wait/true",
+					Path:   "/_supervisor/v1/status/ide/wait/true",
 					Port:   intstr.FromInt((int)(sctx.SupervisorPort)),
 					Scheme: corev1.URISchemeHTTP,
 				},
@@ -447,7 +447,7 @@ func createWorkspaceContainer(sctx *startWorkspaceContext) (*corev1.Container, e
 			PeriodSeconds:       1,
 			SuccessThreshold:    1,
 			TimeoutSeconds:      1,
-			InitialDelaySeconds: 3,
+			InitialDelaySeconds: 1,
 		}
 	)
 

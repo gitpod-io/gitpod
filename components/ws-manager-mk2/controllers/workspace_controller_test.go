@@ -75,6 +75,10 @@ var _ = Describe("WorkspaceController", func() {
 				}}
 			})
 
+			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, workspacev1.ReasonInitializationSuccess, ""))
+			})
+
 			expectPhaseEventually(ws, workspacev1.WorkspacePhaseRunning)
 			expectSecretCleanup(envSecret)
 			expectSecretCleanup(tokenSecret)
