@@ -153,18 +153,35 @@ func TestUpdateOIDCSpec(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 		cipher, _ := dbtest.GetTestCipher(t)
 
-		err := db.UpdateOIDCSpec(context.Background(), conn, cipher, uuid.New(), db.OIDCSpec{})
+		err := db.UpdateOIDCClientConfig(context.Background(), conn, cipher, db.OIDCClientConfig{
+			ID: uuid.New(),
+		}, nil)
 		require.Error(t, err)
 		require.ErrorIs(t, err, db.ErrorNotFound)
 	})
 
-	t.Run("partially updates client id and client secret", func(t *testing.T) {
+	t.Run("no existing client config exists with spec update", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		cipher, _ := dbtest.GetTestCipher(t)
+
+		err := db.UpdateOIDCClientConfig(context.Background(), conn, cipher, db.OIDCClientConfig{
+			ID: uuid.New(),
+		}, &db.OIDCSpec{})
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("partially updates issuer, active, client id and client secret", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 		cipher, _ := dbtest.GetTestCipher(t)
 
 		created := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{})[0]
 
-		err := db.UpdateOIDCSpec(context.Background(), conn, cipher, created.ID, db.OIDCSpec{
+		err := db.UpdateOIDCClientConfig(context.Background(), conn, cipher, db.OIDCClientConfig{
+			ID:     created.ID,
+			Active: true,
+			Issuer: "some-new-issuer",
+		}, &db.OIDCSpec{
 			ClientID:     "my-new-client-id",
 			ClientSecret: "new-client-secret",
 		})
@@ -177,6 +194,8 @@ func TestUpdateOIDCSpec(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "my-new-client-id", decrypted.ClientID)
 		require.Equal(t, "new-client-secret", decrypted.ClientSecret)
+		require.True(t, retrieved.Active)
+		require.Equal(t, "some-new-issuer", retrieved.Issuer)
 	})
 
 	t.Run("partially updates redirect url and scopes", func(t *testing.T) {
@@ -185,7 +204,9 @@ func TestUpdateOIDCSpec(t *testing.T) {
 
 		created := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{})[0]
 
-		err := db.UpdateOIDCSpec(context.Background(), conn, cipher, created.ID, db.OIDCSpec{
+		err := db.UpdateOIDCClientConfig(context.Background(), conn, cipher, db.OIDCClientConfig{
+			ID: created.ID,
+		}, &db.OIDCSpec{
 			RedirectURL: "new-url",
 			Scopes:      []string{"hello"},
 		})
@@ -213,7 +234,9 @@ func TestUpdateOIDCSpec(t *testing.T) {
 			Scopes:       []string{"hello"},
 		}
 
-		err := db.UpdateOIDCSpec(context.Background(), conn, cipher, created.ID, updateSpec)
+		err := db.UpdateOIDCClientConfig(context.Background(), conn, cipher, db.OIDCClientConfig{
+			ID: created.ID,
+		}, &updateSpec)
 		require.NoError(t, err)
 
 		retrieved, err := db.GetOIDCClientConfig(context.Background(), conn, created.ID)

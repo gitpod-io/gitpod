@@ -195,47 +195,57 @@ func GetOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug strin
 
 // UpdateOIDCClientConfig performs an update of the OIDC Client config.
 // Only non-zero fields specified in the struct are updated.
-func UpdateOIDCSpec(ctx context.Context, conn *gorm.DB, cipher Cipher, id uuid.UUID, update OIDCSpec) error {
-	if id == uuid.Nil {
+// When updating the encrypted contents of the specUpdate, you can specify them in the update to have re-encrypted in a transaction.
+func UpdateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cipher Cipher, update OIDCClientConfig, specUpdate *OIDCSpec) error {
+	if update.ID == uuid.Nil {
 		return errors.New("id is a required field")
 	}
 
 	txErr := conn.
 		WithContext(ctx).
 		Transaction(func(tx *gorm.DB) error {
-			existing, err := GetOIDCClientConfig(ctx, conn, id)
-			if err != nil {
-				return err
+			if specUpdate != nil {
+				// we also need to update the contents of the encrypted spec.
+				existing, err := GetOIDCClientConfig(ctx, conn, update.ID)
+				if err != nil {
+					return err
+				}
+
+				decrypted, err := existing.Data.Decrypt(cipher)
+				if err != nil {
+					return fmt.Errorf("failed to decrypt oidc spec: %w", err)
+				}
+
+				updatedSpec := partialUpdateOIDCSpec(decrypted, *specUpdate)
+
+				encrypted, err := EncryptJSON(cipher, updatedSpec)
+				if err != nil {
+					return fmt.Errorf("failed to encrypt oidc spec: %w", err)
+				}
+
+				// Set the serialized contents on our desired update object
+				update.Data = encrypted
 			}
 
-			decrypted, err := existing.Data.Decrypt(cipher)
-			if err != nil {
-				return fmt.Errorf("failed to decrypt oidc spec: %w", err)
-			}
-
-			updatedSpec := partialUpdateOIDCSpec(decrypted, update)
-
-			encrypted, err := EncryptJSON(cipher, updatedSpec)
-			if err != nil {
-				return fmt.Errorf("failed to encrypt oidc spec: %w", err)
-			}
-
-			existing.Data = encrypted
-
-			updateErr := tx.
+			updateTx := tx.
 				Model(&OIDCClientConfig{}).
-				Where("id = ?", id).
+				Where("id = ?", update.ID.String()).
 				Where("deleted = ?", 0).
-				Updates(existing).Error
-			if err != nil {
-				return fmt.Errorf("failed to update OIDC client: %w", updateErr)
+				Updates(update)
+			if updateTx.Error != nil {
+				return fmt.Errorf("failed to update OIDC client: %w", updateTx.Error)
 			}
+
+			if updateTx.RowsAffected == 0 {
+				return fmt.Errorf("OIDC client config ID: %s does not exist: %w", update.ID.String(), ErrorNotFound)
+			}
+
 			// return nil will commit the whole transaction
 			return nil
 		})
 
 	if txErr != nil {
-		return fmt.Errorf("failed to update oidc spec ID: %s: %w", id.String(), txErr)
+		return fmt.Errorf("failed to update oidc spec ID: %s: %w", update.ID.String(), txErr)
 	}
 
 	return nil

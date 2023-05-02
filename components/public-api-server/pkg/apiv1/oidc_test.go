@@ -341,7 +341,7 @@ func TestOIDCService_ListClientConfigs_WithFeatureFlagEnabled(t *testing.T) {
 
 }
 
-func TestOIDCService_UpdateClientConfig(t *testing.T) {
+func TestOIDCService_UpdateClientConfig_WithFeatureFlagDisabled(t *testing.T) {
 	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
 		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
 
@@ -353,14 +353,70 @@ func TestOIDCService_UpdateClientConfig(t *testing.T) {
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
 
-	t.Run("feature flag enabled returns unimplemented", func(t *testing.T) {
+}
+
+func TestOIDCService_UpdateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
+	t.Run("non-existent config ID returns not found", func(t *testing.T) {
 		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
-		_, err := client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{}))
+		_, err := client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{
+			Config: &v1.OIDCClientConfig{
+				Id: uuid.New().String(),
+			},
+		}))
 		require.Error(t, err)
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	})
+
+	t.Run("partially applies updates to issuer and scopes", func(t *testing.T) {
+		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+		issuer := newFakeIdP(t, true)
+		issuerNew := newFakeIdP(t, true)
+
+		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).AnyTimes()
+
+		config := &v1.OIDCClientConfig{
+			OrganizationId: uuid.NewString(),
+			OidcConfig: &v1.OIDCConfig{
+				Issuer: issuer,
+			},
+			Active: true,
+			Oauth2Config: &v1.OAuth2Config{
+				ClientId:     "test-id",
+				ClientSecret: "test-secret",
+				Scopes:       []string{"my-scope"},
+			},
+		}
+		created, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
+			Config: config,
+		}))
+		require.NoError(t, err)
+
+		_, err = client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{
+			Config: &v1.OIDCClientConfig{
+				Id:             created.Msg.GetConfig().Id,
+				OrganizationId: uuid.NewString(),
+				OidcConfig: &v1.OIDCConfig{
+					Issuer: issuerNew,
+				},
+				Oauth2Config: &v1.OAuth2Config{
+					Scopes: []string{"foo"},
+				},
+			},
+		}))
+		require.NoError(t, err)
+
+		retrieved, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
+			Id:             created.Msg.GetConfig().GetId(),
+			OrganizationId: created.Msg.GetConfig().OrganizationId,
+		}))
+		require.NoError(t, err)
+
+		require.Equal(t, issuerNew, retrieved.Msg.GetConfig().OidcConfig.Issuer)
+		require.Equal(t, []string{"email", "foo", "openid", "profile"}, retrieved.Msg.GetConfig().GetOauth2Config().GetScopes())
+
 	})
 }
 

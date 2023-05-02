@@ -202,9 +202,21 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 	config := req.Msg.GetConfig()
 	oidcConfig := config.GetOidcConfig()
 	oauth2Config := config.GetOauth2Config()
+
+	if oidcConfig.GetIssuer() != "" {
+		// If we're updating the issuer, let's also check for reachability
+		err = assertIssuerIsReachable(ctx, oidcConfig.GetIssuer())
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
+	}
+
 	updateSpec := toDbOIDCSpec(oauth2Config, oidcConfig)
 
-	if err := db.UpdateOIDCSpec(ctx, s.dbConn, s.cipher, clientConfigID, updateSpec); err != nil {
+	if err := db.UpdateOIDCClientConfig(ctx, s.dbConn, s.cipher, db.OIDCClientConfig{
+		ID:     clientConfigID,
+		Issuer: oidcConfig.GetIssuer(),
+	}, &updateSpec); err != nil {
 		if errors.Is(err, db.ErrorNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s does not exist", clientConfigID.String()))
 		}
