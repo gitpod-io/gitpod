@@ -184,17 +184,36 @@ func (s *OIDCService) ListClientConfigs(ctx context.Context, req *connect.Reques
 }
 
 func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Request[v1.UpdateClientConfigRequest]) (*connect.Response[v1.UpdateClientConfigResponse], error) {
+	clientConfigID, err := validateOIDCClientConfigID(ctx, req.Msg.GetConfig().GetId())
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := s.getConnection(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	user, userID, err = s.getUser(ctx, conn)
+	_, _, err = s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.UpdateClientConfig is not implemented"))
+	config := req.Msg.GetConfig()
+	oidcConfig := config.GetOidcConfig()
+	oauth2Config := config.GetOauth2Config()
+	updateSpec := toDbOIDCSpec(oauth2Config, oidcConfig)
+
+	if err := db.UpdateOIDCSpec(ctx, s.dbConn, s.cipher, clientConfigID, updateSpec); err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s for Organization %s does not exist", clientConfigID.String(), organizationID.String()))
+		}
+
+		log.Extract(ctx).WithError(err).Error("Failed to update OIDC Client config.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to update OIDC Client Config %s", clientConfigID.String()))
+	}
+
+	return connect.NewResponse(&v1.UpdateClientConfigResponse{}), nil
 }
 
 func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Request[v1.DeleteClientConfigRequest]) (*connect.Response[v1.DeleteClientConfigResponse], error) {
