@@ -225,6 +225,15 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to update OIDC Client Config %s", clientConfigID.String()))
 	}
 
+	if err = db.DeactivateClientConfig(ctx, s.dbConn, clientConfigID); err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s does not exist", clientConfigID.String()))
+		}
+
+		log.Extract(ctx).WithError(err).Error("Failed to deactivate OIDC Client config.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to deactivate OIDC Client Config %s", clientConfigID.String()))
+	}
+
 	return connect.NewResponse(&v1.UpdateClientConfigResponse{}), nil
 }
 

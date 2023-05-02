@@ -252,18 +252,31 @@ func UpdateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cipher Cipher, u
 }
 
 func ActivateClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) error {
+	return setClientConfigActiveFlag(ctx, conn, id, true)
+}
+
+func DeactivateClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) error {
+	return setClientConfigActiveFlag(ctx, conn, id, false)
+}
+
+func setClientConfigActiveFlag(ctx context.Context, conn *gorm.DB, id uuid.UUID, active bool) error {
 	_, err := GetOIDCClientConfig(ctx, conn, id)
 	if err != nil {
 		return err
+	}
+
+	value := 0
+	if active {
+		value = 1
 	}
 
 	tx := conn.
 		WithContext(ctx).
 		Table((&OIDCClientConfig{}).TableName()).
 		Where("id = ?", id.String()).
-		Update("active", 1)
+		Update("active", value)
 	if tx.Error != nil {
-		return fmt.Errorf("failed to mark oidc client config as active (id: %s): %v", id.String(), tx.Error)
+		return fmt.Errorf("failed to set oidc client config as active to %d (id: %s): %v", value, id.String(), tx.Error)
 	}
 	return nil
 }
