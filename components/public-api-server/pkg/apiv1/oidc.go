@@ -184,6 +184,11 @@ func (s *OIDCService) ListClientConfigs(ctx context.Context, req *connect.Reques
 }
 
 func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Request[v1.UpdateClientConfigRequest]) (*connect.Response[v1.UpdateClientConfigResponse], error) {
+	clientConfigID, err := validateOIDCClientConfigID(ctx, req.Msg.GetConfig().GetId())
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := s.getConnection(ctx)
 	if err != nil {
 		return nil, err
@@ -194,7 +199,42 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.UpdateClientConfig is not implemented"))
+	config := req.Msg.GetConfig()
+	oidcConfig := config.GetOidcConfig()
+	oauth2Config := config.GetOauth2Config()
+
+	if oidcConfig.GetIssuer() != "" {
+		// If we're updating the issuer, let's also check for reachability
+		err = assertIssuerIsReachable(ctx, oidcConfig.GetIssuer())
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
+	}
+
+	updateSpec := toDbOIDCSpec(oauth2Config, oidcConfig)
+
+	if err := db.UpdateOIDCClientConfig(ctx, s.dbConn, s.cipher, db.OIDCClientConfig{
+		ID:     clientConfigID,
+		Issuer: oidcConfig.GetIssuer(),
+	}, &updateSpec); err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s does not exist", clientConfigID.String()))
+		}
+
+		log.Extract(ctx).WithError(err).Error("Failed to update OIDC Client config.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to update OIDC Client Config %s", clientConfigID.String()))
+	}
+
+	if err = db.DeactivateClientConfig(ctx, s.dbConn, clientConfigID); err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s does not exist", clientConfigID.String()))
+		}
+
+		log.Extract(ctx).WithError(err).Error("Failed to deactivate OIDC Client config.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to deactivate OIDC Client Config %s", clientConfigID.String()))
+	}
+
+	return connect.NewResponse(&v1.UpdateClientConfigResponse{}), nil
 }
 
 func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Request[v1.DeleteClientConfigRequest]) (*connect.Response[v1.DeleteClientConfigResponse], error) {
