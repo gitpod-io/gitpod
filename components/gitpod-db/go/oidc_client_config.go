@@ -222,7 +222,11 @@ func UpdateOIDCSpec(ctx context.Context, conn *gorm.DB, cipher Cipher, id uuid.U
 
 			existing.Data = encrypted
 
-			updateErr := tx.Model(&OIDCClientConfig{}).Updates(existing).Error
+			updateErr := tx.
+				Model(&OIDCClientConfig{}).
+				Where("id = ?", id).
+				Where("deleted = ?", 0).
+				Updates(existing).Error
 			if err != nil {
 				return fmt.Errorf("failed to update OIDC client: %w", updateErr)
 			}
@@ -267,7 +271,7 @@ func partialUpdateOIDCSpec(old, new OIDCSpec) OIDCSpec {
 		old.RedirectURL = new.RedirectURL
 	}
 
-	if oidcScopesEqual(old.Scopes, new.Scopes) {
+	if !oidcScopesEqual(old.Scopes, new.Scopes) {
 		old.Scopes = new.Scopes
 	}
 

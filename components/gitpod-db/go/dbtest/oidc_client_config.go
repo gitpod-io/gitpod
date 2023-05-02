@@ -19,7 +19,14 @@ func NewOIDCClientConfig(t *testing.T, record db.OIDCClientConfig) db.OIDCClient
 	t.Helper()
 
 	cipher, _ := GetTestCipher(t)
-	encrypted, err := db.EncryptJSON(cipher, db.OIDCSpec{})
+	encrypted, err := db.EncryptJSON(cipher, db.OIDCSpec{
+		ClientID:     "oidc-client-id",
+		ClientSecret: "oidc-client-secret",
+		RedirectURL:  "https://some-redirect-url.or/not",
+		Scopes: []string{
+			"aint", "never", "gonna", "give", "you", "up",
+		},
+	})
 	require.NoError(t, err)
 
 	now := time.Now().UTC().Truncate(time.Millisecond)
