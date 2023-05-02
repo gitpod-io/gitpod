@@ -12,7 +12,6 @@ import check from "../images/check.svg";
 import Tooltip from "../components/Tooltip";
 import { SSOConfigForm, isValid, ssoConfigReducer, useSaveSSOConfig } from "../teams/sso/SSOConfigForm";
 import Alert from "../components/Alert";
-import { useToast } from "../components/toasts/Toasts";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { openOIDCStartWindow } from "../provider-utils";
 import { getGitpodService } from "../service/service";
@@ -25,7 +24,6 @@ type Props = {
 export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
     const { setUser } = useContext(UserContext);
     const [ssoLoginError, setSSOLoginError] = useState("");
-    const { toast } = useToast();
 
     const [ssoConfig, dispatch] = useReducer(ssoConfigReducer, {
         id: config?.id ?? "",
@@ -55,9 +53,6 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
                 configId = response.config.id;
             }
 
-            console.log("config response", response);
-            toast("Your SSO configuration was saved");
-
             await openOIDCStartWindow({
                 configId: configId,
                 onSuccess: async () => {
@@ -77,7 +72,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
         } catch (e) {
             console.error(e);
         }
-    }, [onComplete, save, ssoConfig, toast, updateUser]);
+    }, [onComplete, save, ssoConfig, updateUser]);
 
     return (
         <SetupLayout showOrg>
