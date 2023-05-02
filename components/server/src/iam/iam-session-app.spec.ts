@@ -71,6 +71,7 @@ class TestIamSessionApp {
             hd: "test.net",
         },
         organizationId: "test-org",
+        oidcClientConfigId: "oidc-client-123",
     };
 
     public before() {
@@ -164,6 +165,28 @@ class TestIamSessionApp {
             expect(result.statusCode, JSON.stringify(result.body)).to.equal(400);
             expect(result.body?.message).to.equal(c.expectedMessage);
         }
+    }
+
+    @test public async testInvalidPayload_no_org_id() {
+        const payload = { ...this.payload };
+        (payload.organizationId as any) = "";
+
+        const sr = request(this.app.create());
+        const result = await sr.post("/session").set("Content-Type", "application/json").send(JSON.stringify(payload));
+
+        expect(result.statusCode, JSON.stringify(result.body)).to.equal(400);
+        expect(result.body?.message).to.equal("OrganizationId is missing");
+    }
+
+    @test public async testInvalidPayload_no_config_id() {
+        const payload = { ...this.payload };
+        (payload.oidcClientConfigId as any) = "";
+
+        const sr = request(this.app.create());
+        const result = await sr.post("/session").set("Content-Type", "application/json").send(JSON.stringify(payload));
+
+        expect(result.statusCode, JSON.stringify(result.body)).to.equal(400);
+        expect(result.body?.message).to.equal("OIDC client config id is missing");
     }
 }
 

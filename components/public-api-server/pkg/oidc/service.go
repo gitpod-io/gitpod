@@ -277,14 +277,16 @@ func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (
 	}, nil
 }
 
-func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult, organizationId string) (*http.Cookie, error) {
+func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult, clientConfig *ClientConfig) (*http.Cookie, error) {
 	type CreateSessionPayload struct {
 		AuthFlowResult
 		OrganizationID string `json:"organizationId"`
+		ClientConfigID string `json:"oidcClientConfigId"`
 	}
 	sessionPayload := CreateSessionPayload{
 		AuthFlowResult: *flowResult,
-		OrganizationID: organizationId,
+		OrganizationID: clientConfig.OrganizationID,
+		ClientConfigID: clientConfig.ID,
 	}
 	payload, err := json.Marshal(sessionPayload)
 	if err != nil {

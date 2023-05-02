@@ -11,7 +11,7 @@ import { Authenticator } from "../auth/authenticator";
 import { UserService } from "../user/user-service";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { User } from "@gitpod/gitpod-protocol";
+import { Identity, User } from "@gitpod/gitpod-protocol";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 
 @injectable()
@@ -55,14 +55,9 @@ export class IamSessionApp {
         }
         const payload = req.body;
         OIDCCreateSessionPayload.validate(payload);
-        const claims = payload.claims;
 
         const existingUser = await this.userService.findUserForLogin({
-            candidate: {
-                authId: claims.sub,
-                authProviderId: claims.iss,
-                authName: claims.name,
-            },
+            candidate: this.mapOIDCProfileToIdentity(payload),
         });
         const user = existingUser || (await this.createNewOIDCUser(payload));
 
@@ -81,17 +76,25 @@ export class IamSessionApp {
         };
     }
 
+    protected mapOIDCProfileToIdentity(payload: OIDCCreateSessionPayload): Identity {
+        const {
+            claims: { sub, name, email },
+            oidcClientConfigId,
+        } = payload;
+        return {
+            authId: sub,
+            authProviderId: oidcClientConfigId,
+            authName: name,
+            primaryEmail: email,
+        };
+    }
+
     protected async createNewOIDCUser(payload: OIDCCreateSessionPayload): Promise<User> {
         const { claims, organizationId } = payload;
 
         // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
         const user = await this.userService.createUser({
-            identity: {
-                authId: claims.sub,
-                authProviderId: claims.iss,
-                authName: claims.name,
-                primaryEmail: claims.email,
-            },
+            identity: this.mapOIDCProfileToIdentity(payload),
             userUpdate: (user) => {
                 user.name = claims.name;
                 user.avatarUrl = claims.picture;
