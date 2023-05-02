@@ -144,7 +144,18 @@ describe("Migration Service", () => {
             migrationService.migrateUser(user),
             migrationService.migrateUser(user),
         ]);
-        let teams = await teamDB.findTeamsByUser(user.id);
+        const teams = await teamDB.findTeamsByUser(user.id);
         expect(teams.length).to.be.eq(1);
+    });
+
+    it("should append 'Organization' to too short names", async () => {
+        await wipeRepo();
+        const user = await userDB.newUser();
+        user.fullName = "X";
+        await userDB.storeUser(user);
+
+        await migrationService.migrateUser(user);
+        const teams = await teamDB.findTeamsByUser(user.id);
+        expect(teams[0].name).to.be.eq("X Organization");
     });
 });
