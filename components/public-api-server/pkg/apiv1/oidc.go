@@ -54,6 +54,20 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
+	conn, err := s.getConnection(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, userID, err := s.getUser(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	if authorizationErr := s.userIsOrgOwner(ctx, userID, organizationID); authorizationErr != nil {
+		return nil, authorizationErr
+	}
+
 	config := req.Msg.GetConfig()
 	oidcConfig := config.GetOidcConfig()
 	err = assertIssuerIsReachable(ctx, oidcConfig.GetIssuer())
@@ -63,16 +77,6 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 	err = assertIssuerProvidesDiscovery(ctx, oidcConfig.GetIssuer())
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
-	}
-
-	conn, err := s.getConnection(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	_, _, err = s.getUser(ctx, conn)
-	if err != nil {
-		return nil, err
 	}
 
 	oauth2Config := config.GetOauth2Config()
@@ -125,9 +129,13 @@ func (s *OIDCService) GetClientConfig(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 
-	_, _, err = s.getUser(ctx, conn)
+	_, userID, err := s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
+	}
+
+	if authorizationErr := s.userIsOrgOwner(ctx, userID, organizationID); authorizationErr != nil {
+		return nil, authorizationErr
 	}
 
 	record, err := db.GetOIDCClientConfigForOrganization(ctx, s.dbConn, clientConfigID, organizationID)
@@ -162,9 +170,13 @@ func (s *OIDCService) ListClientConfigs(ctx context.Context, req *connect.Reques
 		return nil, err
 	}
 
-	_, _, err = s.getUser(ctx, conn)
+	_, userID, err := s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
+	}
+
+	if authorizationErr := s.userIsOrgOwner(ctx, userID, organizationID); authorizationErr != nil {
+		return nil, authorizationErr
 	}
 
 	configs, err := db.ListOIDCClientConfigsForOrganization(ctx, s.dbConn, organizationID)
@@ -184,7 +196,14 @@ func (s *OIDCService) ListClientConfigs(ctx context.Context, req *connect.Reques
 }
 
 func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Request[v1.UpdateClientConfigRequest]) (*connect.Response[v1.UpdateClientConfigResponse], error) {
-	clientConfigID, err := validateOIDCClientConfigID(ctx, req.Msg.GetConfig().GetId())
+	config := req.Msg.GetConfig()
+
+	clientConfigID, err := validateOIDCClientConfigID(ctx, config.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	organizationID, err := validateOrganizationID(ctx, config.GetOrganizationId())
 	if err != nil {
 		return nil, err
 	}
@@ -194,12 +213,15 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	_, _, err = s.getUser(ctx, conn)
+	_, userID, err := s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
 	}
 
-	config := req.Msg.GetConfig()
+	if authorizationErr := s.userIsOrgOwner(ctx, userID, organizationID); authorizationErr != nil {
+		return nil, authorizationErr
+	}
+
 	oidcConfig := config.GetOidcConfig()
 	oauth2Config := config.GetOauth2Config()
 
@@ -253,9 +275,13 @@ func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Reque
 		return nil, err
 	}
 
-	_, _, err = s.getUser(ctx, conn)
+	_, userID, err := s.getUser(ctx, conn)
 	if err != nil {
 		return nil, err
+	}
+
+	if authorizationErr := s.userIsOrgOwner(ctx, userID, organizationID); authorizationErr != nil {
+		return nil, authorizationErr
 	}
 
 	err = db.DeleteOIDCClientConfig(ctx, s.dbConn, clientConfigID, organizationID)
@@ -327,6 +353,23 @@ func (s *OIDCService) isFeatureEnabled(ctx context.Context, conn protocol.APIInt
 	}
 
 	return false
+}
+
+func (s *OIDCService) userIsOrgOwner(ctx context.Context, userID, orgID uuid.UUID) error {
+	membership, err := db.GetTeamMembership(ctx, s.dbConn, userID, orgID)
+	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return connect.NewError(connect.CodeNotFound, fmt.Errorf("Organization %s does not exist", orgID.String()))
+		}
+
+		return connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to verify user %s is owner of organization %s", userID.String(), orgID.String()))
+	}
+
+	if membership.Role != db.TeamMembershipRole_Owner {
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("user %s is not owner of organization %s", userID.String(), orgID.String()))
+	}
+
+	return nil
 }
 
 func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor) (*v1.OIDCClientConfig, error) {

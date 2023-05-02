@@ -43,18 +43,15 @@ var (
 		},
 	}
 
-	user = newUser(&protocol.User{})
+	user           = newUser(&protocol.User{})
+	organizationID = uuid.New()
 )
 
 func TestOIDCService_CreateClientConfig_FeatureFlagDisabled(t *testing.T) {
-	organizationID := uuid.New()
 
 	t.Run("returns unauthorized", func(t *testing.T) {
-		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
+		_, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
 		issuer := newFakeIdP(t, true)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
 
 		_, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
 			Config: &v1.OIDCClientConfig{
@@ -70,8 +67,6 @@ func TestOIDCService_CreateClientConfig_FeatureFlagDisabled(t *testing.T) {
 }
 
 func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
-	organizationID := uuid.New()
-
 	t.Run("returns invalid argument when no organisation specified", func(t *testing.T) {
 		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 		issuer := newFakeIdP(t, true)
@@ -103,11 +98,34 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
+	t.Run("returns permission denied when user is not org owner", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+		issuer := newFakeIdP(t, true)
+
+		anotherOrg := uuid.New()
+		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
+			TeamID: anotherOrg,
+			UserID: uuid.MustParse(user.ID),
+			Role:   db.TeamMembershipRole_Member,
+		})
+
+		config := &v1.OIDCClientConfig{
+			OrganizationId: anotherOrg.String(),
+			OidcConfig:     &v1.OIDCConfig{Issuer: issuer},
+			Oauth2Config:   &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
+		}
+		_, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
+			Config: config,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	})
+
 	t.Run("returns invalid argument when issuer is not reachable", func(t *testing.T) {
 		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		config := &v1.OIDCClientConfig{
-			OrganizationId: uuid.NewString(),
+			OrganizationId: organizationID.String(),
 			OidcConfig:     &v1.OIDCConfig{Issuer: "https://this-host-is-not-reachable"},
 			Oauth2Config:   &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
 		}
@@ -124,7 +142,7 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 		issuer := newFakeIdP(t, false)
 
 		config := &v1.OIDCClientConfig{
-			OrganizationId: uuid.NewString(),
+			OrganizationId: organizationID.String(),
 			OidcConfig:     &v1.OIDCConfig{Issuer: issuer},
 			Oauth2Config:   &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
 		}
@@ -137,10 +155,8 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 	})
 
 	t.Run("creates oidc client config", func(t *testing.T) {
-		serverMock, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 		issuer := newFakeIdP(t, true)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
 		config := &v1.OIDCClientConfig{
 			OrganizationId: organizationID.String(),
@@ -187,10 +203,7 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 }
 
 func TestOIDCService_GetClientConfig_WithFeatureFlagDisabled(t *testing.T) {
-	serverMock, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
-
-	serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-	serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
+	_, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
 
 	_, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
 		Id:             uuid.NewString(),
@@ -221,9 +234,7 @@ func TestOIDCService_GetClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 	})
 
 	t.Run("not found when record does not exist", func(t *testing.T) {
-		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		_, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
 			Id:             uuid.NewString(),
@@ -234,15 +245,11 @@ func TestOIDCService_GetClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 	})
 
 	t.Run("retrieves record when it exists", func(t *testing.T) {
-		serverMock, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 		issuer := newFakeIdP(t, true)
 
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-
-		orgID := uuid.New()
-
 		created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
-			OrganizationID: orgID,
+			OrganizationID: organizationID,
 			Issuer:         issuer,
 		})[0]
 
@@ -259,16 +266,31 @@ func TestOIDCService_GetClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 			Config: converted,
 		}, resp.Msg)
 	})
+
+	t.Run("returns permission denied when user is not org owner", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		anotherOrg := uuid.New()
+		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
+			TeamID: anotherOrg,
+			UserID: uuid.MustParse(user.ID),
+			Role:   db.TeamMembershipRole_Member,
+		})
+
+		_, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
+			Id:             uuid.NewString(),
+			OrganizationId: anotherOrg.String(),
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	})
 }
 
 func TestOIDCService_ListClientConfigs_WithFeatureFlagDisabled(t *testing.T) {
-	serverMock, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
-
-	serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-	serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
+	_, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
 
 	_, err := client.ListClientConfigs(context.Background(), connect.NewRequest(&v1.ListClientConfigsRequest{
-		OrganizationId: uuid.NewString(),
+		OrganizationId: organizationID.String(),
 	}))
 	require.Error(t, err)
 	require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
@@ -294,31 +316,46 @@ func TestOIDCService_ListClientConfigs_WithFeatureFlagEnabled(t *testing.T) {
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
+	t.Run("returns permission denied when user is not org owner", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		anotherOrg := uuid.New()
+		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
+			TeamID: anotherOrg,
+			UserID: uuid.MustParse(user.ID),
+			Role:   db.TeamMembershipRole_Member,
+		})
+
+		_, err := client.ListClientConfigs(context.Background(), connect.NewRequest(&v1.ListClientConfigsRequest{
+			OrganizationId: anotherOrg.String(),
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	})
+
 	t.Run("retrieves configs by organization id", func(t *testing.T) {
-		serverMock, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 		issuer := newFakeIdP(t, true)
 
-		orgA, orgB := uuid.New(), uuid.New()
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		anotherOrgID := uuid.New()
 
 		configs := dbtest.CreateOIDCClientConfigs(t, dbConn,
 			dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
-				OrganizationID: orgA,
+				OrganizationID: organizationID,
 				Issuer:         issuer,
 			}),
 			dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
-				OrganizationID: orgA,
+				OrganizationID: organizationID,
 				Issuer:         issuer,
 			}),
 			dbtest.NewOIDCClientConfig(t, db.OIDCClientConfig{
-				OrganizationID: orgB,
+				OrganizationID: anotherOrgID,
 				Issuer:         issuer,
 			}),
 		)
 
 		response, err := client.ListClientConfigs(context.Background(), connect.NewRequest(&v1.ListClientConfigsRequest{
-			OrganizationId: orgA.String(),
+			OrganizationId: organizationID.String(),
 		}))
 		require.NoError(t, err)
 
@@ -343,14 +380,12 @@ func TestOIDCService_ListClientConfigs_WithFeatureFlagEnabled(t *testing.T) {
 
 func TestOIDCService_UpdateClientConfig_WithFeatureFlagDisabled(t *testing.T) {
 	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
-		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
+		_, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
 
 		_, err := client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{
 			Config: &v1.OIDCClientConfig{
-				Id: uuid.NewString(),
+				Id:             uuid.NewString(),
+				OrganizationId: organizationID.String(),
 			},
 		}))
 		require.Error(t, err)
@@ -361,28 +396,45 @@ func TestOIDCService_UpdateClientConfig_WithFeatureFlagDisabled(t *testing.T) {
 
 func TestOIDCService_UpdateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 	t.Run("non-existent config ID returns not found", func(t *testing.T) {
-		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		_, err := client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{
 			Config: &v1.OIDCClientConfig{
-				Id: uuid.New().String(),
+				Id:             uuid.New().String(),
+				OrganizationId: organizationID.String(),
 			},
 		}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	})
 
+	t.Run("returns permission denied when user is not org owner", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		anotherOrg := uuid.New()
+		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
+			TeamID: anotherOrg,
+			UserID: uuid.MustParse(user.ID),
+			Role:   db.TeamMembershipRole_Member,
+		})
+
+		_, err := client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{
+			Config: &v1.OIDCClientConfig{
+				Id:             uuid.New().String(),
+				OrganizationId: anotherOrg.String(),
+			},
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	})
+
 	t.Run("partially applies updates to issuer and scopes", func(t *testing.T) {
-		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 		issuer := newFakeIdP(t, true)
 		issuerNew := newFakeIdP(t, true)
 
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).AnyTimes()
-
 		config := &v1.OIDCClientConfig{
-			OrganizationId: uuid.NewString(),
+			OrganizationId: organizationID.String(),
 			OidcConfig: &v1.OIDCConfig{
 				Issuer: issuer,
 			},
@@ -401,7 +453,7 @@ func TestOIDCService_UpdateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 		_, err = client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{
 			Config: &v1.OIDCClientConfig{
 				Id:             created.Msg.GetConfig().Id,
-				OrganizationId: uuid.NewString(),
+				OrganizationId: organizationID.String(),
 				OidcConfig: &v1.OIDCConfig{
 					Issuer: issuerNew,
 				},
@@ -426,10 +478,7 @@ func TestOIDCService_UpdateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 
 func TestOIDCService_DeleteClientConfig_WithFeatureFlagDisabled(t *testing.T) {
 	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
-		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
-		serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil)
+		_, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
 
 		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{
 			Id:             uuid.NewString(),
@@ -461,30 +510,42 @@ func TestOIDCService_DeleteClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 	})
 
 	t.Run("not found when record does not exist", func(t *testing.T) {
-		serverMock, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{
 			Id:             uuid.NewString(),
-			OrganizationId: uuid.NewString(),
+			OrganizationId: organizationID.String(),
 		}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
 	})
 
+	t.Run("returns permission denied when user is not org owner", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		anotherOrg := uuid.New()
+		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
+			TeamID: anotherOrg,
+			UserID: uuid.MustParse(user.ID),
+			Role:   db.TeamMembershipRole_Member,
+		})
+
+		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{
+			Id:             uuid.NewString(),
+			OrganizationId: anotherOrg.String(),
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	})
+
 	t.Run("deletes record", func(t *testing.T) {
-		serverMock, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 		issuer := newFakeIdP(t, true)
 
-		orgID := uuid.New()
-
 		created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
-			OrganizationID: orgID,
+			OrganizationID: organizationID,
 			Issuer:         issuer,
 		})[0]
-
-		serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil)
 
 		resp, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{
 			Id:             created.ID.String(),
@@ -498,7 +559,7 @@ func TestOIDCService_DeleteClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, v1connect.OIDCServiceClient, *gorm.DB) {
 	t.Helper()
 
-	dbConn := dbtest.ConnectForTests(t)
+	dbConn := dbtest.ConnectForTests(t).Debug()
 
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
@@ -519,10 +580,22 @@ func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.Moc
 		auth.NewClientInterceptor("auth-token"),
 	))
 
+	// setup our default user
+	serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).AnyTimes()
+	serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil).AnyTimes()
+	// ensure our user is owner of our default org
+	dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
+		UserID: uuid.MustParse(user.ID),
+		TeamID: organizationID,
+		Role:   db.TeamMembershipRole_Owner,
+	})
+
 	return serverMock, client, dbConn
 }
 
 func newFakeIdP(t *testing.T, discoveryEnabled bool) string {
+	t.Helper()
+
 	router := chi.NewRouter()
 	ts := httptest.NewServer(router)
 	t.Cleanup(ts.Close)
