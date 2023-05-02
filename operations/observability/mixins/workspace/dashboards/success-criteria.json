@@ -271,6 +271,20 @@
           "legendFormat": "P25",
           "range": true,
           "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "histogram_quantile(\n  0.01, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "P01",
+          "range": true,
+          "refId": "E"
         }
       ],
       "title": "Workspace Startup Time Mk1",
@@ -379,6 +393,20 @@
           "legendFormat": "P25",
           "range": true,
           "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "histogram_quantile(\n  0.01, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "P1",
+          "range": true,
+          "refId": "E"
         }
       ],
       "title": "Workspace Startup Time Mk2",
