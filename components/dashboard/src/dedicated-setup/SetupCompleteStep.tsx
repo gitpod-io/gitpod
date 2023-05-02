@@ -4,9 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC } from "react";
+import { FC, useCallback, useState } from "react";
 import { Button } from "../components/Button";
 import { Heading1, Subheading } from "../components/typography/headings";
+import Tooltip from "../components/Tooltip";
+import copy from "../images/copy.svg";
+import { copyToClipboard } from "../utils";
 import { SetupLayout } from "./SetupLayout";
 
 type Props = {
@@ -14,14 +17,26 @@ type Props = {
 };
 export const SetupCompleteStep: FC<Props> = ({ onComplete }) => {
     const url = document.location.origin;
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyToClipboard = useCallback(() => {
+        copyToClipboard(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }, [url]);
 
     return (
         <SetupLayout showOrg showUser noMaxWidth>
             <Heading1>Welcome to Gitpod</Heading1>
             <Subheading>Your teammates can now sign in to Gitpod using single sign-on (SSO).</Subheading>
 
-            <div className="mt-4">
+            <div className="flex flex-row items-center space-x-2 mt-4">
                 <pre className="font-mono text-sm text-gray-500 dark:text-gray-600">{`> ${url}`}</pre>
+                <div className="cursor-pointer" onClick={handleCopyToClipboard}>
+                    <Tooltip content={copied ? "Copied" : "Click to copy"}>
+                        <img src={copy} alt="copy icon" title="Click to copy" />
+                    </Tooltip>
+                </div>
             </div>
 
             <div className="mt-6 max-w-md">

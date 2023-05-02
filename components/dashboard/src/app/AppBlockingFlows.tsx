@@ -11,7 +11,7 @@ import { MigrationPage, useShouldSeeMigrationPage } from "../whatsnew/MigrationP
 import { useShowUserOnboarding } from "../onboarding/use-show-user-onboarding";
 
 const UserOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
-const DedicatedOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../dedicated-setup/DedicatedSetup"));
+const DedicatedSetup = lazy(() => import(/* webpackPrefetch: true */ "../dedicated-setup/DedicatedSetup"));
 
 // This component handles any flows that should come after we've loaded the user/orgs, but before we render the normal app chrome.
 // Since this runs before the app is rendered, we should avoid adding any lengthy async calls that would delay the app from loading.
@@ -33,7 +33,7 @@ export const AppBlockingFlows: FC = ({ children }) => {
 
     // Handle dedicated onboarding if necessary
     if (!checkDedicatedSetup.isLoading && checkDedicatedSetup.needsOnboarding) {
-        return <DedicatedOnboarding />;
+        return <DedicatedSetup />;
     }
 
     // New user onboarding flow

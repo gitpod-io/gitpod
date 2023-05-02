@@ -36,7 +36,6 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
     const { save, isLoading, isError, error } = useSaveSSOConfig();
 
     const updateUser = useCallback(async () => {
-        // TODO: should reset queries
         await getGitpodService().reconnect();
         const [user] = await Promise.all([getGitpodService().server.getLoggedInUser()]);
         setUser(user);
