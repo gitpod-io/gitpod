@@ -127,7 +127,7 @@ export const useSaveSSOConfig = () => {
                           oauth2Config: {
                               clientId: trimmedClientId,
                               // TODO: determine how we should handle when user doesn't change their secret
-                              clientSecret: ssoConfig.clientSecret === "redacted" ? "" : trimmedClientSecret,
+                              clientSecret: trimmedClientSecret.toLowerCase() === "redacted" ? "" : trimmedClientSecret,
                           },
                           oidcConfig: {
                               issuer: trimmedIssuer,

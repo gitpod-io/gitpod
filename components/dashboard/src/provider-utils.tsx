@@ -142,7 +142,7 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
         search = `${search}&returnTo=${encodeURIComponent(redirectURL)}`;
     }
     const returnTo = gitpodHostUrl.with({ pathname: "complete-auth", search }).toString();
-    const searchParams = new URLSearchParams({ returnTo: encodeURIComponent(returnTo) });
+    const searchParams = new URLSearchParams({ returnTo });
     if (orgSlug) {
         searchParams.append("orgSlug", orgSlug);
     }
