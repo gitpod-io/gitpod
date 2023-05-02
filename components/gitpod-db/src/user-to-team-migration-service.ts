@@ -31,38 +31,44 @@ export class UserToTeamMigrationService {
             return candidate;
         }
         return this.synchronizer.synchronized("migrate-" + candidate.id, "migrateUser", async () => {
-            const user = (await this.userDB.findUserById(candidate.id)) as User;
-            if (!(await this.needsMigration(user))) {
-                return user;
+            if (!(await this.needsMigration(candidate))) {
+                return candidate;
             }
-            AdditionalUserData.set(user, { isMigratedToTeamOnlyAttribution: true });
-            await this.userDB.storeUser(user);
+            AdditionalUserData.set(candidate, { isMigratedToTeamOnlyAttribution: true });
+            await this.userDB.storeUser(candidate);
             try {
-                await this.internalMigrateUser(user);
+                await this.internalMigrateUser(candidate);
             } catch (error) {
                 log.error("Failed to migrate user to team.", error);
-                AdditionalUserData.set(user, { isMigratedToTeamOnlyAttribution: false });
-                await this.userDB.storeUser(user);
+                AdditionalUserData.set(candidate, { isMigratedToTeamOnlyAttribution: false });
+                await this.userDB.storeUser(candidate);
             }
-            return user;
+            return candidate;
         });
     }
 
     private async internalMigrateUser(user: User): Promise<Team> {
         const ctx: LogContext = { userId: user.id };
-        log.info(ctx, "Creating team of one.");
+        let orgName = (user.fullName || user.name || "").trim();
+        if (orgName.length === 0) {
+            orgName = "My Organization";
+        }
+        if (orgName.length > 64) {
+            orgName = orgName.substring(0, 64);
+        }
+        if (orgName.length <= 3) {
+            // artificially extend name to avoid blocking users
+            orgName = orgName + " Organization";
+        }
+        log.info(ctx, "Creating org of one.", { orgName });
         let team;
         let tries = 0;
         while (!team && tries++ < 10) {
             try {
-                let name = user.fullName || user.name || user.id;
-                if (name.length > 64) {
-                    name = name.substring(0, 64);
-                }
                 if (tries > 1) {
-                    name = name + " " + tries;
+                    orgName = orgName + " " + tries;
                 }
-                team = await this.teamDB.createTeam(user.id, name);
+                team = await this.teamDB.createTeam(user.id, orgName);
             } catch (err) {
                 if (err instanceof ResponseError) {
                     if (err.code === ErrorCodes.CONFLICT) {

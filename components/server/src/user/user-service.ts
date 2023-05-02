@@ -128,6 +128,10 @@ export class UserService {
         // state. This measure of prevention is considered in the period deleter as well.
         newUser.identities.push({ ...identity, deleted: false });
         this.handleNewUser(newUser, isFirstUser);
+        newUser = await this.userDb.storeUser(newUser);
+        if (token) {
+            await this.userDb.storeSingleToken(identity, token);
+        }
         if (
             await this.configCatClientFactory().getValueAsync("migrate_new_users", false, {
                 user: newUser,
@@ -136,13 +140,10 @@ export class UserService {
             // org-owned users have an org and the setup user should not get one automatically
             if (newUser.organizationId || newUser.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
                 AdditionalUserData.set(newUser, { isMigratedToTeamOnlyAttribution: true });
+                newUser = await this.userDb.storeUser(newUser);
             } else {
                 await this.migrationService.migrateUser(newUser);
             }
-        }
-        newUser = await this.userDb.storeUser(newUser);
-        if (token) {
-            await this.userDb.storeSingleToken(identity, token);
         }
 
         return newUser;
