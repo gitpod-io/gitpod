@@ -20,10 +20,10 @@ func NewLedgerTriggerJobSpec(schedule time.Duration, job Job) (JobSpec, error) {
 	return NewPeriodicJobSpec(schedule, "ledger", job)
 }
 
-func NewLedgerTrigger(usageClient v1.UsageServiceClient, billingClient v1.BillingServiceClient, sync *redsync.Redsync, mutexExpiry time.Duration) *LedgerJob {
+type ClientsConstructor func() (v1.UsageServiceClient, v1.BillingServiceClient, error)
+
+func NewLedgerTrigger(clientConstructor ClientsConstructor, sync *redsync.Redsync, mutexExpiry time.Duration) *LedgerJob {
 	return &LedgerJob{
-		usageClient:   usageClient,
-		billingClient: billingClient,
 		sync:          sync,
 		mutexDuration: mutexExpiry,
 	}
@@ -37,8 +37,7 @@ type LedgerJob struct {
 	// within the initial alloted time period
 	mutexDuration time.Duration
 
-	usageClient   v1.UsageServiceClient
-	billingClient v1.BillingServiceClient
+	clientsConstructor ClientsConstructor
 }
 
 func (r *LedgerJob) Run() (err error) {
@@ -51,9 +50,13 @@ func (r *LedgerJob) Run() (err error) {
 		WithField("to", now)
 
 	runErr := WithRefreshingMutex(ctx, r.sync, "usage-ledger", r.mutexDuration, func(ctx context.Context) error {
+		usageClient, billingClient, err := r.clientsConstructor()
+		if err != nil {
+			return fmt.Errorf("failed to construct usage and billing client: %w", err)
+		}
 
 		logger.Info("Running ledger job. Reconciling usage records.")
-		_, err = r.usageClient.ReconcileUsage(ctx, &v1.ReconcileUsageRequest{
+		_, err = usageClient.ReconcileUsage(ctx, &v1.ReconcileUsageRequest{
 			From: timestamppb.New(hourAgo),
 			To:   timestamppb.New(now),
 		})
@@ -63,7 +66,7 @@ func (r *LedgerJob) Run() (err error) {
 		}
 
 		logger.Info("Starting invoice reconciliation.")
-		_, err = r.billingClient.ReconcileInvoices(ctx, &v1.ReconcileInvoicesRequest{})
+		_, err = billingClient.ReconcileInvoices(ctx, &v1.ReconcileInvoicesRequest{})
 		if err != nil {
 			logger.WithError(err).Errorf("Failed to reconcile invoices.")
 			return fmt.Errorf("failed to reconcile invoices: %w", err)
