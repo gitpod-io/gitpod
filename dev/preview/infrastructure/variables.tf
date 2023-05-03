@@ -29,7 +29,7 @@ variable "dev_kube_context" {
 
 variable "vm_type" {
   type    = string
-  default = "n2d-standard-8"
+  default = "n2d-standard-16"
 }
 
 variable "vm_image" {
@@ -52,7 +52,7 @@ variable "gcp_project_dns" {
 
 variable "gce_use_spot" {
   type        = bool
-  default     = false
+  default     = true
   description = "Flag to decide whether to use spot instances"
 }
 
