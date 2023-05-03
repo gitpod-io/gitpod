@@ -20,6 +20,8 @@ export const useCheckDedicatedSetup = () => {
     const params = useQueryParams();
     const { data: onboardingState, isLoading } = useOnboardingState();
     const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
+    console.log("enableDedicatedOnboardingFlow", enableDedicatedOnboardingFlow);
+    console.log("onboardingState", onboardingState);
 
     const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
     const needsOnboarding = onboardingState?.isCompleted !== true;
@@ -31,7 +33,7 @@ export const useCheckDedicatedSetup = () => {
         // Either setup forced via query param, or onboarding state is not completed
         // Also don't show if we've marked it as completed (user finished last step)
         showOnboarding: enableDedicatedOnboardingFlow && (forceSetup || needsOnboarding) && !hasCompleted,
-        isLoading,
+        isLoading: enableDedicatedOnboardingFlow && isLoading,
         markCompleted,
     };
 };

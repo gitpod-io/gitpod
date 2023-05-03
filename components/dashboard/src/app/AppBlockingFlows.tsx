@@ -29,6 +29,7 @@ export const AppBlockingFlows: FC = ({ children }) => {
 
     // Wait until we've loaded the onboarding state before rendering anything
     if (checkDedicatedSetup.isLoading) {
+        console.log("waiting on checkDedicatedSetup.isLoading", checkDedicatedSetup.isLoading);
         return <AppLoading />;
     }
 
