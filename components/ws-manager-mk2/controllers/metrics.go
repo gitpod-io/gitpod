@@ -131,7 +131,9 @@ func (m *controllerMetrics) recordWorkspaceStartupTime(log *logr.Logger, ws *wor
 		log.Error(err, "could not record workspace startup time", "type", tpe, "class", class)
 	}
 
-	hist.Observe(float64(time.Since(ws.CreationTimestamp.Time).Seconds()))
+	duration := time.Since(ws.CreationTimestamp.Time)
+	log.Info("workspace startup time", "ws", ws.Name, "duration", duration)
+	hist.Observe(float64(duration.Seconds()))
 }
 
 func (m *controllerMetrics) countWorkspaceStartFailures(log *logr.Logger, ws *workspacev1.Workspace) {
