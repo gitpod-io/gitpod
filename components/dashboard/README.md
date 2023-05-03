@@ -68,11 +68,6 @@ Replace `AUTHENTICATION_COOKIE_VALUE` with the value of your auth cookie taken f
 🚀 After following the above steps, run `yarn run start` to start developing.
 You can view the dashboard at https://`PORT_NUMBER`-`GITPOD_WORKSPACE_URL` (`PORT_NUMBER` is usually `3000`).
 
-## Tests
-
-The dashboard uses 🌳 [Cypress](https://www.cypress.io/) for integration tests.
-Specs are written with 🦑 [Cypress Testing Library](https://testing-library.com/docs/cypress-testing-library/intro/).
-
 ### How to run tests in watch mode
 
 Open a terminal, launch the dashboard app (see instructions above):
@@ -81,27 +76,4 @@ Open a terminal, launch the dashboard app (see instructions above):
 yarn start
 ```
 
-When the dashboard app is up and running, open another terminal **using Bash as shell** (this is mandatory at the moment) and launch Cypress:
-
-```sh
-yarn test:integration:watch
-```
-
-Then open port 6080 in the browser and you should see Cypress' interface via VNC.
-Proceed as usual with Cypress from there.
-
-### How to run tests in batch mode
-
-Open a terminal, launch the dashboard app (see instructions above):
-
-```sh
-yarn start
-```
-
-When the dashboard app is up and running, open another terminal and launch Cypress:
-
-```sh
-yarn test:integration:run
-```
-
-You should see Cypress running in the terminal.
+When the dashboard app is up and running, open another terminal **using Bash as shell** (this is mandatory at the moment)
