@@ -87,17 +87,17 @@ func Start(cfg Config, version string) error {
 	if err != nil {
 		return fmt.Errorf("failed to register grpc client metrics: %w", err)
 	}
-	selfConnection, err := grpc.Dial(srv.GRPCAddress(),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcDialerWithInitialDelay(1*time.Second),
-		grpc.WithUnaryInterceptor(grpcClientMetrics.UnaryClientInterceptor()),
-		grpc.WithStreamInterceptor(grpcClientMetrics.StreamClientInterceptor()),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(100*1024*1024),
-			grpc.MaxCallSendMsgSize(100*1024*1024),
-		))
-	if err != nil {
-		return fmt.Errorf("failed to create self-connection to grpc server: %w", err)
+
+	newSelfConnection := func() (*grpc.ClientConn, error) {
+		return grpc.Dial(srv.GRPCAddress(),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(grpcClientMetrics.UnaryClientInterceptor()),
+			grpc.WithStreamInterceptor(grpcClientMetrics.StreamClientInterceptor()),
+			grpc.WithDefaultCallOptions(
+				grpc.MaxCallRecvMsgSize(100*1024*1024),
+				grpc.MaxCallSendMsgSize(100*1024*1024),
+			),
+		)
 	}
 
 	pricer, err := apiv1.NewWorkspacePricer(cfg.CreditsPerMinuteByWorkspaceClass)
@@ -127,6 +127,15 @@ func Start(cfg Config, version string) error {
 	pool := goredis.NewPool(redisClient)
 	redsyncPool := redsync.New(pool)
 
+	jobClientsConstructor := func() (v1.UsageServiceClient, v1.BillingServiceClient, error) {
+		selfConnection, err := newSelfConnection()
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to create self-connection to grpc server: %w", err)
+		}
+
+		return v1.NewUsageServiceClient(selfConnection), v1.NewBillingServiceClient(selfConnection), nil
+	}
+
 	var schedulerJobSpecs []scheduler.JobSpec
 	if cfg.LedgerSchedule != "" {
 		// we do not run the controller if there is no schedule defined.
@@ -136,7 +145,7 @@ func Start(cfg Config, version string) error {
 		}
 
 		jobSpec, err := scheduler.NewLedgerTriggerJobSpec(schedule,
-			scheduler.NewLedgerTrigger(v1.NewUsageServiceClient(selfConnection), v1.NewBillingServiceClient(selfConnection), redsyncPool, 30*time.Second),
+			scheduler.NewLedgerTrigger(jobClientsConstructor, redsyncPool, 30*time.Second),
 		)
 		if err != nil {
 			return fmt.Errorf("failed to setup ledger trigger job: %w", err)
@@ -154,7 +163,7 @@ func Start(cfg Config, version string) error {
 			return fmt.Errorf("failed to parse reset usage schedule as duration: %w", err)
 		}
 
-		spec, err := scheduler.NewResetUsageJobSpec(schedule, v1.NewUsageServiceClient(selfConnection), redsyncPool, 30*time.Second)
+		spec, err := scheduler.NewResetUsageJobSpec(schedule, jobClientsConstructor, redsyncPool, 30*time.Second)
 		if err != nil {
 			return fmt.Errorf("failed to setup reset usage job: %w", err)
 		}

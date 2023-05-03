@@ -15,17 +15,17 @@ import (
 	"github.com/go-redsync/redsync/v4"
 )
 
-func NewResetUsageJobSpec(schedule time.Duration, usageClient v1.UsageServiceClient, sync *redsync.Redsync, mutexExpiry time.Duration) (JobSpec, error) {
+func NewResetUsageJobSpec(schedule time.Duration, clientsConstructor ClientsConstructor, sync *redsync.Redsync, mutexExpiry time.Duration) (JobSpec, error) {
 	spec := &ResetUsageJobSpec{
-		usageClient:   usageClient,
-		sync:          sync,
-		mutexDuration: mutexExpiry,
+		clientsConstructor: clientsConstructor,
+		sync:               sync,
+		mutexDuration:      mutexExpiry,
 	}
 	return NewPeriodicJobSpec(schedule, "reset_usage", spec)
 }
 
 type ResetUsageJobSpec struct {
-	usageClient v1.UsageServiceClient
+	clientsConstructor ClientsConstructor
 
 	sync *redsync.Redsync
 
@@ -40,8 +40,12 @@ func (j *ResetUsageJobSpec) Run() (err error) {
 
 	runErr := WithRefreshingMutex(ctx, j.sync, "reset-usage", j.mutexDuration, func(ctx context.Context) error {
 		log.Info("Running reset usage job.")
+		usageClient, _, err := j.clientsConstructor()
+		if err != nil {
+			return fmt.Errorf("Failed to construct reset usage job clients: %w", err)
+		}
 
-		_, err = j.usageClient.ResetUsage(ctx, &v1.ResetUsageRequest{})
+		_, err = usageClient.ResetUsage(ctx, &v1.ResetUsageRequest{})
 		if err != nil {
 			return fmt.Errorf("failed to reset usage: %w", err)
 		}
