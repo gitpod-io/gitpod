@@ -16,7 +16,6 @@ import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { Delayed } from "../components/Delayed";
 import { SpinnerLoader } from "../components/Loader";
 import { OrganizationInfo } from "../data/organizations/orgs-query";
-import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { useQueryClient } from "@tanstack/react-query";
 
 type Props = {
@@ -24,21 +23,6 @@ type Props = {
 };
 const DedicatedSetup: FC<Props> = ({ onComplete }) => {
     const currentOrg = useCurrentOrg();
-    const oidcClients = useOIDCClientsQuery();
-    console.log("currentOrg", currentOrg);
-    // if a config already exists, select first active, or first config
-    const ssoConfig = useMemo(() => {
-        if (!oidcClients.data) {
-            return;
-        }
-
-        const activeConfig = (oidcClients.data || []).find((c) => c.active);
-        if (activeConfig) {
-            return activeConfig;
-        }
-
-        return oidcClients.data?.[0];
-    }, [oidcClients.data]);
 
     if (currentOrg.isLoading) {
         return (
@@ -49,7 +33,7 @@ const DedicatedSetup: FC<Props> = ({ onComplete }) => {
     }
 
     // Delay rendering until we have data so we can default to the correct step
-    return <DedicatedSetupSteps org={currentOrg.data} config={ssoConfig} onComplete={onComplete} />;
+    return <DedicatedSetupSteps org={currentOrg.data} onComplete={onComplete} />;
 };
 
 export default DedicatedSetup;
@@ -64,19 +48,30 @@ type StepsValue = typeof STEPS[keyof typeof STEPS];
 
 type DedicatedSetupStepsProps = {
     org?: OrganizationInfo;
-    config?: OIDCClientConfig;
     onComplete: () => void;
 };
-const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config, onComplete }) => {
-    console.log("steps org", org);
-    const { dropConfetti } = useConfetti();
-    const history = useHistory();
-    const client = useQueryClient();
-    const { isLoading: ssoConfigsLoading } = useOIDCClientsQuery();
-
+const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, onComplete }) => {
     // If we have an org w/ a name, we can skip the first step and go to sso setup
     const initialStep = org && org.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
     const [step, setStep] = useState<StepsValue>(initialStep);
+    const history = useHistory();
+    const client = useQueryClient();
+    const oidcClients = useOIDCClientsQuery();
+    const { dropConfetti } = useConfetti();
+
+    // if a config already exists, select first active, or first config
+    const ssoConfig = useMemo(() => {
+        if (!oidcClients.data) {
+            return;
+        }
+
+        const activeConfig = (oidcClients.data || []).find((c) => c.active);
+        if (activeConfig) {
+            return activeConfig;
+        }
+
+        return oidcClients.data?.[0];
+    }, [oidcClients.data]);
 
     const handleSetupComplete = useCallback(() => {
         // celebrate 🎉
@@ -86,9 +81,9 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config, onComp
     }, [dropConfetti]);
 
     const handleEndSetup = useCallback(() => {
+        client.clear();
         history.push("/settings/git");
         onComplete();
-        client.resetQueries();
     }, [client, history, onComplete]);
 
     return (
@@ -96,12 +91,13 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config, onComp
             {step === STEPS.GETTING_STARTED && <GettingStartedStep onComplete={() => setStep(STEPS.ORG_NAMING)} />}
             {step === STEPS.ORG_NAMING && <OrgNamingStep onComplete={() => setStep(STEPS.SSO_SETUP)} />}
             {step === STEPS.SSO_SETUP &&
-                (ssoConfigsLoading ? (
+                (oidcClients.isLoading ? (
+                    // Hold off on showing sso setup until we see if we have a config to continue with
                     <Delayed>
                         <SpinnerLoader />
                     </Delayed>
                 ) : (
-                    <SSOSetupStep config={config} onComplete={handleSetupComplete} />
+                    <SSOSetupStep config={ssoConfig} onComplete={handleSetupComplete} />
                 ))}
             {step === STEPS.COMPLETE && <SetupCompleteStep onComplete={handleEndSetup} />}
         </>

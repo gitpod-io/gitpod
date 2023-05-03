@@ -23,7 +23,6 @@ export const useCheckDedicatedSetup = () => {
     const params = useQueryParams();
 
     const { data: onboardingState, isLoading } = useOnboardingState();
-    console.log("onboardingState", onboardingState);
 
     const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
     const needsOnboarding = forceSetup || (onboardingState && onboardingState.isCompleted !== true);
@@ -36,7 +35,8 @@ export const useCheckDedicatedSetup = () => {
         if (enableDedicatedOnboardingFlow && needsOnboarding && !inProgress) {
             setInProgress(true);
         }
-    }, [enableDedicatedOnboardingFlow, forceSetup, inProgress, needsOnboarding]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [enableDedicatedOnboardingFlow, forceSetup, needsOnboarding]);
 
     return {
         showOnboarding: inProgress,
