@@ -9,6 +9,7 @@ import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
 import { createHash } from "crypto";
 import { AttributionId } from "./attribution";
+import { WorkspaceRegion } from "./workspace-cluster";
 
 export interface UserInfo {
     name?: string;
@@ -273,7 +274,19 @@ export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     // whether the user has been migrated to team attribution.
     // a corresponding feature flag (team_only_attribution) triggers the migration.
     isMigratedToTeamOnlyAttribution?: boolean;
+
+    // remembered workspace auto start options
+    workspaceAutostartOptions?: WorkspaceAutostartOption[];
 }
+
+interface WorkspaceAutostartOption {
+    cloneURL: string;
+    organizationId: string;
+    workspaceClass?: string;
+    ideSettings?: IDESettings;
+    region?: WorkspaceRegion;
+}
+
 export namespace AdditionalUserData {
     export function set(user: User, partialData: Partial<AdditionalUserData>): User {
         if (!user.additionalData) {
