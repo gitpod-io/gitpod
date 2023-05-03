@@ -72,6 +72,7 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config, onComp
     const { dropConfetti } = useConfetti();
     const history = useHistory();
     const client = useQueryClient();
+    const { isLoading: ssoConfigsLoading } = useOIDCClientsQuery();
 
     // If we have an org w/ a name, we can skip the first step and go to sso setup
     const initialStep = org && org.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
@@ -94,7 +95,14 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config, onComp
         <>
             {step === STEPS.GETTING_STARTED && <GettingStartedStep onComplete={() => setStep(STEPS.ORG_NAMING)} />}
             {step === STEPS.ORG_NAMING && <OrgNamingStep onComplete={() => setStep(STEPS.SSO_SETUP)} />}
-            {step === STEPS.SSO_SETUP && <SSOSetupStep config={config} onComplete={handleSetupComplete} />}
+            {step === STEPS.SSO_SETUP &&
+                (ssoConfigsLoading ? (
+                    <Delayed>
+                        <SpinnerLoader />
+                    </Delayed>
+                ) : (
+                    <SSOSetupStep config={config} onComplete={handleSetupComplete} />
+                ))}
             {step === STEPS.COMPLETE && <SetupCompleteStep onComplete={handleEndSetup} />}
         </>
     );
