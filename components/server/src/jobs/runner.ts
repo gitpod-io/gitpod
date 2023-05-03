@@ -10,7 +10,7 @@ import { inject, injectable } from "inversify";
 import { RedisMutex } from "../redis/mutex";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ResourceLockedError } from "redlock";
-import { reportJobCompleted, reportJobStarted } from "../prometheus-metrics";
+import { jobsDurationSeconds, reportJobCompleted, reportJobStarted } from "../prometheus-metrics";
 import { DatabaseGarbageCollector } from "./database-gc";
 import { OTSGarbageCollector } from "./ots-gc";
 import { TokenGarbageCollector } from "./token-gc";
@@ -64,6 +64,7 @@ export class JobRunner {
         try {
             await this.mutex.using(job.lockId, job.frequencyMs, async (signal) => {
                 log.info(`Acquired lock for job ${job.name}.`, logCtx);
+                const timer = jobsDurationSeconds.startTimer({ name: job.name });
                 reportJobStarted(job.name);
                 const now = new Date().getTime();
                 try {
@@ -79,6 +80,8 @@ export class JobRunner {
                         jobTookSec: `${(new Date().getTime() - now) / 1000}s`,
                     });
                     reportJobCompleted(job.name, false);
+                } finally {
+                    jobsDurationSeconds.observe(timer());
                 }
             });
         } catch (err) {

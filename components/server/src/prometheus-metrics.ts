@@ -28,6 +28,7 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(jwtCookieIssued);
     registry.registerMetric(jobStartedTotal);
     registry.registerMetric(jobsCompletedTotal);
+    registry.registerMetric(jobsDurationSeconds);
 }
 
 const loginCounter = new prometheusClient.Counter({
@@ -277,3 +278,10 @@ export const jobsCompletedTotal = new prometheusClient.Counter({
 export function reportJobCompleted(name: string, success: boolean) {
     jobsCompletedTotal.inc({ name, success: String(success) });
 }
+
+export const jobsDurationSeconds = new prometheusClient.Histogram({
+    name: "gitpod_server_jobs_duration_seconds",
+    help: "Histogram of job duration",
+    buckets: [10, 30, 60, 2 * 60, 3 * 60, 5 * 60, 10 * 60, 15 * 60],
+    labelNames: ["name"],
+});
