@@ -13,6 +13,7 @@ import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
 import { AppBlockingFlows } from "./app/AppBlockingFlows";
 import { useHistory } from "react-router";
+import { useCheckDedicatedSetup } from "./dedicated-setup/use-check-dedicated-setup";
 
 // Wrap the App in an ErrorBoundary to catch User/Org loading errors
 // This will also catch any errors that happen to bubble all the way up to the top
@@ -24,6 +25,8 @@ export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(n
 
 // Top level Dashboard App component
 const App: FC = () => {
+    // Fire this query off as early as possible
+    useCheckDedicatedSetup();
     const { user, loading } = useUserLoader();
     const currentOrgQuery = useCurrentOrg();
     const history = useHistory();

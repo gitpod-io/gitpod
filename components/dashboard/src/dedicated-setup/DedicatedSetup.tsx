@@ -66,7 +66,7 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config }) => {
     const { dropConfetti } = useConfetti();
     const history = useHistory();
 
-    // If we have an org name, we can skip the first step
+    // If we have an org w/ a name, we can skip the first step and go to sso setup
     const initialStep = org && org.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
     const [step, setStep] = useState<StepsValue>(initialStep);
 
