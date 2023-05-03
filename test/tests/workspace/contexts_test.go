@@ -111,102 +111,82 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 	f := features.New("context").
 		WithLabel("component", "server").
 		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ffs := []struct {
-				Name string
-				FF   string
-			}{
-				{Name: "classic"},
-				// {Name: "pvc", FF: "persistent_volume_claim"},
-			}
 
-			for _, ff := range ffs {
-				func() {
-					sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
-					defer scancel()
+			sctx, scancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
+			defer scancel()
 
-					api := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			api := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			defer api.Done(t)
+
+			for _, test := range tests {
+				test := test
+				t.Run(test.ContextURL, func(t *testing.T) {
+					report.SetupReport(t, report.FeatureContentInit, fmt.Sprintf("Test to open %v", test.ContextURL))
+					if test.Skip {
+						t.SkipNow()
+					}
+
+					t.Parallel()
+
+					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
+					defer cancel()
+
+					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 					defer api.Done(t)
 
-					username := username + ff.Name
-					userId, err := api.CreateUser(username, userToken)
+					_, err := api.CreateUser(username, userToken)
 					if err != nil {
 						t.Fatal(err)
 					}
 
-					if err := api.UpdateUserFeatureFlag(userId, ff.FF); err != nil {
+					nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
+					if err != nil {
 						t.Fatal(err)
 					}
-				}()
-			}
 
-			for _, ff := range ffs {
-				for _, test := range tests {
-					test := test
-					t.Run(test.ContextURL+"_"+ff.Name, func(t *testing.T) {
-						report.SetupReport(t, report.FeatureContentInit, fmt.Sprintf("Test to open %v", test.ContextURL))
-						if test.Skip {
-							t.SkipNow()
-						}
+					t.Cleanup(func() {
+						sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
+						defer scancel()
 
-						t.Parallel()
+						sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+						defer sapi.Done(t)
 
-						username := username + ff.Name
-
-						ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests)*len(ffs))*time.Minute)
-						defer cancel()
-
-						api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-						defer api.Done(t)
-
-						nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
+						_, err := stopWs(true, sapi)
 						if err != nil {
 							t.Fatal(err)
-						}
-
-						t.Cleanup(func() {
-							sctx, scancel := context.WithTimeout(context.Background(), 10*time.Minute)
-							defer scancel()
-
-							sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
-							defer sapi.Done(t)
-
-							_, err := stopWs(true, sapi)
-							if err != nil {
-								t.Fatal(err)
-							}
-						})
-
-						rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
-						if err != nil {
-							t.Fatal(err)
-						}
-						defer rsa.Close()
-						integration.DeferCloser(t, closer)
-
-						if test.ExpectedBranch == "" && test.ExpectedBranchFunc == nil {
-							return
-						}
-
-						// get actual from workspace
-						git := integration.Git(rsa)
-						err = git.ConfigSafeDirectory()
-						if err != nil {
-							t.Fatal(err)
-						}
-						actBranch, err := git.GetBranch(test.WorkspaceRoot, test.IgnoreError)
-						if err != nil {
-							t.Fatal(err)
-						}
-
-						expectedBranch := test.ExpectedBranch
-						if test.ExpectedBranchFunc != nil {
-							expectedBranch = test.ExpectedBranchFunc(username)
-						}
-						if actBranch != expectedBranch {
-							t.Fatalf("expected branch '%s', got '%s'!", expectedBranch, actBranch)
 						}
 					})
-				}
+
+					rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.LatestInstance.ID))
+					if err != nil {
+						t.Fatal(err)
+					}
+					defer rsa.Close()
+					integration.DeferCloser(t, closer)
+
+					if test.ExpectedBranch == "" && test.ExpectedBranchFunc == nil {
+						return
+					}
+
+					// get actual from workspace
+					git := integration.Git(rsa)
+					err = git.ConfigSafeDirectory()
+					if err != nil {
+						t.Fatal(err)
+					}
+					actBranch, err := git.GetBranch(test.WorkspaceRoot, test.IgnoreError)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					expectedBranch := test.ExpectedBranch
+					if test.ExpectedBranchFunc != nil {
+						expectedBranch = test.ExpectedBranchFunc(username)
+					}
+					if actBranch != expectedBranch {
+						t.Fatalf("expected branch '%s', got '%s'!", expectedBranch, actBranch)
+					}
+				})
 			}
 			return ctx
 		}).

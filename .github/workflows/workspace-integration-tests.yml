@@ -38,21 +38,14 @@ jobs:
         steps:
             # sometimes auth fails with:
             # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
+            - name: Set up Cloud SDK
+              uses: google-github-actions/setup-gcloud@v1
             - id: auth
               uses: google-github-actions/auth@v1
               continue-on-error: true
               with:
                   token_format: access_token
                   credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            # so we retry on failure
-            - id: auth-retry
-              uses: google-github-actions/auth@v1
-              if: steps.auth.outcome == 'failure'
-              with:
-                  token_format: access_token
-                  credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-            - name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@v1
             # do this step as early as possible, so that Slack Notify failure has the secret
             - name: Get Secrets from GCP
               id: "secrets"
@@ -193,7 +186,7 @@ jobs:
                   args+=( "-kubeconfig=/home/gitpod/.kube/config" )
                   args+=( "-namespace=default" )
                   [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-                  args+=( "-timeout=60m" )
+                  args+=( "-timeout=90m" )
 
                   BASE_TESTS_DIR="$GITHUB_WORKSPACE/test/tests"
                   CONTENT_SERVICE_TESTS="$BASE_TESTS_DIR/components/content-service"
@@ -225,7 +218,8 @@ jobs:
                       fi
 
                       set +e
-                      go test -p 2 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
+                      # running tests in parallel saves time, but is flakey.
+                      go test -p 1 --parallel 1 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
                       RC=${PIPESTATUS[0]}
                       set -e
 
@@ -240,6 +234,7 @@ jobs:
               uses: test-summary/action@v2
               with:
                   paths: "test/tests/**/TEST-*.xml"
+                  show: "all"
               if: always()
             - name: Slack Notification
               uses: rtCamp/action-slack-notify@v2

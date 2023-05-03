@@ -2053,6 +2053,7 @@ type UpdateOwnAuthProviderParams struct {
 type CreateWorkspaceOptions struct {
 	StartWorkspaceOptions
 	ContextURL                         string `json:"contextUrl,omitempty"`
+	OrganizationId                     string `json:"organizationId,omitempty"`
 	IgnoreRunningWorkspaceOnSameCommit bool   `json:"ignoreRunningWorkspaceOnSameCommit,omitemopty"`
 	IgnoreRunningPrebuild              bool   `json:"ignoreRunningPrebuild,omitemopty"`
 	AllowUsingPreviousPrebuilds        bool   `json:"allowUsingPreviousPrebuilds,omitemopty"`

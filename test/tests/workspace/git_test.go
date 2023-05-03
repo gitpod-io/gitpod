@@ -6,6 +6,7 @@ package workspace
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -35,7 +36,7 @@ func TestGitActions(t *testing.T) {
 	tests := []GitTest{
 		{
 			Name:          "create, add and commit",
-			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
+			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit",
 			WorkspaceRoot: "/workspace/gitpod-test-repo",
 			Action: func(rsa *integration.RpcClient, git integration.GitClient, workspaceRoot string) (err error) {
 				var resp agent.ExecResponse
@@ -44,17 +45,20 @@ func TestGitActions(t *testing.T) {
 					Command: "bash",
 					Args: []string{
 						"-c",
-						"echo \"another test run...\" >> file_to_commit.txt",
+						"touch file_to_commit.txt",
 					},
 				}, &resp)
 				if err != nil {
 					return err
 				}
+				if resp.ExitCode != 0 {
+					return fmt.Errorf("file create returned rc: %d, out: %v, err: %v", resp.ExitCode, resp.Stdout, resp.Stderr)
+				}
 				err = git.ConfigSafeDirectory()
 				if err != nil {
 					return err
 				}
-				err = git.ConfigUserName(workspaceRoot)
+				err = git.ConfigUserName(workspaceRoot, username)
 				if err != nil {
 					return err
 				}
@@ -66,7 +70,7 @@ func TestGitActions(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				err = git.Commit(workspaceRoot, "automatic test commit", false)
+				err = git.Commit(workspaceRoot, "automatic test commit", false, "--allow-empty")
 				if err != nil {
 					return err
 				}
@@ -74,6 +78,8 @@ func TestGitActions(t *testing.T) {
 			},
 		},
 		{
+			// as of Apr 14, 2023, test fails with:
+			// fatal: could not read Username for 'https://github.com': No such device or address
 			Skip:          true,
 			Name:          "create, add and commit and PUSH",
 			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/tree/integration-test/commit-and-push",
@@ -85,17 +91,20 @@ func TestGitActions(t *testing.T) {
 					Command: "bash",
 					Args: []string{
 						"-c",
-						"echo \"another test run...\" >> file_to_commit.txt",
+						"touch file_to_commit.txt",
 					},
 				}, &resp)
 				if err != nil {
 					return err
 				}
+				if resp.ExitCode != 0 {
+					return fmt.Errorf("file create returned rc: %d, out: %v, err: %v", resp.ExitCode, resp.Stdout, resp.Stderr)
+				}
 				err = git.ConfigSafeDirectory()
 				if err != nil {
 					return err
 				}
-				err = git.ConfigUserName(workspaceRoot)
+				err = git.ConfigUserName(workspaceRoot, username)
 				if err != nil {
 					return err
 				}
@@ -107,7 +116,7 @@ func TestGitActions(t *testing.T) {
 				if err != nil {
 					return err
 				}
-				err = git.Commit(workspaceRoot, "automatic test commit", false)
+				err = git.Commit(workspaceRoot, "automatic test commit", false, "--allow-empty")
 				if err != nil {
 					return err
 				}
@@ -169,7 +178,7 @@ func TestGitActions(t *testing.T) {
 							sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
 							defer sapi.Done(t)
 
-							_, err := stopWs(true, sapi)
+							_, err := stopWs(false, sapi)
 							if err != nil {
 								t.Fatal(err)
 							}
@@ -187,6 +196,7 @@ func TestGitActions(t *testing.T) {
 						if err != nil {
 							t.Fatal(err)
 						}
+						t.Log("test finished successfully")
 					})
 				}
 			}

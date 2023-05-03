@@ -416,7 +416,7 @@ func (c *ComponentAPI) GetUserId(user string) (userId string, err error) {
 	if user == "" {
 		row = db.QueryRow(`SELECT id FROM d_b_user WHERE NOT id = "` + gitpodBuiltinUserID + `" AND blocked = FALSE AND markedDeleted = FALSE`)
 	} else {
-		row = db.QueryRow("SELECT id FROM d_b_user WHERE name = ?", user)
+		row = db.QueryRow("SELECT id FROM d_b_user WHERE name = ? AND blocked != 1 and markedDeleted != 1", user)
 	}
 
 	var id string
@@ -459,7 +459,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	}
 
 	var userId string
-	err = db.QueryRow(`SELECT id FROM d_b_user WHERE name = ?`, username).Scan(&userId)
+	err = db.QueryRow(`SELECT id FROM d_b_user WHERE name = ? and markedDeleted != 1 and blocked != 1`, username).Scan(&userId)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return "", err
 	}
@@ -485,7 +485,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	}
 
 	var authId string
-	err = db.QueryRow(`SELECT authId FROM d_b_identity WHERE userId = ?`, userId).Scan(&authId)
+	err = db.QueryRow(`SELECT authId FROM d_b_identity WHERE userId = ? and deleted != 1`, userId).Scan(&authId)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return "", err
 	}
@@ -504,7 +504,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	}
 
 	var cnt int
-	err = db.QueryRow(`SELECT COUNT(1) AS cnt FROM d_b_token_entry WHERE authId = ?`, authId).Scan(&cnt)
+	err = db.QueryRow(`SELECT COUNT(1) AS cnt FROM d_b_token_entry WHERE authId = ? and deleted != 1`, authId).Scan(&cnt)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return "", err
 	}

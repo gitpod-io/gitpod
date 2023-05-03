@@ -297,7 +297,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	stopWs = stopWsF(t, req.Id, req.Metadata.MetaId, api, req.Type == wsmanapi.WorkspaceType_PREBUILD)
 	defer func() {
 		if err != nil {
-			_, _ = stopWs(false, api)
+			_, _ = stopWs(true, api)
 		}
 	}()
 
@@ -365,9 +365,21 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 
 	var resp *protocol.WorkspaceCreationResult
 	for i := 0; i < 3; i++ {
-		t.Logf("attemp to create the workspace: %s", opts.ContextURL)
+		u, _ := api.GetUserId(username)
+		t.Logf("attempt to create the workspace as user %v, with context %v\n", u, opts.ContextURL)
+
+		teams, _ := server.GetTeams(cctx)
+		var orgId string
+		if len(teams) == 0 {
+			// hack: there might be a better value to use here
+			orgId = u
+		} else {
+			orgId = teams[0].ID
+		}
+
 		resp, err = server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
 			ContextURL:                         opts.ContextURL,
+			OrganizationId:                     orgId,
 			IgnoreRunningPrebuild:              true,
 			IgnoreRunningWorkspaceOnSameCommit: true,
 			StartWorkspaceOptions: protocol.StartWorkspaceOptions{
@@ -396,18 +408,22 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 		break
 	}
 
-	t.Logf("attemp to get the workspace information: %s", resp.CreatedWorkspaceID)
-
+	t.Logf("attempt to get the workspace information: %s", resp.CreatedWorkspaceID)
+	launchStart := time.Now()
 	var wi *protocol.WorkspaceInfo
 	for i := 0; i < 3; i++ {
-		wi, err = server.GetWorkspace(ctx, resp.CreatedWorkspaceID)
+		launchDuration := time.Since(launchStart)
+		wi, err = server.GetWorkspace(cctx, resp.CreatedWorkspaceID)
 		if err != nil || wi.LatestInstance == nil {
 			time.Sleep(2 * time.Second)
+			t.Logf("error or nil instance since %s", launchDuration)
 			continue
 		}
 		if wi.LatestInstance.Status.Phase != "preparing" {
+			t.Logf("not preparing")
 			break
 		}
+		t.Logf("sleeping")
 		time.Sleep(5 * time.Second)
 	}
 	if wi == nil || wi.LatestInstance == nil {
@@ -423,7 +439,7 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 
 	if wi.LatestInstance.Status.Conditions.NeededImageBuild {
 		for ctx.Err() == nil {
-			wi, err = server.GetWorkspace(ctx, resp.CreatedWorkspaceID)
+			wi, err = server.GetWorkspace(cctx, resp.CreatedWorkspaceID)
 			if err != nil {
 				return nil, nil, xerrors.Errorf("cannot get workspace: %w", err)
 			}
@@ -437,12 +453,12 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 	stopWs = stopWsF(t, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api, false)
 	defer func() {
 		if err != nil {
-			_, _ = stopWs(false, api)
+			_, _ = stopWs(true, api)
 		}
 	}()
 
 	t.Log("wait for workspace to be fully up and running")
-	wsState, err := WaitForWorkspaceStart(t, ctx, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api)
+	wsState, err := WaitForWorkspaceStart(t, cctx, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("failed to wait for the workspace to start up: %w", err)
 	}
