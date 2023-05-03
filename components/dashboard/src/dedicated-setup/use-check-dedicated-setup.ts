@@ -8,7 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useQueryParams } from "../hooks/use-query-params";
 import { getGitpodService } from "../service/service";
 import { useFeatureFlag } from "../data/featureflag-query";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { noPersistence } from "../data/setup";
 
 const FORCE_SETUP_PARAM = "dedicated-setup";
 const FORCE_SETUP_PARAM_VALUE = "force";
@@ -16,24 +17,45 @@ const FORCE_SETUP_PARAM_VALUE = "force";
 export const useCheckDedicatedSetup = () => {
     // track if user has finished onboarding so we avoid showing the onboarding
     // again in case onboarding state doesn't updated right away
+    const [loading, setLoading] = useState(true);
+    const [areShowing, setAreShowing] = useState(false);
     const [hasCompleted, setHasCompleted] = useState(false);
-    const params = useQueryParams();
-    const { data: onboardingState, isLoading } = useOnboardingState();
-    const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
-    console.log("enableDedicatedOnboardingFlow", enableDedicatedOnboardingFlow);
-    console.log("onboardingState", onboardingState);
 
-    const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
-    const needsOnboarding = onboardingState?.isCompleted !== true;
+    const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
+    const params = useQueryParams();
+
+    // const { data: onboardingState, isLoading } = useOnboardingState();
+    // console.log("enableDedicatedOnboardingFlow", enableDedicatedOnboardingFlow);
+
+    // const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
 
     const markCompleted = useCallback(() => setHasCompleted(true), []);
+
+    // We want to check once up front if we need to show the setup flow
+    // Once we've decided, we don't want to rely on derived state to determine it anymore
+    // so we can avoid any flashing of the setup flow as it progresses and we need to do things
+    // like re-fetch orgs after creation, or update signed in user
+    useEffect(() => {
+        getGitpodService()
+            .server.getOnboardingState()
+            .then((state) => {
+                console.log("getOnboardingState", state, enableDedicatedOnboardingFlow);
+                const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
+                const needsOnboarding = state.isCompleted !== true;
+                setAreShowing(enableDedicatedOnboardingFlow && (forceSetup || needsOnboarding));
+                setLoading(false);
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return {
         // Feature flag must be on
         // Either setup forced via query param, or onboarding state is not completed
         // Also don't show if we've marked it as completed (user finished last step)
-        showOnboarding: enableDedicatedOnboardingFlow && (forceSetup || needsOnboarding) && !hasCompleted,
-        isLoading: enableDedicatedOnboardingFlow && isLoading,
+        // showOnboarding: enableDedicatedOnboardingFlow && (forceSetup || needsOnboarding) && !hasCompleted,
+        showOnboarding: areShowing && !hasCompleted,
+        // isLoading: enableDedicatedOnboardingFlow && isLoading,
+        isLoading: loading,
         markCompleted,
     };
 };
@@ -42,7 +64,7 @@ export const useOnboardingState = () => {
     const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
 
     return useQuery(
-        ["onboarding-state"],
+        noPersistence(["onboarding-state"]),
         async () => {
             return getGitpodService().server.getOnboardingState();
         },

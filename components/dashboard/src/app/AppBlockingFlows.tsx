@@ -40,7 +40,7 @@ export const AppBlockingFlows: FC = ({ children }) => {
 
     // Handle dedicated onboarding if necessary
     if (checkDedicatedSetup.showOnboarding) {
-        return <DedicatedSetup />;
+        return <DedicatedSetup onComplete={() => checkDedicatedSetup.markCompleted()} />;
     }
 
     // New user onboarding flow

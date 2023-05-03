@@ -17,9 +17,11 @@ import { Delayed } from "../components/Delayed";
 import { SpinnerLoader } from "../components/Loader";
 import { OrganizationInfo } from "../data/organizations/orgs-query";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
-import { useCheckDedicatedSetup } from "./use-check-dedicated-setup";
 
-const DedicatedSetup: FC = () => {
+type Props = {
+    onComplete: () => void;
+};
+const DedicatedSetup: FC<Props> = ({ onComplete }) => {
     const currentOrg = useCurrentOrg();
     const oidcClients = useOIDCClientsQuery();
     console.log("currentOrg", currentOrg);
@@ -46,7 +48,7 @@ const DedicatedSetup: FC = () => {
     }
 
     // Delay rendering until we have data so we can default to the correct step
-    return <DedicatedSetupSteps org={currentOrg.data} config={ssoConfig} />;
+    return <DedicatedSetupSteps org={currentOrg.data} config={ssoConfig} onComplete={onComplete} />;
 };
 
 export default DedicatedSetup;
@@ -62,10 +64,10 @@ type StepsValue = typeof STEPS[keyof typeof STEPS];
 type DedicatedSetupStepsProps = {
     org?: OrganizationInfo;
     config?: OIDCClientConfig;
+    onComplete: () => void;
 };
-const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config }) => {
+const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config, onComplete }) => {
     console.log("steps org", org);
-    const { markCompleted } = useCheckDedicatedSetup();
     const { dropConfetti } = useConfetti();
     const history = useHistory();
 
@@ -81,9 +83,9 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config }) => {
     }, [dropConfetti]);
 
     const handleEndSetup = useCallback(() => {
-        markCompleted();
         history.push("/settings/git");
-    }, [history, markCompleted]);
+        onComplete();
+    }, [history, onComplete]);
 
     return (
         <>
