@@ -92,7 +92,8 @@ export function useCurrentOrg(): { data?: OrganizationInfo; isLoading: boolean }
         orgId = orgIdParam;
     }
     let org = orgs.data.find((org) => org.id === orgId);
-    if (!org && user?.additionalData?.isMigratedToTeamOnlyAttribution) {
+    // TODO: Figure out how to handle this...
+    if (!org && (user?.additionalData?.isMigratedToTeamOnlyAttribution || true)) {
         // if the user is migrated to team-only attribution, we return the first org
         org = orgs.data[0];
     }
