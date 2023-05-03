@@ -17,6 +17,7 @@ import { Delayed } from "../components/Delayed";
 import { SpinnerLoader } from "../components/Loader";
 import { OrganizationInfo } from "../data/organizations/orgs-query";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
+import { useQueryClient } from "@tanstack/react-query";
 
 type Props = {
     onComplete: () => void;
@@ -70,6 +71,7 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config, onComp
     console.log("steps org", org);
     const { dropConfetti } = useConfetti();
     const history = useHistory();
+    const client = useQueryClient();
 
     // If we have an org w/ a name, we can skip the first step and go to sso setup
     const initialStep = org && org.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
@@ -85,7 +87,8 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config, onComp
     const handleEndSetup = useCallback(() => {
         history.push("/settings/git");
         onComplete();
-    }, [history, onComplete]);
+        client.resetQueries();
+    }, [client, history, onComplete]);
 
     return (
         <>

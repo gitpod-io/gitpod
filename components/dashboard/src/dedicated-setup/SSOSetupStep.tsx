@@ -37,7 +37,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
-        const [user] = await Promise.all([getGitpodService().server.getLoggedInUser()]);
+        const user = await getGitpodService().server.getLoggedInUser();
         setUser(user);
     }, [setUser]);
 

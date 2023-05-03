@@ -33,13 +33,13 @@ export const useCheckDedicatedSetup = () => {
     // If needsOnboarding changes to true, we want to set flow as in progress
     // This helps us not close the flow prematurely (i.e. onboardingState.completed = true but we want to show the completed page)
     useEffect(() => {
-        if (needsOnboarding && !inProgress) {
+        if (enableDedicatedOnboardingFlow && needsOnboarding && !inProgress) {
             setInProgress(true);
         }
-    }, [forceSetup, inProgress, needsOnboarding, onboardingState?.isCompleted]);
+    }, [enableDedicatedOnboardingFlow, forceSetup, inProgress, needsOnboarding]);
 
     return {
-        showOnboarding: enableDedicatedOnboardingFlow && inProgress,
+        showOnboarding: inProgress,
         isLoading: enableDedicatedOnboardingFlow && isLoading,
         markCompleted,
     };
