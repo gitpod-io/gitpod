@@ -25,7 +25,7 @@ export const useOIDCClientsQuery = () => {
 
             return clientConfigs;
         },
-        enabled: !isLoading,
+        enabled: !isLoading && !!organization,
     });
 };
 

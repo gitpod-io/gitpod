@@ -90,7 +90,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
                 <Subheading>
                     {/* TODO: Find what link we want to use here */}
                     Enable single sign-on for your organization using the OpenID Connect (OIDC) standard.{" "}
-                    <a href="https://gitpod.io" target="_blank" rel="noreferrer noopener">
+                    <a href="https://gitpod.io" target="_blank" rel="noreferrer noopener" className="gp-link">
                         Learn more
                     </a>
                 </Subheading>

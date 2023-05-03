@@ -22,7 +22,7 @@ import { useCheckDedicatedSetup } from "./use-check-dedicated-setup";
 const DedicatedSetup: FC = () => {
     const currentOrg = useCurrentOrg();
     const oidcClients = useOIDCClientsQuery();
-
+    console.log("currentOrg", currentOrg);
     // if a config already exists, select first active, or first config
     const ssoConfig = useMemo(() => {
         if (!oidcClients.data) {
@@ -37,7 +37,7 @@ const DedicatedSetup: FC = () => {
         return oidcClients.data?.[0];
     }, [oidcClients.data]);
 
-    if (currentOrg.isLoading || oidcClients.isLoading) {
+    if (currentOrg.isLoading) {
         return (
             <Delayed>
                 <SpinnerLoader />
@@ -64,6 +64,7 @@ type DedicatedSetupStepsProps = {
     config?: OIDCClientConfig;
 };
 const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config }) => {
+    console.log("steps org", org);
     const { markCompleted } = useCheckDedicatedSetup();
     const { dropConfetti } = useConfetti();
     const history = useHistory();

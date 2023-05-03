@@ -47,9 +47,9 @@ export const useOnboardingState = () => {
             return getGitpodService().server.getOnboardingState();
         },
         {
-            // TODO: determine if this is helpful to cache longer
-            staleTime: 1000 * 60 * 60 * 1, // 1h
-            cacheTime: 1000 * 60 * 60 * 1, // 1h
+            // // TODO: determine if this is helpful to cache longer
+            // staleTime: 1000 * 60 * 60 * 1, // 1h
+            // cacheTime: 1000 * 60 * 60 * 1, // 1h
             // Only query if feature flag is enabled
             enabled: enableDedicatedOnboardingFlow,
         },

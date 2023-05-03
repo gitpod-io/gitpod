@@ -4009,13 +4009,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // A shortcut for gitpod.io, but also for Dedicated PoC.
         // This is controlled by feature flag (per Gitpod host.)
-        if (!this.enableDedicatedOnboardingFlow) {
-            console.log("enableDedicatedOnboardingFlow is disabled, return isCompleted:true");
-            return {
-                isCompleted: true,
-                hasAnyOrg: true,
-            };
-        }
+        // TODO: figure out how to enable this feature flag check w/o it having a lag (comes back false, then true, relies on UI making multiple calls to get the correct value)
+        // if (!this.enableDedicatedOnboardingFlow) {
+        //     console.log("enableDedicatedOnboardingFlow is disabled, return isCompleted:true");
+        //     return {
+        //         isCompleted: true,
+        //         hasAnyOrg: true,
+        //     };
+        // }
 
         // Optimized check for completed setup
         const hasAnyOrgWithActiveSSO = await this.teamDB.hasAnyOrgWithActiveSSO();
