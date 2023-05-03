@@ -56,3 +56,6 @@ components/server/*.log
 
 # Jetbrains workspace files
 .idea/misc.xml
+
+# Local redis dump files
+dump.rdb

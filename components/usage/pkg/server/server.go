@@ -24,6 +24,10 @@ import (
 	"github.com/gitpod-io/gitpod/usage/pkg/apiv1"
 	"github.com/gitpod-io/gitpod/usage/pkg/stripe"
 	"gorm.io/gorm"
+
+	"github.com/go-redsync/redsync/v4"
+	"github.com/go-redsync/redsync/v4/redis/goredis/v9"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type Config struct {
@@ -46,8 +50,16 @@ type Config struct {
 	// StripePrices configure which Stripe Price IDs should be used
 	StripePrices stripe.StripePrices `json:"stripePrices"`
 
+	// Redis configures the connection to Redis
+	Redis RedisConfiguration `json:"redis"`
+
 	// Where to find the gRPC/Connect APIs on the server component
 	ServerAddress string `json:"serverAddress"`
+}
+
+type RedisConfiguration struct {
+	// Address configures the redis connection of this component
+	Address string `json:"address"`
 }
 
 func Start(cfg Config, version string) error {
@@ -108,6 +120,13 @@ func Start(cfg Config, version string) error {
 		stripeClient = c
 	}
 
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: cfg.Redis.Address,
+	})
+
+	pool := goredis.NewPool(redisClient)
+	redsyncPool := redsync.New(pool)
+
 	var schedulerJobSpecs []scheduler.JobSpec
 	if cfg.LedgerSchedule != "" {
 		// we do not run the controller if there is no schedule defined.
@@ -117,7 +136,7 @@ func Start(cfg Config, version string) error {
 		}
 
 		jobSpec, err := scheduler.NewLedgerTriggerJobSpec(schedule,
-			scheduler.NewLedgerTrigger(v1.NewUsageServiceClient(selfConnection), v1.NewBillingServiceClient(selfConnection)),
+			scheduler.NewLedgerTrigger(v1.NewUsageServiceClient(selfConnection), v1.NewBillingServiceClient(selfConnection), redsyncPool, 30*time.Second),
 		)
 		if err != nil {
 			return fmt.Errorf("failed to setup ledger trigger job: %w", err)
@@ -135,7 +154,7 @@ func Start(cfg Config, version string) error {
 			return fmt.Errorf("failed to parse reset usage schedule as duration: %w", err)
 		}
 
-		spec, err := scheduler.NewResetUsageJobSpec(schedule, v1.NewUsageServiceClient(selfConnection))
+		spec, err := scheduler.NewResetUsageJobSpec(schedule, v1.NewUsageServiceClient(selfConnection), redsyncPool, 30*time.Second)
 		if err != nil {
 			return fmt.Errorf("failed to setup reset usage job: %w", err)
 		}

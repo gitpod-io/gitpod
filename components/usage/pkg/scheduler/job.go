@@ -6,9 +6,9 @@ package scheduler
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/robfig/cron"
 	"time"
+
+	"github.com/robfig/cron"
 )
 
 type Job interface {
@@ -28,40 +28,8 @@ func NewPeriodicJobSpec(period time.Duration, id string, job Job) (JobSpec, erro
 	}
 
 	return JobSpec{
-		Job:      WithoutConcurrentRun(job),
+		Job:      job,
 		ID:       id,
 		Schedule: parsed,
 	}, nil
-}
-
-// WithoutConcurrentRun wraps a Job and ensures the job does not concurrently
-func WithoutConcurrentRun(j Job) Job {
-	return &preventConcurrentInvocation{
-		job:     j,
-		running: make(chan struct{}, 1),
-	}
-}
-
-type preventConcurrentInvocation struct {
-	job     Job
-	running chan struct{}
-}
-
-func (r *preventConcurrentInvocation) Run() error {
-	select {
-	// attempt a write to signal we want to run
-	case r.running <- struct{}{}:
-		// we managed to write, there's no other job executing. Cases are not fall through so we continue executing our main logic.
-		defer func() {
-			// signal job completed
-			<-r.running
-		}()
-
-		err := r.job.Run()
-		return err
-	default:
-		// we could not write, so another instance is already running. Skip current run.
-		log.Infof("Job already running, skipping invocation.")
-		return nil
-	}
 }

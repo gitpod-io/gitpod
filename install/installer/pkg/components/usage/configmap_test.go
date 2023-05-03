@@ -42,6 +42,9 @@ func TestConfigMap_ContainsSchedule(t *testing.T) {
 		}
 	   },
 	   "serverAddress": "server.test-namespace.svc.cluster.local:9877",
+	   "redis": {
+		 "address": "redis.test-namespace.svc.cluster.local:6379"
+	   },
        "server": {
          "services": {
            "grpc": {
