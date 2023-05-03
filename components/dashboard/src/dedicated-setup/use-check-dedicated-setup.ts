@@ -8,11 +8,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useQueryParams } from "../hooks/use-query-params";
 import { getGitpodService } from "../service/service";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useCallback, useState } from "react";
 
 const FORCE_SETUP_PARAM = "dedicated-setup";
 const FORCE_SETUP_PARAM_VALUE = "force";
 
 export const useCheckDedicatedSetup = () => {
+    // track if user has finished onboarding so we avoid showing the onboarding
+    // again in case onboarding state doesn't updated right away
+    const [hasCompleted, setHasCompleted] = useState(false);
     const params = useQueryParams();
     const { data: onboardingState, isLoading } = useOnboardingState();
     const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
@@ -20,11 +24,15 @@ export const useCheckDedicatedSetup = () => {
     const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
     const needsOnboarding = onboardingState?.isCompleted !== true;
 
+    const markCompleted = useCallback(() => setHasCompleted(true), []);
+
     return {
         // Feature flag must be on
         // Either setup forced via query param, or onboarding state is not completed
-        showOnboarding: enableDedicatedOnboardingFlow && (forceSetup || needsOnboarding),
+        // Also don't show if we've marked it as completed (user finished last step)
+        showOnboarding: enableDedicatedOnboardingFlow && (forceSetup || needsOnboarding) && !hasCompleted,
         isLoading,
+        markCompleted,
     };
 };
 

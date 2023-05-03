@@ -17,6 +17,7 @@ import { Delayed } from "../components/Delayed";
 import { SpinnerLoader } from "../components/Loader";
 import { OrganizationInfo } from "../data/organizations/orgs-query";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
+import { useCheckDedicatedSetup } from "./use-check-dedicated-setup";
 
 const DedicatedSetup: FC = () => {
     const currentOrg = useCurrentOrg();
@@ -63,6 +64,7 @@ type DedicatedSetupStepsProps = {
     config?: OIDCClientConfig;
 };
 const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config }) => {
+    const { markCompleted } = useCheckDedicatedSetup();
     const { dropConfetti } = useConfetti();
     const history = useHistory();
 
@@ -78,8 +80,9 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, config }) => {
     }, [dropConfetti]);
 
     const handleEndSetup = useCallback(() => {
+        markCompleted();
         history.push("/settings/git");
-    }, [history]);
+    }, [history, markCompleted]);
 
     return (
         <>
