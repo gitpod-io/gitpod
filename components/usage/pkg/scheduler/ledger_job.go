@@ -24,8 +24,9 @@ type ClientsConstructor func() (v1.UsageServiceClient, v1.BillingServiceClient, 
 
 func NewLedgerTrigger(clientConstructor ClientsConstructor, sync *redsync.Redsync, mutexExpiry time.Duration) *LedgerJob {
 	return &LedgerJob{
-		sync:          sync,
-		mutexDuration: mutexExpiry,
+		sync:               sync,
+		mutexDuration:      mutexExpiry,
+		clientsConstructor: clientConstructor,
 	}
 }
 
