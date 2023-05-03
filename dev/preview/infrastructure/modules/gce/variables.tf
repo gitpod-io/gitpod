@@ -15,7 +15,7 @@ variable "preview_namespace" {
 
 variable "vm_type" {
   type    = string
-  default = "n2d-standard-8"
+  default = "n2d-standard-16"
 }
 
 variable "ssh_key" {
@@ -61,7 +61,7 @@ variable "gcp_project_dns" {
 
 variable "use_spot" {
   type        = bool
-  default     = false
+  default     = true
   description = "Flag to decide whether to use spot instances"
 }
 

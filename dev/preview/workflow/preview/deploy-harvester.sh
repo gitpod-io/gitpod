@@ -33,7 +33,8 @@ shopt -os allexport
 
 terraform_init
 
-source "${SCRIPT_PATH}/determine-env.sh"
+# avoid harvester entirely
+export TF_VAR_infra_provider="gce"
 
 PLAN_EXIT_CODE=0
 terraform_plan || PLAN_EXIT_CODE=$?

@@ -80,5 +80,5 @@ locals {
     ssh_authorized_keys = var.ssh_key
   })
 
-  machine_type = var.with_large_vm ? "n2d-standard-16" : var.vm_type
+  machine_type = var.with_large_vm ? "n2d-standard-32" : var.vm_type
 }
