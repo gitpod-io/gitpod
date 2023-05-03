@@ -175,6 +175,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOrgAuthProviders(params: GitpodServer.GetOrgAuthProviderParams): Promise<AuthProviderEntry[]>;
     deleteOrgAuthProvider(params: GitpodServer.DeleteOrgAuthProviderParams): Promise<void>;
 
+    // Dedicated, Dedicated, Dedicated
+    getOnboardingState(): Promise<GitpodServer.OnboardingState>;
+
     // Projects
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
     createProject(params: CreateProjectParams): Promise<Project>;
@@ -472,6 +475,17 @@ export namespace GitpodServer {
         name?: string;
         type: GitpodTokenType;
         scopes?: string[];
+    }
+    export interface OnboardingState {
+        /**
+         * Whether this Gitpod instance is already configured with SSO.
+         */
+        readonly isCompleted: boolean;
+
+        /**
+         * Whether this Gitpod instance has at least one org.
+         */
+        readonly hasAnyOrg: boolean;
     }
 }
 
