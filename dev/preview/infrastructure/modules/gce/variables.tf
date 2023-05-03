@@ -61,7 +61,7 @@ variable "gcp_project_dns" {
 
 variable "use_spot" {
   type        = bool
-  default     = false
+  default     = true
   description = "Flag to decide whether to use spot instances"
 }
 
