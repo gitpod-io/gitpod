@@ -7,7 +7,6 @@ package baseserver
 import (
 	"context"
 	"fmt"
-	"net"
 	"net/http"
 	"testing"
 	"time"
@@ -39,27 +38,8 @@ func MustUseRandomLocalAddress(t *testing.T) *ServerConfiguration {
 	t.Helper()
 
 	return &ServerConfiguration{
-		Address: fmt.Sprintf("localhost:%d", MustFindFreePort(t)),
+		Address: "localhost:0",
 	}
-}
-
-func MustFindFreePort(t *testing.T) int {
-	t.Helper()
-
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
-	if err != nil {
-		t.Fatalf("cannot find free port: %v", err)
-		return 0
-	}
-
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		t.Fatalf("cannot find free port: %v", err)
-		return 0
-	}
-	defer l.Close()
-
-	return l.Addr().(*net.TCPAddr).Port
 }
 
 // StartServerForTests starts the server for test purposes.

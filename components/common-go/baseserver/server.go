@@ -368,7 +368,14 @@ func (s *Server) HealthAddr() string {
 func (s *Server) HTTPAddress() string {
 	return httpAddress(s.options.config.Services.HTTP, s.httpListener)
 }
-func (s *Server) GRPCAddress() string { return s.options.config.Services.GRPC.GetAddress() }
+func (s *Server) GRPCAddress() string {
+	// If the server hasn't started, it won't have a listener yet
+	if s.grpcListener == nil {
+		return ""
+	}
+
+	return s.grpcListener.Addr().String()
+}
 
 const (
 	BuiltinDebugPort   = 6060

@@ -29,7 +29,7 @@ func TestServer_StartStop(t *testing.T) {
 	baseserver.StartServerForTests(t, srv)
 
 	require.Equal(t, "http://127.0.0.1:8765", srv.HTTPAddress())
-	require.Equal(t, "localhost:8766", srv.GRPCAddress())
+	require.Equal(t, "127.0.0.1:8766", srv.GRPCAddress())
 	require.NoError(t, srv.Close())
 }
 
@@ -49,15 +49,11 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 			var opts []baseserver.Option
 			opts = append(opts, baseserver.WithUnderTest())
 			if test.StartHTTP {
-				opts = append(opts, baseserver.WithHTTP(&baseserver.ServerConfiguration{
-					Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
-				}))
+				opts = append(opts, baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)))
 			}
 
 			if test.StartGRPC {
-				opts = append(opts, baseserver.WithGRPC(&baseserver.ServerConfiguration{
-					Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
-				}))
+				opts = append(opts, baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)))
 			}
 
 			srv, err := baseserver.New("test_server", opts...)
@@ -84,9 +80,7 @@ func TestServer_ServerCombinations_StartsAndStops(t *testing.T) {
 
 func TestServer_Metrics_gRPC(t *testing.T) {
 	ctx := context.Background()
-	srv := baseserver.NewForTests(t, baseserver.WithGRPC(&baseserver.ServerConfiguration{
-		Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
-	}))
+	srv := baseserver.NewForTests(t, baseserver.WithGRPC(baseserver.MustUseRandomLocalAddress(t)))
 
 	// At this point, there must be metrics registry available for use
 	require.NotNil(t, srv.MetricsRegistry())
@@ -113,9 +107,7 @@ func TestServer_Metrics_gRPC(t *testing.T) {
 }
 
 func TestServer_Metrics_HTTP(t *testing.T) {
-	srv := baseserver.NewForTests(t, baseserver.WithHTTP(&baseserver.ServerConfiguration{
-		Address: fmt.Sprintf("localhost:%d", baseserver.MustFindFreePort(t)),
-	}))
+	srv := baseserver.NewForTests(t, baseserver.WithHTTP(baseserver.MustUseRandomLocalAddress(t)))
 
 	// At this point, there must be metrics registry available for use
 	require.NotNil(t, srv.MetricsRegistry())
