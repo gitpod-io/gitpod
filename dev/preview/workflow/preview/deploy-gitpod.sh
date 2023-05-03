@@ -627,10 +627,4 @@ leeway run components:add-smith-token \
   -DPREVIEW_K3S_KUBE_CONTEXT="${PREVIEW_K3S_KUBE_CONTEXT}" \
   -DPREVIEW_NAMESPACE="${PREVIEW_NAMESPACE}"
 
-# Add experimental node label if ws-manager-mk2 is enabled.
-# Remove once mk2 workspaces no longer run on experimental nodes.
-if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
-  kubectl --kubeconfig "${PREVIEW_K3S_KUBE_PATH}" --context "${PREVIEW_K3S_KUBE_CONTEXT}" --namespace="${PREVIEW_NAMESPACE}" label nodes "${PREVIEW_K3S_KUBE_CONTEXT}" gitpod.io/experimental="true" --overwrite
-fi
-
 log_success "Installation is happy: https://${DOMAIN}/workspaces"

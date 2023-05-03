@@ -337,6 +337,11 @@ func createDefiniteWorkspacePod(sctx *startWorkspaceContext) (*corev1.Pod, error
 			Key:      "gitpod.io/experimental",
 			Operator: corev1.NodeSelectorOpExists,
 		})
+	} else {
+		matchExpressions = append(matchExpressions, corev1.NodeSelectorRequirement{
+			Key:      "gitpod.io/experimental",
+			Operator: corev1.NodeSelectorOpDoesNotExist,
+		})
 	}
 
 	affinity := &corev1.Affinity{
