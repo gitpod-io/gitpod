@@ -1206,6 +1206,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ),
             ),
         );
+
+        // we need to update old workspaces on the fly that didn't get an orgId because we lack attribution on their instances.
+        // this can be removed eventually.
+        if (user.additionalData?.isMigratedToTeamOnlyAttribution) {
+            try {
+                const userOrg = await this.userToTeamMigrationService.getUserOrganization(user);
+                await this.userToTeamMigrationService.updateWorkspacesOrganizationId(res, userOrg.id);
+            } catch (error) {
+                log.error({ userId: user.id }, "Error updating workspaces without orgId.", error);
+            }
+        }
         return res;
     }
 
@@ -1292,11 +1303,24 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     protected async internalGetWorkspace(id: string, db: WorkspaceDB): Promise<Workspace> {
-        const ws = await db.findById(id);
-        if (!ws) {
+        const workspace = await db.findById(id);
+        if (!workspace) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Workspace not found.");
         }
-        return ws;
+        if (!workspace.organizationId && this.user?.additionalData?.isMigratedToTeamOnlyAttribution) {
+            try {
+                log.info({ userId: this.user.id }, "Updating workspace without orgId.");
+                const userOrg = await this.userToTeamMigrationService.getUserOrganization(this.user);
+                const latestInstance = await this.workspaceDb.trace({}).findCurrentInstance(workspace.id);
+                this.userToTeamMigrationService.updateWorkspacesOrganizationId(
+                    [{ workspace, latestInstance }],
+                    userOrg.id,
+                );
+            } catch (error) {
+                log.error({ userId: this.user.id }, "Error updating workspaces without orgId.", error);
+            }
+        }
+        return workspace;
     }
 
     private async findRunningInstancesForContext(

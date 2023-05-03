@@ -158,4 +158,41 @@ describe("Migration Service", () => {
         const teams = await teamDB.findTeamsByUser(user.id);
         expect(teams[0].name).to.be.eq("X Organization");
     });
+
+    it("should update 'organizationId' for workspace without attributionId", async () => {
+        await wipeRepo();
+        const user = await userDB.newUser();
+        await userDB.storeUser(user);
+
+        const ws = await workspaceDB.store({
+            id: uuidv4(),
+            creationTime: new Date().toISOString(),
+            ownerId: user.id,
+            config: {},
+            context: {
+                title: "test",
+            },
+            contextURL: "https://gitpod.io",
+            type: "regular",
+            description: "test",
+        });
+
+        await workspaceDB.storeInstance({
+            id: uuidv4(),
+            creationTime: new Date().toISOString(),
+            region: "eu-west-1",
+            ideUrl: "https://ide.eu-west-1.aws.com",
+            workspaceImage: "test",
+            status: {
+                conditions: {},
+                phase: "stopped",
+            },
+            workspaceId: ws.id,
+        });
+
+        await migrationService.migrateUser(user);
+        const wsAndI = await workspaceDB.findWorkspaceAndInstance(ws.id);
+        const teams = await teamDB.findTeamsByUser(user.id);
+        expect(wsAndI?.organizationId).to.be.eq(teams[0].id);
+    });
 });

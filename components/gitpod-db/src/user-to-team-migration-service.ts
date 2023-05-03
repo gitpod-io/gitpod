@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AdditionalUserData, Team, User } from "@gitpod/gitpod-protocol";
+import { AdditionalUserData, Team, User, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { inject, injectable } from "inversify";
 import { ProjectDB } from "./project-db";
@@ -15,6 +15,7 @@ import { TypeORM } from "./typeorm/typeorm";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { UserDB } from "./user-db";
 import { Synchronizer } from "./typeorm/synchronizer";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 @injectable()
 export class UserToTeamMigrationService {
@@ -135,6 +136,13 @@ export class UserToTeamMigrationService {
         );
         log.info(ctx, "Migrated workspaces.", { teamId: team.id, result });
 
+        // Ensure there are no workspaces without an organizationId. This is necessary because very old workspace instance don't have an attributionId.
+        const workspaces = await this.workspaceDB.find({
+            userId: user.id,
+        });
+        await this.updateWorkspacesOrganizationId(workspaces, team.id);
+        log.info(ctx, "Updated workspaces.", { teamId: team.id });
+
         result = await conn.query("UPDATE d_b_usage SET attributionId = ? WHERE attributionId = ?", [
             newAttribution,
             oldAttribution,
@@ -152,5 +160,31 @@ export class UserToTeamMigrationService {
     async needsMigration(user: User): Promise<boolean> {
         const teams = await this.teamDB.findTeamsByUser(user.id);
         return teams.length === 0 || !user.additionalData?.isMigratedToTeamOnlyAttribution;
+    }
+
+    async updateWorkspacesOrganizationId(workspaces: WorkspaceInfo[], userOrgId: string): Promise<WorkspaceInfo[]> {
+        return await Promise.all(
+            workspaces.map(async (ws) => {
+                if (!ws.workspace.organizationId) {
+                    const attrId =
+                        ws.latestInstance?.usageAttributionId &&
+                        AttributionId.parse(ws.latestInstance.usageAttributionId);
+                    if (attrId && attrId.kind === "team") {
+                        ws.workspace.organizationId = attrId.teamId;
+                    } else {
+                        ws.workspace.organizationId = userOrgId;
+                    }
+                    await this.workspaceDB.updatePartial(ws.workspace.id, {
+                        organizationId: ws.workspace.organizationId,
+                    });
+                }
+                return ws;
+            }),
+        );
+    }
+
+    async getUserOrganization(user: User): Promise<Team> {
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+        return teams.find((t) => t.name === user.name || t.name === user.fullName) || teams[0];
     }
 }
