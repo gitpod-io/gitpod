@@ -24,11 +24,10 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AddressInfo } from "net";
 import { ConsensusLeaderQorum } from "./consensus/consensus-leader-quorum";
 import { RabbitMQConsensusLeaderMessenger } from "./consensus/rabbitmq-consensus-leader-messenger";
-import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
-import { PeriodicDbDeleter, TypeORM } from "@gitpod/gitpod-db/lib";
+import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { OneTimeSecretServer } from "./one-time-secret-server";
 import { Disposable, DisposableCollection, GitpodClient, GitpodServer } from "@gitpod/gitpod-protocol";
 import { BearerAuth, isBearerAuthError } from "./auth/bearer-authenticator";
@@ -47,7 +46,6 @@ import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
-import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
@@ -58,9 +56,8 @@ import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
-import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { ResourceLockedError } from "redlock";
 import { RedisMutex } from "./redis/mutex";
+import { JobRunner } from "./jobs/runner";
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -88,12 +85,11 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(BitbucketServerApp) protected readonly bitbucketServerApp: BitbucketServerApp;
     @inject(GitHubEnterpriseApp) protected readonly gitHubEnterpriseApp: GitHubEnterpriseApp;
 
+    @inject(JobRunner) protected readonly jobRunner: JobRunner;
+
     @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
-    @inject(WorkspaceGarbageCollector) protected readonly workspaceGC: WorkspaceGarbageCollector;
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
-    @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
-    @inject(WebhookEventGarbageCollector) protected readonly webhookEventGarbageCollector: WebhookEventGarbageCollector;
     @inject(LongRunningMigrationService) protected readonly migrationService: LongRunningMigrationService;
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
@@ -309,22 +305,11 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         await this.consensusMessenger.connect();
         await this.qorum.start();
 
-        // Start workspace garbage collector
-        this.workspaceGC.start().catch((err) => log.error("wsgc: error during startup", err));
-
-        // Start one-time secret GC
-        this.oneTimeSecretServer.startPruningExpiredSecrets();
-
-        // Start DB updater
-        this.startDbDeleter().catch((err) => log.error("starting DB deleter", err));
+        // Start periodic jobs
+        this.jobRunner.start();
 
         // Start long running migrations
         this.startLongRunningMigrations().catch((err) => log.error("long running migrations errored", err));
-
-        // Start WebhookEvent GC
-        this.webhookEventGarbageCollector
-            .start()
-            .catch((err) => log.error("webhook-event-gc: error during startup", err));
 
         if (!this.config.completeSnapshotJob?.disabled) {
             // Start Snapshot Service
@@ -350,35 +335,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             // sleep 5min
             await new Promise((resolve) => setTimeout(resolve, 5 * 60 * 1000));
         }
-    }
-
-    protected async startDbDeleter() {
-        if (!this.config.runDbDeleter) {
-            return;
-        }
-
-        const intervalMs = 30 * 1000;
-        repeat(async () => {
-            try {
-                await this.mutex.using(["database-deleter"], intervalMs, async (signal) => {
-                    try {
-                        await this.periodicDbDeleter.runOnce();
-                    } catch (err) {
-                        log.error("[PeriodicDbDeleter] error during run", err);
-                    }
-                });
-            } catch (err) {
-                if (err instanceof ResourceLockedError) {
-                    log.debug(
-                        "[PeriodicDbDeleter] failed to acquire database-deleter lock, another instance already has the lock",
-                        err,
-                    );
-                    return;
-                }
-
-                log.error("[PeriodicDbDeleter] failed to acquire database-deleter lock", err);
-            }
-        }, intervalMs); // deletion is never time-critical, so we should ensure we do not spam ourselves
     }
 
     protected async registerRoutes(app: express.Application) {

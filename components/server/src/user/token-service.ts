@@ -4,13 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject, postConstruct } from "inversify";
+import { injectable, inject } from "inversify";
 import { Token, Identity, User, TokenEntry } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { v4 as uuidv4 } from "uuid";
 import { TokenProvider } from "./token-provider";
-import { TokenGarbageCollector } from "./token-garbage-collector";
 
 @injectable()
 export class TokenService implements TokenProvider {
@@ -18,15 +17,7 @@ export class TokenService implements TokenProvider {
     static readonly GITPOD_PORT_AUTH_TOKEN_EXPIRY_MILLIS = 30 * 60 * 1000;
 
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(TokenGarbageCollector) protected readonly tokenGC: TokenGarbageCollector;
     @inject(UserDB) protected readonly userDB: UserDB;
-
-    @postConstruct()
-    init() {
-        /** no await */ this.tokenGC.start().catch((err) => {
-            /** ignore */
-        });
-    }
 
     protected getTokenForHostCache = new Map<string, Promise<Token>>();
 

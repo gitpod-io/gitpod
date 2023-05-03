@@ -48,8 +48,8 @@ import { ConsensusLeaderQorum } from "./consensus/consensus-leader-quorum";
 import { StorageClient } from "./storage/storage-client";
 import { ImageBuilderClientProvider, ImageBuilderClientCallMetrics } from "@gitpod/image-builder/lib";
 import { ImageSourceProvider } from "./workspace/image-source-provider";
-import { WorkspaceGarbageCollector } from "./workspace/garbage-collector";
-import { TokenGarbageCollector } from "./user/token-garbage-collector";
+import { WorkspaceGarbageCollector } from "./jobs/workspace-gc";
+import { TokenGarbageCollector } from "./jobs/token-gc";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { OneTimeSecretServer } from "./one-time-secret-server";
@@ -93,7 +93,7 @@ import {
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { VerificationService } from "./auth/verification-service";
-import { WebhookEventGarbageCollector } from "./projects/webhook-event-garbage-collector";
+import { WebhookEventGarbageCollector } from "./jobs/webhook-gc";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
@@ -130,6 +130,9 @@ import { RedisMutex } from "./redis/mutex";
 import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { StripeService } from "./user/stripe-service";
+import { JobRunner } from "./jobs/runner";
+import { DatabaseGarbageCollector } from "./jobs/database-gc";
+import { OTSGarbageCollector } from "./jobs/ots-gc";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -141,7 +144,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(TokenService).toSelf().inSingletonScope();
     bind(TokenProvider).toService(TokenService);
-    bind(TokenGarbageCollector).toSelf().inSingletonScope();
 
     bind(Authenticator).toSelf().inSingletonScope();
     bind(LoginCompletionHandler).toSelf().inSingletonScope();
@@ -227,7 +229,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ConsensusLeaderMessenger).toService(RabbitMQConsensusLeaderMessenger);
     bind(ConsensusLeaderQorum).toSelf().inSingletonScope();
 
-    bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
     bind(WorkspaceDownloadService).toSelf().inSingletonScope();
     bind(LivenessController).toSelf().inSingletonScope();
 
@@ -309,8 +310,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(VerificationService).toSelf().inSingletonScope();
 
-    bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
-
     bind(UsageServiceImpl).toSelf().inSingletonScope();
     bind(UsageService).toService(UsageServiceImpl);
 
@@ -354,6 +353,14 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(EntitlementServiceImpl).toSelf().inSingletonScope();
     bind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
     bind(BillingModes).to(BillingModesImpl).inSingletonScope();
+
+    // Periodic jobs
+    bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
+    bind(TokenGarbageCollector).toSelf().inSingletonScope();
+    bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
+    bind(DatabaseGarbageCollector).toSelf().inSingletonScope();
+    bind(OTSGarbageCollector).toSelf().inSingletonScope();
+    bind(JobRunner).toSelf().inSingletonScope();
 
     // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
     rebind(UsageService)
