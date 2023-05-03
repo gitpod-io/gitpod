@@ -1312,7 +1312,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 log.info({ userId: this.user.id }, "Updating workspace without orgId.");
                 const userOrg = await this.userToTeamMigrationService.getUserOrganization(this.user);
                 const latestInstance = await this.workspaceDb.trace({}).findCurrentInstance(workspace.id);
-                this.userToTeamMigrationService.updateWorkspacesOrganizationId(
+                await this.userToTeamMigrationService.updateWorkspacesOrganizationId(
                     [{ workspace, latestInstance }],
                     userOrg.id,
                 );
