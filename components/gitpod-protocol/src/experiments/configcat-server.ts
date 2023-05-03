@@ -33,7 +33,7 @@ export function getExperimentsClientForBackend(): Client {
     const configCatClient = configcat.createClient(sdkKey, {
         pollIntervalSeconds: 3 * 60, // 3 minutes
         requestTimeoutMs: 2000,
-        logger: configcat.createConsoleLogger(LogLevel.Error),
+        logger: configcat.createConsoleLogger(LogLevel.Debug),
         maxInitWaitTimeSeconds: 0,
         baseUrl: process.env.CONFIGCAT_BASE_URL,
     });

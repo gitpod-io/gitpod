@@ -4004,18 +4004,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    protected _getOnboardingState: GitpodServer.OnboardingState | undefined;
-
     async getOnboardingState(ctx: TraceContext): Promise<GitpodServer.OnboardingState> {
-        this.checkAndBlockUser("getOnboardingState");
+        // this.checkAndBlockUser("getOnboardingState");
 
-        if (this._getOnboardingState) {
-            return this._getOnboardingState;
-        }
+        const enableDedicatedOnboardingFlow = await this.configCatClientFactory().getValueAsync(
+            "enableDedicatedOnboardingFlow",
+            false,
+            {
+                gitpodHost: new URL(this.config.hostUrl.toString()).host,
+            },
+        );
+        console.log(`enableDedicatedOnboardingFlow = ${enableDedicatedOnboardingFlow}`);
 
         // A shortcut for gitpod.io, but also for Dedicated PoC.
         // This is controlled by feature flag (per Gitpod host.)
-        if (!this.enableDedicatedOnboardingFlow) {
+        if (!enableDedicatedOnboardingFlow) {
             return {
                 isCompleted: true,
                 hasAnyOrg: true,
@@ -4025,12 +4028,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Optimized check for completed setup
         const hasAnyOrgWithActiveSSO = await this.teamDB.hasAnyOrgWithActiveSSO();
         if (hasAnyOrgWithActiveSSO) {
+            console.log(`hasAnyOrgWithActiveSSO = true`);
             // Let's cache the state at least per connection.
-            this._getOnboardingState = {
+            return {
                 isCompleted: true,
                 hasAnyOrg: true,
             };
-            return this._getOnboardingState;
         }
 
         // Find useful details about the state of the Gitpod installation.
@@ -4042,6 +4045,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             "" /* empty search term returns any */,
         );
         const hasAnyOrg = rows.length > 0;
+        console.log(`hasAnyOrg = ${hasAnyOrg}`);
 
         return {
             isCompleted: false,
