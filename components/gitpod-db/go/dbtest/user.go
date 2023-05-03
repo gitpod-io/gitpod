@@ -70,7 +70,9 @@ func CreatUser(t *testing.T, conn *gorm.DB, user ...User) []User {
 	require.NoError(t, conn.CreateInBatches(&records, 1000).Error)
 
 	t.Cleanup(func() {
-		require.NoError(t, conn.Where(ids).Delete(&User{}).Error)
+		if len(ids) > 0 {
+			require.NoError(t, conn.Where(ids).Delete(&User{}).Error)
+		}
 	})
 
 	return records

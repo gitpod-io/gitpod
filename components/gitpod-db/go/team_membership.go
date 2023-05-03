@@ -6,6 +6,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -40,18 +41,52 @@ const (
 	TeamMembershipRole_Member = TeamMembershipRole("member")
 )
 
-func ListTeamMembershipsForUserIDs(ctx context.Context, conn *gorm.DB, userIDs []uuid.UUID) ([]TeamMembership, error) {
-	if len(userIDs) == 0 {
-		return nil, nil
+func GetTeamMembership(ctx context.Context, conn *gorm.DB, userID, teamID uuid.UUID) (TeamMembership, error) {
+	if userID == uuid.Nil {
+		return TeamMembership{}, errors.New("user ID must not be empty")
 	}
 
-	var memberships []TeamMembership
+	if teamID == uuid.Nil {
+		return TeamMembership{}, errors.New("team ID must not be empty")
+	}
+
+	var membership TeamMembership
 	tx := conn.WithContext(ctx).
-		Where("userId IN ?", userIDs).
-		Find(&memberships)
+		Where("userId = ?", userID.String()).
+		Where("teamId = ?", teamID.String()).
+		Where("deleted = ?", false).
+		First(&membership)
 	if tx.Error != nil {
-		return nil, fmt.Errorf("failed to list team memberships for user IDs: %w", tx.Error)
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return TeamMembership{}, fmt.Errorf("no membership record for user %s and team %s exists: %w", userID.String(), teamID.String(), ErrorNotFound)
+		}
+		return TeamMembership{}, fmt.Errorf("failed to retrieve team membership for user %s, team %s: %w", userID.String(), teamID.String(), tx.Error)
 	}
 
-	return memberships, nil
+	return membership, nil
+}
+
+func DeleteTeamMembership(ctx context.Context, conn *gorm.DB, userID uuid.UUID, teamID uuid.UUID) error {
+	if userID == uuid.Nil {
+		return errors.New("user ID must not be empty")
+	}
+
+	if teamID == uuid.Nil {
+		return errors.New("team ID must not be empty")
+	}
+
+	tx := conn.WithContext(ctx).
+		Model(&TeamMembership{}).
+		Where("userId = ?", userID.String()).
+		Where("teamId = ?", teamID.String()).
+		Where("deleted = ?", 0).
+		Update("deleted", 1)
+	if tx.Error != nil {
+		return fmt.Errorf("failed to retrieve team membership for user %s, team %s: %w", userID.String(), teamID.String(), tx.Error)
+	}
+	if tx.RowsAffected == 0 {
+		return fmt.Errorf("no membership record for user %s and team %s exists: %w", userID.String(), teamID.String(), ErrorNotFound)
+	}
+
+	return nil
 }
