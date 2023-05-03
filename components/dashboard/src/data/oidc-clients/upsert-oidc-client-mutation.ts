@@ -7,6 +7,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { oidcService } from "../../service/public-api";
 import { getOIDCClientsQueryKey } from "./oidc-clients-query";
+import {
+    CreateClientConfigResponse,
+    UpdateClientConfigResponse,
+} from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 
 // TODO: find a better way to type this against the API
 type UpsertOIDCClientMutationArgs =
@@ -16,7 +20,7 @@ type UpsertOIDCClientMutationArgs =
 export const useUpsertOIDCClientMutation = () => {
     const queryClient = useQueryClient();
 
-    return useMutation({
+    return useMutation<CreateClientConfigResponse | UpdateClientConfigResponse, Error, UpsertOIDCClientMutationArgs>({
         mutationFn: async ({ config = {} }: UpsertOIDCClientMutationArgs) => {
             if ("id" in config) {
                 return await oidcService.updateClientConfig({

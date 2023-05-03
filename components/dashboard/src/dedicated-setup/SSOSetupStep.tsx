@@ -4,34 +4,105 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback } from "react";
+import { FC, useCallback, useContext, useReducer, useState } from "react";
 import { Button } from "../components/Button";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { SetupLayout } from "./SetupLayout";
+import check from "../images/check.svg";
+import Tooltip from "../components/Tooltip";
+import { SSOConfigForm, isValid, ssoConfigReducer, useSaveSSOConfig } from "../teams/sso/SSOConfigForm";
+import Alert from "../components/Alert";
+import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
+import { openOIDCStartWindow } from "../provider-utils";
+import { getGitpodService } from "../service/service";
+import { UserContext } from "../user-context";
 
 type Props = {
+    config?: OIDCClientConfig;
     onComplete: () => void;
 };
-export const SSOSetupStep: FC<Props> = ({ onComplete }) => {
-    const handleVerify = useCallback(() => {
-        console.log("verify");
+export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
+    const { setUser } = useContext(UserContext);
+    const [ssoLoginError, setSSOLoginError] = useState("");
 
-        onComplete();
-    }, [onComplete]);
+    const [ssoConfig, dispatch] = useReducer(ssoConfigReducer, {
+        id: config?.id ?? "",
+        issuer: config?.oidcConfig?.issuer ?? "",
+        clientId: config?.oauth2Config?.clientId ?? "",
+        clientSecret: config?.oauth2Config?.clientSecret ?? "",
+    });
+    const configIsValid = isValid(ssoConfig);
+
+    const { save, isLoading, isError, error } = useSaveSSOConfig();
+
+    const updateUser = useCallback(async () => {
+        await getGitpodService().reconnect();
+        const [user] = await Promise.all([getGitpodService().server.getLoggedInUser()]);
+        setUser(user);
+    }, [setUser]);
+
+    const handleVerify = useCallback(async () => {
+        try {
+            let configId = ssoConfig.id;
+
+            const response = await save(ssoConfig);
+
+            // Create returns the new config, update does not
+            if ("config" in response && response.config) {
+                configId = response.config.id;
+            }
+
+            await openOIDCStartWindow({
+                activate: true,
+                configId: configId,
+                onSuccess: async () => {
+                    await updateUser();
+                    onComplete();
+                },
+                onError: (payload) => {
+                    let errorMessage: string;
+                    if (typeof payload === "string") {
+                        errorMessage = payload;
+                    } else {
+                        errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                    }
+                    setSSOLoginError(errorMessage);
+                },
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }, [onComplete, save, ssoConfig, updateUser]);
 
     return (
-        <SetupLayout>
-            <Heading1>Configure single sign-on</Heading1>
-            <Subheading>
-                {/* TODO: Find what link we want to use here */}
-                Enable single sign-on for your organization using the OpenID Connect (OIDC) standard.{" "}
-                <a href="https://gitpod.io">Learn more</a>
-            </Subheading>
+        <SetupLayout showOrg>
+            <div className="flex flex-row space-x-2 mb-4">
+                <Tooltip content="Naming your Organization">
+                    <div className="w-5 h-5 bg-green-600 rounded-full flex justify-center items-center text-color-white">
+                        <img src={check} width={15} height={15} alt="checkmark" />
+                    </div>
+                </Tooltip>
+                <div className="w-5 h-5 bg-gray-400 rounded-full" />
+            </div>
 
-            <p>placeholder step...</p>
+            <div className="mb-10">
+                <Heading1>Configure single sign-on</Heading1>
+                <Subheading>
+                    {/* TODO: Find what link we want to use here */}
+                    Enable single sign-on for your organization using the OpenID Connect (OIDC) standard.{" "}
+                    <a href="https://gitpod.io" target="_blank" rel="noreferrer noopener">
+                        Learn more
+                    </a>
+                </Subheading>
+            </div>
+            {isError && <Alert type="danger">{error?.message}</Alert>}
+
+            {ssoLoginError && <Alert type="danger">{ssoLoginError}</Alert>}
+
+            <SSOConfigForm config={ssoConfig} onChange={dispatch} />
 
             <div className="mt-6">
-                <Button size="block" onClick={handleVerify} disabled>
+                <Button size="block" onClick={handleVerify} disabled={!configIsValid} loading={isLoading}>
                     Verify SSO Configuration
                 </Button>
             </div>
