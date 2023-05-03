@@ -4,11 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent, useContext } from "react";
+import { FunctionComponent } from "react";
+import { Link } from "react-router-dom";
+import { StartWorkspaceModalKeyBinding } from "../App";
 import DropDown from "../components/DropDown";
-import { StartWorkspaceModalContext, StartWorkspaceModalKeyBinding } from "./start-workspace-modal-context";
 import search from "../icons/search.svg";
-import { Button } from "../components/Button";
 
 type WorkspacesSearchBarProps = {
     searchTerm: string;
@@ -23,8 +23,6 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
     onSearchTermUpdated,
     onLimitUpdated,
 }) => {
-    const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
-
     return (
         <div className="app-container py-2 flex">
             <div className="flex relative h-10 my-auto">
@@ -68,9 +66,9 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
                     ]}
                 />
             </div>
-            <Button onClick={() => setStartWorkspaceModalProps({})} className="ml-2">
+            <Link to={"/new"} className="ml-2">
                 New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
-            </Button>
+            </Link>
         </div>
     );
 };

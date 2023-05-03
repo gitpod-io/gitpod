@@ -23,7 +23,6 @@ import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
 import { openAuthorizeWindow } from "../provider-utils";
 import { gitpodHostUrl } from "../service/service";
-import { LimitReachedParallelWorkspacesModal } from "../start/CreateWorkspace";
 import { StartWorkspaceOptions } from "../start/start-workspace-options";
 import { StartWorkspaceError } from "../start/StartPage";
 import { useCurrentUser } from "../user-context";
@@ -32,6 +31,7 @@ import { WorkspaceEntry } from "./WorkspaceEntry";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 import { VerifyModal } from "../start/VerifyModal";
 import { useFeatureFlag } from "../data/featureflag-query";
+import Modal from "../components/Modal";
 
 export const useNewCreateWorkspacePage = () => {
     const startWithOptions = useFeatureFlag("start_with_options");
@@ -446,5 +446,40 @@ export function RepositoryNotFound(p: { error: StartWorkspaceError }) {
             approved for '${owner}'.`,
         "Authorize again",
         authorizeURL,
+    );
+}
+
+export function LimitReachedParallelWorkspacesModal() {
+    return (
+        <LimitReachedModal>
+            <p className="mt-1 mb-2 text-base dark:text-gray-400">
+                You have reached the limit of parallel running workspaces for your account. Please, upgrade or stop one
+                of the running workspaces.
+            </p>
+        </LimitReachedModal>
+    );
+}
+
+export function LimitReachedModal(p: { children: React.ReactNode }) {
+    const user = useCurrentUser();
+    return (
+        // TODO: Use title and buttons props
+        <Modal visible={true} closeable={false} onClose={() => {}}>
+            <h3 className="flex">
+                <span className="flex-grow">Limit Reached</span>
+                <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ""} alt={user?.name || "Anonymous"} />
+            </h3>
+            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
+                {p.children}
+            </div>
+            <div className="flex justify-end mt-6">
+                <a href={gitpodHostUrl.asDashboard().toString()}>
+                    <button className="secondary">Go to Dashboard</button>
+                </a>
+                <a href={gitpodHostUrl.with({ pathname: "plans" }).toString()} className="ml-2">
+                    <button>Upgrade</button>
+                </a>
+            </div>
+        </Modal>
     );
 }

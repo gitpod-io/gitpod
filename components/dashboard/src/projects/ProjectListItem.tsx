@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FunctionComponent, useContext, useState } from "react";
+import { FunctionComponent, useState } from "react";
 import dayjs from "dayjs";
 import { Project } from "@gitpod/gitpod-protocol";
 import { Link } from "react-router-dom";
@@ -14,8 +14,6 @@ import { toRemoteURL } from "./render-utils";
 import { prebuildStatusIcon } from "./Prebuilds";
 import { gitpodHostUrl } from "../service/service";
 import { useLatestProjectPrebuildQuery } from "../data/prebuilds/latest-project-prebuild-query";
-import { StartWorkspaceModalContext } from "../workspaces/start-workspace-modal-context";
-import { useNewCreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import Tooltip from "../components/Tooltip";
 
 type ProjectListItemProps = {
@@ -26,8 +24,6 @@ type ProjectListItemProps = {
 export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ project, onProjectRemoved }) => {
     const [showRemoveModal, setShowRemoveModal] = useState(false);
     const { data: prebuild, isLoading } = useLatestProjectPrebuildQuery({ projectId: project.id });
-    const { setStartWorkspaceModalProps } = useContext(StartWorkspaceModalContext);
-    const isNewCreateWsPage = useNewCreateWorkspacePage();
 
     return (
         <div key={`project-${project.id}`} className="h-52">
@@ -44,19 +40,6 @@ export const ProjectListItem: FunctionComponent<ProjectListItemProps> = ({ proje
                                         href: gitpodHostUrl.withContext(`${project.cloneUrl}`).toString(),
                                         separator: true,
                                     },
-                                    ...(isNewCreateWsPage
-                                        ? []
-                                        : [
-                                              {
-                                                  title: "New Workspace with ...",
-                                                  onClick: () =>
-                                                      setStartWorkspaceModalProps({
-                                                          contextUrl: project.cloneUrl,
-                                                          allowContextUrlChange: true,
-                                                      }),
-                                                  separator: true,
-                                              },
-                                          ]),
                                     {
                                         title: "Settings",
                                         link: `/projects/${Project.slug(project)}/settings`,
