@@ -7,6 +7,7 @@
 import { Link } from "react-router-dom";
 import { Heading2 } from "../components/typography/headings";
 import { StartWorkspaceModalKeyBinding } from "../App";
+import { Button } from "../components/Button";
 
 export const EmptyWorkspacesContent = () => {
     return (
@@ -31,8 +32,10 @@ export const EmptyWorkspacesContent = () => {
                         </div>
                         <span>
                             <Link to={"/new"}>
-                                New Workspace{" "}
-                                <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
+                                <Button>
+                                    New Workspace{" "}
+                                    <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
+                                </Button>
                             </Link>
                         </span>
                     </>
