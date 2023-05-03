@@ -4,8 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { GitpodServer } from "@gitpod/gitpod-protocol";
+import { IDESettings } from "@gitpod/gitpod-protocol";
 
+export interface StartWorkspaceOptions {
+    workspaceClass?: string;
+    ideSettings?: IDESettings;
+    autostart?: boolean;
+}
 export namespace StartWorkspaceOptions {
     // The workspace class to use for the workspace. If not specified, the default workspace class is used.
     export const WORKSPACE_CLASS = "workspaceClass";
@@ -13,9 +18,12 @@ export namespace StartWorkspaceOptions {
     // The editor to use for the workspace. If not specified, the default editor is used.
     export const EDITOR = "editor";
 
-    export function parseSearchParams(search: string): GitpodServer.StartWorkspaceOptions {
+    // whether the workspace should automatically start
+    export const AUTOSTART = "autostart";
+
+    export function parseSearchParams(search: string): StartWorkspaceOptions {
         const params = new URLSearchParams(search);
-        const options: GitpodServer.StartWorkspaceOptions = {};
+        const options: StartWorkspaceOptions = {};
         const workspaceClass = params.get(StartWorkspaceOptions.WORKSPACE_CLASS);
         if (workspaceClass) {
             options.workspaceClass = workspaceClass;
@@ -34,10 +42,13 @@ export namespace StartWorkspaceOptions {
                 };
             }
         }
+        if (params.get(StartWorkspaceOptions.AUTOSTART) === "true") {
+            options.autostart = true;
+        }
         return options;
     }
 
-    export function toSearchParams(options: GitpodServer.StartWorkspaceOptions): string {
+    export function toSearchParams(options: StartWorkspaceOptions): string {
         const params = new URLSearchParams();
         if (options.workspaceClass) {
             params.set(StartWorkspaceOptions.WORKSPACE_CLASS, options.workspaceClass);
@@ -46,6 +57,9 @@ export namespace StartWorkspaceOptions {
             const ide = options.ideSettings.defaultIde;
             const latest = options.ideSettings.useLatestVersion;
             params.set(StartWorkspaceOptions.EDITOR, latest ? ide + "-latest" : ide);
+        }
+        if (options.autostart) {
+            params.set(StartWorkspaceOptions.AUTOSTART, "true");
         }
         return params.toString();
     }

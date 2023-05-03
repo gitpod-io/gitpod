@@ -4,34 +4,37 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, GitpodServer, WithReferrerContext } from "@gitpod/gitpod-protocol";
+import { AdditionalUserData, CommitContext, GitpodServer, WithReferrerContext } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
-import { FunctionComponent, useCallback, useEffect, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router";
+import { Link } from "react-router-dom";
 import { Button } from "../components/Button";
+import Modal from "../components/Modal";
 import RepositoryFinder from "../components/RepositoryFinder";
 import SelectIDEComponent from "../components/SelectIDEComponent";
 import SelectWorkspaceClassComponent from "../components/SelectWorkspaceClassComponent";
-import { Heading1 } from "../components/typography/headings";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { CheckboxInputField } from "../components/forms/CheckboxInputField";
+import { Heading1 } from "../components/typography/headings";
+import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
 import { useWorkspaceContext } from "../data/workspaces/resolve-context-query";
 import { openAuthorizeWindow } from "../provider-utils";
-import { gitpodHostUrl } from "../service/service";
-import { StartWorkspaceOptions } from "../start/start-workspace-options";
+import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartWorkspaceError } from "../start/StartPage";
-import { useCurrentUser } from "../user-context";
-import { SelectAccountModal } from "../user-settings/SelectAccountModal";
-import { WorkspaceEntry } from "./WorkspaceEntry";
-import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 import { VerifyModal } from "../start/VerifyModal";
-import { useFeatureFlag } from "../data/featureflag-query";
-import Modal from "../components/Modal";
+import { StartWorkspaceOptions } from "../start/start-workspace-options";
+import { UserContext, useCurrentUser } from "../user-context";
+import { SelectAccountModal } from "../user-settings/SelectAccountModal";
+import { settingsPathPreferences } from "../user-settings/settings.routes";
+import { WorkspaceEntry } from "./WorkspaceEntry";
 
 export const useNewCreateWorkspacePage = () => {
     const startWithOptions = useFeatureFlag("start_with_options");
@@ -40,8 +43,9 @@ export const useNewCreateWorkspacePage = () => {
 };
 
 export function CreateWorkspacePage() {
-    const user = useCurrentUser();
+    const { user, setUser } = useContext(UserContext);
     const currentOrg = useCurrentOrg().data;
+    const organizations = useOrganizations();
     const projects = useListProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
     const location = useLocation();
@@ -69,6 +73,42 @@ export function CreateWorkspacePage() {
         StartWorkspaceOptions.parseContextUrl(location.hash),
     );
     const workspaceContext = useWorkspaceContext(contextURL);
+    const [rememberOptions, setRememberOptions] = useState(false);
+    const [autostart, setAutostart] = useState<boolean | undefined>(props.autostart);
+
+    const storeAutoStartOptions = useCallback(() => {
+        if (!workspaceContext.data || !user || !currentOrg) {
+            return;
+        }
+        const cloneURL = CommitContext.is(workspaceContext.data) && workspaceContext.data.repository.cloneUrl;
+        if (!cloneURL) {
+            return;
+        }
+        let workspaceAutoStartOptions = (user.additionalData?.workspaceAutostartOptions || []).filter(
+            (e) => e.cloneURL !== cloneURL,
+        );
+
+        // we only keep the last 20 options
+        workspaceAutoStartOptions = workspaceAutoStartOptions.slice(-20);
+
+        if (rememberOptions) {
+            workspaceAutoStartOptions.push({
+                cloneURL,
+                organizationId: currentOrg.id,
+                ideSettings: {
+                    defaultIde: selectedIde,
+                    useLatestVersion: useLatestIde,
+                },
+                workspaceClass: selectedWsClass,
+            });
+
+            AdditionalUserData.set(user, {
+                workspaceAutostartOptions: workspaceAutoStartOptions,
+            });
+        }
+        setUser(user);
+        getGitpodService().server.updateLoggedInUser(user).catch(console.error);
+    }, [currentOrg, rememberOptions, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
 
     // see if we have a matching project based on context url and project's repo url
     const project = useMemo(() => {
@@ -99,6 +139,8 @@ export function CreateWorkspacePage() {
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
     const handleContextURLChange = useCallback(
         (newContextURL: string) => {
+            // we disable auto start if the user changes the context URL
+            setAutostart(false);
             setContextURL(newContextURL);
             history.replace(`#${newContextURL}`);
         },
@@ -163,11 +205,17 @@ export function CreateWorkspacePage() {
                     console.log("Skipping duplicate createWorkspace call.");
                     return;
                 }
+                if (rememberOptions) {
+                    storeAutoStartOptions();
+                }
+                // we wait at least 5 secs
+                const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
                 const result = await createWorkspaceMutation.mutateAsync({
                     contextUrl: contextURL,
                     organizationId,
                     ...opts,
                 });
+                await timeout;
                 if (result.workspaceURL) {
                     window.location.href = result.workspaceURL;
                 } else if (result.createdWorkspaceId) {
@@ -175,38 +223,88 @@ export function CreateWorkspacePage() {
                 }
             } catch (error) {
                 console.log(error);
+            } finally {
+                // we only auto start once, so we don't run into endless start loops on errors
+                if (autostart) {
+                    setAutostart(false);
+                }
             }
         },
         [
-            createWorkspaceMutation,
-            history,
             contextURL,
-            selectedIde,
-            selectedWsClass,
             currentOrg?.id,
             user?.additionalData?.isMigratedToTeamOnlyAttribution,
+            selectedWsClass,
+            selectedIde,
             useLatestIde,
+            createWorkspaceMutation,
+            rememberOptions,
+            autostart,
+            storeAutoStartOptions,
+            history,
         ],
     );
+
+    // listen on auto start changes
+    useEffect(() => {
+        if (!autostart) {
+            return;
+        }
+        createWorkspace();
+    }, [autostart, createWorkspace]);
+
+    // when workspaceContext is available, we look up if options are remembered
+    useEffect(() => {
+        if (!organizations.data) {
+            return;
+        }
+        const cloneURL = CommitContext.is(workspaceContext.data) && workspaceContext.data.repository.cloneUrl;
+        if (!cloneURL || autostart) {
+            return undefined;
+        }
+        const rememberedOptions = (user?.additionalData?.workspaceAutostartOptions || []).find(
+            (e) => e.cloneURL === cloneURL,
+        );
+        setRememberOptions(!!rememberedOptions);
+        if (rememberedOptions) {
+            // if it's another org, we simply redirect using the same hash and let the reloaded page handle everything again.
+            if (rememberedOptions.organizationId !== currentOrg?.id) {
+                const org = organizations.data.find((o) => o.id === rememberedOptions.organizationId);
+                if (org) {
+                    const redirect = `${location.pathname}?org=${encodeURIComponent(rememberedOptions.organizationId)}${
+                        location.hash
+                    }`;
+                    window.location.href = redirect;
+                } else {
+                    console.warn("Could not find organization", rememberedOptions.organizationId);
+                }
+            }
+            if (rememberedOptions.ideSettings?.defaultIde) {
+                setSelectedIde(rememberedOptions.ideSettings?.defaultIde);
+            }
+            setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
+            if (rememberedOptions.workspaceClass) {
+                setSelectedWsClass(rememberedOptions.workspaceClass);
+            }
+            if (autostart === undefined) {
+                setAutostart(true);
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [workspaceContext.data]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
 
-    // if the context URL has a referrer prefix, we set the referrerIde as the selected IDE and immediately start a workspace.
+    // if the context URL has a referrer prefix, we set the referrerIde as the selected IDE and autostart the workspace.
     useEffect(() => {
         if (workspaceContext.data && WithReferrerContext.is(workspaceContext.data)) {
-            let options: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl"> | undefined;
             if (workspaceContext.data.referrerIde) {
                 setSelectedIde(workspaceContext.data.referrerIde);
-                options = {
-                    ideSettings: {
-                        defaultIde: workspaceContext.data.referrerIde,
-                    },
-                };
             }
-            createWorkspace(options);
+            setAutostart(true);
         }
-    }, [workspaceContext.data, createWorkspace]);
+    }, [workspaceContext.data]);
 
     if (SelectAccountPayload.is(selectAccountError)) {
         return (
@@ -259,7 +357,7 @@ export function CreateWorkspacePage() {
                         {errorWsClass && <div className="text-red-500 text-sm">{errorWsClass}</div>}
                     </div>
                 </div>
-                <div className="w-full flex justify-end mt-6 space-x-2 px-6">
+                <div className="w-full flex justify-end mt-3 space-x-2 px-6">
                     <Button
                         onClick={onClickCreate}
                         autoFocus={true}
@@ -273,10 +371,17 @@ export function CreateWorkspacePage() {
                             !!workspaceContext.error
                         }
                     >
-                        {isStarting ? "Creating Workspace ..." : "New Workspace"}
+                        {isStarting ? "Opening Workspace ..." : "Continue"}
                     </Button>
                 </div>
-                {existingWorkspaces.length > 0 && (
+                {workspaceContext.data && (
+                    <RememberOptions
+                        disabled={createWorkspaceMutation.isLoading || createWorkspaceMutation.isSuccess}
+                        checked={rememberOptions}
+                        onChange={setRememberOptions}
+                    />
+                )}
+                {existingWorkspaces.length > 0 && !isStarting && (
                     <div className="w-full flex flex-col justify-end px-6">
                         <p className="mt-6 text-center text-base">Running workspaces on this revision</p>
                         <>
@@ -296,6 +401,33 @@ export function CreateWorkspacePage() {
                 )}
             </div>
         </div>
+    );
+}
+
+function RememberOptions(params: { disabled?: boolean; checked: boolean; onChange: (checked: boolean) => void }) {
+    const { disabled, checked, onChange } = params;
+
+    return (
+        <>
+            <div className={"w-full flex justify-center mt-3 px-8 mx-2"}>
+                <CheckboxInputField
+                    label="Autostart with these options for this repository."
+                    checked={checked}
+                    disabled={disabled}
+                    topMargin={false}
+                    onChange={onChange}
+                />
+            </div>
+            <div className={"w-full flex justify-center px-8 mx-2"}>
+                <p className="text-gray-400 dark:text-gray-500 text-sm">
+                    Don't worry, you can reset this anytime in your{" "}
+                    <Link to={settingsPathPreferences} className="gp-link">
+                        preferences
+                    </Link>
+                    .
+                </p>
+            </div>
+        </>
     );
 }
 

@@ -11,7 +11,7 @@ import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { ThemeSelector } from "../components/ThemeSelector";
 import Alert from "../components/Alert";
 import { Link } from "react-router-dom";
-import { Heading2, Subheading } from "../components/typography/headings";
+import { Heading2, Heading3, Subheading } from "../components/typography/headings";
 import { useUserMaySetTimeout } from "../data/current-user/may-set-timeout-query";
 import { Button } from "../components/Button";
 import SelectIDE from "./SelectIDE";
@@ -19,6 +19,7 @@ import { InputField } from "../components/forms/InputField";
 import { TextInput } from "../components/forms/TextInputField";
 import { useToast } from "../components/toasts/Toasts";
 import { useUpdateCurrentUserDotfileRepoMutation } from "../data/current-user/update-mutation";
+import { AdditionalUserData } from "@gitpod/gitpod-protocol";
 
 export type IDEChangedTrackLocation = "workspace_list" | "workspace_start" | "preferences";
 
@@ -67,12 +68,22 @@ export default function Preferences() {
         [toast, setUser, workspaceTimeout],
     );
 
+    const clearAutostartWorkspaceOptions = useCallback(async () => {
+        if (!user) {
+            return;
+        }
+        AdditionalUserData.set(user, { workspaceAutostartOptions: [] });
+        setUser(user);
+        await getGitpodService().server.updateLoggedInUser(user);
+        toast("Your autostart options were cleared.");
+    }, [setUser, toast, user]);
+
     return (
         <div>
             <PageWithSettingsSubMenu>
-                <Heading2>Editor</Heading2>
+                <Heading2>New Workspaces</Heading2>
                 <Subheading>
-                    Choose the editor for opening workspaces.{" "}
+                    Choose your default editor.{" "}
                     <a
                         className="gp-link"
                         href="https://www.gitpod.io/docs/references/ides-and-editors"
@@ -83,6 +94,11 @@ export default function Preferences() {
                     </a>
                 </Subheading>
                 <SelectIDE location="preferences" />
+                <Heading3 className="mt-12">Autostart Options</Heading3>
+                <Subheading>Forget any saved autostart options for all repositories.</Subheading>
+                <Button className="mt-4" type="secondary" onClick={clearAutostartWorkspaceOptions}>
+                    Reset Options
+                </Button>
 
                 <ThemeSelector className="mt-12" />
 
