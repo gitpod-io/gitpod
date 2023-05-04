@@ -11,6 +11,14 @@ import { GitpodServer, Snapshot } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
 
+export interface WaitForSnapshotOptions {
+    workspaceOwner: string;
+    snapshot: Snapshot;
+}
+
+const SNAPSHOT_TIMEOUT_SECONDS = 60 * 30;
+const SNAPSHOT_POLL_INTERVAL_SECONDS = 5;
+
 @injectable()
 export class SnapshotService {
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
@@ -26,5 +34,60 @@ export class SnapshotService {
             bucketId: snapshotUrl,
             originalWorkspaceId: options.workspaceId,
         });
+    }
+
+    public async waitForSnapshot(opts: WaitForSnapshotOptions): Promise<void> {
+        return await this.driveSnapshot(opts);
+    }
+
+    public async driveSnapshot(opts: WaitForSnapshotOptions): Promise<void> {
+        if (opts.snapshot.state === "available") {
+            return;
+        }
+        if (opts.snapshot.state === "error") {
+            throw new Error(`snapshot error: ${opts.snapshot.message}`);
+        }
+
+        const { id: snapshotId, bucketId, originalWorkspaceId, creationTime } = opts.snapshot;
+        const start = new Date(creationTime).getTime();
+        while (start + SNAPSHOT_TIMEOUT_SECONDS * 1000 > Date.now()) {
+            await new Promise((resolve) => setTimeout(resolve, SNAPSHOT_POLL_INTERVAL_SECONDS * 1000));
+
+            // did somebody else complete that snapshot?
+            const snapshot = await this.workspaceDb.findSnapshotById(snapshotId);
+            if (!snapshot) {
+                throw new Error(`no snapshot with id '${snapshotId}' found.`);
+            }
+            if (snapshot.state === "available") {
+                return;
+            }
+            if (snapshot.state === "error") {
+                throw new Error(`snapshot error: ${snapshot.message}`);
+            }
+
+            // pending: check if the snapshot is there
+            const exists = await this.storageClient.workspaceSnapshotExists(
+                opts.workspaceOwner,
+                originalWorkspaceId,
+                bucketId,
+            );
+            if (exists) {
+                await this.workspaceDb.updateSnapshot({
+                    id: snapshotId,
+                    state: "available",
+                    availableTime: new Date().toISOString(),
+                });
+                return;
+            }
+        }
+
+        // took too long
+        const message = `snapshot timed out after taking longer than ${SNAPSHOT_TIMEOUT_SECONDS}s.`;
+        await this.workspaceDb.updateSnapshot({
+            id: snapshotId,
+            state: "error",
+            message,
+        });
+        throw new Error(message);
     }
 }
