@@ -64,7 +64,7 @@ export class JobRunner {
         try {
             await this.mutex.using(job.lockId, job.frequencyMs, async (signal) => {
                 log.info(`Acquired lock for job ${job.name}.`, logCtx);
-                const timer = jobsDurationSeconds.startTimer({ name: job.name });
+                const timer = jobsDurationSeconds.startTimer();
                 reportJobStarted(job.name);
                 const now = new Date().getTime();
                 try {
@@ -81,7 +81,7 @@ export class JobRunner {
                     });
                     reportJobCompleted(job.name, false);
                 } finally {
-                    jobsDurationSeconds.observe(timer());
+                    jobsDurationSeconds.observe(timer({ name: job.name }));
                 }
             });
         } catch (err) {
