@@ -24,22 +24,27 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
     const createOrg = useCreateOrgMutation();
     const updateOrg = useUpdateOrgMutation();
 
-    const handleContinue = useCallback(() => {
-        if (org.data) {
-            updateOrg.mutate({ name: orgName }, { onSuccess: onComplete });
-        } else {
-            createOrg.mutate(
-                { name: orgName },
-                {
-                    onSuccess: (newOrg) => {
-                        // Need to manually set active-org here so it's returned via subsequent useCurrentOrg() calls
-                        localStorage.setItem("active-org", newOrg.id);
-                        onComplete();
+    const handleContinue = useCallback(
+        (e) => {
+            e.preventDefault();
+
+            if (org.data) {
+                updateOrg.mutate({ name: orgName }, { onSuccess: onComplete });
+            } else {
+                createOrg.mutate(
+                    { name: orgName },
+                    {
+                        onSuccess: (newOrg) => {
+                            // Need to manually set active-org here so it's returned via subsequent useCurrentOrg() calls
+                            localStorage.setItem("active-org", newOrg.id);
+                            onComplete();
+                        },
                     },
-                },
-            );
-        }
-    }, [createOrg, onComplete, org.data, orgName, updateOrg]);
+                );
+            }
+        },
+        [createOrg, onComplete, org.data, orgName, updateOrg],
+    );
 
     const nameError = useOnBlurError("Please provide a name", orgName.trim().length > 0);
 
@@ -59,25 +64,27 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
             {(createOrg.isError || updateOrg.isError) && (
                 <Alert type="danger">{createOrg.error?.message || updateOrg.error?.message}</Alert>
             )}
-            <TextInputField
-                label="Organization Name"
-                placeholder="e.g. ACME Inc"
-                hint="The name of your company or organization."
-                value={orgName}
-                error={nameError.message}
-                onChange={setOrgName}
-                onBlur={nameError.onBlur}
-            />
-            <div className="mt-6">
-                <Button
-                    size="block"
-                    onClick={handleContinue}
-                    disabled={!nameError.isValid}
-                    loading={createOrg.isLoading || updateOrg.isLoading}
-                >
-                    Continue
-                </Button>
-            </div>
+
+            <form onSubmit={handleContinue}>
+                <TextInputField
+                    label="Organization Name"
+                    placeholder="e.g. ACME Inc"
+                    hint="The name of your company or organization."
+                    value={orgName}
+                    error={nameError.message}
+                    onChange={setOrgName}
+                    onBlur={nameError.onBlur}
+                />
+                <div className="mt-6">
+                    <Button
+                        size="block"
+                        disabled={!nameError.isValid}
+                        loading={createOrg.isLoading || updateOrg.isLoading}
+                    >
+                        Continue
+                    </Button>
+                </div>
+            </form>
         </SetupLayout>
     );
 };
