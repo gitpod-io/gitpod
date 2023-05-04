@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useContext, useReducer, useState } from "react";
+import { FC, useCallback, useReducer, useState } from "react";
 import { Button } from "../components/Button";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { SetupLayout } from "./SetupLayout";
@@ -14,15 +14,12 @@ import { SSOConfigForm, isValid, ssoConfigReducer, useSaveSSOConfig } from "../t
 import Alert from "../components/Alert";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { openOIDCStartWindow } from "../provider-utils";
-import { getGitpodService } from "../service/service";
-import { UserContext } from "../user-context";
 
 type Props = {
     config?: OIDCClientConfig;
     onComplete: () => void;
 };
 export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
-    const { setUser } = useContext(UserContext);
     const [ssoLoginError, setSSOLoginError] = useState("");
 
     const [ssoConfig, dispatch] = useReducer(ssoConfigReducer, {
@@ -34,12 +31,6 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
     const configIsValid = isValid(ssoConfig);
 
     const { save, isLoading, isError, error } = useSaveSSOConfig();
-
-    const updateUser = useCallback(async () => {
-        await getGitpodService().reconnect();
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
-    }, [setUser]);
 
     const handleVerify = useCallback(async () => {
         try {
@@ -56,7 +47,6 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
                 activate: true,
                 configId: configId,
                 onSuccess: async () => {
-                    await updateUser();
                     onComplete();
                 },
                 onError: (payload) => {
@@ -72,7 +62,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
         } catch (e) {
             console.error(e);
         }
-    }, [onComplete, save, ssoConfig, updateUser]);
+    }, [onComplete, save, ssoConfig]);
 
     return (
         <SetupLayout showOrg>

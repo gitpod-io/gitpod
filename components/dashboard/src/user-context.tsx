@@ -5,7 +5,8 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import React, { createContext, useState, useContext, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import React, { createContext, useState, useContext, useMemo, useCallback } from "react";
 
 const UserContext = createContext<{
     user?: User;
@@ -17,8 +18,20 @@ const UserContext = createContext<{
 const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User>();
 
+    const client = useQueryClient();
+
+    const doSetUser = useCallback(
+        (updatedUser: User) => {
+            if (user?.id !== updatedUser.id) {
+                client.clear();
+            }
+            setUser(updatedUser);
+        },
+        [user?.id, setUser, client],
+    );
+
     // Wrap value in useMemo to avoid unnecessary re-renders
-    const ctxValue = useMemo(() => ({ user, setUser }), [user, setUser]);
+    const ctxValue = useMemo(() => ({ user, setUser: doSetUser }), [user, doSetUser]);
 
     return <UserContext.Provider value={ctxValue}>{children}</UserContext.Provider>;
 };
