@@ -98,9 +98,14 @@ export default function Menu() {
                                     </li>
                                 )}
                                 {isGitpodIo() && (
-                                    <li className="cursor-pointer">
-                                        <PillMenuItem name="Feedback" onClick={handleFeedbackFormClick} />
-                                    </li>
+                                    <>
+                                        <li className="cursor-pointer">
+                                            <PillMenuItem name="🪐 CDE Universe ↗" link="https://cdeuniverse.com/" />
+                                        </li>
+                                        <li className="cursor-pointer">
+                                            <PillMenuItem name="Feedback" onClick={handleFeedbackFormClick} />
+                                        </li>
+                                    </>
                                 )}
                             </ul>
                         </nav>
