@@ -65,8 +65,8 @@ const App: FC = () => {
         <Suspense fallback={<AppLoading />}>
             {/* Any required onboarding flows will be handled here before rendering the main app layout & routes */}
             <AppBlockingFlows>
-                {/* Use org id, or user id (for personal account) as key to force re-render on org change */}
-                <AppRoutes key={currentOrgQuery?.data?.id ?? user.id} />
+                {/* Use org id *and* user id as key to force re-render on org *or* user changes. */}
+                <AppRoutes key={`${currentOrgQuery?.data?.id ?? "no-org"}-${user.id}`} />
             </AppBlockingFlows>
         </Suspense>
     );

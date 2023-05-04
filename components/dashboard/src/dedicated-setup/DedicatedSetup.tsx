@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useMemo, useState } from "react";
+import { FC, useCallback, useContext, useMemo, useState } from "react";
 import { GettingStartedStep } from "./GettingStartedStep";
 import { OrgNamingStep } from "./OrgNamingStep";
 import { SSOSetupStep } from "./SSOSetupStep";
@@ -16,7 +16,8 @@ import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { Delayed } from "../components/Delayed";
 import { SpinnerLoader } from "../components/Loader";
 import { OrganizationInfo } from "../data/organizations/orgs-query";
-import { useQueryClient } from "@tanstack/react-query";
+import { getGitpodService } from "../service/service";
+import { UserContext } from "../user-context";
 
 type Props = {
     onComplete: () => void;
@@ -51,11 +52,12 @@ type DedicatedSetupStepsProps = {
     onComplete: () => void;
 };
 const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, onComplete }) => {
+    const { setUser } = useContext(UserContext);
+
     // If we have an org w/ a name, we can skip the first step and go to sso setup
     const initialStep = org && org.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
     const [step, setStep] = useState<StepsValue>(initialStep);
     const history = useHistory();
-    const client = useQueryClient();
     const oidcClients = useOIDCClientsQuery();
     const { dropConfetti } = useConfetti();
 
@@ -80,11 +82,21 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, onComplete }) 
         setStep(STEPS.COMPLETE);
     }, [dropConfetti]);
 
-    const handleEndSetup = useCallback(() => {
-        client.clear();
-        history.push("/settings/git");
+    const updateUser = useCallback(async () => {
+        await getGitpodService().reconnect();
+        const user = await getGitpodService().server.getLoggedInUser();
+        setUser(user);
+    }, [setUser]);
+
+    const handleEndSetup = useCallback(async () => {
+        await updateUser();
+        history.push(`/settings/git?org=${org?.id}`);
         onComplete();
-    }, [client, history, onComplete]);
+    }, [history, onComplete, updateUser, org?.id]);
+
+    if (ssoConfig?.active) {
+        setStep(STEPS.COMPLETE);
+    }
 
     return (
         <>
