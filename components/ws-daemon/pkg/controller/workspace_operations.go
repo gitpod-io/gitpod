@@ -28,16 +28,6 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const (
-	// maxPendingChanges is the limit beyond which we no longer report pending changes.
-	// For example, if a workspace has then 150 untracked files, we'll report the first
-	// 100 followed by "... and 50 more".
-	//
-	// We do this to keep the load on our infrastructure light and because beyond this number
-	// the changes are irrelevant anyways.
-	maxPendingChanges = 100
-)
-
 //go:generate mockgen -destination=mock.go -package=controller . WorkspaceOperations
 type WorkspaceOperations interface {
 	// InitWorkspace initializes the workspace content
