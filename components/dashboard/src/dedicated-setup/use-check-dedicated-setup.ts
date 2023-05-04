@@ -4,20 +4,61 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { useQuery } from "@tanstack/react-query";
 import { useQueryParams } from "../hooks/use-query-params";
+import { getGitpodService } from "../service/service";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { useCallback, useEffect, useState } from "react";
+import { noPersistence } from "../data/setup";
 
 const FORCE_SETUP_PARAM = "dedicated-setup";
 const FORCE_SETUP_PARAM_VALUE = "force";
 
 export const useCheckDedicatedSetup = () => {
+    // track if user has finished onboarding so we avoid showing the onboarding
+    // again in case onboarding state doesn't updated right away
+    const [inProgress, setInProgress] = useState(false);
+
+    const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
     const params = useQueryParams();
 
-    const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
+    const { data: onboardingState, isLoading } = useOnboardingState();
 
-    // For now to aid dev only show if query param is set
-    // TODO: update this once a new backend method is ready that will let us know if dedicated setup is needed
+    const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
+    const needsOnboarding = forceSetup || (onboardingState && onboardingState.isCompleted !== true);
+
+    const markCompleted = useCallback(() => setInProgress(false), []);
+
+    // If needsOnboarding changes to true, we want to set flow as in progress
+    // This helps us not close the flow prematurely (i.e. onboardingState.completed = true but we want to show the completed page)
+    useEffect(() => {
+        if (enableDedicatedOnboardingFlow && needsOnboarding && !inProgress) {
+            setInProgress(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [enableDedicatedOnboardingFlow, forceSetup, needsOnboarding]);
+
     return {
-        needsOnboarding: forceSetup,
-        isLoading: false,
+        showOnboarding: inProgress,
+        isLoading: enableDedicatedOnboardingFlow && isLoading,
+        markCompleted,
     };
+};
+
+export const useOnboardingState = () => {
+    const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
+
+    return useQuery(
+        noPersistence(["onboarding-state"]),
+        async () => {
+            return getGitpodService().server.getOnboardingState();
+        },
+        {
+            // Cache for a bit so we can avoid having the value change before we're ready
+            staleTime: 1000 * 60 * 60 * 1, // 1h
+            cacheTime: 1000 * 60 * 60 * 1, // 1h
+            // Only query if feature flag is enabled
+            enabled: enableDedicatedOnboardingFlow,
+        },
+    );
 };

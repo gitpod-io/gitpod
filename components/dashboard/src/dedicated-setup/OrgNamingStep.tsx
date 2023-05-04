@@ -28,7 +28,16 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
         if (org.data) {
             updateOrg.mutate({ name: orgName }, { onSuccess: onComplete });
         } else {
-            createOrg.mutate({ name: orgName }, { onSuccess: onComplete });
+            createOrg.mutate(
+                { name: orgName },
+                {
+                    onSuccess: (newOrg) => {
+                        // Need to manually set active-org here so it's returned via subsequent useCurrentOrg() calls
+                        localStorage.setItem("active-org", newOrg.id);
+                        onComplete();
+                    },
+                },
+            );
         }
     }, [createOrg, onComplete, org.data, orgName, updateOrg]);
 
