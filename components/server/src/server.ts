@@ -306,11 +306,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Start periodic jobs
         this.jobRunner.start();
 
-        if (!this.config.completeSnapshotJob?.disabled) {
-            // Start Snapshot Service
-            log.info("Starting snapshot completion job...");
-            await this.snapshotService.start();
-        }
+        // Start long running migrations
+        this.startLongRunningMigrations().catch((err) => log.error("long running migrations errored", err));
 
         this.app = app;
 
