@@ -9,9 +9,10 @@ import { useEffect } from "react";
 import Alert from "../components/Alert";
 import { Heading2 } from "../components/typography/headings";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
-import gitpodIconUA from "../icons/gitpod.svg";
+import gitpodIcon from "../icons/gitpod.svg";
 import { gitpodHostUrl } from "../service/service";
 import { VerifyModal } from "./VerifyModal";
+import CDEUniverseLogo from "../images/cdeuniverse.svg";
 
 export enum StartPhase {
     Checking = 0,
@@ -100,7 +101,7 @@ export function StartPage(props: StartPageProps) {
             <div className="flex flex-col mx-auto items-center text-center h-screen">
                 <div className="h-1/3"></div>
                 <img
-                    src={gitpodIconUA}
+                    src={gitpodIcon}
                     alt="Gitpod's logo"
                     className={`h-16 flex-shrink-0 ${
                         error || phase === StartPhase.Stopped || phase === StartPhase.IdeReady ? "" : "animate-bounce"
@@ -130,11 +131,12 @@ export function StartPage(props: StartPageProps) {
                     </Alert>
                 )}
                 <div className="absolute bottom-4 right-4 text-gray-400 dark:text-gray-500 text-xs font-medium tracking-wide">
-                    <span className="mr-1 align-middle">Stand with Ukraine</span>{" "}
-                    <svg width="14" height="14" className="inline-block" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14 7A7 7 0 1 0 0 7h14Z" fill="#015BBB" />
-                        <path d="M0 7a7 7 0 1 0 14 0H0Z" fill="#FC0" />
-                    </svg>
+                    <a href="https://cdeuniverse.com/" target="_blank">
+                        <span>
+                            <img src={CDEUniverseLogo} alt="CDE Universe logo" className="h-4 inline mr-1" />
+                            <span className="font-semibold">CDE Universe</span>: June 1 & 2 ↗
+                        </span>
+                    </a>
                 </div>
             </div>
         </div>
