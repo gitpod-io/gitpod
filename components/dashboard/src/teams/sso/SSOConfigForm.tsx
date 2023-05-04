@@ -13,6 +13,7 @@ import { useOnBlurError } from "../../hooks/use-onblur-error";
 import isURL from "validator/lib/isURL";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useUpsertOIDCClientMutation } from "../../data/oidc-clients/upsert-oidc-client-mutation";
+import { Subheading } from "../../components/typography/headings";
 
 type Props = {
     config: SSOConfig;
@@ -28,6 +29,19 @@ export const SSOConfigForm: FC<Props> = ({ config, onChange }) => {
 
     return (
         <>
+            <Subheading>
+                <strong>1.</strong> Add the following <strong>redirect url</strong> to your identity provider's
+                configuration.
+            </Subheading>
+
+            <InputField>
+                <InputWithCopy value={redirectUrl} tip="Copy the Redirect URL to clipboard" />
+            </InputField>
+
+            <Subheading className="mt-8">
+                <strong>2.</strong> Find the information below from your identity provider.
+            </Subheading>
+
             <TextInputField
                 label="Issuer URL"
                 value={config.issuer}
@@ -36,10 +50,6 @@ export const SSOConfigForm: FC<Props> = ({ config, onChange }) => {
                 onBlur={issuerError.onBlur}
                 onChange={(val) => onChange({ issuer: val })}
             />
-
-            <InputField label="Redirect URL">
-                <InputWithCopy value={redirectUrl} tip="Copy the Redirect URL to clipboard" />
-            </InputField>
 
             <TextInputField
                 label="Client ID"
