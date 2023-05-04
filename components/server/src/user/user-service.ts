@@ -157,9 +157,6 @@ export class UserService {
             // blocked = if user already blocked OR is not allowed to pass
             newUser.blocked = newUser.blocked || !canPass;
         }
-        if (!newUser.blocked && isFirstUser && this.config.admin.grantFirstUserAdminRole) {
-            newUser.rolesOrPermissions = ["admin", "admin-permissions"];
-        }
     }
 
     protected async validateUsageAttributionId(user: User, usageAttributionId: string): Promise<AttributionId> {
