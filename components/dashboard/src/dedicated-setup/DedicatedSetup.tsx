@@ -94,7 +94,7 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, onComplete }) 
         onComplete();
     }, [history, onComplete, updateUser, org?.id]);
 
-    if (ssoConfig?.active) {
+    if (ssoConfig?.active && step !== STEPS.COMPLETE) {
         setStep(STEPS.COMPLETE);
     }
 
