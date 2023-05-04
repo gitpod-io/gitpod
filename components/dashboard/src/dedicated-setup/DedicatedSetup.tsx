@@ -19,6 +19,8 @@ import { OrganizationInfo } from "../data/organizations/orgs-query";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
+import { useQueryParams } from "../hooks/use-query-params";
+import { forceDedicatedSetupParam } from "./use-check-dedicated-setup";
 
 type Props = {
     onComplete: () => void;
@@ -41,7 +43,8 @@ const DedicatedSetup: FC<Props> = ({ onComplete }) => {
         return oidcClients.data?.[0];
     }, [oidcClients.data]);
 
-    if (currentOrg.isLoading) {
+    // let current org load along with oidc clients once we have an org
+    if (currentOrg.isLoading || (currentOrg.data && oidcClients.isLoading)) {
         return (
             <Delayed>
                 <SpinnerLoader />
@@ -70,6 +73,7 @@ type DedicatedSetupStepsProps = {
 };
 const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onComplete }) => {
     const { setUser } = useContext(UserContext);
+    const params = useQueryParams();
 
     // If we have an org w/ a name, we can skip the first step and go to sso setup
     let initialStep: StepsValue = org && org.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
@@ -77,7 +81,10 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onC
     if (ssoConfig?.active) {
         initialStep = STEPS.COMPLETE;
     }
-    const [step, setStep] = useState<StepsValue>(initialStep);
+
+    // If setup forced via params, just start at beginning
+    const forceSetup = forceDedicatedSetupParam(params);
+    const [step, setStep] = useState<StepsValue>(forceSetup ? STEPS.GETTING_STARTED : initialStep);
     const history = useHistory();
     const { dropConfetti } = useConfetti();
 
