@@ -41,7 +41,7 @@ const DedicatedSetup: FC<Props> = ({ onComplete }) => {
         return oidcClients.data?.[0];
     }, [oidcClients.data]);
 
-    if (currentOrg.isLoading || oidcClients.isLoading) {
+    if (currentOrg.isLoading) {
         return (
             <Delayed>
                 <SpinnerLoader />
