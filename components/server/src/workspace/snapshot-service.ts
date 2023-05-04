@@ -9,7 +9,6 @@ import { v4 as uuidv4 } from "uuid";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { GitpodServer, Snapshot } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
-import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
 
 export interface WaitForSnapshotOptions {
     workspaceOwner: string;
@@ -23,7 +22,6 @@ const SNAPSHOT_POLL_INTERVAL_SECONDS = 5;
 export class SnapshotService {
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
-    @inject(ConsensusLeaderQorum) protected readonly leaderQuorum: ConsensusLeaderQorum;
 
     public async createSnapshot(options: GitpodServer.TakeSnapshotOptions, snapshotUrl: string): Promise<Snapshot> {
         const id = uuidv4();
