@@ -31,7 +31,7 @@ export const SSOConfigForm: FC<Props> = ({ config, onChange }) => {
             <TextInputField
                 label="Issuer URL"
                 value={config.issuer}
-                placeholder={"https://accounts.google.com"}
+                placeholder={"e.g. https://accounts.google.com"}
                 error={issuerError.message}
                 onBlur={issuerError.onBlur}
                 onChange={(val) => onChange({ issuer: val })}
