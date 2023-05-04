@@ -26,7 +26,7 @@ export const SetupCompleteStep: FC<Props> = ({ onComplete }) => {
     }, [url]);
 
     return (
-        <SetupLayout showOrg showUser noMaxWidth>
+        <SetupLayout showOrg noMaxWidth>
             <Heading1>Welcome to Gitpod</Heading1>
             <Subheading>Your teammates can now sign in to Gitpod using single sign-on (SSO).</Subheading>
 
