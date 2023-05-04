@@ -106,7 +106,6 @@ func eventFilter(nodeName string) predicate.Predicate {
 }
 
 func workspaceFilter(object client.Object, nodeName string) bool {
-	panic("bla")
 	if ws, ok := object.(*workspacev1.Workspace); ok {
 		return ws.Status.Runtime != nil && ws.Status.Runtime.NodeName == nodeName
 	}
@@ -163,7 +162,6 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 	defer tracing.FinishSpan(span, &err)
 
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil {
-		panic("bla")
 		if wsc.latestWorkspace(ctx, ws) != nil {
 			return ctrl.Result{Requeue: true}, nil
 		}

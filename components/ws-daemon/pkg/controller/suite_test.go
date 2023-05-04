@@ -25,7 +25,6 @@ import (
 
 	//+kubebuilder:scaffold:imports
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -104,31 +103,6 @@ func createNamespace(name string) *corev1.Namespace {
 
 	Expect(k8sClient.Create(ctx, namespace)).To(Succeed())
 	return namespace
-}
-
-type FakeWorkspaceOperations struct {
-	Initialized bool
-}
-
-func (fwo *FakeWorkspaceOperations) InitWorkspace(ctx context.Context, options InitOptions) (string, error) {
-	fwo.Initialized = true
-	return "", nil
-}
-
-func (fwo *FakeWorkspaceOperations) BackupWorkspace(ctx context.Context, opts BackupOptions) (*csapi.GitStatus, error) {
-	return nil, nil
-}
-
-func (fwo *FakeWorkspaceOperations) DeleteWorkspace(ctx context.Context, instanceID string) error {
-	return nil
-}
-
-func (fwo *FakeWorkspaceOperations) SnapshotIDs(ctx context.Context, instanceID string) (snapshotUrl, snapshotName string, err error) {
-	return "bla", "bla", nil
-}
-
-func (fwo *FakeWorkspaceOperations) Snapshot(ctx context.Context, instanceID, snapshotName string) (err error) {
-	return nil
 }
 
 var _ = AfterSuite(func() {

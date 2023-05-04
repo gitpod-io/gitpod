@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	timeout            = time.Second * 5
+	timeout            = time.Second * 20
 	duration           = time.Second * 2
 	interval           = time.Millisecond * 250
 	workspaceNamespace = "default"
@@ -32,13 +32,11 @@ const (
 
 var _ = Describe("WorkspaceController", func() {
 	Context("with regular workspace", func() {
-		It("should handle content init", func() {
+		It("should handle regular content init", func() {
 			name := uuid.NewString()
 
-			// ops := &FakeWorkspaceOperations{}
-			// workspaceCtrl.operations = ops
-
 			mockCtrl := gomock.NewController(GinkgoT())
+			defer mockCtrl.Finish()
 			ops := NewMockWorkspaceOperations(mockCtrl)
 
 			ops.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).Return("", nil).Times(1)
@@ -55,11 +53,97 @@ var _ = Describe("WorkspaceController", func() {
 				}
 			})
 
+			expectConditionEventually(ws, string(workspacev1.WorkspaceConditionContentReady), metav1.ConditionTrue, "InitializationSuccess")
+		})
+
+		It("should handle regular content backup", func() {
+			name := uuid.NewString()
+
+			mockCtrl := gomock.NewController(GinkgoT())
+			defer mockCtrl.Finish()
+			ops := NewMockWorkspaceOperations(mockCtrl)
+
+			ops.EXPECT().BackupWorkspace(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
+			ops.EXPECT().DeleteWorkspace(gomock.Any(), gomock.Any())
+			workspaceCtrl.operations = ops
+
+			_ = createSecret(fmt.Sprintf("%s-tokens", name), secretsNamespace)
+			ws := newWorkspace(name, workspaceNamespace, workspacev1.WorkspacePhaseCreating)
+			createWorkspace(ws)
+			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
+				ws.Status.Phase = workspacev1.WorkspacePhaseStopping
+				ws.Status.Conditions = []metav1.Condition{
+					workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, "InitializationSuccess", ""),
+				}
+				ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
+					NodeName: NodeName,
+				}
+			})
+
+			expectConditionEventually(ws, string(workspacev1.WorkspaceConditionBackupComplete), metav1.ConditionTrue, "BackupComplete")
+		})
+
+		It("should report backup failure", func() {
+			name := uuid.NewString()
+
+			mockCtrl := gomock.NewController(GinkgoT())
+			defer mockCtrl.Finish()
+			ops := NewMockWorkspaceOperations(mockCtrl)
+
+			ops.EXPECT().BackupWorkspace(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("BOOM!")).Times(1)
+			ops.EXPECT().DeleteWorkspace(gomock.Any(), gomock.Any())
+			workspaceCtrl.operations = ops
+
+			_ = createSecret(fmt.Sprintf("%s-tokens", name), secretsNamespace)
+			ws := newWorkspace(name, workspaceNamespace, workspacev1.WorkspacePhaseCreating)
+			createWorkspace(ws)
+			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
+				ws.Status.Phase = workspacev1.WorkspacePhaseStopping
+				ws.Status.Conditions = []metav1.Condition{
+					workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, "InitializationSuccess", ""),
+				}
+				ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
+					NodeName: NodeName,
+				}
+			})
+
+			expectConditionEventually(ws, string(workspacev1.WorkspaceConditionBackupFailure), metav1.ConditionTrue, "BackupFailed")
+		})
+
+		It("should report snapshot url on snapshot", func() {
+			name := uuid.NewString()
+
+			mockCtrl := gomock.NewController(GinkgoT())
+			defer mockCtrl.Finish()
+			ops := NewMockWorkspaceOperations(mockCtrl)
+
+			ops.EXPECT().BackupWorkspace(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
+			ops.EXPECT().SnapshotIDs(gomock.Any(), gomock.Any()).Return("snapshotUrl", "snapshotName", nil)
+			ops.EXPECT().DeleteWorkspace(gomock.Any(), gomock.Any()).Return(nil).Times(1)
+			workspaceCtrl.operations = ops
+
+			_ = createSecret(fmt.Sprintf("%s-tokens", name), secretsNamespace)
+			ws := newWorkspace(name, workspaceNamespace, workspacev1.WorkspacePhaseCreating)
+			ws.Spec.Type = workspacev1.WorkspaceTypePrebuild
+			createWorkspace(ws)
+			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
+				ws.Status.Phase = workspacev1.WorkspacePhaseStopping
+				ws.Status.Conditions = []metav1.Condition{
+					workspacev1.NewWorkspaceConditionContentReady(metav1.ConditionTrue, "InitializationSuccess", ""),
+				}
+				ws.Status.Runtime = &workspacev1.WorkspaceRuntimeStatus{
+					NodeName: NodeName,
+				}
+			})
+
 			Eventually(func(g Gomega) {
 				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
-				g.Expect(wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)))
+				g.Expect(ws.Status.Snapshot).ToNot(BeEmpty())
 			}, timeout, interval).Should(Succeed())
+
+			expectConditionEventually(ws, string(workspacev1.WorkspaceConditionBackupComplete), metav1.ConditionTrue, "BackupComplete")
 		})
+
 	})
 })
 
@@ -148,5 +232,19 @@ func updateObjWithRetries[O client.Object](c client.Client, obj O, updateStatus 
 			err = c.Update(ctx, obj)
 		}
 		return err
+	}, timeout, interval).Should(Succeed())
+}
+
+func expectConditionEventually(ws *workspacev1.Workspace, tpe string, status metav1.ConditionStatus, reason string) {
+	GinkgoHelper()
+	By(fmt.Sprintf("controller setting workspace condition %s to %s", tpe, status))
+	Eventually(func(g Gomega) {
+		g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
+		c := wsk8s.GetCondition(ws.Status.Conditions, tpe)
+		g.Expect(c).ToNot(BeNil(), fmt.Sprintf("expected condition %s to be present", tpe))
+		g.Expect(c.Status).To(Equal(status))
+		if reason != "" {
+			g.Expect(c.Reason).To(Equal(reason))
+		}
 	}, timeout, interval).Should(Succeed())
 }
