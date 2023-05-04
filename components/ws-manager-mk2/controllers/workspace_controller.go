@@ -362,11 +362,13 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 
 func isStartFailure(ws *workspacev1.Workspace) bool {
 	// Consider workspaces that never became ready as start failures.
+	everReady := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady))
 	// Except for aborted prebuilds, as they can get aborted before becoming ready, which shouldn't be counted
 	// as a start failure.
-	everReady := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady))
 	isAborted := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted))
-	return !everReady && !isAborted
+	// Also ignore workspaces that are requested to be stopped before they became ready.
+	isStoppedByRequest := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest))
+	return !everReady && !isAborted && !isStoppedByRequest
 }
 
 func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspacev1.Workspace, old *workspacev1.WorkspaceStatus) {
