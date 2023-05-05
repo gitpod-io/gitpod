@@ -30,12 +30,12 @@ export const SSOConfigForm: FC<Props> = ({ config, onChange }) => {
     return (
         <>
             <Subheading>
-                <strong>1.</strong> Add the following <strong>redirect url</strong> to your identity provider's
+                <strong>1.</strong> Add the following <strong>redirect URI</strong> to your identity provider's
                 configuration.
             </Subheading>
 
             <InputField>
-                <InputWithCopy value={redirectUrl} tip="Copy the Redirect URL to clipboard" />
+                <InputWithCopy value={redirectUrl} tip="Copy the redirect URI to clipboard" />
             </InputField>
 
             <Subheading className="mt-8">

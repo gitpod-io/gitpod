@@ -515,7 +515,7 @@ export function GitIntegrationModal(
 
     const [type, setType] = useState<string>("GitLab");
     const [host, setHost] = useState<string>("");
-    const [redirectURL, setRedirectURL] = useState<string>(callbackUrl("gitlab.example.com"));
+    const [redirectURI, setRedirectURI] = useState<string>(callbackUrl("gitlab.example.com"));
     const [clientId, setClientId] = useState<string>("");
     const [clientSecret, setClientSecret] = useState<string>("");
     const [busy, setBusy] = useState<boolean>(false);
@@ -530,7 +530,7 @@ export function GitIntegrationModal(
             setHost(props.provider.host);
             setClientId(props.provider.oauth.clientId);
             setClientSecret(props.provider.oauth.clientSecret);
-            setRedirectURL(props.provider.oauth.callBackUrl);
+            setRedirectURI(props.provider.oauth.callBackUrl);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -636,7 +636,7 @@ export function GitIntegrationModal(
             }
 
             setHost(newHostValue);
-            setRedirectURL(callbackUrl(newHostValue));
+            setRedirectURI(callbackUrl(newHostValue));
             setErrorMessage(undefined);
         }
     };
@@ -691,7 +691,7 @@ export function GitIntegrationModal(
 
         return (
             <span>
-                Use this redirect URL to update the OAuth application. Go to{" "}
+                Use this redirect URI to update the OAuth application. Go to{" "}
                 <a href={`https://${settingsUrl}`} target="_blank" rel="noreferrer noopener" className="gp-link">
                     developer settings
                 </a>{" "}
@@ -719,9 +719,9 @@ export function GitIntegrationModal(
         }
     };
 
-    const copyRedirectUrl = () => {
+    const copyRedirectURI = () => {
         const el = document.createElement("textarea");
-        el.value = redirectURL;
+        el.value = redirectURI;
         document.body.appendChild(el);
         el.select();
         try {
@@ -794,22 +794,22 @@ export function GitIntegrationModal(
                         />
                     </div>
                     <div className="flex flex-col space-y-2">
-                        <label htmlFor="redirectURL" className="font-medium">
-                            Redirect URL
+                        <label htmlFor="redirectURI" className="font-medium">
+                            Redirect URI
                         </label>
                         <div className="w-full relative">
                             <input
-                                id="redirectURL"
+                                id="redirectURI"
                                 disabled={true}
                                 readOnly={true}
                                 type="text"
-                                value={redirectURL}
+                                value={redirectURI}
                                 className="w-full pr-8"
                             />
-                            <div className="cursor-pointer" onClick={() => copyRedirectUrl()}>
+                            <div className="cursor-pointer" onClick={() => copyRedirectURI()}>
                                 <img
                                     src={copy}
-                                    title="Copy the Redirect URL to clipboard"
+                                    title="Copy the redirect URI to clipboard"
                                     className="absolute top-1/3 right-3"
                                     alt="copy icon"
                                 />
