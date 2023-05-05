@@ -56,7 +56,7 @@ type OIDCClientConfig struct {
 	// Whether this config can be used for sign-ins.
 	// Defaults to false.
 	// Optional.
-	Active bool `protobuf:"varint,9,opt,name=active,proto3" json:"active,omitempty"`
+	Active bool `protobuf:"varint,9,opt,name=active,proto3" json:"active"`
 }
 
 func (x *OIDCClientConfig) Reset() {
