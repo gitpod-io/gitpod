@@ -148,7 +148,7 @@ function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
     return (
         <div className="flex" title={option.title}>
             <div className="mx-2 my-2">
-                <img className="w-8 filter-grayscale self-center" src={option.logo} alt="logo" />
+                <img className="w-8 h-8 filter-grayscale self-center" src={option.logo} alt="logo" />
             </div>
             <div className="flex self-center text-gray-500">
                 <div className="font-semibold text-gray-700 dark:text-gray-300">{option.title}</div>
