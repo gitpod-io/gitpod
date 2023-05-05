@@ -76,6 +76,8 @@ export default function OrganizationSelector() {
 
     const showUsageForOrg = currentOrg.data?.isOwner && orgBillingMode?.mode === "usage-based";
 
+    // yolo
+
     if (showUsageForPersonalAccount || showUsageForOrg) {
         linkEntries.push({
             title: "Usage",
