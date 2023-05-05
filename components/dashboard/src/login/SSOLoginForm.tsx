@@ -11,19 +11,29 @@ import { TextInputField } from "../components/forms/TextInputField";
 import { useOnBlurError } from "../hooks/use-onblur-error";
 import { openOIDCStartWindow } from "../provider-utils";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { useLocation } from "react-router";
 
 type Props = {
     singleOrgMode?: boolean;
     onSuccess: () => void;
 };
+
+function getOrgSlugFromPath(path: string) {
+    return path.split("/")[2];
+}
+
 export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
-    const [orgSlug, setOrgSlug] = useState("");
+    const location = useLocation();
+    const [orgSlug, setOrgSlug] = useState(
+        getOrgSlugFromPath(location.pathname) || window.localStorage.getItem("sso-org-slug") || "",
+    );
     const [error, setError] = useState("");
     const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
 
     const openLoginWithSSO = useCallback(
         async (e) => {
             e.preventDefault();
+            window.localStorage.setItem("sso-org-slug", orgSlug.trim());
 
             try {
                 await openOIDCStartWindow({

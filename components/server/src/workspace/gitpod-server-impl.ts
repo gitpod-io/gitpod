@@ -2889,6 +2889,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "The invite link is no longer valid.");
         }
         ctx.span?.setTag("teamId", invite.teamId);
+        if (await this.teamDB.hasActiveSSO(invite.teamId)) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+        }
         const result = await this.teamDB.addMemberToTeam(user.id, invite.teamId);
         const team = await this.teamDB.findTeamById(invite.teamId);
         if (result !== "already_member") {
@@ -2966,6 +2969,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.checkUser("getGenericInvite");
         await this.guardTeamOperation(teamId, "get", "org_members_write");
 
+        if (await this.teamDB.hasActiveSSO(teamId)) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+        }
+
         const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
         if (invite) {
             return invite;
@@ -2978,6 +2985,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         this.checkAndBlockUser("resetGenericInvite");
         await this.guardTeamOperation(teamId, "update", "org_members_write");
+        if (await this.teamDB.hasActiveSSO(teamId)) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+        }
         return this.teamDB.resetGenericInvite(teamId);
     }
 
@@ -4007,15 +4017,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getOnboardingState(ctx: TraceContext): Promise<GitpodServer.OnboardingState> {
         this.checkAndBlockUser("getOnboardingState");
 
-        // Optimized check for completed setup
-        const hasAnyOrgWithActiveSSO = await this.teamDB.hasAnyOrgWithActiveSSO();
-        if (hasAnyOrgWithActiveSSO) {
-            return {
-                isCompleted: true,
-                hasAnyOrg: true,
-            };
-        }
-
         // Find useful details about the state of the Gitpod installation.
         const { rows } = await this.teamDB.findTeams(
             0 /* offset */,
@@ -4025,9 +4026,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             "" /* empty search term returns any */,
         );
         const hasAnyOrg = rows.length > 0;
-
+        let isCompleted = false;
+        for (const row of rows) {
+            isCompleted = await this.teamDB.hasActiveSSO(row.id);
+            if (isCompleted) {
+                break;
+            }
+        }
         return {
-            isCompleted: false,
+            isCompleted,
             hasAnyOrg,
         };
     }

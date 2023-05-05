@@ -184,7 +184,7 @@ export const AppRoutes = () => {
                     <AdminRoute path="/admin/blocked-repositories" component={BlockedRepositories} />
                     <AdminRoute path="/admin/settings" component={AdminSettings} />
 
-                    <Route path={["/", "/login"]} exact>
+                    <Route path={["/", "/login", "/login/:orgSlug"]} exact>
                         <Redirect to={workspacesPathMain} />
                     </Route>
                     <Route path={[settingsPathMain]} exact>

@@ -89,6 +89,35 @@ func TestTeamsService_CreateTeam(t *testing.T) {
 			Team: teamToAPIResponse(team, teamMembers, invite),
 		}, response.Msg)
 	})
+
+	t.Run("returns team with members and no invite", func(t *testing.T) {
+		teamMembers := []*protocol.TeamMemberInfo{
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Alice Alice",
+				Role:     protocol.TeamMember_Owner,
+			}),
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Bob Bob",
+				Role:     protocol.TeamMember_Member,
+			}),
+		}
+		team := newTeam(&protocol.Team{
+			ID: id,
+		})
+
+		serverMock, client := setupTeamService(t)
+
+		serverMock.EXPECT().CreateTeam(gomock.Any(), name).Return(team, nil)
+		serverMock.EXPECT().GetTeamMembers(gomock.Any(), id).Return(teamMembers, nil)
+		serverMock.EXPECT().GetGenericInvite(gomock.Any(), id).Return(nil, &jsonrpc2.Error{Code: 404, Message: "not found"})
+
+		response, err := client.CreateTeam(context.Background(), connect.NewRequest(&v1.CreateTeamRequest{Name: name}))
+		require.NoError(t, err)
+
+		requireEqualProto(t, &v1.CreateTeamResponse{
+			Team: teamToAPIResponse(team, teamMembers, nil),
+		}, response.Msg)
+	})
 }
 
 func TestTeamsService_ListTeams(t *testing.T) {
