@@ -32,37 +32,46 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
 
     const { save, isLoading, isError, error } = useSaveSSOConfig();
 
-    const handleVerify = useCallback(async () => {
-        try {
-            let configId = ssoConfig.id;
+    const handleVerify = useCallback(
+        async (e) => {
+            e.preventDefault();
 
-            const response = await save(ssoConfig);
-
-            // Create returns the new config, update does not
-            if ("config" in response && response.config) {
-                configId = response.config.id;
+            if (isLoading) {
+                return;
             }
 
-            await openOIDCStartWindow({
-                activate: true,
-                configId: configId,
-                onSuccess: async () => {
-                    onComplete();
-                },
-                onError: (payload) => {
-                    let errorMessage: string;
-                    if (typeof payload === "string") {
-                        errorMessage = payload;
-                    } else {
-                        errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
-                    }
-                    setSSOLoginError(errorMessage);
-                },
-            });
-        } catch (e) {
-            console.error(e);
-        }
-    }, [onComplete, save, ssoConfig]);
+            try {
+                let configId = ssoConfig.id;
+
+                const response = await save(ssoConfig);
+
+                // Create returns the new config, update does not
+                if ("config" in response && response.config) {
+                    configId = response.config.id;
+                }
+
+                await openOIDCStartWindow({
+                    activate: true,
+                    configId: configId,
+                    onSuccess: async () => {
+                        onComplete();
+                    },
+                    onError: (payload) => {
+                        let errorMessage: string;
+                        if (typeof payload === "string") {
+                            errorMessage = payload;
+                        } else {
+                            errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                        }
+                        setSSOLoginError(errorMessage);
+                    },
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        },
+        [isLoading, onComplete, save, ssoConfig],
+    );
 
     return (
         <SetupLayout showOrg>
@@ -80,7 +89,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
                 <Subheading>
                     {/* TODO: Find what link we want to use here */}
                     Enable single sign-on for your organization using the OpenID Connect (OIDC) standard.{" "}
-                    <a href="https://gitpod.io" target="_blank" rel="noreferrer noopener" className="gp-link">
+                    <a href="https://openid.net/connect/" target="_blank" rel="noreferrer noopener" className="gp-link">
                         Learn more
                     </a>
                 </Subheading>
@@ -89,13 +98,15 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
 
             {ssoLoginError && <Alert type="danger">{ssoLoginError}</Alert>}
 
-            <SSOConfigForm config={ssoConfig} onChange={dispatch} />
+            <form onSubmit={handleVerify}>
+                <SSOConfigForm config={ssoConfig} onChange={dispatch} />
 
-            <div className="mt-6">
-                <Button size="block" onClick={handleVerify} disabled={!configIsValid} loading={isLoading}>
-                    Verify SSO Configuration
-                </Button>
-            </div>
+                <div className="mt-6">
+                    <Button size="block" disabled={!configIsValid} loading={isLoading}>
+                        Verify SSO Configuration
+                    </Button>
+                </div>
+            </form>
         </SetupLayout>
     );
 };

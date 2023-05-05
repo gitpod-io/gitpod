@@ -9,16 +9,13 @@ import gitpodIcon from "../icons/gitpod.svg";
 import { OrgIcon } from "../components/org-icon/OrgIcon";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import "./styles.css";
-import { useCurrentUser } from "../user-context";
 
 type Props = {
     showOrg?: boolean;
-    showUser?: boolean;
     noMaxWidth?: boolean;
 };
-export const SetupLayout: FC<Props> = ({ showOrg = false, showUser = false, noMaxWidth = false, children }) => {
+export const SetupLayout: FC<Props> = ({ showOrg = false, noMaxWidth = false, children }) => {
     const currentOrg = useCurrentOrg();
-    const currentUser = useCurrentUser();
 
     useEffect(() => {
         document.body.classList.add("honeycomb-bg");
@@ -48,13 +45,6 @@ export const SetupLayout: FC<Props> = ({ showOrg = false, showUser = false, noMa
                             <span className="text-lg">Gitpod</span>
                         )}
                     </div>
-                    {showUser && currentUser && (
-                        <img
-                            className="rounded-full w-8 h-8"
-                            src={currentUser.avatarUrl || ""}
-                            alt={currentUser.name || "Anonymous"}
-                        />
-                    )}
                 </div>
                 <div className={`mt-24 ${noMaxWidth ? "" : "max-w-md"}`}>{children}</div>
             </div>

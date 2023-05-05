@@ -18,48 +18,16 @@ import { SpinnerLoader } from "../components/Loader";
 import { OrganizationInfo } from "../data/organizations/orgs-query";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
+import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
+import { useQueryParams } from "../hooks/use-query-params";
+import { forceDedicatedSetupParam } from "./use-check-dedicated-setup";
 
 type Props = {
     onComplete: () => void;
 };
 const DedicatedSetup: FC<Props> = ({ onComplete }) => {
     const currentOrg = useCurrentOrg();
-
-    if (currentOrg.isLoading) {
-        return (
-            <Delayed>
-                <SpinnerLoader />
-            </Delayed>
-        );
-    }
-
-    // Delay rendering until we have data so we can default to the correct step
-    return <DedicatedSetupSteps org={currentOrg.data} onComplete={onComplete} />;
-};
-
-export default DedicatedSetup;
-
-const STEPS = {
-    GETTING_STARTED: "getting-started",
-    ORG_NAMING: "org-naming",
-    SSO_SETUP: "sso-setup",
-    COMPLETE: "complete",
-} as const;
-type StepsValue = typeof STEPS[keyof typeof STEPS];
-
-type DedicatedSetupStepsProps = {
-    org?: OrganizationInfo;
-    onComplete: () => void;
-};
-const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, onComplete }) => {
-    const { setUser } = useContext(UserContext);
-
-    // If we have an org w/ a name, we can skip the first step and go to sso setup
-    const initialStep = org && org.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
-    const [step, setStep] = useState<StepsValue>(initialStep);
-    const history = useHistory();
     const oidcClients = useOIDCClientsQuery();
-    const { dropConfetti } = useConfetti();
 
     // if a config already exists, select first active, or first config
     const ssoConfig = useMemo(() => {
@@ -74,6 +42,51 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, onComplete }) 
 
         return oidcClients.data?.[0];
     }, [oidcClients.data]);
+
+    // let current org load along with oidc clients once we have an org
+    if (currentOrg.isLoading || (currentOrg.data && oidcClients.isLoading)) {
+        return (
+            <Delayed>
+                <SpinnerLoader />
+            </Delayed>
+        );
+    }
+
+    // Delay rendering until we have data so we can default to the correct step
+    return <DedicatedSetupSteps org={currentOrg.data} ssoConfig={ssoConfig} onComplete={onComplete} />;
+};
+
+export default DedicatedSetup;
+
+const STEPS = {
+    GETTING_STARTED: "getting-started",
+    ORG_NAMING: "org-naming",
+    SSO_SETUP: "sso-setup",
+    COMPLETE: "complete",
+} as const;
+type StepsValue = typeof STEPS[keyof typeof STEPS];
+
+type DedicatedSetupStepsProps = {
+    org?: OrganizationInfo;
+    ssoConfig?: OIDCClientConfig;
+    onComplete: () => void;
+};
+const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onComplete }) => {
+    const { setUser } = useContext(UserContext);
+    const params = useQueryParams();
+
+    // If we have an org w/ a name, we can skip the first step and go to sso setup
+    let initialStep: StepsValue = org && org.name ? STEPS.SSO_SETUP : STEPS.GETTING_STARTED;
+    // If there's already an active sso config, advance to the complete step
+    if (ssoConfig?.active) {
+        initialStep = STEPS.COMPLETE;
+    }
+
+    // If setup forced via params, just start at beginning
+    const forceSetup = forceDedicatedSetupParam(params);
+    const [step, setStep] = useState<StepsValue>(forceSetup ? STEPS.GETTING_STARTED : initialStep);
+    const history = useHistory();
+    const { dropConfetti } = useConfetti();
 
     const handleSetupComplete = useCallback(() => {
         // celebrate 🎉
@@ -94,23 +107,11 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, onComplete }) 
         onComplete();
     }, [history, onComplete, updateUser, org?.id]);
 
-    if (ssoConfig?.active && step !== STEPS.COMPLETE) {
-        setStep(STEPS.COMPLETE);
-    }
-
     return (
         <>
             {step === STEPS.GETTING_STARTED && <GettingStartedStep onComplete={() => setStep(STEPS.ORG_NAMING)} />}
             {step === STEPS.ORG_NAMING && <OrgNamingStep onComplete={() => setStep(STEPS.SSO_SETUP)} />}
-            {step === STEPS.SSO_SETUP &&
-                (oidcClients.isLoading ? (
-                    // Hold off on showing sso setup until we see if we have a config to continue with
-                    <Delayed>
-                        <SpinnerLoader />
-                    </Delayed>
-                ) : (
-                    <SSOSetupStep config={ssoConfig} onComplete={handleSetupComplete} />
-                ))}
+            {step === STEPS.SSO_SETUP && <SSOSetupStep config={ssoConfig} onComplete={handleSetupComplete} />}
             {step === STEPS.COMPLETE && <SetupCompleteStep onComplete={handleEndSetup} />}
         </>
     );

@@ -213,8 +213,8 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                         onBlur={hostOnBlur}
                     />
 
-                    <InputField label="Redirect URL" hint={<RedirectUrlDescription type={type} host={host} />}>
-                        <InputWithCopy value={redirectURL} tip="Copy the Redirect URL to clipboard" />
+                    <InputField label="Redirect URI" hint={<RedirectUrlDescription type={type} host={host} />}>
+                        <InputWithCopy value={redirectURL} tip="Copy the redirect URI to clipboard" />
                     </InputField>
 
                     <TextInputField
@@ -316,7 +316,7 @@ const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = (
 
     return (
         <span>
-            Use this redirect URL to update the OAuth application. Go to{" "}
+            Use this redirect URI to update the OAuth application. Go to{" "}
             <a href={`https://${settingsUrl}`} target="_blank" rel="noreferrer noopener" className="gp-link">
                 developer settings
             </a>{" "}

@@ -26,12 +26,16 @@ export const SetupCompleteStep: FC<Props> = ({ onComplete }) => {
     }, [url]);
 
     return (
-        <SetupLayout showOrg showUser noMaxWidth>
+        <SetupLayout showOrg noMaxWidth>
             <Heading1>Welcome to Gitpod</Heading1>
             <Subheading>Your teammates can now sign in to Gitpod using single sign-on (SSO).</Subheading>
 
             <div className="flex flex-row items-center space-x-2 mt-4">
-                <pre className="font-mono text-sm text-gray-500 dark:text-gray-600">{`> ${url}`}</pre>
+                <div className="flex flex-row items-center space-x-1 font-mono text-sm text-gray-500 dark:text-gray-600">
+                    {/* Keep the caret in a separate tag so triple clicking url doesn't select caret too */}
+                    <pre>{`>`}</pre>
+                    <pre>{url}</pre>
+                </div>
                 <div className="cursor-pointer" onClick={handleCopyToClipboard}>
                     <Tooltip content={copied ? "Copied" : "Click to copy"}>
                         <img src={copy} alt="copy icon" title="Click to copy" />

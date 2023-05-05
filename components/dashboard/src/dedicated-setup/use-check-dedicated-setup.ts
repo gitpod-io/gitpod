@@ -24,7 +24,7 @@ export const useCheckDedicatedSetup = () => {
 
     const { data: onboardingState, isLoading } = useOnboardingState();
 
-    const forceSetup = params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
+    const forceSetup = forceDedicatedSetupParam(params);
     const needsOnboarding = forceSetup || (onboardingState && onboardingState.isCompleted !== true);
 
     const markCompleted = useCallback(() => setInProgress(false), []);
@@ -43,6 +43,10 @@ export const useCheckDedicatedSetup = () => {
         isLoading: enableDedicatedOnboardingFlow && isLoading,
         markCompleted,
     };
+};
+
+export const forceDedicatedSetupParam = (params: URLSearchParams) => {
+    return params.get(FORCE_SETUP_PARAM) === FORCE_SETUP_PARAM_VALUE;
 };
 
 export const useOnboardingState = () => {
