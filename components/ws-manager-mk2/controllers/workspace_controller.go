@@ -110,7 +110,7 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}()
 	}
 
-	log.Info("reconciling workspace", "ws", req.NamespacedName, "phase", workspace.Status.Phase)
+	log.Info("reconciling workspace", "workspace", req.NamespacedName, "phase", workspace.Status.Phase)
 
 	var workspacePods corev1.PodList
 	err := r.List(ctx, &workspacePods, client.InNamespace(req.Namespace), client.MatchingFields{wsOwnerKey: req.Name})
@@ -384,8 +384,8 @@ func (r *WorkspaceReconciler) emitPhaseEvents(ctx context.Context, ws *workspace
 }
 
 func (r *WorkspaceReconciler) deleteWorkspacePod(ctx context.Context, pod *corev1.Pod, reason string) (ctrl.Result, error) {
-	log := log.FromContext(ctx).WithValues("workspace", pod.Name, "reason", reason)
-	log.V(1).Info("deleting workspace pod")
+	log := log.FromContext(ctx).WithValues("pod", pod.Name, "reason", reason)
+	log.Info("deleting workspace pod")
 
 	// Workspace was requested to be deleted, propagate by deleting the Pod.
 	// The Pod deletion will then trigger workspace disposal steps.
