@@ -164,13 +164,13 @@ class TeamDBSpec {
     }
 
     @test(timeout(10000))
-    public async test_hasAnyOrgWithActiveSSO() {
-        expect(await this.db.hasAnyOrgWithActiveSSO(), "case 1: empty db").to.be.false;
+    public async test_hasActiveSSO() {
+        expect((await this.db.findTeams(0, 1, "creationTime", "ASC")).total, "case 1: empty db").to.be.eq(0);
 
         const user = await this.userDb.newUser();
         const org = await this.db.createTeam(user.id, "Some Org");
         await this.db.createTeam(user.id, "Another Org");
-        expect(await this.db.hasAnyOrgWithActiveSSO(), "case 2: org without sso").to.be.false;
+        expect(await this.db.hasActiveSSO(org.id), "case 2: org without sso").to.be.false;
 
         const id = uuidv4();
         await this.exec(async (c) => {
@@ -179,15 +179,15 @@ class TeamDBSpec {
                 [id, "https://issuer.local", org.id, "{}", 0],
             );
         });
-        expect(await this.db.hasAnyOrgWithActiveSSO(), "case 3: org with inactive sso").to.be.false;
+        expect(await this.db.hasActiveSSO(org.id), "case 3: org with inactive sso").to.be.false;
 
         await this.exec(async (c) => {
             await c.query("UPDATE d_b_oidc_client_config set active = ? where id = ?", [1, id]);
         });
-        expect(await this.db.hasAnyOrgWithActiveSSO(), "case 4: org with active sso").to.be.true;
+        expect(await this.db.hasActiveSSO(org.id), "case 4: org with active sso").to.be.true;
 
         await this.db.deleteTeam(org.id);
-        expect(await this.db.hasAnyOrgWithActiveSSO(), "case 5: deleted org").to.be.false;
+        expect(await this.db.hasActiveSSO(org.id), "case 5: deleted org").to.be.false;
     }
 
     protected async exec(queryFn: (connection: Connection) => Promise<void>) {

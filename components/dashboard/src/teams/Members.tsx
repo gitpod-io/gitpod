@@ -30,13 +30,20 @@ export default function MembersPage() {
     const [searchText, setSearchText] = useState<string>("");
     const [roleFilter, setRoleFilter] = useState<TeamMemberRole | undefined>();
 
-    const getInviteURL = (inviteId?: string) => {
-        if (!inviteId) return "no-invite-id";
+    const inviteUrl = useMemo(() => {
+        if (!org.data) {
+            return undefined;
+        }
+        // orgs without an invitation id invite members through their own login page
         const link = new URL(window.location.href);
-        link.pathname = "/orgs/join";
-        link.search = "?inviteId=" + inviteId;
+        if (!org.data.invitationId) {
+            link.pathname = "/login/" + org.data.slug;
+        } else {
+            link.pathname = "/orgs/join";
+            link.search = "?inviteId=" + org.data.invitationId;
+        }
         return link.href;
-    };
+    }, [org.data]);
 
     const [copied, setCopied] = useState<boolean>(false);
     const copyToClipboard = (text: string) => {
@@ -132,7 +139,7 @@ export default function MembersPage() {
                     <button
                         onClick={() => {
                             trackEvent("invite_url_requested", {
-                                invite_url: getInviteURL(org.data?.invitationId),
+                                invite_url: inviteUrl || "",
                             });
                             setShowInviteModal(true);
                         }}
@@ -246,7 +253,7 @@ export default function MembersPage() {
                     )}
                 </ItemsList>
             </div>
-            {org.data?.invitationId && showInviteModal && (
+            {inviteUrl && showInviteModal && (
                 // TODO: Use title and buttons props
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
                     <ModalHeader>Invite Members</ModalHeader>
@@ -260,13 +267,10 @@ export default function MembersPage() {
                                 disabled={true}
                                 readOnly={true}
                                 type="text"
-                                value={getInviteURL(org.data?.invitationId)}
+                                value={inviteUrl}
                                 className="rounded-md w-full truncate overflow-x-scroll pr-8"
                             />
-                            <div
-                                className="cursor-pointer"
-                                onClick={() => copyToClipboard(getInviteURL(org.data?.invitationId))}
-                            >
+                            <div className="cursor-pointer" onClick={() => copyToClipboard(inviteUrl)}>
                                 <div className="absolute top-1/3 right-3">
                                     <Tooltip content={copied ? "Copied!" : "Copy Invite URL"}>
                                         <img src={copy} title="Copy Invite URL" alt="copy icon" />
@@ -279,9 +283,11 @@ export default function MembersPage() {
                         </p>
                     </ModalBody>
                     <ModalFooter>
-                        <button className="secondary" onClick={() => resetInviteLink()}>
-                            Reset Invite Link
-                        </button>
+                        {!!org?.data?.invitationId && (
+                            <button className="secondary" onClick={() => resetInviteLink()}>
+                                Reset Invite Link
+                            </button>
+                        )}
                         <button className="secondary" onClick={() => setShowInviteModal(false)}>
                             Close
                         </button>

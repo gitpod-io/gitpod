@@ -41,5 +41,5 @@ export interface TeamDB {
     findOrgSettings(teamId: string): Promise<OrganizationSettings | undefined>;
     setOrgSettings(teamId: string, settings: Partial<OrganizationSettings>): Promise<void>;
 
-    hasAnyOrgWithActiveSSO(): Promise<boolean>;
+    hasActiveSSO(organizationId: string): Promise<boolean>;
 }

@@ -379,7 +379,7 @@ export class TeamDBImpl implements TeamDB {
         }
     }
 
-    public async hasAnyOrgWithActiveSSO(): Promise<boolean> {
+    public async hasActiveSSO(organizationId: string): Promise<boolean> {
         const repo = await this.getTeamRepo();
         const result = await repo.query(
             `select org.id from d_b_team as org inner join d_b_oidc_client_config as oidc on org.id = oidc.organizationId
@@ -387,7 +387,9 @@ export class TeamDBImpl implements TeamDB {
                 and oidc.deleted = 0
                 and org.deleted = 0
                 and org.markedDeleted = 0
+                and org.id = ?
                 limit 1;`,
+            [organizationId],
         );
         return result.length === 1;
     }

@@ -278,9 +278,14 @@ func (s *TeamService) toTeamAPIResponse(ctx context.Context, conn protocol.APIIn
 	}
 
 	invite, err := conn.GetGenericInvite(ctx, team.ID)
+
 	if err != nil {
-		logger.WithError(err).Error("Failed to get generic invite.")
-		return nil, proxy.ConvertError(err)
+		convertedError := proxy.ConvertError(err)
+		// code not found is expected if the organization is SSO-enabled
+		if connectError, ok := convertedError.(*connect.Error); !ok || connectError.Code() != connect.CodeNotFound {
+			logger.WithError(err).Error("Failed to get generic invite")
+			return nil, convertedError
+		}
 	}
 
 	return teamToAPIResponse(team, members, invite), nil
@@ -325,6 +330,9 @@ func teamRoleToAPIResponse(role protocol.TeamMemberRole) v1.TeamRole {
 }
 
 func teamInviteToAPIResponse(invite *protocol.TeamMembershipInvite) *v1.TeamInvitation {
+	if invite == nil {
+		return nil
+	}
 	return &v1.TeamInvitation{
 		Id: invite.ID,
 	}
