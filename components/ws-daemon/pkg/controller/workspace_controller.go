@@ -123,7 +123,7 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	glog.WithField("ws", req.NamespacedName).WithField("phase", workspace.Status.Phase).Info("reconciling workspace")
+	glog.WithField("workspace", req.NamespacedName).WithField("phase", workspace.Status.Phase).Info("reconciling workspace")
 
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseCreating ||
 		workspace.Status.Phase == workspacev1.WorkspacePhaseInitializing {
