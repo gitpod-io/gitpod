@@ -56,7 +56,9 @@ export const ReloadPageErrorFallback: FC<Pick<FallbackProps, "error">> = ({ erro
                         <strong>Code:</strong> {caughtError.code}
                     </span>
                 )}
-                {caughtError.message && <pre>{caughtError.message}</pre>}
+                {caughtError.message && (
+                    <pre className="max-w-3xl whitespace-normal text-sm">{caughtError.message}</pre>
+                )}
             </div>
         </div>
     );
