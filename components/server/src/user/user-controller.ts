@@ -161,9 +161,10 @@ export class UserController {
                     });
                 });
 
-                // Redirect the user to create a new Organization
-                // We'll want to be more specific about the redirect based on the cell information in the future.
-                res.redirect("/orgs/new", 307);
+                // Redirect the admin-user to the Org Settings page.
+                // The dashboard is expected to render the Onboading flow instead of the regular view,
+                // but if the browser is reloaded after completion of the flow, it should be fine to see the settings.
+                res.redirect("/settings", 307);
             } catch (e) {
                 log.error("Failed to sign-in as admin with OTS Token", e);
 
