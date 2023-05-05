@@ -108,6 +108,13 @@ export class IamSessionApp {
         await this.teamDb.addMemberToTeam(user.id, organizationId);
         if (firstMember) {
             await this.teamDb.setTeamMemberRole(user.id, organizationId, "owner");
+
+            // remove the admin-user from the org
+            try {
+                await this.teamDb.removeMemberFromTeam(BUILTIN_INSTLLATION_ADMIN_USER_ID, organizationId);
+            } catch {
+                // ignore errors if membership would not exist.
+            }
         }
 
         return user;

@@ -19,7 +19,7 @@ import * as request from "supertest";
 
 import * as chai from "chai";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
-import { TeamDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
 const expect = chai.expect;
 
@@ -45,15 +45,20 @@ class TestIamSessionApp {
         },
     };
 
-    protected teamDbMock: TeamDB = {
+    protected teamDbMock: Partial<TeamDB> & { memberships: Set<string> } = {
+        memberships: new Set<string>(), // simply assuming single org here!
         findMembersByTeam: async (teamId: string): Promise<TeamMemberInfo[]> => {
             return [];
         },
-        addMemberToTeam: async (userId: string, teamId: string): Promise<"added" | "already_member"> => {
+        async addMemberToTeam(userId: string, teamId: string): Promise<"added" | "already_member"> {
+            this.memberships.add(userId);
             return "added";
         },
         setTeamMemberRole: async (userId, teamId, role): Promise<void> => {},
-    } as TeamDB;
+        async removeMemberFromTeam(userId, teamId): Promise<void> {
+            this.memberships.delete(userId);
+        },
+    };
 
     protected payload: OIDCCreateSessionPayload = {
         idToken: {} as any,
@@ -75,6 +80,8 @@ class TestIamSessionApp {
     };
 
     public before() {
+        this.teamDbMock.memberships.clear();
+
         const container = new Container();
         container.load(
             new ContainerModule((bind) => {
@@ -187,6 +194,24 @@ class TestIamSessionApp {
 
         expect(result.statusCode, JSON.stringify(result.body)).to.equal(400);
         expect(result.body?.message).to.equal("OIDC client config id is missing");
+    }
+
+    @test.only public async testSessionRequest_createUser_removes_admin() {
+        // assert only admin is member of the org
+        await this.teamDbMock.addMemberToTeam!(BUILTIN_INSTLLATION_ADMIN_USER_ID, "test-org");
+        expect(this.teamDbMock.memberships.has(BUILTIN_INSTLLATION_ADMIN_USER_ID)).to.be.true;
+        expect(this.teamDbMock.memberships.has("id-new-user")).to.be.false;
+
+        const result = await request(this.app.create())
+            .post("/session")
+            .set("Content-Type", "application/json")
+            .send(JSON.stringify(this.payload));
+
+        expect(result.statusCode, JSON.stringify(result.body)).to.equal(200);
+
+        // assert no admin is member of the org
+        expect(this.teamDbMock.memberships.has(BUILTIN_INSTLLATION_ADMIN_USER_ID)).to.be.false;
+        expect(this.teamDbMock.memberships.has("id-new-user")).to.be.true;
     }
 }
 
