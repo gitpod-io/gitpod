@@ -43,6 +43,7 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 			respondWithError(w, distv2.ErrorCodeManifestUnknown)
 		})
 	}
+	log.Infof("provider %s will handle request for %s", spname, name)
 	spec, err := sp.GetSpec(ctx, name)
 	if err != nil {
 		// treat invalid names from node-labeler as debug, not errors
