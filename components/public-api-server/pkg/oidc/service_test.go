@@ -78,12 +78,14 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 	service, dbConn := setupOIDCServiceForTests(t)
 	config, team := createConfig(t, dbConn, &ClientConfig{
 		Issuer:         issuer,
+		Active:         true,
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config:   &oauth2.Config{},
 	})
 	// create second org to emulate an installation with multiple orgs
 	createConfig(t, dbConn, &ClientConfig{
 		Issuer:         issuer,
+		Active:         true,
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config:   &oauth2.Config{},
 	})
@@ -143,6 +145,7 @@ func TestGetClientConfigFromStartRequestSingleOrg(t *testing.T) {
 	dbConn.Delete(&db.Team{}, "1=1")
 	config, team := createConfig(t, dbConn, &ClientConfig{
 		Issuer:         issuer,
+		Active:         true,
 		VerifierConfig: &oidc.Config{},
 		OAuth2Config:   &oauth2.Config{},
 	})
@@ -190,7 +193,7 @@ func TestGetClientConfigFromStartRequestSingleOrg(t *testing.T) {
 			if tc.ExpectedError != true {
 				require.NoError(te, err)
 				require.NotNil(te, config)
-				require.Equal(te, tc.ExpectedId, config.ID)
+				require.Equal(te, tc.ExpectedId, config.ID, "wrong config")
 			}
 		})
 	}
@@ -348,9 +351,12 @@ func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) (db.OIDCC
 		ID:   orgID,
 		Name: "Org 1",
 		// creating random slug using UUID generator, because it's handy here
-		Slug: uuid.New().String(),
+		Slug: "org-" + uuid.New().String(),
 	})
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, dbConn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+	})
 
 	data, err := db.EncryptJSON(dbtest.CipherSet(t), db.OIDCSpec{
 		ClientID:     config.OAuth2Config.ClientID,
@@ -359,10 +365,18 @@ func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) (db.OIDCC
 	require.NoError(t, err)
 
 	created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
+		ID:             uuid.New(),
 		OrganizationID: orgID,
 		Issuer:         config.Issuer,
+		Active:         false,
 		Data:           data,
-	})[0]
+	}, db.OIDCClientConfig{
+		ID:             uuid.New(),
+		OrganizationID: orgID,
+		Issuer:         config.Issuer,
+		Active:         config.Active,
+		Data:           data,
+	})[1]
 
 	return created, team
 }

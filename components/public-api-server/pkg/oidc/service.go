@@ -45,6 +45,7 @@ type ClientConfig struct {
 	ID             string
 	OrganizationID string
 	Issuer         string
+	Active         bool
 	OAuth2Config   *oauth2.Config
 	VerifierConfig *goidc.Config
 }
@@ -227,6 +228,7 @@ func (s *Service) convertClientConfig(ctx context.Context, dbEntry db.OIDCClient
 		ID:             dbEntry.ID.String(),
 		OrganizationID: dbEntry.OrganizationID.String(),
 		Issuer:         dbEntry.Issuer,
+		Active:         dbEntry.Active,
 		OAuth2Config: &oauth2.Config{
 			ClientID:     spec.ClientID,
 			ClientSecret: spec.ClientSecret,

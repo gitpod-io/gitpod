@@ -19,16 +19,18 @@ func Test_WriteRead(t *testing.T) {
 
 	team := db.Team{
 		ID:   uuid.New(),
-		Name: "Team1",
-		Slug: "team1",
+		Name: "Org 1",
+		Slug: "org-" + uuid.New().String(),
 	}
 
 	_, err := db.CreateTeam(context.Background(), conn, team)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+	})
 
 	candidates := []db.Team{
 		{ID: team.ID},
-		{Slug: team.Slug},
 	}
 
 	for _, read := range candidates {
@@ -45,11 +47,14 @@ func Test_GetTeamBySlug(t *testing.T) {
 	team := db.Team{
 		ID:   uuid.New(),
 		Name: "Team1",
-		Slug: "team1",
+		Slug: "org-" + uuid.New().String(),
 	}
 
 	_, err := db.CreateTeam(context.Background(), conn, team)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+	})
 
 	read, err := db.GetTeamBySlug(context.Background(), conn, team.Slug)
 	require.NoError(t, err)
@@ -69,11 +74,14 @@ func Test_GetTheSingleTeam(t *testing.T) {
 	team := db.Team{
 		ID:   uuid.New(),
 		Name: "Team1",
-		Slug: "team1",
+		Slug: "org-" + uuid.New().String(),
 	}
 
 	_, err = db.CreateTeam(context.Background(), conn, team)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+	})
 
 	read, err := db.GetTheSingleTeam(context.Background(), conn)
 	require.NoError(t, err)
@@ -84,11 +92,14 @@ func Test_GetTheSingleTeam(t *testing.T) {
 	team2 := db.Team{
 		ID:   uuid.New(),
 		Name: "Team1",
-		Slug: "team1",
+		Slug: "org-" + uuid.New().String(),
 	}
 
 	_, err = db.CreateTeam(context.Background(), conn, team2)
 	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+	})
 
 	_, err = db.GetTheSingleTeam(context.Background(), conn)
 	require.Error(t, err)

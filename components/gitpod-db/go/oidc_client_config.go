@@ -55,11 +55,15 @@ type OIDCSpec struct {
 
 func CreateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cfg OIDCClientConfig) (OIDCClientConfig, error) {
 	if cfg.ID == uuid.Nil {
-		return OIDCClientConfig{}, errors.New("id must be set")
+		return OIDCClientConfig{}, errors.New("ID must be set")
+	}
+
+	if cfg.OrganizationID == uuid.Nil {
+		return OIDCClientConfig{}, errors.New("Organization ID must be set")
 	}
 
 	if cfg.Issuer == "" {
-		return OIDCClientConfig{}, errors.New("issuer must be set")
+		return OIDCClientConfig{}, errors.New("Issuer must be set")
 	}
 
 	tx := conn.
@@ -179,15 +183,18 @@ func GetOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug strin
 
 	tx := conn.
 		WithContext(ctx).
-		Table((&OIDCClientConfig{}).TableName()).
-		// TODO: is there a better way to reference table names here and below?
-		Joins("JOIN d_b_team team ON team.id = d_b_oidc_client_config.organizationId").
+		Table(fmt.Sprintf("%s as config", (&OIDCClientConfig{}).TableName())).
+		Joins(fmt.Sprintf("JOIN %s AS team ON team.id = config.organizationId", (&Team{}).TableName())).
 		Where("team.slug = ?", slug).
-		Where("d_b_oidc_client_config.deleted = ?", 0).
+		Where("config.deleted = ?", 0).
+		Where("config.active = ?", 1).
 		First(&config)
 
 	if tx.Error != nil {
-		return OIDCClientConfig{}, fmt.Errorf("failed to get oidc client config by org slug (slug: %s): %v", slug, tx.Error)
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return OIDCClientConfig{}, fmt.Errorf("OIDC Client Config for Organization (slug: %s) does not exist: %w", slug, ErrorNotFound)
+		}
+		return OIDCClientConfig{}, fmt.Errorf("Failed to retrieve OIDC client config: %v", tx.Error)
 	}
 
 	return config, nil

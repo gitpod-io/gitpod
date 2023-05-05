@@ -111,6 +111,84 @@ func TestGetOIDCClientConfigForOrganization(t *testing.T) {
 
 }
 
+func TestGetOIDCClientConfigByOrgSlug(t *testing.T) {
+
+	t.Run("not found when config does not exist", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		_, err := db.GetOIDCClientConfigByOrgSlug(context.Background(), conn, "non-existing-org")
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("retrieves config which exists", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		// create a single team
+		team := db.Team{
+			ID:   uuid.New(),
+			Name: "Team1",
+			Slug: "team-" + uuid.New().String(),
+		}
+
+		_, err := db.CreateTeam(context.Background(), conn, team)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+		})
+
+		created := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
+			OrganizationID: team.ID,
+			Active:         true,
+		})[0]
+
+		retrieved, err := db.GetOIDCClientConfigByOrgSlug(context.Background(), conn, team.Slug)
+		require.NoError(t, err)
+
+		require.Equal(t, created, retrieved)
+	})
+
+	t.Run("retrieves single active config", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		// create a single team
+		team := db.Team{
+			ID:   uuid.New(),
+			Name: "Team1",
+			Slug: "team-" + uuid.New().String(),
+		}
+		_, err := db.CreateTeam(context.Background(), conn, team)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+		})
+
+		// create multiple
+		activeConfigID := uuid.New()
+		configs := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
+			ID:             uuid.New(),
+			OrganizationID: team.ID,
+			Active:         false,
+		}, db.OIDCClientConfig{
+			ID:             activeConfigID,
+			OrganizationID: team.ID,
+			Active:         true,
+		}, db.OIDCClientConfig{
+			ID:             uuid.New(),
+			OrganizationID: team.ID,
+			Active:         false,
+		})
+		require.Equal(t, 3, len(configs))
+
+		retrieved, err := db.GetOIDCClientConfigByOrgSlug(context.Background(), conn, team.Slug)
+		require.NoError(t, err)
+
+		require.Equal(t, activeConfigID, retrieved.ID)
+
+	})
+
+}
+
 func TestActivateClientConfig(t *testing.T) {
 
 	t.Run("not found when config does not exist", func(t *testing.T) {
