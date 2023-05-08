@@ -8,7 +8,7 @@ import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/
 import { FC, useCallback, useState } from "react";
 import { Button } from "../../components/Button";
 import { EmptyMessage } from "../../components/EmptyMessage";
-import { Item, ItemField, ItemsList } from "../../components/ItemsList";
+import { Item, ItemField, ItemFieldIcon, ItemsList } from "../../components/ItemsList";
 import { SpinnerLoader } from "../../components/Loader";
 import { Heading2, Subheading } from "../../components/typography/headings";
 import { useOIDCClientsQuery } from "../../data/oidc-clients/oidc-clients-query";
@@ -63,9 +63,8 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
             ) : (
                 <ItemsList className="pt-6">
                     <Item header={true}>
-                        <ItemField className="flex flex-col">
-                            <span>Issuer URL</span>
-                        </ItemField>
+                        <ItemFieldIcon />
+                        <ItemField>Issuer URL</ItemField>
                     </Item>
                     {clientConfigs.map((cc) => (
                         <OIDCClientListItem key={cc.id} clientConfig={cc} />

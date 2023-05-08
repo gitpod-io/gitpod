@@ -8,7 +8,7 @@ import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/
 import { FC, useCallback, useMemo, useState } from "react";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import { ContextMenuEntry } from "../../components/ContextMenu";
-import { Item, ItemField, ItemFieldContextMenu } from "../../components/ItemsList";
+import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon } from "../../components/ItemsList";
 import { useDeleteOIDCClientMutation } from "../../data/oidc-clients/delete-oidc-client-mutation";
 import { gitpodHostUrl } from "../../service/service";
 import { OIDCClientConfigModal } from "./OIDCClientConfigModal";
@@ -29,7 +29,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
                 separator: true,
             },
             {
-                title: "Log in",
+                title: "Login",
                 onClick: () => {
                     window.location.href = gitpodHostUrl
                         .with({ pathname: `/iam/oidc/start`, search: `id=${clientConfig.id}` })
@@ -37,6 +37,19 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
                 },
                 separator: true,
             },
+            ...(!clientConfig.active
+                ? [
+                      {
+                          title: "Activate",
+                          onClick: () => {
+                              window.location.href = gitpodHostUrl
+                                  .with({ pathname: `/iam/oidc/start`, search: `id=${clientConfig.id}&activate=true` })
+                                  .toString();
+                          },
+                          separator: true,
+                      },
+                  ]
+                : []),
             {
                 title: "Remove",
                 customFontStyle: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
@@ -58,6 +71,16 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
     return (
         <>
             <Item key={clientConfig.id}>
+                <ItemFieldIcon>
+                    <div
+                        className={
+                            "rounded-full w-3 h-3 text-sm align-middle m-auto " +
+                            (clientConfig.active ? "bg-green-500" : "bg-gray-400")
+                        }
+                    >
+                        &nbsp;
+                    </div>
+                </ItemFieldIcon>
                 <ItemField className="flex flex-col flex-grow">
                     <span className="font-medium truncate overflow-ellipsis">{clientConfig.oidcConfig?.issuer}</span>
                     <span className="text-sm text-gray-500 truncate overflow-ellipsis">{clientConfig.id}</span>
