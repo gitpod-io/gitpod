@@ -2938,23 +2938,35 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
         }
 
-        const user = this.checkAndBlockUser("removeTeamMember");
-        // The user is leaving a team, if they are removing themselves from the team.
-        const userLeavingTeam = user.id === userId;
+        const currentUser = this.checkAndBlockUser("removeTeamMember");
 
-        if (!userLeavingTeam) {
+        // The user is leaving a team, if they are removing themselves from the team.
+        const currentUserLeavingTeam = currentUser.id === userId;
+        if (!currentUserLeavingTeam) {
             await this.guardTeamOperation(teamId, "update", "not_implemented");
         } else {
             await this.guardTeamOperation(teamId, "get", "org_members_write");
         }
 
+        // Check for existing membership.
         const membership = await this.teamDB.findTeamMembership(userId, teamId);
         if (!membership) {
             throw new Error(`Could not find membership for user '${userId}' in organization '${teamId}'`);
         }
-        await this.teamDB.removeMemberFromTeam(userId, teamId);
+
+        // Check if user's account belongs to the Org.
+        const userToBeRemoved = currentUserLeavingTeam ? currentUser : await this.userDB.findUserById(userId);
+        if (!userToBeRemoved) {
+            throw new Error(`Could not find user '${userId}'`);
+        }
+        // Only invited members can be removed from the Org, but organizational accounts cannot.
+        if (userToBeRemoved.organizationId && teamId === userToBeRemoved.organizationId) {
+            throw new Error(`User's account '${userId}' belongs to the organization '${teamId}'`);
+        }
+
+        await this.teamDB.removeMemberFromTeam(userToBeRemoved.id, teamId);
         this.analytics.track({
-            userId: user.id,
+            userId: currentUser.id,
             event: "team_user_removed",
             properties: {
                 team_id: teamId,
