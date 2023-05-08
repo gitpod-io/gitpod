@@ -346,17 +346,7 @@ func setupOIDCServiceForTests(t *testing.T) (*Service, *gorm.DB) {
 func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) (db.OIDCClientConfig, db.Team) {
 	t.Helper()
 
-	orgID := uuid.New()
-	team, err := db.CreateTeam(context.Background(), dbConn, db.Team{
-		ID:   orgID,
-		Name: "Org 1",
-		// creating random slug using UUID generator, because it's handy here
-		Slug: "org-" + uuid.New().String(),
-	})
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, dbConn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
-	})
+	team := dbtest.CreateTeams(t, dbConn, db.Team{})[0]
 
 	data, err := db.EncryptJSON(dbtest.CipherSet(t), db.OIDCSpec{
 		ClientID:     config.OAuth2Config.ClientID,
@@ -366,13 +356,13 @@ func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) (db.OIDCC
 
 	created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
 		ID:             uuid.New(),
-		OrganizationID: orgID,
+		OrganizationID: team.ID,
 		Issuer:         config.Issuer,
 		Active:         false,
 		Data:           data,
 	}, db.OIDCClientConfig{
 		ID:             uuid.New(),
-		OrganizationID: orgID,
+		OrganizationID: team.ID,
 		Issuer:         config.Issuer,
 		Active:         config.Active,
 		Data:           data,

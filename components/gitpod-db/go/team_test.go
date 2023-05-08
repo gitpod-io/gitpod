@@ -10,24 +10,13 @@ import (
 
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_WriteRead(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
-	team := db.Team{
-		ID:   uuid.New(),
-		Name: "Org 1",
-		Slug: "org-" + uuid.New().String(),
-	}
-
-	_, err := db.CreateTeam(context.Background(), conn, team)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
-	})
+	team := dbtest.CreateTeams(t, conn, db.Team{})[0]
 
 	candidates := []db.Team{
 		{ID: team.ID},
@@ -44,17 +33,7 @@ func Test_WriteRead(t *testing.T) {
 func Test_GetTeamBySlug(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 
-	team := db.Team{
-		ID:   uuid.New(),
-		Name: "Team1",
-		Slug: "org-" + uuid.New().String(),
-	}
-
-	_, err := db.CreateTeam(context.Background(), conn, team)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
-	})
+	team := dbtest.CreateTeams(t, conn, db.Team{})[0]
 
 	read, err := db.GetTeamBySlug(context.Background(), conn, team.Slug)
 	require.NoError(t, err)
@@ -71,17 +50,7 @@ func Test_GetTheSingleTeam(t *testing.T) {
 	require.Error(t, err)
 
 	// create a single team
-	team := db.Team{
-		ID:   uuid.New(),
-		Name: "Team1",
-		Slug: "org-" + uuid.New().String(),
-	}
-
-	_, err = db.CreateTeam(context.Background(), conn, team)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
-	})
+	team := dbtest.CreateTeams(t, conn, db.Team{})[0]
 
 	read, err := db.GetTheSingleTeam(context.Background(), conn)
 	require.NoError(t, err)
@@ -89,17 +58,8 @@ func Test_GetTheSingleTeam(t *testing.T) {
 	require.Equal(t, team.Slug, read.Slug)
 
 	// create a second team
-	team2 := db.Team{
-		ID:   uuid.New(),
-		Name: "Team1",
-		Slug: "org-" + uuid.New().String(),
-	}
-
-	_, err = db.CreateTeam(context.Background(), conn, team2)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		require.NoError(t, conn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
-	})
+	team2 := dbtest.CreateTeams(t, conn, db.Team{})[0]
+	require.NotNil(t, team2)
 
 	_, err = db.GetTheSingleTeam(context.Background(), conn)
 	require.Error(t, err)
