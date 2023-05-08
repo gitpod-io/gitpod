@@ -262,7 +262,7 @@ class TestResourceAccess {
                 name: "member - get",
                 teamRole: "member",
                 operation: "get",
-                expectation: false,
+                expectation: true,
             },
             {
                 name: "member - update",
@@ -364,7 +364,7 @@ class TestResourceAccess {
             if (!owner) {
                 throw new Error("Bad test data: expected isOwner OR teamRole to be configured!");
             }
-            const actual = await resourceGuard.canAccess({ kind: "costCenter", owner }, "get");
+            const actual = await resourceGuard.canAccess({ kind: "costCenter", owner }, t.operation);
             expect(actual).to.be.eq(
                 t.expectation,
                 `"${t.name}" expected canAccess(resource, "${t.operation}") === ${t.expectation}, but was ${actual}`,

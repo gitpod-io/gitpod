@@ -74,9 +74,7 @@ export default function OrganizationSelector() {
         BillingMode.showUsageBasedBilling(userBillingMode) &&
         !user?.additionalData?.isMigratedToTeamOnlyAttribution;
 
-    const showUsageForOrg = currentOrg.data?.isOwner && orgBillingMode?.mode === "usage-based";
-
-    if (showUsageForPersonalAccount || showUsageForOrg) {
+    if (showUsageForPersonalAccount || currentOrg.data) {
         linkEntries.push({
             title: "Usage",
             customContent: <LinkEntry>Usage</LinkEntry>,

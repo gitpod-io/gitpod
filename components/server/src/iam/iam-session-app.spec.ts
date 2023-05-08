@@ -196,7 +196,7 @@ class TestIamSessionApp {
         expect(result.body?.message).to.equal("OIDC client config id is missing");
     }
 
-    @test.only public async testSessionRequest_createUser_removes_admin() {
+    @test public async testSessionRequest_createUser_removes_admin() {
         // assert only admin is member of the org
         await this.teamDbMock.addMemberToTeam!(BUILTIN_INSTLLATION_ADMIN_USER_ID, "test-org");
         expect(this.teamDbMock.memberships.has(BUILTIN_INSTLLATION_ADMIN_USER_ID)).to.be.true;
