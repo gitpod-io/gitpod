@@ -35,6 +35,7 @@ import { UserContext, useCurrentUser } from "../user-context";
 import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { settingsPathPreferences } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
+import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
 
 export const useNewCreateWorkspacePage = () => {
     const startWithOptions = useFeatureFlag("start_with_options");
@@ -75,6 +76,7 @@ export function CreateWorkspacePage() {
     const workspaceContext = useWorkspaceContext(contextURL);
     const [rememberOptions, setRememberOptions] = useState(false);
     const [autostart, setAutostart] = useState<boolean | undefined>(props.autostart);
+    const needsGitAuthorization = useNeedsGitAuthorization();
 
     const storeAutoStartOptions = useCallback(() => {
         if (!workspaceContext.data || !user || !currentOrg) {
@@ -314,6 +316,20 @@ export function CreateWorkspacePage() {
                     window.location.href = gitpodHostUrl.asAccessControl().toString();
                 }}
             />
+        );
+    }
+
+    if (needsGitAuthorization) {
+        return (
+            <div className="flex flex-col mt-32 mx-auto ">
+                <div className="flex flex-col max-h-screen max-w-lg mx-auto items-center w-full">
+                    <Heading1>New Workspace</Heading1>
+                    <div className="text-gray-500 text-center text-base">
+                        Start a new workspace with the following options.
+                    </div>
+                    <AuthorizeGit className="mt-12" />
+                </div>
+            </div>
         );
     }
 

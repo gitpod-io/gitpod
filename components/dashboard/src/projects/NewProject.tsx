@@ -24,11 +24,13 @@ import { UserContext } from "../user-context";
 import { projectsPathNew } from "./projects.routes";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
+import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
 
 export default function NewProject() {
     const currentTeam = useCurrentOrg()?.data;
     const { user, setUser } = useContext(UserContext);
     const refreshProjects = useRefreshProjects();
+    const needsGitAuth = useNeedsGitAuthorization();
 
     const [selectedProviderHost, setSelectedProviderHost] = useState<string | undefined>();
     const [reposInAccounts, setReposInAccounts] = useState<ProviderRepository[]>([]);
@@ -483,6 +485,9 @@ export default function NewProject() {
             setShowGitProviders(false);
             setSelectedProviderHost(host);
         };
+        if (needsGitAuth) {
+            return <AuthorizeGit />;
+        }
 
         if (!loaded) {
             return renderLoadingState();
