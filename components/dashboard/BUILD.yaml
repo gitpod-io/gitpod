@@ -53,7 +53,7 @@ packages:
 scripts:
   - name: lint
     script: |-
-      yarn run lint
+      yarn run eslint --max-warnings=0 $(git diff --cached --relative --name-only --diff-filter=ACMRTUXB | grep  -E "\.(js|ts|tsx)$")
   - name: telepresence
     script: |-
       trap "kill 0" EXIT
