@@ -48,6 +48,12 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
                 // Create returns the new config, update does not
                 if ("config" in response && response.config) {
                     configId = response.config.id;
+
+                    // Update our local state with the new config ID in case we created a new one
+                    // This ensures we update the correct config if we save again vs. create a new one
+                    dispatch({
+                        id: configId,
+                    });
                 }
 
                 await openOIDCStartWindow({
