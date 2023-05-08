@@ -204,6 +204,40 @@ func TestActivateClientConfig(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("config activation of config de-activates previous active one", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		configs := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
+			OrganizationID: uuid.New(),
+			Active:         false,
+		}, db.OIDCClientConfig{
+			OrganizationID: uuid.New(),
+			Active:         false,
+		})
+		config1 := configs[0]
+		config2 := configs[1]
+
+		// activate first
+		err := db.ActivateClientConfig(context.Background(), conn, config1.ID)
+		require.NoError(t, err)
+
+		config1, err = db.GetOIDCClientConfig(context.Background(), conn, config1.ID)
+		require.NoError(t, err)
+		require.Equal(t, true, config1.Active, "failed to active config1")
+
+		// activate second
+		err = db.ActivateClientConfig(context.Background(), conn, config2.ID)
+		require.NoError(t, err)
+
+		config1, err = db.GetOIDCClientConfig(context.Background(), conn, config1.ID)
+		require.NoError(t, err)
+		require.Equal(t, false, config1.Active, "failed to de-active config1")
+
+		config2, err = db.GetOIDCClientConfig(context.Background(), conn, config2.ID)
+		require.NoError(t, err)
+		require.Equal(t, true, config2.Active, "failed to active config2")
+	})
+
 }
 
 func TestUpdateOIDCSpec(t *testing.T) {
