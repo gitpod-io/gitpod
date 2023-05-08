@@ -56,6 +56,17 @@ const (
 	stopWorkspaceImmediatelyGracePeriod = 1 * time.Second
 )
 
+var (
+	// retryParams are custom backoff parameters used to modify a workspace.
+	// These params retry more quickly than the default retry.DefaultBackoff.
+	retryParams = wait.Backoff{
+		Steps:    10,
+		Duration: 10 * time.Millisecond,
+		Factor:   2.0,
+		Jitter:   0.2,
+	}
+)
+
 func NewWorkspaceManagerServer(clnt client.Client, cfg *config.Configuration, reg prometheus.Registerer, activity *activity.WorkspaceActivity, maintenance maintenance.Maintenance) *WorkspaceManagerServer {
 	metrics := newWorkspaceMetrics(cfg.Namespace, clnt, activity)
 	reg.MustRegister(metrics)
@@ -726,7 +737,7 @@ func (wsm *WorkspaceManagerServer) DescribeCluster(ctx context.Context, req *wsm
 // modifyWorkspace modifies a workspace object using the mod function. If the mod function returns a gRPC status error, that error
 // is returned directly. If mod returns a non-gRPC error it is turned into one.
 func (wsm *WorkspaceManagerServer) modifyWorkspace(ctx context.Context, id string, updateStatus bool, mod func(ws *workspacev1.Workspace) error) error {
-	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+	err := retry.RetryOnConflict(retryParams, func() error {
 		var ws workspacev1.Workspace
 		err := wsm.Client.Get(ctx, types.NamespacedName{Namespace: wsm.Config.Namespace, Name: id}, &ws)
 		if err != nil {
