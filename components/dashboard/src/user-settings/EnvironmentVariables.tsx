@@ -14,6 +14,7 @@ import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { EnvironmentVariableEntry } from "./EnvironmentVariableEntry";
 import { Button } from "../components/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
+import EnvironmentVariablesSearchBar from "./EnvironmentVariablesSearchBar";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -144,6 +145,8 @@ function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
 }
 
 export default function EnvVars() {
+    const [searchTerm, setSearchTerm] = useState("");
+    let allEnvVars: UserEnvVarValue[];
     const [envVars, setEnvVars] = useState([] as UserEnvVarValue[]);
     const [currentEnvVar, setCurrentEnvVar] = useState({
         name: "",
@@ -156,7 +159,20 @@ export default function EnvVars() {
         await getGitpodService()
             .server.getAllEnvVars()
             .then((r) => setEnvVars(r.sort(sortEnvVars)));
+            allEnvVars = envVars;
     };
+
+    useEffect(() => {
+        const lowerSearchTerm = searchTerm.toLowerCase();
+
+        if(lowerSearchTerm[0] === "/"){
+            setEnvVars(allEnvVars.filter((envVar) => envVar.repositoryPattern.includes(lowerSearchTerm)));
+        }
+        else{
+            setEnvVars(allEnvVars.filter((envVar) => envVar.name.includes(lowerSearchTerm)));
+        }
+
+    }, [searchTerm]);
 
     useEffect(() => {
         update();
@@ -237,6 +253,7 @@ export default function EnvVars() {
                 </div>
                 {envVars.length !== 0 ? (
                     <div className="mt-3 flex mt-0">
+                        <EnvironmentVariablesSearchBar searchTerm={searchTerm} onSearchTermUpdated={setSearchTerm} />
                         <button onClick={add} className="ml-2">
                             New Variable
                         </button>
