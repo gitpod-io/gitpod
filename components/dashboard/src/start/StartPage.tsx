@@ -131,7 +131,7 @@ export function StartPage(props: StartPageProps) {
                     </Alert>
                 )}
                 <div className="absolute bottom-4 right-4 text-gray-400 dark:text-gray-500 text-xs font-medium tracking-wide">
-                    <a href="https://cdeuniverse.com/" target="_blank">
+                    <a href="https://cdeuniverse.com/" target="_blank" rel="noreferrer noopener">
                         <span>
                             <img src={CDEUniverseLogo} alt="CDE Universe logo" className="h-4 inline mr-1" />
                             <span className="font-semibold">CDE Universe</span>: June 1 & 2 ↗
