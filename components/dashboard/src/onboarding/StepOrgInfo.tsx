@@ -15,7 +15,6 @@ import { EXPLORE_REASON_WORK, getExplorationReasons } from "./exploration-reason
 import { getJobRoleOptions, JOB_ROLE_OTHER } from "./job-roles";
 import { OnboardingStep } from "./OnboardingStep";
 import { getSignupGoalsOptions, SIGNUP_GOALS_OTHER } from "./signup-goals";
-import isURL from "validator/lib/isURL";
 import { getCompanySizeOptions } from "./company-size";
 
 type Props = {

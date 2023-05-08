@@ -11,7 +11,6 @@ import { useCurrentUser } from "../user-context";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
-import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 import { useLocation } from "react-router";
 import { User } from "@gitpod/gitpod-protocol";
 
@@ -20,7 +19,6 @@ export default function OrganizationSelector() {
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
     const { data: userBillingMode } = useUserBillingMode();
-    const { data: orgBillingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
