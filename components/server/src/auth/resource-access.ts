@@ -191,8 +191,11 @@ export class TeamMemberResourceGuard implements ResourceAccessGuard {
                     // This is handled in the "OwnerResourceGuard"
                     return false;
                 }
+                if (operation === "get") {
+                    return owner.members.some((m) => m.userId === this.userId);
+                }
                 // TODO(gpl) We should check whether we're looking at the right team for the right CostCenter here!
-                // Only team "owners" are allowed to do anything with CostCenters
+                // Only team "owners" are allowed to write CostCenters
                 return owner.members.filter((m) => m.role === "owner").some((m) => m.userId === this.userId);
         }
         return false;
