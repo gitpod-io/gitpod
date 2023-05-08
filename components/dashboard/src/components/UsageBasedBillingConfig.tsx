@@ -327,9 +327,6 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                                 Pay-as-you-go
                             </div>
                             <div className="mt-4 flex space-x-1 text-gray-400 dark:text-gray-500">
-                                <div className="m-0.5 w-8 h-5">
-                                    <Check />
-                                </div>
                                 <div className="flex flex-col">
                                     <span>
                                         {priceInformation}{" "}
