@@ -26,8 +26,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BillingServiceClient interface {
-	// ReconcileInvoices retrieves current credit balance and reflects it in billing system.
-	// Internal RPC, not intended for general consumption.
+	// ReconcileInvoices retrieves current credit balance and reflects it in
+	// billing system. Internal RPC, not intended for general consumption.
 	ReconcileInvoices(ctx context.Context, in *ReconcileInvoicesRequest, opts ...grpc.CallOption) (*ReconcileInvoicesResponse, error)
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
@@ -38,13 +38,16 @@ type BillingServiceClient interface {
 	// GetStripeCustomer retrieves a Stripe Customer
 	GetStripeCustomer(ctx context.Context, in *GetStripeCustomerRequest, opts ...grpc.CallOption) (*GetStripeCustomerResponse, error)
 	CreateStripeCustomer(ctx context.Context, in *CreateStripeCustomerRequest, opts ...grpc.CallOption) (*CreateStripeCustomerResponse, error)
-	// CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify
-	// the payment method/creditability of this user on first signup, before we create the subscription
+	// CreateHoldPaymentIntent is meant to create a PaymentIntent for the given
+	// customer, that is meant as measure to verify the payment
+	// method/creditability of this user on first signup, before we create the
+	// subscription
 	CreateHoldPaymentIntent(ctx context.Context, in *CreateHoldPaymentIntentRequest, opts ...grpc.CallOption) (*CreateHoldPaymentIntentResponse, error)
 	CreateStripeSubscription(ctx context.Context, in *CreateStripeSubscriptionRequest, opts ...grpc.CallOption) (*CreateStripeSubscriptionResponse, error)
 	// GetPriceInformation returns the price information for a given attribtion id
 	GetPriceInformation(ctx context.Context, in *GetPriceInformationRequest, opts ...grpc.CallOption) (*GetPriceInformationResponse, error)
-	// OnChargeDispute handles charge disputes created with the underlying payment provider.
+	// OnChargeDispute handles charge disputes created with the underlying payment
+	// provider.
 	OnChargeDispute(ctx context.Context, in *OnChargeDisputeRequest, opts ...grpc.CallOption) (*OnChargeDisputeResponse, error)
 }
 
@@ -141,8 +144,8 @@ func (c *billingServiceClient) OnChargeDispute(ctx context.Context, in *OnCharge
 // All implementations must embed UnimplementedBillingServiceServer
 // for forward compatibility
 type BillingServiceServer interface {
-	// ReconcileInvoices retrieves current credit balance and reflects it in billing system.
-	// Internal RPC, not intended for general consumption.
+	// ReconcileInvoices retrieves current credit balance and reflects it in
+	// billing system. Internal RPC, not intended for general consumption.
 	ReconcileInvoices(context.Context, *ReconcileInvoicesRequest) (*ReconcileInvoicesResponse, error)
 	// FinalizeInvoice marks all sessions occurring in the given Stripe invoice as
 	// having been invoiced.
@@ -153,13 +156,16 @@ type BillingServiceServer interface {
 	// GetStripeCustomer retrieves a Stripe Customer
 	GetStripeCustomer(context.Context, *GetStripeCustomerRequest) (*GetStripeCustomerResponse, error)
 	CreateStripeCustomer(context.Context, *CreateStripeCustomerRequest) (*CreateStripeCustomerResponse, error)
-	// CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify
-	// the payment method/creditability of this user on first signup, before we create the subscription
+	// CreateHoldPaymentIntent is meant to create a PaymentIntent for the given
+	// customer, that is meant as measure to verify the payment
+	// method/creditability of this user on first signup, before we create the
+	// subscription
 	CreateHoldPaymentIntent(context.Context, *CreateHoldPaymentIntentRequest) (*CreateHoldPaymentIntentResponse, error)
 	CreateStripeSubscription(context.Context, *CreateStripeSubscriptionRequest) (*CreateStripeSubscriptionResponse, error)
 	// GetPriceInformation returns the price information for a given attribtion id
 	GetPriceInformation(context.Context, *GetPriceInformationRequest) (*GetPriceInformationResponse, error)
-	// OnChargeDispute handles charge disputes created with the underlying payment provider.
+	// OnChargeDispute handles charge disputes created with the underlying payment
+	// provider.
 	OnChargeDispute(context.Context, *OnChargeDisputeRequest) (*OnChargeDisputeResponse, error)
 	mustEmbedUnimplementedBillingServiceServer()
 }

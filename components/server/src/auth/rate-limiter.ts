@@ -177,7 +177,6 @@ const defaultFunctions: FunctionsConfig = {
     accessHeadlessLogs: { group: "default", points: 1 },
 
     getStripePublishableKey: { group: "default", points: 1 },
-    getStripeSetupIntentClientSecret: { group: "default", points: 1 },
     findStripeSubscriptionId: { group: "default", points: 1 },
     createStripeCustomerIfNeeded: { group: "default", points: 1 },
     createHoldPaymentIntent: { group: "default", points: 1 },

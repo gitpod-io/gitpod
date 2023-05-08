@@ -4341,20 +4341,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return publishableKey;
     }
 
-    async getStripeSetupIntentClientSecret(ctx: TraceContext): Promise<string> {
-        this.checkAndBlockUser("getStripeSetupIntentClientSecret");
-        try {
-            const setupIntent = await this.stripeService.createSetupIntent();
-            if (!setupIntent.client_secret) {
-                throw new Error("No client secret in the SetupIntent");
-            }
-            return setupIntent.client_secret;
-        } catch (error) {
-            log.error("Failed to create Stripe SetupIntent", error);
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to create Stripe SetupIntent");
-        }
-    }
-
     async findStripeSubscriptionId(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
         const user = this.checkAndBlockUser("findStripeSubscriptionId");
 
@@ -4500,7 +4486,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async subscribeToStripe(
         ctx: TraceContext,
         attributionId: string,
-        setupIntentId: string,
         paymentIntentId: string,
         usageLimit: number,
     ): Promise<number | undefined> {
@@ -4528,7 +4513,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             await this.billingService.createStripeSubscription({
                 attributionId,
-                setupIntentId,
                 paymentIntentId,
                 usageLimit,
             });

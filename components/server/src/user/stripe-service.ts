@@ -37,12 +37,6 @@ export class StripeService {
         return this._stripe;
     }
 
-    async createSetupIntent(): Promise<Stripe.SetupIntent> {
-        return await reportStripeOutcome("intent_setup", () => {
-            return this.getStripe().setupIntents.create({ usage: "on_session" });
-        });
-    }
-
     async findCustomerByAttributionId(attributionId: string): Promise<string | undefined> {
         try {
             const resp = await this.billingService.getStripeCustomer({ attributionId: attributionId });
