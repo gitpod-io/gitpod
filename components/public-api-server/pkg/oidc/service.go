@@ -140,7 +140,7 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 		orgSlug = org.Slug
 	}
 	if orgSlug != "" {
-		dbEntry, err := db.GetOIDCClientConfigByOrgSlug(r.Context(), s.dbConn, orgSlug)
+		dbEntry, err := db.GetActiveOIDCClientConfigByOrgSlug(r.Context(), s.dbConn, orgSlug)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
 		}

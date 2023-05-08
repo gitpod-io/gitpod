@@ -174,7 +174,7 @@ func DeleteOIDCClientConfig(ctx context.Context, conn *gorm.DB, id, organization
 	return nil
 }
 
-func GetOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug string) (OIDCClientConfig, error) {
+func GetActiveOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug string) (OIDCClientConfig, error) {
 	var config OIDCClientConfig
 
 	if slug == "" {

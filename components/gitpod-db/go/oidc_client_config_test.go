@@ -111,12 +111,12 @@ func TestGetOIDCClientConfigForOrganization(t *testing.T) {
 
 }
 
-func TestGetOIDCClientConfigByOrgSlug(t *testing.T) {
+func TestGetActiveOIDCClientConfigByOrgSlug(t *testing.T) {
 
 	t.Run("not found when config does not exist", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 
-		_, err := db.GetOIDCClientConfigByOrgSlug(context.Background(), conn, "non-existing-org")
+		_, err := db.GetActiveOIDCClientConfigByOrgSlug(context.Background(), conn, "non-existing-org")
 		require.Error(t, err)
 		require.ErrorIs(t, err, db.ErrorNotFound)
 	})
@@ -142,7 +142,7 @@ func TestGetOIDCClientConfigByOrgSlug(t *testing.T) {
 			Active:         true,
 		})[0]
 
-		retrieved, err := db.GetOIDCClientConfigByOrgSlug(context.Background(), conn, team.Slug)
+		retrieved, err := db.GetActiveOIDCClientConfigByOrgSlug(context.Background(), conn, team.Slug)
 		require.NoError(t, err)
 
 		require.Equal(t, created, retrieved)
@@ -180,7 +180,7 @@ func TestGetOIDCClientConfigByOrgSlug(t *testing.T) {
 		})
 		require.Equal(t, 3, len(configs))
 
-		retrieved, err := db.GetOIDCClientConfigByOrgSlug(context.Background(), conn, team.Slug)
+		retrieved, err := db.GetActiveOIDCClientConfigByOrgSlug(context.Background(), conn, team.Slug)
 		require.NoError(t, err)
 
 		require.Equal(t, activeConfigID, retrieved.ID)
