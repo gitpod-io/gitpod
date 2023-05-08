@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:f9d60d6615172e96dbdd39275ae8e77cb870a553ac77570cb27580d7a48d50b1
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:153c0ba4dd4ef9272ed7440e8f2ffa233b09de3e24a36b490d2a10d750aaaddf
 
 WORKDIR /app
 COPY components-local-app--app/components-local-app--app-linux-amd64/local-app local-app-linux
