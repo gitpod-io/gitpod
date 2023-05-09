@@ -56,7 +56,7 @@ var _ = BeforeSuite(func() {
 	testEnv = &envtest.Environment{
 		ControlPlaneStartTimeout: 1 * time.Minute,
 		ControlPlaneStopTimeout:  1 * time.Minute,
-		CRDDirectoryPaths:        []string{filepath.Join("../../../ws-manager-mk2", "config", "crd", "bases")},
+		CRDDirectoryPaths:        []string{filepath.Join("..", "..", "crd")},
 		ErrorIfCRDPathMissing:    true,
 	}
 

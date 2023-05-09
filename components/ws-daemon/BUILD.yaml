@@ -7,15 +7,19 @@ packages:
       - "main.go"
       - "go.mod"
       - "go.sum"
+      - "crd/*.yaml"
     deps:
       - components/common-go:lib
       - components/content-service-api/go:lib
       - components/content-service:lib
       - components/ws-daemon-api/go:lib
       - components/ws-manager-api/go:lib
+      - components/ws-manager-mk2:crd
     env:
       - CGO_ENABLED=0
       - GOOS=linux
+    prep:
+      - ["mv", "_deps/components-ws-manager-mk2--crd/workspace.gitpod.io_workspaces.yaml", "crd/workspace.gitpod.io_workspaces.yaml"]
     config:
       packaging: app
       buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid= -X 'github.com/gitpod-io/gitpod/ws-daemon/cmd.Version=commit-${__git_commit}'"]
@@ -33,6 +37,7 @@ packages:
       - components/content-service:lib
       - components/ws-daemon-api/go:lib
       - components/ws-manager-api/go:lib
+      - components/ws-manager-mk2:crd
     env:
       - CGO_ENABLED=0
       - GOOS=linux
