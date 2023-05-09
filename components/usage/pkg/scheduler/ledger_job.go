@@ -11,7 +11,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
-	"github.com/go-redsync/redsync/v4"
 	"github.com/robfig/cron"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -32,22 +31,13 @@ func NewLedgerTriggerJobSpec(schedule time.Duration, job Job) (JobSpec, error) {
 
 type ClientsConstructor func() (v1.UsageServiceClient, v1.BillingServiceClient, error)
 
-func NewLedgerTrigger(clientConstructor ClientsConstructor, sync *redsync.Redsync, mutexExpiry time.Duration) *LedgerJob {
+func NewLedgerTrigger(clientConstructor ClientsConstructor) *LedgerJob {
 	return &LedgerJob{
-		sync:               sync,
-		mutexDuration:      mutexExpiry,
 		clientsConstructor: clientConstructor,
 	}
 }
 
 type LedgerJob struct {
-	sync *redsync.Redsync
-
-	// mutexDuration configures for how a mutex on the ledger should hold initially
-	// it will be automatically extend for this duration if the job does not complete
-	// within the initial alloted time period
-	mutexDuration time.Duration
-
 	clientsConstructor ClientsConstructor
 }
 

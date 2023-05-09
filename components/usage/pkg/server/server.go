@@ -145,7 +145,7 @@ func Start(cfg Config, version string) error {
 		}
 
 		jobSpec, err := scheduler.NewLedgerTriggerJobSpec(schedule,
-			scheduler.NewLedgerTrigger(jobClientsConstructor, redsyncPool, 30*time.Second),
+			scheduler.NewLedgerTrigger(jobClientsConstructor),
 		)
 		if err != nil {
 			return fmt.Errorf("failed to setup ledger trigger job: %w", err)
@@ -163,7 +163,7 @@ func Start(cfg Config, version string) error {
 			return fmt.Errorf("failed to parse reset usage schedule as duration: %w", err)
 		}
 
-		spec, err := scheduler.NewResetUsageJobSpec(schedule, jobClientsConstructor, redsyncPool, 30*time.Second)
+		spec, err := scheduler.NewResetUsageJobSpec(schedule, jobClientsConstructor)
 		if err != nil {
 			return fmt.Errorf("failed to setup reset usage job: %w", err)
 		}
@@ -171,7 +171,7 @@ func Start(cfg Config, version string) error {
 		schedulerJobSpecs = append(schedulerJobSpecs, spec)
 	}
 
-	sched := scheduler.New(schedulerJobSpecs...)
+	sched := scheduler.New(redsyncPool, schedulerJobSpecs...)
 	sched.Start()
 	defer sched.Stop()
 
