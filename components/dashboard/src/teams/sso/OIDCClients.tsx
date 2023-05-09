@@ -40,14 +40,14 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
 
             <div className="flex flex-col space-y-2 md:flex-row md:items-start md:justify-between md:space-y-0">
                 <div>
-                    <Heading2>OpenID Connect clients</Heading2>
-                    <Subheading>Configure single sign-on for your organization.</Subheading>
+                    <Heading2>SSO Configurations</Heading2>
+                    <Subheading>Configure OpenID Connect single sign-on for your organization.</Subheading>
                 </div>
 
                 {clientConfigs.length !== 0 ? (
                     <div className="">
                         <Button className="whitespace-nowrap" onClick={onCreate}>
-                            New OIDC Client
+                            New Configuration
                         </Button>
                     </div>
                 ) : null}
@@ -55,9 +55,8 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
 
             {clientConfigs.length === 0 ? (
                 <EmptyMessage
-                    title="No OIDC providers"
-                    subtitle="Enable single sign-on for your organization using an external identity provider (IdP) service that supports the OpenID Connect (OIDC) standard, such as Google."
-                    buttonText="New OIDC Client"
+                    subtitle="Enable single sign-on for your organization using an external identity provider (IdP) service that supports the OpenID Connect (OIDC) standard, such as Google or Okta."
+                    buttonText="New Configuration"
                     onClick={onCreate}
                 />
             ) : (

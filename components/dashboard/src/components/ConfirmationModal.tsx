@@ -15,6 +15,7 @@ export default function ConfirmationModal(props: {
     children?: Entity | React.ReactChild[] | React.ReactChild;
     buttonText?: string;
     buttonDisabled?: boolean;
+    buttonLoading?: boolean;
     visible?: boolean;
     warningHead?: string;
     warningText?: string;
@@ -27,7 +28,13 @@ export default function ConfirmationModal(props: {
         <Button type="secondary" onClick={props.onClose} autoFocus ref={cancelButtonRef}>
             Cancel
         </Button>,
-        <Button type="danger" className="ml-2" onClick={props.onConfirm} disabled={props.buttonDisabled}>
+        <Button
+            type="danger"
+            className="ml-2"
+            onClick={props.onConfirm}
+            disabled={props.buttonDisabled}
+            loading={props.buttonLoading}
+        >
             {props.buttonText || "Yes, I'm Sure"}
         </Button>,
     ];

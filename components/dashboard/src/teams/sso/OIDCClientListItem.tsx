@@ -12,11 +12,13 @@ import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon } from "../../comp
 import { useDeleteOIDCClientMutation } from "../../data/oidc-clients/delete-oidc-client-mutation";
 import { gitpodHostUrl } from "../../service/service";
 import { OIDCClientConfigModal } from "./OIDCClientConfigModal";
+import { useToast } from "../../components/toasts/Toasts";
 
 type Props = {
     clientConfig: OIDCClientConfig;
 };
 export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
+    const { toast } = useToast();
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const deleteOIDCClient = useDeleteOIDCClientMutation();
@@ -29,7 +31,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
                 separator: true,
             },
             {
-                title: "Log in",
+                title: "Verify",
                 onClick: () => {
                     window.location.href = gitpodHostUrl
                         .with({ pathname: `/iam/oidc/start`, search: `id=${clientConfig.id}` })
@@ -63,10 +65,11 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
         try {
             await deleteOIDCClient.mutateAsync({ clientId: clientConfig.id });
             setShowDeleteConfirmation(false);
+            toast("The SSO configuration was deleted");
         } catch (error) {
             console.log(error);
         }
-    }, [clientConfig.id, deleteOIDCClient]);
+    }, [clientConfig.id, deleteOIDCClient, toast]);
 
     return (
         <>
@@ -83,21 +86,30 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
                 </ItemFieldIcon>
                 <ItemField className="flex flex-col flex-grow">
                     <span className="font-medium truncate overflow-ellipsis">{clientConfig.oidcConfig?.issuer}</span>
-                    <span className="text-sm text-gray-500 truncate overflow-ellipsis">{clientConfig.id}</span>
+                    {/* TODO: Address overflow here, these can be quite long */}
+                    <span className="text-sm text-gray-500 truncate overflow-ellipsis">
+                        {clientConfig.oauth2Config?.clientId}
+                    </span>
                 </ItemField>
                 <ItemFieldContextMenu menuEntries={menuEntries} />
             </Item>
             {showDeleteConfirmation && (
                 <ConfirmationModal
-                    title="Remove OIDC client"
-                    areYouSureText="Are you sure you want to remove the following OIDC client?"
+                    title="Remove SSO configuration"
+                    areYouSureText="Are you sure you want to remove the following SSO configuration?"
                     children={{
-                        name: clientConfig.id,
-                        description: clientConfig.oidcConfig?.issuer ?? "",
+                        name: clientConfig.oidcConfig?.issuer ?? "",
+                        description: clientConfig.oauth2Config?.clientId ?? "",
                     }}
-                    buttonText="Remove client"
-                    buttonDisabled={false}
-                    warningText={deleteOIDCClient.isError ? "There was a problem deleting the client" : undefined}
+                    buttonText="Remove"
+                    buttonLoading={deleteOIDCClient.isLoading}
+                    warningText={
+                        deleteOIDCClient.isError
+                            ? "There was a problem deleting the configuration"
+                            : clientConfig.active
+                            ? "Warning, you are about to remove the active SSO configuration. If you continue, SSO will be disabled for your organization and no one, including yourself, will be able to log in."
+                            : ""
+                    }
                     onClose={() => setShowDeleteConfirmation(false)}
                     onConfirm={deleteClient}
                 />

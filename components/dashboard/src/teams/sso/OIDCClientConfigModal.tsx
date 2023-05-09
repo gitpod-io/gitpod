@@ -9,6 +9,7 @@ import { FC, useCallback, useReducer } from "react";
 import { Button } from "../../components/Button";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
 import { ssoConfigReducer, isValid, useSaveSSOConfig, SSOConfigForm } from "./SSOConfigForm";
+import Alert from "../../components/Alert";
 
 type Props = {
     clientConfig?: OIDCClientConfig;
@@ -50,12 +51,13 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                 return false;
             }}
         >
-            <ModalHeader>{isNew ? "New OIDC Client" : "OIDC Client"}</ModalHeader>
+            <ModalHeader>{isNew ? "New SSO Configuration" : "Edit SSO Configuration"}</ModalHeader>
             <ModalBody>
-                <div className="flex flex-col">
-                    <span className="text-gray-500">Enter this information from your OIDC service.</span>
-                </div>
-
+                {clientConfig?.active && (
+                    <Alert type="message" className="mb-4">
+                        Please be careful! Your are editing an active SSO configuration.
+                    </Alert>
+                )}
                 <SSOConfigForm config={ssoConfig} onChange={dispatch} />
             </ModalBody>
             <ModalFooter alert={error ? <SaveErrorAlert error={error} /> : null}>
@@ -63,7 +65,7 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                     Cancel
                 </Button>
                 <Button onClick={saveConfig} disabled={!configIsValid} loading={isLoading}>
-                    Save
+                    {isNew ? "Create" : "Save"}
                 </Button>
             </ModalFooter>
         </Modal>
