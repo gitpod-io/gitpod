@@ -136,7 +136,7 @@ var _ = Describe("WorkspaceController", func() {
 			expectWorkspaceCleanup(ws, pod)
 
 			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
-				startFailures: 1,
+				startFailures: 0, // No start failure should be recorded, even though the workspace didn't become ready, as it was stopped before it could become ready.
 				stops:         map[StopReason]int{StopReasonRegular: 1},
 			})
 		})
