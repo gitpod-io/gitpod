@@ -385,44 +385,7 @@ func (c *Client) CreateSubscription(ctx context.Context, customerID string, pric
 	return subscription, err
 }
 
-// TODO: We can remove this once we stop using a setup intent during subscribtion creation
-func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID string, setupIntentId string) (*stripe.Customer, error) {
-	if customerID == "" {
-		return nil, fmt.Errorf("no customerID specified")
-	}
-
-	if setupIntentId == "" {
-		return nil, fmt.Errorf("no setupIntentID specified")
-	}
-
-	setupIntent, err := c.sc.SetupIntents.Get(setupIntentId, &stripe.SetupIntentParams{
-		Params: stripe.Params{
-			Context: ctx,
-		},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Failed to retrieve setup intent with id %s", setupIntentId)
-	}
-
-	paymentMethod, err := c.sc.PaymentMethods.Attach(setupIntent.PaymentMethod.ID, &stripe.PaymentMethodAttachParams{Customer: &customerID})
-	if err != nil {
-		return nil, fmt.Errorf("Failed to attach payment method to setup intent ID %s", setupIntentId)
-	}
-
-	customer, _ := c.sc.Customers.Update(customerID, &stripe.CustomerParams{
-		InvoiceSettings: &stripe.CustomerInvoiceSettingsParams{
-			DefaultPaymentMethod: stripe.String(paymentMethod.ID)},
-		Address: &stripe.AddressParams{
-			Line1:   stripe.String(paymentMethod.BillingDetails.Address.Line1),
-			Country: stripe.String(paymentMethod.BillingDetails.Address.Country)}})
-	if err != nil {
-		return nil, fmt.Errorf("Failed to update customer with id %s", customerID)
-	}
-
-	return customer, nil
-}
-
-func (c *Client) SetDefaultPaymentForCustomerWithPaymentIntent(ctx context.Context, customerID string, paymentIntentId string) (*stripe.Customer, error) {
+func (c *Client) SetDefaultPaymentForCustomer(ctx context.Context, customerID string, paymentIntentId string) (*stripe.Customer, error) {
 	if customerID == "" {
 		return nil, fmt.Errorf("no customerID specified")
 	}

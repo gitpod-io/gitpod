@@ -221,12 +221,9 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		return nil, status.Errorf(codes.InvalidArgument, "Invalid attribution ID %s", attributionID)
 	}
 
-	// Either setup_intent_id or payment_intent_id must be provided
-	// TODO: Require payment_intent_id once we switch to using payment intents instead of setup intents
-	setupIntentID := req.SetupIntentId
 	paymentIntentID := req.PaymentIntentId
-	if setupIntentID == "" && paymentIntentID == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "Must provide either setup_intent_id or payment_intent_id")
+	if paymentIntentID == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid payment_intent_id")
 	}
 
 	customer, err := s.GetStripeCustomer(ctx, &v1.GetStripeCustomerRequest{
@@ -236,14 +233,6 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 	})
 	if err != nil {
 		return nil, err
-	}
-
-	// TODO: We can remove this once we switch to using payment intents instead of setup intents
-	if setupIntentID != "" {
-		_, err = s.stripeClient.SetDefaultPaymentForCustomer(ctx, customer.Customer.Id, setupIntentID)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "Failed to set default payment for customer ID %s", customer.Customer.Id)
-		}
 	}
 
 	stripeCustomer, err := s.stripeClient.GetCustomer(ctx, customer.Customer.Id)
@@ -270,37 +259,21 @@ func (s *BillingService) CreateStripeSubscription(ctx context.Context, req *v1.C
 		log.Warnf("Automatic Stripe tax is not supported for customer %s", stripeCustomer.ID)
 	}
 
-	// Handle a payment hold for either a setup intent or a payment intent
-	// TODO: remove the setup intent handling once we switch to using payment intents
-	if setupIntentID != "" {
-		// check the provided payment method by creating a hold on it.
-		result, err := s.stripeClient.TryHoldAmount(ctx, stripeCustomer, 1000)
-		if err != nil {
-			log.WithError(err).Errorf("Failed to verify credit card for customer %s", stripeCustomer.ID)
-		}
-		if result != stripe.PaymentHoldResultSucceeded {
-			log.Errorf("Failed to verify credit card for customer %s. Result: %s", stripeCustomer.ID, result)
-			return nil, status.Error(codes.InvalidArgument, "The provided payment method is invalid. Please provide working credit card information to proceed.")
-		}
-	} else {
-		// Make sure the provided payment intent hold was successful, and release it
-		result, err := s.stripeClient.TryHoldAmountForPaymentIntent(ctx, stripeCustomer, string(paymentIntentID))
-		if err != nil {
-			log.WithError(err).Errorf("Failed to verify credit card for customer %s", stripeCustomer.ID)
-		}
-		if result != stripe.PaymentHoldResultSucceeded {
-			log.Errorf("Failed to verify credit card for customer %s. Result: %s", stripeCustomer.ID, result)
-			return nil, status.Error(codes.InvalidArgument, "The provided payment method is invalid. Please provide working credit card information to proceed.")
-		}
-
+	// Handle a payment hold for the payment intent
+	// Make sure the provided payment intent hold was successful, and release it
+	result, err := s.stripeClient.TryHoldAmountForPaymentIntent(ctx, stripeCustomer, string(paymentIntentID))
+	if err != nil {
+		log.WithError(err).Errorf("Failed to verify credit card for customer %s", stripeCustomer.ID)
+	}
+	if result != stripe.PaymentHoldResultSucceeded {
+		log.Errorf("Failed to verify credit card for customer %s. Result: %s", stripeCustomer.ID, result)
+		return nil, status.Error(codes.InvalidArgument, "The provided payment method is invalid. Please provide working credit card information to proceed.")
 	}
 
-	if paymentIntentID != "" {
-		// At this point we should have a valid payment method, so we can set it as default.
-		_, err = s.stripeClient.SetDefaultPaymentForCustomerWithPaymentIntent(ctx, customer.Customer.Id, string(paymentIntentID))
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "Failed to set default payment for customer ID %s", customer.Customer.Id)
-		}
+	// At this point we should have a valid payment method, so we can set it as default.
+	_, err = s.stripeClient.SetDefaultPaymentForCustomer(ctx, customer.Customer.Id, string(paymentIntentID))
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Failed to set default payment for customer ID %s", customer.Customer.Id)
 	}
 
 	subscription, err := s.stripeClient.CreateSubscription(ctx, stripeCustomer.ID, priceID, isAutomaticTaxSupported)

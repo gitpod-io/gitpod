@@ -71,7 +71,6 @@ export interface CreateHoldPaymentIntentResponse {
 
 export interface CreateStripeSubscriptionRequest {
   attributionId: string;
-  setupIntentId: string;
   usageLimit: number;
   paymentIntentId: string;
 }
@@ -770,16 +769,13 @@ export const CreateHoldPaymentIntentResponse = {
 };
 
 function createBaseCreateStripeSubscriptionRequest(): CreateStripeSubscriptionRequest {
-  return { attributionId: "", setupIntentId: "", usageLimit: 0, paymentIntentId: "" };
+  return { attributionId: "", usageLimit: 0, paymentIntentId: "" };
 }
 
 export const CreateStripeSubscriptionRequest = {
   encode(message: CreateStripeSubscriptionRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.attributionId !== "") {
       writer.uint32(10).string(message.attributionId);
-    }
-    if (message.setupIntentId !== "") {
-      writer.uint32(18).string(message.setupIntentId);
     }
     if (message.usageLimit !== 0) {
       writer.uint32(24).int64(message.usageLimit);
@@ -800,9 +796,6 @@ export const CreateStripeSubscriptionRequest = {
         case 1:
           message.attributionId = reader.string();
           break;
-        case 2:
-          message.setupIntentId = reader.string();
-          break;
         case 3:
           message.usageLimit = longToNumber(reader.int64() as Long);
           break;
@@ -820,7 +813,6 @@ export const CreateStripeSubscriptionRequest = {
   fromJSON(object: any): CreateStripeSubscriptionRequest {
     return {
       attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
-      setupIntentId: isSet(object.setupIntentId) ? String(object.setupIntentId) : "",
       usageLimit: isSet(object.usageLimit) ? Number(object.usageLimit) : 0,
       paymentIntentId: isSet(object.paymentIntentId) ? String(object.paymentIntentId) : "",
     };
@@ -829,7 +821,6 @@ export const CreateStripeSubscriptionRequest = {
   toJSON(message: CreateStripeSubscriptionRequest): unknown {
     const obj: any = {};
     message.attributionId !== undefined && (obj.attributionId = message.attributionId);
-    message.setupIntentId !== undefined && (obj.setupIntentId = message.setupIntentId);
     message.usageLimit !== undefined && (obj.usageLimit = Math.round(message.usageLimit));
     message.paymentIntentId !== undefined && (obj.paymentIntentId = message.paymentIntentId);
     return obj;
@@ -838,7 +829,6 @@ export const CreateStripeSubscriptionRequest = {
   fromPartial(object: DeepPartial<CreateStripeSubscriptionRequest>): CreateStripeSubscriptionRequest {
     const message = createBaseCreateStripeSubscriptionRequest();
     message.attributionId = object.attributionId ?? "";
-    message.setupIntentId = object.setupIntentId ?? "";
     message.usageLimit = object.usageLimit ?? 0;
     message.paymentIntentId = object.paymentIntentId ?? "";
     return message;
@@ -1130,8 +1120,8 @@ export const BillingServiceDefinition = {
   fullName: "usage.v1.BillingService",
   methods: {
     /**
-     * ReconcileInvoices retrieves current credit balance and reflects it in billing system.
-     * Internal RPC, not intended for general consumption.
+     * ReconcileInvoices retrieves current credit balance and reflects it in
+     * billing system. Internal RPC, not intended for general consumption.
      */
     reconcileInvoices: {
       name: "ReconcileInvoices",
@@ -1183,8 +1173,10 @@ export const BillingServiceDefinition = {
       options: {},
     },
     /**
-     * CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify
-     * the payment method/creditability of this user on first signup, before we create the subscription
+     * CreateHoldPaymentIntent is meant to create a PaymentIntent for the given
+     * customer, that is meant as measure to verify the payment
+     * method/creditability of this user on first signup, before we create the
+     * subscription
      */
     createHoldPaymentIntent: {
       name: "CreateHoldPaymentIntent",
@@ -1211,7 +1203,10 @@ export const BillingServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    /** OnChargeDispute handles charge disputes created with the underlying payment provider. */
+    /**
+     * OnChargeDispute handles charge disputes created with the underlying payment
+     * provider.
+     */
     onChargeDispute: {
       name: "OnChargeDispute",
       requestType: OnChargeDisputeRequest,
@@ -1225,8 +1220,8 @@ export const BillingServiceDefinition = {
 
 export interface BillingServiceServiceImplementation<CallContextExt = {}> {
   /**
-   * ReconcileInvoices retrieves current credit balance and reflects it in billing system.
-   * Internal RPC, not intended for general consumption.
+   * ReconcileInvoices retrieves current credit balance and reflects it in
+   * billing system. Internal RPC, not intended for general consumption.
    */
   reconcileInvoices(
     request: ReconcileInvoicesRequest,
@@ -1258,8 +1253,10 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<CreateStripeCustomerResponse>>;
   /**
-   * CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify
-   * the payment method/creditability of this user on first signup, before we create the subscription
+   * CreateHoldPaymentIntent is meant to create a PaymentIntent for the given
+   * customer, that is meant as measure to verify the payment
+   * method/creditability of this user on first signup, before we create the
+   * subscription
    */
   createHoldPaymentIntent(
     request: CreateHoldPaymentIntentRequest,
@@ -1274,7 +1271,10 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
     request: GetPriceInformationRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<GetPriceInformationResponse>>;
-  /** OnChargeDispute handles charge disputes created with the underlying payment provider. */
+  /**
+   * OnChargeDispute handles charge disputes created with the underlying payment
+   * provider.
+   */
   onChargeDispute(
     request: OnChargeDisputeRequest,
     context: CallContext & CallContextExt,
@@ -1283,8 +1283,8 @@ export interface BillingServiceServiceImplementation<CallContextExt = {}> {
 
 export interface BillingServiceClient<CallOptionsExt = {}> {
   /**
-   * ReconcileInvoices retrieves current credit balance and reflects it in billing system.
-   * Internal RPC, not intended for general consumption.
+   * ReconcileInvoices retrieves current credit balance and reflects it in
+   * billing system. Internal RPC, not intended for general consumption.
    */
   reconcileInvoices(
     request: DeepPartial<ReconcileInvoicesRequest>,
@@ -1316,8 +1316,10 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     options?: CallOptions & CallOptionsExt,
   ): Promise<CreateStripeCustomerResponse>;
   /**
-   * CreateHoldPaymentIntent is meant to create a PaymentIntent for the given customer, that is meant as measure to verify
-   * the payment method/creditability of this user on first signup, before we create the subscription
+   * CreateHoldPaymentIntent is meant to create a PaymentIntent for the given
+   * customer, that is meant as measure to verify the payment
+   * method/creditability of this user on first signup, before we create the
+   * subscription
    */
   createHoldPaymentIntent(
     request: DeepPartial<CreateHoldPaymentIntentRequest>,
@@ -1332,7 +1334,10 @@ export interface BillingServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<GetPriceInformationRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<GetPriceInformationResponse>;
-  /** OnChargeDispute handles charge disputes created with the underlying payment provider. */
+  /**
+   * OnChargeDispute handles charge disputes created with the underlying payment
+   * provider.
+   */
   onChargeDispute(
     request: DeepPartial<OnChargeDisputeRequest>,
     options?: CallOptions & CallOptionsExt,

@@ -231,19 +231,13 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * Stripe/Usage
      */
     getStripePublishableKey(): Promise<string>;
-    getStripeSetupIntentClientSecret(): Promise<string>;
     findStripeSubscriptionId(attributionId: string): Promise<string | undefined>;
     getPriceInformation(attributionId: string): Promise<string | undefined>;
     createStripeCustomerIfNeeded(attributionId: string, currency: string): Promise<void>;
     createHoldPaymentIntent(
         attributionId: string,
     ): Promise<{ paymentIntentId: string; paymentIntentClientSecret: string }>;
-    subscribeToStripe(
-        attributionId: string,
-        setupIntentId: string,
-        paymentIntentId: string,
-        usageLimit: number,
-    ): Promise<number | undefined>;
+    subscribeToStripe(attributionId: string, paymentIntentId: string, usageLimit: number): Promise<number | undefined>;
     getStripePortalUrl(attributionId: string): Promise<string>;
     getCostCenter(attributionId: string): Promise<CostCenterJSON | undefined>;
     setUsageLimit(attributionId: string, usageLimit: number): Promise<void>;
