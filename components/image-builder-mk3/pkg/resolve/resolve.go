@@ -71,7 +71,7 @@ func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts .
 	// To make this a valid digested form we first need to normalize that familiar name.
 	pref, err := reference.ParseNormalizedNamed(ref)
 	if err != nil {
-		return "", xerrors.Errorf("cannt resolve image ref: %w", err)
+		return "", xerrors.Errorf("cannot resolve image ref: %w", err)
 	}
 
 	// The reference is already in digest form we don't have to do anything

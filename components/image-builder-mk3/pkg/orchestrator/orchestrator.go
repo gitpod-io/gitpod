@@ -564,7 +564,7 @@ func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authent
 func (o *Orchestrator) getAbsoluteImageRef(ctx context.Context, ref string, allowedAuth auth.AllowedAuthFor) (res string, err error) {
 	auth, err := allowedAuth.GetAuthFor(o.Auth, ref)
 	if err != nil {
-		return "", status.Errorf(codes.InvalidArgument, "cannt resolve base image ref: %v", err)
+		return "", status.Errorf(codes.InvalidArgument, "cannot resolve base image ref: %v", err)
 	}
 
 	ref, err = o.RefResolver.Resolve(ctx, ref, resolve.WithAuthentication(auth))

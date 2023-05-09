@@ -123,7 +123,7 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 
 	volumesnapshotclientset, err := volumesnapshotclientv1.NewForConfig(cfg)
 	if err != nil {
-		t.Errorf("cannt create test environment: %v", err)
+		t.Errorf("cannot create test environment: %v", err)
 		return nil
 	}
 
