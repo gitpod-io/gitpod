@@ -111,7 +111,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(wsReconciler.SetupWithManager(k8sManager)).To(Succeed())
 
-	wsActivity = &activity.WorkspaceActivity{}
+	wsActivity = activity.NewWorkspaceActivity()
 	timeoutReconciler, err := NewTimeoutReconciler(k8sManager.GetClient(), k8sManager.GetEventRecorderFor("workspace"), conf, wsActivity, maintenance)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(timeoutReconciler.SetupWithManager(k8sManager)).To(Succeed())

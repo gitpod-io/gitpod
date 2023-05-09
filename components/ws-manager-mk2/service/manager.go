@@ -424,7 +424,7 @@ func (wsm *WorkspaceManagerServer) DescribeWorkspace(ctx context.Context, req *w
 		Status: wsm.extractWorkspaceStatus(&ws),
 	}
 
-	lastActivity := wsm.activity.GetLastActivity(req.Id)
+	lastActivity := wsm.activity.GetLastActivity(&ws)
 	if lastActivity != nil {
 		result.LastActivity = lastActivity.UTC().Format(time.RFC3339Nano)
 	}
@@ -1417,7 +1417,7 @@ func (wav *workspaceActivityVec) getWorkspaceActivityCounts() (active, notActive
 			continue
 		}
 
-		hasActivity := wav.activity.GetLastActivity(ws.Name) != nil
+		hasActivity := wav.activity.GetLastActivity(&ws) != nil
 		if hasActivity {
 			active++
 		} else {

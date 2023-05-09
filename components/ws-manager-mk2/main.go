@@ -147,7 +147,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	activity := &activity.WorkspaceActivity{}
+	activity := activity.NewWorkspaceActivity()
 	timeoutReconciler, err := controllers.NewTimeoutReconciler(mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), cfg.Manager, activity, maintenanceReconciler)
 	if err != nil {
 		setupLog.Error(err, "unable to create timeout controller", "controller", "Timeout")
