@@ -5,10 +5,14 @@
 package scheduler
 
 import (
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/robfig/cron"
+	"context"
+	"errors"
 	"sync"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/go-redsync/redsync/v4"
+	"github.com/robfig/cron"
 )
 
 func New(jobs ...JobSpec) *Scheduler {
@@ -22,14 +26,16 @@ func New(jobs ...JobSpec) *Scheduler {
 type Scheduler struct {
 	specs       []JobSpec
 	runningJobs sync.WaitGroup
+	mutex       *redsync.Redsync
 
 	cron *cron.Cron
 }
 
 type JobSpec struct {
-	Job      Job
-	ID       string
-	Schedule cron.Schedule
+	Job                 Job
+	ID                  string
+	Schedule            cron.Schedule
+	InitialLockDuration time.Duration
 }
 
 func (c *Scheduler) Start() {
@@ -39,24 +45,40 @@ func (c *Scheduler) Start() {
 		// need to re-assign job to avoid pointing to a different job spec once the `cron.FuncJob` executes.
 		j := job
 		c.cron.Schedule(job.Schedule, cron.FuncJob(func() {
+			ctx := context.Background()
 			c.runningJobs.Add(1)
 			defer c.runningJobs.Done()
 
 			now := time.Now().UTC()
 			logger := log.WithField("job_id", j.ID)
 
-			logger.Infof("Starting scheduled job %s", j.ID)
-			reportJobStarted(j.ID)
+			err := WithRefreshingMutex(ctx, c.mutex, job.ID, job.InitialLockDuration, func(ctx context.Context) error {
+				logger.Infof("Starting scheduled job %s", j.ID)
+				reportJobStarted(j.ID)
+				jobErr := j.Job.Run()
+				reportJobCompleted(j.ID, time.Since(now), jobErr)
 
-			err := j.Job.Run()
-			defer func() {
-				reportJobCompleted(j.ID, time.Since(now), err)
-			}()
+				if jobErr != nil {
+					// We don't propagate the job erros outside of run mutex context deliberately
+					// to contain each job errors
+					logger.WithError(jobErr).Errorf("Scheduled job %s failed.", job.ID)
+					return nil
+				}
+
+				logger.Infof("Scheduled job %s completed succesfully.", job.ID)
+				return jobErr
+			})
 			if err != nil {
-				logger.WithError(err).Errorf("Scheduled job %s failed.", job.ID)
+				if errors.Is(err, redsync.ErrFailed) {
+					logger.WithError(err).Info("Failed to acquire lock, another instance holds the lock already.")
+					return
+				}
+
+				logger.WithError(err).Error("Failed to execute job inside a mutex.")
 				return
 			}
-			logger.Infof("Scheduled job %s completed succesfully.", job.ID)
+
+			logger.Debug("Succesfully obtained mutex and executed job.")
 		}))
 	}
 
