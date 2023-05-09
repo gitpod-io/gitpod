@@ -31,6 +31,7 @@ packages:
       - "main.go"
       - "go.mod"
       - "go.sum"
+      - "crd/*.yaml"
     deps:
       - components/common-go:lib
       - components/content-service-api/go:lib
@@ -41,6 +42,8 @@ packages:
     env:
       - CGO_ENABLED=0
       - GOOS=linux
+    prep:
+      - ["mv", "_deps/components-ws-manager-mk2--crd/workspace.gitpod.io_workspaces.yaml", "crd/workspace.gitpod.io_workspaces.yaml"]
     config:
       packaging: library
   - name: content-initializer
