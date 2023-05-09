@@ -6,18 +6,28 @@ package scheduler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/usage-api/v1"
 	"github.com/go-redsync/redsync/v4"
+	"github.com/robfig/cron"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func NewLedgerTriggerJobSpec(schedule time.Duration, job Job) (JobSpec, error) {
-	return NewPeriodicJobSpec(schedule, "ledger", job)
+	parsed, err := cron.Parse(fmt.Sprintf("@every %s", schedule.String()))
+	if err != nil {
+		return JobSpec{}, fmt.Errorf("failed to parse period into schedule: %w", err)
+	}
+
+	return JobSpec{
+		Job:                 job,
+		ID:                  "ledger",
+		Schedule:            parsed,
+		InitialLockDuration: schedule,
+	}, nil
 }
 
 type ClientsConstructor func() (v1.UsageServiceClient, v1.BillingServiceClient, error)
@@ -46,45 +56,35 @@ func (r *LedgerJob) Run() (err error) {
 	now := time.Now().UTC()
 	hourAgo := now.Add(-1 * time.Hour)
 
+	defer func() {
+		reportLedgerCompleted(err)
+	}()
+
 	logger := log.
 		WithField("from", hourAgo).
 		WithField("to", now)
 
-	runErr := WithRefreshingMutex(ctx, r.sync, "usage-ledger", r.mutexDuration, func(ctx context.Context) error {
-		usageClient, billingClient, err := r.clientsConstructor()
-		if err != nil {
-			return fmt.Errorf("failed to construct usage and billing client: %w", err)
-		}
-
-		logger.Info("Running ledger job. Reconciling usage records.")
-		_, err = usageClient.ReconcileUsage(ctx, &v1.ReconcileUsageRequest{
-			From: timestamppb.New(hourAgo),
-			To:   timestamppb.New(now),
-		})
-		if err != nil {
-			logger.WithError(err).Errorf("Failed to reconcile usage with ledger.")
-			return fmt.Errorf("failed to reconcile usage with ledger: %w", err)
-		}
-
-		logger.Info("Starting invoice reconciliation.")
-		_, err = billingClient.ReconcileInvoices(ctx, &v1.ReconcileInvoicesRequest{})
-		if err != nil {
-			logger.WithError(err).Errorf("Failed to reconcile invoices.")
-			return fmt.Errorf("failed to reconcile invoices: %w", err)
-		}
-
-		return nil
-	})
-
-	if errors.Is(runErr, redsync.ErrFailed) {
-		logger.Info("Ledger job did not acquire mutex, another job must be running already.")
-		return nil
+	usageClient, billingClient, err := r.clientsConstructor()
+	if err != nil {
+		return fmt.Errorf("failed to construct usage and billing client: %w", err)
 	}
 
-	defer func() {
-		reportLedgerCompleted(runErr)
-	}()
+	logger.Info("Running ledger job. Reconciling usage records.")
+	_, err = usageClient.ReconcileUsage(ctx, &v1.ReconcileUsageRequest{
+		From: timestamppb.New(hourAgo),
+		To:   timestamppb.New(now),
+	})
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to reconcile usage with ledger.")
+		return fmt.Errorf("failed to reconcile usage with ledger: %w", err)
+	}
 
-	return runErr
+	logger.Info("Starting invoice reconciliation.")
+	_, err = billingClient.ReconcileInvoices(ctx, &v1.ReconcileInvoicesRequest{})
+	if err != nil {
+		logger.WithError(err).Errorf("Failed to reconcile invoices.")
+		return fmt.Errorf("failed to reconcile invoices: %w", err)
+	}
 
+	return nil
 }

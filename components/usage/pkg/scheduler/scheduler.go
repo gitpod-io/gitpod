@@ -13,13 +13,15 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/robfig/cron"
+	"github.com/sirupsen/logrus"
 )
 
-func New(jobs ...JobSpec) *Scheduler {
+func New(mutex *redsync.Redsync, jobs ...JobSpec) *Scheduler {
 	return &Scheduler{
 		specs:       jobs,
 		runningJobs: sync.WaitGroup{},
 		cron:        cron.NewWithLocation(time.UTC),
+		mutex:       mutex,
 	}
 }
 
@@ -50,9 +52,10 @@ func (c *Scheduler) Start() {
 			defer c.runningJobs.Done()
 
 			now := time.Now().UTC()
+			log.Log.Logger.SetLevel(logrus.DebugLevel)
 			logger := log.WithField("job_id", j.ID)
 
-			err := WithRefreshingMutex(ctx, c.mutex, job.ID, job.InitialLockDuration, func(ctx context.Context) error {
+			err := WithRefreshingMutex(ctx, c.mutex, j.ID, j.InitialLockDuration, func(ctx context.Context) error {
 				logger.Infof("Starting scheduled job %s", j.ID)
 				reportJobStarted(j.ID)
 				jobErr := j.Job.Run()
@@ -65,7 +68,7 @@ func (c *Scheduler) Start() {
 					return nil
 				}
 
-				logger.Infof("Scheduled job %s completed succesfully.", job.ID)
+				logger.Infof("Scheduled job %s completed succesfully.", j.ID)
 				return jobErr
 			})
 			if err != nil {
