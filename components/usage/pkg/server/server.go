@@ -192,7 +192,7 @@ func Start(cfg Config, version string) error {
 
 	err = srv.ListenAndServe()
 	if err != nil {
-		return fmt.Errorf("failed to listen and serve: %w", err)
+		return fmt.Errorf("failed to listen and serve:2 %w", err)
 	}
 
 	return nil
