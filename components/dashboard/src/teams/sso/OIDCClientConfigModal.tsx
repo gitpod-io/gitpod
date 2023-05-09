@@ -54,8 +54,9 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
             <ModalHeader>{isNew ? "New SSO Configuration" : "Edit SSO Configuration"}</ModalHeader>
             <ModalBody>
                 {clientConfig?.active && (
-                    <Alert type="message" className="mb-4">
-                        Please be careful! Your are editing an active SSO configuration.
+                    <Alert type="warning" className="mb-4">
+                        Warning, you are editing an active SSO configuration. A misconfiguration may prevent any user
+                        from logging in.
                     </Alert>
                 )}
                 <SSOConfigForm config={ssoConfig} onChange={dispatch} />

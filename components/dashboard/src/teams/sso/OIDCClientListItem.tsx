@@ -13,6 +13,7 @@ import { useDeleteOIDCClientMutation } from "../../data/oidc-clients/delete-oidc
 import { gitpodHostUrl } from "../../service/service";
 import { OIDCClientConfigModal } from "./OIDCClientConfigModal";
 import { useToast } from "../../components/toasts/Toasts";
+import { ModalFooterAlert } from "../../components/Modal";
 
 type Props = {
     clientConfig: OIDCClientConfig;
@@ -104,11 +105,16 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
                     buttonText="Remove"
                     buttonLoading={deleteOIDCClient.isLoading}
                     warningText={
-                        deleteOIDCClient.isError
-                            ? "There was a problem deleting the configuration"
-                            : clientConfig.active
+                        clientConfig.active
                             ? "Warning, you are about to remove the active SSO configuration. If you continue, SSO will be disabled for your organization and no one, including yourself, will be able to log in."
                             : ""
+                    }
+                    footerAlert={
+                        deleteOIDCClient.isError ? (
+                            <ModalFooterAlert type="danger">
+                                There was a problem deleting the configuration
+                            </ModalFooterAlert>
+                        ) : null
                     }
                     onClose={() => setShowDeleteConfirmation(false)}
                     onConfirm={deleteClient}
