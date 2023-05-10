@@ -15,14 +15,7 @@ type HeadingProps = {
 
 export const Heading1: FC<HeadingProps> = ({ color, tracking, className, children }) => {
     return (
-        <h1
-            className={classNames(
-                getHeadingColor(color),
-                getTracking(tracking),
-                "font-bold text-4xl leading-64",
-                className,
-            )}
-        >
+        <h1 className={classNames(getHeadingColor(color), getTracking(tracking), "font-bold text-4xl", className)}>
             {children}
         </h1>
     );
@@ -30,14 +23,7 @@ export const Heading1: FC<HeadingProps> = ({ color, tracking, className, childre
 
 export const Heading2: FC<HeadingProps> = ({ color, tracking, className, children }) => {
     return (
-        <h2
-            className={classNames(
-                getHeadingColor(color),
-                getTracking(tracking),
-                "leading-9 font-semibold text-2xl",
-                className,
-            )}
-        >
+        <h2 className={classNames(getHeadingColor(color), getTracking(tracking), "font-semibold text-2xl", className)}>
             {children}
         </h2>
     );
