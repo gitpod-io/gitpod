@@ -163,6 +163,7 @@ export interface OrgMemberInfo {
     avatarUrl?: string;
     role: TeamMemberRole;
     memberSince: string;
+    ownedByOrganization: boolean;
 }
 
 export interface TeamMembershipInvite {

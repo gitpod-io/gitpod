@@ -41,6 +41,9 @@ message TeamMember {
 
     // primary_email is the primary email of the TeamMember
     string primary_email = 6;
+
+    // owned_by_organization indicates if the TeamMember is owned by the organization
+    bool owned_by_organization = 7;
 }
 
 enum TeamRole {

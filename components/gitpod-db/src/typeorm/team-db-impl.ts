@@ -104,6 +104,7 @@ export class TeamDBImpl implements TeamDB {
                 avatarUrl: u.avatarUrl,
                 role: m.role,
                 memberSince: m.creationTime,
+                ownedByOrganization: u.organizationId === teamId,
             };
         });
         return infos.sort((a, b) => (a.memberSince < b.memberSince ? 1 : a.memberSince === b.memberSince ? 0 : -1));

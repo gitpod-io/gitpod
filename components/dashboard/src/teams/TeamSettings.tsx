@@ -155,14 +155,18 @@ export default function TeamSettingsPage() {
                     />
                 </form>
 
-                <Heading2 className="pt-12">Delete Organization</Heading2>
-                <Subheading className="pb-4 max-w-2xl">
-                    Deleting this organization will also remove all associated data, including projects and workspaces.
-                    Deleted organizations cannot be restored!
-                </Subheading>
-                <button className="danger secondary" onClick={() => setModal(true)}>
-                    Delete Organization
-                </button>
+                {user?.organizationId !== org?.id && (
+                    <>
+                        <Heading2 className="pt-12">Delete Organization</Heading2>
+                        <Subheading className="pb-4 max-w-2xl">
+                            Deleting this organization will also remove all associated data, including projects and
+                            workspaces. Deleted organizations cannot be restored!
+                        </Subheading>
+                        <button className="danger secondary" onClick={() => setModal(true)}>
+                            Delete Organization
+                        </button>
+                    </>
+                )}
             </OrgSettingsPage>
 
             <ConfirmationModal
