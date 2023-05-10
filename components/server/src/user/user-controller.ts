@@ -6,7 +6,7 @@
 
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
-import { UserDB, DBUser, WorkspaceDB, OneTimeSecretDB } from "@gitpod/gitpod-db/lib";
+import { UserDB, DBUser, WorkspaceDB, OneTimeSecretDB, TeamDB } from "@gitpod/gitpod-db/lib";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib/user-db";
 import * as express from "express";
 import { Authenticator } from "../auth/authenticator";
@@ -38,6 +38,7 @@ export type ServerFactory = () => GitpodServerImpl;
 export class UserController {
     @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
     @inject(UserDB) protected readonly userDb: UserDB;
+    @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(Authenticator) protected readonly authenticator: Authenticator;
     @inject(Config) protected readonly config: Config;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
@@ -151,6 +152,21 @@ export class UserController {
                     // We respond with NOT_AUTHENTICATED to prevent gleaning whether the user, or token are invalid.
                     throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Admin user not found");
                 }
+
+                // Ensure admin user is owner of any Org.
+                const { rows: orgs } = await this.teamDb.findTeams(
+                    0 /* offset */,
+                    1000 /* limit */,
+                    "creationTime" /* order by */,
+                    "ASC",
+                    "" /* empty search term returns any */,
+                );
+                for (const org of orgs) {
+                    await this.teamDb.addMemberToTeam(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
+                    await this.teamDb.setTeamMemberRole(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id, "owner");
+                }
+
+                // Create a session for the admin user.
                 await new Promise<void>((resolve, reject) => {
                     req.login(user, (err) => {
                         if (err) {
@@ -168,7 +184,7 @@ export class UserController {
             } catch (e) {
                 log.error("Failed to sign-in as admin with OTS Token", e);
 
-                // Default to unathenticated, to not leak information.
+                // Default to unauthenticated, to not leak information.
                 // We do not send the error response to ensure we do not disclose information.
                 const code = e.code || 401;
                 res.sendStatus(code);
