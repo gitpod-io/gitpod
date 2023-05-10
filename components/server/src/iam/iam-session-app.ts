@@ -13,6 +13,7 @@ import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Identity, User } from "@gitpod/gitpod-protocol";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
+import { ResponseError } from "vscode-ws-jsonrpc";
 
 @injectable()
 export class IamSessionApp {
@@ -41,8 +42,13 @@ export class IamSessionApp {
                 res.status(200).json(result);
             } catch (error) {
                 log.error("Error creating session on behalf of IAM", error, { error });
+                if (error instanceof ResponseError) {
+                    res.status(error.code).json({ message: error.message });
+                    return;
+                }
+
                 // we treat all errors as bad request here and forward the error message to the caller
-                res.status(400).json({ error, message: error.message });
+                res.status(400).json({ message: error.message });
             }
         });
 
@@ -50,12 +56,7 @@ export class IamSessionApp {
     }
 
     protected async doCreateSession(req: express.Request) {
-        if (!OIDCCreateSessionPayload.is(req.body)) {
-            throw new Error("Unexpected payload.");
-        }
-        const payload = req.body;
-        OIDCCreateSessionPayload.validate(payload);
-
+        const payload = OIDCCreateSessionPayload.validate(req.body);
         const existingUser = await this.userService.findUserForLogin({
             candidate: this.mapOIDCProfileToIdentity(payload),
         });
