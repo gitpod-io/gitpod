@@ -176,7 +176,10 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
         let redirect = false;
         try {
             const desktopLink = new URL(url);
-            redirect = desktopLink.protocol !== "http:" && desktopLink.protocol !== "https:";
+            // allow to redirect only for whitelisted trusted protocols
+            // IDE-69
+            const trustedProtocols = ["vscode:", "vscode-insiders:", "jetbrains-gateway:"];
+            redirect = trustedProtocols.includes(desktopLink.protocol);
         } catch (e) {
             console.error("invalid desktop link:", e);
         }
