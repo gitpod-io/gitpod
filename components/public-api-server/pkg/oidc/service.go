@@ -45,6 +45,7 @@ type ClientConfig struct {
 	ID             string
 	OrganizationID string
 	Issuer         string
+	Active         bool
 	OAuth2Config   *oauth2.Config
 	VerifierConfig *goidc.Config
 }
@@ -139,7 +140,7 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 		orgSlug = org.Slug
 	}
 	if orgSlug != "" {
-		dbEntry, err := db.GetOIDCClientConfigByOrgSlug(r.Context(), s.dbConn, orgSlug)
+		dbEntry, err := db.GetActiveOIDCClientConfigByOrgSlug(r.Context(), s.dbConn, orgSlug)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find OIDC clients: %w", err)
 		}
@@ -227,6 +228,7 @@ func (s *Service) convertClientConfig(ctx context.Context, dbEntry db.OIDCClient
 		ID:             dbEntry.ID.String(),
 		OrganizationID: dbEntry.OrganizationID.String(),
 		Issuer:         dbEntry.Issuer,
+		Active:         dbEntry.Active,
 		OAuth2Config: &oauth2.Config{
 			ClientID:     spec.ClientID,
 			ClientSecret: spec.ClientSecret,
