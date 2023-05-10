@@ -24,7 +24,14 @@ import {
     GuardedCostCenter,
 } from "./resource-access";
 import { PrebuiltWorkspace, User, UserEnvVar, Workspace, WorkspaceType } from "@gitpod/gitpod-protocol/lib/protocol";
-import { Team, TeamMemberInfo, TeamMemberRole, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import {
+    OrgMemberInfo,
+    Organization,
+    Team,
+    TeamMemberInfo,
+    TeamMemberRole,
+    WorkspaceInstance,
+} from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "./host-context-provider";
 
 class MockedRepositoryResourceGuard extends RepositoryResourceGuard {
@@ -179,6 +186,7 @@ class TestResourceAccess {
                             userId: "foo",
                             memberSince: "2021-08-31",
                             role: "member",
+                            ownedByOrganization: false,
                         },
                     ],
                 },
@@ -199,6 +207,7 @@ class TestResourceAccess {
                             userId: "foo",
                             memberSince: "2021-08-31",
                             role: "member",
+                            ownedByOrganization: false,
                         },
                     ],
                 },
@@ -219,6 +228,7 @@ class TestResourceAccess {
                             userId: "foo",
                             memberSince: "2021-08-31",
                             role: "member",
+                            ownedByOrganization: false,
                         },
                     ],
                 },
@@ -357,6 +367,7 @@ class TestResourceAccess {
                         userId: user.id,
                         role: t.teamRole,
                         memberSince: user.creationDate,
+                        ownedByOrganization: false,
                     },
                 ];
                 owner = { kind: "team", team, members: teamMembers };
@@ -369,6 +380,124 @@ class TestResourceAccess {
                 t.expectation,
                 `"${t.name}" expected canAccess(resource, "${t.operation}") === ${t.expectation}, but was ${actual}`,
             );
+        }
+    }
+
+    @test public async organizationResourceGuard() {
+        const user: User = {
+            id: "123",
+            name: "testuser",
+            creationDate: new Date(2000, 1, 1).toISOString(),
+            identities: [
+                {
+                    authId: "123",
+                    authName: "testuser",
+                    authProviderId: "github.com",
+                },
+            ],
+        };
+
+        const org: Organization = {
+            id: "org-123",
+            name: "test-org",
+            creationTime: new Date(2000, 1, 1).toISOString(),
+        };
+
+        const noMember: OrgMemberInfo[] = [
+            {
+                userId: "foo",
+                role: "member",
+                memberSince: new Date(2000, 1, 1).toISOString(),
+                ownedByOrganization: false,
+            },
+        ];
+
+        const member: OrgMemberInfo[] = [
+            {
+                userId: user.id,
+                role: "member",
+                memberSince: new Date(2000, 1, 1).toISOString(),
+                ownedByOrganization: false,
+            },
+        ];
+
+        const memberAndOwned: OrgMemberInfo[] = [
+            {
+                userId: user.id,
+                role: "member",
+                memberSince: new Date(2000, 1, 1).toISOString(),
+                ownedByOrganization: true,
+            },
+        ];
+
+        const owner: OrgMemberInfo[] = [
+            {
+                userId: user.id,
+                role: "owner",
+                memberSince: new Date(2000, 1, 1).toISOString(),
+                ownedByOrganization: false,
+            },
+        ];
+
+        const ownerAndOwned: OrgMemberInfo[] = [
+            {
+                userId: user.id,
+                role: "owner",
+                memberSince: new Date(2000, 1, 1).toISOString(),
+                ownedByOrganization: true,
+            },
+        ];
+
+        const tests: {
+            name: string;
+            members: OrgMemberInfo[];
+            permitted: ResourceAccessOp[];
+        }[] = [
+            // not even a member
+            {
+                name: "not a member",
+                members: noMember,
+                permitted: ["create"],
+            },
+            {
+                name: "member",
+                members: member,
+                permitted: ["get", "create"],
+            },
+            {
+                name: "member and owned",
+                members: memberAndOwned,
+                permitted: ["get"],
+            },
+            {
+                name: "owner",
+                members: owner,
+                permitted: ["get", "update", "create", "delete"],
+            },
+            {
+                name: "owner and owned",
+                members: ownerAndOwned,
+                permitted: ["get", "update"],
+            },
+        ];
+
+        for (const t of tests) {
+            const resourceGuard = new CompositeResourceAccessGuard([
+                new OwnerResourceGuard(user.id),
+                new TeamMemberResourceGuard(user.id),
+                new SharedWorkspaceAccessGuard(),
+                new MockedRepositoryResourceGuard(true),
+            ]);
+
+            for (const op of ["get", "update", "create", "delete"] as ResourceAccessOp[]) {
+                const expectation = t.permitted.includes(op);
+                const actual = await resourceGuard.canAccess({ kind: "team", subject: org, members: t.members }, op);
+
+                expect(actual).to.be.eq(
+                    expectation,
+                    `"${t.name}" expected canAccess(resource, "${op}") === ${expectation}, but was ${actual}`,
+                );
+            }
         }
     }
 
@@ -1149,6 +1278,7 @@ class TestResourceAccess {
                     userId: user.id,
                     role: t.teamRole,
                     memberSince: user.creationDate,
+                    ownedByOrganization: false,
                 });
             }
 

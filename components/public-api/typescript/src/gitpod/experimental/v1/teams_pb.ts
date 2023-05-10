@@ -162,6 +162,13 @@ export class TeamMember extends Message<TeamMember> {
    */
   primaryEmail = "";
 
+  /**
+   * owned_by_organization indicates if the TeamMember is owned by the organization
+   *
+   * @generated from field: bool owned_by_organization = 7;
+   */
+  ownedByOrganization = false;
+
   constructor(data?: PartialMessage<TeamMember>) {
     super();
     proto3.util.initPartial(data, this);
@@ -176,6 +183,7 @@ export class TeamMember extends Message<TeamMember> {
     { no: 4, name: "avatar_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "full_name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "primary_email", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 7, name: "owned_by_organization", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): TeamMember {
@@ -841,4 +849,3 @@ export class DeleteTeamMemberResponse extends Message<DeleteTeamMemberResponse> 
     return proto3.util.equals(DeleteTeamMemberResponse, a, b);
   }
 }
-

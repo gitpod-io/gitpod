@@ -2286,12 +2286,13 @@ const (
 )
 
 type TeamMemberInfo struct {
-	UserId       string         `json:"userId,omitempty"`
-	FullName     string         `json:"fullName,omitempty"`
-	PrimaryEmail string         `json:"primaryEmail,omitempty"`
-	AvatarUrl    string         `json:"avatarUrl,omitempty"`
-	Role         TeamMemberRole `json:"role,omitempty"`
-	MemberSince  string         `json:"memberSince,omitempty"`
+	UserId              string         `json:"userId,omitempty"`
+	FullName            string         `json:"fullName,omitempty"`
+	PrimaryEmail        string         `json:"primaryEmail,omitempty"`
+	AvatarUrl           string         `json:"avatarUrl,omitempty"`
+	Role                TeamMemberRole `json:"role,omitempty"`
+	MemberSince         string         `json:"memberSince,omitempty"`
+	OwnedByOrganization bool           `json:"ownedByOrganization,omitempty"`
 }
 
 type TeamMembershipInvite struct {

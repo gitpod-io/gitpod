@@ -70,6 +70,7 @@ const gitpodServiceMock = createServiceMock({
                 avatarUrl: u1.avatarUrl,
                 fullName: u1.fullName,
                 primaryEmail: "alex@gitpod.io",
+                ownedByOrganization: false,
             },
         ];
     },

@@ -103,5 +103,6 @@ export function memberToAPI(member: OrgMemberInfo): TeamMember {
         primaryEmail: member.primaryEmail,
         role: member.role === "owner" ? TeamRole.OWNER : TeamRole.MEMBER,
         userId: member.userId,
+        ownedByOrganization: !!member.ownedByOrganization,
     });
 }

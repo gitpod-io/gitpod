@@ -240,15 +240,19 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
             case "team":
                 switch (operation) {
                     case "create":
-                        // Anyone can create a new team.
-                        return true;
+                        // Anyone who's not owned by an org can create orgs.
+                        return !resource.members.some((m) => m.userId === this.userId && m.ownedByOrganization);
                     case "get":
                         // Only members can get infos about a team.
                         return resource.members.some((m) => m.userId === this.userId);
                     case "update":
-                    case "delete":
-                        // Only owners can update or delete a team.
+                        // Only owners can update a team.
                         return resource.members.some((m) => m.userId === this.userId && m.role === "owner");
+                    case "delete":
+                        // Only owners that are not directly owned by the org can delete the org.
+                        return resource.members.some(
+                            (m) => m.userId === this.userId && m.role === "owner" && !m.ownedByOrganization,
+                        );
                 }
             case "costCenter":
                 const owner = resource.owner;

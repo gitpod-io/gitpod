@@ -52,6 +52,7 @@ export function publicApiTeamMemberToProtocol(member: TeamMember): TeamMemberInf
         memberSince: member.memberSince?.toDate().toISOString() || "",
         role: publicApiTeamRoleToProtocol(member.role),
         primaryEmail: member.primaryEmail,
+        ownedByOrganization: member.ownedByOrganization,
     };
 }
 
