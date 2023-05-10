@@ -32,7 +32,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
                 separator: true,
             },
             {
-                title: "Verify",
+                title: "Login",
                 onClick: () => {
                     window.location.href = gitpodHostUrl
                         .with({ pathname: `/iam/oidc/start`, search: `id=${clientConfig.id}` })
@@ -74,7 +74,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
 
     return (
         <>
-            <Item key={clientConfig.id}>
+            <Item>
                 <ItemFieldIcon>
                     <div
                         className={
@@ -87,10 +87,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
                 </ItemFieldIcon>
                 <ItemField className="flex flex-col flex-grow">
                     <span className="font-medium truncate overflow-ellipsis">{clientConfig.oidcConfig?.issuer}</span>
-                    {/* TODO: Address overflow here, these can be quite long */}
-                    <span className="text-sm text-gray-500 truncate overflow-ellipsis">
-                        {clientConfig.oauth2Config?.clientId}
-                    </span>
+                    <span className="text-sm text-gray-500 break-all">{clientConfig.oauth2Config?.clientId}</span>
                 </ItemField>
                 <ItemFieldContextMenu menuEntries={menuEntries} />
             </Item>
