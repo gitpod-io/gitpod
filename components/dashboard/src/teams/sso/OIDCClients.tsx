@@ -8,7 +8,7 @@ import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/
 import { FC, useCallback, useState } from "react";
 import { Button } from "../../components/Button";
 import { EmptyMessage } from "../../components/EmptyMessage";
-import { Item, ItemField, ItemsList } from "../../components/ItemsList";
+import { Item, ItemField, ItemFieldIcon, ItemsList } from "../../components/ItemsList";
 import { SpinnerLoader } from "../../components/Loader";
 import { Heading2, Subheading } from "../../components/typography/headings";
 import { useOIDCClientsQuery } from "../../data/oidc-clients/oidc-clients-query";
@@ -40,14 +40,14 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
 
             <div className="flex flex-col space-y-2 md:flex-row md:items-start md:justify-between md:space-y-0">
                 <div>
-                    <Heading2>OpenID Connect clients</Heading2>
-                    <Subheading>Configure single sign-on for your organization.</Subheading>
+                    <Heading2>SSO Configurations</Heading2>
+                    <Subheading>Configure OpenID Connect single sign-on for your organization.</Subheading>
                 </div>
 
                 {clientConfigs.length !== 0 ? (
                     <div className="">
                         <Button className="whitespace-nowrap" onClick={onCreate}>
-                            New OIDC Client
+                            New Configuration
                         </Button>
                     </div>
                 ) : null}
@@ -55,17 +55,15 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
 
             {clientConfigs.length === 0 ? (
                 <EmptyMessage
-                    title="No OIDC providers"
-                    subtitle="Enable single sign-on for your organization using an external identity provider (IdP) service that supports the OpenID Connect (OIDC) standard, such as Google."
-                    buttonText="New OIDC Client"
+                    subtitle="Enable single sign-on for your organization using an external identity provider (IdP) service that supports the OpenID Connect (OIDC) standard, such as Google or Okta."
+                    buttonText="New Configuration"
                     onClick={onCreate}
                 />
             ) : (
                 <ItemsList className="pt-6">
                     <Item header={true}>
-                        <ItemField className="flex flex-col">
-                            <span>Issuer URL</span>
-                        </ItemField>
+                        <ItemFieldIcon />
+                        <ItemField>Issuer URL</ItemField>
                     </Item>
                     {clientConfigs.map((cc) => (
                         <OIDCClientListItem key={cc.id} clientConfig={cc} />
