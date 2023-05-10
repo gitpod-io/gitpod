@@ -31,15 +31,6 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig }) => {
                 onClick: () => setShowEditModal(true),
                 separator: true,
             },
-            {
-                title: "Login",
-                onClick: () => {
-                    window.location.href = gitpodHostUrl
-                        .with({ pathname: `/iam/oidc/start`, search: `id=${clientConfig.id}` })
-                        .toString();
-                },
-                separator: true,
-            },
             ...(!clientConfig.active
                 ? [
                       {
