@@ -154,10 +154,10 @@ class TestIamSessionApp {
 
     @test public async testInvalidPayload() {
         const cases = [
-            { claims: { sub: "" }, expectedMessage: "Subject is missing" },
-            { claims: { iss: "" }, expectedMessage: "Issuer is missing" },
-            { claims: { email: "" }, expectedMessage: "Email is missing" },
-            { claims: { name: "" }, expectedMessage: "Name is missing" },
+            { claims: { sub: "" }, expectedMessage: "Claim 'sub' (subject) is missing" },
+            { claims: { iss: "" }, expectedMessage: "Claim 'iss' (issuer) is missing" },
+            { claims: { email: "" }, expectedMessage: "Claim 'email' is missing" },
+            { claims: { name: "" }, expectedMessage: "Claim 'name' is missing" },
         ];
         for (const c of cases) {
             const payload = { ...this.payload, claims: { ...this.payload.claims, ...c.claims } };
@@ -173,7 +173,7 @@ class TestIamSessionApp {
         }
     }
 
-    @test.only public async testInvalidPayload_no_org_id() {
+    @test public async testInvalidPayload_no_org_id() {
         const payload: OIDCCreateSessionPayload = { ...this.payload, organizationId: "" };
 
         const sr = request(this.app.create());
@@ -192,7 +192,7 @@ class TestIamSessionApp {
         const result = await sr.post("/session").set("Content-Type", "application/json").send(JSON.stringify(payload));
 
         expect(result.statusCode, JSON.stringify(result.body)).to.equal(400);
-        expect(result.body?.message).to.equal("OIDC client config id is missing");
+        expect(result.body?.message).to.equal("OIDC client config id missing");
     }
 
     @test public async testSessionRequest_createUser_removes_admin() {

@@ -29,24 +29,24 @@ export namespace OIDCCreateSessionPayload {
                 "OIDC Create Session Payload does not contain claims object.",
             );
         }
-        if (hasNonEmptyField(payload.claims, "iss")) {
+        if (hasEmptyField(payload.claims, "iss")) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Claim 'iss' (issuer) is missing");
         }
-        if (hasNonEmptyField(payload.claims, "sub")) {
+        if (hasEmptyField(payload.claims, "sub")) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Claim 'sub' (subject) is missing");
         }
-        if (hasNonEmptyField(payload.claims, "name")) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Claim 'name' is missing.");
+        if (hasEmptyField(payload.claims, "name")) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Claim 'name' is missing");
         }
-        if (hasNonEmptyField(payload.claims, "email")) {
+        if (hasEmptyField(payload.claims, "email")) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Claim 'email' is missing");
         }
 
-        if (hasNonEmptyField(payload, "organizationId")) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organizationId is missing");
+        if (hasEmptyField(payload, "organizationId")) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "OrganizationId is missing");
         }
-        if (hasNonEmptyField(payload, "oidcClientConfigId")) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "oidcClientConfigId is missing");
+        if (hasEmptyField(payload, "oidcClientConfigId")) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "OIDC client config id missing");
         }
 
         return payload as OIDCCreateSessionPayload;
@@ -57,12 +57,11 @@ export namespace OIDCCreateSessionPayload {
     }
 
     function hasField(obj: any, key: string): boolean {
-        console.log("hasField", obj, key, typeof obj === "object" && key in obj);
         return typeof obj === "object" && key in obj;
     }
 
-    function hasNonEmptyField(obj: any, key: string): boolean {
-        return hasField(obj, key) && !isEmpty(obj[key]);
+    function hasEmptyField(obj: any, key: string): boolean {
+        return hasField(obj, key) && isEmpty(obj[key]);
     }
 }
 
