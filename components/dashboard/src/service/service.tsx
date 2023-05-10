@@ -193,10 +193,8 @@ export class IDEFrontendService implements IDEFrontendDashboardService.IServer {
             const desktopLink = new URL(url);
             // allow to redirect only for whitelisted trusted protocols
             // security: IDE-69
-            redirect =
-                desktopLink.protocol === "vscode:" ||
-                desktopLink.protocol === "vscode-insiders:" ||
-                desktopLink.protocol === "jetbrains-gateway:";
+            const trustedProtocols = ["vscode:", "vscode-insiders:", "jetbrains-gateway:"];
+            redirect = trustedProtocols.includes(desktopLink.protocol);
         } catch (e) {
             console.error("invalid desktop link:", e);
         }
