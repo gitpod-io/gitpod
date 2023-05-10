@@ -50,11 +50,11 @@ export class IamSessionApp {
     }
 
     protected async doCreateSession(req: express.Request) {
+        OIDCCreateSessionPayload.validate(req.body);
         if (!OIDCCreateSessionPayload.is(req.body)) {
             throw new Error("Unexpected payload.");
         }
         const payload = req.body;
-        OIDCCreateSessionPayload.validate(payload);
 
         const existingUser = await this.userService.findUserForLogin({
             candidate: this.mapOIDCProfileToIdentity(payload),
