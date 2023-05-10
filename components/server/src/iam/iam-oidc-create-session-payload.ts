@@ -9,7 +9,6 @@ import { ResponseError } from "vscode-ws-jsonrpc";
 
 export namespace OIDCCreateSessionPayload {
     export function validate(payload: any): OIDCCreateSessionPayload {
-        console.log("validate", payload);
         if (typeof payload !== "object") {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "OIDC Create Session Payload is not an object.");
         }

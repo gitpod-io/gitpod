@@ -186,8 +186,6 @@ class TestIamSessionApp {
     @test public async testInvalidPayload_no_config_id() {
         const payload: OIDCCreateSessionPayload = { ...this.payload, oidcClientConfigId: "" };
 
-        console.log("submitting", payload);
-
         const sr = request(this.app.create());
         const result = await sr.post("/session").set("Content-Type", "application/json").send(JSON.stringify(payload));
 
