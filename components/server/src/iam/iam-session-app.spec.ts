@@ -160,8 +160,7 @@ class TestIamSessionApp {
             { claims: { name: "" }, expectedMessage: "Name is missing" },
         ];
         for (const c of cases) {
-            const payload = { ...this.payload };
-            payload.claims = { ...payload.claims, ...c.claims };
+            const payload = { ...this.payload, claims: { ...this.payload.claims, ...c.claims } };
 
             const sr = request(this.app.create());
             const result = await sr
@@ -174,9 +173,8 @@ class TestIamSessionApp {
         }
     }
 
-    @test public async testInvalidPayload_no_org_id() {
-        const payload = { ...this.payload };
-        (payload.organizationId as any) = "";
+    @test.only public async testInvalidPayload_no_org_id() {
+        const payload: OIDCCreateSessionPayload = { ...this.payload, organizationId: "" };
 
         const sr = request(this.app.create());
         const result = await sr.post("/session").set("Content-Type", "application/json").send(JSON.stringify(payload));
@@ -186,8 +184,9 @@ class TestIamSessionApp {
     }
 
     @test public async testInvalidPayload_no_config_id() {
-        const payload = { ...this.payload };
-        (payload.oidcClientConfigId as any) = "";
+        const payload: OIDCCreateSessionPayload = { ...this.payload, oidcClientConfigId: "" };
+
+        console.log("submitting", payload);
 
         const sr = request(this.app.create());
         const result = await sr.post("/session").set("Content-Type", "application/json").send(JSON.stringify(payload));
