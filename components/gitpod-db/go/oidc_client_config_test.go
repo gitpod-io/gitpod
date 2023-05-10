@@ -159,7 +159,7 @@ func TestGetActiveOIDCClientConfigByOrgSlug(t *testing.T) {
 			OrganizationID: team.ID,
 			Active:         false,
 		})
-		require.Equal(t, 3, len(configs))
+		require.Len(t, configs, 3)
 
 		retrieved, err := db.GetActiveOIDCClientConfigByOrgSlug(context.Background(), conn, team.Slug)
 		require.NoError(t, err)
@@ -223,7 +223,7 @@ func TestActivateClientConfig(t *testing.T) {
 
 		config1, err = db.GetOIDCClientConfig(context.Background(), conn, config1.ID)
 		require.NoError(t, err)
-		require.Equal(t, true, config1.Active, "failed to active config1")
+		require.Equal(t, true, config1.Active, "failed to activate config1")
 
 		// activate second
 		err = db.ActivateClientConfig(context.Background(), conn, config2.ID)
@@ -231,11 +231,11 @@ func TestActivateClientConfig(t *testing.T) {
 
 		config1, err = db.GetOIDCClientConfig(context.Background(), conn, config1.ID)
 		require.NoError(t, err)
-		require.Equal(t, false, config1.Active, "failed to de-active config1")
+		require.Equal(t, false, config1.Active, "failed to de-activate config1")
 
 		config2, err = db.GetOIDCClientConfig(context.Background(), conn, config2.ID)
 		require.NoError(t, err)
-		require.Equal(t, true, config2.Active, "failed to active config2")
+		require.Equal(t, true, config2.Active, "failed to activate config2")
 	})
 
 }

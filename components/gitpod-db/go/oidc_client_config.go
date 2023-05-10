@@ -59,11 +59,11 @@ func CreateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cfg OIDCClientCo
 	}
 
 	if cfg.OrganizationID == uuid.Nil {
-		return OIDCClientConfig{}, errors.New("Organization ID must be set")
+		return OIDCClientConfig{}, errors.New("organization ID must be set")
 	}
 
 	if cfg.Issuer == "" {
-		return OIDCClientConfig{}, errors.New("Issuer must be set")
+		return OIDCClientConfig{}, errors.New("issuer must be set")
 	}
 
 	tx := conn.
@@ -292,6 +292,7 @@ func setClientConfigActiveFlag(ctx context.Context, conn *gorm.DB, id uuid.UUID,
 			Table((&OIDCClientConfig{}).TableName()).
 			Where("id != ?", id.String()).
 			Where("organizationId != ?", config.OrganizationID).
+			Where("deleted = ?", false).
 			Update("active", 0)
 		if tx.Error != nil {
 			return fmt.Errorf("failed to set oidc client config as active to %d (id: %s): %v", value, id.String(), tx.Error)

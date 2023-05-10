@@ -33,7 +33,7 @@ func NewOIDCClientConfig(t *testing.T, record db.OIDCClientConfig) db.OIDCClient
 	result := db.OIDCClientConfig{
 		ID:             uuid.New(),
 		OrganizationID: uuid.New(),
-		Issuer:         "issuer",
+		Issuer:         "https://accounts.google.com",
 		Data:           encrypted,
 		LastModified:   now,
 		Active:         false,
