@@ -163,7 +163,7 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)); c == nil {
 		if wsc.latestWorkspace(ctx, ws) != nil {
-			return ctrl.Result{Requeue: true}, nil
+			return ctrl.Result{Requeue: true, RequeueAfter: 100 * time.Millisecond}, nil
 		}
 
 		init, err := wsc.prepareInitializer(ctx, ws)
@@ -238,7 +238,7 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 	}
 
 	if wsc.latestWorkspace(ctx, ws) != nil {
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{Requeue: true, RequeueAfter: 100 * time.Millisecond}, nil
 	}
 
 	disposeStart := time.Now()
