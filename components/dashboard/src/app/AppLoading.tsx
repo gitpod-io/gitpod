@@ -11,8 +11,8 @@ import gitpodIcon from "../icons/gitpod.svg";
 
 export const AppLoading: FunctionComponent = () => {
     return (
-        // Wait 2 seconds before showing the loading screen to avoid flashing it too quickly
-        <Delayed wait={2000}>
+        // Wait 3 seconds before showing the loading screen to avoid flashing it too quickly
+        <Delayed wait={3000}>
             <div className="flex flex-col justify-center items-center w-full h-screen space-y-4">
                 <img src={gitpodIcon} alt="Gitpod's logo" className={"h-16 flex-shrink-0"} />
                 <Heading3>Just getting a few more things ready</Heading3>
