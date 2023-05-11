@@ -488,6 +488,7 @@ func TestOIDCService_UpdateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 		}))
 		require.NoError(t, err)
 
+		require.Equal(t, config.Active, retrieved.Msg.GetConfig().Active, "unexpected change of `active` flag")
 		require.Equal(t, issuerNew, retrieved.Msg.GetConfig().OidcConfig.Issuer)
 		require.Equal(t, []string{"email", "foo", "openid", "profile"}, retrieved.Msg.GetConfig().GetOauth2Config().GetScopes())
 
