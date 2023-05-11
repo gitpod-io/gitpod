@@ -13,12 +13,12 @@ COMPONENTS_TO_TEST=( )
 # an associative array to describe dependencies we'd like to search for and update to
 declare -A WORKSPACE_CLUSTER_DEPENDENCIES
 WORKSPACE_CLUSTER_DEPENDENCIES["github.com/containerd/containerd"]="1.6.20"
-WORKSPACE_CLUSTER_DEPENDENCIES["github.com/moby/buildkit"]="0.11.4"
+WORKSPACE_CLUSTER_DEPENDENCIES["github.com/moby/buildkit"]="0.11.6"
 
 # loop through keys of each associative array
 for key in "${!WORKSPACE_CLUSTER_DEPENDENCIES[@]}"
 do
-    echo "Working on ${key}"
+    echo "Inspecting ${key}"
     # make an array of go.mod from components containing the dependency
     RELATED_COMPONENTS=( )
     mapfile -t "RELATED_COMPONENTS" < <(grep -r "${key}" --include="go.mod" -l)
@@ -26,15 +26,18 @@ do
     # update the dependency in each component
     for c in "${RELATED_COMPONENTS[@]}"
     do
-        echo "Working on ${c}"
+        echo "On component ${c}"
         FOLDER="$(dirname "${c}")"
         pushd "${FOLDER}"
-        echo "${key}"
-        go get "${key}"@v"${WORKSPACE_CLUSTER_DEPENDENCIES[${key}]}"
-         # shellcheck disable=SC2076
-        if [[ ! " ${COMPONENTS_TO_TEST[*]} " =~ " ${FOLDER} " ]]; then
-            COMPONENTS_TO_TEST+=("${FOLDER}")
+
+        if  grep -q "${key}" go.mod && ! grep -q "${key} v${WORKSPACE_CLUSTER_DEPENDENCIES[${key}]}" go.mod; then
+            go get "${key}"@v"${WORKSPACE_CLUSTER_DEPENDENCIES[${key}]}"
+            # shellcheck disable=SC2076
+            if [[ ! " ${COMPONENTS_TO_TEST[*]} " =~ " ${FOLDER} " ]]; then
+                COMPONENTS_TO_TEST+=("${FOLDER}")
+            fi
         fi
+
         popd
     done
 done
