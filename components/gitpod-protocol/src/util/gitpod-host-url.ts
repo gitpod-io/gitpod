@@ -108,7 +108,7 @@ export class GitpodHostUrl {
     }
 
     asAccessControl(): GitpodHostUrl {
-        return this.with((url) => ({ pathname: "/integrations" }));
+        return this.with((url) => ({ pathname: "/user/integrations" }));
     }
 
     asSettings(): GitpodHostUrl {

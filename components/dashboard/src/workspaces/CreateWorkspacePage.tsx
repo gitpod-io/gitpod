@@ -36,6 +36,7 @@ import { SelectAccountModal } from "../user-settings/SelectAccountModal";
 import { settingsPathPreferences } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
+import { settingsPathIntegrations } from "../user-settings/settings.routes";
 
 export const useNewCreateWorkspacePage = () => {
     const startWithOptions = useFeatureFlag("start_with_options");
@@ -52,6 +53,7 @@ export function CreateWorkspacePage() {
     const location = useLocation();
     const history = useHistory();
     const props = StartWorkspaceOptions.parseSearchParams(location.search);
+    const [autostart, setAutostart] = useState<boolean | undefined>(props.autostart);
     const createWorkspaceMutation = useCreateWorkspaceMutation();
     const isStarting =
         createWorkspaceMutation.isLoading ||
@@ -75,10 +77,9 @@ export function CreateWorkspacePage() {
     );
     const workspaceContext = useWorkspaceContext(contextURL);
     const [rememberOptions, setRememberOptions] = useState(false);
-    const [autostart, setAutostart] = useState<boolean | undefined>(props.autostart);
     const needsGitAuthorization = useNeedsGitAuthorization();
 
-    const storeAutoStartOptions = useCallback(() => {
+    const storeAutoStartOptions = useCallback(async () => {
         if (!workspaceContext.data || !user || !currentOrg) {
             return;
         }
@@ -108,8 +109,7 @@ export function CreateWorkspacePage() {
                 workspaceAutostartOptions: workspaceAutoStartOptions,
             });
         }
-        setUser(user);
-        getGitpodService().server.updateLoggedInUser(user).catch(console.error);
+        await getGitpodService().server.updateLoggedInUser(user).then(setUser).catch(console.error);
     }, [currentOrg, rememberOptions, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
 
     // see if we have a matching project based on context url and project's repo url
@@ -208,7 +208,7 @@ export function CreateWorkspacePage() {
                     return;
                 }
                 if (rememberOptions) {
-                    storeAutoStartOptions();
+                    await storeAutoStartOptions();
                 }
                 // we wait at least 5 secs
                 const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
@@ -267,33 +267,52 @@ export function CreateWorkspacePage() {
         const rememberedOptions = (user?.additionalData?.workspaceAutostartOptions || []).find(
             (e) => e.cloneURL === cloneURL,
         );
-        setRememberOptions(!!rememberedOptions);
         if (rememberedOptions) {
             // if it's another org, we simply redirect using the same hash and let the reloaded page handle everything again.
             if (rememberedOptions.organizationId !== currentOrg?.id) {
                 const org = organizations.data.find((o) => o.id === rememberedOptions.organizationId);
                 if (org) {
-                    const redirect = `${location.pathname}?org=${encodeURIComponent(rememberedOptions.organizationId)}${
-                        location.hash
-                    }`;
-                    window.location.href = redirect;
+                    let searchParams = `org=${encodeURIComponent(rememberedOptions.organizationId)}`;
+                    // if autostart was disabled (i.e. user was manually changing the contextURL) we need to pass it on
+                    if (autostart === false) {
+                        searchParams += "&autostart=false";
+                    }
+                    const redirect = `${location.pathname}?${searchParams}${location.hash}`;
+                    history.push(redirect);
                 } else {
                     console.warn("Could not find organization", rememberedOptions.organizationId);
                 }
             }
-            if (rememberedOptions.ideSettings?.defaultIde) {
+            if (!rememberOptions) {
+                setRememberOptions(true);
+            }
+            if (selectedIde !== rememberedOptions.ideSettings?.defaultIde) {
                 setSelectedIde(rememberedOptions.ideSettings?.defaultIde);
             }
-            setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
-            if (rememberedOptions.workspaceClass) {
+            if (useLatestIde !== !!rememberedOptions.ideSettings?.useLatestVersion) {
+                setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
+            }
+            if (selectedWsClass !== rememberedOptions.workspaceClass) {
                 setSelectedWsClass(rememberedOptions.workspaceClass);
             }
             if (autostart === undefined) {
                 setAutostart(true);
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [workspaceContext.data]);
+    }, [
+        autostart,
+        currentOrg?.id,
+        history,
+        location.hash,
+        location.pathname,
+        organizations.data,
+        rememberOptions,
+        selectedIde,
+        selectedWsClass,
+        useLatestIde,
+        user?.additionalData?.workspaceAutostartOptions,
+        workspaceContext.data,
+    ]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
@@ -313,7 +332,7 @@ export function CreateWorkspacePage() {
             <SelectAccountModal
                 {...selectAccountError}
                 close={() => {
-                    window.location.href = gitpodHostUrl.asAccessControl().toString();
+                    history.push(settingsPathIntegrations);
                 }}
             />
         );
