@@ -5,7 +5,7 @@
  */
 
 import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
-import { FunctionComponent, useCallback, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useContext, useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
@@ -19,6 +19,8 @@ import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { useOnBlurError } from "../../hooks/use-onblur-error";
 import { openAuthorizeWindow } from "../../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../../service/service";
+import { UserContext } from "../../user-context";
+import { useToast } from "../../components/toasts/Toasts";
 
 type Props = {
     provider?: AuthProviderEntry;
@@ -26,6 +28,8 @@ type Props = {
 };
 
 export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
+    const { setUser } = useContext(UserContext);
+    const { toast } = useToast();
     const team = useCurrentOrg().data;
     const [type, setType] = useState<string>(props.provider?.type ?? "GitLab");
     const [host, setHost] = useState<string>(props.provider?.host ?? "");
@@ -141,6 +145,11 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                 onSuccess: (payload) => {
                     invalidateOrgAuthProviders();
 
+                    // Refresh the current user - they may have a new identity record now
+                    // setup a promise and don't wait so we can close the modal right away
+                    getGitpodService().server.getLoggedInUser().then(setUser);
+                    toast(`${newProvider.type} integration has been activated.`);
+
                     props.onClose();
                 },
                 onError: (payload) => {
@@ -170,7 +179,9 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
         props,
         reloadSavedProvider,
         savedProvider?.id,
+        setUser,
         team,
+        toast,
         type,
         upsertProvider,
     ]);
