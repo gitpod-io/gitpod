@@ -556,6 +556,76 @@ func TestOIDCService_DeleteClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 	})
 }
 
+func TestOIDCService_ActivateClientConfig_WithFeatureFlagDisabled(t *testing.T) {
+	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
+
+		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+			Id:             uuid.NewString(),
+			OrganizationId: uuid.NewString(),
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	})
+
+}
+
+func TestOIDCService_ActivateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
+	t.Run("invalid argument when ID not specified", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when Organization ID not specified", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+			Id: uuid.NewString(),
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("returns permission denied when user is not org owner", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		anotherOrg := uuid.New()
+		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
+			TeamID: anotherOrg,
+			UserID: uuid.MustParse(user.ID),
+			Role:   db.TeamMembershipRole_Member,
+		})
+
+		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+			Id:             uuid.NewString(),
+			OrganizationId: anotherOrg.String(),
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
+	})
+
+	t.Run("activates record", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+		issuer := newFakeIdP(t, true)
+
+		created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
+			OrganizationID: organizationID,
+			Issuer:         issuer,
+			Active:         false,
+		})[0]
+
+		resp, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+			Id:             created.ID.String(),
+			OrganizationId: created.OrganizationID.String(),
+		}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ActivateClientConfigResponse{}, resp.Msg)
+	})
+}
+
 func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, v1connect.OIDCServiceClient, *gorm.DB) {
 	t.Helper()
 
