@@ -36,7 +36,7 @@ var _ = Describe("TimeoutController", func() {
 			// Use a fake client instead of the envtest's k8s client, such that we can add objects
 			// with custom CreationTimestamps and check timeout logic.
 			fakeClient = fake.NewClientBuilder().WithScheme(k8sClient.Scheme()).Build()
-			r, err = NewTimeoutReconciler(fakeClient, record.NewFakeRecorder(100), conf, &activity.WorkspaceActivity{}, &fakeMaintenance{enabled: false})
+			r, err = NewTimeoutReconciler(fakeClient, record.NewFakeRecorder(100), conf, activity.NewWorkspaceActivity(), &fakeMaintenance{enabled: false})
 			Expect(err).ToNot(HaveOccurred())
 		})
 
@@ -79,10 +79,9 @@ var _ = Describe("TimeoutController", func() {
 				// Set controller (re)start time.
 				if tc.controllerRestart.IsZero() {
 					// Bit arbitrary, but default to the controller running for ~2 days.
-					r.ctrlStartTime = now.Add(-48 * time.Hour)
-
+					r.activity.ManagerStartedAt = now.Add(-48 * time.Hour)
 				} else {
-					r.ctrlStartTime = tc.controllerRestart
+					r.activity.ManagerStartedAt = tc.controllerRestart
 				}
 
 				// Run the timeout controller for this workspace.
@@ -197,7 +196,7 @@ var _ = Describe("TimeoutController", func() {
 		var r *TimeoutReconciler
 		BeforeEach(func() {
 			var err error
-			r, err = NewTimeoutReconciler(k8sClient, record.NewFakeRecorder(100), newTestConfig(), &activity.WorkspaceActivity{}, &fakeMaintenance{enabled: false})
+			r, err = NewTimeoutReconciler(k8sClient, record.NewFakeRecorder(100), newTestConfig(), activity.NewWorkspaceActivity(), &fakeMaintenance{enabled: false})
 			Expect(err).ToNot(HaveOccurred())
 		})
 

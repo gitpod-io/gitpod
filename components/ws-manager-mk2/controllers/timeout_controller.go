@@ -41,7 +41,6 @@ func NewTimeoutReconciler(c client.Client, recorder record.EventRecorder, cfg co
 		Config:            cfg,
 		activity:          activity,
 		reconcileInterval: reconcileInterval,
-		ctrlStartTime:     time.Now().UTC(),
 		recorder:          recorder,
 		maintenance:       maintenance,
 	}, nil
@@ -57,7 +56,6 @@ type TimeoutReconciler struct {
 	Config            config.Configuration
 	activity          *wsactivity.WorkspaceActivity
 	reconcileInterval time.Duration
-	ctrlStartTime     time.Time
 	recorder          record.EventRecorder
 	maintenance       maintenance.Maintenance
 }
@@ -160,7 +158,7 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 	}
 
 	start := ws.ObjectMeta.CreationTimestamp.Time
-	lastActivity := r.activity.GetLastActivity(ws.Name)
+	lastActivity := r.activity.GetLastActivity(ws)
 	isClosed := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed))
 
 	switch phase {
@@ -194,23 +192,8 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 			lastActivity = &start
 			activity = activityRunningHeadless
 		} else if lastActivity == nil {
-			// The workspace is up and running, but the user has never produced any activity, OR the controller
-			// has restarted and not yet received a heartbeat for this workspace (since heartbeats are stored
-			// in-memory and reset on restart).
-			// First check whether the controller has restarted during this workspace's lifetime.
-			// If it has, use the FirstUserActivity condition to determine whether there had already been any user activity
-			// before the controller restart.
-			// If the controller started before the workspace, then the user hasn't produced any activity yet.
-			if r.ctrlStartTime.After(start) && wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFirstUserActivity)) {
-				// The controller restarted during this workspace's lifetime, and the workspace has had activity before the restart,
-				// so the last activity has been lost on restart. Therefore, "reset" the timeout and measure only since the controller startup time.
-				start = r.ctrlStartTime
-			} else {
-				// This workspace hasn't had any user activity yet (also not before a potential controller restart).
-				// So check for a startup timeout, and measure since workspace creation time.
-				timeout = timeouts.TotalStartup
-			}
-			return decide(start, timeout, activityNone)
+			// The workspace is up and running, but the user has never produced any activity
+			return decide(start, timeouts.TotalStartup, activityNone)
 		} else if isClosed {
 			reason := func() string {
 				afterClosed := timeouts.AfterClose
