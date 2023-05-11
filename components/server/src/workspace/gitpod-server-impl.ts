@@ -3916,7 +3916,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         // Ensure user can perform this operation on this organization
-        await this.guardTeamOperation(newProvider.organizationId, "create", "org_authprovider_write");
+        await this.guardTeamOperation(newProvider.organizationId, "update", "org_authprovider_write");
 
         try {
             // on creating we're are checking for already existing runtime providers
