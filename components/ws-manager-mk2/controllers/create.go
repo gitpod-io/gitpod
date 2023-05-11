@@ -47,7 +47,12 @@ const (
 
 	// Grace time until the process in the workspace is properly completed
 	// e.g. dockerd in the workspace may take some time to clean up the overlay directory.
-	gracePeriod = 3 * time.Minute
+	//
+	// The high value here tries to avoid issues in nodes under load, we could face the deletion of the node, even if the pod is still in terminating state.
+	// This could be related to creation of the backup or the upload to the object storage
+	// https://github.com/kubernetes/autoscaler/blob/ee59c74cc0d61165c633d3e5b42caccc614be542/cluster-autoscaler/utils/drain/drain.go#L330
+	// https://github.com/kubernetes/autoscaler/blob/ee59c74cc0d61165c633d3e5b42caccc614be542/cluster-autoscaler/utils/drain/drain.go#L107
+	gracePeriod = 30 * time.Minute
 )
 
 type startWorkspaceContext struct {
