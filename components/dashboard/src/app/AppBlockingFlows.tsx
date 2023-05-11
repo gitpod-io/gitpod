@@ -9,7 +9,6 @@ import { useCheckDedicatedSetup } from "../dedicated-setup/use-check-dedicated-s
 import { useCurrentUser } from "../user-context";
 import { MigrationPage, useShouldSeeMigrationPage } from "../whatsnew/MigrationPage";
 import { useShowUserOnboarding } from "../onboarding/use-show-user-onboarding";
-import { AppLoading } from "./AppLoading";
 
 const UserOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
 const DedicatedSetup = lazy(() => import(/* webpackPrefetch: true */ "../dedicated-setup/DedicatedSetup"));
@@ -25,11 +24,6 @@ export const AppBlockingFlows: FC = ({ children }) => {
     // This shouldn't happen, but if it does don't render anything yet
     if (!user) {
         return <></>;
-    }
-
-    // Wait until we've loaded the onboarding state before rendering anything
-    if (checkDedicatedSetup.isLoading) {
-        return <AppLoading />;
     }
 
     // If orgOnlyAttribution is enabled and the user hasn't been migrated, yet, we need to show the migration page
