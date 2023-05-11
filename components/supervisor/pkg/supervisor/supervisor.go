@@ -1265,7 +1265,7 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 			return
 		}
 		conn, err := gitpod.NewWebsocketConnection(ctx, wsConn, func(staleErr error) {
-			log.WithError(staleErr).Error("tunnel: closing stale connection")
+			log.WithError(staleErr).Error("tunnel ssh: closing stale connection")
 		})
 		if err != nil {
 			log.WithError(err).Error("tunnel ssh: upgrade to the WebSocket protocol failed")
