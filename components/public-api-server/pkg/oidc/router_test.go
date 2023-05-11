@@ -24,8 +24,10 @@ func TestRoute_start(t *testing.T) {
 
 	// setup test server with client routes
 	baseUrl, _, configId, _ := newTestServer(t, testServerParams{
-		issuer:      idpUrl,
-		returnToURL: "",
+		issuer: idpUrl,
+		state: StateParams{
+			ReturnToURL: "",
+		},
 	})
 
 	// go to /start
@@ -60,14 +62,16 @@ func TestRoute_start(t *testing.T) {
 }
 
 func TestRoute_callback(t *testing.T) {
-	t.Skip()
 	// setup fake OIDC service
 	idpUrl := newFakeIdP(t)
 
 	// setup test server with client routes
 	baseUrl, stateParam, _, service := newTestServer(t, testServerParams{
-		issuer:      idpUrl,
-		returnToURL: "/relative/url/to/some/page",
+		clientID: "client-id",
+		issuer:   idpUrl,
+		state: StateParams{
+			ReturnToURL: "/relative/url/to/some/page",
+		},
 	})
 	state, err := service.encodeStateParam(*stateParam)
 	require.NoError(t, err)
@@ -101,10 +105,53 @@ func TestRoute_callback(t *testing.T) {
 
 }
 
+func TestRoute_callback_verify_only(t *testing.T) {
+	// setup fake OIDC service
+	idpUrl := newFakeIdP(t)
+
+	// setup test server with client routes
+	baseUrl, stateParam, _, service := newTestServer(t, testServerParams{
+		clientID: "client-id",
+		issuer:   idpUrl,
+		state: StateParams{
+			ReturnToURL: "/relative/url/to/some/page",
+			Verify:      true,
+		},
+	})
+	state, err := service.encodeStateParam(*stateParam)
+	require.NoError(t, err)
+
+	// hit the /callback endpoint
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	req, err := http.NewRequest("GET", baseUrl+"/oidc/callback?code=123&state="+state, nil)
+	require.NoError(t, err)
+	req.AddCookie(&http.Cookie{
+		Name: "state", Value: state, MaxAge: 60,
+	})
+	req.AddCookie(&http.Cookie{
+		Name: "nonce", Value: "111", MaxAge: 60,
+	})
+	resp, err := client.Do(req)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	require.Equal(t, http.StatusTemporaryRedirect, resp.StatusCode, "callback should response with redirect (307)")
+	require.Len(t, resp.Cookies(), 0, "unexpected session cookie on verify request")
+
+	url, err := resp.Location()
+	require.NoError(t, err)
+	require.Equal(t, "/relative/url/to/some/page", url.Path, "callback redirects properly")
+}
+
 type testServerParams struct {
-	issuer      string
-	returnToURL string
-	clientID    string
+	issuer   string
+	clientID string
+	state    StateParams
 }
 
 func newTestServer(t *testing.T, params testServerParams) (url string, state *StateParams, configId string, oidcService *Service) {
@@ -137,7 +184,9 @@ func newTestServer(t *testing.T, params testServerParams) (url string, state *St
 
 	stateParam := &StateParams{
 		ClientConfigID: configId,
-		ReturnToURL:    params.returnToURL,
+		ReturnToURL:    params.state.ReturnToURL,
+		Activate:       params.state.Activate,
+		Verify:         params.state.Verify,
 	}
 
 	return url, stateParam, configId, oidcService
