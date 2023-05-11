@@ -75,13 +75,14 @@ export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
             <div className="mt-10 space-y-2">
                 {singleOrgMode ? (
                     setupPending ? (
-                        <>
+                        <div>
+                            {/* TODO: Add page image here */}
                             <Heading2>Setup is pending</Heading2>
                             <Subheading>
                                 This instance of Gitpod is not quite ready. An administrator has a few additional steps
                                 to complete.
                             </Subheading>
-                        </>
+                        </div>
                     ) : (
                         <Button className="w-full" type="secondary" disabled={!orgSlug.trim() || !slugError.isValid}>
                             Continue
