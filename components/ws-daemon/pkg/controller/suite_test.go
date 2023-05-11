@@ -42,11 +42,9 @@ var (
 )
 
 func TestAPIs(t *testing.T) {
-	RegisterFailHandler(Fail)
-
-	RunSpecs(t, "Controller Suite")
-
 	mock_ctrl = gomock.NewController(t)
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Controller Suite")
 }
 
 var _ = BeforeSuite(func() {
@@ -74,7 +72,8 @@ var _ = BeforeSuite(func() {
 	Expect(k8sClient).NotTo(BeNil())
 
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
+		Scheme:             scheme.Scheme,
+		MetricsBindAddress: ":0",
 	})
 	Expect(err).ToNot(HaveOccurred())
 	ctx, cancel = context.WithCancel(context.Background())
