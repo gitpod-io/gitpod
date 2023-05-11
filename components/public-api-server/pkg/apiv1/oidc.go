@@ -312,6 +312,40 @@ func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Reque
 	return connect.NewResponse(&v1.DeleteClientConfigResponse{}), nil
 }
 
+func (s *OIDCService) ActivateClientConfig(ctx context.Context, req *connect.Request[v1.ActivateClientConfigRequest]) (*connect.Response[v1.ActivateClientConfigResponse], error) {
+	organizationID, err := validateOrganizationID(ctx, req.Msg.GetOrganizationId())
+	if err != nil {
+		return nil, err
+	}
+
+	clientConfigID, err := validateOIDCClientConfigID(ctx, req.Msg.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := s.getConnection(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, userID, err := s.getUser(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	if authorizationErr := s.userIsOrgOwner(ctx, userID, organizationID); authorizationErr != nil {
+		return nil, authorizationErr
+	}
+
+	err = db.ActivateClientConfig(ctx, s.dbConn, clientConfigID)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to activate OIDC Client Config.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to activate OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
+	}
+
+	return connect.NewResponse(&v1.ActivateClientConfigResponse{}), nil
+}
+
 func (s *OIDCService) getConnection(ctx context.Context) (protocol.APIInterface, error) {
 	token, err := auth.TokenFromContext(ctx)
 	if err != nil {
