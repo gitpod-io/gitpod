@@ -25,6 +25,8 @@ import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 import { SSOLoginForm } from "./login/SSOLoginForm";
 import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
+import { useNeedsSetup } from "./dedicated-setup/use-check-dedicated-setup";
+import { SetupPending } from "./login/SetupPending";
 
 function Item(props: { icon: string; iconSize?: string; text: string }) {
     const iconSize = props.iconSize || 28;
@@ -60,6 +62,9 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
     const [hostFromContext, setHostFromContext] = useState<string | undefined>();
     const [repoPathname, setRepoPathname] = useState<string | undefined>();
+
+    // This flag lets us know if the current installation still needs setup
+    const { needsSetup, isLoading: needsSetupCheckLoading } = useNeedsSetup();
 
     useEffect(() => {
         try {
@@ -170,72 +175,81 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                     id="login-section-column"
                     className={"flex-grow max-w-2xl flex flex-col h-100 mx-auto" + (showWelcome ? " lg:my-0" : "")}
                 >
-                    <div className="flex-grow h-100 flex flex-row items-center justify-center">
-                        <div className="rounded-xl px-10 py-10 mx-auto">
-                            <div className="mx-auto pb-8">
-                                <img
-                                    src={providerFromContext ? gitpod : gitpodIcon}
-                                    className="h-14 mx-auto block dark:hidden"
-                                    alt="Gitpod's logo"
-                                />
-                                <img
-                                    src={providerFromContext ? gitpodDark : gitpodIcon}
-                                    className="h-14 hidden mx-auto dark:block"
-                                    alt="Gitpod dark theme logo"
-                                />
-                            </div>
+                    {
+                        // if flag on and loading - show nothing
+                        needsSetupCheckLoading ? (
+                            <div className="flex-grow" />
+                        ) : needsSetup ? (
+                            <SetupPending />
+                        ) : (
+                            <div className="flex-grow h-100 flex flex-row items-center justify-center">
+                                <div className="rounded-xl px-10 py-10 mx-auto">
+                                    <div className="mx-auto pb-8">
+                                        <img
+                                            src={providerFromContext ? gitpod : gitpodIcon}
+                                            className="h-14 mx-auto block dark:hidden"
+                                            alt="Gitpod's logo"
+                                        />
+                                        <img
+                                            src={providerFromContext ? gitpodDark : gitpodIcon}
+                                            className="h-14 hidden mx-auto dark:block"
+                                            alt="Gitpod dark theme logo"
+                                        />
+                                    </div>
 
-                            <div className="mx-auto text-center pb-8 space-y-2">
-                                {providerFromContext ? (
-                                    <>
-                                        <Heading2>Open a cloud development environment</Heading2>
-                                        <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Heading1>Log in{showWelcome ? "" : " to Gitpod"}</Heading1>
-                                        <Subheading className="uppercase text-sm text-gray-400">
-                                            ALWAYS READY-TO-CODE
-                                        </Subheading>
-                                    </>
-                                )}
-                            </div>
+                                    <div className="mx-auto text-center pb-8 space-y-2">
+                                        {providerFromContext ? (
+                                            <>
+                                                <Heading2>Open a cloud development environment</Heading2>
+                                                <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Heading1>Log in{showWelcome ? "" : " to Gitpod"}</Heading1>
+                                                <Subheading className="uppercase text-sm text-gray-400">
+                                                    ALWAYS READY-TO-CODE
+                                                </Subheading>
+                                            </>
+                                        )}
+                                    </div>
 
-                            <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
-                                {providerFromContext ? (
-                                    <button
-                                        key={"button" + providerFromContext.host}
-                                        className="btn-login flex-none w-56 h-10 p-0 inline-flex"
-                                        onClick={() => openLogin(providerFromContext!.host)}
-                                    >
-                                        {iconForAuthProvider(providerFromContext.authProviderType)}
-                                        <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
-                                            Continue with {simplifyProviderName(providerFromContext.host)}
-                                        </span>
-                                    </button>
-                                ) : (
-                                    authProviders.data?.map((ap) => (
-                                        <button
-                                            key={"button" + ap.host}
-                                            className="btn-login flex-none w-56 h-10 p-0 inline-flex"
-                                            onClick={() => openLogin(ap.host)}
-                                        >
-                                            {iconForAuthProvider(ap.authProviderType)}
-                                            <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
-                                                Continue with {simplifyProviderName(ap.host)}
-                                            </span>
-                                        </button>
-                                    ))
-                                )}
-                                <SSOLoginForm
-                                    onSuccess={authorizeSuccessful}
-                                    singleOrgMode={!!authProviders.data && authProviders.data.length === 0}
-                                />
+                                    <div className="w-56 mx-auto flex flex-col space-y-3 items-center">
+                                        {providerFromContext ? (
+                                            <button
+                                                key={"button" + providerFromContext.host}
+                                                className="btn-login flex-none w-56 h-10 p-0 inline-flex"
+                                                onClick={() => openLogin(providerFromContext!.host)}
+                                            >
+                                                {iconForAuthProvider(providerFromContext.authProviderType)}
+                                                <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
+                                                    Continue with {simplifyProviderName(providerFromContext.host)}
+                                                </span>
+                                            </button>
+                                        ) : (
+                                            authProviders.data?.map((ap) => (
+                                                <button
+                                                    key={"button" + ap.host}
+                                                    className="btn-login flex-none w-56 h-10 p-0 inline-flex"
+                                                    onClick={() => openLogin(ap.host)}
+                                                >
+                                                    {iconForAuthProvider(ap.authProviderType)}
+                                                    <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">
+                                                        Continue with {simplifyProviderName(ap.host)}
+                                                    </span>
+                                                </button>
+                                            ))
+                                        )}
+                                        <SSOLoginForm
+                                            onSuccess={authorizeSuccessful}
+                                            singleOrgMode={!!authProviders.data && authProviders.data.length === 0}
+                                        />
+                                    </div>
+                                    {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
+                                </div>
                             </div>
-                            {errorMessage && <ErrorMessage imgSrc={exclamation} message={errorMessage} />}
-                        </div>
-                    </div>
-                    <div className="flex-none mx-auto h-20 text-center">
+                        )
+                    }
+                    <div className="flex-none mx-auto h-20 text-center px-4">
                         <span className="text-gray-400">
                             By signing in, you agree to our{" "}
                             <a

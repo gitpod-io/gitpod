@@ -16,21 +16,18 @@ const FORCE_SETUP_PARAM_VALUE = "force";
 
 export const useCheckDedicatedSetup = () => {
     // track if user has finished onboarding so we avoid showing the onboarding
-    // again in case onboarding state doesn't updated right away
+    // again in case onboarding state isn't updated right away
     const [inProgress, setInProgress] = useState(false);
+
+    const { needsSetup } = useNeedsSetup();
 
     const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
     const params = useQueryParams();
 
-    const { data: onboardingState, isLoading } = useOnboardingState();
-
     const forceSetup = forceDedicatedSetupParam(params);
-    let needsOnboarding = forceSetup || (onboardingState && onboardingState.isCompleted !== true);
+    let needsOnboarding = forceSetup || needsSetup;
 
-    // TODO: This is a temporary safety-gurad against this flow showing up on gitpod.io
-    // We can remove this once we've ensured we're distinguishing different installation types for this
-    // Purposely not using isGitpodIo() check here to avoid disabling on preview environments too.
-    if (["gitpod.io", "gitpod-staging.com"].includes(window.location.hostname)) {
+    if (isCurrentHostExcludedFromSetup()) {
         needsOnboarding = false;
     }
 
@@ -47,7 +44,6 @@ export const useCheckDedicatedSetup = () => {
 
     return {
         showOnboarding: inProgress,
-        isLoading: enableDedicatedOnboardingFlow && isLoading,
         markCompleted,
     };
 };
@@ -62,7 +58,7 @@ export const useOnboardingState = () => {
     return useQuery(
         noPersistence(["onboarding-state"]),
         async () => {
-            return getGitpodService().server.getOnboardingState();
+            return await getGitpodService().server.getOnboardingState();
         },
         {
             // Cache for a bit so we can avoid having the value change before we're ready
@@ -72,4 +68,27 @@ export const useOnboardingState = () => {
             enabled: enableDedicatedOnboardingFlow,
         },
     );
+};
+
+export const useNeedsSetup = () => {
+    const { data: onboardingState, isLoading } = useOnboardingState();
+    const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
+
+    let needsOnboarding = (onboardingState?.isCompleted ?? false) !== true;
+
+    if (isCurrentHostExcludedFromSetup()) {
+        needsOnboarding = false;
+    }
+
+    return {
+        needsSetup: enableDedicatedOnboardingFlow && needsOnboarding,
+        isLoading: enableDedicatedOnboardingFlow && isLoading,
+    };
+};
+
+// TODO: This is a temporary safety-gurad against this flow showing up on gitpod.io
+// We can remove this once we've ensured we're distinguishing different installation types for this
+const isCurrentHostExcludedFromSetup = () => {
+    // Purposely not using isGitpodIo() check here to avoid disabling on preview environments too.
+    return ["gitpod.io", "gitpod-staging.com"].includes(window.location.hostname);
 };
