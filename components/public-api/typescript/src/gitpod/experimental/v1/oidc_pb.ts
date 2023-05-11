@@ -87,6 +87,15 @@ export class OIDCClientConfig extends Message<OIDCClientConfig> {
    */
   active = false;
 
+  /**
+   * Whether this config was tested by executing the OIDC flow.
+   * Defaults to false.
+   * Optional.
+   *
+   * @generated from field: bool verified = 10;
+   */
+  verified = false;
+
   constructor(data?: PartialMessage<OIDCClientConfig>) {
     super();
     proto3.util.initPartial(data, this);
@@ -104,6 +113,7 @@ export class OIDCClientConfig extends Message<OIDCClientConfig> {
     { no: 7, name: "creation_time", kind: "message", T: Timestamp },
     { no: 8, name: "status", kind: "message", T: OIDCClientConfigStatus },
     { no: 9, name: "active", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
+    { no: 10, name: "verified", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): OIDCClientConfig {
@@ -880,5 +890,79 @@ export class DeleteClientConfigResponse extends Message<DeleteClientConfigRespon
 
   static equals(a: DeleteClientConfigResponse | PlainMessage<DeleteClientConfigResponse> | undefined, b: DeleteClientConfigResponse | PlainMessage<DeleteClientConfigResponse> | undefined): boolean {
     return proto3.util.equals(DeleteClientConfigResponse, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.ActivateClientConfigRequest
+ */
+export class ActivateClientConfigRequest extends Message<ActivateClientConfigRequest> {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id = "";
+
+  /**
+   * @generated from field: string organization_id = 2;
+   */
+  organizationId = "";
+
+  constructor(data?: PartialMessage<ActivateClientConfigRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.ActivateClientConfigRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ActivateClientConfigRequest {
+    return new ActivateClientConfigRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ActivateClientConfigRequest {
+    return new ActivateClientConfigRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ActivateClientConfigRequest {
+    return new ActivateClientConfigRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ActivateClientConfigRequest | PlainMessage<ActivateClientConfigRequest> | undefined, b: ActivateClientConfigRequest | PlainMessage<ActivateClientConfigRequest> | undefined): boolean {
+    return proto3.util.equals(ActivateClientConfigRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.ActivateClientConfigResponse
+ */
+export class ActivateClientConfigResponse extends Message<ActivateClientConfigResponse> {
+  constructor(data?: PartialMessage<ActivateClientConfigResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.ActivateClientConfigResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ActivateClientConfigResponse {
+    return new ActivateClientConfigResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ActivateClientConfigResponse {
+    return new ActivateClientConfigResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ActivateClientConfigResponse {
+    return new ActivateClientConfigResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: ActivateClientConfigResponse | PlainMessage<ActivateClientConfigResponse> | undefined, b: ActivateClientConfigResponse | PlainMessage<ActivateClientConfigResponse> | undefined): boolean {
+    return proto3.util.equals(ActivateClientConfigResponse, a, b);
   }
 }

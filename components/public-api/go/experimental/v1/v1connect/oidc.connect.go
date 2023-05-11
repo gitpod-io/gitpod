@@ -39,8 +39,10 @@ type OIDCServiceClient interface {
 	ListClientConfigs(context.Context, *connect_go.Request[v1.ListClientConfigsRequest]) (*connect_go.Response[v1.ListClientConfigsResponse], error)
 	// Updates modifiable properties of an existing OIDC client configuration.
 	UpdateClientConfig(context.Context, *connect_go.Request[v1.UpdateClientConfigRequest]) (*connect_go.Response[v1.UpdateClientConfigResponse], error)
-	// Removes a OIDC client configuration by ID.
+	// Removes an OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error)
+	// Activates an OIDC client configuration by ID.
+	ActivateClientConfig(context.Context, *connect_go.Request[v1.ActivateClientConfigRequest]) (*connect_go.Response[v1.ActivateClientConfigResponse], error)
 }
 
 // NewOIDCServiceClient constructs a client for the gitpod.experimental.v1.OIDCService service. By
@@ -78,16 +80,22 @@ func NewOIDCServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+"/gitpod.experimental.v1.OIDCService/DeleteClientConfig",
 			opts...,
 		),
+		activateClientConfig: connect_go.NewClient[v1.ActivateClientConfigRequest, v1.ActivateClientConfigResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.OIDCService/ActivateClientConfig",
+			opts...,
+		),
 	}
 }
 
 // oIDCServiceClient implements OIDCServiceClient.
 type oIDCServiceClient struct {
-	createClientConfig *connect_go.Client[v1.CreateClientConfigRequest, v1.CreateClientConfigResponse]
-	getClientConfig    *connect_go.Client[v1.GetClientConfigRequest, v1.GetClientConfigResponse]
-	listClientConfigs  *connect_go.Client[v1.ListClientConfigsRequest, v1.ListClientConfigsResponse]
-	updateClientConfig *connect_go.Client[v1.UpdateClientConfigRequest, v1.UpdateClientConfigResponse]
-	deleteClientConfig *connect_go.Client[v1.DeleteClientConfigRequest, v1.DeleteClientConfigResponse]
+	createClientConfig   *connect_go.Client[v1.CreateClientConfigRequest, v1.CreateClientConfigResponse]
+	getClientConfig      *connect_go.Client[v1.GetClientConfigRequest, v1.GetClientConfigResponse]
+	listClientConfigs    *connect_go.Client[v1.ListClientConfigsRequest, v1.ListClientConfigsResponse]
+	updateClientConfig   *connect_go.Client[v1.UpdateClientConfigRequest, v1.UpdateClientConfigResponse]
+	deleteClientConfig   *connect_go.Client[v1.DeleteClientConfigRequest, v1.DeleteClientConfigResponse]
+	activateClientConfig *connect_go.Client[v1.ActivateClientConfigRequest, v1.ActivateClientConfigResponse]
 }
 
 // CreateClientConfig calls gitpod.experimental.v1.OIDCService.CreateClientConfig.
@@ -115,6 +123,11 @@ func (c *oIDCServiceClient) DeleteClientConfig(ctx context.Context, req *connect
 	return c.deleteClientConfig.CallUnary(ctx, req)
 }
 
+// ActivateClientConfig calls gitpod.experimental.v1.OIDCService.ActivateClientConfig.
+func (c *oIDCServiceClient) ActivateClientConfig(ctx context.Context, req *connect_go.Request[v1.ActivateClientConfigRequest]) (*connect_go.Response[v1.ActivateClientConfigResponse], error) {
+	return c.activateClientConfig.CallUnary(ctx, req)
+}
+
 // OIDCServiceHandler is an implementation of the gitpod.experimental.v1.OIDCService service.
 type OIDCServiceHandler interface {
 	// Creates a new OIDC client configuration.
@@ -125,8 +138,10 @@ type OIDCServiceHandler interface {
 	ListClientConfigs(context.Context, *connect_go.Request[v1.ListClientConfigsRequest]) (*connect_go.Response[v1.ListClientConfigsResponse], error)
 	// Updates modifiable properties of an existing OIDC client configuration.
 	UpdateClientConfig(context.Context, *connect_go.Request[v1.UpdateClientConfigRequest]) (*connect_go.Response[v1.UpdateClientConfigResponse], error)
-	// Removes a OIDC client configuration by ID.
+	// Removes an OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error)
+	// Activates an OIDC client configuration by ID.
+	ActivateClientConfig(context.Context, *connect_go.Request[v1.ActivateClientConfigRequest]) (*connect_go.Response[v1.ActivateClientConfigResponse], error)
 }
 
 // NewOIDCServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -161,6 +176,11 @@ func NewOIDCServiceHandler(svc OIDCServiceHandler, opts ...connect_go.HandlerOpt
 		svc.DeleteClientConfig,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.OIDCService/ActivateClientConfig", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.OIDCService/ActivateClientConfig",
+		svc.ActivateClientConfig,
+		opts...,
+	))
 	return "/gitpod.experimental.v1.OIDCService/", mux
 }
 
@@ -185,4 +205,8 @@ func (UnimplementedOIDCServiceHandler) UpdateClientConfig(context.Context, *conn
 
 func (UnimplementedOIDCServiceHandler) DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.DeleteClientConfig is not implemented"))
+}
+
+func (UnimplementedOIDCServiceHandler) ActivateClientConfig(context.Context, *connect_go.Request[v1.ActivateClientConfigRequest]) (*connect_go.Response[v1.ActivateClientConfigResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.ActivateClientConfig is not implemented"))
 }
