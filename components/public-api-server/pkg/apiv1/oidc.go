@@ -313,6 +313,15 @@ func (s *OIDCService) ActivateClientConfig(ctx context.Context, req *connect.Req
 		return nil, authorizationErr
 	}
 
+	config, err := db.GetOIDCClientConfig(ctx, s.dbConn, clientConfigID)
+	if err != nil {
+		return nil, err
+	}
+	if !config.Verified {
+		log.Extract(ctx).WithError(err).Error("Failed to activate an unverified OIDC Client Config.")
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Failed to activate an unverified OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
+	}
+
 	err = db.ActivateClientConfig(ctx, s.dbConn, clientConfigID)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to activate OIDC Client Config.")

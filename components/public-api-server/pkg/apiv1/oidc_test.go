@@ -616,6 +616,7 @@ func TestOIDCService_ActivateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 			OrganizationID: organizationID,
 			Issuer:         issuer,
 			Active:         false,
+			Verified:       true,
 		})[0]
 
 		resp, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
@@ -624,6 +625,25 @@ func TestOIDCService_ActivateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 		}))
 		require.NoError(t, err)
 		requireEqualProto(t, &v1.ActivateClientConfigResponse{}, resp.Msg)
+	})
+
+	t.Run("fails to activate unverified record", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+		issuer := newFakeIdP(t, true)
+
+		created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
+			OrganizationID: organizationID,
+			Issuer:         issuer,
+			Active:         false,
+			Verified:       false,
+		})[0]
+
+		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+			Id:             created.ID.String(),
+			OrganizationId: created.OrganizationID.String(),
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 	})
 }
 
