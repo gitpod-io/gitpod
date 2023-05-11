@@ -257,10 +257,13 @@ export const AppRoutes = () => {
                     <Route
                         path="*"
                         render={(_match) => {
-                            return isGitpodIo() ? (
-                                // delegate to our website to handle the request
-                                (window.location.host = "www.gitpod.io")
-                            ) : (
+                            // delegate to our website to handle the request
+                            if (isGitpodIo()) {
+                                window.location.host = "www.gitpod.io";
+                                return;
+                            }
+
+                            return (
                                 <div className="mt-48 text-center">
                                     <Heading1>404</Heading1>
                                     <Subheading className="mt-4">Page not found.</Subheading>
