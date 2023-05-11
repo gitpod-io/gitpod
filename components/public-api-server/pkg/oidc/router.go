@@ -52,12 +52,19 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 			activate = true
 		}
 
+		// `activate` overrides a `verify` parameter
+		verify := false
+		if !activate && r.URL.Query().Get("verify") != "" {
+			verify = true
+		}
+
 		redirectURL := getCallbackURL(r.Host)
 
 		startParams, err := s.GetStartParams(config, redirectURL, StateParams{
 			ClientConfigID: config.ID,
 			ReturnToURL:    returnToURL,
 			Activate:       activate,
+			Verify:         verify,
 		})
 		if err != nil {
 			log.WithError(err).Error("Failed to get start parameters for authentication flow.")
@@ -131,13 +138,26 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			}
 		}
 
-		cookie, _, err := s.CreateSession(r.Context(), result, config)
-		if err != nil {
-			log.WithError(err).Warn("Failed to create session from downstream session provider.")
-			http.Error(rw, "We were unable to create a user session.", http.StatusInternalServerError)
-			return
+		if state.Verify {
+			err = s.MarkClientConfigAsVerified(r.Context(), config)
+			if err != nil {
+				log.Warn("Failed to mark config as verified: " + err.Error())
+				http.Error(rw, "Failed to mark config as verified", http.StatusInternalServerError)
+				return
+			}
 		}
-		http.SetCookie(rw, cookie)
+
+		// Skip the sign-in on verify-only requests.
+		if !state.Verify {
+			cookie, _, err := s.CreateSession(r.Context(), result, config)
+			if err != nil {
+				log.WithError(err).Warn("Failed to create session from downstream session provider.")
+				http.Error(rw, "We were unable to create a user session.", http.StatusInternalServerError)
+				return
+			}
+			http.SetCookie(rw, cookie)
+		}
+
 		http.Redirect(rw, r, oauth2Result.ReturnToURL, http.StatusTemporaryRedirect)
 	}
 }

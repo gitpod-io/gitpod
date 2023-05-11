@@ -198,6 +198,14 @@ func (s *Service) ActivateAndVerifyClientConfig(ctx context.Context, config *Cli
 	return db.ActivateClientConfig(ctx, s.dbConn, uuid)
 }
 
+func (s *Service) MarkClientConfigAsVerified(ctx context.Context, config *ClientConfig) error {
+	uuid, err := uuid.Parse(config.ID)
+	if err != nil {
+		return err
+	}
+	return db.VerifyClientConfig(ctx, s.dbConn, uuid)
+}
+
 func (s *Service) getConfigById(ctx context.Context, id string) (*ClientConfig, error) {
 	uuid, err := uuid.Parse(id)
 	if err != nil {

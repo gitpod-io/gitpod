@@ -23,6 +23,7 @@ type StateParams struct {
 	ClientConfigID string `json:"clientConfigId"`
 	ReturnToURL    string `json:"returnTo"`
 	Activate       bool   `json:"activate"`
+	Verify         bool   `json:"verify"`
 }
 
 type keyOAuth2Result struct{}
