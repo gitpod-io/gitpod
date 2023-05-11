@@ -186,8 +186,12 @@ func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientCo
 	return nil, nil, fmt.Errorf("failed to find OIDC config on callback")
 }
 
-func (s *Service) ActivateClientConfig(ctx context.Context, config *ClientConfig) error {
+func (s *Service) ActivateAndVerifyClientConfig(ctx context.Context, config *ClientConfig) error {
 	uuid, err := uuid.Parse(config.ID)
+	if err != nil {
+		return err
+	}
+	err = db.VerifyClientConfig(ctx, s.dbConn, uuid)
 	if err != nil {
 		return err
 	}

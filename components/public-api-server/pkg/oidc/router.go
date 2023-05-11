@@ -123,7 +123,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		log.WithField("id_token", result.IDToken).Trace("User verification was successful")
 
 		if state.Activate {
-			err = s.ActivateClientConfig(r.Context(), config)
+			err = s.ActivateAndVerifyClientConfig(r.Context(), config)
 			if err != nil {
 				log.WithError(err).Warn("Failed to mark OIDC Client Config as active")
 				http.Error(rw, "We've been unable to mark the selected OIDC config as active. Please try again.", http.StatusInternalServerError)
