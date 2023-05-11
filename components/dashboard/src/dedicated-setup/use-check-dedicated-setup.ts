@@ -25,7 +25,14 @@ export const useCheckDedicatedSetup = () => {
     const { data: onboardingState, isLoading } = useOnboardingState();
 
     const forceSetup = forceDedicatedSetupParam(params);
-    const needsOnboarding = forceSetup || (onboardingState && onboardingState.isCompleted !== true);
+    let needsOnboarding = forceSetup || (onboardingState && onboardingState.isCompleted !== true);
+
+    // TODO: This is a temporary safety-gurad against this flow showing up on gitpod.io
+    // We can remove this once we've ensured we're distinguishing different installation types for this
+    // Purposely not using isGitpodIo() check here to avoid disabling on preview environments too.
+    if (window.location.hostname === "gitpod.io") {
+        needsOnboarding = false;
+    }
 
     const markCompleted = useCallback(() => setInProgress(false), []);
 
