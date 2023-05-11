@@ -100,6 +100,8 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, status.Errorf(codes.Internal, "Failed to store OIDC client config.")
 	}
 
+	// foo
+
 	log.AddFields(ctx, log.OIDCClientConfigID(created.ID.String()))
 
 	converted, err := dbOIDCClientConfigToAPI(created, s.cipher)
