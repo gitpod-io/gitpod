@@ -30,7 +30,7 @@ export const useCheckDedicatedSetup = () => {
     // TODO: This is a temporary safety-gurad against this flow showing up on gitpod.io
     // We can remove this once we've ensured we're distinguishing different installation types for this
     // Purposely not using isGitpodIo() check here to avoid disabling on preview environments too.
-    if (window.location.hostname === "gitpod.io") {
+    if (["gitpod.io", "gitpod-staging.com"].includes(window.location.hostname)) {
         needsOnboarding = false;
     }
 
