@@ -424,7 +424,8 @@ func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor)
 		OidcConfig: &v1.OIDCConfig{
 			Issuer: config.Issuer,
 		},
-		Active: config.Active,
+		Active:   config.Active,
+		Verified: config.Verified,
 	}, nil
 }
 
