@@ -37,6 +37,7 @@ func NewOIDCClientConfig(t *testing.T, record db.OIDCClientConfig) db.OIDCClient
 		Data:           encrypted,
 		LastModified:   now,
 		Active:         false,
+		Verified:       false,
 	}
 
 	if record.ID != uuid.Nil {
@@ -57,6 +58,10 @@ func NewOIDCClientConfig(t *testing.T, record db.OIDCClientConfig) db.OIDCClient
 
 	if record.Active {
 		result.Active = true
+	}
+
+	if record.Verified {
+		result.Verified = true
 	}
 
 	return result
