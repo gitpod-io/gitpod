@@ -302,6 +302,37 @@ func setClientConfigActiveFlag(ctx context.Context, conn *gorm.DB, id uuid.UUID,
 	return nil
 }
 
+func VerifyClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) error {
+	return setClientConfigVerifiedFlag(ctx, conn, id, true)
+}
+
+func UnverifyClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) error {
+	return setClientConfigVerifiedFlag(ctx, conn, id, false)
+}
+
+func setClientConfigVerifiedFlag(ctx context.Context, conn *gorm.DB, id uuid.UUID, verified bool) error {
+	_, err := GetOIDCClientConfig(ctx, conn, id)
+	if err != nil {
+		return err
+	}
+
+	value := 0
+	if verified {
+		value = 1
+	}
+
+	tx := conn.
+		WithContext(ctx).
+		Table((&OIDCClientConfig{}).TableName()).
+		Where("id = ?", id.String()).
+		Update("verified", value)
+	if tx.Error != nil {
+		return fmt.Errorf("failed to set oidc client config as active to %d (id: %s): %v", value, id.String(), tx.Error)
+	}
+
+	return nil
+}
+
 func partialUpdateOIDCSpec(old, new OIDCSpec) OIDCSpec {
 	if new.ClientID != "" {
 		old.ClientID = new.ClientID
