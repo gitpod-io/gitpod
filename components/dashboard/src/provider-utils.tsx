@@ -133,10 +133,11 @@ interface OpenOIDCStartWindowParams extends WindowMessageHandler {
     orgSlug?: string;
     configId?: string;
     activate?: boolean;
+    verify?: boolean;
 }
 
 async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
-    const { orgSlug, configId, activate = false } = params;
+    const { orgSlug, configId, activate = false, verify = false } = params;
     let search = "message=success";
     const redirectURL = getSafeURLRedirect();
     if (redirectURL) {
@@ -152,6 +153,8 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
     }
     if (activate) {
         searchParams.append("activate", "true");
+    } else if (verify) {
+        searchParams.append("verify", "true");
     }
 
     const url = gitpodHostUrl

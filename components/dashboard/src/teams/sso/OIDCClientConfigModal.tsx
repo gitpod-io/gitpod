@@ -55,17 +55,21 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
             <ModalBody>
                 {clientConfig?.active && (
                     <Alert type="warning" className="mb-4">
-                        Warning, you are editing an active SSO configuration. A misconfiguration may prevent any user
-                        from logging in.
+                        This is an active SSO configuration. In order to make changes, please create a new
+                        configuration. You may then verify and activate it.
                     </Alert>
                 )}
-                <SSOConfigForm config={ssoConfig} onChange={dispatch} />
+                <SSOConfigForm config={ssoConfig} onChange={dispatch} readOnly={clientConfig?.active === true} />
             </ModalBody>
             <ModalFooter alert={error ? <SaveErrorAlert error={error} /> : null}>
                 <Button type="secondary" onClick={onClose}>
                     Cancel
                 </Button>
-                <Button onClick={saveConfig} disabled={!configIsValid} loading={isLoading}>
+                <Button
+                    onClick={saveConfig}
+                    disabled={!configIsValid || clientConfig?.active === true}
+                    loading={isLoading}
+                >
                     {isNew ? "Create" : "Save"}
                 </Button>
             </ModalFooter>

@@ -17,10 +17,11 @@ import { Subheading } from "../../components/typography/headings";
 
 type Props = {
     config: SSOConfig;
+    readOnly?: boolean;
     onChange: (config: Partial<SSOConfig>) => void;
 };
 
-export const SSOConfigForm: FC<Props> = ({ config, onChange }) => {
+export const SSOConfigForm: FC<Props> = ({ config, readOnly = false, onChange }) => {
     const redirectUrl = gitpodHostUrl.with({ pathname: `/iam/oidc/callback` }).toString();
 
     const issuerError = useOnBlurError(`Please enter a valid URL.`, isValidIssuer(config.issuer));
@@ -47,6 +48,7 @@ export const SSOConfigForm: FC<Props> = ({ config, onChange }) => {
                 value={config.issuer}
                 placeholder={"e.g. https://accounts.google.com"}
                 error={issuerError.message}
+                disabled={readOnly}
                 onBlur={issuerError.onBlur}
                 onChange={(val) => onChange({ issuer: val })}
             />
@@ -55,6 +57,7 @@ export const SSOConfigForm: FC<Props> = ({ config, onChange }) => {
                 label="Client ID"
                 value={config.clientId}
                 error={clientIdError.message}
+                disabled={readOnly}
                 onBlur={clientIdError.onBlur}
                 onChange={(val) => onChange({ clientId: val })}
             />
@@ -64,6 +67,7 @@ export const SSOConfigForm: FC<Props> = ({ config, onChange }) => {
                 type="password"
                 value={config.clientSecret}
                 error={clientSecretError.message}
+                disabled={readOnly}
                 onBlur={clientSecretError.onBlur}
                 onChange={(val) => onChange({ clientSecret: val })}
             />
