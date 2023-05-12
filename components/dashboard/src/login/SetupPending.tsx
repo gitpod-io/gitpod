@@ -7,7 +7,7 @@
 import { FC } from "react";
 import { Heading2, Subheading } from "../components/typography/headings";
 import cubicleImg from "../images/cubicle.png";
-import cubicleImg2x from "../images/cubicle@2x.png";
+import cubicleImg2x from "../images/cubicle-2x.png";
 import gitpodIcon from "../icons/gitpod.svg";
 import classNames from "classnames";
 
