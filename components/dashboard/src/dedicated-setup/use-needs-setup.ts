@@ -24,6 +24,7 @@ export const useNeedsSetup = () => {
 
     return {
         needsSetup: enableDedicatedOnboardingFlow && needsSetup,
+        // disabled queries stay in `isLoading` state, so checking feature flag here too
         isLoading: enableDedicatedOnboardingFlow && isLoading,
     };
 };
