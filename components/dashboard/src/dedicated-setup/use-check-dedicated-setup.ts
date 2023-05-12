@@ -19,10 +19,10 @@ export const useCheckDedicatedSetup = () => {
     // again in case onboarding state isn't updated right away
     const [inProgress, setInProgress] = useState(false);
 
-    const { needsSetup } = useNeedsSetup();
-
     const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
     const params = useQueryParams();
+
+    const { needsSetup } = useNeedsSetup();
 
     const forceSetup = forceDedicatedSetupParam(params);
     let needsOnboarding = forceSetup || needsSetup;
