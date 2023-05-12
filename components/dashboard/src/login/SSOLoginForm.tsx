@@ -12,8 +12,6 @@ import { useOnBlurError } from "../hooks/use-onblur-error";
 import { openOIDCStartWindow } from "../provider-utils";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { useLocation } from "react-router";
-import { useCheckDedicatedSetup } from "../dedicated-setup/use-check-dedicated-setup";
-import { Heading2, Subheading } from "../components/typography/headings";
 
 type Props = {
     singleOrgMode?: boolean;
@@ -31,8 +29,6 @@ export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
     );
     const [error, setError] = useState("");
     const oidcServiceEnabled = useFeatureFlag("oidcServiceEnabled");
-    // This flag lets us know if the current installation still needs setup
-    const { showOnboarding: setupPending } = useCheckDedicatedSetup();
 
     const openLoginWithSSO = useCallback(
         async (e) => {
@@ -73,36 +69,23 @@ export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
     return (
         <form onSubmit={openLoginWithSSO}>
             <div className="mt-10 space-y-2">
-                {singleOrgMode ? (
-                    setupPending ? (
-                        <div>
-                            {/* TODO: Add page image here */}
-                            <Heading2>Setup is pending</Heading2>
-                            <Subheading>
-                                This instance of Gitpod is not quite ready. An administrator has a few additional steps
-                                to complete.
-                            </Subheading>
-                        </div>
-                    ) : (
-                        <Button className="w-full" type="secondary" disabled={!orgSlug.trim() || !slugError.isValid}>
-                            Continue
-                        </Button>
-                    )
-                ) : (
-                    <>
-                        <TextInputField
-                            label="Organization Slug"
-                            placeholder="my-company"
-                            value={orgSlug}
-                            onChange={setOrgSlug}
-                            error={slugError.message}
-                            onBlur={slugError.onBlur}
-                        />
-                        <Button className="w-full" type="secondary">
-                            Continue
-                        </Button>
-                    </>
+                {!singleOrgMode && (
+                    <TextInputField
+                        label="Organization Slug"
+                        placeholder="my-company"
+                        value={orgSlug}
+                        onChange={setOrgSlug}
+                        error={slugError.message}
+                        onBlur={slugError.onBlur}
+                    />
                 )}
+                <Button
+                    className="w-full"
+                    type="secondary"
+                    disabled={!singleOrgMode && (!orgSlug.trim() || !slugError.isValid)}
+                >
+                    Continue {singleOrgMode ? "" : "with SSO"}
+                </Button>
                 {error && <Alert type="info">{error}</Alert>}
             </div>
         </form>
