@@ -101,12 +101,14 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var frontendDevEnabled bool
 	var trustedSegmentKey string
 	var untrustedSegmentKey string
+	var segmentEndpoint string
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil {
 			frontendDevEnabled = cfg.WebApp.ProxyConfig.FrontendDevEnabled
 			if cfg.WebApp.ProxyConfig.AnalyticsPlugin != nil {
 				trustedSegmentKey = cfg.WebApp.ProxyConfig.AnalyticsPlugin.TrustedSegmentKey
 				untrustedSegmentKey = cfg.WebApp.ProxyConfig.AnalyticsPlugin.UntrustedSegmentKey
+				segmentEndpoint = cfg.WebApp.ProxyConfig.AnalyticsPlugin.SegmentEndpoint
 			}
 		}
 		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil && cfg.WebApp.ProxyConfig.Configcat != nil && cfg.WebApp.ProxyConfig.Configcat.FromConfigMap != "" {
@@ -273,6 +275,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								}, {
 									Name:  "ANALYTICS_PLUGIN_UNTRUSTED_SEGMENT_KEY",
 									Value: untrustedSegmentKey,
+								}, {
+									Name:  "ANALYTICS_PLUGIN_SEGMENT_ENDPOINT",
+									Value: segmentEndpoint,
 								}},
 							)),
 						}},
