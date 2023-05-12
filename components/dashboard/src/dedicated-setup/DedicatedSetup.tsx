@@ -20,8 +20,8 @@ import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { useQueryParams } from "../hooks/use-query-params";
-import { forceDedicatedSetupParam } from "./use-check-dedicated-setup";
 import { useDocumentTitle } from "../hooks/use-document-title";
+import { forceDedicatedSetupParam } from "./use-show-dedicated-setup";
 
 type Props = {
     onComplete: () => void;
@@ -66,7 +66,7 @@ const STEPS = {
     SSO_SETUP: "sso-setup",
     COMPLETE: "complete",
 } as const;
-type StepsValue = typeof STEPS[keyof typeof STEPS];
+type StepsValue = (typeof STEPS)[keyof typeof STEPS];
 
 type DedicatedSetupStepsProps = {
     org?: OrganizationInfo;

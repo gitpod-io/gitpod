@@ -25,8 +25,8 @@ import ErrorMessage from "./components/ErrorMessage";
 import { Heading1, Heading2, Subheading } from "./components/typography/headings";
 import { SSOLoginForm } from "./login/SSOLoginForm";
 import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
-import { useNeedsSetup } from "./dedicated-setup/use-check-dedicated-setup";
 import { SetupPending } from "./login/SetupPending";
+import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
 
 function Item(props: { icon: string; iconSize?: string; text: string }) {
     const iconSize = props.iconSize || 28;
