@@ -4,13 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
 import { FC, lazy, Suspense } from "react";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { AppLoading } from "../../app/AppLoading";
-import { Login } from "../../Login";
+import { hasLoggedInBefore, Login } from "../../Login";
 import { isGitpodIo } from "../../utils";
 import { CaughtError } from "./ReloadPageErrorBoundary";
 
@@ -41,7 +40,7 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
         // Redirects if it's the root, no user, and no gp cookie present (has logged in recently)
         if (isGitpodIo() && window.location.pathname === "/" && window.location.hash === "") {
             // If there's no gp cookie, bounce to www site
-            if (!GitpodCookie.isPresent(document.cookie)) {
+            if (!hasLoggedInBefore()) {
                 window.location.href = `https://www.gitpod.io`;
                 return <div></div>;
             }
