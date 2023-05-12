@@ -58,9 +58,10 @@ type WorkspaceMeta struct {
 }
 
 type InitOptions struct {
-	Meta        WorkspaceMeta
-	Initializer *csapi.WorkspaceInitializer
-	Headless    bool
+	Meta         WorkspaceMeta
+	Initializer  *csapi.WorkspaceInitializer
+	Headless     bool
+	StorageQuota int
 }
 
 type BackupOptions struct {
@@ -91,7 +92,7 @@ func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, 
 
 func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, options InitOptions) (string, error) {
 	ws, err := wso.provider.Create(ctx, options.Meta.InstanceID, filepath.Join(wso.provider.Location, options.Meta.InstanceID),
-		wso.creator(options.Meta.Owner, options.Meta.WorkspaceID, options.Meta.InstanceID, options.Initializer, false))
+		wso.creator(options.Meta.Owner, options.Meta.WorkspaceID, options.Meta.InstanceID, options.Initializer, false, options.StorageQuota))
 
 	if err != nil {
 		return "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
@@ -153,7 +154,7 @@ func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, option
 	return "", nil
 }
 
-func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID string, init *csapi.WorkspaceInitializer, storageDisabled bool) session.WorkspaceFactory {
+func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID string, init *csapi.WorkspaceInitializer, storageDisabled bool, storageQuota int) session.WorkspaceFactory {
 	var checkoutLocation string
 	allLocations := csapi.GetCheckoutLocationsFromInitializer(init)
 	if len(allLocations) > 0 {
@@ -173,6 +174,7 @@ func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID st
 			PersistentVolumeClaim: false,
 			RemoteStorageDisabled: storageDisabled,
 			IsMk2:                 true,
+			StorageQuota:          storageQuota,
 
 			ServiceLocDaemon: filepath.Join(wso.config.WorkingArea, serviceDirName),
 			ServiceLocNode:   filepath.Join(wso.config.WorkingAreaNode, serviceDirName),

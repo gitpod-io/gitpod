@@ -178,8 +178,9 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 				WorkspaceID: ws.Spec.Ownership.WorkspaceID,
 				InstanceID:  ws.Name,
 			},
-			Initializer: init,
-			Headless:    ws.IsHeadless(),
+			Initializer:  init,
+			Headless:     ws.IsHeadless(),
+			StorageQuota: ws.Spec.StorageQuota,
 		})
 
 		err = retry.RetryOnConflict(retryParams, func() error {

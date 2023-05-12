@@ -55,6 +55,11 @@ type WorkspaceSpec struct {
 	Ports []PortSpec `json:"ports"`
 
 	SshPublicKeys []string `json:"sshPublicKeys,omitempty"`
+
+	// TODO: make StorageQuota Required in the future, avoid for now to avoid runtime failures for existing workspaces
+
+	// the XFS quota to enforce on the workspace's /workspace folder
+	StorageQuota int `json:"storageQuota,omitempty"`
 }
 
 type Ownership struct {

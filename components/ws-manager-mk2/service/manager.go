@@ -190,6 +190,12 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		return nil, status.Errorf(codes.InvalidArgument, "workspace class \"%s\" is unknown", req.Spec.Class)
 	}
 
+	storage, err := class.Container.Limits.StorageQuantity()
+	if err != nil {
+		msg := fmt.Sprintf("workspace class %s has invalid storage quantity: %v", class.Name, err)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
+	}
+
 	annotations := make(map[string]string)
 	for k, v := range req.Metadata.Annotations {
 		annotations[k] = v
@@ -272,6 +278,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			},
 			Ports:         ports,
 			SshPublicKeys: req.Spec.SshPublicKeys,
+			StorageQuota:  int(storage.Value()),
 		},
 	}
 	controllerutil.AddFinalizer(&ws, workspacev1.GitpodFinalizerName)
