@@ -35,6 +35,13 @@
                 "displayName": "Zig Language"
             }
         },
+        "gencay.vscode-chatgpt": {
+            "disallowInstall": true,
+            "extension": {
+                "id": "genieai.chatgpt-vscode",
+                "displayName": "Chat"
+            }
+        },
         "dbaeumer.jshint": {
             "disallowInstall": true,
             "extension": {
@@ -99,16 +106,10 @@
             }
         },
         "CoenraadS.bracket-pair-colorizer-2": {
-            "settings": [
-                "editor.bracketPairColorization.enabled",
-                "editor.guides.bracketPairs"
-            ]
+            "settings": ["editor.bracketPairColorization.enabled", "editor.guides.bracketPairs"]
         },
         "CoenraadS.bracket-pair-colorizer": {
-            "settings": [
-                "editor.bracketPairColorization.enabled",
-                "editor.guides.bracketPairs"
-            ]
+            "settings": ["editor.bracketPairColorization.enabled", "editor.guides.bracketPairs"]
         },
         "idleberg.innosetup": {
             "disallowInstall": true,
