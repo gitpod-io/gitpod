@@ -180,7 +180,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                         needsSetupCheckLoading ? (
                             <div className="flex-grow" />
                         ) : needsSetup ? (
-                            <SetupPending />
+                            <SetupPending alwaysShowHeader={!showWelcome} />
                         ) : (
                             <div className="flex-grow h-100 flex flex-row items-center justify-center">
                                 <div className="rounded-xl px-10 py-10 mx-auto">
@@ -249,7 +249,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                             </div>
                         )
                     }
-                    <div className="flex-none mx-auto h-20 text-center px-4">
+                    <div className="flex-none mx-auto text-center px-4 pb-4">
                         <span className="text-gray-400">
                             By signing in, you agree to our{" "}
                             <a
