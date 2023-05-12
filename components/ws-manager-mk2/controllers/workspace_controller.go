@@ -21,7 +21,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
@@ -497,5 +499,9 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}).
 		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
+		// Watch nodes, but don't enqueue reconciliations. This ensures
+		// we cache the Node kind in memory, instead of calling the k8s
+		// API to get the node every time we reconcile a workspace.
+		Watches(&source.Kind{Type: &corev1.Node{}}, &handler.Funcs{}).
 		Complete(r)
 }
