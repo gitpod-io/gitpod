@@ -22,8 +22,6 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
 import { UserToTeamMigrationService } from "@gitpod/gitpod-db/lib/user-to-team-migration-service";
 import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { use } from "chai";
 
 export interface FindUserByIdentityStrResult {
     user: User;
