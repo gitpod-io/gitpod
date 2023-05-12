@@ -414,6 +414,7 @@ jobs:
             TEST_BUILD_ID: ${{ github.run_id }}
             TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
+            WS_MANAGER_MK2: ${{ needs.configuration.outputs.with_ws_manager_mk2 != 'false' }}
         run: |
             set -euo pipefail
 
