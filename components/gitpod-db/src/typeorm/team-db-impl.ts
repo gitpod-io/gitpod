@@ -138,10 +138,9 @@ export class TeamDBImpl implements TeamDB {
         return soleOwnedTeams;
     }
 
-    public async updateTeam(teamId: string, team: Pick<Team, "name" | "slug">): Promise<Team> {
+    public async updateTeam(teamId: string, team: Pick<Team, "name">): Promise<Team> {
         const name = team.name && team.name.trim();
-        const slug = team.slug && team.slug.trim();
-        if (!name && !slug) {
+        if (!name) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "No update provided");
         }
 
@@ -156,32 +155,15 @@ export class TeamDBImpl implements TeamDB {
             }
 
             // no changes
-            if (existingTeam.name === name && existingTeam.slug === slug) {
+            if (existingTeam.name === name) {
                 return existingTeam;
             }
 
-            if (!!name) {
-                if (name.length > 32) {
-                    throw new ResponseError(
-                        ErrorCodes.INVALID_VALUE,
-                        "The name must be between 1 and 32 characters long",
-                    );
-                }
-                existingTeam.name = name;
+            if (name.length > 32) {
+                throw new ResponseError(ErrorCodes.INVALID_VALUE, "The name must be between 1 and 32 characters long");
             }
-            if (!!slug && existingTeam.slug != slug) {
-                if (slug.length > 63) {
-                    throw new ResponseError(ErrorCodes.INVALID_VALUE, "Slug must be between 1 and 63 characters long");
-                }
-                if (!/^[A-Za-z0-9-]+$/.test(slug)) {
-                    throw new ResponseError(ErrorCodes.BAD_REQUEST, "Slug must contain only letters, or numbers");
-                }
-                const anotherTeamWithThatSlug = await teamRepo.findOne({ slug, deleted: false, markedDeleted: false });
-                if (anotherTeamWithThatSlug) {
-                    throw new ResponseError(ErrorCodes.INVALID_VALUE, "Slug must be unique");
-                }
-                existingTeam.slug = slug;
-            }
+            existingTeam.name = name;
+            existingTeam.slug = await this.createUniqueSlug(teamRepo, name);
 
             return teamRepo.save(existingTeam);
         });
@@ -202,24 +184,12 @@ export class TeamDBImpl implements TeamDB {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Please choose a name that is at most 64 characters long.");
         }
 
-        let slug = slugify(name, { lower: true });
-
-        if (slug.length < 3) {
-            throw new ResponseError(
-                ErrorCodes.BAD_REQUEST,
-                "Please choose a name that is at least three characters long.",
-            );
-        }
-
         // Storing new entry in a TX to avoid potential dupes caused by racing requests.
         const em = await this.getEntityManager();
         const team = await em.transaction<DBTeam>(async (em) => {
             const teamRepo = em.getRepository<DBTeam>(DBTeam);
 
-            const existingTeam = await teamRepo.findOne({ slug, deleted: false, markedDeleted: false });
-            if (!!existingTeam) {
-                slug = slug + "-" + randomBytes(4).toString("hex");
-            }
+            const slug = await this.createUniqueSlug(teamRepo, name);
 
             const team: Team = {
                 id: uuidv4(),
@@ -239,6 +209,30 @@ export class TeamDBImpl implements TeamDB {
             creationTime: team.creationTime,
         });
         return team;
+    }
+
+    private async createUniqueSlug(teamRepo: Repository<DBTeam>, name: string): Promise<string> {
+        let slug = slugify(name, {
+            lower: true,
+        });
+        let tries = 0;
+        while (
+            tries++ < 5 &&
+            (await teamRepo.findOne({
+                slug,
+                deleted: false,
+                markedDeleted: false,
+            }))
+        ) {
+            slug = slug + "-" + randomBytes(4).toString("hex");
+        }
+        if (tries >= 5) {
+            throw new ResponseError(
+                ErrorCodes.INTERNAL_SERVER_ERROR,
+                `Failed to create a unique slug for the '${name}'`,
+            );
+        }
+        return slug;
     }
 
     public async deleteTeam(teamId: string): Promise<void> {
