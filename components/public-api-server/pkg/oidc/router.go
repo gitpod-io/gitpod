@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -119,7 +120,8 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			return
 		}
 
-		log.WithField("id_token", result.IDToken).Trace("user verification was successful")
+		log.WithFields(logrus.Fields{"idToken": result.IDToken, "claims": result.Claims}).Info("OIDC authentication successful")
+		// log.WithFields(logrus.Fields{"idToken": result.IDToken, "claims": result.Claims}).Trace("OIDC authentication successful")
 
 		if state.Activate {
 			err = s.ActivateClientConfig(r.Context(), config)
