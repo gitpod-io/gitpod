@@ -29,7 +29,6 @@ export default function TeamSettingsPage() {
     const [modal, setModal] = useState(false);
     const [teamNameToDelete, setTeamNameToDelete] = useState("");
     const [teamName, setTeamName] = useState(org?.name || "");
-    const [slug, setSlug] = useState(org?.slug || "");
     const [updated, setUpdated] = useState(false);
     const updateOrg = useUpdateOrgMutation();
     const { data: settings, isLoading } = useOrgSettingsQuery();
@@ -57,14 +56,7 @@ export default function TeamSettingsPage() {
         !!teamName && teamName.length <= 32,
     );
 
-    const slugError = useOnBlurError(
-        slug.length > 100
-            ? "Organization slug must not be longer than 100 characters"
-            : "Organization slug can not be blank.",
-        !!slug && slug.length <= 100,
-    );
-
-    const orgFormIsValid = teamNameError.isValid && slugError.isValid;
+    const orgFormIsValid = teamNameError.isValid;
 
     const updateTeamInformation = useCallback(
         async (e: React.FormEvent) => {
@@ -75,14 +67,14 @@ export default function TeamSettingsPage() {
             }
 
             try {
-                await updateOrg.mutateAsync({ name: teamName, slug });
+                await updateOrg.mutateAsync({ name: teamName });
                 setUpdated(true);
                 setTimeout(() => setUpdated(false), 3000);
             } catch (error) {
                 console.error(error);
             }
         },
-        [orgFormIsValid, updateOrg, teamName, slug],
+        [orgFormIsValid, updateOrg, teamName],
     );
 
     const deleteTeam = useCallback(async () => {
@@ -128,20 +120,7 @@ export default function TeamSettingsPage() {
                         onBlur={teamNameError.onBlur}
                     />
 
-                    <TextInputField
-                        label="Slug"
-                        hint="The slug will be used for easier signin and discovery"
-                        value={slug}
-                        error={slugError.message}
-                        onChange={setSlug}
-                        onBlur={slugError.onBlur}
-                    />
-
-                    <Button
-                        className="mt-4"
-                        htmlType="submit"
-                        disabled={(org?.name === teamName && org?.slug === slug) || !orgFormIsValid}
-                    >
+                    <Button className="mt-4" htmlType="submit" disabled={org?.name === teamName || !orgFormIsValid}>
                         Update Organization
                     </Button>
 

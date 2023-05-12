@@ -75,4 +75,17 @@ export class TeamDBSpec {
         expect(team.name).to.be.eq("I ♥ gitpod");
         expect(team.slug).to.be.eq("i-love-gitpod");
     }
+
+    @test()
+    async testSlugIsAutomated(): Promise<void> {
+        const user = await this.userDB.newUser();
+
+        const team1 = await this.teamDB.createTeam(user.id, "My Team");
+        expect(team1.slug).to.be.eq("my-team");
+        const team2 = await this.teamDB.createTeam(user.id, "My Other Team");
+        expect(team2.slug).to.be.eq("my-other-team");
+        team2.name = "My Team";
+        const team3 = await this.teamDB.updateTeam(team2.id, team2);
+        expect(team3.slug).to.match(/^my-team-[a-zA-Z0-9_-]{8}$/);
+    }
 }
