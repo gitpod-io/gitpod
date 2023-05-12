@@ -5,7 +5,7 @@
  */
 
 import Alert from "./Alert";
-import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "./Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "./Modal";
 import { useRef, useEffect, ReactNode } from "react";
 import { Button } from "./Button";
 
