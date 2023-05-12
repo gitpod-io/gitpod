@@ -1258,6 +1258,30 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		}
 		tunnelOverWebSocket(tunneled, conn)
 	}))
+	routes.Handle("/_supervisor/tunnel/ssh", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		wsConn, err := upgrader.Upgrade(rw, r, nil)
+		if err != nil {
+			log.WithError(err).Error("tunnel ssh: upgrade to the WebSocket protocol failed")
+			return
+		}
+		conn, err := gitpod.NewWebsocketConnection(ctx, wsConn, func(staleErr error) {
+			log.WithError(staleErr).Error("tunnel ssh: closing stale connection")
+		})
+		if err != nil {
+			log.WithError(err).Error("tunnel ssh: upgrade to the WebSocket protocol failed")
+			return
+		}
+
+		conn2, err := net.Dial("tcp", net.JoinHostPort("localhost", strconv.FormatInt(int64(cfg.SSHPort), 10)))
+		if err != nil {
+			log.WithError(err).Error("tunnel ssh: dial to ssh server failed")
+			return
+		}
+
+		go io.Copy(conn2, conn)
+		_, _ = io.Copy(conn, conn2)
+		log.Infof("tunnel ssh: Disconnect from %s", conn.RemoteAddr())
+	}))
 	if cfg.DebugEnable {
 		routes.Handle("/_supervisor/debug/tunnels", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			rw.Header().Set("X-Content-Type-Options", "nosniff")
