@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
+	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -273,6 +274,87 @@ var _ = Describe("WorkspaceController", func() {
 				restores: 1,
 				stops:    map[StopReason]int{StopReasonRegular: 1},
 				backups:  1,
+			})
+		})
+
+		It("node disappearing should fail with backup failure", func() {
+			ws := newWorkspace(uuid.NewString(), "default")
+			m := collectMetricCounts(wsMetrics, ws)
+
+			// Simulate pod getting scheduled to a node.
+			var node corev1.Node
+			node.Name = uuid.NewString()
+			Expect(k8sClient.Create(ctx, &node)).To(Succeed())
+			// Manually create the workspace pod with the node name.
+			// We can't update the pod with the node name, as this operation
+			// is only allowed for the scheduler. So as a hack, we manually
+			// create the workspace's pod.
+			pod := &corev1.Pod{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       fmt.Sprintf("ws-%s", ws.Name),
+					Namespace:  ws.Namespace,
+					Finalizers: []string{workspacev1.GitpodFinalizerName},
+				},
+				Spec: corev1.PodSpec{
+					NodeName: node.Name,
+					Containers: []corev1.Container{{
+						Name:  "workspace",
+						Image: "someimage",
+					}},
+				},
+			}
+
+			Expect(k8sClient.Create(ctx, pod)).To(Succeed())
+			pod = createWorkspaceExpectPod(ws)
+			updateObjWithRetries(k8sClient, pod, false, func(pod *corev1.Pod) {
+				Expect(ctrl.SetControllerReference(ws, pod, k8sClient.Scheme())).To(Succeed())
+			})
+
+			markReady(ws)
+
+			// Make node disappear 🪄
+			By("deleting node")
+			Expect(k8sClient.Delete(ctx, &node)).To(Succeed())
+
+			// Expect workspace to disappear, with a backup failure.
+			// NOTE: Can't use expectWorkspaceCleanup() here, as the pod never disappears in envtest due to a nodeName being set.
+			// Therefore, we only verify deletion timestamps are set and all finalizers are removed, which in a real cluster
+			// would cause the pod and workspace to disappear.
+			By("workspace and pod finalizers being removed and deletion timestamps set")
+			Eventually(func() error {
+				if err := k8sClient.Get(ctx, types.NamespacedName{Name: pod.GetName(), Namespace: pod.GetNamespace()}, pod); err != nil {
+					if !errors.IsNotFound(err) {
+						return err
+					}
+				} else {
+					if len(pod.ObjectMeta.Finalizers) > 0 {
+						return fmt.Errorf("pod still has finalizers: %v", pod.ObjectMeta.Finalizers)
+					}
+					if pod.DeletionTimestamp == nil {
+						return fmt.Errorf("pod deletion timestamp not set")
+					}
+				}
+
+				if err := k8sClient.Get(ctx, types.NamespacedName{Name: ws.GetName(), Namespace: ws.GetNamespace()}, ws); err != nil {
+					if !errors.IsNotFound(err) {
+						return err
+					}
+				} else {
+					if ws.Status.Phase != workspacev1.WorkspacePhaseStopped {
+						return fmt.Errorf("workspace phase did not reach Stopped, was %s", ws.Status.Phase)
+					}
+					// Can't check for workspace finalizer removal and deletionTimestamp being set,
+					// as this only happens once all pods are gone, and the pod never disappears in this test.
+				}
+				return nil
+			}, timeout, interval).Should(Succeed(), "pod/workspace not cleaned up")
+
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:       1,
+				backups:        1,
+				backupFailures: 1,
+				failures:       1,
+				stops:          map[StopReason]int{StopReasonFailed: 1},
 			})
 		})
 

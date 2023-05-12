@@ -16,6 +16,7 @@ import (
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -78,6 +79,13 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	}
 	if workspace.Status.Runtime.PodName == "" && pod.Name != "" {
 		workspace.Status.Runtime.PodName = pod.Name
+	}
+
+	// Check if the node has disappeared. If so, ws-daemon has also disappeared and we need to
+	// mark the workspace backup as failed if it didn't complete disposal yet.
+	// Otherwise, the workspace will be stuck in the Stopping phase forever.
+	if err := r.checkNodeDisappeared(ctx, workspace, pod); err != nil {
+		return err
 	}
 
 	if workspace.Status.URL == "" {
@@ -207,12 +215,42 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 	return nil
 }
 
+func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspace *workspacev1.Workspace, pod *corev1.Pod) error {
+	if pod.Spec.NodeName == "" {
+		// Not yet scheduled.
+		return nil
+	}
+
+	var node corev1.Node
+	err := r.Get(ctx, types.NamespacedName{Namespace: "", Name: pod.Spec.NodeName}, &node)
+	if err == nil || !errors.IsNotFound(err) {
+		return err
+	}
+
+	// If NodeDisappeared is already set, return early, we've already made the below checks previously.
+	if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionNodeDisappeared)) {
+		return nil
+	}
+
+	if !isDisposalFinished(workspace) {
+		// Node disappeared before a backup could be taken, mark it with a backup failure.
+		log.FromContext(ctx).Error(nil, "workspace node disappeared while disposal has not finished yet", "node", pod.Spec.NodeName)
+		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionBackupFailure("workspace node disappeared before backup was taken"))
+	}
+
+	// Must set this after checking isDisposalFinished, as that method also checks for the NodeDisappeared condition.
+	workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionNodeDisappeared())
+	return nil
+}
+
 func isDisposalFinished(ws *workspacev1.Workspace) bool {
 	return wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
 		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
 		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) ||
 		// Nothing to dispose if content wasn't ready.
 		!wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) ||
+		// Can't dispose if node disappeared.
+		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionNodeDisappeared)) ||
 		// Image builds have nothing to dispose.
 		ws.Spec.Type == workspacev1.WorkspaceTypeImageBuild
 }
@@ -227,6 +265,8 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 			msg := c.Message
 			if msg == "" {
 				msg = "Content initialization failed for an unknown reason"
+			} else {
+				msg = fmt.Sprintf("Content initialization failed: %s", msg)
 			}
 			return msg, nil
 		}
@@ -237,6 +277,8 @@ func (r *WorkspaceReconciler) extractFailure(ctx context.Context, ws *workspacev
 		msg := c.Message
 		if msg == "" {
 			msg = "Backup failed for an unknown reason"
+		} else {
+			msg = fmt.Sprintf("Backup failed: %s", msg)
 		}
 		return msg, nil
 	}

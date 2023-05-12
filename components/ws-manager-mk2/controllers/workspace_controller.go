@@ -260,6 +260,10 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			return ctrl.Result{Requeue: true}, err
 		}
 
+	// if the node disappeared, delete the pod.
+	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionNodeDisappeared)) && !isPodBeingDeleted(pod):
+		return r.deleteWorkspacePod(ctx, pod, "node disappeared")
+
 	// if the workspace timed out, delete it
 	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) && !isPodBeingDeleted(pod):
 		return r.deleteWorkspacePod(ctx, pod, "timed out")
