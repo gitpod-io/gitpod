@@ -18,7 +18,7 @@ const DedicatedSetup = lazy(() => import(/* webpackPrefetch: true */ "../dedicat
 export const AppBlockingFlows: FC = ({ children }) => {
     const user = useCurrentUser();
     const shouldSeeMigrationPage = useShouldSeeMigrationPage();
-    const checkDedicatedSetup = useShowDedicatedSetup();
+    const showDedicatedSetup = useShowDedicatedSetup();
     const showUserOnboarding = useShowUserOnboarding();
 
     // This shouldn't happen, but if it does don't render anything yet
@@ -32,8 +32,8 @@ export const AppBlockingFlows: FC = ({ children }) => {
     }
 
     // Handle dedicated setup if necessary
-    if (checkDedicatedSetup.showSetup) {
-        return <DedicatedSetup onComplete={() => checkDedicatedSetup.markCompleted()} />;
+    if (showDedicatedSetup.showSetup) {
+        return <DedicatedSetup onComplete={() => showDedicatedSetup.markCompleted()} />;
     }
 
     // New user onboarding flow
