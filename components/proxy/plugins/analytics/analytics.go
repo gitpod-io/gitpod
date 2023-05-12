@@ -51,7 +51,7 @@ func (Analytics) CaddyModule() caddy.ModuleInfo {
 func (a *Analytics) Provision(ctx caddy.Context) error {
 	logger := ctx.Logger(a)
 
-	segmentEndponit, err := url.Parse(segment.DefaultEndpoint)
+	segmentEndpoint, err := resolveSegmenEndpoint()
 	if err != nil {
 		logger.Error("failed to parse segment endpoint", zap.Error(err))
 		return nil
@@ -63,11 +63,19 @@ func (a *Analytics) Provision(ctx caddy.Context) error {
 		return nil
 	}
 
-	a.segmentProxy = newSegmentProxy(segmentEndponit, errorLog)
+	a.segmentProxy = newSegmentProxy(segmentEndpoint, errorLog)
 	a.untrustedSegmentKey = os.Getenv("ANALYTICS_PLUGIN_UNTRUSTED_SEGMENT_KEY")
 	a.trustedSegmentKey = os.Getenv("ANALYTICS_PLUGIN_TRUSTED_SEGMENT_KEY")
 
 	return nil
+}
+
+func resolveSegmenEndpoint() (*url.URL, error) {
+	segmentEndpoint := os.Getenv("ANALYTICS_PLUGIN_SEGMENT_ENDPOINT")
+	if segmentEndpoint == "" {
+		segmentEndpoint = segment.DefaultEndpoint
+	}
+	return url.Parse(segmentEndpoint)
 }
 
 func newSegmentProxy(segmentEndpoint *url.URL, errorLog *log.Logger) http.Handler {
