@@ -42,8 +42,8 @@ export namespace StartWorkspaceOptions {
                 };
             }
         }
-        if (params.get(StartWorkspaceOptions.AUTOSTART) === "true") {
-            options.autostart = true;
+        if (params.get(StartWorkspaceOptions.AUTOSTART)) {
+            options.autostart = params.get(StartWorkspaceOptions.AUTOSTART) === "true";
         }
         return options;
     }
