@@ -5,9 +5,10 @@
  */
 
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { oidcService } from "../../service/public-api";
 import { useCurrentOrg } from "../organizations/orgs-query";
+import { useCallback } from "react";
 
 export type OIDCClientsQueryResults = OIDCClientConfig[];
 
@@ -27,6 +28,19 @@ export const useOIDCClientsQuery = () => {
         },
         enabled: !isLoading && !!organization,
     });
+};
+
+export const useInvalidateOIDCClientsQuery = () => {
+    const client = useQueryClient();
+    const { data: organization } = useCurrentOrg();
+
+    return useCallback(() => {
+        if (!organization) {
+            throw new Error("No current organization selected");
+        }
+
+        client.invalidateQueries(getOIDCClientsQueryKey(organization.id));
+    }, [client, organization]);
 };
 
 export const getOIDCClientsQueryKey = (organizationId: string) => ["oidc-clients", { organizationId }];

@@ -34,6 +34,8 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
     const onCreate = useCallback(() => setShowCreateModal(true), []);
     const hideModal = useCallback(() => setShowCreateModal(false), []);
 
+    const hasActiveConfig = clientConfigs.some((config) => config.active);
+
     return (
         <>
             {showCreateModal && <OIDCClientConfigModal onClose={hideModal} />}
@@ -66,7 +68,7 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
                         <ItemField>Issuer URL</ItemField>
                     </Item>
                     {clientConfigs.map((cc) => (
-                        <OIDCClientListItem key={cc.id} clientConfig={cc} />
+                        <OIDCClientListItem key={cc.id} clientConfig={cc} hasActiveConfig={hasActiveConfig} />
                     ))}
                 </ItemsList>
             )}
