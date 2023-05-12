@@ -22,6 +22,8 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
 import { UserToTeamMigrationService } from "@gitpod/gitpod-db/lib/user-to-team-migration-service";
 import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { use } from "chai";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -458,5 +460,22 @@ export class UserService {
      */
     async mayCreateOrJoinOrganization(user: User): Promise<boolean> {
         return !user.organizationId;
+    }
+
+    async updateUser(userID: string, update: Partial<User>): Promise<User> {
+        const user = await this.userDb.findUserById(userID);
+        if (!user) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "User does not exist.");
+        }
+
+        const allowedFields: (keyof User)[] = ["avatarUrl", "fullName", "additionalData"];
+        for (const p of allowedFields) {
+            if (p in update) {
+                (user[p] as any) = update[p];
+            }
+        }
+
+        await this.userDb.updateUserPartial(user);
+        return user;
     }
 }
