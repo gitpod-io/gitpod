@@ -43,13 +43,6 @@ func TestConvertError(t *testing.T) {
 		},
 		{
 			Input: &jsonrpc2.Error{
-				Code:    -32603,
-				Message: "Request getWorkspace failed with message: No workspace with id 'some-id' found.",
-			},
-			ExpectedError: connect.NewError(connect.CodeInternal, fmt.Errorf("Request getWorkspace failed with message: No workspace with id 'some-id' found.")),
-		},
-		{
-			Input: &jsonrpc2.Error{
 				Code:    409,
 				Message: "already exists",
 			},
@@ -57,10 +50,38 @@ func TestConvertError(t *testing.T) {
 		},
 		{
 			Input: &jsonrpc2.Error{
+				Code:    429,
+				Message: "too many requests",
+			},
+			ExpectedError: connect.NewError(connect.CodeResourceExhausted, fmt.Errorf("too many requests")),
+		},
+		{
+			Input: &jsonrpc2.Error{
 				Code:    470,
 				Message: "user blocked",
 			},
 			ExpectedError: connect.NewError(connect.CodePermissionDenied, fmt.Errorf("user blocked")),
+		},
+		{
+			Input: &jsonrpc2.Error{
+				Code:    499,
+				Message: "catch all client error",
+			},
+			ExpectedError: connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("catch all client error")),
+		},
+		{
+			Input: &jsonrpc2.Error{
+				Code:    599,
+				Message: "catch all server error",
+			},
+			ExpectedError: connect.NewError(connect.CodeInternal, fmt.Errorf("catch all server error")),
+		},
+		{
+			Input: &jsonrpc2.Error{
+				Code:    -32603,
+				Message: "Request getWorkspace failed with message: No workspace with id 'some-id' found.",
+			},
+			ExpectedError: connect.NewError(connect.CodeInternal, fmt.Errorf("Request getWorkspace failed with message: No workspace with id 'some-id' found.")),
 		},
 		{
 			Input:         nil,

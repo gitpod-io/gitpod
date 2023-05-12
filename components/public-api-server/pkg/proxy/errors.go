@@ -44,21 +44,13 @@ func categorizeRPCError(err error) *connect.Error {
 		case 409:
 			return connect.NewError(connect.CodeAlreadyExists, fmt.Errorf(rpcErr.Message))
 		// components/gitpod-protocol/src/messaging/error.ts - SETUP_REQUIRED (no user)
-		case 410:
-			return connect.NewError(connect.CodeUnauthenticated, fmt.Errorf(rpcErr.Message))
-		// components/gitpod-protocol/src/messaging/error.ts - NEEDS_VERIFICATION (no user)
-		case 411:
-			return connect.NewError(connect.CodePermissionDenied, fmt.Errorf(rpcErr.Message))
 		case 429:
 			return connect.NewError(connect.CodeResourceExhausted, fmt.Errorf(rpcErr.Message))
 		// components/gitpod-messagebus/src/jsonrpc-server.ts#47
-		case -32603:
-			return connect.NewError(connect.CodeInternal, fmt.Errorf(rpcErr.Message))
 		case 470:
 			return connect.NewError(connect.CodePermissionDenied, fmt.Errorf(rpcErr.Message))
-		// components/gitpod-protocol/src/messaging/error.ts - INVALID_VALUE (no user)
-		case 650:
-			return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf(rpcErr.Message))
+		case -32603:
+			return connect.NewError(connect.CodeInternal, fmt.Errorf(rpcErr.Message))
 		}
 		// components/gitpod-protocol/src/messaging/error.ts - user errors
 		if rpcErr.Code >= 400 && rpcErr.Code < 500 {
