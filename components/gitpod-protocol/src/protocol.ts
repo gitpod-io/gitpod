@@ -89,7 +89,7 @@ export namespace User {
      * @returns A primaryEmail, or undefined if there is none.
      */
     export function getPrimaryEmail(user: User): string | undefined {
-        if (user.additionalData?.profile?.emailAddress) {
+        if (!isOrganizationOwned(user) && user.additionalData?.profile?.emailAddress) {
             return user.additionalData?.profile?.emailAddress;
         }
         const identities = user.identities.filter((i) => !!i.primaryEmail);
@@ -99,6 +99,7 @@ export namespace User {
 
         return identities[0].primaryEmail || undefined;
     }
+
     export function getName(user: User): string | undefined {
         const name = user.fullName || user.name;
         if (name) {
@@ -121,7 +122,7 @@ export namespace User {
     }
 
     export function isOnboardingUser(user: User) {
-        if (!!user.organizationId) {
+        if (isOrganizationOwned(user)) {
             return false;
         }
         // If a user has already been onboarded
