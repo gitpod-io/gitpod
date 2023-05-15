@@ -38,7 +38,7 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 		config, err := s.GetClientConfigFromStartRequest(r)
 		if err != nil {
 			log.WithError(err).Warn("Failed to start SSO sing-in flow.")
-			http.Error(rw, "We were unable to find the SSO configuration you've requested. Please ensure your SSO configuration is correct, and validated.", http.StatusNotFound)
+			http.Error(rw, "We were unable to find the SSO configuration you've requested. Please verify SSO is configured with your Organization owner.", http.StatusNotFound)
 			return
 		}
 
@@ -94,7 +94,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		config, state, err := s.GetClientConfigFromCallbackRequest(r)
 		if err != nil {
 			log.WithError(err).Warn("Client SSO config not found")
-			http.Error(rw, "We were unable to find the SSO configuration you've requested. Please ensure your SSO configuration is correct, and validated.", http.StatusNotFound)
+			http.Error(rw, "We were unable to find the SSO configuration you've requested. Please verify SSO is configured with your Organization owner.", http.StatusNotFound)
 			return
 		}
 		oauth2Result := GetOAuth2ResultFromContext(r.Context())
@@ -106,7 +106,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		// nonce = number used once
 		nonceCookie, err := r.Cookie(nonceCookieName)
 		if err != nil {
-			http.Error(rw, "There was no nonce present on the request. Please try logging in again.", http.StatusBadRequest)
+			http.Error(rw, "There was no nonce present on the request. Please try to sign-in in again.", http.StatusBadRequest)
 			return
 		}
 		result, err := s.Authenticate(r.Context(), AuthenticateParams{
@@ -116,7 +116,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		})
 		if err != nil {
 			log.WithError(err).Warn("OIDC authentication failed")
-			http.Error(rw, "We've not been able to authenticate you with the OIDC Provider. Please try again.", http.StatusInternalServerError)
+			http.Error(rw, "We've not been able to authenticate you with the OIDC Provider.", http.StatusInternalServerError)
 			return
 		}
 
@@ -134,7 +134,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		cookie, _, err := s.CreateSession(r.Context(), result, config)
 		if err != nil {
 			log.WithError(err).Warn("Failed to create session from downstream session provider.")
-			http.Error(rw, "We were unable to create a user session. Please try again.", http.StatusInternalServerError)
+			http.Error(rw, "We were unable to create a user session.", http.StatusInternalServerError)
 			return
 		}
 		http.SetCookie(rw, cookie)
