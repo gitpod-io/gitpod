@@ -155,7 +155,7 @@ func (s *WorkspaceStatus) SetCondition(cond metav1.Condition) {
 	s.Conditions = wsk8s.AddUniqueCondition(s.Conditions, cond)
 }
 
-// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure
+// +kubebuilder:validation:Enum=Deployed;Failed;Timeout;FirstUserActivity;Closed;HeadlessTaskFailed;StoppedByRequest;Aborted;ContentReady;EverReady;BackupComplete;BackupFailure;Refresh;NodeDisappeared
 type WorkspaceCondition string
 
 const (
@@ -200,6 +200,9 @@ const (
 
 	// Refresh is used to ensure that we operate on the latest version of the workspace
 	WorkspaceConditionRefresh WorkspaceCondition = "Refresh"
+
+	// NodeDisappeared is true if the workspace's node disappeared before the workspace was stopped
+	WorkspaceConditionNodeDisappeared WorkspaceCondition = "NodeDisappeared"
 )
 
 func NewWorkspaceConditionDeployed() metav1.Condition {
@@ -315,6 +318,14 @@ func NewWorkspaceConditionBackupFailure(message string) metav1.Condition {
 func NewWorkspaceConditionRefresh() metav1.Condition {
 	return metav1.Condition{
 		Type:               string(WorkspaceConditionRefresh),
+		LastTransitionTime: metav1.Now(),
+		Status:             metav1.ConditionTrue,
+	}
+}
+
+func NewWorkspaceConditionNodeDisappeared() metav1.Condition {
+	return metav1.Condition{
+		Type:               string(WorkspaceConditionNodeDisappeared),
 		LastTransitionTime: metav1.Now(),
 		Status:             metav1.ConditionTrue,
 	}

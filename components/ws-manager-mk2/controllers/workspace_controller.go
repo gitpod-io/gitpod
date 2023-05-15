@@ -17,11 +17,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
@@ -260,6 +264,10 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			return ctrl.Result{Requeue: true}, err
 		}
 
+	// if the node disappeared, delete the pod.
+	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionNodeDisappeared)) && !isPodBeingDeleted(pod):
+		return r.deleteWorkspacePod(ctx, pod, "node disappeared")
+
 	// if the workspace timed out, delete it
 	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) && !isPodBeingDeleted(pod):
 		return r.deleteWorkspacePod(ctx, pod, "timed out")
@@ -493,5 +501,32 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}).
 		For(&workspacev1.Workspace{}).
 		Owns(&corev1.Pod{}).
+		// Add a watch for Nodes, so that they're cached in memory and don't require calling the k8s API
+		// when reconciling workspaces.
+		Watches(&source.Kind{Type: &corev1.Node{}}, &handler.Funcs{
+			// Only enqueue events for workspaces when the node gets deleted,
+			// such that we can trigger their cleanup.
+			DeleteFunc: func(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+				if e.Object == nil {
+					return
+				}
+
+				var wsList workspacev1.WorkspaceList
+				err := r.List(context.Background(), &wsList)
+				if err != nil {
+					log.FromContext(context.Background()).Error(err, "cannot list workspaces")
+					return
+				}
+				for _, ws := range wsList.Items {
+					if ws.Status.Runtime == nil || ws.Status.Runtime.NodeName != e.Object.GetName() {
+						continue
+					}
+					queue.Add(ctrl.Request{NamespacedName: types.NamespacedName{
+						Namespace: ws.Namespace,
+						Name:      ws.Name,
+					}})
+				}
+			},
+		}).
 		Complete(r)
 }
