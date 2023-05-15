@@ -176,6 +176,27 @@ class UserDBSpec {
         expect(r1).to.be.not.undefined;
         expect(r1!.name).to.be.eq("XYZ");
     }
+
+    @test(timeout(10000))
+    public async findOrgOwnedUser_by_email() {
+        let orgUser1 = await this.db.newUser();
+        orgUser1.organizationId = "org1";
+        orgUser1.name = "Tester";
+        orgUser1.identities.push({
+            authId: "123",
+            authName: "Tester",
+            authProviderId: "oauth2-client-id",
+            primaryEmail: "tester@some.org",
+        });
+        orgUser1 = await this.db.storeUser(orgUser1);
+
+        const result = await this.db.findOrgOwnedUser("org1", "tester@some.org");
+        expect(result, "organizational user should be found").not.to.be.undefined;
+        expect(result!.identities, "should find a single identity").to.have.length(1);
+
+        const result2 = await this.db.findOrgOwnedUser("org1", "unknown@some.org");
+        expect(result2, "no user should be found").to.be.undefined;
+    }
 }
 
 namespace TestData {

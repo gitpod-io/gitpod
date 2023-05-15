@@ -5,8 +5,8 @@
  */
 
 import { injectable, inject } from "inversify";
-import { User, Identity, Token, AdditionalUserData } from "@gitpod/gitpod-protocol";
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID, ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { User, Identity, Token, AdditionalUserData, IdentityLookup } from "@gitpod/gitpod-protocol";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, MaybeUser, ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -287,8 +287,13 @@ export class UserService {
         return await this.userDb.storeUser(target);
     }
 
-    async findUserForLogin(params: { candidate: Identity }) {
+    async findUserForLogin(params: { candidate: IdentityLookup }) {
         let user = await this.userDb.findUserByIdentity(params.candidate);
+        return user;
+    }
+
+    async findOrgOwnedUser(params: { organizationId: string; email: string }): Promise<MaybeUser> {
+        let user = await this.userDb.findOrgOwnedUser(params.organizationId, params.email);
         return user;
     }
 

@@ -11,7 +11,7 @@ import { Authenticator } from "../auth/authenticator";
 import { UserService } from "../user/user-service";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Identity, User } from "@gitpod/gitpod-protocol";
+import { Identity, IdentityLookup, User } from "@gitpod/gitpod-protocol";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 import { ResponseError } from "vscode-ws-jsonrpc";
 
@@ -57,9 +57,8 @@ export class IamSessionApp {
 
     protected async doCreateSession(req: express.Request) {
         const payload = OIDCCreateSessionPayload.validate(req.body);
-        const existingUser = await this.userService.findUserForLogin({
-            candidate: this.mapOIDCProfileToIdentity(payload),
-        });
+
+        const existingUser = await this.findExistingOIDCUser(payload);
         const user = existingUser || (await this.createNewOIDCUser(payload));
 
         await new Promise<void>((resolve, reject) => {
@@ -77,17 +76,66 @@ export class IamSessionApp {
         };
     }
 
+    /**
+     * Maps from OIDC profile (ID token) to `Identity` which is used for the primary
+     * lookup of existing users as well as for creating new accounts.
+     */
     protected mapOIDCProfileToIdentity(payload: OIDCCreateSessionPayload): Identity {
         const {
-            claims: { sub, name, email },
+            claims: { sub, name, email, aud },
+        } = payload;
+        return {
+            authId: sub,
+            authProviderId: aud,
+            primaryEmail: email,
+            authName: name,
+        };
+    }
+
+    /**
+     * Computes search criteria to look up existing accounts in compatibility mode.
+     * The composite key `[subject, oidc-client-config-id]` was used as identifier for
+     * existing accounts before the switch to `[subject, audience/client-id]`.
+     */
+    protected mapOIDCProfileToIdentityLookup_compatibility(payload: OIDCCreateSessionPayload): IdentityLookup {
+        const {
+            claims: { sub },
             oidcClientConfigId,
         } = payload;
         return {
             authId: sub,
             authProviderId: oidcClientConfigId,
-            authName: name,
-            primaryEmail: email,
         };
+    }
+
+    protected async findExistingOIDCUser(payload: OIDCCreateSessionPayload): Promise<User | undefined> {
+        // Direct lookup
+        let existingUser = await this.userService.findUserForLogin({
+            candidate: this.mapOIDCProfileToIdentity(payload),
+        });
+        if (existingUser) {
+            return existingUser;
+        }
+
+        // Compatibility lookup
+        existingUser = await this.userService.findUserForLogin({
+            candidate: this.mapOIDCProfileToIdentityLookup_compatibility(payload),
+        });
+        if (existingUser) {
+            // TODO(at) convert legacy entry
+            return existingUser;
+        }
+
+        // Organizational account lookup by email address
+        existingUser = await this.userService.findOrgOwnedUser({
+            organizationId: payload.organizationId,
+            email: payload.claims.email,
+        });
+        if (existingUser) {
+            log.info("Found Org-owned user by email.", { email: payload?.claims?.email });
+        }
+
+        return existingUser;
     }
 
     protected async createNewOIDCUser(payload: OIDCCreateSessionPayload): Promise<User> {

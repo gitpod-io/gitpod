@@ -30,15 +30,22 @@ class TestIamSessionApp {
 
     protected cookieName = "test-session-name";
 
-    protected knownSub = "111";
+    protected knownSubjectID = "111";
+    protected knownEmail = "tester@my.org";
 
     protected userServiceMock: Partial<UserService> = {
         createUser: (params) => {
             return { id: "id-new-user" } as any;
         },
 
-        findUserForLogin: (params) => {
-            if (params.candidate?.authId === this.knownSub) {
+        findUserForLogin: async (params) => {
+            if (params.candidate?.authId === this.knownSubjectID) {
+                return { id: "id-known-user" } as any;
+            }
+            return undefined;
+        },
+        findOrgOwnedUser: async (params) => {
+            if (params.email === this.knownEmail) {
                 return { id: "id-known-user" } as any;
             }
             return undefined;
@@ -141,7 +148,21 @@ class TestIamSessionApp {
 
     @test public async testSessionRequestResponsesWithSetCookie_knownUser() {
         const payload = { ...this.payload };
-        payload.claims.sub = this.knownSub;
+        payload.claims.sub = this.knownSubjectID;
+        const result = await request(this.app.create())
+            .post("/session")
+            .set("Content-Type", "application/json")
+            .send(JSON.stringify(payload));
+
+        expect(result.statusCode, JSON.stringify(result.body)).to.equal(200);
+        expect(result.body?.userId).to.equal("id-known-user");
+        expect(JSON.stringify(result.get("Set-Cookie"))).to.contain(this.cookieName);
+    }
+
+    @test public async testSessionRequestResponsesWithSetCookie_knownEmail() {
+        const payload = { ...this.payload };
+        payload.claims.sub = "random-subject-id";
+        payload.claims.email = this.knownEmail;
         const result = await request(this.app.create())
             .post("/session")
             .set("Content-Type", "application/json")
