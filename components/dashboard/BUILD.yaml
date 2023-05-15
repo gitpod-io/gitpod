@@ -6,6 +6,7 @@ packages:
       - "src/**/*.ts*"
       - "src/**/*.css"
       - "src/**/*.svg"
+      - "src/**/*.png"
       - "typings/**"
       - package.json
       - tailwind.config.js
