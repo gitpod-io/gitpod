@@ -13,8 +13,12 @@ import { StripeService } from "../user/stripe-service";
 const expect = chai.expect;
 
 const mockedStripe = new StripeService();
-mockedStripe.updateAttributionId = async (stripeCustomerId: string, attributionId: string) => {
-    return;
+mockedStripe.updateAttributionId = async (
+    stripeCustomerId: string,
+    attributionId: string,
+    oldAttributionId: string,
+) => {
+    return true;
 };
 testContainer.load(
     new ContainerModule((bind) => {

@@ -161,7 +161,7 @@ export class UserToTeamMigrationService {
             const stripeCustomerId = stripeCustomer[0].stripeId;
             // update the metadata['attributionid'] on the stripe customer in stripe
             try {
-                await this.stripeService.updateAttributionId(stripeCustomerId, newAttribution);
+                await this.stripeService.updateAttributionId(stripeCustomerId, newAttribution, oldAttribution);
                 // delete the record from the db so it gets repopulated on next use
                 result = await conn.query("DELETE FROM d_b_stripe_customer WHERE attributionid = ?", [oldAttribution]);
                 log.info(ctx, "Migrated stripe customer data.", {
