@@ -131,6 +131,9 @@ export class IamSessionApp {
             organizationId: payload.organizationId,
             email: payload.claims.email,
         });
+        if (existingUser) {
+            log.info("Found Org-owned user by email.", { email: payload?.claims?.email });
+        }
 
         return existingUser;
     }
