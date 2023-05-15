@@ -78,11 +78,11 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             </div>
             <div className="flex-col ml-1 mt-1 flex-grow">
                 <div className="flex font-semibold text-gray-700">
-                    <div className="text-gray-700 dark:text-gray-300">Context URL</div>
+                    <div className="text-gray-700 dark:text-gray-300 truncate w-80">
+                        {displayContextUrl(props.initialValue) || "Select a repository"}
+                    </div>
                 </div>
-                <div className={"flex text-xs text-gray-500 dark:text-gray-400 font-semibold "}>
-                    {displayContextUrl(props.initialValue) || "Select a repository"}
-                </div>
+                <div className={"flex text-xs text-gray-500 dark:text-gray-400 font-semibold "}>Context URL</div>
             </div>
         </div>
     );
