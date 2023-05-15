@@ -35,7 +35,7 @@ const (
 
 func (s *Service) getStartHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		config, err := s.GetClientConfigFromStartRequest(r)
+		config, err := s.getClientConfigFromStartRequest(r)
 		if err != nil {
 			log.WithError(err).Warn("Failed to start SSO sing-in flow.")
 			http.Error(rw, "We were unable to find the SSO configuration you've requested. Please verify SSO is configured with your Organization owner.", http.StatusNotFound)
@@ -54,7 +54,7 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 
 		redirectURL := getCallbackURL(r.Host)
 
-		startParams, err := s.GetStartParams(config, redirectURL, StateParams{
+		startParams, err := s.getStartParams(config, redirectURL, StateParams{
 			ClientConfigID: config.ID,
 			ReturnToURL:    returnToURL,
 			Activate:       activate,
@@ -91,7 +91,7 @@ func newCallbackCookie(r *http.Request, name string, value string) *http.Cookie 
 // The OIDC callback handler depends on the state produced in the OAuth2 middleware
 func (s *Service) getCallbackHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		config, state, err := s.GetClientConfigFromCallbackRequest(r)
+		config, state, err := s.getClientConfigFromCallbackRequest(r)
 		if err != nil {
 			log.WithError(err).Warn("Client SSO config not found")
 			http.Error(rw, "We were unable to find the SSO configuration you've requested. Please verify SSO is configured with your Organization owner.", http.StatusNotFound)
@@ -109,7 +109,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			http.Error(rw, "There was no nonce present on the request. Please try to sign-in in again.", http.StatusBadRequest)
 			return
 		}
-		result, err := s.Authenticate(r.Context(), AuthenticateParams{
+		result, err := s.authenticate(r.Context(), authenticateParams{
 			Config:           config,
 			OAuth2Result:     oauth2Result,
 			NonceCookieValue: nonceCookie.Value,
@@ -123,7 +123,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		log.WithField("id_token", result.IDToken).Trace("User verification was successful")
 
 		if state.Activate {
-			err = s.ActivateClientConfig(r.Context(), config)
+			err = s.activateClientConfig(r.Context(), config)
 			if err != nil {
 				log.WithError(err).Warn("Failed to mark OIDC Client Config as active")
 				http.Error(rw, "We've been unable to mark the selected OIDC config as active. Please try again.", http.StatusInternalServerError)
@@ -131,7 +131,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			}
 		}
 
-		cookie, _, err := s.CreateSession(r.Context(), result, config)
+		cookie, _, err := s.createSession(r.Context(), result, config)
 		if err != nil {
 			log.WithError(err).Warn("Failed to create session from downstream session provider.")
 			http.Error(rw, "We were unable to create a user session.", http.StatusInternalServerError)

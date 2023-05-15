@@ -42,7 +42,7 @@ func GetOAuth2ResultFromContext(ctx context.Context) *OAuth2Result {
 
 func (s *Service) OAuth2Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		config, _, err := s.GetClientConfigFromCallbackRequest(r)
+		config, _, err := s.getClientConfigFromCallbackRequest(r)
 		if err != nil {
 			log.Warn("client config not found: " + err.Error())
 			http.Error(rw, "config not found", http.StatusNotFound)
