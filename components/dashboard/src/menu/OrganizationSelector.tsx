@@ -82,8 +82,15 @@ export default function OrganizationSelector() {
         });
     }
 
-    // Show settings if user is an owner of current org
+    // Show billing & settings if user is an owner of current org
     if (currentOrg.data && currentOrg.data.isOwner) {
+        linkEntries.push({
+            title: "Billing",
+            customContent: <LinkEntry>Billing</LinkEntry>,
+            active: false,
+            separator: false,
+            link: "/billing",
+        });
         linkEntries.push({
             title: "Settings",
             customContent: <LinkEntry>Settings</LinkEntry>,

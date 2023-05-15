@@ -24,6 +24,8 @@ import { toRemoteURL } from "../projects/render-utils";
 import { gitpodHostUrl } from "../service/service";
 import "./react-datepicker.css";
 import { Heading1, Heading2, Subheading } from "./typography/headings";
+import { Link } from "react-router-dom";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -37,6 +39,7 @@ function UsageView({ attributionId }: UsageViewProps) {
     const [endDate, setEndDate] = useState(dayjs());
     const supportedClasses = useWorkspaceClasses();
     const location = useLocation();
+    const currentOrg = useCurrentOrg();
     useEffect(() => {
         const match = /#(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})/.exec(location.hash);
         if (match) {
@@ -246,6 +249,15 @@ function UsageView({ attributionId }: UsageViewProps) {
                                                     {usagePage.data?.creditsUsed.toLocaleString()}
                                                 </span>
                                             </div>
+                                            {currentOrg.data && currentOrg.data.isOwner && (
+                                                <div className="flex text-xs text-gray-600">
+                                                    <span className="dark:text-gray-500 text-gray-400">
+                                                        <Link to="/billing" className="gp-link">
+                                                            View Billing →
+                                                        </Link>
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 )}
