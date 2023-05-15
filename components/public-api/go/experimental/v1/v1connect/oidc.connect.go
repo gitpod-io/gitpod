@@ -42,7 +42,7 @@ type OIDCServiceClient interface {
 	// Removes an OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error)
 	// Activates an OIDC client configuration by ID.
-	ActivateClientConfig(context.Context, *connect_go.Request[v1.ActivateClientConfigRequest]) (*connect_go.Response[v1.ActivateClientConfigResponse], error)
+	SetClientConfigActivation(context.Context, *connect_go.Request[v1.SetClientConfigActivationRequest]) (*connect_go.Response[v1.SetClientConfigActivationResponse], error)
 }
 
 // NewOIDCServiceClient constructs a client for the gitpod.experimental.v1.OIDCService service. By
@@ -80,9 +80,9 @@ func NewOIDCServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 			baseURL+"/gitpod.experimental.v1.OIDCService/DeleteClientConfig",
 			opts...,
 		),
-		activateClientConfig: connect_go.NewClient[v1.ActivateClientConfigRequest, v1.ActivateClientConfigResponse](
+		setClientConfigActivation: connect_go.NewClient[v1.SetClientConfigActivationRequest, v1.SetClientConfigActivationResponse](
 			httpClient,
-			baseURL+"/gitpod.experimental.v1.OIDCService/ActivateClientConfig",
+			baseURL+"/gitpod.experimental.v1.OIDCService/SetClientConfigActivation",
 			opts...,
 		),
 	}
@@ -90,12 +90,12 @@ func NewOIDCServiceClient(httpClient connect_go.HTTPClient, baseURL string, opts
 
 // oIDCServiceClient implements OIDCServiceClient.
 type oIDCServiceClient struct {
-	createClientConfig   *connect_go.Client[v1.CreateClientConfigRequest, v1.CreateClientConfigResponse]
-	getClientConfig      *connect_go.Client[v1.GetClientConfigRequest, v1.GetClientConfigResponse]
-	listClientConfigs    *connect_go.Client[v1.ListClientConfigsRequest, v1.ListClientConfigsResponse]
-	updateClientConfig   *connect_go.Client[v1.UpdateClientConfigRequest, v1.UpdateClientConfigResponse]
-	deleteClientConfig   *connect_go.Client[v1.DeleteClientConfigRequest, v1.DeleteClientConfigResponse]
-	activateClientConfig *connect_go.Client[v1.ActivateClientConfigRequest, v1.ActivateClientConfigResponse]
+	createClientConfig        *connect_go.Client[v1.CreateClientConfigRequest, v1.CreateClientConfigResponse]
+	getClientConfig           *connect_go.Client[v1.GetClientConfigRequest, v1.GetClientConfigResponse]
+	listClientConfigs         *connect_go.Client[v1.ListClientConfigsRequest, v1.ListClientConfigsResponse]
+	updateClientConfig        *connect_go.Client[v1.UpdateClientConfigRequest, v1.UpdateClientConfigResponse]
+	deleteClientConfig        *connect_go.Client[v1.DeleteClientConfigRequest, v1.DeleteClientConfigResponse]
+	setClientConfigActivation *connect_go.Client[v1.SetClientConfigActivationRequest, v1.SetClientConfigActivationResponse]
 }
 
 // CreateClientConfig calls gitpod.experimental.v1.OIDCService.CreateClientConfig.
@@ -123,9 +123,9 @@ func (c *oIDCServiceClient) DeleteClientConfig(ctx context.Context, req *connect
 	return c.deleteClientConfig.CallUnary(ctx, req)
 }
 
-// ActivateClientConfig calls gitpod.experimental.v1.OIDCService.ActivateClientConfig.
-func (c *oIDCServiceClient) ActivateClientConfig(ctx context.Context, req *connect_go.Request[v1.ActivateClientConfigRequest]) (*connect_go.Response[v1.ActivateClientConfigResponse], error) {
-	return c.activateClientConfig.CallUnary(ctx, req)
+// SetClientConfigActivation calls gitpod.experimental.v1.OIDCService.SetClientConfigActivation.
+func (c *oIDCServiceClient) SetClientConfigActivation(ctx context.Context, req *connect_go.Request[v1.SetClientConfigActivationRequest]) (*connect_go.Response[v1.SetClientConfigActivationResponse], error) {
+	return c.setClientConfigActivation.CallUnary(ctx, req)
 }
 
 // OIDCServiceHandler is an implementation of the gitpod.experimental.v1.OIDCService service.
@@ -141,7 +141,7 @@ type OIDCServiceHandler interface {
 	// Removes an OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *connect_go.Request[v1.DeleteClientConfigRequest]) (*connect_go.Response[v1.DeleteClientConfigResponse], error)
 	// Activates an OIDC client configuration by ID.
-	ActivateClientConfig(context.Context, *connect_go.Request[v1.ActivateClientConfigRequest]) (*connect_go.Response[v1.ActivateClientConfigResponse], error)
+	SetClientConfigActivation(context.Context, *connect_go.Request[v1.SetClientConfigActivationRequest]) (*connect_go.Response[v1.SetClientConfigActivationResponse], error)
 }
 
 // NewOIDCServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -176,9 +176,9 @@ func NewOIDCServiceHandler(svc OIDCServiceHandler, opts ...connect_go.HandlerOpt
 		svc.DeleteClientConfig,
 		opts...,
 	))
-	mux.Handle("/gitpod.experimental.v1.OIDCService/ActivateClientConfig", connect_go.NewUnaryHandler(
-		"/gitpod.experimental.v1.OIDCService/ActivateClientConfig",
-		svc.ActivateClientConfig,
+	mux.Handle("/gitpod.experimental.v1.OIDCService/SetClientConfigActivation", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.OIDCService/SetClientConfigActivation",
+		svc.SetClientConfigActivation,
 		opts...,
 	))
 	return "/gitpod.experimental.v1.OIDCService/", mux
@@ -207,6 +207,6 @@ func (UnimplementedOIDCServiceHandler) DeleteClientConfig(context.Context, *conn
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.DeleteClientConfig is not implemented"))
 }
 
-func (UnimplementedOIDCServiceHandler) ActivateClientConfig(context.Context, *connect_go.Request[v1.ActivateClientConfigRequest]) (*connect_go.Response[v1.ActivateClientConfigResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.ActivateClientConfig is not implemented"))
+func (UnimplementedOIDCServiceHandler) SetClientConfigActivation(context.Context, *connect_go.Request[v1.SetClientConfigActivationRequest]) (*connect_go.Response[v1.SetClientConfigActivationResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.OIDCService.SetClientConfigActivation is not implemented"))
 }

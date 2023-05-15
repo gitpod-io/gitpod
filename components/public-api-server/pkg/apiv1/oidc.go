@@ -288,7 +288,7 @@ func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Reque
 	return connect.NewResponse(&v1.DeleteClientConfigResponse{}), nil
 }
 
-func (s *OIDCService) ActivateClientConfig(ctx context.Context, req *connect.Request[v1.ActivateClientConfigRequest]) (*connect.Response[v1.ActivateClientConfigResponse], error) {
+func (s *OIDCService) SetClientConfigActivation(ctx context.Context, req *connect.Request[v1.SetClientConfigActivationRequest]) (*connect.Response[v1.SetClientConfigActivationResponse], error) {
 	organizationID, err := validateOrganizationID(ctx, req.Msg.GetOrganizationId())
 	if err != nil {
 		return nil, err
@@ -297,6 +297,10 @@ func (s *OIDCService) ActivateClientConfig(ctx context.Context, req *connect.Req
 	clientConfigID, err := validateOIDCClientConfigID(ctx, req.Msg.GetId())
 	if err != nil {
 		return nil, err
+	}
+
+	if !req.Msg.GetActivate() {
+		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("deactivation not yet implemented"))
 	}
 
 	conn, err := s.getConnection(ctx)
@@ -328,7 +332,7 @@ func (s *OIDCService) ActivateClientConfig(ctx context.Context, req *connect.Req
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to activate OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
 	}
 
-	return connect.NewResponse(&v1.ActivateClientConfigResponse{}), nil
+	return connect.NewResponse(&v1.SetClientConfigActivationResponse{}), nil
 }
 
 func (s *OIDCService) getConnection(ctx context.Context) (protocol.APIInterface, error) {

@@ -894,9 +894,9 @@ export class DeleteClientConfigResponse extends Message<DeleteClientConfigRespon
 }
 
 /**
- * @generated from message gitpod.experimental.v1.ActivateClientConfigRequest
+ * @generated from message gitpod.experimental.v1.SetClientConfigActivationRequest
  */
-export class ActivateClientConfigRequest extends Message<ActivateClientConfigRequest> {
+export class SetClientConfigActivationRequest extends Message<SetClientConfigActivationRequest> {
   /**
    * @generated from field: string id = 1;
    */
@@ -907,62 +907,68 @@ export class ActivateClientConfigRequest extends Message<ActivateClientConfigReq
    */
   organizationId = "";
 
-  constructor(data?: PartialMessage<ActivateClientConfigRequest>) {
+  /**
+   * @generated from field: bool activate = 3;
+   */
+  activate = false;
+
+  constructor(data?: PartialMessage<SetClientConfigActivationRequest>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime = proto3;
-  static readonly typeName = "gitpod.experimental.v1.ActivateClientConfigRequest";
+  static readonly typeName = "gitpod.experimental.v1.SetClientConfigActivationRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "organization_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "activate", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ActivateClientConfigRequest {
-    return new ActivateClientConfigRequest().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetClientConfigActivationRequest {
+    return new SetClientConfigActivationRequest().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ActivateClientConfigRequest {
-    return new ActivateClientConfigRequest().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetClientConfigActivationRequest {
+    return new SetClientConfigActivationRequest().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ActivateClientConfigRequest {
-    return new ActivateClientConfigRequest().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetClientConfigActivationRequest {
+    return new SetClientConfigActivationRequest().fromJsonString(jsonString, options);
   }
 
-  static equals(a: ActivateClientConfigRequest | PlainMessage<ActivateClientConfigRequest> | undefined, b: ActivateClientConfigRequest | PlainMessage<ActivateClientConfigRequest> | undefined): boolean {
-    return proto3.util.equals(ActivateClientConfigRequest, a, b);
+  static equals(a: SetClientConfigActivationRequest | PlainMessage<SetClientConfigActivationRequest> | undefined, b: SetClientConfigActivationRequest | PlainMessage<SetClientConfigActivationRequest> | undefined): boolean {
+    return proto3.util.equals(SetClientConfigActivationRequest, a, b);
   }
 }
 
 /**
- * @generated from message gitpod.experimental.v1.ActivateClientConfigResponse
+ * @generated from message gitpod.experimental.v1.SetClientConfigActivationResponse
  */
-export class ActivateClientConfigResponse extends Message<ActivateClientConfigResponse> {
-  constructor(data?: PartialMessage<ActivateClientConfigResponse>) {
+export class SetClientConfigActivationResponse extends Message<SetClientConfigActivationResponse> {
+  constructor(data?: PartialMessage<SetClientConfigActivationResponse>) {
     super();
     proto3.util.initPartial(data, this);
   }
 
   static readonly runtime = proto3;
-  static readonly typeName = "gitpod.experimental.v1.ActivateClientConfigResponse";
+  static readonly typeName = "gitpod.experimental.v1.SetClientConfigActivationResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
   ]);
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): ActivateClientConfigResponse {
-    return new ActivateClientConfigResponse().fromBinary(bytes, options);
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SetClientConfigActivationResponse {
+    return new SetClientConfigActivationResponse().fromBinary(bytes, options);
   }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): ActivateClientConfigResponse {
-    return new ActivateClientConfigResponse().fromJson(jsonValue, options);
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SetClientConfigActivationResponse {
+    return new SetClientConfigActivationResponse().fromJson(jsonValue, options);
   }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): ActivateClientConfigResponse {
-    return new ActivateClientConfigResponse().fromJsonString(jsonString, options);
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SetClientConfigActivationResponse {
+    return new SetClientConfigActivationResponse().fromJsonString(jsonString, options);
   }
 
-  static equals(a: ActivateClientConfigResponse | PlainMessage<ActivateClientConfigResponse> | undefined, b: ActivateClientConfigResponse | PlainMessage<ActivateClientConfigResponse> | undefined): boolean {
-    return proto3.util.equals(ActivateClientConfigResponse, a, b);
+  static equals(a: SetClientConfigActivationResponse | PlainMessage<SetClientConfigActivationResponse> | undefined, b: SetClientConfigActivationResponse | PlainMessage<SetClientConfigActivationResponse> | undefined): boolean {
+    return proto3.util.equals(SetClientConfigActivationResponse, a, b);
   }
 }

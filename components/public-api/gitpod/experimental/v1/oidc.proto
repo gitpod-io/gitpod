@@ -149,7 +149,7 @@ service OIDCService {
   rpc DeleteClientConfig(DeleteClientConfigRequest) returns (DeleteClientConfigResponse) {};
 
   // Activates an OIDC client configuration by ID.
-  rpc ActivateClientConfig(ActivateClientConfigRequest) returns (ActivateClientConfigResponse) {};
+  rpc SetClientConfigActivation(SetClientConfigActivationRequest) returns (SetClientConfigActivationResponse) {};
 }
 
 message CreateClientConfigRequest {
@@ -198,9 +198,10 @@ message DeleteClientConfigRequest {
 
 message DeleteClientConfigResponse {}
 
-message ActivateClientConfigRequest {
+message SetClientConfigActivationRequest {
   string id = 1;
   string organization_id = 2;
+  bool activate = 3;
 }
 
-message ActivateClientConfigResponse {}
+message SetClientConfigActivationResponse {}
