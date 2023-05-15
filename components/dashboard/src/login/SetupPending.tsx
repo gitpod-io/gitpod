@@ -10,7 +10,8 @@ import cubicleImg from "../images/cubicle.png";
 import cubicleDarkImg from "../images/cubicle-dark.png";
 import cubicleImg2x from "../images/cubicle@2x.png";
 import cubicleDarkImg2x from "../images/cubicle-dark@2x.png";
-import gitpodIcon from "../icons/gitpod.svg";
+import gitpodIcon from "../images/gitpod.svg";
+import gitpodDarkIcon from "../images/gitpod-dark.svg";
 import classNames from "classnames";
 import { useTheme } from "../theme-context";
 
@@ -24,8 +25,7 @@ export const SetupPending: FC<Props> = ({ alwaysShowHeader }) => {
         <div className="flex-grow flex items-center justify-center p-4">
             <div className={classNames(alwaysShowHeader ? "" : "lg:hidden", "absolute top-0 left-0 right-0")}>
                 <div className="flex items-center justify-center items-center py-3 space-x-1">
-                    <img src={gitpodIcon} className="w-6 h-6" alt="Gitpod's logo" />
-                    <span className="text-lg">Gitpod</span>
+                    <img src={isDark ? gitpodDarkIcon : gitpodIcon} className="h-8" alt="Gitpod's logo" />
                 </div>
             </div>
             <div className="max-w-md flex flex-col items-center justify-center text-center">
