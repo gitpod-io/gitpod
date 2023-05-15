@@ -16,18 +16,11 @@ import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { StripeService } from "./stripe-service";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
 import { UserToTeamMigrationService } from "@gitpod/gitpod-db/lib/user-to-team-migration-service";
 import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-
-export interface FindUserByIdentityStrResult {
-    user: User;
-    identity: Identity;
-    authHost: string;
-}
 
 export interface CreateUserParams {
     identity: Identity;
@@ -54,45 +47,9 @@ export class UserService {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectDB) protected readonly projectDb: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(StripeService) protected readonly stripeService: StripeService;
     @inject(UsageService) protected readonly usageService: UsageService;
     @inject(UserToTeamMigrationService) protected readonly migrationService: UserToTeamMigrationService;
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
-
-    /**
-     * Takes strings in the form of <authHost>/<authName> and returns the matching User
-     * @param identityStr A string of the form <authHost>/<authName>
-     * @returns The User associated with the identified Identity
-     */
-    async findUserByIdentityStr(identityStr: string): Promise<FindUserByIdentityStrResult | undefined> {
-        const parts = identityStr.split("/");
-        if (parts.length !== 2) {
-            return undefined;
-        }
-        const [authHost, authName] = parts;
-        if (!authHost || !authName) {
-            return undefined;
-        }
-        const authProviderId = this.getAuthProviderIdForHost(authHost);
-        if (!authProviderId) {
-            return undefined;
-        }
-
-        const identities = await this.userDb.findIdentitiesByName({ authProviderId, authName });
-        if (identities.length === 0) {
-            return undefined;
-        } else if (identities.length > 1) {
-            // TODO Choose a better solution here. It blocks this lookup until the old account logs in again and gets their authName updated
-            throw new Error(`Multiple identities with name: ${authName}`);
-        }
-
-        const identity = identities[0];
-        const user = await this.userDb.findUserByIdentity(identity);
-        if (!user) {
-            return undefined;
-        }
-        return { user, identity, authHost };
-    }
 
     protected getAuthProviderIdForHost(host: string): string | undefined {
         const hostContext = this.hostContextProvider.get(host);
