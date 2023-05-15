@@ -149,7 +149,7 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
     countUsagesOfPhoneNumber(phoneNumber: string): Promise<number>;
     isBlockedPhoneNumber(phoneNumber: string): Promise<boolean>;
 
-    findOrganizationalUser(organizationId: string, email: string): Promise<MaybeUser>;
+    findOrgOwnedUser(organizationId: string, email: string): Promise<MaybeUser>;
 }
 export type PartialUserUpdate = Partial<Omit<User, "identities">> & Pick<User, "id">;
 

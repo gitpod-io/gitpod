@@ -178,7 +178,7 @@ class UserDBSpec {
     }
 
     @test(timeout(10000))
-    public async findOrganizationalUser_by_email() {
+    public async findOrgOwnedUser_by_email() {
         let orgUser = await this.db.newUser();
         orgUser.organizationId = "org1";
         orgUser.name = "Tester";
@@ -190,7 +190,7 @@ class UserDBSpec {
         });
         orgUser = await this.db.storeUser(orgUser);
 
-        const result = await this.db.findOrganizationalUser("org1", "tester@some.org");
+        const result = await this.db.findOrgOwnedUser("org1", "tester@some.org");
         expect(result, "organizational user should be found").not.to.be.undefined;
         expect(result!.identities, "should find a single identity").to.have.length(1);
     }

@@ -44,7 +44,7 @@ class TestIamSessionApp {
             }
             return undefined;
         },
-        findOrganizationalUser: async (params) => {
+        findOrgOwnedUser: async (params) => {
             if (params.email === this.knownEmail) {
                 return { id: "id-known-user" } as any;
             }

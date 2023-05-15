@@ -127,7 +127,7 @@ export class IamSessionApp {
         }
 
         // Organizational account lookup by email address
-        existingUser = await this.userService.findOrganizationalUser({
+        existingUser = await this.userService.findOrgOwnedUser({
             organizationId: payload.organizationId,
             email: payload.claims.email,
         });

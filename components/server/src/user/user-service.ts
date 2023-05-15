@@ -335,8 +335,8 @@ export class UserService {
         return user;
     }
 
-    async findOrganizationalUser(params: { organizationId: string; email: string }): Promise<MaybeUser> {
-        let user = await this.userDb.findOrganizationalUser(params.organizationId, params.email);
+    async findOrgOwnedUser(params: { organizationId: string; email: string }): Promise<MaybeUser> {
+        let user = await this.userDb.findOrgOwnedUser(params.organizationId, params.email);
         return user;
     }
 

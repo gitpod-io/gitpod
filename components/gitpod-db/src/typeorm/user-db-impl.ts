@@ -600,7 +600,7 @@ export class TypeORMUserDBImpl implements UserDB {
         return blockedUsers > 0;
     }
 
-    async findOrganizationalUser(organizationId: string, email: string): Promise<MaybeUser> {
+    async findOrgOwnedUser(organizationId: string, email: string): Promise<MaybeUser> {
         const userRepo = await this.getUserRepo();
         const qBuilder = userRepo
             .createQueryBuilder("user")
