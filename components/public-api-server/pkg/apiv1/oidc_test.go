@@ -121,6 +121,21 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
 	})
 
+	t.Run("returns invalid argument when issuer is not valid URL", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		config := &v1.OIDCClientConfig{
+			OrganizationId: organizationID.String(),
+			OidcConfig:     &v1.OIDCConfig{Issuer: "random thing which is not url"},
+			Oauth2Config:   &v1.OAuth2Config{ClientId: "test-id", ClientSecret: "test-secret"},
+		}
+		_, err := client.CreateClientConfig(context.Background(), connect.NewRequest(&v1.CreateClientConfigRequest{
+			Config: config,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
 	t.Run("returns invalid argument when issuer is not reachable", func(t *testing.T) {
 		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
@@ -158,9 +173,11 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 		issuer := newFakeIdP(t, true)
 
+		// Trailing slashes should be removed from the issuer
+		issuerWithTrailingSlash := issuer + "/"
 		config := &v1.OIDCClientConfig{
 			OrganizationId: organizationID.String(),
-			OidcConfig:     &v1.OIDCConfig{Issuer: issuer},
+			OidcConfig:     &v1.OIDCConfig{Issuer: issuerWithTrailingSlash},
 			Active:         true,
 			Oauth2Config: &v1.OAuth2Config{
 				ClientId:     "test-id",
@@ -184,7 +201,7 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 					Scopes:       []string{"openid", "profile", "email", "my-scope"},
 				},
 				OidcConfig: &v1.OIDCConfig{
-					Issuer: config.OidcConfig.Issuer,
+					Issuer: issuer,
 				},
 			},
 		}, response.Msg)
@@ -195,10 +212,11 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 
 		retrieved, err := db.GetOIDCClientConfig(context.Background(), dbConn, uuid.MustParse(response.Msg.Config.Id))
 		require.NoError(t, err)
+		require.Equal(t, issuer, retrieved.Issuer, "issuer must not contain trailing slash")
 
 		decrypted, err := retrieved.Data.Decrypt(dbtest.CipherSet(t))
 		require.NoError(t, err)
-		require.Equal(t, toDbOIDCSpec(config.Oauth2Config, config.OidcConfig), decrypted)
+		require.Equal(t, toDbOIDCSpec(config.Oauth2Config), decrypted)
 	})
 }
 
@@ -455,7 +473,7 @@ func TestOIDCService_UpdateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 				Id:             created.Msg.GetConfig().Id,
 				OrganizationId: organizationID.String(),
 				OidcConfig: &v1.OIDCConfig{
-					Issuer: issuerNew,
+					Issuer: issuerNew + "/", // trailing slash should be removed
 				},
 				Oauth2Config: &v1.OAuth2Config{
 					Scopes: []string{"foo"},
