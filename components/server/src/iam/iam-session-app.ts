@@ -41,7 +41,7 @@ export class IamSessionApp {
                 const result = await this.doCreateSession(req);
                 res.status(200).json(result);
             } catch (error) {
-                log.error("Error creating session on behalf of IAM", error, { error });
+                log.error("Error creating session on behalf of IAM", error);
                 if (error instanceof ResponseError) {
                     res.status(error.code).json({ message: error.message });
                     return;

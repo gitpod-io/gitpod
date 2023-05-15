@@ -36,7 +36,7 @@ func CreateStripeCustomer(ctx context.Context, conn *gorm.DB, customer StripeCus
 
 	tx := conn.WithContext(ctx).Create(customer)
 	if tx.Error != nil {
-		return fmt.Errorf("failed to create StripeCustomer ID %s", customer.StripeCustomerID)
+		return fmt.Errorf("failed to create StripeCustomer ID %s: %w", customer.StripeCustomerID, tx.Error)
 	}
 
 	return nil
@@ -53,7 +53,7 @@ func GetStripeCustomer(ctx context.Context, conn *gorm.DB, stripeCustomerID stri
 			return StripeCustomer{}, fmt.Errorf("stripe customer with ID %s does not exist: %w", stripeCustomerID, ErrorNotFound)
 		}
 
-		return StripeCustomer{}, fmt.Errorf("failed to lookup stripe customer with ID %s", stripeCustomerID)
+		return StripeCustomer{}, fmt.Errorf("failed to lookup stripe customer with ID %s: %w", stripeCustomerID, err)
 	}
 
 	return customer, nil

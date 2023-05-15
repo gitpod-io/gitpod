@@ -1,21 +1,18 @@
 /**
- * Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { ProjectDB, TeamDB, TypeORM, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { Synchronizer } from "@gitpod/gitpod-db/lib/typeorm/synchronizer";
 import { AdditionalUserData, Team, User, WorkspaceInfo } from "@gitpod/gitpod-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { inject, injectable } from "inversify";
-import { ProjectDB } from "./project-db";
-import { TeamDB } from "./team-db";
-import { ResponseError } from "vscode-jsonrpc";
-import { WorkspaceDB } from "./workspace-db";
-import { TypeORM } from "./typeorm/typeorm";
-import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { UserDB } from "./user-db";
-import { Synchronizer } from "./typeorm/synchronizer";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { inject, injectable } from "inversify";
+import { ResponseError } from "vscode-jsonrpc";
+import { StripeService } from "../user/stripe-service";
 
 @injectable()
 export class UserToTeamMigrationService {
@@ -25,6 +22,7 @@ export class UserToTeamMigrationService {
     @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
     @inject(TypeORM) protected readonly typeorm: TypeORM;
     @inject(Synchronizer) protected readonly synchronizer: Synchronizer;
+    @inject(StripeService) protected readonly stripeService: StripeService;
 
     async migrateUser(candidate: User): Promise<User> {
         // do a quick check before going into synchonization for the common case that the user has been migrated already
@@ -34,6 +32,11 @@ export class UserToTeamMigrationService {
         return this.synchronizer.synchronized("migrate-" + candidate.id, "migrateUser", async () => {
             if (!(await this.needsMigration(candidate))) {
                 return candidate;
+            }
+            // refetch user from the db to ensure it was not migrated in the meantime
+            const refetched = await this.userDB.findUserById(candidate.id);
+            if (refetched && !(await this.needsMigration(refetched))) {
+                return refetched;
             }
             AdditionalUserData.set(candidate, { isMigratedToTeamOnlyAttribution: true });
             await this.userDB.storeUser(candidate);
@@ -149,11 +152,32 @@ export class UserToTeamMigrationService {
         ]);
         log.info(ctx, "Migrated usage data.", { teamId: team.id, result });
 
-        result = await conn.query("UPDATE d_b_stripe_customer SET attributionid = ? WHERE attributionid = ?", [
-            newAttribution,
-            oldAttribution,
-        ]);
-        log.info(ctx, "Migrated stripe customer data.", { teamId: team.id, result });
+        const stripeCustomer = await conn.query(
+            "SELECT stripeCustomerId FROM d_b_stripe_customer WHERE attributionid = ? AND deleted = 0",
+            [oldAttribution],
+        );
+
+        if (stripeCustomer.length > 0) {
+            const stripeCustomerId = stripeCustomer[0].stripeId;
+            // update the metadata['attributionid'] on the stripe customer in stripe
+            try {
+                await this.stripeService.updateAttributionId(stripeCustomerId, newAttribution);
+                // delete the record from the db so it gets repopulated on next use
+                result = await conn.query("DELETE FROM d_b_stripe_customer WHERE attributionid = ?", [oldAttribution]);
+                log.info(ctx, "Migrated stripe customer data.", {
+                    teamId: team.id,
+                    stripeId: stripeCustomerId,
+                    result,
+                });
+            } catch (error) {
+                log.error(ctx, "Failed to migrate stripe customer data.", {
+                    teamId: team.id,
+                    stripeId: stripeCustomerId,
+                    error,
+                });
+            }
+        }
+
         return team;
     }
 

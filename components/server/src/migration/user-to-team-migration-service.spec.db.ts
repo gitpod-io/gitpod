@@ -1,19 +1,27 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2023 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
 
 import * as chai from "chai";
-import { testContainer } from "./test-container";
-import { TypeORM } from "./typeorm/typeorm";
 import { UserToTeamMigrationService } from "./user-to-team-migration-service";
-import { UserDB } from "./user-db";
-import { TeamDB } from "./team-db";
-import { ProjectDB } from "./project-db";
 import { v4 as uuidv4 } from "uuid";
-import { WorkspaceDB } from "./workspace-db";
+import { ProjectDB, TeamDB, TypeORM, UserDB, WorkspaceDB, testContainer } from "@gitpod/gitpod-db/lib";
+import { ContainerModule } from "inversify";
+import { StripeService } from "../user/stripe-service";
 const expect = chai.expect;
+
+const mockedStripe = new StripeService();
+mockedStripe.updateAttributionId = async (stripeCustomerId: string, attributionId: string) => {
+    return;
+};
+testContainer.load(
+    new ContainerModule((bind) => {
+        bind(StripeService).toConstantValue(mockedStripe);
+        bind(UserToTeamMigrationService).toSelf().inSingletonScope();
+    }),
+);
 
 describe("Migration Service", () => {
     const typeORM = testContainer.get<TypeORM>(TypeORM);
@@ -103,7 +111,7 @@ describe("Migration Service", () => {
         expect((await conn.query("SELECT * FROM d_b_cost_center WHERE id = ?", [newAttrId])).length).be.eq(1);
         expect(
             (await conn.query("SELECT * FROM d_b_stripe_customer WHERE attributionId = ?", [newAttrId])).length,
-        ).be.eq(1);
+        ).be.eq(0);
     });
 
     it("should create a new free cost center when user doesn't have a team", async () => {
@@ -145,7 +153,7 @@ describe("Migration Service", () => {
             migrationService.migrateUser(user),
         ]);
         const teams = await teamDB.findTeamsByUser(user.id);
-        expect(teams.length).to.be.eq(1);
+        expect(teams.length, "not exactly one team: " + JSON.stringify(teams)).to.be.eq(1);
     });
 
     it("should append 'Organization' to too short names", async () => {

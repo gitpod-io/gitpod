@@ -113,6 +113,14 @@ export class StripeService {
             return this.getStripe().subscriptions.del(subscriptionId, { invoice_now: true });
         });
     }
+
+    public async updateAttributionId(stripeCustomerId: string, attributionId: string): Promise<void> {
+        await this.getStripe().customers.update(stripeCustomerId, {
+            metadata: {
+                attributionId,
+            },
+        });
+    }
 }
 
 async function reportStripeOutcome<T>(op: string, f: () => Promise<T>) {
