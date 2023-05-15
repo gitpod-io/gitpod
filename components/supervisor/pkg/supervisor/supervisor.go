@@ -1006,6 +1006,11 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", mem)
 	}
 
+	if _, ok := envs["HISTFILE"]; !ok {
+		envs["HISTFILE"] = "/workspace/.gitpod/.shell_history"
+		envs["PROMPT_COMMAND"] = "history -a"
+	}
+
 	var env, envn []string
 	for nme, val := range envs {
 		log.WithField("envvar", nme).Debug("passing environment variable to IDE")
