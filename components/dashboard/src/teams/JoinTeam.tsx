@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
+import { useDocumentTitle } from "../hooks/use-document-title";
 import { publicApiTeamToProtocol, teamsService } from "../service/public-api";
 
 export default function JoinTeamPage() {
@@ -34,9 +35,7 @@ export default function JoinTeamPage() {
         })();
     }, [history, inviteId, orgInvalidator]);
 
-    useEffect(() => {
-        document.title = "Joining Organization — Gitpod";
-    }, []);
+    useDocumentTitle("Joining Organization — Gitpod");
 
     return joinError ? <div className="mt-16 text-center text-gitpod-red">{String(joinError)}</div> : <></>;
 }

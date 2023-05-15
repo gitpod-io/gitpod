@@ -5,10 +5,11 @@
  */
 
 import { ConnectError } from "@bufbuild/connect-web";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { Heading1, Heading3, Subheading } from "../components/typography/headings";
 import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
+import { useDocumentTitle } from "../hooks/use-document-title";
 import { publicApiTeamToProtocol, teamsService } from "../service/public-api";
 
 export default function NewTeamPage() {
@@ -36,9 +37,7 @@ export default function NewTeamPage() {
         }
     };
 
-    useEffect(() => {
-        document.title = "New Organization — Gitpod";
-    }, []);
+    useDocumentTitle("New Organization — Gitpod");
 
     return (
         <div className="flex flex-col w-96 mt-24 mx-auto items-center">

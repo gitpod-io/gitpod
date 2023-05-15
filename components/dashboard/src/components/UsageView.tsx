@@ -186,7 +186,8 @@ function UsageView({ attributionId }: UsageViewProps) {
     return (
         <>
             <Header
-                title={
+                title="Usage"
+                complexTitle={
                     <div className="flex items-baseline">
                         <Heading1 tracking="tight">Usage</Heading1>
                         <Subheading className="ml-3">(updated every 15 minutes).</Subheading>
