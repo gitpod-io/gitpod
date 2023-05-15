@@ -114,12 +114,40 @@ export class StripeService {
         });
     }
 
-    public async updateAttributionId(stripeCustomerId: string, attributionId: string): Promise<void> {
+    public async updateAttributionId(
+        stripeCustomerId: string,
+        newAttributionId: string,
+        oldAttributionId: string,
+    ): Promise<boolean> {
+        const result = await this.getStripe().customers.search({
+            query: `metadata[attributionId]:${oldAttributionId}`,
+        });
+        if (result.data.length > 0) {
+            for (const customer of result.data) {
+                if (customer.id !== stripeCustomerId) {
+                    log.error(`Found unexpected Stripe customer with old attribution ID`, {
+                        oldAttributionId,
+                        newAttributionId,
+                        expectedStripeCustomerId: stripeCustomerId,
+                        actualStripeCustomerId: customer.id,
+                    });
+                }
+            }
+        } else {
+            log.info(`No Stripe customer found for old attribution ID`, { oldAttributionId, stripeCustomerId });
+            return false;
+        }
+        log.info(`Updating Stripe customer in stripe`, {
+            oldAttributionId,
+            newAttributionId,
+            stripeCustomerId,
+        });
         await this.getStripe().customers.update(stripeCustomerId, {
             metadata: {
-                attributionId,
+                attributionId: newAttributionId,
             },
         });
+        return true;
     }
 }
 
