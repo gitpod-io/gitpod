@@ -21,11 +21,13 @@ import { UserContext } from "../user-context";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { useQueryParams } from "../hooks/use-query-params";
 import { forceDedicatedSetupParam } from "./use-check-dedicated-setup";
+import { useDocumentTitle } from "../hooks/use-document-title";
 
 type Props = {
     onComplete: () => void;
 };
 const DedicatedSetup: FC<Props> = ({ onComplete }) => {
+    useDocumentTitle("Welcome - Gitpod");
     const currentOrg = useCurrentOrg();
     const oidcClients = useOIDCClientsQuery();
 

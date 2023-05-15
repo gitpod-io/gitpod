@@ -4,17 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import dayjs from "dayjs";
 import { PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
-import { useEffect, useState } from "react";
+import dayjs from "dayjs";
+import { useEffect, useMemo, useState } from "react";
 import { Redirect, useHistory, useParams } from "react-router";
 import Header from "../components/Header";
 import PrebuildLogs from "../components/PrebuildLogs";
+import { Subheading } from "../components/typography/headings";
 import Spinner from "../icons/Spinner.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { shortCommitMessage } from "./render-utils";
 import { useCurrentProject } from "./project-context";
-import { Heading1, Subheading } from "../components/typography/headings";
+import { shortCommitMessage } from "./render-utils";
 
 export default function PrebuildPage() {
     const history = useHistory();
@@ -49,12 +49,12 @@ export default function PrebuildPage() {
         }).dispose;
     }, [prebuildId, project]);
 
-    const renderTitle = () => {
+    const title = useMemo(() => {
         if (!prebuild) {
             return "unknown prebuild";
         }
-        return <Heading1>{prebuild.info.branch} </Heading1>;
-    };
+        return prebuild.info.branch;
+    }, [prebuild]);
 
     const renderSubtitle = () => {
         if (!prebuild) {
@@ -130,17 +130,13 @@ export default function PrebuildPage() {
         }
     };
 
-    useEffect(() => {
-        document.title = "Prebuild — Gitpod";
-    }, []);
-
     if (!loading && !project) {
         return <Redirect to={"/projects"} />;
     }
 
     return (
         <>
-            <Header title={renderTitle()} subtitle={renderSubtitle()} />
+            <Header title={title} subtitle={renderSubtitle()} />
             <div className="app-container mt-8">
                 <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId}>
                     {["building", "queued"].includes(prebuild?.status || "") ? (

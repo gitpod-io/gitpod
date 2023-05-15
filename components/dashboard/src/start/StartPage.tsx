@@ -5,14 +5,14 @@
  */
 
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { useEffect } from "react";
 import Alert from "../components/Alert";
-import { Heading2 } from "../components/typography/headings";
 import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
+import { Heading2 } from "../components/typography/headings";
+import { useDocumentTitle } from "../hooks/use-document-title";
 import gitpodIcon from "../icons/gitpod.svg";
+import CDEUniverseLogo from "../images/cdeuniverse.svg";
 import { gitpodHostUrl } from "../service/service";
 import { VerifyModal } from "./VerifyModal";
-import CDEUniverseLogo from "../images/cdeuniverse.svg";
 
 export enum StartPhase {
     Checking = 0,
@@ -93,9 +93,7 @@ export interface StartWorkspaceError {
 export function StartPage(props: StartPageProps) {
     const { phase, error } = props;
     let title = props.title || getPhaseTitle(phase, error);
-    useEffect(() => {
-        document.title = "Starting — Gitpod";
-    }, []);
+    useDocumentTitle("Starting — Gitpod");
     return (
         <div className="w-screen h-screen align-middle">
             <div className="flex flex-col mx-auto items-center text-center h-screen">
