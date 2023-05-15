@@ -575,13 +575,14 @@ func TestOIDCService_DeleteClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 	})
 }
 
-func TestOIDCService_ActivateClientConfig_WithFeatureFlagDisabled(t *testing.T) {
+func TestOIDCService_SetClientConfigActivation_WithFeatureFlagDisabled(t *testing.T) {
 	t.Run("feature flag disabled returns unauthorized", func(t *testing.T) {
 		_, client, _ := setupOIDCService(t, withOIDCFeatureDisabled)
 
-		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
 			Id:             uuid.NewString(),
 			OrganizationId: uuid.NewString(),
+			Activate:       true,
 		}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
@@ -589,11 +590,11 @@ func TestOIDCService_ActivateClientConfig_WithFeatureFlagDisabled(t *testing.T) 
 
 }
 
-func TestOIDCService_ActivateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
+func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing.T) {
 	t.Run("invalid argument when ID not specified", func(t *testing.T) {
 		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
-		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{}))
+		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
@@ -601,11 +602,23 @@ func TestOIDCService_ActivateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 	t.Run("invalid argument when Organization ID not specified", func(t *testing.T) {
 		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
 
-		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
 			Id: uuid.NewString(),
 		}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("de-activation is not implemented", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
+			Id:             uuid.NewString(),
+			OrganizationId: uuid.NewString(),
+			Activate:       false,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
 	})
 
 	t.Run("returns permission denied when user is not org owner", func(t *testing.T) {
@@ -618,9 +631,10 @@ func TestOIDCService_ActivateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 			Role:   db.TeamMembershipRole_Member,
 		})
 
-		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
 			Id:             uuid.NewString(),
 			OrganizationId: anotherOrg.String(),
+			Activate:       true,
 		}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err))
@@ -637,12 +651,13 @@ func TestOIDCService_ActivateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 			Verified:       true,
 		})[0]
 
-		resp, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+		resp, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
 			Id:             created.ID.String(),
 			OrganizationId: created.OrganizationID.String(),
+			Activate:       true,
 		}))
 		require.NoError(t, err)
-		requireEqualProto(t, &v1.ActivateClientConfigResponse{}, resp.Msg)
+		requireEqualProto(t, &v1.SetClientConfigActivationResponse{}, resp.Msg)
 	})
 
 	t.Run("fails to activate unverified record", func(t *testing.T) {
@@ -656,9 +671,10 @@ func TestOIDCService_ActivateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 			Verified:       false,
 		})[0]
 
-		_, err := client.ActivateClientConfig(context.Background(), connect.NewRequest(&v1.ActivateClientConfigRequest{
+		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
 			Id:             created.ID.String(),
 			OrganizationId: created.OrganizationID.String(),
+			Activate:       true,
 		}))
 		require.Error(t, err)
 		require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
