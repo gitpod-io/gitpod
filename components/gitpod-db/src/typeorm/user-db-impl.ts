@@ -599,6 +599,27 @@ export class TypeORMUserDBImpl implements UserDB {
             .getCount();
         return blockedUsers > 0;
     }
+
+    async findOrganizationalUser(organizationId: string, email: string): Promise<MaybeUser> {
+        const userRepo = await this.getUserRepo();
+        const qBuilder = userRepo
+            .createQueryBuilder("user")
+            .leftJoinAndSelect("user.identities", "identity")
+            .where((qb) => {
+                const subQuery = qb
+                    .subQuery()
+                    .select("user1.id")
+                    .from(DBUser, "user1")
+                    .leftJoin("user1.identities", "identity")
+                    .where(`user1.organizationId = :organizationId`, { organizationId })
+                    .andWhere(`user1.markedDeleted != true`)
+                    .andWhere(`identity.primaryEmail = :email`, { email })
+                    .andWhere(`identity.deleted != true`)
+                    .getQuery();
+                return `user.id IN ${subQuery}`;
+            });
+        return qBuilder.getOne();
+    }
 }
 
 export class TransactionalUserDBImpl extends TypeORMUserDBImpl {
