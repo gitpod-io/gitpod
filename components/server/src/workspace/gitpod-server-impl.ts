@@ -725,7 +725,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    public async updateLoggedInUser(ctx: TraceContext, partialUser: Partial<User>): Promise<User> {
+    public async updateLoggedInUser(ctx: TraceContext, update: Partial<User>): Promise<User> {
         traceAPIParams(ctx, {}); // partialUser contains PII
 
         const user = this.checkUser("updateLoggedInUser");
@@ -734,17 +734,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         //hang on to user profile before it's overwritten for analytics below
         const oldProfile = User.getProfile(user);
 
-        const allowedFields: (keyof User)[] = ["avatarUrl", "fullName", "additionalData"];
-        for (const p of allowedFields) {
-            if (p in partialUser) {
-                (user[p] as any) = partialUser[p];
-            }
-        }
-
-        await this.userDB.updateUserPartial(user);
+        const updatedUser = await this.userService.updateUser(user.id, update);
 
         //track event and user profile if profile of partialUser changed
-        const newProfile = User.getProfile(user);
+        const newProfile = User.getProfile(updatedUser);
         if (User.Profile.hasChanges(oldProfile, newProfile)) {
             this.analytics.track({
                 userId: user.id,
@@ -757,7 +750,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             });
         }
 
-        return user;
+        return updatedUser;
     }
 
     public async maySetTimeout(ctx: TraceContext): Promise<boolean> {

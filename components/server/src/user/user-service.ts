@@ -459,4 +459,21 @@ export class UserService {
     async mayCreateOrJoinOrganization(user: User): Promise<boolean> {
         return !user.organizationId;
     }
+
+    async updateUser(userID: string, update: Partial<User>): Promise<User> {
+        const user = await this.userDb.findUserById(userID);
+        if (!user) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "User does not exist.");
+        }
+
+        const allowedFields: (keyof User)[] = ["avatarUrl", "fullName", "additionalData"];
+        for (const p of allowedFields) {
+            if (p in update) {
+                (user[p] as any) = update[p];
+            }
+        }
+
+        await this.userDb.updateUserPartial(user);
+        return user;
+    }
 }
