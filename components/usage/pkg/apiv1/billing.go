@@ -152,7 +152,7 @@ func (s *BillingService) CreateStripeCustomer(ctx context.Context, req *v1.Creat
 	}
 
 	customer, err := s.stripeClient.CreateCustomer(ctx, stripe.CreateCustomerParams{
-		AttributuonID:        string(attributionID),
+		AttributionID:        string(attributionID),
 		Currency:             req.GetCurrency(),
 		Email:                req.GetEmail(),
 		Name:                 req.GetName(),

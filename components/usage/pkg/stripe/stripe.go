@@ -277,7 +277,7 @@ func (c *Client) GetPriceInformation(ctx context.Context, priceID string) (price
 }
 
 type CreateCustomerParams struct {
-	AttributuonID        string
+	AttributionID        string
 	Currency             string
 	Email                string
 	Name                 string
@@ -299,7 +299,7 @@ func (c *Client) CreateCustomer(ctx context.Context, params CreateCustomerParams
 				// This is also done to propagate the preference into the Customer such that we can inform them when their
 				// new subscription would use a different currency to the previous one
 				PreferredCurrencyMetadataKey:    params.Currency,
-				AttributionIDMetadataKey:        params.AttributuonID,
+				AttributionIDMetadataKey:        params.AttributionID,
 				BillingCreaterUserIDMetadataKey: params.BillingCreatorUserID,
 			},
 		},

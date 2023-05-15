@@ -133,6 +133,7 @@ import { StripeService } from "./user/stripe-service";
 import { JobRunner } from "./jobs/runner";
 import { DatabaseGarbageCollector } from "./jobs/database-gc";
 import { OTSGarbageCollector } from "./jobs/ots-gc";
+import { UserToTeamMigrationService } from "./migration/user-to-team-migration-service";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -314,6 +315,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(UsageService).toService(UsageServiceImpl);
 
     bind(LinkedInService).toSelf().inSingletonScope();
+    bind(UserToTeamMigrationService).toSelf().inSingletonScope();
 
     // IAM Support
     bind(IamSessionApp).toSelf().inSingletonScope();

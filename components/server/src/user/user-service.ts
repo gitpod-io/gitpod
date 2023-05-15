@@ -19,7 +19,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
-import { UserToTeamMigrationService } from "@gitpod/gitpod-db/lib/user-to-team-migration-service";
+import { UserToTeamMigrationService } from "../migration/user-to-team-migration-service";
 import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export interface CreateUserParams {
