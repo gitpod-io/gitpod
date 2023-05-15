@@ -309,6 +309,17 @@ var _ = Describe("WorkspaceController", func() {
 			updateObjWithRetries(k8sClient, pod, false, func(pod *corev1.Pod) {
 				Expect(ctrl.SetControllerReference(ws, pod, k8sClient.Scheme())).To(Succeed())
 			})
+			// Wait until controller has reconciled at least once (by waiting for the runtime status to get updated).
+			// This is necessary for the metrics to get recorded correctly. If we don't wait, the first reconciliation
+			// might be once the Pod is already in a running state, and hence the metric state might not record e.g. content
+			// restore.
+			// This is only necessary because we manually created the pod, normally the Pod creation is the controller's
+			// first reconciliation which ensures the metrics are recorded from the workspace's initial state.
+			Eventually(func(g Gomega) {
+				g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
+				g.Expect(ws.Status.Runtime).ToNot(BeNil())
+				g.Expect(ws.Status.Runtime.PodName).To(Equal(pod.Name))
+			}, timeout, interval).Should(Succeed())
 
 			markReady(ws)
 
