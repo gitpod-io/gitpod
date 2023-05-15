@@ -4020,8 +4020,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getOnboardingState(ctx: TraceContext): Promise<GitpodServer.OnboardingState> {
-        this.checkAndBlockUser("getOnboardingState");
-
         // Find useful details about the state of the Gitpod installation.
         const { rows } = await this.teamDB.findTeams(
             0 /* offset */,

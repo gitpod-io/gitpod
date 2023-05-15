@@ -56,30 +56,30 @@ const bootApp = () => {
     // Render the App
     ReactDOM.render(
         <React.StrictMode>
-            <ReloadPageErrorBoundary>
-                <BrowserRouter>
-                    <GitpodQueryClientProvider>
-                        {/* This needs to be inside of the GitpodQueryClientProvider so it can reset queries if needed */}
-                        <QueryErrorBoundary>
-                            <ConfettiContextProvider>
-                                <ToastContextProvider>
-                                    <UserContextProvider>
-                                        <AdminContextProvider>
-                                            <PaymentContextProvider>
-                                                <ProjectContextProvider>
-                                                    <ThemeContextProvider>
+            <ThemeContextProvider>
+                <ReloadPageErrorBoundary>
+                    <BrowserRouter>
+                        <GitpodQueryClientProvider>
+                            {/* This needs to be inside of the GitpodQueryClientProvider so it can reset queries if needed */}
+                            <QueryErrorBoundary>
+                                <ConfettiContextProvider>
+                                    <ToastContextProvider>
+                                        <UserContextProvider>
+                                            <AdminContextProvider>
+                                                <PaymentContextProvider>
+                                                    <ProjectContextProvider>
                                                         <App />
-                                                    </ThemeContextProvider>
-                                                </ProjectContextProvider>
-                                            </PaymentContextProvider>
-                                        </AdminContextProvider>
-                                    </UserContextProvider>
-                                </ToastContextProvider>
-                            </ConfettiContextProvider>
-                        </QueryErrorBoundary>
-                    </GitpodQueryClientProvider>
-                </BrowserRouter>
-            </ReloadPageErrorBoundary>
+                                                    </ProjectContextProvider>
+                                                </PaymentContextProvider>
+                                            </AdminContextProvider>
+                                        </UserContextProvider>
+                                    </ToastContextProvider>
+                                </ConfettiContextProvider>
+                            </QueryErrorBoundary>
+                        </GitpodQueryClientProvider>
+                    </BrowserRouter>
+                </ReloadPageErrorBoundary>
+            </ThemeContextProvider>
         </React.StrictMode>,
         document.getElementById("root"),
     );
