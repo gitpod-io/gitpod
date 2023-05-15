@@ -239,6 +239,7 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 		if err != nil {
 			return nil, err
 		}
+
 		err = assertIssuerIsReachable(ctx, issuerURL)
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInvalidArgument, err)
