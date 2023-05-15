@@ -271,16 +271,6 @@ export class TypeORMUserDBImpl implements UserDB {
         );
     }
 
-    public async findIdentitiesByName(identity: Identity): Promise<Identity[]> {
-        const repo = await this.getIdentitiesRepo();
-        const qBuilder = repo
-            .createQueryBuilder("identity")
-            .where(`identity.authProviderId = :authProviderId`, { authProviderId: identity.authProviderId })
-            .andWhere(`identity.deleted != true`)
-            .andWhere(`identity.authName = :authName`, { authName: identity.authName });
-        return qBuilder.getMany();
-    }
-
     public async storeSingleToken(identity: Identity, token: Token): Promise<TokenEntry> {
         await this.deleteTokens(identity);
         return this.addToken(identity, token);

@@ -5,7 +5,6 @@
  */
 
 import {
-    AdditionalUserData,
     GitpodToken,
     GitpodTokenType,
     Identity,
@@ -32,7 +31,6 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
     updateUserPartial(partial: PartialUserUpdate): Promise<void>;
     findUserById(id: string): Promise<MaybeUser>;
     findUserByIdentity(identity: IdentityLookup): Promise<MaybeUser>;
-    findIdentitiesByName(identity: Pick<Identity, "authProviderId" | "authName">): Promise<Identity[]>;
 
     /**
      * Gets the number of users.
@@ -157,12 +155,3 @@ export const BUILTIN_WORKSPACE_USER_AGENT_SMITH = "builtin-user-agent-smith-0000
 
 // We need a valid UUID for the builtin admin user so that it can authenticate in order to call endpoints for setting up SSO
 export const BUILTIN_INSTLLATION_ADMIN_USER_ID = "f071bb8e-b5d1-46cf-a436-da03ae63bcd2";
-
-export interface OwnerAndRepo {
-    owner: string;
-    repo: string;
-}
-
-export type UserEmailContact = Pick<User, "id" | "name"> & { primaryEmail: string } & {
-    additionalData?: Pick<AdditionalUserData, "emailNotificationSettings">;
-};
