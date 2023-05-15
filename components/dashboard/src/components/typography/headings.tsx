@@ -40,7 +40,7 @@ export const Heading3: FC<HeadingProps> = ({ color, tracking, className, childre
 // Intended to be placed beneath a heading to provide more context
 export const Subheading: FC<HeadingProps> = ({ tracking, className, children }) => {
     return (
-        <p className={classNames("text-base text-gray-500 dark:text-gray-600", getTracking(tracking), className)}>
+        <p className={classNames("text-base text-gray-500 dark:text-gray-500", getTracking(tracking), className)}>
             {children}
         </p>
     );
