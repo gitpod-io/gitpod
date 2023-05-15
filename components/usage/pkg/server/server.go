@@ -144,7 +144,7 @@ func Start(cfg Config, version string) error {
 			return fmt.Errorf("failed to parse schedule duration: %w", err)
 		}
 
-		jobSpec, err := scheduler.NewLedgerTriggerJobSpec(schedule,
+		jobSpec, err := scheduler.NewLedgerTriggerJob(schedule,
 			scheduler.NewLedgerTrigger(jobClientsConstructor),
 		)
 		if err != nil {
@@ -163,7 +163,7 @@ func Start(cfg Config, version string) error {
 			return fmt.Errorf("failed to parse reset usage schedule as duration: %w", err)
 		}
 
-		spec, err := scheduler.NewResetUsageJobSpec(schedule, jobClientsConstructor)
+		spec, err := scheduler.NewResetUsageJob(schedule, jobClientsConstructor)
 		if err != nil {
 			return fmt.Errorf("failed to setup reset usage job: %w", err)
 		}

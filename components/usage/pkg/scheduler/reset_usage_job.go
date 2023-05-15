@@ -14,7 +14,7 @@ import (
 	"github.com/robfig/cron"
 )
 
-func NewResetUsageJobSpec(schedule time.Duration, clientsConstructor ClientsConstructor) (JobSpec, error) {
+func NewResetUsageJob(schedule time.Duration, clientsConstructor ClientsConstructor) (JobSpec, error) {
 	job := &ResetUsageJobSpec{
 		clientsConstructor: clientsConstructor,
 	}

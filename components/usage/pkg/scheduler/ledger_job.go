@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NewLedgerTriggerJobSpec(schedule time.Duration, job Job) (JobSpec, error) {
+func NewLedgerTriggerJob(schedule time.Duration, job Job) (JobSpec, error) {
 	parsed, err := cron.Parse(fmt.Sprintf("@every %s", schedule.String()))
 	if err != nil {
 		return JobSpec{}, fmt.Errorf("failed to parse period into schedule: %w", err)
