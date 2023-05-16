@@ -148,27 +148,21 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
     protected abstract readAuthUserSetup(accessToken: string, tokenResponse: object): Promise<AuthUserSetup>;
 
-    authorize(
+    async authorize(
         req: express.Request,
         res: express.Response,
         next: express.NextFunction,
         flow: AuthFlow,
         scope?: string[],
-    ): void {
-        this.signInJWT
-            .sign(flow, 5 * 60)
-            .then((state) => {
-                const handler = passport.authenticate(this.getStrategy() as any, {
-                    ...this.defaultStrategyOptions,
-                    ...{ state, scope },
-                });
+    ) {
+        const state = await this.signInJWT.sign(flow, 5 * 60);
 
-                handler(req, res, next);
-            })
-            .catch((err) => {
-                res.status(500);
-                res.send("Failed to encode sign-in state.");
-            });
+        const handler = passport.authenticate(this.getStrategy() as any, {
+            ...this.defaultStrategyOptions,
+            ...{ state, scope },
+        });
+
+        handler(req, res, next);
     }
 
     protected getStrategy() {
