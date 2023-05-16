@@ -15,7 +15,9 @@ import { getGitpodService } from "../service/service";
 export const useNeedsSetup = () => {
     const { data: onboardingState, isLoading } = useOnboardingState();
     const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
-    let needsSetup = !isLoading && onboardingState && (onboardingState?.isCompleted ?? false) !== true;
+
+    // This needs to only be true if we've loaded the onboarding state
+    let needsSetup = !isLoading && onboardingState && onboardingState.isCompleted !== true;
 
     if (isCurrentHostExcludedFromSetup()) {
         needsSetup = false;
