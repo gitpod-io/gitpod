@@ -120,7 +120,7 @@ export class StripeService {
         oldAttributionId: string,
     ): Promise<boolean> {
         const result = await this.getStripe().customers.search({
-            query: `metadata[attributionId]:${oldAttributionId}`,
+            query: `metadata['attributionId']:'${oldAttributionId}'`,
         });
         if (result.data.length > 0) {
             for (const customer of result.data) {
