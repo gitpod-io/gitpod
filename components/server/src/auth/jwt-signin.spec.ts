@@ -50,7 +50,7 @@ class TestSigninJWT {
             host: decoded.host,
             returnTo: decoded.returnTo,
             overrideScopes: decoded.overrideScopes,
-        }).to.eq(flow);
+        }).to.deep.eq(flow);
     }
 }
 
