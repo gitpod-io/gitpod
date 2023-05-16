@@ -28,7 +28,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-//go:generate mockgen -destination=mock.go -package=controller . WorkspaceOperations
+//go:generate sh -c "go install github.com/golang/mock/mockgen@v1.6.0 && mockgen -destination=mock.go -package=controller . WorkspaceOperations"
 type WorkspaceOperations interface {
 	// InitWorkspace initializes the workspace content
 	InitWorkspace(ctx context.Context, options InitOptions) (string, error)
