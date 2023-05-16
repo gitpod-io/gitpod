@@ -262,15 +262,6 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to update OIDC Client Config %s", clientConfigID.String()))
 	}
 
-	if err = db.DeactivateClientConfig(ctx, s.dbConn, clientConfigID); err != nil {
-		if errors.Is(err, db.ErrorNotFound) {
-			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s does not exist", clientConfigID.String()))
-		}
-
-		log.Extract(ctx).WithError(err).Error("Failed to deactivate OIDC Client config.")
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to deactivate OIDC Client Config %s", clientConfigID.String()))
-	}
-
 	return connect.NewResponse(&v1.UpdateClientConfigResponse{}), nil
 }
 
@@ -310,6 +301,53 @@ func (s *OIDCService) DeleteClientConfig(ctx context.Context, req *connect.Reque
 	}
 
 	return connect.NewResponse(&v1.DeleteClientConfigResponse{}), nil
+}
+
+func (s *OIDCService) SetClientConfigActivation(ctx context.Context, req *connect.Request[v1.SetClientConfigActivationRequest]) (*connect.Response[v1.SetClientConfigActivationResponse], error) {
+	organizationID, err := validateOrganizationID(ctx, req.Msg.GetOrganizationId())
+	if err != nil {
+		return nil, err
+	}
+
+	clientConfigID, err := validateOIDCClientConfigID(ctx, req.Msg.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	if !req.Msg.GetActivate() {
+		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("deactivation not yet implemented"))
+	}
+
+	conn, err := s.getConnection(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, userID, err := s.getUser(ctx, conn)
+	if err != nil {
+		return nil, err
+	}
+
+	if authorizationErr := s.userIsOrgOwner(ctx, userID, organizationID); authorizationErr != nil {
+		return nil, authorizationErr
+	}
+
+	config, err := db.GetOIDCClientConfig(ctx, s.dbConn, clientConfigID)
+	if err != nil {
+		return nil, err
+	}
+	if config.Verified == nil || !*config.Verified {
+		log.Extract(ctx).WithError(err).Error("Failed to activate an unverified OIDC Client Config.")
+		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Failed to activate an unverified OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
+	}
+
+	err = db.ActivateClientConfig(ctx, s.dbConn, clientConfigID)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to activate OIDC Client Config.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to activate OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
+	}
+
+	return connect.NewResponse(&v1.SetClientConfigActivationResponse{}), nil
 }
 
 func (s *OIDCService) getConnection(ctx context.Context) (protocol.APIInterface, error) {
@@ -405,7 +443,8 @@ func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor)
 		OidcConfig: &v1.OIDCConfig{
 			Issuer: config.Issuer,
 		},
-		Active: config.Active,
+		Active:   config.Active,
+		Verified: config.Verified != nil && *config.Verified,
 	}, nil
 }
 

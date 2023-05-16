@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateClientConfigRequest, CreateClientConfigResponse, DeleteClientConfigRequest, DeleteClientConfigResponse, GetClientConfigRequest, GetClientConfigResponse, ListClientConfigsRequest, ListClientConfigsResponse, UpdateClientConfigRequest, UpdateClientConfigResponse} from "./oidc_pb.js";
+import {CreateClientConfigRequest, CreateClientConfigResponse, DeleteClientConfigRequest, DeleteClientConfigResponse, GetClientConfigRequest, GetClientConfigResponse, ListClientConfigsRequest, ListClientConfigsResponse, SetClientConfigActivationRequest, SetClientConfigActivationResponse, UpdateClientConfigRequest, UpdateClientConfigResponse} from "./oidc_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -63,7 +63,7 @@ export const OIDCService = {
       kind: MethodKind.Unary,
     },
     /**
-     * Removes a OIDC client configuration by ID.
+     * Removes an OIDC client configuration by ID.
      *
      * @generated from rpc gitpod.experimental.v1.OIDCService.DeleteClientConfig
      */
@@ -73,6 +73,16 @@ export const OIDCService = {
       O: DeleteClientConfigResponse,
       kind: MethodKind.Unary,
     },
+    /**
+     * Activates an OIDC client configuration by ID.
+     *
+     * @generated from rpc gitpod.experimental.v1.OIDCService.SetClientConfigActivation
+     */
+    setClientConfigActivation: {
+      name: "SetClientConfigActivation",
+      I: SetClientConfigActivationRequest,
+      O: SetClientConfigActivationResponse,
+      kind: MethodKind.Unary,
+    },
   }
 } as const;
-

@@ -29,6 +29,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+	"gopkg.in/square/go-jose.v2"
 	"gorm.io/gorm"
 )
 
@@ -265,43 +266,6 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	}
 }
 
-func TestAuthenticate_nonce_check(t *testing.T) {
-	t.Skip()
-	issuer := newFakeIdP(t)
-	service, dbConn := setupOIDCServiceForTests(t)
-	config, _ := createConfig(t, dbConn, &ClientConfig{
-		Issuer: issuer,
-		// VerifierConfig: &oidc.Config{
-		// 	SkipClientIDCheck:          true,
-		// 	SkipIssuerCheck:            true,
-		// 	SkipExpiryCheck:            true,
-		// 	InsecureSkipSignatureCheck: true,
-		// },
-		OAuth2Config: &oauth2.Config{},
-	})
-
-	_, err := service.getConfigById(context.Background(), config.ID.String())
-	require.NoError(t, err, "could not assert config creation")
-
-	token := oauth2.Token{}
-	extra := map[string]interface{}{
-		"id_token": `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkN1bXF1YXQgRG9wdGlnIiwibm9uY2UiOiIxMTEiLCJpYXQiOjE1MTYyMzkwMjJ9.NfbRZns-Sefhw6MT4ULWMj_7bX0vScklaZA2ObCYkStYlo2SvNu5Be79-5Lwcy4GY95vY_dFvLIKrZjfqv_duURSKLUbtH8VxskhcrW4sPAK2R5lzz62a6d_OnVydjNJRZf754TQZILAzMm81tEDNAJSDQjaTFl7t8Bp0iYapNyyH9ZoBrGAPaZkXHYoq4lNH88gCZj5JMRIbrZbsvhOuR3CAzbAMplOmKIWxhFVnHdm6aq6HRjz0ra6Y7yh0R9jEF3vWl2w5D3aN4XESPNBbyB3CHKQ5TG0WkbgdUpv1wwzbPfz4aFHOt--qLy7ZK0TOrS-A7YLFFsJKtoPGRjAPA`,
-	}
-
-	result, err := service.authenticate(context.Background(), authenticateParams{
-		OAuth2Result: &OAuth2Result{
-			OAuth2Token: token.WithExtra(extra),
-		},
-		NonceCookieValue: "111",
-		Config: &ClientConfig{
-			Issuer: issuer,
-		},
-	})
-
-	require.NoError(t, err, "failed to authenticate")
-	require.NotNil(t, result)
-}
-
 func TestCreateSession(t *testing.T) {
 	service, _ := setupOIDCServiceForTests(t)
 
@@ -494,12 +458,44 @@ func newFakeIdP(t *testing.T) string {
 	ts := httptest.NewServer(router)
 	url := ts.URL
 
+	keyset := jwstest.GenerateKeySet(t)
+	rsa256, err := jws.NewRSA256(keyset)
+	require.NoError(t, err)
+
+	type IDTokenClaims struct {
+		Nonce string `json:"nonce"`
+		Email string `json:"email"`
+		Name  string `json:"name"`
+		jwt.RegisteredClaims
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &IDTokenClaims{
+		Nonce: "111",
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   "user-id",
+			Audience:  jwt.ClaimStrings{"client-id"},
+			Issuer:    url,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+		},
+		Email: "me@idp.org",
+		Name:  "User",
+	})
+
+	idTokenValue, err := rsa256.Sign(token)
+	require.NoError(t, err)
+
+	var jwks jose.JSONWebKeySet
+	jwks.Keys = append(jwks.Keys, jose.JSONWebKey{
+		Key:       &keyset.Signing.Private.PublicKey,
+		KeyID:     "0001",
+		Algorithm: string(jose.RS256),
+	})
+	keysValue, err := json.Marshal(jwks)
+	require.NoError(t, err)
+
 	router.Use(middleware.Logger)
 	router.Get("/oauth2/v3/certs", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte(`{
-			"keys": [
-			]
-		  }`))
+		_, err := w.Write(keysValue)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -512,10 +508,10 @@ func newFakeIdP(t *testing.T) string {
 	})
 	router.Post("/token", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
-		_, err := w.Write([]byte(`{
+		_, err := w.Write([]byte(fmt.Sprintf(`{
 			"access_token": "no-token-set",
-			"id_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkN1bXF1YXQgRG9wdGlnIiwibm9uY2UiOiIxMTEiLCJpYXQiOjE1MTYyMzkwMjJ9.NfbRZns-Sefhw6MT4ULWMj_7bX0vScklaZA2ObCYkStYlo2SvNu5Be79-5Lwcy4GY95vY_dFvLIKrZjfqv_duURSKLUbtH8VxskhcrW4sPAK2R5lzz62a6d_OnVydjNJRZf754TQZILAzMm81tEDNAJSDQjaTFl7t8Bp0iYapNyyH9ZoBrGAPaZkXHYoq4lNH88gCZj5JMRIbrZbsvhOuR3CAzbAMplOmKIWxhFVnHdm6aq6HRjz0ra6Y7yh0R9jEF3vWl2w5D3aN4XESPNBbyB3CHKQ5TG0WkbgdUpv1wwzbPfz4aFHOt--qLy7ZK0TOrS-A7YLFFsJKtoPGRjAPA"
-		}`))
+			"id_token": "%[1]s"
+		}`, idTokenValue)))
 		if err != nil {
 			log.Fatal(err)
 		}

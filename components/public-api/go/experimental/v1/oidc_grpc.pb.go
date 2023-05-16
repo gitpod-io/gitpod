@@ -34,8 +34,10 @@ type OIDCServiceClient interface {
 	ListClientConfigs(ctx context.Context, in *ListClientConfigsRequest, opts ...grpc.CallOption) (*ListClientConfigsResponse, error)
 	// Updates modifiable properties of an existing OIDC client configuration.
 	UpdateClientConfig(ctx context.Context, in *UpdateClientConfigRequest, opts ...grpc.CallOption) (*UpdateClientConfigResponse, error)
-	// Removes a OIDC client configuration by ID.
+	// Removes an OIDC client configuration by ID.
 	DeleteClientConfig(ctx context.Context, in *DeleteClientConfigRequest, opts ...grpc.CallOption) (*DeleteClientConfigResponse, error)
+	// Activates an OIDC client configuration by ID.
+	SetClientConfigActivation(ctx context.Context, in *SetClientConfigActivationRequest, opts ...grpc.CallOption) (*SetClientConfigActivationResponse, error)
 }
 
 type oIDCServiceClient struct {
@@ -91,6 +93,15 @@ func (c *oIDCServiceClient) DeleteClientConfig(ctx context.Context, in *DeleteCl
 	return out, nil
 }
 
+func (c *oIDCServiceClient) SetClientConfigActivation(ctx context.Context, in *SetClientConfigActivationRequest, opts ...grpc.CallOption) (*SetClientConfigActivationResponse, error) {
+	out := new(SetClientConfigActivationResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.OIDCService/SetClientConfigActivation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OIDCServiceServer is the server API for OIDCService service.
 // All implementations must embed UnimplementedOIDCServiceServer
 // for forward compatibility
@@ -103,8 +114,10 @@ type OIDCServiceServer interface {
 	ListClientConfigs(context.Context, *ListClientConfigsRequest) (*ListClientConfigsResponse, error)
 	// Updates modifiable properties of an existing OIDC client configuration.
 	UpdateClientConfig(context.Context, *UpdateClientConfigRequest) (*UpdateClientConfigResponse, error)
-	// Removes a OIDC client configuration by ID.
+	// Removes an OIDC client configuration by ID.
 	DeleteClientConfig(context.Context, *DeleteClientConfigRequest) (*DeleteClientConfigResponse, error)
+	// Activates an OIDC client configuration by ID.
+	SetClientConfigActivation(context.Context, *SetClientConfigActivationRequest) (*SetClientConfigActivationResponse, error)
 	mustEmbedUnimplementedOIDCServiceServer()
 }
 
@@ -126,6 +139,9 @@ func (UnimplementedOIDCServiceServer) UpdateClientConfig(context.Context, *Updat
 }
 func (UnimplementedOIDCServiceServer) DeleteClientConfig(context.Context, *DeleteClientConfigRequest) (*DeleteClientConfigResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteClientConfig not implemented")
+}
+func (UnimplementedOIDCServiceServer) SetClientConfigActivation(context.Context, *SetClientConfigActivationRequest) (*SetClientConfigActivationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetClientConfigActivation not implemented")
 }
 func (UnimplementedOIDCServiceServer) mustEmbedUnimplementedOIDCServiceServer() {}
 
@@ -230,6 +246,24 @@ func _OIDCService_DeleteClientConfig_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OIDCService_SetClientConfigActivation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetClientConfigActivationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OIDCServiceServer).SetClientConfigActivation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.OIDCService/SetClientConfigActivation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OIDCServiceServer).SetClientConfigActivation(ctx, req.(*SetClientConfigActivationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OIDCService_ServiceDesc is the grpc.ServiceDesc for OIDCService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -256,6 +290,10 @@ var OIDCService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteClientConfig",
 			Handler:    _OIDCService_DeleteClientConfig_Handler,
+		},
+		{
+			MethodName: "SetClientConfigActivation",
+			Handler:    _OIDCService_SetClientConfigActivation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

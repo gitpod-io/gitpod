@@ -68,3 +68,13 @@ func (s *ProxyOIDCServiceHandler) DeleteClientConfig(ctx context.Context, req *c
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyOIDCServiceHandler) SetClientConfigActivation(ctx context.Context, req *connect_go.Request[v1.SetClientConfigActivationRequest]) (*connect_go.Response[v1.SetClientConfigActivationResponse], error) {
+	resp, err := s.Client.SetClientConfigActivation(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

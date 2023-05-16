@@ -45,6 +45,11 @@ message OIDCClientConfig {
   // Defaults to false.
   // Optional.
   bool active = 9;
+
+  // Whether this config was tested by executing the OIDC flow.
+  // Defaults to false.
+  // Optional.
+  bool verified = 10;
 }
 
 // The OIDC specific part of the client configuration.
@@ -140,8 +145,11 @@ service OIDCService {
   // Updates modifiable properties of an existing OIDC client configuration.
   rpc UpdateClientConfig(UpdateClientConfigRequest) returns (UpdateClientConfigResponse) {};
 
-  // Removes a OIDC client configuration by ID.
+  // Removes an OIDC client configuration by ID.
   rpc DeleteClientConfig(DeleteClientConfigRequest) returns (DeleteClientConfigResponse) {};
+
+  // Activates an OIDC client configuration by ID.
+  rpc SetClientConfigActivation(SetClientConfigActivationRequest) returns (SetClientConfigActivationResponse) {};
 }
 
 message CreateClientConfigRequest {
@@ -189,3 +197,11 @@ message DeleteClientConfigRequest {
 }
 
 message DeleteClientConfigResponse {}
+
+message SetClientConfigActivationRequest {
+  string id = 1;
+  string organization_id = 2;
+  bool activate = 3;
+}
+
+message SetClientConfigActivationResponse {}
