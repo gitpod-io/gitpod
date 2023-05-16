@@ -16,7 +16,6 @@ import { OTSGarbageCollector } from "./ots-gc";
 import { TokenGarbageCollector } from "./token-gc";
 import { WebhookEventGarbageCollector } from "./webhook-gc";
 import { WorkspaceGarbageCollector } from "./workspace-gc";
-import { FixStripeAttributionIds } from "./fix-stripe-job";
 
 export const Job = Symbol("Job");
 
@@ -36,19 +35,11 @@ export class JobRunner {
     @inject(TokenGarbageCollector) protected tokenGC: TokenGarbageCollector;
     @inject(WebhookEventGarbageCollector) protected webhookGC: WebhookEventGarbageCollector;
     @inject(WorkspaceGarbageCollector) protected workspaceGC: WorkspaceGarbageCollector;
-    @inject(FixStripeAttributionIds) protected fixStripeAttributionIds: FixStripeAttributionIds;
 
     public start(): DisposableCollection {
         const disposables = new DisposableCollection();
 
-        const jobs: Job[] = [
-            this.databaseGC,
-            this.otsGC,
-            this.tokenGC,
-            this.webhookGC,
-            this.workspaceGC,
-            this.fixStripeAttributionIds,
-        ];
+        const jobs: Job[] = [this.databaseGC, this.otsGC, this.tokenGC, this.webhookGC, this.workspaceGC];
 
         for (let job of jobs) {
             log.info(`Registered job ${job.name} in job runner.`, {
