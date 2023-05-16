@@ -41,8 +41,7 @@ export const useShowDedicatedSetup = () => {
         if (enableDedicatedOnboardingFlow && showSetup && !inProgress) {
             setInProgress(true);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [enableDedicatedOnboardingFlow, forceSetup, showSetup]);
+    }, [enableDedicatedOnboardingFlow, inProgress, showSetup]);
 
     return {
         showSetup: inProgress,
