@@ -11,6 +11,7 @@ import { inject, injectable } from "inversify";
 import { StripeService } from "../user/stripe-service";
 import { Job } from "./runner";
 import { Config } from "../config";
+import { Connection } from "typeorm";
 
 @injectable()
 export class FixStripeAttributionIds implements Job {
@@ -50,18 +51,25 @@ export class FixStripeAttributionIds implements Job {
                 const userId = row.userId;
                 const organizationId = row.organizationId;
                 const stripeCustomerId = row.stripeCustomerid;
+                const newAttributionID = AttributionId.render({ kind: "team", teamId: organizationId });
+                const oldAttributionID = AttributionId.render({ kind: "user", userId: userId });
                 try {
                     if (
                         await this.stripeService.updateAttributionId(
                             stripeCustomerId,
-                            AttributionId.render({ kind: "team", teamId: organizationId }),
-                            AttributionId.render({ kind: "user", userId: userId }),
+                            newAttributionID,
+                            oldAttributionID,
                         )
                     ) {
                         migrated++;
                     }
                 } catch (err) {
                     log.error("Failed to update stripe customer", err, { userId, organizationId, stripeCustomerId });
+                }
+                try {
+                    await fixInvoice(c, oldAttributionID, newAttributionID);
+                } catch (err) {
+                    log.error("Failed to fix invoice", err, { userId, organizationId, stripeCustomerId });
                 }
                 // wait a bit to not overload the stripe API
                 await new Promise((r) => setTimeout(r, 1000));
@@ -72,5 +80,42 @@ export class FixStripeAttributionIds implements Job {
             log.error("Failed to run job", err, { jobName: this.name });
             throw err;
         }
+    }
+}
+
+export async function fixInvoice(c: Connection, oldAttributionID: string, newAttributionID: string) {
+    const result = await c.query(`SELECT effectiveTime, kind FROM d_b_usage where attributionId = ?`, [
+        oldAttributionID,
+    ]);
+    if (result.length === 1) {
+        const invoiceTime = result[0].effectiveTime;
+        if (result[0].kind !== "invoice") {
+            throw new Error(`Expected kind invoice, got ${result[0].kind} (attributionId: ${oldAttributionID})`);
+        }
+        await c.query(`UPDATE d_b_usage set attributionId = ? WHERE attributionId= ?`, [
+            newAttributionID,
+            oldAttributionID,
+        ]);
+        log.info(`Updated usage table`, {
+            newAttributionID,
+            oldAttributionID,
+        });
+        const costCenters = await c.query(
+            `SELECT * FROM d_b_cost_center WHERE id= ? ORDER by creationTime DESC LIMIT 1`,
+            [newAttributionID],
+        );
+        const nextBillingTime = new Date(invoiceTime);
+        nextBillingTime.setMonth(nextBillingTime.getMonth() + 1);
+        await c.query(
+            `INSERT into d_b_cost_center (id, spendingLimit, creationTime, billingStrategy, nextBillingTime, billingCycleStart) VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                newAttributionID,
+                costCenters[0].spendingLimit,
+                new Date().toISOString(),
+                costCenters[0].billingStrategy,
+                nextBillingTime.toISOString(),
+                invoiceTime,
+            ],
+        );
     }
 }
