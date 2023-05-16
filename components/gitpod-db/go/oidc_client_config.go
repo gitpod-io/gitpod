@@ -243,7 +243,7 @@ func UpdateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cipher Cipher, u
 				update.Verified = BoolPointer(false)
 			}
 
-			updateTx := tx.Debug().
+			updateTx := tx.
 				Model(&OIDCClientConfig{}).
 				Where("id = ?", update.ID.String()).
 				Where("deleted = ?", 0).
@@ -297,7 +297,7 @@ func setClientConfigActiveFlag(ctx context.Context, conn *gorm.DB, id uuid.UUID,
 	}
 
 	if active {
-		tx := conn.Debug().
+		tx := conn.
 			WithContext(ctx).
 			Table((&OIDCClientConfig{}).TableName()).
 			Where("id != ?", id.String()).
