@@ -4783,9 +4783,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // backward compatibility for cost centers that were created before introduction of BillingStrategy
         if (!response.costCenter) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Coudln't find cost center with id ${attributionId}`);
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Couldn't find cost center with id ${attributionId}`);
         }
-        const stripeSubscriptionId = await this.findStripeSubscriptionId(ctx, attributionId);
+        const stripeSubscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(attributionId);
         if (stripeSubscriptionId != undefined) {
             response.costCenter.billingStrategy = CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
         }
