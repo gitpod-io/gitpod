@@ -33,6 +33,7 @@ import { trackSignup } from "../analytics";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { VerificationService } from "../auth/verification-service";
+import { SignInJWT } from "./jwt";
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -72,6 +73,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(VerificationService) protected readonly verificationService: VerificationService;
+    @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
 
     @postConstruct()
     init() {
@@ -146,12 +148,27 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
     protected abstract readAuthUserSetup(accessToken: string, tokenResponse: object): Promise<AuthUserSetup>;
 
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        const handler = passport.authenticate(this.getStrategy() as any, {
-            ...this.defaultStrategyOptions,
-            ...{ scope },
-        });
-        handler(req, res, next);
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        flow: AuthFlow,
+        scope?: string[],
+    ): void {
+        this.signInJWT
+            .sign(flow, 5 * 60)
+            .then((state) => {
+                const handler = passport.authenticate(this.getStrategy() as any, {
+                    ...this.defaultStrategyOptions,
+                    ...{ state, scope },
+                });
+
+                handler(req, res, next);
+            })
+            .catch((err) => {
+                res.status(500);
+                res.send("Failed to encode sign-in state.");
+            });
     }
 
     protected getStrategy() {
@@ -258,7 +275,17 @@ export abstract class GenericAuthProvider implements AuthProvider {
         });
 
         const isAlreadyLoggedIn = request.isAuthenticated() && User.is(request.user);
-        const authFlow = AuthFlow.get(request.session);
+
+        const state = request.query.state;
+        if (!state) {
+            log.error(cxt, `(${strategyName}) No state present on callback request.`, { clientInfo });
+            response.redirect(
+                this.getSorryUrl(`No state was present on the authentication callback. Please try again.`),
+            );
+            return;
+        }
+
+        const authFlow = await this.signInJWT.verify(state as string);
         if (isAlreadyLoggedIn) {
             if (!authFlow) {
                 log.warn(

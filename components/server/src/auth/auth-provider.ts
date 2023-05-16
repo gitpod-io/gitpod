@@ -80,7 +80,13 @@ export interface AuthProvider {
     readonly info: AuthProviderInfo;
     readonly authCallbackPath: string;
     callback(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void>;
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scopes?: string[]): void;
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        flow: AuthFlow,
+        scopes?: string[],
+    ): void;
     refreshToken?(user: User): Promise<void>;
 }
 
