@@ -57,7 +57,7 @@ export class JobRunner {
                 redisLockId: job.lockId,
             });
             // immediately run the job once
-            this.run(job);
+            this.run(job).catch((err) => log.error(`Error while running job ${job.name}`, err));
             disposables.push(repeat(() => this.run(job), job.frequencyMs));
         }
 
