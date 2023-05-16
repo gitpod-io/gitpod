@@ -20,7 +20,7 @@ import * as request from "supertest";
 import * as chai from "chai";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
-import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
+import { TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -33,6 +33,11 @@ class TestIamSessionApp {
     protected knownSubjectID = "111";
     protected knownEmail = "tester@my.org";
 
+    protected knownUser: Partial<User> = {
+        id: "id-known-user",
+        identities: [],
+    };
+
     protected userServiceMock: Partial<UserService> = {
         createUser: (params) => {
             return { id: "id-new-user" } as any;
@@ -40,13 +45,13 @@ class TestIamSessionApp {
 
         findUserForLogin: async (params) => {
             if (params.candidate?.authId === this.knownSubjectID) {
-                return { id: "id-known-user" } as any;
+                return this.knownUser as any;
             }
             return undefined;
         },
         findOrgOwnedUser: async (params) => {
             if (params.email === this.knownEmail) {
-                return { id: "id-known-user" } as any;
+                return this.knownUser as any;
             }
             return undefined;
         },

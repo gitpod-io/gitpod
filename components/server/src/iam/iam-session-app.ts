@@ -59,6 +59,10 @@ export class IamSessionApp {
         const payload = OIDCCreateSessionPayload.validate(req.body);
 
         const existingUser = await this.findExistingOIDCUser(payload);
+        if (existingUser) {
+            await this.updateOIDCUserOnSign(existingUser, payload);
+        }
+
         const user = existingUser || (await this.createNewOIDCUser(payload));
 
         await new Promise<void>((resolve, reject) => {
@@ -136,6 +140,20 @@ export class IamSessionApp {
         }
 
         return existingUser;
+    }
+
+    /**
+     * Updates `User.identities[current IdP].primaryEmail`
+     */
+    protected async updateOIDCUserOnSign(user: User, payload: OIDCCreateSessionPayload) {
+        const recent = this.mapOIDCProfileToIdentity(payload);
+        const existing = user.identities.find((identity) => identity.authId === recent.authId);
+
+        // Update email
+        if (existing && !!recent.primaryEmail && existing.primaryEmail !== recent.primaryEmail) {
+            existing.primaryEmail = recent.primaryEmail;
+            await this.userService.updateUserIdentity(user, existing);
+        }
     }
 
     protected async createNewOIDCUser(payload: OIDCCreateSessionPayload): Promise<User> {
