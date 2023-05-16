@@ -149,8 +149,8 @@ export default function TeamSettingsPage() {
             </OrgSettingsPage>
 
             <ConfirmationModal
-                title="Delete Team"
-                buttonText="Delete Team"
+                title="Delete Organization"
+                buttonText="Delete Organization"
                 buttonDisabled={teamNameToDelete !== org?.name}
                 visible={modal}
                 warningHead="Warning"
@@ -170,6 +170,7 @@ export default function TeamSettingsPage() {
                         All <b>members</b> of this organization will lose access to this organization, associated
                         projects and workspaces.
                     </li>
+                    <li className="ml-5">Any free credit allowances granted to this organization will be lost.</li>
                 </ol>
                 <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">
                     Type <code>{org?.name}</code> to confirm
