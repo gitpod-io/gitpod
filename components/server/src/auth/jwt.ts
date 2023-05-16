@@ -6,9 +6,10 @@
 
 import * as jsonwebtoken from "jsonwebtoken";
 import { Config } from "../config";
-import { inject, injectable } from "inversify";
+import { inject, injectable, postConstruct } from "inversify";
+import { AuthFlow } from "./auth-provider";
 
-const algorithm: jsonwebtoken.Algorithm = "RS512";
+const authJWTAlgorithm: jsonwebtoken.Algorithm = "RS512";
 
 @injectable()
 export class AuthJWT {
@@ -21,7 +22,7 @@ export class AuthJWT {
         issuer: string = this.config.auth.session.issuer,
     ): Promise<string> {
         const opts: jsonwebtoken.SignOptions = {
-            algorithm,
+            algorithm: authJWTAlgorithm,
             expiresIn: expirySeconds,
             issuer,
             subject,
@@ -53,8 +54,52 @@ export class AuthJWT {
 
         // Given we know which keyid this token was presumably signed with, let's verify the token using the public key.
         const verified = await verify(encoded, publicKeysByID[keyID], {
-            algorithms: [algorithm],
+            algorithms: [authJWTAlgorithm],
         });
+
+        return verified;
+    }
+}
+
+const signinJWTAlgorithm: jsonwebtoken.Algorithm = "HS256";
+
+@injectable()
+export class SignInJWT {
+    @inject(Config) protected config: Config;
+
+    private key: string;
+
+    @postConstruct()
+    init() {
+        // Having another secret for the symmetric algorithm of HS256 would be overkill,
+        // we re-use the RSA private key as the symmetric key, by dropping the // START / END markers.
+        const lines = this.config.auth.pki.signing.privateKey.split("\n");
+        // drop the first line
+        lines.shift();
+        // drop the last line
+        lines.pop();
+
+        this.key = lines.join("\n");
+    }
+
+    async sign(payload: AuthFlow, expirySeconds: number = 5 * 60): Promise<string> {
+        const opts: jsonwebtoken.SignOptions = {
+            algorithm: signinJWTAlgorithm,
+            expiresIn: expirySeconds,
+        };
+
+        return sign(payload, this.key, opts);
+    }
+
+    async verify(encoded: string): Promise<AuthFlow> {
+        // For signin JWT, we always verify with our PKI Signing PK
+        const verified = await verify(encoded, this.key, {
+            algorithms: [signinJWTAlgorithm],
+        });
+
+        if (!AuthFlow.is(verified)) {
+            throw new Error("Encoded sign-in JWT is not a valid AuthFlow object.");
+        }
 
         return verified;
     }

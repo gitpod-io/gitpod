@@ -46,7 +46,6 @@ class TestAuthJWT {
 
         const subject = "user-id";
         const encoded = await sut.sign(subject, {});
-        console.log("encoded", encoded);
 
         const decoded = await verify(encoded, this.config.auth.pki.signing.publicKey, {
             algorithms: ["RS512"],

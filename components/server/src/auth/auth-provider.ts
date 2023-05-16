@@ -105,4 +105,19 @@ export namespace AuthFlow {
             return saveSession(session);
         }
     }
+
+    export function is(obj: any): obj is AuthFlow {
+        if (obj === undefined) {
+            return false;
+        }
+        if (typeof obj !== "object") {
+            return false;
+        }
+
+        if (!("host" in obj) || !("returnTo" in obj)) {
+            return false;
+        }
+
+        return true;
+    }
 }
