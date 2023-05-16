@@ -20,6 +20,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc/codes"
@@ -273,6 +274,10 @@ func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (
 	if idToken.Nonce != params.NonceCookieValue {
 		return nil, fmt.Errorf("nonce mismatch")
 	}
+	err = s.validateRequiredClaims(idToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to validate required claims: %w", err)
+	}
 	return &AuthFlowResult{
 		IDToken: idToken,
 		Claims:  claims,
@@ -317,4 +322,26 @@ func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult,
 
 	log.WithField("create-session-error", message).Error("Failed to create session (via server)")
 	return nil, message, fmt.Errorf("unexpected status code: %v", res.StatusCode)
+}
+
+func (s *Service) validateRequiredClaims(token *goidc.IDToken) error {
+	if len(token.Audience) < 1 {
+		return fmt.Errorf("audience claim is missing")
+	}
+	var claims struct {
+		Email string `json:"email,omitempty"`
+		Name  string `json:"name,omitempty"`
+		jwt.RegisteredClaims
+	}
+	err := token.Claims(&claims)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal claims of ID token: %w", err)
+	}
+	if claims.Email == "" {
+		return fmt.Errorf("email claim is missing")
+	}
+	if claims.Name == "" {
+		return fmt.Errorf("name claim is missing")
+	}
+	return nil
 }
