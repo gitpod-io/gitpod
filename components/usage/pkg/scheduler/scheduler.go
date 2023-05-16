@@ -13,7 +13,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/robfig/cron"
-	"github.com/sirupsen/logrus"
 )
 
 func New(mutex *redsync.Redsync, jobs ...JobSpec) *Scheduler {
@@ -52,7 +51,6 @@ func (c *Scheduler) Start() {
 			defer c.runningJobs.Done()
 
 			now := time.Now().UTC()
-			log.Log.Logger.SetLevel(logrus.DebugLevel)
 			logger := log.WithField("job_id", j.ID)
 
 			err := WithRefreshingMutex(ctx, c.mutex, j.ID, j.InitialLockDuration, func(ctx context.Context) error {
