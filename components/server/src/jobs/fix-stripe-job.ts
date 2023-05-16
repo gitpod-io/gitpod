@@ -50,14 +50,18 @@ export class FixStripeAttributionIds implements Job {
                 const userId = row.userId;
                 const organizationId = row.organizationId;
                 const stripeCustomerId = row.stripeCustomerid;
-                if (
-                    await this.stripeService.updateAttributionId(
-                        stripeCustomerId,
-                        AttributionId.render({ kind: "team", teamId: organizationId }),
-                        AttributionId.render({ kind: "user", userId: userId }),
-                    )
-                ) {
-                    migrated++;
+                try {
+                    if (
+                        await this.stripeService.updateAttributionId(
+                            stripeCustomerId,
+                            AttributionId.render({ kind: "team", teamId: organizationId }),
+                            AttributionId.render({ kind: "user", userId: userId }),
+                        )
+                    ) {
+                        migrated++;
+                    }
+                } catch (err) {
+                    log.error("Failed to update stripe customer", err, { userId, organizationId, stripeCustomerId });
                 }
                 // wait a bit to not overload the stripe API
                 await new Promise((r) => setTimeout(r, 1000));
