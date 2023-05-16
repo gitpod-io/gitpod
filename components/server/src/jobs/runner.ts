@@ -56,6 +56,8 @@ export class JobRunner {
                 frequencyMs: job.frequencyMs,
                 redisLockId: job.lockId,
             });
+            // immediately run the job once
+            this.run(job);
             disposables.push(repeat(() => this.run(job), job.frequencyMs));
         }
 
