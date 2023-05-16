@@ -6,7 +6,7 @@
 
 import { useQueryParams } from "../hooks/use-query-params";
 import { useFeatureFlag } from "../data/featureflag-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { isCurrentHostExcludedFromSetup, useNeedsSetup } from "./use-needs-setup";
 
 const FORCE_SETUP_PARAM = "dedicated-setup";
@@ -35,13 +35,10 @@ export const useShowDedicatedSetup = () => {
 
     const markCompleted = useCallback(() => setInProgress(false), []);
 
-    // If needsOnboarding changes to true, we want to set flow as in progress
-    // This helps us not close the flow prematurely (i.e. onboardingState.completed = true but we want to show the completed page)
-    useEffect(() => {
-        if (enableDedicatedOnboardingFlow && showSetup && !inProgress) {
-            setInProgress(true);
-        }
-    }, [enableDedicatedOnboardingFlow, inProgress, showSetup]);
+    // Update to inProgress if we should show the setup flow and we aren't
+    if (enableDedicatedOnboardingFlow && showSetup && !inProgress) {
+        setInProgress(true);
+    }
 
     return {
         showSetup: inProgress,

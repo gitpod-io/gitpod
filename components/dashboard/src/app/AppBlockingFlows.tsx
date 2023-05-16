@@ -33,7 +33,15 @@ export const AppBlockingFlows: FC = ({ children }) => {
 
     // Handle dedicated setup if necessary
     if (showDedicatedSetup.showSetup) {
-        return <DedicatedSetup onComplete={() => showDedicatedSetup.markCompleted()} />;
+        return (
+            <DedicatedSetup
+                onComplete={() => {
+                    showDedicatedSetup.markCompleted();
+                    // doing a full page reload here to avoid any lingering setup-related state issues
+                    document.location.href = "/settings/git";
+                }}
+            />
+        );
     }
 
     // New user onboarding flow

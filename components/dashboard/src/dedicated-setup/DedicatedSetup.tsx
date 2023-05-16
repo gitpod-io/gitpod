@@ -10,7 +10,6 @@ import { OrgNamingStep } from "./OrgNamingStep";
 import { SSOSetupStep } from "./SSOSetupStep";
 import { useConfetti } from "../contexts/ConfettiContext";
 import { SetupCompleteStep } from "./SetupCompleteStep";
-import { useHistory } from "react-router";
 import { useOIDCClientsQuery } from "../data/oidc-clients/oidc-clients-query";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { Delayed } from "../components/Delayed";
@@ -66,7 +65,7 @@ const STEPS = {
     SSO_SETUP: "sso-setup",
     COMPLETE: "complete",
 } as const;
-type StepsValue = (typeof STEPS)[keyof typeof STEPS];
+type StepsValue = typeof STEPS[keyof typeof STEPS];
 
 type DedicatedSetupStepsProps = {
     org?: OrganizationInfo;
@@ -87,7 +86,6 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onC
     // If setup forced via params, just start at beginning
     const forceSetup = forceDedicatedSetupParam(params);
     const [step, setStep] = useState<StepsValue>(forceSetup ? STEPS.GETTING_STARTED : initialStep);
-    const history = useHistory();
     const { dropConfetti } = useConfetti();
 
     const handleSetupComplete = useCallback(() => {
@@ -105,9 +103,8 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onC
 
     const handleEndSetup = useCallback(async () => {
         await updateUser();
-        history.push(`/settings/git?org=${org?.id}`);
         onComplete();
-    }, [history, onComplete, updateUser, org?.id]);
+    }, [onComplete, updateUser]);
 
     return (
         <>
