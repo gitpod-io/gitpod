@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -70,17 +71,23 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 
 	config := req.Msg.GetConfig()
 	oidcConfig := config.GetOidcConfig()
-	err = assertIssuerIsReachable(ctx, oidcConfig.GetIssuer())
+
+	issuer, err := validateIssuerURL(oidcConfig.GetIssuer())
+	if err != nil {
+		return nil, err
+	}
+
+	err = assertIssuerIsReachable(ctx, issuer)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	err = assertIssuerProvidesDiscovery(ctx, oidcConfig.GetIssuer())
+	err = assertIssuerProvidesDiscovery(ctx, issuer)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
 	oauth2Config := config.GetOauth2Config()
-	data, err := db.EncryptJSON(s.cipher, toDbOIDCSpec(oauth2Config, oidcConfig))
+	data, err := db.EncryptJSON(s.cipher, toDbOIDCSpec(oauth2Config))
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to encrypt oidc client config.")
 		return nil, status.Errorf(codes.Internal, "Failed to store OIDC client config.")
@@ -91,7 +98,7 @@ func (s *OIDCService) CreateClientConfig(ctx context.Context, req *connect.Reque
 	created, err := db.CreateOIDCClientConfig(ctx, s.dbConn, db.OIDCClientConfig{
 		ID:             uuid.New(),
 		OrganizationID: organizationID,
-		Issuer:         oidcConfig.GetIssuer(),
+		Issuer:         issuer.String(),
 		Data:           data,
 		Active:         active,
 	})
@@ -225,19 +232,27 @@ func (s *OIDCService) UpdateClientConfig(ctx context.Context, req *connect.Reque
 	oidcConfig := config.GetOidcConfig()
 	oauth2Config := config.GetOauth2Config()
 
+	issuer := ""
 	if oidcConfig.GetIssuer() != "" {
 		// If we're updating the issuer, let's also check for reachability
-		err = assertIssuerIsReachable(ctx, oidcConfig.GetIssuer())
+		issuerURL, err := validateIssuerURL(oidcConfig.GetIssuer())
+		if err != nil {
+			return nil, err
+		}
+
+		err = assertIssuerIsReachable(ctx, issuerURL)
 		if err != nil {
 			return nil, connect.NewError(connect.CodeInvalidArgument, err)
 		}
+
+		issuer = issuerURL.String()
 	}
 
-	updateSpec := toDbOIDCSpec(oauth2Config, oidcConfig)
+	updateSpec := toDbOIDCSpec(oauth2Config)
 
 	if err := db.UpdateOIDCClientConfig(ctx, s.dbConn, s.cipher, db.OIDCClientConfig{
 		ID:     clientConfigID,
-		Issuer: oidcConfig.GetIssuer(),
+		Issuer: issuer,
 	}, &updateSpec); err != nil {
 		if errors.Is(err, db.ErrorNotFound) {
 			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s does not exist", clientConfigID.String()))
@@ -409,7 +424,7 @@ func dbOIDCClientConfigsToAPI(configs []db.OIDCClientConfig, decryptor db.Decryp
 	return results, nil
 }
 
-func toDbOIDCSpec(oauth2Config *v1.OAuth2Config, oidcConfig *v1.OIDCConfig) db.OIDCSpec {
+func toDbOIDCSpec(oauth2Config *v1.OAuth2Config) db.OIDCSpec {
 	return db.OIDCSpec{
 		ClientID:     oauth2Config.GetClientId(),
 		ClientSecret: oauth2Config.GetClientSecret(),
@@ -418,7 +433,7 @@ func toDbOIDCSpec(oauth2Config *v1.OAuth2Config, oidcConfig *v1.OIDCConfig) db.O
 	}
 }
 
-func assertIssuerIsReachable(ctx context.Context, issuer string) error {
+func assertIssuerIsReachable(ctx context.Context, issuer *url.URL) error {
 	tr := &http.Transport{
 		// TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		Proxy: http.ProxyFromEnvironment,
@@ -432,7 +447,7 @@ func assertIssuerIsReachable(ctx context.Context, issuer string) error {
 		},
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, issuer, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, issuer.String(), nil)
 	if err != nil {
 		return err
 	}
@@ -447,7 +462,7 @@ func assertIssuerIsReachable(ctx context.Context, issuer string) error {
 	return nil
 }
 
-func assertIssuerProvidesDiscovery(ctx context.Context, issuer string) error {
+func assertIssuerProvidesDiscovery(ctx context.Context, issuer *url.URL) error {
 	tr := &http.Transport{
 		// TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		Proxy: http.ProxyFromEnvironment,
@@ -461,7 +476,7 @@ func assertIssuerProvidesDiscovery(ctx context.Context, issuer string) error {
 		},
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, issuer+"/.well-known/openid-configuration", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, issuer.String()+"/.well-known/openid-configuration", nil)
 	if err != nil {
 		return err
 	}
@@ -484,4 +499,13 @@ func assertIssuerProvidesDiscovery(ctx context.Context, issuer string) error {
 		return fmt.Errorf("OIDC Discovery configuration is not parsable.")
 	}
 	return nil
+}
+
+func validateIssuerURL(issuer string) (*url.URL, error) {
+	parsed, err := url.Parse(strings.TrimSuffix(issuer, "/"))
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Issuer must contain a valid URL"))
+	}
+
+	return parsed, nil
 }

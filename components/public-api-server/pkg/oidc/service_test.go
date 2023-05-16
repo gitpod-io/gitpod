@@ -50,7 +50,7 @@ func TestGetStartParams(t *testing.T) {
 		},
 	}
 
-	params, err := service.GetStartParams(config, redirectURL, StateParams{
+	params, err := service.getStartParams(config, redirectURL, StateParams{
 		ClientConfigID: config.ID,
 		ReturnToURL:    "/",
 		Activate:       false,
@@ -123,7 +123,7 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Location, func(te *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
-			config, err := service.GetClientConfigFromStartRequest(request)
+			config, err := service.getClientConfigFromStartRequest(request)
 			if tc.ExpectedError == true {
 				require.Error(te, err)
 			}
@@ -188,7 +188,7 @@ func TestGetClientConfigFromStartRequestSingleOrg(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Location, func(te *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
-			config, err := service.GetClientConfigFromStartRequest(request)
+			config, err := service.getClientConfigFromStartRequest(request)
 			if tc.ExpectedError == true {
 				require.Error(te, err)
 			}
@@ -252,7 +252,7 @@ func TestGetClientConfigFromCallbackRequest(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.Location, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, tc.Location, nil)
-			config, _, err := service.GetClientConfigFromCallbackRequest(request)
+			config, _, err := service.getClientConfigFromCallbackRequest(request)
 			if tc.ExpectedError == true {
 				require.Error(t, err)
 			}
@@ -288,7 +288,7 @@ func TestAuthenticate_nonce_check(t *testing.T) {
 		"id_token": `eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkN1bXF1YXQgRG9wdGlnIiwibm9uY2UiOiIxMTEiLCJpYXQiOjE1MTYyMzkwMjJ9.NfbRZns-Sefhw6MT4ULWMj_7bX0vScklaZA2ObCYkStYlo2SvNu5Be79-5Lwcy4GY95vY_dFvLIKrZjfqv_duURSKLUbtH8VxskhcrW4sPAK2R5lzz62a6d_OnVydjNJRZf754TQZILAzMm81tEDNAJSDQjaTFl7t8Bp0iYapNyyH9ZoBrGAPaZkXHYoq4lNH88gCZj5JMRIbrZbsvhOuR3CAzbAMplOmKIWxhFVnHdm6aq6HRjz0ra6Y7yh0R9jEF3vWl2w5D3aN4XESPNBbyB3CHKQ5TG0WkbgdUpv1wwzbPfz4aFHOt--qLy7ZK0TOrS-A7YLFFsJKtoPGRjAPA`,
 	}
 
-	result, err := service.Authenticate(context.Background(), AuthenticateParams{
+	result, err := service.authenticate(context.Background(), authenticateParams{
 		OAuth2Result: &OAuth2Result{
 			OAuth2Token: token.WithExtra(extra),
 		},
@@ -310,7 +310,7 @@ func TestCreateSession(t *testing.T) {
 		OrganizationID: "org1",
 	}
 
-	_, message, err := service.CreateSession(context.Background(), &AuthFlowResult{}, &config)
+	_, message, err := service.createSession(context.Background(), &AuthFlowResult{}, &config)
 	require.NoError(t, err, "failed to create session")
 
 	got := map[string]interface{}{}

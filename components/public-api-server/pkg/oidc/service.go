@@ -74,7 +74,7 @@ func NewService(sessionServiceAddress string, dbConn *gorm.DB, cipher db.Cipher,
 	}
 }
 
-func (s *Service) GetStartParams(config *ClientConfig, redirectURL string, stateParams StateParams) (*StartParams, error) {
+func (s *Service) getStartParams(config *ClientConfig, redirectURL string, stateParams StateParams) (*StartParams, error) {
 	// the `state` is supposed to be passed through unmodified by the IdP.
 	state, err := s.encodeStateParam(stateParams)
 	if err != nil {
@@ -128,7 +128,7 @@ func randString(size int) (string, error) {
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfig, error) {
+func (s *Service) getClientConfigFromStartRequest(r *http.Request) (*ClientConfig, error) {
 	orgSlug := r.URL.Query().Get("orgSlug")
 	idParam := r.URL.Query().Get("id")
 
@@ -169,7 +169,7 @@ func (s *Service) GetClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 	return nil, fmt.Errorf("failed to find OIDC config")
 }
 
-func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, *StateParams, error) {
+func (s *Service) getClientConfigFromCallbackRequest(r *http.Request) (*ClientConfig, *StateParams, error) {
 	stateParam := r.URL.Query().Get("state")
 	if stateParam == "" {
 		return nil, nil, fmt.Errorf("missing state parameter")
@@ -187,7 +187,7 @@ func (s *Service) GetClientConfigFromCallbackRequest(r *http.Request) (*ClientCo
 	return nil, nil, fmt.Errorf("failed to find OIDC config on callback")
 }
 
-func (s *Service) ActivateClientConfig(ctx context.Context, config *ClientConfig) error {
+func (s *Service) activateClientConfig(ctx context.Context, config *ClientConfig) error {
 	uuid, err := uuid.Parse(config.ID)
 	if err != nil {
 		return err
@@ -242,13 +242,13 @@ func (s *Service) convertClientConfig(ctx context.Context, dbEntry db.OIDCClient
 	}, nil
 }
 
-type AuthenticateParams struct {
+type authenticateParams struct {
 	Config           *ClientConfig
 	OAuth2Result     *OAuth2Result
 	NonceCookieValue string
 }
 
-func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (*AuthFlowResult, error) {
+func (s *Service) authenticate(ctx context.Context, params authenticateParams) (*AuthFlowResult, error) {
 	rawIDToken, ok := params.OAuth2Result.OAuth2Token.Extra("id_token").(string)
 	if !ok {
 		return nil, fmt.Errorf("id_token not found")
@@ -284,7 +284,7 @@ func (s *Service) Authenticate(ctx context.Context, params AuthenticateParams) (
 	}, nil
 }
 
-func (s *Service) CreateSession(ctx context.Context, flowResult *AuthFlowResult, clientConfig *ClientConfig) (*http.Cookie, string, error) {
+func (s *Service) createSession(ctx context.Context, flowResult *AuthFlowResult, clientConfig *ClientConfig) (*http.Cookie, string, error) {
 	type CreateSessionPayload struct {
 		AuthFlowResult
 		OrganizationID string `json:"organizationId"`
