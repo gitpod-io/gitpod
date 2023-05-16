@@ -464,6 +464,8 @@ func newFakeIdP(t *testing.T) string {
 
 	type IDTokenClaims struct {
 		Nonce string `json:"nonce"`
+		Email string `json:"email"`
+		Name  string `json:"name"`
 		jwt.RegisteredClaims
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, &IDTokenClaims{
@@ -475,6 +477,8 @@ func newFakeIdP(t *testing.T) string {
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
+		Email: "me@idp.org",
+		Name:  "User",
 	})
 
 	idTokenValue, err := rsa256.Sign(token)
