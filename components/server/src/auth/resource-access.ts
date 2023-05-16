@@ -9,6 +9,7 @@ import {
     GitpodToken,
     PrebuiltWorkspace,
     Repository,
+    Role,
     Snapshot,
     Team,
     TeamMemberInfo,
@@ -598,5 +599,12 @@ export class RepositoryResourceGuard implements ResourceAccessGuard {
             }),
         );
         return result.every((b) => b);
+    }
+}
+
+export class AdminResourceGuard implements ResourceAccessGuard {
+    constructor(protected readonly user: User) {}
+    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
+        return (this.user.rolesOrPermissions || []).includes(Role.ADMIN.name);
     }
 }

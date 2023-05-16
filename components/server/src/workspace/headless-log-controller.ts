@@ -20,6 +20,7 @@ import {
     OwnerResourceGuard,
     TeamMemberResourceGuard,
     RepositoryResourceGuard,
+    AdminResourceGuard,
 } from "../auth/resource-access";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
@@ -225,6 +226,7 @@ export class HeadlessLogController {
             new OwnerResourceGuard(user.id),
             new TeamMemberResourceGuard(user.id),
             new RepositoryResourceGuard(user, this.hostContextProvider),
+            new AdminResourceGuard(user),
         ]);
         if (!(await resourceGuard.canAccess({ kind: "workspaceLog", subject: workspace, teamMembers }, "get"))) {
             res.sendStatus(403);
