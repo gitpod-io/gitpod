@@ -648,7 +648,7 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 			OrganizationID: organizationID,
 			Issuer:         issuer,
 			Active:         false,
-			Verified:       true,
+			Verified:       db.BoolPointer(true),
 		})[0]
 
 		resp, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
@@ -668,7 +668,7 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 			OrganizationID: organizationID,
 			Issuer:         issuer,
 			Active:         false,
-			Verified:       false,
+			Verified:       db.BoolPointer(false),
 		})[0]
 
 		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
@@ -688,12 +688,12 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 			OrganizationID: organizationID,
 			Issuer:         issuer,
 			Active:         true,
-			Verified:       true,
+			Verified:       db.BoolPointer(true),
 		}, db.OIDCClientConfig{
 			OrganizationID: organizationID,
 			Issuer:         issuer,
 			Active:         false,
-			Verified:       true,
+			Verified:       db.BoolPointer(true),
 		})
 
 		first := configs[0]

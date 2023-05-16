@@ -26,11 +26,15 @@ type OIDCClientConfig struct {
 
 	Active bool `gorm:"column:active;type:tinyint;default:0;" json:"active"`
 
-	Verified bool `gorm:"column:verified;type:tinyint;default:0;" json:"verified"`
+	Verified *bool `gorm:"column:verified;type:tinyint;default:0;" json:"verified"`
 
 	LastModified time.Time `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
 	// deleted is reserved for use by periodic deleter.
 	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
+}
+
+func BoolPointer(b bool) *bool {
+	return &b
 }
 
 func (c *OIDCClientConfig) TableName() string {
@@ -234,9 +238,12 @@ func UpdateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cipher Cipher, u
 
 				// Set the serialized contents on our desired update object
 				update.Data = encrypted
+
+				// Each update should unverify the entry
+				update.Verified = BoolPointer(false)
 			}
 
-			updateTx := tx.
+			updateTx := tx.Debug().
 				Model(&OIDCClientConfig{}).
 				Where("id = ?", update.ID.String()).
 				Where("deleted = ?", 0).
@@ -246,6 +253,7 @@ func UpdateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cipher Cipher, u
 			}
 
 			if updateTx.RowsAffected == 0 {
+				// FIXME(at) this should not return an error in case of empty update
 				return fmt.Errorf("OIDC client config ID: %s does not exist: %w", update.ID.String(), ErrorNotFound)
 			}
 
@@ -289,15 +297,15 @@ func setClientConfigActiveFlag(ctx context.Context, conn *gorm.DB, id uuid.UUID,
 	}
 
 	if active {
-		tx := conn.
+		tx := conn.Debug().
 			WithContext(ctx).
 			Table((&OIDCClientConfig{}).TableName()).
 			Where("id != ?", id.String()).
 			Where("organizationId = ?", config.OrganizationID).
-			Where("deleted = ?", false).
-			Update("active", false)
+			Where("deleted = ?", 0).
+			Update("active", 0)
 		if tx.Error != nil {
-			return fmt.Errorf("failed to set oidc client config as active to %d (id: %s): %v", value, id.String(), tx.Error)
+			return fmt.Errorf("failed to set other oidc client configs as inactive: %v", tx.Error)
 		}
 	}
 

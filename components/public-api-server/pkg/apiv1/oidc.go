@@ -336,7 +336,7 @@ func (s *OIDCService) SetClientConfigActivation(ctx context.Context, req *connec
 	if err != nil {
 		return nil, err
 	}
-	if !config.Verified {
+	if config.Verified == nil || !*config.Verified {
 		log.Extract(ctx).WithError(err).Error("Failed to activate an unverified OIDC Client Config.")
 		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Failed to activate an unverified OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
 	}
@@ -444,7 +444,7 @@ func dbOIDCClientConfigToAPI(config db.OIDCClientConfig, decryptor db.Decryptor)
 			Issuer: config.Issuer,
 		},
 		Active:   config.Active,
-		Verified: config.Verified,
+		Verified: config.Verified != nil && *config.Verified,
 	}, nil
 }
 
