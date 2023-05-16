@@ -293,9 +293,9 @@ func setClientConfigActiveFlag(ctx context.Context, conn *gorm.DB, id uuid.UUID,
 			WithContext(ctx).
 			Table((&OIDCClientConfig{}).TableName()).
 			Where("id != ?", id.String()).
-			Where("organizationId != ?", config.OrganizationID).
+			Where("organizationId = ?", config.OrganizationID).
 			Where("deleted = ?", false).
-			Update("active", 0)
+			Update("active", false)
 		if tx.Error != nil {
 			return fmt.Errorf("failed to set oidc client config as active to %d (id: %s): %v", value, id.String(), tx.Error)
 		}

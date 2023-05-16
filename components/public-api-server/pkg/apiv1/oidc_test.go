@@ -679,6 +679,40 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 		require.Error(t, err)
 		require.Equal(t, connect.CodeFailedPrecondition, connect.CodeOf(err))
 	})
+
+	t.Run("activation of record should deactivate others", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+		issuer := newFakeIdP(t, true)
+
+		configs := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
+			OrganizationID: organizationID,
+			Issuer:         issuer,
+			Active:         true,
+			Verified:       true,
+		}, db.OIDCClientConfig{
+			OrganizationID: organizationID,
+			Issuer:         issuer,
+			Active:         false,
+			Verified:       true,
+		})
+
+		first := configs[0]
+		second := configs[1]
+
+		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
+			Id:             second.ID.String(),
+			OrganizationId: organizationID.String(),
+			Activate:       true,
+		}))
+		require.NoError(t, err)
+
+		getFirstConfigResponse, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
+			Id:             first.ID.String(),
+			OrganizationId: organizationID.String(),
+		}))
+		require.NoError(t, err)
+		require.Equal(t, false, getFirstConfigResponse.Msg.GetConfig().Active)
+	})
 }
 
 func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, v1connect.OIDCServiceClient, *gorm.DB) {
