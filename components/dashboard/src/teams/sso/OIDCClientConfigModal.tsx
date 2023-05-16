@@ -10,6 +10,7 @@ import { Button } from "../../components/Button";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
 import { ssoConfigReducer, isValid, useSaveSSOConfig, SSOConfigForm } from "./SSOConfigForm";
 import Alert from "../../components/Alert";
+import { useToast } from "../../components/toasts/Toasts";
 
 type Props = {
     clientConfig?: OIDCClientConfig;
@@ -18,6 +19,7 @@ type Props = {
 
 export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
     const isNew = !clientConfig;
+    const { toast } = useToast();
 
     const [ssoConfig, dispatch] = useReducer(ssoConfigReducer, {
         id: clientConfig?.id ?? "",
@@ -36,11 +38,14 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
 
         try {
             await save(ssoConfig);
+            if (isNew) {
+                toast("Your SSO configuration was created. You may now verify, then activate it");
+            }
             onClose();
         } catch (error) {
             console.error(error);
         }
-    }, [isLoading, onClose, save, ssoConfig]);
+    }, [isLoading, isNew, onClose, save, ssoConfig, toast]);
 
     return (
         <Modal
