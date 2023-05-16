@@ -17,12 +17,14 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
+	goidc "github.com/coreos/go-oidc/v3/oidc"
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws/jwstest"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -325,6 +327,88 @@ func TestCreateSession(t *testing.T) {
 	if diff := cmp.Diff(expected, got); diff != "" {
 		t.Errorf("Unexpected create session payload (-want +got):\n%s", diff)
 	}
+}
+
+func Test_validateRequiredClaims(t *testing.T) {
+	service, _ := setupOIDCServiceForTests(t)
+
+	type data struct {
+		jwt.RegisteredClaims
+		Email string `json:"email,omitempty"`
+		Name  string `json:"name,omitempty"`
+	}
+
+	testCases := []struct {
+		Label         string
+		ExpectedError string
+		Claims        data
+	}{
+		{
+			Label:         "Required claims present",
+			ExpectedError: "",
+			Claims: data{
+				RegisteredClaims: jwt.RegisteredClaims{
+					Audience: []string{"audience"},
+				},
+				Email: "me@localhost",
+				Name:  "Admin",
+			},
+		},
+		{
+			Label:         "Email claim is missing",
+			ExpectedError: "email claim is missing",
+			Claims: data{
+				RegisteredClaims: jwt.RegisteredClaims{
+					Audience: []string{"audience"},
+				},
+				Name: "Admin",
+			},
+		},
+		{
+			Label:         "Name claim is missing",
+			ExpectedError: "name claim is missing",
+			Claims: data{
+				RegisteredClaims: jwt.RegisteredClaims{
+					Audience: []string{"audience"},
+				},
+				Email: "admin@localhost",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Label, func(t *testing.T) {
+			token := createTestIDToken(t, tc.Claims)
+
+			err := service.validateRequiredClaims(token)
+			if tc.ExpectedError == "" {
+				require.NoError(t, err)
+			}
+			if tc.ExpectedError != "" {
+				require.Equal(t, err.Error(), tc.ExpectedError)
+			}
+		})
+	}
+}
+
+func createTestIDToken(t *testing.T, claims jwt.Claims) *goidc.IDToken {
+	t.Helper()
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	rawIDToken, err := token.SignedString([]byte("no-relevant-for-this-test"))
+	require.NoError(t, err)
+
+	verifier := goidc.NewVerifier("http://localhost", nil, &goidc.Config{
+		SkipIssuerCheck:            true,
+		SkipClientIDCheck:          true,
+		SkipExpiryCheck:            true,
+		InsecureSkipSignatureCheck: true,
+	})
+
+	verifiedToken, err := verifier.Verify(context.Background(), rawIDToken)
+	require.NoError(t, err)
+
+	return verifiedToken
 }
 
 func setupOIDCServiceForTests(t *testing.T) (*Service, *gorm.DB) {
