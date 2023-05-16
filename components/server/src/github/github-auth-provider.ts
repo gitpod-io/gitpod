@@ -9,7 +9,7 @@ import * as express from "express";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitHubScope } from "./scopes";
-import { AuthUserSetup } from "../auth/auth-provider";
+import { AuthFlow, AuthUserSetup } from "../auth/auth-provider";
 import { Octokit } from "@octokit/rest";
 import { GitHubApiError } from "./api";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
@@ -45,8 +45,14 @@ export class GitHubAuthProvider extends GenericAuthProvider {
         };
     }
 
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        super.authorize(req, res, next, scope ? scope : GitHubScope.Requirements.DEFAULT);
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        flow: AuthFlow,
+        scope?: string[],
+    ): void {
+        super.authorize(req, res, next, flow, scope ? scope : GitHubScope.Requirements.DEFAULT);
     }
 
     /**

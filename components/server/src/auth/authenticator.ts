@@ -142,13 +142,13 @@ export class Authenticator {
             return;
         }
 
-        // prepare session
-        await AuthFlow.attach(req.session, {
+        const flow: AuthFlow = {
             host,
             returnTo,
-        });
+        };
+
         // authenticate user
-        authProvider.authorize(req, res, next);
+        authProvider.authorize(req, res, next, flow);
     }
     protected async isInSetupMode() {
         const hasAnyStaticProviders = this.hostContextProvider
@@ -256,7 +256,7 @@ export class Authenticator {
         }
 
         // prepare session
-        await AuthFlow.attach(req.session, { host, returnTo, overrideScopes: override });
+        const flow: AuthFlow = { host, returnTo, overrideScopes: override };
         let wantedScopes = scopes
             .split(",")
             .map((s) => s.trim())
@@ -281,7 +281,7 @@ export class Authenticator {
             { sessionId: req.sessionID },
             `(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`,
         );
-        authProvider.authorize(req, res, next, wantedScopes);
+        authProvider.authorize(req, res, next, flow, wantedScopes);
     }
     protected mergeScopes(a: string[], b: string[]) {
         const set = new Set(a);
