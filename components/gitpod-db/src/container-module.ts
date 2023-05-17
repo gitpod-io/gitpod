@@ -45,8 +45,6 @@ import { WebhookEventDB } from "./webhook-event-db";
 import { WebhookEventDBImpl } from "./typeorm/webhook-event-db-impl";
 import { PersonalAccessTokenDBImpl } from "./typeorm/personal-access-token-db-impl";
 import { Synchronizer } from "./typeorm/synchronizer";
-import { WorkspaceOrganizationIdMigration } from "./long-running-migration/workspace-organizationid-migration";
-import { LongRunningMigration, LongRunningMigrationService } from "./long-running-migration/long-running-migration";
 import { LinkedInProfileDBImpl } from "./typeorm/linked-in-profile-db-impl";
 import { LinkedInProfileDB } from "./linked-in-profile-db";
 
@@ -115,11 +113,7 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
 
     // com concerns
     bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
-    bind(WorkspaceOrganizationIdMigration).toSelf().inSingletonScope();
     bind(Synchronizer).toSelf().inSingletonScope();
     bind(LinkedInProfileDBImpl).toSelf().inSingletonScope();
     bind(LinkedInProfileDB).toService(LinkedInProfileDBImpl);
-
-    bind(LongRunningMigrationService).toSelf().inSingletonScope();
-    bind(LongRunningMigration).to(WorkspaceOrganizationIdMigration).inSingletonScope();
 });

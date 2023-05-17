@@ -133,7 +133,6 @@ export interface ConfigSerialized {
 
     workspaceGarbageCollection: WorkspaceGarbageCollection;
     completeSnapshotJob?: { disabled?: boolean };
-    longRunningMigrationsJob?: { disabled?: boolean };
 
     enableLocalApp: boolean;
 

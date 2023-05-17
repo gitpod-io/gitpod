@@ -48,7 +48,6 @@ import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
-import { LongRunningMigrationService } from "@gitpod/gitpod-db/lib/long-running-migration/long-running-migration";
 import { API } from "./api/server";
 import { SnapshotService } from "./workspace/snapshot-service";
 import { GithubApp } from "./prebuilds/github-app";
@@ -90,7 +89,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
-    @inject(LongRunningMigrationService) protected readonly migrationService: LongRunningMigrationService;
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
     @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
@@ -308,9 +306,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Start periodic jobs
         this.jobRunner.start();
 
-        // Start long running migrations
-        this.startLongRunningMigrations().catch((err) => log.error("long running migrations errored", err));
-
         if (!this.config.completeSnapshotJob?.disabled) {
             // Start Snapshot Service
             log.info("Starting snapshot completion job...");
@@ -320,21 +315,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         this.app = app;
 
         log.info("server initialized.");
-    }
-
-    protected async startLongRunningMigrations(): Promise<void> {
-        if (this.config.longRunningMigrationsJob?.disabled) {
-            return;
-        }
-        log.info("Starting long running migrations job...");
-        let completed = false;
-        while (!completed) {
-            if (await this.qorum.areWeLeader()) {
-                completed = await this.migrationService.runMigrationBatch();
-            }
-            // sleep 5min
-            await new Promise((resolve) => setTimeout(resolve, 5 * 60 * 1000));
-        }
     }
 
     protected async registerRoutes(app: express.Application) {
