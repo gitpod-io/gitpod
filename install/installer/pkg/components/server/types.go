@@ -48,7 +48,6 @@ type ConfigSerialized struct {
 	GitHubApp                  GitHubApp                  `json:"githubApp"`
 	WorkspaceGarbageCollection WorkspaceGarbageCollection `json:"workspaceGarbageCollection"`
 	CompleteSnapshotJob        JobConfig                  `json:"completeSnapshotJob"`
-	LongRunningMigrationsJob   JobConfig                  `json:"longRunningMigrationsJob"`
 	AuthProviderConfigFiles    []string                   `json:"authProviderConfigFiles"`
 	IncrementalPrebuilds       IncrementalPrebuilds       `json:"incrementalPrebuilds"`
 	BlockNewUsers              config.BlockNewUsers       `json:"blockNewUsers"`

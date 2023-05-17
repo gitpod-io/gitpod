@@ -103,14 +103,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
-	disableLongRunningMigrationsJob := false
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
-			disableLongRunningMigrationsJob = cfg.WebApp.Server.DisableLongRunningMigrationJob
-		}
-		return nil
-	})
-
 	disableCompleteSnapshotJob := false
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
@@ -224,9 +216,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			ContentChunkLimit:          100,
 			PurgeRetentionPeriodDays:   365,
 			PurgeChunkLimit:            5000,
-		},
-		LongRunningMigrationsJob: JobConfig{
-			Disabled: disableLongRunningMigrationsJob,
 		},
 		CompleteSnapshotJob: JobConfig{
 			Disabled: disableCompleteSnapshotJob,
