@@ -64,9 +64,8 @@ export class WebhookEventDBSpec {
 
         await this.db.deleteOldEvents(0, 1);
 
-        const event = (await this.db.findByCloneUrl(cloneUrl))[0];
-        expect(event, "should be found").to.be.not.undefined;
-        expect((event as DBWebhookEvent).deleted, "should be marked as deleted").to.be.true;
+        const events = await this.db.findByCloneUrl(cloneUrl);
+        expect(events.length).to.be.eq(0);
     }
 }
 
