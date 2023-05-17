@@ -16,7 +16,8 @@ export const useNeedsSetup = () => {
     const { data: onboardingState, isLoading } = useOnboardingState();
     const enableDedicatedOnboardingFlow = useFeatureFlag("enableDedicatedOnboardingFlow");
 
-    let needsSetup = (onboardingState?.isCompleted ?? false) !== true;
+    // This needs to only be true if we've loaded the onboarding state
+    let needsSetup = !isLoading && onboardingState && onboardingState.isCompleted !== true;
 
     if (isCurrentHostExcludedFromSetup()) {
         needsSetup = false;
@@ -38,9 +39,6 @@ const useOnboardingState = () => {
             return await getGitpodService().server.getOnboardingState();
         },
         {
-            // Cache for a bit so we can avoid having the value change before we're ready
-            staleTime: 1000 * 60 * 60 * 1, // 1h
-            cacheTime: 1000 * 60 * 60 * 1, // 1h
             // Only query if feature flag is enabled
             enabled: enableDedicatedOnboardingFlow,
         },
