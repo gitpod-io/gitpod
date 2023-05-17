@@ -200,6 +200,7 @@ func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts
 
 	err = wso.uploadWorkspaceContent(ctx, ws, opts.SnapshotName)
 	if err != nil {
+		glog.WithError(err).WithFields(ws.OWI()).Error("final backup failed for workspace")
 		return nil, fmt.Errorf("final backup failed for workspace %s", opts.Meta.InstanceID)
 	}
 
@@ -277,6 +278,7 @@ func (wso *DefaultWorkspaceOperations) Snapshot(ctx context.Context, workspaceID
 
 	err = wso.uploadWorkspaceContent(ctx, ws, snapshotName)
 	if err != nil {
+		glog.WithError(err).WithFields(ws.OWI()).Error("snapshot failed for workspace")
 		return fmt.Errorf("snapshot failed for workspace %s", workspaceID)
 	}
 
