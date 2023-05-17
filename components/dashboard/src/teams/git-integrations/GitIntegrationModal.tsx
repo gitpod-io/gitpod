@@ -200,7 +200,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                 return false;
             }}
         >
-            <ModalHeader>{isNew ? "New Git Integration" : "Git Integration"}</ModalHeader>
+            <ModalHeader>{isNew ? "New Git Provider" : "Git Provider"}</ModalHeader>
             <ModalBody>
                 {isNew && (
                     <Subheading>
