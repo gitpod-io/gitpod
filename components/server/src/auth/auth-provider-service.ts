@@ -33,19 +33,7 @@ export class AuthProviderService {
      */
     async getAllAuthProviders(exceptOAuthRevisions: string[] = []): Promise<AuthProviderParams[]> {
         const all = await this.authProviderDB.findAll(exceptOAuthRevisions);
-        const transformed = all.map(this.toAuthProviderParams.bind(this));
-
-        // as a precaution, let's remove duplicates
-        const unique = new Map<string, AuthProviderParams>();
-        for (const current of transformed) {
-            const duplicate = unique.get(current.host);
-            if (duplicate) {
-                log.warn(`Duplicate dynamic Auth Provider detected.`, { rawResult: all, duplicate: current.host });
-                continue;
-            }
-            unique.set(current.host, current);
-        }
-        return Array.from(unique.values());
+        return all.map((provider) => this.toAuthProviderParams(provider));
     }
 
     async getAllAuthProviderHosts(): Promise<string[]> {
