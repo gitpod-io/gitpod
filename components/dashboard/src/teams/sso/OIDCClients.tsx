@@ -14,6 +14,10 @@ import { Heading2, Subheading } from "../../components/typography/headings";
 import { useOIDCClientsQuery } from "../../data/oidc-clients/oidc-clients-query";
 import { OIDCClientConfigModal } from "./OIDCClientConfigModal";
 import { OIDCClientListItem } from "./OIDCClientListItem";
+import { useToast } from "../../components/toasts/Toasts";
+import { LinkButton } from "../../components/LinkButton";
+import { ActivateConfigModal } from "./ActivateConfigModal";
+import { useVerifyClient } from "./use-verify-client";
 
 export const OIDCClients: FC = () => {
     const { data, isLoading } = useOIDCClientsQuery();
@@ -29,16 +33,44 @@ type OIDCClientsListProps = {
     clientConfigs: OIDCClientConfig[];
 };
 const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
+    const { toast } = useToast();
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [activateModalConfigId, setActivateModalConfigID] = useState("");
+
+    const verifyClient = useVerifyClient({
+        onSuccess: (configId: string) => {
+            toast(
+                <span>
+                    Single sign-on configuration was successfully verified.{" "}
+                    <LinkButton onClick={() => setActivateModalConfigID(configId)}>Activate configuration</LinkButton>.
+                </span>,
+            );
+        },
+        onError: (errorMessage) => {
+            toast(errorMessage);
+        },
+    });
 
     const onCreate = useCallback(() => setShowCreateModal(true), []);
     const hideModal = useCallback(() => setShowCreateModal(false), []);
+
+    const handleSaved = useCallback(
+        (configId: string) => {
+            toast(
+                <span>
+                    Your SSO configuration was successfully saved.{" "}
+                    <LinkButton onClick={() => verifyClient(configId)}>Verify it</LinkButton>.
+                </span>,
+            );
+        },
+        [toast, verifyClient],
+    );
 
     const hasActiveConfig = clientConfigs.some((config) => config.active);
 
     return (
         <>
-            {showCreateModal && <OIDCClientConfigModal onClose={hideModal} />}
+            {showCreateModal && <OIDCClientConfigModal onSaved={handleSaved} onClose={hideModal} />}
 
             <div className="flex flex-col space-y-2 md:flex-row md:items-start md:justify-between md:space-y-0">
                 <div>
@@ -68,9 +100,24 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
                         <ItemField>Issuer URL</ItemField>
                     </Item>
                     {clientConfigs.map((cc) => (
-                        <OIDCClientListItem key={cc.id} clientConfig={cc} hasActiveConfig={hasActiveConfig} />
+                        <OIDCClientListItem
+                            key={cc.id}
+                            clientConfig={cc}
+                            hasActiveConfig={hasActiveConfig}
+                            onVerify={verifyClient}
+                            onActivate={setActivateModalConfigID}
+                            onSaved={handleSaved}
+                        />
                     ))}
                 </ItemsList>
+            )}
+
+            {!!activateModalConfigId && (
+                <ActivateConfigModal
+                    configId={activateModalConfigId}
+                    hasActiveConfig={hasActiveConfig}
+                    onClose={() => setActivateModalConfigID("")}
+                />
             )}
         </>
     );

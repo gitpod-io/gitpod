@@ -14,47 +14,24 @@ import { OIDCClientConfigModal } from "./OIDCClientConfigModal";
 import { useToast } from "../../components/toasts/Toasts";
 import { ModalFooterAlert } from "../../components/Modal";
 import Tooltip from "../../components/Tooltip";
-import { openOIDCStartWindow } from "../../provider-utils";
-import { useInvalidateOIDCClientsQuery } from "../../data/oidc-clients/oidc-clients-query";
-import { useActivateOIDCClientMutation } from "../../data/oidc-clients/activate-oidc-client-mutation";
 
 type Props = {
     clientConfig: OIDCClientConfig;
-    hasActiveConfig?: boolean;
+    hasActiveConfig: boolean;
+    onSaved: (configId: string) => void;
+    onVerify: (configId: string) => void;
+    onActivate: (configId: string) => void;
 };
-export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig = false }) => {
+export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig, onSaved, onVerify, onActivate }) => {
     const { toast } = useToast();
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-    const [showActivateModal, setShowActivateModal] = useState(false);
     const deleteOIDCClient = useDeleteOIDCClientMutation();
-    const activateClient = useActivateOIDCClientMutation();
-    const invalidateClients = useInvalidateOIDCClientsQuery();
-
-    const handleVerifyClient = useCallback(async () => {
-        await openOIDCStartWindow({
-            verify: true,
-            configId: clientConfig.id,
-            onSuccess: async () => {
-                invalidateClients();
-                toast("Your SSO configuration was verified. You may now activate it.");
-            },
-            onError: (payload) => {
-                let errorMessage: string;
-                if (typeof payload === "string") {
-                    errorMessage = payload;
-                } else {
-                    errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
-                }
-                toast(errorMessage);
-            },
-        });
-    }, [clientConfig.id, invalidateClients, toast]);
 
     const menuEntries = useMemo(() => {
         const result: ContextMenuEntry[] = [
             {
-                title: "Edit",
+                title: clientConfig.active ? "View" : "Edit",
                 onClick: () => setShowEditModal(true),
                 separator: true,
             },
@@ -62,7 +39,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig = 
                 ? [
                       {
                           title: "Verify",
-                          onClick: handleVerifyClient,
+                          onClick: () => onVerify(clientConfig.id),
                           separator: true,
                       },
                   ]
@@ -72,7 +49,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig = 
                       {
                           title: "Activate",
                           onClick: () => {
-                              setShowActivateModal(true);
+                              onActivate(clientConfig.id);
                           },
                           separator: true,
                       },
@@ -85,7 +62,7 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig = 
             },
         ];
         return result;
-    }, [clientConfig.active, clientConfig.verified, handleVerifyClient]);
+    }, [clientConfig.active, clientConfig.id, clientConfig.verified, onActivate, onVerify]);
 
     const deleteClient = useCallback(async () => {
         try {
@@ -96,21 +73,6 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig = 
             console.log(error);
         }
     }, [clientConfig.id, deleteOIDCClient, toast]);
-
-    const handleActivateClient = useCallback(async () => {
-        activateClient.mutate(
-            { id: clientConfig.id },
-            {
-                onSuccess: () => {
-                    setShowActivateModal(false);
-                    toast("Your SSO configuration was activated");
-                },
-                onError: (error) => {
-                    console.error(error);
-                },
-            },
-        );
-    }, [activateClient, clientConfig.id, toast]);
 
     return (
         <>
@@ -164,33 +126,10 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig = 
                 />
             )}
             {showEditModal && (
-                <OIDCClientConfigModal clientConfig={clientConfig} onClose={() => setShowEditModal(false)} />
-            )}
-            {showActivateModal && (
-                <ConfirmationModal
-                    title="Activate SSO configuration"
-                    areYouSureText="Are you sure you want to activate the following SSO configuration?"
-                    children={{
-                        name: clientConfig.oidcConfig?.issuer ?? "",
-                        description: clientConfig.oauth2Config?.clientId ?? "",
-                    }}
-                    buttonText="Activate"
-                    buttonType="primary"
-                    buttonLoading={activateClient.isLoading}
-                    warningText={
-                        hasActiveConfig
-                            ? "Activating this SSO configuration will also deactivate the currently active configuration."
-                            : ""
-                    }
-                    footerAlert={
-                        activateClient.isError ? (
-                            <ModalFooterAlert type="danger">
-                                There was a problem activating the configuration
-                            </ModalFooterAlert>
-                        ) : null
-                    }
-                    onClose={() => setShowActivateModal(false)}
-                    onConfirm={handleActivateClient}
+                <OIDCClientConfigModal
+                    clientConfig={clientConfig}
+                    onSaved={onSaved}
+                    onClose={() => setShowEditModal(false)}
                 />
             )}
         </>
