@@ -2886,20 +2886,34 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
         const result = await this.teamDB.addMemberToTeam(user.id, invite.teamId);
-        const team = await this.teamDB.findTeamById(invite.teamId);
+        const org = await this.getTeam(ctx, invite.teamId);
+        if (org !== undefined) {
+            try {
+                // verify the new member if this org a paying customer
+                if (
+                    (await this.stripeService.findUncancelledSubscriptionByAttributionId(
+                        AttributionId.render({ kind: "team", teamId: org.id }),
+                    )) !== undefined
+                ) {
+                    await this.verificationService.verifyUser(user);
+                }
+            } catch (e) {
+                log.warn("Failed to verify new org member", e);
+            }
+        }
         if (result !== "already_member") {
             this.analytics.track({
                 userId: user.id,
                 event: "team_joined",
                 properties: {
                     team_id: invite.teamId,
-                    team_name: team?.name,
+                    team_name: org?.name,
                     invite_id: inviteId,
                 },
             });
         }
 
-        return team!;
+        return org!;
     }
 
     public async setTeamMemberRole(
@@ -4516,6 +4530,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
                 },
             });
+
+            // marking all members as verified
+            if (attrId.kind === "team") {
+                try {
+                    await this.verificationService.verifyOrgMembers(attrId.teamId);
+                } catch (err) {
+                    log.error(`Failed to verify org members`, err, { organizationId: attrId.teamId });
+                }
+            }
 
             return costCenter?.spendingLimit;
         } catch (error) {

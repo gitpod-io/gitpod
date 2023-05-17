@@ -10,7 +10,7 @@ import { inject, injectable, postConstruct } from "inversify";
 import { Config } from "../config";
 import { Twilio } from "twilio";
 import { ServiceContext } from "twilio/lib/rest/verify/v2/service";
-import { UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ResponseError } from "vscode-ws-jsonrpc";
@@ -20,6 +20,7 @@ export class VerificationService {
     @inject(Config) protected config: Config;
     @inject(WorkspaceDB) protected workspaceDB: WorkspaceDB;
     @inject(UserDB) protected userDB: UserDB;
+    @inject(TeamDB) protected teamDB: TeamDB;
     @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     protected verifyService: ServiceContext;
@@ -55,6 +56,24 @@ export class VerificationService {
 
     public markVerified(user: User): User {
         user.lastVerificationTime = new Date().toISOString();
+        return user;
+    }
+
+    public async verifyOrgMembers(organizationId: string): Promise<void> {
+        const members = await this.teamDB.findMembersByTeam(organizationId);
+        for (const member of members) {
+            const user = await this.userDB.findUserById(member.userId);
+            if (user) {
+                await this.verifyUser(user);
+            }
+        }
+    }
+
+    public async verifyUser(user: User): Promise<User> {
+        if (await this.needsVerification(user)) {
+            user = await this.userDB.storeUser(this.markVerified(user));
+            log.info("User verified", { userId: user.id });
+        }
         return user;
     }
 
