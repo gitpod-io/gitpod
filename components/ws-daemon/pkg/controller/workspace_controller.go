@@ -132,6 +132,11 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 		return result, err
 	}
 
+	if workspace.Status.Phase == workspacev1.WorkspacePhaseRunning {
+		result, err = wsc.handleWorkspaceRunning(ctx, &workspace, req)
+		return result, err
+	}
+
 	if workspace.Status.Phase == workspacev1.WorkspacePhaseStopping {
 
 		result, err = wsc.handleWorkspaceStop(ctx, &workspace, req)
@@ -209,6 +214,13 @@ func (wsc *WorkspaceController) handleWorkspaceInit(ctx context.Context, ws *wor
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (wsc *WorkspaceController) handleWorkspaceRunning(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceRunning")
+	defer tracing.FinishSpan(span, &err)
+
+	return ctrl.Result{}, wsc.operations.SetupWorkspace(ctx, ws.Name)
 }
 
 func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *workspacev1.Workspace, req ctrl.Request) (result ctrl.Result, err error) {
