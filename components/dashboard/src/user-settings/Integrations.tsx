@@ -30,6 +30,7 @@ import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { SelectAccountModal } from "./SelectAccountModal";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { EmptyMessage } from "../components/EmptyMessage";
 
 export default function Integrations() {
     return (
@@ -321,7 +322,7 @@ function GitProviders() {
 
             <Heading2>Git Providers</Heading2>
             <Subheading>
-                Manage permissions for Git providers.{" "}
+                Manage your permissions to the available Git provider integrations.{" "}
                 <a
                     className="gp-link"
                     href="https://www.gitpod.io/docs/configure/authentication"
@@ -333,15 +334,19 @@ function GitProviders() {
             </Subheading>
             <ItemsList className="pt-6">
                 {authProviders.data &&
-                    authProviders.data.map((ap) => (
-                        <AuthEntryItem
-                            key={ap.authProviderId}
-                            isConnected={isConnected}
-                            gitProviderMenu={gitProviderMenu}
-                            getUsername={getUsername}
-                            getPermissions={getPermissions}
-                            ap={ap}
-                        />
+                    (authProviders.data.length === 0 ? (
+                        <EmptyMessage subtitle="No Git providers have been configured yet." />
+                    ) : (
+                        authProviders.data.map((ap) => (
+                            <AuthEntryItem
+                                key={ap.authProviderId}
+                                isConnected={isConnected}
+                                gitProviderMenu={gitProviderMenu}
+                                getUsername={getUsername}
+                                getPermissions={getPermissions}
+                                ap={ap}
+                            />
+                        ))
                     ))}
             </ItemsList>
         </div>
