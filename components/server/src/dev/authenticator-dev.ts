@@ -11,7 +11,7 @@ import { Strategy as DummyStrategy } from "passport-dummy";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ResponseError } from "vscode-jsonrpc";
 import { Authenticator } from "../auth/authenticator";
-import { AuthFlow, AuthProvider } from "../auth/auth-provider";
+import { AuthProvider } from "../auth/auth-provider";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { DevData } from "./dev-data";
 
@@ -61,7 +61,7 @@ class DummyAuthProvider implements AuthProvider {
         req: express.Request,
         res: express.Response,
         next: express.NextFunction,
-        flow: AuthFlow,
+        state: string,
         scopes: string[],
     ): void {
         throw new Error("Method not implemented.");

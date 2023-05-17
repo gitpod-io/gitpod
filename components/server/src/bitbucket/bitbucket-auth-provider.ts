@@ -9,7 +9,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Bitbucket } from "bitbucket";
 import * as express from "express";
 import { injectable } from "inversify";
-import { AuthFlow, AuthUserSetup } from "../auth/auth-provider";
+import { AuthUserSetup } from "../auth/auth-provider";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
 import { BitbucketOAuthScopes } from "./bitbucket-oauth-scopes";
 
@@ -47,14 +47,14 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
         return "x-token-auth";
     }
 
-    async authorize(
+    authorize(
         req: express.Request,
         res: express.Response,
         next: express.NextFunction,
-        flow: AuthFlow,
+        state: string,
         scope?: string[],
     ) {
-        await super.authorize(req, res, next, flow, scope ? scope : BitbucketOAuthScopes.Requirements.DEFAULT);
+        super.authorize(req, res, next, state, scope ? scope : BitbucketOAuthScopes.Requirements.DEFAULT);
     }
 
     protected get baseURL() {

@@ -84,7 +84,7 @@ export interface AuthProvider {
         req: express.Request,
         res: express.Response,
         next: express.NextFunction,
-        flow: AuthFlow,
+        state: string,
         scopes?: string[],
     ): void;
     refreshToken?(user: User): Promise<void>;
