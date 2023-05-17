@@ -59,7 +59,7 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
             toast(
                 <span>
                     Your SSO configuration was successfully saved.{" "}
-                    <LinkButton onClick={() => verifyClient(configId)}>Verify it</LinkButton>.
+                    <LinkButton onClick={() => verifyClient(configId)}>Verify configuration</LinkButton>.
                 </span>,
             );
         },
