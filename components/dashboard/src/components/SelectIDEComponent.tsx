@@ -115,22 +115,23 @@ function IdeOptionElementSelected({ option, useLatest }: IdeOptionElementProps):
                 <img className="w-8 filter-grayscale self-center" src={Editor} alt="logo" />
             </div>
             <div className="flex-col ml-1 mt-1 flex-grow">
-                <div className="text-gray-700 dark:text-gray-300 font-semibold">Editor</div>
-                <div className="flex text-xs text-gray-500 dark:text-gray-400">
-                    <div className="font-semibold">{title}</div>
-                    {version && (
-                        <>
-                            <div className="mx-1">&middot;</div>
-                            <div>{version}</div>
-                        </>
+                <div className="text-gray-700 dark:text-gray-300 font-semibold">
+                    {title} <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
+                    <span className="text-gray-400 dark:text-gray-500 font-normal">{version}</span>{" "}
+                    {useLatest && (
+                        <div className="ml-1 rounded-xl bg-gray-200 dark:bg-gray-600 px-2 inline text-sm text-gray-500 dark:text-gray-400 font-normal">
+                            Latest
+                        </div>
                     )}
+                </div>
+                <div className="flex text-xs text-gray-500 dark:text-gray-400">
+                    <div className="font-semibold">Editor</div>
                     {label && (
                         <>
                             <div className="mx-1">&middot;</div>
                             <div>{capitalize(label)}</div>
                         </>
                     )}
-                    {useLatest && <div className="ml-2 rounded-xl bg-gray-200 dark:bg-gray-600 px-2">Latest</div>}
                 </div>
             </div>
         </div>
