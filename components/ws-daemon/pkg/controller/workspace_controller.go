@@ -220,6 +220,9 @@ func (wsc *WorkspaceController) handleWorkspaceRunning(ctx context.Context, ws *
 	span, ctx := opentracing.StartSpanFromContext(ctx, "handleWorkspaceRunning")
 	defer tracing.FinishSpan(span, &err)
 
+	log := log.FromContext(ctx)
+	log.Info("handling running workspace")
+
 	return ctrl.Result{}, wsc.operations.SetupWorkspace(ctx, ws.Name)
 }
 
