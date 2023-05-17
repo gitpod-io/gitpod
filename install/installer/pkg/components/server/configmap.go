@@ -180,6 +180,14 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	var isSingleOrgInstallation bool
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil {
+			isSingleOrgInstallation = cfg.WebApp.Server.IsSingleOrgInstallation
+		}
+		return nil
+	})
+
 	_, _, adminCredentialsPath := getAdminCredentials()
 
 	_, _, authCfg := auth.GetConfig(ctx)
@@ -279,9 +287,10 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Admin: AdminConfig{
 			CredentialsPath: adminCredentialsPath,
 		},
-		ShowSetupModal: showSetupModal,
-		Auth:           authCfg,
-		Redis:          redis.GetConfiguration(ctx),
+		ShowSetupModal:          showSetupModal,
+		Auth:                    authCfg,
+		Redis:                   redis.GetConfiguration(ctx),
+		IsSingleOrgInstallation: isSingleOrgInstallation,
 	}
 
 	fc, err := common.ToJSONString(scfg)

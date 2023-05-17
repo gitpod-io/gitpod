@@ -41,6 +41,7 @@ type ConfigSerialized struct {
 	PATSigningKeyFile                 string      `json:"patSigningKeyFile"`
 	ShowSetupModal                    bool        `json:"showSetupModal"`
 	Auth                              auth.Config `json:"auth"`
+	IsSingleOrgInstallation           bool        `json:"isSingleOrgInstallation"`
 
 	WorkspaceHeartbeat         WorkspaceHeartbeat         `json:"workspaceHeartbeat"`
 	WorkspaceDefaults          WorkspaceDefaults          `json:"workspaceDefaults"`
