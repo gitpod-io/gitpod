@@ -86,12 +86,12 @@ function WorkspaceClassDropDownElementSelected(props: { wsClass?: SupportedWorks
                 <img className="w-8 filter-grayscale self-center" src={WorkspaceClass} alt="logo" />
             </div>
             <div className="flex-col ml-1 mt-1 flex-grow">
-                <div className="text-gray-700 dark:text-gray-300 font-semibold">
-                    {title} <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
-                    <span className="text-gray-400 dark:text-gray-500 font-normal">{c?.description}</span>
-                </div>
+                <div className="text-gray-700 dark:text-gray-300 font-semibold truncate w-80">{title}</div>
                 <div className="flex text-xs text-gray-500 dark:text-gray-400">
-                    <div className="font-semibold">Class</div>
+                    <div className="font-semibold">
+                        Class <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
+                        <span className="text-gray-500 dark:text-gray-400 font-normal">{c?.description}</span>
+                    </div>
                 </div>
             </div>
         </div>
