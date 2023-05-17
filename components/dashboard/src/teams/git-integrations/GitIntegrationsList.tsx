@@ -27,7 +27,7 @@ export const GitIntegrationsList: FunctionComponent<Props> = ({ providers }) => 
             <div className="flex flex-col space-y-2 md:flex-row md:items-start md:justify-between md:space-y-0">
                 <div>
                     <Heading2>Git Provider</Heading2>
-                    <Subheading>Configure Git providers for your organization.</Subheading>
+                    <Subheading>Configure Git provider integrations for your organization.</Subheading>
                 </div>
 
                 {providers.length !== 0 ? (
