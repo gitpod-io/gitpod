@@ -51,7 +51,6 @@ export default function ConfirmationModal(props: {
         >
             <ModalHeader>{props.title || "Confirm"}</ModalHeader>
             <ModalBody>
-                <p className="mb-3 text-base text-gray-500">{props.areYouSureText}</p>
                 {props.warningText && (
                     <Alert type="warning" className="mb-4">
                         <strong>{props.warningHead}</strong>
@@ -59,6 +58,7 @@ export default function ConfirmationModal(props: {
                         {props.warningText}
                     </Alert>
                 )}
+                <p className="mb-3 text-base text-gray-500">{props.areYouSureText}</p>
                 {isEntity(props.children) ? (
                     <div className="w-full p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-xl group">
                         <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">
