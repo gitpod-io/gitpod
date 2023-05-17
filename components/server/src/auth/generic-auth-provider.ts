@@ -157,7 +157,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
     ) {
         const handler = passport.authenticate(this.getStrategy() as any, {
             ...this.defaultStrategyOptions,
-            ...{ state, scope },
+            ...{ state: this.deriveAuthState(state), scope },
         });
 
         handler(req, res, next);
@@ -277,7 +277,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             return;
         }
 
-        const authFlow = await this.signInJWT.verify(state as string);
+        const authFlow = await this.parseState(state as string);
         if (isAlreadyLoggedIn) {
             if (!authFlow) {
                 log.warn(
@@ -711,9 +711,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
             scopeSeparator,
             authorizationParams,
         } = this.oauthConfig;
-        const augmentedAuthParams = this.config.devBranch
-            ? { ...authorizationParams, state: this.config.devBranch }
-            : authorizationParams;
         return {
             authorizationURL: authorizationUrl,
             tokenURL: tokenUrl,
@@ -725,7 +722,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             scopeSeparator: scopeSeparator || " ",
             userAgent: this.USER_AGENT,
             passReqToCallback: true,
-            authorizationParams: augmentedAuthParams,
+            authorizationParams: authorizationParams,
         };
     }
 
@@ -745,6 +742,31 @@ export abstract class GenericAuthProvider implements AuthProvider {
         }
         throw lastError;
     };
+
+    private deriveAuthState(state: string): string {
+        // In preview environments, we prepend the current development branch to the state, to allow
+        // our preview proxy to route the Auth callback appropriately.
+        // See https://github.com/gitpod-io/ops/pull/9398/files
+        if (this.config.devBranch) {
+            return `${this.config.devBranch},${state}`;
+        }
+
+        return state;
+    }
+
+    private async parseState(state: string): Promise<AuthFlow> {
+        // In preview environments, we prepend the current development branch to the state, to allow
+        // our preview proxy to route the Auth callback appropriately.
+        // See https://github.com/gitpod-io/ops/pull/9398/files
+        //
+        // We need to strip the branch out of the state, if it's present
+        if (state.indexOf(",") >= 0) {
+            const [, actualState] = state.split(",", 2);
+            state = actualState;
+        }
+
+        return await this.signInJWT.verify(state as string);
+    }
 }
 
 interface VerifyResult {
