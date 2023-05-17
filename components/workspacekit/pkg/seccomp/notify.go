@@ -107,13 +107,6 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 	return fd, nil
 }
 
-const (
-	// IWS backoff is the backoff configuration we use for interacting with the in-workspace service
-	iwsBackoffInitialWait = 10 * time.Millisecond
-	iwsBackoffSteps       = 4
-	iwsBackoffFactor      = 5
-)
-
 // Handle actually listens on the seccomp notif FD and handles incoming requests.
 // This function returns when the notif FD is closed.
 func Handle(fd libseccomp.ScmpFd, handler SyscallHandler, wsid string) (stop chan<- struct{}, errchan <-chan error) {
@@ -291,39 +284,25 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 			}
 		}
 
-		wait := iwsBackoffInitialWait
-		for i := 0; i < iwsBackoffSteps; i++ {
-			err = func() error {
-				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-				defer cancel()
-				iws, err := h.Daemon(ctx)
-				if err != nil {
-					log.WithField("target", target).WithField("dest", dest).WithField("mode", stat.Mode()).WithError(err).Errorf("cannot get IWS client to mount %s", filesystem)
-					return err
-				}
-				defer iws.Close()
-
-				call := iws.MountProc
-				if filesystem == "sysfs" {
-					call = iws.MountSysfs
-				}
-				_, err = call(ctx, &daemonapi.MountProcRequest{
-					Target: dest,
-					Pid:    int64(req.Pid),
-				})
-				if err != nil {
-					log.WithField("target", dest).WithError(err).Errorf("cannot mount %s", filesystem)
-					return err
-				}
-				return nil
-			}()
-			if err != nil {
-				time.Sleep(wait)
-				wait = wait * iwsBackoffFactor
-			}
-		}
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		iws, err := h.Daemon(ctx)
 		if err != nil {
-			// We've already logged the reason above
+			log.WithField("target", target).WithField("dest", dest).WithField("mode", stat.Mode()).WithError(err).Errorf("cannot get IWS client to mount %s", filesystem)
+			return Errno(unix.EFAULT)
+		}
+		defer iws.Close()
+
+		call := iws.MountProc
+		if filesystem == "sysfs" {
+			call = iws.MountSysfs
+		}
+		_, err = call(ctx, &daemonapi.MountProcRequest{
+			Target: dest,
+			Pid:    int64(req.Pid),
+		})
+		if err != nil {
+			log.WithField("target", dest).WithError(err).Errorf("cannot mount %s", filesystem)
 			return Errno(unix.EFAULT)
 		}
 
