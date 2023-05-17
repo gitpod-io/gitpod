@@ -12,11 +12,12 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
 import { HostContextProvider } from "./host-context-provider";
-import { AuthProvider, AuthFlow } from "./auth-provider";
+import { AuthProvider } from "./auth-provider";
 import { TokenProvider } from "../user/token-provider";
 import { AuthProviderService } from "./auth-provider-service";
 import { UserService } from "../user/user-service";
 import { increaseLoginCounter } from "../prometheus-metrics";
+import { SignInJWT } from "./jwt";
 
 @injectable()
 export class Authenticator {
@@ -30,6 +31,7 @@ export class Authenticator {
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(UserService) protected readonly userService: UserService;
+    @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
 
     @postConstruct()
     protected setup() {
@@ -142,13 +144,13 @@ export class Authenticator {
             return;
         }
 
-        const flow: AuthFlow = {
+        const state = await this.signInJWT.sign({
             host,
             returnTo,
-        };
+        });
 
         // authenticate user
-        authProvider.authorize(req, res, next, flow);
+        authProvider.authorize(req, res, next, state);
     }
     protected async isInSetupMode() {
         const hasAnyStaticProviders = this.hostContextProvider
@@ -256,7 +258,6 @@ export class Authenticator {
         }
 
         // prepare session
-        const flow: AuthFlow = { host, returnTo, overrideScopes: override };
         let wantedScopes = scopes
             .split(",")
             .map((s) => s.trim())
@@ -281,7 +282,8 @@ export class Authenticator {
             { sessionId: req.sessionID },
             `(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`,
         );
-        authProvider.authorize(req, res, next, flow, wantedScopes);
+        const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override });
+        authProvider.authorize(req, res, next, state, wantedScopes);
     }
     protected mergeScopes(a: string[], b: string[]) {
         const set = new Set(a);

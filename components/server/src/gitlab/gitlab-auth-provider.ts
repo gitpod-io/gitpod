@@ -12,7 +12,7 @@ import { GitLabScope } from "./scopes";
 import { UnconfirmedUserException } from "../auth/errors";
 import { GitLab } from "./api";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
-import { AuthFlow, AuthUserSetup } from "../auth/auth-provider";
+import { AuthUserSetup } from "../auth/auth-provider";
 import { oauthUrls } from "./gitlab-urls";
 
 @injectable()
@@ -46,14 +46,14 @@ export class GitLabAuthProvider extends GenericAuthProvider {
         };
     }
 
-    async authorize(
+    authorize(
         req: express.Request,
         res: express.Response,
         next: express.NextFunction,
-        flow: AuthFlow,
+        state: string,
         scope?: string[],
     ) {
-        await super.authorize(req, res, next, flow, scope ? scope : GitLabScope.Requirements.DEFAULT);
+        super.authorize(req, res, next, state, scope ? scope : GitLabScope.Requirements.DEFAULT);
     }
 
     protected get baseURL() {
