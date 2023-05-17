@@ -27,17 +27,28 @@ import {
 } from "@gitpod/gitpod-db/lib";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
+    AdditionalContentContext,
+    BillingTier,
     CommitContext,
     Disposable,
+    DisposableCollection,
+    GitCheckoutInfo,
+    GitpodServer,
     GitpodToken,
     GitpodTokenType,
-    GitCheckoutInfo,
+    HeadlessWorkspaceEventType,
+    IDESettings,
+    ImageBuildLogInfo,
+    ImageConfigFile,
     NamedWorkspaceFeatureFlag,
+    Permission,
+    Project,
     RefType,
     SnapshotContext,
     StartWorkspaceResult,
     User,
     WithPrebuild,
+    WithReferrerContext,
     Workspace,
     WorkspaceContext,
     WorkspaceImageSource,
@@ -46,22 +57,17 @@ import {
     WorkspaceInstance,
     WorkspaceInstanceConfiguration,
     WorkspaceInstanceStatus,
-    Permission,
-    HeadlessWorkspaceEventType,
-    DisposableCollection,
-    AdditionalContentContext,
-    ImageConfigFile,
-    ImageBuildLogInfo,
-    WithReferrerContext,
-    BillingTier,
-    Project,
-    GitpodServer,
-    IDESettings,
     WorkspaceTimeoutDuration,
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
+import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
 import {
     BuildRegistryAuth,
     BuildRegistryAuthSelective,
@@ -76,7 +82,7 @@ import {
     ResolveBaseImageRequest,
     ResolveWorkspaceImageRequest,
 } from "@gitpod/image-builder/lib";
-import { StartWorkspaceSpec, WorkspaceFeatureFlag, StartWorkspaceResponse, IDEImage } from "@gitpod/ws-manager/lib";
+import { IDEImage, StartWorkspaceResponse, StartWorkspaceSpec, WorkspaceFeatureFlag } from "@gitpod/ws-manager/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     AdmissionLevel,
@@ -85,28 +91,23 @@ import {
     PortSpec,
     PortVisibility,
     StartWorkspaceRequest,
-    WorkspaceMetadata,
-    WorkspaceType,
     StopWorkspacePolicy,
     StopWorkspaceRequest,
+    WorkspaceMetadata,
+    WorkspaceType,
 } from "@gitpod/ws-manager/lib/core_pb";
+import * as grpc from "@grpc/grpc-js";
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
+import * as path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ScopedResourceGuard } from "../auth/resource-access";
+import { BillingModes } from "../billing/billing-mode";
+import { EntitlementService } from "../billing/entitlement-service";
 import { Config } from "../config";
-import { OneTimeSecretServer } from "../one-time-secret-server";
-import { AuthorizationService } from "../user/authorization-service";
-import { TokenProvider } from "../user/token-provider";
-import { UserService } from "../user/user-service";
-import { ImageSourceProvider } from "./image-source-provider";
-import { MessageBusIntegration } from "./messagebus-integration";
-import * as path from "path";
-import * as grpc from "@grpc/grpc-js";
 import { IDEService } from "../ide-service";
-import * as IdeServiceApi from "@gitpod/ide-service-api/lib/ide.pb";
-import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
+import { OneTimeSecretServer } from "../one-time-secret-server";
 import {
     FailedInstanceStartReason,
     increaseFailedInstanceStartCounter,
@@ -114,17 +115,15 @@ import {
     increaseImageBuildsStartedTotal,
     increaseSuccessfulInstanceStartCounter,
 } from "../prometheus-metrics";
+import { RedisMutex } from "../redis/mutex";
+import { AuthorizationService } from "../user/authorization-service";
+import { TokenProvider } from "../user/token-provider";
+import { UserService } from "../user/user-service";
 import { ContextParser } from "./context-parser-service";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { WorkspaceClassesConfig } from "./workspace-classes";
-import { EntitlementService } from "../billing/entitlement-service";
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { ResolvedEnvVars } from "./env-var-service";
-import { Synchronizer } from "@gitpod/gitpod-db/lib/typeorm/synchronizer";
-import { BillingModes } from "../billing/billing-mode";
+import { ImageSourceProvider } from "./image-source-provider";
+import { MessageBusIntegration } from "./messagebus-integration";
+import { WorkspaceClassesConfig } from "./workspace-classes";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
@@ -203,7 +202,7 @@ export class WorkspaceStarter {
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(Synchronizer) protected readonly synchronizer: Synchronizer;
+    @inject(RedisMutex) protected readonly redisMutex: RedisMutex;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -300,7 +299,7 @@ export class WorkspaceStarter {
                 options.workspaceClass,
             );
             // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
-            await this.synchronizer.synchronized("startws-" + workspace.id, "server", async () => {
+            await this.redisMutex.using(["startws", workspace.id], 1000, async () => {
                 const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspace.id);
                 if (runningInstance) {
                     throw new Error(`Workspace ${workspace.id} is already running`);

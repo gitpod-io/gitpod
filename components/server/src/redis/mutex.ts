@@ -48,7 +48,9 @@ export class RedisMutex {
             if (err instanceof ExecutionError) {
                 // Workaround for https://github.com/mike-marcacci/node-redlock/issues/168 and https://github.com/mike-marcacci/node-redlock/issues/169
                 if (err.message.indexOf("unable to achieve a quorum during its retry window") >= 0) {
-                    log.debug("wsgc: failed to acquire workspace-gc lock, another instance already has the lock", err);
+                    log.debug("failed to acquire a lock, another instance already has the lock", err, {
+                        lockKey: resources,
+                    });
 
                     throw new ResourceLockedError("operation was unable to achieve quorum");
                 }
