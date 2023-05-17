@@ -609,18 +609,6 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
-	t.Run("de-activation is not implemented", func(t *testing.T) {
-		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
-
-		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
-			Id:             uuid.NewString(),
-			OrganizationId: uuid.NewString(),
-			Activate:       false,
-		}))
-		require.Error(t, err)
-		require.Equal(t, connect.CodeUnimplemented, connect.CodeOf(err))
-	})
-
 	t.Run("returns permission denied when user is not org owner", func(t *testing.T) {
 		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 
@@ -712,6 +700,32 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 		}))
 		require.NoError(t, err)
 		require.Equal(t, false, getFirstConfigResponse.Msg.GetConfig().Active)
+	})
+
+	t.Run("deactivates record", func(t *testing.T) {
+		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
+		issuer := newFakeIdP(t, true)
+
+		created := dbtest.CreateOIDCClientConfigs(t, dbConn, db.OIDCClientConfig{
+			OrganizationID: organizationID,
+			Issuer:         issuer,
+			Active:         true,
+			Verified:       db.BoolPointer(true),
+		})[0]
+
+		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
+			Id:             created.ID.String(),
+			OrganizationId: created.OrganizationID.String(),
+			Activate:       false,
+		}))
+		require.NoError(t, err)
+
+		getResponse, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
+			Id:             created.ID.String(),
+			OrganizationId: created.OrganizationID.String(),
+		}))
+		require.NoError(t, err)
+		require.Equal(t, false, getResponse.Msg.Config.Active)
 	})
 }
 
