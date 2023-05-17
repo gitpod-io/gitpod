@@ -10,6 +10,8 @@ import { v4 as uuidv4 } from "uuid";
 import { ProjectDB, TeamDB, TypeORM, UserDB, WorkspaceDB, testContainer } from "@gitpod/gitpod-db/lib";
 import { ContainerModule } from "inversify";
 import { StripeService } from "../user/stripe-service";
+import { RedisMutex } from "../redis/mutex";
+import { RedlockAbortSignal } from "redlock";
 const expect = chai.expect;
 
 const mockedStripe = new StripeService();
@@ -20,10 +22,20 @@ mockedStripe.updateAttributionId = async (
 ) => {
     return true;
 };
+class TestingRedisMutex extends RedisMutex {
+    public using<T>(
+        resources: string[],
+        duration: number,
+        routine: (signal: RedlockAbortSignal) => Promise<T>,
+    ): Promise<T> {
+        return routine(undefined!);
+    }
+}
 testContainer.load(
     new ContainerModule((bind) => {
         bind(StripeService).toConstantValue(mockedStripe);
         bind(UserToTeamMigrationService).toSelf().inSingletonScope();
+        bind(RedisMutex).toConstantValue(new TestingRedisMutex());
     }),
 );
 

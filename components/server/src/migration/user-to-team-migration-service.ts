@@ -5,7 +5,6 @@
  */
 
 import { ProjectDB, TeamDB, TypeORM, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Synchronizer } from "@gitpod/gitpod-db/lib/typeorm/synchronizer";
 import { AdditionalUserData, Team, User, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -13,6 +12,7 @@ import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { ResponseError } from "vscode-jsonrpc";
 import { StripeService } from "../user/stripe-service";
+import { RedisMutex } from "../redis/mutex";
 
 @injectable()
 export class UserToTeamMigrationService {
@@ -21,7 +21,7 @@ export class UserToTeamMigrationService {
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
     @inject(TypeORM) protected readonly typeorm: TypeORM;
-    @inject(Synchronizer) protected readonly synchronizer: Synchronizer;
+    @inject(RedisMutex) protected readonly redisMutex: RedisMutex;
     @inject(StripeService) protected readonly stripeService: StripeService;
 
     async migrateUser(candidate: User): Promise<User> {
@@ -29,7 +29,7 @@ export class UserToTeamMigrationService {
         if (!(await this.needsMigration(candidate))) {
             return candidate;
         }
-        return this.synchronizer.synchronized("migrate-" + candidate.id, "migrateUser", async () => {
+        return this.redisMutex.using(["migrateUser", candidate.id], 5000, async () => {
             if (!(await this.needsMigration(candidate))) {
                 return candidate;
             }
