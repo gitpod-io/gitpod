@@ -7,7 +7,7 @@
 import Alert from "./Alert";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "./Modal";
 import { useRef, useEffect, ReactNode } from "react";
-import { Button } from "./Button";
+import { Button, ButtonProps } from "./Button";
 
 export default function ConfirmationModal(props: {
     title?: string;
@@ -16,6 +16,7 @@ export default function ConfirmationModal(props: {
     buttonText?: string;
     buttonDisabled?: boolean;
     buttonLoading?: boolean;
+    buttonType?: ButtonProps["type"];
     visible?: boolean;
     warningHead?: string;
     warningText?: string;
@@ -23,6 +24,7 @@ export default function ConfirmationModal(props: {
     onClose: () => void;
     onConfirm: () => void;
 }) {
+    const buttonType = props.buttonType || "danger";
     const cancelButtonRef = useRef<HTMLButtonElement>(null);
 
     const buttonDisabled = useRef(props.buttonDisabled);
@@ -75,7 +77,7 @@ export default function ConfirmationModal(props: {
                     Cancel
                 </Button>
                 <Button
-                    type="danger"
+                    type={buttonType}
                     className="ml-2"
                     onClick={props.onConfirm}
                     disabled={props.buttonDisabled}
