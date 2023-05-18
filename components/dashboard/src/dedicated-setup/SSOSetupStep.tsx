@@ -93,9 +93,13 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
             <div className="mb-10">
                 <Heading1>Configure single sign-on</Heading1>
                 <Subheading>
-                    {/* TODO: Find what link we want to use here */}
                     Enable single sign-on for your organization using the OpenID Connect (OIDC) standard.{" "}
-                    <a href="https://openid.net/connect/" target="_blank" rel="noreferrer noopener" className="gp-link">
+                    <a
+                        href="https://gitpod.io/docs/dedicated/sso-setup-8f7696e0"
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="gp-link"
+                    >
                         Learn more
                     </a>
                 </Subheading>
