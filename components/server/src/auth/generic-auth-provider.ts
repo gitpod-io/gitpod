@@ -504,7 +504,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
         const { strategyName } = this;
         const clientInfo = getRequestingClientInfo(req);
         const authProviderId = this.authProviderId;
-        const authFlow = AuthFlow.get(req.session)!; // asserted in `callback` allready
+        const authFlow = await this.parseState((req.query.state as string) || "");
         const defaultLogPayload = { authFlow, clientInfo, authProviderId };
         let currentGitpodUser: User | undefined = User.is(req.user) ? req.user : undefined;
         let candidate: Identity;
