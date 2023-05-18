@@ -523,7 +523,7 @@ func buildWorkspacePodURL(protocol api.PortProtocol, ipAddress string, port stri
 	case api.PortProtocol_PORT_PROTOCOL_HTTPS:
 		portProtocol = "https"
 	default:
-		return nil, xerrors.Errorf("protocol not support")
+		return nil, xerrors.Errorf("protocol not supported")
 	}
 	return url.Parse(fmt.Sprintf("%v://%v:%v", portProtocol, ipAddress, port))
 }
