@@ -57,14 +57,17 @@ export class WebhookEventDBImpl implements WebhookEventDB {
         const d = new Date();
         d.setDate(d.getDate() - ageInDays);
         const expirationDate = d.toISOString();
-        const query = await repo
-            .createQueryBuilder()
-            .limit(limit)
-            .where("creationTime <= :expirationDate", { expirationDate })
-            .delete()
-            .getQuery();
-
-        console.log(query);
+        await repo.query(
+            `DELETE FROM d_b_webhook_event
+                WHERE id IN (
+                SELECT id FROM (
+                    SELECT id FROM d_b_webhook_event
+                    WHERE creationTime <= ?
+                    LIMIT ?
+                ) AS selection
+            )`,
+            [expirationDate, limit],
+        );
 
         return;
     }
