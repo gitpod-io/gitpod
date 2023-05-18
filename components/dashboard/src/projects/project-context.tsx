@@ -21,7 +21,10 @@ export const ProjectContext = createContext<{
 
 export const ProjectContextProvider: React.FC = ({ children }) => {
     const [project, setProject] = useState<Project>();
-    return <ProjectContext.Provider value={{ project, setProject }}>{children}</ProjectContext.Provider>;
+
+    const ctx = useMemo(() => ({ project, setProject }), [project]);
+
+    return <ProjectContext.Provider value={ctx}>{children}</ProjectContext.Provider>;
 };
 
 export function useProjectSlugs(): { projectSlug?: string; prebuildId?: string } {
