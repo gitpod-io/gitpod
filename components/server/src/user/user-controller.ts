@@ -188,6 +188,7 @@ export class UserController {
                 // We do not send the error response to ensure we do not disclose information.
                 const code = e.code || 401;
                 res.sendStatus(code);
+                // TODO: return a new html page for displaying the error
                 return;
             }
         });
