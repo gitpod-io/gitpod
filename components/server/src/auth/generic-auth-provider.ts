@@ -317,8 +317,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
         if (callbackError) {
             // e.g. "access_denied"
-            // Clean up the session
-            await AuthFlow.clear(request.session);
 
             increaseLoginCounter("failed", this.host);
             return this.sendCompletionRedirectWithError(response, {
@@ -363,8 +361,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
         });
 
         if (err) {
-            await AuthFlow.clear(request.session);
-
             if (SelectAccountException.is(err)) {
                 return this.sendCompletionRedirectWithError(response, err.payload);
             }

@@ -48,9 +48,6 @@ export class LoginCompletionHandler {
                 });
             });
         } catch (err) {
-            // Clean up the session & avoid loops
-            await AuthFlow.clear(request.session);
-
             if (authHost) {
                 increaseLoginCounter("failed", authHost);
             }
@@ -78,9 +75,6 @@ export class LoginCompletionHandler {
         if (authHost) {
             await this.updateAuthProviderAsVerified(authHost, user);
         }
-
-        // Clean up the session & avoid loops
-        await AuthFlow.clear(request.session);
 
         if (authHost) {
             increaseLoginCounter("succeeded", authHost);

@@ -96,22 +96,6 @@ export interface AuthFlow {
     readonly overrideScopes?: boolean;
 }
 export namespace AuthFlow {
-    export function get(session: Session | undefined): AuthFlow | undefined {
-        if (session) {
-            return session.authFlow;
-        }
-    }
-    export async function attach(session: Session, authFlow: AuthFlow): Promise<void> {
-        session.authFlow = authFlow;
-        return saveSession(session);
-    }
-    export async function clear(session: Session | undefined) {
-        if (session) {
-            session.authFlow = undefined;
-            return saveSession(session);
-        }
-    }
-
     export function is(obj: any): obj is AuthFlow {
         if (obj === undefined) {
             return false;
