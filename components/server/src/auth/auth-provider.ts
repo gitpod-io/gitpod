@@ -6,8 +6,6 @@
 
 import * as express from "express";
 import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
-import { saveSession } from "../express-util";
-import { Session } from "../express";
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
 
