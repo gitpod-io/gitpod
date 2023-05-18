@@ -184,11 +184,8 @@ export class UserController {
             } catch (e) {
                 log.error("Failed to sign-in as admin with OTS Token", e);
 
-                // Default to unauthenticated, to not leak information.
-                // We do not send the error response to ensure we do not disclose information.
-                const code = e.code || 401;
-                res.sendStatus(code);
-                // TODO: return a new html page for displaying the error
+                // Always redirect to an expired token page if there's an error
+                res.redirect("/error/expire-ots", 307);
                 return;
             }
         });

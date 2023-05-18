@@ -6,10 +6,10 @@
 
 import { FC } from "react";
 import { Heading2, Subheading } from "../components/typography/headings";
-import cubicleImg from "../images/cubicle.png";
-import cubicleDarkImg from "../images/cubicle-dark.png";
-import cubicleImg2x from "../images/cubicle@2x.png";
-import cubicleDarkImg2x from "../images/cubicle-dark@2x.png";
+import cubicleImg from "../images/cubicle.webp";
+import cubicleDarkImg from "../images/cubicle-dark.webp";
+import cubicleImg2x from "../images/cubicle@2x.webp";
+import cubicleDarkImg2x from "../images/cubicle-dark@2x.webp";
 import gitpodIcon from "../images/gitpod.svg";
 import gitpodDarkIcon from "../images/gitpod-dark.svg";
 import classNames from "classnames";

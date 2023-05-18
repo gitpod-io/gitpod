@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { FC, Suspense, useEffect } from "react";
+import { FC, Suspense, useEffect } from "react";
 import { AppLoading } from "./app/AppLoading";
 import { AppRoutes } from "./app/AppRoutes";
 import { useCurrentOrg } from "./data/organizations/orgs-query";
@@ -12,13 +12,8 @@ import { useAnalyticsTracking } from "./hooks/use-analytics-tracking";
 import { useUserLoader } from "./hooks/use-user-loader";
 import { Login } from "./Login";
 import { AppBlockingFlows } from "./app/AppBlockingFlows";
-import { useHistory } from "react-router";
-
-// Wrap the App in an ErrorBoundary to catch User/Org loading errors
-// This will also catch any errors that happen to bubble all the way up to the top
-const AppWithErrorBoundary: FC = () => {
-    return <App />;
-};
+import { Route, Switch, useHistory } from "react-router";
+import { ErrorPages } from "./error-pages/ErrorPages";
 
 export const StartWorkspaceModalKeyBinding = `${/(Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl﹢"}O`;
 
@@ -72,4 +67,13 @@ const App: FC = () => {
     );
 };
 
-export default AppWithErrorBoundary;
+// Routing level above main App component for any routes that don't need user/orgs loaded, such as addressable error pages
+export const RootAppRouter: FC = () => {
+    return (
+        <Switch>
+            {/* Any route that starts w/ `/error` will render a specific error page if it matches a route, otherwise a generic error page */}
+            <Route path="/error" component={ErrorPages} />
+            <Route path="*" component={App} />
+        </Switch>
+    );
+};
