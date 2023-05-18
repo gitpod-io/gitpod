@@ -27,7 +27,9 @@ import com.intellij.util.io.DigestUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.gateway.api.*
+import com.jetbrains.gateway.api.ConnectionRequestor
+import com.jetbrains.gateway.api.GatewayConnectionHandle
+import com.jetbrains.gateway.api.GatewayConnectionProvider
 import com.jetbrains.gateway.ssh.ClientOverSshTunnelConnector
 import com.jetbrains.gateway.ssh.SshHostTunnelConnector
 import com.jetbrains.gateway.thinClientLink.ThinClientHandle
@@ -36,6 +38,7 @@ import com.jetbrains.rd.util.URI
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import io.gitpod.gitpodprotocol.api.entities.WorkspaceInstance
+import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
 import io.gitpod.jetbrains.icons.GitpodIcons
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.await
@@ -45,7 +48,6 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.*
-import javax.swing.JComponent
 import javax.swing.JLabel
 import kotlin.coroutines.coroutineContext
 
@@ -53,6 +55,7 @@ import kotlin.coroutines.coroutineContext
 class GitpodConnectionProvider : GatewayConnectionProvider {
     private val activeConnections = ConcurrentHashMap<String, LifetimeDefinition>()
     private val gitpod = service<GitpodConnectionService>()
+    private val connectionHandleFactory = service<GitpodConnectionHandleFactory>()
 
     private val httpClient = HttpClient.newBuilder()
         .followRedirects(HttpClient.Redirect.ALWAYS)
@@ -307,7 +310,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
             }
         }
 
-        return GitpodConnectionHandle(connectionLifetime, connectionPanel, connectParams)
+        return connectionHandleFactory.createGitpodConnectionHandle(connectionLifetime, connectionPanel, connectParams)
     }
 
     private suspend fun resolveJoinLink(
@@ -474,7 +477,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
     override fun isApplicable(parameters: Map<String, String>): Boolean =
         parameters.containsKey("gitpodHost")
 
-    private data class ConnectParams(
+    data class ConnectParams(
         val gitpodHost: String,
         val actualWorkspaceId: String,
         val backendPort: String?,
@@ -482,25 +485,6 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
     ) {
         val resolvedWorkspaceId = "${if (debugWorkspace) "debug-" else ""}$actualWorkspaceId"
         val title = "$resolvedWorkspaceId ($gitpodHost)"
-    }
-
-    private class GitpodConnectionHandle(
-        lifetime: Lifetime,
-        private val component: JComponent,
-        private val params: ConnectParams
-    ) : GatewayConnectionHandle(lifetime) {
-        override fun customComponentProvider() = object : CustomConnectionFrameComponentProvider {
-            override val closeConfirmationText = "Disconnect from ${getTitle()}?"
-            override fun createComponent(context: CustomConnectionFrameContext) = component
-        }
-
-        override fun getTitle(): String {
-            return params.title
-        }
-
-        override fun hideToTrayOnStart(): Boolean {
-            return false
-        }
     }
 
     private data class SSHHostKey(val type: String, val hostKey: String)
