@@ -185,7 +185,7 @@ export class UserController {
                 log.error("Failed to sign-in as admin with OTS Token", e);
 
                 // Always redirect to an expired token page if there's an error
-                res.redirect("/error/expire-ots", 307);
+                res.redirect("/error/expired-ots", 307);
                 return;
             }
         });
