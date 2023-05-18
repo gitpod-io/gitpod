@@ -257,6 +257,11 @@ func (s *Service) OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePo
 	} else {
 		payload.Port.Policy = v1.PortPolicy_PORT_POLICY_PRIVATE
 	}
+	if port.Protocol == gitpod.PortProtocolHTTPS {
+		payload.Port.Protocol = v1.PortProtocol_PORT_PROTOCOL_HTTPS
+	} else {
+		payload.Port.Protocol = v1.PortProtocol_PORT_PROTOCOL_HTTP
+	}
 	_, err = service.UpdatePort(ctx, payload)
 	if err != nil {
 		log.WithField("method", "UpdatePort").WithError(err).Error("failed to call PublicAPI")
@@ -470,6 +475,11 @@ func workspaceStatusToWorkspaceInstance(status *v1.WorkspaceStatus) *gitpod.Work
 			info.Visibility = gitpod.PortVisibilityPublic
 		} else {
 			info.Visibility = gitpod.PortVisibilityPrivate
+		}
+		if port.Protocol == v1.PortProtocol_PORT_PROTOCOL_HTTPS {
+			info.Protocol = gitpod.PortProtocolHTTPS
+		} else {
+			info.Protocol = gitpod.PortProtocolHTTP
 		}
 		instance.Status.ExposedPorts = append(instance.Status.ExposedPorts, info)
 	}

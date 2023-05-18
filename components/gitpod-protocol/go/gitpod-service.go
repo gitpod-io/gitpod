@@ -1905,11 +1905,17 @@ type WorkspaceInstancePort struct {
 	Port       float64 `json:"port,omitempty"`
 	URL        string  `json:"url,omitempty"`
 	Visibility string  `json:"visibility,omitempty"`
+	Protocol   string  `json:"protocol,omitempty"`
 }
 
 const (
 	PortVisibilityPublic  = "public"
 	PortVisibilityPrivate = "private"
+)
+
+const (
+	PortProtocolHTTP  = "http"
+	PortProtocolHTTPS = "https"
 )
 
 // GithubAppConfig is the GithubAppConfig message type
@@ -1942,6 +1948,7 @@ type PortConfig struct {
 	Visibility  string  `json:"visibility,omitempty"`
 	Description string  `json:"description,omitempty"`
 	Name        string  `json:"name,omitempty"`
+	Protocol    string  `json:"protocol,omitempty"`
 }
 
 // TaskConfig is the TaskConfig message type

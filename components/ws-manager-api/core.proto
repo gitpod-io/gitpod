@@ -386,6 +386,9 @@ message PortSpec {
 
     // url is the public-facing URL this port is available at
     string url = 4;
+
+    // protocol is the workspace port protocol, default is http
+    PortProtocol protocol = 5;
 }
 
 // PortVisibility defines who may access a workspace port which is guarded by an authentication in the proxy
@@ -396,6 +399,15 @@ enum PortVisibility {
 
     // public means the port is accessible by everybody using the workspace port URL
     PORT_VISIBILITY_PUBLIC = 1;
+}
+
+// PortProtocol defines the workspace port protocol
+enum PortProtocol {
+    // http means workspace port protocol is http
+    PORT_PROTOCOL_HTTP = 0;
+
+    // https means workspace port protocol is https
+    PORT_PROTOCOL_HTTPS = 1;
 }
 
 // VolumeSnapshotInfo defines volume snapshot information

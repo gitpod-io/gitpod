@@ -789,6 +789,8 @@ export class PortSpec extends jspb.Message {
     setVisibility(value: PortVisibility): PortSpec;
     getUrl(): string;
     setUrl(value: string): PortSpec;
+    getProtocol(): PortProtocol;
+    setProtocol(value: PortProtocol): PortSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PortSpec.AsObject;
@@ -805,6 +807,7 @@ export namespace PortSpec {
         port: number,
         visibility: PortVisibility,
         url: string,
+        protocol: PortProtocol,
     }
 }
 
@@ -1279,6 +1282,11 @@ export enum AdmissionLevel {
 export enum PortVisibility {
     PORT_VISIBILITY_PRIVATE = 0,
     PORT_VISIBILITY_PUBLIC = 1,
+}
+
+export enum PortProtocol {
+    PORT_PROTOCOL_HTTP = 0,
+    PORT_PROTOCOL_HTTPS = 1,
 }
 
 export enum WorkspaceConditionBool {

@@ -150,7 +150,7 @@ type PortsItems struct {
 	// The port number (e.g. 1337) or range (e.g. 3000-3999) to expose.
 	Port interface{} `yaml:"port" json:"port"`
 
-	// The protocol to be used. (deprecated)
+	// The protocol of workspace port.
 	Protocol string `yaml:"protocol,omitempty" json:"protocol,omitempty"`
 
 	// Whether the port visibility should be private or public. 'private' (default) will only allow users with workspace access to access the port. 'public' will allow everyone with the port URL to access the port.

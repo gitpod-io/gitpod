@@ -7,6 +7,7 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +29,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // RouteHandlerConfig configures a RouteHandler.
@@ -434,6 +437,11 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig, infoP
 				workspacePodPortResolver,
 				withHTTPErrorHandler(showPortNotFoundPage),
 				withXFrameOptionsFilter(),
+				func(h *proxyPassConfig) {
+					h.Transport = &http.Transport{
+						TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+					}
+				},
 			)(rw, r)
 		},
 	)
@@ -451,7 +459,7 @@ func workspacePodResolver(config *Config, infoProvider WorkspaceInfoProvider, re
 		port = fmt.Sprint(config.WorkspacePodConfig.TheiaPort)
 	}
 	workspaceInfo := infoProvider.WorkspaceInfo(coords.ID)
-	return buildWorkspacePodURL(workspaceInfo.IPAddress, port)
+	return buildWorkspacePodURL(api.PortProtocol_PORT_PROTOCOL_HTTP, workspaceInfo.IPAddress, port)
 }
 
 // workspacePodPortResolver resolves to the workspace pods ports.
@@ -459,12 +467,24 @@ func workspacePodPortResolver(config *Config, infoProvider WorkspaceInfoProvider
 	coords := getWorkspaceCoords(req)
 	workspaceInfo := infoProvider.WorkspaceInfo(coords.ID)
 	var port string
+	protocol := api.PortProtocol_PORT_PROTOCOL_HTTP
 	if coords.Debug {
 		port = fmt.Sprint(config.WorkspacePodConfig.DebugWorkspaceProxyPort)
 	} else {
 		port = coords.Port
+		prt, err := strconv.ParseUint(port, 10, 16)
+		if err != nil {
+			log.WithField("port", port).WithError(err).Error("cannot convert port to int")
+		} else {
+			for _, p := range workspaceInfo.Ports {
+				if p.Port == uint32(prt) {
+					protocol = p.Protocol
+					break
+				}
+			}
+		}
 	}
-	return buildWorkspacePodURL(workspaceInfo.IPAddress, port)
+	return buildWorkspacePodURL(protocol, workspaceInfo.IPAddress, port)
 }
 
 // workspacePodSupervisorResolver resolves to the workspace pods Supervisor url from the given request.
@@ -477,7 +497,7 @@ func workspacePodSupervisorResolver(config *Config, infoProvider WorkspaceInfoPr
 		port = fmt.Sprint(config.WorkspacePodConfig.SupervisorPort)
 	}
 	workspaceInfo := infoProvider.WorkspaceInfo(coords.ID)
-	return buildWorkspacePodURL(workspaceInfo.IPAddress, port)
+	return buildWorkspacePodURL(api.PortProtocol_PORT_PROTOCOL_HTTP, workspaceInfo.IPAddress, port)
 }
 
 func dynamicIDEResolver(config *Config, infoProvider WorkspaceInfoProvider, req *http.Request) (res *url.URL, err error) {
@@ -495,8 +515,17 @@ func dynamicIDEResolver(config *Config, infoProvider WorkspaceInfoProvider, req 
 	return &dst, nil
 }
 
-func buildWorkspacePodURL(ipAddress string, port string) (*url.URL, error) {
-	return url.Parse(fmt.Sprintf("http://%v:%v", ipAddress, port))
+func buildWorkspacePodURL(protocol api.PortProtocol, ipAddress string, port string) (*url.URL, error) {
+	portProtocol := ""
+	switch protocol {
+	case api.PortProtocol_PORT_PROTOCOL_HTTP:
+		portProtocol = "http"
+	case api.PortProtocol_PORT_PROTOCOL_HTTPS:
+		portProtocol = "https"
+	default:
+		return nil, xerrors.Errorf("protocol not support")
+	}
+	return url.Parse(fmt.Sprintf("%v://%v:%v", portProtocol, ipAddress, port))
 }
 
 // corsHandler produces the CORS handler for workspaces.

@@ -788,7 +788,7 @@ func (tep *testExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 func (tep *testExposedPorts) Run(ctx context.Context) {
 }
 
-func (tep *testExposedPorts) Expose(ctx context.Context, local uint32, public bool) <-chan error {
+func (tep *testExposedPorts) Expose(ctx context.Context, local uint32, public bool, protocol string) <-chan error {
 	tep.mu.Lock()
 	defer tep.mu.Unlock()
 

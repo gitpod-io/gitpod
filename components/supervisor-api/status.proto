@@ -148,6 +148,12 @@ enum PortVisibility {
     private = 0;
     public = 1;
 }
+
+enum PortProtocol {
+    http = 0;
+    https = 1;
+}
+
 // DEPRECATED(use PortsStatus.OnOpenAction)
 enum OnPortExposedAction {
     ignore = 0;
@@ -163,6 +169,8 @@ message ExposedPortInfo {
     string url = 2;
     // DEPRECATED(use PortsStatus.on_open instead): action hint on expose
     OnPortExposedAction on_exposed = 3 [deprecated=true];
+
+    PortProtocol protocol = 4;
 }
 message TunneledPortInfo {
   // target port is the desired port on the remote machine

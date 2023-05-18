@@ -292,6 +292,17 @@ enum PortPolicy {
     PORT_POLICY_PUBLIC = 2;
 }
 
+// PortProtocol defines the backend protocol of port
+enum PortProtocol {
+    PORT_PROTOCOL_UNSPECIFIED = 0;
+
+    // Http means the port backend is http
+    PORT_PROTOCOL_HTTP = 1;
+
+    // Https means the port backend is https
+    PORT_PROTOCOL_HTTPS = 2;
+}
+
 message Port {
     // port number
     uint64 port = 1;
@@ -301,6 +312,9 @@ message Port {
 
     // url that can be used to access the port
     string url = 3;
+
+    // backend protocol of this port
+    PortProtocol protocol = 4;
 }
 
 // Admission level describes who can access a workspace instance and its ports.
@@ -325,6 +339,9 @@ message PortSpec {
 
     // policy of this port
     PortPolicy policy = 2;
+
+    // backend protocol of this port
+    PortProtocol protocol = 3;
 }
 
 message UpdatePortRequest {

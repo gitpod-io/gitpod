@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInstance, PortVisibility } from "./workspace-instance";
+import { WorkspaceInstance, PortVisibility, PortProtocol } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
 import { createHash } from "crypto";
@@ -1046,6 +1046,7 @@ export interface PortConfig {
     port: number;
     onOpen?: PortOnOpen;
     visibility?: PortVisibility;
+    protocol?: PortProtocol;
     description?: string;
     name?: string;
 }

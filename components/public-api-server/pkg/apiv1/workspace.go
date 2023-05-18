@@ -187,20 +187,30 @@ func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[
 		return nil, err
 	}
 
+	var portVisibility string
+	var portProtocol string
+
 	switch req.Msg.GetPort().GetPolicy() {
 	case v1.PortPolicy_PORT_POLICY_PRIVATE:
-		_, err = conn.OpenPort(ctx, workspaceID, &protocol.WorkspaceInstancePort{
-			Port:       float64(req.Msg.Port.Port),
-			Visibility: protocol.PortVisibilityPrivate,
-		})
+		portVisibility = protocol.PortVisibilityPrivate
 	case v1.PortPolicy_PORT_POLICY_PUBLIC:
-		_, err = conn.OpenPort(ctx, workspaceID, &protocol.WorkspaceInstancePort{
-			Port:       float64(req.Msg.Port.Port),
-			Visibility: protocol.PortVisibilityPublic,
-		})
+		portVisibility = protocol.PortVisibilityPublic
 	default:
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unknown port policy specified."))
 	}
+	switch req.Msg.GetPort().GetProtocol() {
+	case v1.PortProtocol_PORT_PROTOCOL_HTTP, v1.PortProtocol_PORT_PROTOCOL_UNSPECIFIED:
+		portProtocol = protocol.PortProtocolHTTP
+	case v1.PortProtocol_PORT_PROTOCOL_HTTPS:
+		portProtocol = protocol.PortProtocolHTTPS
+	default:
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Unknown port protocol specified."))
+	}
+	_, err = conn.OpenPort(ctx, workspaceID, &protocol.WorkspaceInstancePort{
+		Port:       float64(req.Msg.Port.Port),
+		Visibility: portVisibility,
+		Protocol:   portProtocol,
+	})
 	if err != nil {
 		log.Extract(ctx).Error("Failed to update port")
 		return nil, proxy.ConvertError(err)
@@ -355,6 +365,12 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, shareable bool) (
 		} else {
 			port.Policy = v1.PortPolicy_PORT_POLICY_PRIVATE
 		}
+		if p.Protocol == protocol.PortProtocolHTTPS {
+			port.Protocol = v1.PortProtocol_PORT_PROTOCOL_HTTPS
+		} else {
+			port.Protocol = v1.PortProtocol_PORT_PROTOCOL_HTTP
+		}
+
 		ports = append(ports, port)
 	}
 
