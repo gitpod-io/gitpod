@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useMemo, useState } from "react";
 
 export type Currency = "USD" | "EUR";
 
@@ -19,16 +19,15 @@ const PaymentContext = createContext<{
 const PaymentContextProvider: React.FC = ({ children }) => {
     const [currency, setCurrency] = useState<Currency>("USD");
 
-    return (
-        <PaymentContext.Provider
-            value={{
-                currency,
-                setCurrency,
-            }}
-        >
-            {children}
-        </PaymentContext.Provider>
+    const ctx = useMemo(
+        () => ({
+            currency,
+            setCurrency,
+        }),
+        [currency],
     );
+
+    return <PaymentContext.Provider value={ctx}>{children}</PaymentContext.Provider>;
 };
 
 export { PaymentContext, PaymentContextProvider };

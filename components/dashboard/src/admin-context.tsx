@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { createContext, useState } from "react";
+import React, { createContext, useMemo, useState } from "react";
 import { InstallationAdminSettings } from "@gitpod/gitpod-protocol";
 
 const AdminContext = createContext<{
@@ -16,7 +16,10 @@ const AdminContext = createContext<{
 
 const AdminContextProvider: React.FC = ({ children }) => {
     const [adminSettings, setAdminSettings] = useState<InstallationAdminSettings>();
-    return <AdminContext.Provider value={{ adminSettings, setAdminSettings }}>{children}</AdminContext.Provider>;
+
+    const ctx = useMemo(() => ({ adminSettings, setAdminSettings }), [adminSettings]);
+
+    return <AdminContext.Provider value={ctx}>{children}</AdminContext.Provider>;
 };
 
 export { AdminContext, AdminContextProvider };
