@@ -52,19 +52,13 @@ export class WebhookEventDBImpl implements WebhookEventDB {
         return query.getMany();
     }
 
-    public async deleteOldEvents(ageInDays: number, limit?: number): Promise<void> {
+    public async deleteOldEvents(ageInDays: number, limit: number): Promise<void> {
         const repo = await this.getRepo();
         const d = new Date();
         d.setDate(d.getDate() - ageInDays);
         const expirationDate = d.toISOString();
-        const query = repo
-            .createQueryBuilder()
-            .update()
-            .set({ deleted: true })
-            .where("creationTime <= :expirationDate", { expirationDate });
-        if (typeof limit === "number") {
-            query.limit(limit);
-        }
-        await query.execute();
+        await repo.query(`DELETE FROM d_b_webhook_event WHERE creationTime <= ? LIMIT ?`, [expirationDate, limit]);
+
+        return;
     }
 }
