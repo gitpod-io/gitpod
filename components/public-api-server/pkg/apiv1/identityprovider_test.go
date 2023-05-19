@@ -43,7 +43,7 @@ func TestGetIDToken(t *testing.T) {
 			TokenSource: func(t *testing.T) IDTokenSource {
 				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
 					require.Equal(t, "correct@gitpod.io", userInfo.GetEmail())
-					require.False(t, userInfo.IsEmailVerified())
+					require.True(t, userInfo.IsEmailVerified())
 
 					return "foobar", nil
 				})
