@@ -4,7 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, ReactNode, useEffect } from "react";
+import { FC, ReactNode, useCallback, useEffect, useRef } from "react";
+import { Portal } from "react-portal";
+import FocusLock from "react-focus-lock";
 import cn from "classnames";
 import { getGitpodService } from "../service/service";
 import { Heading2 } from "./typography/headings";
@@ -14,7 +16,7 @@ import classNames from "classnames";
 
 type CloseModalManner = "esc" | "enter" | "x";
 
-export default function Modal(props: {
+type Props = {
     // specify a key if having the same title and window.location
     specify?: string;
     title?: string;
@@ -26,97 +28,153 @@ export default function Modal(props: {
     className?: string;
     onClose: () => void;
     onEnter?: () => boolean | Promise<boolean>;
-}) {
-    const closeModal = (manner: CloseModalManner) => {
-        props.onClose();
-        getGitpodService()
-            .server.trackEvent({
-                event: "modal_dismiss",
-                properties: {
-                    manner,
-                    title: props.title,
-                    specify: props.specify,
-                    path: window.location.pathname,
-                },
-            })
-            .then()
-            .catch(console.error);
-    };
-    const handler = async (evt: KeyboardEvent) => {
-        if (!props.visible) {
-            return;
-        }
-        if (evt.defaultPrevented) {
-            return;
-        }
-        if (evt.key === "Escape") {
-            closeModal("esc");
-        }
-        if (evt.key === "Enter") {
-            if (props.onEnter) {
-                if (await props.onEnter()) {
-                    closeModal("enter");
-                }
-            } else {
-                closeModal("enter");
-            }
-        }
-    };
+};
+export const Modal: FC<Props> = ({
+    title,
+    specify,
+    hideDivider = false,
+    buttons,
+    visible,
+    children,
+    closeable = true,
+    className,
+    onClose,
+    onEnter,
+}) => {
+    const modalRef = useRef<HTMLDivElement | null>(null);
+
+    const closeModal = useCallback(
+        (manner: CloseModalManner) => {
+            onClose();
+            getGitpodService()
+                .server.trackEvent({
+                    event: "modal_dismiss",
+                    properties: {
+                        manner,
+                        title: title,
+                        specify: specify,
+                        path: window.location.pathname,
+                    },
+                })
+                .then()
+                .catch(console.error);
+        },
+        [onClose, specify, title],
+    );
+
     // Add event listeners
     useEffect(() => {
+        const handler = async (evt: KeyboardEvent) => {
+            if (!visible) {
+                return;
+            }
+            if (evt.defaultPrevented) {
+                return;
+            }
+            if (evt.key === "Escape") {
+                closeModal("esc");
+            }
+            if (evt.key === "Enter") {
+                if (onEnter) {
+                    if (await onEnter()) {
+                        closeModal("enter");
+                    }
+                } else {
+                    closeModal("enter");
+                }
+            }
+        };
+
         window.addEventListener("keydown", handler);
         // Remove event listeners on cleanup
         return () => {
             window.removeEventListener("keydown", handler);
+            // enable scrolling on body
+            document.body.style.overflow = "unset";
+            // signal body is visible again
+            const appRoot = document.getElementById("root");
+            if (appRoot) {
+                appRoot.removeAttribute("aria-hidden");
+            }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [props.onClose, props.onEnter]);
+    }, [closeModal, onClose, onEnter, visible]);
 
-    if (!props.visible) {
+    useEffect(() => {
+        if (visible) {
+            if (modalRef.current) {
+                // Focus the Modal container when it becomes visible
+                modalRef.current.focus();
+            }
+            // prevent scrolling on body while modal is open
+            document.body.style.overflow = "hidden";
+            // signal main content is hidden by modal
+            const appRoot = document.getElementById("root");
+            if (appRoot) {
+                appRoot.setAttribute("aria-hidden", "true");
+            }
+        } else {
+            document.body.style.overflow = "unset";
+            document.body.removeAttribute("aria-hidden");
+        }
+    }, [visible]);
+
+    if (!visible) {
         return null;
     }
 
     return (
-        <div className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen">
-            <div className="w-screen h-screen align-middle" style={{ display: "table-cell" }}>
-                <div
-                    className={cn(
-                        "flex flex-col max-h-screen relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 max-w-lg mx-auto text-left ",
-                        props.className,
-                    )}
-                >
-                    {props.closeable !== false && (
+        <Portal>
+            {/* backdrop overlay */}
+            <div className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen">
+                {/* Modal outer-container for positioning */}
+                <div className="flex justify-center items-center w-screen h-screen">
+                    <FocusLock>
+                        {/* Visible Modal */}
                         <div
-                            className="absolute right-7 top-6 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
-                            onClick={() => closeModal("x")}
+                            className={cn(
+                                "relative flex flex-col max-h-screen max-w-screen",
+                                "w-screen h-screen sm:w-auto sm:h-auto sm:max-w-lg",
+                                "p-6 text-left",
+                                "bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800",
+                                "filter drop-shadow-xl",
+                                "rounded-none sm:rounded-xl",
+                                className,
+                            )}
+                            role="dialog"
+                            aria-labelledby="modal-header"
+                            tabIndex={-1}
+                            ref={modalRef}
                         >
-                            <svg version="1.1" width="14px" height="14px" viewBox="0 0 100 100">
-                                <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="10px" />
-                                <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="10px" />
-                            </svg>
+                            {closeable && <ModalCloseIcon onClose={() => closeModal("x")} />}
+                            {title ? (
+                                <>
+                                    <ModalHeader>{title}</ModalHeader>
+                                    <ModalBody hideDivider={hideDivider}>{children}</ModalBody>
+                                    <ModalFooter>{buttons}</ModalFooter>
+                                </>
+                            ) : (
+                                children
+                            )}
                         </div>
-                    )}
-                    {props.title ? (
-                        <>
-                            <ModalHeader>{props.title}</ModalHeader>
-                            <ModalBody hideDivider={props.hideDivider}>{props.children}</ModalBody>
-                            <ModalFooter>{props.buttons}</ModalFooter>
-                        </>
-                    ) : (
-                        props.children
-                    )}
+                    </FocusLock>
                 </div>
             </div>
-        </div>
+        </Portal>
     );
-}
+};
+
+export default Modal;
 
 type ModalHeaderProps = {
     children: ReactNode;
 };
 
-export const ModalHeader = ({ children }: ModalHeaderProps) => {
-    return <Heading2 className="pb-2">{children}</Heading2>;
+export const ModalHeader: FC<ModalHeaderProps> = ({ children }) => {
+    return (
+        <Heading2 id="modal-header" className="pb-2">
+            {children}
+        </Heading2>
+    );
 };
 
 type ModalBodyProps = {
@@ -125,10 +183,10 @@ type ModalBodyProps = {
     noScroll?: boolean;
 };
 
-export const ModalBody = ({ children, hideDivider = false, noScroll = false }: ModalBodyProps) => {
+export const ModalBody: FC<ModalBodyProps> = ({ children, hideDivider = false, noScroll = false }) => {
     return (
         <div
-            className={cn("relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
+            className={cn("flex-grow relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
                 "border-t border-b mt-2 py-4": !hideDivider,
                 "overflow-y-auto": !noScroll,
             })}
@@ -176,5 +234,24 @@ export const ModalFooterAlert: FC<AlertProps> = ({ closable = true, children, ..
                 {children}
             </Alert>
         </div>
+    );
+};
+
+type ModalCloseIconProps = {
+    onClose: () => void;
+};
+const ModalCloseIcon: FC<ModalCloseIconProps> = ({ onClose }) => {
+    return (
+        // TODO: Create an IconButton component
+        <button
+            aria-label="Close modal"
+            className="bg-transparent absolute right-7 top-6 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
+            onClick={onClose}
+        >
+            <svg version="1.1" width="14px" height="14px" viewBox="0 0 100 100">
+                <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="10px" />
+                <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="10px" />
+            </svg>
+        </button>
     );
 };
