@@ -64,7 +64,7 @@ func TestGetIDToken(t *testing.T) {
 						Identities: []*protocol.Identity{
 							nil,
 							{Deleted: true, PrimaryEmail: "nonsense@gitpod.io"},
-							{PrimaryEmail: "correct@gitpod.io"},
+							{Deleted: false, PrimaryEmail: "correct@gitpod.io"},
 						},
 					},
 					nil,
