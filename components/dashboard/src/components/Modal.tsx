@@ -89,24 +89,20 @@ export const Modal: FC<Props> = ({
         // Remove event listeners on cleanup
         return () => {
             window.removeEventListener("keydown", handler);
-            // enable scrolling on body
-            document.body.style.overflow = "unset";
-            // signal body is visible again
-            const appRoot = document.getElementById("root");
-            if (appRoot) {
-                appRoot.removeAttribute("aria-hidden");
-            }
         };
     }, [closeModal, onClose, onEnter, visible]);
 
+    // Handle aria & scrolling when modal opens/closes
     useEffect(() => {
         if (visible) {
+            // Focus the Modal container when it becomes visible
             if (modalRef.current) {
-                // Focus the Modal container when it becomes visible
                 modalRef.current.focus();
             }
+
             // prevent scrolling on body while modal is open
             document.body.style.overflow = "hidden";
+
             // signal main content is hidden by modal
             const appRoot = document.getElementById("root");
             if (appRoot) {
@@ -116,6 +112,17 @@ export const Modal: FC<Props> = ({
             document.body.style.overflow = "unset";
             document.body.removeAttribute("aria-hidden");
         }
+
+        // Ensure we reset things when modal is removed
+        return () => {
+            // enable scrolling on body
+            document.body.style.overflow = "unset";
+            // signal body is visible again
+            const appRoot = document.getElementById("root");
+            if (appRoot) {
+                appRoot.removeAttribute("aria-hidden");
+            }
+        };
     }, [visible]);
 
     if (!visible) {
