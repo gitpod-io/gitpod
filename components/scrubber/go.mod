@@ -1,4 +1,4 @@
-module github.com/gitpod-io/scrubber
+module github.com/gitpod-io/gitpod/components/scrubber
 
 go 1.19
 
