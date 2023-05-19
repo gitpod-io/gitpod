@@ -78,6 +78,7 @@ import {
     PrebuildEvent,
     RoleOrPermission,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    PortProtocol,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
@@ -116,6 +117,7 @@ import {
     PortSpec,
     PortVisibility as ProtoPortVisibility,
     SetTimeoutRequest,
+    PortProtocol as ProtoPortProtocol,
     StopWorkspacePolicy,
     TakeSnapshotRequest,
     UpdateSSHKeyRequest,
@@ -2088,6 +2090,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         port: p.getPort(),
                         url: p.getUrl(),
                         visibility: this.portVisibilityFromProto(p.getVisibility()),
+                        protocol: this.portProtocolFromProto(p.getProtocol()),
                     },
             );
 
@@ -2120,6 +2123,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const spec = new PortSpec();
         spec.setPort(port.port);
         spec.setVisibility(this.portVisibilityToProto(port.visibility));
+        spec.setProtocol(this.portProtocolToProto(port.protocol));
         req.setSpec(spec);
         req.setExpose(true);
 
@@ -2148,6 +2152,26 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 return ProtoPortVisibility.PORT_VISIBILITY_PRIVATE;
             case "public":
                 return ProtoPortVisibility.PORT_VISIBILITY_PUBLIC;
+        }
+    }
+
+    protected portProtocolFromProto(protocol: ProtoPortProtocol): PortProtocol {
+        switch (protocol) {
+            default: // the default in the protobuf def is: http
+            case ProtoPortProtocol.PORT_PROTOCOL_HTTP:
+                return "http";
+            case ProtoPortProtocol.PORT_PROTOCOL_HTTPS:
+                return "https";
+        }
+    }
+
+    protected portProtocolToProto(protocol: PortProtocol | undefined): ProtoPortProtocol {
+        switch (protocol) {
+            default: // the default for requests is: http
+            case "http":
+                return ProtoPortProtocol.PORT_PROTOCOL_HTTP;
+            case "https":
+                return ProtoPortProtocol.PORT_PROTOCOL_HTTPS;
         }
     }
 

@@ -48,6 +48,7 @@ goog.exportSymbol('proto.wsman.IDEImage', null, global);
 goog.exportSymbol('proto.wsman.MarkActiveRequest', null, global);
 goog.exportSymbol('proto.wsman.MarkActiveResponse', null, global);
 goog.exportSymbol('proto.wsman.MetadataFilter', null, global);
+goog.exportSymbol('proto.wsman.PortProtocol', null, global);
 goog.exportSymbol('proto.wsman.PortSpec', null, global);
 goog.exportSymbol('proto.wsman.PortVisibility', null, global);
 goog.exportSymbol('proto.wsman.SSHPublicKeys', null, global);
@@ -6508,7 +6509,8 @@ proto.wsman.PortSpec.toObject = function(includeInstance, msg) {
   var f, obj = {
     port: jspb.Message.getFieldWithDefault(msg, 1, 0),
     visibility: jspb.Message.getFieldWithDefault(msg, 3, 0),
-    url: jspb.Message.getFieldWithDefault(msg, 4, "")
+    url: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    protocol: jspb.Message.getFieldWithDefault(msg, 5, 0)
   };
 
   if (includeInstance) {
@@ -6557,6 +6559,10 @@ proto.wsman.PortSpec.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {string} */ (reader.readString());
       msg.setUrl(value);
       break;
+    case 5:
+      var value = /** @type {!proto.wsman.PortProtocol} */ (reader.readEnum());
+      msg.setProtocol(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -6604,6 +6610,13 @@ proto.wsman.PortSpec.serializeBinaryToWriter = function(message, writer) {
   if (f.length > 0) {
     writer.writeString(
       4,
+      f
+    );
+  }
+  f = message.getProtocol();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      5,
       f
     );
   }
@@ -6661,6 +6674,24 @@ proto.wsman.PortSpec.prototype.getUrl = function() {
  */
 proto.wsman.PortSpec.prototype.setUrl = function(value) {
   return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional PortProtocol protocol = 5;
+ * @return {!proto.wsman.PortProtocol}
+ */
+proto.wsman.PortSpec.prototype.getProtocol = function() {
+  return /** @type {!proto.wsman.PortProtocol} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+};
+
+
+/**
+ * @param {!proto.wsman.PortProtocol} value
+ * @return {!proto.wsman.PortSpec} returns this
+ */
+proto.wsman.PortSpec.prototype.setProtocol = function(value) {
+  return jspb.Message.setProto3EnumField(this, 5, value);
 };
 
 
@@ -10144,6 +10175,14 @@ proto.wsman.AdmissionLevel = {
 proto.wsman.PortVisibility = {
   PORT_VISIBILITY_PRIVATE: 0,
   PORT_VISIBILITY_PUBLIC: 1
+};
+
+/**
+ * @enum {number}
+ */
+proto.wsman.PortProtocol = {
+  PORT_PROTOCOL_HTTP: 0,
+  PORT_PROTOCOL_HTTPS: 1
 };
 
 /**

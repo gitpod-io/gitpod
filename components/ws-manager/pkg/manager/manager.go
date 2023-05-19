@@ -1078,11 +1078,13 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 				Port:       uint32(port),
 				Visibility: req.Spec.Visibility,
 				Url:        url,
+				Protocol:   req.Spec.Protocol,
 			}
 
 			exposedPorts.Ports = append(exposedPorts.Ports, portSpec)
 		} else if req.Expose && existingPortSpecIdx >= 0 {
 			exposedPorts.Ports[existingPortSpecIdx].Visibility = req.Spec.Visibility
+			exposedPorts.Ports[existingPortSpecIdx].Protocol = req.Spec.Protocol
 		} else if !req.Expose && existingPortSpecIdx < 0 {
 			// port isn't exposed already - we're done here
 			return nil

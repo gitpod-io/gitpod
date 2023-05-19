@@ -45,11 +45,9 @@
                         "type": "string",
                         "enum": [
                             "http",
-                            "TCP",
-                            "UDP"
+                            "https"
                         ],
-                        "deprecationMessage": "The 'protocol' property is deprecated.",
-                        "description": "The protocol to be used. (deprecated)"
+                        "description": "The protocol of workspace port."
                     },
                     "description": {
                         "type": "string",

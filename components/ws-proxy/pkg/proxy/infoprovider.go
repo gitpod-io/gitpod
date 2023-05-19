@@ -267,12 +267,17 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 	ports := make([]*wsapi.PortSpec, 0, len(ws.Spec.Ports))
 	for _, p := range ws.Spec.Ports {
 		v := wsapi.PortVisibility_PORT_VISIBILITY_PRIVATE
+		protocol := wsapi.PortProtocol_PORT_PROTOCOL_HTTP
 		if p.Visibility == workspacev1.AdmissionLevelEveryone {
 			v = wsapi.PortVisibility_PORT_VISIBILITY_PUBLIC
+		}
+		if p.Protocol == workspacev1.PortProtocolHttps {
+			protocol = wsapi.PortProtocol_PORT_PROTOCOL_HTTPS
 		}
 		ports = append(ports, &wsapi.PortSpec{
 			Port:       p.Port,
 			Visibility: v,
+			Protocol:   protocol,
 		})
 	}
 

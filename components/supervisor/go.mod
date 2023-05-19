@@ -18,6 +18,7 @@ require (
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.9
+	github.com/google/nftables v0.1.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -43,6 +44,15 @@ require (
 	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.29.1
 	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	github.com/BurntSushi/toml v0.4.1 // indirect
+	github.com/josharian/native v0.0.0-20200817173448-b6b71def0850 // indirect
+	github.com/mdlayher/netlink v1.4.2 // indirect
+	github.com/mdlayher/socket v0.0.0-20211102153432-57e3fa563ecb // indirect
+	golang.org/x/mod v0.8.0 // indirect
+	honnef.co/go/tools v0.2.2 // indirect
 )
 
 require (
@@ -74,7 +84,7 @@ require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
-	github.com/cilium/ebpf v0.4.0 // indirect
+	github.com/cilium/ebpf v0.7.0 // indirect
 	github.com/configcat/go-sdk/v7 v7.6.0 // indirect
 	github.com/containerd/cgroups v1.0.4 // indirect
 	github.com/coreos/go-systemd/v22 v22.4.0 // indirect
