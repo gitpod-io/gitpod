@@ -23,7 +23,6 @@ const featureFlags = {
     newSignupFlow: false,
     linkedinConnectionForOnboarding: false,
     paymentVerificationFlow: false,
-    team_only_attribution: false,
     enableDedicatedOnboardingFlow: false,
 };
 

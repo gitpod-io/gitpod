@@ -4,17 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { AdditionalUserData, User } from "@gitpod/gitpod-protocol";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { OnboardingStep } from "../onboarding/OnboardingStep";
-import { User } from "@gitpod/gitpod-protocol";
-import { getGitpodService } from "../service/service";
-import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
-import { Separator } from "../components/Separator";
-import gitpodIcon from "../icons/gitpod.svg";
 import { useContext } from "react";
-import { UserContext, useCurrentUser } from "../user-context";
+import { Separator } from "../components/Separator";
 import { Heading3 } from "../components/typography/headings";
-import { useFeatureFlag } from "../data/featureflag-query";
+import gitpodIcon from "../icons/gitpod.svg";
+import { OnboardingStep } from "../onboarding/OnboardingStep";
+import { getGitpodService } from "../service/service";
+import { UserContext, useCurrentUser } from "../user-context";
 
 namespace SkipMigration {
     const key = "skip-migration";
@@ -65,12 +63,11 @@ namespace SkipMigration {
 export function useShouldSeeMigrationPage(): boolean {
     const user = useCurrentUser();
     const isSkipped = SkipMigration.useIsSkipped();
-    const orgOnlyAttribution = useFeatureFlag("team_only_attribution");
-    return !!user && !user.additionalData?.isMigratedToTeamOnlyAttribution && orgOnlyAttribution && !isSkipped;
+    return !!user && !!user.additionalData?.shouldSeeMigrationMessage && !isSkipped;
 }
 
 export function MigrationPage() {
-    const migrateUsers = useMigrateUserMutation();
+    const markRead = useMarkMessageReadMutation();
     const user = useCurrentUser();
     const canSkip = SkipMigration.useCanSkip();
     const markSkipped = SkipMigration.useMarkSkipped();
@@ -86,19 +83,19 @@ export function MigrationPage() {
                 <div className="mt-24">
                     <OnboardingStep
                         title="It's getting easier to collaborate"
-                        subtitle="Your personal account is turned into an organization."
+                        subtitle="Your personal account has turned into an organization."
                         isValid={true}
-                        isSaving={migrateUsers.isLoading}
-                        onSubmit={migrateUsers.mutateAsync}
+                        isSaving={markRead.isLoading}
+                        onSubmit={markRead.mutateAsync}
                         onCancel={skipForNow}
-                        cancelButtonText="Ask me later"
+                        cancelButtonText="Read later"
                     >
                         <Heading3>What's different?</Heading3>
                         <p className="text-gray-500 text-base mb-4">
-                            Your personal account (<b>{user?.fullName || user?.name}</b>) is converted to an
+                            Your personal account (<b>{user?.fullName || user?.name}</b>) was converted to an
                             organization. As part of this any of your personal workspaces, projects, and configurations
-                            are moved to that organization. Additionally, after this step usage cost is always
-                            attributed to the currently selected organization, allowing for better cost control.{" "}
+                            have moved to that organization. Additionally, usage cost is now always attributed to the
+                            currently selected organization, allowing for better cost control.{" "}
                             <a className="gp-link" href="https://gitpod.io/blog/organizations">
                                 Learn more →
                             </a>
@@ -120,18 +117,18 @@ export function MigrationPage() {
     );
 }
 
-function useMigrateUserMutation() {
-    const invalidateOrgs = useOrganizationsInvalidator();
-    const { setUser } = useContext(UserContext);
+function useMarkMessageReadMutation() {
+    const { user, setUser } = useContext(UserContext);
 
     return useMutation<User, Error>({
         mutationFn: async () => {
-            const user = await getGitpodService().server.migrateLoggedInUserToOrgOnlyMode();
-            setUser(user);
-            return user;
-        },
-        onSuccess(updatedOrg) {
-            invalidateOrgs();
+            if (!user) {
+                throw new Error("No user");
+            }
+            let updatedUser = AdditionalUserData.set(user, { shouldSeeMigrationMessage: false });
+            updatedUser = await getGitpodService().server.updateLoggedInUser(updatedUser);
+            setUser(updatedUser);
+            return updatedUser;
         },
     });
 }
