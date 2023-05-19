@@ -53,6 +53,138 @@ func TestKeyValue(t *testing.T) {
 	}
 }
 
+func TestStruct(t *testing.T) {
+	type Expectation struct {
+		Error  string
+		Result any
+	}
+	tests := []struct {
+		Name        string
+		Struct      any
+		Expectation Expectation
+	}{
+		{
+			Name: "basic happy path",
+			Struct: &struct {
+				Username     string
+				Email        string
+				Password     string
+				WorkspaceID  string
+				LeaveMeAlone string
+			}{Username: "foo", Email: "foo@bar.com", Password: "foobar", WorkspaceID: "gitpodio-gitpod-uesaddev73c", LeaveMeAlone: "foo"},
+			Expectation: Expectation{
+				Result: &struct {
+					Username     string
+					Email        string
+					Password     string
+					WorkspaceID  string
+					LeaveMeAlone string
+				}{Username: "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]", Email: "[redacted:md5:f3ada405ce890b6f8204094deb12d8a8]", Password: "[redacted]", WorkspaceID: "[redacted:md5:a35538939333def8477b5c19ac694b35]", LeaveMeAlone: "foo"},
+			},
+		},
+		{
+			Name: "map field",
+			Struct: &struct {
+				WithMap map[string]interface{}
+			}{
+				WithMap: map[string]interface{}{
+					"email": "foo@bar.com",
+				},
+			},
+			Expectation: Expectation{
+				Result: &struct{ WithMap map[string]any }{WithMap: map[string]any{"email": string("[redacted:md5:8ca658a5d9282ba6de6fc39825c054ab]")}},
+			},
+		},
+		{
+			Name: "slices",
+			Struct: &struct {
+				Slice []string
+			}{Slice: []string{"foo", "bar", "foo@bar.com"}},
+			Expectation: Expectation{
+				Result: &struct {
+					Slice []string
+				}{Slice: []string{"foo", "bar", "[redacted:md5:f3ada405ce890b6f8204094deb12d8a8:email]"}},
+			},
+		},
+		{
+			Name: "struct tags",
+			Struct: &struct {
+				Hashed   string `scrub:"hash"`
+				Redacted string `scrub:"redact"`
+				Email    string `scrub:"ignore"`
+			}{
+				Hashed:   "foo",
+				Redacted: "foo",
+				Email:    "foo",
+			},
+			Expectation: Expectation{
+				Result: &struct {
+					Hashed   string `scrub:"hash"`
+					Redacted string `scrub:"redact"`
+					Email    string `scrub:"ignore"`
+				}{
+					Hashed:   "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]",
+					Redacted: "[redacted]",
+					Email:    "foo",
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			var act Expectation
+
+			err := Default.Struct(test.Struct)
+			if err != nil {
+				act.Error = err.Error()
+			} else {
+				act.Result = test.Struct
+			}
+
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("Struct() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestJSON(t *testing.T) {
+	type Expectation struct {
+		Error  string
+		Result string
+	}
+	tests := []struct {
+		Name        string
+		Input       string
+		Expectation Expectation
+	}{
+		{
+			Name:  "basic happy path",
+			Input: `{"ok": true, "email": "foo@bar.com", "workspaceID": "gitpodio-gitpod-uesaddev73c"}`,
+			Expectation: Expectation{
+				Result: `{"email":"[redacted:md5:8ca658a5d9282ba6de6fc39825c054ab]","ok":true,"workspaceID":"[redacted:md5:8ca658a5d9282ba6de6fc39825c054ab]"}`,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			var act Expectation
+
+			res, err := Default.JSON([]byte(test.Input))
+			if err != nil {
+				act.Error = err.Error()
+			}
+			act.Result = string(res)
+
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("JSON() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
 func BenchmarkKeyValue(b *testing.B) {
 	key := HashedFieldNames[rand.Intn(len(HashedFieldNames))]
 

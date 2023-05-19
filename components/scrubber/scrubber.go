@@ -6,6 +6,11 @@ package scrubber
 
 import (
 	"encoding/json"
+	"fmt"
+	"reflect"
+	"strings"
+
+	"github.com/mitchellh/reflectwalk"
 )
 
 type Scrubber interface {
@@ -52,28 +57,44 @@ var Default Scrubber = newScrubberImpl()
 func newScrubberImpl() *scrubberImpl {
 	fieldIndex := make(map[string]Sanitisatiser, len(HashedFieldNames)+len(RedactedFieldNames))
 	for _, f := range HashedFieldNames {
-		fieldIndex[f] = SanitiseHash
+		fieldIndex[strings.ToLower(f)] = SanitiseHash
 	}
 	for _, f := range RedactedFieldNames {
-		fieldIndex[f] = SanitiseRedact
+		fieldIndex[strings.ToLower(f)] = SanitiseRedact
 	}
-	return &scrubberImpl{
+	res := &scrubberImpl{
 		FieldIndex: fieldIndex,
 	}
+	res.Walker = &structScrubber{Parent: res}
+	return res
 }
 
 type scrubberImpl struct {
+	Walker     *structScrubber
 	FieldIndex map[string]Sanitisatiser
 }
 
 // JSON implements Scrubber
-func (scrubberImpl) JSON(msg json.RawMessage) (json.RawMessage, error) {
-	panic("unimplemented")
+func (s *scrubberImpl) JSON(msg json.RawMessage) (json.RawMessage, error) {
+	var content map[string]interface{}
+	err := json.Unmarshal(msg, &content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot scrub JSON: %w", err)
+	}
+	err = s.Struct(content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot scrub JSON: %w", err)
+	}
+	res, err := json.Marshal(content)
+	if err != nil {
+		return nil, fmt.Errorf("cannot scrub JSON: %w", err)
+	}
+	return res, nil
 }
 
 // KeyValue implements Scrubber
 func (s *scrubberImpl) KeyValue(key string, value string) (sanitisedValue string) {
-	f, ok := s.FieldIndex[key]
+	f, ok := s.FieldIndex[strings.ToLower(key)]
 	if !ok {
 		return value
 	}
@@ -81,8 +102,8 @@ func (s *scrubberImpl) KeyValue(key string, value string) (sanitisedValue string
 }
 
 // Struct implements Scrubber
-func (scrubberImpl) Struct(val any) error {
-	panic("unimplemented")
+func (s *scrubberImpl) Struct(val any) error {
+	return reflectwalk.Walk(val, s.Walker)
 }
 
 // Value implements Scrubber
@@ -93,4 +114,82 @@ func (scrubberImpl) Value(value string) string {
 		})
 	}
 	return value
+}
+
+type structScrubber struct {
+	Parent Scrubber
+}
+
+// Primitive implements reflectwalk.PrimitiveWalker
+func (s *structScrubber) Primitive(val reflect.Value) error {
+	if val.Kind() == reflect.String && val.CanSet() {
+		val.SetString(s.Parent.Value(val.String()))
+	}
+
+	// We don't call reflectwalk here because we're at the a leaf of the object tree.
+
+	return nil
+}
+
+var (
+	_ reflectwalk.MapWalker       = &structScrubber{}
+	_ reflectwalk.StructWalker    = &structScrubber{}
+	_ reflectwalk.PrimitiveWalker = &structScrubber{}
+)
+
+// Struct implements reflectwalk.StructWalker
+func (*structScrubber) Struct(reflect.Value) error {
+	return nil
+}
+
+// StructField implements reflectwalk.StructWalker
+func (s *structScrubber) StructField(field reflect.StructField, val reflect.Value) error {
+	if val.Kind() == reflect.String {
+		var (
+			setExplicitValue bool
+			explicitValue    string
+		)
+		tag := field.Tag.Get("scrub")
+		switch tag {
+		case "ignore":
+			return nil
+		case "hash":
+			setExplicitValue = true
+			explicitValue = SanitiseHash(val.String())
+		case "redact":
+			setExplicitValue = true
+			explicitValue = SanitiseRedact(val.String())
+		}
+
+		if !val.CanSet() {
+			return fmt.Errorf("cannot set %s", field.PkgPath)
+		}
+		if setExplicitValue {
+			val.SetString(explicitValue)
+			return nil
+		}
+		val.SetString(s.Parent.KeyValue(field.Name, val.String()))
+		return nil
+	}
+
+	return reflectwalk.Walk(val.Interface(), s)
+}
+
+// Map implements reflectwalk.MapWalker
+func (s *structScrubber) Map(m reflect.Value) error {
+	return nil
+}
+
+// MapElem implements reflectwalk.MapWalker
+func (s *structScrubber) MapElem(m reflect.Value, k reflect.Value, v reflect.Value) error {
+	kind := v.Kind()
+	if kind == reflect.Interface {
+		kind = v.Elem().Kind()
+	}
+	if kind == reflect.String {
+		m.SetMapIndex(k, reflect.ValueOf(s.Parent.KeyValue(k.String(), v.String())))
+		return nil
+	}
+
+	return reflectwalk.Walk(v.Interface(), s)
 }
