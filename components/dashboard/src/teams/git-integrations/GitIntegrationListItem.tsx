@@ -11,6 +11,8 @@ import { ContextMenuEntry } from "../../components/ContextMenu";
 import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon } from "../../components/ItemsList";
 import { useDeleteOrgAuthProviderMutation } from "../../data/auth-providers/delete-org-auth-provider-mutation";
 import { GitIntegrationModal } from "./GitIntegrationModal";
+import { useCurrentOrg } from "../../data/organizations/orgs-query";
+import { ModalFooterAlert } from "../../components/Modal";
 
 type Props = {
     provider: AuthProviderEntry;
@@ -19,6 +21,9 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const deleteAuthProvider = useDeleteOrgAuthProviderMutation();
+    const { data: org } = useCurrentOrg();
+
+    const memberCount = org?.members.length ?? 1;
 
     const menuEntries = useMemo(() => {
         const result: ContextMenuEntry[] = [];
@@ -67,15 +72,23 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
             </Item>
             {showDeleteConfirmation && (
                 <ConfirmationModal
-                    title="Remove Integration"
-                    areYouSureText="Are you sure you want to remove the following Git integration?"
+                    title="Remove Git Provider"
+                    warningText={
+                        memberCount > 1
+                            ? `You are about to delete an organization-wide Git providers integration. This will affect all ${memberCount} people in the organization. Are you sure?`
+                            : "You are about to delete an organization-wide Git providers integration. Are you sure?"
+                    }
                     children={{
                         name: provider.type,
                         description: provider.host,
                     }}
-                    buttonText="Remove Integration"
+                    buttonText="Remove Provider"
                     buttonDisabled={deleteAuthProvider.isLoading}
-                    warningText={deleteAuthProvider.isError ? "There was a problem deleting the provider" : undefined}
+                    footerAlert={
+                        deleteAuthProvider.isError ? (
+                            <ModalFooterAlert type="danger">There was a problem deleting the provider</ModalFooterAlert>
+                        ) : undefined
+                    }
                     onClose={() => setShowDeleteConfirmation(false)}
                     onConfirm={deleteProvider}
                 />

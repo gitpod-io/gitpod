@@ -65,7 +65,7 @@ function getSettingsMenu(user?: User, userBillingMode?: BillingMode, enablePerso
             link: [settingsPathSSHKeys],
         },
         {
-            title: "Integrations",
+            title: "Git Providers",
             link: [settingsPathIntegrations, "/access-control"],
         },
         ...(enablePersonalAccessTokens

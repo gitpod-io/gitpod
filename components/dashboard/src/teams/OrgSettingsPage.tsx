@@ -84,7 +84,7 @@ function getTeamSettingsMenu(params: {
     }
     if (orgGitAuthProviders) {
         result.push({
-            title: "Git Integrations",
+            title: "Git Providers",
             link: [`/settings/git`],
         });
     }
