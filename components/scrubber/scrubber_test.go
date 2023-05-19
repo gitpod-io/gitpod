@@ -92,7 +92,7 @@ func TestStruct(t *testing.T) {
 				},
 			},
 			Expectation: Expectation{
-				Result: &struct{ WithMap map[string]any }{WithMap: map[string]any{"email": string("[redacted:md5:8ca658a5d9282ba6de6fc39825c054ab]")}},
+				Result: &struct{ WithMap map[string]any }{WithMap: map[string]any{"email": string("[redacted:md5:aa7cedb94f5a9a40dc762b156272d991]")}},
 			},
 		},
 		{
@@ -163,8 +163,13 @@ func TestJSON(t *testing.T) {
 			Name:  "basic happy path",
 			Input: `{"ok": true, "email": "foo@bar.com", "workspaceID": "gitpodio-gitpod-uesaddev73c"}`,
 			Expectation: Expectation{
-				Result: `{"email":"[redacted:md5:8ca658a5d9282ba6de6fc39825c054ab]","ok":true,"workspaceID":"[redacted:md5:8ca658a5d9282ba6de6fc39825c054ab]"}`,
+				Result: `{"email":"[redacted:md5:f3ada405ce890b6f8204094deb12d8a8]","ok":true,"workspaceID":"[redacted:md5:a35538939333def8477b5c19ac694b35]"}`,
 			},
+		},
+		{
+			Name:        "analytics",
+			Input:       `{"batch":[{"event":"signup","foo":"bar","type":"track"}],"foo":"bar"}`,
+			Expectation: Expectation{Result: `{"batch":[{"event":"signup","foo":"bar","type":"track"}],"foo":"bar"}`},
 		},
 	}
 

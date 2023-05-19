@@ -184,7 +184,8 @@ func (s *structScrubber) Map(m reflect.Value) error {
 func (s *structScrubber) MapElem(m reflect.Value, k reflect.Value, v reflect.Value) error {
 	kind := v.Kind()
 	if kind == reflect.Interface {
-		kind = v.Elem().Kind()
+		v = v.Elem()
+		kind = v.Kind()
 	}
 	if kind == reflect.String {
 		m.SetMapIndex(k, reflect.ValueOf(s.Parent.KeyValue(k.String(), v.String())))
