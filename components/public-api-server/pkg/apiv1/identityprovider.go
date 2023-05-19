@@ -70,6 +70,15 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 		return nil, proxy.ConvertError(err)
 	}
 
+	var email string
+	for _, id := range user.Identities {
+		if id == nil || id.Deleted || id.PrimaryEmail == "" {
+			continue
+		}
+		email = id.PrimaryEmail
+		break
+	}
+
 	if workspace.Workspace == nil {
 		log.Extract(ctx).WithError(err).Error("Server did not return a workspace.")
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
@@ -79,6 +88,9 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 	userInfo := oidc.NewUserInfo()
 	userInfo.SetName(user.Name)
 	userInfo.SetSubject(subject)
+	if email != "" {
+		userInfo.SetEmail(email, true)
+	}
 
 	token, err := srv.idTokenSource.IDToken(ctx, "gitpod", req.Msg.Audience, userInfo)
 	if err != nil {
