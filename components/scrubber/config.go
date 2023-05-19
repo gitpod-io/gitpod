@@ -27,7 +27,7 @@ var (
 
 	// HashedValues are regular expressions which - when matched - cause the entire value to be hashed
 	HashedValues = map[string]*regexp.Regexp{
-		// https://www.regular-expressions.info/email.html
-		"email": regexp.MustCompile(`\A[a-z0-9!#$%&'*+/=?^_‘{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_‘{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\z`),
+		// https://html.spec.whatwg.org/multipage/input.html#email-state-(type=email)
+		"email": regexp.MustCompile(`[a-zA-Z0-9.!#$%&'*+\/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*`),
 	}
 )

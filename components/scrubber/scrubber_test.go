@@ -18,7 +18,7 @@ func TestValue(t *testing.T) {
 	}{
 		{Name: "empty string"},
 		{Name: "email", Value: "foo@bar.com", Expectation: "[redacted:md5:f3ada405ce890b6f8204094deb12d8a8:email]"},
-		{Name: "email in text", Value: "The email is foo@bar.com or bar@foo.com"},
+		{Name: "email in text", Value: "The email is foo@bar.com or bar@foo.com", Expectation: "The email is [redacted:md5:f3ada405ce890b6f8204094deb12d8a8:email] or [redacted:md5:dc8a42aba3651b0b1f088ef928ff3b1d:email]"},
 	}
 
 	for _, test := range tests {
