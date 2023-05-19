@@ -19,7 +19,7 @@ var (
 
 	// HashedFieldNames name fields whose values we'll hash
 	HashedFieldNames = []string{
-		"workspaceId",
+		"contextURL",
 		"workspaceID",
 		"username",
 		"email",
