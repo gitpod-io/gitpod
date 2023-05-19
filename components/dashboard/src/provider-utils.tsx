@@ -97,7 +97,6 @@ function openModalWindow(url: string) {
 
 function attachMessageListener(successKey: string, { onSuccess, onError }: WindowMessageHandler) {
     const eventListener = (event: MessageEvent) => {
-        // TODO: check w/ why we didn't do this already
         if (event?.origin !== document.location.origin) {
             return;
         }
