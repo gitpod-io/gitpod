@@ -6,7 +6,8 @@
 
 import { FC, ReactNode, useCallback, useEffect, useRef } from "react";
 import { Portal } from "react-portal";
-import FocusLock from "react-focus-lock";
+// import FocusLock from "react-focus-lock";
+import FocusTrap from "focus-trap-react";
 import cn from "classnames";
 import { getGitpodService } from "../service/service";
 import { Heading2 } from "./typography/headings";
@@ -135,7 +136,7 @@ export const Modal: FC<Props> = ({
             <div className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen">
                 {/* Modal outer-container for positioning */}
                 <div className="flex justify-center items-center w-screen h-screen">
-                    <FocusLock>
+                    <FocusTrap>
                         {/* Visible Modal */}
                         <div
                             className={cn(
@@ -163,7 +164,7 @@ export const Modal: FC<Props> = ({
                                 children
                             )}
                         </div>
-                    </FocusLock>
+                    </FocusTrap>
                 </div>
             </div>
         </Portal>
