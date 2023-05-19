@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
+import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -74,6 +74,17 @@ export const WorkspacesService = {
       kind: MethodKind.Unary,
     },
     /**
+     * StartWorkspace starts an existing workspace.
+     *
+     * @generated from rpc gitpod.experimental.v1.WorkspacesService.StartWorkspace
+     */
+    startWorkspace: {
+      name: "StartWorkspace",
+      I: StartWorkspaceRequest,
+      O: StartWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
      * StopWorkspace stops a running workspace (instance).
      * Errors:
      *   NOT_FOUND:           the workspace_id is unkown
@@ -111,4 +122,3 @@ export const WorkspacesService = {
     },
   }
 } as const;
-

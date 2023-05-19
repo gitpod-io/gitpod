@@ -25,6 +25,9 @@ service WorkspacesService {
     // CreateAndStartWorkspace creates a new workspace and starts it.
     rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
 
+    // StartWorkspace starts an existing workspace.
+    rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
+
     // StopWorkspace stops a running workspace (instance).
     // Errors:
     //   NOT_FOUND:           the workspace_id is unkown
@@ -86,21 +89,20 @@ message CreateAndStartWorkspaceResponse {
 }
 
 message StartWorkspaceRequest {
-    string idempotency_token = 1;
-
-    string workspace_id = 2;
-    StartWorkspaceSpec spec = 3;
+    string workspace_id = 1;
 }
+
 message StartWorkspaceResponse {
-    string instance_id = 1;
-    string workspace_url = 2;
+    Workspace result = 1;
 }
 
 message StopWorkspaceRequest {
     string workspace_id = 1;
 }
 
-message StopWorkspaceResponse {}
+message StopWorkspaceResponse {
+    Workspace result = 1;
+}
 
 message DeleteWorkspaceRequest {
     string workspace_id = 1;
