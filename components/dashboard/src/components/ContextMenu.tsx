@@ -106,7 +106,7 @@ function ContextMenu(props: ContextMenuProps) {
             </div>
             {expanded ? (
                 <div
-                    className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated ${
+                    className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 filter drop-shadow-xl rounded-lg truncated ${
                         props.customClasses || "w-48 right-0"
                     }`}
                     data-analytics='{"button_type":"context_menu"}'
