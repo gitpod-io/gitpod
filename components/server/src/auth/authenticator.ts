@@ -7,7 +7,6 @@
 import * as express from "express";
 import * as passport from "passport";
 import { injectable, postConstruct, inject } from "inversify";
-import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
@@ -17,11 +16,16 @@ import { TokenProvider } from "../user/token-provider";
 import { AuthProviderService } from "./auth-provider-service";
 import { UserService } from "../user/user-service";
 import { increaseLoginCounter } from "../prometheus-metrics";
+import { Strategy as JWTStrategy } from "passport-jwt";
+import { SessionHandlerProvider } from "../session-handler";
+import { decodeWithoutVerification } from "./jwt";
+import * as jsonwebtoken from "jsonwebtoken";
+import { User } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class Authenticator {
     protected passportInitialize: express.Handler;
-    protected passportSession: express.Handler;
+    protected passportJWT: express.Handler;
 
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected userDb: UserDB;
@@ -35,7 +39,51 @@ export class Authenticator {
     protected setup() {
         // Setup passport
         this.passportInitialize = passport.initialize();
-        this.passportSession = passport.session();
+        this.passportJWT = new JWTStrategy(
+            {
+                jwtFromRequest: (req: express.Request): string => {
+                    const cookies = parseCookieHeader(req.headers.cookie || "");
+                    const token = cookies[SessionHandlerProvider.getJWTCookieName(this.config)];
+                    return token;
+                },
+                secretOrKeyProvider: (req: express.Request, rawJWT: string, done: (key: string) => void): void => {
+                    const keypairs = [this.config.auth.pki.signing, ...this.config.auth.pki.validating];
+                    const publicKeysByID = keypairs.reduce<{ [id: string]: string }>((byID, keypair) => {
+                        byID[keypair.id] = keypair.publicKey;
+                        return byID;
+                    }, {});
+
+                    // When we verify an encoded token, we first read the Key ID from the token header (without verifying the signature)
+                    // and then lookup the appropriate key from out collection of available keys.
+                    const decodedWithoutVerification = decodeWithoutVerification(rawJWT);
+                    const keyID = decodedWithoutVerification.header.kid;
+
+                    if (!keyID) {
+                        throw new Error("JWT token does not contain kid (key id) property.");
+                    }
+
+                    if (!publicKeysByID[keyID]) {
+                        throw new Error("JWT was signed with an unknown key id");
+                    }
+
+                    done(publicKeysByID[keyID]);
+                },
+            },
+            (jwtPayload: jsonwebtoken.JwtPayload, done: (err: Error | null, user?: User | boolean) => void) => {
+                this.userDb
+                    .findUserById(jwtPayload.sub as string)
+                    .then((user) => {
+                        if (user) {
+                            this.userService.onAfterUserLoad(user).then(() => done(null, user));
+                        } else {
+                            done(new Error(`User ${jwtPayload.sub} not found.`), false);
+                        }
+                    })
+                    .catch((err) => {
+                        done(err, false);
+                    });
+            },
+        ); // this.passportSession = passport.session();
         passport.serializeUser<string>((user: User, done) => {
             if (user) {
                 done(null, user.id);
@@ -61,7 +109,7 @@ export class Authenticator {
     get initHandlers(): express.Handler[] {
         return [
             this.passportInitialize, // adds `passport.user` to session
-            this.passportSession, // deserializes session user into  `req.user`
+            this.passportJWT, // deserializes session user into  `req.user`
         ];
     }
 
@@ -302,4 +350,15 @@ export class Authenticator {
     protected getSorryUrl(message: string) {
         return this.config.hostUrl.asSorry(message).toString();
     }
+}
+
+function parseCookieHeader(cookie: string): { [key: string]: string } {
+    return cookie
+        .split("; ")
+        .map((keypair) => keypair.split("="))
+        .reduce<{ [key: string]: string }>((aggregator, vals) => {
+            const [key, value] = vals;
+            aggregator[key] = value;
+            return aggregator;
+        }, {});
 }
