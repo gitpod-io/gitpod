@@ -5,6 +5,7 @@
 package scrubber
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -49,5 +50,21 @@ func TestKeyValue(t *testing.T) {
 				t.Errorf("KeyValue() mismatch (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func BenchmarkKeyValue(b *testing.B) {
+	key := HashedFieldNames[rand.Intn(len(HashedFieldNames))]
+
+	for i := 0; i < b.N; i++ {
+		Default.KeyValue(key, "value")
+	}
+}
+
+func BenchmarkValue(b *testing.B) {
+	const input = "This text contains {\"json\":\"data\"}, a workspace ID gitpodio-gitpod-uesaddev73c and an email foo@bar.com"
+
+	for i := 0; i < b.N; i++ {
+		Default.Value(input)
 	}
 }
