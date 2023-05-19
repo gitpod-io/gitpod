@@ -20,6 +20,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sourcegraph/jsonrpc2"
+	"github.com/stretchr/testify/require"
 	"github.com/zitadel/oidc/pkg/oidc"
 )
 
@@ -31,7 +32,7 @@ func TestGetIDToken(t *testing.T) {
 	}
 	tests := []struct {
 		Name        string
-		TokenSource IDTokenSource
+		TokenSource func(t *testing.T) IDTokenSource
 		ServerSetup func(*protocol.MockAPIInterface)
 		Request     *v1.GetIDTokenRequest
 
@@ -39,9 +40,14 @@ func TestGetIDToken(t *testing.T) {
 	}{
 		{
 			Name: "happy path",
-			TokenSource: functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
-				return "foobar", nil
-			}),
+			TokenSource: func(t *testing.T) IDTokenSource {
+				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
+					require.Equal(t, "correct@gitpod.io", userInfo.GetEmail())
+					require.False(t, userInfo.IsEmailVerified())
+
+					return "foobar", nil
+				})
+			},
 			ServerSetup: func(ma *protocol.MockAPIInterface) {
 				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
 				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
@@ -55,6 +61,11 @@ func TestGetIDToken(t *testing.T) {
 				ma.EXPECT().GetLoggedInUser(gomock.Any()).Return(
 					&protocol.User{
 						Name: "foobar",
+						Identities: []*protocol.Identity{
+							nil,
+							{Deleted: true, PrimaryEmail: "nonsense@gitpod.io"},
+							{PrimaryEmail: "correct@gitpod.io"},
+						},
 					},
 					nil,
 				)
@@ -71,9 +82,11 @@ func TestGetIDToken(t *testing.T) {
 		},
 		{
 			Name: "workspace not found",
-			TokenSource: functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
-				return "foobar", nil
-			}),
+			TokenSource: func(t *testing.T) IDTokenSource {
+				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
+					return "foobar", nil
+				})
+			},
 			ServerSetup: func(ma *protocol.MockAPIInterface) {
 				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
 				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
@@ -91,9 +104,11 @@ func TestGetIDToken(t *testing.T) {
 		},
 		{
 			Name: "no logged in user",
-			TokenSource: functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
-				return "foobar", nil
-			}),
+			TokenSource: func(t *testing.T) IDTokenSource {
+				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
+					return "foobar", nil
+				})
+			},
 			ServerSetup: func(ma *protocol.MockAPIInterface) {
 				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
 				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
@@ -119,9 +134,11 @@ func TestGetIDToken(t *testing.T) {
 		},
 		{
 			Name: "no audience",
-			TokenSource: functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
-				return "foobar", nil
-			}),
+			TokenSource: func(t *testing.T) IDTokenSource {
+				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
+					return "foobar", nil
+				})
+			},
 			Request: &v1.GetIDTokenRequest{
 				WorkspaceId: workspaceID,
 			},
@@ -131,9 +148,11 @@ func TestGetIDToken(t *testing.T) {
 		},
 		{
 			Name: "token source error",
-			TokenSource: functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
-				return "", fmt.Errorf("cannot produce token")
-			}),
+			TokenSource: func(t *testing.T) IDTokenSource {
+				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
+					return "", fmt.Errorf("cannot produce token")
+				})
+			},
 			ServerSetup: func(ma *protocol.MockAPIInterface) {
 				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
 				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
@@ -170,7 +189,7 @@ func TestGetIDToken(t *testing.T) {
 				test.ServerSetup(serverMock)
 			}
 
-			svc := NewIdentityProviderService(&FakeServerConnPool{api: serverMock}, test.TokenSource)
+			svc := NewIdentityProviderService(&FakeServerConnPool{api: serverMock}, test.TokenSource(t))
 			_, handler := v1connect.NewIdentityProviderServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
 			srv := httptest.NewServer(handler)
 			t.Cleanup(srv.Close)
