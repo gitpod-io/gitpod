@@ -82,7 +82,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
                         name: provider.type,
                         description: provider.host,
                     }}
-                    buttonText="Remove provider"
+                    buttonText="Remove Provider"
                     buttonDisabled={deleteAuthProvider.isLoading}
                     footerAlert={
                         deleteAuthProvider.isError ? (
