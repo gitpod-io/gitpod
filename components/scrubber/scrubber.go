@@ -41,10 +41,30 @@ type Scrubber interface {
 	Struct(val any) error
 }
 
-// Default is the default scrubber consumers of this package should use
-var Default Scrubber = scrubberImpl{}
+// Scrub scrubs the implementing type from sensitive information
+type Scrub interface {
+	Scrub(scrubber Scrubber) error
+}
 
-type scrubberImpl struct{}
+// Default is the default scrubber consumers of this package should use
+var Default Scrubber = newScrubberImpl()
+
+func newScrubberImpl() *scrubberImpl {
+	fieldIndex := make(map[string]Sanitisatiser, len(HashedFieldNames)+len(RedactedFieldNames))
+	for _, f := range HashedFieldNames {
+		fieldIndex[f] = SanitiseHash
+	}
+	for _, f := range RedactedFieldNames {
+		fieldIndex[f] = SanitiseRedact
+	}
+	return &scrubberImpl{
+		FieldIndex: fieldIndex,
+	}
+}
+
+type scrubberImpl struct {
+	FieldIndex map[string]Sanitisatiser
+}
 
 // JSON implements Scrubber
 func (scrubberImpl) JSON(msg json.RawMessage) (json.RawMessage, error) {
@@ -52,8 +72,12 @@ func (scrubberImpl) JSON(msg json.RawMessage) (json.RawMessage, error) {
 }
 
 // KeyValue implements Scrubber
-func (scrubberImpl) KeyValue(key string, value string) (sanitisedValue string) {
-	panic("unimplemented")
+func (s *scrubberImpl) KeyValue(key string, value string) (sanitisedValue string) {
+	f, ok := s.FieldIndex[key]
+	if !ok {
+		return value
+	}
+	return f(value)
 }
 
 // Struct implements Scrubber
@@ -63,5 +87,10 @@ func (scrubberImpl) Struct(val any) error {
 
 // Value implements Scrubber
 func (scrubberImpl) Value(value string) string {
-	panic("unimplemented")
+	for key, expr := range HashedValues {
+		value = expr.ReplaceAllStringFunc(value, func(s string) string {
+			return SanitiseHash(s, SanitiseWithKeyName(key))
+		})
+	}
+	return value
 }

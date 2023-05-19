@@ -4,6 +4,8 @@
 
 package scrubber
 
+import "regexp"
+
 var (
 	// RedactedFieldNames are the names of fields we'll redact
 	RedactedFieldNames = []string{
@@ -21,5 +23,11 @@ var (
 		"workspaceID",
 		"username",
 		"email",
+	}
+
+	// HashedValues are regular expressions which - when matched - cause the entire value to be hashed
+	HashedValues = map[string]*regexp.Regexp{
+		// https://www.regular-expressions.info/email.html
+		"email": regexp.MustCompile(`\A[a-z0-9!#$%&'*+/=?^_‘{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_‘{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\z`),
 	}
 )
