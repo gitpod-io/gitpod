@@ -28,7 +28,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-//go:generate mockgen -destination=mock.go -package=controller . WorkspaceOperations
+//go:generate sh -c "go install github.com/golang/mock/mockgen@v1.6.0 && mockgen -destination=mock.go -package=controller . WorkspaceOperations"
 type WorkspaceOperations interface {
 	// InitWorkspace initializes the workspace content
 	InitWorkspace(ctx context.Context, options InitOptions) (string, error)
@@ -40,6 +40,8 @@ type WorkspaceOperations interface {
 	SnapshotIDs(ctx context.Context, instanceID string) (snapshotUrl, snapshotName string, err error)
 	// Snapshot takes a snapshot of the workspace
 	Snapshot(ctx context.Context, instanceID, snapshotName string) (err error)
+	// Setup ensures that the workspace has been setup
+	SetupWorkspace(ctx context.Context, instanceID string) error
 }
 
 type DefaultWorkspaceOperations struct {
@@ -58,9 +60,10 @@ type WorkspaceMeta struct {
 }
 
 type InitOptions struct {
-	Meta        WorkspaceMeta
-	Initializer *csapi.WorkspaceInitializer
-	Headless    bool
+	Meta         WorkspaceMeta
+	Initializer  *csapi.WorkspaceInitializer
+	Headless     bool
+	StorageQuota int
 }
 
 type BackupOptions struct {
@@ -91,7 +94,7 @@ func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, 
 
 func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, options InitOptions) (string, error) {
 	ws, err := wso.provider.Create(ctx, options.Meta.InstanceID, filepath.Join(wso.provider.Location, options.Meta.InstanceID),
-		wso.creator(options.Meta.Owner, options.Meta.WorkspaceID, options.Meta.InstanceID, options.Initializer, false))
+		wso.creator(options.Meta.Owner, options.Meta.WorkspaceID, options.Meta.InstanceID, options.Initializer, false, options.StorageQuota))
 
 	if err != nil {
 		return "bug: cannot add workspace to store", xerrors.Errorf("cannot add workspace to store: %w", err)
@@ -153,7 +156,7 @@ func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, option
 	return "", nil
 }
 
-func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID string, init *csapi.WorkspaceInitializer, storageDisabled bool) session.WorkspaceFactory {
+func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID string, init *csapi.WorkspaceInitializer, storageDisabled bool, storageQuota int) session.WorkspaceFactory {
 	var checkoutLocation string
 	allLocations := csapi.GetCheckoutLocationsFromInitializer(init)
 	if len(allLocations) > 0 {
@@ -173,11 +176,21 @@ func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID st
 			PersistentVolumeClaim: false,
 			RemoteStorageDisabled: storageDisabled,
 			IsMk2:                 true,
+			StorageQuota:          storageQuota,
 
 			ServiceLocDaemon: filepath.Join(wso.config.WorkingArea, serviceDirName),
 			ServiceLocNode:   filepath.Join(wso.config.WorkingAreaNode, serviceDirName),
 		}, nil
 	}
+}
+
+func (wso *DefaultWorkspaceOperations) SetupWorkspace(ctx context.Context, instanceID string) error {
+	_, err := wso.provider.Get(ctx, instanceID)
+	if err != nil {
+		return fmt.Errorf("cannot setup workspace %s: %w", instanceID, err)
+	}
+
+	return nil
 }
 
 func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts BackupOptions) (*csapi.GitStatus, error) {

@@ -112,16 +112,18 @@ func hookInstallQuota(xfs *quota.XFS, isHard bool) session.WorkspaceLivecycleHoo
 		defer tracing.FinishSpan(span, &err)
 
 		if xfs == nil {
+			log.WithFields(ws.OWI()).Warn("no xfs definition")
 			return nil
 		}
 
 		if ws.StorageQuota == 0 {
+			log.WithFields(ws.OWI()).Warn("no storage quota defined")
 			return nil
 		}
 
 		size := quota.Size(ws.StorageQuota)
 
-		log.WithFields(ws.OWI()).WithField("size", size).WithField("directory", ws.Location).Debug("setting disk quota")
+		log.WithFields(ws.OWI()).WithField("isHard", isHard).WithField("size", size).WithField("directory", ws.Location).Debug("setting disk quota")
 
 		var (
 			prj int
