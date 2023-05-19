@@ -20,7 +20,6 @@ func TestGeneratePersonalAccessToken(t *testing.T) {
 
 	pat, err := GeneratePersonalAccessToken(signer)
 	require.NoError(t, err)
-	fmt.Println(pat)
 
 	signature, err := signer.Sign([]byte(pat.value))
 	require.NoError(t, err)
