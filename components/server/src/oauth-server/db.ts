@@ -74,6 +74,9 @@ function createVSCodeClient(protocol: "vscode" | "vscode-insiders" | "vscodium")
             { name: "function:getWorkspaces" },
             { name: "function:getSSHPublicKeys" },
             { name: "function:sendHeartBeat" },
+            { name: "function:startWorkspace" },
+            { name: "function:stopWorkspace" },
+            { name: "function:deleteWorkspace" },
             { name: "resource:default" },
         ],
     };
