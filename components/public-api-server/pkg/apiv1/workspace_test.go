@@ -107,7 +107,7 @@ func TestWorkspaceService_StartWorkspace(t *testing.T) {
 	t.Run("not found when workspace does not exist", func(t *testing.T) {
 		serverMock, client := setupWorkspacesService(t)
 
-		serverMock.EXPECT().StartWorkspace(gomock.Any(), workspaceID, nil).Return(nil, &jsonrpc2.Error{
+		serverMock.EXPECT().StartWorkspace(gomock.Any(), workspaceID, &protocol.StartWorkspaceOptions{}).Return(nil, &jsonrpc2.Error{
 			Code:    404,
 			Message: "not found",
 		})
@@ -122,7 +122,7 @@ func TestWorkspaceService_StartWorkspace(t *testing.T) {
 	t.Run("delegates to server", func(t *testing.T) {
 		serverMock, client := setupWorkspacesService(t)
 
-		serverMock.EXPECT().StartWorkspace(gomock.Any(), workspaceID, nil).Return(&protocol.StartWorkspaceResult{
+		serverMock.EXPECT().StartWorkspace(gomock.Any(), workspaceID, &protocol.StartWorkspaceOptions{}).Return(&protocol.StartWorkspaceResult{
 			InstanceID:   workspaceTestData[0].Protocol.LatestInstance.ID,
 			WorkspaceURL: workspaceTestData[0].Protocol.LatestInstance.IdeURL,
 		}, nil)
