@@ -95,7 +95,6 @@ import {
     StopWorkspaceRequest,
     WorkspaceMetadata,
     WorkspaceType,
-    PortProtocol,
 } from "@gitpod/ws-manager/lib/core_pb";
 import * as grpc from "@grpc/grpc-js";
 import * as crypto from "crypto";
@@ -1444,9 +1443,6 @@ export class WorkspaceStarter {
                     p.visibility == "public"
                         ? PortVisibility.PORT_VISIBILITY_PUBLIC
                         : PortVisibility.PORT_VISIBILITY_PRIVATE,
-                );
-                spec.setProtocol(
-                    p.protocol == "https" ? PortProtocol.PORT_PROTOCOL_HTTPS : PortProtocol.PORT_PROTOCOL_HTTP,
                 );
                 return spec;
             })

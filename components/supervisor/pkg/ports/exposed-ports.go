@@ -21,7 +21,6 @@ type ExposedPort struct {
 	LocalPort uint32
 	URL       string
 	Public    bool
-	Protocol  string
 }
 
 // ExposedPortsInterface provides access to port exposure
@@ -37,7 +36,7 @@ type ExposedPortsInterface interface {
 	Run(ctx context.Context)
 
 	// Expose exposes a port to the internet. Upon successful execution any Observer will be updated.
-	Expose(ctx context.Context, port uint32, public bool, protocol string) <-chan error
+	Expose(ctx context.Context, port uint32, public bool) <-chan error
 }
 
 // NoopExposedPorts implements ExposedPortsInterface but does nothing
@@ -52,7 +51,7 @@ func (*NoopExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort, <-c
 func (*NoopExposedPorts) Run(ctx context.Context) {}
 
 // Expose exposes a port to the internet. Upon successful execution any Observer will be updated.
-func (*NoopExposedPorts) Expose(ctx context.Context, local uint32, public bool, protocol string) <-chan error {
+func (*NoopExposedPorts) Expose(ctx context.Context, local uint32, public bool) <-chan error {
 	done := make(chan error)
 	close(done)
 	return done
@@ -102,15 +101,6 @@ func (g *GitpodExposedPorts) getPortUrl(port uint32) string {
 	return u.String()
 }
 
-func (g *GitpodExposedPorts) getPortProtocol(protocol string) string {
-	switch protocol {
-	case gitpod.PortProtocolHTTP, gitpod.PortProtocolHTTPS:
-		return protocol
-	default:
-		return gitpod.PortProtocolHTTP
-	}
-}
-
 func (g *GitpodExposedPorts) existInLocalExposed(port uint32) bool {
 	for _, p := range g.localExposedPort {
 		if p == port {
@@ -143,7 +133,6 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 					LocalPort: port,
 					Public:    false,
 					URL:       g.getPortUrl(port),
-					Protocol:  gitpod.PortProtocolHTTP,
 				}
 			}
 
@@ -152,7 +141,6 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 					LocalPort: uint32(p.Port),
 					Public:    p.Visibility == "public",
 					URL:       g.getPortUrl(uint32(p.Port)),
-					Protocol:  g.getPortProtocol(p.Protocol),
 				}
 			}
 			exposedPort := make([]ExposedPort, 0, len(res))
@@ -238,11 +226,8 @@ func (g *GitpodExposedPorts) doExpose(req *exposePortRequest) {
 }
 
 // Expose exposes a port to the internet. Upon successful execution any Observer will be updated.
-func (g *GitpodExposedPorts) Expose(ctx context.Context, local uint32, public bool, protocol string) <-chan error {
-	if protocol != gitpod.PortProtocolHTTPS && protocol != gitpod.PortProtocolHTTP {
-		protocol = gitpod.PortProtocolHTTP
-	}
-	if !public && protocol != gitpod.PortProtocolHTTPS {
+func (g *GitpodExposedPorts) Expose(ctx context.Context, local uint32, public bool) <-chan error {
+	if !public {
 		if !g.existInLocalExposed(local) {
 			g.localExposedPort = append(g.localExposedPort, local)
 			g.localExposedNotice <- struct{}{}
@@ -251,15 +236,10 @@ func (g *GitpodExposedPorts) Expose(ctx context.Context, local uint32, public bo
 		close(c)
 		return c
 	}
-	visibility := gitpod.PortVisibilityPrivate
-	if public {
-		visibility = gitpod.PortVisibilityPublic
-	}
 	req := &exposePortRequest{
 		port: &gitpod.WorkspaceInstancePort{
 			Port:       float64(local),
-			Visibility: visibility,
-			Protocol:   protocol,
+			Visibility: "public",
 		},
 		ctx:  ctx,
 		done: make(chan error),

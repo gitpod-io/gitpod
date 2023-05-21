@@ -186,9 +186,6 @@ export type AdmissionLevel = "owner_only" | "everyone";
 // PortVisibility describes how a port can be accessed
 export type PortVisibility = "public" | "private";
 
-// PortProtocol
-export type PortProtocol = "http" | "https";
-
 // WorkspaceInstancePort describes a port exposed on a workspace instance
 export interface WorkspaceInstancePort {
     // The outward-facing port number
@@ -199,8 +196,6 @@ export interface WorkspaceInstancePort {
 
     // Public, outward-facing URL where the port can be accessed on.
     url?: string;
-
-    protocol?: PortProtocol;
 }
 
 // WorkspaceInstanceRepoStatus describes the status of th Git working copy of a workspace

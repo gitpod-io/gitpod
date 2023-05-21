@@ -46,38 +46,6 @@ proto3.util.setEnumType(PortPolicy, "gitpod.experimental.v1.PortPolicy", [
 ]);
 
 /**
- * PortProtocol defines the backend protocol of port
- *
- * @generated from enum gitpod.experimental.v1.PortProtocol
- */
-export enum PortProtocol {
-  /**
-   * @generated from enum value: PORT_PROTOCOL_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * Http means the port backend is http
-   *
-   * @generated from enum value: PORT_PROTOCOL_HTTP = 1;
-   */
-  HTTP = 1,
-
-  /**
-   * Https means the port backend is https
-   *
-   * @generated from enum value: PORT_PROTOCOL_HTTPS = 2;
-   */
-  HTTPS = 2,
-}
-// Retrieve enum metadata with: proto3.getEnumType(PortProtocol)
-proto3.util.setEnumType(PortProtocol, "gitpod.experimental.v1.PortProtocol", [
-  { no: 0, name: "PORT_PROTOCOL_UNSPECIFIED" },
-  { no: 1, name: "PORT_PROTOCOL_HTTP" },
-  { no: 2, name: "PORT_PROTOCOL_HTTPS" },
-]);
-
-/**
  * Admission level describes who can access a workspace instance and its ports.
  *
  * @generated from enum gitpod.experimental.v1.AdmissionLevel
@@ -1416,13 +1384,6 @@ export class Port extends Message<Port> {
    */
   url = "";
 
-  /**
-   * backend protocol of this port
-   *
-   * @generated from field: gitpod.experimental.v1.PortProtocol protocol = 4;
-   */
-  protocol = PortProtocol.UNSPECIFIED;
-
   constructor(data?: PartialMessage<Port>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1434,7 +1395,6 @@ export class Port extends Message<Port> {
     { no: 1, name: "port", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
     { no: 2, name: "policy", kind: "enum", T: proto3.getEnumType(PortPolicy) },
     { no: 3, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "protocol", kind: "enum", T: proto3.getEnumType(PortProtocol) },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Port {
@@ -1507,13 +1467,6 @@ export class PortSpec extends Message<PortSpec> {
    */
   policy = PortPolicy.UNSPECIFIED;
 
-  /**
-   * backend protocol of this port
-   *
-   * @generated from field: gitpod.experimental.v1.PortProtocol protocol = 3;
-   */
-  protocol = PortProtocol.UNSPECIFIED;
-
   constructor(data?: PartialMessage<PortSpec>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1524,7 +1477,6 @@ export class PortSpec extends Message<PortSpec> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "port", kind: "scalar", T: 4 /* ScalarType.UINT64 */ },
     { no: 2, name: "policy", kind: "enum", T: proto3.getEnumType(PortPolicy) },
-    { no: 3, name: "protocol", kind: "enum", T: proto3.getEnumType(PortProtocol) },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): PortSpec {
@@ -1617,3 +1569,4 @@ export class UpdatePortResponse extends Message<UpdatePortResponse> {
     return proto3.util.equals(UpdatePortResponse, a, b);
   }
 }
+

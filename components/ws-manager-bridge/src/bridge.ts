@@ -12,14 +12,12 @@ import {
     WorkspaceInstancePort,
     PortVisibility,
     DisposableCollection,
-    PortProtocol,
 } from "@gitpod/gitpod-protocol";
 import {
     WorkspaceStatus,
     WorkspacePhase,
     WorkspaceConditionBool,
     PortVisibility as WsManPortVisibility,
-    PortProtocol as WsManPortProtocol,
 } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -243,7 +241,6 @@ export class WorkspaceManagerBridge implements Disposable {
                     return <WorkspaceInstancePort>{
                         port: p.port,
                         visibility: mapPortVisibility(p.visibility),
-                        protocol: mapPortProcotol(p.protocol),
                         url: p.url,
                     };
                 });
@@ -405,15 +402,6 @@ const mapPortVisibility = (visibility: WsManPortVisibility | undefined): PortVis
             return "private";
         case WsManPortVisibility.PORT_VISIBILITY_PUBLIC:
             return "public";
-    }
-};
-
-const mapPortProcotol = (protocol: WsManPortProtocol | undefined): PortProtocol | undefined => {
-    switch (protocol) {
-        case WsManPortProtocol.PORT_PROTOCOL_HTTPS:
-            return "https";
-        default:
-            return "http";
     }
 };
 

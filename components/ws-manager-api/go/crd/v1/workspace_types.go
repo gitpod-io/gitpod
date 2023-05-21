@@ -124,14 +124,6 @@ const (
 	AdmissionLevelEveryone AdmissionLevel = "Everyone"
 )
 
-// +kubebuilder:validation:Enum=Http;Https
-type PortProtocol string
-
-const (
-	PortProtocolHttp  PortProtocol = "Http"
-	PortProtocolHttps PortProtocol = "Https"
-)
-
 type PortSpec struct {
 	// +kubebuilder:validation:Required
 	Port uint32 `json:"port"`
@@ -139,10 +131,6 @@ type PortSpec struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:default=Owner
 	Visibility AdmissionLevel `json:"visibility"`
-
-	// +kubebuilder:validation:Required
-	// +kubebuilder:default=Http
-	Protocol PortProtocol `json:"protocol"`
 }
 
 // WorkspaceStatus defines the observed state of Workspace
