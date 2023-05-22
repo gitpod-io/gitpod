@@ -11,7 +11,7 @@ import utc from "dayjs/plugin/utc";
 import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter } from "react-router-dom";
-import App from "./App";
+import { RootAppRouter } from "./App";
 import { AdminContextProvider } from "./admin-context";
 import { QueryErrorBoundary } from "./components/error-boundaries/QueryErrorBoundary";
 import { ReloadPageErrorBoundary } from "./components/error-boundaries/ReloadPageErrorBoundary";
@@ -68,7 +68,7 @@ const bootApp = () => {
                                             <AdminContextProvider>
                                                 <PaymentContextProvider>
                                                     <ProjectContextProvider>
-                                                        <App />
+                                                        <RootAppRouter />
                                                     </ProjectContextProvider>
                                                 </PaymentContextProvider>
                                             </AdminContextProvider>
