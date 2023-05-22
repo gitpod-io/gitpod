@@ -4,22 +4,21 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
+import { CreateClientConfigResponse, OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
 import { FC, useCallback, useReducer } from "react";
 import { Button } from "../../components/Button";
 import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../../components/Modal";
 import { ssoConfigReducer, isValid, useSaveSSOConfig, SSOConfigForm } from "./SSOConfigForm";
 import Alert from "../../components/Alert";
-import { useToast } from "../../components/toasts/Toasts";
 
 type Props = {
     clientConfig?: OIDCClientConfig;
     onClose: () => void;
+    onSaved: (configId: string) => void;
 };
 
-export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
+export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onSaved, onClose }) => {
     const isNew = !clientConfig;
-    const { toast } = useToast();
 
     const [ssoConfig, dispatch] = useReducer(ssoConfigReducer, {
         id: clientConfig?.id ?? "",
@@ -37,15 +36,25 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
         }
 
         try {
-            await save(ssoConfig);
-            if (isNew) {
-                toast("Your SSO configuration was created. You may now verify, then activate it");
+            // Have to jump through some hoops to ensure we have a config id after create and update
+            let configId = ssoConfig.id;
+
+            const resp = await save(ssoConfig);
+
+            // Create response returns the new config, upate does not
+            if (resp.hasOwnProperty("config")) {
+                configId = (resp as CreateClientConfigResponse).config?.id;
+            }
+
+            // There should always be a configId, but just to type-guard
+            if (!!configId) {
+                onSaved(configId);
             }
             onClose();
         } catch (error) {
             console.error(error);
         }
-    }, [isLoading, isNew, onClose, save, ssoConfig, toast]);
+    }, [isLoading, onClose, onSaved, save, ssoConfig]);
 
     return (
         <Modal
@@ -56,12 +65,18 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onClose }) => {
                 return false;
             }}
         >
-            <ModalHeader>{isNew ? "New SSO Configuration" : "Edit SSO Configuration"}</ModalHeader>
+            <ModalHeader>
+                {isNew
+                    ? "New SSO Configuration"
+                    : clientConfig?.active
+                    ? "View SSO Configuration"
+                    : "Edit SSO Configuration"}
+            </ModalHeader>
             <ModalBody>
                 {clientConfig?.active && (
-                    <Alert type="warning" className="mb-4">
-                        This is an active SSO configuration. In order to make changes, please create a new
-                        configuration. You may then verify and activate it.
+                    <Alert type="message" className="mb-4">
+                        This configuration is currently active for single sign-on (SSO). To make any modifications,
+                        please create a new configuration. Once created, you can proceed to verify and activate it.
                     </Alert>
                 )}
                 <SSOConfigForm config={ssoConfig} onChange={dispatch} readOnly={clientConfig?.active === true} />

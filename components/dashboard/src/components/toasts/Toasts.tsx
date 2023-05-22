@@ -10,7 +10,7 @@ import { Portal } from "react-portal";
 import { ToastEntry, toastReducer } from "./reducer";
 import { Toast } from "./Toast";
 
-type ToastFnProps = string | (Pick<ToastEntry, "message"> & Partial<ToastEntry>);
+type ToastFnProps = ToastEntry["message"] | (Pick<ToastEntry, "message"> & Partial<ToastEntry>);
 
 const ToastContext = createContext<{
     toast: (toast: ToastFnProps, opts?: Partial<ToastEntry>) => void;
@@ -30,15 +30,23 @@ export const ToastContextProvider: FC = ({ children }) => {
     }, []);
 
     const addToast = useCallback((message: ToastFnProps, opts = {}) => {
+        // detect if message arg looks like a toast object
+        // it can also be a ReactNode
+        let isToastObj = false;
+        if (message && typeof message === "object" && message.hasOwnProperty("message")) {
+            isToastObj = true;
+        }
+
         let newToast: ToastEntry = {
-            ...(typeof message === "string"
+            ...(isToastObj
                 ? {
                       id: `${Math.random()}`,
-                      message,
+                      // @ts-ignore
+                      ...message,
                   }
                 : {
                       id: `${Math.random()}`,
-                      ...message,
+                      message,
                   }),
             ...opts,
         };

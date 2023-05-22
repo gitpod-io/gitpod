@@ -4,9 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { ReactNode } from "react";
+
 export type ToastEntry = {
     id: string;
-    message: string;
+    message: ReactNode;
     duration?: number;
     autoHide?: boolean;
 };
