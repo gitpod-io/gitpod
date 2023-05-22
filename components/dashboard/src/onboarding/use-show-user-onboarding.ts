@@ -5,7 +5,6 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { useCurrentUser } from "../user-context";
 import { useQueryParams } from "../hooks/use-query-params";
 import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "./UserOnboarding";
@@ -13,18 +12,16 @@ import { FORCE_ONBOARDING_PARAM, FORCE_ONBOARDING_PARAM_VALUE } from "./UserOnbo
 export const useShowUserOnboarding = () => {
     const user = useCurrentUser();
     const search = useQueryParams();
-    const newSignupFlow = useFeatureFlag("newSignupFlow");
 
     if (!user || User.isOrganizationOwned(user)) {
         return false;
     }
 
     // Show new signup flow if:
-    // * feature flag enabled
-    // * User is onboarding (no ide selected yet) OR query param `onboarding=force` is set
+    // * User is onboarding (no ide selected yet, not org user, hasn't onboarded before)
+    // * OR query param `onboarding=force` is set
     const showUserOnboarding =
-        newSignupFlow &&
-        (User.isOnboardingUser(user) || search.get(FORCE_ONBOARDING_PARAM) === FORCE_ONBOARDING_PARAM_VALUE);
+        User.isOnboardingUser(user) || search.get(FORCE_ONBOARDING_PARAM) === FORCE_ONBOARDING_PARAM_VALUE;
 
     return showUserOnboarding;
 };
