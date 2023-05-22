@@ -353,7 +353,8 @@ export function CreateWorkspacePage() {
             <div className="flex flex-col max-h-screen max-w-lg mx-auto items-center w-full">
                 <Heading1>New Workspace</Heading1>
                 <div className="text-gray-500 text-center text-base">
-                    Start a new workspace with the following options.
+                    Create a new workspace in the <span className="font-semibold">{currentOrg?.name}</span>{" "}
+                    organization.
                 </div>
                 <div className="-mx-6 px-6 mt-6 w-full">
                     <div className="pt-3">
