@@ -10,27 +10,27 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"reflect"
 	"sort"
 	"sync"
+	"syscall"
 	"time"
 
 	"golang.org/x/net/nettest"
-	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/google/nftables"
-	"github.com/google/nftables/expr"
 )
 
 var workspaceIPAdress string
-var ifaceName string
 
 func init() {
-	ifaceName, workspaceIPAdress = defaultRoutableIP()
+	_, workspaceIPAdress = defaultRoutableIP()
 }
 
 // NewManager creates a new port manager
@@ -813,7 +813,6 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 	if mp.Exposed && mp.URL != "" {
 		ps.Exposed = &api.ExposedPortInfo{
 			Visibility: mp.Visibility,
-			Protocol:   mp.Protocol,
 			Url:        mp.URL,
 			OnExposed:  mp.OnExposed,
 		}
@@ -829,109 +828,66 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 	return ps
 }
 
-type nftPortForwarder struct {
-	nc    *nftables.Conn
-	table *nftables.Table
-	port  uint16
-}
-
-func NewNftPortForwarder(port uint16) *nftPortForwarder {
-	return &nftPortForwarder{
-		port: port,
-		nc:   &nftables.Conn{},
-	}
-}
-
-func (n *nftPortForwarder) Run() error {
-	table := n.nc.AddTable(&nftables.Table{
-		Family: nftables.TableFamilyIPv4,
-		Name:   fmt.Sprintf("pf-%d", n.port),
-	})
-
-	prerouting := n.nc.AddChain(&nftables.Chain{
-		Name:     fmt.Sprintf("pf-%d", n.port),
-		Hooknum:  nftables.ChainHookPrerouting,
-		Priority: nftables.ChainPriorityNATDest,
-		Table:    table,
-		Type:     nftables.ChainTypeNAT,
-	})
-
-	chains, _ := n.nc.ListChains()
-	for _, c := range chains {
-		fmt.Println(c.Name, c.Hooknum)
-	}
-
-	localIp := net.IPNet{
-		IP:   net.IPv4(127, 0, 0, 1),
-		Mask: net.IPv4Mask(255, 0, 0, 0),
-	}
-
-	// iifname $containerIf tcp dport $port dnat to $localhost:tcp dport
-	n.nc.AddRule(&nftables.Rule{
-		Table: table,
-		Chain: prerouting,
-		Exprs: []expr.Any{
-			&expr.Meta{Key: expr.MetaKeyIIFNAME, Register: 1},
-			&expr.Cmp{
-				Op:       expr.CmpOpEq,
-				Register: 1,
-				Data:     []byte(ifaceName + "\x00"),
-			},
-
-			&expr.Meta{Key: expr.MetaKeyL4PROTO, Register: 1},
-			&expr.Cmp{
-				Op:       expr.CmpOpEq,
-				Register: 1,
-				Data:     []byte{unix.IPPROTO_TCP},
-			},
-			&expr.Payload{
-				DestRegister: 1,
-				Base:         expr.PayloadBaseTransportHeader,
-				Offset:       2,
-				Len:          2,
-			},
-
-			&expr.Cmp{
-				Op:       expr.CmpOpEq,
-				Register: 1,
-				Data:     []byte{byte(n.port >> 8), byte(n.port & 0xff)},
-			},
-
-			&expr.Immediate{
-				Register: 2,
-				Data:     localIp.IP.To4(),
-			},
-			&expr.NAT{
-				Type:        expr.NATTypeDestNAT,
-				Family:      unix.NFPROTO_IPV4,
-				RegAddrMin:  2,
-				RegProtoMin: 1,
-			},
-		},
-	})
-	n.table = table
-	if err := n.nc.Flush(); err != nil {
-		return xerrors.Errorf("failed to apply nftables: %v", err)
-	}
-	return nil
-}
-
-func (n *nftPortForwarder) Close() error {
-	if n.table != nil {
-		n.nc.DelTable(n.table)
-		if err := n.nc.Flush(); err != nil {
-			return xerrors.Errorf("failed to apply nftables: %v", err)
-		}
-	}
-	return nil
-}
-
 func startLocalhostProxy(port uint32) (io.Closer, error) {
-	r := NewNftPortForwarder(uint16(port))
-	if err := r.Run(); err != nil {
-		return nil, err
+	host := fmt.Sprintf("localhost:%d", port)
+
+	dsturl, err := url.Parse("http://" + host)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot produce proxy destination URL: %w", err)
 	}
-	return r, nil
+
+	proxy := httputil.NewSingleHostReverseProxy(dsturl)
+	originalDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		req.Host = host
+		originalDirector(req)
+	}
+	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
+		rw.WriteHeader(http.StatusBadGateway)
+
+		// avoid common warnings
+
+		if errors.Is(err, context.Canceled) {
+			return
+		}
+
+		if errors.Is(err, io.EOF) {
+			return
+		}
+
+		if errors.Is(err, syscall.ECONNREFUSED) {
+			return
+		}
+
+		var netOpErr *net.OpError
+		if errors.As(err, &netOpErr) {
+			if netOpErr.Op == "read" {
+				return
+			}
+		}
+
+		log.WithError(err).WithField("local-port", port).WithField("url", req.URL.String()).Warn("localhost proxy request failed")
+	}
+
+	proxyAddr := fmt.Sprintf("%v:%d", workspaceIPAdress, port)
+	lis, err := net.Listen("tcp", proxyAddr)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot listen on proxy port %d: %w", port, err)
+	}
+
+	srv := &http.Server{
+		Addr:    proxyAddr,
+		Handler: proxy,
+	}
+	go func() {
+		err := srv.Serve(lis)
+		if err == http.ErrServerClosed {
+			return
+		}
+		log.WithError(err).WithField("local-port", port).Error("localhost proxy failed")
+	}()
+
+	return srv, nil
 }
 
 func defaultRoutableIP() (string, string) {
