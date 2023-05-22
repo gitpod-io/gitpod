@@ -40,7 +40,6 @@ export interface FindWorkspacesOptions {
 export interface PrebuiltUpdatableAndWorkspace extends PrebuiltWorkspaceUpdatable {
     prebuild: PrebuiltWorkspace;
     workspace: Workspace;
-    instance: WorkspaceInstance;
 }
 
 export type WorkspaceAuthData = Pick<Workspace, "id" | "ownerId" | "shareable">;
