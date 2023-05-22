@@ -87,7 +87,7 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		return ctrl.Result{}, nil
 	}
 
-	if r.maintenance.IsEnabled() {
+	if r.maintenance.IsEnabled(ctx) {
 		// Don't reconcile timeouts in maintenance mode, to prevent workspace deletion.
 		// Requeue after some time to ensure we do still reconcile this workspace when
 		// maintenance mode ends.

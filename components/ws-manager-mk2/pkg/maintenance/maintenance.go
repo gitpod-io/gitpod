@@ -4,9 +4,11 @@
 
 package maintenance
 
+import "context"
+
 // Maintenance is used to check whether ws-manager-mk2 is in maintenance mode,
 // which prevents pod creation/deletion and snapshots being taken, such that
 // the cluster can be updated in-place.
 type Maintenance interface {
-	IsEnabled() bool
+	IsEnabled(ctx context.Context) bool
 }

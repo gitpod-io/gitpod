@@ -109,7 +109,7 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
-	if wsm.maintenance.IsEnabled() {
+	if wsm.maintenance.IsEnabled(ctx) {
 		return &wsmanapi.StartWorkspaceResponse{}, status.Error(codes.FailedPrecondition, "under maintenance")
 	}
 
@@ -378,7 +378,7 @@ func (wsm *WorkspaceManagerServer) StopWorkspace(ctx context.Context, req *wsman
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
-	if wsm.maintenance.IsEnabled() {
+	if wsm.maintenance.IsEnabled(ctx) {
 		return &wsmanapi.StopWorkspaceResponse{}, status.Error(codes.FailedPrecondition, "under maintenance")
 	}
 
@@ -604,7 +604,7 @@ func (wsm *WorkspaceManagerServer) TakeSnapshot(ctx context.Context, req *wsmana
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
 
-	if wsm.maintenance.IsEnabled() {
+	if wsm.maintenance.IsEnabled(ctx) {
 		return &wsmanapi.TakeSnapshotResponse{}, status.Error(codes.FailedPrecondition, "under maintenance")
 	}
 

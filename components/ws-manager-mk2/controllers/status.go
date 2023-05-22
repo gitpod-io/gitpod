@@ -198,7 +198,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		} else if workspace.Status.Phase != workspacev1.WorkspacePhaseStopped {
 			// Should be in Stopping phase, but isn't yet.
 			// Move to Stopping to start disposal, but only if maintenance mode is disabled.
-			if !r.maintenance.IsEnabled() {
+			if !r.maintenance.IsEnabled(ctx) {
 				workspace.Status.Phase = workspacev1.WorkspacePhaseStopping
 			}
 		}
