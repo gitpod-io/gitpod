@@ -68,37 +68,35 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
     protected abstract getManager(): Promise<EntityManager>;
 
     protected async getWorkspaceRepo(): Promise<Repository<DBWorkspace>> {
-        return await (await this.getManager()).getRepository<DBWorkspace>(DBWorkspace);
+        return (await this.getManager()).getRepository<DBWorkspace>(DBWorkspace);
     }
 
     protected async getWorkspaceInstanceRepo(): Promise<Repository<DBWorkspaceInstance>> {
-        return await (await this.getManager()).getRepository<DBWorkspaceInstance>(DBWorkspaceInstance);
+        return (await this.getManager()).getRepository<DBWorkspaceInstance>(DBWorkspaceInstance);
     }
 
     protected async getWorkspaceInstanceUserRepo(): Promise<Repository<DBWorkspaceInstanceUser>> {
-        return await (await this.getManager()).getRepository<DBWorkspaceInstanceUser>(DBWorkspaceInstanceUser);
+        return (await this.getManager()).getRepository<DBWorkspaceInstanceUser>(DBWorkspaceInstanceUser);
     }
 
     protected async getRepositoryWhitelist(): Promise<Repository<DBRepositoryWhiteList>> {
-        return await (await this.getManager()).getRepository<DBRepositoryWhiteList>(DBRepositoryWhiteList);
+        return (await this.getManager()).getRepository<DBRepositoryWhiteList>(DBRepositoryWhiteList);
     }
 
     protected async getSnapshotRepo(): Promise<Repository<DBSnapshot>> {
-        return await (await this.getManager()).getRepository<DBSnapshot>(DBSnapshot);
+        return (await this.getManager()).getRepository<DBSnapshot>(DBSnapshot);
     }
 
     protected async getPrebuiltWorkspaceRepo(): Promise<Repository<DBPrebuiltWorkspace>> {
-        return await (await this.getManager()).getRepository<DBPrebuiltWorkspace>(DBPrebuiltWorkspace);
+        return (await this.getManager()).getRepository<DBPrebuiltWorkspace>(DBPrebuiltWorkspace);
     }
 
     protected async getPrebuildInfoRepo(): Promise<Repository<DBPrebuildInfo>> {
-        return await (await this.getManager()).getRepository<DBPrebuildInfo>(DBPrebuildInfo);
+        return (await this.getManager()).getRepository<DBPrebuildInfo>(DBPrebuildInfo);
     }
 
     protected async getPrebuiltWorkspaceUpdatableRepo(): Promise<Repository<DBPrebuiltWorkspaceUpdatable>> {
-        return await (
-            await this.getManager()
-        ).getRepository<DBPrebuiltWorkspaceUpdatable>(DBPrebuiltWorkspaceUpdatable);
+        return (await this.getManager()).getRepository<DBPrebuiltWorkspaceUpdatable>(DBPrebuiltWorkspaceUpdatable);
     }
 
     public async connect(maxTries: number = 3, timeout: number = 2000): Promise<void> {
@@ -906,7 +904,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             .createQueryBuilder("pwsu")
             .innerJoinAndMapOne("pwsu.prebuild", DBPrebuiltWorkspace, "pws", "pwsu.prebuiltWorkspaceId = pws.id")
             .innerJoinAndMapOne("pwsu.workspace", DBWorkspace, "ws", "pws.buildWorkspaceId = ws.id")
-            .innerJoinAndMapOne("pwsu.instance", DBWorkspaceInstance, "wsi", "ws.id = wsi.workspaceId")
             .where("pwsu.isResolved = 0")
             .orderBy("ws.creationTime", "DESC");
 
