@@ -264,6 +264,8 @@ export interface ConfigSerialized {
     redis: {
         address: string;
     };
+
+    isSingleOrgInstallation: boolean;
 }
 
 export interface CookieConfig {
