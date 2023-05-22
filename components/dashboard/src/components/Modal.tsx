@@ -4,18 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, ReactNode, useCallback, useEffect, useRef } from "react";
+import { FC, KeyboardEvent, ReactNode, useCallback } from "react";
 import { Portal } from "react-portal";
-// import FocusLock from "react-focus-lock";
-import FocusTrap from "focus-trap-react";
+import { FocusOn, AutoFocusInside } from "react-focus-on";
 import cn from "classnames";
-import { getGitpodService } from "../service/service";
 import { Heading2 } from "./typography/headings";
 import Alert, { AlertProps } from "./Alert";
 import "./modal.css";
 import classNames from "classnames";
+import { useTrackEvent } from "../data/tracking/track-event-mutation";
 
-type CloseModalManner = "esc" | "enter" | "x";
+type CloseModalManner = "esc" | "enter" | "x" | "click_outside";
 
 type Props = {
     // specify a key if having the same title and window.location
@@ -42,39 +41,42 @@ export const Modal: FC<Props> = ({
     onClose,
     onEnter,
 }) => {
-    const modalRef = useRef<HTMLDivElement | null>(null);
+    const trackEvent = useTrackEvent();
 
     const closeModal = useCallback(
         (manner: CloseModalManner) => {
             onClose();
-            getGitpodService()
-                .server.trackEvent({
-                    event: "modal_dismiss",
-                    properties: {
-                        manner,
-                        title: title,
-                        specify: specify,
-                        path: window.location.pathname,
-                    },
-                })
-                .then()
-                .catch(console.error);
+
+            trackEvent.mutate({
+                event: "modal_dismiss",
+                properties: {
+                    manner,
+                    title: title,
+                    specify: specify,
+                    path: window.location.pathname,
+                },
+            });
         },
-        [onClose, specify, title],
+        [onClose, specify, title, trackEvent],
     );
 
-    // Add event listeners
-    useEffect(() => {
-        const handler = async (evt: KeyboardEvent) => {
-            if (!visible) {
+    const handleClickOutside = useCallback(() => {
+        closeModal("click_outside");
+    }, [closeModal]);
+
+    const handleEscape = useCallback(() => {
+        closeModal("esc");
+    }, [closeModal]);
+
+    // TODO: look into deprecating onEnter for Modals - use <form onSubmit> instead
+    // onEnter requires consumers do things like check if a non-submit button is focused
+    // when enter is pressed vs. inside an input, <form> handles that for us already
+    const handleKeydown = useCallback(
+        async (evt: KeyboardEvent) => {
+            if (!visible || evt.defaultPrevented) {
                 return;
             }
-            if (evt.defaultPrevented) {
-                return;
-            }
-            if (evt.key === "Escape") {
-                closeModal("esc");
-            }
+
             if (evt.key === "Enter") {
                 if (onEnter) {
                     if (await onEnter()) {
@@ -84,47 +86,9 @@ export const Modal: FC<Props> = ({
                     closeModal("enter");
                 }
             }
-        };
-
-        window.addEventListener("keydown", handler);
-        // Remove event listeners on cleanup
-        return () => {
-            window.removeEventListener("keydown", handler);
-        };
-    }, [closeModal, onClose, onEnter, visible]);
-
-    // Handle aria & scrolling when modal opens/closes
-    useEffect(() => {
-        if (visible) {
-            // Focus the Modal container when it becomes visible
-            if (modalRef.current) {
-                modalRef.current.focus();
-            }
-
-            // prevent scrolling on body while modal is open
-            document.body.style.overflow = "hidden";
-
-            // signal main content is hidden by modal
-            const appRoot = document.getElementById("root");
-            if (appRoot) {
-                appRoot.setAttribute("aria-hidden", "true");
-            }
-        } else {
-            document.body.style.overflow = "unset";
-            document.body.removeAttribute("aria-hidden");
-        }
-
-        // Ensure we reset things when modal is removed
-        return () => {
-            // enable scrolling on body
-            document.body.style.overflow = "unset";
-            // signal body is visible again
-            const appRoot = document.getElementById("root");
-            if (appRoot) {
-                appRoot.removeAttribute("aria-hidden");
-            }
-        };
-    }, [visible]);
+        },
+        [closeModal, onEnter, visible],
+    );
 
     if (!visible) {
         return null;
@@ -133,10 +97,14 @@ export const Modal: FC<Props> = ({
     return (
         <Portal>
             {/* backdrop overlay */}
-            <div className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen">
+            <div
+                className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen focus:ring-0"
+                onKeyDown={handleKeydown}
+                tabIndex={0}
+            >
                 {/* Modal outer-container for positioning */}
                 <div className="flex justify-center items-center w-screen h-screen">
-                    <FocusTrap>
+                    <FocusOn autoFocus onClickOutside={handleClickOutside} onEscapeKey={handleEscape}>
                         {/* Visible Modal */}
                         <div
                             className={cn(
@@ -151,7 +119,6 @@ export const Modal: FC<Props> = ({
                             role="dialog"
                             aria-labelledby="modal-header"
                             tabIndex={-1}
-                            ref={modalRef}
                         >
                             {closeable && <ModalCloseIcon onClose={() => closeModal("x")} />}
                             {title ? (
@@ -164,7 +131,7 @@ export const Modal: FC<Props> = ({
                                 children
                             )}
                         </div>
-                    </FocusTrap>
+                    </FocusOn>
                 </div>
             </div>
         </Portal>
@@ -193,14 +160,15 @@ type ModalBodyProps = {
 
 export const ModalBody: FC<ModalBodyProps> = ({ children, hideDivider = false, noScroll = false }) => {
     return (
-        <div
+        // Allows the first tabbable element in the body to receive focus on mount
+        <AutoFocusInside
             className={cn("flex-grow relative border-gray-200 dark:border-gray-800 -mx-6 px-6 pb-6", {
                 "border-t border-b mt-2 py-4": !hideDivider,
                 "overflow-y-auto": !noScroll,
             })}
         >
             {children}
-        </div>
+        </AutoFocusInside>
     );
 };
 
