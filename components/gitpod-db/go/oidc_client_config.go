@@ -268,15 +268,7 @@ func UpdateOIDCClientConfig(ctx context.Context, conn *gorm.DB, cipher Cipher, u
 	return nil
 }
 
-func ActivateClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) error {
-	return setClientConfigActiveFlag(ctx, conn, id, true)
-}
-
-func DeactivateClientConfig(ctx context.Context, conn *gorm.DB, id uuid.UUID) error {
-	return setClientConfigActiveFlag(ctx, conn, id, false)
-}
-
-func setClientConfigActiveFlag(ctx context.Context, conn *gorm.DB, id uuid.UUID, active bool) error {
+func SetClientConfigActiviation(ctx context.Context, conn *gorm.DB, id uuid.UUID, active bool) error {
 	config, err := GetOIDCClientConfig(ctx, conn, id)
 	if err != nil {
 		return err

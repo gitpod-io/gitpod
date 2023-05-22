@@ -196,7 +196,7 @@ func (s *Service) activateAndVerifyClientConfig(ctx context.Context, config *Cli
 	if err != nil {
 		return err
 	}
-	return db.ActivateClientConfig(ctx, s.dbConn, uuid)
+	return db.SetClientConfigActiviation(ctx, s.dbConn, uuid, true)
 }
 
 func (s *Service) markClientConfigAsVerified(ctx context.Context, config *ClientConfig) error {
