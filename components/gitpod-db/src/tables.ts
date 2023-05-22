@@ -95,21 +95,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             dependencies: ["d_b_user"],
         },
         {
-            name: "d_b_workspace",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-            deletionColumn: "deleted",
-            dependencies: ["d_b_user"],
-        },
-        {
-            name: "d_b_workspace_instance",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-            dependencies: ["d_b_workspace"],
-            deletionColumn: "deleted",
-            ignoreColumns: ["phase"],
-        },
-        {
             name: "d_b_workspace_instance_user",
             primaryKeys: ["instanceId", "userId"],
             timeColumn: "_lastModified",
@@ -205,12 +190,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_prebuild_info",
-            primaryKeys: ["prebuildId"],
-            deletionColumn: "deleted",
-            timeColumn: "_lastModified",
-        },
-        {
             name: "d_b_project_env_var",
             primaryKeys: ["id", "projectId"],
             deletionColumn: "deleted",
@@ -235,12 +214,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: "_lastModified",
         },
         {
-            name: "d_b_webhook_event",
-            primaryKeys: ["id"],
-            deletionColumn: "deleted",
-            timeColumn: "_lastModified",
-        },
-        {
             name: "d_b_cost_center",
             primaryKeys: ["id", "creationTime"],
             deletionColumn: "deleted",
@@ -250,18 +223,6 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             name: "d_b_usage",
             primaryKeys: ["id"],
             timeColumn: "_lastModified",
-        },
-        {
-            name: "d_b_prebuilt_workspace_updatable",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-            deletionColumn: "deleted",
-        },
-        {
-            name: "d_b_prebuilt_workspace",
-            primaryKeys: ["id"],
-            timeColumn: "_lastModified",
-            deletionColumn: "deleted",
         },
         {
             name: "d_b_stripe_customer",
