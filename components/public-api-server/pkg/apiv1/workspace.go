@@ -219,7 +219,7 @@ func (s *WorkspaceService) StartWorkspace(ctx context.Context, req *connect.Requ
 
 	_, err = conn.StartWorkspace(ctx, workspaceID, &protocol.StartWorkspaceOptions{})
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to stop workspace.")
+		log.Extract(ctx).WithError(err).Error("Failed to start workspace.")
 		return nil, proxy.ConvertError(err)
 	}
 
