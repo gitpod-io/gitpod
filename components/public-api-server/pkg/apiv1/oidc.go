@@ -330,6 +330,10 @@ func (s *OIDCService) SetClientConfigActivation(ctx context.Context, req *connec
 
 	config, err := db.GetOIDCClientConfig(ctx, s.dbConn, clientConfigID)
 	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s for Organization %s does not exist", clientConfigID.String(), organizationID.String()))
+		}
+
 		return nil, err
 	}
 

@@ -727,6 +727,18 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 		require.NoError(t, err)
 		require.Equal(t, false, getResponse.Msg.Config.Active)
 	})
+
+	t.Run("record not found", func(t *testing.T) {
+		_, client, _ := setupOIDCService(t, withOIDCFeatureEnabled)
+
+		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
+			Id:             uuid.NewString(),
+			OrganizationId: organizationID.String(),
+			Activate:       false,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	})
 }
 
 func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, v1connect.OIDCServiceClient, *gorm.DB) {
