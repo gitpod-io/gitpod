@@ -175,7 +175,7 @@ func TestActivateClientConfig(t *testing.T) {
 	t.Run("not found when config does not exist", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 
-		err := db.ActivateClientConfig(context.Background(), conn, uuid.New())
+		err := db.SetClientConfigActiviation(context.Background(), conn, uuid.New(), true)
 		require.Error(t, err)
 		require.ErrorIs(t, err, db.ErrorNotFound)
 	})
@@ -193,14 +193,14 @@ func TestActivateClientConfig(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, false, config.Active)
 
-		err = db.ActivateClientConfig(context.Background(), conn, configID)
+		err = db.SetClientConfigActiviation(context.Background(), conn, configID, true)
 		require.NoError(t, err)
 
 		config2, err := db.GetOIDCClientConfig(context.Background(), conn, configID)
 		require.NoError(t, err)
 		require.Equal(t, true, config2.Active)
 
-		err = db.ActivateClientConfig(context.Background(), conn, configID)
+		err = db.SetClientConfigActiviation(context.Background(), conn, configID, true)
 		require.NoError(t, err)
 	})
 
@@ -219,7 +219,7 @@ func TestActivateClientConfig(t *testing.T) {
 		config2 := configs[1]
 
 		// activate first
-		err := db.ActivateClientConfig(context.Background(), conn, config1.ID)
+		err := db.SetClientConfigActiviation(context.Background(), conn, config1.ID, true)
 		require.NoError(t, err)
 
 		config1, err = db.GetOIDCClientConfig(context.Background(), conn, config1.ID)
@@ -227,7 +227,7 @@ func TestActivateClientConfig(t *testing.T) {
 		require.Equal(t, true, config1.Active, "failed to activate config1")
 
 		// activate second
-		err = db.ActivateClientConfig(context.Background(), conn, config2.ID)
+		err = db.SetClientConfigActiviation(context.Background(), conn, config2.ID, true)
 		require.NoError(t, err)
 
 		config2, err = db.GetOIDCClientConfig(context.Background(), conn, config2.ID)

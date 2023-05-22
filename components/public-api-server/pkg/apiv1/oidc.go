@@ -314,10 +314,6 @@ func (s *OIDCService) SetClientConfigActivation(ctx context.Context, req *connec
 		return nil, err
 	}
 
-	if !req.Msg.GetActivate() {
-		return nil, connect.NewError(connect.CodeUnimplemented, fmt.Errorf("deactivation not yet implemented"))
-	}
-
 	conn, err := s.getConnection(ctx)
 	if err != nil {
 		return nil, err
@@ -334,17 +330,24 @@ func (s *OIDCService) SetClientConfigActivation(ctx context.Context, req *connec
 
 	config, err := db.GetOIDCClientConfig(ctx, s.dbConn, clientConfigID)
 	if err != nil {
+		if errors.Is(err, db.ErrorNotFound) {
+			return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("OIDC Client Config %s for Organization %s does not exist", clientConfigID.String(), organizationID.String()))
+		}
+
 		return nil, err
 	}
-	if config.Verified == nil || !*config.Verified {
-		log.Extract(ctx).WithError(err).Error("Failed to activate an unverified OIDC Client Config.")
-		return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Failed to activate an unverified OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
+
+	if req.Msg.Activate {
+		if config.Verified == nil || !*config.Verified {
+			log.Extract(ctx).WithError(err).Error("Failed to activate an unverified OIDC Client Config.")
+			return nil, connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("Failed to activate an unverified OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
+		}
 	}
 
-	err = db.ActivateClientConfig(ctx, s.dbConn, clientConfigID)
+	err = db.SetClientConfigActiviation(ctx, s.dbConn, clientConfigID, req.Msg.Activate)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to activate OIDC Client Config.")
-		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to activate OIDC Client Config %s for Organization %s", clientConfigID.String(), organizationID.String()))
+		log.Extract(ctx).WithError(err).Error("Failed to set OIDC Client Config activation.")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to set OIDC Client Config activation (ID: %s) for Organization %s", clientConfigID.String(), organizationID.String()))
 	}
 
 	return connect.NewResponse(&v1.SetClientConfigActivationResponse{}), nil
