@@ -104,9 +104,9 @@ export class AuthProviderEntryDBSpec {
     }
 
     @test public async findByOrgId() {
-        const ap1 = this.authProvider({ id: "1", organizationId: "O1" });
-        const ap2 = this.authProvider({ id: "2", organizationId: "O1" });
-        const ap3 = this.authProvider({ id: "3", organizationId: "O2" });
+        const ap1 = this.authProvider({ id: "1", organizationId: "O1", host: "H1" });
+        const ap2 = this.authProvider({ id: "2", organizationId: "O1", host: "H2" });
+        const ap3 = this.authProvider({ id: "3", organizationId: "O2", host: "H1" });
 
         await this.db.storeAuthProvider(ap1, false);
         await this.db.storeAuthProvider(ap2, false);
