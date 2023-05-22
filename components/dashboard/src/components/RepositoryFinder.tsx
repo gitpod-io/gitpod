@@ -72,7 +72,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
     );
 
     const element = (
-        <div className="flex h-12" title="Repository">
+        <div className="flex h-12" title={displayContextUrl(props.initialValue) || "Repository"}>
             <div className="mx-2 my-2">
                 <img className="w-8 filter-grayscale self-center" src={Repository} alt="logo" />
             </div>
