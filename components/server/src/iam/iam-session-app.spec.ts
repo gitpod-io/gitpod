@@ -20,7 +20,7 @@ import * as request from "supertest";
 import * as chai from "chai";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
-import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
+import { TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -33,6 +33,11 @@ class TestIamSessionApp {
     protected knownSubjectID = "111";
     protected knownEmail = "tester@my.org";
 
+    protected knownUser: Partial<User> = {
+        id: "id-known-user",
+        identities: [],
+    };
+
     protected userServiceMock: Partial<UserService> = {
         createUser: (params) => {
             return { id: "id-new-user" } as any;
@@ -40,13 +45,13 @@ class TestIamSessionApp {
 
         findUserForLogin: async (params) => {
             if (params.candidate?.authId === this.knownSubjectID) {
-                return { id: "id-known-user" } as any;
+                return this.knownUser as any;
             }
             return undefined;
         },
         findOrgOwnedUser: async (params) => {
             if (params.email === this.knownEmail) {
-                return { id: "id-known-user" } as any;
+                return this.knownUser as any;
             }
             return undefined;
         },
@@ -88,6 +93,7 @@ class TestIamSessionApp {
 
     public before() {
         this.teamDbMock.memberships.clear();
+        this.knownUser.identities = [];
 
         const container = new Container();
         container.load(
@@ -230,6 +236,58 @@ class TestIamSessionApp {
         // assert no admin is member of the org
         expect(this.teamDbMock.memberships.has(BUILTIN_INSTLLATION_ADMIN_USER_ID)).to.be.false;
         expect(this.teamDbMock.memberships.has("id-new-user")).to.be.true;
+    }
+
+    @test public async testSessionRequest_updates_existing_user() {
+        const payload: OIDCCreateSessionPayload = { ...this.payload };
+        payload.claims.sub = this.knownSubjectID; // `userServiceMock.findUserForLogin` will match this value
+
+        this.knownUser.identities = [
+            {
+                authId: payload.claims.sub,
+                authProviderId: payload.claims.aud,
+                authName: "Test User",
+                primaryEmail: "random-user@any.org",
+            },
+        ];
+
+        let newEmail: string | undefined;
+        this.userServiceMock.updateUserIdentity = async (user, updatedIdentity) => {
+            newEmail = updatedIdentity.primaryEmail;
+        };
+
+        const result = await request(this.app.create())
+            .post("/session")
+            .set("Content-Type", "application/json")
+            .send(JSON.stringify(payload));
+
+        expect(result.statusCode, JSON.stringify(result.body)).to.equal(200);
+        expect(newEmail, "update was not called").not.to.be.undefined;
+        expect(newEmail).to.equal(payload.claims.email);
+    }
+
+    @test public async testSessionRequest_no_update_if_same_email() {
+        this.knownUser.identities = [
+            {
+                authId: this.payload.claims.sub,
+                authProviderId: this.payload.claims.aud,
+                authName: "Test User",
+                primaryEmail: this.payload.claims.email,
+            },
+        ];
+
+        let updateUserIdentityCalled = false;
+        this.userServiceMock.updateUserIdentity = async () => {
+            updateUserIdentityCalled = true;
+        };
+
+        const result = await request(this.app.create())
+            .post("/session")
+            .set("Content-Type", "application/json")
+            .send(JSON.stringify(this.payload));
+
+        expect(result.statusCode, JSON.stringify(result.body)).to.equal(200);
+        expect(updateUserIdentityCalled).to.be.false;
     }
 }
 

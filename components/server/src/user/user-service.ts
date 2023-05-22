@@ -302,20 +302,20 @@ export class UserService {
         user.name = user.name || authUser.name || authUser.primaryEmail;
         user.avatarUrl = user.avatarUrl || authUser.avatarUrl;
         await this.onAfterUserLoad(user);
-        await this.updateUserIdentity(user, candidate, token);
+        await this.updateUserIdentity(user, candidate);
+        await this.userDb.storeSingleToken(candidate, token);
     }
 
     async onAfterUserLoad(user: User): Promise<User> {
         return user;
     }
 
-    async updateUserIdentity(user: User, candidate: Identity, token: Token) {
+    async updateUserIdentity(user: User, candidate: Identity) {
         // ensure single identity per auth provider instance
         user.identities = user.identities.filter((i) => i.authProviderId !== candidate.authProviderId);
         user.identities.push(candidate);
 
         await this.userDb.storeUser(user);
-        await this.userDb.storeSingleToken(candidate, token);
     }
 
     async deauthorize(user: User, authProviderId: string) {
