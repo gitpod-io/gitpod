@@ -19,14 +19,16 @@ import (
 )
 
 type WorkspaceProvider struct {
-	hooks    map[session.WorkspaceState][]session.WorkspaceLivecycleHook
-	Location string
+	hooks      map[session.WorkspaceState][]session.WorkspaceLivecycleHook
+	Location   string
+	workspaces map[string]*session.Workspace
 }
 
 func NewWorkspaceProvider(hooks map[session.WorkspaceState][]session.WorkspaceLivecycleHook, location string) *WorkspaceProvider {
 	return &WorkspaceProvider{
-		hooks:    hooks,
-		Location: location,
+		hooks:      hooks,
+		Location:   location,
+		workspaces: make(map[string]*session.Workspace),
 	}
 }
 
@@ -48,11 +50,18 @@ func (wf *WorkspaceProvider) Create(ctx context.Context, instanceID, location st
 	if err != nil {
 		return nil, err
 	}
+	wf.workspaces[instanceID] = ws
 
 	return ws, nil
 }
 
-func (wf *WorkspaceProvider) Get(ctx context.Context, instanceID string) (*session.Workspace, error) {
+func (wf *WorkspaceProvider) GetAndConnect(ctx context.Context, instanceID string) (*session.Workspace, error) {
+	if ws, ok := wf.workspaces[instanceID]; ok {
+		return ws, nil
+	}
+
+	// if the workspace is not in memory ws-daemon probabably has been restarted
+	// reload from disk and reconnect the workspace in that case
 	path := filepath.Join(wf.Location, fmt.Sprintf("%s.workspace.json", instanceID))
 	ws, err := loadWorkspace(ctx, path)
 	if err != nil {
@@ -63,6 +72,7 @@ func (wf *WorkspaceProvider) Get(ctx context.Context, instanceID string) (*sessi
 		ws.NonPersistentAttrs = make(map[string]interface{})
 	}
 
+	log.Infof("Reconnecting workspace %s to IWS", instanceID)
 	err = wf.runLifecycleHooks(ctx, ws, session.WorkspaceReady)
 	if err != nil {
 		return nil, err

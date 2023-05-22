@@ -185,7 +185,7 @@ func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID st
 }
 
 func (wso *DefaultWorkspaceOperations) SetupWorkspace(ctx context.Context, instanceID string) error {
-	_, err := wso.provider.Get(ctx, instanceID)
+	_, err := wso.provider.GetAndConnect(ctx, instanceID)
 	if err != nil {
 		return fmt.Errorf("cannot setup workspace %s: %w", instanceID, err)
 	}
@@ -194,7 +194,7 @@ func (wso *DefaultWorkspaceOperations) SetupWorkspace(ctx context.Context, insta
 }
 
 func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts BackupOptions) (*csapi.GitStatus, error) {
-	ws, err := wso.provider.Get(ctx, opts.Meta.InstanceID)
+	ws, err := wso.provider.GetAndConnect(ctx, opts.Meta.InstanceID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot find workspace %s during DisposeWorkspace: %w", opts.Meta.InstanceID, err)
 	}
@@ -234,7 +234,7 @@ func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts
 }
 
 func (wso *DefaultWorkspaceOperations) DeleteWorkspace(ctx context.Context, instanceID string) error {
-	ws, err := wso.provider.Get(ctx, instanceID)
+	ws, err := wso.provider.GetAndConnect(ctx, instanceID)
 	if err != nil {
 		return fmt.Errorf("cannot find workspace %s during DisposeWorkspace: %w", instanceID, err)
 	}
@@ -254,7 +254,7 @@ func (wso *DefaultWorkspaceOperations) DeleteWorkspace(ctx context.Context, inst
 }
 
 func (wso *DefaultWorkspaceOperations) SnapshotIDs(ctx context.Context, instanceID string) (snapshotUrl, snapshotName string, err error) {
-	sess, err := wso.provider.Get(ctx, instanceID)
+	sess, err := wso.provider.GetAndConnect(ctx, instanceID)
 	if err != nil {
 		return "", "", fmt.Errorf("cannot find workspace %s during SnapshotName: %w", instanceID, err)
 	}
@@ -280,7 +280,7 @@ func (wso *DefaultWorkspaceOperations) Snapshot(ctx context.Context, workspaceID
 		return fmt.Errorf("workspaceID is required")
 	}
 
-	ws, err := wso.provider.Get(ctx, workspaceID)
+	ws, err := wso.provider.GetAndConnect(ctx, workspaceID)
 	if err != nil {
 		return fmt.Errorf("cannot find workspace %s during DisposeWorkspace", workspaceID)
 	}
