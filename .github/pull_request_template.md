@@ -22,23 +22,27 @@ Does this PR require updates to the documentation at www.gitpod.io/docs?
 
 gitpod:summary
 
-## Build Options:
+## Build Options
+
+<details>
+<summary>Build</summary>
 
 - [ ] /werft with-werft
       Run the build with werft instead of GHA
 - [ ] leeway-no-cache
 - [ ] /werft no-test
       Run Leeway with `--dont-test`
+</details>
 
 <details>
-<summary>Publish Options</summary>
+<summary>Publish</summary>
 
 - [ ] /werft publish-to-npm
 - [ ] /werft publish-to-jb-marketplace
 </details>
 
 <details>
-<summary>Installer Options</summary>
+<summary>Installer</summary>
 
 - [ ] analytics=segment
 - [ ] with-dedicated-emulation
@@ -47,7 +51,9 @@ gitpod:summary
   Add desired feature flags to the end of the line above, space separated
 </details>
 
-#### Preview Environment Options:
+<details>
+<summary>Preview Environment</summary>
+
 - [ ] /werft with-local-preview
       If enabled this will build `install/preview`
 - [ ] /werft with-preview
@@ -56,5 +62,6 @@ gitpod:summary
       If enabled this will create the environment on GCE infra
 - [ ] with-integration-tests=all
       Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`
-
+</details>
+ 
 /hold
