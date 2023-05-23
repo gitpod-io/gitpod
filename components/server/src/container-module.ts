@@ -135,6 +135,7 @@ import { DatabaseGarbageCollector } from "./jobs/database-gc";
 import { OTSGarbageCollector } from "./jobs/ots-gc";
 import { UserToTeamMigrationService } from "./migration/user-to-team-migration-service";
 import { SnapshotsJob } from "./jobs/snapshots";
+import { OrgOnlyMigrationJob } from "./jobs/org-only-migration-job";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -365,6 +366,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(DatabaseGarbageCollector).toSelf().inSingletonScope();
     bind(OTSGarbageCollector).toSelf().inSingletonScope();
     bind(SnapshotsJob).toSelf().inSingletonScope();
+    bind(OrgOnlyMigrationJob).toSelf().inSingletonScope();
     bind(JobRunner).toSelf().inSingletonScope();
 
     // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129

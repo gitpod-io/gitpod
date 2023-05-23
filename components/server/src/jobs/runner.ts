@@ -17,6 +17,7 @@ import { TokenGarbageCollector } from "./token-gc";
 import { WebhookEventGarbageCollector } from "./webhook-gc";
 import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
+import { OrgOnlyMigrationJob } from "./org-only-migration-job";
 
 export const Job = Symbol("Job");
 
@@ -37,6 +38,7 @@ export class JobRunner {
     @inject(WebhookEventGarbageCollector) protected webhookGC: WebhookEventGarbageCollector;
     @inject(WorkspaceGarbageCollector) protected workspaceGC: WorkspaceGarbageCollector;
     @inject(SnapshotsJob) protected snapshotsJob: SnapshotsJob;
+    @inject(OrgOnlyMigrationJob) protected orgOnlyMigrationJob: OrgOnlyMigrationJob;
 
     public start(): DisposableCollection {
         const disposables = new DisposableCollection();
@@ -48,6 +50,7 @@ export class JobRunner {
             this.webhookGC,
             this.workspaceGC,
             this.snapshotsJob,
+            this.orgOnlyMigrationJob,
         ];
 
         for (let job of jobs) {
