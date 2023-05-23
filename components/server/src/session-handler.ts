@@ -56,7 +56,11 @@ export class SessionHandlerProvider {
                 /* tslint:disable-next-line */
                 this.jwtSessionHandler(jwtToken)
                     .then((res) => {
+                        const [, user] = res;
                         hasJWTCookie = true;
+
+                        req.user = user;
+                        next();
                     })
                     .catch((err) => {
                         log.error("Failed to verify JWT Session token", err);
@@ -64,9 +68,9 @@ export class SessionHandlerProvider {
                     .finally(() => {
                         reportSessionWithJWT(hasJWTCookie);
                     });
+            } else {
+                session(options)(req, res, next);
             }
-
-            session(options)(req, res, next);
         };
     }
 
