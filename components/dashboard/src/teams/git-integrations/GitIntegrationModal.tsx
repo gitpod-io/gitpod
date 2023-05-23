@@ -303,7 +303,7 @@ const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = (
     let docsUrl = ``;
     switch (type) {
         case "GitHub":
-            docsUrl = `https://www.gitpod.io/docs/github-integration/#oauth-application`;
+            docsUrl = `https://www.gitpod.io/docs/configure/authentication/github-enterprise`;
             break;
         case "GitLab":
             docsUrl = `https://www.gitpod.io/docs/gitlab-integration/#oauth-application`;
