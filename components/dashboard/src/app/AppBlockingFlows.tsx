@@ -10,6 +10,8 @@ import { useCurrentUser } from "../user-context";
 import { MigrationPage, useShouldSeeMigrationPage } from "../whatsnew/MigrationPage";
 import { useShowUserOnboarding } from "../onboarding/use-show-user-onboarding";
 import { useHistory } from "react-router";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { OrgNamingStep } from "../dedicated-setup/OrgNamingStep";
 
 const UserOnboarding = lazy(() => import(/* webpackPrefetch: true */ "../onboarding/UserOnboarding"));
 const DedicatedSetup = lazy(() => import(/* webpackPrefetch: true */ "../dedicated-setup/DedicatedSetup"));
@@ -19,6 +21,7 @@ const DedicatedSetup = lazy(() => import(/* webpackPrefetch: true */ "../dedicat
 export const AppBlockingFlows: FC = ({ children }) => {
     const history = useHistory();
     const user = useCurrentUser();
+    const org = useCurrentOrg();
     const shouldSeeMigrationPage = useShouldSeeMigrationPage();
     const showDedicatedSetup = useShowDedicatedSetup();
     const showUserOnboarding = useShowUserOnboarding();
@@ -51,6 +54,10 @@ export const AppBlockingFlows: FC = ({ children }) => {
     // New user onboarding flow
     if (showUserOnboarding) {
         return <UserOnboarding user={user} />;
+    }
+
+    if (!org.data) {
+        return <OrgNamingStep onComplete={() => {}} />;
     }
 
     return <>{children}</>;

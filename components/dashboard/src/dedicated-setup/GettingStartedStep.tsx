@@ -11,10 +11,12 @@ import { SetupLayout } from "./SetupLayout";
 
 type Props = {
     onComplete: () => void;
+    progressCurrent?: number;
+    progressTotal?: number;
 };
-export const GettingStartedStep: FC<Props> = ({ onComplete }) => {
+export const GettingStartedStep: FC<Props> = ({ onComplete, progressCurrent, progressTotal }) => {
     return (
-        <SetupLayout>
+        <SetupLayout progressCurrent={progressCurrent} progressTotal={progressTotal}>
             <Heading1>Let's get started</Heading1>
             <Subheading>
                 Spin up fresh cloud development environments for each task, fully automated, in seconds.

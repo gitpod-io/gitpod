@@ -39,7 +39,6 @@ import { useQueryParams } from "../hooks/use-query-params";
 import { useCurrentUser } from "../user-context";
 import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokensCreateView";
 import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
-import { OrgRequiredRoute } from "./OrgRequiredRoute";
 import { WebsocketClients } from "./WebsocketClients";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
 
@@ -202,19 +201,17 @@ export const AppRoutes = () => {
                             <Subheading className="mt-4 text-gitpod-red">{decodeURIComponent(getURLHash())}</Subheading>
                         </div>
                     </Route>
-                    {/* TODO remove the /teams/join navigation after a few weeks */}
-                    <Route exact path="/teams/join" component={JoinTeam} />
                     <Route exact path="/orgs/new" component={NewTeam} />
                     <Route exact path="/orgs/join" component={JoinTeam} />
                     <Route exact path="/projects" component={Projects} />
 
                     {/* These routes that require a selected organization, otherwise they redirect to "/" */}
-                    <OrgRequiredRoute exact path="/members" component={Members} />
-                    <OrgRequiredRoute exact path="/settings" component={TeamSettings} />
-                    <OrgRequiredRoute exact path="/settings/git" component={TeamGitIntegrations} />
+                    <Route exact path="/members" component={Members} />
+                    <Route exact path="/settings" component={TeamSettings} />
+                    <Route exact path="/settings/git" component={TeamGitIntegrations} />
                     {/* TODO: migrate other org settings pages underneath /settings prefix so we can utilize nested routes */}
-                    <OrgRequiredRoute exact path="/billing" component={TeamUsageBasedBilling} />
-                    <OrgRequiredRoute exact path="/sso" component={SSO} />
+                    <Route exact path="/billing" component={TeamUsageBasedBilling} />
+                    <Route exact path="/sso" component={SSO} />
 
                     <Route exact path={`/projects/:projectSlug`} component={Project} />
                     <Route exact path={`/projects/:projectSlug/events`} component={Events} />
