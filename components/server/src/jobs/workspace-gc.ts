@@ -62,17 +62,23 @@ export class WorkspaceGarbageCollector implements Job {
 
         const span = opentracing.globalTracer().startSpan("softDeleteOldWorkspaces");
         try {
+            const now = new Date();
             const workspaces = await this.workspaceDB
                 .trace({ span })
                 .findWorkspacesForGarbageCollection(
                     this.config.workspaceGarbageCollection.minAgeDays,
                     this.config.workspaceGarbageCollection.chunkLimit,
                 );
+            const afterSelect = new Date();
             const deletes = await Promise.all(
                 workspaces.map((ws) => this.deletionService.softDeleteWorkspace({ span }, ws, "gc")),
             );
+            const afterDelete = new Date();
 
-            log.info(`workspace-gc: successfully soft-deleted ${deletes.length} workspaces`);
+            log.info(`workspace-gc: successfully soft-deleted ${deletes.length} workspaces`, {
+                selectionTimeMs: afterSelect.getTime() - now.getTime(),
+                deletionTimeMs: afterDelete.getTime() - afterSelect.getTime(),
+            });
             span.addTags({ nrOfCollectedWorkspaces: deletes.length });
         } catch (err) {
             TraceContext.setError({ span }, err);

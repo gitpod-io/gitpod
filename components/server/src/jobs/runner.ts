@@ -66,6 +66,8 @@ export class JobRunner {
         try {
             await this.mutex.using(job.lockId, job.frequencyMs, async (signal) => {
                 log.info(`Acquired lock for job ${job.name}.`, logCtx);
+                // we want to hold the lock for the entire duration of the job, so we return earliest after frequencyMs
+                const timeout = new Promise<void>((resolve) => setTimeout(resolve, job.frequencyMs));
                 const timer = jobsDurationSeconds.startTimer({ name: job.name });
                 reportJobStarted(job.name);
                 const now = new Date().getTime();
@@ -84,6 +86,7 @@ export class JobRunner {
                     reportJobCompleted(job.name, false);
                 } finally {
                     jobsDurationSeconds.observe(timer());
+                    await timeout;
                 }
             });
         } catch (err) {
