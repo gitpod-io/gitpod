@@ -17,12 +17,16 @@ import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
 import { reportSessionWithJWT } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
+import { UserDB } from "@gitpod/gitpod-db/lib";
+import { JwtPayload } from "jsonwebtoken";
+import { User } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class SessionHandlerProvider {
     @inject(Config) protected readonly config: Config;
     @inject(DBConfig) protected readonly dbConfig: DBConfig;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
+    @inject(UserDB) protected userDb: UserDB;
 
     public sessionHandler: express.RequestHandler;
 
@@ -50,12 +54,8 @@ export class SessionHandlerProvider {
             if (jwtToken) {
                 // we handle the verification async, because we don't yet need to use it in the application
                 /* tslint:disable-next-line */
-                this.authJWT
-                    .verify(jwtToken)
-                    .then((claims) => {
-                        log.debug("JWT Session token verified", {
-                            claims,
-                        });
+                this.jwtSessionHandler(jwtToken)
+                    .then((res) => {
                         hasJWTCookie = true;
                     })
                     .catch((err) => {
@@ -68,6 +68,25 @@ export class SessionHandlerProvider {
 
             session(options)(req, res, next);
         };
+    }
+
+    protected async jwtSessionHandler(jwtToken: string): Promise<[JwtPayload, User]> {
+        const claims = await this.authJWT.verify(jwtToken);
+        log.debug("JWT Session token verified", {
+            claims,
+        });
+
+        const subject = claims.sub;
+        if (!subject) {
+            throw new Error("Subject is missing from JWT session claims");
+        }
+
+        const user = await this.userDb.findUserById(subject);
+        if (!user) {
+            throw new Error("No user exists.");
+        }
+
+        return [claims, user];
     }
 
     protected getCookieOptions(config: Config): express.CookieOptions {
