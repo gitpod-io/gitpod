@@ -45,7 +45,7 @@ class TestIssueContexts {
         const issueTitle = "This is a really long issue title that goes beyond 30 characters";
         const issueNr = 3;
         const result = IssueContexts.toBranchName(user, issueTitle, issueNr);
-        expect(result.length).to.be.at.most(30 + `-${issueNr}`.length);
+        expect(result.length).to.be.at.most(IssueContexts.maxBaseBranchLength + `-${issueNr}`.length);
     }
 
     @test

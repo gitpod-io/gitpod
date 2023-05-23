@@ -113,6 +113,7 @@ function sanitizedRefName(name: string): string {
 }
 
 export namespace IssueContexts {
+    export const maxBaseBranchLength = 30;
     export function toBranchName(user: User, issueTitle: string, issueNr: number): string {
         const titleWords = issueTitle
             .toLowerCase()
@@ -121,7 +122,7 @@ export namespace IssueContexts {
             .filter((w) => w.length > 0);
         let localBranch = (user.name + "/").toLowerCase();
         for (const segment of titleWords) {
-            if (localBranch.length > 30) {
+            if (localBranch.length > maxBaseBranchLength) {
                 break;
             }
             localBranch += segment + "-";
