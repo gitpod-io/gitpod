@@ -5,7 +5,7 @@
  */
 
 import classNames from "classnames";
-import { FC, RefObject } from "react";
+import { FC, ForwardedRef, ReactNode, forwardRef } from "react";
 import SpinnerWhite from "../icons/SpinnerWhite.svg";
 
 export type ButtonProps = {
@@ -17,67 +17,71 @@ export type ButtonProps = {
     loading?: boolean;
     className?: string;
     autoFocus?: boolean;
-    ref?: RefObject<HTMLButtonElement>;
     htmlType?: "button" | "submit" | "reset";
+    children: ReactNode;
     onClick?: ButtonOnClickHandler;
 };
 
 // Allow w/ or w/o handling event argument
 type ButtonOnClickHandler = React.DOMAttributes<HTMLButtonElement>["onClick"] | (() => void);
 
-export const Button: FC<ButtonProps> = ({
-    type = "primary",
-    className,
-    htmlType,
-    disabled = false,
-    loading = false,
-    autoFocus = false,
-    ref,
-    size,
-    children,
-    onClick,
-}) => {
-    return (
-        <button
-            type={htmlType}
-            className={classNames(
-                "cursor-pointer px-4 py-2 my-auto",
-                "text-sm font-medium",
-                "rounded-md focus:outline-none focus:ring transition ease-in-out",
-                type === "primary"
-                    ? [
-                          "bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600",
-                          "text-gray-100 dark:text-green-100",
-                      ]
-                    : null,
-                type === "secondary"
-                    ? [
-                          "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600",
-                          "text-gray-500 dark:text-gray-100 hover:text-gray-600",
-                      ]
-                    : null,
-                type === "danger" ? ["bg-red-600 hover:bg-red-700", "text-gray-100 dark:text-red-100"] : null,
-                type === "danger.secondary"
-                    ? [
-                          "bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200",
-                          "text-red-600 hover:text-red-700",
-                      ]
-                    : null,
-                {
-                    "w-full": size === "block",
-                    "cursor-default opacity-50 pointer-events-none": disabled || loading,
-                },
-                className,
-            )}
-            ref={ref}
-            disabled={disabled}
-            autoFocus={autoFocus}
-            onClick={onClick}
-        >
-            <ButtonContent loading={loading}>{children}</ButtonContent>
-        </button>
-    );
-};
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+    (
+        {
+            type = "primary",
+            className,
+            htmlType,
+            disabled = false,
+            loading = false,
+            autoFocus = false,
+            size,
+            children,
+            onClick,
+        },
+        ref: ForwardedRef<HTMLButtonElement>,
+    ) => {
+        return (
+            <button
+                type={htmlType}
+                className={classNames(
+                    "cursor-pointer px-4 py-2 my-auto",
+                    "text-sm font-medium",
+                    "rounded-md focus:outline-none focus:ring transition ease-in-out",
+                    type === "primary"
+                        ? [
+                              "bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600",
+                              "text-gray-100 dark:text-green-100",
+                          ]
+                        : null,
+                    type === "secondary"
+                        ? [
+                              "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600",
+                              "text-gray-500 dark:text-gray-100 hover:text-gray-600",
+                          ]
+                        : null,
+                    type === "danger" ? ["bg-red-600 hover:bg-red-700", "text-gray-100 dark:text-red-100"] : null,
+                    type === "danger.secondary"
+                        ? [
+                              "bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200",
+                              "text-red-600 hover:text-red-700",
+                          ]
+                        : null,
+                    {
+                        "w-full": size === "block",
+                        "cursor-default opacity-50 pointer-events-none": disabled || loading,
+                    },
+                    className,
+                )}
+                ref={ref}
+                disabled={disabled}
+                autoFocus={autoFocus}
+                onClick={onClick}
+            >
+                <ButtonContent loading={loading}>{children}</ButtonContent>
+            </button>
+        );
+    },
+);
 
 // TODO: Consider making this a LoadingButton variant instead
 type ButtonContentProps = {
