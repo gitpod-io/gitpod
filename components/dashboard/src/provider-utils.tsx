@@ -52,7 +52,8 @@ interface OpenAuthorizeWindowParams extends WindowMessageHandler {
 
 async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     const { login, host, scopes, overrideScopes } = params;
-    let search = "message=success";
+    const successKey = getUniqueSuccessKey();
+    let search = `message=${successKey}`;
     const redirectURL = getSafeURLRedirect();
     if (redirectURL) {
         search = `${search}&returnTo=${encodeURIComponent(redirectURL)}`;
@@ -77,7 +78,7 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
 
     openModalWindow(url);
 
-    attachMessageListener(params);
+    attachMessageListener(successKey, params);
 }
 
 function openModalWindow(url: string) {
@@ -94,9 +95,11 @@ function openModalWindow(url: string) {
     );
 }
 
-function attachMessageListener({ onSuccess, onError }: WindowMessageHandler) {
+function attachMessageListener(successKey: string, { onSuccess, onError }: WindowMessageHandler) {
     const eventListener = (event: MessageEvent) => {
-        // todo: check event.origin
+        if (event?.origin !== document.location.origin) {
+            return;
+        }
 
         const killAuthWindow = () => {
             window.removeEventListener("message", eventListener);
@@ -107,7 +110,7 @@ function attachMessageListener({ onSuccess, onError }: WindowMessageHandler) {
             }
         };
 
-        if (typeof event.data === "string" && event.data.startsWith("success")) {
+        if (typeof event.data === "string" && event.data.startsWith(successKey)) {
             killAuthWindow();
             onSuccess && onSuccess(event.data);
         }
@@ -138,7 +141,8 @@ interface OpenOIDCStartWindowParams extends WindowMessageHandler {
 
 async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
     const { orgSlug, configId, activate = false, verify = false } = params;
-    let search = "message=success";
+    const successKey = getUniqueSuccessKey();
+    let search = `message=${successKey}`;
     const redirectURL = getSafeURLRedirect();
     if (redirectURL) {
         search = `${search}&returnTo=${encodeURIComponent(redirectURL)}`;
@@ -166,7 +170,7 @@ async function openOIDCStartWindow(params: OpenOIDCStartWindowParams) {
 
     openModalWindow(url);
 
-    attachMessageListener(params);
+    attachMessageListener(successKey, params);
 }
 const getSafeURLRedirect = (source?: string) => {
     const returnToURL: string | null = new URLSearchParams(source ? source : window.location.search).get("returnTo");
@@ -180,6 +184,12 @@ const getSafeURLRedirect = (source?: string) => {
             return returnToURL;
         }
     }
+};
+
+// Used to ensure each callback is handled uniquely
+let counter = 0;
+const getUniqueSuccessKey = () => {
+    return `success:${counter++}`;
 };
 
 export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, getSafeURLRedirect, openOIDCStartWindow };
