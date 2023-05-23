@@ -8,13 +8,22 @@ import { FC, useEffect } from "react";
 import gitpodIcon from "../icons/gitpod.svg";
 import { OrgIcon } from "../components/org-icon/OrgIcon";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
+import check from "../images/check.svg";
 import "./styles.css";
 
 type Props = {
     showOrg?: boolean;
     noMaxWidth?: boolean;
+    progressCurrent?: number;
+    progressTotal?: number;
 };
-export const SetupLayout: FC<Props> = ({ showOrg = false, noMaxWidth = false, children }) => {
+export const SetupLayout: FC<Props> = ({
+    showOrg = false,
+    noMaxWidth = false,
+    progressCurrent,
+    progressTotal,
+    children,
+}) => {
     const currentOrg = useCurrentOrg();
 
     useEffect(() => {
@@ -46,8 +55,32 @@ export const SetupLayout: FC<Props> = ({ showOrg = false, noMaxWidth = false, ch
                         )}
                     </div>
                 </div>
-                <div className={`mt-24 ${noMaxWidth ? "" : "max-w-md"}`}>{children}</div>
+                <div className={`mt-24 ${noMaxWidth ? "" : "max-w-md"}`}>
+                    {/* generate the rounded dots for the progress  */}
+                    {progressCurrent !== undefined && progressTotal !== undefined ? (
+                        <div className="flex flex-row space-x-2 mb-4">
+                            {[...Array(progressTotal).keys()].map((i) => (
+                                <ProgressElement key={i} i={i + 1} current={progressCurrent} />
+                            ))}
+                        </div>
+                    ) : null}
+                    <>{children}</>
+                </div>
             </div>
         </div>
     );
+};
+
+const ProgressElement: FC<{ i: number; current: number }> = ({ current, i }) => {
+    if (i < current) {
+        return (
+            <div className="w-5 h-5 bg-green-600 rounded-full flex justify-center items-center text-color-white">
+                <img src={check} width={15} height={15} alt="checkmark" />
+            </div>
+        );
+    } else if (i === current) {
+        return <div className="w-5 h-5 rounded-full bg-gray-400" />;
+    } else {
+        return <div className="w-5 h-5 rounded-full border-2 border-dashed border-gray-400" />;
+    }
 };

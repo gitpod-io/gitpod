@@ -108,9 +108,24 @@ const DedicatedSetupSteps: FC<DedicatedSetupStepsProps> = ({ org, ssoConfig, onC
 
     return (
         <>
-            {step === STEPS.GETTING_STARTED && <GettingStartedStep onComplete={() => setStep(STEPS.ORG_NAMING)} />}
-            {step === STEPS.ORG_NAMING && <OrgNamingStep onComplete={() => setStep(STEPS.SSO_SETUP)} />}
-            {step === STEPS.SSO_SETUP && <SSOSetupStep config={ssoConfig} onComplete={handleSetupComplete} />}
+            {step === STEPS.GETTING_STARTED && (
+                <GettingStartedStep
+                    progressCurrent={0}
+                    progressTotal={2}
+                    onComplete={() => setStep(STEPS.ORG_NAMING)}
+                />
+            )}
+            {step === STEPS.ORG_NAMING && (
+                <OrgNamingStep progressCurrent={1} progressTotal={2} onComplete={() => setStep(STEPS.SSO_SETUP)} />
+            )}
+            {step === STEPS.SSO_SETUP && (
+                <SSOSetupStep
+                    progressCurrent={2}
+                    progressTotal={2}
+                    config={ssoConfig}
+                    onComplete={handleSetupComplete}
+                />
+            )}
             {step === STEPS.COMPLETE && <SetupCompleteStep onComplete={handleEndSetup} />}
         </>
     );

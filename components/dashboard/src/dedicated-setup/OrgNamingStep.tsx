@@ -17,8 +17,10 @@ import { useUpdateOrgMutation } from "../data/organizations/update-org-mutation"
 
 type Props = {
     onComplete: () => void;
+    progressCurrent?: number;
+    progressTotal?: number;
 };
-export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
+export const OrgNamingStep: FC<Props> = ({ onComplete, progressCurrent, progressTotal }) => {
     const org = useCurrentOrg();
     const [orgName, setOrgName] = useState(org.data?.name ?? "");
     const createOrg = useCreateOrgMutation();
@@ -49,12 +51,7 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
     const nameError = useOnBlurError("Please provide a name", orgName.trim().length > 0);
 
     return (
-        <SetupLayout>
-            {/* TODO: extract this into SetupLayout and accept props to control progress indicator */}
-            <div className="flex flex-row space-x-2 mb-4">
-                <div className="w-5 h-5 bg-gray-400 rounded-full" />
-                <div className="w-5 h-5 border-2 border-dashed rounded-full border-gray-400" />
-            </div>
+        <SetupLayout progressCurrent={progressCurrent} progressTotal={progressTotal}>
             <div className="mb-10">
                 <Heading1>Name your organization</Heading1>
                 <Subheading>
@@ -64,7 +61,6 @@ export const OrgNamingStep: FC<Props> = ({ onComplete }) => {
             {(createOrg.isError || updateOrg.isError) && (
                 <Alert type="danger">{createOrg.error?.message || updateOrg.error?.message}</Alert>
             )}
-
             <form onSubmit={handleContinue}>
                 <TextInputField
                     label="Organization Name"

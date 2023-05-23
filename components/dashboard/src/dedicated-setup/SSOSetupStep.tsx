@@ -8,8 +8,6 @@ import { FC, useCallback, useReducer, useState } from "react";
 import { Button } from "../components/Button";
 import { Heading1, Subheading } from "../components/typography/headings";
 import { SetupLayout } from "./SetupLayout";
-import check from "../images/check.svg";
-import Tooltip from "../components/Tooltip";
 import { SSOConfigForm, isValid, ssoConfigReducer, useSaveSSOConfig } from "../teams/sso/SSOConfigForm";
 import Alert from "../components/Alert";
 import { OIDCClientConfig } from "@gitpod/public-api/lib/gitpod/experimental/v1/oidc_pb";
@@ -18,8 +16,10 @@ import { openOIDCStartWindow } from "../provider-utils";
 type Props = {
     config?: OIDCClientConfig;
     onComplete: () => void;
+    progressCurrent?: number;
+    progressTotal?: number;
 };
-export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
+export const SSOSetupStep: FC<Props> = ({ config, onComplete, progressCurrent, progressTotal }) => {
     const [ssoLoginError, setSSOLoginError] = useState("");
 
     const [ssoConfig, dispatch] = useReducer(ssoConfigReducer, {
@@ -80,16 +80,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete }) => {
     );
 
     return (
-        <SetupLayout showOrg>
-            <div className="flex flex-row space-x-2 mb-4">
-                <Tooltip content="Naming your Organization">
-                    <div className="w-5 h-5 bg-green-600 rounded-full flex justify-center items-center text-color-white">
-                        <img src={check} width={15} height={15} alt="checkmark" />
-                    </div>
-                </Tooltip>
-                <div className="w-5 h-5 bg-gray-400 rounded-full" />
-            </div>
-
+        <SetupLayout showOrg progressCurrent={progressCurrent} progressTotal={progressTotal}>
             <div className="mb-10">
                 <Heading1>Configure single sign-on</Heading1>
                 <Subheading>
