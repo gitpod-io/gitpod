@@ -158,7 +158,7 @@ type fakeMaintenance struct {
 	enabled bool
 }
 
-func (f *fakeMaintenance) IsEnabled() bool {
+func (f *fakeMaintenance) IsEnabled(context.Context) bool {
 	return f.enabled
 }
 
