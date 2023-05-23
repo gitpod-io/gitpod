@@ -111,6 +111,7 @@ const invalidCharacterRegex = /[\x00-\x20\x7F~^:?*\[\\|""]+|@{|\.\.+|^\.|\.$|\.l
 function sanitizedRefName(name: string): string {
     return name.replace(invalidCharacterRegex, "-").replace(/^[-\+]*/g, "");
 }
+
 export namespace IssueContexts {
     export function toBranchName(user: User, issueTitle: string, issueNr: number): string {
         const titleWords = issueTitle
