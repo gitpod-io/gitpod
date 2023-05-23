@@ -76,7 +76,6 @@ packages:
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
       - components/ws-manager-bridge:docker
-      - components/ws-manager:docker
       - components/ws-manager-mk2:docker
       - components/ws-proxy:docker
       - components/ide-proxy:docker
@@ -128,7 +127,6 @@ packages:
       - components/workspace-rollout-job:app
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
-      - components/ws-manager:app
       - components/ide-metrics:app
       - components/ide-service:app
       - components/ide/jetbrains/launcher:app

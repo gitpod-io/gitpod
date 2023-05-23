@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/components/workspace"
-	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 	configv1 "github.com/gitpod-io/gitpod/installer/pkg/config/v1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
@@ -38,17 +37,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	gitpodInstallationWorkspaceHostSuffix := fmt.Sprintf(".ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 	gitpodInstallationWorkspaceHostSuffixRegex := fmt.Sprintf("\\.ws[^\\.]*\\.%s", ctx.Config.Domain)
 
-	wsmanagerAddr := fmt.Sprintf("ws-manager:%d", wsmanager.RPCPort)
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Workspace == nil || !cfg.Workspace.UseWsmanagerMk2 {
-			return nil
-		}
-		wsmanagerAddr = fmt.Sprintf("ws-manager-mk2:%d", wsmanagermk2.RPCPort)
-		return nil
-	})
-
 	wsManagerConfig := &config.WorkspaceManagerConn{
-		Addr: wsmanagerAddr,
+		Addr: fmt.Sprintf("ws-manager-mk2:%d", wsmanagermk2.RPCPort),
 		TLS: struct {
 			CA   string "json:\"ca\""
 			Cert string "json:\"crt\""
@@ -59,8 +49,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Key:  "/ws-manager-client-tls-certs/tls.key",
 		},
 	}
-
-	var enableWorkspaceCRD bool
 
 	ctx.WithExperimental(func(ucfg *experimental.Config) error {
 		if ucfg.Workspace == nil {
@@ -81,8 +69,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffixRegex != "" {
 			gitpodInstallationWorkspaceHostSuffixRegex = ucfg.Workspace.WSProxy.GitpodInstallationWorkspaceHostSuffixRegex
 		}
-
-		enableWorkspaceCRD = ucfg.Workspace.UseWsmanagerMk2
 
 		return nil
 	})
@@ -136,7 +122,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		PrometheusAddr:     common.LocalhostPrometheusAddr(),
 		ReadinessProbeAddr: fmt.Sprintf(":%v", ReadinessPort),
 		WorkspaceManager:   wsManagerConfig,
-		EnableWorkspaceCRD: enableWorkspaceCRD,
+		EnableWorkspaceCRD: true,
 	}
 
 	fc, err := common.ToJSONString(wspcfg)

@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 )
@@ -22,7 +21,7 @@ var Objects = common.CompositeRenderFunc(
 
 func WSManagerList(ctx *common.RenderContext) []WorkspaceCluster {
 	skipSelf := false
-	wsmanagerAddr := fmt.Sprintf("dns:///%s:%d", wsmanager.Component, wsmanager.RPCPort)
+	wsmanagerAddr := fmt.Sprintf("dns:///%s:%d", wsmanagermk2.Component, wsmanagermk2.RPCPort)
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.WorkspaceManagerBridge != nil {
 			skipSelf = cfg.WebApp.WorkspaceManagerBridge.SkipSelf
@@ -33,9 +32,6 @@ func WSManagerList(ctx *common.RenderContext) []WorkspaceCluster {
 			skipSelf = true
 		}
 
-		if cfg.Workspace != nil && cfg.Workspace.UseWsmanagerMk2 {
-			wsmanagerAddr = fmt.Sprintf("dns:///%s:%d", wsmanagermk2.Component, wsmanagermk2.RPCPort)
-		}
 		return nil
 	})
 
