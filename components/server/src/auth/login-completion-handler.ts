@@ -9,7 +9,6 @@ import * as express from "express";
 import { User } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
-import { AuthFlow } from "./auth-provider";
 import { HostContextProvider } from "./host-context-provider";
 import { AuthProviderService } from "./auth-provider-service";
 import { increaseLoginCounter, reportJWTCookieIssued } from "../prometheus-metrics";
@@ -48,9 +47,6 @@ export class LoginCompletionHandler {
                 });
             });
         } catch (err) {
-            // Clean up the session & avoid loops
-            await AuthFlow.clear(request.session);
-
             if (authHost) {
                 increaseLoginCounter("failed", authHost);
             }
@@ -78,9 +74,6 @@ export class LoginCompletionHandler {
         if (authHost) {
             await this.updateAuthProviderAsVerified(authHost, user);
         }
-
-        // Clean up the session & avoid loops
-        await AuthFlow.clear(request.session);
 
         if (authHost) {
             increaseLoginCounter("succeeded", authHost);

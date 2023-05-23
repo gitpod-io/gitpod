@@ -6,8 +6,6 @@
 
 import * as express from "express";
 import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
-import { saveSession } from "../express-util";
-import { Session } from "../express";
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
 
@@ -80,7 +78,13 @@ export interface AuthProvider {
     readonly info: AuthProviderInfo;
     readonly authCallbackPath: string;
     callback(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void>;
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scopes?: string[]): void;
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        state: string,
+        scopes?: string[],
+    ): void;
     refreshToken?(user: User): Promise<void>;
 }
 
@@ -90,22 +94,6 @@ export interface AuthFlow {
     readonly overrideScopes?: boolean;
 }
 export namespace AuthFlow {
-    export function get(session: Session | undefined): AuthFlow | undefined {
-        if (session) {
-            return session.authFlow;
-        }
-    }
-    export async function attach(session: Session, authFlow: AuthFlow): Promise<void> {
-        session.authFlow = authFlow;
-        return saveSession(session);
-    }
-    export async function clear(session: Session | undefined) {
-        if (session) {
-            session.authFlow = undefined;
-            return saveSession(session);
-        }
-    }
-
     export function is(obj: any): obj is AuthFlow {
         if (obj === undefined) {
             return false;

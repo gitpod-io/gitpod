@@ -57,7 +57,13 @@ class DummyAuthProvider implements AuthProvider {
     authenticate(req: express.Request, res: express.Response, next: express.NextFunction): void {
         throw new Error("Method not implemented.");
     }
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scopes: string[]): void {
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        state: string,
+        scopes: string[],
+    ): void {
         throw new Error("Method not implemented.");
     }
 }

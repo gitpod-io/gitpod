@@ -33,6 +33,7 @@ import { trackSignup } from "../analytics";
 import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { VerificationService } from "../auth/verification-service";
+import { SignInJWT } from "./jwt";
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -72,6 +73,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(VerificationService) protected readonly verificationService: VerificationService;
+    @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
 
     @postConstruct()
     init() {
@@ -146,11 +148,18 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
     protected abstract readAuthUserSetup(accessToken: string, tokenResponse: object): Promise<AuthUserSetup>;
 
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        state: string,
+        scope?: string[],
+    ) {
         const handler = passport.authenticate(this.getStrategy() as any, {
             ...this.defaultStrategyOptions,
-            ...{ scope },
+            ...{ state: this.deriveAuthState(state), scope },
         });
+
         handler(req, res, next);
     }
 
@@ -258,7 +267,27 @@ export abstract class GenericAuthProvider implements AuthProvider {
         });
 
         const isAlreadyLoggedIn = request.isAuthenticated() && User.is(request.user);
-        const authFlow = AuthFlow.get(request.session);
+
+        const state = request.query.state;
+        if (!state) {
+            log.error(cxt, `(${strategyName}) No state present on callback request.`, { clientInfo });
+            response.redirect(
+                this.getSorryUrl(`No state was present on the authentication callback. Please try again.`),
+            );
+            return;
+        }
+
+        let authFlow: AuthFlow;
+        try {
+            authFlow = await this.parseState(state as string);
+        } catch (error) {
+            log.error(cxt, `(${strategyName}) Failed to parse state JWT from request.`, { clientInfo });
+            increaseLoginCounter("failed", this.host);
+
+            response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
+            return;
+        }
+
         if (isAlreadyLoggedIn) {
             if (!authFlow) {
                 log.warn(
@@ -298,8 +327,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
         if (callbackError) {
             // e.g. "access_denied"
-            // Clean up the session
-            await AuthFlow.clear(request.session);
 
             increaseLoginCounter("failed", this.host);
             return this.sendCompletionRedirectWithError(response, {
@@ -344,8 +371,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
         });
 
         if (err) {
-            await AuthFlow.clear(request.session);
-
             if (SelectAccountException.is(err)) {
                 return this.sendCompletionRedirectWithError(response, err.payload);
             }
@@ -485,10 +510,19 @@ export abstract class GenericAuthProvider implements AuthProvider {
         const { strategyName } = this;
         const clientInfo = getRequestingClientInfo(req);
         const authProviderId = this.authProviderId;
-        const authFlow = AuthFlow.get(req.session)!; // asserted in `callback` allready
-        const defaultLogPayload = { authFlow, clientInfo, authProviderId };
         let currentGitpodUser: User | undefined = User.is(req.user) ? req.user : undefined;
         let candidate: Identity;
+
+        let authFlow: AuthFlow;
+        try {
+            authFlow = await this.parseState((req.query.state as string) || "");
+        } catch (err) {
+            log.error(`(${strategyName}) Failed to extract auth flow from state`, err);
+            done(err, undefined);
+            return;
+        }
+
+        const defaultLogPayload = { authFlow, clientInfo, authProviderId };
 
         try {
             const tokenResponseObject = this.ensureIsObject(tokenResponse);
@@ -692,9 +726,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
             scopeSeparator,
             authorizationParams,
         } = this.oauthConfig;
-        const augmentedAuthParams = this.config.devBranch
-            ? { ...authorizationParams, state: this.config.devBranch }
-            : authorizationParams;
         return {
             authorizationURL: authorizationUrl,
             tokenURL: tokenUrl,
@@ -706,7 +737,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
             scopeSeparator: scopeSeparator || " ",
             userAgent: this.USER_AGENT,
             passReqToCallback: true,
-            authorizationParams: augmentedAuthParams,
+            authorizationParams: authorizationParams,
         };
     }
 
@@ -726,6 +757,31 @@ export abstract class GenericAuthProvider implements AuthProvider {
         }
         throw lastError;
     };
+
+    private deriveAuthState(state: string): string {
+        // In preview environments, we prepend the current development branch to the state, to allow
+        // our preview proxy to route the Auth callback appropriately.
+        // See https://github.com/gitpod-io/ops/pull/9398/files
+        if (this.config.devBranch) {
+            return `${this.config.devBranch},${state}`;
+        }
+
+        return state;
+    }
+
+    private async parseState(state: string): Promise<AuthFlow> {
+        // In preview environments, we prepend the current development branch to the state, to allow
+        // our preview proxy to route the Auth callback appropriately.
+        // See https://github.com/gitpod-io/ops/pull/9398/files
+        //
+        // We need to strip the branch out of the state, if it's present
+        if (state.indexOf(",") >= 0) {
+            const [, actualState] = state.split(",", 2);
+            state = actualState;
+        }
+
+        return await this.signInJWT.verify(state as string);
+    }
 }
 
 interface VerifyResult {

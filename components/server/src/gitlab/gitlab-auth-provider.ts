@@ -46,8 +46,14 @@ export class GitLabAuthProvider extends GenericAuthProvider {
         };
     }
 
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        super.authorize(req, res, next, scope ? scope : GitLabScope.Requirements.DEFAULT);
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        state: string,
+        scope?: string[],
+    ) {
+        super.authorize(req, res, next, state, scope ? scope : GitLabScope.Requirements.DEFAULT);
     }
 
     protected get baseURL() {

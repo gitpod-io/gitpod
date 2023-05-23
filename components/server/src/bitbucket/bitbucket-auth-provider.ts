@@ -47,8 +47,14 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
         return "x-token-auth";
     }
 
-    authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        super.authorize(req, res, next, scope ? scope : BitbucketOAuthScopes.Requirements.DEFAULT);
+    authorize(
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+        state: string,
+        scope?: string[],
+    ) {
+        super.authorize(req, res, next, state, scope ? scope : BitbucketOAuthScopes.Requirements.DEFAULT);
     }
 
     protected get baseURL() {

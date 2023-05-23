@@ -109,7 +109,7 @@ import { APIUserService } from "./api/user";
 import { APITeamsService } from "./api/teams";
 import { API } from "./api/server";
 import { LinkedInService } from "./linkedin-service";
-import { AuthJWT } from "./auth/jwt";
+import { AuthJWT, SignInJWT } from "./auth/jwt";
 import { SnapshotService } from "./workspace/snapshot-service";
 import { APIWorkspacesService } from "./api/workspaces";
 import { PrebuildManager } from "./prebuilds/prebuild-manager";
@@ -333,6 +333,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(API).toSelf().inSingletonScope();
 
     bind(AuthJWT).toSelf().inSingletonScope();
+    bind(SignInJWT).toSelf().inSingletonScope();
 
     bind(PrebuildManager).toSelf().inSingletonScope();
     bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
