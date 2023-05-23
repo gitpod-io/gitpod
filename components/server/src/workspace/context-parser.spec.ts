@@ -54,7 +54,7 @@ class TestIssueContexts {
         const issueTitle = "";
         const issueNr = 4;
         const result = IssueContexts.toBranchName(user, issueTitle, issueNr);
-        expect(result).to.equal("johndoe/4");
+        expect(result).to.equal("john-doe/4");
     }
 }
 
