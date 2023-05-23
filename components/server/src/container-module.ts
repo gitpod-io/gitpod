@@ -42,9 +42,6 @@ import {
 import { WorkspaceStarter } from "./workspace/workspace-starter";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { AuthorizationService, AuthorizationServiceImpl } from "./user/authorization-service";
-import { ConsensusLeaderMessenger } from "./consensus/consensus-leader-messenger";
-import { RabbitMQConsensusLeaderMessenger } from "./consensus/rabbitmq-consensus-leader-messenger";
-import { ConsensusLeaderQorum } from "./consensus/consensus-leader-quorum";
 import { StorageClient } from "./storage/storage-client";
 import { ImageBuilderClientProvider, ImageBuilderClientCallMetrics } from "@gitpod/image-builder/lib";
 import { ImageSourceProvider } from "./workspace/image-source-provider";
@@ -226,10 +223,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderEnvSource).inSingletonScope();
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderDBSource).inSingletonScope();
     bind(IWorkspaceManagerClientCallMetrics).toService(IClientCallMetrics);
-
-    bind(RabbitMQConsensusLeaderMessenger).toSelf().inSingletonScope();
-    bind(ConsensusLeaderMessenger).toService(RabbitMQConsensusLeaderMessenger);
-    bind(ConsensusLeaderQorum).toSelf().inSingletonScope();
 
     bind(WorkspaceDownloadService).toSelf().inSingletonScope();
     bind(LivenessController).toSelf().inSingletonScope();
