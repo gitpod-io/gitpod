@@ -306,9 +306,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Start periodic jobs
         this.jobRunner.start();
 
-        // Start long running migrations
-        this.startLongRunningMigrations().catch((err) => log.error("long running migrations errored", err));
-
         this.app = app;
 
         log.info("server initialized.");
