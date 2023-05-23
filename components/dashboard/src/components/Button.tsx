@@ -30,7 +30,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {
             type = "primary",
             className,
-            htmlType,
+            htmlType = "button",
             disabled = false,
             loading = false,
             autoFocus = false,
