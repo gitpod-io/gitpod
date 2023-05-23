@@ -304,10 +304,10 @@ const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = (
     let settingsUrl = ``;
     switch (type) {
         case "GitHub":
-            settingsUrl = `${host}/settings/developers`;
+            settingsUrl = `${host || "github.com"}/settings/developers`;
             break;
         case "GitLab":
-            settingsUrl = `${host}/-/profile/applications`;
+            settingsUrl = `${host || "gitlab.com"}/-/profile/applications`;
             break;
         default:
             return null;
