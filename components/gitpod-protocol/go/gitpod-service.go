@@ -102,6 +102,7 @@ type APIInterface interface {
 	GetTeamProjects(ctx context.Context, teamID string) ([]*Project, error)
 
 	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
+	WorkspaceUpdates(ctx context.Context, workspaceID string) (<-chan *WorkspaceInstance, error)
 
 	// GetIDToken doesn't actually do anything, it just authorises
 	GetIDToken(ctx context.Context) (err error)
@@ -310,8 +311,9 @@ type APIoverJSONRPC struct {
 	C   jsonrpc2.JSONRPC2
 	log *logrus.Entry
 
-	mu   sync.RWMutex
-	subs map[string]map[chan *WorkspaceInstance]struct{}
+	mu            sync.RWMutex
+	instanceSubs  map[string]map[chan *WorkspaceInstance]struct{}
+	workspaceSubs map[string]map[chan *WorkspaceInstance]struct{}
 }
 
 // Close closes the connection
@@ -336,13 +338,13 @@ func (gp *APIoverJSONRPC) InstanceUpdates(ctx context.Context, instanceID string
 	chn := make(chan *WorkspaceInstance)
 
 	gp.mu.Lock()
-	if gp.subs == nil {
-		gp.subs = make(map[string]map[chan *WorkspaceInstance]struct{})
+	if gp.instanceSubs == nil {
+		gp.instanceSubs = make(map[string]map[chan *WorkspaceInstance]struct{})
 	}
-	if sub, ok := gp.subs[instanceID]; ok {
+	if sub, ok := gp.instanceSubs[instanceID]; ok {
 		sub[chn] = struct{}{}
 	} else {
-		gp.subs[instanceID] = map[chan *WorkspaceInstance]struct{}{chn: {}}
+		gp.instanceSubs[instanceID] = map[chan *WorkspaceInstance]struct{}{chn: {}}
 	}
 	gp.mu.Unlock()
 
@@ -350,7 +352,37 @@ func (gp *APIoverJSONRPC) InstanceUpdates(ctx context.Context, instanceID string
 		<-ctx.Done()
 
 		gp.mu.Lock()
-		delete(gp.subs[instanceID], chn)
+		delete(gp.instanceSubs[instanceID], chn)
+		close(chn)
+		gp.mu.Unlock()
+	}()
+
+	return chn, nil
+}
+
+// WorkspaceUpdates subscribes to workspace instance updates until the context is canceled
+func (gp *APIoverJSONRPC) WorkspaceUpdates(ctx context.Context, workspaceID string) (<-chan *WorkspaceInstance, error) {
+	if gp == nil {
+		return nil, errNotConnected
+	}
+	chn := make(chan *WorkspaceInstance)
+
+	gp.mu.Lock()
+	if gp.workspaceSubs == nil {
+		gp.workspaceSubs = make(map[string]map[chan *WorkspaceInstance]struct{})
+	}
+	if sub, ok := gp.workspaceSubs[workspaceID]; ok {
+		sub[chn] = struct{}{}
+	} else {
+		gp.workspaceSubs[workspaceID] = map[chan *WorkspaceInstance]struct{}{chn: {}}
+	}
+	gp.mu.Unlock()
+
+	go func() {
+		<-ctx.Done()
+
+		gp.mu.Lock()
+		delete(gp.workspaceSubs[workspaceID], chn)
 		close(chn)
 		gp.mu.Unlock()
 	}()
@@ -376,13 +408,19 @@ func (gp *APIoverJSONRPC) handler(ctx context.Context, conn *jsonrpc2.Conn, req 
 
 	gp.mu.RLock()
 	defer gp.mu.RUnlock()
-	for chn := range gp.subs[instance.ID] {
+	for chn := range gp.instanceSubs[instance.ID] {
 		select {
 		case chn <- &instance:
 		default:
 		}
 	}
-	for chn := range gp.subs[""] {
+	for chn := range gp.instanceSubs[""] {
+		select {
+		case chn <- &instance:
+		default:
+		}
+	}
+	for chn := range gp.workspaceSubs[instance.WorkspaceID] {
 		select {
 		case chn <- &instance:
 		default:
