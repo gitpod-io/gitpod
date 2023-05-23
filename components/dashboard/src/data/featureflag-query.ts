@@ -20,9 +20,7 @@ const featureFlags = {
     // Default to true to enable on gitpod dedicated until ff support is added for dedicated
     orgGitAuthProviders: true,
     userGitAuthProviders: false,
-    newSignupFlow: false,
     linkedinConnectionForOnboarding: false,
-    paymentVerificationFlow: false,
     team_only_attribution: false,
     enableDedicatedOnboardingFlow: false,
 };
