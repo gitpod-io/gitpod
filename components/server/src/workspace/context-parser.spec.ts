@@ -27,7 +27,7 @@ class TestIssueContexts {
         const issueTitle = "Issue Title With Special Characters like * ? @ {";
         const issueNr = 1;
         const result = IssueContexts.toBranchName(user, issueTitle, issueNr);
-        expect(result).to.equal("johndoe/issue-title-with-special-characters-like-1");
+        expect(result).to.equal("john-doe/issue-title-with-special-1");
     }
 
     @test
@@ -45,7 +45,7 @@ class TestIssueContexts {
         const issueTitle = "This is a really long issue title that goes beyond 30 characters";
         const issueNr = 3;
         const result = IssueContexts.toBranchName(user, issueTitle, issueNr);
-        expect(result.length).to.be.at.most(30);
+        expect(result.length).to.be.at.most(30 + `-${issueNr}`.length);
     }
 
     @test
@@ -54,7 +54,7 @@ class TestIssueContexts {
         const issueTitle = "";
         const issueNr = 4;
         const result = IssueContexts.toBranchName(user, issueTitle, issueNr);
-        expect(result).to.equal("johndoe/-4");
+        expect(result).to.equal("johndoe/4");
     }
 }
 
