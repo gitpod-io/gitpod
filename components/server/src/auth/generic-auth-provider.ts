@@ -513,10 +513,18 @@ export abstract class GenericAuthProvider implements AuthProvider {
         let currentGitpodUser: User | undefined = User.is(req.user) ? req.user : undefined;
         let candidate: Identity;
 
+        let authFlow: AuthFlow;
         try {
-            const authFlow = await this.parseState((req.query.state as string) || "");
-            const defaultLogPayload = { authFlow, clientInfo, authProviderId };
+            authFlow = await this.parseState((req.query.state as string) || "");
+        } catch (err) {
+            log.error(`(${strategyName}) Failed to extract auth flow from state`, err);
+            done(err, undefined);
+            return;
+        }
 
+        const defaultLogPayload = { authFlow, clientInfo, authProviderId };
+
+        try {
             const tokenResponseObject = this.ensureIsObject(tokenResponse);
             const { authUser, currentScopes, envVars } = await this.readAuthUserSetup(accessToken, tokenResponseObject);
             const { authName, primaryEmail } = authUser;
