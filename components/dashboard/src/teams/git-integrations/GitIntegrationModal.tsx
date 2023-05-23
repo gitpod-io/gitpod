@@ -22,6 +22,8 @@ import { getGitpodService, gitpodHostUrl } from "../../service/service";
 import { UserContext } from "../../user-context";
 import { useToast } from "../../components/toasts/Toasts";
 
+type ProviderType = "GitHub" | "GitLab" | "BitbucketServer";
+
 type Props = {
     provider?: AuthProviderEntry;
     onClose: () => void;
@@ -31,7 +33,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     const { setUser } = useContext(UserContext);
     const { toast } = useToast();
     const team = useCurrentOrg().data;
-    const [type, setType] = useState<string>(props.provider?.type ?? "GitLab");
+    const [type, setType] = useState<ProviderType>((props.provider?.type as ProviderType) ?? "GitLab");
     const [host, setHost] = useState<string>(props.provider?.host ?? "");
     const [clientId, setClientId] = useState<string>(props.provider?.oauth.clientId ?? "");
     const [clientSecret, setClientSecret] = useState<string>(props.provider?.oauth.clientSecret ?? "");
@@ -209,7 +211,12 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                 )}
 
                 <div>
-                    <SelectInputField disabled={!isNew} label="Provider Type" value={type} onChange={setType}>
+                    <SelectInputField
+                        disabled={!isNew}
+                        label="Provider Type"
+                        value={type}
+                        onChange={(val) => setType(val as ProviderType)}
+                    >
                         <option value="GitHub">GitHub</option>
                         <option value="GitLab">GitLab</option>
                         <option value="BitbucketServer">Bitbucket Server</option>
@@ -283,7 +290,7 @@ const callbackUrl = (host: string) => {
     return gitpodHostUrl.with({ pathname }).toString();
 };
 
-const getPlaceholderForIntegrationType = (type: string) => {
+const getPlaceholderForIntegrationType = (type: ProviderType) => {
     switch (type) {
         case "GitHub":
             return "github.example.com";
@@ -297,7 +304,7 @@ const getPlaceholderForIntegrationType = (type: string) => {
 };
 
 type RedirectUrlDescriptionProps = {
-    type: string;
+    type: ProviderType;
 };
 const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = ({ type }) => {
     let docsUrl = ``;
@@ -306,7 +313,10 @@ const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = (
             docsUrl = `https://www.gitpod.io/docs/configure/authentication/github-enterprise`;
             break;
         case "GitLab":
-            docsUrl = `https://www.gitpod.io/docs/gitlab-integration/#oauth-application`;
+            docsUrl = `https://www.gitpod.io/docs/configure/authentication/gitlab#registering-a-self-hosted-gitlab-installation`;
+            break;
+        case "BitbucketServer":
+            docsUrl = "https://www.gitpod.io/docs/configure/authentication/bitbucket-server";
             break;
         default:
             return null;
