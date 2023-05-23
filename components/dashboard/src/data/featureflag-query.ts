@@ -21,7 +21,6 @@ const featureFlags = {
     orgGitAuthProviders: true,
     userGitAuthProviders: false,
     linkedinConnectionForOnboarding: false,
-    team_only_attribution: false,
     enableDedicatedOnboardingFlow: false,
 };
 

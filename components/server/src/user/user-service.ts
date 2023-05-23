@@ -89,18 +89,12 @@ export class UserService {
         if (token) {
             await this.userDb.storeSingleToken(identity, token);
         }
-        if (
-            await this.configCatClientFactory().getValueAsync("migrate_new_users", false, {
-                user: newUser,
-            })
-        ) {
-            // org-owned users have an org and the setup user should not get one automatically
-            if (newUser.organizationId || newUser.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
-                AdditionalUserData.set(newUser, { isMigratedToTeamOnlyAttribution: true });
-                newUser = await this.userDb.storeUser(newUser);
-            } else {
-                await this.migrationService.migrateUser(newUser);
-            }
+        // org-owned users have an org and the setup user should not get one automatically
+        if (newUser.organizationId || newUser.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
+            AdditionalUserData.set(newUser, { isMigratedToTeamOnlyAttribution: true });
+            newUser = await this.userDb.storeUser(newUser);
+        } else {
+            newUser = await this.migrationService.migrateUser(newUser, false);
         }
 
         return newUser;
