@@ -48,11 +48,11 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
             url = savedProvider?.oauth.callBackUrl ?? url;
         } else {
             // Otherwise construct it w/ their provided host value or example
-            url = callbackUrl(host || "gitlab.example.com");
+            url = callbackUrl(host || getPlaceholderForIntegrationType(type));
         }
 
         return url;
-    }, [host, isNew, savedProvider?.oauth.callBackUrl]);
+    }, [host, isNew, savedProvider?.oauth.callBackUrl, type]);
 
     const [savingProvider, setSavingProvider] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
