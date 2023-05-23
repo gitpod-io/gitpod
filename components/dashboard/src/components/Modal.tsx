@@ -80,7 +80,6 @@ export const Modal: FC<Props> = ({
     // when enter is pressed vs. inside an input, <form> handles that for us already
     const handleKeydown = useCallback(
         async (evt: KeyboardEvent) => {
-            console.log("keydown handler");
             if (!visible || evt.defaultPrevented) {
                 return;
             }
