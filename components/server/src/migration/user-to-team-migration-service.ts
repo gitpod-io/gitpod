@@ -24,29 +24,34 @@ export class UserToTeamMigrationService {
     @inject(RedisMutex) protected readonly redisMutex: RedisMutex;
     @inject(StripeService) protected readonly stripeService: StripeService;
 
-    async migrateUser(candidate: User): Promise<User> {
+    async migrateUser(candidate: User, shouldSeeMessage?: boolean): Promise<User> {
         // do a quick check before going into synchonization for the common case that the user has been migrated already
-        if (!(await this.needsMigration(candidate))) {
+        if (!this.needsMigration(candidate)) {
             return candidate;
         }
         return this.redisMutex.using(["migrateUser", candidate.id], 5000, async () => {
-            if (!(await this.needsMigration(candidate))) {
+            const now = new Date();
+            if (!this.needsMigration(candidate)) {
                 return candidate;
             }
             // refetch user from the db to ensure it was not migrated in the meantime
             const refetched = await this.userDB.findUserById(candidate.id);
-            if (refetched && !(await this.needsMigration(refetched))) {
+            if (refetched && !this.needsMigration(refetched)) {
                 return refetched;
             }
-            AdditionalUserData.set(candidate, { isMigratedToTeamOnlyAttribution: true });
+            AdditionalUserData.set(candidate, {
+                isMigratedToTeamOnlyAttribution: true,
+                shouldSeeMigrationMessage: !!shouldSeeMessage,
+            });
             await this.userDB.storeUser(candidate);
             try {
                 await this.internalMigrateUser(candidate);
             } catch (error) {
-                log.error("Failed to migrate user to team.", error);
-                AdditionalUserData.set(candidate, { isMigratedToTeamOnlyAttribution: false });
-                await this.userDB.storeUser(candidate);
+                log.error("Error migrating user to org.", error, { userId: candidate.id });
             }
+            log.info({ userId: candidate.id }, "Migrated user to org.", {
+                timeMs: new Date().getTime() - now.getTime(),
+            });
             return candidate;
         });
     }
@@ -181,9 +186,8 @@ export class UserToTeamMigrationService {
         return team;
     }
 
-    async needsMigration(user: User): Promise<boolean> {
-        const teams = await this.teamDB.findTeamsByUser(user.id);
-        return teams.length === 0 || !user.additionalData?.isMigratedToTeamOnlyAttribution;
+    needsMigration(user: User): boolean {
+        return !user.additionalData?.isMigratedToTeamOnlyAttribution;
     }
 
     async updateWorkspacesOrganizationId(workspaces: WorkspaceInfo[], userOrgId: string): Promise<WorkspaceInfo[]> {

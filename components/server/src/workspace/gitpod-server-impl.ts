@@ -674,23 +674,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.checkUser("getLoggedInUser");
     }
 
-    public async migrateLoggedInUserToOrgOnlyMode(ctx: TraceContext): Promise<User> {
-        await this.doUpdateUser();
-        const user = this.checkUser("migrateLoggedInUserToOrgOnlyMode");
-        if (!this.userToTeamMigrationService.needsMigration(user)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "User does not need migration.");
-        }
-        try {
-            await this.userToTeamMigrationService.migrateUser(user);
-            await this.doUpdateUser();
-            log.info({ userId: user.id }, "migrated user to org-only mode");
-            return this.user!;
-        } catch (error) {
-            console.error(error);
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to migrate user to org-only mode.");
-        }
-    }
-
     protected showSetupCondition: { value: boolean } | undefined = undefined;
     protected enableDedicatedOnboardingFlow: boolean = false; // TODO(gpl): Remove once we have an onboarding setup
     protected async doUpdateUser(): Promise<void> {
@@ -720,7 +703,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         if (this.user) {
-            const updatedUser = await this.userDB.findUserById(this.user.id);
+            if (this.userToTeamMigrationService.needsMigration(this.user)) {
+                this.user = await this.userToTeamMigrationService.migrateUser(this.user, true);
+            }
+            let updatedUser = await this.userDB.findUserById(this.user.id);
             if (updatedUser) {
                 this.user = updatedUser;
             }
