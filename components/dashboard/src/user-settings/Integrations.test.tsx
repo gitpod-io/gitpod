@@ -4,11 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { render, fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { GitIntegrationModal } from "./Integrations";
+import { renderWithContext } from "../contexts/TestContext";
 
 test("should update redirectURL preview", async () => {
-    render(<GitIntegrationModal mode="new" userId="F00" />);
+    renderWithContext(<GitIntegrationModal mode="new" userId="F00" />);
 
     fireEvent.change(screen.getByLabelText(/Host/i), {
         target: { value: "gitlab.gitpod.io:80" },
