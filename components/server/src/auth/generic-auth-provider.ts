@@ -277,7 +277,17 @@ export abstract class GenericAuthProvider implements AuthProvider {
             return;
         }
 
-        const authFlow = await this.parseState(state as string);
+        let authFlow: AuthFlow;
+        try {
+            authFlow = await this.parseState(state as string);
+        } catch (error) {
+            log.error(cxt, `(${strategyName}) Failed to parse state JWT from request.`, { clientInfo });
+            increaseLoginCounter("failed", this.host);
+
+            response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
+            return;
+        }
+
         if (isAlreadyLoggedIn) {
             if (!authFlow) {
                 log.warn(
@@ -500,12 +510,13 @@ export abstract class GenericAuthProvider implements AuthProvider {
         const { strategyName } = this;
         const clientInfo = getRequestingClientInfo(req);
         const authProviderId = this.authProviderId;
-        const authFlow = await this.parseState((req.query.state as string) || "");
-        const defaultLogPayload = { authFlow, clientInfo, authProviderId };
         let currentGitpodUser: User | undefined = User.is(req.user) ? req.user : undefined;
         let candidate: Identity;
 
         try {
+            const authFlow = await this.parseState((req.query.state as string) || "");
+            const defaultLogPayload = { authFlow, clientInfo, authProviderId };
+
             const tokenResponseObject = this.ensureIsObject(tokenResponse);
             const { authUser, currentScopes, envVars } = await this.readAuthUserSetup(accessToken, tokenResponseObject);
             const { authName, primaryEmail } = authUser;
