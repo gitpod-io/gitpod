@@ -306,12 +306,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Start periodic jobs
         this.jobRunner.start();
 
-        if (!this.config.completeSnapshotJob?.disabled) {
-            // Start Snapshot Service
-            log.info("Starting snapshot completion job...");
-            await this.snapshotService.start();
-        }
-
         this.app = app;
 
         log.info("server initialized.");

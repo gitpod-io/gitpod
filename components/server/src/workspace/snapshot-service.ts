@@ -7,72 +7,21 @@
 import { inject, injectable } from "inversify";
 import { v4 as uuidv4 } from "uuid";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Disposable, GitpodServer, Snapshot } from "@gitpod/gitpod-protocol";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { GitpodServer, Snapshot } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
-import { ConsensusLeaderQorum } from "../consensus/consensus-leader-quorum";
-
-const SNAPSHOT_TIMEOUT_SECONDS = 60 * 30;
-const SNAPSHOT_POLL_INTERVAL_SECONDS = 5;
-const SNAPSHOT_DB_POLL_INTERVAL_SECONDS = 60 * 5;
 
 export interface WaitForSnapshotOptions {
     workspaceOwner: string;
     snapshot: Snapshot;
 }
 
-/**
- * SnapshotService hosts all code that's necessary to create snapshots and drive them to completion.
- * To guarantee every snapshot reacheds an end state ('error' or 'available') it regularly polls the DB to pick up and drive those as well.
- */
+const SNAPSHOT_TIMEOUT_SECONDS = 60 * 30;
+const SNAPSHOT_POLL_INTERVAL_SECONDS = 5;
+
 @injectable()
 export class SnapshotService {
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
-    @inject(ConsensusLeaderQorum) protected readonly leaderQuorum: ConsensusLeaderQorum;
-
-    protected readonly runningSnapshots: Map<string, Promise<void>> = new Map();
-
-    public async start(): Promise<Disposable> {
-        return repeat(
-            () => this.pickupAndDriveFromDbIfWeAreLeader().catch(log.error),
-            SNAPSHOT_DB_POLL_INTERVAL_SECONDS * 1000,
-        );
-    }
-
-    public async pickupAndDriveFromDbIfWeAreLeader() {
-        if (!(await this.leaderQuorum.areWeLeader())) {
-            return;
-        }
-
-        log.info("snapshots: we're leading the quorum. picking up pending snapshots and driving them home.");
-        const step = 50; // make sure we're not flooding ourselves
-        const { snapshots: pendingSnapshots, total } = await this.workspaceDb.findSnapshotsWithState(
-            "pending",
-            0,
-            step,
-        );
-        if (total > step) {
-            log.warn("snapshots: looks like we have more pending snapshots then we can handle!");
-        }
-
-        for (const snapshot of pendingSnapshots) {
-            const workspace = await this.workspaceDb.findById(snapshot.originalWorkspaceId);
-            if (!workspace) {
-                log.error(
-                    { workspaceId: snapshot.originalWorkspaceId },
-                    `snapshots: unable to find workspace for snapshot`,
-                    { snapshotId: snapshot.id },
-                );
-                continue;
-            }
-
-            this.driveSnapshotCached({ workspaceOwner: workspace.ownerId, snapshot }).catch((err) => {
-                /** ignore */
-            });
-        }
-    }
 
     public async createSnapshot(options: GitpodServer.TakeSnapshotOptions, snapshotUrl: string): Promise<Snapshot> {
         const id = uuidv4();
@@ -86,23 +35,10 @@ export class SnapshotService {
     }
 
     public async waitForSnapshot(opts: WaitForSnapshotOptions): Promise<void> {
-        return await this.driveSnapshotCached(opts);
+        return await this.driveSnapshot(opts);
     }
 
-    protected async driveSnapshotCached(opts: WaitForSnapshotOptions): Promise<void> {
-        const running = this.runningSnapshots.get(opts.snapshot.id);
-        if (running) {
-            return running;
-        }
-
-        const started = this.driveSnapshot(opts)
-            .finally(() => this.runningSnapshots.delete(opts.snapshot.id))
-            .catch((err) => log.error("driveSnapshot", err));
-        this.runningSnapshots.set(opts.snapshot.id, started);
-        return started;
-    }
-
-    protected async driveSnapshot(opts: WaitForSnapshotOptions): Promise<void> {
+    public async driveSnapshot(opts: WaitForSnapshotOptions): Promise<void> {
         if (opts.snapshot.state === "available") {
             return;
         }
