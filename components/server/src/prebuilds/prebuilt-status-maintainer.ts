@@ -55,7 +55,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                 this.handlePrebuildFinished(ctx, msg),
             ),
         );
-        this.disposables.push(repeat(this.periodicUpdatableCheck.bind(this), 60 * 1000));
+        this.disposables.push(repeat(this.periodicUpdatableCheck.bind(this), MAX_UPDATABLE_AGE / 2));
         log.debug("prebuild updatable status maintainer started");
     }
 
