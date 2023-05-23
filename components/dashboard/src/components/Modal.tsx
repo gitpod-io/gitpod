@@ -29,7 +29,7 @@ type Props = {
     className?: string;
     onClose: () => void;
     /**
-     * @deprecated
+     * @deprecated Use onSubmit() instead and include a Button w/ htmlType="submit"
      */
     onEnter?: () => boolean | Promise<boolean>;
     onSubmit?: () => void | Promise<void>;
@@ -98,19 +98,6 @@ export const Modal: FC<Props> = ({
         [closeModal, onEnter, visible],
     );
 
-    const handleSubmit = useCallback(
-        (e: FormEvent) => {
-            console.log("handleSubmit");
-            e.preventDefault();
-
-            if (onSubmit) {
-                console.log("onSubmit()");
-                onSubmit();
-            }
-        },
-        [onSubmit],
-    );
-
     if (!visible) {
         return null;
     }
@@ -146,7 +133,7 @@ export const Modal: FC<Props> = ({
                             aria-labelledby="modal-header"
                             tabIndex={-1}
                         >
-                            <form onSubmit={handleSubmit}>
+                            <MaybeWithForm onSubmit={onSubmit}>
                                 {closeable && <ModalCloseIcon onClose={() => closeModal("x")} />}
                                 {title ? (
                                     <>
@@ -157,7 +144,7 @@ export const Modal: FC<Props> = ({
                                 ) : (
                                     children
                                 )}
-                            </form>
+                            </MaybeWithForm>
                         </div>
                     </FocusOn>
                 </div>
@@ -167,6 +154,28 @@ export const Modal: FC<Props> = ({
 };
 
 export default Modal;
+
+type MaybeWithFormProps = {
+    onSubmit: Props["onSubmit"];
+};
+const MaybeWithForm: FC<MaybeWithFormProps> = ({ onSubmit, children }) => {
+    const handleSubmit = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
+
+            if (onSubmit) {
+                onSubmit();
+            }
+        },
+        [onSubmit],
+    );
+
+    if (!onSubmit) {
+        return <>{children}</>;
+    }
+
+    return <form onSubmit={handleSubmit}>{children}</form>;
+};
 
 type ModalHeaderProps = {
     children: ReactNode;
