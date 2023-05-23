@@ -806,6 +806,21 @@ func (mr *MockAPIInterfaceMockRecorder) InstanceUpdates(ctx, instanceID interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstanceUpdates", reflect.TypeOf((*MockAPIInterface)(nil).InstanceUpdates), ctx, instanceID)
 }
 
+// WorkspaceUpdates mocks base method.
+func (m *MockAPIInterface) WorkspaceUpdates(ctx context.Context, workspaceID string) (<-chan *WorkspaceInstance, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WorkspaceUpdates", ctx, workspaceID)
+	ret0, _ := ret[0].(<-chan *WorkspaceInstance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// InstanceUpdates indicates an expected call of WorkspaceUpdates.
+func (mr *MockAPIInterfaceMockRecorder) WorkspaceUpdates(ctx, workspaceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WorkspaceUpdates", reflect.TypeOf((*MockAPIInterface)(nil).WorkspaceUpdates), ctx, workspaceID)
+}
+
 // IsPrebuildDone mocks base method.
 func (m *MockAPIInterface) IsPrebuildDone(ctx context.Context, pwsid string) (bool, error) {
 	m.ctrl.T.Helper()

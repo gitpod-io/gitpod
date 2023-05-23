@@ -378,7 +378,7 @@ func TestWorkspaceService_StreamWorkspaceStatus(t *testing.T) {
 		serverMock, client := setupWorkspacesService(t)
 
 		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
-		serverMock.EXPECT().InstanceUpdates(gomock.Any(), instanceID).DoAndReturn(func(ctx context.Context, instanceID string) (<-chan *protocol.WorkspaceInstance, error) {
+		serverMock.EXPECT().WorkspaceUpdates(gomock.Any(), workspaceID).DoAndReturn(func(ctx context.Context, workspaceID string) (<-chan *protocol.WorkspaceInstance, error) {
 			ch := make(chan *protocol.WorkspaceInstance)
 			go func() {
 				ch <- workspaceTestData[0].Protocol.LatestInstance
