@@ -224,7 +224,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                         onBlur={hostOnBlur}
                     />
 
-                    <InputField label="Redirect URI" hint={<RedirectUrlDescription type={type} host={host} />}>
+                    <InputField label="Redirect URI" hint={<RedirectUrlDescription type={type} />}>
                         <InputWithCopy value={redirectURL} tip="Copy the redirect URI to clipboard" />
                     </InputField>
 
@@ -298,21 +298,8 @@ const getPlaceholderForIntegrationType = (type: string) => {
 
 type RedirectUrlDescriptionProps = {
     type: string;
-    host: string;
 };
-const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = ({ type, host }) => {
-    let settingsUrl = ``;
-    switch (type) {
-        case "GitHub":
-            settingsUrl = `${host || "github.com"}/settings/developers`;
-            break;
-        case "GitLab":
-            settingsUrl = `${host || "gitlab.com"}/-/profile/applications`;
-            break;
-        default:
-            return null;
-    }
-
+const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = ({ type }) => {
     let docsUrl = ``;
     switch (type) {
         case "GitHub":
@@ -327,15 +314,10 @@ const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = (
 
     return (
         <span>
-            Use this redirect URI to update the OAuth application. Go to{" "}
-            <a href={`https://${settingsUrl}`} target="_blank" rel="noreferrer noopener" className="gp-link">
-                developer settings
-            </a>{" "}
-            and setup the OAuth application.&nbsp;
+            Use this redirect URI to register a {type} instance as an authorized Git provider in Gitpod.{" "}
             <a href={docsUrl} target="_blank" rel="noreferrer noopener" className="gp-link">
                 Learn more
             </a>
-            .
         </span>
     );
 };
