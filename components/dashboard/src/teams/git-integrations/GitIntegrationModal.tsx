@@ -194,14 +194,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     );
 
     return (
-        <Modal
-            visible
-            onClose={props.onClose}
-            onEnter={() => {
-                activate();
-                return false;
-            }}
-        >
+        <Modal visible onClose={props.onClose} onSubmit={activate}>
             <ModalHeader>{isNew ? "New Git Provider" : "Git Provider"}</ModalHeader>
             <ModalBody>
                 {isNew && (
@@ -272,7 +265,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                 <Button type="secondary" onClick={props.onClose}>
                     Cancel
                 </Button>
-                <Button onClick={activate} disabled={!isValid || savingProvider} loading={savingProvider}>
+                <Button htmlType="submit" disabled={!isValid} loading={savingProvider}>
                     Activate
                 </Button>
             </ModalFooter>
