@@ -16,10 +16,11 @@ import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal"
 import Tooltip from "../components/Tooltip";
 import { useCurrentOrg, useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import searchIcon from "../icons/search.svg";
-import copy from "../images/copy.svg";
 import { teamsService } from "../service/public-api";
 import { useCurrentUser } from "../user-context";
 import { SpinnerLoader } from "../components/Loader";
+import { InputField } from "../components/forms/InputField";
+import { InputWithCopy } from "../components/InputWithCopy";
 
 export default function MembersPage() {
     const user = useCurrentUser();
@@ -44,21 +45,6 @@ export default function MembersPage() {
         }
         return link.href;
     }, [org.data]);
-
-    const [copied, setCopied] = useState<boolean>(false);
-    const copyToClipboard = (text: string) => {
-        const el = document.createElement("textarea");
-        el.value = text;
-        document.body.appendChild(el);
-        el.select();
-        try {
-            document.execCommand("copy");
-        } finally {
-            document.body.removeChild(el);
-        }
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
 
     const resetInviteLink = async () => {
         await teamsService.resetTeamInvitation({ teamId: org.data?.id });
@@ -258,29 +244,9 @@ export default function MembersPage() {
                 <Modal visible={true} onClose={() => setShowInviteModal(false)}>
                     <ModalHeader>Invite Members</ModalHeader>
                     <ModalBody>
-                        <label htmlFor="inviteUrl" className="font-medium">
-                            Invite URL
-                        </label>
-                        <div className="w-full relative">
-                            <input
-                                name="inviteUrl"
-                                disabled={true}
-                                readOnly={true}
-                                type="text"
-                                value={inviteUrl}
-                                className="rounded-md w-full truncate overflow-x-scroll pr-8"
-                            />
-                            <div className="cursor-pointer" onClick={() => copyToClipboard(inviteUrl)}>
-                                <div className="absolute top-1/3 right-3">
-                                    <Tooltip content={copied ? "Copied!" : "Copy Invite URL"}>
-                                        <img src={copy} title="Copy Invite URL" alt="copy icon" />
-                                    </Tooltip>
-                                </div>
-                            </div>
-                        </div>
-                        <p className="mt-1 text-gray-500 text-sm">
-                            Use this URL to join this organization as a member.
-                        </p>
+                        <InputField label="Invite URL" hint="Use this URL to join this organization as a member.">
+                            <InputWithCopy value={inviteUrl} tip="Copy Invite URL" />
+                        </InputField>
                     </ModalBody>
                     <ModalFooter>
                         {!!org?.data?.invitationId && (

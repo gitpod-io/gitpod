@@ -78,15 +78,7 @@ export function inResource(pathname: string, resources: string[]): boolean {
 }
 
 export function copyToClipboard(text: string) {
-    const el = document.createElement("textarea");
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    try {
-        document.execCommand("copy");
-    } finally {
-        document.body.removeChild(el);
-    }
+    navigator.clipboard.writeText(text);
 }
 
 export function getURLHash() {
