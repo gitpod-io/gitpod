@@ -22,8 +22,6 @@ import { createWebSocketConnection } from "vscode-ws-jsonrpc/lib";
 import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AddressInfo } from "net";
-import { ConsensusLeaderQorum } from "./consensus/consensus-leader-quorum";
-import { RabbitMQConsensusLeaderMessenger } from "./consensus/rabbitmq-consensus-leader-messenger";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
@@ -86,8 +84,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
     @inject(JobRunner) protected readonly jobRunner: JobRunner;
 
-    @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
-    @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
     @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
 
@@ -298,10 +294,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Start local message broker
         await this.localMessageBroker.start();
         this.disposables.push(Disposable.create(() => this.localMessageBroker.stop().catch(log.error)));
-
-        // Start concensus quorum
-        await this.consensusMessenger.connect();
-        await this.qorum.start();
 
         // Start periodic jobs
         this.jobRunner.start();
