@@ -15,6 +15,7 @@ export interface DropDown2Element {
 
 export interface DropDown2Props {
     getElements: (searchString: string) => DropDown2Element[];
+    disabled?: boolean;
     searchPlaceholder?: string;
     disableSearch?: boolean;
     expanded?: boolean;
@@ -23,7 +24,7 @@ export interface DropDown2Props {
 }
 
 export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
-    const [showDropDown, setShowDropDown] = useState<boolean>(!!props.expanded);
+    const [showDropDown, setShowDropDown] = useState<boolean>(!props?.disabled && !!props.expanded);
     const nodeRef: RefObject<HTMLDivElement> = useRef(null);
     const onSelected = useCallback(
         (elementId: string) => {
@@ -50,8 +51,11 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
     }, [showDropDown]);
 
     const toggleDropDown = useCallback(() => {
+        if (props?.disabled) {
+            return;
+        }
         setShowDropDown(!showDropDown);
-    }, [setShowDropDown, showDropDown]);
+    }, [props?.disabled, setShowDropDown, showDropDown]);
 
     const setFocussedElement = useCallback(
         (element: string) => {
@@ -137,6 +141,8 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                     "h-16 bg-gray-100 dark:bg-gray-800 flex items-center px-2 " +
                     (showDropDown
                         ? "rounded-t-lg"
+                        : props?.disabled
+                        ? "rounded-lg opacity-80 "
                         : "rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer")
                 }
                 onClick={toggleDropDown}

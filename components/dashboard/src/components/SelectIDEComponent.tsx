@@ -15,6 +15,7 @@ interface SelectIDEComponentProps {
     useLatest?: boolean;
     onSelectionChange: (ide: string, latest: boolean) => void;
     setError?: (error?: string) => void;
+    disabled?: boolean;
 }
 
 function filteredIdeOptions(ideOptions: IDEOptions) {
@@ -78,6 +79,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             onSelectionChange={internalOnSelectionChange}
             searchPlaceholder={"Select Editor"}
             allOptions={ide}
+            disabled={props.disabled}
         >
             <IdeOptionElementSelected option={ideOptions?.options[ide]} useLatest={!!props.useLatest} />
         </DropDown2>

@@ -56,16 +56,16 @@ export function CreateWorkspacePage() {
     const [autostart, setAutostart] = useState<boolean | undefined>(props.autostart);
     const createWorkspaceMutation = useCreateWorkspaceMutation();
 
-    const [useLatestIde, setUseLatestIde] = useState(
+    const defaultLatestIde =
         props.ideSettings?.useLatestVersion !== undefined
             ? props.ideSettings.useLatestVersion
-            : !!user?.additionalData?.ideSettings?.useLatestVersion,
-    );
-    const [selectedIde, setSelectedIde] = useState(
+            : !!user?.additionalData?.ideSettings?.useLatestVersion;
+    const [useLatestIde, setUseLatestIde] = useState(defaultLatestIde);
+    const defaultIde =
         props.ideSettings?.defaultIde !== undefined
             ? props.ideSettings.defaultIde
-            : user?.additionalData?.ideSettings?.defaultIde,
-    );
+            : user?.additionalData?.ideSettings?.defaultIde;
+    const [selectedIde, setSelectedIde] = useState(defaultIde);
     const [selectedWsClass, setSelectedWsClass] = useState<string | undefined>(props.workspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
@@ -100,12 +100,13 @@ export function CreateWorkspacePage() {
                 },
                 workspaceClass: selectedWsClass,
             });
-
-            AdditionalUserData.set(user, {
-                workspaceAutostartOptions: workspaceAutoStartOptions,
-            });
         }
-        await getGitpodService().server.updateLoggedInUser(user).then(setUser).catch(console.error);
+        AdditionalUserData.set(user, {
+            workspaceAutostartOptions: workspaceAutoStartOptions,
+        });
+        setUser(user);
+        await getGitpodService().server.updateLoggedInUser(user);
+        console.log("Stored autostart options", workspaceAutoStartOptions);
     }, [currentOrg, rememberOptions, selectedIde, selectedWsClass, setUser, useLatestIde, user, workspaceContext.data]);
 
     // see if we have a matching project based on context url and project's repo url
@@ -210,9 +211,7 @@ export function CreateWorkspacePage() {
                     organizationId,
                     ...opts,
                 });
-                if (rememberOptions) {
-                    await storeAutoStartOptions();
-                }
+                await storeAutoStartOptions();
                 await timeout;
                 if (result.workspaceURL) {
                     window.location.href = result.workspaceURL;
@@ -236,7 +235,6 @@ export function CreateWorkspacePage() {
             selectedIde,
             useLatestIde,
             createWorkspaceMutation,
-            rememberOptions,
             autostart,
             storeAutoStartOptions,
             history,
@@ -279,36 +277,22 @@ export function CreateWorkspacePage() {
                     console.warn("Could not find organization", rememberedOptions.organizationId);
                 }
             }
-            if (!rememberOptions) {
-                setRememberOptions(true);
-            }
-            if (selectedIde !== rememberedOptions.ideSettings?.defaultIde) {
-                setSelectedIde(rememberedOptions.ideSettings?.defaultIde);
-            }
-            if (useLatestIde !== !!rememberedOptions.ideSettings?.useLatestVersion) {
-                setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
-            }
-            if (selectedWsClass !== rememberedOptions.workspaceClass) {
-                setSelectedWsClass(rememberedOptions.workspaceClass);
-            }
+            setRememberOptions(true);
+            setSelectedIde(rememberedOptions.ideSettings?.defaultIde);
+            setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
+            setSelectedWsClass(rememberedOptions.workspaceClass);
             if (autostart === undefined) {
                 setAutostart(true);
             }
+        } else {
+            setRememberOptions(false);
+            // reset the ide settings to the user's default
+            setSelectedIde(defaultIde);
+            setUseLatestIde(defaultLatestIde);
         }
-    }, [
-        autostart,
-        currentOrg?.id,
-        history,
-        location.hash,
-        location.pathname,
-        organizations.data,
-        rememberOptions,
-        selectedIde,
-        selectedWsClass,
-        useLatestIde,
-        user?.additionalData?.workspaceAutostartOptions,
-        workspaceContext.data,
-    ]);
+        // we only update the remembered options when the workspaceContext changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [workspaceContext.data]);
 
     // Need a wrapper here so we call createWorkspace w/o any arguments
     const onClickCreate = useCallback(() => createWorkspace(), [createWorkspace]);
@@ -359,7 +343,11 @@ export function CreateWorkspacePage() {
                 </div>
                 <div className="-mx-6 px-6 mt-6 w-full">
                     <div className="pt-3">
-                        <RepositoryFinder setSelection={handleContextURLChange} initialValue={contextURL} />
+                        <RepositoryFinder
+                            setSelection={handleContextURLChange}
+                            initialValue={contextURL}
+                            disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
+                        />
                         <ErrorMessage
                             error={
                                 (createWorkspaceMutation.error as StartWorkspaceError) ||
@@ -378,6 +366,7 @@ export function CreateWorkspacePage() {
                             setError={setErrorIde}
                             selectedIdeOption={selectedIde}
                             useLatest={useLatestIde}
+                            disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
                         />
                         {errorIde && <div className="text-red-500 text-sm">{errorIde}</div>}
                     </div>
@@ -386,6 +375,7 @@ export function CreateWorkspacePage() {
                             onSelectionChange={setSelectedWsClass}
                             setError={setErrorWsClass}
                             selectedWorkspaceClass={selectedWsClass}
+                            disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
                         />
                         {errorWsClass && <div className="text-red-500 text-sm">{errorWsClass}</div>}
                     </div>
@@ -397,6 +387,7 @@ export function CreateWorkspacePage() {
                         size="block"
                         loading={createWorkspaceMutation.isStarting}
                         disabled={
+                            workspaceContext.isLoading ||
                             !contextURL ||
                             contextURL.length === 0 ||
                             !!errorIde ||
@@ -409,7 +400,7 @@ export function CreateWorkspacePage() {
                 </div>
                 {workspaceContext.data && (
                     <RememberOptions
-                        disabled={createWorkspaceMutation.isStarting}
+                        disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
                         checked={rememberOptions}
                         onChange={setRememberOptions}
                     />
