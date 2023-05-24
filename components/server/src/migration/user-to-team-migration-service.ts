@@ -24,7 +24,7 @@ export class UserToTeamMigrationService {
     @inject(RedisMutex) protected readonly redisMutex: RedisMutex;
     @inject(StripeService) protected readonly stripeService: StripeService;
 
-    async migrateUser(candidate: User, shouldSeeMessage?: boolean): Promise<User> {
+    async migrateUser(candidate: User, shouldSeeMessage?: boolean, caller?: string): Promise<User> {
         // do a quick check before going into synchonization for the common case that the user has been migrated already
         if (!this.needsMigration(candidate)) {
             return candidate;
@@ -51,6 +51,7 @@ export class UserToTeamMigrationService {
             }
             log.info({ userId: candidate.id }, "Migrated user to org.", {
                 timeMs: new Date().getTime() - now.getTime(),
+                caller,
             });
             return candidate;
         });

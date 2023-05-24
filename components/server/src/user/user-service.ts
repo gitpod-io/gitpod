@@ -94,7 +94,7 @@ export class UserService {
             AdditionalUserData.set(newUser, { isMigratedToTeamOnlyAttribution: true });
             newUser = await this.userDb.storeUser(newUser);
         } else {
-            newUser = await this.migrationService.migrateUser(newUser, false);
+            newUser = await this.migrationService.migrateUser(newUser, false, "new user");
         }
 
         return newUser;

@@ -33,8 +33,9 @@ export class OrgOnlyMigrationJob implements Job {
 
             const result: User[] = [];
             for (const user of users) {
-                result.push(await this.migrationService.migrateUser(user));
+                result.push(await this.migrationService.migrateUser(user, true, this.name));
             }
+            log.info("org-only-migration-job: migrated users", { count: result.length });
             return result;
         } catch (err) {
             log.error("org-only-migration-job: error during run", err);
@@ -43,6 +44,6 @@ export class OrgOnlyMigrationJob implements Job {
     }
 
     public async run(): Promise<void> {
-        await this.migrateUsers(100);
+        await this.migrateUsers(1500); // in prod we do ~300 / minute
     }
 }
