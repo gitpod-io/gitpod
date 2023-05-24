@@ -11,8 +11,12 @@ import { UserToTeamMigrationService } from "../migration/user-to-team-migration-
 import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 
+interface MigrationState {
+    migratedUpToCreationDate: string;
+}
+
 @injectable()
-export class OrgOnlyMigrationJob implements Job {
+export class OrgOnlyMigrationJob implements Job<MigrationState> {
     @inject(UserToTeamMigrationService) protected readonly migrationService: UserToTeamMigrationService;
     @inject(TypeORM) protected readonly db: TypeORM;
     @inject(UserDB) protected readonly userDB: UserDB;
@@ -20,14 +24,16 @@ export class OrgOnlyMigrationJob implements Job {
     public readonly name = "org-only-migration-job";
     public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
-    public async migrateUsers(limit: number): Promise<User[]> {
+    public async migrateUsers(limit: number, usersNewerThan: string): Promise<User[]> {
         try {
             const userRepo = (await this.db.getConnection()).manager.getRepository<DBUser>(DBUser);
             const users = await userRepo
                 .createQueryBuilder("user")
                 .leftJoinAndSelect("user.identities", "identity")
-                .where("additionalData->>'$.isMigratedToTeamOnlyAttribution' != 'true'")
-                .orWhere("additionalData->>'$.isMigratedToTeamOnlyAttribution' IS NULL")
+                .where("user.creationDate > :usersNewerThan", { usersNewerThan })
+                .andWhere("additionalData->>'$.isMigratedToTeamOnlyAttribution' IS NULL")
+                .orWhere("additionalData->>'$.isMigratedToTeamOnlyAttribution' != 'true'")
+                .orderBy("user.creationDate", "ASC")
                 .limit(limit)
                 .getMany();
 
@@ -43,7 +49,16 @@ export class OrgOnlyMigrationJob implements Job {
         }
     }
 
-    public async run(): Promise<void> {
-        await this.migrateUsers(1500); // in prod we do ~300 / minute
+    public async run(state?: MigrationState): Promise<MigrationState> {
+        const migratedUsers = await this.migrateUsers(1500, state?.migratedUpToCreationDate || "1900-01-01"); // in prod we do ~300 / minute
+        if (migratedUsers.length > 0) {
+            const lastUser = migratedUsers[migratedUsers.length - 1];
+            return {
+                migratedUpToCreationDate: lastUser.creationDate,
+            };
+        }
+        return {
+            migratedUpToCreationDate: new Date().toISOString(),
+        };
     }
 }

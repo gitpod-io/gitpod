@@ -57,7 +57,7 @@ describe("Migration Job", () => {
         AdditionalUserData.set(nonMigratedUser, { isMigratedToTeamOnlyAttribution: undefined });
         await userDB.storeUser(nonMigratedUser);
 
-        const users = await migrationJob.migrateUsers(1000);
+        const users = await migrationJob.migrateUsers(1000, "1900-01-01");
 
         expect(
             users.some((u) => u.id === nonMigratedUser.id),
@@ -74,6 +74,24 @@ describe("Migration Job", () => {
 
         const c = await typeORM.getConnection();
         await c.query("DELETE FROM d_b_user WHERE id in (?)", [[migratedUser.id, nonMigratedUser.id]]);
+        await c.close();
+    });
+
+    it("should migrate in badges", async () => {
+        const user1 = await userDB.newUser();
+        user1.creationDate = "2021-01-01";
+        await userDB.storeUser(user1);
+        const user2 = await userDB.newUser();
+        user2.creationDate = "2022-01-01";
+        await userDB.storeUser(user2);
+
+        let users = await migrationJob.migrateUsers(1, "1900-01-01");
+        expect(users[0].id === user1.id, "should migrate the older user").to.be.true;
+        users = await migrationJob.migrateUsers(1, users[0].creationDate);
+        expect(users[0].id === user2.id, "should migrate the younger user next").to.be.true;
+
+        const c = await typeORM.getConnection();
+        await c.query("DELETE FROM d_b_user WHERE id in (?)", [[user1.id, user2.id]]);
         await c.close();
     });
 });
