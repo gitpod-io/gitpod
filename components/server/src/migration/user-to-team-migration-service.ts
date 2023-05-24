@@ -29,7 +29,7 @@ export class UserToTeamMigrationService {
         if (!this.needsMigration(candidate)) {
             return candidate;
         }
-        return this.redisMutex.using(["migrateUser", candidate.id], 5000, async () => {
+        return this.redisMutex.using(["migrateUser-" + candidate.id], 5000, async () => {
             const now = new Date();
             if (!this.needsMigration(candidate)) {
                 return candidate;

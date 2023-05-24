@@ -20,7 +20,6 @@ export class TokenGarbageCollector implements Job {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
 
     public name = "token-gc";
-    public lockId = ["token-gc"];
     public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
     public async run(): Promise<void> {

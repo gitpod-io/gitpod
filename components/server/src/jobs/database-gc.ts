@@ -16,7 +16,6 @@ export class DatabaseGarbageCollector implements Job {
     @inject(Config) protected readonly config: Config;
 
     public name = "database-gc";
-    public lockId = ["database-gc"];
     public frequencyMs = 30000; // every 30 seconds
 
     public async run(): Promise<void> {

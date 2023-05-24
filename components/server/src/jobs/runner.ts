@@ -22,9 +22,9 @@ import { OrgOnlyMigrationJob } from "./org-only-migration-job";
 export const Job = Symbol("Job");
 
 export interface Job {
-    get name(): string;
-    get lockId(): string[];
-    get frequencyMs(): number;
+    readonly name: string;
+    readonly frequencyMs: number;
+    readonly lockedResources?: string[];
     run: () => Promise<void>;
 }
 
@@ -57,7 +57,7 @@ export class JobRunner {
             log.info(`Registered job ${job.name} in job runner.`, {
                 jobName: job.name,
                 frequencyMs: job.frequencyMs,
-                redisLockId: job.lockId,
+                lockedResources: job.lockedResources,
             });
             // immediately run the job once
             this.run(job).catch((err) => log.error(`Error while running job ${job.name}`, err));
@@ -71,12 +71,12 @@ export class JobRunner {
         const logCtx = {
             jobTickId: new Date().toISOString(),
             jobName: job.name,
-            redisLockId: job.lockId,
+            lockedResources: job.lockedResources,
             frequencyMs: job.frequencyMs,
         };
 
         try {
-            await this.mutex.using(job.lockId, job.frequencyMs, async (signal) => {
+            await this.mutex.using([job.name, ...(job.lockedResources || [])], job.frequencyMs, async (signal) => {
                 log.info(`Acquired lock for job ${job.name}.`, logCtx);
                 // we want to hold the lock for the entire duration of the job, so we return earliest after frequencyMs
                 const timeout = new Promise<void>((resolve) => setTimeout(resolve, job.frequencyMs));

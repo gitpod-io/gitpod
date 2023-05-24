@@ -18,7 +18,6 @@ export class OrgOnlyMigrationJob implements Job {
     @inject(UserDB) protected readonly userDB: UserDB;
 
     public readonly name = "org-only-migration-job";
-    public readonly lockId = [this.name];
     public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
     public async migrateUsers(limit: number): Promise<User[]> {

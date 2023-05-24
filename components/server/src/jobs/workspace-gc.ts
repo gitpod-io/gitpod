@@ -25,7 +25,6 @@ export class WorkspaceGarbageCollector implements Job {
     @inject(Config) protected readonly config: Config;
 
     public name = "workspace-gc";
-    public lockId = ["workspace-gc"];
     public frequencyMs: number;
 
     @postConstruct()
