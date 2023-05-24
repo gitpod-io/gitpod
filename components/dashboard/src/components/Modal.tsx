@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, FormEvent, KeyboardEvent, ReactNode, useCallback } from "react";
+import { FC, FormEvent, ReactNode, useCallback } from "react";
 import { Portal } from "react-portal";
 import { FocusOn, AutoFocusInside } from "react-focus-on";
 import cn from "classnames";
@@ -28,10 +28,6 @@ type Props = {
     disableFocusLock?: boolean;
     className?: string;
     onClose: () => void;
-    /**
-     * @deprecated Use onSubmit() instead and include a Button w/ htmlType="submit"
-     */
-    onEnter?: () => boolean | Promise<boolean>;
     onSubmit?: () => void | Promise<void>;
 };
 export const Modal: FC<Props> = ({
@@ -45,7 +41,6 @@ export const Modal: FC<Props> = ({
     disableFocusLock = false,
     className,
     onClose,
-    onEnter,
     onSubmit,
 }) => {
     const trackEvent = useTrackEvent();
@@ -75,28 +70,6 @@ export const Modal: FC<Props> = ({
         closeModal("esc");
     }, [closeModal]);
 
-    // TODO: look into deprecating onEnter for Modals - use <form onSubmit> instead
-    // onEnter requires consumers do things like check if a non-submit button is focused
-    // when enter is pressed vs. inside an input, <form> handles that for us already
-    const handleKeydown = useCallback(
-        async (evt: KeyboardEvent) => {
-            if (!visible || evt.defaultPrevented) {
-                return;
-            }
-
-            if (evt.key === "Enter") {
-                if (onEnter) {
-                    if (await onEnter()) {
-                        closeModal("enter");
-                    }
-                } else {
-                    closeModal("enter");
-                }
-            }
-        },
-        [closeModal, onEnter, visible],
-    );
-
     if (!visible) {
         return null;
     }
@@ -104,11 +77,7 @@ export const Modal: FC<Props> = ({
     return (
         <Portal>
             {/* backdrop overlay */}
-            <div
-                className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen focus:ring-0"
-                onKeyDown={onEnter ? handleKeydown : undefined}
-                tabIndex={0}
-            >
+            <div className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen focus:ring-0" tabIndex={0}>
                 {/* Modal outer-container for positioning */}
                 <div className="flex justify-center items-center w-screen h-screen">
                     <FocusOn

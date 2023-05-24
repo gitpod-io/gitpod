@@ -6,11 +6,13 @@
 
 import { useState } from "react";
 import Alert, { AlertType } from "../components/Alert";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { getGitpodService } from "../service/service";
 import PhoneInput from "react-intl-tel-input";
 import "react-intl-tel-input/dist/main.css";
 import "./phone-input.css";
+import { Button } from "../components/Button";
+import { LinkButton } from "../components/LinkButton";
 
 interface VerifyModalState {
     phoneNumber?: string;
@@ -42,7 +44,6 @@ export function VerifyModal() {
                     sending: false,
                     sent: new Date(),
                 });
-                return true;
             } catch (err) {
                 setState({
                     sent: undefined,
@@ -52,20 +53,19 @@ export function VerifyModal() {
                         text: err.toString(),
                     },
                 });
-                return false;
             }
         };
         return (
             <Modal
                 onClose={() => {}}
                 closeable={false}
-                onEnter={sendCode}
+                onSubmit={sendCode}
                 title="User Validation Required"
                 buttons={
                     <div>
-                        <button className="ml-2" disabled={!state.phoneNumberValid || state.sending} onClick={sendCode}>
+                        <Button htmlType="submit" disabled={!state.phoneNumberValid || state.sending}>
                             Send Code via SMS
-                        </button>
+                        </Button>
                     </div>
                 }
                 visible={true}
@@ -138,7 +138,6 @@ export function VerifyModal() {
                         },
                     });
                 }
-                return verified;
             } catch (err) {
                 setState({
                     sent: undefined,
@@ -148,7 +147,6 @@ export function VerifyModal() {
                         text: err.toString(),
                     },
                 });
-                return false;
             }
         };
 
@@ -164,13 +162,13 @@ export function VerifyModal() {
             <Modal
                 onClose={() => {}}
                 closeable={false}
-                onEnter={verifyToken}
+                onSubmit={verifyToken}
                 title="User Validation Required"
                 buttons={
                     <div>
-                        <button className="ml-2" disabled={!isTokenFilled()} onClick={verifyToken}>
+                        <Button htmlType="submit" disabled={!isTokenFilled()}>
                             Validate Account
-                        </button>
+                        </Button>
                     </div>
                 }
                 visible={true}
@@ -180,9 +178,7 @@ export function VerifyModal() {
                     discourage and reduce abuse on Gitpod infrastructure.
                 </Alert>
                 <div className="pt-4">
-                    <button className="gp-link" onClick={reset}>
-                        &larr; Use a different phone number
-                    </button>
+                    <LinkButton onClick={reset}>&larr; Use a different phone number</LinkButton>
                 </div>
                 <div className="text-gray-600 dark:text-gray-400 pt-4">
                     Enter the verification code we sent to {state.phoneNumber}.<br />
@@ -218,26 +214,18 @@ export function VerifyModal() {
     } else {
         const continueStartWorkspace = () => {
             window.location.reload();
-            return true;
         };
         return (
-            <Modal
-                onClose={continueStartWorkspace}
-                closeable={false}
-                onEnter={continueStartWorkspace}
-                title="User Validation Successful"
-                buttons={
-                    <div>
-                        <button className="ml-2" onClick={continueStartWorkspace}>
-                            Continue
-                        </button>
-                    </div>
-                }
-                visible={true}
-            >
-                <Alert type="success" className="mt-2">
-                    Your account has been successfully verified.
-                </Alert>
+            <Modal onClose={continueStartWorkspace} closeable={false} onSubmit={continueStartWorkspace} visible={true}>
+                <ModalHeader>User Validation Successful</ModalHeader>
+                <ModalBody>
+                    <Alert type="success" className="mt-2">
+                        Your account has been successfully verified.
+                    </Alert>
+                </ModalBody>
+                <ModalFooter>
+                    <Button htmlType="submit">Continue</Button>
+                </ModalFooter>
             </Modal>
         );
     }

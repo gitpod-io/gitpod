@@ -6,14 +6,16 @@
 
 import classNames from "classnames";
 import { FC, MouseEvent, useCallback } from "react";
+import { ButtonProps } from "./Button";
 
 type Props = {
     className?: string;
+    htmlType?: ButtonProps["htmlType"];
     onClick: () => void;
 };
 
 // A button that looks like a link
-export const LinkButton: FC<Props> = ({ className, children, onClick }) => {
+export const LinkButton: FC<Props> = ({ className, htmlType = "button", children, onClick }) => {
     const handleClick = useCallback(
         (e: MouseEvent<HTMLButtonElement>) => {
             e.preventDefault();
@@ -24,6 +26,7 @@ export const LinkButton: FC<Props> = ({ className, children, onClick }) => {
 
     return (
         <button
+            type={htmlType}
             className={classNames(
                 "text-sm font-normal",
                 "bg-transparent hover:bg-transparent p-0 rounded-none",

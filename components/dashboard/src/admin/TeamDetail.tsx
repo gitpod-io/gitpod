@@ -228,7 +228,6 @@ export default function TeamDetail(props: { team: Team }) {
                 visible={editSpendingLimit}
                 onClose={() => setEditSpendingLimit(false)}
                 title="Change Usage Limit"
-                onEnter={() => false}
                 buttons={[
                     <button
                         disabled={usageLimit === costCenter?.spendingLimit}
@@ -263,7 +262,6 @@ export default function TeamDetail(props: { team: Team }) {
                 </div>
             </Modal>
             <Modal
-                onEnter={() => false}
                 visible={editAddCreditNote}
                 onClose={() => setEditAddCreditNote(false)}
                 title="Add Credits"

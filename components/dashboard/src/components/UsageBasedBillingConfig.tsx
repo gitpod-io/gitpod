@@ -9,13 +9,13 @@ import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
 import { ReactComponent as Check } from "../images/check-circle.svg";
 import { getGitpodService } from "../service/service";
 import Alert from "./Alert";
-import { Heading2, Subheading } from "./typography/headings";
+import { Subheading } from "./typography/headings";
 import { AddPaymentMethodModal } from "./billing/AddPaymentMethodModal";
 import { Button } from "./Button";
 import { useCreateHoldPaymentIntentMutation } from "../data/billing/create-hold-payment-intent-mutation";
@@ -205,16 +205,18 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
             if (!attributionId) {
                 return;
             }
-            setShowUpdateLimitModal(false);
+
             try {
                 await getGitpodService().server.setUsageLimit(attributionId, newLimit);
                 setUsageLimit(newLimit);
+                toast(`Your usage limit was updated to ${newLimit || 0}`);
             } catch (error) {
                 console.error("Failed to update usage limit", error);
                 setErrorMessage(`Failed to update usage limit. ${error?.message || String(error)}`);
             }
+            setShowUpdateLimitModal(false);
         },
-        [attributionId],
+        [attributionId, toast],
     );
 
     const balance = currentUsage * -1 + usageLimit;
@@ -393,7 +395,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                     }
                     currentValue={usageLimit}
                     onClose={() => setShowUpdateLimitModal(false)}
-                    onUpdate={(newLimit) => updateUsageLimit(newLimit)}
+                    onUpdate={async (newLimit) => await updateUsageLimit(newLimit)}
                 />
             )}
         </div>
@@ -404,15 +406,15 @@ function UpdateLimitModal(props: {
     minValue?: number;
     currentValue: number | undefined;
     onClose: () => void;
-    onUpdate: (newLimit: number) => {};
+    onUpdate: (newLimit: number) => void;
 }) {
+    const [isSaving, setIsSaving] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string>("");
     const [newLimit, setNewLimit] = useState<string | undefined>(
         typeof props.currentValue === "number" ? String(props.currentValue) : undefined,
     );
 
-    function onSubmit(event: React.FormEvent) {
-        event.preventDefault();
+    const onSubmit = useCallback(async () => {
         if (!newLimit) {
             setErrorMessage("Please specify a limit");
             return;
@@ -426,41 +428,47 @@ function UpdateLimitModal(props: {
             setErrorMessage(`Please specify a limit that is >= ${props.minValue}`);
             return;
         }
-        props.onUpdate(n);
-    }
+
+        setIsSaving(true);
+        await props.onUpdate(n);
+        setIsSaving(false);
+    }, [newLimit, props]);
 
     return (
-        <Modal visible={true} onClose={props.onClose} onEnter={() => false}>
-            <Heading2 className="mb-4">Usage Limit</Heading2>
-            <form onSubmit={onSubmit}>
-                <div className="border-t border-b border-gray-200 dark:border-gray-700 -mx-6 px-6 py-4 flex flex-col">
-                    <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
-                    {errorMessage && (
-                        <Alert type="error" className="-mt-2 mb-2">
-                            {errorMessage}
-                        </Alert>
-                    )}
-                    <label className="font-medium">
-                        Credits
-                        <div className="w-full">
-                            <input
-                                type="text"
-                                value={newLimit}
-                                className={`rounded-md w-full truncate overflow-x-scroll pr-8 ${
-                                    errorMessage ? "error" : ""
-                                }`}
-                                onChange={(e) => {
-                                    setErrorMessage("");
-                                    setNewLimit(e.target.value);
-                                }}
-                            />
-                        </div>
-                    </label>
-                </div>
-                <div className="flex justify-end mt-6 space-x-2">
-                    <button className="secondary">Update</button>
-                </div>
-            </form>
+        <Modal visible={true} onClose={props.onClose} onSubmit={onSubmit}>
+            <ModalHeader>Usage Limit</ModalHeader>
+            <ModalBody>
+                <p className="pb-4 text-gray-500 text-base">Set usage limit in total credits per month.</p>
+                {errorMessage && (
+                    <Alert type="error" className="-mt-2 mb-2">
+                        {errorMessage}
+                    </Alert>
+                )}
+                <label className="font-medium">
+                    Credits
+                    <div className="w-full">
+                        <input
+                            type="text"
+                            value={newLimit}
+                            className={`rounded-md w-full truncate overflow-x-scroll pr-8 ${
+                                errorMessage ? "error" : ""
+                            }`}
+                            onChange={(e) => {
+                                setErrorMessage("");
+                                setNewLimit(e.target.value);
+                            }}
+                        />
+                    </div>
+                </label>
+            </ModalBody>
+            <ModalFooter>
+                <Button type="secondary" onClick={props.onClose}>
+                    Cancel
+                </Button>
+                <Button htmlType="submit" loading={isSaving}>
+                    Update
+                </Button>
+            </ModalFooter>
         </Modal>
     );
 }

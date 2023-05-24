@@ -29,13 +29,13 @@ function ShowTokenModal(props: TokenModalProps) {
         expirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });
 
-    const onEnter = () => {
+    const save = () => {
         props.onSave({ expirationDate: expiration.expirationDate });
         props.onClose();
     };
 
     return (
-        <Modal visible onClose={props.onClose} onSubmit={onEnter}>
+        <Modal visible onClose={props.onClose} onSubmit={save}>
             <ModalHeader>{props.title}</ModalHeader>
             <ModalBody>
                 <div className="text-gray-500 dark:text-gray-400 text-md">
