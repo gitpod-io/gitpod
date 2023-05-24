@@ -48,7 +48,7 @@ export class APITeamsServiceSpec {
         await this.dbConn.getRepository(DBTeam).delete({});
 
         // Start an actual server for tests
-        this.server = this.container.get<API>(API).listen(0);
+        this.server = this.container.get<API>(API).listen();
 
         // Construct a client to point against our server
         const address = this.server.address() as AddressInfo;

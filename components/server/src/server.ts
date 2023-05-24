@@ -383,7 +383,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
-        this.apiServer = this.api.listen(9877);
+        this.apiServer = this.api.listen();
 
         this.debugApp.start();
     }
