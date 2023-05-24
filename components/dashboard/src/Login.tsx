@@ -157,7 +157,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                 </Subheading>
                             </div>
                             <div className="flex mb-10">
-                                <Item icon={code} iconSize="16" text="Always Ready&#x2011;To&#x2011;Code" />
+                                <Item icon={code} text="Always Ready&#x2011;To&#x2011;Code" />
                                 <Item icon={customize} text="Personalize your Workspace" />
                                 <Item icon={automate} text="Automate Your Development Setup" />
                             </div>
