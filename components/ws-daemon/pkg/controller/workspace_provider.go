@@ -56,27 +56,28 @@ func (wf *WorkspaceProvider) Create(ctx context.Context, instanceID, location st
 }
 
 func (wf *WorkspaceProvider) GetAndConnect(ctx context.Context, instanceID string) (*session.Workspace, error) {
-	if ws, ok := wf.workspaces[instanceID]; ok {
-		return ws, nil
+	ws, ok := wf.workspaces[instanceID]
+	if !ok {
+		// if the workspace is not in memory ws-daemon probabably has been restarted
+		// in that case we reload it from disk
+		path := filepath.Join(wf.Location, fmt.Sprintf("%s.workspace.json", instanceID))
+		loadWs, err := loadWorkspace(ctx, path)
+		if err != nil {
+			return nil, err
+		}
+
+		if loadWs.NonPersistentAttrs == nil {
+			loadWs.NonPersistentAttrs = make(map[string]interface{})
+		}
+
+		ws = loadWs
 	}
 
-	// if the workspace is not in memory ws-daemon probabably has been restarted
-	// reload from disk and reconnect the workspace in that case
-	path := filepath.Join(wf.Location, fmt.Sprintf("%s.workspace.json", instanceID))
-	ws, err := loadWorkspace(ctx, path)
+	err := wf.runLifecycleHooks(ctx, ws, session.WorkspaceReady)
 	if err != nil {
 		return nil, err
 	}
-
-	if ws.NonPersistentAttrs == nil {
-		ws.NonPersistentAttrs = make(map[string]interface{})
-	}
-
-	log.Infof("Reconnecting workspace %s to IWS", instanceID)
-	err = wf.runLifecycleHooks(ctx, ws, session.WorkspaceReady)
-	if err != nil {
-		return nil, err
-	}
+	wf.workspaces[instanceID] = ws
 
 	return ws, nil
 }
