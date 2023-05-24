@@ -28,6 +28,7 @@ export class OrgOnlyMigrationJob implements Job {
                 .createQueryBuilder("user")
                 .leftJoinAndSelect("user.identities", "identity")
                 .where("additionalData->>'$.isMigratedToTeamOnlyAttribution' != 'true'")
+                .orWhere("additionalData->>'$.isMigratedToTeamOnlyAttribution' IS NULL")
                 .limit(limit)
                 .getMany();
 

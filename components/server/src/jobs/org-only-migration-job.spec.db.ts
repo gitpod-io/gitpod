@@ -54,7 +54,7 @@ describe("Migration Job", () => {
         AdditionalUserData.set(migratedUser, { isMigratedToTeamOnlyAttribution: true });
         await userDB.storeUser(migratedUser);
         const nonMigratedUser = await userDB.newUser();
-        AdditionalUserData.set(nonMigratedUser, { isMigratedToTeamOnlyAttribution: false });
+        AdditionalUserData.set(nonMigratedUser, { isMigratedToTeamOnlyAttribution: undefined });
         await userDB.storeUser(nonMigratedUser);
 
         const users = await migrationJob.migrateUsers(1000);
