@@ -5,7 +5,7 @@
  */
 
 import { UserEnvVar, UserEnvVarValue } from "@gitpod/gitpod-protocol";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
@@ -39,22 +39,19 @@ function AddEnvVarModal(p: EnvVarModalProps) {
     }, [p.envVar]);
 
     const isNew = !p.envVar.id;
-    let save = () => {
+    let save = useCallback(async () => {
         const v = ref.current;
         const errorMsg = p.validate(v);
         if (!!errorMsg) {
             setError(errorMsg);
-            return false;
         } else {
-            p.save(v);
+            await p.save(v);
             p.onClose();
-            return true;
         }
-    };
+    }, [p]);
 
     return (
-        // TODO: Use title and buttons props
-        <Modal visible={true} onClose={p.onClose} onEnter={save}>
+        <Modal visible={true} onClose={p.onClose} onSubmit={save}>
             <ModalHeader>{isNew ? "New" : "Edit"} Variable</ModalHeader>
             <ModalBody>
                 {error ? (
@@ -106,7 +103,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 <Button type="secondary" onClick={p.onClose}>
                     Cancel
                 </Button>
-                <Button onClick={save}>{isNew ? "Add" : "Update"} Variable</Button>
+                <Button htmlType="submit">{isNew ? "Add" : "Update"} Variable</Button>
             </ModalFooter>
         </Modal>
     );
@@ -264,6 +261,7 @@ export default function EnvVars() {
                     </Item>
                     {envVars.map((variable) => (
                         <EnvironmentVariableEntry
+                            key={variable.id}
                             variable={variable}
                             edit={edit}
                             confirmDeleteVariable={confirmDeleteVariable}
