@@ -18,8 +18,6 @@ import { Config } from "./config";
 import { reportSessionWithJWT } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
-import { JwtPayload } from "jsonwebtoken";
-import { User } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class SessionHandlerProvider {
