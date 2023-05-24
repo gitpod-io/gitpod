@@ -590,8 +590,7 @@ export function RepositoryNotFound(p: { error: StartWorkspaceError }) {
 
     if (!updatedRecently) {
         return renderError(
-            `Permission to access private repositories has been granted. If you are a member of{" "}
-                '${owner}', please try to request access for Gitpod.`,
+            `Permission to access private repositories has been granted. If you are a member of '${owner}', please try to request access for Gitpod.`,
             "Request access",
             authorizeURL,
         );
