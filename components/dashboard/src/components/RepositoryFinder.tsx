@@ -16,6 +16,7 @@ interface RepositoryFinderProps {
     maxDisplayItems?: number;
     setSelection?: (selection: string) => void;
     onError?: (error: string) => void;
+    disabled?: boolean;
 }
 
 function stripOffProtocol(url: string): string {
@@ -97,6 +98,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             getElements={getElements}
             expanded={!props.initialValue}
             onSelectionChange={props.setSelection}
+            disabled={props.disabled}
             searchPlaceholder="Paste repository URL or type to find suggestions"
         >
             {element}

@@ -14,6 +14,7 @@ interface SelectWorkspaceClassProps {
     selectedWorkspaceClass?: string;
     onSelectionChange: (workspaceClass: string) => void;
     setError?: (error?: string) => void;
+    disabled?: boolean;
 }
 
 export default function SelectWorkspaceClassComponent(props: SelectWorkspaceClassProps) {
@@ -68,6 +69,7 @@ export default function SelectWorkspaceClassComponent(props: SelectWorkspaceClas
             searchPlaceholder="Select class"
             disableSearch={true}
             allOptions={selectedWsClass?.id}
+            disabled={props.disabled}
         >
             <WorkspaceClassDropDownElementSelected wsClass={selectedWsClass} />
         </DropDown2>
