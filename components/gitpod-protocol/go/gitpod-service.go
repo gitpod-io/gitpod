@@ -101,7 +101,6 @@ type APIInterface interface {
 	GetUserProjects(ctx context.Context) ([]*Project, error)
 	GetTeamProjects(ctx context.Context, teamID string) ([]*Project, error)
 
-	InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error)
 	WorkspaceUpdates(ctx context.Context, workspaceID string) (<-chan *WorkspaceInstance, error)
 
 	// GetIDToken doesn't actually do anything, it just authorises
@@ -312,7 +311,6 @@ type APIoverJSONRPC struct {
 	log *logrus.Entry
 
 	mu            sync.RWMutex
-	instanceSubs  map[string]map[chan *WorkspaceInstance]struct{}
 	workspaceSubs map[string]map[chan *WorkspaceInstance]struct{}
 }
 
@@ -327,37 +325,6 @@ func (gp *APIoverJSONRPC) Close() (err error) {
 		return e1
 	}
 	return nil
-}
-
-// InstanceUpdates subscribes to workspace instance updates until the context is canceled or the workspace
-// instance is stopped.
-func (gp *APIoverJSONRPC) InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error) {
-	if gp == nil {
-		return nil, errNotConnected
-	}
-	chn := make(chan *WorkspaceInstance)
-
-	gp.mu.Lock()
-	if gp.instanceSubs == nil {
-		gp.instanceSubs = make(map[string]map[chan *WorkspaceInstance]struct{})
-	}
-	if sub, ok := gp.instanceSubs[instanceID]; ok {
-		sub[chn] = struct{}{}
-	} else {
-		gp.instanceSubs[instanceID] = map[chan *WorkspaceInstance]struct{}{chn: {}}
-	}
-	gp.mu.Unlock()
-
-	go func() {
-		<-ctx.Done()
-
-		gp.mu.Lock()
-		delete(gp.instanceSubs[instanceID], chn)
-		close(chn)
-		gp.mu.Unlock()
-	}()
-
-	return chn, nil
 }
 
 // WorkspaceUpdates subscribes to workspace instance updates until the context is canceled
@@ -408,19 +375,13 @@ func (gp *APIoverJSONRPC) handler(ctx context.Context, conn *jsonrpc2.Conn, req 
 
 	gp.mu.RLock()
 	defer gp.mu.RUnlock()
-	for chn := range gp.instanceSubs[instance.ID] {
-		select {
-		case chn <- &instance:
-		default:
-		}
-	}
-	for chn := range gp.instanceSubs[""] {
-		select {
-		case chn <- &instance:
-		default:
-		}
-	}
 	for chn := range gp.workspaceSubs[instance.WorkspaceID] {
+		select {
+		case chn <- &instance:
+		default:
+		}
+	}
+	for chn := range gp.workspaceSubs[""] {
 		select {
 		case chn <- &instance:
 		default:
