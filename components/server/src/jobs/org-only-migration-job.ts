@@ -44,6 +44,6 @@ export class OrgOnlyMigrationJob implements Job {
     }
 
     public async run(): Promise<void> {
-        await this.migrateUsers(1); // in prod we do ~300 / minute
+        await this.migrateUsers(1500); // in prod we do ~300 / minute
     }
 }
