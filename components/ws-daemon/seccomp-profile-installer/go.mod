@@ -3,7 +3,7 @@ module github.com/gitpod-io/gitpod/ws-daemon/seccomp-profile-installer
 go 1.19
 
 require (
-	github.com/containerd/containerd v1.6.20
+	github.com/containerd/containerd v1.6.21
 	github.com/opencontainers/runtime-spec v1.1.0-rc.1
 )
 

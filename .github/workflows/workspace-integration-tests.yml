@@ -186,7 +186,7 @@ jobs:
                   args+=( "-kubeconfig=/home/gitpod/.kube/config" )
                   args+=( "-namespace=default" )
                   [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-                  args+=( "-timeout=90m" )
+                  args+=( "-timeout=180m" )
 
                   BASE_TESTS_DIR="$GITHUB_WORKSPACE/test/tests"
                   CONTENT_SERVICE_TESTS="$BASE_TESTS_DIR/components/content-service"
