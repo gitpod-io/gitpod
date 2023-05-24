@@ -136,6 +136,7 @@ import { OTSGarbageCollector } from "./jobs/ots-gc";
 import { UserToTeamMigrationService } from "./migration/user-to-team-migration-service";
 import { SnapshotsJob } from "./jobs/snapshots";
 import { OrgOnlyMigrationJob } from "./jobs/org-only-migration-job";
+import { APIStatsService } from "./api/stats";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Config).toConstantValue(ConfigFile.fromFile());
@@ -332,6 +333,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(APIUserService).toSelf().inSingletonScope();
     bind(APITeamsService).toSelf().inSingletonScope();
     bind(APIWorkspacesService).toSelf().inSingletonScope();
+    bind(APIStatsService).toSelf().inSingletonScope();
     bind(API).toSelf().inSingletonScope();
 
     bind(AuthJWT).toSelf().inSingletonScope();

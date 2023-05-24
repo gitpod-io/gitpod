@@ -15,16 +15,19 @@ import { expressConnectMiddleware } from "@bufbuild/connect-express";
 import { UserService as UserServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/user_connectweb";
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import { WorkspacesService as WorkspacesServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/workspaces_connectweb";
+import { StatsService } from "@gitpod/public-api/lib/gitpod/experimental/v1/stats_connectweb";
 import { AddressInfo } from "net";
 import { APIWorkspacesService } from "./workspaces";
+import { APIStatsService } from "./stats";
 
 @injectable()
 export class API {
     @inject(APIUserService) protected readonly apiUserService: APIUserService;
     @inject(APITeamsService) protected readonly apiTeamService: APITeamsService;
     @inject(APIWorkspacesService) protected readonly apiWorkspacesService: APIWorkspacesService;
+    @inject(APIStatsService) protected readonly apiStatsService: APIStatsService;
 
-    public listen(port: number): http.Server {
+    public listen(): http.Server {
         const app = express();
         this.register(app);
 
@@ -42,6 +45,7 @@ export class API {
                     router.service(UserServiceDefinition, this.apiUserService);
                     router.service(TeamsServiceDefinition, this.apiTeamService);
                     router.service(WorkspacesServiceDefinition, this.apiWorkspacesService);
+                    router.service(StatsService, this.apiStatsService);
                 },
             }),
         );
