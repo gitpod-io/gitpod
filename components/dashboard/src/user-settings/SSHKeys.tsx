@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import Alert from "../components/Alert";
 import { Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -15,6 +15,7 @@ import dayjs from "dayjs";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { EmptyMessage } from "../components/EmptyMessage";
+import { Button } from "../components/Button";
 
 interface AddModalProps {
     value: SSHPublicKeyValue;
@@ -46,81 +47,77 @@ export function AddSSHKeyModal(props: AddModalProps) {
         const tmp = SSHPublicKeyValue.validate(value);
         if (tmp) {
             setErrorMsg(tmp);
-            return false;
+            return;
         }
         try {
             await getGitpodService().server.addSSHPublicKey(value);
+            props.onClose();
+            props.onSave();
         } catch (e) {
             setErrorMsg(e.message.replace("Request addSSHPublicKey failed with message: ", ""));
-            return false;
+            return;
         }
-        props.onClose();
-        props.onSave();
-        return true;
     };
 
     return (
-        <Modal
-            title="New SSH Key"
-            buttons={
-                <button className="ml-2" onClick={save}>
-                    Add SSH Key
-                </button>
-            }
-            visible={true}
-            onClose={props.onClose}
-            onEnter={save}
-        >
-            <>
+        <Modal visible onClose={props.onClose} onSubmit={save}>
+            <ModalHeader>New SSH Key</ModalHeader>
+            <ModalBody>
                 {errorMsg.length > 0 && (
                     <Alert type="error" className="mb-2">
                         {errorMsg}
                     </Alert>
                 )}
-            </>
-            <div className="text-gray-500 dark:text-gray-400 text-md">
-                Add an SSH key for secure access workspaces via SSH.{" "}
-                <a href="/docs/configure/ssh" target="gitpod-ssh-doc" className="gp-link">
-                    Learn more
-                </a>
-            </div>
-            <Alert type="info" className="mt-2">
-                SSH key are used to connect securely to workspaces.{" "}
-                <a
-                    href="https://www.gitpod.io/docs/configure/ssh#create-an-ssh-key"
-                    target="gitpod-create-ssh-key-doc"
-                    className="gp-link"
-                >
-                    Learn how to create an SSH Key
-                </a>
-            </Alert>
-            <div className="mt-2">
-                <h4>Key</h4>
-                <textarea
-                    autoFocus
-                    style={{ height: "160px" }}
-                    className="w-full resize-none"
-                    value={value.key}
-                    placeholder="Begins with 'ssh-rsa', 'ecdsa-sha2-nistp256',
+                <div className="text-gray-500 dark:text-gray-400 text-md">
+                    Add an SSH key for secure access workspaces via SSH.{" "}
+                    <a href="/docs/configure/ssh" target="gitpod-ssh-doc" className="gp-link">
+                        Learn more
+                    </a>
+                </div>
+                <Alert type="info" className="mt-2">
+                    SSH key are used to connect securely to workspaces.{" "}
+                    <a
+                        href="https://www.gitpod.io/docs/configure/ssh#create-an-ssh-key"
+                        target="gitpod-create-ssh-key-doc"
+                        className="gp-link"
+                    >
+                        Learn how to create an SSH Key
+                    </a>
+                </Alert>
+                <div className="mt-2">
+                    <h4>Key</h4>
+                    <textarea
+                        autoFocus
+                        style={{ height: "160px" }}
+                        className="w-full resize-none"
+                        value={value.key}
+                        placeholder="Begins with 'ssh-rsa', 'ecdsa-sha2-nistp256',
                         'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521',
                         'ssh-ed25519',
                         'sk-ecdsa-sha2-nistp256@openssh.com', or
                         'sk-ssh-ed25519@openssh.com'"
-                    onChange={(v) => update({ key: v.target.value })}
-                />
-            </div>
-            <div className="mt-4">
-                <h4>Title</h4>
-                <input
-                    className="w-full"
-                    type="text"
-                    placeholder="e.g. laptop"
-                    value={value.name}
-                    onChange={(v) => {
-                        update({ name: v.target.value });
-                    }}
-                />
-            </div>
+                        onChange={(v) => update({ key: v.target.value })}
+                    />
+                </div>
+                <div className="mt-4">
+                    <h4>Title</h4>
+                    <input
+                        className="w-full"
+                        type="text"
+                        placeholder="e.g. laptop"
+                        value={value.name}
+                        onChange={(v) => {
+                            update({ name: v.target.value });
+                        }}
+                    />
+                </div>
+            </ModalBody>
+            <ModalFooter>
+                <Button type="secondary" onClick={props.onClose}>
+                    Cancel
+                </Button>
+                <Button htmlType="submit">Add SSH Key</Button>
+            </ModalFooter>
         </Modal>
     );
 }
