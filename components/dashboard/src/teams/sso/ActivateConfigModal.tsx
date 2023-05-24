@@ -27,18 +27,12 @@ export const ActivateConfigModal: FC<Props> = ({ configId, hasActiveConfig, onCl
             return;
         }
 
-        activateClient.mutate(
-            { id: config.id },
-            {
-                onSuccess: () => {
-                    toast("Single sign-on configuration was activated.");
-                    onClose();
-                },
-                onError: (error) => {
-                    console.error(error);
-                },
-            },
-        );
+        try {
+            await activateClient.mutateAsync({ id: config.id });
+
+            toast("Single sign-on configuration was activated.");
+            onClose();
+        } catch (e) {}
     }, [activateClient, config, onClose, toast]);
 
     // We should already have the config in all the scenarios we show this modal. If we don't, wait for it.
@@ -56,7 +50,6 @@ export const ActivateConfigModal: FC<Props> = ({ configId, hasActiveConfig, onCl
             }}
             buttonText="Activate"
             buttonType="primary"
-            buttonLoading={activateClient.isLoading}
             warningText={
                 hasActiveConfig
                     ? "Activating this SSO configuration will also deactivate the currently active configuration."

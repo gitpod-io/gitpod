@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import Alert from "../components/Alert";
 import { Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
@@ -123,11 +123,12 @@ export function AddSSHKeyModal(props: AddModalProps) {
 }
 
 export function DeleteSSHKeyModal(props: DeleteModalProps) {
-    const confirmDelete = async () => {
+    const confirmDelete = useCallback(async () => {
         await getGitpodService().server.deleteSSHPublicKey(props.value.id!);
         props.onConfirm();
         props.onClose();
-    };
+    }, [props]);
+
     return (
         <ConfirmationModal
             title="Delete SSH Key"
@@ -223,7 +224,7 @@ export default function SSHKeys() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
                     {dataList.map((key) => {
                         return (
-                            <Item solid className="items-start">
+                            <Item key={key.id} solid className="items-start">
                                 <KeyItem sshKey={key}></KeyItem>
                                 <ItemFieldContextMenu
                                     position="start"

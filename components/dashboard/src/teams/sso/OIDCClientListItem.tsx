@@ -108,7 +108,6 @@ export const OIDCClientListItem: FC<Props> = ({ clientConfig, hasActiveConfig, o
                         description: clientConfig.oauth2Config?.clientId ?? "",
                     }}
                     buttonText="Remove"
-                    buttonLoading={deleteOIDCClient.isLoading}
                     warningText={
                         clientConfig.active
                             ? "Warning, you are about to remove the active SSO configuration. If you continue, SSO will be disabled for your organization and no one, including yourself, will be able to log in."

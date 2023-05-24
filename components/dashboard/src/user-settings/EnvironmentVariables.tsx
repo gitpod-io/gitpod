@@ -116,8 +116,8 @@ function DeleteEnvVarModal(p: { variable: UserEnvVarValue; deleteVariable: () =>
             areYouSureText="Are you sure you want to delete this variable?"
             buttonText="Delete Variable"
             onClose={p.onClose}
-            onConfirm={() => {
-                p.deleteVariable();
+            onConfirm={async () => {
+                await p.deleteVariable();
                 p.onClose();
             }}
         >
@@ -213,7 +213,7 @@ export default function EnvVars() {
             {isDeleteEnvVarModalVisible && (
                 <DeleteEnvVarModal
                     variable={currentEnvVar}
-                    deleteVariable={() => deleteVariable(currentEnvVar)}
+                    deleteVariable={async () => await deleteVariable(currentEnvVar)}
                     onClose={() => setDeleteEnvVarModalVisible(false)}
                 />
             )}

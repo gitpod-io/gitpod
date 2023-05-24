@@ -6,89 +6,85 @@
 
 import Alert from "./Alert";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "./Modal";
-import { useRef, useEffect, ReactNode } from "react";
+import { FC, ReactNode, useCallback, useState } from "react";
 import { Button, ButtonProps } from "./Button";
 
-export default function ConfirmationModal(props: {
+type Props = {
     title?: string;
     areYouSureText?: string;
     children?: Entity | ReactNode;
     buttonText?: string;
     buttonDisabled?: boolean;
-    buttonLoading?: boolean;
     buttonType?: ButtonProps["type"];
     visible?: boolean;
     warningHead?: string;
     warningText?: string;
     footerAlert?: ReactNode;
     onClose: () => void;
-    onConfirm: () => void;
-}) {
-    const buttonType = props.buttonType || "danger";
-    const cancelButtonRef = useRef<HTMLButtonElement>(null);
+    onConfirm: () => void | Promise<void>;
+};
+export const ConfirmationModal: FC<Props> = ({
+    title = "Confirm",
+    areYouSureText,
+    children,
+    buttonText = "Yes, I'm Sure",
+    buttonDisabled,
+    buttonType = "danger",
+    visible,
+    warningHead,
+    warningText,
+    footerAlert,
+    onClose,
+    onConfirm,
+}) => {
+    const [isLoading, setIsLoading] = useState(false);
+    const handleSubmit = useCallback(async () => {
+        setIsLoading(true);
 
-    const buttonDisabled = useRef(props.buttonDisabled);
-    useEffect(() => {
-        buttonDisabled.current = props.buttonDisabled;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        await onConfirm();
+
+        setIsLoading(false);
+    }, [onConfirm]);
 
     return (
-        <Modal
-            visible={props.visible === undefined ? true : props.visible}
-            onClose={props.onClose}
-            onEnter={() => {
-                if (cancelButtonRef?.current?.contains(document.activeElement)) {
-                    props.onClose();
-                    return false;
-                }
-                if (buttonDisabled.current) {
-                    return false;
-                }
-                props.onConfirm();
-                return true;
-            }}
-        >
-            <ModalHeader>{props.title || "Confirm"}</ModalHeader>
+        <Modal visible={visible === undefined ? true : visible} onClose={onClose} onSubmit={handleSubmit}>
+            <ModalHeader>{title}</ModalHeader>
             <ModalBody>
-                {props.warningText && (
+                {warningText && (
                     <Alert type="warning" className="mb-4">
-                        <strong>{props.warningHead}</strong>
-                        {props.warningHead ? ": " : ""}
-                        {props.warningText}
+                        <strong>{warningHead}</strong>
+                        {warningHead ? ": " : ""}
+                        {warningText}
                     </Alert>
                 )}
-                <p className="mb-3 text-base text-gray-500">{props.areYouSureText}</p>
-                {isEntity(props.children) ? (
+                <p className="mb-3 text-base text-gray-500">{areYouSureText}</p>
+                {isEntity(children) ? (
                     <div className="w-full p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-xl group">
-                        <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">
-                            {props.children.name}
-                        </p>
-                        {props.children.description && (
-                            <p className="text-gray-500 truncate">{props.children.description}</p>
-                        )}
+                        <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{children.name}</p>
+                        {children.description && <p className="text-gray-500 truncate">{children.description}</p>}
                     </div>
                 ) : (
-                    props.children
+                    children
                 )}
             </ModalBody>
-            <ModalFooter alert={props.footerAlert}>
-                <Button type="secondary" onClick={props.onClose} autoFocus ref={cancelButtonRef}>
+            <ModalFooter alert={footerAlert}>
+                <Button type="secondary" onClick={onClose} autoFocus>
                     Cancel
                 </Button>
                 <Button
+                    htmlType="submit"
                     type={buttonType}
                     className="ml-2"
-                    onClick={props.onConfirm}
-                    disabled={props.buttonDisabled}
-                    loading={props.buttonLoading}
+                    disabled={buttonDisabled}
+                    loading={isLoading}
                 >
-                    {props.buttonText || "Yes, I'm Sure"}
+                    {buttonText}
                 </Button>
             </ModalFooter>
         </Modal>
     );
-}
+};
+export default ConfirmationModal;
 
 export interface Entity {
     name: string;

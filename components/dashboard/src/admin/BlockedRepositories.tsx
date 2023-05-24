@@ -114,7 +114,7 @@ export function BlockedRepositoriesList(props: Props) {
                 {isDeleteModalVisible && (
                     <DeleteBlockedRepositoryModal
                         blockedRepository={currentBlockedRepository}
-                        deleteBlockedRepository={() => deleteBlockedRepository(currentBlockedRepository)}
+                        deleteBlockedRepository={async () => await deleteBlockedRepository(currentBlockedRepository)}
                         onClose={() => setDeleteModalVisible(false)}
                     />
                 )}
@@ -263,8 +263,8 @@ function DeleteBlockedRepositoryModal(props: {
             areYouSureText="Are you sure you want to delete this repository from the list?"
             buttonText="Delete Blocked Repository"
             onClose={props.onClose}
-            onConfirm={() => {
-                props.deleteBlockedRepository();
+            onConfirm={async () => {
+                await props.deleteBlockedRepository();
                 props.onClose();
             }}
         >
