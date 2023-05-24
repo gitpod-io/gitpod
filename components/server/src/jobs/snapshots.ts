@@ -18,7 +18,6 @@ export class SnapshotsJob implements Job {
     @inject(Config) protected readonly config: Config;
 
     public name = "snapshots";
-    public lockId = ["snapshots"];
     public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
     public async run(): Promise<void> {

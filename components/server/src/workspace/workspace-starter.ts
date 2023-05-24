@@ -300,7 +300,7 @@ export class WorkspaceStarter {
                 options.workspaceClass,
             );
             // we run the actual creation of a new instance in a distributed lock, to make sure we always only start one instance per workspace.
-            await this.redisMutex.using(["workspace-start", workspace.id], 2000, async () => {
+            await this.redisMutex.using(["workspace-start-" + workspace.id], 2000, async () => {
                 const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspace.id);
                 if (runningInstance) {
                     throw new Error(`Workspace ${workspace.id} is already running`);

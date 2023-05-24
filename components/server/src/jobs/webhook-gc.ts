@@ -17,7 +17,6 @@ export class WebhookEventGarbageCollector implements Job {
     @inject(WebhookEventDB) protected readonly db: WebhookEventDB;
 
     public name = "webhook-gc";
-    public lockId = ["webhook-gc"];
     public frequencyMs = 4 * 60 * 1000; // every 4 minutes
 
     public async run(): Promise<void> {
