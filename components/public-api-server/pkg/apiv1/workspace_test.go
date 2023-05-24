@@ -80,6 +80,63 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 	})
 }
 
+func TestWorkspaceService_StartWorkspace(t *testing.T) {
+
+	workspaceID := workspaceTestData[0].Protocol.Workspace.ID
+
+	t.Run("invalid argument when workspace ID is missing", func(t *testing.T) {
+		_, client := setupWorkspacesService(t)
+
+		_, err := client.StartWorkspace(context.Background(), connect.NewRequest(&v1.StartWorkspaceRequest{
+			WorkspaceId: "",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when workspace ID does not validate", func(t *testing.T) {
+		_, client := setupWorkspacesService(t)
+
+		_, err := client.StartWorkspace(context.Background(), connect.NewRequest(&v1.StartWorkspaceRequest{
+			WorkspaceId: "some-random-not-valid-workspace-id",
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("not found when workspace does not exist", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().StartWorkspace(gomock.Any(), workspaceID, &protocol.StartWorkspaceOptions{}).Return(nil, &jsonrpc2.Error{
+			Code:    404,
+			Message: "not found",
+		})
+
+		_, err := client.StartWorkspace(context.Background(), connect.NewRequest(&v1.StartWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	})
+
+	t.Run("delegates to server", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		serverMock.EXPECT().StartWorkspace(gomock.Any(), workspaceID, &protocol.StartWorkspaceOptions{}).Return(&protocol.StartWorkspaceResult{
+			InstanceID:   workspaceTestData[0].Protocol.LatestInstance.ID,
+			WorkspaceURL: workspaceTestData[0].Protocol.LatestInstance.IdeURL,
+		}, nil)
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
+
+		resp, err := client.StartWorkspace(context.Background(), connect.NewRequest(&v1.StartWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.NoError(t, err)
+
+		requireEqualProto(t, workspaceTestData[0].API, resp.Msg.GetResult())
+	})
+}
+
 func TestWorkspaceService_StopWorkspace(t *testing.T) {
 
 	workspaceID := workspaceTestData[0].Protocol.Workspace.ID
@@ -123,13 +180,14 @@ func TestWorkspaceService_StopWorkspace(t *testing.T) {
 		serverMock, client := setupWorkspacesService(t)
 
 		serverMock.EXPECT().StopWorkspace(gomock.Any(), workspaceID).Return(nil)
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
 
 		resp, err := client.StopWorkspace(context.Background(), connect.NewRequest(&v1.StopWorkspaceRequest{
 			WorkspaceId: workspaceID,
 		}))
 		require.NoError(t, err)
 
-		requireEqualProto(t, &v1.StopWorkspaceResponse{}, resp.Msg)
+		requireEqualProto(t, workspaceTestData[0].API, resp.Msg.GetResult())
 	})
 }
 

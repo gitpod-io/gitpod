@@ -18,6 +18,8 @@ import {
     GetWorkspaceResponse,
     ListWorkspacesRequest,
     ListWorkspacesResponse,
+    StartWorkspaceRequest,
+    StartWorkspaceResponse,
     StopWorkspaceRequest,
     StopWorkspaceResponse,
     StreamWorkspaceStatusRequest,
@@ -45,6 +47,10 @@ export class APIWorkspacesService implements ServiceImpl<typeof WorkspacesServic
     }
 
     async createAndStartWorkspace(req: CreateAndStartWorkspaceRequest): Promise<CreateAndStartWorkspaceResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+
+    async startWorkspace(req: StartWorkspaceRequest): Promise<StartWorkspaceResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 

@@ -521,19 +521,9 @@ export class CreateAndStartWorkspaceResponse extends Message<CreateAndStartWorks
  */
 export class StartWorkspaceRequest extends Message<StartWorkspaceRequest> {
   /**
-   * @generated from field: string idempotency_token = 1;
-   */
-  idempotencyToken = "";
-
-  /**
-   * @generated from field: string workspace_id = 2;
+   * @generated from field: string workspace_id = 1;
    */
   workspaceId = "";
-
-  /**
-   * @generated from field: gitpod.experimental.v1.StartWorkspaceSpec spec = 3;
-   */
-  spec?: StartWorkspaceSpec;
 
   constructor(data?: PartialMessage<StartWorkspaceRequest>) {
     super();
@@ -543,9 +533,7 @@ export class StartWorkspaceRequest extends Message<StartWorkspaceRequest> {
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.StartWorkspaceRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "idempotency_token", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "spec", kind: "message", T: StartWorkspaceSpec },
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StartWorkspaceRequest {
@@ -570,14 +558,9 @@ export class StartWorkspaceRequest extends Message<StartWorkspaceRequest> {
  */
 export class StartWorkspaceResponse extends Message<StartWorkspaceResponse> {
   /**
-   * @generated from field: string instance_id = 1;
+   * @generated from field: gitpod.experimental.v1.Workspace result = 1;
    */
-  instanceId = "";
-
-  /**
-   * @generated from field: string workspace_url = 2;
-   */
-  workspaceUrl = "";
+  result?: Workspace;
 
   constructor(data?: PartialMessage<StartWorkspaceResponse>) {
     super();
@@ -587,8 +570,7 @@ export class StartWorkspaceResponse extends Message<StartWorkspaceResponse> {
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.StartWorkspaceResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "instance_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "workspace_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 1, name: "result", kind: "message", T: Workspace },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StartWorkspaceResponse {
@@ -649,6 +631,11 @@ export class StopWorkspaceRequest extends Message<StopWorkspaceRequest> {
  * @generated from message gitpod.experimental.v1.StopWorkspaceResponse
  */
 export class StopWorkspaceResponse extends Message<StopWorkspaceResponse> {
+  /**
+   * @generated from field: gitpod.experimental.v1.Workspace result = 1;
+   */
+  result?: Workspace;
+
   constructor(data?: PartialMessage<StopWorkspaceResponse>) {
     super();
     proto3.util.initPartial(data, this);
@@ -657,6 +644,7 @@ export class StopWorkspaceResponse extends Message<StopWorkspaceResponse> {
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.StopWorkspaceResponse";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "result", kind: "message", T: Workspace },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StopWorkspaceResponse {

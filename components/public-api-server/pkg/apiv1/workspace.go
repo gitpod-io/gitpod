@@ -40,35 +40,20 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 		return nil, err
 	}
 
-	workspace, err := conn.GetWorkspace(ctx, workspaceID)
+	ws, err := conn.GetWorkspace(ctx, workspaceID)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
 		return nil, proxy.ConvertError(err)
 	}
 
-	instance, err := convertWorkspaceInstance(workspace.LatestInstance, workspace.Workspace.Shareable)
+	workspace, err := convertWorkspaceInfo(ws)
 	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to convert workspace instance.")
-		instance = &v1.WorkspaceInstance{}
+		log.Extract(ctx).WithError(err).Error("Failed to convert workspace.")
+		return nil, err
 	}
 
 	return connect.NewResponse(&v1.GetWorkspaceResponse{
-		Result: &v1.Workspace{
-			WorkspaceId: workspace.Workspace.ID,
-			OwnerId:     workspace.Workspace.OwnerID,
-			ProjectId:   "",
-			Context: &v1.WorkspaceContext{
-				ContextUrl: workspace.Workspace.ContextURL,
-				Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
-					NormalizedContextUrl: workspace.Workspace.ContextURL,
-					Commit:               "",
-				}},
-			},
-			Description: workspace.Workspace.Description,
-			Status: &v1.WorkspaceStatus{
-				Instance: instance,
-			},
-		},
+		Result: workspace,
 	}), nil
 }
 
@@ -221,6 +206,38 @@ func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[
 	), nil
 }
 
+func (s *WorkspaceService) StartWorkspace(ctx context.Context, req *connect.Request[v1.StartWorkspaceRequest]) (*connect.Response[v1.StartWorkspaceResponse], error) {
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = conn.StartWorkspace(ctx, workspaceID, &protocol.StartWorkspaceOptions{})
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to start workspace.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	ws, err := conn.GetWorkspace(ctx, workspaceID)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	workspace, err := convertWorkspaceInfo(ws)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to convert workspace.")
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.StartWorkspaceResponse{Result: workspace}), nil
+}
+
 func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Request[v1.StopWorkspaceRequest]) (*connect.Response[v1.StopWorkspaceResponse], error) {
 	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
@@ -238,7 +255,19 @@ func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Reque
 		return nil, proxy.ConvertError(err)
 	}
 
-	return connect.NewResponse(&v1.StopWorkspaceResponse{}), nil
+	ws, err := conn.GetWorkspace(ctx, workspaceID)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	workspace, err := convertWorkspaceInfo(ws)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to convert workspace.")
+		return nil, err
+	}
+
+	return connect.NewResponse(&v1.StopWorkspaceResponse{Result: workspace}), nil
 }
 
 func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Request[v1.DeleteWorkspaceRequest]) (*connect.Response[v1.DeleteWorkspaceResponse], error) {
