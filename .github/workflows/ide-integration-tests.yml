@@ -5,9 +5,11 @@ on:
             name:
                 required: true
                 description: "The name of the preview environment"
+                default: "latest"
             version:
                 required: true
                 description: "The version of Gitpod to install"
+                default: "latest"
             wsman_mk2:
                 required: false
                 type: boolean
