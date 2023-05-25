@@ -16,7 +16,6 @@ import (
 	contentservice "github.com/gitpod-io/gitpod/installer/pkg/components/content-service"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/spicedb"
 	"github.com/gitpod-io/gitpod/installer/pkg/components/usage"
-	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
@@ -241,19 +240,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	addWsManagerTls := common.WithLocalWsManager(ctx)
 	if addWsManagerTls {
-		secretName := wsmanager.TLSSecretNameClient
-		_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-			if cfg.Workspace != nil && cfg.Workspace.UseWsmanagerMk2 {
-				secretName = wsmanagermk2.TLSSecretNameClient
-			}
-			return nil
-		})
-
 		volumes = append(volumes, corev1.Volume{
 			Name: "ws-manager-client-tls-certs",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
+					SecretName: wsmanagermk2.TLSSecretNameClient,
 				},
 			},
 		})

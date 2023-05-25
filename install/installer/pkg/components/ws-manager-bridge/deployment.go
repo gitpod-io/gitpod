@@ -10,9 +10,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	wsmanager "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -37,19 +35,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	addWsManagerTls := common.WithLocalWsManager(ctx)
 	if addWsManagerTls {
-		secretName := wsmanager.TLSSecretNameClient
-		_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-			if cfg.Workspace != nil && cfg.Workspace.UseWsmanagerMk2 {
-				secretName = wsmanagermk2.TLSSecretNameClient
-			}
-			return nil
-		})
-
 		volumes = append(volumes, corev1.Volume{
 			Name: "ws-manager-client-tls-certs",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					SecretName: secretName,
+					SecretName: wsmanagermk2.TLSSecretNameClient,
 				},
 			},
 		})

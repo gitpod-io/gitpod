@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	wsman "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager"
 
 	certmanagerv1 "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
@@ -22,10 +21,9 @@ func tlssecret(ctx *common.RenderContext) ([]runtime.Object, error) {
 		fmt.Sprintf("%s.%s.svc", Component, ctx.Namespace),
 		Component,
 		fmt.Sprintf("%s-dev", Component),
-
-		fmt.Sprintf("%s.%s.svc", wsman.Component, ctx.Namespace),
-		wsman.Component,
-		fmt.Sprintf("%s-dev", wsman.Component),
+		fmt.Sprintf("%s.%s.svc", "ws-manager", ctx.Namespace),
+		"ws-manager",
+		fmt.Sprintf("%s-dev", "ws-manager"),
 	}
 	clientAltNames := []string{
 		common.RegistryFacadeComponent,
