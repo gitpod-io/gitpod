@@ -25,8 +25,8 @@ export class OAuthController {
 
     private getValidUser(req: express.Request, res: express.Response): User | null {
         if (!req.isAuthenticated() || !User.is(req.user)) {
-            const redirectTarget = encodeURIComponent(`${this.config.hostUrl}api${req.originalUrl}`);
-            const redirectTo = `${this.config.hostUrl}login?returnTo=${redirectTarget}`;
+            const returnToPath = encodeURIComponent(`api${req.originalUrl}`);
+            const redirectTo = `${this.config.hostUrl}login?returnToPath=${returnToPath}`;
             res.redirect(redirectTo);
             return null;
         }
@@ -101,8 +101,8 @@ export class OAuthController {
             if (!oauthClientsApproved || !oauthClientsApproved[clientID]) {
                 const client = await clientRepository.getByIdentifier(clientID);
                 if (client) {
-                    const redirectTarget = encodeURIComponent(`${this.config.hostUrl}api${req.originalUrl}`);
-                    const redirectTo = `${this.config.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
+                    const returnToPath = encodeURIComponent(`api${req.originalUrl}`);
+                    const redirectTo = `${this.config.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnToPath=${returnToPath}`;
                     res.redirect(redirectTo);
                     return false;
                 } else {
