@@ -12,6 +12,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -221,7 +222,11 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 			if controllerutil.ContainsFinalizer(workspace, workspacev1.GitpodFinalizerName) {
 				controllerutil.RemoveFinalizer(workspace, workspacev1.GitpodFinalizerName)
 				if err := r.Update(ctx, workspace); err != nil {
-					return ctrl.Result{}, client.IgnoreNotFound(err)
+					if apierrors.IsNotFound(err) {
+						return ctrl.Result{}, nil
+					} else {
+						return ctrl.Result{}, fmt.Errorf("failed to remove gitpod finalizer from workspace: %w", err)
+					}
 				}
 			}
 
@@ -300,7 +305,7 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		hadFinalizer := controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName)
 		controllerutil.RemoveFinalizer(pod, workspacev1.GitpodFinalizerName)
 		if err := r.Client.Update(ctx, pod); err != nil {
-			return ctrl.Result{}, fmt.Errorf("failed to remove gitpod finalizer: %w", err)
+			return ctrl.Result{}, fmt.Errorf("failed to remove gitpod finalizer from pod: %w", err)
 		}
 
 		if hadFinalizer {
