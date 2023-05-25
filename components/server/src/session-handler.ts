@@ -18,6 +18,7 @@ import { Config } from "./config";
 import { reportSessionWithJWT } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
+import { session } from "passport";
 
 @injectable()
 export class SessionHandlerProvider {
@@ -92,9 +93,23 @@ export class SessionHandlerProvider {
             req.user = user;
 
             req.sessionID = uuidv4();
-            // req.session.id is alias for req.sessionID
-            // https://github.com/expressjs/session/blob/master/README.md?plain=1#LL396C9-L396C19
-            req.session.id = req.sessionID;
+
+            const session: session.Session & Partial<session.SessionData> = {
+                cookie: {
+                    originalMaxAge: this.getCookieOptions(this.config).maxAge!,
+                    ...this.getCookieOptions(this.config),
+                },
+                // req.session.id is alias for req.sessionID
+                // https://github.com/expressjs/session/blob/master/README.md?plain=1#LL396C9-L396C19
+                id: req.sessionID,
+                regenerate: (cb) => session,
+                destroy: (cb) => session,
+                reload: (cb) => session,
+                resetMaxAge: () => session,
+                save: (cb) => session,
+                touch: () => session,
+            };
+            req.session = session;
 
             // Trigger the next middleware in the chain.
             next();
