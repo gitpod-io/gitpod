@@ -18,7 +18,6 @@ import { Config } from "./config";
 import { reportSessionWithJWT } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
-import { session } from "passport";
 
 @injectable()
 export class SessionHandlerProvider {
