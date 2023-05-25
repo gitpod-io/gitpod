@@ -80,9 +80,6 @@ flags:
   components-ws-manager-bridge-app:
     paths:
       - components/ws-manager-bridge/
-  components-ws-manager-app:
-    paths:
-      - components/ws-manager/
   dev-blowtorch-app:
     paths:
       - dev/blowtorch/
