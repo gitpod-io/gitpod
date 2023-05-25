@@ -13,12 +13,6 @@ import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "
 import gitpod from "./images/gitpod.svg";
 import gitpodDark from "./images/gitpod-dark.svg";
 import gitpodIcon from "./icons/gitpod.svg";
-import automate from "./images/welcome/automate.svg";
-import code from "./images/welcome/code.svg";
-import collaborate from "./images/welcome/collaborate.svg";
-import customize from "./images/welcome/customize.svg";
-import fresh from "./images/welcome/fresh.svg";
-import prebuild from "./images/welcome/prebuild.svg";
 import exclamation from "./images/exclamation.svg";
 import { getURLHash } from "./utils";
 import ErrorMessage from "./components/ErrorMessage";
@@ -27,16 +21,6 @@ import { SSOLoginForm } from "./login/SSOLoginForm";
 import { useAuthProviders } from "./data/auth-providers/auth-provider-query";
 import { SetupPending } from "./login/SetupPending";
 import { useNeedsSetup } from "./dedicated-setup/use-needs-setup";
-
-function Item(props: { icon: string; iconSize?: string; text: string }) {
-    const iconSize = props.iconSize || 28;
-    return (
-        <div className="flex-col items-center w-1/3 px-3">
-            <img src={props.icon} alt={props.text} className={`w-${iconSize} m-auto h-24`} />
-            <div className="text-gray-400 text-sm w-36 h-20 text-center">{props.text}</div>
-        </div>
-    );
-}
 
 export function markLoggedIn() {
     document.cookie = GitpodCookie.generateCookie(window.location.hostname);
@@ -139,35 +123,6 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     return (
         <div id="login-container" className="z-50 flex w-screen h-screen">
-            {showWelcome ? (
-                <div id="feature-section" className="flex-grow bg-gray-100 dark:bg-gray-800 w-1/2 hidden lg:block">
-                    <div id="feature-section-column" className="flex max-w-xl h-full mx-auto pt-6">
-                        <div className="flex flex-col px-8 my-auto ml-auto">
-                            <div className="mb-12">
-                                <img src={gitpod} className="h-8 block dark:hidden" alt="Gitpod light theme logo" />
-                                <img src={gitpodDark} className="h-8 hidden dark:block" alt="Gitpod dark theme logo" />
-                            </div>
-                            <div className="mb-10">
-                                <Heading1 className="text-5xl mb-3">Welcome to Gitpod</Heading1>
-                                <Subheading className="text-gray-400 text-lg">
-                                    Spin up fresh cloud development environments for each task, fully automated, in
-                                    seconds.
-                                </Subheading>
-                            </div>
-                            <div className="flex mb-10">
-                                <Item icon={code} text="Always Ready&#x2011;To&#x2011;Code" />
-                                <Item icon={customize} text="Personalize your Workspace" />
-                                <Item icon={automate} text="Automate Your Development Setup" />
-                            </div>
-                            <div className="flex">
-                                <Item icon={prebuild} text="Continuously Prebuild Your Project" />
-                                <Item icon={collaborate} text="Collaborate With Your Team" />
-                                <Item icon={fresh} text="Fresh Workspace For Each New Task" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            ) : null}
             <div id="login-section" className={"flex-grow flex w-full" + (showWelcome ? " lg:w-1/2" : "")}>
                 <div
                     id="login-section-column"
@@ -202,10 +157,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                         </>
                                     ) : (
                                         <>
-                                            <Heading1>Log in{showWelcome ? "" : " to Gitpod"}</Heading1>
-                                            <Subheading className="uppercase text-sm text-gray-400">
-                                                ALWAYS READY-TO-CODE
-                                            </Subheading>
+                                            <Heading1>Log in to Gitpod</Heading1>
                                         </>
                                     )}
                                 </div>
@@ -248,7 +200,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                     {/* If we have the login view showing, show this as well */}
                     {!needsSetup && !needsSetupCheckLoading && (
                         <div className="flex-none mx-auto text-center px-4 pb-4">
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 dark:text-gray-500 text-sm">
                                 By signing in, you agree to our{" "}
                                 <a
                                     className="gp-link hover:text-gray-600"
