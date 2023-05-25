@@ -50,7 +50,7 @@ export class OrgOnlyMigrationJob implements Job<MigrationState> {
     }
 
     public async run(state?: MigrationState): Promise<MigrationState> {
-        const migratedUsers = await this.migrateUsers(1500, state?.migratedUpToCreationDate || "1900-01-01"); // in prod we do ~300 / minute
+        const migratedUsers = await this.migrateUsers(3000, state?.migratedUpToCreationDate || "1900-01-01"); // in prod we do ~300 / minute
         if (migratedUsers.length > 0) {
             const lastUser = migratedUsers[migratedUsers.length - 1];
             return {
