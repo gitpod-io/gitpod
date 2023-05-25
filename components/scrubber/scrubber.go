@@ -113,6 +113,12 @@ func (scrubberImpl) Value(value string) string {
 			return SanitiseHash(s, SanitiseWithKeyName(key))
 		})
 	}
+	for key, expr := range RedactedValues {
+		value = expr.ReplaceAllStringFunc(value, func(s string) string {
+			return SanitiseRedact(s, SanitiseWithKeyName(key))
+		})
+	}
+
 	return value
 }
 

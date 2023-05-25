@@ -18,8 +18,8 @@ func TestValue(t *testing.T) {
 		Expectation string
 	}{
 		{Name: "empty string"},
-		{Name: "email", Value: "foo@bar.com", Expectation: "[redacted:md5:f3ada405ce890b6f8204094deb12d8a8:email]"},
-		{Name: "email in text", Value: "The email is foo@bar.com or bar@foo.com", Expectation: "The email is [redacted:md5:f3ada405ce890b6f8204094deb12d8a8:email] or [redacted:md5:dc8a42aba3651b0b1f088ef928ff3b1d:email]"},
+		{Name: "email", Value: "foo@bar.com", Expectation: "[redacted:email]"},
+		{Name: "email in text", Value: "The email is foo@bar.com or bar@foo.com", Expectation: "The email is [redacted:email] or [redacted:email]"},
 	}
 
 	for _, test := range tests {
@@ -39,7 +39,7 @@ func TestKeyValue(t *testing.T) {
 		Key         string
 		Expectation string
 	}{
-		{Key: "email", Expectation: "[redacted:md5:e9de89b0a5e9ad6efd5e5ab543ec617c]"},
+		{Key: "email", Expectation: "[redacted]"},
 		{Key: "token", Expectation: "[redacted]"},
 	}
 
@@ -79,7 +79,7 @@ func TestStruct(t *testing.T) {
 					Password     string
 					WorkspaceID  string
 					LeaveMeAlone string
-				}{Username: "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]", Email: "[redacted:md5:f3ada405ce890b6f8204094deb12d8a8]", Password: "[redacted]", WorkspaceID: "[redacted:md5:a35538939333def8477b5c19ac694b35]", LeaveMeAlone: "foo"},
+				}{Username: "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]", Email: "[redacted]", Password: "[redacted]", WorkspaceID: "[redacted:md5:a35538939333def8477b5c19ac694b35]", LeaveMeAlone: "foo"},
 			},
 		},
 		{
@@ -92,7 +92,7 @@ func TestStruct(t *testing.T) {
 				},
 			},
 			Expectation: Expectation{
-				Result: &struct{ WithMap map[string]any }{WithMap: map[string]any{"email": string("[redacted:md5:aa7cedb94f5a9a40dc762b156272d991]")}},
+				Result: &struct{ WithMap map[string]any }{WithMap: map[string]any{"email": string("[redacted]")}},
 			},
 		},
 		{
@@ -103,7 +103,7 @@ func TestStruct(t *testing.T) {
 			Expectation: Expectation{
 				Result: &struct {
 					Slice []string
-				}{Slice: []string{"foo", "bar", "[redacted:md5:f3ada405ce890b6f8204094deb12d8a8:email]"}},
+				}{Slice: []string{"foo", "bar", "[redacted:email]"}},
 			},
 		},
 		{
