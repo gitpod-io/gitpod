@@ -18,8 +18,6 @@ import { Config } from "./config";
 import { reportSessionWithJWT } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
-import { JwtPayload } from "jsonwebtoken";
-import { User } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class SessionHandlerProvider {
@@ -47,46 +45,83 @@ export class SessionHandlerProvider {
         options.store = this.createStore();
 
         this.sessionHandler = (req, res, next) => {
-            let hasJWTCookie = false;
-
             const cookies = parseCookieHeader(req.headers.cookie || "");
             const jwtToken = cookies[SessionHandlerProvider.getJWTCookieName(this.config)];
             if (jwtToken) {
                 // we handle the verification async, because we don't yet need to use it in the application
                 /* tslint:disable-next-line */
-                this.jwtSessionHandler(jwtToken)
-                    .then((res) => {
-                        hasJWTCookie = true;
-                    })
+                this.jwtSessionHandler(jwtToken, req, res, next)
+                    // the jwtSessionHandler is self-contained with respect to handling errors
+                    // however, if we did miss any, we at least capture it in here.
                     .catch((err) => {
-                        log.error("Failed to verify JWT Session token", err);
-                    })
-                    .finally(() => {
-                        reportSessionWithJWT(hasJWTCookie);
+                        log.error("Failed authenticate user with JWT Session cookie", err);
+                        res.statusCode = 500;
+                        res.send("Failed to authenticate jwt session.");
                     });
+            } else {
+                session(options)(req, res, next);
             }
-
-            session(options)(req, res, next);
         };
     }
 
-    protected async jwtSessionHandler(jwtToken: string): Promise<[JwtPayload, User]> {
-        const claims = await this.authJWT.verify(jwtToken);
-        log.debug("JWT Session token verified", {
-            claims,
-        });
+    protected async jwtSessionHandler(
+        jwtToken: string,
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+    ): Promise<void> {
+        try {
+            const claims = await this.authJWT.verify(jwtToken);
+            log.debug("JWT Session token verified", {
+                claims,
+            });
 
-        const subject = claims.sub;
-        if (!subject) {
-            throw new Error("Subject is missing from JWT session claims");
+            const subject = claims.sub;
+            if (!subject) {
+                throw new Error("Subject is missing from JWT session claims");
+            }
+
+            const user = await this.userDb.findUserById(subject);
+            if (!user) {
+                throw new Error("No user exists.");
+            }
+
+            // We set the user object on the request to signal the user is authenticated.
+            // Passport uses the `user` property on the request to determine if the session
+            // is authenticated.
+            req.user = user;
+
+            req.sessionID = uuidv4();
+
+            const session: session.Session & Partial<session.SessionData> = {
+                cookie: {
+                    originalMaxAge: this.getCookieOptions(this.config).maxAge!,
+                    ...this.getCookieOptions(this.config),
+                },
+                // req.session.id is alias for req.sessionID
+                // https://github.com/expressjs/session/blob/master/README.md?plain=1#LL396C9-L396C19
+                id: req.sessionID,
+                regenerate: (cb) => session,
+                destroy: (cb) => session,
+                reload: (cb) => session,
+                resetMaxAge: () => session,
+                save: (cb) => session,
+                touch: () => session,
+            };
+            req.session = session;
+
+            // Trigger the next middleware in the chain.
+            next();
+        } catch (err) {
+            log.warn("Failed to authenticate user with JWT Session", err);
+            // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
+            this.clearSessionCookie(res, this.config);
+
+            // Redirect the user to an error page
+            res.redirect(this.config.hostUrl.asSorry(err).toString());
+        } finally {
+            reportSessionWithJWT(true);
         }
-
-        const user = await this.userDb.findUserById(subject);
-        if (!user) {
-            throw new Error("No user exists.");
-        }
-
-        return [claims, user];
     }
 
     protected getCookieOptions(config: Config): express.CookieOptions {
