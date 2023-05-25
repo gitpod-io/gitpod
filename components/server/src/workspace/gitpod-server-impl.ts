@@ -621,15 +621,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     protected checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): User {
-        // Old self-hosted mode did not require a session, therefore it's checked first.
-        // But we need to make sure, it's not triggered if the new Dedicated Onboarding is active.
-        // TODO(gpl): Remove the outer condition once we have an onboarding setup
-        if (!this.enableDedicatedOnboardingFlow) {
-            if (this.showSetupCondition?.value) {
-                throw new ResponseError(ErrorCodes.SETUP_REQUIRED, "Setup required.");
-            }
-        }
-
         // Generally, a user session is required.
         if (!this.user) {
             throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
@@ -674,7 +665,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.checkUser("getLoggedInUser");
     }
 
-    protected showSetupCondition: { value: boolean } | undefined = undefined;
     protected enableDedicatedOnboardingFlow: boolean = false; // TODO(gpl): Remove once we have an onboarding setup
     protected async doUpdateUser(): Promise<void> {
         // Conditionally enable Dedicated Onboarding Flow
@@ -685,22 +675,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 gitpodHost: new URL(this.config.hostUrl.toString()).host,
             },
         );
-        // execute the check for the setup to be shown until the setup is not required.
-        // cf. evaluation of the condition in `checkUser`
-        if (!this.config.showSetupModal) {
-            this.showSetupCondition = { value: false };
-        }
-        if (!this.showSetupCondition || this.showSetupCondition.value === true) {
-            const hasAnyStaticProviders = this.hostContextProvider
-                .getAll()
-                .some((hc) => hc.authProvider.params.builtin === true);
-            if (!hasAnyStaticProviders) {
-                const userCount = await this.userDB.getUserCount();
-                this.showSetupCondition = { value: userCount === 0 };
-            } else {
-                this.showSetupCondition = { value: false };
-            }
-        }
 
         if (this.user) {
             if (this.userToTeamMigrationService.needsMigration(this.user)) {
@@ -3799,22 +3773,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async getOwnAuthProviders(ctx: TraceContext): Promise<AuthProviderEntry[]> {
         const redacted = (entry: AuthProviderEntry) => AuthProviderEntry.redact(entry);
-        let userId: string;
-        try {
-            userId = this.checkAndBlockUser("getOwnAuthProviders").id;
-        } catch (error) {
-            userId = this.acceptNotAuthenticatedForInitialSetup(error);
-        }
+        const userId = this.checkAndBlockUser("getOwnAuthProviders").id;
         const ownAuthProviders = await this.authProviderService.getAuthProvidersOfUser(userId);
         return ownAuthProviders.map(redacted);
-    }
-    protected acceptNotAuthenticatedForInitialSetup(error: any) {
-        if (error && error instanceof ResponseError) {
-            if (error.code === ErrorCodes.NOT_AUTHENTICATED || error.code === ErrorCodes.SETUP_REQUIRED) {
-                return "no-user";
-            }
-        }
-        throw error;
     }
 
     async updateOwnAuthProvider(
@@ -3823,13 +3784,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<AuthProviderEntry> {
         traceAPIParams(ctx, {}); // entry contains PII
 
-        let userId: string;
-        try {
-            userId = this.checkAndBlockUser("updateOwnAuthProvider").id;
-        } catch (error) {
-            userId = this.acceptNotAuthenticatedForInitialSetup(error);
-        }
-
+        const userId = this.checkAndBlockUser("updateOwnAuthProvider").id;
         if (userId !== entry.ownerId) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Not allowed to modify this resource.");
         }
@@ -3882,13 +3837,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async deleteOwnAuthProvider(ctx: TraceContext, params: GitpodServer.DeleteOwnAuthProviderParams): Promise<void> {
         traceAPIParams(ctx, { params });
 
-        let userId: string;
-        try {
-            userId = this.checkAndBlockUser("deleteOwnAuthProvider").id;
-        } catch (error) {
-            userId = this.acceptNotAuthenticatedForInitialSetup(error);
-        }
-
+        const userId = this.checkAndBlockUser("deleteOwnAuthProvider").id;
         const ownProviders = await this.authProviderService.getAuthProvidersOfUser(userId);
         const authProvider = ownProviders.find((p) => p.id === params.id);
         if (!authProvider) {

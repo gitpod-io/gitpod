@@ -21,9 +21,6 @@ const (
 	// 409 Conflict (e.g. already existing)
 	CONFLICT = 409
 
-	// 410 No User
-	SETUP_REQUIRED = 410
-
 	// 411 No User
 	NEEDS_VERIFICATION = 411
 

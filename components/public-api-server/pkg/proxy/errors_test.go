@@ -99,6 +99,6 @@ func TestConvertError(t *testing.T) {
 
 	for _, s := range scenarios {
 		converted := ConvertError(s.Input)
-		require.Equal(t, s.ExpectedError, converted)
+		require.Equal(t, s.ExpectedError, converted, s.Input)
 	}
 }

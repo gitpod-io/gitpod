@@ -59,20 +59,8 @@ export class UserService {
         return hostContext.authProvider.authProviderId;
     }
 
-    private cachedIsFirstUser: boolean | undefined = undefined;
     public async createUser({ identity, token, userUpdate }: CreateUserParams): Promise<User> {
         log.debug("Creating new user.", { identity, "login-flow": true });
-
-        const prevIsFirstUser = this.cachedIsFirstUser;
-        // immediately updating the cached value here without awaiting the async user count
-        // in order to make sure there is no race.
-        this.cachedIsFirstUser = false;
-
-        let isFirstUser = false;
-        if (prevIsFirstUser === undefined) {
-            // check user count only once
-            isFirstUser = (await this.userDb.getUserCount()) === 0;
-        }
 
         let newUser = await this.userDb.newUser();
         if (userUpdate) {
@@ -84,7 +72,7 @@ export class UserService {
         // deleter will take care of them. Reuse of soft-deleted entries would lead to an invalid
         // state. This measure of prevention is considered in the period deleter as well.
         newUser.identities.push({ ...identity, deleted: false });
-        this.handleNewUser(newUser, isFirstUser);
+        this.handleNewUser(newUser);
         newUser = await this.userDb.storeUser(newUser);
         if (token) {
             await this.userDb.storeSingleToken(identity, token);
@@ -99,7 +87,7 @@ export class UserService {
 
         return newUser;
     }
-    protected handleNewUser(newUser: User, isFirstUser: boolean) {
+    protected handleNewUser(newUser: User) {
         if (this.config.blockNewUsers.enabled) {
             const emailDomainInPasslist = (mail: string) =>
                 this.config.blockNewUsers.passlist.some((e) => mail.endsWith(`@${e}`));

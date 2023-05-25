@@ -20,9 +20,6 @@ export namespace ErrorCodes {
     // 409 Conflict (e.g. already existing)
     export const CONFLICT = 409;
 
-    // 410 No User
-    export const SETUP_REQUIRED = 410;
-
     // 411 No User
     export const NEEDS_VERIFICATION = 411;
 

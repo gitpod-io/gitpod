@@ -43,7 +43,6 @@ func categorizeRPCError(err error) *connect.Error {
 		// components/gitpod-protocol/src/messaging/error.ts
 		case 409:
 			return connect.NewError(connect.CodeAlreadyExists, fmt.Errorf(rpcErr.Message))
-		// components/gitpod-protocol/src/messaging/error.ts - SETUP_REQUIRED (no user)
 		case 429:
 			return connect.NewError(connect.CodeResourceExhausted, fmt.Errorf(rpcErr.Message))
 		// components/gitpod-messagebus/src/jsonrpc-server.ts#47
