@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -21,14 +22,13 @@ import (
 type WorkspaceProvider struct {
 	hooks      map[session.WorkspaceState][]session.WorkspaceLivecycleHook
 	Location   string
-	workspaces map[string]*session.Workspace
+	workspaces sync.Map
 }
 
 func NewWorkspaceProvider(hooks map[session.WorkspaceState][]session.WorkspaceLivecycleHook, location string) *WorkspaceProvider {
 	return &WorkspaceProvider{
-		hooks:      hooks,
-		Location:   location,
-		workspaces: make(map[string]*session.Workspace),
+		hooks:    hooks,
+		Location: location,
 	}
 }
 
@@ -50,13 +50,14 @@ func (wf *WorkspaceProvider) Create(ctx context.Context, instanceID, location st
 	if err != nil {
 		return nil, err
 	}
-	wf.workspaces[instanceID] = ws
+
+	wf.workspaces.Store(instanceID, ws)
 
 	return ws, nil
 }
 
 func (wf *WorkspaceProvider) GetAndConnect(ctx context.Context, instanceID string) (*session.Workspace, error) {
-	ws, ok := wf.workspaces[instanceID]
+	ws, ok := wf.workspaces.Load(instanceID)
 	if !ok {
 		// if the workspace is not in memory ws-daemon probabably has been restarted
 		// in that case we reload it from disk
@@ -73,13 +74,13 @@ func (wf *WorkspaceProvider) GetAndConnect(ctx context.Context, instanceID strin
 		ws = loadWs
 	}
 
-	err := wf.runLifecycleHooks(ctx, ws, session.WorkspaceReady)
+	err := wf.runLifecycleHooks(ctx, ws.(*session.Workspace), session.WorkspaceReady)
 	if err != nil {
 		return nil, err
 	}
-	wf.workspaces[instanceID] = ws
+	wf.workspaces.Store(instanceID, ws)
 
-	return ws, nil
+	return ws.(*session.Workspace), nil
 }
 
 func (s *WorkspaceProvider) runLifecycleHooks(ctx context.Context, ws *session.Workspace, state session.WorkspaceState) error {
