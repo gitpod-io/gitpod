@@ -5,16 +5,19 @@
  */
 
 import gitpodIcon from "./icons/gitpod.svg";
-import { getSafeURLRedirect } from "./provider-utils";
 
 export default function OAuthClientApproval() {
     const params = new URLSearchParams(window.location.search);
     const clientName = params.get("clientName") || "";
-    let redirectToParam = params.get("redirectTo") || undefined;
-    if (redirectToParam) {
-        redirectToParam = decodeURIComponent(redirectToParam);
+
+    let redirectTo = "/";
+    const returnToPath = params.get("returnToPath");
+    if (returnToPath) {
+        const isAbsoluteURL = /^https?:\/\//i.test(returnToPath);
+        if (!isAbsoluteURL) {
+            redirectTo = returnToPath;
+        }
     }
-    const redirectTo = getSafeURLRedirect(redirectToParam) || "/";
     const updateClientApproval = async (isApproved: boolean) => {
         if (redirectTo === "/") {
             window.location.replace(redirectTo);

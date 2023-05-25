@@ -9,7 +9,7 @@ import * as GitpodCookie from "@gitpod/gitpod-protocol/lib/util/gitpod-cookie";
 import { useContext, useEffect, useState, useMemo, useCallback, FC } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
-import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName, getSafeURLRedirect } from "./provider-utils";
+import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "./provider-utils";
 import gitpod from "./images/gitpod.svg";
 import gitpodDark from "./images/gitpod-dark.svg";
 import gitpodIcon from "./icons/gitpod.svg";
@@ -92,21 +92,19 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
         markLoggedIn();
     }, [setUser]);
 
-    const authorizeSuccessful = useCallback(
-        async (payload?: string) => {
-            updateUser().catch(console.error);
+    const authorizeSuccessful = useCallback(async () => {
+        updateUser().catch(console.error);
 
-            onLoggedIn && onLoggedIn();
+        onLoggedIn && onLoggedIn();
 
-            // Check for a valid returnTo in payload
-            const safeReturnTo = getSafeURLRedirect(payload);
-            if (safeReturnTo) {
-                // ... and if it is, redirect to it
-                window.location.replace(safeReturnTo);
+        const returnToPath = new URLSearchParams(window.location.search).get("returnToPath");
+        if (returnToPath) {
+            const isAbsoluteURL = /^https?:\/\//i.test(returnToPath);
+            if (!isAbsoluteURL) {
+                window.location.replace(returnToPath);
             }
-        },
-        [onLoggedIn, updateUser],
-    );
+        }
+    }, [onLoggedIn, updateUser]);
 
     const openLogin = useCallback(
         async (host: string) => {

@@ -12,11 +12,7 @@
     <script>
         if (window.opener) {
             const search = new URLSearchParams(window.location.search);
-            let message = search.get("message");
-            const returnTo = search.get("returnTo");
-            if (returnTo) {
-                message = `${message}&returnTo=${encodeURIComponent(returnTo)}`;
-            }
+            const message = search.get("message");
             window.opener.postMessage(message, `https://${window.location.hostname}`);
         } else {
             console.log("This page is supposed to be opened by Gitpod.")
