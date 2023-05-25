@@ -9,7 +9,7 @@ import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { inject, injectable } from "inversify";
 import { RedisMutex } from "../redis/mutex";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { ResourceLockedError } from "redlock";
+import { ExecutionError, ResourceLockedError } from "redlock";
 import { jobsDurationSeconds, reportJobCompleted, reportJobStarted } from "../prometheus-metrics";
 import { DatabaseGarbageCollector } from "./database-gc";
 import { OTSGarbageCollector } from "./ots-gc";
@@ -108,7 +108,7 @@ export class JobRunner {
                 }
             });
         } catch (err) {
-            if (err instanceof ResourceLockedError) {
+            if (err instanceof ResourceLockedError || err instanceof ExecutionError) {
                 log.debug(
                     `Failed to acquire lock for job ${job.name}. Likely another instance already holds the lock.`,
                     err,
