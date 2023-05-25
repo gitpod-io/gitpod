@@ -110,7 +110,8 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	defer tracing.FinishSpan(span, &err)
 
 	if wsm.maintenance.IsEnabled(ctx) {
-		return &wsmanapi.StartWorkspaceResponse{}, status.Error(codes.FailedPrecondition, "under maintenance")
+		return &wsmanapi.StartWorkspaceResponse{}, status.Error(codes.FailedPrecondition,
+			"cannot start a workspace because the workspace cluster is temporarily unavailable due to maintenance. Please try again in a few minutes")
 	}
 
 	if err := validateStartWorkspaceRequest(req); err != nil {
