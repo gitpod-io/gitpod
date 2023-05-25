@@ -5,9 +5,8 @@
  */
 
 import { inject, injectable } from "inversify";
-import Redlock, { ExecutionError, RedlockAbortSignal, ResourceLockedError } from "redlock";
+import Redlock, { RedlockAbortSignal } from "redlock";
 import { RedisClient } from "./client";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class RedisMutex {
@@ -42,21 +41,6 @@ export class RedisMutex {
         duration: number,
         routine: (signal: RedlockAbortSignal) => Promise<T>,
     ): Promise<T> {
-        try {
-            return this.client().using(resources, duration, routine);
-        } catch (err) {
-            if (err instanceof ExecutionError) {
-                // Workaround for https://github.com/mike-marcacci/node-redlock/issues/168 and https://github.com/mike-marcacci/node-redlock/issues/169
-                if (err.message.indexOf("unable to achieve a quorum during its retry window") >= 0) {
-                    log.debug("failed to acquire a lock, another instance already has the lock", err, {
-                        lockKey: resources,
-                    });
-
-                    throw new ResourceLockedError("operation was unable to achieve quorum");
-                }
-            }
-
-            throw err;
-        }
+        return this.client().using(resources, duration, routine);
     }
 }
