@@ -46,6 +46,7 @@ import { WebhookEventDBImpl } from "./typeorm/webhook-event-db-impl";
 import { PersonalAccessTokenDBImpl } from "./typeorm/personal-access-token-db-impl";
 import { LinkedInProfileDBImpl } from "./typeorm/linked-in-profile-db-impl";
 import { LinkedInProfileDB } from "./linked-in-profile-db";
+import { JobStateDbImpl } from "./typeorm/job-state-db-impl";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -109,6 +110,8 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
 
     bind(PersonalAccessTokenDBImpl).toSelf().inSingletonScope();
     bind(PersonalAccessTokenDB).toService(PersonalAccessTokenDBImpl);
+
+    bind(JobStateDbImpl).toSelf().inSingletonScope();
 
     // com concerns
     bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
