@@ -40,7 +40,7 @@ export class SessionHandlerProvider {
             (options.name = SessionHandlerProvider.getCookieName(this.config));
         // options.proxy = true    // TODO SSL Proxy
         options.resave = true; // TODO Check with store! See docu
-        options.rolling = true; // default, new cookie and maxAge
+        options.rolling = false;
         options.secret = this.config.session.secret;
         options.saveUninitialized = false; // Do not save new cookie without content (uninitialized)
 
