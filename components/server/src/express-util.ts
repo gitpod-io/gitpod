@@ -118,11 +118,10 @@ export function bottomErrorHandler(log: (...args: any[]) => void): express.Error
         } else {
             msg = err.toString();
         }
-        log({ sessionId: req.sessionID }, err, {
+        log({}, err, {
             originalUrl: req.originalUrl,
             headers: req.headers,
             cookies: req.cookies,
-            session: req.session,
         });
         if (!isAnsweredRequest(req, response)) {
             response.status(status).send({ error: msg });

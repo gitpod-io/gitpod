@@ -88,7 +88,6 @@ export class IamSessionApp {
         }
 
         return {
-            sessionId: req.sessionID,
             userId: user.id,
         };
     }

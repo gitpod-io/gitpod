@@ -96,12 +96,12 @@ export class Authenticator {
 
     async authenticate(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
         if (req.isAuthenticated()) {
-            log.info({ sessionId: req.sessionID }, `User is already authenticated. Continue.`, { "login-flow": true });
+            log.info({}, `User is already authenticated. Continue.`, { "login-flow": true });
             return next();
         }
         let returnTo: string | undefined = req.query.returnTo?.toString();
         if (returnTo) {
-            log.info({ sessionId: req.sessionID }, `Stored returnTo URL: ${returnTo}`, { "login-flow": true });
+            log.info({}, `Stored returnTo URL: ${returnTo}`, { "login-flow": true });
         }
         // returnTo defaults to workspaces url
         const workspaceUrl = this.config.hostUrl.asDashboard().toString();
@@ -109,13 +109,13 @@ export class Authenticator {
         const host: string = req.query.host?.toString() || "";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!host || !authProvider) {
-            log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { "login-flow": true });
+            log.info({}, `Bad request: missing parameters.`, { "login-flow": true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
         // Logins with organizational Git Auth is not permitted
         if (authProvider.info.organizationId) {
-            log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, {
+            log.info({}, `Login with "${host}" is not permitted.`, {
                 "authorize-flow": true,
                 ap: authProvider.info,
             });
@@ -123,21 +123,14 @@ export class Authenticator {
             return;
         }
         if (this.config.disableDynamicAuthProviderLogin && !authProvider.params.builtin) {
-            log.info({ sessionId: req.sessionID }, `Auth Provider is not allowed.`, { ap: authProvider.info });
+            log.info({}, `Auth Provider is not allowed.`, { ap: authProvider.info });
             res.redirect(this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
-            return;
-        }
-        if (!req.session) {
-            // The session is missing entirely: count as client error
-            increaseLoginCounter("failed_client", authProvider.info.host);
-            log.info({}, `No session.`, { "login-flow": true });
-            res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
             return;
         }
 
         if (!authProvider.info.verified) {
             increaseLoginCounter("failed", authProvider.info.host);
-            log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, {
+            log.info({}, `Login with "${host}" is not permitted.`, {
                 "login-flow": true,
                 ap: authProvider.info,
             });
@@ -157,7 +150,7 @@ export class Authenticator {
     async deauthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
-            log.info({ sessionId: req.sessionID }, `User is not authenticated.`);
+            log.info({}, `User is not authenticated.`);
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
@@ -167,7 +160,7 @@ export class Authenticator {
         const authProvider = host && (await this.getAuthProviderForHost(host));
 
         if (!host || !authProvider) {
-            log.warn({ sessionId: req.sessionID }, `Bad request: missing parameters.`);
+            log.warn({}, `Bad request: missing parameters.`);
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
@@ -177,7 +170,7 @@ export class Authenticator {
             res.redirect(returnTo);
         } catch (error) {
             next(error);
-            log.error({ sessionId: req.sessionID }, `Failed to disconnect a provider.`, error, {
+            log.error({}, `Failed to disconnect a provider.`, error, {
                 host,
                 userId: user.id,
             });
@@ -190,14 +183,9 @@ export class Authenticator {
     }
 
     async authorize(req: express.Request, res: express.Response, next: express.NextFunction) {
-        if (!req.session) {
-            log.info({}, `No session.`, { "authorize-flow": true });
-            res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
-            return;
-        }
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
-            log.info({ sessionId: req.sessionID }, `User is not authenticated.`, { "authorize-flow": true });
+            log.info({}, `User is not authenticated.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
@@ -207,7 +195,7 @@ export class Authenticator {
         const override = req.query.override === "true";
         const authProvider = host && (await this.getAuthProviderForHost(host));
         if (!returnTo || !host || !authProvider) {
-            log.info({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { "authorize-flow": true });
+            log.info({}, `Bad request: missing parameters.`, { "authorize-flow": true });
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
@@ -216,7 +204,7 @@ export class Authenticator {
         if (!authProvider.info.verified && authProvider.info.organizationId) {
             const member = await this.teamDb.findTeamMembership(user.id, authProvider.info.organizationId);
             if (member?.role !== "owner") {
-                log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, {
+                log.info({}, `Authorization with "${host}" is not permitted.`, {
                     "authorize-flow": true,
                     ap: authProvider.info,
                 });
@@ -227,7 +215,7 @@ export class Authenticator {
 
         // For non-verified, non-org auth provider, ensure user is the owner of the auth provider
         if (!authProvider.info.verified && !authProvider.info.organizationId && user.id !== authProvider.info.ownerId) {
-            log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, {
+            log.info({}, `Authorization with "${host}" is not permitted.`, {
                 "authorize-flow": true,
                 ap: authProvider.info,
             });
@@ -239,7 +227,7 @@ export class Authenticator {
         if (authProvider.info.organizationId) {
             const member = await this.teamDb.findTeamMembership(user.id, authProvider.info.organizationId);
             if (!member) {
-                log.info({ sessionId: req.sessionID }, `Authorization with "${host}" is not permitted.`, {
+                log.info({}, `Authorization with "${host}" is not permitted.`, {
                     "authorize-flow": true,
                     ap: authProvider.info,
                 });
@@ -269,10 +257,7 @@ export class Authenticator {
             }
         }
         // authorize Gitpod
-        log.info(
-            { sessionId: req.sessionID },
-            `(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`,
-        );
+        log.info({}, `(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`);
         const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override });
         authProvider.authorize(req, res, next, state, wantedScopes);
     }

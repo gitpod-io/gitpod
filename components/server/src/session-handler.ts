@@ -46,22 +46,15 @@ export class SessionHandler {
         options.store = this.createStore();
 
         this.sessionHandler = (req, res, next) => {
-            const cookies = parseCookieHeader(req.headers.cookie || "");
-            const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
-            if (jwtToken) {
-                // we handle the verification async, because we don't yet need to use it in the application
-                /* tslint:disable-next-line */
-                this.jwtSessionHandler(jwtToken, req, res, next)
-                    // the jwtSessionHandler is self-contained with respect to handling errors
-                    // however, if we did miss any, we at least capture it in here.
-                    .catch((err) => {
-                        log.error("Failed authenticate user with JWT Session cookie", err);
-                        res.statusCode = 500;
-                        res.send("Failed to authenticate jwt session.");
-                    });
-            } else {
-                session(options)(req, res, next);
-            }
+            /* tslint:disable-next-line */
+            this.jwtSessionHandler(req, res, next)
+                // the jwtSessionHandler is self-contained with respect to handling errors
+                // however, if we did miss any, we at least capture it in here.
+                .catch((err) => {
+                    log.error("Failed authenticate user with JWT Session cookie", err);
+                    res.statusCode = 500;
+                    res.send("Failed to authenticate jwt session.");
+                });
         };
     }
 
@@ -130,11 +123,20 @@ export class SessionHandler {
     }
 
     protected async jwtSessionHandler(
-        jwtToken: string,
         req: express.Request,
         res: express.Response,
         next: express.NextFunction,
     ): Promise<void> {
+        const cookies = parseCookieHeader(req.headers.cookie || "");
+        const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
+        if (!jwtToken) {
+            log.debug("No JWT session present on request");
+            // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
+            this.clearSessionCookie(res, this.config);
+
+            // Redirect the user to an error page
+            res.redirect(this.config.hostUrl.asSorry("No credentials present on request, please sign-in.").toString());
+        }
         try {
             const claims = await this.authJWT.verify(jwtToken);
             log.debug("JWT Session token verified", {
@@ -155,39 +157,6 @@ export class SessionHandler {
             // Passport uses the `user` property on the request to determine if the session
             // is authenticated.
             req.user = user;
-
-            req.sessionID = uuidv4();
-
-            const session: session.Session & Partial<session.SessionData> = {
-                cookie: {
-                    originalMaxAge: this.getCookieOptions(this.config).maxAge!,
-                    ...this.getCookieOptions(this.config),
-                },
-                // req.session.id is alias for req.sessionID
-                // https://github.com/expressjs/session/blob/master/README.md?plain=1#LL396C9-L396C19
-                id: req.sessionID,
-                regenerate: (cb) => {
-                    cb(null);
-                    return session;
-                },
-                destroy: (cb) => {
-                    cb(null);
-                    return session;
-                },
-                reload: (cb) => {
-                    cb(null);
-                    return session;
-                },
-                resetMaxAge: () => session,
-                save: (cb) => {
-                    if (cb) {
-                        cb(null);
-                    }
-                    return session;
-                },
-                touch: () => session,
-            };
-            req.session = session;
 
             // Trigger the next middleware in the chain.
             next();
