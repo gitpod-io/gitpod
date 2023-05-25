@@ -91,6 +91,11 @@ export class SessionHandlerProvider {
             // is authenticated.
             req.user = user;
 
+            req.sessionID = uuidv4();
+            // req.session.id is alias for req.sessionID
+            // https://github.com/expressjs/session/blob/master/README.md?plain=1#LL396C9-L396C19
+            req.session.id = req.sessionID;
+
             // Trigger the next middleware in the chain.
             next();
         } catch (err) {
