@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User, Workspace, NamedWorkspaceFeatureFlag } from "./protocol";
+import { User, Workspace, NamedWorkspaceFeatureFlag, EmailDomainFilterEntry } from "./protocol";
 import { BlockedRepository } from "./blocked-repositories-protocol";
 import { FindPrebuildsParams } from "./gitpod-service";
 import { Project, Team, PrebuildWithStatus, TeamMemberInfo, TeamMemberRole } from "./teams-projects-protocol";
@@ -56,6 +56,9 @@ export interface AdminServer {
     adminListUsage(req: ListUsageRequest): Promise<ListUsageResponse>;
     adminAddUsageCreditNote(attributionId: string, credits: number, note: string): Promise<void>;
     adminGetUsageBalance(attributionId: string): Promise<number>;
+
+    adminGetBlockedEmailDomains(): Promise<EmailDomainFilterEntry[]>;
+    adminSaveBlockedEmailDomain(entry: EmailDomainFilterEntry): Promise<void>;
 
     // Admin Settings
     adminGetSettings(): Promise<InstallationAdminSettings>;

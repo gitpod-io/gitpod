@@ -41,6 +41,7 @@ import PersonalAccessTokenCreateView from "../user-settings/PersonalAccessTokens
 import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
+import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
@@ -179,6 +180,7 @@ export const AppRoutes = () => {
                     <AdminRoute path="/admin/workspaces" component={WorkspacesSearch} />
                     <AdminRoute path="/admin/projects" component={ProjectsSearch} />
                     <AdminRoute path="/admin/blocked-repositories" component={BlockedRepositories} />
+                    <AdminRoute path="/admin/blocked-email-domains" component={BlockedEmailDomains} />
                     <AdminRoute path="/admin/settings" component={AdminSettings} />
 
                     <Route path={["/", "/login", "/login/:orgSlug"]} exact>

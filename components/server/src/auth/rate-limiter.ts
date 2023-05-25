@@ -170,6 +170,8 @@ const defaultFunctions: FunctionsConfig = {
     adminListUsage: { group: "default", points: 1 },
     adminAddUsageCreditNote: { group: "default", points: 1 },
     adminGetUsageBalance: { group: "default", points: 1 },
+    adminGetBlockedEmailDomains: { group: "default", points: 1 },
+    adminSaveBlockedEmailDomain: { group: "default", points: 1 },
 
     accessCodeSyncStorage: { group: "default", points: 1 },
 

@@ -22,6 +22,7 @@ import {
     TeamDB,
     InstallationAdminDB,
     ProjectDB,
+    EmailDomainFilterDB,
 } from "@gitpod/gitpod-db/lib";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
@@ -153,6 +154,7 @@ import { PartialProject, OrganizationSettings } from "@gitpod/gitpod-protocol/li
 import { ClientMetadata, traceClientMetadata } from "../websocket/websocket-connection-manager";
 import {
     AdditionalUserData,
+    EmailDomainFilterEntry,
     EnvVarWithValue,
     LinkedInProfile,
     OpenPrebuildContext,
@@ -298,6 +300,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(StripeService) protected readonly stripeService: StripeService;
     @inject(UsageServiceDefinition.name) protected readonly usageService: UsageServiceClient;
     @inject(BillingServiceDefinition.name) protected readonly billingService: BillingServiceClient;
+    @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB;
 
     @inject(EnvVarService)
     private readonly envVarService: EnvVarService;
@@ -4812,5 +4815,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             description,
             userId: user.id,
         });
+    }
+
+    async adminGetBlockedEmailDomains(ctx: TraceContextWithSpan): Promise<EmailDomainFilterEntry[]> {
+        const user = this.checkAndBlockUser("adminGetBlockedEmailDomains");
+        await this.guardAdminAccess("adminGetBlockedEmailDomains", { id: user.id }, Permission.ADMIN_USERS);
+        return await this.emailDomainFilterdb.getFilterEntries();
+    }
+
+    async adminSaveBlockedEmailDomain(
+        ctx: TraceContextWithSpan,
+        domainFilterentry: EmailDomainFilterEntry,
+    ): Promise<void> {
+        const user = this.checkAndBlockUser("adminSaveBlockedEmailDomain");
+        await this.guardAdminAccess("adminSaveBlockedEmailDomain", { id: user.id }, Permission.ADMIN_USERS);
+        await this.emailDomainFilterdb.storeFilterEntry(domainFilterentry);
     }
 }

@@ -21,12 +21,17 @@ export class EmailDomainFilterDBImpl implements EmailDomainFilterDB {
     }
 
     protected async getRepo(): Promise<Repository<EmailDomainFilterEntry>> {
-        return await (await this.getManager()).getRepository<DBEmailDomainFilterEntry>(DBEmailDomainFilterEntry);
+        return (await this.getManager()).getRepository<DBEmailDomainFilterEntry>(DBEmailDomainFilterEntry);
     }
 
     async storeFilterEntry(entry: EmailDomainFilterEntry): Promise<void> {
         const repo = await this.getRepo();
         await repo.save(entry);
+    }
+
+    async getFilterEntries(): Promise<EmailDomainFilterEntry[]> {
+        const repo = await this.getRepo();
+        return repo.find();
     }
 
     async isBlocked(domain: string): Promise<boolean> {
