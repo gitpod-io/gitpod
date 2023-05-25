@@ -21,7 +21,6 @@ export class InstallationAdminTelemetryDataProvider {
         try {
             const data: TelemetryData = {
                 installationAdmin: await this.installationAdminDb.getData(),
-                totalUsers: await this.userDb.getUserCount(true),
                 totalWorkspaces: await this.workspaceDb.getWorkspaceCount(),
                 totalInstances: await this.workspaceDb.getInstanceCount(),
             } as TelemetryData;

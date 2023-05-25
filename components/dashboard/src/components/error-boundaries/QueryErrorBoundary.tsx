@@ -6,14 +6,11 @@
 
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { QueryErrorResetBoundary } from "@tanstack/react-query";
-import { FC, lazy, Suspense } from "react";
+import { FC } from "react";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
-import { AppLoading } from "../../app/AppLoading";
 import { hasLoggedInBefore, Login } from "../../Login";
 import { isGitpodIo } from "../../utils";
 import { CaughtError } from "./ReloadPageErrorBoundary";
-
-const Setup = lazy(() => import(/* webpackPrefetch: true */ "../../Setup"));
 
 // Error boundary intended to catch and handle expected errors from api calls
 export const QueryErrorBoundary: FC = ({ children }) => {
@@ -47,15 +44,6 @@ const ExpectedQueryErrorsFallback: FC<FallbackProps> = ({ error, resetErrorBound
         }
 
         return <Login onLoggedIn={resetErrorBoundary} />;
-    }
-
-    // Setup needed before proceeding
-    if (caughtError.code === ErrorCodes.SETUP_REQUIRED) {
-        return (
-            <Suspense fallback={<AppLoading />}>
-                <Setup onComplete={resetErrorBoundary} />
-            </Suspense>
-        );
     }
 
     // Otherwise throw the error for default error boundary to catch and handle

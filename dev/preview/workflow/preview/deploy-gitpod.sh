@@ -345,8 +345,6 @@ fi
 #
 if [[ "${GITPOD_WITH_DEDICATED_EMU}" == "true" ]]
 then
-  # Suppress the Self-Hosted setup modal
-  yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.showSetupModal "false"
   yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.isSingleOrgInstallation "true"
 fi
 

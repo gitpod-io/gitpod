@@ -134,7 +134,7 @@ export class Authenticator {
             return;
         }
 
-        if (!authProvider.info.verified && !(await this.isInSetupMode())) {
+        if (!authProvider.info.verified) {
             increaseLoginCounter("failed", authProvider.info.host);
             log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, {
                 "login-flow": true,
@@ -151,16 +151,6 @@ export class Authenticator {
 
         // authenticate user
         authProvider.authorize(req, res, next, state);
-    }
-    protected async isInSetupMode() {
-        const hasAnyStaticProviders = this.hostContextProvider
-            .getAll()
-            .some((hc) => hc.authProvider.params.builtin === true);
-        if (hasAnyStaticProviders) {
-            return false;
-        }
-        const noUser = (await this.userDb.getUserCount()) === 0;
-        return noUser;
     }
 
     async deauthorize(req: express.Request, res: express.Response, next: express.NextFunction) {

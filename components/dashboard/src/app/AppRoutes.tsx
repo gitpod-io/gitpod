@@ -42,7 +42,6 @@ import { CreateWorkspacePage } from "../workspaces/CreateWorkspacePage";
 import { WebsocketClients } from "./WebsocketClients";
 import { LinkedInCallback } from "react-linkedin-login-oauth2";
 
-const Setup = React.lazy(() => import(/* webpackPrefetch: true */ "../Setup"));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Notifications"));
@@ -152,7 +151,6 @@ export const AppRoutes = () => {
                     >
                         <Redirect to={"/billing"} />
                     </Route>
-                    <Route path="/setup" exact component={Setup} />
                     <Route path={workspacesPathMain} exact component={Workspaces} />
                     <Route path={settingsPathAccount} exact component={Account} />
                     <Route path={usagePathMain} exact component={Usage} />
