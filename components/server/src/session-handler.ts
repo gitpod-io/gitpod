@@ -5,7 +5,6 @@
  */
 
 import * as express from "express";
-import { v4 as uuidv4 } from "uuid";
 import { injectable, inject, postConstruct } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
