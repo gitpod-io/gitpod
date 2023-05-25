@@ -56,7 +56,6 @@
 /install/installer/pkg/components/workspace @gitpod-io/engineering-workspace
 /install/installer/pkg/components/workspace/ide @gitpod-io/engineering-ide
 /install/installer/pkg/components/ws-daemon @gitpod-io/engineering-workspace
-/install/installer/pkg/components/ws-manager @gitpod-io/engineering-workspace
 /install/installer/pkg/components/ws-manager-mk2 @gitpod-io/engineering-workspace
 /install/installer/pkg/components/ws-manager-bridge @gitpod-io/engineering-webapp
 /install/installer/pkg/components/ws-proxy @gitpod-io/engineering-workspace
@@ -85,7 +84,6 @@
 /components/ws-manager-api @gitpod-io/engineering-workspace
 /components/ws-manager-bridge-api @gitpod-io/engineering-webapp
 /components/ws-manager-bridge @gitpod-io/engineering-webapp
-/components/ws-manager @gitpod-io/engineering-workspace
 /components/ws-manager-mk2 @gitpod-io/engineering-workspace
 /components/ws-proxy @gitpod-io/engineering-workspace
 /components/node-labeler @gitpod-io/engineering-workspace
@@ -143,4 +141,3 @@
 /test/tests/components/image-builder @gitpod-io/engineering-workspace
 /test/tests/components/server @gitpod-io/engineering-webapp
 /test/tests/components/ws-daemon @gitpod-io/engineering-workspace
-/test/tests/components/ws-manager @gitpod-io/engineering-workspace

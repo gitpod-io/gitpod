@@ -20,7 +20,6 @@
         { "path": "components/usage-api" },
         { "path": "components/workspacekit" },
         { "path": "components/ws-daemon" },
-        { "path": "components/ws-manager" },
         { "path": "components/ws-manager-mk2" },
         { "path": "components/ws-proxy" },
         { "path": "components/public-api" },
