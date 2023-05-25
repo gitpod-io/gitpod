@@ -54,3 +54,15 @@ spec:
                     description: Automatic scale-up in cluster {{ $labels.cluster }} failed due to {{ $labels.reason }}.
                 expr: |
                     increase(cluster_autoscaler_failed_scale_ups_total{cluster!~"ephemeral.*"}[1m]) != 0
+
+              - alert: NodePoolLoad
+                labels:
+                    severity: critical
+                    team: workspace
+                for: 60m
+                annotations:
+                    runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/NodePoolLoad.md
+                    summary: Node pool load is high
+                    description: Node pool {{ $labels.nodepool }} in cluster {{ $labels.cluster }} has high, sustained load
+                expr: |
+                    sum by(nodepool) (nodepool:node_load1:normalized{nodepool=~".*workspace.*",cluster!~"ephemeral.*"}}) > 40
