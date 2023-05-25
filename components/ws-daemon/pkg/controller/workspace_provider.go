@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -19,8 +20,9 @@ import (
 )
 
 type WorkspaceProvider struct {
-	hooks    map[session.WorkspaceState][]session.WorkspaceLivecycleHook
-	Location string
+	hooks      map[session.WorkspaceState][]session.WorkspaceLivecycleHook
+	Location   string
+	workspaces sync.Map
 }
 
 func NewWorkspaceProvider(hooks map[session.WorkspaceState][]session.WorkspaceLivecycleHook, location string) *WorkspaceProvider {
@@ -49,26 +51,36 @@ func (wf *WorkspaceProvider) Create(ctx context.Context, instanceID, location st
 		return nil, err
 	}
 
+	wf.workspaces.Store(instanceID, ws)
+
 	return ws, nil
 }
 
-func (wf *WorkspaceProvider) Get(ctx context.Context, instanceID string) (*session.Workspace, error) {
-	path := filepath.Join(wf.Location, fmt.Sprintf("%s.workspace.json", instanceID))
-	ws, err := loadWorkspace(ctx, path)
+func (wf *WorkspaceProvider) GetAndConnect(ctx context.Context, instanceID string) (*session.Workspace, error) {
+	ws, ok := wf.workspaces.Load(instanceID)
+	if !ok {
+		// if the workspace is not in memory ws-daemon probabably has been restarted
+		// in that case we reload it from disk
+		path := filepath.Join(wf.Location, fmt.Sprintf("%s.workspace.json", instanceID))
+		loadWs, err := loadWorkspace(ctx, path)
+		if err != nil {
+			return nil, err
+		}
+
+		if loadWs.NonPersistentAttrs == nil {
+			loadWs.NonPersistentAttrs = make(map[string]interface{})
+		}
+
+		ws = loadWs
+	}
+
+	err := wf.runLifecycleHooks(ctx, ws.(*session.Workspace), session.WorkspaceReady)
 	if err != nil {
 		return nil, err
 	}
+	wf.workspaces.Store(instanceID, ws)
 
-	if ws.NonPersistentAttrs == nil {
-		ws.NonPersistentAttrs = make(map[string]interface{})
-	}
-
-	err = wf.runLifecycleHooks(ctx, ws, session.WorkspaceReady)
-	if err != nil {
-		return nil, err
-	}
-
-	return ws, nil
+	return ws.(*session.Workspace), nil
 }
 
 func (s *WorkspaceProvider) runLifecycleHooks(ctx context.Context, ws *session.Workspace, state session.WorkspaceState) error {
