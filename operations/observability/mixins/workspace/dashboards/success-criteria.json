@@ -64,76 +64,6 @@
         "x": 0,
         "y": 0
       },
-      "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "9.4.7",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "exemplar": false,
-          "expr": "1-((\n  (\n    (sum(rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum(rate(gitpod_ws_manager_workspace_stops_total{cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n) OR on() vector(0) + (\n  (\n    (sum(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n))",
-          "instant": false,
-          "interval": "",
-          "legendFormat": "Success Rate",
-          "refId": "A"
-        }
-      ],
-      "title": "Workspace Success Rate Mk1",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "fixedColor": "blue",
-            "mode": "fixed"
-          },
-          "decimals": 4,
-          "mappings": [],
-          "max": 1,
-          "min": 0.9,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 0.99
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
       "id": 13,
       "options": {
         "colorMode": "value",
@@ -149,7 +79,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.4.7",
+      "pluginVersion": "9.5.1",
       "targets": [
         {
           "datasource": {
@@ -165,129 +95,7 @@
           "refId": "A"
         }
       ],
-      "title": "Workspace Success Rate Mk2",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 40
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 0,
-        "y": 9
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "pluginVersion": "9.4.7",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
-          "interval": "",
-          "legendFormat": "P95",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "histogram_quantile(\n  0.75, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
-          "hide": false,
-          "legendFormat": "P75",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "histogram_quantile(\n  0.50, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "P50",
-          "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "histogram_quantile(\n  0.25, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "P25",
-          "range": true,
-          "refId": "D"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "exemplar": true,
-          "expr": "histogram_quantile(\n  0.01, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "P01",
-          "range": true,
-          "refId": "E"
-        }
-      ],
-      "title": "Workspace Startup Time Mk1",
+      "title": "Workspace Success Rate",
       "type": "stat"
     },
     {
@@ -322,7 +130,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 9
+        "y": 0
       },
       "id": 14,
       "options": {
@@ -339,7 +147,7 @@
         },
         "textMode": "auto"
       },
-      "pluginVersion": "9.4.7",
+      "pluginVersion": "9.5.1",
       "targets": [
         {
           "datasource": {
@@ -409,7 +217,7 @@
           "refId": "E"
         }
       ],
-      "title": "Workspace Startup Time Mk2",
+      "title": "Workspace Startup Time",
       "type": "stat"
     },
     {
@@ -476,7 +284,7 @@
         "h": 9,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 9
       },
       "id": 9,
       "options": {
@@ -497,25 +305,13 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "exemplar": false,
-          "expr": "1-((\n  (\n    (sum(rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum(rate(gitpod_ws_manager_workspace_stops_total{cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n) + (\n  (\n    (sum(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n))",
-          "instant": false,
-          "interval": "",
-          "legendFormat": "Success Rate mk1",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
           "editorMode": "code",
           "exemplar": false,
           "expr": "1-((\n  (\n    (sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason=\"failed\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n) + (\n  (\n    (sum(rate(grpc_server_handled_total{service=\"gitpod-ws-manager-mk2\",grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum(rate(grpc_server_handled_total{service=\"gitpod-ws-manager-mk2\",grpc_method=\"StartWorkspace\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n))",
           "hide": false,
           "instant": false,
           "interval": "",
-          "legendFormat": "Success Rate mk2",
+          "legendFormat": "Success rate",
           "refId": "B"
         }
       ],
@@ -584,7 +380,7 @@
         "h": 9,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 9
       },
       "id": 12,
       "options": {
@@ -607,9 +403,36 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
           "interval": "",
-          "legendFormat": "P95 mk1",
+          "legendFormat": "P95",
+          "range": true,
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(\n  0.75, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
+          "legendFormat": "P75",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${datasource}"
+          },
+          "editorMode": "code",
+          "exemplar": true,
+          "expr": "histogram_quantile(\n  0.50, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "P50",
           "range": true,
           "refId": "A"
         },
@@ -619,9 +442,11 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(\n  0.5, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "exemplar": true,
+          "expr": "histogram_quantile(\n  0.25, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
           "hide": false,
-          "legendFormat": "P50 mk1",
+          "interval": "",
+          "legendFormat": "P25",
           "range": true,
           "refId": "B"
         },
@@ -632,24 +457,12 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
+          "expr": "histogram_quantile(\n  0.01, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
           "hide": false,
           "interval": "",
-          "legendFormat": "P95 mk2",
+          "legendFormat": "P01",
           "range": true,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "histogram_quantile(\n  0.5, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le)\n  )",
-          "hide": false,
-          "legendFormat": "P50 mk2",
-          "range": true,
-          "refId": "D"
+          "refId": "E"
         }
       ],
       "title": "Workspace Startup Time",
@@ -661,7 +474,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 27
+        "y": 18
       },
       "id": 8,
       "panels": [],
@@ -732,7 +545,7 @@
         "h": 14,
         "w": 24,
         "x": 0,
-        "y": 28
+        "y": 19
       },
       "id": 5,
       "options": {
@@ -753,25 +566,13 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "exemplar": false,
-          "expr": "1-((\n  (\n    (sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(gitpod_ws_manager_workspace_stops_total{cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n) OR on() vector(0) + (\n  (\n    (sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(grpc_server_handled_total{grpc_method=\"StartWorkspace\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n))",
-          "instant": false,
-          "interval": "",
-          "legendFormat": "{{ cluster }}-mk1",
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
           "editorMode": "code",
           "exemplar": false,
           "expr": "1-((\n  (\n    (sum by (cluster)(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason=\"failed\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(gitpod_ws_manager_mk2_workspace_stops_total{cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n) OR on() vector(0) + (\n  (\n    (sum by (cluster)(rate(grpc_server_handled_total{service=\"gitpod-ws-manager-mk2\",grpc_method=\"StartWorkspace\",grpc_code!~\"OK|ResourceExhausted\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d])) OR on() vector(0))\n    /\n    sum by (cluster)(rate(grpc_server_handled_total{service=\"gitpod-ws-manager-mk2\",grpc_method=\"StartWorkspace\",cluster!~\"prod-meta-.*|ephemeral.*\"}[1d]))\n  )\n))",
           "hide": false,
           "instant": false,
           "interval": "",
-          "legendFormat": "{{ cluster }}-mk2",
+          "legendFormat": "{{ cluster }}",
           "refId": "B"
         }
       ],
@@ -824,7 +625,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -840,7 +642,7 @@
         "h": 15,
         "w": 24,
         "x": 0,
-        "y": 42
+        "y": 33
       },
       "id": 6,
       "options": {
@@ -861,24 +663,12 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "exemplar": true,
-          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le, cluster)\n  )",
-          "interval": "",
-          "legendFormat": "{{cluster}}-mk1",
-          "range": true,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
           "editorMode": "code",
           "exemplar": true,
           "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le, cluster)\n  )",
           "hide": false,
           "interval": "",
-          "legendFormat": "{{cluster}}-mk2",
+          "legendFormat": "{{cluster}}",
           "range": true,
           "refId": "B"
         }
@@ -950,7 +740,7 @@
   "timepicker": {},
   "timezone": "",
   "title": "Success Criteria",
-  "uid": "h2qYC3P4k",
+  "uid": "workspace-success",
   "version": 1,
   "weekStart": ""
 }
