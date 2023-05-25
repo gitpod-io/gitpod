@@ -14,7 +14,6 @@ import { UserService } from "../user/user-service";
 
 import * as passport from "passport";
 import * as express from "express";
-import * as session from "express-session";
 import * as request from "supertest";
 
 import * as chai from "chai";
@@ -26,7 +25,6 @@ const expect = chai.expect;
 @suite(timeout(10000))
 class TestIamSessionApp {
     protected app: IamSessionApp;
-    protected store: session.MemoryStore;
 
     protected cookieName = "test-session-name";
 
@@ -109,20 +107,7 @@ class TestIamSessionApp {
         this.app = container.get(IamSessionApp);
         passport.serializeUser<string>((user: any, done) => done(null, user.id));
 
-        this.store = new session.MemoryStore();
-        this.app.getMiddlewares = () => [
-            express.json(),
-            session({
-                secret: "test123",
-                store: this.store,
-                resave: true,
-                saveUninitialized: true,
-                name: this.cookieName,
-                genid: () => "session-123",
-            }),
-            passport.initialize(),
-            passport.session(),
-        ];
+        this.app.getMiddlewares = () => [express.json(), passport.initialize(), passport.session()];
     }
 
     @test public async testSessionRequestStoresNewSession() {
