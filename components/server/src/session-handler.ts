@@ -5,13 +5,8 @@
  */
 
 import * as express from "express";
-import * as session from "express-session";
-import { SessionOptions } from "express-session";
 import { v4 as uuidv4 } from "uuid";
 import { injectable, inject, postConstruct } from "inversify";
-
-import * as mysqlstore from "express-mysql-session";
-const MySQLStore = mysqlstore(session);
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
@@ -31,20 +26,6 @@ export class SessionHandler {
 
     @postConstruct()
     public init() {
-        const options: SessionOptions = {} as SessionOptions;
-        options.cookie = this.getCookieOptions(this.config);
-        (options.genid = function (req: any) {
-            return uuidv4(); // use UUIDs for session IDs
-        }),
-            (options.name = SessionHandler.getCookieName(this.config));
-        // options.proxy = true    // TODO SSL Proxy
-        options.resave = true; // TODO Check with store! See docu
-        options.rolling = true; // default, new cookie and maxAge
-        options.secret = this.config.session.secret;
-        options.saveUninitialized = false; // Do not save new cookie without content (uninitialized)
-
-        options.store = this.createStore();
-
         this.sessionHandler = (req, res, next) => {
             /* tslint:disable-next-line */
             this.jwtSessionHandler(req, res, next)
@@ -225,20 +206,6 @@ export class SessionHandler {
         res.clearCookie(name, options);
 
         res.clearCookie(SessionHandler.getJWTCookieName(this.config), options);
-    }
-
-    protected createStore(): any | undefined {
-        const options = {
-            ...(this.dbConfig.dbConfig as any),
-            user: this.dbConfig.dbConfig.username,
-            database: "gitpod-sessions",
-            createDatabaseTable: true,
-        };
-        return new MySQLStore(options, undefined, (err) => {
-            if (err) {
-                log.debug("MySQL session store error: ", err);
-            }
-        });
     }
 }
 
