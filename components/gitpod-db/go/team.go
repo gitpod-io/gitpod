@@ -49,7 +49,7 @@ func CreateOrganization(ctx context.Context, conn *gorm.DB, org Organization) (O
 		WithContext(ctx).
 		Create(&org)
 	if tx.Error != nil {
-		return Organization{}, fmt.Errorf("failed to create team: %w", tx.Error)
+		return Organization{}, fmt.Errorf("failed to create organization: %w", tx.Error)
 	}
 
 	return org, nil
@@ -68,9 +68,9 @@ func GetOrganizationBySlug(ctx context.Context, conn *gorm.DB, slug string) (Org
 
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			return Organization{}, fmt.Errorf("Team with slug %s does not exist: %w", slug, ErrorNotFound)
+			return Organization{}, fmt.Errorf("Organization with slug %s does not exist: %w", slug, ErrorNotFound)
 		}
-		return Organization{}, fmt.Errorf("Failed to retrieve team: %v", tx.Error)
+		return Organization{}, fmt.Errorf("Failed to retrieve organization: %v", tx.Error)
 	}
 
 	return org, nil
@@ -92,17 +92,17 @@ func GetSingleOrganizationWithActiveSSO(ctx context.Context, conn *gorm.DB) (Org
 
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			return Organization{}, fmt.Errorf("No single team found: %w", ErrorNotFound)
+			return Organization{}, fmt.Errorf("No single organization found: %w", ErrorNotFound)
 		}
-		return Organization{}, fmt.Errorf("Failed to retrieve team: %v", tx.Error)
+		return Organization{}, fmt.Errorf("Failed to retrieve organization: %v", tx.Error)
 	}
 
 	if len(orgs) == 0 {
-		return Organization{}, fmt.Errorf("No single team with active SSO found: %w", ErrorNotFound)
+		return Organization{}, fmt.Errorf("No single organization with active SSO found: %w", ErrorNotFound)
 	}
 
 	if len(orgs) > 1 {
-		return Organization{}, fmt.Errorf("More than one team with active SSO found: %w", ErrorNotFound)
+		return Organization{}, fmt.Errorf("More than one organization with active SSO found: %w", ErrorNotFound)
 	}
 
 	return orgs[0], nil
