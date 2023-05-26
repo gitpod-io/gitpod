@@ -5,7 +5,7 @@
  */
 
 import { EmailDomainFilterEntry } from "@gitpod/gitpod-protocol";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Alert from "../components/Alert";
 import { ContextMenuEntry } from "../components/ContextMenu";
@@ -15,6 +15,7 @@ import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import searchIcon from "../icons/search.svg";
 import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
+import Pagination from "../Pagination/Pagination";
 
 export function BlockedEmailDomains() {
     return (
@@ -30,14 +31,39 @@ function useBlockedEmailDomains() {
     });
 }
 
+function useUpdateBlockedEmailDomainMutation() {
+    const queryClient = useQueryClient();
+    const blockedEmailDomains = useBlockedEmailDomains();
+    return useMutation(
+        async (blockedDomain: EmailDomainFilterEntry) => {
+            await getGitpodService().server.adminSaveBlockedEmailDomain(blockedDomain);
+        },
+        {
+            onSuccess: (_, blockedDomain) => {
+                const updated = [];
+                for (const entry of blockedEmailDomains.data || []) {
+                    if (entry.domain !== blockedDomain.domain) {
+                        updated.push(entry);
+                    } else {
+                        updated.push(blockedDomain);
+                    }
+                }
+                queryClient.setQueryData(["blockedEmailDomains"], updated);
+                blockedEmailDomains.refetch();
+            },
+        },
+    );
+}
+
 interface Props {}
 
 export function BlockedEmailDomainsList(props: Props) {
     const blockedEmailDomains = useBlockedEmailDomains();
+    const updateBlockedEmailDomainMutation = useUpdateBlockedEmailDomainMutation();
     const [searchTerm, setSearchTerm] = useState("");
-
+    const pageSize = 50;
     const [isAddModalVisible, setAddModalVisible] = useState(false);
-
+    const [currentPage, setCurrentPage] = useState(1);
     const [currentBlockedDomain, setCurrentBlockedDomain] = useState<EmailDomainFilterEntry>({
         domain: "",
         negative: false,
@@ -61,9 +87,8 @@ export function BlockedEmailDomainsList(props: Props) {
     };
 
     const save = async (blockedDomain: EmailDomainFilterEntry) => {
-        await getGitpodService().server.adminSaveBlockedEmailDomain(blockedDomain);
+        updateBlockedEmailDomainMutation.mutateAsync(blockedDomain);
         setAddModalVisible(false);
-        blockedEmailDomains.refetch();
     };
 
     const validate = (blockedDomain: EmailDomainFilterEntry): string | undefined => {
@@ -95,37 +120,39 @@ export function BlockedEmailDomainsList(props: Props) {
                             <input
                                 className="w-64 pl-9 border-0"
                                 type="search"
-                                placeholder="Search by URL RegEx"
+                                placeholder="Search by domain"
                                 onChange={(v) => {
                                     setSearchTerm(v.target.value.trim());
                                 }}
                             />
                         </div>
                         <div className="flex space-x-2">
-                            <button onClick={add}>New Blocked Domain</button>
+                            <button onClick={add}>Add Domain</button>
                         </div>
                     </div>
                 </div>
 
-                <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
-                    Search by email domain URL using <abbr title="regular expression">RegEx</abbr>.
-                </Alert>
                 <div className="flex flex-col space-y-2">
                     <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
-                        <div className="w-9/12">Domain URL (RegEx)</div>
+                        <div className="w-9/12">Domain</div>
                         <div className="w-1/12">Block Users</div>
                         <div className="w-1/12"></div>
                     </div>
-                    {searchResult.map((br) => (
+                    {searchResult.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((br) => (
                         <BlockedDomainEntry
+                            key={br.domain}
                             br={br}
                             toggleBlockUser={async () => {
                                 br.negative = !br.negative;
-                                await getGitpodService().server.adminSaveBlockedEmailDomain(br);
-                                blockedEmailDomains.refetch();
+                                updateBlockedEmailDomainMutation.mutateAsync(br);
                             }}
                         />
                     ))}
+                    <Pagination
+                        currentPage={currentPage}
+                        setPage={setCurrentPage}
+                        totalNumberOfPages={Math.ceil(searchResult.length / pageSize)}
+                    />
                 </div>
             </div>
         </>
