@@ -60,11 +60,11 @@ func GetOrganizationBySlug(ctx context.Context, conn *gorm.DB, slug string) (Org
 		return Organization{}, fmt.Errorf("Slug is required")
 	}
 
-	var team Organization
+	var org Organization
 
 	tx := conn.WithContext(ctx).
 		Where("slug = ?", slug).
-		Find(&team)
+		Find(&org)
 
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
@@ -73,7 +73,7 @@ func GetOrganizationBySlug(ctx context.Context, conn *gorm.DB, slug string) (Org
 		return Organization{}, fmt.Errorf("Failed to retrieve team: %v", tx.Error)
 	}
 
-	return team, nil
+	return org, nil
 }
 
 // GetSingleOrganizationWithActiveSSO returns the single team with SSO enabled.
