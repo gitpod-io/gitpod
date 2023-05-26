@@ -112,10 +112,10 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 
 	opts := []experiments.ClientOpt{}
 	if cfg.ConfigcatEnabled {
-		log.Info("====>  ConfigcatEnabled")
+		fmt.Println("====>  ConfigcatEnabled")
 		opts = append(opts, experiments.WithGitpodProxy(cfg.Host))
 	}
-	log.Info("====> TEST 1")
+	fmt.Println("====> TEST 1")
 	service := &Service{
 		token:            tknres.Token,
 		gitpodService:    gitpodService,
@@ -125,19 +125,19 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 		onUsingPublicAPI: make(chan struct{}),
 		subs:             make(map[chan *gitpod.WorkspaceInstance]struct{}),
 	}
-	log.Info("====> TEST 2")
+	fmt.Println("====> TEST 2")
 	// public api
 	service.tryConnToPublicAPI(ctx)
-	log.Info("====> TEST 3")
+	fmt.Println("====> TEST 3")
 	service.usingPublicAPI.Store(experiments.SupervisorUsePublicAPI(ctx, service.experiments, experiments.Attributes{
 		UserID: cfg.OwnerID,
 	}))
-	log.Info("====> TEST 4")
+	fmt.Println("====> TEST 4")
 	// start to listen on real instance updates
 	go service.onWorkspaceUpdates(ctx)
-	log.Info("====> TEST 5")
+	fmt.Println("====> TEST 5")
 	go service.observeConfigcatValue(ctx)
-	log.Info("====> TEST 6")
+	fmt.Println("====> TEST 6")
 
 	return service
 }
@@ -173,23 +173,23 @@ func (s *Service) tryConnToPublicAPI(ctx context.Context) {
 
 func (s *Service) observeConfigcatValue(ctx context.Context) {
 	ticker := time.NewTicker(time.Second * 10)
-	log.Info("====> observeConfigcatValue")
+	fmt.Println("====> observeConfigcatValue")
 	for {
 		select {
 		case <-ctx.Done():
-			log.Info("====> Ticker Done ")
+			fmt.Println("====> Ticker Done ")
 			ticker.Stop()
 			return
 		case <-ticker.C:
 			usePublicAPI := experiments.SupervisorUsePublicAPI(ctx, s.experiments, experiments.Attributes{
 				UserID: s.cfg.OwnerID,
 			})
-			log.Info("====>  ", usePublicAPI)
+			fmt.Println("====>  ", usePublicAPI)
 			if prev := s.usingPublicAPI.Swap(usePublicAPI); prev != usePublicAPI {
 				if usePublicAPI {
-					log.Info("switch to use PublicAPI")
+					fmt.Println("switch to use PublicAPI")
 				} else {
-					log.Info("switch to use ServerAPI")
+					fmt.Println("switch to use ServerAPI")
 				}
 				select {
 				case s.onUsingPublicAPI <- struct{}{}:
