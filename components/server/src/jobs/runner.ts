@@ -19,6 +19,7 @@ import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
 import { OrgOnlyMigrationJob } from "./org-only-migration-job";
 import { JobStateDbImpl } from "@gitpod/gitpod-db/lib/typeorm/job-state-db-impl";
+import { FixStripeJob } from "./fix-stripe-job";
 
 export const Job = Symbol("Job");
 
@@ -40,6 +41,7 @@ export class JobRunner {
     @inject(WorkspaceGarbageCollector) protected workspaceGC: WorkspaceGarbageCollector;
     @inject(SnapshotsJob) protected snapshotsJob: SnapshotsJob;
     @inject(OrgOnlyMigrationJob) protected orgOnlyMigrationJob: OrgOnlyMigrationJob;
+    @inject(FixStripeJob) protected fixStripeJob: FixStripeJob;
     @inject(JobStateDbImpl) protected jobStateDb: JobStateDbImpl;
 
     public start(): DisposableCollection {
@@ -53,6 +55,7 @@ export class JobRunner {
             this.workspaceGC,
             this.snapshotsJob,
             this.orgOnlyMigrationJob,
+            this.fixStripeJob,
         ];
 
         for (let job of jobs) {
