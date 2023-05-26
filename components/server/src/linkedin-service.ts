@@ -5,7 +5,7 @@
  */
 
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { LinkedInProfile, User } from "@gitpod/gitpod-protocol/src/protocol";
+import { LinkedInProfile, User } from "@gitpod/gitpod-protocol/lib/protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LinkedInProfileDB } from "@gitpod/gitpod-db/lib";
 import { inject, injectable } from "inversify";

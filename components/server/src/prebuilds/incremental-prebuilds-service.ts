@@ -15,7 +15,7 @@ import {
     WorkspaceImageSource,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { WithCommitHistory } from "@gitpod/gitpod-protocol/src/protocol";
+import { WithCommitHistory } from "@gitpod/gitpod-protocol/lib/protocol";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
 import { ConfigProvider } from "../workspace/config-provider";
