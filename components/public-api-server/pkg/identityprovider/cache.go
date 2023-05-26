@@ -236,6 +236,10 @@ func (rc *RedisCache) Signer(ctx context.Context) (jose.Signer, error) {
 }
 
 func (rc *RedisCache) reconcile(ctx context.Context) error {
+	if rc.current == nil {
+		return nil
+	}
+
 	resp := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, redisCacheDefaultTTL)
 	if err := resp.Err(); err != nil {
 		log.WithField("keyID", rc.currentID).WithError(err).Warn("cannot extend cached IDP public key TTL")
