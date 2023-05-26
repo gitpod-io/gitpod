@@ -76,13 +76,19 @@ func GetTeamBySlug(ctx context.Context, conn *gorm.DB, slug string) (Team, error
 	return team, nil
 }
 
-// GetTheSingleTeam returns the single team in the database.
-// If there is more than one team, an error is returned.
-func GetTheSingleTeam(ctx context.Context, conn *gorm.DB) (Team, error) {
+// GetSingleTeamWithActiveSSO returns the single team with SSO enabled.
+// If there is more than one team with SSO enabled, an error is returned.
+func GetSingleTeamWithActiveSSO(ctx context.Context, conn *gorm.DB) (Team, error) {
 	var teams []Team
 
-	// find the single team and throw error if more than one team exists
-	tx := conn.WithContext(ctx).Where("deleted != TRUE").Find(&teams)
+	tx := conn.
+		WithContext(ctx).
+		Table(fmt.Sprintf("%s as team", (&Team{}).TableName())).
+		Joins(fmt.Sprintf("JOIN %s AS config ON team.id = config.organizationId", (&OIDCClientConfig{}).TableName())).
+		Where("team.deleted = ?", 0).
+		Where("config.deleted = ?", 0).
+		Where("config.active = ?", 1).
+		Find(&teams)
 
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
@@ -91,8 +97,12 @@ func GetTheSingleTeam(ctx context.Context, conn *gorm.DB) (Team, error) {
 		return Team{}, fmt.Errorf("Failed to retrieve team: %v", tx.Error)
 	}
 
-	if len(teams) != 1 {
-		return Team{}, fmt.Errorf("No single team found: %w", ErrorNotFound)
+	if len(teams) == 0 {
+		return Team{}, fmt.Errorf("No single team with active SSO found: %w", ErrorNotFound)
+	}
+
+	if len(teams) > 1 {
+		return Team{}, fmt.Errorf("More than one team with active SSO found: %w", ErrorNotFound)
 	}
 
 	return teams[0], nil

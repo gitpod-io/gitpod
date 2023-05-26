@@ -41,26 +41,68 @@ func Test_GetTeamBySlug(t *testing.T) {
 	require.Equal(t, team.Slug, read.Slug)
 }
 
-func Test_GetTheSingleTeam(t *testing.T) {
-	conn := dbtest.ConnectForTests(t)
+func Test_GetSingleTeamWithActiveSSO(t *testing.T) {
 
-	conn.Delete(&db.Team{}, "1=1")
+	t.Run("not found when no team exist", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
 
-	_, err := db.GetTheSingleTeam(context.Background(), conn)
-	require.Error(t, err)
+		_, err := db.GetSingleTeamWithActiveSSO(context.Background(), conn)
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
 
-	// create a single team
-	team := dbtest.CreateTeams(t, conn, db.Team{})[0]
+	t.Run("not found when only teams without SSO exist", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
 
-	read, err := db.GetTheSingleTeam(context.Background(), conn)
-	require.NoError(t, err)
-	require.Equal(t, team.Name, read.Name)
-	require.Equal(t, team.Slug, read.Slug)
+		_ = dbtest.CreateTeams(t, conn, db.Team{}, db.Team{})
 
-	// create a second team
-	team2 := dbtest.CreateTeams(t, conn, db.Team{})[0]
-	require.NotNil(t, team2)
+		_, err := db.GetSingleTeamWithActiveSSO(context.Background(), conn)
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
 
-	_, err = db.GetTheSingleTeam(context.Background(), conn)
-	require.Error(t, err)
+	t.Run("found single team with active SSO", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		team := dbtest.CreateTeams(t, conn, db.Team{}, db.Team{})[1]
+		_ = dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
+			OrganizationID: team.ID,
+			Active:         true,
+		})[0]
+
+		found, err := db.GetSingleTeamWithActiveSSO(context.Background(), conn)
+		require.NoError(t, err)
+		require.Equal(t, team.ID, found.ID)
+	})
+
+	t.Run("not found single team with inactive SSO", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		team := dbtest.CreateTeams(t, conn, db.Team{}, db.Team{})[1]
+		_ = dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
+			OrganizationID: team.ID,
+			Active:         false,
+		})[0]
+
+		_, err := db.GetSingleTeamWithActiveSSO(context.Background(), conn)
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
+
+	t.Run("not found if two teams with active SSO exist", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		teams := dbtest.CreateTeams(t, conn, db.Team{}, db.Team{})
+		_ = dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
+			OrganizationID: teams[0].ID,
+			Active:         true,
+		}, db.OIDCClientConfig{
+			OrganizationID: teams[1].ID,
+			Active:         true,
+		})
+
+		_, err := db.GetSingleTeamWithActiveSSO(context.Background(), conn)
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
 }
