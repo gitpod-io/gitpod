@@ -5,6 +5,9 @@
 package oidc
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -35,10 +38,15 @@ const (
 
 func (s *Service) getStartHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
+		useHttpErrors := false
+		if r.URL.Query().Get("useHttpErrors") != "" {
+			useHttpErrors = true
+		}
+
 		config, err := s.getClientConfigFromStartRequest(r)
 		if err != nil {
-			log.WithError(err).Warn("Failed to start SSO sing-in flow.")
-			http.Error(rw, "We were unable to find the SSO configuration you've requested. Please verify SSO is configured with your Organization owner.", http.StatusNotFound)
+			log.WithError(err).Warn("Failed to start SSO sign-in flow.")
+			respondeWithError(rw, r, "We were unable to find the SSO configuration you've requested. Please verify SSO is configured with your Organization owner.", http.StatusNotFound, useHttpErrors)
 			return
 		}
 
@@ -65,10 +73,11 @@ func (s *Service) getStartHandler() http.HandlerFunc {
 			ReturnToURL:    returnToURL,
 			Activate:       activate,
 			Verify:         verify,
+			UseHttpErrors:  useHttpErrors,
 		})
 		if err != nil {
 			log.WithError(err).Error("Failed to get start parameters for authentication flow.")
-			http.Error(rw, "We were unable to start the authentication flow for system reasons.", http.StatusInternalServerError)
+			respondeWithError(rw, r, "We were unable to start the authentication flow for system reasons.", http.StatusInternalServerError, useHttpErrors)
 			return
 		}
 
@@ -99,21 +108,22 @@ func newCallbackCookie(r *http.Request, name string, value string) *http.Cookie 
 func (s *Service) getCallbackHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		config, state, err := s.getClientConfigFromCallbackRequest(r)
+		useHttpErrors := state.UseHttpErrors
 		if err != nil {
 			log.WithError(err).Warn("Client SSO config not found")
-			http.Error(rw, "We were unable to find the SSO configuration you've requested. Please verify SSO is configured with your Organization owner.", http.StatusNotFound)
+			respondeWithError(rw, r, "We were unable to find the SSO configuration you've requested. Please verify SSO is configured with your Organization owner.", http.StatusNotFound, useHttpErrors)
 			return
 		}
 		oauth2Result := GetOAuth2ResultFromContext(r.Context())
 		if oauth2Result == nil {
-			http.Error(rw, "OIDC precondition failure", http.StatusInternalServerError)
+			respondeWithError(rw, r, "OIDC precondition failure", http.StatusInternalServerError, useHttpErrors)
 			return
 		}
 
 		// nonce = number used once
 		nonceCookie, err := r.Cookie(nonceCookieName)
 		if err != nil {
-			http.Error(rw, "There was no nonce present on the request. Please try to sign-in in again.", http.StatusBadRequest)
+			respondeWithError(rw, r, "There was no nonce present on the request. Please try to sign-in in again.", http.StatusBadRequest, useHttpErrors)
 			return
 		}
 		result, err := s.authenticate(r.Context(), authenticateParams{
@@ -123,7 +133,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 		})
 		if err != nil {
 			log.WithError(err).Warn("OIDC authentication failed")
-			http.Error(rw, "We've not been able to authenticate you with the OIDC Provider.", http.StatusInternalServerError)
+			respondeWithError(rw, r, "We've not been able to authenticate you with the OIDC Provider.", http.StatusInternalServerError, useHttpErrors)
 			return
 		}
 
@@ -133,7 +143,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			err = s.activateAndVerifyClientConfig(r.Context(), config)
 			if err != nil {
 				log.WithError(err).Warn("Failed to mark OIDC Client Config as active")
-				http.Error(rw, "We've been unable to mark the selected OIDC config as active. Please try again.", http.StatusInternalServerError)
+				respondeWithError(rw, r, "We've been unable to mark the selected OIDC config as active. Please try again.", http.StatusInternalServerError, useHttpErrors)
 				return
 			}
 		}
@@ -142,7 +152,7 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			err = s.markClientConfigAsVerified(r.Context(), config)
 			if err != nil {
 				log.Warn("Failed to mark config as verified: " + err.Error())
-				http.Error(rw, "Failed to mark config as verified", http.StatusInternalServerError)
+				respondeWithError(rw, r, "Failed to mark config as verified", http.StatusInternalServerError, useHttpErrors)
 				return
 			}
 		}
@@ -152,12 +162,34 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 			cookie, _, err := s.createSession(r.Context(), result, config)
 			if err != nil {
 				log.WithError(err).Warn("Failed to create session from downstream session provider.")
-				http.Error(rw, "We were unable to create a user session.", http.StatusInternalServerError)
+				respondeWithError(rw, r, "We were unable to create a user session.", http.StatusInternalServerError, useHttpErrors)
 				return
 			}
 			http.SetCookie(rw, cookie)
 		}
 
 		http.Redirect(rw, r, oauth2Result.ReturnToURL, http.StatusTemporaryRedirect)
+	}
+}
+
+func respondeWithError(w http.ResponseWriter, r *http.Request, error string, code int, useHttpErrors bool) {
+	if useHttpErrors {
+		http.Error(w, error, code)
+		return
+	}
+
+	if !useHttpErrors {
+		jsonString, err := json.Marshal(map[string]interface{}{
+			"code":  code,
+			"error": error,
+		})
+		if err != nil {
+			log.WithError(err).Warn("Failed to marchal error to be sent to frontend.")
+			jsonString = []byte("Internal error")
+		}
+		errorEncoded := base64.StdEncoding.EncodeToString(jsonString)
+		url := fmt.Sprintf("/complete-auth?message=error:%s", errorEncoded)
+
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	}
 }

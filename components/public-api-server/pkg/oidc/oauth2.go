@@ -19,11 +19,12 @@ type OAuth2Result struct {
 }
 
 type StateParams struct {
-	// Internal client config ID
+	// Gitpod's client config ID, not to be confused with OAuth `clientID`
 	ClientConfigID string `json:"clientConfigId"`
 	ReturnToURL    string `json:"returnTo"`
 	Activate       bool   `json:"activate"`
 	Verify         bool   `json:"verify"`
+	UseHttpErrors  bool   `json:"useHttpErrors"`
 }
 
 type keyOAuth2Result struct{}
@@ -73,17 +74,21 @@ func (s *Service) OAuth2Middleware(next http.Handler) http.Handler {
 			http.Error(rw, "bad state param", http.StatusBadRequest)
 			return
 		}
+		useHttpErrors := state.UseHttpErrors
 
 		code := r.URL.Query().Get("code")
 		if code == "" {
 			http.Error(rw, "code param not found", http.StatusBadRequest)
+			log.Warn("'code' parameter not found.")
+			respondeWithError(rw, r, "'code' parameter not found.", http.StatusInternalServerError, useHttpErrors)
 			return
 		}
 
 		config.OAuth2Config.RedirectURL = getCallbackURL(r.Host)
 		oauth2Token, err := config.OAuth2Config.Exchange(r.Context(), code)
 		if err != nil {
-			http.Error(rw, "failed to exchange token: "+err.Error(), http.StatusInternalServerError)
+			log.WithError(err).Warn("Failed to exchange OAuth2 token.")
+			respondeWithError(rw, r, "Failed to exchange OAuth2 token: "+err.Error(), http.StatusInternalServerError, useHttpErrors)
 			return
 		}
 
