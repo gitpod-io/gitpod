@@ -108,11 +108,13 @@ const (
 	redisIDPKeyPrefix    = "idp:keys:"
 )
 
-func NewRedisCache(client *redis.Client) *RedisCache {
-	return &RedisCache{
+func NewRedisCache(ctx context.Context, client *redis.Client) *RedisCache {
+	cache := &RedisCache{
 		Client: client,
 		keyID:  defaultKeyID,
 	}
+	go cache.sync(ctx)
+	return cache
 }
 
 func defaultKeyID(current *rsa.PrivateKey) string {
@@ -219,17 +221,8 @@ func (rc *RedisCache) Signer(ctx context.Context) (jose.Signer, error) {
 		return nil, nil
 	}
 
-	resp := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, redisCacheDefaultTTL)
-	if err := resp.Err(); err != nil {
-		log.WithField("keyID", rc.currentID).WithError(err).Warn("cannot extend cached IDP public key TTL")
-	}
-	if !resp.Val() {
-		log.WithField("keyID", rc.currentID).Warn("cannot extend cached IDP public key TTL - trying to repersist")
-		err := rc.persistPublicKey(ctx, rc.current)
-		if err != nil {
-			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot repersist public key")
-			return nil, err
-		}
+	if err := rc.reconcile(ctx); err != nil {
+		return nil, err
 	}
 
 	return jose.NewSigner(jose.SigningKey{
@@ -240,6 +233,35 @@ func (rc *RedisCache) Signer(ctx context.Context) (jose.Signer, error) {
 			jose.HeaderKey("kid"): rc.currentID,
 		},
 	})
+}
+
+func (rc *RedisCache) reconcile(ctx context.Context) error {
+	resp := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, redisCacheDefaultTTL)
+	if err := resp.Err(); err != nil {
+		log.WithField("keyID", rc.currentID).WithError(err).Warn("cannot extend cached IDP public key TTL")
+	}
+	if !resp.Val() {
+		log.WithField("keyID", rc.currentID).Warn("cannot extend cached IDP public key TTL - trying to repersist")
+		err := rc.persistPublicKey(ctx, rc.current)
+		if err != nil {
+			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot repersist public key")
+			return err
+		}
+	}
+	return nil
+}
+
+func (rc *RedisCache) sync(ctx context.Context) {
+	_ = rc.reconcile(ctx)
+	ticker := time.NewTicker(10 * time.Minute)
+	for ctx.Err() == nil {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			_ = rc.reconcile(ctx)
+		}
+	}
 }
 
 var _ KeyCache = ((*RedisCache)(nil))
