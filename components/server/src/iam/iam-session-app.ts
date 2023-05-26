@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 import * as express from "express";
-import { SessionHandlerProvider } from "../session-handler";
+import { SessionHandler } from "../session-handler";
 import { Authenticator } from "../auth/authenticator";
 import { UserService } from "../user/user-service";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
@@ -14,17 +14,16 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Identity, IdentityLookup, User } from "@gitpod/gitpod-protocol";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 import { ResponseError } from "vscode-ws-jsonrpc";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { reportJWTCookieIssued } from "../prometheus-metrics";
 
 @injectable()
 export class IamSessionApp {
-    @inject(SessionHandlerProvider)
-    protected readonly sessionHandlerProvider: SessionHandlerProvider;
-    @inject(Authenticator)
-    protected readonly authenticator: Authenticator;
-    @inject(UserService)
-    protected readonly userService: UserService;
-    @inject(TeamDB)
-    protected readonly teamDb: TeamDB;
+    @inject(SessionHandler) protected readonly sessionHandlerProvider: SessionHandler;
+    @inject(Authenticator) protected readonly authenticator: Authenticator;
+    @inject(UserService) protected readonly userService: UserService;
+    @inject(TeamDB) protected readonly teamDb: TeamDB;
+    @inject(SessionHandler) protected readonly session: SessionHandler;
 
     public getMiddlewares() {
         return [express.json(), this.sessionHandlerProvider.sessionHandler, ...this.authenticator.initHandlers];
@@ -38,7 +37,7 @@ export class IamSessionApp {
 
         app.post("/session", async (req: express.Request, res: express.Response) => {
             try {
-                const result = await this.doCreateSession(req);
+                const result = await this.doCreateSession(req, res);
                 res.status(200).json(result);
             } catch (error) {
                 log.error("Error creating session on behalf of IAM", error);
@@ -55,7 +54,7 @@ export class IamSessionApp {
         return app;
     }
 
-    protected async doCreateSession(req: express.Request) {
+    protected async doCreateSession(req: express.Request, res: express.Response) {
         const payload = OIDCCreateSessionPayload.validate(req.body);
 
         const existingUser = await this.findExistingOIDCUser(payload);
@@ -74,6 +73,20 @@ export class IamSessionApp {
                 }
             });
         });
+
+        const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
+            "jwtSessionCookieEnabled",
+            false,
+            {
+                user: user,
+            },
+        );
+        if (isJWTCookieExperimentEnabled) {
+            const cookie = await this.session.createJWTSessionCookie(user.id);
+            res.cookie(cookie.name, cookie.value, cookie.opts);
+            reportJWTCookieIssued();
+        }
+
         return {
             sessionId: req.sessionID,
             userId: user.id,
