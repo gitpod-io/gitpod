@@ -127,7 +127,7 @@ export namespace ClientMetadata {
 
     export function fromRequest(req: any) {
         const expressReq = req as express.Request;
-        const user = expressReq.user;
+        const user = User.is(expressReq.user) ? expressReq.user : undefined;
         const sessionId = expressReq.session?.id;
         const type = WebsocketClientType.getClientType(expressReq);
         const version = takeFirst(expressReq.headers["x-client-version"]);
@@ -217,7 +217,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
     ): GitpodServerImpl {
         const expressReq = request as express.Request;
         const session = expressReq.session;
-        const user: User | undefined = expressReq.user;
+        const user: User | undefined = User.is(expressReq.user) ? expressReq.user : undefined;
 
         const clientContext = this.getOrCreateClientContext(expressReq);
         const gitpodServer = this.serverFactory();

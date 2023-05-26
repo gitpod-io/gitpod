@@ -38,8 +38,8 @@ export class Authenticator {
         // Setup passport
         this.passportInitialize = passport.initialize();
         this.passportSession = passport.session();
-        passport.serializeUser<string>((user: User, done) => {
-            if (user) {
+        passport.serializeUser<string>((user: Express.User, done) => {
+            if (user && User.is(user)) {
                 done(null, user.id);
             } else {
                 log.error("(Authenticator) serializeUser called with undefined user.");
