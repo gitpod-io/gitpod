@@ -164,7 +164,7 @@ export class UserToTeamMigrationService {
         );
 
         if (stripeCustomer.length > 0) {
-            const stripeCustomerId = stripeCustomer[0].stripeId;
+            const stripeCustomerId = stripeCustomer[0].stripeCustomerId;
             // update the metadata['attributionid'] on the stripe customer in stripe
             try {
                 await this.stripeService.updateAttributionId(stripeCustomerId, newAttribution, oldAttribution);
