@@ -125,7 +125,7 @@ func TestGetActiveOIDCClientConfigByOrgSlug(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 
 		// create a single team
-		team := dbtest.CreateTeams(t, conn, db.Team{})[0]
+		team := dbtest.CreateOrganizations(t, conn, db.Organization{})[0]
 
 		created := dbtest.CreateOIDCClientConfigs(t, conn, db.OIDCClientConfig{
 			OrganizationID: team.ID,
@@ -142,7 +142,7 @@ func TestGetActiveOIDCClientConfigByOrgSlug(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 
 		// create a single team
-		team := dbtest.CreateTeams(t, conn, db.Team{})[0]
+		team := dbtest.CreateOrganizations(t, conn, db.Organization{})[0]
 
 		// create multiple
 		activeConfigID := uuid.New()

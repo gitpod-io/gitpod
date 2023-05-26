@@ -14,12 +14,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type TeamMembership struct {
+type OrganizationMembership struct {
 	ID uuid.UUID `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
 
-	TeamID uuid.UUID          `gorm:"column:teamId;type:char;size:36;" json:"teamId"`
-	UserID uuid.UUID          `gorm:"column:userId;type:char;size:36;" json:"userId"`
-	Role   TeamMembershipRole `gorm:"column:role;type:varchar;size:255;" json:"role"`
+	TeamID uuid.UUID                  `gorm:"column:teamId;type:char;size:36;" json:"teamId"`
+	UserID uuid.UUID                  `gorm:"column:userId;type:char;size:36;" json:"userId"`
+	Role   OrganizationMembershipRole `gorm:"column:role;type:varchar;size:255;" json:"role"`
 
 	CreationTime VarcharTime `gorm:"column:creationTime;type:varchar;size:255;" json:"creationTime"`
 	// Read-only (-> property).
@@ -30,27 +30,27 @@ type TeamMembership struct {
 }
 
 // TableName sets the insert table name for this struct type
-func (d *TeamMembership) TableName() string {
+func (d *OrganizationMembership) TableName() string {
 	return "d_b_team_membership"
 }
 
-type TeamMembershipRole string
+type OrganizationMembershipRole string
 
 const (
-	TeamMembershipRole_Owner  = TeamMembershipRole("owner")
-	TeamMembershipRole_Member = TeamMembershipRole("member")
+	TeamMembershipRole_Owner  = OrganizationMembershipRole("owner")
+	TeamMembershipRole_Member = OrganizationMembershipRole("member")
 )
 
-func GetTeamMembership(ctx context.Context, conn *gorm.DB, userID, teamID uuid.UUID) (TeamMembership, error) {
+func GetOrganizationMembership(ctx context.Context, conn *gorm.DB, userID, teamID uuid.UUID) (OrganizationMembership, error) {
 	if userID == uuid.Nil {
-		return TeamMembership{}, errors.New("user ID must not be empty")
+		return OrganizationMembership{}, errors.New("user ID must not be empty")
 	}
 
 	if teamID == uuid.Nil {
-		return TeamMembership{}, errors.New("team ID must not be empty")
+		return OrganizationMembership{}, errors.New("team ID must not be empty")
 	}
 
-	var membership TeamMembership
+	var membership OrganizationMembership
 	tx := conn.WithContext(ctx).
 		Where("userId = ?", userID.String()).
 		Where("teamId = ?", teamID.String()).
@@ -58,15 +58,15 @@ func GetTeamMembership(ctx context.Context, conn *gorm.DB, userID, teamID uuid.U
 		First(&membership)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			return TeamMembership{}, fmt.Errorf("no membership record for user %s and team %s exists: %w", userID.String(), teamID.String(), ErrorNotFound)
+			return OrganizationMembership{}, fmt.Errorf("no membership record for user %s and team %s exists: %w", userID.String(), teamID.String(), ErrorNotFound)
 		}
-		return TeamMembership{}, fmt.Errorf("failed to retrieve team membership for user %s, team %s: %w", userID.String(), teamID.String(), tx.Error)
+		return OrganizationMembership{}, fmt.Errorf("failed to retrieve team membership for user %s, team %s: %w", userID.String(), teamID.String(), tx.Error)
 	}
 
 	return membership, nil
 }
 
-func DeleteTeamMembership(ctx context.Context, conn *gorm.DB, userID uuid.UUID, teamID uuid.UUID) error {
+func DeleteOrganizationMembership(ctx context.Context, conn *gorm.DB, userID uuid.UUID, teamID uuid.UUID) error {
 	if userID == uuid.Nil {
 		return errors.New("user ID must not be empty")
 	}
@@ -76,7 +76,7 @@ func DeleteTeamMembership(ctx context.Context, conn *gorm.DB, userID uuid.UUID, 
 	}
 
 	tx := conn.WithContext(ctx).
-		Model(&TeamMembership{}).
+		Model(&OrganizationMembership{}).
 		Where("userId = ?", userID.String()).
 		Where("teamId = ?", teamID.String()).
 		Where("deleted = ?", 0).

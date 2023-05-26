@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Team struct {
+type Organization struct {
 	ID   uuid.UUID `gorm:"primary_key;column:id;type:char;size:36;" json:"id"`
 	Name string    `gorm:"column:name;type:varchar;size:255;" json:"name"`
 	Slug string    `gorm:"column:slug;type:varchar;size:255;" json:"slug"`
@@ -29,38 +29,38 @@ type Team struct {
 }
 
 // TableName sets the insert table name for this struct type
-func (d *Team) TableName() string {
+func (d *Organization) TableName() string {
 	return "d_b_team"
 }
 
-func CreateTeam(ctx context.Context, conn *gorm.DB, newTeam Team) (Team, error) {
-	if newTeam.ID == uuid.Nil {
-		return Team{}, errors.New("id must be set")
+func CreateOrganization(ctx context.Context, conn *gorm.DB, org Organization) (Organization, error) {
+	if org.ID == uuid.Nil {
+		return Organization{}, errors.New("id must be set")
 	}
 
-	if newTeam.Name == "" {
-		return Team{}, errors.New("name must be set")
+	if org.Name == "" {
+		return Organization{}, errors.New("name must be set")
 	}
-	if newTeam.Slug == "" {
-		return Team{}, errors.New("slug must be set")
+	if org.Slug == "" {
+		return Organization{}, errors.New("slug must be set")
 	}
 
 	tx := conn.
 		WithContext(ctx).
-		Create(&newTeam)
+		Create(&org)
 	if tx.Error != nil {
-		return Team{}, fmt.Errorf("failed to create team: %w", tx.Error)
+		return Organization{}, fmt.Errorf("failed to create team: %w", tx.Error)
 	}
 
-	return newTeam, nil
+	return org, nil
 }
 
-func GetTeamBySlug(ctx context.Context, conn *gorm.DB, slug string) (Team, error) {
+func GetOrganizationBySlug(ctx context.Context, conn *gorm.DB, slug string) (Organization, error) {
 	if slug == "" {
-		return Team{}, fmt.Errorf("Slug is required")
+		return Organization{}, fmt.Errorf("Slug is required")
 	}
 
-	var team Team
+	var team Organization
 
 	tx := conn.WithContext(ctx).
 		Where("slug = ?", slug).
@@ -68,42 +68,42 @@ func GetTeamBySlug(ctx context.Context, conn *gorm.DB, slug string) (Team, error
 
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			return Team{}, fmt.Errorf("Team with slug %s does not exist: %w", slug, ErrorNotFound)
+			return Organization{}, fmt.Errorf("Team with slug %s does not exist: %w", slug, ErrorNotFound)
 		}
-		return Team{}, fmt.Errorf("Failed to retrieve team: %v", tx.Error)
+		return Organization{}, fmt.Errorf("Failed to retrieve team: %v", tx.Error)
 	}
 
 	return team, nil
 }
 
-// GetSingleTeamWithActiveSSO returns the single team with SSO enabled.
+// GetSingleOrganizationWithActiveSSO returns the single team with SSO enabled.
 // If there is more than one team with SSO enabled, an error is returned.
-func GetSingleTeamWithActiveSSO(ctx context.Context, conn *gorm.DB) (Team, error) {
-	var teams []Team
+func GetSingleOrganizationWithActiveSSO(ctx context.Context, conn *gorm.DB) (Organization, error) {
+	var orgs []Organization
 
 	tx := conn.
 		WithContext(ctx).
-		Table(fmt.Sprintf("%s as team", (&Team{}).TableName())).
+		Table(fmt.Sprintf("%s as team", (&Organization{}).TableName())).
 		Joins(fmt.Sprintf("JOIN %s AS config ON team.id = config.organizationId", (&OIDCClientConfig{}).TableName())).
 		Where("team.deleted = ?", 0).
 		Where("config.deleted = ?", 0).
 		Where("config.active = ?", 1).
-		Find(&teams)
+		Find(&orgs)
 
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
-			return Team{}, fmt.Errorf("No single team found: %w", ErrorNotFound)
+			return Organization{}, fmt.Errorf("No single team found: %w", ErrorNotFound)
 		}
-		return Team{}, fmt.Errorf("Failed to retrieve team: %v", tx.Error)
+		return Organization{}, fmt.Errorf("Failed to retrieve team: %v", tx.Error)
 	}
 
-	if len(teams) == 0 {
-		return Team{}, fmt.Errorf("No single team with active SSO found: %w", ErrorNotFound)
+	if len(orgs) == 0 {
+		return Organization{}, fmt.Errorf("No single team with active SSO found: %w", ErrorNotFound)
 	}
 
-	if len(teams) > 1 {
-		return Team{}, fmt.Errorf("More than one team with active SSO found: %w", ErrorNotFound)
+	if len(orgs) > 1 {
+		return Organization{}, fmt.Errorf("More than one team with active SSO found: %w", ErrorNotFound)
 	}
 
-	return teams[0], nil
+	return orgs[0], nil
 }

@@ -14,10 +14,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewTeamMembership(t *testing.T, membership db.TeamMembership) db.TeamMembership {
+func NewTeamMembership(t *testing.T, membership db.OrganizationMembership) db.OrganizationMembership {
 	t.Helper()
 
-	result := db.TeamMembership{
+	result := db.OrganizationMembership{
 		ID:           uuid.New(),
 		TeamID:       uuid.New(),
 		UserID:       uuid.New(),
@@ -44,10 +44,10 @@ func NewTeamMembership(t *testing.T, membership db.TeamMembership) db.TeamMember
 	return result
 }
 
-func CreateTeamMembership(t *testing.T, conn *gorm.DB, memberships ...db.TeamMembership) []db.TeamMembership {
+func CreateTeamMembership(t *testing.T, conn *gorm.DB, memberships ...db.OrganizationMembership) []db.OrganizationMembership {
 	t.Helper()
 
-	var records []db.TeamMembership
+	var records []db.OrganizationMembership
 	var ids []uuid.UUID
 	for _, m := range memberships {
 		record := NewTeamMembership(t, m)
@@ -59,7 +59,7 @@ func CreateTeamMembership(t *testing.T, conn *gorm.DB, memberships ...db.TeamMem
 
 	t.Cleanup(func() {
 		if len(ids) > 0 {
-			require.NoError(t, conn.Where(ids).Delete(db.TeamMembership{}).Error)
+			require.NoError(t, conn.Where(ids).Delete(db.OrganizationMembership{}).Error)
 		}
 
 	})
