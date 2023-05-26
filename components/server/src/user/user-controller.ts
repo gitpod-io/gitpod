@@ -636,7 +636,7 @@ export class UserController {
     private async readAdminCredentials(): Promise<AdminCredentials> {
         const credentialsFilePath = this.config.admin.credentialsPath;
 
-        // Credentials do not have to be present in the system, if admin level sing-in is entirely disabled.
+        // Credentials do not have to be present in the system, if admin level sign-in is entirely disabled.
         if (!credentialsFilePath) {
             throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "No admin credentials");
         }
