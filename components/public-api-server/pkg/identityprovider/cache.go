@@ -7,6 +7,8 @@ package identityprovider
 import (
 	"context"
 	"crypto/rsa"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -114,7 +116,8 @@ func NewRedisCache(client *redis.Client) *RedisCache {
 }
 
 func defaultKeyID(current *rsa.PrivateKey) string {
-	return fmt.Sprintf("id-%d-%d", time.Now().UnixMicro(), rand.Int())
+	hashed := sha256.Sum256(current.N.Bytes())
+	return fmt.Sprintf("id-%s", hex.EncodeToString(hashed[:]))
 }
 
 type RedisCache struct {
