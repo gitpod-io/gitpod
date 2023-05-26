@@ -65,4 +65,4 @@ spec:
                     summary: Node pool load is high
                     description: Node pool {{ $labels.nodepool }} in cluster {{ $labels.cluster }} has high, sustained load
                 expr: |
-                    sum by(nodepool) (nodepool:node_load1:normalized{nodepool=~".*workspace.*",cluster!~"ephemeral.*"}}) > 40
+                    sum by(nodepool, cluster) (nodepool:node_load1:normalized{nodepool=~".*workspace.*",cluster!~"ephemeral.*"}) > 30
