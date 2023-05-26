@@ -15,7 +15,7 @@ import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AuthorizationService } from "./authorization-service";
 import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
-import { SessionHandlerProvider } from "../session-handler";
+import { SessionHandler } from "../session-handler";
 import { URL } from "url";
 import { saveSession, getRequestingClientInfo, destroySession } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
@@ -43,7 +43,7 @@ export class UserController {
     @inject(Config) protected readonly config: Config;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(SessionHandlerProvider) protected readonly sessionHandlerProvider: SessionHandlerProvider;
+    @inject(SessionHandler) protected readonly sessionHandlerProvider: SessionHandler;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;

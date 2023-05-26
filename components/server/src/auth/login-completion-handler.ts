@@ -15,7 +15,7 @@ import { increaseLoginCounter, reportJWTCookieIssued } from "../prometheus-metri
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { SessionHandlerProvider } from "../session-handler";
+import { SessionHandler } from "../session-handler";
 import { AuthJWT } from "./jwt";
 
 /**
@@ -28,6 +28,7 @@ export class LoginCompletionHandler {
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
+    @inject(SessionHandler) protected readonly session: SessionHandler;
 
     async complete(
         request: express.Request,
@@ -91,14 +92,9 @@ export class LoginCompletionHandler {
             },
         );
         if (isJWTCookieExperimentEnabled) {
-            const token = await this.authJWT.sign(user.id, {});
+            const cookie = await this.session.createJWTSessionCookie(user.id);
 
-            response.cookie(SessionHandlerProvider.getJWTCookieName(this.config), token, {
-                maxAge: this.config.auth.session.cookie.maxAge * 1000, // express does not match the HTTP spec and uses milliseconds
-                httpOnly: this.config.auth.session.cookie.httpOnly,
-                sameSite: this.config.auth.session.cookie.sameSite,
-                secure: this.config.auth.session.cookie.secure,
-            });
+            response.cookie(cookie.name, cookie.value, cookie.opts);
 
             reportJWTCookieIssued();
         }

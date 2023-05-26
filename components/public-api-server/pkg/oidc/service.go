@@ -296,7 +296,7 @@ func (s *Service) authenticate(ctx context.Context, params authenticateParams) (
 	}, nil
 }
 
-func (s *Service) createSession(ctx context.Context, flowResult *AuthFlowResult, clientConfig *ClientConfig) (*http.Cookie, string, error) {
+func (s *Service) createSession(ctx context.Context, flowResult *AuthFlowResult, clientConfig *ClientConfig) ([]*http.Cookie, string, error) {
 	type CreateSessionPayload struct {
 		AuthFlowResult
 		OrganizationID string `json:"organizationId"`
@@ -325,11 +325,7 @@ func (s *Service) createSession(ctx context.Context, flowResult *AuthFlowResult,
 	message := string(body)
 
 	if res.StatusCode == http.StatusOK {
-		cookies := res.Cookies()
-		if len(cookies) == 1 {
-			return cookies[0], message, nil
-		}
-		return nil, message, fmt.Errorf("unexpected number of cookies: %v", len(cookies))
+		return res.Cookies(), message, nil
 	}
 
 	log.WithField("create-session-error", message).Error("Failed to create session (via server)")

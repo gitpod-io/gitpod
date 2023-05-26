@@ -20,7 +20,7 @@ import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 
 @injectable()
-export class SessionHandlerProvider {
+export class SessionHandler {
     @inject(Config) protected readonly config: Config;
     @inject(DBConfig) protected readonly dbConfig: DBConfig;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
@@ -35,7 +35,7 @@ export class SessionHandlerProvider {
         (options.genid = function (req: any) {
             return uuidv4(); // use UUIDs for session IDs
         }),
-            (options.name = SessionHandlerProvider.getCookieName(this.config));
+            (options.name = SessionHandler.getCookieName(this.config));
         // options.proxy = true    // TODO SSL Proxy
         options.resave = true; // TODO Check with store! See docu
         options.rolling = true; // default, new cookie and maxAge
@@ -46,7 +46,7 @@ export class SessionHandlerProvider {
 
         this.sessionHandler = (req, res, next) => {
             const cookies = parseCookieHeader(req.headers.cookie || "");
-            const jwtToken = cookies[SessionHandlerProvider.getJWTCookieName(this.config)];
+            const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
             if (jwtToken) {
                 // we handle the verification async, because we don't yet need to use it in the application
                 /* tslint:disable-next-line */
@@ -124,6 +124,23 @@ export class SessionHandlerProvider {
         }
     }
 
+    public async createJWTSessionCookie(
+        userID: string,
+    ): Promise<{ name: string; value: string; opts: express.CookieOptions }> {
+        const token = await this.authJWT.sign(userID, {});
+
+        return {
+            name: SessionHandler.getJWTCookieName(this.config),
+            value: token,
+            opts: {
+                maxAge: this.config.auth.session.cookie.maxAge * 1000, // express does not match the HTTP spec and uses milliseconds
+                httpOnly: this.config.auth.session.cookie.httpOnly,
+                sameSite: this.config.auth.session.cookie.sameSite,
+                secure: this.config.auth.session.cookie.secure,
+            },
+        };
+    }
+
     protected getCookieOptions(config: Config): express.CookieOptions {
         // ############################################################################################################
         // WARNING: Whenever we do changes here, we very likely want to have bump the cookie name as well!
@@ -153,13 +170,13 @@ export class SessionHandlerProvider {
 
     public clearSessionCookie(res: express.Response, config: Config): void {
         // http://expressjs.com/en/api.html#res.clearCookie
-        const name = SessionHandlerProvider.getCookieName(config);
+        const name = SessionHandler.getCookieName(config);
         const options = { ...this.getCookieOptions(config) };
         delete options.expires;
         delete options.maxAge;
         res.clearCookie(name, options);
 
-        res.clearCookie(SessionHandlerProvider.getJWTCookieName(this.config));
+        res.clearCookie(SessionHandler.getJWTCookieName(this.config));
     }
 
     protected createStore(): any | undefined {

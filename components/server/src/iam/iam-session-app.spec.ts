@@ -6,7 +6,7 @@
 
 import { Container, ContainerModule } from "inversify";
 import { suite, test, timeout } from "mocha-typescript";
-import { SessionHandlerProvider } from "../session-handler";
+import { SessionHandler } from "../session-handler";
 import { IamSessionApp } from "./iam-session-app";
 import { Config } from "../config";
 import { Authenticator } from "../auth/authenticator";
@@ -98,7 +98,7 @@ class TestIamSessionApp {
         const container = new Container();
         container.load(
             new ContainerModule((bind) => {
-                bind(SessionHandlerProvider).toConstantValue(<any>{}); // disable due to DB dependency
+                bind(SessionHandler).toConstantValue(<any>{}); // disable due to DB dependency
                 bind(IamSessionApp).toSelf().inSingletonScope();
                 bind(Authenticator).toConstantValue(<any>{}); // unused
                 bind(Config).toConstantValue(<any>{}); // unused
