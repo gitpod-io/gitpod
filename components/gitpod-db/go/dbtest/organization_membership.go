@@ -18,18 +18,18 @@ func NewTeamMembership(t *testing.T, membership db.OrganizationMembership) db.Or
 	t.Helper()
 
 	result := db.OrganizationMembership{
-		ID:           uuid.New(),
-		TeamID:       uuid.New(),
-		UserID:       uuid.New(),
-		Role:         db.TeamMembershipRole_Member,
-		CreationTime: db.NewVarCharTime(time.Now()),
+		ID:             uuid.New(),
+		OrganizationID: uuid.New(),
+		UserID:         uuid.New(),
+		Role:           db.TeamMembershipRole_Member,
+		CreationTime:   db.NewVarCharTime(time.Now()),
 	}
 
 	if membership.ID != uuid.Nil {
 		result.ID = membership.ID
 	}
-	if membership.TeamID != uuid.Nil {
-		result.TeamID = membership.TeamID
+	if membership.OrganizationID != uuid.Nil {
+		result.OrganizationID = membership.OrganizationID
 	}
 	if membership.UserID != uuid.Nil {
 		result.UserID = membership.UserID

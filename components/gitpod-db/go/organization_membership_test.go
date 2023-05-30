@@ -28,10 +28,10 @@ func TestGetTeamMembership(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 		membership := dbtest.CreateTeamMembership(t, conn, db.OrganizationMembership{})[0]
 
-		err := db.DeleteOrganizationMembership(context.Background(), conn, membership.UserID, membership.TeamID)
+		err := db.DeleteOrganizationMembership(context.Background(), conn, membership.UserID, membership.OrganizationID)
 		require.NoError(t, err)
 
-		_, err = db.GetOrganizationMembership(context.Background(), conn, membership.UserID, membership.TeamID)
+		_, err = db.GetOrganizationMembership(context.Background(), conn, membership.UserID, membership.OrganizationID)
 		require.Error(t, err)
 		require.ErrorIs(t, err, db.ErrorNotFound)
 	})
@@ -40,13 +40,13 @@ func TestGetTeamMembership(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
 		membership := dbtest.CreateTeamMembership(t, conn, db.OrganizationMembership{})[0]
 
-		retrieved, err := db.GetOrganizationMembership(context.Background(), conn, membership.UserID, membership.TeamID)
+		retrieved, err := db.GetOrganizationMembership(context.Background(), conn, membership.UserID, membership.OrganizationID)
 		require.NoError(t, err)
 
 		require.Equal(t, membership.ID, retrieved.ID)
 		require.Equal(t, membership.Role, retrieved.Role)
 		require.Equal(t, membership.UserID, retrieved.UserID)
-		require.Equal(t, membership.TeamID, retrieved.TeamID)
+		require.Equal(t, membership.OrganizationID, retrieved.OrganizationID)
 	})
 }
 
