@@ -8,7 +8,7 @@ import { ContainerModule } from "inversify";
 
 import { Server } from "./server";
 import { Authenticator } from "./auth/authenticator";
-import { SessionHandlerProvider } from "./session-handler";
+import { SessionHandler } from "./session-handler";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { ServerFactory, UserController } from "./user/user-controller";
@@ -149,7 +149,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(Authenticator).toSelf().inSingletonScope();
     bind(LoginCompletionHandler).toSelf().inSingletonScope();
 
-    bind(SessionHandlerProvider).toSelf().inSingletonScope();
+    bind(SessionHandler).toSelf().inSingletonScope();
     bind(Server).toSelf().inSingletonScope();
     bind(DebugApp).toSelf().inSingletonScope();
 

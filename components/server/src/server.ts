@@ -11,7 +11,7 @@ import * as bodyParser from "body-parser";
 import * as cookieParser from "cookie-parser";
 import { injectable, inject } from "inversify";
 import * as prom from "prom-client";
-import { SessionHandlerProvider } from "./session-handler";
+import { SessionHandler } from "./session-handler";
 import { Authenticator } from "./auth/authenticator";
 import { UserController } from "./user/user-controller";
 import { EventEmitter } from "events";
@@ -62,7 +62,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
     @inject(Config) protected readonly config: Config;
     @inject(TypeORM) protected readonly typeOrm: TypeORM;
-    @inject(SessionHandlerProvider) protected sessionHandlerProvider: SessionHandlerProvider;
+    @inject(SessionHandler) protected sessionHandlerProvider: SessionHandler;
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
     @inject(InstallationAdminController) protected readonly installationAdminController: InstallationAdminController;

@@ -159,13 +159,16 @@ func (s *Service) getCallbackHandler() http.HandlerFunc {
 
 		// Skip the sign-in on verify-only requests.
 		if !state.Verify {
-			cookie, _, err := s.createSession(r.Context(), result, config)
+			cookies, _, err := s.createSession(r.Context(), result, config)
 			if err != nil {
 				log.WithError(err).Warn("Failed to create session from downstream session provider.")
 				respondeWithError(rw, r, "We were unable to create a user session.", http.StatusInternalServerError, useHttpErrors)
 				return
 			}
-			http.SetCookie(rw, cookie)
+			for _, cookie := range cookies {
+				http.SetCookie(rw, cookie)
+			}
+
 		}
 
 		http.Redirect(rw, r, oauth2Result.ReturnToURL, http.StatusTemporaryRedirect)
