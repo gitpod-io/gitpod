@@ -171,7 +171,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	// 3. start debug
 	fmt.Println("")
 	runLog := log.New()
-	runLog.Logger.SetLevel(logrus.TraceLevel)
+	runLog.Level = logrus.TraceLevel
 	setLoggerFormatter(runLog.Logger)
 	runLog.Logger.SetOutput(os.Stdout)
 	runLog.Info("Starting the workspace...")
@@ -227,7 +227,7 @@ func runRebuild(ctx context.Context, supervisorClient *supervisor.SupervisorClie
 	}
 
 	serverLog := logrus.NewEntry(logrus.New())
-	serverLog.Logger.SetLevel(logLevel)
+	serverLog.Level = logLevel
 	setLoggerFormatter(serverLog.Logger)
 	workspaceEnvs, err := getWorkspaceEnvs(ctx, &connectToServerOptions{supervisorClient, wsInfo, serverLog})
 	if err != nil {
