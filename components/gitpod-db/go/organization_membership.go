@@ -37,8 +37,8 @@ func (d *OrganizationMembership) TableName() string {
 type OrganizationMembershipRole string
 
 const (
-	TeamMembershipRole_Owner  = OrganizationMembershipRole("owner")
-	TeamMembershipRole_Member = OrganizationMembershipRole("member")
+	OrganizationMembershipRole_Owner  = OrganizationMembershipRole("owner")
+	OrganizationMembershipRole_Member = OrganizationMembershipRole("member")
 )
 
 func GetOrganizationMembership(ctx context.Context, conn *gorm.DB, userID, orgID uuid.UUID) (OrganizationMembership, error) {

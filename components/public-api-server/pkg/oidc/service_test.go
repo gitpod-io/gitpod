@@ -137,7 +137,7 @@ func TestGetClientConfigFromStartRequest(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		require.NoError(t, dbConn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+		require.NoError(t, dbConn.Where("slug = ?", team.Slug).Delete(&db.Organization{}).Error)
 	})
 }
 
@@ -145,7 +145,7 @@ func TestGetClientConfigFromStartRequestSingleOrg(t *testing.T) {
 	issuer := newFakeIdP(t)
 	service, dbConn := setupOIDCServiceForTests(t)
 	// make sure no other teams are in the db anymore
-	dbConn.Delete(&db.Team{}, "1=1")
+	dbConn.Delete(&db.Organization{}, "1=1")
 	config, team := createConfig(t, dbConn, &ClientConfig{
 		Issuer:         issuer,
 		Active:         true,
@@ -202,7 +202,7 @@ func TestGetClientConfigFromStartRequestSingleOrg(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		require.NoError(t, dbConn.Where("slug = ?", team.Slug).Delete(&db.Team{}).Error)
+		require.NoError(t, dbConn.Where("slug = ?", team.Slug).Delete(&db.Organization{}).Error)
 	})
 }
 
@@ -391,10 +391,10 @@ func setupOIDCServiceForTests(t *testing.T) (*Service, *gorm.DB) {
 	return service, dbConn
 }
 
-func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) (db.OIDCClientConfig, db.Team) {
+func createConfig(t *testing.T, dbConn *gorm.DB, config *ClientConfig) (db.OIDCClientConfig, db.Organization) {
 	t.Helper()
 
-	team := dbtest.CreateTeams(t, dbConn, db.Team{})[0]
+	team := dbtest.CreateOrganizations(t, dbConn, db.Organization{})[0]
 
 	data, err := db.EncryptJSON(dbtest.CipherSet(t), db.OIDCSpec{
 		ClientID:     config.OAuth2Config.ClientID,

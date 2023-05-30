@@ -134,7 +134,7 @@ func (s *Service) getClientConfigFromStartRequest(r *http.Request) (*ClientConfi
 
 	// if no org slug is given, we assume the request is for the default org
 	if orgSlug == "" && idParam == "" {
-		org, err := db.GetSingleTeamWithActiveSSO(r.Context(), s.dbConn)
+		org, err := db.GetSingleOrganizationWithActiveSSO(r.Context(), s.dbConn)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to find team: %w", err)
 		}

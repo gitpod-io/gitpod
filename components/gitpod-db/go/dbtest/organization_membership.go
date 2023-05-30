@@ -21,7 +21,7 @@ func NewTeamMembership(t *testing.T, membership db.OrganizationMembership) db.Or
 		ID:             uuid.New(),
 		OrganizationID: uuid.New(),
 		UserID:         uuid.New(),
-		Role:           db.TeamMembershipRole_Member,
+		Role:           db.OrganizationMembershipRole_Member,
 		CreationTime:   db.NewVarCharTime(time.Now()),
 	}
 

@@ -103,10 +103,10 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 		issuer := newFakeIdP(t, true)
 
 		anotherOrg := uuid.New()
-		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
-			TeamID: anotherOrg,
-			UserID: uuid.MustParse(user.ID),
-			Role:   db.TeamMembershipRole_Member,
+		dbtest.CreateTeamMembership(t, dbConn, db.OrganizationMembership{
+			OrganizationID: anotherOrg,
+			UserID:         uuid.MustParse(user.ID),
+			Role:           db.OrganizationMembershipRole_Member,
 		})
 
 		config := &v1.OIDCClientConfig{
@@ -289,10 +289,10 @@ func TestOIDCService_GetClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		anotherOrg := uuid.New()
-		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
-			TeamID: anotherOrg,
-			UserID: uuid.MustParse(user.ID),
-			Role:   db.TeamMembershipRole_Member,
+		dbtest.CreateTeamMembership(t, dbConn, db.OrganizationMembership{
+			OrganizationID: anotherOrg,
+			UserID:         uuid.MustParse(user.ID),
+			Role:           db.OrganizationMembershipRole_Member,
 		})
 
 		_, err := client.GetClientConfig(context.Background(), connect.NewRequest(&v1.GetClientConfigRequest{
@@ -338,10 +338,10 @@ func TestOIDCService_ListClientConfigs_WithFeatureFlagEnabled(t *testing.T) {
 		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		anotherOrg := uuid.New()
-		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
-			TeamID: anotherOrg,
-			UserID: uuid.MustParse(user.ID),
-			Role:   db.TeamMembershipRole_Member,
+		dbtest.CreateTeamMembership(t, dbConn, db.OrganizationMembership{
+			OrganizationID: anotherOrg,
+			UserID:         uuid.MustParse(user.ID),
+			Role:           db.OrganizationMembershipRole_Member,
 		})
 
 		_, err := client.ListClientConfigs(context.Background(), connect.NewRequest(&v1.ListClientConfigsRequest{
@@ -430,10 +430,10 @@ func TestOIDCService_UpdateClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		anotherOrg := uuid.New()
-		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
-			TeamID: anotherOrg,
-			UserID: uuid.MustParse(user.ID),
-			Role:   db.TeamMembershipRole_Member,
+		dbtest.CreateTeamMembership(t, dbConn, db.OrganizationMembership{
+			OrganizationID: anotherOrg,
+			UserID:         uuid.MustParse(user.ID),
+			Role:           db.OrganizationMembershipRole_Member,
 		})
 
 		_, err := client.UpdateClientConfig(context.Background(), connect.NewRequest(&v1.UpdateClientConfigRequest{
@@ -543,10 +543,10 @@ func TestOIDCService_DeleteClientConfig_WithFeatureFlagEnabled(t *testing.T) {
 		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		anotherOrg := uuid.New()
-		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
-			TeamID: anotherOrg,
-			UserID: uuid.MustParse(user.ID),
-			Role:   db.TeamMembershipRole_Member,
+		dbtest.CreateTeamMembership(t, dbConn, db.OrganizationMembership{
+			OrganizationID: anotherOrg,
+			UserID:         uuid.MustParse(user.ID),
+			Role:           db.OrganizationMembershipRole_Member,
 		})
 
 		_, err := client.DeleteClientConfig(context.Background(), connect.NewRequest(&v1.DeleteClientConfigRequest{
@@ -613,10 +613,10 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 		_, client, dbConn := setupOIDCService(t, withOIDCFeatureEnabled)
 
 		anotherOrg := uuid.New()
-		dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
-			TeamID: anotherOrg,
-			UserID: uuid.MustParse(user.ID),
-			Role:   db.TeamMembershipRole_Member,
+		dbtest.CreateTeamMembership(t, dbConn, db.OrganizationMembership{
+			OrganizationID: anotherOrg,
+			UserID:         uuid.MustParse(user.ID),
+			Role:           db.OrganizationMembershipRole_Member,
 		})
 
 		_, err := client.SetClientConfigActivation(context.Background(), connect.NewRequest(&v1.SetClientConfigActivationRequest{
@@ -769,10 +769,10 @@ func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.Moc
 	serverMock.EXPECT().GetLoggedInUser(gomock.Any()).Return(user, nil).AnyTimes()
 	serverMock.EXPECT().GetTeams(gomock.Any()).Return(teams, nil).AnyTimes()
 	// ensure our user is owner of our default org
-	dbtest.CreateTeamMembership(t, dbConn, db.TeamMembership{
-		UserID: uuid.MustParse(user.ID),
-		TeamID: organizationID,
-		Role:   db.TeamMembershipRole_Owner,
+	dbtest.CreateTeamMembership(t, dbConn, db.OrganizationMembership{
+		UserID:         uuid.MustParse(user.ID),
+		OrganizationID: organizationID,
+		Role:           db.OrganizationMembershipRole_Owner,
 	})
 
 	return serverMock, client, dbConn
