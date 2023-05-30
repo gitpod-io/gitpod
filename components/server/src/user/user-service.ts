@@ -6,12 +6,18 @@
 
 import { injectable, inject } from "inversify";
 import { User, Identity, Token, AdditionalUserData, IdentityLookup } from "@gitpod/gitpod-protocol";
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID, MaybeUser, ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import {
+    BUILTIN_INSTLLATION_ADMIN_USER_ID,
+    EmailDomainFilterDB,
+    MaybeUser,
+    ProjectDB,
+    TeamDB,
+    UserDB,
+} from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
 import { AuthUser } from "../auth/auth-provider";
-import { BlockedUserService } from "../auth/blocked-user-filter";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
@@ -20,7 +26,6 @@ import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
 import { UserToTeamMigrationService } from "../migration/user-to-team-migration-service";
-import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export interface CreateUserParams {
     identity: Identity;
@@ -41,15 +46,16 @@ export interface UsageLimitReachedResult {
 
 @injectable()
 export class UserService {
-    @inject(BlockedUserService) protected readonly blockedUserService: BlockedUserService;
-    @inject(UserDB) protected readonly userDb: UserDB;
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
+
+    @inject(EmailDomainFilterDB) protected readonly domainFilterDb: EmailDomainFilterDB;
+    @inject(UserDB) protected readonly userDb: UserDB;
     @inject(ProjectDB) protected readonly projectDb: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+
+    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UsageService) protected readonly usageService: UsageService;
     @inject(UserToTeamMigrationService) protected readonly migrationService: UserToTeamMigrationService;
-    @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
 
     protected getAuthProviderIdForHost(host: string): string | undefined {
         const hostContext = this.hostContextProvider.get(host);
@@ -249,16 +255,6 @@ export class UserService {
         return [AttributionId.create(user)].concat(result);
     }
 
-    async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {
-        if (params.user && params.user.blocked) {
-            return true;
-        }
-        if (params.primaryEmail) {
-            return this.blockedUserService.isBlocked(params.primaryEmail);
-        }
-        return false;
-    }
-
     async blockUser(targetUserId: string, block: boolean): Promise<User> {
         const target = await this.userDb.findUserById(targetUserId);
         if (!target) {
@@ -410,7 +406,7 @@ export class UserService {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "User does not exist.");
         }
 
-        const allowedFields: (keyof User)[] = ["avatarUrl", "fullName", "additionalData"];
+        const allowedFields: (keyof User)[] = ["fullName", "additionalData"];
         for (const p of allowedFields) {
             if (p in update) {
                 (user[p] as any) = update[p];
@@ -419,5 +415,24 @@ export class UserService {
 
         await this.userDb.updateUserPartial(user);
         return user;
+    }
+
+    async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {
+        if (params.user && params.user.blocked) {
+            return true;
+        }
+        if (params.primaryEmail) {
+            const { domain } = this.parseMail(params.primaryEmail);
+            return this.domainFilterDb.isBlocked(domain);
+        }
+        return false;
+    }
+
+    protected parseMail(email: string): { user: string; domain: string } {
+        const parts = email.split("@");
+        if (parts.length !== 2) {
+            throw new Error("Invalid E-Mail address: " + email);
+        }
+        return { user: parts[0], domain: parts[1].toLowerCase() };
     }
 }
