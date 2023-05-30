@@ -19,6 +19,7 @@ import { UserService } from "../user/user-service";
 import { increaseLoginCounter } from "../prometheus-metrics";
 import { SignInJWT } from "./jwt";
 import "../express"; // helps ts-loader to find the merged declarations in Express.User
+import { SessionHandler } from "../session-handler";
 
 @injectable()
 export class Authenticator {
@@ -33,6 +34,7 @@ export class Authenticator {
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(UserService) protected readonly userService: UserService;
     @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
+    @inject(SessionHandler) protected readonly sessionHandler: SessionHandler;
 
     @postConstruct()
     protected setup() {
@@ -65,6 +67,7 @@ export class Authenticator {
         return [
             this.passportInitialize, // adds `passport.user` to session
             this.passportSession, // deserializes session user into  `req.user`
+            this.sessionHandler.jwtSessionConvertor(),
         ];
     }
 
