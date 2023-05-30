@@ -142,7 +142,13 @@ const MaybeWithForm: FC<MaybeWithFormProps> = ({ onSubmit, children }) => {
         return <>{children}</>;
     }
 
-    return <form onSubmit={handleSubmit}>{children}</form>;
+    return (
+        <form onSubmit={handleSubmit}>
+            {/* including a hidden submit button ensures submit on enter works despite a button w/ type="submit" existing or not */}
+            <input type="submit" className="hidden" hidden />
+            {children}
+        </form>
+    );
 };
 
 type ModalHeaderProps = {

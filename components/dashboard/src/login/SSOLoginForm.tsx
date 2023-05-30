@@ -80,6 +80,7 @@ export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
                     />
                 )}
                 <Button
+                    htmlType="submit"
                     className="w-full"
                     type="secondary"
                     disabled={!singleOrgMode && (!orgSlug.trim() || !slugError.isValid)}

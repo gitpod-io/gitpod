@@ -119,6 +119,7 @@ export default function Preferences() {
                                 />
                             </div>
                             <Button
+                                htmlType="submit"
                                 loading={updateDotfileRepo.isLoading}
                                 disabled={
                                     updateDotfileRepo.isLoading ||
@@ -165,6 +166,7 @@ export default function Preferences() {
                                         />
                                     </div>
                                     <Button
+                                        htmlType="submit"
                                         loading={timeoutUpdating}
                                         disabled={workspaceTimeout === user?.additionalData?.workspaceTimeout ?? ""}
                                     >

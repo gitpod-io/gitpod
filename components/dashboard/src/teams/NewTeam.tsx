@@ -11,6 +11,7 @@ import { Heading1, Heading3, Subheading } from "../components/typography/heading
 import { useOrganizationsInvalidator } from "../data/organizations/orgs-query";
 import { useDocumentTitle } from "../hooks/use-document-title";
 import { publicApiTeamToProtocol, teamsService } from "../service/public-api";
+import { Button } from "../components/Button";
 
 export default function NewTeamPage() {
     const invalidateOrgs = useOrganizationsInvalidator();
@@ -71,10 +72,10 @@ export default function NewTeamPage() {
                     )}
                 </div>
                 <div className="flex flex-row-reverse space-x-2 space-x-reverse mt-2">
-                    <button type="submit">Create Organization</button>
-                    <button className="secondary" onClick={() => history.push("/")}>
+                    <Button htmlType="submit">Create Organization</Button>
+                    <Button type="secondary" onClick={() => history.push("/")}>
                         Cancel
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>

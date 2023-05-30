@@ -130,7 +130,7 @@ function AddPaymentMethodForm({ attributionId }: { attributionId: string }) {
                         ]}
                     />
                 </div>
-                <Button disabled={!stripe} loading={confirmPayment.isLoading}>
+                <Button htmlType="submit" disabled={!stripe} loading={confirmPayment.isLoading}>
                     Confirm
                 </Button>
             </ModalFooter>
