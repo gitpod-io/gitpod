@@ -43,7 +43,6 @@ import { Config } from "./config";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
-import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { API } from "./api/server";
@@ -65,7 +64,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(SessionHandlerProvider) protected sessionHandlerProvider: SessionHandlerProvider;
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
-    @inject(InstallationAdminController) protected readonly installationAdminController: InstallationAdminController;
     @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
     @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
@@ -277,9 +275,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         // Health check + metrics endpoints
         this.monitoringApp = this.monitoringEndpointsApp.create();
-
-        // Installation Admin - host separately to avoid exposing publicly
-        this.installationAdminApp = this.installationAdminController.create();
 
         // IAM Session App - host separately to avoid exposing publicly
         this.iamSessionApp = this.iamSessionAppCreator.create();
