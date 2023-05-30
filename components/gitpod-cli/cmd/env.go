@@ -19,6 +19,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/supervisor"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/utils"
 	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	supervisorapi "github.com/gitpod-io/gitpod/supervisor/api"
@@ -253,18 +254,18 @@ func parseArgs(args []string, pattern string) ([]*serverapi.UserEnvVarValue, err
 	for i, arg := range args {
 		kv := strings.SplitN(arg, "=", 1)
 		if len(kv) != 1 || kv[0] == "" {
-			return nil, xerrors.Errorf("empty string (correct format is key=value)")
+			return nil, GpError{Err: xerrors.Errorf("empty string (correct format is key=value)"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 
 		if !strings.Contains(kv[0], "=") {
-			return nil, xerrors.Errorf("%s has no equal character (correct format is %s=some_value)", arg, arg)
+			return nil, GpError{Err: xerrors.Errorf("%s has no equal character (correct format is %s=some_value)", arg, arg), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 
 		parts := strings.SplitN(kv[0], "=", 2)
 
 		key := strings.TrimSpace(parts[0])
 		if key == "" {
-			return nil, xerrors.Errorf("variable must have a name")
+			return nil, GpError{Err: xerrors.Errorf("variable must have a name"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 
 		// Do not trim value - the user might want whitespace here
@@ -276,7 +277,7 @@ func parseArgs(args []string, pattern string) ([]*serverapi.UserEnvVarValue, err
 		val = strings.ReplaceAll(val, `\ `, " ")
 
 		if val == "" {
-			return nil, xerrors.Errorf("variable must have a value; use -u to unset a variable")
+			return nil, GpError{Err: xerrors.Errorf("variable must have a value; use -u to unset a variable"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 
 		vars[i] = &serverapi.UserEnvVarValue{Name: key, Value: val, RepositoryPattern: pattern}
