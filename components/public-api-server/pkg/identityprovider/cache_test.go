@@ -110,8 +110,12 @@ func TestRedisCachePublicKeys(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			s := miniredis.RunT(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(func() {
+				cancel()
+			})
 			client := redis.NewClient(&redis.Options{Addr: s.Addr()})
-			cache := NewRedisCache(context.Background(), client)
+			cache := NewRedisCache(ctx, client)
 			cache.keyID = testKeyID
 			for _, key := range test.Keys {
 				err := cache.Set(context.Background(), key)
@@ -205,4 +209,8 @@ func TestRedisCacheSigner(t *testing.T) {
 	if len(keys) == 0 {
 		t.Error("getting a new signer did not repersist the key")
 	}
+}
+
+func TestRedisSync(t *testing.T) {
+
 }

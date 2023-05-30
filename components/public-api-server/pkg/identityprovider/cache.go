@@ -105,6 +105,7 @@ func (imc *InMemoryCache) PublicKeys(ctx context.Context) ([]byte, error) {
 
 const (
 	redisCacheDefaultTTL = 1 * time.Hour
+	redisRefreshPeriod   = 10 * time.Minute
 	redisIDPKeyPrefix    = "idp:keys:"
 )
 
@@ -113,7 +114,7 @@ func NewRedisCache(ctx context.Context, client *redis.Client) *RedisCache {
 		Client: client,
 		keyID:  defaultKeyID,
 	}
-	go cache.sync(ctx)
+	go cache.sync(ctx, redisRefreshPeriod)
 	return cache
 }
 
@@ -255,9 +256,9 @@ func (rc *RedisCache) reconcile(ctx context.Context) error {
 	return nil
 }
 
-func (rc *RedisCache) sync(ctx context.Context) {
+func (rc *RedisCache) sync(ctx context.Context, period time.Duration) {
 	_ = rc.reconcile(ctx)
-	ticker := time.NewTicker(10 * time.Minute)
+	ticker := time.NewTicker(period)
 	for ctx.Err() == nil {
 		select {
 		case <-ctx.Done():
