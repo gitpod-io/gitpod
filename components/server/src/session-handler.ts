@@ -15,9 +15,10 @@ const MySQLStore = mysqlstore(session);
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
-import { reportSessionWithJWT } from "./prometheus-metrics";
+import { reportJWTCookieIssued, reportSessionWithJWT } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class SessionHandler {
@@ -61,6 +62,36 @@ export class SessionHandler {
             } else {
                 session(options)(req, res, next);
             }
+        };
+    }
+
+    public jwtSessionConvertor(): express.Handler {
+        return async (req, res, next) => {
+            const user = req.user;
+            if (!user) {
+                log.info("JWT Session converter did not find user on request.");
+                next();
+                return;
+            }
+
+            const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
+                "jwtSessionCookieEnabled",
+                false,
+                {
+                    user: user,
+                },
+            );
+            if (isJWTCookieExperimentEnabled) {
+                const cookie = await this.createJWTSessionCookie(user.id);
+
+                res.cookie(cookie.name, cookie.value, cookie.opts);
+
+                reportJWTCookieIssued();
+                log.info("JWT Session convertor issued JWT cookie");
+            }
+
+            next();
+            return;
         };
     }
 
