@@ -82,12 +82,18 @@ export class SessionHandler {
                 },
             );
             if (isJWTCookieExperimentEnabled) {
-                const cookie = await this.createJWTSessionCookie(user.id);
+                const cookies = parseCookieHeader(req.headers.cookie || "");
+                const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
+                if (!jwtToken) {
+                    const cookie = await this.createJWTSessionCookie(user.id);
 
-                res.cookie(cookie.name, cookie.value, cookie.opts);
+                    res.cookie(cookie.name, cookie.value, cookie.opts);
 
-                reportJWTCookieIssued();
-                log.info("JWT Session convertor issued JWT cookie");
+                    reportJWTCookieIssued();
+                    log.info("JWT Session convertor issued JWT cookie");
+                } else {
+                    log.info("Session already has a JWT cookie");
+                }
             }
 
             next();
