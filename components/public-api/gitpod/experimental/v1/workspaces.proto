@@ -133,6 +133,9 @@ message Workspace {
 
     // status is the current status of this Workspace.
     WorkspaceStatus status = 6;
+
+    // recentFolders is the opened folders inside the workspace. Used to determine the folder path to load the workspace in.
+    repeated string recentFolders = 7;
 }
 
 // WorkspaceStatus represents the currently observed status of a Workspace, including data about child resources that belong to this Workspace.
@@ -147,6 +150,9 @@ message WorkspaceContext {
     message Git {
         string normalized_context_url = 1;
         string commit = 2;
+
+        // gitProvider is the git provider, e.g. 'github', 'gitlab', self hosted, etc
+        string gitProvider = 3;
     }
 
     // Workspace was created from a prebuild
