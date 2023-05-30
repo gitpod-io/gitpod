@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TeamDB, TypeORM, TypeORMUserDBImpl, testContainer } from "@gitpod/gitpod-db/lib";
+import { DBUser, TypeORM, TypeORMUserDBImpl, testContainer } from "@gitpod/gitpod-db/lib";
 import { Container } from "inversify";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { UsageService } from "./usage-service";
