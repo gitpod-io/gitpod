@@ -127,6 +127,7 @@ func (kp *Service) Router() http.Handler {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "application/json")
 		_, err = w.Write(keys)
 		if err != nil {
 			log.WithError(err).Error("cannot repond to /keys")
