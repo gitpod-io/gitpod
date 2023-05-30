@@ -19,14 +19,19 @@ import { reportJWTCookieIssued } from "../prometheus-metrics";
 
 @injectable()
 export class IamSessionApp {
-    @inject(SessionHandler) protected readonly sessionHandlerProvider: SessionHandler;
+    @inject(SessionHandler) protected readonly sessionHandler: SessionHandler;
     @inject(Authenticator) protected readonly authenticator: Authenticator;
     @inject(UserService) protected readonly userService: UserService;
     @inject(TeamDB) protected readonly teamDb: TeamDB;
     @inject(SessionHandler) protected readonly session: SessionHandler;
 
     public getMiddlewares() {
-        return [express.json(), this.sessionHandlerProvider.sessionHandler, ...this.authenticator.initHandlers];
+        return [
+            express.json(),
+            this.sessionHandler.sessionHandler,
+            this.sessionHandler.jwtSessionConvertor(),
+            ...this.authenticator.initHandlers,
+        ];
     }
 
     public create(): express.Application {
