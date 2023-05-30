@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/redis/go-redis/v9"
 	"gopkg.in/square/go-jose.v2"
+	"gorm.io/gorm"
 )
 
 // KeyCache caches public keys to ensure they're returned with the JWKS as long
@@ -286,3 +287,129 @@ func (rc *RedisCache) sync(ctx context.Context, period time.Duration) {
 }
 
 var _ KeyCache = ((*RedisCache)(nil))
+
+const (
+	mysqlCacheDefaultTTL = 1 * time.Hour
+)
+
+func NewMySQLCache(dbConn *gorm.DB) *MySQLCache {
+	return &MySQLCache{
+		dbConn: dbConn,
+		keyID:  defaultKeyID,
+	}
+}
+
+type MySQLCache struct {
+	dbConn *gorm.DB
+
+	keyID     func(current *rsa.PrivateKey) string
+	mu        sync.RWMutex
+	current   *rsa.PrivateKey
+	currentID string
+}
+
+// PublicKeys implements KeyCache
+func (rc *MySQLCache) PublicKeys(ctx context.Context) ([]byte, error) {
+	var (
+		res           = []byte("{\"keys\":[")
+		first         = true
+		hasCurrentKey = false
+	)
+
+	if rc.current != nil && rc.currentID != "" {
+		hasCurrentKey = true
+		fc, err := serializePublicKeyAsJSONWebKey(rc.currentID, &rc.current.PublicKey)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, fc...)
+		first = false
+	}
+
+	iter := rc.Client.Scan(ctx, 0, redisIDPKeyPrefix+"*", 0).Iterator()
+	for iter.Next(ctx) {
+		idx := iter.Val()
+		if hasCurrentKey && strings.HasSuffix(idx, rc.currentID) {
+			// We've already added the public key we hold in memory
+			continue
+		}
+		key, err := rc.Client.Get(ctx, idx).Result()
+		if err != nil {
+			return nil, err
+		}
+
+		if !first {
+			res = append(res, []byte(",")...)
+		}
+		res = append(res, []byte(key)...)
+		first = false
+	}
+	if err := iter.Err(); err != nil {
+		return nil, err
+	}
+	res = append(res, []byte("]}")...)
+	return res, nil
+}
+
+// Set implements KeyCache
+func (rc *MySQLCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+
+	err := rc.persistPublicKey(ctx, current)
+	if err != nil {
+		return err
+	}
+	rc.currentID = rc.keyID(current)
+	rc.current = current
+
+	return nil
+}
+
+func (rc *MySQLCache) persistPublicKey(ctx context.Context, current *rsa.PrivateKey) error {
+	id := rc.keyID(current)
+
+	publicKeyJSON, err := serializePublicKeyAsJSONWebKey(id, &current.PublicKey)
+	if err != nil {
+		return err
+	}
+
+	redisKey := fmt.Sprintf("%s%s", redisIDPKeyPrefix, id)
+	err = rc.Client.Set(ctx, redisKey, string(publicKeyJSON), mysqlCacheDefaultTTL).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Signer implements KeyCache
+func (rc *MySQLCache) Signer(ctx context.Context) (jose.Signer, error) {
+	if rc.current == nil {
+		return nil, nil
+	}
+
+	resp := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, mysqlCacheDefaultTTL)
+	if err := resp.Err(); err != nil {
+		log.WithField("keyID", rc.currentID).WithError(err).Warn("cannot extend cached IDP public key TTL")
+	}
+	if !resp.Val() {
+		log.WithField("keyID", rc.currentID).Warn("cannot extend cached IDP public key TTL - trying to repersist")
+		err := rc.persistPublicKey(ctx, rc.current)
+		if err != nil {
+			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot repersist public key")
+			return nil, err
+		}
+	}
+
+	return jose.NewSigner(jose.SigningKey{
+		Algorithm: jose.RS256,
+		Key:       rc.current,
+	}, &jose.SignerOptions{
+		ExtraHeaders: map[jose.HeaderKey]interface{}{
+			jose.HeaderKey("kid"): rc.currentID,
+		},
+	})
+}
+
+var _ KeyCache = ((*MySQLCache)(nil))
