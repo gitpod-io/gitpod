@@ -115,6 +115,7 @@ func (kp *Service) Router() http.Handler {
 			EndSessionEndpoint:                                 notSupported,
 			JwksURI:                                            keysURL,
 		}
+		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(cfg)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
