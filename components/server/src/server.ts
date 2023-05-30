@@ -105,9 +105,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected app?: express.Application;
     protected httpServer?: http.Server;
     protected monitoringApp?: express.Application;
-    protected installationAdminApp?: express.Application;
     protected monitoringHttpServer?: http.Server;
-    protected installationAdminHttpServer?: http.Server;
     protected disposables = new DisposableCollection();
 
     public async init(app: express.Application) {
@@ -352,16 +350,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
-        if (this.installationAdminApp) {
-            this.installationAdminHttpServer = this.installationAdminApp.listen(9000, () => {
-                log.info(
-                    `installation admin app listening on port: ${
-                        (<AddressInfo>this.installationAdminHttpServer!.address()).port
-                    }`,
-                );
-            });
-        }
-
         if (this.iamSessionApp) {
             this.iamSessionAppServer = this.iamSessionApp.listen(9876, () => {
                 log.info(
@@ -379,7 +367,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         await this.debugApp.stop();
         await this.stopServer(this.iamSessionAppServer);
         await this.stopServer(this.monitoringHttpServer);
-        await this.stopServer(this.installationAdminHttpServer);
         await this.stopServer(this.httpServer);
         await this.stopServer(this.apiServer);
         this.disposables.dispose();
