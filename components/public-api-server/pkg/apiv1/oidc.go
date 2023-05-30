@@ -412,7 +412,7 @@ func (s *OIDCService) isFeatureEnabled(ctx context.Context, conn protocol.APIInt
 }
 
 func (s *OIDCService) userIsOrgOwner(ctx context.Context, userID, orgID uuid.UUID) error {
-	membership, err := db.GetTeamMembership(ctx, s.dbConn, userID, orgID)
+	membership, err := db.GetOrganizationMembership(ctx, s.dbConn, userID, orgID)
 	if err != nil {
 		if errors.Is(err, db.ErrorNotFound) {
 			return connect.NewError(connect.CodeNotFound, fmt.Errorf("Organization %s does not exist", orgID.String()))
@@ -421,7 +421,7 @@ func (s *OIDCService) userIsOrgOwner(ctx context.Context, userID, orgID uuid.UUI
 		return connect.NewError(connect.CodeInternal, fmt.Errorf("Failed to verify user %s is owner of organization %s", userID.String(), orgID.String()))
 	}
 
-	if membership.Role != db.TeamMembershipRole_Owner {
+	if membership.Role != db.OrganizationMembershipRole_Owner {
 		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("user %s is not owner of organization %s", userID.String(), orgID.String()))
 	}
 

@@ -190,7 +190,7 @@ func GetActiveOIDCClientConfigByOrgSlug(ctx context.Context, conn *gorm.DB, slug
 	tx := conn.
 		WithContext(ctx).
 		Table(fmt.Sprintf("%s as config", (&OIDCClientConfig{}).TableName())).
-		Joins(fmt.Sprintf("JOIN %s AS team ON team.id = config.organizationId", (&Team{}).TableName())).
+		Joins(fmt.Sprintf("JOIN %s AS team ON team.id = config.organizationId", (&Organization{}).TableName())).
 		Where("team.slug = ?", slug).
 		Where("config.deleted = ?", 0).
 		Where("config.active = ?", 1).

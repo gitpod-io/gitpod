@@ -14,13 +14,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateTeams(t *testing.T, conn *gorm.DB, entries ...db.Team) []db.Team {
+func CreateOrganizations(t *testing.T, conn *gorm.DB, entries ...db.Organization) []db.Organization {
 	t.Helper()
 
-	var records []db.Team
+	var records []db.Organization
 	var ids []string
 	for _, entry := range entries {
-		record := db.Team{
+		record := db.Organization{
 			ID:   uuid.New(),
 			Name: "Team1",
 			Slug: "org-" + uuid.New().String(),
@@ -37,7 +37,7 @@ func CreateTeams(t *testing.T, conn *gorm.DB, entries ...db.Team) []db.Team {
 		records = append(records, record)
 		ids = append(ids, record.ID.String())
 
-		created, err := db.CreateTeam(context.Background(), conn, record)
+		created, err := db.CreateOrganization(context.Background(), conn, record)
 		require.NoError(t, err)
 		require.NotNil(t, created)
 	}
@@ -51,6 +51,6 @@ func CreateTeams(t *testing.T, conn *gorm.DB, entries ...db.Team) []db.Team {
 
 func HardDeleteTeams(t *testing.T, ids ...string) {
 	if len(ids) > 0 {
-		require.NoError(t, conn.Where(ids).Delete(&db.Team{}).Error)
+		require.NoError(t, conn.Where(ids).Delete(&db.Organization{}).Error)
 	}
 }

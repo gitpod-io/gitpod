@@ -19,34 +19,34 @@ func TestGetTeamMembership(t *testing.T) {
 
 	t.Run("membership does not exist", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
-		_, err := db.GetTeamMembership(context.Background(), conn, uuid.New(), uuid.New())
+		_, err := db.GetOrganizationMembership(context.Background(), conn, uuid.New(), uuid.New())
 		require.Error(t, err)
 		require.ErrorIs(t, err, db.ErrorNotFound)
 	})
 
 	t.Run("ignores deleted records", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
-		membership := dbtest.CreateTeamMembership(t, conn, db.TeamMembership{})[0]
+		membership := dbtest.CreateTeamMembership(t, conn, db.OrganizationMembership{})[0]
 
-		err := db.DeleteTeamMembership(context.Background(), conn, membership.UserID, membership.TeamID)
+		err := db.DeleteOrganizationMembership(context.Background(), conn, membership.UserID, membership.OrganizationID)
 		require.NoError(t, err)
 
-		_, err = db.GetTeamMembership(context.Background(), conn, membership.UserID, membership.TeamID)
+		_, err = db.GetOrganizationMembership(context.Background(), conn, membership.UserID, membership.OrganizationID)
 		require.Error(t, err)
 		require.ErrorIs(t, err, db.ErrorNotFound)
 	})
 
 	t.Run("retrieves membership", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
-		membership := dbtest.CreateTeamMembership(t, conn, db.TeamMembership{})[0]
+		membership := dbtest.CreateTeamMembership(t, conn, db.OrganizationMembership{})[0]
 
-		retrieved, err := db.GetTeamMembership(context.Background(), conn, membership.UserID, membership.TeamID)
+		retrieved, err := db.GetOrganizationMembership(context.Background(), conn, membership.UserID, membership.OrganizationID)
 		require.NoError(t, err)
 
 		require.Equal(t, membership.ID, retrieved.ID)
 		require.Equal(t, membership.Role, retrieved.Role)
 		require.Equal(t, membership.UserID, retrieved.UserID)
-		require.Equal(t, membership.TeamID, retrieved.TeamID)
+		require.Equal(t, membership.OrganizationID, retrieved.OrganizationID)
 	})
 }
 
@@ -54,7 +54,7 @@ func TestDeleteTeamMembership(t *testing.T) {
 
 	t.Run("not found when membership does not exist", func(t *testing.T) {
 		conn := dbtest.ConnectForTests(t)
-		err := db.DeleteTeamMembership(context.Background(), conn, uuid.New(), uuid.New())
+		err := db.DeleteOrganizationMembership(context.Background(), conn, uuid.New(), uuid.New())
 		require.Error(t, err)
 		require.ErrorIs(t, err, db.ErrorNotFound)
 	})
