@@ -208,7 +208,7 @@ type Bastion struct {
 }
 
 func (b *Bastion) Run() error {
-	updates, err := b.Client.InstanceUpdates(b.ctx, "")
+	updates, err := b.Client.WorkspaceUpdates(b.ctx, "")
 	if err != nil {
 		return err
 	}

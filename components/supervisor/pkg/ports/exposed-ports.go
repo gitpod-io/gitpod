@@ -131,7 +131,7 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 		defer close(reschan)
 		defer close(errchan)
 
-		updates, err := g.gitpodService.InstanceUpdates(ctx)
+		updates, err := g.gitpodService.WorkspaceUpdates(ctx)
 		if err != nil {
 			errchan <- err
 			return

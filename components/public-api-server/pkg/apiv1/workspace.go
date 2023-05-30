@@ -79,7 +79,7 @@ func (s *WorkspaceService) StreamWorkspaceStatus(ctx context.Context, req *conne
 		return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf("instance not found"))
 	}
 
-	ch, err := conn.InstanceUpdates(ctx, workspace.LatestInstance.ID)
+	ch, err := conn.WorkspaceUpdates(ctx, workspaceID)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to get workspace instance updates.")
 		return proxy.ConvertError(err)

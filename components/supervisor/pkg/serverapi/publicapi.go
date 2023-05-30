@@ -32,7 +32,7 @@ import (
 type APIInterface interface {
 	GetToken(ctx context.Context, query *gitpod.GetTokenSearchOptions) (res *gitpod.Token, err error)
 	OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePort) (res *gitpod.WorkspaceInstancePort, err error)
-	InstanceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error)
+	WorkspaceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error)
 
 	// Metrics
 	RegisterMetrics(registry *prometheus.Registry) error
@@ -71,7 +71,7 @@ type Service struct {
 	// onUsingPublicAPI which will only used in instanceUpdate config change notify
 	onUsingPublicAPI chan struct{}
 
-	// subs is the subscribers of instanceUpdates
+	// subs is the subscribers of workspaceUpdates
 	subs     map[chan *gitpod.WorkspaceInstance]struct{}
 	subMutex sync.Mutex
 
@@ -131,7 +131,7 @@ func NewServerApiService(ctx context.Context, cfg *ServiceConfig, tknsrv api.Tok
 		UserID: cfg.OwnerID,
 	}))
 	// start to listen on real instance updates
-	go service.onInstanceUpdates(ctx)
+	go service.onWorkspaceUpdates(ctx)
 	go service.observeConfigcatValue(ctx)
 
 	return service
@@ -272,15 +272,15 @@ func (s *Service) OpenPort(ctx context.Context, port *gitpod.WorkspaceInstancePo
 	return port, nil
 }
 
-// onInstanceUpdates listen to server and public API instanceUpdates and publish to subscribers once Service created.
-func (s *Service) onInstanceUpdates(ctx context.Context) {
+// onWorkspaceUpdates listen to server and public API workspaceUpdates and publish to subscribers once Service created.
+func (s *Service) onWorkspaceUpdates(ctx context.Context) {
 	errChan := make(chan error)
 	processUpdate := func(usePublicAPI bool) context.CancelFunc {
 		childCtx, cancel := context.WithCancel(ctx)
 		if usePublicAPI {
-			go s.publicAPIInstanceUpdate(childCtx, errChan)
+			go s.publicAPIWorkspaceUpdate(childCtx, errChan)
 		} else {
-			go s.serverInstanceUpdate(childCtx, errChan)
+			go s.serverWorkspaceUpdate(childCtx, errChan)
 		}
 		return cancel
 	}
@@ -310,7 +310,7 @@ func (s *Service) onInstanceUpdates(ctx context.Context) {
 				if code == codes.PermissionDenied {
 					log.WithError(err).Fatalf("failed to on instance update: have no permission")
 				}
-				log.WithField("method", "InstanceUpdates").WithError(err).Error("failed to listen")
+				log.WithField("method", "WorkspaceUpdates").WithError(err).Error("failed to listen")
 				cancel()
 				time.Sleep(time.Second * 2)
 				cancel = processUpdate(s.usePublicAPI(ctx))
@@ -319,7 +319,7 @@ func (s *Service) onInstanceUpdates(ctx context.Context) {
 	}()
 }
 
-func (s *Service) InstanceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error) {
+func (s *Service) WorkspaceUpdates(ctx context.Context) (<-chan *gitpod.WorkspaceInstance, error) {
 	if s == nil {
 		return nil, errNotConnected
 	}
@@ -340,14 +340,14 @@ func (s *Service) InstanceUpdates(ctx context.Context) (<-chan *gitpod.Workspace
 	return ch, nil
 }
 
-func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan error) {
+func (s *Service) publicAPIWorkspaceUpdate(ctx context.Context, errChan chan error) {
 	workspaceID := s.cfg.WorkspaceID
 	resp, err := backoff.RetryWithData(func() (v1.WorkspacesService_StreamWorkspaceStatusClient, error) {
 		startTime := time.Now()
 		var err error
 		defer func() {
 			if err != nil {
-				s.apiMetrics.ProcessMetrics(true, "InstanceUpdates", err, startTime)
+				s.apiMetrics.ProcessMetrics(true, "WorkspaceUpdates", err, startTime)
 			}
 		}()
 		service := v1.NewWorkspacesServiceClient(s.publicAPIConn)
@@ -370,7 +370,7 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan erro
 	}
 	startTime := time.Now()
 	defer func() {
-		s.apiMetrics.ProcessMetrics(true, "InstanceUpdates", err, startTime)
+		s.apiMetrics.ProcessMetrics(true, "WorkspaceUpdates", err, startTime)
 	}()
 	var data *v1.StreamWorkspaceStatusResponse
 	for {
@@ -394,18 +394,18 @@ func (s *Service) publicAPIInstanceUpdate(ctx context.Context, errChan chan erro
 	}
 }
 
-func (s *Service) serverInstanceUpdate(ctx context.Context, errChan chan error) {
-	instanceID := s.cfg.InstanceID
+func (s *Service) serverWorkspaceUpdate(ctx context.Context, errChan chan error) {
+	workspaceID := s.cfg.WorkspaceID
 	ch, err := backoff.RetryWithData(func() (<-chan *gitpod.WorkspaceInstance, error) {
 		startTime := time.Now()
-		ch, err := s.gitpodService.InstanceUpdates(ctx, instanceID)
+		ch, err := s.gitpodService.WorkspaceUpdates(ctx, workspaceID)
 		defer func() {
 			if err != nil {
-				s.apiMetrics.ProcessMetrics(false, "InstanceUpdates", err, startTime)
+				s.apiMetrics.ProcessMetrics(false, "WorkspaceUpdates", err, startTime)
 			}
 		}()
 		if err != nil {
-			log.WithError(err).Info("backoff failed to listen to serverAPI instanceUpdates, try again")
+			log.WithError(err).Info("backoff failed to listen to serverAPI WorkspaceUpdates, try again")
 		}
 		return ch, err
 	}, backoff.WithContext(ConnBackoff, ctx))
@@ -414,13 +414,13 @@ func (s *Service) serverInstanceUpdate(ctx context.Context, errChan chan error) 
 		if ctx.Err() != nil {
 			return
 		}
-		log.WithField("method", "InstanceUpdates").WithError(err).Error("failed to call serverAPI")
+		log.WithField("method", "WorkspaceUpdates").WithError(err).Error("failed to call serverAPI")
 		errChan <- err
 		return
 	}
 	startTime := time.Now()
 	defer func() {
-		s.apiMetrics.ProcessMetrics(false, "InstanceUpdates", ctx.Err(), startTime)
+		s.apiMetrics.ProcessMetrics(false, "WorkspaceUpdates", ctx.Err(), startTime)
 	}()
 	for update := range ch {
 		s.subMutex.Lock()
