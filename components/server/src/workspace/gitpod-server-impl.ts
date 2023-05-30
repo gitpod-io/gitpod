@@ -162,9 +162,7 @@ import {
     UserFeatureSettings,
     WorkspaceTimeoutSetting,
 } from "@gitpod/gitpod-protocol/lib/protocol";
-import { InstallationAdminSettings, TelemetryData } from "@gitpod/gitpod-protocol";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
-import { InstallationAdminTelemetryDataProvider } from "../installation-admin/telemetry-data-provider";
 import { ListUsageRequest, ListUsageResponse } from "@gitpod/gitpod-protocol/lib/usage";
 import { VerificationService } from "../auth/verification-service";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
@@ -246,8 +244,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
     @inject(InstallationAdminDB) protected readonly installationAdminDb: InstallationAdminDB;
-    @inject(InstallationAdminTelemetryDataProvider)
-    protected readonly telemetryDataProvider: InstallationAdminTelemetryDataProvider;
 
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
     @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
@@ -3723,40 +3719,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {
         await this.guardAdminAccess("adminSetTeamMemberRole", { teamId, userId, role }, Permission.ADMIN_WORKSPACES);
         return this.teamDB.setTeamMemberRole(userId, teamId, role);
-    }
-
-    async adminGetSettings(ctx: TraceContext): Promise<InstallationAdminSettings> {
-        traceAPIParams(ctx, {});
-
-        await this.guardAdminAccess("adminGetSettings", {}, Permission.ADMIN_API);
-
-        const settings = await this.installationAdminDb.getData();
-
-        return settings.settings;
-    }
-
-    async adminUpdateSettings(ctx: TraceContext, settings: InstallationAdminSettings): Promise<void> {
-        traceAPIParams(ctx, {});
-
-        await this.guardAdminAccess("adminUpdateSettings", {}, Permission.ADMIN_API);
-
-        const newSettings: Partial<InstallationAdminSettings> = {};
-
-        for (const p of InstallationAdminSettings.fields()) {
-            if (p in settings) {
-                newSettings[p] = settings[p];
-            }
-        }
-
-        await this.installationAdminDb.setSettings(newSettings);
-    }
-
-    async adminGetTelemetryData(ctx: TraceContext): Promise<TelemetryData> {
-        traceAPIParams(ctx, {});
-
-        await this.guardAdminAccess("adminGetTelemetryData", {}, Permission.ADMIN_API);
-
-        return await this.telemetryDataProvider.getTelemetryData();
     }
 
     protected censorUser(user: User): User {

@@ -12,7 +12,6 @@ import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance"
 import { RoleOrPermission } from "./permission";
 import { BillingMode } from "./billing-mode";
 import { CostCenterJSON, ListUsageRequest, ListUsageResponse } from "./usage";
-import { InstallationAdminSettings, TelemetryData } from "./installation-admin-protocol";
 
 export interface AdminServer {
     adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>>;
@@ -47,9 +46,6 @@ export interface AdminServer {
 
     adminGetBillingMode(attributionId: string): Promise<BillingMode>;
 
-    adminGetSettings(): Promise<InstallationAdminSettings>;
-    adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>;
-
     adminGetCostCenter(attributionId: string): Promise<CostCenterJSON | undefined>;
     adminSetUsageLimit(attributionId: string, usageLimit: number): Promise<void>;
 
@@ -59,11 +55,6 @@ export interface AdminServer {
 
     adminGetBlockedEmailDomains(): Promise<EmailDomainFilterEntry[]>;
     adminSaveBlockedEmailDomain(entry: EmailDomainFilterEntry): Promise<void>;
-
-    // Admin Settings
-    adminGetSettings(): Promise<InstallationAdminSettings>;
-    adminUpdateSettings(settings: InstallationAdminSettings): Promise<void>;
-    adminGetTelemetryData(): Promise<TelemetryData>;
 }
 
 export interface AdminGetListRequest<T> {
