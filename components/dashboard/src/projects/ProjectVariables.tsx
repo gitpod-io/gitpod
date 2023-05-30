@@ -84,7 +84,7 @@ export default function ProjectVariablesPage() {
                         </Item>
                         {envVars.map((variable) => {
                             return (
-                                <Item className="grid grid-cols-3 items-center">
+                                <Item key={variable.id} className="grid grid-cols-3 items-center">
                                     <ItemField className="truncate">{variable.name}</ItemField>
                                     <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
                                     <ItemField className="flex justify-end">
