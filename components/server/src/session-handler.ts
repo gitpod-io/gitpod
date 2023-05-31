@@ -87,11 +87,9 @@ export class SessionHandler {
                 if (!jwtToken) {
                     const cookie = await this.createJWTSessionCookie(user.id);
 
-                    log.info("Res", res);
                     res.cookie(cookie.name, cookie.value, cookie.opts);
 
                     reportJWTCookieIssued();
-                    log.info("JWT Session convertor issued JWT cookie");
                     res.status(200);
                     res.send("New JWT cookie issued.");
                 } else {
