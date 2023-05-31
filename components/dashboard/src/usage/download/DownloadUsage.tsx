@@ -4,15 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect, useState } from "react";
+import { FC, useCallback, useEffect, useMemo } from "react";
 import { Button } from "../../components/Button";
-import { DownloadUsageCSVResponse, downloadUsageCSV } from "./download-usage-csv";
+import { useDownloadUsageCSV } from "./download-usage-csv";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Dayjs } from "dayjs";
 import { useToast } from "../../components/toasts/Toasts";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { SpinnerLoader } from "../../components/Loader";
 import { ReactComponent as DownloadIcon } from "../../icons/Download.svg";
+import { ReactComponent as ExclamationIcon } from "../../images/exclamation.svg";
 import { LinkButton } from "../../components/LinkButton";
 import { saveAs } from "file-saver";
 
@@ -55,44 +56,34 @@ type DownloadUsageToastProps = Props & {
 };
 
 const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDate, startDate, orgName }) => {
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [response, setResponse] = useState<DownloadUsageCSVResponse | null>(null);
-    const { toast } = useToast();
-
-    const startDownload = useCallback(async () => {
-        setIsDownloading(true);
-
-        try {
-            const resp = await downloadUsageCSV({
-                orgName,
-                attributionId: AttributionId.render(attributionId),
-                from: startDate.startOf("day").valueOf(),
-                to: endDate.endOf("day").valueOf(),
-            });
-            setResponse(resp);
-        } catch (e) {
-            console.error(e);
-            // TODO: don't open a new toast, just update this existing one
-            toast(`There was a problem downloading your usage data: ${e.message}`);
-        }
-
-        setIsDownloading(false);
-    }, [attributionId, endDate, orgName, startDate, toast]);
+    const queryArgs = useMemo(
+        () => ({
+            orgName,
+            attributionId: AttributionId.render(attributionId),
+            from: startDate.startOf("day").valueOf(),
+            to: endDate.endOf("day").valueOf(),
+        }),
+        [attributionId, endDate, orgName, startDate],
+    );
+    const { data, error, isLoading, abort, remove } = useDownloadUsageCSV(queryArgs);
 
     const saveFile = useCallback(() => {
-        if (!response || !response.blob) {
+        if (!data || !data.blob) {
             return;
         }
 
-        saveAs(response.blob, response.filename);
-    }, [response]);
+        saveAs(data.blob, data.filename);
+    }, [data]);
 
     useEffect(() => {
-        startDownload();
+        return () => {
+            abort();
+            remove();
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    if (isDownloading) {
+    if (isLoading) {
         return (
             <div className="flex flex-row items-center space-x-2">
                 <SpinnerLoader small />
@@ -101,7 +92,19 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
         );
     }
 
-    if (!response || response.blob === null) {
+    if (error) {
+        return (
+            <div>
+                <div className="flex flex-row items-start space-x-2">
+                    <ExclamationIcon className="mt-1 w-4 h-4" />
+                    <span>Error exporting your usage data:</span>
+                </div>
+                <pre className="mt-2 whitespace-normal text-sm">{error.message}</pre>
+            </div>
+        );
+    }
+
+    if (!data || data.blob === null) {
         return <span>There are no usage records for that date range</span>;
     }
 

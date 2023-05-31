@@ -9,12 +9,19 @@ import { getGitpodService } from "../../service/service";
 
 type GetAllUsageRecordsArgs = Pick<ListUsageRequest, "attributionId" | "from" | "to">;
 
-export const getAllUsageRecords = async ({ attributionId, from, to }: GetAllUsageRecordsArgs) => {
+export const getAllUsageRecords = async (
+    { attributionId, from, to }: GetAllUsageRecordsArgs,
+    signal?: AbortSignal,
+): Promise<Usage[]> => {
     let page = 1;
     let totalPages: number | null = null;
     let records: Usage[] = [];
 
     while (totalPages === null || page < totalPages) {
+        if (signal?.aborted === true) {
+            return [];
+        }
+
         const timer = new Promise((r) => setTimeout(r, 1000));
 
         const resp = await getUsagePage({
@@ -34,7 +41,7 @@ export const getAllUsageRecords = async ({ attributionId, from, to }: GetAllUsag
     return records;
 };
 
-type GetUsagePageArgs = GetAllUsageRecordsArgs & {
+type GetUsagePageArgs = Pick<ListUsageRequest, "attributionId" | "from" | "to"> & {
     page: number;
 };
 const getUsagePage = async ({ attributionId, from, to, page }: GetUsagePageArgs) => {
