@@ -101,11 +101,25 @@ export class SessionHandler {
                 // req.session.id is alias for req.sessionID
                 // https://github.com/expressjs/session/blob/master/README.md?plain=1#LL396C9-L396C19
                 id: req.sessionID,
-                regenerate: (cb) => session,
-                destroy: (cb) => session,
-                reload: (cb) => session,
+                regenerate: (cb) => {
+                    cb(null);
+                    return session;
+                },
+                destroy: (cb) => {
+                    cb(null);
+                    return session;
+                },
+                reload: (cb) => {
+                    cb(null);
+                    return session;
+                },
                 resetMaxAge: () => session,
-                save: (cb) => session,
+                save: (cb) => {
+                    if (cb) {
+                        cb(null);
+                    }
+                    return session;
+                },
                 touch: () => session,
             };
             req.session = session;
@@ -176,7 +190,7 @@ export class SessionHandler {
         delete options.maxAge;
         res.clearCookie(name, options);
 
-        res.clearCookie(SessionHandler.getJWTCookieName(this.config));
+        res.clearCookie(SessionHandler.getJWTCookieName(this.config), options);
     }
 
     protected createStore(): any | undefined {
