@@ -5,15 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import {
-    DBWithTracing,
-    ProjectDB,
-    TeamDB,
-    TracedWorkspaceDB,
-    UserDB,
-    WebhookEventDB,
-    WorkspaceDB,
-} from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, ProjectDB, TracedWorkspaceDB, WebhookEventDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     Branch,
     PrebuildWithStatus,
@@ -30,12 +22,13 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { Config } from "../config";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { ResponseError } from "vscode-ws-jsonrpc";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { URL } from "url";
 
 @injectable()
 export class ProjectsService {
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(UserDB) protected readonly userDB: UserDB;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Config) protected readonly config: Config;
@@ -127,6 +120,16 @@ export class ProjectsService {
         { name, slug, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams,
         installer: User,
     ): Promise<Project> {
+        if (cloneUrl.length >= 1000) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Clone URL must be less than 1k characters.");
+        }
+
+        try {
+            new URL(cloneUrl);
+        } catch (err) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
+        }
+
         const projects = await this.getProjectsByCloneUrls([cloneUrl]);
         if (projects.length > 0) {
             throw new Error("Project for repository already exists.");
