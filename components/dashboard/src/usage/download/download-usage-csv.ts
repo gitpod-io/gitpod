@@ -46,7 +46,6 @@ export const downloadUsageCSV = async ({ attributionId, from, to, orgName }: Arg
     const start = dayjs(from).format("YYYYMMDD");
     const end = dayjs(to).format("YYYYMMDD");
 
-    // TODO: generate filename based on args
     const filename = `gitpod-usage-${orgName}-${start}-${end}.csv`;
 
     saveAs(blob, filename);

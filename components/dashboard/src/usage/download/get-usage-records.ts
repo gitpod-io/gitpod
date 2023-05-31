@@ -14,7 +14,6 @@ export const getAllUsageRecords = async ({ attributionId, from, to }: GetAllUsag
     let totalPages: number | null = null;
     let records: Usage[] = [];
 
-    // TODO: figure out a throttle for this
     while (totalPages === null || page < totalPages) {
         const timer = new Promise((r) => setTimeout(r, 1000));
 
@@ -45,7 +44,6 @@ const getUsagePage = async ({ attributionId, from, to, page }: GetUsagePageArgs)
         to,
         order: Ordering.ORDERING_DESCENDING,
         pagination: {
-            // TODO: determine a good upper bound here
             perPage: 1000,
             page,
         },
