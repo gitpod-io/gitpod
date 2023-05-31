@@ -202,7 +202,6 @@ func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID st
 			Owner:                 owner,
 			WorkspaceID:           workspaceID,
 			InstanceID:            instanceID,
-			FullWorkspaceBackup:   false,
 			PersistentVolumeClaim: false,
 			RemoteStorageDisabled: storageDisabled,
 			IsMk2:                 true,
@@ -460,18 +459,16 @@ func (wso *DefaultWorkspaceOperations) uploadWorkspaceContent(ctx context.Contex
 
 		var opts []archive.TarOption
 		opts = append(opts)
-		if !sess.FullWorkspaceBackup {
-			mappings := []archive.IDMapping{
-				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
-				{ContainerID: 1, HostID: 100000, Size: 65534},
-			}
-			opts = append(opts,
-				archive.WithUIDMapping(mappings),
-				archive.WithGIDMapping(mappings),
-			)
+		mappings := []archive.IDMapping{
+			{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
+			{ContainerID: 1, HostID: 100000, Size: 65534},
 		}
+		opts = append(opts,
+			archive.WithUIDMapping(mappings),
+			archive.WithGIDMapping(mappings),
+		)
 
-		err = content.BuildTarbal(ctx, loc, tmpf.Name(), sess.FullWorkspaceBackup, opts...)
+		err = content.BuildTarbal(ctx, loc, tmpf.Name(), opts...)
 		if err != nil {
 			return
 		}

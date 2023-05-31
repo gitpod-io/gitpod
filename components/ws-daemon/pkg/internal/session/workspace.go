@@ -63,7 +63,6 @@ type Workspace struct {
 	WorkspaceID           string           `json:"metaID"`
 	InstanceID            string           `json:"workspaceID"`
 	LastGitStatus         *csapi.GitStatus `json:"lastGitStatus"`
-	FullWorkspaceBackup   bool             `json:"fullWorkspaceBackup"`
 	PersistentVolumeClaim bool             `json:"persistentVolumeClaim"`
 	ContentManifest       []byte           `json:"contentManifest"`
 
@@ -243,9 +242,7 @@ func (s *Workspace) Dispose(ctx context.Context, hooks []WorkspaceLivecycleHook)
 		return nil
 	}
 
-	if !s.FullWorkspaceBackup {
-		err = os.RemoveAll(s.Location)
-	}
+	err = os.RemoveAll(s.Location)
 	if err != nil {
 		return xerrors.Errorf("cannot remove workspace all: %w", err)
 	}

@@ -403,8 +403,6 @@ func TestMissingBackup(t *testing.T) {
 				FF   []wsmanapi.WorkspaceFeatureFlag
 			}{
 				{Name: "classic"},
-				{Name: "fwb", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP}},
-				// {Name: "pvc", FF: []wsmanapi.WorkspaceFeatureFlag{wsmanapi.WorkspaceFeatureFlag_PERSISTENT_VOLUME_CLAIM}},
 			}
 			for _, test := range tests {
 				test := test

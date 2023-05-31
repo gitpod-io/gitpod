@@ -42,12 +42,12 @@ message InitWorkspaceRequest {
 
     // full_workspace_backup means we ignore the initializer and wait for a workspace pod with the given instance ID to
     // appear at our local containerd.
-    bool full_workspace_backup = 4;
+    reserved 4;
 
     // content_manifest describes the layers that comprise the workspace image content.
     // This manifest is not used to actually download content, but to produce a new manifest for snapshots and backups.
     // This field is ignored if full_workspace_backup is false.
-    bytes content_manifest = 5;
+    reserved 5;
 
     // Was used for user_namespaced
     reserved 6;

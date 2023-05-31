@@ -28,9 +28,6 @@ const (
 
 	// DefaultBackupManifest is the name of the manifest of the regular default backup we upload
 	DefaultBackupManifest = "wsfull.json"
-
-	// FmtFullWorkspaceBackup is the format for names of full workspace backups
-	FmtFullWorkspaceBackup = "wsfull-%d.tar"
 )
 
 var (

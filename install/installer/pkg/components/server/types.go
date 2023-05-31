@@ -161,10 +161,6 @@ type WorkspaceClass struct {
 
 type NamedWorkspaceFeatureFlag string
 
-const (
-	NamedWorkspaceFeatureFlagFullWorkspaceBackup NamedWorkspaceFeatureFlag = "full_workspace_backup"
-)
-
 type WorkspaceClassCategory string
 
 const (
