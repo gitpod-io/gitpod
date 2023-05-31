@@ -45,7 +45,7 @@ export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) 
 
     return (
         <Button type="secondary" onClick={handleDownload} className="flex flex-row" icon={<DownloadIcon />}>
-            Download as CSV
+            Export as CSV
         </Button>
     );
 };
