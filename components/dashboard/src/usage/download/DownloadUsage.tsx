@@ -44,9 +44,7 @@ export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) 
     }, [attributionId, endDate, org, startDate, toast]);
 
     return (
-        // TODO: Add an `icon` prop to Button that handles this automatically
-        <Button type="secondary" onClick={handleDownload} className="flex flex-row">
-            <DownloadIcon className="h-5 w-5 mr-1" />
+        <Button type="secondary" onClick={handleDownload} className="flex flex-row" icon={<DownloadIcon />}>
             Download as CSV
         </Button>
     );

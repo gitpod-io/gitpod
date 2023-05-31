@@ -6,7 +6,7 @@
 
 import classNames from "classnames";
 import { FC, ForwardedRef, ReactNode, forwardRef } from "react";
-import SpinnerWhite from "../icons/SpinnerWhite.svg";
+import { ReactComponent as SpinnerWhite } from "../icons/SpinnerWhite.svg";
 
 export type ButtonProps = {
     // TODO: determine if we want danger.secondary
@@ -18,6 +18,7 @@ export type ButtonProps = {
     className?: string;
     autoFocus?: boolean;
     htmlType?: "button" | "submit" | "reset";
+    icon?: ReactNode;
     children: ReactNode;
     onClick?: ButtonOnClickHandler;
 };
@@ -35,6 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             loading = false,
             autoFocus = false,
             size,
+            icon,
             children,
             onClick,
         },
@@ -77,7 +79,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 autoFocus={autoFocus}
                 onClick={onClick}
             >
-                <ButtonContent loading={loading}>{children}</ButtonContent>
+                <ButtonContent loading={loading} icon={icon}>
+                    {children}
+                </ButtonContent>
             </button>
         );
     },
@@ -86,16 +90,18 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 // TODO: Consider making this a LoadingButton variant instead
 type ButtonContentProps = {
     loading: boolean;
+    icon?: ReactNode;
 };
-const ButtonContent: FC<ButtonContentProps> = ({ loading, children }) => {
-    if (!loading) {
+const ButtonContent: FC<ButtonContentProps> = ({ loading, icon, children }) => {
+    if (!loading && !icon) {
         return <>{children}</>;
     }
 
     return (
         <div className="flex items-center justify-center space-x-2">
-            {/* TODO: This spinner doesn't look right - use a solid white instead? */}
-            <img className="h-4 w-4 animate-spin" src={SpinnerWhite} alt="loading spinner" />
+            <span className="flex items-center w-5 h-5">
+                {loading ? <SpinnerWhite className="animate-spin" /> : icon ? <>{icon}</> : null}
+            </span>
             <span>{children}</span>
         </div>
     );

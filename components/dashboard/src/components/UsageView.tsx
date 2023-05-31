@@ -229,7 +229,7 @@ function UsageView({ attributionId }: UsageViewProps) {
             />
             <div className="app-container pt-5">
                 {usageDownload && (
-                    <div className="text-right mb-4">
+                    <div className="flex justify-end mb-4">
                         <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />
                     </div>
                 )}
