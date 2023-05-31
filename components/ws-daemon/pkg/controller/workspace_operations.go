@@ -28,6 +28,36 @@ import (
 	"golang.org/x/xerrors"
 )
 
+type Metrics struct {
+	BackupWaitingTimeHist       prometheus.Histogram
+	BackupWaitingTimeoutCounter prometheus.Counter
+	InitializerHistogram        *prometheus.HistogramVec
+}
+
+func registerConcurrentBackupMetrics(reg prometheus.Registerer, suffix string) (prometheus.Histogram, prometheus.Counter, error) {
+	backupWaitingTime := prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "concurrent_backup_waiting_seconds" + suffix,
+		Help:    "waiting time for concurrent backups to finish",
+		Buckets: []float64{5, 10, 30, 60, 120, 180, 300, 600, 1800},
+	})
+
+	err := reg.Register(backupWaitingTime)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot register Prometheus histogram for backup waiting time: %w", err)
+	}
+
+	waitingTimeoutCounter := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "concurrent_backup_waiting_timeout_total" + suffix,
+		Help: "total count of backup rate limiting timeouts",
+	})
+	err = reg.Register(waitingTimeoutCounter)
+	if err != nil {
+		return nil, nil, xerrors.Errorf("cannot register Prometheus counter for backup waiting timeouts: %w", err)
+	}
+
+	return backupWaitingTime, waitingTimeoutCounter, nil
+}
+
 //go:generate sh -c "go install github.com/golang/mock/mockgen@v1.6.0 && mockgen -destination=mock.go -package=controller . WorkspaceOperations"
 type WorkspaceOperations interface {
 	// InitWorkspace initializes the workspace content
@@ -48,7 +78,7 @@ type DefaultWorkspaceOperations struct {
 	config                 content.Config
 	provider               *WorkspaceProvider
 	backupWorkspaceLimiter chan struct{}
-	metrics                *content.Metrics
+	metrics                *Metrics
 }
 
 var _ WorkspaceOperations = (*DefaultWorkspaceOperations)(nil)
@@ -75,7 +105,7 @@ type BackupOptions struct {
 }
 
 func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, reg prometheus.Registerer) (WorkspaceOperations, error) {
-	waitingTimeHist, waitingTimeoutCounter, err := content.RegisterConcurrentBackupMetrics(reg, "_mk2")
+	waitingTimeHist, waitingTimeoutCounter, err := registerConcurrentBackupMetrics(reg, "_mk2")
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +113,7 @@ func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, 
 	return &DefaultWorkspaceOperations{
 		config:   config,
 		provider: provider,
-		metrics: &content.Metrics{
+		metrics: &Metrics{
 			BackupWaitingTimeHist:       waitingTimeHist,
 			BackupWaitingTimeoutCounter: waitingTimeoutCounter,
 		},

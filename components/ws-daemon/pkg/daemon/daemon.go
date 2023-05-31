@@ -14,7 +14,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
 	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -27,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/cgroup"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
@@ -195,7 +193,6 @@ func NewDaemon(config Config) (*Daemon, error) {
 		hooks := content.WorkspaceLifecycleHooks(
 			contentCfg,
 			config.Runtime.WorkspaceCIDR,
-			func(instanceID string) bool { return true },
 			&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
 			xfs,
 			config.CPULimit.CGroupBasePath,
@@ -232,26 +229,11 @@ func NewDaemon(config Config) (*Daemon, error) {
 		return nil, err
 	}
 
-	contentService, err := content.NewWorkspaceService(
-		context.Background(),
-		config.Content,
-		containerRuntime,
-		dsptch.WorkspaceExistsOnNode,
-		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
-		config.CPULimit.CGroupBasePath,
-		wrappedReg,
-		config.Runtime.WorkspaceCIDR,
-	)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create content service: %w", err)
-	}
-
 	dsk := diskguard.FromConfig(config.DiskSpaceGuard, clientset, nodename)
 
 	return &Daemon{
 		Config:          config,
 		dispatch:        dsptch,
-		content:         contentService,
 		diskGuards:      dsk,
 		configReloader:  configReloader,
 		mgr:             mgr,
@@ -272,7 +254,6 @@ type Daemon struct {
 	Config Config
 
 	dispatch        *dispatch.Dispatch
-	content         *content.WorkspaceService
 	diskGuards      []*diskguard.Guard
 	configReloader  ConfigReloader
 	mgr             ctrl.Manager
@@ -292,7 +273,6 @@ func (d *Daemon) Start() error {
 		return xerrors.Errorf("cannot start dispatch: %w", err)
 	}
 
-	go d.content.Start()
 	for _, dsk := range d.diskGuards {
 		go dsk.Start()
 	}
@@ -312,11 +292,6 @@ func (d *Daemon) Start() error {
 	return nil
 }
 
-// Register registers all gRPC services provided by this daemon
-func (d *Daemon) Register(srv *grpc.Server) {
-	api.RegisterWorkspaceContentServiceServer(srv, d.content)
-}
-
 // Stop gracefully shuts down the daemon. Once stopped, it
 // cannot be started again.
 func (d *Daemon) Stop() error {
@@ -324,8 +299,6 @@ func (d *Daemon) Stop() error {
 
 	var errs []error
 	errs = append(errs, d.dispatch.Close())
-	errs = append(errs, d.content.Close())
-
 	for _, err := range errs {
 		if err != nil {
 			return err

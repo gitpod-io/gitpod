@@ -21,7 +21,6 @@ import (
 	"k8s.io/client-go/util/retry"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -136,7 +135,7 @@ func unmountMark(instanceID string) error {
 		return xerrors.Errorf("cannot read /proc/mounts: %w", err)
 	}
 
-	dir := content.ServiceDirName(instanceID)
+	dir := instanceID + "-daemon"
 	path := fromPartialMount(filepath.Join(dir, "mark"), mounts)
 	// empty path means no mount found
 	if len(path) == 0 {
