@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ProjectDB, TeamDB, TypeORM, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { ProjectDB, TeamDB, TypeORM, UserDB, WorkspaceDB, isBuiltinUser } from "@gitpod/gitpod-db/lib";
 import { AdditionalUserData, Team, User, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -25,6 +25,14 @@ export class UserToTeamMigrationService {
     @inject(StripeService) protected readonly stripeService: StripeService;
 
     async migrateUser(candidate: User, shouldSeeMessage?: boolean, caller?: string): Promise<User> {
+        // org-owned users have an org and the technical users should not get one automatically
+        if (candidate.organizationId || isBuiltinUser(candidate.id)) {
+            AdditionalUserData.set(candidate, { isMigratedToTeamOnlyAttribution: true });
+            await this.userDB.storeUser(candidate);
+            const user = await this.userDB.findUserById(candidate.id);
+            return user!;
+        }
+
         // do a quick check before going into synchonization for the common case that the user has been migrated already
         if (!this.needsMigration(candidate)) {
             return candidate;
@@ -187,7 +195,7 @@ export class UserToTeamMigrationService {
         return team;
     }
 
-    needsMigration(user: User): boolean {
+    protected needsMigration(user: User): boolean {
         return !user.additionalData?.isMigratedToTeamOnlyAttribution;
     }
 
