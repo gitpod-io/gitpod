@@ -10,7 +10,7 @@ import { getGitpodService } from "../../service/service";
 type GetAllUsageRecordsArgs = Pick<ListUsageRequest, "attributionId" | "from" | "to">;
 
 export const getAllUsageRecords = async ({ attributionId, from, to }: GetAllUsageRecordsArgs) => {
-    let page = 0;
+    let page = 1;
     let totalPages: number | null = null;
     let records: Usage[] = [];
 
