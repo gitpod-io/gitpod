@@ -6,6 +6,7 @@ packages:
       - "test/**"
       - package.json
       - mocha.opts
+      - tslint.yaml
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
@@ -17,6 +18,7 @@ packages:
       - components/usage-api/typescript:lib
       - components/ide-service-api/typescript:lib
       - components/public-api/typescript:lib
+      - :dbtest
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock
@@ -36,7 +38,7 @@ packages:
       image:
         - ${imageRepoBase}/server:${version}
         - ${imageRepoBase}/server:commit-${__git_commit}
-  - name: lib
+  - name: dbtest
     type: yarn
     srcs:
       - "src/**"
@@ -44,31 +46,6 @@ packages:
       - package.json
       - mocha.opts
       - tslint.yaml
-    deps:
-      - components/content-service-api/typescript:lib
-      - components/gitpod-db:lib
-      - components/gitpod-messagebus:lib
-      - components/gitpod-protocol:lib
-      - components/image-builder-api/typescript:lib
-      - components/ws-manager-api/typescript:lib
-      - components/supervisor-api/typescript-grpcweb:lib
-      - components/usage-api/typescript:lib
-      - components/ide-service-api/typescript:lib
-      - components/public-api/typescript:lib
-      - :dbtest
-    config:
-      packaging: library
-      yarnLock: ${coreYarnLockBase}/yarn.lock
-      tsconfig: tsconfig.json
-      commands:
-        test: ["yarn", "test"]
-        build: ["yarn", "build"]
-  - name: dbtest
-    type: yarn
-    srcs:
-      - "src/**/*.ts"
-      - package.json
-      - mocha.opts
     deps:
       - components/gitpod-db:dbtest-init
       - components/gitpod-db:lib
