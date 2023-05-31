@@ -74,7 +74,6 @@ describe("Migration Job", () => {
 
         const c = await typeORM.getConnection();
         await c.query("DELETE FROM d_b_user WHERE id in (?)", [[migratedUser.id, nonMigratedUser.id]]);
-        await c.close();
     });
 
     it("should migrate in badges", async () => {
@@ -92,6 +91,5 @@ describe("Migration Job", () => {
 
         const c = await typeORM.getConnection();
         await c.query("DELETE FROM d_b_user WHERE id in (?)", [[user1.id, user2.id]]);
-        await c.close();
     });
 });
