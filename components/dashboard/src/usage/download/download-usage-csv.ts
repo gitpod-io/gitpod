@@ -7,7 +7,6 @@
 import { ListUsageRequest } from "@gitpod/gitpod-protocol/lib/usage";
 import { getAllUsageRecords } from "./get-usage-records";
 import { UsageCSVRow, transformUsageRecord } from "./transform-usage-record";
-import { saveAs } from "file-saver";
 import dayjs from "dayjs";
 
 type Args = Pick<ListUsageRequest, "attributionId" | "from" | "to"> & {
@@ -59,8 +58,6 @@ export const downloadUsageCSV = async ({
     const blob = new Blob([`\ufeff${csvRows.join("\n")}`], {
         type: "text/csv;charset=utf-8",
     });
-
-    saveAs(blob, filename);
 
     return {
         blob,

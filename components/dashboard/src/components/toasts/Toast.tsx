@@ -78,12 +78,12 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
             role="alert"
             aria-labelledby={elId}
         >
-            <div className="text-white dark:text-gray-800" id={elId}>
+            <div className="flex-grow text-white dark:text-gray-800" id={elId}>
                 {typeof message === "string" ? <p>{message}</p> : <>{message}</>}
             </div>
             <button
                 className={classNames(
-                    "cursor-pointer p-2",
+                    "cursor-pointer p-2 ml-2",
                     "bg-transparent hover:bg-transparent",
                     "text-white hover:text-gray-300 dark:text-gray-800 dark:hover:text-gray-600",
                 )}

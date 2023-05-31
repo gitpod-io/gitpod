@@ -79,7 +79,7 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
         setIsDownloading(false);
     }, [attributionId, endDate, orgName, startDate, toast]);
 
-    const saveAgain = useCallback(() => {
+    const saveFile = useCallback(() => {
         if (!response || !response.blob) {
             return;
         }
@@ -96,7 +96,7 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
         return (
             <div className="flex flex-row items-center space-x-2">
                 <SpinnerLoader small />
-                <span>Generating your CSV file...</span>
+                <span>Preparing usage export</span>
             </div>
         );
     }
@@ -106,11 +106,11 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
     }
 
     return (
-        <div className="flex flex-col">
-            <span>File downloaded.</span>
-            <p>
-                <LinkButton onClick={saveAgain}>Click here</LinkButton> to download the file again.
-            </p>
+        <div className="flex flex-row items-center justify-between space-x-2">
+            <span>Usage export complete.</span>
+            <LinkButton onClick={saveFile} className="text-left text-base">
+                Download CSV file
+            </LinkButton>
         </div>
     );
 };
