@@ -68,8 +68,6 @@ var runCmd = &cobra.Command{
 		health.AddReadinessCheck("ws-daemon", dmn.ReadinessProbe())
 		health.AddReadinessCheck("disk-space", freeDiskSpace(cfg.Daemon))
 
-		dmn.Register(srv.GRPC())
-
 		err = dmn.Start()
 		if err != nil {
 			log.WithError(err).Fatal("Cannot start daemon.")
