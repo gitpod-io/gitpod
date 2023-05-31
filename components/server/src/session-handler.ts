@@ -15,9 +15,10 @@ const MySQLStore = mysqlstore(session);
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
-import { reportSessionWithJWT } from "./prometheus-metrics";
+import { reportJWTCookieIssued, reportSessionWithJWT } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 @injectable()
 export class SessionHandler {
@@ -60,6 +61,45 @@ export class SessionHandler {
                     });
             } else {
                 session(options)(req, res, next);
+            }
+        };
+    }
+
+    public jwtSessionConvertor(): express.Handler {
+        return async (req, res) => {
+            const user = req.user;
+            if (!user) {
+                res.status(401);
+                res.send("User has no valid session.");
+                return;
+            }
+
+            const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
+                "jwtSessionCookieEnabled",
+                false,
+                {
+                    user: user,
+                },
+            );
+            if (isJWTCookieExperimentEnabled) {
+                const cookies = parseCookieHeader(req.headers.cookie || "");
+                const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
+                if (!jwtToken) {
+                    const cookie = await this.createJWTSessionCookie(user.id);
+
+                    res.cookie(cookie.name, cookie.value, cookie.opts);
+
+                    reportJWTCookieIssued();
+                    res.status(200);
+                    res.send("New JWT cookie issued.");
+                } else {
+                    res.status(200);
+                    res.send("User session already has a valid JWT session.");
+                }
+            } else {
+                res.status(401);
+                res.send("JWT Cookies are not enabled.");
+                return;
             }
         };
     }
