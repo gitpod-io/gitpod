@@ -80,7 +80,6 @@ describe("Migration Service", () => {
         expect(userProjects.length, "personal projects should be migrated to the new team.").to.be.eq(0);
 
         await teamDB.removeMemberFromTeam(user.id, teams[0].id);
-        expect(migrationService.needsMigration(user), "migrated user withoiut team needs migration").to.be.true;
         await migrationService.migrateUser(user);
         teams = await teamDB.findTeamsByUser(user.id);
         expect(teams.length, "rerunning the migration should not create a new team.").to.be.eq(1);

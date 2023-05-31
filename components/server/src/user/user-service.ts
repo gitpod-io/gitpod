@@ -5,15 +5,8 @@
  */
 
 import { injectable, inject } from "inversify";
-import { User, Identity, Token, AdditionalUserData, IdentityLookup } from "@gitpod/gitpod-protocol";
-import {
-    BUILTIN_INSTLLATION_ADMIN_USER_ID,
-    EmailDomainFilterDB,
-    MaybeUser,
-    ProjectDB,
-    TeamDB,
-    UserDB,
-} from "@gitpod/gitpod-db/lib";
+import { User, Identity, Token, IdentityLookup } from "@gitpod/gitpod-protocol";
+import { EmailDomainFilterDB, MaybeUser, ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -83,13 +76,7 @@ export class UserService {
         if (token) {
             await this.userDb.storeSingleToken(identity, token);
         }
-        // org-owned users have an org and the setup user should not get one automatically
-        if (newUser.organizationId || newUser.id === BUILTIN_INSTLLATION_ADMIN_USER_ID) {
-            AdditionalUserData.set(newUser, { isMigratedToTeamOnlyAttribution: true });
-            newUser = await this.userDb.storeUser(newUser);
-        } else {
-            newUser = await this.migrationService.migrateUser(newUser, false, "new user");
-        }
+        newUser = await this.migrationService.migrateUser(newUser, false, "new user");
 
         return newUser;
     }
