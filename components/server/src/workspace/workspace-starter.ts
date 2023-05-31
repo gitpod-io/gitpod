@@ -558,10 +558,9 @@ export class WorkspaceStarter {
                     if (this.isClusterMaintenanceError(err)) {
                         reason = "clusterMaintenance";
                         err = new Error(
-                            "cannot start a workspace because the workspace cluster is temporarily unavailable due to maintenance. Please try again in a few minutes",
+                            "Cannot start a workspace because the workspace cluster is temporarily unavailable due to maintenance. Please try again in a few minutes",
                         );
                     }
-
                     await this.failInstanceStart({ span }, err, workspace, instance);
                     throw new StartInstanceError(reason, err);
                 }
@@ -636,7 +635,12 @@ export class WorkspaceStarter {
     }
 
     private isClusterMaintenanceError(err: any): boolean {
-        return "code" in err && err.code == grpc.status.FAILED_PRECONDITION;
+        return (
+            "code" in err &&
+            err.code == grpc.status.FAILED_PRECONDITION &&
+            "details" in err &&
+            err.details == "under maintenance"
+        );
     }
 
     protected logAndTraceStartWorkspaceError(ctx: TraceContext, logCtx: LogContext, err: any) {
