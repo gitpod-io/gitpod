@@ -34,7 +34,7 @@ export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) 
                 orgName: org?.slug ?? org?.id,
                 attributionId: AttributionId.render(attributionId),
                 from: startDate.startOf("day").valueOf(),
-                to: endDate.startOf("day").valueOf(),
+                to: endDate.endOf("day").valueOf(),
             });
 
             if (!downloaded) {
