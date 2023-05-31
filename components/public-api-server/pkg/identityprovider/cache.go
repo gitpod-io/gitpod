@@ -22,7 +22,7 @@ import (
 // KeyCache caches public keys to ensure they're returned with the JWKS as long
 // as there are valid tokens out there using those keys.
 //
-// PoC Note: in production this cache would likely be implemted using Redis or the database.
+// PoC Note: in production this cache would likely be implemented using Redis or the database.
 type KeyCache interface {
 	// Set rotates the current key
 	Set(ctx context.Context, current *rsa.PrivateKey) error

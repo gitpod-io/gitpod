@@ -32,6 +32,7 @@ func TestRouter(t *testing.T) {
 		Name                string
 		Expectation         Expectation
 		ResponseExpectation func(*Service) string
+		ExpectedHeaders     map[string]string
 		Path                string
 	}{
 		{
@@ -40,6 +41,9 @@ func TestRouter(t *testing.T) {
 			Expectation: Expectation{
 				Response: `{"issuer":"https://api.gitpod.io/idp","authorization_endpoint":"https://api.gitpod.io/idp/not-supported","token_endpoint":"https://api.gitpod.io/idp/not-supported","introspection_endpoint":"https://api.gitpod.io/idp/not-supported","userinfo_endpoint":"https://api.gitpod.io/idp/not-supported","revocation_endpoint":"https://api.gitpod.io/idp/not-supported","end_session_endpoint":"https://api.gitpod.io/idp/not-supported","jwks_uri":"https://api.gitpod.io/idp/keys","scopes_supported":["openid","profile","email","phone","address","offline_access"],"response_types_supported":["code","id_token","id_token token"],"grant_types_supported":["authorization_code","implicit"],"subject_types_supported":["public"],"id_token_signing_alg_values_supported":["RS256"],"revocation_endpoint_auth_methods_supported":["none"],"introspection_endpoint_auth_methods_supported":["none"],"introspection_endpoint_auth_signing_alg_values_supported":["RS256"],"claims_supported":["sub","aud","exp","iat","iss","auth_time","nonce","acr","amr","c_hash","at_hash","act","scopes","client_id","azp","preferred_username","name","family_name","given_name","locale","email"],"request_uri_parameter_supported":false}` + "\n",
 			},
+			ExpectedHeaders: map[string]string{
+				"Content-Type": "application/json",
+			},
 		},
 		{
 			Name: "keys",
@@ -47,6 +51,9 @@ func TestRouter(t *testing.T) {
 			ResponseExpectation: func(s *Service) string {
 				r, _ := s.keys.PublicKeys(context.Background())
 				return string(r)
+			},
+			ExpectedHeaders: map[string]string{
+				"Content-Type": "application/json",
 			},
 		},
 	}
@@ -78,6 +85,13 @@ func TestRouter(t *testing.T) {
 
 			if diff := cmp.Diff(test.Expectation, act); diff != "" {
 				t.Errorf("Router() mismatch (-want +got):\n%s", diff)
+			}
+
+			for name, expected := range test.ExpectedHeaders {
+				actual := resp.Header.Get(name)
+				if actual != expected {
+					t.Errorf("Unexpected value for header '%s'. got: '%s', want: '%s'", name, actual, expected)
+				}
 			}
 		})
 	}
