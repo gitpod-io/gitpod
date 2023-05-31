@@ -14,7 +14,21 @@ type Args = Pick<ListUsageRequest, "attributionId" | "from" | "to"> & {
     orgName: string;
 };
 
-export const downloadUsageCSV = async ({ attributionId, from, to, orgName }: Args) => {
+export type DownloadUsageCSVResponse = {
+    blob: Blob | null;
+    filename: string;
+};
+
+export const downloadUsageCSV = async ({
+    attributionId,
+    from,
+    to,
+    orgName,
+}: Args): Promise<DownloadUsageCSVResponse> => {
+    const start = dayjs(from).format("YYYYMMDD");
+    const end = dayjs(to).format("YYYYMMDD");
+    const filename = `gitpod-usage-${orgName}-${start}-${end}.csv`;
+
     const records = await getAllUsageRecords({
         attributionId,
         from,
@@ -22,7 +36,10 @@ export const downloadUsageCSV = async ({ attributionId, from, to, orgName }: Arg
     });
 
     if (records.length === 0) {
-        return false;
+        return {
+            blob: null,
+            filename,
+        };
     }
 
     const rows = records.map(transformUsageRecord).filter(Boolean) as UsageCSVRow[];
@@ -43,12 +60,10 @@ export const downloadUsageCSV = async ({ attributionId, from, to, orgName }: Arg
         type: "text/csv;charset=utf-8",
     });
 
-    const start = dayjs(from).format("YYYYMMDD");
-    const end = dayjs(to).format("YYYYMMDD");
-
-    const filename = `gitpod-usage-${orgName}-${start}-${end}.csv`;
-
     saveAs(blob, filename);
 
-    return true;
+    return {
+        blob,
+        filename,
+    };
 };

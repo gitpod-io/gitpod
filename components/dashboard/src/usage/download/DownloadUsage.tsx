@@ -4,13 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useState } from "react";
+import { FC, useCallback, useEffect, useState } from "react";
 import { Button } from "../../components/Button";
-import { downloadUsageCSV } from "./download-usage-csv";
+import { DownloadUsageCSVResponse, downloadUsageCSV } from "./download-usage-csv";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Dayjs } from "dayjs";
 import { useToast } from "../../components/toasts/Toasts";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
+import { SpinnerLoader } from "../../components/Loader";
+import { ReactComponent as DownloadIcon } from "../../icons/Download.svg";
+import { LinkButton } from "../../components/LinkButton";
+import { saveAs } from "file-saver";
 
 type Props = {
     attributionId: AttributionId;
@@ -19,7 +23,6 @@ type Props = {
 };
 export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) => {
     const { data: org } = useCurrentOrg();
-    const [isSaving, setIsSaving] = useState(false);
     const { toast } = useToast();
 
     const handleDownload = useCallback(async () => {
@@ -27,30 +30,89 @@ export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) 
             return;
         }
 
-        setIsSaving(true);
+        toast(
+            <DownloadUsageToast
+                orgName={org?.slug ?? org?.id}
+                attributionId={attributionId}
+                startDate={startDate}
+                endDate={endDate}
+            />,
+            {
+                autoHide: false,
+            },
+        );
+    }, [attributionId, endDate, org, startDate, toast]);
+
+    return (
+        // TODO: Add an `icon` prop to Button that handles this automatically
+        <Button type="secondary" onClick={handleDownload} className="flex flex-row">
+            <DownloadIcon className="h-5 w-5 mr-1" />
+            Download as CSV
+        </Button>
+    );
+};
+
+type DownloadUsageToastProps = Props & {
+    orgName: string;
+};
+
+const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDate, startDate, orgName }) => {
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [response, setResponse] = useState<DownloadUsageCSVResponse | null>(null);
+    const { toast } = useToast();
+
+    const startDownload = useCallback(async () => {
+        setIsDownloading(true);
 
         try {
-            const downloaded = await downloadUsageCSV({
-                orgName: org?.slug ?? org?.id,
+            const resp = await downloadUsageCSV({
+                orgName,
                 attributionId: AttributionId.render(attributionId),
                 from: startDate.startOf("day").valueOf(),
                 to: endDate.endOf("day").valueOf(),
             });
-
-            if (!downloaded) {
-                toast("There are no usage records for that date range");
-            }
+            setResponse(resp);
         } catch (e) {
             console.error(e);
+            // TODO: don't open a new toast, just update this existing one
             toast(`There was a problem downloading your usage data: ${e.message}`);
         }
 
-        setIsSaving(false);
-    }, [attributionId, endDate, org, startDate, toast]);
+        setIsDownloading(false);
+    }, [attributionId, endDate, orgName, startDate, toast]);
+
+    const saveAgain = useCallback(() => {
+        if (!response || !response.blob) {
+            return;
+        }
+
+        saveAs(response.blob, response.filename);
+    }, [response]);
+
+    useEffect(() => {
+        startDownload();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    if (isDownloading) {
+        return (
+            <div className="flex flex-row items-center space-x-2">
+                <SpinnerLoader small />
+                <span>Generating your CSV file...</span>
+            </div>
+        );
+    }
+
+    if (!response || response.blob === null) {
+        return <span>There are no usage records for that date range</span>;
+    }
 
     return (
-        <Button type="secondary" loading={isSaving} onClick={handleDownload}>
-            Download as CSV
-        </Button>
+        <div className="flex flex-col">
+            <span>File downloaded.</span>
+            <p>
+                <LinkButton onClick={saveAgain}>Click here</LinkButton> to download the file again.
+            </p>
+        </div>
     );
 };
