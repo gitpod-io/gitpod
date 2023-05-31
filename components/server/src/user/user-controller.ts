@@ -274,6 +274,9 @@ export class UserController {
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
             res.redirect(redirectToUrl);
         });
+
+        router.get("/auth/jwt-cookie", this.sessionHandlerProvider.jwtSessionConvertor());
+
         router.get(
             "/auth/workspace-cookie/:instanceID",
             async (req: express.Request, res: express.Response, next: express.NextFunction) => {

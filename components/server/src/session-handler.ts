@@ -66,11 +66,11 @@ export class SessionHandler {
     }
 
     public jwtSessionConvertor(): express.Handler {
-        return async (req, res, next) => {
+        return async (req, res) => {
             const user = req.user;
             if (!user) {
-                log.info("JWT Session converter did not find user on request.");
-                next();
+                res.status(401);
+                res.send("User has no valid session.");
                 return;
             }
 
@@ -92,13 +92,17 @@ export class SessionHandler {
 
                     reportJWTCookieIssued();
                     log.info("JWT Session convertor issued JWT cookie");
+                    res.status(200);
+                    res.send("New JWT cookie issued.");
                 } else {
-                    log.info("Session already has a JWT cookie");
+                    res.status(200);
+                    res.send("User session already has a valid JWT session.");
                 }
+            } else {
+                res.status(401);
+                res.send("JWT Cookies are not enabled.");
+                return;
             }
-
-            next();
-            return;
         };
     }
 
