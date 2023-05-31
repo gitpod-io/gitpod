@@ -10,13 +10,10 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"golang.org/x/net/nettest"
@@ -25,6 +22,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"inet.af/tcpproxy"
 )
 
 var workspaceIPAdress string
@@ -829,65 +827,20 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 }
 
 func startLocalhostProxy(port uint32) (io.Closer, error) {
-	host := fmt.Sprintf("localhost:%d", port)
+	listen := fmt.Sprintf("%s:%d", workspaceIPAdress, port)
+	target := fmt.Sprintf("localhost:%d", port)
 
-	dsturl, err := url.Parse("http://" + host)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot produce proxy destination URL: %w", err)
-	}
+	var p tcpproxy.Proxy
+	p.AddRoute(listen, tcpproxy.To(target))
 
-	proxy := httputil.NewSingleHostReverseProxy(dsturl)
-	originalDirector := proxy.Director
-	proxy.Director = func(req *http.Request) {
-		req.Host = host
-		originalDirector(req)
-	}
-	proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
-		rw.WriteHeader(http.StatusBadGateway)
-
-		// avoid common warnings
-
-		if errors.Is(err, context.Canceled) {
-			return
-		}
-
-		if errors.Is(err, io.EOF) {
-			return
-		}
-
-		if errors.Is(err, syscall.ECONNREFUSED) {
-			return
-		}
-
-		var netOpErr *net.OpError
-		if errors.As(err, &netOpErr) {
-			if netOpErr.Op == "read" {
-				return
-			}
-		}
-
-		log.WithError(err).WithField("local-port", port).WithField("url", req.URL.String()).Warn("localhost proxy request failed")
-	}
-
-	proxyAddr := fmt.Sprintf("%v:%d", workspaceIPAdress, port)
-	lis, err := net.Listen("tcp", proxyAddr)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot listen on proxy port %d: %w", port, err)
-	}
-
-	srv := &http.Server{
-		Addr:    proxyAddr,
-		Handler: proxy,
-	}
 	go func() {
-		err := srv.Serve(lis)
-		if err == http.ErrServerClosed {
+		err := p.Run()
+		if err == net.ErrClosed || strings.Contains(err.Error(), "use of closed network connection") {
 			return
 		}
 		log.WithError(err).WithField("local-port", port).Error("localhost proxy failed")
 	}()
-
-	return srv, nil
+	return &p, nil
 }
 
 func defaultRoutableIP() (string, string) {

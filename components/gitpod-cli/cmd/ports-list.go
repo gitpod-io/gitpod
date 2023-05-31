@@ -42,7 +42,7 @@ var listPortsCmd = &cobra.Command{
 		}
 
 		table := tablewriter.NewWriter(os.Stdout)
-		table.SetHeader([]string{"Port", "Status", "URL", "Name & Description"})
+		table.SetHeader([]string{"Port", "Status", "Protocol", "URL", "Name & Description"})
 		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
 		table.SetCenterSeparator("|")
 
@@ -101,7 +101,7 @@ var listPortsCmd = &cobra.Command{
 			}
 
 			table.Rich(
-				[]string{fmt.Sprint(port.LocalPort), status, exposedUrl, nameAndDescription},
+				[]string{fmt.Sprint(port.LocalPort), status, port.Exposed.Protocol.String(), exposedUrl, nameAndDescription},
 				colors,
 			)
 		}

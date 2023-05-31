@@ -45,6 +45,8 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
+require inet.af/tcpproxy v0.0.0-20221017015627-91f861402626 // indirect
+
 require (
 	cloud.google.com/go v0.110.0 // indirect
 	cloud.google.com/go/compute v1.18.0 // indirect

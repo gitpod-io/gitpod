@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License.AGPL.txt in the project root for license information.
 
@@ -20,25 +20,25 @@ import (
 	"golang.org/x/xerrors"
 )
 
-// portsVisibilityCmd change visibility of port
-var portsVisibilityCmd = &cobra.Command{
-	Use:   "visibility <port:{private|public}>",
-	Short: "Make a port public or private",
+// portsProtocolCmd change protocol of port
+var portsProtocolCmd = &cobra.Command{
+	Use:   "protocol <port:{http|https}>",
+	Short: "Set port protocol",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: we can add visibility for analysis later.
-		portVisibility := args[0]
-		s := strings.Split(portVisibility, ":")
+		// TODO: we can add protocol for analysis later.
+		portProtocol := args[0]
+		s := strings.Split(portProtocol, ":")
 		if len(s) != 2 {
-			return GpError{Err: xerrors.Errorf("cannot parse args, should be something like `3000:public` or `3000:private`"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
+			return GpError{Err: xerrors.Errorf("cannot parse args, should be something like `3000:http` or `3000:https`"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 		port, err := strconv.Atoi(s[0])
 		if err != nil {
 			return GpError{Err: xerrors.Errorf("port should be integer"), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
-		visibility := s[1]
-		if visibility != serverapi.PortVisibilityPublic && visibility != serverapi.PortVisibilityPrivate {
-			return GpError{Err: xerrors.Errorf("visibility should be `%s` or `%s`", serverapi.PortVisibilityPublic, serverapi.PortVisibilityPrivate), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
+		protocol := s[1]
+		if protocol != serverapi.PortProtocolHTTP && protocol != serverapi.PortProtocolHTTPS {
+			return GpError{Err: xerrors.Errorf("protocol should be `%s` or `%s`", serverapi.PortProtocolHTTP, serverapi.PortProtocolHTTPS), OutCome: utils.Outcome_UserErr, ErrorCode: utils.UserErrorCode_InvalidArguments}
 		}
 		ctx, cancel := context.WithTimeout(cmd.Context(), 5*time.Second)
 		defer cancel()
@@ -73,21 +73,21 @@ var portsVisibilityCmd = &cobra.Command{
 		}
 		defer client.Close()
 		params := &serverapi.WorkspaceInstancePort{
-			Port:       float64(port),
-			Visibility: visibility,
+			Port:     float64(port),
+			Protocol: protocol,
 		}
 		if prePortStatus != nil && prePortStatus.Exposed != nil {
-			params.Protocol = prePortStatus.Exposed.Protocol.String()
+			params.Visibility = prePortStatus.Exposed.Visibility.String()
 		}
 
 		if _, err := client.OpenPort(ctx, wsInfo.WorkspaceId, params); err != nil {
-			return xerrors.Errorf("failed to change port visibility: %w", err)
+			return xerrors.Errorf("failed to change port protocol: %w", err)
 		}
-		fmt.Printf("port %v is now %s\n", port, visibility)
+		fmt.Printf("port %v is now %s\n", port, protocol)
 		return nil
 	},
 }
 
 func init() {
-	portsCmd.AddCommand(portsVisibilityCmd)
+	portsCmd.AddCommand(portsProtocolCmd)
 }
