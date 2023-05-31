@@ -179,7 +179,7 @@ export type FailedInstanceStartReason =
     | "startOnClusterFailed"
     | "imageBuildFailed"
     | "resourceExhausted"
-    | "clusterMaintenance"
+    | "workspaceClusterMaintenance"
     | "other";
 export function increaseFailedInstanceStartCounter(reason: FailedInstanceStartReason) {
     instanceStartsFailedTotal.inc({ reason });
