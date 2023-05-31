@@ -228,9 +228,8 @@ function UsageView({ attributionId }: UsageViewProps) {
                 }
             />
             <div className="app-container pt-5">
-                {/* TODO: move this to a better spot */}
-                {usageDownload && (
-                    <div className="text-right">
+                {!usageDownload && (
+                    <div className="text-right mb-4">
                         <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />
                     </div>
                 )}

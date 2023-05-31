@@ -50,7 +50,7 @@ export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) 
 
     return (
         <Button type="secondary" loading={isSaving} onClick={handleDownload}>
-            Download Usage
+            Download as CSV
         </Button>
     );
 };
