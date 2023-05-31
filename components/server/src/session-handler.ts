@@ -176,7 +176,7 @@ export class SessionHandler {
         delete options.maxAge;
         res.clearCookie(name, options);
 
-        res.clearCookie(SessionHandler.getJWTCookieName(this.config));
+        res.clearCookie(SessionHandler.getJWTCookieName(this.config), options);
     }
 
     protected createStore(): any | undefined {
