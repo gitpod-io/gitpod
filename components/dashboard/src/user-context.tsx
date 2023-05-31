@@ -26,6 +26,25 @@ const UserContextProvider: React.FC = ({ children }) => {
                 client.clear();
             }
             setUser(updatedUser);
+
+            // Schedule a periodic refresh of JWT cookie
+            const w = window as any;
+            const _gp = w._gp || (w._gp = {});
+
+            const frequencyMs = 1000 * 60 * 60; // 1 hour
+            if (!_gp.jwttimer) {
+                // Store the timer on the window, to avoid queuing up multiple
+                _gp.jwtTimer = setInterval(() => {
+                    fetch("/api/auth/jwt-cookie", {
+                        credentials: "include",
+                    })
+                        .then((resp) => resp.text())
+                        .then((text) => console.log(`Completed JWT Cookie refresh: ${text}`))
+                        .catch((err) => {
+                            console.log("Failed to update jwt-cookie", err);
+                        });
+                }, frequencyMs);
+            }
         },
         [user?.id, setUser, client],
     );
