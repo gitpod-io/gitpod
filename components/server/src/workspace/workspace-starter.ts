@@ -616,6 +616,7 @@ export class WorkspaceStarter {
                         ideConfig: instance.configuration?.ideConfig,
                         usesPrebuild: spec.getInitializer()?.hasPrebuild(),
                     },
+                    timestamp: new Date(instance.creationTime),
                 });
 
                 {
