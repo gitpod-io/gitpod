@@ -14,7 +14,7 @@ export class RevertOrgOnlyMigrationForBuiltinUser1685447855319 implements Migrat
         );
         // Set isMigratedToTeamOnlyAttribution for all technical users
         queryRunner.query(
-            "UPDATE d_b_user SET additionalData = JSON_SET(additionalData, '$.isMigratedToTeamOnlyAttribution', 'true') WHERE id IN ('builtin-user-workspace-probe-0000000', 'builtin-user-agent-smith-0000000', 'f071bb8e-b5d1-46cf-a436-da03ae63bcd2')",
+            "UPDATE d_b_user SET additionalData = JSON_SET(additionalData, '$.isMigratedToTeamOnlyAttribution', TRUE) WHERE id IN ('builtin-user-workspace-probe-0000000', 'builtin-user-agent-smith-0000000', 'f071bb8e-b5d1-46cf-a436-da03ae63bcd2')",
         );
 
         // Delete all cost centers added by UserToTeamMigrationService
