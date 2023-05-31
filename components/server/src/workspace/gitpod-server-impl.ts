@@ -20,7 +20,6 @@ import {
     DBUser,
     UserStorageResourcesDB,
     TeamDB,
-    InstallationAdminDB,
     ProjectDB,
     EmailDomainFilterDB,
 } from "@gitpod/gitpod-db/lib";
@@ -243,7 +242,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(ContextParser) protected contextParser: ContextParser;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
-    @inject(InstallationAdminDB) protected readonly installationAdminDb: InstallationAdminDB;
 
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
     @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
