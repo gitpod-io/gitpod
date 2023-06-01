@@ -379,15 +379,20 @@ func (rc *MySQLCache) sync(ctx context.Context, period time.Duration) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			rc.activePublicKey(ctx)
+			rc.reconcile(ctx)
 		}
 	}
 }
 
-func (rc *MySQLCache) activePublicKey(ctx context.Context) {
+func (rc *MySQLCache) reconcile(ctx context.Context) {
+	err := db.DeleteExpiredIDPPublicKeys(ctx, rc.dbConn)
+	if err != nil {
+		log.WithError(err).Warn("failed to cleanup expired IDP public keys")
+	}
+
 	id := rc.keyID(rc.current)
 
-	err := db.MarkIDPPublicKeyActive(ctx, rc.dbConn, id)
+	err = db.MarkIDPPublicKeyActive(ctx, rc.dbConn, id)
 	if err != nil {
 		if !errors.Is(err, db.ErrorNotFound) {
 			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot mark IDP public key active")
