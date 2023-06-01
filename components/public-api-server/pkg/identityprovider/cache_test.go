@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/go-cmp/cmp"
@@ -211,6 +212,26 @@ func TestRedisCacheSigner(t *testing.T) {
 	}
 }
 
-func TestRedisSync(t *testing.T) {
+func TestRedisPeriodicallySync(t *testing.T) {
+	s := miniredis.RunT(t)
+	client := redis.NewClient(&redis.Options{Addr: s.Addr()})
+	cache := NewRedisCache(context.Background(), client, WithRefreshPeriod(1*time.Second))
 
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = cache.Set(context.Background(), key)
+	if err != nil {
+		t.Fatalf("RedisCache failed to Set current key but shouldn't have: %v", err)
+	}
+	err = client.FlushAll(context.Background()).Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(3 * time.Second)
+	keys := client.Keys(context.Background(), redisIDPKeyPrefix+"*").Val()
+	if len(keys) == 0 {
+		t.Error("redis periodically sync won't work")
+	}
 }
