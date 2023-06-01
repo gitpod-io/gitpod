@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/redis/go-redis/v9"
 	"gopkg.in/square/go-jose.v2"
 	"gorm.io/gorm"
@@ -288,15 +290,13 @@ func (rc *RedisCache) sync(ctx context.Context, period time.Duration) {
 
 var _ KeyCache = ((*RedisCache)(nil))
 
-const (
-	mysqlCacheDefaultTTL = 1 * time.Hour
-)
-
-func NewMySQLCache(dbConn *gorm.DB) *MySQLCache {
-	return &MySQLCache{
+func NewMySQLCache(ctx context.Context, dbConn *gorm.DB, refreshPeriod int) *MySQLCache {
+	cache := &MySQLCache{
 		dbConn: dbConn,
 		keyID:  defaultKeyID,
 	}
+	go cache.sync(ctx, time.Duration(refreshPeriod))
+	return cache
 }
 
 type MySQLCache struct {
@@ -326,27 +326,22 @@ func (rc *MySQLCache) PublicKeys(ctx context.Context) ([]byte, error) {
 		first = false
 	}
 
-	iter := rc.Client.Scan(ctx, 0, redisIDPKeyPrefix+"*", 0).Iterator()
-	for iter.Next(ctx) {
-		idx := iter.Val()
-		if hasCurrentKey && strings.HasSuffix(idx, rc.currentID) {
+	keys, err := db.ListActiveIDPPublicKeys(ctx, rc.dbConn)
+	if err != nil {
+		return nil, err
+	}
+	for _, key := range keys {
+		if hasCurrentKey && key.KeyID == rc.currentID {
 			// We've already added the public key we hold in memory
 			continue
 		}
-		key, err := rc.Client.Get(ctx, idx).Result()
-		if err != nil {
-			return nil, err
-		}
-
 		if !first {
 			res = append(res, []byte(",")...)
 		}
-		res = append(res, []byte(key)...)
+		res = append(res, []byte(key.Data)...)
 		first = false
 	}
-	if err := iter.Err(); err != nil {
-		return nil, err
-	}
+
 	res = append(res, []byte("]}")...)
 	return res, nil
 }
@@ -356,50 +351,70 @@ func (rc *MySQLCache) Set(ctx context.Context, current *rsa.PrivateKey) error {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
 
-	err := rc.persistPublicKey(ctx, current)
-	if err != nil {
-		return err
-	}
-	rc.currentID = rc.keyID(current)
-	rc.current = current
-
-	return nil
-}
-
-func (rc *MySQLCache) persistPublicKey(ctx context.Context, current *rsa.PrivateKey) error {
 	id := rc.keyID(current)
-
 	publicKeyJSON, err := serializePublicKeyAsJSONWebKey(id, &current.PublicKey)
 	if err != nil {
 		return err
 	}
 
-	redisKey := fmt.Sprintf("%s%s", redisIDPKeyPrefix, id)
-	err = rc.Client.Set(ctx, redisKey, string(publicKeyJSON), mysqlCacheDefaultTTL).Err()
+	_, err = db.CreateIDPPublicKey(ctx, rc.dbConn, db.IDPPublicKey{
+		KeyID:          id,
+		Data:           string(publicKeyJSON),
+		LastActiveTime: time.Now(),
+	})
 	if err != nil {
 		return err
 	}
 
+	rc.currentID = id
+	rc.current = current
+
 	return nil
+}
+
+func (rc *MySQLCache) sync(ctx context.Context, period time.Duration) {
+	ticker := time.NewTicker(period)
+	for ctx.Err() == nil {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			rc.activePublicKey(ctx)
+		}
+	}
+}
+
+func (rc *MySQLCache) activePublicKey(ctx context.Context) {
+	id := rc.keyID(rc.current)
+
+	err := db.MarkIDPPublicKeyActive(ctx, rc.dbConn, id)
+	if err != nil {
+		if !errors.Is(err, db.ErrorNotFound) {
+			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot mark IDP public key active")
+			return
+		}
+		log.WithField("keyID", rc.currentID).Warn("IDP public key not found - trying to repersist")
+		publicKeyJSON, err := serializePublicKeyAsJSONWebKey(id, &rc.current.PublicKey)
+		if err != nil {
+			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot marshal IDP public key")
+			return
+		}
+		_, err = db.CreateIDPPublicKey(ctx, rc.dbConn, db.IDPPublicKey{
+			KeyID:          id,
+			Data:           string(publicKeyJSON),
+			LastActiveTime: time.Now(),
+		})
+		if err != nil {
+			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot repersist public key")
+			return
+		}
+	}
 }
 
 // Signer implements KeyCache
 func (rc *MySQLCache) Signer(ctx context.Context) (jose.Signer, error) {
 	if rc.current == nil {
 		return nil, nil
-	}
-
-	resp := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, mysqlCacheDefaultTTL)
-	if err := resp.Err(); err != nil {
-		log.WithField("keyID", rc.currentID).WithError(err).Warn("cannot extend cached IDP public key TTL")
-	}
-	if !resp.Val() {
-		log.WithField("keyID", rc.currentID).Warn("cannot extend cached IDP public key TTL - trying to repersist")
-		err := rc.persistPublicKey(ctx, rc.current)
-		if err != nil {
-			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot repersist public key")
-			return nil, err
-		}
 	}
 
 	return jose.NewSigner(jose.SigningKey{
