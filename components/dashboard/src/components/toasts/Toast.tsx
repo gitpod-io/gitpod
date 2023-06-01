@@ -8,6 +8,7 @@ import classNames from "classnames";
 import { FC, useCallback, useEffect, useRef } from "react";
 import { useId } from "../../hooks/useId";
 import { ToastEntry } from "./reducer";
+import { ReactComponent as CloseIcon } from "../../images/x.svg";
 
 type Props = ToastEntry & {
     onRemove: (id: string) => void;
@@ -66,7 +67,7 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
     return (
         <div
             className={classNames(
-                "relative flex justify-between items-center",
+                "relative flex justify-between items-start",
                 "w-full md:w-112 max-w-full",
                 "p-4 md:rounded-md",
                 "bg-gray-800 dark:bg-gray-100",
@@ -81,19 +82,18 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
             <div className="flex-grow text-white dark:text-gray-800" id={elId}>
                 {typeof message === "string" ? <p>{message}</p> : <>{message}</>}
             </div>
-            <button
-                className={classNames(
-                    "cursor-pointer p-2 ml-2",
-                    "bg-transparent hover:bg-transparent",
-                    "text-white hover:text-gray-300 dark:text-gray-800 dark:hover:text-gray-600",
-                )}
-                onClick={handleRemove}
-            >
-                <svg version="1.1" width="10px" height="10px" viewBox="0 0 100 100">
-                    <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="20" />
-                    <line x1="0" y1="100" x2="100" y2="0" stroke="currentColor" strokeWidth="20" />
-                </svg>
-            </button>
+            <div>
+                <button
+                    className={classNames(
+                        "cursor-pointer p-2 ml-2 -mt-1",
+                        "bg-transparent hover:bg-transparent",
+                        "text-white hover:text-gray-300 dark:text-gray-800 dark:hover:text-gray-600",
+                    )}
+                    onClick={handleRemove}
+                >
+                    <CloseIcon />
+                </button>
+            </div>
         </div>
     );
 };

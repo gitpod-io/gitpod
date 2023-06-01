@@ -12,7 +12,6 @@ import { Dayjs } from "dayjs";
 import { useToast } from "../../components/toasts/Toasts";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { ReactComponent as DownloadIcon } from "../../icons/Download.svg";
-import StatusDoneIcon from "../../icons/StatusDone.svg";
 import { ReactComponent as ExclamationIcon } from "../../images/exclamation.svg";
 import { LinkButton } from "../../components/LinkButton";
 import { saveAs } from "file-saver";
@@ -101,12 +100,13 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
 
     if (error) {
         return (
-            <div>
-                <div className="flex flex-row items-start space-x-2">
-                    <ExclamationIcon className="mt-1 w-4 h-4" />
+            <div className="flex flex-row items-start space-x-2">
+                <ExclamationIcon className="w-5 h-5 mt-0.5" />
+
+                <div>
                     <span>Error exporting your usage data:</span>
+                    <pre className="mt-2 whitespace-normal text-sm">{error.message}</pre>
                 </div>
-                <pre className="mt-2 whitespace-normal text-sm">{error.message}</pre>
             </div>
         );
     }
@@ -119,19 +119,18 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
     const formattedCount = Intl.NumberFormat().format(data.count);
 
     return (
-        <div className="space-y-2">
-            <div className="flex flex-row items-center justify-between space-x-2">
-                <div className="flex flex-row items-center space-x-2">
-                    <img src={StatusDoneIcon} className="w-5 h-5" alt="Completed icon" />
-                    <span>Usage export complete.</span>
-                </div>
+        <div className="flex flex-row items-start justify-between space-x-2">
+            <div>
+                <span>Usage export complete.</span>
+                <p>
+                    {readableSize} &middot; {formattedCount} entries exported
+                </p>
+            </div>
+            <div>
                 <LinkButton onClick={saveFile} className="text-left text-base">
                     Download CSV
                 </LinkButton>
             </div>
-            <p>
-                {readableSize} &middot; {formattedCount} entries exported
-            </p>
         </div>
     );
 };

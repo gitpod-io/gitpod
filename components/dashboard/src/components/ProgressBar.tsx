@@ -11,9 +11,9 @@ type Props = {
 };
 export const ProgressBar: FC<Props> = ({ percent }) => {
     return (
-        <div className="w-full rounded-full h-2.5 bg-gray-300 dark:bg-gray-300">
+        <div className="w-full rounded-full h-3 my-1 bg-gray-600 dark:bg-gray-300">
             <div
-                className="transition-width ease-linear duration-1000 bg-blue-500 h-2.5 rounded-full"
+                className="transition-width ease-linear duration-1000 bg-green-500 h-3 rounded-full"
                 style={{ width: `${percent}%` }}
             />
         </div>
