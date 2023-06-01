@@ -68,11 +68,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 			Templates: templatesCfg,
-			PVC: config.PVCConfiguration{
-				Size:          ctx.Config.Workspace.PVC.Size,
-				StorageClass:  ctx.Config.Workspace.PVC.StorageClass,
-				SnapshotClass: ctx.Config.Workspace.PVC.SnapshotClass,
-			},
 		},
 	}
 
@@ -124,7 +119,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 					},
 				},
 				Templates: tplsCfg,
-				PVC:       config.PVCConfiguration(c.PVC),
 			}
 			for tmpl_n, tmpl_v := range ctpls {
 				if _, ok := tpls[tmpl_n]; ok {

@@ -137,23 +137,10 @@ type WorkspaceConfig struct {
 	UseMk2ExperimentalMode bool  `json:"useMk2ExperimentalMode,omitempty"`
 }
 
-type PersistentVolumeClaim struct {
-	// Size is a size of persistent volume claim to use
-	Size resource.Quantity `json:"size" validate:"required"`
-
-	// StorageClass is a storage class of persistent volume claim to use
-	StorageClass string `json:"storageClass"`
-
-	// SnapshotClass is a snapshot class name that is used to create volume snapshot
-	SnapshotClass string `json:"snapshotClass"`
-}
-
 type WorkspaceClass struct {
-	Name        string                `json:"name" validate:"required"`
-	Resources   WorkspaceResources    `json:"resources" validate:"required"`
-	Templates   WorkspaceTemplates    `json:"templates,omitempty"`
-	PrebuildPVC PersistentVolumeClaim `json:"prebuildPVC" validate:"required"`
-	PVC         PersistentVolumeClaim `json:"pvc" validate:"required"`
+	Name      string             `json:"name" validate:"required"`
+	Resources WorkspaceResources `json:"resources" validate:"required"`
+	Templates WorkspaceTemplates `json:"templates,omitempty"`
 }
 
 type WorkspaceResources struct {
