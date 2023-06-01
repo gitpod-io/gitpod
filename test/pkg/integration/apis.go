@@ -1181,11 +1181,6 @@ func (c *ComponentAPI) portFwdWithRetry(ctx context.Context, portFwdF portFwdFun
 	}
 }
 
-func (c *ComponentAPI) IsPVCExist(pvcName string) bool {
-	var pvc corev1.PersistentVolumeClaim
-	return c.client.Resources().Get(context.Background(), pvcName, c.namespace, &pvc) == nil
-}
-
 // RestartDeployment rollout restart the deployment by updating the
 // spec.template.metadata.annotations["kubectl.kubernetes.io/restartedAt"] = time.Now()
 func (c *ComponentAPI) RestartDeployment(deployName, namespace string, wait bool) error {
