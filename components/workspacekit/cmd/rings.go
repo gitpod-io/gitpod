@@ -318,14 +318,9 @@ var ring1Cmd = &cobra.Command{
 			}
 		}
 
-		// FWB workspaces do not require mounting /workspace
-		// if that is done, the backup will not contain any change in the directory
-		// same applies to persistent volume claims, we cannot mount /workspace folder when PVC is used
-		if os.Getenv("WORKSPACEKIT_NO_WORKSPACE_MOUNT") != "true" {
-			mnts = append(mnts,
-				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
-			)
-		}
+		mnts = append(mnts,
+			mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
+		)
 
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
