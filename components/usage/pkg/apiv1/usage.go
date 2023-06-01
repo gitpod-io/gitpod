@@ -57,6 +57,10 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 		return nil, status.Errorf(codes.InvalidArgument, "Number of items perPage needs to be positive (was %d).", in.GetPagination().GetPerPage())
 	}
 
+	if in.GetPagination().GetPerPage() > 1000 {
+		return nil, status.Errorf(codes.InvalidArgument, "Number of items perPage needs to be no more than 1000 (was %d).", in.GetPagination().GetPerPage())
+	}
+
 	if in.GetPagination().GetPage() < 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "Page number needs to be 0 or greater (was %d).", in.GetPagination().GetPage())
 	}
