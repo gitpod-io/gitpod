@@ -110,7 +110,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(1, sum(rate(supervisor_client_handling_seconds_bucket{method!=\"InstanceUpdates\"}[1m])) by (le))",
+          "expr": "histogram_quantile(1, sum(rate(supervisor_client_handling_seconds_bucket{method!~\"InstanceUpdates|WorkspaceUpdates\"}[1m])) by (le))",
           "legendFormat": "100%",
           "range": true,
           "refId": "A"
@@ -121,7 +121,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, sum(rate(supervisor_client_handling_seconds_bucket{method!=\"InstanceUpdates\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.99, sum(rate(supervisor_client_handling_seconds_bucket{method!~\"InstanceUpdates|WorkspaceUpdates\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "99%",
           "range": true,
@@ -133,7 +133,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(supervisor_client_handling_seconds_bucket{method!=\"InstanceUpdates\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(supervisor_client_handling_seconds_bucket{method!~\"InstanceUpdates|WorkspaceUpdates\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "95%",
           "range": true,
@@ -145,7 +145,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.80, sum(rate(supervisor_client_handling_seconds_bucket{method!=\"InstanceUpdates\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.80, sum(rate(supervisor_client_handling_seconds_bucket{method!~\"InstanceUpdates|WorkspaceUpdates\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "80%",
           "range": true,
@@ -157,7 +157,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, sum(rate(supervisor_client_handling_seconds_bucket{method!=\"InstanceUpdates\"}[1m])) by (le))",
+          "expr": "histogram_quantile(0.50, sum(rate(supervisor_client_handling_seconds_bucket{method!~\"InstanceUpdates|WorkspaceUpdates\"}[1m])) by (le))",
           "hide": false,
           "legendFormat": "50%",
           "range": true,
