@@ -259,7 +259,7 @@ func (rc *RedisCache) reconcile(ctx context.Context) error {
 func (rc *RedisCache) sync(ctx context.Context, period time.Duration) {
 	_ = rc.reconcile(ctx)
 	ticker := time.NewTicker(period)
-	for ctx.Err() == nil {
+	for {
 		select {
 		case <-ctx.Done():
 			return
