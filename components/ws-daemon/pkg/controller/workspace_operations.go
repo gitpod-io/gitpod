@@ -248,7 +248,7 @@ func (wso *DefaultWorkspaceOperations) BackupWorkspace(ctx context.Context, opts
 	var repo *csapi.GitStatus
 	if opts.UpdateGitStatus {
 		// Update the git status prior to deleting the workspace
-		repo, err = ws.UpdateGitStatus(ctx, false)
+		repo, err = ws.UpdateGitStatus(ctx)
 		if err != nil {
 			// do not fail workspace because we were unable to get git status
 			// which can happen for various reasons, including user corrupting his .git folder somehow
