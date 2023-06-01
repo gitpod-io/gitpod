@@ -21,6 +21,7 @@ type Args = Pick<ListUsageRequest, "attributionId" | "from" | "to"> & {
 export type DownloadUsageCSVResponse = {
     blob: Blob | null;
     filename: string;
+    count: number;
 };
 
 const downloadUsageCSV = async ({
@@ -47,6 +48,7 @@ const downloadUsageCSV = async ({
         return {
             blob: null,
             filename,
+            count: 0,
         };
     }
 
@@ -71,6 +73,7 @@ const downloadUsageCSV = async ({
     return {
         blob,
         filename,
+        count: rows.length,
     };
 };
 

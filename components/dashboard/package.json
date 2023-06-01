@@ -22,6 +22,7 @@
     "idb-keyval": "^6.2.0",
     "js-cookie": "^3.0.1",
     "monaco-editor": "^0.25.2",
+    "pretty-bytes": "^6.1.0",
     "query-string": "^7.1.1",
     "react": "^17.0.1",
     "react-confetti": "^6.1.0",

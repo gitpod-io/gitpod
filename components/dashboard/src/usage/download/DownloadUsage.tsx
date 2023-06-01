@@ -16,6 +16,7 @@ import StatusDoneIcon from "../../icons/StatusDone.svg";
 import { ReactComponent as ExclamationIcon } from "../../images/exclamation.svg";
 import { LinkButton } from "../../components/LinkButton";
 import { saveAs } from "file-saver";
+import prettyBytes from "pretty-bytes";
 import { ProgressBar } from "../../components/ProgressBar";
 
 type Props = {
@@ -110,9 +111,12 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
         );
     }
 
-    if (!data || data.blob === null) {
+    if (!data || !data.blob || data.count === 0) {
         return <span>There are no usage records for that date range</span>;
     }
+
+    const readableSize = prettyBytes(data.blob.size);
+    const formattedCount = Intl.NumberFormat().format(data.count);
 
     return (
         <div className="space-y-2">
@@ -125,6 +129,7 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
                     Download CSV file
                 </LinkButton>
             </div>
+            <p>{`${readableSize} - ${formattedCount} entries exported`}</p>
         </div>
     );
 };
