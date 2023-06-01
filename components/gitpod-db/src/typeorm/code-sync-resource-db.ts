@@ -32,9 +32,10 @@ export class CodeSyncResourceDB {
         const resourcesResult = await connection.manager
             .createQueryBuilder(DBCodeSyncResource, "resource")
             .where(
-                "resource.userId = :userId AND resource.kind != 'editSessions' AND resource.collection = :collection AND resource.deleted = 0",
+                "resource.userId = :userId AND resource.kind NOT IN (:...kinds) AND resource.collection = :collection AND resource.deleted = 0",
                 {
                     userId,
+                    kinds: ["editSessions", "workspaceState"],
                     collection: uuid.NIL,
                 },
             )
@@ -46,8 +47,8 @@ export class CodeSyncResourceDB {
                     .addSelect("max(resource2.created)")
                     .from(DBCodeSyncResource, "resource2")
                     .where(
-                        "resource2.userId = :userId AND resource2.kind != 'editSessions' AND resource2.collection = :collection AND resource2.deleted = 0",
-                        { userId, collection: uuid.NIL },
+                        "resource2.userId = :userId AND resource2.kind NOT IN (:...kinds) AND resource2.collection = :collection AND resource2.deleted = 0",
+                        { userId, kinds: ["editSessions", "workspaceState"], collection: uuid.NIL },
                     )
                     .groupBy("resource2.kind")
                     .orderBy("resource2.created", "DESC")
@@ -63,9 +64,10 @@ export class CodeSyncResourceDB {
         const collectionsResult = await connection.manager
             .createQueryBuilder(DBCodeSyncResource, "resource")
             .where(
-                "resource.userId = :userId AND resource.kind != 'editSessions' AND resource.collection != :collection AND resource.deleted = 0",
+                "resource.userId = :userId AND resource.kind NOT IN (:...kinds) AND resource.collection != :collection AND resource.deleted = 0",
                 {
                     userId,
+                    kinds: ["editSessions", "workspaceState"],
                     collection: uuid.NIL,
                 },
             )
@@ -78,8 +80,8 @@ export class CodeSyncResourceDB {
                     .addSelect("max(resource2.created)")
                     .from(DBCodeSyncResource, "resource2")
                     .where(
-                        "resource2.userId = :userId AND resource2.kind != 'editSessions' AND resource2.collection != :collection AND resource2.deleted = 0",
-                        { userId, collection: uuid.NIL },
+                        "resource2.userId = :userId AND resource2.kind NOT IN (:...kinds) AND resource2.collection != :collection AND resource2.deleted = 0",
+                        { userId, kinds: ["editSessions", "workspaceState"], collection: uuid.NIL },
                     )
                     .groupBy("resource2.kind")
                     .addGroupBy("resource2.collection")
@@ -134,8 +136,9 @@ export class CodeSyncResourceDB {
                 .createQueryBuilder()
                 .update(DBCodeSyncResource)
                 .set({ deleted: true })
-                .where("userId = :userId AND kind != 'editSessions' AND collection = :collection", {
+                .where("userId = :userId AND kind NOT IN (:...kinds) AND collection = :collection", {
                     userId,
+                    kinds: ["editSessions", "workspaceState"],
                     collection: uuid.NIL,
                 })
                 .execute();
