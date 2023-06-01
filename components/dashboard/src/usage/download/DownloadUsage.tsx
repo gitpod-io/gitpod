@@ -123,7 +123,7 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
             <div>
                 <span>Usage export complete.</span>
                 <p>
-                    {readableSize} &middot; {formattedCount} entries exported
+                    {readableSize} &middot; {formattedCount} {data.count !== 1 ? "entries" : "entry"} exported
                 </p>
             </div>
             <div>
