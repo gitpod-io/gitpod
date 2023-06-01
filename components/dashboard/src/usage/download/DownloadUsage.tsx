@@ -112,7 +112,7 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
     }
 
     if (!data || !data.blob || data.count === 0) {
-        return <span>There are no usage records for that date range</span>;
+        return <span>No usage data for the selected period.</span>;
     }
 
     const readableSize = prettyBytes(data.blob.size);
@@ -126,10 +126,12 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
                     <span>Usage export complete.</span>
                 </div>
                 <LinkButton onClick={saveFile} className="text-left text-base">
-                    Download CSV file
+                    Download CSV
                 </LinkButton>
             </div>
-            <p>{`${readableSize} - ${formattedCount} entries exported`}</p>
+            <p>
+                {readableSize} &middot; {formattedCount} entries exported
+            </p>
         </div>
     );
 };
