@@ -202,7 +202,6 @@ func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID st
 			Owner:                 owner,
 			WorkspaceID:           workspaceID,
 			InstanceID:            instanceID,
-			PersistentVolumeClaim: false,
 			RemoteStorageDisabled: storageDisabled,
 			IsMk2:                 true,
 			StorageQuota:          storageQuota,
