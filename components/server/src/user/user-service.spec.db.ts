@@ -4,28 +4,39 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TypeORM, TypeORMUserDBImpl, testContainer } from "@gitpod/gitpod-db/lib";
+import { DBUser, TypeORM, TypeORMUserDBImpl } from "@gitpod/gitpod-db/lib";
 import { Container } from "inversify";
-import { HostContextProvider } from "../auth/host-context-provider";
-import { UsageService } from "./usage-service";
-import { UserToTeamMigrationService } from "../migration/user-to-team-migration-service";
 import { suite, test } from "mocha-typescript";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
 import { UserService } from "./user-service";
 import * as chai from "chai";
+import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
+import { productionContainerModule } from "../container-module";
+import { Config } from "../config";
+import { UserToTeamMigrationService } from "../migration/user-to-team-migration-service";
+import { User } from "@gitpod/gitpod-protocol";
 
 const expect = chai.expect;
 
+export const testContainer = new Container();
+testContainer.load(productionContainerModule);
+testContainer.load(dbContainerModule);
+
 @suite
 class UserServiceSpec {
-    private container: Container;
     userDB = testContainer.get<TypeORMUserDBImpl>(TypeORMUserDBImpl);
 
     async before() {
-        this.container = testContainer.createChild();
-        this.container.bind(HostContextProvider).toConstantValue({} as any);
-        this.container.bind(UsageService).toConstantValue({} as any);
-        this.container.bind(UserToTeamMigrationService).toConstantValue({} as any);
+        testContainer.rebind(Config).toConstantValue({
+            blockNewUsers: {
+                enabled: false,
+            },
+        } as any);
+        testContainer.rebind(UserToTeamMigrationService).toConstantValue({
+            migrateUser: (user: User) => {
+                return user;
+            },
+        } as any);
 
         await this.wipeRepos();
     }
@@ -43,7 +54,7 @@ class UserServiceSpec {
 
     @test
     public async updateLoggedInUser_avatarUrlNotUpdatable() {
-        const sut = this.container.get<UserService>(UserService);
+        const sut = testContainer.get<UserService>(UserService);
 
         const user = await sut.createUser({
             identity: {
@@ -59,7 +70,7 @@ class UserServiceSpec {
         });
 
         // The update to avatarUrl is not applied
-        expect(updated).to.eq(user);
+        expect(updated.avatarUrl).is.undefined;
     }
 }
 

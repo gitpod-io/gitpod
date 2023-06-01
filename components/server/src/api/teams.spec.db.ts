@@ -22,6 +22,8 @@ import { GetTeamRequest, Team, TeamMember, TeamRole } from "@gitpod/public-api/l
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
 import { Connection } from "typeorm";
 import { Timestamp } from "@bufbuild/protobuf";
+import { APIWorkspacesService } from "./workspaces";
+import { APIStatsService } from "./stats";
 
 const expect = chai.expect;
 
@@ -38,6 +40,8 @@ export class APITeamsServiceSpec {
         this.container.bind(API).toSelf().inSingletonScope();
         this.container.bind(APIUserService).toSelf().inSingletonScope();
         this.container.bind(APITeamsService).toSelf().inSingletonScope();
+        this.container.bind(APIWorkspacesService).toSelf().inSingletonScope();
+        this.container.bind(APIStatsService).toSelf().inSingletonScope();
 
         this.container.bind(WorkspaceStarter).toConstantValue({} as WorkspaceStarter);
         this.container.bind(UserService).toConstantValue({} as UserService);

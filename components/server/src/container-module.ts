@@ -136,7 +136,10 @@ import { APIStatsService } from "./api/stats";
 import { FixStripeJob } from "./jobs/fix-stripe-job";
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
-    bind(Config).toConstantValue(ConfigFile.fromFile());
+    // gpl: Making this dynamic enables re-use insides tests
+    bind(Config)
+        .toDynamicValue((ctx) => ConfigFile.fromFile())
+        .inSingletonScope();
     bind(IDEService).toSelf().inSingletonScope();
 
     bind(UserService).toSelf().inSingletonScope();
