@@ -123,7 +123,6 @@ var ring0Cmd = &cobra.Command{
 		cmd.Stderr = os.Stderr
 		cmd.Env = append(os.Environ(),
 			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
-			fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.PersistentVolumeClaim),
 		)
 
 		if err := cmd.Start(); err != nil {
