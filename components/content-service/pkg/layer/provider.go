@@ -172,7 +172,7 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 		return s.getSnapshotContentLayer(ctx, gis)
 	}
 	if pis := initializer.GetPrebuild(); pis != nil {
-		l, manifest, err = s.getPrebuildContentLayer(ctx, pis, false)
+		l, manifest, err = s.getPrebuildContentLayer(ctx, pis)
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI(owner, workspaceID, "")).Warn("cannot initialize from prebuild - falling back to Git")
 			span.LogKV("fallback-to-git", err.Error())
@@ -362,15 +362,6 @@ func contentDescriptorToLayer(cdesc []byte) (*Layer, error) {
 		fileInLayer{&tar.Header{Typeflag: tar.TypeReg, Name: "/workspace/.gitpod/content.json", Uid: initializer.GitpodUID, Gid: initializer.GitpodGID, Mode: 0755, Size: int64(len(cdesc))}, cdesc},
 	)
 }
-
-var prestophookScript = `#!/bin/bash
-cd ${GITPOD_REPO_ROOT}
-git config --global --add safe.directory ${GITPOD_REPO_ROOT}
-git status --porcelain=v2 --branch -uall > /.workspace/prestophookdata/git_status.txt
-git log --pretty='%h: %s' --branches --not --remotes > /.workspace/prestophookdata/git_log_1.txt
-git log --pretty=%H -n 1 > /.workspace/prestophookdata/git_log_2.txt
-cp /workspace/.gitpod/prebuild-log* /.workspace/prestophookdata/ | true
-`
 
 func workspaceReadyLayer(src csapi.WorkspaceInitSource) (*Layer, error) {
 	msg := csapi.WorkspaceReadyMessage{
