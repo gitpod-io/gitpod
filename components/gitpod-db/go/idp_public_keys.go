@@ -23,9 +23,6 @@ type IDPPublicKey struct {
 	LastActiveTime time.Time `gorm:"column:last_active_time;type:timestamp;" json:"last_active_time"`
 
 	LastModified time.Time `gorm:"column:_lastModified;type:timestamp;default:CURRENT_TIMESTAMP(6);" json:"_lastModified"`
-
-	// deleted is reserved for use by periodic deleter.
-	_ bool `gorm:"column:deleted;type:tinyint;default:0;" json:"deleted"`
 }
 
 func (c *IDPPublicKey) TableName() string {
@@ -65,7 +62,6 @@ func GetIDPPublicKey(ctx context.Context, conn *gorm.DB, keyId string) (IDPPubli
 	tx := conn.
 		WithContext(ctx).
 		Where("kid = ?", keyId).
-		Where("deleted = ?", 0).
 		First(&key)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
@@ -82,7 +78,6 @@ func ListActiveIDPPublicKeys(ctx context.Context, conn *gorm.DB) ([]IDPPublicKey
 
 	tx := conn.
 		WithContext(ctx).
-		Where("deleted = ?", 0).
 		Where("last_active_time > ?", time.Now().Add(-1*IDPDefaultExpiredTime)).
 		Order("last_active_time").
 		Find(&results)
@@ -96,10 +91,8 @@ func ListActiveIDPPublicKeys(ctx context.Context, conn *gorm.DB) ([]IDPPublicKey
 func DeleteExpiredIDPPublicKeys(ctx context.Context, conn *gorm.DB) error {
 	tx := conn.
 		WithContext(ctx).
-		Table((&IDPPublicKey{}).TableName()).
 		Where("last_active_time < ?", time.Now().Add(-1*IDPDefaultExpiredTime)).
-		Where("deleted = ?", 0).
-		Update("deleted", 1)
+		Delete(&IDPPublicKey{})
 
 	if tx.Error != nil {
 		return fmt.Errorf("failed to delete expired idp public keys: %w", tx.Error)
@@ -121,7 +114,6 @@ func MarkIDPPublicKeyActive(ctx context.Context, conn *gorm.DB, keyID string) er
 		WithContext(ctx).
 		Table((&IDPPublicKey{}).TableName()).
 		Where("kid = ?", keyID).
-		Where("deleted = ?", 0).
 		Update("last_active_time", time.Now())
 
 	if tx.Error != nil {

@@ -11,7 +11,7 @@ export class CreateIDPPublicKeysTable1685093642782 implements MigrationInterface
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (!(await tableExists(queryRunner, "d_b_idp_public_keys"))) {
             await queryRunner.query(
-                "CREATE TABLE IF NOT EXISTS `d_b_idp_public_keys` (`kid` varchar(255) NOT NULL, `last_active_time` timestamp(6) NOT NULL, `data` text(65535) NOT NULL, `_lastModified` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), `deleted` tinyint(4) NOT NULL DEFAULT '0', PRIMARY KEY (kid))",
+                "CREATE TABLE IF NOT EXISTS `d_b_idp_public_keys` (`kid` varchar(255) NOT NULL, `last_active_time` timestamp(6) NOT NULL, `data` text(65535) NOT NULL, `_lastModified` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (kid))",
             );
         }
     }

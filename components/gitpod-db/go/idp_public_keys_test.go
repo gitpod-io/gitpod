@@ -12,6 +12,7 @@ import (
 	db "github.com/gitpod-io/gitpod/components/gitpod-db/go"
 	"github.com/gitpod-io/gitpod/components/gitpod-db/go/dbtest"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 func TestCreateIDPPublicKey(t *testing.T) {
@@ -75,10 +76,9 @@ func TestDeleteExpiredIDPPublicKeys(t *testing.T) {
 		err := db.DeleteExpiredIDPPublicKeys(context.Background(), conn)
 		require.NoError(t, err)
 
-		// Delete only sets the `deleted` field, verify that's true
 		var retrieved db.IDPPublicKey
-		tx := conn.Where("kid = ?", created[0].KeyID).Where("deleted = 1").First(&retrieved)
-		require.NoError(t, tx.Error)
+		tx := conn.Where("kid = ?", created[0].KeyID).First(&retrieved)
+		require.ErrorIs(t, tx.Error, gorm.ErrRecordNotFound)
 	})
 
 }
