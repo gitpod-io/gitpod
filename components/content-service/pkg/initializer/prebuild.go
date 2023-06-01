@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -19,7 +18,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/process"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
@@ -196,24 +194,5 @@ func runGitInit(ctx context.Context, gInit *GitInitializer) (commitChanged bool,
 		log.Debug("prebuild initializer Git operations complete")
 	}
 
-	defer func() {
-		span.SetTag("Chown", gInit.Chown)
-		if !gInit.Chown {
-			return
-		}
-		// TODO (ptumik): need this for regular prebuild -> pvc workspace. Once fixed supervisor executor.execure() running with root we can remove this code.
-		args := []string{"-R", "-L", "gitpod:gitpod", gInit.Location}
-		cmd := exec.Command("chown", args...)
-		res, cerr := cmd.CombinedOutput()
-		if cerr != nil && !process.IsNotChildProcess(cerr) {
-			err = git.OpFailedError{
-				Args:       args,
-				ExecErr:    cerr,
-				Output:     string(res),
-				Subcommand: "chown",
-			}
-			return
-		}
-	}()
 	return commitChanged, nil
 }
