@@ -85,7 +85,15 @@ export const useDownloadUsageCSV = (args: Args) => {
     const query = useQuery<DownloadUsageCSVResponse, Error>(
         key,
         async ({ signal }) => {
-            return await downloadUsageCSV({ ...args, signal });
+            const resp = await downloadUsageCSV({ ...args, signal });
+
+            // Introduce a slight artificial delay when completed to allow progress to finish the transition to 100%
+            // While this feels a bit odd here instead of in the component, it's much easier to add
+            // the delay here than track it in react state
+            // 1000ms because the transition duration is 1000ms
+            await new Promise((r) => setTimeout(r, 1000));
+
+            return resp;
         },
         {
             retry: false,

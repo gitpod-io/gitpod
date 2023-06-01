@@ -23,7 +23,7 @@ export const getAllUsageRecords = async ({
     let totalPages: number | null = null;
     let records: Usage[] = [];
 
-    while (totalPages === null || page < totalPages) {
+    while (totalPages === null || page <= totalPages) {
         if (signal?.aborted === true) {
             return [];
         }
@@ -39,19 +39,14 @@ export const getAllUsageRecords = async ({
         records = records.concat(resp.usageEntriesList);
         totalPages = resp.pagination?.totalPages ?? 0;
 
-        // ensure we only call once per second
-
-        // if we have results, track progress before we increment the page
         if (totalPages > 0) {
             onProgress && onProgress(Math.ceil((page / totalPages) * 100));
         }
 
-        // introduce a slight delay when we're completed to allow for a transition to 100% progress
-        if (page === totalPages) {
-            await new Promise((r) => setTimeout(r, 300));
-        }
-
+        // ensure we only call once per second
+        // TODO: consider starting timer here to ensure 1s between call completing and next call vs. 1s between start and next call
         await timer;
+
         page = page + 1;
     }
 
