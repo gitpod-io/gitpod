@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/go-cmp/cmp"
@@ -110,8 +111,12 @@ func TestRedisCachePublicKeys(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			s := miniredis.RunT(t)
+			ctx, cancel := context.WithCancel(context.Background())
+			t.Cleanup(func() {
+				cancel()
+			})
 			client := redis.NewClient(&redis.Options{Addr: s.Addr()})
-			cache := NewRedisCache(client)
+			cache := NewRedisCache(ctx, client)
 			cache.keyID = testKeyID
 			for _, key := range test.Keys {
 				err := cache.Set(context.Background(), key)
@@ -157,7 +162,7 @@ func TestRedisCachePublicKeys(t *testing.T) {
 func TestRedisCacheSigner(t *testing.T) {
 	s := miniredis.RunT(t)
 	client := redis.NewClient(&redis.Options{Addr: s.Addr()})
-	cache := NewRedisCache(client)
+	cache := NewRedisCache(context.Background(), client)
 
 	sig, err := cache.Signer(context.Background())
 	if sig != nil {
@@ -204,5 +209,29 @@ func TestRedisCacheSigner(t *testing.T) {
 	keys := client.Keys(context.Background(), redisIDPKeyPrefix+"*").Val()
 	if len(keys) == 0 {
 		t.Error("getting a new signer did not repersist the key")
+	}
+}
+
+func TestRedisPeriodicallySync(t *testing.T) {
+	s := miniredis.RunT(t)
+	client := redis.NewClient(&redis.Options{Addr: s.Addr()})
+	cache := NewRedisCache(context.Background(), client, WithRefreshPeriod(1*time.Second))
+
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = cache.Set(context.Background(), key)
+	if err != nil {
+		t.Fatalf("RedisCache failed to Set current key but shouldn't have: %v", err)
+	}
+	err = client.FlushAll(context.Background()).Err()
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(3 * time.Second)
+	keys := client.Keys(context.Background(), redisIDPKeyPrefix+"*").Val()
+	if len(keys) == 0 {
+		t.Error("redis periodically sync won't work")
 	}
 }

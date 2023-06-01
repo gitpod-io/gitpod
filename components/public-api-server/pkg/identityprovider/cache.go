@@ -7,6 +7,8 @@ package identityprovider
 import (
 	"context"
 	"crypto/rsa"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -106,17 +108,6 @@ const (
 	redisIDPKeyPrefix    = "idp:keys:"
 )
 
-func NewRedisCache(client *redis.Client) *RedisCache {
-	return &RedisCache{
-		Client: client,
-		keyID:  defaultKeyID,
-	}
-}
-
-func defaultKeyID(current *rsa.PrivateKey) string {
-	return fmt.Sprintf("id-%d-%d", time.Now().UnixMicro(), rand.Int())
-}
-
 type RedisCache struct {
 	Client *redis.Client
 
@@ -124,6 +115,38 @@ type RedisCache struct {
 	mu        sync.RWMutex
 	current   *rsa.PrivateKey
 	currentID string
+}
+
+type redisCacheOpt struct {
+	refreshPeriod time.Duration
+}
+
+type redisCacheOption func(*redisCacheOpt)
+
+func WithRefreshPeriod(t time.Duration) redisCacheOption {
+	return func(opt *redisCacheOpt) {
+		opt.refreshPeriod = t
+	}
+}
+
+func NewRedisCache(ctx context.Context, client *redis.Client, opts ...redisCacheOption) *RedisCache {
+	opt := &redisCacheOpt{
+		refreshPeriod: 10 * time.Minute,
+	}
+	for _, o := range opts {
+		o(opt)
+	}
+	cache := &RedisCache{
+		Client: client,
+		keyID:  defaultKeyID,
+	}
+	go cache.sync(ctx, opt.refreshPeriod)
+	return cache
+}
+
+func defaultKeyID(current *rsa.PrivateKey) string {
+	hashed := sha256.Sum256(current.N.Bytes())
+	return fmt.Sprintf("id-%s", hex.EncodeToString(hashed[:]))
 }
 
 // PublicKeys implements KeyCache
@@ -216,17 +239,8 @@ func (rc *RedisCache) Signer(ctx context.Context) (jose.Signer, error) {
 		return nil, nil
 	}
 
-	resp := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, redisCacheDefaultTTL)
-	if err := resp.Err(); err != nil {
-		log.WithField("keyID", rc.currentID).WithError(err).Warn("cannot extend cached IDP public key TTL")
-	}
-	if !resp.Val() {
-		log.WithField("keyID", rc.currentID).Warn("cannot extend cached IDP public key TTL - trying to repersist")
-		err := rc.persistPublicKey(ctx, rc.current)
-		if err != nil {
-			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot repersist public key")
-			return nil, err
-		}
+	if err := rc.reconcile(ctx); err != nil {
+		return nil, err
 	}
 
 	return jose.NewSigner(jose.SigningKey{
@@ -237,6 +251,38 @@ func (rc *RedisCache) Signer(ctx context.Context) (jose.Signer, error) {
 			jose.HeaderKey("kid"): rc.currentID,
 		},
 	})
+}
+
+func (rc *RedisCache) reconcile(ctx context.Context) error {
+	if rc.current == nil {
+		return nil
+	}
+
+	resp := rc.Client.Expire(ctx, redisIDPKeyPrefix+rc.currentID, redisCacheDefaultTTL)
+	if err := resp.Err(); err != nil {
+		log.WithField("keyID", rc.currentID).WithError(err).Warn("cannot extend cached IDP public key TTL")
+	}
+	if !resp.Val() {
+		log.WithField("keyID", rc.currentID).Warn("cannot extend cached IDP public key TTL - trying to repersist")
+		err := rc.persistPublicKey(ctx, rc.current)
+		if err != nil {
+			log.WithField("keyID", rc.currentID).WithError(err).Error("cannot repersist public key")
+			return err
+		}
+	}
+	return nil
+}
+
+func (rc *RedisCache) sync(ctx context.Context, period time.Duration) {
+	ticker := time.NewTicker(period)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			_ = rc.reconcile(ctx)
+		}
+	}
 }
 
 var _ KeyCache = ((*RedisCache)(nil))

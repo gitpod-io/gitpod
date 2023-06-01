@@ -133,7 +133,7 @@ func Start(logger *logrus.Entry, version string, cfg *config.Configuration) erro
 	if redisClient == nil {
 		return fmt.Errorf("no Redis configiured")
 	}
-	idpService, err := identityprovider.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", identityprovider.NewRedisCache(redisClient))
+	idpService, err := identityprovider.NewService(strings.TrimSuffix(cfg.PublicURL, "/")+"/idp", identityprovider.NewRedisCache(context.Background(), redisClient))
 	if err != nil {
 		return err
 	}
