@@ -1028,11 +1028,6 @@ export class StartWorkspaceSpec extends jspb.Message {
     setIdeImage(value?: IDEImage): StartWorkspaceSpec;
     getClass(): string;
     setClass(value: string): StartWorkspaceSpec;
-
-    hasVolumeSnapshot(): boolean;
-    clearVolumeSnapshot(): void;
-    getVolumeSnapshot(): VolumeSnapshotInfo | undefined;
-    setVolumeSnapshot(value?: VolumeSnapshotInfo): StartWorkspaceSpec;
     clearSshPublicKeysList(): void;
     getSshPublicKeysList(): Array<string>;
     setSshPublicKeysList(value: Array<string>): StartWorkspaceSpec;
@@ -1074,7 +1069,6 @@ export namespace StartWorkspaceSpec {
         admission: AdmissionLevel,
         ideImage?: IDEImage.AsObject,
         pb_class: string,
-        volumeSnapshot?: VolumeSnapshotInfo.AsObject,
         sshPublicKeysList: Array<string>,
         sysEnvvarsList: Array<EnvironmentVariable.AsObject>,
         ideImageLayersList: Array<string>,
@@ -1311,7 +1305,6 @@ export enum WorkspacePhase {
 
 export enum WorkspaceFeatureFlag {
     NOOP = 0,
-    PERSISTENT_VOLUME_CLAIM = 7,
     WORKSPACE_CLASS_LIMITING = 9,
     WORKSPACE_CONNECTION_LIMITING = 10,
     WORKSPACE_PSI = 11,

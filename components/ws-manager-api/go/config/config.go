@@ -136,11 +136,9 @@ type Configuration struct {
 }
 
 type WorkspaceClass struct {
-	Name        string                            `json:"name"`
-	Container   ContainerConfiguration            `json:"container"`
-	Templates   WorkspacePodTemplateConfiguration `json:"templates"`
-	PrebuildPVC PVCConfiguration                  `json:"prebuildPVC"`
-	PVC         PVCConfiguration                  `json:"pvc"`
+	Name      string                            `json:"name"`
+	Container ContainerConfiguration            `json:"container"`
+	Templates WorkspacePodTemplateConfiguration `json:"templates"`
 }
 
 // WorkspaceTimeoutConfiguration configures the timeout behaviour of workspaces
@@ -289,22 +287,6 @@ var validWorkspaceURLTemplate = ozzo.By(func(o interface{}) error {
 
 	return err
 })
-
-// PVCConfiguration configures properties of persistent volume claim to use for workspace containers
-type PVCConfiguration struct {
-	Size          resource.Quantity `json:"size"`
-	StorageClass  string            `json:"storageClass"`
-	SnapshotClass string            `json:"snapshotClass"`
-}
-
-// Validate validates a PVC configuration
-func (c *PVCConfiguration) Validate() error {
-	return ozzo.ValidateStruct(c,
-		ozzo.Field(&c.Size, ozzo.Required),
-		ozzo.Field(&c.StorageClass, ozzo.Required),
-		ozzo.Field(&c.SnapshotClass, ozzo.Required),
-	)
-}
 
 // ContainerConfiguration configures properties of workspace pod container
 type ContainerConfiguration struct {
