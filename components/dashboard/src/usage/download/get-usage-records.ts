@@ -7,12 +7,18 @@
 import { ListUsageRequest, Ordering, Usage } from "@gitpod/gitpod-protocol/lib/usage";
 import { getGitpodService } from "../../service/service";
 
-type GetAllUsageRecordsArgs = Pick<ListUsageRequest, "attributionId" | "from" | "to">;
+type GetAllUsageRecordsArgs = Pick<ListUsageRequest, "attributionId" | "from" | "to"> & {
+    signal?: AbortSignal;
+    onProgress?: (percentage: number) => void;
+};
 
-export const getAllUsageRecords = async (
-    { attributionId, from, to }: GetAllUsageRecordsArgs,
-    signal?: AbortSignal,
-): Promise<Usage[]> => {
+export const getAllUsageRecords = async ({
+    attributionId,
+    from,
+    to,
+    signal,
+    onProgress,
+}: GetAllUsageRecordsArgs): Promise<Usage[]> => {
     let page = 1;
     let totalPages: number | null = null;
     let records: Usage[] = [];
@@ -32,10 +38,21 @@ export const getAllUsageRecords = async (
         });
         records = records.concat(resp.usageEntriesList);
         totalPages = resp.pagination?.totalPages ?? 0;
-        page = page + 1;
 
         // ensure we only call once per second
+
+        // if we have results, track progress before we increment the page
+        if (totalPages > 0) {
+            onProgress && onProgress(Math.ceil((page / totalPages) * 100));
+        }
+
+        // introduce a slight delay when we're completed to allow for a transition to 100% progress
+        if (page === totalPages) {
+            await new Promise((r) => setTimeout(r, 300));
+        }
+
         await timer;
+        page = page + 1;
     }
 
     return records;

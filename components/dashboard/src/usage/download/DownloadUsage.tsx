@@ -4,18 +4,19 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, useCallback, useEffect, useMemo } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { useDownloadUsageCSV } from "./download-usage-csv";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Dayjs } from "dayjs";
 import { useToast } from "../../components/toasts/Toasts";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
-import { SpinnerLoader } from "../../components/Loader";
 import { ReactComponent as DownloadIcon } from "../../icons/Download.svg";
+import StatusDoneIcon from "../../icons/StatusDone.svg";
 import { ReactComponent as ExclamationIcon } from "../../images/exclamation.svg";
 import { LinkButton } from "../../components/LinkButton";
 import { saveAs } from "file-saver";
+import { ProgressBar } from "../../components/ProgressBar";
 
 type Props = {
     attributionId: AttributionId;
@@ -56,12 +57,15 @@ type DownloadUsageToastProps = Props & {
 };
 
 const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDate, startDate, orgName }) => {
+    const [progress, setProgress] = useState(0);
+
     const queryArgs = useMemo(
         () => ({
             orgName,
             attributionId: AttributionId.render(attributionId),
             from: startDate.startOf("day").valueOf(),
             to: endDate.endOf("day").valueOf(),
+            onProgress: setProgress,
         }),
         [attributionId, endDate, orgName, startDate],
     );
@@ -85,9 +89,11 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
 
     if (isLoading) {
         return (
-            <div className="flex flex-row items-center space-x-2">
-                <SpinnerLoader small />
-                <span>Preparing usage export</span>
+            <div className="space-y-2">
+                <div className="flex flex-row items-center space-x-2">
+                    <span>Preparing usage export</span>
+                </div>
+                <ProgressBar percent={progress} />
             </div>
         );
     }
@@ -109,11 +115,16 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
     }
 
     return (
-        <div className="flex flex-row items-center justify-between space-x-2">
-            <span>Usage export complete.</span>
-            <LinkButton onClick={saveFile} className="text-left text-base">
-                Download CSV file
-            </LinkButton>
+        <div className="space-y-2">
+            <div className="flex flex-row items-center justify-between space-x-2">
+                <div className="flex flex-row items-center space-x-2">
+                    <img src={StatusDoneIcon} className="w-5 h-5" alt="Completed icon" />
+                    <span>Usage export complete.</span>
+                </div>
+                <LinkButton onClick={saveFile} className="text-left text-base">
+                    Download CSV file
+                </LinkButton>
+            </div>
         </div>
     );
 };

@@ -14,6 +14,8 @@ import { noPersistence } from "../../data/setup";
 
 type Args = Pick<ListUsageRequest, "attributionId" | "from" | "to"> & {
     orgName: string;
+    signal?: AbortSignal;
+    onProgress?: (percentage: number) => void;
 };
 
 export type DownloadUsageCSVResponse = {
@@ -21,22 +23,25 @@ export type DownloadUsageCSVResponse = {
     filename: string;
 };
 
-export const downloadUsageCSV = async (
-    { attributionId, from, to, orgName }: Args,
-    signal?: AbortSignal,
-): Promise<DownloadUsageCSVResponse> => {
+const downloadUsageCSV = async ({
+    attributionId,
+    from,
+    to,
+    orgName,
+    signal,
+    onProgress,
+}: Args): Promise<DownloadUsageCSVResponse> => {
     const start = dayjs(from).format("YYYYMMDD");
     const end = dayjs(to).format("YYYYMMDD");
     const filename = `gitpod-usage-${orgName}-${start}-${end}.csv`;
 
-    const records = await getAllUsageRecords(
-        {
-            attributionId,
-            from,
-            to,
-        },
+    const records = await getAllUsageRecords({
+        attributionId,
+        from,
+        to,
         signal,
-    );
+        onProgress,
+    });
 
     if (records.length === 0) {
         return {
@@ -80,7 +85,7 @@ export const useDownloadUsageCSV = (args: Args) => {
     const query = useQuery<DownloadUsageCSVResponse, Error>(
         key,
         async ({ signal }) => {
-            return await downloadUsageCSV(args, signal);
+            return await downloadUsageCSV({ ...args, signal });
         },
         {
             retry: false,
