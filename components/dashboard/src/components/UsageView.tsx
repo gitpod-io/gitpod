@@ -8,8 +8,8 @@ import { WorkspaceType } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ListUsageRequest, Ordering, Usage, WorkspaceInstanceUsageData } from "@gitpod/gitpod-protocol/lib/usage";
-import dayjs from "dayjs";
-import { forwardRef, useEffect, useMemo, useState } from "react";
+import dayjs, { Dayjs } from "dayjs";
+import { FC, forwardRef, useCallback, useEffect, useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useLocation } from "react-router";
@@ -23,11 +23,11 @@ import Pagination from "../Pagination/Pagination";
 import { toRemoteURL } from "../projects/render-utils";
 import { gitpodHostUrl } from "../service/service";
 import "./react-datepicker.css";
-import { Heading1, Heading2, Subheading } from "./typography/headings";
-import { Link } from "react-router-dom";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { Heading2, Subheading } from "./typography/headings";
 import { DownloadUsage } from "../usage/download/DownloadUsage";
 import { useFeatureFlag } from "../data/featureflag-query";
+import ContextMenu, { ContextMenuEntry } from "./ContextMenu";
+import classNames from "classnames";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -41,7 +41,6 @@ function UsageView({ attributionId }: UsageViewProps) {
     const [endDate, setEndDate] = useState(dayjs());
     const supportedClasses = useWorkspaceClasses();
     const location = useLocation();
-    const currentOrg = useCurrentOrg();
     const usageDownload = useFeatureFlag("usageDownload");
 
     useEffect(() => {
@@ -126,30 +125,6 @@ function UsageView({ attributionId }: UsageViewProps) {
         return inMinutes + " min";
     };
 
-    const handleMonthClick = (start: dayjs.Dayjs, end: dayjs.Dayjs) => {
-        setStartDate(start);
-        setEndDate(end);
-    };
-
-    const getBillingHistory = () => {
-        let rows = [];
-        // This goes back 6 months from the current month
-        for (let i = 1; i < 7; i++) {
-            const startDate = dayjs().subtract(i, "month").startOf("month");
-            const endDate = startDate.endOf("month");
-            rows.push(
-                <div
-                    key={`billing${i}`}
-                    className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer gp-link"
-                    onClick={() => handleMonthClick(startDate, endDate)}
-                >
-                    {startDate.format("MMMM YYYY")}
-                </div>,
-            );
-        }
-        return rows;
-    };
-
     const displayTime = (time: string | number) => {
         const options: Intl.DateTimeFormatOptions = {
             day: "numeric",
@@ -163,70 +138,10 @@ function UsageView({ attributionId }: UsageViewProps) {
 
     const currentPaginatedResults =
         usagePage.data?.usageEntriesList.filter((u) => u.kind === "workspaceinstance") ?? [];
-    const DateDisplay = forwardRef((arg: any, ref: any) => (
-        <div
-            className="px-2 py-0.5 text-gray-500 bg-gray-50 dark:text-gray-400 dark:bg-gray-800 rounded-md cursor-pointer flex items-center hover:bg-gray-100 dark:hover:bg-gray-700"
-            onClick={arg.onClick}
-            ref={ref}
-        >
-            <div className="font-medium">{arg.value}</div>
-            <div>
-                <svg
-                    width="20"
-                    height="20"
-                    fill="currentColor"
-                    xmlns="http://www.w3.org/2000/svg"
-                    onClick={arg.onClick}
-                    ref={ref}
-                >
-                    <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z"
-                    />
-                    <title>Change Date</title>
-                </svg>
-            </div>
-        </div>
-    ));
 
     return (
         <>
-            <Header
-                title="Usage"
-                complexTitle={
-                    <div className="flex items-baseline">
-                        <Heading1 tracking="tight">Usage</Heading1>
-                        <Subheading className="ml-3">(updated every 15 minutes).</Subheading>
-                    </div>
-                }
-                subtitle={
-                    <div className="tracking-wide flex mt-3 items-center">
-                        <Subheading className="mr-1">Showing usage from </Subheading>
-                        <DatePicker
-                            selected={startDate.toDate()}
-                            onChange={(date) => date && setStartDate(dayjs(date))}
-                            selectsStart
-                            startDate={startDate.toDate()}
-                            endDate={endDate.toDate()}
-                            maxDate={endDate.toDate()}
-                            customInput={<DateDisplay />}
-                            dateFormat={"MMM d, yyyy"}
-                        />
-                        <Subheading className="mx-1">to</Subheading>
-                        <DatePicker
-                            selected={endDate.toDate()}
-                            onChange={(date) => date && setEndDate(dayjs(date))}
-                            selectsEnd
-                            startDate={startDate.toDate()}
-                            endDate={endDate.toDate()}
-                            minDate={startDate.toDate()}
-                            customInput={<DateDisplay />}
-                            dateFormat={"MMM d, yyyy"}
-                        />
-                    </div>
-                }
-            />
+            <Header title="Usage" subtitle="updated every 15 minutes" />
             <div className="app-container pt-5">
                 {usageDownload && (
                     <div className="flex justify-end mb-4">
@@ -234,195 +149,303 @@ function UsageView({ attributionId }: UsageViewProps) {
                     </div>
                 )}
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
-                {!errorMessage && (
-                    <div className="flex space-x-16">
-                        <div className="flex">
-                            <div className="space-y-8 mb-6" style={{ width: "max-content" }}>
-                                <div className="flex flex-col truncate">
-                                    <div className="text-base text-gray-500 truncate">Current Month</div>
-                                    <div
-                                        className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500 truncate cursor-pointer mb-5"
-                                        onClick={() => handleMonthClick(startOfCurrentMonth, dayjs())}
-                                    >
-                                        {dayjs(startOfCurrentMonth).format("MMMM YYYY")}
-                                    </div>
-                                    <div className="text-base text-gray-500 truncate">Previous Months</div>
-                                    {getBillingHistory()}
-                                </div>
-                                {!usagePage.isLoading && (
-                                    <div>
-                                        <div className="flex flex-col truncate">
-                                            <div className="text-base text-gray-500">Credits</div>
-                                            <div className="flex text-lg text-gray-600 font-semibold">
-                                                <span className="dark:text-gray-400">
-                                                    {usagePage.data?.creditsUsed.toLocaleString()}
-                                                </span>
-                                            </div>
-                                            {currentOrg.data && currentOrg.data.isOwner && (
-                                                <div className="flex text-xs text-gray-600">
-                                                    <span className="dark:text-gray-500 text-gray-400">
-                                                        <Link to="/billing" className="gp-link">
-                                                            View Billing →
-                                                        </Link>
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                        {!usagePage.isLoading &&
-                            (usagePage === undefined || currentPaginatedResults.length === 0) &&
-                            !errorMessage && (
-                                <div className="flex flex-col w-full mb-8">
-                                    <Heading2 className="text-center mt-8">No sessions found.</Heading2>
-                                    <Subheading className="text-center mt-1">
-                                        Have you started any
-                                        <a className="gp-link" href={gitpodHostUrl.asWorkspacePage().toString()}>
-                                            {" "}
-                                            workspaces
-                                        </a>{" "}
-                                        in {startDate.format("MMMM YYYY")} or checked your other organizations?
-                                    </Subheading>
-                                </div>
-                            )}
+
+                <UsageToolbar
+                    startDate={startDate}
+                    endDate={endDate}
+                    onStartDateChange={setStartDate}
+                    onEndDateChange={setEndDate}
+                />
+
+                <UsageSummaryData creditsUsed={usagePage.data?.creditsUsed} isLoading={usagePage.isLoading} />
+
+                <div className="flex flex-col w-full mb-8">
+                    <ItemsList className="mt-2 text-gray-400 dark:text-gray-500">
+                        <Item header={false} className="grid grid-cols-12 gap-x-3 bg-gray-100 dark:bg-gray-800">
+                            <ItemField className="col-span-2 my-auto ">
+                                <span>Type</span>
+                            </ItemField>
+                            <ItemField className="col-span-5 my-auto">
+                                <span>ID</span>
+                            </ItemField>
+                            <ItemField className="my-auto">
+                                <span>Credits</span>
+                            </ItemField>
+                            <ItemField className="my-auto" />
+                            <ItemField className="my-auto">
+                                <span>Timestamp</span>
+                            </ItemField>
+                        </Item>
+
+                        {/* results loading */}
                         {usagePage.isLoading && (
                             <div className="flex items-center justify-center w-full space-x-2 text-gray-400 text-sm pt-16 pb-40">
                                 <img alt="Loading Spinner" className="h-4 w-4 animate-spin" src={Spinner} />
-                                <span>Fetching usage...</span>
+                                <span>Loading usage...</span>
                             </div>
                         )}
-                        {!usagePage.isLoading && currentPaginatedResults.length > 0 && (
-                            <div className="flex flex-col w-full mb-8">
-                                <ItemsList className="mt-2 text-gray-400 dark:text-gray-500">
-                                    <Item
-                                        header={false}
-                                        className="grid grid-cols-12 gap-x-3 bg-gray-100 dark:bg-gray-800"
+
+                        {/* results */}
+                        {!usagePage.isLoading &&
+                            currentPaginatedResults &&
+                            currentPaginatedResults.map((usage) => {
+                                return (
+                                    <div
+                                        key={usage.workspaceInstanceId}
+                                        className="flex p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl"
                                     >
-                                        <ItemField className="col-span-2 my-auto ">
-                                            <span>Type</span>
-                                        </ItemField>
-                                        <ItemField className="col-span-5 my-auto">
-                                            <span>ID</span>
-                                        </ItemField>
-                                        <ItemField className="my-auto">
-                                            <span>Credits</span>
-                                        </ItemField>
-                                        <ItemField className="my-auto" />
-                                        <ItemField className="my-auto">
-                                            <span>Timestamp</span>
-                                        </ItemField>
-                                    </Item>
-                                    {currentPaginatedResults &&
-                                        currentPaginatedResults.map((usage) => {
-                                            return (
-                                                <div
-                                                    key={usage.workspaceInstanceId}
-                                                    className="flex p-3 grid grid-cols-12 gap-x-3 justify-between transition ease-in-out rounded-xl"
-                                                >
-                                                    <div className="flex flex-col col-span-2 my-auto">
-                                                        <span className="text-gray-600 dark:text-gray-100 text-md font-medium">
-                                                            {getType(
+                                        <div className="flex flex-col col-span-2 my-auto">
+                                            <span className="text-gray-600 dark:text-gray-100 text-md font-medium">
+                                                {getType((usage.metadata as WorkspaceInstanceUsageData).workspaceType)}
+                                            </span>
+                                            <span className="text-sm text-gray-400 dark:text-gray-500">
+                                                {getDisplayName(
+                                                    (usage.metadata as WorkspaceInstanceUsageData).workspaceClass,
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col col-span-5 my-auto">
+                                            <div className="flex">
+                                                {isRunning(usage) && (
+                                                    <div
+                                                        className="rounded-full w-2 h-2 text-sm align-middle bg-green-500 my-auto mx-1"
+                                                        title="Still running"
+                                                    />
+                                                )}
+                                                <span className="truncate text-gray-600 dark:text-gray-100 text-md font-medium">
+                                                    {(usage.metadata as WorkspaceInstanceUsageData).workspaceId}
+                                                </span>
+                                            </div>
+                                            <span className="text-sm truncate text-gray-400 dark:text-gray-500">
+                                                {(usage.metadata as WorkspaceInstanceUsageData).contextURL &&
+                                                    toRemoteURL(
+                                                        (usage.metadata as WorkspaceInstanceUsageData).contextURL,
+                                                    )}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col my-auto">
+                                            <span className="text-right text-gray-500 dark:text-gray-400 font-medium">
+                                                {usage.credits}
+                                            </span>
+                                            <span className="text-right text-sm text-gray-400 dark:text-gray-500">
+                                                {getMinutes(usage)}
+                                            </span>
+                                        </div>
+                                        <div className="my-auto" />
+                                        <div className="flex flex-col col-span-3 my-auto">
+                                            <span className="text-gray-400 dark:text-gray-500 truncate font-medium">
+                                                {displayTime(usage.effectiveTime!)}
+                                            </span>
+                                            <div className="flex">
+                                                {(usage.metadata as WorkspaceInstanceUsageData).workspaceType ===
+                                                "prebuild" ? (
+                                                    <UsageIcon className="my-auto w-4 h-4 mr-1" />
+                                                ) : (
+                                                    ""
+                                                )}
+                                                {(usage.metadata as WorkspaceInstanceUsageData).workspaceType ===
+                                                "prebuild" ? (
+                                                    <span className="text-sm text-gray-400 dark:text-gray-500">
+                                                        Gitpod
+                                                    </span>
+                                                ) : (
+                                                    <div className="flex">
+                                                        <img
+                                                            className="my-auto rounded-full w-4 h-4 inline-block align-text-bottom mr-1 overflow-hidden"
+                                                            src={
                                                                 (usage.metadata as WorkspaceInstanceUsageData)
-                                                                    .workspaceType,
-                                                            )}
-                                                        </span>
+                                                                    .userAvatarURL || ""
+                                                            }
+                                                            alt="user avatar"
+                                                        />
                                                         <span className="text-sm text-gray-400 dark:text-gray-500">
-                                                            {getDisplayName(
-                                                                (usage.metadata as WorkspaceInstanceUsageData)
-                                                                    .workspaceClass,
-                                                            )}
+                                                            {(usage.metadata as WorkspaceInstanceUsageData).userName ||
+                                                                ""}
                                                         </span>
                                                     </div>
-                                                    <div className="flex flex-col col-span-5 my-auto">
-                                                        <div className="flex">
-                                                            {isRunning(usage) && (
-                                                                <div
-                                                                    className="rounded-full w-2 h-2 text-sm align-middle bg-green-500 my-auto mx-1"
-                                                                    title="Still running"
-                                                                />
-                                                            )}
-                                                            <span className="truncate text-gray-600 dark:text-gray-100 text-md font-medium">
-                                                                {
-                                                                    (usage.metadata as WorkspaceInstanceUsageData)
-                                                                        .workspaceId
-                                                                }
-                                                            </span>
-                                                        </div>
-                                                        <span className="text-sm truncate text-gray-400 dark:text-gray-500">
-                                                            {(usage.metadata as WorkspaceInstanceUsageData)
-                                                                .contextURL &&
-                                                                toRemoteURL(
-                                                                    (usage.metadata as WorkspaceInstanceUsageData)
-                                                                        .contextURL,
-                                                                )}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col my-auto">
-                                                        <span className="text-right text-gray-500 dark:text-gray-400 font-medium">
-                                                            {usage.credits}
-                                                        </span>
-                                                        <span className="text-right text-sm text-gray-400 dark:text-gray-500">
-                                                            {getMinutes(usage)}
-                                                        </span>
-                                                    </div>
-                                                    <div className="my-auto" />
-                                                    <div className="flex flex-col col-span-3 my-auto">
-                                                        <span className="text-gray-400 dark:text-gray-500 truncate font-medium">
-                                                            {displayTime(usage.effectiveTime!)}
-                                                        </span>
-                                                        <div className="flex">
-                                                            {(usage.metadata as WorkspaceInstanceUsageData)
-                                                                .workspaceType === "prebuild" ? (
-                                                                <UsageIcon className="my-auto w-4 h-4 mr-1" />
-                                                            ) : (
-                                                                ""
-                                                            )}
-                                                            {(usage.metadata as WorkspaceInstanceUsageData)
-                                                                .workspaceType === "prebuild" ? (
-                                                                <span className="text-sm text-gray-400 dark:text-gray-500">
-                                                                    Gitpod
-                                                                </span>
-                                                            ) : (
-                                                                <div className="flex">
-                                                                    <img
-                                                                        className="my-auto rounded-full w-4 h-4 inline-block align-text-bottom mr-1 overflow-hidden"
-                                                                        src={
-                                                                            (
-                                                                                usage.metadata as WorkspaceInstanceUsageData
-                                                                            ).userAvatarURL || ""
-                                                                        }
-                                                                        alt="user avatar"
-                                                                    />
-                                                                    <span className="text-sm text-gray-400 dark:text-gray-500">
-                                                                        {(usage.metadata as WorkspaceInstanceUsageData)
-                                                                            .userName || ""}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                </ItemsList>
-                                {usagePage.data &&
-                                    usagePage.data.pagination &&
-                                    usagePage.data.pagination.totalPages > 1 && (
-                                        <Pagination
-                                            currentPage={usagePage.data.pagination.page}
-                                            setPage={setPage}
-                                            totalNumberOfPages={usagePage.data.pagination.totalPages}
-                                        />
-                                    )}
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                        {/* No results */}
+                        {!usagePage.isLoading && currentPaginatedResults.length === 0 && !errorMessage && (
+                            <div className="flex flex-col w-full mb-8">
+                                <Heading2 className="text-center mt-8">No sessions found.</Heading2>
+                                <Subheading className="text-center mt-1">
+                                    Have you started any
+                                    <a className="gp-link" href={gitpodHostUrl.asWorkspacePage().toString()}>
+                                        {" "}
+                                        workspaces
+                                    </a>{" "}
+                                    in {startDate.format("MMMM YYYY")} or checked your other organizations?
+                                </Subheading>
                             </div>
                         )}
-                    </div>
-                )}
+                    </ItemsList>
+
+                    {usagePage.data && usagePage.data.pagination && usagePage.data.pagination.totalPages > 1 && (
+                        <Pagination
+                            currentPage={usagePage.data.pagination.page}
+                            setPage={setPage}
+                            totalNumberOfPages={usagePage.data.pagination.totalPages}
+                        />
+                    )}
+                </div>
             </div>
         </>
     );
 }
 
 export default UsageView;
+
+// TODO: move these into the `/usage` folder once the export as csv feature is merged into this
+type UsageToolbarProps = {
+    startDate: Dayjs;
+    endDate: Dayjs;
+    onStartDateChange: (val: Dayjs) => void;
+    onEndDateChange: (val: Dayjs) => void;
+};
+const UsageToolbar: FC<UsageToolbarProps> = ({ startDate, endDate, onStartDateChange, onEndDateChange }) => {
+    const handleRangeChanged = useCallback(
+        (start: Dayjs, end: Dayjs) => {
+            onStartDateChange(start);
+            onEndDateChange(end);
+        },
+        [onEndDateChange, onStartDateChange],
+    );
+
+    return (
+        <div
+            className={classNames(
+                "flex items-start flex-col space-y-3 px-3",
+                "sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0",
+            )}
+        >
+            <UsageDateRangePicker onChange={handleRangeChanged} />
+            <div className="flex items-center space-x-3">
+                <DatePicker
+                    selected={startDate.toDate()}
+                    onChange={(date) => date && onStartDateChange(dayjs(date))}
+                    selectsStart
+                    startDate={startDate.toDate()}
+                    endDate={endDate.toDate()}
+                    maxDate={endDate.toDate()}
+                    customInput={<DateDisplay />}
+                    dateFormat={"MMM d, yyyy"}
+                    // tab loop enabled causes a bug w/ layout shift to the right of input when open
+                    enableTabLoop={false}
+                />
+                <Subheading>to</Subheading>
+                <DatePicker
+                    selected={endDate.toDate()}
+                    onChange={(date) => date && onEndDateChange(dayjs(date))}
+                    selectsEnd
+                    startDate={startDate.toDate()}
+                    endDate={endDate.toDate()}
+                    minDate={startDate.toDate()}
+                    customInput={<DateDisplay />}
+                    dateFormat={"MMM d, yyyy"}
+                    enableTabLoop={false}
+                />
+            </div>
+        </div>
+    );
+};
+
+const DateDisplay = forwardRef((arg: any, ref: any) => (
+    <div
+        className="px-2 py-0.5 text-gray-500 bg-gray-50 dark:text-gray-400 dark:bg-gray-800 rounded-md cursor-pointer flex items-center hover:bg-gray-100 dark:hover:bg-gray-700"
+        onClick={arg.onClick}
+        ref={ref}
+    >
+        <div className="w-28 font-medium">{arg.value}</div>
+        <div>
+            <svg
+                width="20"
+                height="20"
+                fill="currentColor"
+                xmlns="http://www.w3.org/2000/svg"
+                onClick={arg.onClick}
+                ref={ref}
+            >
+                <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z"
+                />
+                <title>Change Date</title>
+            </svg>
+        </div>
+    </div>
+));
+
+type UsageDateRangePickerProps = {
+    onChange: (start: dayjs.Dayjs, end: dayjs.Dayjs) => void;
+};
+const UsageDateRangePicker: FC<UsageDateRangePickerProps> = ({ onChange }) => {
+    const entries = useMemo<ContextMenuEntry[]>(() => {
+        const startOfCurrentMonth = dayjs().startOf("month");
+
+        const entries: ContextMenuEntry[] = [
+            {
+                title: "Current month",
+                onClick: () => onChange(startOfCurrentMonth, dayjs()),
+                active: false,
+            },
+        ];
+
+        // This goes back 6 months from the current month
+        for (let i = 1; i < 7; i++) {
+            const startDate = dayjs().subtract(i, "month").startOf("month");
+            const endDate = startDate.endOf("month");
+            entries.push({
+                title: startDate.format("MMMM YYYY"),
+                active: false,
+                onClick: () => onChange(startDate, endDate),
+            });
+        }
+
+        return entries;
+    }, [onChange]);
+
+    return (
+        <ContextMenu menuEntries={entries} customClasses="left-0">
+            <DateDisplay value="Date Range" onClick={noop} />
+        </ContextMenu>
+    );
+};
+
+type UsageSummaryDataProps = {
+    isLoading: boolean;
+    creditsUsed?: number;
+};
+const UsageSummaryData: FC<UsageSummaryDataProps> = ({ isLoading, creditsUsed }) => {
+    return (
+        <div className="mt-8 p-3 flex flex-col">
+            <Subheading>Credits Consumed</Subheading>
+            <div className="flex text-lg text-gray-600 font-semibold">
+                <span className="dark:text-gray-400">
+                    {creditsUsed !== undefined ? creditsUsed.toLocaleString() : "-"}
+                </span>
+            </div>
+        </div>
+    );
+};
+
+const noop = () => {};
+
+// TODO: figure out where to put this link
+// {
+//     currentOrg.data && currentOrg.data.isOwner && (
+//         <div className="flex text-xs text-gray-600">
+//             <span className="dark:text-gray-500 text-gray-400">
+//                 <Link to="/billing" className="gp-link">
+//                     View Billing →
+//                 </Link>
+//             </span>
+//         </div>
+//     );
+// }
