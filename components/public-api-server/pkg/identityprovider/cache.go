@@ -105,23 +105,8 @@ func (imc *InMemoryCache) PublicKeys(ctx context.Context) ([]byte, error) {
 
 const (
 	redisCacheDefaultTTL = 1 * time.Hour
-	redisRefreshPeriod   = 10 * time.Minute
 	redisIDPKeyPrefix    = "idp:keys:"
 )
-
-func NewRedisCache(ctx context.Context, client *redis.Client) *RedisCache {
-	cache := &RedisCache{
-		Client: client,
-		keyID:  defaultKeyID,
-	}
-	go cache.sync(ctx, redisRefreshPeriod)
-	return cache
-}
-
-func defaultKeyID(current *rsa.PrivateKey) string {
-	hashed := sha256.Sum256(current.N.Bytes())
-	return fmt.Sprintf("id-%s", hex.EncodeToString(hashed[:]))
-}
 
 type RedisCache struct {
 	Client *redis.Client
@@ -130,6 +115,38 @@ type RedisCache struct {
 	mu        sync.RWMutex
 	current   *rsa.PrivateKey
 	currentID string
+}
+
+type redisCacheOpt struct {
+	refreshPeriod time.Duration
+}
+
+type redisCacheOption func(*redisCacheOpt)
+
+func WithRefreshPeriod(t time.Duration) redisCacheOption {
+	return func(opt *redisCacheOpt) {
+		opt.refreshPeriod = t
+	}
+}
+
+func NewRedisCache(ctx context.Context, client *redis.Client, opts ...redisCacheOption) *RedisCache {
+	opt := &redisCacheOpt{
+		refreshPeriod: 10 * time.Minute,
+	}
+	for _, o := range opts {
+		o(opt)
+	}
+	cache := &RedisCache{
+		Client: client,
+		keyID:  defaultKeyID,
+	}
+	go cache.sync(ctx, opt.refreshPeriod)
+	return cache
+}
+
+func defaultKeyID(current *rsa.PrivateKey) string {
+	hashed := sha256.Sum256(current.N.Bytes())
+	return fmt.Sprintf("id-%s", hex.EncodeToString(hashed[:]))
 }
 
 // PublicKeys implements KeyCache
@@ -257,7 +274,6 @@ func (rc *RedisCache) reconcile(ctx context.Context) error {
 }
 
 func (rc *RedisCache) sync(ctx context.Context, period time.Duration) {
-	_ = rc.reconcile(ctx)
 	ticker := time.NewTicker(period)
 	for {
 		select {
