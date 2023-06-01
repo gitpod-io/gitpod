@@ -346,8 +346,7 @@ proto.wsdaemon.InitWorkspaceRequest.toObject = function(includeInstance, msg) {
     metadata: (f = msg.getMetadata()) && proto.wsdaemon.WorkspaceMetadata.toObject(includeInstance, f),
     initializer: (f = msg.getInitializer()) && content$service$api_initializer_pb.WorkspaceInitializer.toObject(includeInstance, f),
     remoteStorageDisabled: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
-    storageQuotaBytes: jspb.Message.getFieldWithDefault(msg, 8, 0),
-    persistentVolumeClaim: jspb.Message.getBooleanFieldWithDefault(msg, 9, false)
+    storageQuotaBytes: jspb.Message.getFieldWithDefault(msg, 8, 0)
   };
 
   if (includeInstance) {
@@ -405,10 +404,6 @@ proto.wsdaemon.InitWorkspaceRequest.deserializeBinaryFromReader = function(msg, 
     case 8:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setStorageQuotaBytes(value);
-      break;
-    case 9:
-      var value = /** @type {boolean} */ (reader.readBool());
-      msg.setPersistentVolumeClaim(value);
       break;
     default:
       reader.skipField();
@@ -473,13 +468,6 @@ proto.wsdaemon.InitWorkspaceRequest.serializeBinaryToWriter = function(message, 
   if (f !== 0) {
     writer.writeInt64(
       8,
-      f
-    );
-  }
-  f = message.getPersistentVolumeClaim();
-  if (f) {
-    writer.writeBool(
-      9,
       f
     );
   }
@@ -611,24 +599,6 @@ proto.wsdaemon.InitWorkspaceRequest.prototype.getStorageQuotaBytes = function() 
  */
 proto.wsdaemon.InitWorkspaceRequest.prototype.setStorageQuotaBytes = function(value) {
   return jspb.Message.setProto3IntField(this, 8, value);
-};
-
-
-/**
- * optional bool persistent_volume_claim = 9;
- * @return {boolean}
- */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getPersistentVolumeClaim = function() {
-  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 9, false));
-};
-
-
-/**
- * @param {boolean} value
- * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
- */
-proto.wsdaemon.InitWorkspaceRequest.prototype.setPersistentVolumeClaim = function(value) {
-  return jspb.Message.setProto3BooleanField(this, 9, value);
 };
 
 
