@@ -8100,7 +8100,6 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     admission: jspb.Message.getFieldWithDefault(msg, 11, 0),
     ideImage: (f = msg.getIdeImage()) && proto.wsman.IDEImage.toObject(includeInstance, f),
     pb_class: jspb.Message.getFieldWithDefault(msg, 13, ""),
-    volumeSnapshot: (f = msg.getVolumeSnapshot()) && proto.wsman.VolumeSnapshotInfo.toObject(includeInstance, f),
     sshPublicKeysList: (f = jspb.Message.getRepeatedField(msg, 15)) == null ? undefined : f,
     sysEnvvarsList: jspb.Message.toObjectList(msg.getSysEnvvarsList(),
     proto.wsman.EnvironmentVariable.toObject, includeInstance),
@@ -8196,11 +8195,6 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
     case 13:
       var value = /** @type {string} */ (reader.readString());
       msg.setClass(value);
-      break;
-    case 14:
-      var value = new proto.wsman.VolumeSnapshotInfo;
-      reader.readMessage(value,proto.wsman.VolumeSnapshotInfo.deserializeBinaryFromReader);
-      msg.setVolumeSnapshot(value);
       break;
     case 15:
       var value = /** @type {string} */ (reader.readString());
@@ -8335,14 +8329,6 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
     writer.writeString(
       13,
       f
-    );
-  }
-  f = message.getVolumeSnapshot();
-  if (f != null) {
-    writer.writeMessage(
-      14,
-      f,
-      proto.wsman.VolumeSnapshotInfo.serializeBinaryToWriter
     );
   }
   f = message.getSshPublicKeysList();
@@ -8706,43 +8692,6 @@ proto.wsman.StartWorkspaceSpec.prototype.getClass = function() {
  */
 proto.wsman.StartWorkspaceSpec.prototype.setClass = function(value) {
   return jspb.Message.setProto3StringField(this, 13, value);
-};
-
-
-/**
- * optional VolumeSnapshotInfo volume_snapshot = 14;
- * @return {?proto.wsman.VolumeSnapshotInfo}
- */
-proto.wsman.StartWorkspaceSpec.prototype.getVolumeSnapshot = function() {
-  return /** @type{?proto.wsman.VolumeSnapshotInfo} */ (
-    jspb.Message.getWrapperField(this, proto.wsman.VolumeSnapshotInfo, 14));
-};
-
-
-/**
- * @param {?proto.wsman.VolumeSnapshotInfo|undefined} value
- * @return {!proto.wsman.StartWorkspaceSpec} returns this
-*/
-proto.wsman.StartWorkspaceSpec.prototype.setVolumeSnapshot = function(value) {
-  return jspb.Message.setWrapperField(this, 14, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.wsman.StartWorkspaceSpec} returns this
- */
-proto.wsman.StartWorkspaceSpec.prototype.clearVolumeSnapshot = function() {
-  return this.setVolumeSnapshot(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.wsman.StartWorkspaceSpec.prototype.hasVolumeSnapshot = function() {
-  return jspb.Message.getField(this, 14) != null;
 };
 
 
@@ -10213,7 +10162,6 @@ proto.wsman.WorkspacePhase = {
  */
 proto.wsman.WorkspaceFeatureFlag = {
   NOOP: 0,
-  PERSISTENT_VOLUME_CLAIM: 7,
   WORKSPACE_CLASS_LIMITING: 9,
   WORKSPACE_CONNECTION_LIMITING: 10,
   WORKSPACE_PSI: 11
