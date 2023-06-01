@@ -103,7 +103,9 @@ export default function Account() {
                         emailIsReadonly={!canUpdateEmail}
                     >
                         <div className="flex flex-row mt-8">
-                            <Button onClick={saveProfileState}>Update Profile</Button>
+                            <Button htmlType="submit" onClick={saveProfileState}>
+                                Update Profile
+                            </Button>
                         </div>
                     </ProfileInformation>
                 </form>

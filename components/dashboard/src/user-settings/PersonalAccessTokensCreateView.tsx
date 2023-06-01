@@ -239,6 +239,7 @@ function PersonalAccessTokenCreateView() {
                                 <CheckboxListField label="Permission">
                                     {AllPermissions.map((item) => (
                                         <CheckboxInputField
+                                            key={item.name}
                                             value={item.name}
                                             label={item.name}
                                             hint={item.description}

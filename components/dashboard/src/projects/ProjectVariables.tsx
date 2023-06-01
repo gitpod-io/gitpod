@@ -5,17 +5,19 @@
  */
 
 import { Project, ProjectEnvVar } from "@gitpod/gitpod-protocol";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Redirect } from "react-router";
 import Alert from "../components/Alert";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import InfoBox from "../components/InfoBox";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
-import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalFooterAlert, ModalHeader } from "../components/Modal";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { getGitpodService } from "../service/service";
 import { useCurrentProject } from "./project-context";
 import { ProjectSettingsPage } from "./ProjectSettings";
+import { Button } from "../components/Button";
+import { useSetProjectEnvVar } from "../data/projects/set-project-env-var-mutation";
 
 export default function ProjectVariablesPage() {
     const { project, loading } = useCurrentProject();
@@ -82,7 +84,7 @@ export default function ProjectVariablesPage() {
                         </Item>
                         {envVars.map((variable) => {
                             return (
-                                <Item className="grid grid-cols-3 items-center">
+                                <Item key={variable.id} className="grid grid-cols-3 items-center">
                                     <ItemField className="truncate">{variable.name}</ItemField>
                                     <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
                                     <ItemField className="flex justify-end">
@@ -111,31 +113,26 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
     const [name, setName] = useState<string>("");
     const [value, setValue] = useState<string>("");
     const [censored, setCensored] = useState<boolean>(true);
-    const [error, setError] = useState<Error | undefined>();
+    const setProjectEnvVar = useSetProjectEnvVar();
 
-    const addVariable = async () => {
+    const addVariable = useCallback(async () => {
         if (!props.project) {
             return;
         }
-        try {
-            await getGitpodService().server.setProjectEnvironmentVariable(props.project.id, name, value, censored);
-            props.onClose();
-        } catch (err) {
-            console.error(err);
-            setError(err);
-        }
-    };
+
+        await setProjectEnvVar.mutate(
+            {
+                projectId: props.project.id,
+                name,
+                value,
+                censored,
+            },
+            { onSuccess: props.onClose },
+        );
+    }, [censored, name, props.onClose, props.project, setProjectEnvVar, value]);
 
     return (
-        // TODO: Use title and buttons props
-        <Modal
-            visible={true}
-            onClose={props.onClose}
-            onEnter={() => {
-                addVariable();
-                return false;
-            }}
-        >
+        <Modal visible onClose={props.onClose} onSubmit={addVariable}>
             <ModalHeader>New Variable</ModalHeader>
             <ModalBody>
                 <Alert type="warning">
@@ -145,11 +142,6 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                     repository can access secret values if they are printed in the terminal, logged, or persisted to the
                     file system.
                 </Alert>
-                {error && (
-                    <Alert type="error" className="mt-4">
-                        {String(error).replace(/Error: Request \w+ failed with message: /, "")}
-                    </Alert>
-                )}
                 <div className="mt-8">
                     <h4>Name</h4>
                     <input
@@ -185,13 +177,21 @@ function AddVariableModal(props: { project?: Project; onClose: () => void }) {
                     </div>
                 )}
             </ModalBody>
-            <ModalFooter>
-                <button className="secondary" onClick={props.onClose}>
+            <ModalFooter
+                alert={
+                    setProjectEnvVar.isError ? (
+                        <ModalFooterAlert type="danger">
+                            {String(setProjectEnvVar.error).replace(/Error: Request \w+ failed with message: /, "")}
+                        </ModalFooterAlert>
+                    ) : null
+                }
+            >
+                <Button type="secondary" onClick={props.onClose}>
                     Cancel
-                </button>
-                <button className="ml-2" onClick={addVariable}>
+                </Button>
+                <Button htmlType="submit" loading={setProjectEnvVar.isLoading}>
                     Add Variable
-                </button>
+                </Button>
             </ModalFooter>
         </Modal>
     );

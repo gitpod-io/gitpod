@@ -442,7 +442,7 @@ function GitIntegrations() {
                     }}
                     buttonText="Remove Integration"
                     onClose={() => setModal(undefined)}
-                    onConfirm={() => deleteProvider(modal.provider)}
+                    onConfirm={async () => await deleteProvider(modal.provider)}
                 />
             )}
 

@@ -10,12 +10,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Alert from "../components/Alert";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import { ItemFieldContextMenu } from "../components/ItemsList";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import searchIcon from "../icons/search.svg";
 import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
 import Pagination from "../Pagination/Pagination";
+import { Button } from "../components/Button";
 
 export function BlockedEmailDomains() {
     return (
@@ -208,41 +209,35 @@ function AddBlockedDomainModal(p: AddBlockedDomainModalProps) {
         setError("");
     }, [p.blockedDomain]);
 
-    const save = (): boolean => {
+    const save = () => {
         const v = ref.current;
         const newError = p.validate(v);
         if (!!newError) {
             setError(newError);
-            return false;
         }
 
         p.save(v);
         p.onClose();
-        return true;
     };
 
     return (
-        <Modal
-            visible={true}
-            title={"New Blocked Domain"}
-            onClose={p.onClose}
-            onEnter={save}
-            buttons={[
-                <button className="secondary" onClick={p.onClose}>
+        <Modal visible={true} onClose={p.onClose} onSubmit={save}>
+            <ModalHeader>New Blocked Domain</ModalHeader>
+            <ModalBody>
+                <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
+                    Entries in this table have an immediate effect on all new users. Please use it carefully.
+                </Alert>
+                <Alert type={"message"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
+                    Users are blocked by matching their email domain.
+                </Alert>
+                <Details br={br} update={update} error={error} />
+            </ModalBody>
+            <ModalFooter>
+                <Button type="secondary" onClick={p.onClose}>
                     Cancel
-                </button>,
-                <button className="ml-2" onClick={save}>
-                    Add Blocked Domain
-                </button>,
-            ]}
-        >
-            <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
-                Entries in this table have an immediate effect on all new users. Please use it carefully.
-            </Alert>
-            <Alert type={"message"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
-                Users are blocked by matching their email domain.
-            </Alert>
-            <Details br={br} update={update} error={error} />
+                </Button>
+                <Button htmlType="submit">Add Blocked Domain</Button>
+            </ModalFooter>
         </Modal>
     );
 }

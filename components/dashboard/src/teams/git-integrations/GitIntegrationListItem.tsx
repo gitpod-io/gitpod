@@ -13,6 +13,7 @@ import { useDeleteOrgAuthProviderMutation } from "../../data/auth-providers/dele
 import { GitIntegrationModal } from "./GitIntegrationModal";
 import { useCurrentOrg } from "../../data/organizations/orgs-query";
 import { ModalFooterAlert } from "../../components/Modal";
+import { useToast } from "../../components/toasts/Toasts";
 
 type Props = {
     provider: AuthProviderEntry;
@@ -22,6 +23,7 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
     const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
     const deleteAuthProvider = useDeleteOrgAuthProviderMutation();
     const { data: org } = useCurrentOrg();
+    const { toast } = useToast();
 
     const memberCount = org?.members.length ?? 1;
 
@@ -43,11 +45,11 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
     const deleteProvider = useCallback(async () => {
         try {
             await deleteAuthProvider.mutateAsync({ providerId: provider.id });
+
+            toast("Git provider was deleted");
             setShowDeleteConfirmation(false);
-        } catch (error) {
-            console.log(error);
-        }
-    }, [deleteAuthProvider, provider.id]);
+        } catch (e) {}
+    }, [deleteAuthProvider, provider.id, toast]);
 
     return (
         <>
@@ -83,7 +85,6 @@ export const GitIntegrationListItem: FunctionComponent<Props> = ({ provider }) =
                         description: provider.host,
                     }}
                     buttonText="Remove Provider"
-                    buttonDisabled={deleteAuthProvider.isLoading}
                     footerAlert={
                         deleteAuthProvider.isError ? (
                             <ModalFooterAlert type="danger">There was a problem deleting the provider</ModalFooterAlert>

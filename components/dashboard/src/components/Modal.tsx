@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { FC, KeyboardEvent, ReactNode, useCallback } from "react";
+import { FC, FormEvent, ReactNode, useCallback } from "react";
 import { Portal } from "react-portal";
 import { FocusOn, AutoFocusInside } from "react-focus-on";
 import cn from "classnames";
@@ -28,7 +28,7 @@ type Props = {
     disableFocusLock?: boolean;
     className?: string;
     onClose: () => void;
-    onEnter?: () => boolean | Promise<boolean>;
+    onSubmit?: () => void | Promise<void>;
 };
 export const Modal: FC<Props> = ({
     title,
@@ -41,7 +41,7 @@ export const Modal: FC<Props> = ({
     disableFocusLock = false,
     className,
     onClose,
-    onEnter,
+    onSubmit,
 }) => {
     const trackEvent = useTrackEvent();
 
@@ -70,28 +70,6 @@ export const Modal: FC<Props> = ({
         closeModal("esc");
     }, [closeModal]);
 
-    // TODO: look into deprecating onEnter for Modals - use <form onSubmit> instead
-    // onEnter requires consumers do things like check if a non-submit button is focused
-    // when enter is pressed vs. inside an input, <form> handles that for us already
-    const handleKeydown = useCallback(
-        async (evt: KeyboardEvent) => {
-            if (!visible || evt.defaultPrevented) {
-                return;
-            }
-
-            if (evt.key === "Enter") {
-                if (onEnter) {
-                    if (await onEnter()) {
-                        closeModal("enter");
-                    }
-                } else {
-                    closeModal("enter");
-                }
-            }
-        },
-        [closeModal, onEnter, visible],
-    );
-
     if (!visible) {
         return null;
     }
@@ -99,11 +77,7 @@ export const Modal: FC<Props> = ({
     return (
         <Portal>
             {/* backdrop overlay */}
-            <div
-                className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen focus:ring-0"
-                onKeyDown={handleKeydown}
-                tabIndex={0}
-            >
+            <div className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen focus:ring-0" tabIndex={0}>
                 {/* Modal outer-container for positioning */}
                 <div className="flex justify-center items-center w-screen h-screen">
                     <FocusOn
@@ -127,16 +101,18 @@ export const Modal: FC<Props> = ({
                             aria-labelledby="modal-header"
                             tabIndex={-1}
                         >
-                            {closeable && <ModalCloseIcon onClose={() => closeModal("x")} />}
-                            {title ? (
-                                <>
-                                    <ModalHeader>{title}</ModalHeader>
-                                    <ModalBody hideDivider={hideDivider}>{children}</ModalBody>
-                                    <ModalFooter>{buttons}</ModalFooter>
-                                </>
-                            ) : (
-                                children
-                            )}
+                            <MaybeWithForm onSubmit={onSubmit}>
+                                {closeable && <ModalCloseIcon onClose={() => closeModal("x")} />}
+                                {title ? (
+                                    <>
+                                        <ModalHeader>{title}</ModalHeader>
+                                        <ModalBody hideDivider={hideDivider}>{children}</ModalBody>
+                                        <ModalFooter>{buttons}</ModalFooter>
+                                    </>
+                                ) : (
+                                    children
+                                )}
+                            </MaybeWithForm>
                         </div>
                     </FocusOn>
                 </div>
@@ -146,6 +122,34 @@ export const Modal: FC<Props> = ({
 };
 
 export default Modal;
+
+type MaybeWithFormProps = {
+    onSubmit: Props["onSubmit"];
+};
+const MaybeWithForm: FC<MaybeWithFormProps> = ({ onSubmit, children }) => {
+    const handleSubmit = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
+
+            if (onSubmit) {
+                onSubmit();
+            }
+        },
+        [onSubmit],
+    );
+
+    if (!onSubmit) {
+        return <>{children}</>;
+    }
+
+    return (
+        <form onSubmit={handleSubmit}>
+            {/* including a hidden submit button ensures submit on enter works despite a button w/ type="submit" existing or not */}
+            <input type="submit" className="hidden" hidden />
+            {children}
+        </form>
+    );
+};
 
 type ModalHeaderProps = {
     children: ReactNode;
@@ -205,7 +209,12 @@ export const ModalFooter: FC<ModalFooterProps> = ({ className, alert, children }
 };
 
 // Wrapper around Alert to ensure it's used correctly in a Modal
-export const ModalFooterAlert: FC<AlertProps> = ({ closable = true, children, ...alertProps }) => {
+export const ModalFooterAlert: FC<AlertProps> = ({
+    closable = true,
+    autoFocusClose = true,
+    children,
+    ...alertProps
+}) => {
     return (
         <div
             className={classNames({
@@ -213,7 +222,7 @@ export const ModalFooterAlert: FC<AlertProps> = ({ closable = true, children, ..
                 "gp-modal-footer-alert_animate absolute": closable,
             })}
         >
-            <Alert rounded={false} closable={closable} {...alertProps}>
+            <Alert rounded={false} closable={closable} autoFocusClose={autoFocusClose} {...alertProps}>
                 {children}
             </Alert>
         </div>
@@ -227,8 +236,9 @@ const ModalCloseIcon: FC<ModalCloseIconProps> = ({ onClose }) => {
     return (
         // TODO: Create an IconButton component
         <button
+            type="button"
             aria-label="Close modal"
-            className="bg-transparent absolute right-7 top-6 cursor-pointer text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
+            className="bg-transparent absolute right-7 top-6 text-gray-800 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md p-2"
             onClick={onClose}
         >
             <svg version="1.1" width="14px" height="14px" viewBox="0 0 100 100">

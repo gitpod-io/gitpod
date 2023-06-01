@@ -16,6 +16,7 @@ import { EmptyWorkspacesContent } from "./EmptyWorkspacesContent";
 import { WorkspacesSearchBar } from "./WorkspacesSearchBar";
 import { hoursBefore, isDateSmallerOrEqual } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { useDeleteInactiveWorkspacesMutation } from "../data/workspaces/delete-inactive-workspaces-mutation";
+import { useToast } from "../components/toasts/Toasts";
 
 const WorkspacesPage: FunctionComponent = () => {
     const [limit, setLimit] = useState(50);
@@ -24,6 +25,7 @@ const WorkspacesPage: FunctionComponent = () => {
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
     const { data, isLoading } = useListWorkspacesQuery({ limit });
     const deleteInactiveWorkspaces = useDeleteInactiveWorkspacesMutation();
+    const { toast } = useToast();
 
     // Sort workspaces into active/inactive groups
     const { activeWorkspaces, inactiveWorkspaces } = useMemo(() => {
@@ -67,12 +69,11 @@ const WorkspacesPage: FunctionComponent = () => {
             await deleteInactiveWorkspaces.mutateAsync({
                 workspaceIds: inactiveWorkspaces.map((info) => info.workspace.id),
             });
-        } catch (e) {
-            console.error("error deleting inactive workspaces");
-        }
 
-        setDeleteModalVisible(false);
-    }, [deleteInactiveWorkspaces, inactiveWorkspaces]);
+            setDeleteModalVisible(false);
+            toast("Your workspace was deleted");
+        } catch (e) {}
+    }, [deleteInactiveWorkspaces, inactiveWorkspaces, toast]);
 
     return (
         <>

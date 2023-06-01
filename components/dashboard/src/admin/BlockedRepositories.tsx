@@ -5,18 +5,19 @@
  */
 
 import { AdminGetListResult } from "@gitpod/gitpod-protocol";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { AdminPageHeader } from "./AdminPageHeader";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import ConfirmationModal from "../components/ConfirmationModal";
-import Modal from "../components/Modal";
+import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { ItemFieldContextMenu } from "../components/ItemsList";
 import { ContextMenuEntry } from "../components/ContextMenu";
 import Alert from "../components/Alert";
 import { SpinnerLoader } from "../components/Loader";
 import searchIcon from "../icons/search.svg";
+import { Button } from "../components/Button";
 
 export function BlockedRepositories() {
     return (
@@ -114,7 +115,7 @@ export function BlockedRepositoriesList(props: Props) {
                 {isDeleteModalVisible && (
                     <DeleteBlockedRepositoryModal
                         blockedRepository={currentBlockedRepository}
-                        deleteBlockedRepository={() => deleteBlockedRepository(currentBlockedRepository)}
+                        deleteBlockedRepository={async () => await deleteBlockedRepository(currentBlockedRepository)}
                         onClose={() => setDeleteModalVisible(false)}
                     />
                 )}
@@ -213,41 +214,34 @@ function AddBlockedRepositoryModal(p: AddBlockedRepositoryModalProps) {
         setError("");
     }, [p.blockedRepository]);
 
-    const save = (): boolean => {
+    const save = useCallback(() => {
         const v = ref.current;
         const newError = p.validate(v);
         if (!!newError) {
             setError(newError);
-            return false;
         }
 
         p.save(v);
-        p.onClose();
-        return true;
-    };
+    }, [p]);
 
     return (
-        <Modal
-            visible={true}
-            title={"New Blocked Repository"}
-            onClose={p.onClose}
-            onEnter={save}
-            buttons={[
-                <button className="secondary" onClick={p.onClose}>
+        <Modal visible onClose={p.onClose} onSubmit={save}>
+            <ModalHeader>New Blocked Repository</ModalHeader>
+            <ModalBody>
+                <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
+                    Entries in this table have an immediate effect on all users. Please use it carefully.
+                </Alert>
+                <Alert type={"message"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
+                    Repositories are blocked by matching their URL against this regular expression.
+                </Alert>
+                <Details br={br} update={update} error={error} />
+            </ModalBody>
+            <ModalFooter>
+                <Button type="secondary" onClick={p.onClose}>
                     Cancel
-                </button>,
-                <button className="ml-2" onClick={save}>
-                    Add Blocked Repository
-                </button>,
-            ]}
-        >
-            <Alert type={"warning"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
-                Entries in this table have an immediate effect on all users. Please use it carefully.
-            </Alert>
-            <Alert type={"message"} closable={false} showIcon={true} className="flex rounded p-2 w-2/3 mb-2 w-full">
-                Repositories are blocked by matching their URL against this regular expression.
-            </Alert>
-            <Details br={br} update={update} error={error} />
+                </Button>
+                <Button htmlType="submit">Add Blocked Repository</Button>
+            </ModalFooter>
         </Modal>
     );
 }
@@ -263,8 +257,8 @@ function DeleteBlockedRepositoryModal(props: {
             areYouSureText="Are you sure you want to delete this repository from the list?"
             buttonText="Delete Blocked Repository"
             onClose={props.onClose}
-            onConfirm={() => {
-                props.deleteBlockedRepository();
+            onConfirm={async () => {
+                await props.deleteBlockedRepository();
                 props.onClose();
             }}
         >

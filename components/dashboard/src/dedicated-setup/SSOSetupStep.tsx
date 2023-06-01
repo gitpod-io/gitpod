@@ -103,7 +103,7 @@ export const SSOSetupStep: FC<Props> = ({ config, onComplete, progressCurrent, p
                 <SSOConfigForm config={ssoConfig} onChange={dispatch} />
 
                 <div className="mt-6">
-                    <Button size="block" disabled={!configIsValid} loading={isLoading}>
+                    <Button htmlType="submit" size="block" disabled={!configIsValid} loading={isLoading}>
                         Verify SSO Configuration
                     </Button>
                 </div>

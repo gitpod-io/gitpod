@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { ReactComponent as Exclamation } from "../images/exclamation.svg";
 import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 import { ReactComponent as InfoSvg } from "../images/info.svg";
@@ -32,6 +32,7 @@ export interface AlertProps {
     // Without background color, default false
     light?: boolean;
     closable?: boolean;
+    autoFocusClose?: boolean;
     onClose?: () => void;
     showIcon?: boolean;
     icon?: React.ReactNode;
@@ -87,14 +88,25 @@ const infoMap: Record<AlertType, AlertInfo> = {
 
 export default function Alert(props: AlertProps) {
     const [visible, setVisible] = useState(true);
-    if (!visible) {
-        return null;
-    }
+
     const type: AlertType = props.type ?? "info";
     const info = infoMap[type];
     const showIcon = props.showIcon ?? true;
     const light = props.light ?? false;
     const rounded = props.rounded ?? true;
+    const autoFocusClose = props.autoFocusClose ?? false;
+
+    const handleClose = useCallback(() => {
+        setVisible(false);
+        if (props.onClose) {
+            props.onClose();
+        }
+    }, [props]);
+
+    if (!visible) {
+        return null;
+    }
+
     return (
         <div
             className={classNames(
@@ -108,16 +120,16 @@ export default function Alert(props: AlertProps) {
             {showIcon && <span className={`mt-1 mr-4 h-4 w-4 ${info.iconColor}`}>{props.icon ?? info.icon}</span>}
             <span className="flex-1 text-left">{props.children}</span>
             {props.closable && (
-                <span className={`mt-1 ml-4 h-4 w-4`}>
-                    <XSvg
-                        onClick={() => {
-                            setVisible(false);
-                            if (props.onClose) {
-                                props.onClose();
-                            }
-                        }}
-                        className="w-3 h-4 cursor-pointer"
-                    ></XSvg>
+                <span className={`mt-1 ml-4`}>
+                    {/* Use an IconButton component once we make it */}
+                    <button
+                        type="button"
+                        className="bg-transparent p-1"
+                        onClick={handleClose}
+                        autoFocus={autoFocusClose}
+                    >
+                        <XSvg className="w-3 h-4 cursor-pointer" />
+                    </button>
                 </span>
             )}
         </div>

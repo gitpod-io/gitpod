@@ -57,14 +57,7 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onSaved, onClos
     }, [isLoading, onClose, onSaved, save, ssoConfig]);
 
     return (
-        <Modal
-            visible
-            onClose={onClose}
-            onEnter={() => {
-                saveConfig();
-                return false;
-            }}
-        >
+        <Modal visible onClose={onClose} onSubmit={saveConfig}>
             <ModalHeader>
                 {isNew
                     ? "New SSO Configuration"
@@ -86,7 +79,7 @@ export const OIDCClientConfigModal: FC<Props> = ({ clientConfig, onSaved, onClos
                     Cancel
                 </Button>
                 <Button
-                    onClick={saveConfig}
+                    htmlType="submit"
                     disabled={!configIsValid || clientConfig?.active === true}
                     loading={isLoading}
                 >

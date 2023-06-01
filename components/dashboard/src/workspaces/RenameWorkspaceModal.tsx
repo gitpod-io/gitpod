@@ -8,6 +8,7 @@ import { Workspace } from "@gitpod/gitpod-protocol";
 import { FunctionComponent, useCallback, useState } from "react";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { useUpdateWorkspaceDescriptionMutation } from "../data/workspaces/update-workspace-description-mutation";
+import { Button } from "../components/Button";
 
 type Props = {
     workspace: Workspace;
@@ -22,33 +23,28 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
         try {
             if (description.length === 0) {
                 setErrorMessage("Description cannot not be empty.");
-                return false;
+                return;
             }
 
             if (description.length > 250) {
                 setErrorMessage("Description is too long for readability.");
-                return false;
+                return;
             }
 
             setErrorMessage("");
 
             // Using mutateAsync here so we can close the modal after it completes successfully
             await updateDescription.mutateAsync({ workspaceId: workspace.id, newDescription: description });
+
+            // Close the modal
+            onClose();
         } catch (error) {
-            console.error(error);
             setErrorMessage("Something went wrong. Please try renaming again.");
         }
-    }, [description, updateDescription, workspace.id]);
+    }, [description, onClose, updateDescription, workspace.id]);
 
     return (
-        <Modal
-            visible
-            onClose={onClose}
-            onEnter={async () => {
-                await updateWorkspaceDescription();
-                return true;
-            }}
-        >
+        <Modal visible onClose={onClose} onSubmit={updateWorkspaceDescription}>
             <ModalHeader>Rename Workspace Description</ModalHeader>
             <ModalBody>
                 {errorMessage.length > 0 ? (
@@ -70,20 +66,12 @@ export const RenameWorkspaceModal: FunctionComponent<Props> = ({ workspace, onCl
                 </div>
             </ModalBody>
             <ModalFooter>
-                <button disabled={updateDescription.isLoading} className="secondary" onClick={onClose}>
+                <Button type="secondary" disabled={updateDescription.isLoading} onClick={onClose}>
                     Cancel
-                </button>
-                <button
-                    disabled={updateDescription.isLoading}
-                    className="ml-2"
-                    type="submit"
-                    onClick={async () => {
-                        await updateWorkspaceDescription();
-                        onClose();
-                    }}
-                >
+                </Button>
+                <Button htmlType="submit" loading={updateDescription.isLoading}>
                     Update Description
-                </button>
+                </Button>
             </ModalFooter>
         </Modal>
     );
