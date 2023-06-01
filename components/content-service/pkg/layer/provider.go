@@ -109,11 +109,7 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 	}
 	manifest = &mf
 
-	if mf.Type != csapi.TypeFullWorkspaceContentV1 {
-		err = errUnsupportedContentType
-		return
-	}
-
+	err = errUnsupportedContentType
 	return
 }
 
@@ -126,9 +122,7 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 	defer func() {
 		// we never return a nil manifest, just maybe an empty one
 		if manifest == nil {
-			manifest = &csapi.WorkspaceContentManifest{
-				Type: csapi.TypeFullWorkspaceContentV1,
-			}
+			manifest = &csapi.WorkspaceContentManifest{}
 		}
 	}()
 
@@ -236,9 +230,7 @@ func (s *Provider) GetContentLayerPVC(ctx context.Context, owner, workspaceID st
 	defer func() {
 		// we never return a nil manifest, just maybe an empty one
 		if manifest == nil {
-			manifest = &csapi.WorkspaceContentManifest{
-				Type: csapi.TypeFullWorkspaceContentV1,
-			}
+			manifest = &csapi.WorkspaceContentManifest{}
 		}
 	}()
 

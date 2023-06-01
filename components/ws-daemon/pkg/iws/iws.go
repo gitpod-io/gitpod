@@ -255,7 +255,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
-	if wbs.FSShift == api.FSShiftMethod_FUSE || wbs.Session.FullWorkspaceBackup {
+	if wbs.FSShift == api.FSShiftMethod_FUSE {
 		err = nsi.Nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 			// In case of any change in the user mapping, the next line must be updated.
 			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
@@ -272,7 +272,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 			return nil, status.Errorf(codes.Internal, "cannot mount fusefs mark")
 		}
 
-		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).WithField("fwb", wbs.Session.FullWorkspaceBackup).Info("fs-shift using fuse")
+		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).Info("fs-shift using fuse")
 
 		if err := wbs.createWorkspaceCgroup(ctx, wscontainerID); err != nil {
 			return nil, err
@@ -280,7 +280,6 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 		return &api.PrepareForUserNSResponse{
 			FsShift:               api.FSShiftMethod_FUSE,
-			FullWorkspaceBackup:   wbs.Session.FullWorkspaceBackup,
 			PersistentVolumeClaim: wbs.Session.PersistentVolumeClaim,
 		}, nil
 	}
@@ -309,7 +308,6 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	return &api.PrepareForUserNSResponse{
 		FsShift:               api.FSShiftMethod_SHIFTFS,
-		FullWorkspaceBackup:   wbs.Session.FullWorkspaceBackup,
 		PersistentVolumeClaim: wbs.Session.PersistentVolumeClaim,
 	}, nil
 }

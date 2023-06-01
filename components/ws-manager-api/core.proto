@@ -631,7 +631,7 @@ enum WorkspaceFeatureFlag {
     // FullWorkspaceBackup does away with the /workspace host mount. All workspace content lives
     // in the ephemeral container storage. We initlialize workspaces using content layer served by
     // the registry facade and back them up using regular "hardlink backups".
-    FULL_WORKSPACE_BACKUP = 4;
+    reserved 4;
 
     // Was used to ensure a workspace is not subject to ws-daemon's dynamic resource limits.
     // In this sence it's akin to "guaranteed" (as compared to burstable) resources for workspaces.

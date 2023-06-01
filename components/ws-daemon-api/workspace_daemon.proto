@@ -61,7 +61,8 @@ service WorkspaceInfoService {
 message PrepareForUserNSRequest {}
 message PrepareForUserNSResponse {
     FSShiftMethod fs_shift = 1;
-    bool full_workspace_backup = 2;
+    // was used for full workspace backup
+    reserved 2;
     bool persistent_volume_claim = 3;
 }
 

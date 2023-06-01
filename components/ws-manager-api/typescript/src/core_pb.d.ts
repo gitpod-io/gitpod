@@ -1308,7 +1308,6 @@ export enum WorkspacePhase {
 
 export enum WorkspaceFeatureFlag {
     NOOP = 0,
-    FULL_WORKSPACE_BACKUP = 4,
     PERSISTENT_VOLUME_CLAIM = 7,
     WORKSPACE_CLASS_LIMITING = 9,
     WORKSPACE_CONNECTION_LIMITING = 10,
