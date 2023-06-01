@@ -290,12 +290,12 @@ func (rc *RedisCache) sync(ctx context.Context, period time.Duration) {
 
 var _ KeyCache = ((*RedisCache)(nil))
 
-func NewMySQLCache(ctx context.Context, dbConn *gorm.DB, refreshPeriod int) *MySQLCache {
+func NewMySQLCache(ctx context.Context, dbConn *gorm.DB, refreshPeriod time.Duration) *MySQLCache {
 	cache := &MySQLCache{
 		dbConn: dbConn,
 		keyID:  defaultKeyID,
 	}
-	go cache.sync(ctx, time.Duration(refreshPeriod))
+	go cache.sync(ctx, refreshPeriod)
 	return cache
 }
 
