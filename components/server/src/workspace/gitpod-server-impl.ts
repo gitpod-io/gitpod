@@ -3213,6 +3213,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Anyone who can read a team's information (i.e. any team member) can create a new project.
         await this.guardTeamOperation(params.teamId || "", "get", "not_implemented");
 
+        let url;
+        try {
+            url = new URL(params.cloneUrl);
+        } catch (err) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
+        }
+        const availableRepositories = await this.getProviderRepositoriesForUser(ctx, { provider: url.host });
+        if (!availableRepositories.some((r) => (r.cloneUrl = params.cloneUrl))) {
+            // The error message is derived from internals of `getProviderRepositoriesForUser` and
+            // `getRepositoriesForAutomatedPrebuilds`, which require admin permissions to be present.
+            throw new ResponseError(
+                ErrorCodes.BAD_REQUEST,
+                "Repository URL seems to be inaccessible, or admin permissions are missing.",
+            );
+        }
+
         const project = await this.projectsService.createProject(params, user);
         // update client registration for the logged in user
         this.disposables.push(
