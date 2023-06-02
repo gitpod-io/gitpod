@@ -62,18 +62,31 @@ func TestGetUsageSummary(t *testing.T) {
 
 	attributionID := db.NewTeamAttributionID(uuid.New().String())
 
+	beforeUserID := uuid.New()
+	insideUserID := uuid.New()
+	afterUserID := uuid.New()
+
 	draftBefore := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
 		EffectiveTime: db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
 		CreditCents:   100,
 		Draft:         true,
 	})
+	err := draftBefore.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID: beforeUserID,
+	})
+	require.NoError(t, err)
+
 	nondraftBefore := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
 		EffectiveTime: db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
 		CreditCents:   200,
 		Draft:         false,
 	})
+	err = nondraftBefore.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID: beforeUserID,
+	})
+	require.NoError(t, err)
 
 	draftInside := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
@@ -81,18 +94,31 @@ func TestGetUsageSummary(t *testing.T) {
 		CreditCents:   300,
 		Draft:         true,
 	})
+	err = draftInside.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID: insideUserID,
+	})
+	require.NoError(t, err)
+
 	nonDraftInside := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
 		EffectiveTime: db.NewVarCharTime(start.Add(2 * time.Hour)),
 		CreditCents:   400,
 		Draft:         false,
 	})
+	err = nonDraftInside.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID: insideUserID,
+	})
+	require.NoError(t, err)
 
 	nonDraftAfter := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
 		EffectiveTime: db.NewVarCharTime(end.Add(2 * time.Hour)),
 		CreditCents:   1000,
 	})
+	err = nonDraftAfter.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID: afterUserID,
+	})
+	require.NoError(t, err)
 
 	invoice := dbtest.NewUsage(t, db.Usage{
 		AttributionID: attributionID,
@@ -110,14 +136,15 @@ func TestGetUsageSummary(t *testing.T) {
 		// expectations
 		creditCents     db.CreditCents
 		numberOfRecords int
+		uniqueUsers     int
 	}{
-		{start, end, false, 700, 2},
-		{start, end, true, 400, 1},
-		{end, end, false, 0, 0},
-		{end, end, true, 0, 0},
-		{start, start, false, 0, 0},
-		{start.Add(-500 * 24 * time.Hour), end, false, 1000, 4},
-		{start.Add(-500 * 24 * time.Hour), end.Add(500 * 24 * time.Hour), false, 2000, 5},
+		{start, end, false, 700, 2, 1},
+		{start, end, true, 400, 1, 1},
+		{end, end, false, 0, 0, 0},
+		{end, end, true, 0, 0, 0},
+		{start, start, false, 0, 0, 0},
+		{start.Add(-500 * 24 * time.Hour), end, false, 1000, 4, 2},
+		{start.Add(-500 * 24 * time.Hour), end.Add(500 * 24 * time.Hour), false, 2000, 5, 3},
 	}
 
 	for i, test := range tests {
@@ -132,6 +159,7 @@ func TestGetUsageSummary(t *testing.T) {
 
 			require.EqualValues(t, test.creditCents, usageSummary.CreditCentsUsed)
 			require.EqualValues(t, test.numberOfRecords, usageSummary.NumberOfRecords)
+			require.EqualValues(t, test.uniqueUsers, usageSummary.UniqueUsers)
 		})
 	}
 }

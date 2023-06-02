@@ -185,13 +185,14 @@ type GetUsageSummaryParams struct {
 
 type GetUsageSummaryResponse struct {
 	CreditCentsUsed CreditCents
+	UniqueUsers     int
 	NumberOfRecords int
 }
 
 func GetUsageSummary(ctx context.Context, conn *gorm.DB, params GetUsageSummaryParams) (GetUsageSummaryResponse, error) {
 	db := conn.WithContext(ctx)
 	query1 := db.Table((&Usage{}).TableName()).
-		Select("sum(creditCents) as CreditCentsUsed, count(*) as NumberOfRecords").
+		Select("sum(creditCents) as CreditCentsUsed, count(distinct(metadata->\"$.userId\")) as UniqueUsers, count(*) as NumberOfRecords").
 		Where("attributionId = ?", params.AttributionId).
 		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
 		Where("kind = ?", WorkspaceInstanceUsageKind)
