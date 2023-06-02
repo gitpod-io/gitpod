@@ -73,6 +73,7 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 		serverMock, client := setupWorkspacesService(t)
 
 		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
+		serverMock.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 
 		resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
 			WorkspaceId: workspaceID,
@@ -130,6 +131,7 @@ func TestWorkspaceService_StartWorkspace(t *testing.T) {
 			WorkspaceURL: workspaceTestData[0].Protocol.LatestInstance.IdeURL,
 		}, nil)
 		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
+		serverMock.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 
 		resp, err := client.StartWorkspace(context.Background(), connect.NewRequest(&v1.StartWorkspaceRequest{
 			WorkspaceId: workspaceID,
@@ -184,6 +186,7 @@ func TestWorkspaceService_StopWorkspace(t *testing.T) {
 
 		serverMock.EXPECT().StopWorkspace(gomock.Any(), workspaceID).Return(nil)
 		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
+		serverMock.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 
 		resp, err := client.StopWorkspace(context.Background(), connect.NewRequest(&v1.StopWorkspaceRequest{
 			WorkspaceId: workspaceID,
@@ -366,6 +369,7 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 					}
 					return nil, nil
 				})
+				srv.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 			},
 			PageSize: 42,
 			Expectation: Expectation{
@@ -392,6 +396,7 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 
 			if test.Workspaces != nil {
 				serverMock.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Return(test.Workspaces, nil)
+				serverMock.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 			} else if test.Setup != nil {
 				test.Setup(t, serverMock)
 			}
@@ -551,6 +556,10 @@ var workspaceTestData = []workspaceTestDataEntry{
 				Context: &protocol.WorkspaceContext{
 					NormalizedContextURL: "https://github.com/gitpod-io/protocol.git",
 					Title:                "tes ttitle",
+					Repository: &protocol.Repository{
+						Host: "github.com",
+						Name: "gitpod",
+					},
 				},
 				Description: "test description",
 			},
@@ -593,6 +602,10 @@ var workspaceTestData = []workspaceTestDataEntry{
 				Details: &v1.WorkspaceContext_Git_{
 					Git: &v1.WorkspaceContext_Git{
 						NormalizedContextUrl: "https://github.com/gitpod-io/gitpod",
+						Provider: &v1.WorkspaceContext_GitProvider{
+							Type:     "GitHub",
+							Hostname: "github.com",
+						},
 					},
 				},
 			},
@@ -627,10 +640,19 @@ var workspaceTestData = []workspaceTestDataEntry{
 								Protocol: v1.PortProtocol_PORT_PROTOCOL_HTTPS,
 							},
 						},
+						RecentFolders: []string{"/workspace/gitpod"},
 					},
 				},
 			},
 		},
+	},
+}
+
+var authProviderTestData = []*protocol.AuthProviderInfo{
+	{
+		AuthProviderID:   "f2effcfd-3dd2-4187-b584-256e88a424f2",
+		Host:             "github.com",
+		AuthProviderType: "GitHub",
 	},
 }
 
@@ -641,12 +663,14 @@ func TestConvertWorkspaceInfo(t *testing.T) {
 	}
 	tests := []struct {
 		Name        string
-		Input       protocol.WorkspaceInfo
+		Input1      protocol.WorkspaceInfo
+		Input2      []*protocol.AuthProviderInfo
 		Expectation Expectation
 	}{
 		{
 			Name:        "happy path",
-			Input:       workspaceTestData[0].Protocol,
+			Input1:      workspaceTestData[0].Protocol,
+			Input2:      authProviderTestData,
 			Expectation: Expectation{Result: workspaceTestData[0].API},
 		},
 	}
@@ -657,7 +681,7 @@ func TestConvertWorkspaceInfo(t *testing.T) {
 				act Expectation
 				err error
 			)
-			act.Result, err = convertWorkspaceInfo(&test.Input)
+			act.Result, err = convertWorkspaceInfo(&test.Input1, test.Input2)
 			if err != nil {
 				act.Error = err.Error()
 			}
@@ -678,7 +702,7 @@ func FuzzConvertWorkspaceInfo(f *testing.F) {
 		}
 
 		// we really just care for panics
-		_, _ = convertWorkspaceInfo(&nfo)
+		_, _ = convertWorkspaceInfo(&nfo, authProviderTestData)
 	})
 }
 
