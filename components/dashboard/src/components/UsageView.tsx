@@ -143,7 +143,7 @@ function UsageView({ attributionId }: UsageViewProps) {
 
     return (
         <>
-            <Header title="Usage" subtitle="updated every 15 minutes" />
+            <Header title="Usage" subtitle="Organization usage, updated every 15 minutes." />
             <div className="app-container pt-5">
                 {usageDownload && (
                     <div className="flex justify-end mb-4">
@@ -323,11 +323,12 @@ const UsageToolbar: FC<UsageToolbarProps> = ({ startDate, endDate, onStartDateCh
         <div
             className={classNames(
                 "flex items-start flex-col space-y-3 px-3",
-                "sm:flex-row sm:items-center sm:space-x-3 sm:space-y-0",
+                "sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0",
             )}
         >
             <UsageDateRangePicker onChange={handleRangeChanged} />
-            <div className="flex items-center space-x-3">
+
+            <div className="flex items-center space-x-1">
                 <DatePicker
                     selected={startDate.toDate()}
                     onChange={(date) => date && onStartDateChange(dayjs(date))}
@@ -357,21 +358,35 @@ const UsageToolbar: FC<UsageToolbarProps> = ({ startDate, endDate, onStartDateCh
     );
 };
 
-const DateDisplay = forwardRef((arg: any, ref: any) => (
-    <div
-        className="px-2 py-0.5 text-gray-500 bg-gray-50 dark:text-gray-400 dark:bg-gray-800 rounded-md cursor-pointer flex items-center hover:bg-gray-100 dark:hover:bg-gray-700"
-        onClick={arg.onClick}
-        ref={ref}
-    >
-        <div className="w-28 font-medium">{arg.value}</div>
-        <div>
+type DateDisplayProps = {
+    value?: string;
+    onClick?: () => void;
+};
+const DateDisplay = forwardRef<any, DateDisplayProps>(({ value, onClick }, ref) => {
+    return (
+        // TODO: Turn this into something like a <InputButton showIcon />
+        <button
+            onClick={onClick}
+            ref={ref}
+            className={classNames(
+                "w-36 bg-transparent",
+                "px-4 py-2 my-auto rounded-md",
+                "text-left text-base",
+                "bg-white dark:bg-gray-800",
+                "text-gray-600 dark:text-gray-400",
+                "border border-gray-300 dark:border-gray-500",
+                "focus:border-gray-400 dark:focus:border-gray-400 focus:ring-0",
+                "hover:bg-gray-100 dark:hover:bg-gray-900",
+            )}
+        >
+            <span>{value}</span>
             <svg
+                className="absolute -mt-2 top-1/2 right-2"
                 width="20"
                 height="20"
                 fill="currentColor"
                 xmlns="http://www.w3.org/2000/svg"
-                onClick={arg.onClick}
-                ref={ref}
+                onClick={onClick}
             >
                 <path
                     fillRule="evenodd"
@@ -380,9 +395,9 @@ const DateDisplay = forwardRef((arg: any, ref: any) => (
                 />
                 <title>Change Date</title>
             </svg>
-        </div>
-    </div>
-));
+        </button>
+    );
+});
 
 type UsageDateRangePickerProps = {
     onChange: (start: dayjs.Dayjs, end: dayjs.Dayjs) => void;
