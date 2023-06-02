@@ -12,21 +12,23 @@ import { useCallback } from "react";
 
 export type OIDCClientsQueryResults = OIDCClientConfig[];
 
-export const useOIDCClientsQuery = () => {
+export const useOIDCClientsQuery = (orgId?: string) => {
     const { data: organization, isLoading } = useCurrentOrg();
 
     return useQuery<OIDCClientsQueryResults>({
-        queryKey: getOIDCClientsQueryKey(organization?.id ?? ""),
+        queryKey: getOIDCClientsQueryKey(orgId ?? organization?.id ?? ""),
         queryFn: async () => {
-            if (!organization) {
+            if (!orgId && !organization) {
                 throw new Error("No current organization selected");
             }
 
-            const { clientConfigs } = await oidcService.listClientConfigs({ organizationId: organization.id });
+            const { clientConfigs } = await oidcService.listClientConfigs({
+                organizationId: orgId || organization?.id,
+            });
 
             return clientConfigs;
         },
-        enabled: !isLoading && !!organization,
+        enabled: !isLoading && (!!orgId || !!organization),
     });
 };
 

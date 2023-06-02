@@ -5,7 +5,7 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -13,11 +13,11 @@ import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Button } from "../components/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
 import Alert from "../components/Alert";
+import { useOIDCClientsQuery } from "../data/oidc-clients/oidc-clients-query";
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
     const [modal, setModal] = useState(false);
-    const primaryEmail = User.getPrimaryEmail(user!) || "";
     const [typedEmail, setTypedEmail] = useState("");
     const original = User.getProfile(user!);
     const [profileState, setProfileState] = useState(original);
@@ -25,7 +25,31 @@ export default function Account() {
     const [updated, setUpdated] = useState(false);
     const canUpdateEmail = user && !User.isOrganizationOwned(user);
 
-    const saveProfileState = () => {
+    const oidcClients = useOIDCClientsQuery(user && User.isOrganizationOwned(user) ? user.organizationId : undefined);
+    const [email, setEmail] = useState("");
+
+    useEffect(() => {
+        if (!user) {
+            return;
+        }
+        if (User.isOrganizationOwned(user)) {
+            if (!oidcClients.data) {
+                return;
+            }
+            const clientIds = oidcClients.data.map((c) => c.oauth2Config?.clientId!);
+            const recentlyUsedSSOIdentity = user.identities
+                .reverse()
+                .find((i) => clientIds.indexOf(i.authProviderId) !== -1);
+            setEmail(recentlyUsedSSOIdentity?.primaryEmail!);
+        } else {
+            const primaryEmail = User.getPrimaryEmail(user!);
+            if (primaryEmail) {
+                setEmail(primaryEmail);
+            }
+        }
+    }, [user, oidcClients.data]);
+
+    const saveProfileState = useCallback(() => {
         if (profileState.name.trim() === "") {
             setErrorMessage("Name must not be empty.");
             return;
@@ -50,12 +74,12 @@ export default function Account() {
         setUser(updatedUser);
         getGitpodService().server.updateLoggedInUser(updatedUser);
         setUpdated(true);
-    };
+    }, [canUpdateEmail, profileState, setUser, user]);
 
-    const deleteAccount = async () => {
+    const deleteAccount = useCallback(async () => {
         await getGitpodService().server.deleteAccount();
         document.location.href = gitpodHostUrl.asApiLogout().toString();
-    };
+    }, []);
 
     const close = () => setModal(false);
     return (
@@ -64,7 +88,7 @@ export default function Account() {
                 title="Delete Account"
                 areYouSureText="You are about to permanently delete your account."
                 buttonText="Delete Account"
-                buttonDisabled={typedEmail !== primaryEmail}
+                buttonDisabled={typedEmail !== email}
                 visible={modal}
                 onClose={close}
                 onConfirm={deleteAccount}
@@ -100,6 +124,7 @@ export default function Account() {
                         }}
                         errorMessage={errorMessage}
                         updated={updated}
+                        email={email}
                         emailIsReadonly={!canUpdateEmail}
                     >
                         <div className="flex flex-row mt-8">
@@ -125,6 +150,7 @@ function ProfileInformation(props: {
     profileState: User.Profile;
     setProfileState: (newState: User.Profile) => void;
     errorMessage: string;
+    email: string;
     emailIsReadonly?: boolean;
     updated: boolean;
     children?: React.ReactChild[] | React.ReactChild;
@@ -160,7 +186,7 @@ function ProfileInformation(props: {
                         <h4>Email</h4>
                         <input
                             type="text"
-                            value={props.profileState.email}
+                            value={props.email}
                             disabled={props.emailIsReadonly}
                             onChange={(e) => props.setProfileState({ ...props.profileState, email: e.target.value })}
                         />
