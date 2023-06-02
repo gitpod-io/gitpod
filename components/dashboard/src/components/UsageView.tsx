@@ -28,6 +28,8 @@ import { DownloadUsage } from "../usage/download/DownloadUsage";
 import { useFeatureFlag } from "../data/featureflag-query";
 import ContextMenu, { ContextMenuEntry } from "./ContextMenu";
 import classNames from "classnames";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { Link } from "react-router-dom";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -423,29 +425,29 @@ type UsageSummaryDataProps = {
     creditsUsed?: number;
 };
 const UsageSummaryData: FC<UsageSummaryDataProps> = ({ isLoading, creditsUsed }) => {
+    const currentOrg = useCurrentOrg();
+
     return (
-        <div className="mt-8 p-3 flex flex-col">
-            <Subheading>Credits Consumed</Subheading>
-            <div className="flex text-lg text-gray-600 font-semibold">
-                <span className="dark:text-gray-400">
-                    {creditsUsed !== undefined ? creditsUsed.toLocaleString() : "-"}
-                </span>
+        <div className="flex flex-row">
+            <div className="mt-8 p-3 flex flex-col">
+                <Subheading>Credits Consumed</Subheading>
+                <div className="flex text-lg text-gray-600 font-semibold">
+                    <span className="dark:text-gray-400">
+                        {creditsUsed !== undefined ? creditsUsed.toLocaleString() : "-"}
+                    </span>
+                </div>
+                {currentOrg.data && currentOrg.data.isOwner && (
+                    <div className="flex text-xs text-gray-600">
+                        <span className="dark:text-gray-500 text-gray-400">
+                            <Link to="/billing" className="gp-link">
+                                View Billing →
+                            </Link>
+                        </span>
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
 const noop = () => {};
-
-// TODO: figure out where to put this link
-// {
-//     currentOrg.data && currentOrg.data.isOwner && (
-//         <div className="flex text-xs text-gray-600">
-//             <span className="dark:text-gray-500 text-gray-400">
-//                 <Link to="/billing" className="gp-link">
-//                     View Billing →
-//                 </Link>
-//             </span>
-//         </div>
-//     );
-// }
