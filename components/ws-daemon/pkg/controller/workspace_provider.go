@@ -19,20 +19,22 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 )
 
+type WorkspaceFactory func(ctx context.Context, instanceID string) (ws *session.Workspace, err error)
+
 type WorkspaceProvider struct {
-	hooks      map[session.WorkspaceState][]session.WorkspaceLivecycleHook
 	Location   string
+	hooks      map[session.WorkspaceState][]session.WorkspaceLivecycleHook
 	workspaces sync.Map
 }
 
-func NewWorkspaceProvider(hooks map[session.WorkspaceState][]session.WorkspaceLivecycleHook, location string) *WorkspaceProvider {
+func NewWorkspaceProvider(location string, hooks map[session.WorkspaceState][]session.WorkspaceLivecycleHook) *WorkspaceProvider {
 	return &WorkspaceProvider{
-		hooks:    hooks,
 		Location: location,
+		hooks:    hooks,
 	}
 }
 
-func (wf *WorkspaceProvider) Create(ctx context.Context, instanceID, location string, create session.WorkspaceFactory) (ws *session.Workspace, err error) {
+func (wf *WorkspaceProvider) NewWorkspace(ctx context.Context, instanceID, location string, create WorkspaceFactory) (ws *session.Workspace, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "WorkspaceProvider.Create")
 	tracing.ApplyOWI(span, log.OWI("", "", instanceID))
 	defer tracing.FinishSpan(span, &err)
@@ -54,6 +56,14 @@ func (wf *WorkspaceProvider) Create(ctx context.Context, instanceID, location st
 	wf.workspaces.Store(instanceID, ws)
 
 	return ws, nil
+}
+
+func (wf *WorkspaceProvider) Remove(ctx context.Context, instanceID string) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "WorkspaceProvider.Create")
+	tracing.ApplyOWI(span, log.OWI("", "", instanceID))
+	defer tracing.FinishSpan(span, nil)
+
+	wf.workspaces.Delete(instanceID)
 }
 
 func (wf *WorkspaceProvider) GetAndConnect(ctx context.Context, instanceID string) (*session.Workspace, error) {
