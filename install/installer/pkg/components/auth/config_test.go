@@ -15,42 +15,42 @@ func TestCookieNameFromDomain(t *testing.T) {
 		{
 			name:            "Simple Domain",
 			domain:          "example.com",
-			expectedOutcome: "_example_com_jwt_",
+			expectedOutcome: "_example_com_jwt_v2",
 		},
 		{
 			name:            "Domain with Underscore",
 			domain:          "example_test.com",
-			expectedOutcome: "_example_test_com_jwt_",
+			expectedOutcome: "_example_test_com_jwt_v2",
 		},
 		{
 			name:            "Domain with Hyphen",
 			domain:          "example-test.com",
-			expectedOutcome: "_example_test_com_jwt_",
+			expectedOutcome: "_example_test_com_jwt_v2",
 		},
 		{
 			name:            "Domain with Special Characters",
 			domain:          "example&test.com",
-			expectedOutcome: "_example_test_com_jwt_",
+			expectedOutcome: "_example_test_com_jwt_v2",
 		},
 		{
 			name:            "Subdomain",
 			domain:          "subdomain.example.com",
-			expectedOutcome: "_subdomain_example_com_jwt_",
+			expectedOutcome: "_subdomain_example_com_jwt_v2",
 		},
 		{
 			name:            "Subdomain with Hyphen",
 			domain:          "sub-domain.example.com",
-			expectedOutcome: "_sub_domain_example_com_jwt_",
+			expectedOutcome: "_sub_domain_example_com_jwt_v2",
 		},
 		{
 			name:            "Subdomain with Underscore",
 			domain:          "sub_domain.example.com",
-			expectedOutcome: "_sub_domain_example_com_jwt_",
+			expectedOutcome: "_sub_domain_example_com_jwt_v2",
 		},
 		{
 			name:            "Subdomain with Special Characters",
 			domain:          "sub&domain.example.com",
-			expectedOutcome: "_sub_domain_example_com_jwt_",
+			expectedOutcome: "_sub_domain_example_com_jwt_v2",
 		},
 	}
 
