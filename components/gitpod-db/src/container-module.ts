@@ -37,8 +37,6 @@ import { TeamDBImpl } from "./typeorm/team-db-impl";
 import { ProjectDB } from "./project-db";
 import { ProjectDBImpl } from "./typeorm/project-db-impl";
 import { PersonalAccessTokenDB } from "./personal-access-token-db";
-import { TypeORMInstallationAdminImpl } from "./typeorm/installation-admin-db-impl";
-import { InstallationAdminDB } from "./installation-admin-db";
 import { TypeORMBlockedRepositoryDBImpl } from "./typeorm/blocked-repository-db-impl";
 import { BlockedRepositoryDB } from "./blocked-repository-db";
 import { WebhookEventDB } from "./webhook-event-db";
@@ -61,9 +59,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
     bind(UserDB).toService(TypeORMUserDBImpl);
     bindDbWithTracing(TracedUserDB, bind, UserDB).inSingletonScope();
-
-    bind(TypeORMInstallationAdminImpl).toSelf().inSingletonScope();
-    bind(InstallationAdminDB).toService(TypeORMInstallationAdminImpl);
 
     bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
 

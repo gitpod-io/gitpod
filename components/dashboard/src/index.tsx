@@ -12,7 +12,6 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { BrowserRouter } from "react-router-dom";
 import { RootAppRouter } from "./App";
-import { AdminContextProvider } from "./admin-context";
 import { QueryErrorBoundary } from "./components/error-boundaries/QueryErrorBoundary";
 import { ReloadPageErrorBoundary } from "./components/error-boundaries/ReloadPageErrorBoundary";
 import { ToastContextProvider } from "./components/toasts/Toasts";
@@ -65,13 +64,11 @@ const bootApp = () => {
                                 <ConfettiContextProvider>
                                     <ToastContextProvider>
                                         <UserContextProvider>
-                                            <AdminContextProvider>
-                                                <PaymentContextProvider>
-                                                    <ProjectContextProvider>
-                                                        <RootAppRouter />
-                                                    </ProjectContextProvider>
-                                                </PaymentContextProvider>
-                                            </AdminContextProvider>
+                                            <PaymentContextProvider>
+                                                <ProjectContextProvider>
+                                                    <RootAppRouter />
+                                                </ProjectContextProvider>
+                                            </PaymentContextProvider>
                                         </UserContextProvider>
                                     </ToastContextProvider>
                                 </ConfettiContextProvider>

@@ -12,7 +12,6 @@ import { SessionHandler } from "./session-handler";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { ServerFactory, UserController } from "./user/user-controller";
-import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
 import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
 import { ConfigProvider } from "./workspace/config-provider";
 import { MessageBusIntegration } from "./workspace/messagebus-integration";
@@ -77,7 +76,6 @@ import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messaging/local-message-broker";
 import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser";
-import { InstallationAdminTelemetryDataProvider } from "./installation-admin/telemetry-data-provider";
 import { IDEService } from "./ide-service";
 import { WorkspaceClusterImagebuilderClientProvider } from "./workspace/workspace-cluster-imagebuilder-client-provider";
 import { UsageServiceClient, UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
@@ -170,8 +168,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ServerFactory).toAutoFactory(GitpodServerImpl);
     bind(UserController).toSelf().inSingletonScope();
 
-    bind(InstallationAdminController).toSelf().inSingletonScope();
-
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
     bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
     bind(MessageBusIntegration).toSelf().inSingletonScope();
@@ -234,8 +230,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(AuthProviderService).toSelf().inSingletonScope();
     bind(BearerAuth).toSelf().inSingletonScope();
-
-    bind(InstallationAdminTelemetryDataProvider).toSelf().inSingletonScope();
 
     // binds all content services
     contentServiceBinder((ctx) => {

@@ -43,7 +43,6 @@ import { Config } from "./config";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
-import { InstallationAdminController } from "./installation-admin/installation-admin-controller";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { API } from "./api/server";
@@ -65,7 +64,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(SessionHandler) protected sessionHandlerProvider: SessionHandler;
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
-    @inject(InstallationAdminController) protected readonly installationAdminController: InstallationAdminController;
     @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
     @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
@@ -107,9 +105,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     protected app?: express.Application;
     protected httpServer?: http.Server;
     protected monitoringApp?: express.Application;
-    protected installationAdminApp?: express.Application;
     protected monitoringHttpServer?: http.Server;
-    protected installationAdminHttpServer?: http.Server;
     protected disposables = new DisposableCollection();
 
     public async init(app: express.Application) {
@@ -278,9 +274,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Health check + metrics endpoints
         this.monitoringApp = this.monitoringEndpointsApp.create();
 
-        // Installation Admin - host separately to avoid exposing publicly
-        this.installationAdminApp = this.installationAdminController.create();
-
         // IAM Session App - host separately to avoid exposing publicly
         this.iamSessionApp = this.iamSessionAppCreator.create();
 
@@ -357,16 +350,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             });
         }
 
-        if (this.installationAdminApp) {
-            this.installationAdminHttpServer = this.installationAdminApp.listen(9000, () => {
-                log.info(
-                    `installation admin app listening on port: ${
-                        (<AddressInfo>this.installationAdminHttpServer!.address()).port
-                    }`,
-                );
-            });
-        }
-
         if (this.iamSessionApp) {
             this.iamSessionAppServer = this.iamSessionApp.listen(9876, () => {
                 log.info(
@@ -384,7 +367,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         await this.debugApp.stop();
         await this.stopServer(this.iamSessionAppServer);
         await this.stopServer(this.monitoringHttpServer);
-        await this.stopServer(this.installationAdminHttpServer);
         await this.stopServer(this.httpServer);
         await this.stopServer(this.apiServer);
         this.disposables.dispose();
