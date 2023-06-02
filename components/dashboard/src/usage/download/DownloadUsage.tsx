@@ -17,6 +17,7 @@ import { LinkButton } from "../../components/LinkButton";
 import { saveAs } from "file-saver";
 import prettyBytes from "pretty-bytes";
 import { ProgressBar } from "../../components/ProgressBar";
+import { useTemporaryState } from "../../hooks/use-temporary-value";
 
 type Props = {
     attributionId: AttributionId;
@@ -26,12 +27,15 @@ type Props = {
 export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) => {
     const { data: org } = useCurrentOrg();
     const { toast } = useToast();
+    // When we start the download, we disable the button for a short time
+    const [downloadDisabled, setDownloadDisabled] = useTemporaryState(false, 1000);
 
     const handleDownload = useCallback(async () => {
         if (!org) {
             return;
         }
 
+        setDownloadDisabled(true);
         toast(
             <DownloadUsageToast
                 orgName={org?.slug ?? org?.id}
@@ -43,10 +47,16 @@ export const DownloadUsage: FC<Props> = ({ attributionId, startDate, endDate }) 
                 autoHide: false,
             },
         );
-    }, [attributionId, endDate, org, startDate, toast]);
+    }, [attributionId, endDate, org, setDownloadDisabled, startDate, toast]);
 
     return (
-        <Button type="secondary" onClick={handleDownload} className="flex flex-row" icon={<DownloadIcon />}>
+        <Button
+            type="secondary"
+            onClick={handleDownload}
+            className="flex flex-row"
+            icon={<DownloadIcon />}
+            disabled={downloadDisabled}
+        >
             Export as CSV
         </Button>
     );
