@@ -3209,14 +3209,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { params });
 
         const user = this.checkUser("createProject");
-        if (params.userId) {
-            if (params.userId !== user.id) {
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Cannot create Projects for other users`);
-            }
-        } else {
-            // Anyone who can read a team's information (i.e. any team member) can create a new project.
-            await this.guardTeamOperation(params.teamId || "", "get", "not_implemented");
-        }
+
+        // Anyone who can read a team's information (i.e. any team member) can create a new project.
+        await this.guardTeamOperation(params.teamId || "", "get", "not_implemented");
 
         const project = await this.projectsService.createProject(params, user);
         // update client registration for the logged in user
