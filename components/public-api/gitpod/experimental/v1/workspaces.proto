@@ -143,10 +143,22 @@ message WorkspaceStatus {
 
 // WorkspaceContext describes the context a workspace was created from
 message WorkspaceContext {
+    // GitProvider describes the git provider
+    message GitProvider {
+        // type is the git provider type, e.g. 'github', 'gitlab', 'bitbucked'
+        string type = 1;
+
+        // hostname is the git provider hostname
+        string hostname = 2;
+    }
+
     // Explicit Git context
     message Git {
         string normalized_context_url = 1;
         string commit = 2;
+
+        // provider is the git provider
+        GitProvider provider = 3;
     }
 
     // Workspace was created from a prebuild
@@ -276,6 +288,9 @@ message WorkspaceInstanceStatus {
 
     // ports is the list of exposed ports in the workspace.
     repeated Port ports = 7;
+
+    // recent_folders is the opened folders inside the workspace. Used to determine the folder path to load the workspace in.
+    repeated string recent_folders = 8;
 
     // repo details the Git working copy status of the workspace.
     // Note: this is a best-effort field and more often than not will not be present. Its absence does not
