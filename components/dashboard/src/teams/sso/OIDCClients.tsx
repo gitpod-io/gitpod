@@ -42,7 +42,9 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
             toast(
                 <span>
                     Single sign-on configuration was successfully verified.{" "}
-                    <LinkButton onClick={() => setActivateModalConfigID(configId)}>Activate configuration</LinkButton>
+                    <LinkButton inverted onClick={() => setActivateModalConfigID(configId)}>
+                        Activate configuration
+                    </LinkButton>
                 </span>,
             );
         },
@@ -59,7 +61,9 @@ const OIDCClientsList: FC<OIDCClientsListProps> = ({ clientConfigs }) => {
             toast(
                 <span>
                     Single sign-on configuration was successfully saved.{" "}
-                    <LinkButton onClick={() => verifyClient(configId)}>Verify configuration</LinkButton>
+                    <LinkButton inverted onClick={() => verifyClient(configId)}>
+                        Verify configuration
+                    </LinkButton>
                 </span>,
             );
         },

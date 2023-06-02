@@ -4,16 +4,21 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import classNames from "classnames";
 import { FC } from "react";
+import { invertable } from "../theme-context";
 
 type Props = {
-    percent: number;
+    value: number;
+    inverted?: boolean;
 };
-export const ProgressBar: FC<Props> = ({ percent }) => {
+export const ProgressBar: FC<Props> = ({ value: percent, inverted }) => {
     return (
-        <div className="w-full rounded-full h-3 my-1 bg-gray-600 dark:bg-gray-300">
+        <div
+            className={classNames("w-full rounded-full h-2 my-1.5", invertable("bg-gray-300", "bg-gray-600", inverted))}
+        >
             <div
-                className="transition-width ease-linear duration-1000 bg-green-500 h-3 rounded-full"
+                className="transition-width ease-linear duration-1000 bg-green-500 h-2 rounded-full"
                 style={{ width: `${percent}%` }}
             />
         </div>

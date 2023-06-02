@@ -6,16 +6,18 @@
 
 import classNames from "classnames";
 import { FC, MouseEvent, useCallback } from "react";
+import { invertable } from "../theme-context";
 import { ButtonProps } from "./Button";
 
 type Props = {
     className?: string;
     htmlType?: ButtonProps["htmlType"];
+    inverted?: boolean;
     onClick: () => void;
 };
 
 // A button that looks like a link
-export const LinkButton: FC<Props> = ({ className, htmlType = "button", children, onClick }) => {
+export const LinkButton: FC<Props> = ({ className, htmlType = "button", inverted = false, children, onClick }) => {
     const handleClick = useCallback(
         (e: MouseEvent<HTMLButtonElement>) => {
             e.preventDefault();
@@ -30,7 +32,8 @@ export const LinkButton: FC<Props> = ({ className, htmlType = "button", children
             className={classNames(
                 "text-sm font-normal",
                 "bg-transparent hover:bg-transparent p-0 rounded-none",
-                "text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-500",
+                invertable("text-blue-500", "text-blue-400", inverted),
+                invertable("hover:text-blue-600", "hover:text-blue-500", inverted),
                 className,
             )}
             onClick={handleClick}

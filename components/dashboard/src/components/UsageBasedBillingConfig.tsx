@@ -20,6 +20,7 @@ import { AddPaymentMethodModal } from "./billing/AddPaymentMethodModal";
 import { Button } from "./Button";
 import { useCreateHoldPaymentIntentMutation } from "../data/billing/create-hold-payment-intent-mutation";
 import { useToast } from "./toasts/Toasts";
+import { ProgressBar } from "./ProgressBar";
 
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
@@ -275,7 +276,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                             )}
                         </div>
                         <div className="mt-2 flex">
-                            <progress className="h-2 flex-grow rounded-xl" value={percentage} max={100} />
+                            <ProgressBar value={percentage} />
                         </div>
                         <div className="bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 -m-4 p-4 mt-4 rounded-b-xl flex">
                             <div className="flex-grow">

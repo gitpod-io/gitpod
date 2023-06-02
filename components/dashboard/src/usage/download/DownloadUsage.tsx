@@ -89,11 +89,9 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
 
     if (isLoading) {
         return (
-            <div className="space-y-2">
-                <div className="flex flex-row items-center space-x-2">
-                    <span>Preparing usage export</span>
-                </div>
-                <ProgressBar percent={progress} />
+            <div>
+                <span>Preparing usage export</span>
+                <ProgressBar inverted value={progress} />
             </div>
         );
     }
@@ -102,7 +100,6 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
         return (
             <div className="flex flex-row items-start space-x-2">
                 <ExclamationIcon className="w-5 h-5 mt-0.5" />
-
                 <div>
                     <span>Error exporting your usage data:</span>
                     <pre className="mt-2 whitespace-normal text-sm">{error.message}</pre>
@@ -127,7 +124,7 @@ const DownloadUsageToast: FC<DownloadUsageToastProps> = ({ attributionId, endDat
                 </p>
             </div>
             <div>
-                <LinkButton onClick={saveFile} className="text-left text-base">
+                <LinkButton inverted onClick={saveFile} className="text-left text-base">
                     Download CSV
                 </LinkButton>
             </div>
