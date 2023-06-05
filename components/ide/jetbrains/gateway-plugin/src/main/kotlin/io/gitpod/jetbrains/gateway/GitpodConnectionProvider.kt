@@ -30,7 +30,6 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.gateway.api.ConnectionRequestor
 import com.jetbrains.gateway.api.GatewayConnectionHandle
 import com.jetbrains.gateway.api.GatewayConnectionProvider
-import com.jetbrains.gateway.ssh.ClientOverSshTunnelConnector
 import com.jetbrains.gateway.ssh.SshHostTunnelConnector
 import com.jetbrains.gateway.thinClientLink.ThinClientHandle
 import com.jetbrains.rd.util.ConcurrentHashMap
@@ -262,12 +261,11 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
                                         setErrorMessage("failed to fetch JetBrains Gateway Join Link.")
                                         return@launch
                                     }
-                                    val connector = ClientOverSshTunnelConnector(
+                                    val clientHandle = connectionHandleFactory.connect(
                                         connectionLifetime,
                                         SshHostTunnelConnector(credentials),
                                         URI(joinLink)
                                     )
-                                    val clientHandle = connector.connect()
                                     clientHandle.clientClosed.advise(connectionLifetime) {
                                         application.invokeLater {
                                             connectionLifetime.terminate()
