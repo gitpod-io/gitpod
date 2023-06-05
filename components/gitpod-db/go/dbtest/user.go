@@ -34,6 +34,12 @@ func NewUser(t *testing.T, user db.User) db.User {
 	if user.ID != uuid.Nil {
 		result.ID = user.ID
 	}
+	if user.OrganizationID != nil {
+		result.OrganizationID = user.OrganizationID
+	}
+	if user.UsageAttributionID != "" {
+		result.UsageAttributionID = user.UsageAttributionID
+	}
 
 	if user.AvatarURL != "" {
 		result.AvatarURL = user.AvatarURL
