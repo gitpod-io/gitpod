@@ -71,3 +71,37 @@ func GetUser(ctx context.Context, conn *gorm.DB, id uuid.UUID) (User, error) {
 
 	return user, nil
 }
+
+func GetUserByIdentity(ctx context.Context, conn *gorm.DB, authProviderID, authID string) (User, error) {
+	var user User
+
+	tx := conn.
+		Table(fmt.Sprintf("%s as user", (&User{}).TableName())).
+		Joins(fmt.Sprintf("LEFT JOIN %s as identity ON identity.userId", (&Identity{}).TableName())).
+		Where("identity.authProviderId = ?", authProviderID).
+		Where("identity.authId = ?", authID).
+		Where("identity.deleted = false").
+		Where("user.markedDeleted = 0").
+		Preload("Identities").
+		First(&user)
+
+	// Joins("JOIN emails ON emails.user_id = users.id AND emails.email = ?", "jinzhu@example.org").
+	// Joins("JOIN credit_cards ON credit_cards.user_id = users.id").
+	// Where("credit_cards.number = ?", "411111111111").
+	// Find(&user)
+
+	// db.Table("users").Select("users.name, emails.email").Joins("left join emails on emails.user_id = users.id").Scan(&results)
+
+	// tx := conn.
+	// 	Joins("Identities", conn.Where(&Identity{
+	// 		AuthProviderID: authProviderID,
+	// 		AuthID:         authID,
+	// 		Deleted:        false,
+	// 	})).
+	// 	First(&user)
+	if tx.Error != nil {
+		return User{}, tx.Error
+	}
+
+	return user, nil
+}

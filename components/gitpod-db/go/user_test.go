@@ -14,10 +14,20 @@ import (
 )
 
 func TestGetUser(t *testing.T) {
-	conn := dbtest.ConnectForTests(t).Debug()
+	conn := dbtest.ConnectForTests(t)
 	user := dbtest.CreatUsers(t, conn, db.User{})[0]
 
 	retrived, err := db.GetUser(context.Background(), conn, user.ID)
 	require.NoError(t, err)
 	require.Equal(t, user, retrived)
+}
+
+func TestGetUserByIdentity(t *testing.T) {
+	conn := dbtest.ConnectForTests(t).Debug()
+	user := dbtest.CreatUsers(t, conn, db.User{})[0]
+
+	retrived, err := db.GetUserByIdentity(context.Background(), conn, user.Identities[0].AuthProviderID, user.Identities[0].AuthID)
+	require.NoError(t, err)
+	require.Equal(t, user, retrived)
+
 }
