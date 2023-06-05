@@ -156,14 +156,14 @@ export class IamSessionApp {
     }
 
     /**
-     * Updates `User.identities[current IdP].primaryEmail`
+     * Updates `User.identities[current IdP]` entry
      */
     protected async updateOIDCUserOnSignin(user: User, payload: OIDCCreateSessionPayload) {
         const recent = this.mapOIDCProfileToIdentity(payload);
         const existingIdentity = user.identities.find((identity) => identity.authId === recent.authId);
 
-        // Update email
-        if (existingIdentity && !!recent.primaryEmail && existingIdentity.primaryEmail !== recent.primaryEmail) {
+        // Update entry
+        if (existingIdentity) {
             await this.userService.updateUserIdentity(user, {
                 ...existingIdentity,
                 primaryEmail: recent.primaryEmail,
