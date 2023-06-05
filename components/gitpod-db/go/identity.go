@@ -13,9 +13,7 @@ type Identity struct {
 	AuthName string `gorm:"column:authName;type:char;size:255;not null;"`
 
 	UserID       uuid.UUID `gorm:"column:userId;type:char;size:36;"`
-	PrimaryEmail string    `gorm:"column:authName;type:char;size:255;not null;default:'';"`
-
-	Tokens string `gorm:"column:authName;type:text;"`
+	PrimaryEmail string    `gorm:"column:primaryEmail;type:char;size:255;not null;default:'';"`
 
 	Deleted  bool `gorm:"column:deleted;type:tinyint;default:0;"`
 	Readonly bool `gorm:"column:readonly;type:tinyint;default:0;"`

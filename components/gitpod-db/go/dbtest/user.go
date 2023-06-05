@@ -19,8 +19,9 @@ func NewUser(t *testing.T, user db.User) db.User {
 
 	orgID := uuid.New()
 
+	userID := uuid.New()
 	result := db.User{
-		ID:                 uuid.New(),
+		ID:                 userID,
 		OrganizationID:     &orgID,
 		UsageAttributionID: db.NewTeamAttributionID(uuid.NewString()),
 
@@ -28,7 +29,13 @@ func NewUser(t *testing.T, user db.User) db.User {
 		FullName:  "Homer Simpson",
 		AvatarURL: "https://avatars.githubusercontent.com/u/9071",
 
-		CreationDate: db.NewVarCharTime(time.Now()),
+		CreationDate: db.NewVarCharTime(time.Now().Round(time.Second)),
+
+		Identities: []db.Identity{
+			NewIdentity(t, db.Identity{
+				UserID: userID,
+			}),
+		},
 	}
 
 	if user.ID != uuid.Nil {
