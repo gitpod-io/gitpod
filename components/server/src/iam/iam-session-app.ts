@@ -109,37 +109,12 @@ export class IamSessionApp {
         };
     }
 
-    /**
-     * Computes search criteria to look up existing accounts in compatibility mode.
-     * The composite key `[subject, oidc-client-config-id]` was used as identifier for
-     * existing accounts before the switch to `[subject, audience/client-id]`.
-     */
-    protected mapOIDCProfileToIdentityLookup_compatibility(payload: OIDCCreateSessionPayload): IdentityLookup {
-        const {
-            claims: { sub },
-            oidcClientConfigId,
-        } = payload;
-        return {
-            authId: sub,
-            authProviderId: oidcClientConfigId,
-        };
-    }
-
     protected async findExistingOIDCUser(payload: OIDCCreateSessionPayload): Promise<User | undefined> {
         // Direct lookup
         let existingUser = await this.userService.findUserForLogin({
             candidate: this.mapOIDCProfileToIdentity(payload),
         });
         if (existingUser) {
-            return existingUser;
-        }
-
-        // Compatibility lookup
-        existingUser = await this.userService.findUserForLogin({
-            candidate: this.mapOIDCProfileToIdentityLookup_compatibility(payload),
-        });
-        if (existingUser) {
-            // TODO(at) convert legacy entry
             return existingUser;
         }
 
