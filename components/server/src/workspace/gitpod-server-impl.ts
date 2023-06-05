@@ -659,7 +659,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getLoggedInUser(ctx: TraceContext): Promise<User> {
         await this.doUpdateUser();
-        return this.checkUser("getLoggedInUser");
+        const user = this.checkUser("getLoggedInUser");
+        return this.censorUser(user);
     }
 
     protected enableDedicatedOnboardingFlow: boolean = false; // TODO(gpl): Remove once we have an onboarding setup
@@ -707,7 +708,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             });
         }
 
-        return updatedUser;
+        return this.censorUser(updatedUser);
     }
 
     public async maySetTimeout(ctx: TraceContext): Promise<boolean> {
@@ -3517,7 +3518,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
             this.verificationService.markVerified(user);
             await this.userDB.updateUserPartial(user);
-            return user;
+            return this.censorUser(user);
         } catch (e) {
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
@@ -3543,11 +3544,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
         target.rolesOrPermissions = Array.from(rolesOrPermissions.values()) as RoleOrPermission[];
 
-        await this.userDB.storeUser(target);
-        // For some reason, neither returning the result of `this.userDB.storeUser(target)` nor returning `target` work.
-        // The response never arrives the caller.
-        // Returning the following works at the cost of an additional DB query:
-        return this.censorUser((await this.userDB.findUserById(req.id))!);
+        const user = await this.userDB.storeUser(target);
+        return this.censorUser(user);
     }
 
     async adminModifyPermanentWorkspaceFeatureFlag(
@@ -3575,10 +3573,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         featureSettings.permanentWSFeatureFlags = Array.from(featureFlags);
         target.featureFlags = featureSettings;
 
-        await this.userDB.storeUser(target);
-        // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
-        // Returning `target` instead (which should be equivalent).
-        return this.censorUser(target);
+        const user = await this.userDB.storeUser(target);
+        return this.censorUser(user);
     }
 
     async adminGetWorkspaces(
@@ -3719,7 +3715,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     protected censorUser(user: User): User {
         const res = { ...user };
-        delete res.additionalData;
         res.identities = res.identities.map((i) => {
             // The user field is not in the Identity shape, but actually exists on DBIdentity.
             // Trying to push this object out via JSON RPC will fail because of the cyclic nature
