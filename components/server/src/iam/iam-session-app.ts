@@ -59,7 +59,7 @@ export class IamSessionApp {
 
         const existingUser = await this.findExistingOIDCUser(payload);
         if (existingUser) {
-            await this.updateOIDCUserOnSign(existingUser, payload);
+            await this.updateOIDCUserOnSignin(existingUser, payload);
         }
 
         const user = existingUser || (await this.createNewOIDCUser(payload));
@@ -158,14 +158,17 @@ export class IamSessionApp {
     /**
      * Updates `User.identities[current IdP].primaryEmail`
      */
-    protected async updateOIDCUserOnSign(user: User, payload: OIDCCreateSessionPayload) {
+    protected async updateOIDCUserOnSignin(user: User, payload: OIDCCreateSessionPayload) {
         const recent = this.mapOIDCProfileToIdentity(payload);
-        const existing = user.identities.find((identity) => identity.authId === recent.authId);
+        const existingIdentity = user.identities.find((identity) => identity.authId === recent.authId);
 
         // Update email
-        if (existing && !!recent.primaryEmail && existing.primaryEmail !== recent.primaryEmail) {
-            existing.primaryEmail = recent.primaryEmail;
-            await this.userService.updateUserIdentity(user, existing);
+        if (existingIdentity && !!recent.primaryEmail && existingIdentity.primaryEmail !== recent.primaryEmail) {
+            await this.userService.updateUserIdentity(user, {
+                ...existingIdentity,
+                primaryEmail: recent.primaryEmail,
+                lastSigninTime: new Date().toISOString(),
+            });
         }
     }
 
@@ -174,7 +177,7 @@ export class IamSessionApp {
 
         // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
         const user = await this.userService.createUser({
-            identity: this.mapOIDCProfileToIdentity(payload),
+            identity: { ...this.mapOIDCProfileToIdentity(payload), lastSigninTime: new Date().toISOString() },
             userUpdate: (user) => {
                 user.name = claims.name;
                 user.avatarUrl = claims.picture;
