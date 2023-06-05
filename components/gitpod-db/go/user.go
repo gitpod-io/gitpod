@@ -35,6 +35,8 @@ type User struct {
 
 	AdditionalData *string `gorm:"column:additionalData;type:text;"`
 
+	// Identities can be loaded with Preload("Identities") from the `d_b_identity` table as
+	// a One to Many relationship
 	Identities []Identity `gorm:"foreignKey:userId;references:id"`
 
 	CreationDate VarcharTime `gorm:"column:creationDate;type:varchar;size:255;"`

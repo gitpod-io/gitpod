@@ -20,5 +20,4 @@ func TestGetUser(t *testing.T) {
 	retrived, err := db.GetUser(context.Background(), conn, user.ID)
 	require.NoError(t, err)
 	require.Equal(t, user, retrived)
-
 }
