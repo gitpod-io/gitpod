@@ -672,8 +672,15 @@ func (pm *Manager) Expose(ctx context.Context, port uint32) error {
 	pm.mu.RUnlock()
 	unlock = false
 
-	public := exists && config.Visibility != "private"
-	err := <-pm.E.Expose(ctx, port, public, config.Protocol)
+	public := false
+	protocol := gitpod.PortProtocolHTTP
+
+	if exists {
+		public = config.Visibility != "private"
+		protocol = config.Protocol
+	}
+
+	err := <-pm.E.Expose(ctx, port, public, protocol)
 	if err != nil && err != context.Canceled {
 		log.WithError(err).WithField("port", port).Error("cannot expose port")
 	}
