@@ -491,12 +491,11 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 	}
 	if authId == "" {
 		authId = strconv.FormatInt(time.Now().UnixMilli(), 10)
-		_, err = db.Exec(`INSERT IGNORE INTO d_b_identity (authProviderId, authId, authName, userId, tokens) VALUES (?, ?, ?, ?, ?)`,
+		_, err = db.Exec(`INSERT IGNORE INTO d_b_identity (authProviderId, authId, authName, userId) VALUES (?, ?, ?, ?)`,
 			"Public-GitHub",
 			authId,
 			username,
 			userId,
-			"[]",
 		)
 		if err != nil {
 			return "", err
