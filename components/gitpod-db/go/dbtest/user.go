@@ -14,24 +14,10 @@ import (
 	"gorm.io/gorm"
 )
 
-type User struct {
-	ID           uuid.UUID      `gorm:"primary_key;column:id;type:char;size:36;"`
-	AvatarURL    string         `gorm:"column:avatarUrl;type:char;size:255;"`
-	Name         string         `gorm:"column:name;type:char;size:255;"`
-	FullName     string         `gorm:"column:fullName;type:char;size:255;"`
-	CreationDate db.VarcharTime `gorm:"column:creationDate;type:varchar;size:255;"`
-
-	// user has more field but we don't care here as they are just used in tests.
-}
-
-func (user *User) TableName() string {
-	return "d_b_user"
-}
-
-func NewUser(t *testing.T, user User) User {
+func NewUser(t *testing.T, user db.User) db.User {
 	t.Helper()
 
-	result := User{
+	result := db.User{
 		ID:           uuid.New(),
 		AvatarURL:    "https://avatars.githubusercontent.com/u/9071",
 		Name:         "HomerJSimpson",
@@ -56,10 +42,10 @@ func NewUser(t *testing.T, user User) User {
 	return result
 }
 
-func CreatUser(t *testing.T, conn *gorm.DB, user ...User) []User {
+func CreatUser(t *testing.T, conn *gorm.DB, user ...db.User) []db.User {
 	t.Helper()
 
-	var records []User
+	var records []db.User
 	var ids []uuid.UUID
 	for _, u := range user {
 		record := NewUser(t, u)
@@ -71,7 +57,7 @@ func CreatUser(t *testing.T, conn *gorm.DB, user ...User) []User {
 
 	t.Cleanup(func() {
 		if len(ids) > 0 {
-			require.NoError(t, conn.Where(ids).Delete(&User{}).Error)
+			require.NoError(t, conn.Where(ids).Delete(&db.User{}).Error)
 		}
 	})
 
