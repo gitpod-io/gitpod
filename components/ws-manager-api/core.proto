@@ -609,6 +609,9 @@ message StartWorkspaceSpec {
 
     // timeout optionally sets a custom closed timeout
     string closed_timeout = 18;
+
+    // maximum lifetime of the workspace
+    string maximum_lifetime = 19;
 }
 
 // WorkspaceFeatureFlag enable non-standard behaviour in workspaces

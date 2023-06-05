@@ -1047,6 +1047,8 @@ export class StartWorkspaceSpec extends jspb.Message {
     addIdeImageLayers(value: string, index?: number): string;
     getClosedTimeout(): string;
     setClosedTimeout(value: string): StartWorkspaceSpec;
+    getMaximumLifetime(): string;
+    setMaximumLifetime(value: string): StartWorkspaceSpec;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -1077,6 +1079,7 @@ export namespace StartWorkspaceSpec {
         sysEnvvarsList: Array<EnvironmentVariable.AsObject>,
         ideImageLayersList: Array<string>,
         closedTimeout: string,
+        maximumLifetime: string,
     }
 }
 
