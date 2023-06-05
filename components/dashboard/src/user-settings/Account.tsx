@@ -13,7 +13,6 @@ import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Button } from "../components/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
 import Alert from "../components/Alert";
-import { useOIDCClientsQuery } from "../data/oidc-clients/oidc-clients-query";
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
@@ -25,7 +24,6 @@ export default function Account() {
     const [updated, setUpdated] = useState(false);
     const canUpdateEmail = user && !User.isOrganizationOwned(user);
 
-    const oidcClients = useOIDCClientsQuery(user && User.isOrganizationOwned(user) ? user.organizationId : undefined);
     const [email, setEmail] = useState("");
 
     useEffect(() => {
@@ -33,13 +31,11 @@ export default function Account() {
             return;
         }
         if (User.isOrganizationOwned(user)) {
-            if (!oidcClients.data) {
-                return;
-            }
-            const clientIds = oidcClients.data.map((c) => c.oauth2Config?.clientId!);
+            const compareTime = (a?: string, b?: string) => (a || "").localeCompare(b || "");
             const recentlyUsedSSOIdentity = user.identities
-                .reverse()
-                .find((i) => clientIds.indexOf(i.authProviderId) !== -1);
+                .sort((a, b) => compareTime(a.lastSigninTime, b.lastSigninTime))
+                // optimistically pick the most recent one
+                .reverse()[0];
             setEmail(recentlyUsedSSOIdentity?.primaryEmail!);
         } else {
             const primaryEmail = User.getPrimaryEmail(user!);
@@ -47,7 +43,7 @@ export default function Account() {
                 setEmail(primaryEmail);
             }
         }
-    }, [user, oidcClients.data]);
+    }, [user]);
 
     const saveProfileState = useCallback(() => {
         if (profileState.name.trim() === "") {
