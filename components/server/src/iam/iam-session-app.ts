@@ -11,7 +11,7 @@ import { Authenticator } from "../auth/authenticator";
 import { UserService } from "../user/user-service";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Identity, IdentityLookup, User } from "@gitpod/gitpod-protocol";
+import { Identity, User } from "@gitpod/gitpod-protocol";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
