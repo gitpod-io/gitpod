@@ -214,7 +214,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             const handleSession: WsRequestHandler = (ws, req, next) => {
                 // The fake response needs to be create in a per-request context to avoid memory leaks
                 this.sessionHandler.sessionHandler(req, {} as express.Response, next);
-                this.sessionHandler.jwtSessionConvertor()(req, {} as express.Response, next);
             };
 
             // Materialize user into req.user

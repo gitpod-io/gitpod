@@ -116,7 +116,6 @@ export class SessionHandler {
                         res.status(200);
                         res.send("User session already has a valid JWT session.");
                     } catch (err) {
-                        reportJWTCookieIssued();
                         res.status(401);
                         res.send("JWT Session is invalid");
                         return;
