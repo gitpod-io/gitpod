@@ -2439,29 +2439,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return result;
     }
 
-    // Get environment variables (filter by repository pattern precedence)
-    // TODO remove then latsest gitpod-cli is deployed
-    async getEnvVars(ctx: TraceContext): Promise<UserEnvVarValue[]> {
-        const user = this.checkUser("getEnvVars");
-        const result = new Map<string, { value: UserEnvVar; score: number }>();
-        for (const value of await this.userDB.getEnvVars(user.id)) {
-            if (!(await this.resourceAccessGuard.canAccess({ kind: "envVar", subject: value }, "get"))) {
-                continue;
-            }
-            const score = UserEnvVar.score(value);
-            const current = result.get(value.name);
-            if (!current || score < current.score) {
-                result.set(value.name, { value, score });
-            }
-        }
-        return [...result.values()].map(({ value: { id, name, value, repositoryPattern } }) => ({
-            id,
-            name,
-            value,
-            repositoryPattern,
-        }));
-    }
-
     // Get all environment variables (unfiltered)
     async getAllEnvVars(ctx: TraceContext): Promise<UserEnvVarValue[]> {
         const user = this.checkUser("getAllEnvVars");

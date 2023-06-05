@@ -144,7 +144,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getWorkspaceEnvVars(workspaceId: string): Promise<EnvVarWithValue[]>;
 
     // User env vars
-    getEnvVars(): Promise<UserEnvVarValue[]>;
     getAllEnvVars(): Promise<UserEnvVarValue[]>;
     setEnvVar(variable: UserEnvVarValue): Promise<void>;
     deleteEnvVar(variable: UserEnvVarValue): Promise<void>;
