@@ -9,7 +9,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -73,9 +72,9 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 			}},
 		},
 		{
-			Name: "working-area",
+			Name: "working-area-mk2",
 			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-				Path: HostWorkingArea,
+				Path: HostWorkingAreaMk2,
 				Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
 			}},
 		},
@@ -146,8 +145,8 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:             "working-area",
-			MountPath:        ContainerWorkingArea,
+			Name:             "working-area-mk2",
+			MountPath:        ContainerWorkingAreaMk2,
 			MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationBidirectional; return &r }(),
 		},
 		{
@@ -187,29 +186,6 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		common.CAVolumeMount(),
 	}
-
-	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		if cfg.Workspace != nil && cfg.Workspace.UseWsmanagerMk2 {
-			mk2WorkingAreaVolume := corev1.Volume{
-				Name: "working-area-mk2",
-				VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{
-					Path: HostWorkingAreaMk2,
-					Type: func() *corev1.HostPathType { r := corev1.HostPathDirectoryOrCreate; return &r }(),
-				}},
-			}
-
-			mk2WorkingAreaMount := corev1.VolumeMount{
-				Name:             "working-area-mk2",
-				MountPath:        ContainerWorkingAreaMk2,
-				MountPropagation: func() *corev1.MountPropagationMode { r := corev1.MountPropagationBidirectional; return &r }(),
-			}
-
-			volumes = append(volumes, mk2WorkingAreaVolume)
-			volumeMounts = append(volumeMounts, mk2WorkingAreaMount)
-		}
-
-		return nil
-	})
 
 	tolerations := []corev1.Toleration{
 		{

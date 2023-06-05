@@ -104,7 +104,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 		procLimit = ucfg.Workspace.ProcLimit
 
-		wscontroller.Enabled = ucfg.Workspace.UseWsmanagerMk2
 		wscontroller.WorkingAreaSuffix = "-mk2"
 		wscontroller.MaxConcurrentReconciles = 15
 

@@ -33,7 +33,6 @@ type Config struct {
 }
 
 type WorkspaceControllerConfig struct {
-	Enabled                 bool   `json:"enabled"`
 	WorkingAreaSuffix       string `json:"workingAreaSuffix"`
 	MaxConcurrentReconciles int    `json:"maxConcurrentReconciles,omitempty"`
 }

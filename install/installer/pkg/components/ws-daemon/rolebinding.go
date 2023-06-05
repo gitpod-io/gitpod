@@ -8,7 +8,6 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -55,33 +54,26 @@ func rolebinding(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Namespace: ctx.Namespace,
 			}},
 		},
-	}
-
-	_ = ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg.Workspace != nil && ucfg.Workspace.UseWsmanagerMk2 {
-			bindings = append(bindings, &rbacv1.RoleBinding{
-				TypeMeta: common.TypeMetaRoleBinding,
-				ObjectMeta: metav1.ObjectMeta{
+		&rbacv1.RoleBinding{
+			TypeMeta: common.TypeMetaRoleBinding,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      Component,
+				Namespace: common.WorkspaceSecretsNamespace,
+			},
+			RoleRef: rbacv1.RoleRef{
+				APIGroup: "rbac.authorization.k8s.io",
+				Kind:     "Role",
+				Name:     Component,
+			},
+			Subjects: []rbacv1.Subject{
+				{
+					Kind:      "ServiceAccount",
 					Name:      Component,
-					Namespace: common.WorkspaceSecretsNamespace,
+					Namespace: ctx.Namespace,
 				},
-				RoleRef: rbacv1.RoleRef{
-					APIGroup: "rbac.authorization.k8s.io",
-					Kind:     "Role",
-					Name:     Component,
-				},
-				Subjects: []rbacv1.Subject{
-					{
-						Kind:      "ServiceAccount",
-						Name:      Component,
-						Namespace: ctx.Namespace,
-					},
-				},
-			})
-		}
-
-		return nil
-	})
+			},
+		},
+	}
 
 	return bindings, nil
 }

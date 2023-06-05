@@ -87,7 +87,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	workspaceClusterHost := fmt.Sprintf("ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 	workspaceURLTemplate := fmt.Sprintf("https://{{ .Prefix }}.ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
 	workspacePortURLTemplate := fmt.Sprintf("https://{{ .WorkspacePort }}-{{ .Prefix }}.ws%s.%s", installationShortNameSuffix, ctx.Config.Domain)
-	hostWorkingArea := wsdaemon.HostWorkingArea
+	hostWorkingArea := wsdaemon.HostWorkingAreaMk2
 
 	rateLimits := map[string]grpc.RateLimit{}
 
@@ -148,10 +148,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		}
 		rateLimits = ucfg.Workspace.WSManagerRateLimits
 
-		if ucfg.Workspace.UseWsmanagerMk2 {
-			hostWorkingArea = wsdaemon.HostWorkingAreaMk2
-			experimentalMode = ucfg.Workspace.UseMk2ExperimentalMode
-		}
+		experimentalMode = ucfg.Workspace.UseMk2ExperimentalMode
 
 		return nil
 	})

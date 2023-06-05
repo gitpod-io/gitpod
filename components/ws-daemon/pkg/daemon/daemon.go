@@ -166,63 +166,60 @@ func NewDaemon(config Config) (*Daemon, error) {
 	}))
 
 	var mgr manager.Manager
-	if config.WorkspaceController.Enabled {
-		mgr, err = ctrl.NewManager(restCfg, ctrl.Options{
-			Scheme:                 scheme,
-			Port:                   9443,
-			Namespace:              config.Runtime.KubernetesNamespace,
-			HealthProbeBindAddress: "0",
-			MetricsBindAddress:     "0", // Metrics are exposed through baseserver.
-			NewCache:               cache.MultiNamespacedCacheBuilder([]string{config.Runtime.KubernetesNamespace, config.Runtime.SecretsNamespace}),
-		})
-		if err != nil {
-			return nil, err
-		}
 
-		log.Info("enabling workspace CRD controller")
-
-		contentCfg := config.Content
-		contentCfg.WorkingArea += config.WorkspaceController.WorkingAreaSuffix
-		contentCfg.WorkingAreaNode += config.WorkspaceController.WorkingAreaSuffix
-
-		xfs, err := quota.NewXFS(contentCfg.WorkingArea)
-		if err != nil {
-			return nil, err
-		}
-
-		hooks := content.WorkspaceLifecycleHooks(
-			contentCfg,
-			config.Runtime.WorkspaceCIDR,
-			&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
-			xfs,
-			config.CPULimit.CGroupBasePath,
-		)
-
-		workspaceOps, err := controller.NewWorkspaceOperations(contentCfg, controller.NewWorkspaceProvider(hooks, contentCfg.WorkingArea), wrappedReg)
-		if err != nil {
-			return nil, err
-		}
-
-		wsctrl, err := controller.NewWorkspaceController(
-			mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), nodename, config.Runtime.SecretsNamespace, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps, wrappedReg)
-		if err != nil {
-			return nil, err
-		}
-		err = wsctrl.SetupWithManager(mgr)
-		if err != nil {
-			return nil, err
-		}
-
-		ssctrl := controller.NewSnapshotController(
-			mgr.GetClient(), mgr.GetEventRecorderFor("snapshot"), nodename, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps)
-		err = ssctrl.SetupWithManager(mgr)
-		if err != nil {
-			return nil, err
-		}
-
-		housekeeping := controller.NewHousekeeping(contentCfg.WorkingArea, 5*time.Minute)
-		go housekeeping.Start(context.Background())
+	mgr, err = ctrl.NewManager(restCfg, ctrl.Options{
+		Scheme:                 scheme,
+		Port:                   9443,
+		Namespace:              config.Runtime.KubernetesNamespace,
+		HealthProbeBindAddress: "0",
+		MetricsBindAddress:     "0", // Metrics are exposed through baseserver.
+		NewCache:               cache.MultiNamespacedCacheBuilder([]string{config.Runtime.KubernetesNamespace, config.Runtime.SecretsNamespace}),
+	})
+	if err != nil {
+		return nil, err
 	}
+
+	contentCfg := config.Content
+	contentCfg.WorkingArea += config.WorkspaceController.WorkingAreaSuffix
+	contentCfg.WorkingAreaNode += config.WorkspaceController.WorkingAreaSuffix
+
+	xfs, err := quota.NewXFS(contentCfg.WorkingArea)
+	if err != nil {
+		return nil, err
+	}
+
+	hooks := content.WorkspaceLifecycleHooks(
+		contentCfg,
+		config.Runtime.WorkspaceCIDR,
+		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+		xfs,
+		config.CPULimit.CGroupBasePath,
+	)
+
+	workspaceOps, err := controller.NewWorkspaceOperations(contentCfg, controller.NewWorkspaceProvider(hooks, contentCfg.WorkingArea), wrappedReg)
+	if err != nil {
+		return nil, err
+	}
+
+	wsctrl, err := controller.NewWorkspaceController(
+		mgr.GetClient(), mgr.GetEventRecorderFor("workspace"), nodename, config.Runtime.SecretsNamespace, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps, wrappedReg)
+	if err != nil {
+		return nil, err
+	}
+	err = wsctrl.SetupWithManager(mgr)
+	if err != nil {
+		return nil, err
+	}
+
+	ssctrl := controller.NewSnapshotController(
+		mgr.GetClient(), mgr.GetEventRecorderFor("snapshot"), nodename, config.WorkspaceController.MaxConcurrentReconciles, workspaceOps)
+	err = ssctrl.SetupWithManager(mgr)
+	if err != nil {
+		return nil, err
+	}
+
+	housekeeping := controller.NewHousekeeping(contentCfg.WorkingArea, 5*time.Minute)
+	go housekeeping.Start(context.Background())
 
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename, listener...)
 	if err != nil {
@@ -280,14 +277,12 @@ func (d *Daemon) Start() error {
 	var ctx context.Context
 	ctx, d.cancel = context.WithCancel(context.Background())
 
-	if d.Config.WorkspaceController.Enabled {
-		go func() {
-			err := d.mgr.Start(ctx)
-			if err != nil {
-				log.WithError(err).Fatal("cannot start controller")
-			}
-		}()
-	}
+	go func() {
+		err := d.mgr.Start(ctx)
+		if err != nil {
+			log.WithError(err).Fatal("cannot start controller")
+		}
+	}()
 
 	return nil
 }

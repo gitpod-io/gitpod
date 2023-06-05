@@ -11,7 +11,6 @@ const (
 	ServicePort             = 8080
 	HostWorkingArea         = "/var/gitpod/workspaces"
 	HostWorkingAreaMk2      = "/var/gitpod/workspaces-mk2"
-	ContainerWorkingArea    = "/mnt/workingarea"
 	ContainerWorkingAreaMk2 = "/mnt/workingarea-mk2"
 	HostBackupPath          = "/var/gitpod/tmp/backup"
 	TLSSecretName           = "ws-daemon-tls"

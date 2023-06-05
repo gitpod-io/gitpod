@@ -6,7 +6,6 @@ package wsproxy
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	"github.com/gitpod-io/gitpod/installer/pkg/config/v1/experimental"
 
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,23 +23,16 @@ func role(ctx *common.RenderContext) ([]runtime.Object, error) {
 				"watch",
 			},
 		},
+		{
+			APIGroups: []string{"workspace.gitpod.io"},
+			Resources: []string{"workspaces"},
+			Verbs: []string{
+				"get",
+				"list",
+				"watch",
+			},
+		},
 	}
-
-	ctx.WithExperimental(func(ucfg *experimental.Config) error {
-		if ucfg.Workspace != nil && ucfg.Workspace.UseWsmanagerMk2 {
-			rules = append(rules, rbacv1.PolicyRule{
-				APIGroups: []string{"workspace.gitpod.io"},
-				Resources: []string{"workspaces"},
-				Verbs: []string{
-					"get",
-					"list",
-					"watch",
-				},
-			})
-		}
-
-		return nil
-	})
 
 	return []runtime.Object{&rbacv1.Role{
 		TypeMeta: common.TypeMetaRole,
