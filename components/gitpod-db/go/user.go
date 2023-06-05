@@ -30,6 +30,8 @@ type User struct {
 
 	AdditionalData *string `gorm:"column:text;type:text;"`
 
+	Identities []Identity `gorm:"foreignKey:userId;references:id"`
+
 	CreationDate VarcharTime `gorm:"column:creationDate;type:varchar;size:255;"`
 
 	MarkedDeleted bool `gorm:"column:markedDeleted;type:tinyint;default:0;" json:"markedDeleted"`
