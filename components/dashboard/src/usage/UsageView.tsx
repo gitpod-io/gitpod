@@ -8,7 +8,7 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Ordering } from "@gitpod/gitpod-protocol/lib/usage";
 import dayjs from "dayjs";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import Header from "../components/Header";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
@@ -50,11 +50,6 @@ function UsageView({ attributionId }: UsageViewProps) {
         }
     }, [location]);
 
-    // reset to page 1 when dates change
-    useEffect(() => {
-        setPage(1);
-    }, [startDate, endDate]);
-
     const usagePage = useListUsage({
         attributionId: AttributionId.render(attributionId),
         from: startDate.startOf("day").valueOf(),
@@ -65,6 +60,16 @@ function UsageView({ attributionId }: UsageViewProps) {
             page,
         },
     });
+
+    const handleStartChange = useCallback((val) => {
+        setStartDate(val);
+        setPage(1);
+    }, []);
+
+    const handleEndChange = useCallback((val) => {
+        setEndDate(val);
+        setPage(1);
+    }, []);
 
     let errorMessage = useMemo(() => {
         let errorMessage = "";
@@ -80,8 +85,11 @@ function UsageView({ attributionId }: UsageViewProps) {
         return errorMessage;
     }, [usagePage.error]);
 
-    const currentPaginatedResults =
-        usagePage.data?.usageEntriesList.filter((u) => u.kind === "workspaceinstance") ?? [];
+    // TODO: filter this at the api layer
+    const currentPaginatedResults = useMemo(
+        () => usagePage.data?.usageEntriesList.filter((u) => u.kind === "workspaceinstance") ?? [],
+        [usagePage.data?.usageEntriesList],
+    );
 
     return (
         <>
@@ -96,8 +104,8 @@ function UsageView({ attributionId }: UsageViewProps) {
                     <UsageDateFilters
                         startDate={startDate}
                         endDate={endDate}
-                        onStartDateChange={setStartDate}
-                        onEndDateChange={setEndDate}
+                        onStartDateChange={handleStartChange}
+                        onEndDateChange={handleEndChange}
                     />
                     {usageDownload && (
                         <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />
