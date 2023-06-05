@@ -660,7 +660,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getLoggedInUser(ctx: TraceContext): Promise<User> {
         await this.doUpdateUser();
         const user = this.checkUser("getLoggedInUser");
-        return this.censorUser(user);
+        return this.cleanUser(user);
     }
 
     protected enableDedicatedOnboardingFlow: boolean = false; // TODO(gpl): Remove once we have an onboarding setup
@@ -708,7 +708,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             });
         }
 
-        return this.censorUser(updatedUser);
+        return this.cleanUser(updatedUser);
     }
 
     public async maySetTimeout(ctx: TraceContext): Promise<boolean> {
@@ -3408,7 +3408,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!result) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
         }
-        return this.censorUser(result);
+        return this.cleanUser(result);
     }
 
     async adminGetUsers(ctx: TraceContext, req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
@@ -3424,7 +3424,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 req.orderDir === "asc" ? "ASC" : "DESC",
                 req.searchTerm,
             );
-            res.rows = res.rows.map(this.censorUser);
+            res.rows = res.rows.map(this.cleanUser);
             return res;
         } catch (e) {
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
@@ -3494,7 +3494,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
         // Returning `target` instead (which should be equivalent).
-        return this.censorUser(targetUser);
+        return this.cleanUser(targetUser);
     }
 
     async adminDeleteUser(ctx: TraceContext, userId: string): Promise<void> {
@@ -3518,7 +3518,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
             this.verificationService.markVerified(user);
             await this.userDB.updateUserPartial(user);
-            return this.censorUser(user);
+            return this.cleanUser(user);
         } catch (e) {
             throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
@@ -3545,7 +3545,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         target.rolesOrPermissions = Array.from(rolesOrPermissions.values()) as RoleOrPermission[];
 
         const user = await this.userDB.storeUser(target);
-        return this.censorUser(user);
+        return this.cleanUser(user);
     }
 
     async adminModifyPermanentWorkspaceFeatureFlag(
@@ -3574,7 +3574,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         target.featureFlags = featureSettings;
 
         const user = await this.userDB.storeUser(target);
-        return this.censorUser(user);
+        return this.cleanUser(user);
     }
 
     async adminGetWorkspaces(
@@ -3713,7 +3713,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.teamDB.setTeamMemberRole(userId, teamId, role);
     }
 
-    protected censorUser(user: User): User {
+    protected cleanUser(user: User): User {
         const res = { ...user };
         res.identities = res.identities.map((i) => {
             // The user field is not in the Identity shape, but actually exists on DBIdentity.
