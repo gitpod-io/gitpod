@@ -70,3 +70,15 @@ export const ThemeContextProvider: React.FC = ({ children }) => {
 export const useTheme = () => {
     return useContext(ThemeContext);
 };
+
+/**
+ * Helper for making components themable and invertable, i.e. supports being used on an inverted backround.
+ *
+ * @param lightClass css class for light theme
+ * @param darkClass corresponding css class for dark theme
+ * @param inverted if the classes should be inverted, i.e. the component is on an inverted background
+ * @returns Array containing the two class strings w/ the proper one prefixed with `dark:`
+ */
+export const invertable = (lightClass: string, darkClass: string, inverted = false) => {
+    return [!inverted ? lightClass : darkClass, !inverted ? `dark:${darkClass}` : `dark:${lightClass}`];
+};

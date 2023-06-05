@@ -22,6 +22,7 @@ const featureFlags = {
     userGitAuthProviders: false,
     linkedinConnectionForOnboarding: false,
     enableDedicatedOnboardingFlow: false,
+    usageDownload: false,
 };
 
 export const useFeatureFlag = (featureFlag: keyof typeof featureFlags) => {

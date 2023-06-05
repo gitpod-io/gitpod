@@ -26,6 +26,8 @@ import "./react-datepicker.css";
 import { Heading1, Heading2, Subheading } from "./typography/headings";
 import { Link } from "react-router-dom";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
+import { DownloadUsage } from "../usage/download/DownloadUsage";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -40,6 +42,8 @@ function UsageView({ attributionId }: UsageViewProps) {
     const supportedClasses = useWorkspaceClasses();
     const location = useLocation();
     const currentOrg = useCurrentOrg();
+    const usageDownload = useFeatureFlag("usageDownload");
+
     useEffect(() => {
         const match = /#(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})/.exec(location.hash);
         if (match) {
@@ -224,6 +228,11 @@ function UsageView({ attributionId }: UsageViewProps) {
                 }
             />
             <div className="app-container pt-5">
+                {usageDownload && (
+                    <div className="flex justify-end mb-4">
+                        <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />
+                    </div>
+                )}
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
                 {!errorMessage && (
                     <div className="flex space-x-16">
