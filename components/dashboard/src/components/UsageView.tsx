@@ -8,9 +8,8 @@ import { WorkspaceType } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ListUsageRequest, Ordering, Usage, WorkspaceInstanceUsageData } from "@gitpod/gitpod-protocol/lib/usage";
-import dayjs, { Dayjs } from "dayjs";
-import { FC, forwardRef, useCallback, useEffect, useMemo, useState } from "react";
-import DatePicker from "react-datepicker";
+import dayjs from "dayjs";
+import { useEffect, useMemo, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { useLocation } from "react-router";
 import Header from "../components/Header";
@@ -24,12 +23,8 @@ import { toRemoteURL } from "../projects/render-utils";
 import { gitpodHostUrl } from "../service/service";
 import "./react-datepicker.css";
 import { Heading2, Subheading } from "./typography/headings";
-import { DownloadUsage } from "../usage/download/DownloadUsage";
-import { useFeatureFlag } from "../data/featureflag-query";
-import ContextMenu, { ContextMenuEntry } from "./ContextMenu";
-import classNames from "classnames";
-import { useCurrentOrg } from "../data/organizations/orgs-query";
-import { Link } from "react-router-dom";
+import { UsageToolbar } from "../usage/UsageToolbar";
+import { UsageSummaryData } from "../usage/UsageSummary";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -154,7 +149,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                     onEndDateChange={setEndDate}
                 />
 
-                <UsageSummaryData creditsUsed={usagePage.data?.creditsUsed} isLoading={usagePage.isLoading} />
+                <UsageSummaryData creditsUsed={usagePage.data?.creditsUsed} />
 
                 <div className="flex flex-col w-full mb-8">
                     <ItemsList className="mt-2 text-gray-400 dark:text-gray-500">
@@ -297,183 +292,3 @@ function UsageView({ attributionId }: UsageViewProps) {
 }
 
 export default UsageView;
-
-// TODO: move these into the `/usage` folder once the export as csv feature is merged into this
-type UsageToolbarProps = {
-    attributionId: AttributionId;
-    startDate: Dayjs;
-    endDate: Dayjs;
-    onStartDateChange: (val: Dayjs) => void;
-    onEndDateChange: (val: Dayjs) => void;
-};
-const UsageToolbar: FC<UsageToolbarProps> = ({
-    attributionId,
-    startDate,
-    endDate,
-    onStartDateChange,
-    onEndDateChange,
-}) => {
-    const usageDownload = useFeatureFlag("usageDownload");
-
-    const handleRangeChanged = useCallback(
-        (start: Dayjs, end: Dayjs) => {
-            onStartDateChange(start);
-            onEndDateChange(end);
-        },
-        [onEndDateChange, onStartDateChange],
-    );
-
-    return (
-        <div
-            className={classNames(
-                "flex flex-col items-start space-y-3 justify-between px-3",
-                "md:flex-row md:items-center md:space-x-4 md:space-y-0",
-            )}
-        >
-            <div
-                className={classNames(
-                    "flex flex-col items-start space-y-3",
-                    "sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0",
-                )}
-            >
-                <UsageDateRangePicker onChange={handleRangeChanged} />
-                <div className="flex items-center space-x-1">
-                    <DatePicker
-                        selected={startDate.toDate()}
-                        onChange={(date) => date && onStartDateChange(dayjs(date))}
-                        selectsStart
-                        startDate={startDate.toDate()}
-                        endDate={endDate.toDate()}
-                        maxDate={endDate.toDate()}
-                        customInput={<DateDisplay />}
-                        dateFormat={"MMM d, yyyy"}
-                        // tab loop enabled causes a bug w/ layout shift to the right of input when open
-                        enableTabLoop={false}
-                    />
-                    <Subheading>to</Subheading>
-                    <DatePicker
-                        selected={endDate.toDate()}
-                        onChange={(date) => date && onEndDateChange(dayjs(date))}
-                        selectsEnd
-                        startDate={startDate.toDate()}
-                        endDate={endDate.toDate()}
-                        minDate={startDate.toDate()}
-                        customInput={<DateDisplay />}
-                        dateFormat={"MMM d, yyyy"}
-                        enableTabLoop={false}
-                    />
-                </div>
-            </div>
-            {usageDownload && <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />}
-        </div>
-    );
-};
-
-type DateDisplayProps = {
-    value?: string;
-    onClick?: () => void;
-};
-const DateDisplay = forwardRef<any, DateDisplayProps>(({ value, onClick }, ref) => {
-    return (
-        // TODO: Turn this into something like a <InputButton showIcon />
-        <button
-            onClick={onClick}
-            ref={ref}
-            className={classNames(
-                "w-36 bg-transparent",
-                "px-4 py-2 my-auto rounded-md",
-                "text-left text-base",
-                "bg-white dark:bg-gray-800",
-                "text-gray-600 dark:text-gray-400",
-                "border border-gray-300 dark:border-gray-500",
-                "focus:border-gray-400 dark:focus:border-gray-400 focus:ring-0",
-                "hover:bg-gray-100 dark:hover:bg-gray-900",
-            )}
-        >
-            <span>{value}</span>
-            <svg
-                className="absolute -mt-2 top-1/2 right-2"
-                width="20"
-                height="20"
-                fill="currentColor"
-                xmlns="http://www.w3.org/2000/svg"
-                onClick={onClick}
-            >
-                <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z"
-                />
-                <title>Change Date</title>
-            </svg>
-        </button>
-    );
-});
-
-type UsageDateRangePickerProps = {
-    onChange: (start: dayjs.Dayjs, end: dayjs.Dayjs) => void;
-};
-const UsageDateRangePicker: FC<UsageDateRangePickerProps> = ({ onChange }) => {
-    const entries = useMemo<ContextMenuEntry[]>(() => {
-        const startOfCurrentMonth = dayjs().startOf("month");
-
-        const entries: ContextMenuEntry[] = [
-            {
-                title: "Current month",
-                onClick: () => onChange(startOfCurrentMonth, dayjs()),
-                active: false,
-            },
-        ];
-
-        // This goes back 6 months from the current month
-        for (let i = 1; i < 7; i++) {
-            const startDate = dayjs().subtract(i, "month").startOf("month");
-            const endDate = startDate.endOf("month");
-            entries.push({
-                title: startDate.format("MMMM YYYY"),
-                active: false,
-                onClick: () => onChange(startDate, endDate),
-            });
-        }
-
-        return entries;
-    }, [onChange]);
-
-    return (
-        <ContextMenu menuEntries={entries} customClasses="left-0">
-            <DateDisplay value="Date Range" onClick={noop} />
-        </ContextMenu>
-    );
-};
-
-type UsageSummaryDataProps = {
-    isLoading: boolean;
-    creditsUsed?: number;
-};
-const UsageSummaryData: FC<UsageSummaryDataProps> = ({ isLoading, creditsUsed }) => {
-    const currentOrg = useCurrentOrg();
-
-    return (
-        <div className="flex flex-row">
-            <div className="mt-8 p-3 flex flex-col">
-                <Subheading>Credits Consumed</Subheading>
-                <div className="flex text-lg text-gray-600 font-semibold">
-                    <span className="dark:text-gray-400">
-                        {creditsUsed !== undefined ? creditsUsed.toLocaleString() : "-"}
-                    </span>
-                </div>
-                {currentOrg.data && currentOrg.data.isOwner && (
-                    <div className="flex text-xs text-gray-600">
-                        <span className="dark:text-gray-500 text-gray-400">
-                            <Link to="/billing" className="gp-link">
-                                View Billing →
-                            </Link>
-                        </span>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-const noop = () => {};
