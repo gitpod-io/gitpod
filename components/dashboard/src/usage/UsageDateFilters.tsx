@@ -114,7 +114,7 @@ const UsageDateRangePicker: FC<UsageDateRangePickerProps> = ({ startDate, endDat
 
     return (
         <ContextMenu menuEntries={entries} customClasses="left-0">
-            <DateDisplay value={selectedEntry?.title ?? "Custom"} onClick={noop} />
+            <DateDisplay value={selectedEntry?.title ?? "Custom range"} onClick={noop} />
         </ContextMenu>
     );
 };
