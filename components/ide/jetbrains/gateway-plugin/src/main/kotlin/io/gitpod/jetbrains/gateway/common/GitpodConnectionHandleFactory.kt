@@ -9,10 +9,17 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import io.gitpod.jetbrains.gateway.GitpodConnectionProvider
 import javax.swing.JComponent
 
+@Suppress("UnstableApiUsage")
 interface GitpodConnectionHandleFactory {
     fun createGitpodConnectionHandle(
             lifetime: Lifetime,
             component: JComponent,
             params: GitpodConnectionProvider.ConnectParams
     ): GatewayConnectionHandle
+
+    suspend fun connect(
+        lifetime: Lifetime,
+        connector: com.jetbrains.gateway.ssh.HostTunnelConnector,
+        tcpJoinLink: java.net.URI
+    ): com.jetbrains.gateway.thinClientLink.ThinClientHandle
 }

@@ -7,9 +7,13 @@ package io.gitpod.jetbrains.gateway.latest
 import com.jetbrains.gateway.api.CustomConnectionFrameComponentProvider
 import com.jetbrains.gateway.api.CustomConnectionFrameContext
 import com.jetbrains.gateway.api.GatewayConnectionHandle
+import com.jetbrains.gateway.ssh.ClientOverSshTunnelConnector
+import com.jetbrains.gateway.ssh.HostTunnelConnector
+import com.jetbrains.gateway.thinClientLink.ThinClientHandle
 import com.jetbrains.rd.util.lifetime.Lifetime
 import io.gitpod.jetbrains.gateway.GitpodConnectionProvider.ConnectParams
 import io.gitpod.jetbrains.gateway.common.GitpodConnectionHandleFactory
+import java.net.URI
 import javax.swing.JComponent
 
 class GitpodConnectionHandle(
@@ -30,7 +34,7 @@ class GitpodConnectionHandle(
         return false
     }
 }
-
+@Suppress("UnstableApiUsage")
 class LatestGitpodConnectionHandleFactory : GitpodConnectionHandleFactory {
     override fun createGitpodConnectionHandle(
             lifetime: Lifetime,
@@ -38,5 +42,12 @@ class LatestGitpodConnectionHandleFactory : GitpodConnectionHandleFactory {
             params: ConnectParams
     ): GatewayConnectionHandle {
         return GitpodConnectionHandle(lifetime, component, params)
+    }
+
+    override suspend fun connect(lifetime: Lifetime, connector: HostTunnelConnector, tcpJoinLink: URI): ThinClientHandle {
+        return ClientOverSshTunnelConnector(
+            lifetime,
+            connector
+        ).connect(tcpJoinLink)
     }
 }
