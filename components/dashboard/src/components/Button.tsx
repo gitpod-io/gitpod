@@ -47,7 +47,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 type={htmlType}
                 className={classNames(
                     "cursor-pointer px-4 py-2 my-auto",
-                    "text-sm font-medium",
+                    "text-sm font-medium whitespace-nowrap",
                     "rounded-md focus:outline-none focus:ring transition ease-in-out",
                     type === "primary"
                         ? [

@@ -43,7 +43,6 @@ function UsageView({ attributionId }: UsageViewProps) {
     const [endDate, setEndDate] = useState(dayjs());
     const supportedClasses = useWorkspaceClasses();
     const location = useLocation();
-    const usageDownload = useFeatureFlag("usageDownload");
 
     useEffect(() => {
         const match = /#(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})/.exec(location.hash);
@@ -145,14 +144,10 @@ function UsageView({ attributionId }: UsageViewProps) {
         <>
             <Header title="Usage" subtitle="Organization usage, updated every 15 minutes." />
             <div className="app-container pt-5">
-                {usageDownload && (
-                    <div className="flex justify-end mb-4">
-                        <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />
-                    </div>
-                )}
                 {errorMessage && <p className="text-base">{errorMessage}</p>}
 
                 <UsageToolbar
+                    attributionId={attributionId}
                     startDate={startDate}
                     endDate={endDate}
                     onStartDateChange={setStartDate}
@@ -305,12 +300,21 @@ export default UsageView;
 
 // TODO: move these into the `/usage` folder once the export as csv feature is merged into this
 type UsageToolbarProps = {
+    attributionId: AttributionId;
     startDate: Dayjs;
     endDate: Dayjs;
     onStartDateChange: (val: Dayjs) => void;
     onEndDateChange: (val: Dayjs) => void;
 };
-const UsageToolbar: FC<UsageToolbarProps> = ({ startDate, endDate, onStartDateChange, onEndDateChange }) => {
+const UsageToolbar: FC<UsageToolbarProps> = ({
+    attributionId,
+    startDate,
+    endDate,
+    onStartDateChange,
+    onEndDateChange,
+}) => {
+    const usageDownload = useFeatureFlag("usageDownload");
+
     const handleRangeChanged = useCallback(
         (start: Dayjs, end: Dayjs) => {
             onStartDateChange(start);
@@ -322,38 +326,45 @@ const UsageToolbar: FC<UsageToolbarProps> = ({ startDate, endDate, onStartDateCh
     return (
         <div
             className={classNames(
-                "flex items-start flex-col space-y-3 px-3",
-                "sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0",
+                "flex flex-col items-start space-y-3 justify-between px-3",
+                "md:flex-row md:items-center md:space-x-4 md:space-y-0",
             )}
         >
-            <UsageDateRangePicker onChange={handleRangeChanged} />
-
-            <div className="flex items-center space-x-1">
-                <DatePicker
-                    selected={startDate.toDate()}
-                    onChange={(date) => date && onStartDateChange(dayjs(date))}
-                    selectsStart
-                    startDate={startDate.toDate()}
-                    endDate={endDate.toDate()}
-                    maxDate={endDate.toDate()}
-                    customInput={<DateDisplay />}
-                    dateFormat={"MMM d, yyyy"}
-                    // tab loop enabled causes a bug w/ layout shift to the right of input when open
-                    enableTabLoop={false}
-                />
-                <Subheading>to</Subheading>
-                <DatePicker
-                    selected={endDate.toDate()}
-                    onChange={(date) => date && onEndDateChange(dayjs(date))}
-                    selectsEnd
-                    startDate={startDate.toDate()}
-                    endDate={endDate.toDate()}
-                    minDate={startDate.toDate()}
-                    customInput={<DateDisplay />}
-                    dateFormat={"MMM d, yyyy"}
-                    enableTabLoop={false}
-                />
+            <div
+                className={classNames(
+                    "flex flex-col items-start space-y-3",
+                    "sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0",
+                )}
+            >
+                <UsageDateRangePicker onChange={handleRangeChanged} />
+                <div className="flex items-center space-x-1">
+                    <DatePicker
+                        selected={startDate.toDate()}
+                        onChange={(date) => date && onStartDateChange(dayjs(date))}
+                        selectsStart
+                        startDate={startDate.toDate()}
+                        endDate={endDate.toDate()}
+                        maxDate={endDate.toDate()}
+                        customInput={<DateDisplay />}
+                        dateFormat={"MMM d, yyyy"}
+                        // tab loop enabled causes a bug w/ layout shift to the right of input when open
+                        enableTabLoop={false}
+                    />
+                    <Subheading>to</Subheading>
+                    <DatePicker
+                        selected={endDate.toDate()}
+                        onChange={(date) => date && onEndDateChange(dayjs(date))}
+                        selectsEnd
+                        startDate={startDate.toDate()}
+                        endDate={endDate.toDate()}
+                        minDate={startDate.toDate()}
+                        customInput={<DateDisplay />}
+                        dateFormat={"MMM d, yyyy"}
+                        enableTabLoop={false}
+                    />
+                </div>
             </div>
+            {usageDownload && <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />}
         </div>
     );
 };
