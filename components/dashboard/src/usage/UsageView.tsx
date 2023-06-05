@@ -17,10 +17,13 @@ import Spinner from "../icons/Spinner.svg";
 import Pagination from "../Pagination/Pagination";
 import { gitpodHostUrl } from "../service/service";
 import { Heading2, Subheading } from "../components/typography/headings";
-import { UsageToolbar } from "./UsageToolbar";
 import { UsageSummaryData } from "./UsageSummary";
 import { UsageEntry } from "./UsageEntry";
 import Alert from "../components/Alert";
+import classNames from "classnames";
+import { UsageDateFilters } from "./UsageDateFilters";
+import { useFeatureFlag } from "../data/featureflag-query";
+import { DownloadUsage } from "./download/DownloadUsage";
 
 interface UsageViewProps {
     attributionId: AttributionId;
@@ -32,6 +35,7 @@ function UsageView({ attributionId }: UsageViewProps) {
     const [startDate, setStartDate] = useState(startOfCurrentMonth);
     const [endDate, setEndDate] = useState(dayjs());
     const location = useLocation();
+    const usageDownload = useFeatureFlag("usageDownload");
 
     // parse out optional dates from url hash
     useEffect(() => {
@@ -83,13 +87,22 @@ function UsageView({ attributionId }: UsageViewProps) {
         <>
             <Header title="Usage" subtitle="Organization usage, updated every 15 minutes." />
             <div className="app-container pt-5">
-                <UsageToolbar
-                    attributionId={attributionId}
-                    startDate={startDate}
-                    endDate={endDate}
-                    onStartDateChange={setStartDate}
-                    onEndDateChange={setEndDate}
-                />
+                <div
+                    className={classNames(
+                        "flex flex-col items-start space-y-3 justify-between px-3",
+                        "md:flex-row md:items-center md:space-x-4 md:space-y-0",
+                    )}
+                >
+                    <UsageDateFilters
+                        startDate={startDate}
+                        endDate={endDate}
+                        onStartDateChange={setStartDate}
+                        onEndDateChange={setEndDate}
+                    />
+                    {usageDownload && (
+                        <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />
+                    )}
+                </div>
 
                 {errorMessage && (
                     <Alert type="error" className="mt-4">
