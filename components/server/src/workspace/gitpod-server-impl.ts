@@ -3213,6 +3213,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Anyone who can read a team's information (i.e. any team member) can create a new project.
         await this.guardTeamOperation(params.teamId || "", "get", "not_implemented");
 
+        // Check if provided clone URL is accessible for the current user, and user has admin permissions.
         let url;
         try {
             url = new URL(params.cloneUrl);
@@ -3220,7 +3221,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
         }
         const availableRepositories = await this.getProviderRepositoriesForUser(ctx, { provider: url.host });
-        if (!availableRepositories.some((r) => (r.cloneUrl = params.cloneUrl))) {
+        if (!availableRepositories.some((r) => r.cloneUrl === params.cloneUrl)) {
             // The error message is derived from internals of `getProviderRepositoriesForUser` and
             // `getRepositoriesForAutomatedPrebuilds`, which require admin permissions to be present.
             throw new ResponseError(
