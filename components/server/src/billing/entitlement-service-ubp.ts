@@ -13,6 +13,8 @@ import {
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
+    WORKSPACE_LIFETIME_LONG,
+    WORKSPACE_LIFETIME_SHORT,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
@@ -97,6 +99,14 @@ export class EntitlementServiceUBP implements EntitlementService {
             return WORKSPACE_TIMEOUT_DEFAULT_LONG;
         } else {
             return WORKSPACE_TIMEOUT_DEFAULT_SHORT;
+        }
+    }
+
+    async getDefaultWorkspaceLifetime(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
+        if (await this.hasPaidSubscription(user, date)) {
+            return WORKSPACE_LIFETIME_LONG;
+        } else {
+            return WORKSPACE_LIFETIME_SHORT;
         }
     }
 
