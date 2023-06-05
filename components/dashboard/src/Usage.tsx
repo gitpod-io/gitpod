@@ -5,7 +5,7 @@
  */
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import UsageView from "./usage/UsageView";
+import { UsageView } from "./usage/UsageView";
 import { useCurrentOrg } from "./data/organizations/orgs-query";
 import { useCurrentUser } from "./user-context";
 

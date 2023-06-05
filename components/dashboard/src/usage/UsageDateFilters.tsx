@@ -14,30 +14,21 @@ import dayjs, { Dayjs } from "dayjs";
 type Props = {
     startDate: Dayjs;
     endDate: Dayjs;
-    onStartDateChange: (val: Dayjs) => void;
-    onEndDateChange: (val: Dayjs) => void;
+    onDateRangeChange: (params: { start?: Dayjs; end?: Dayjs }) => void;
 };
-export const UsageDateFilters: FC<Props> = ({ startDate, endDate, onStartDateChange, onEndDateChange }) => {
-    const handleRangeChanged = useCallback(
-        (start: Dayjs, end: Dayjs) => {
-            onStartDateChange(start);
-            onEndDateChange(end);
-        },
-        [onEndDateChange, onStartDateChange],
-    );
-
+export const UsageDateFilters: FC<Props> = ({ startDate, endDate, onDateRangeChange }) => {
     const handleStartDateChange = useCallback(
         (date: Date | null) => {
-            date && onStartDateChange(dayjs(date));
+            date && onDateRangeChange({ start: dayjs(date) });
         },
-        [onStartDateChange],
+        [onDateRangeChange],
     );
 
     const handleEndDateChange = useCallback(
         (date: Date | null) => {
-            date && onEndDateChange(dayjs(date));
+            date && onDateRangeChange({ end: dayjs(date) });
         },
-        [onEndDateChange],
+        [onDateRangeChange],
     );
 
     return (
@@ -47,7 +38,7 @@ export const UsageDateFilters: FC<Props> = ({ startDate, endDate, onStartDateCha
                 "sm:flex-row sm:items-center sm:space-x-4 sm:space-y-0",
             )}
         >
-            <UsageDateRangePicker startDate={startDate} endDate={endDate} onChange={handleRangeChanged} />
+            <UsageDateRangePicker startDate={startDate} endDate={endDate} onChange={onDateRangeChange} />
             <div className="flex items-center space-x-1">
                 <ReactDatePicker
                     selected={startDate.toDate()}
@@ -81,7 +72,7 @@ export const UsageDateFilters: FC<Props> = ({ startDate, endDate, onStartDateCha
 type UsageDateRangePickerProps = {
     startDate: Dayjs;
     endDate: Dayjs;
-    onChange: (start: Dayjs, end: Dayjs) => void;
+    onChange: (params: { start: Dayjs; end: Dayjs }) => void;
 };
 const UsageDateRangePicker: FC<UsageDateRangePickerProps> = ({ startDate, endDate, onChange }) => {
     const entries = useMemo<ContextMenuEntry[]>(() => {
@@ -91,7 +82,7 @@ const UsageDateRangePicker: FC<UsageDateRangePickerProps> = ({ startDate, endDat
         const entries: ContextMenuEntry[] = [
             {
                 title: "Current month",
-                onClick: () => onChange(startOfCurrentMonth, now),
+                onClick: () => onChange({ start: startOfCurrentMonth, end: now }),
                 active: startDate.isSame(startOfCurrentMonth, "day") && endDate.isSame(now, "day"),
             },
         ];
@@ -103,7 +94,7 @@ const UsageDateRangePicker: FC<UsageDateRangePickerProps> = ({ startDate, endDat
             entries.push({
                 title: entryStart.format("MMM YYYY"),
                 active: startDate.isSame(entryStart, "day") && endDate.isSame(entryEnd, "day"),
-                onClick: () => onChange(entryStart, entryEnd),
+                onClick: () => onChange({ start: entryStart, end: entryEnd }),
             });
         }
 

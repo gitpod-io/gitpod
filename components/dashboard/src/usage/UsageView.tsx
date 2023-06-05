@@ -7,9 +7,9 @@
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Ordering } from "@gitpod/gitpod-protocol/lib/usage";
-import dayjs from "dayjs";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router";
+import dayjs, { Dayjs } from "dayjs";
+import { FC, useCallback, useMemo } from "react";
+import { useHistory, useLocation } from "react-router";
 import Header from "../components/Header";
 import { Item, ItemField, ItemsList } from "../components/ItemsList";
 import { useListUsage } from "../data/usage/usage-query";
@@ -24,31 +24,24 @@ import classNames from "classnames";
 import { UsageDateFilters } from "./UsageDateFilters";
 import { useFeatureFlag } from "../data/featureflag-query";
 import { DownloadUsage } from "./download/DownloadUsage";
+import { useQueryParams } from "../hooks/use-query-params";
+
+const DATE_PARAM_FORMAT = "YYYY-MM-DD";
 
 interface UsageViewProps {
     attributionId: AttributionId;
 }
-
-function UsageView({ attributionId }: UsageViewProps) {
-    const [page, setPage] = useState(1);
-    const startOfCurrentMonth = dayjs().startOf("month");
-    const [startDate, setStartDate] = useState(startOfCurrentMonth);
-    const [endDate, setEndDate] = useState(dayjs());
+export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
     const location = useLocation();
+    const history = useHistory();
     const usageDownload = useFeatureFlag("usageDownload");
+    const params = useQueryParams();
 
-    // parse out optional dates from url hash
-    useEffect(() => {
-        const match = /#(\d{4}-\d{2}-\d{2}):(\d{4}-\d{2}-\d{2})/.exec(location.hash);
-        if (match) {
-            try {
-                setStartDate(dayjs(match[1], "YYYY-MM-DD"));
-                setEndDate(dayjs(match[2], "YYYY-MM-DD"));
-            } catch (e) {
-                console.error(e);
-            }
-        }
-    }, [location]);
+    // page filter params are all in the url as querystring params
+    const startOfCurrentMonth = dayjs().startOf("month");
+    const startDate = getDateFromParam(params.get("start")) || startOfCurrentMonth;
+    const endDate = getDateFromParam(params.get("end")) || dayjs();
+    const page = getNumberFromParam(params.get("page")) || 1;
 
     const usagePage = useListUsage({
         attributionId: AttributionId.render(attributionId),
@@ -61,15 +54,25 @@ function UsageView({ attributionId }: UsageViewProps) {
         },
     });
 
-    const handleStartChange = useCallback((val) => {
-        setStartDate(val);
-        setPage(1);
-    }, []);
+    // Updates the query params w/ new values overlaid onto existing values
+    const updatePageParams = useCallback(
+        (pageParams: { start?: Dayjs; end?: Dayjs; page?: number }) => {
+            const newParams = new URLSearchParams(params);
+            newParams.set("start", (pageParams.start || startDate).format(DATE_PARAM_FORMAT));
+            newParams.set("end", (pageParams.end || endDate).format(DATE_PARAM_FORMAT));
+            newParams.set("page", `${pageParams.page || page}`);
 
-    const handleEndChange = useCallback((val) => {
-        setEndDate(val);
-        setPage(1);
-    }, []);
+            history.push(`${location.pathname}?${newParams}`);
+        },
+        [endDate, history, location.pathname, page, params, startDate],
+    );
+
+    const handlePageChange = useCallback(
+        (val: number) => {
+            updatePageParams({ page: val });
+        },
+        [updatePageParams],
+    );
 
     let errorMessage = useMemo(() => {
         let errorMessage = "";
@@ -101,12 +104,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                         "md:flex-row md:items-center md:space-x-4 md:space-y-0",
                     )}
                 >
-                    <UsageDateFilters
-                        startDate={startDate}
-                        endDate={endDate}
-                        onStartDateChange={handleStartChange}
-                        onEndDateChange={handleEndChange}
-                    />
+                    <UsageDateFilters startDate={startDate} endDate={endDate} onDateRangeChange={updatePageParams} />
                     {usageDownload && (
                         <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />
                     )}
@@ -172,7 +170,7 @@ function UsageView({ attributionId }: UsageViewProps) {
                     {usagePage.data && usagePage.data.pagination && usagePage.data.pagination.totalPages > 1 && (
                         <Pagination
                             currentPage={usagePage.data.pagination.page}
-                            setPage={setPage}
+                            setPage={handlePageChange}
                             totalNumberOfPages={usagePage.data.pagination.totalPages}
                         />
                     )}
@@ -180,6 +178,38 @@ function UsageView({ attributionId }: UsageViewProps) {
             </div>
         </>
     );
-}
+};
 
-export default UsageView;
+const getDateFromParam = (paramValue: string | null) => {
+    if (!paramValue) {
+        return null;
+    }
+
+    try {
+        const date = dayjs(paramValue, DATE_PARAM_FORMAT, true);
+        if (!date.isValid()) {
+            return null;
+        }
+
+        return date;
+    } catch (e) {
+        return null;
+    }
+};
+
+const getNumberFromParam = (paramValue: string | null) => {
+    if (!paramValue) {
+        return null;
+    }
+
+    try {
+        const number = Number.parseInt(paramValue, 10);
+        if (Number.isNaN(number)) {
+            return null;
+        }
+
+        return number;
+    } catch (e) {
+        return null;
+    }
+};

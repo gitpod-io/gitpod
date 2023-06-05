@@ -295,7 +295,9 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
                                 <Link
                                     to={`/usage?org=${
                                         attrId?.kind === "team" ? attrId.teamId : "0"
-                                    }#${billingCycleFrom.format("YYYY-MM-DD")}:${billingCycleTo.format("YYYY-MM-DD")}`}
+                                    }&start=${billingCycleFrom.format("YYYY-MM-DD")}&end=${billingCycleTo.format(
+                                        "YYYY-MM-DD",
+                                    )}`}
                                 >
                                     <button className="secondary">View Usage →</button>
                                 </Link>
