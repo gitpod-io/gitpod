@@ -117,7 +117,7 @@ export class ProjectsService {
     }
 
     async createProject(
-        { name, slug, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams,
+        { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
     ): Promise<Project> {
         if (cloneUrl.length >= 1000) {
@@ -137,7 +137,7 @@ export class ProjectsService {
         // If the desired project slug already exists in this team or user account, add a unique suffix to avoid collisions.
         let uniqueSlug = slug;
         let uniqueSuffix = 0;
-        const existingProjects = await (!!userId ? this.getUserProjects(userId) : this.getTeamProjects(teamId!));
+        const existingProjects = await this.getTeamProjects(teamId!);
         while (existingProjects.some((p) => p.slug === uniqueSlug)) {
             uniqueSuffix++;
             uniqueSlug = `${slug}-${uniqueSuffix}`;
@@ -146,7 +146,7 @@ export class ProjectsService {
             name,
             slug: uniqueSlug,
             cloneUrl,
-            ...(!!userId ? { userId } : { teamId }),
+            teamId,
             appInstallationId,
         });
         await this.projectDB.storeProject(project);
@@ -159,8 +159,8 @@ export class ProjectsService {
                 project_id: project.id,
                 name: name,
                 clone_url: cloneUrl,
-                owner_type: teamId ? "team" : "user",
-                owner_id: teamId ? teamId : userId,
+                owner_type: "team",
+                owner_id: teamId,
                 app_installation_id: appInstallationId,
             },
         });

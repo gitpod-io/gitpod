@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderInfo, Project, ProviderRepository, Team, User } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, Project, ProviderRepository, Team } from "@gitpod/gitpod-protocol";
 import dayjs from "dayjs";
 import { useCallback, useContext, useEffect, useState } from "react";
 import { trackEvent } from "../Analytics";
@@ -90,8 +90,8 @@ export default function NewProject() {
     }, [authProviders.data, isGitHubAppEnabled, selectedProviderHost]);
 
     useEffect(() => {
-        if (selectedRepo && user) {
-            createProject(currentTeam, user, selectedRepo);
+        if (selectedRepo && user && currentTeam) {
+            createProject(currentTeam, selectedRepo);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedRepo, currentTeam, user]);
@@ -188,7 +188,7 @@ export default function NewProject() {
 
     // TODO: Look into making this a react-query mutation
     const createProject = useCallback(
-        async (team: Team | undefined, user: User, repo: ProviderRepository) => {
+        async (team: Team, repo: ProviderRepository) => {
             if (!selectedProviderHost) {
                 return;
             }
@@ -199,7 +199,7 @@ export default function NewProject() {
                     name: repo.name,
                     slug: repoSlug,
                     cloneUrl: repo.cloneUrl,
-                    ...(team ? { teamId: team.id } : { userId: user.id }),
+                    teamId: team.id,
                     appInstallationId: String(repo.installationId),
                 });
 
