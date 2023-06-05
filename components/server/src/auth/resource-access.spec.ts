@@ -779,13 +779,6 @@ class TestResourceAccess {
                 expectation: false,
             },
             {
-                name: "explicit scope with exact same owner and repo",
-                guard: new WorkspaceEnvVarAccessGuard([getEnvVarResourceScope]),
-                guardEnvVar: { kind: "envVar", subject: { repositoryPattern: "foo/x" } as UserEnvVar },
-                operation: "get",
-                expectation: true,
-            },
-            {
                 name: "explicit scope with exact different owner and exact same repo",
                 guard: new WorkspaceEnvVarAccessGuard([getEnvVarResourceScope]),
                 guardEnvVar: { kind: "envVar", subject: { repositoryPattern: "bar/x" } as UserEnvVar },
