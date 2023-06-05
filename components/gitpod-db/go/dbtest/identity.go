@@ -66,7 +66,7 @@ func CreateIdentities(t *testing.T, conn *gorm.DB, user ...db.Identity) []db.Ide
 
 	t.Cleanup(func() {
 		for _, tup := range ids {
-			require.NoError(t, conn.Where("authProviderId = ?", tup.AuthProviderID).Where("authId = ?", tup.AuthID).Delete(&db.User{}).Error)
+			require.NoError(t, conn.Model(&db.Identity{}).Where("authProviderId = ?", tup.AuthProviderID).Where("authId = ?", tup.AuthID).Delete(&db.User{}).Error)
 		}
 	})
 
