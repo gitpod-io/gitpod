@@ -10,6 +10,9 @@ import ReactDatePicker from "react-datepicker";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { Subheading } from "../components/typography/headings";
 import dayjs, { Dayjs } from "dayjs";
+import { useToast } from "../components/toasts/Toasts";
+
+const MAX_HOURS = 300 * 24; // 300 days
 
 type Props = {
     startDate: Dayjs;
@@ -17,18 +20,47 @@ type Props = {
     onDateRangeChange: (params: { start?: Dayjs; end?: Dayjs }) => void;
 };
 export const UsageDateFilters: FC<Props> = ({ startDate, endDate, onDateRangeChange }) => {
+    const { toast } = useToast();
+
     const handleStartDateChange = useCallback(
         (date: Date | null) => {
-            date && onDateRangeChange({ start: dayjs(date) });
+            if (!date) {
+                return;
+            }
+
+            const start = dayjs(date).startOf("day");
+
+            let end;
+
+            // Automatically adjust end date if > 300 days
+            if (endDate.endOf("day").diff(start.startOf("day"), "hours") >= MAX_HOURS) {
+                end = start.add(MAX_HOURS, "hours").subtract(1, "day").endOf("day");
+                toast("Usage date range is limited to 300 days. Your end date was adjusted for you automatically.");
+            }
+
+            onDateRangeChange({ start, end });
         },
-        [onDateRangeChange],
+        [endDate, onDateRangeChange, toast],
     );
 
     const handleEndDateChange = useCallback(
         (date: Date | null) => {
-            date && onDateRangeChange({ end: dayjs(date) });
+            if (!date) {
+                return;
+            }
+            let end = dayjs(date).endOf("day");
+
+            let start;
+
+            // Automatically adjust start date if > 300 days
+            if (end.diff(startDate, "hours") >= MAX_HOURS) {
+                start = end.subtract(MAX_HOURS, "hours").add(1, "day").startOf("day");
+                toast("Usage date range is limited to 300 days. Your start date was adjusted for you automatically.");
+            }
+
+            onDateRangeChange({ start, end });
         },
-        [onDateRangeChange],
+        [onDateRangeChange, startDate, toast],
     );
 
     return (
