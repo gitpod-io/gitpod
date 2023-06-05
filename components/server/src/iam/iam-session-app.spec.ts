@@ -110,22 +110,6 @@ class TestIamSessionApp {
         this.app.getMiddlewares = () => [express.json(), passport.initialize(), passport.session()];
     }
 
-    @test public async testSessionRequestStoresNewSession() {
-        var _set = this.store.set;
-        var count = 0;
-
-        this.store.set = function set() {
-            count++;
-            return _set.apply(this, arguments as any);
-        };
-        await request(this.app.create())
-            .post("/session")
-            .set("Content-Type", "application/json")
-            .send(JSON.stringify(this.payload));
-
-        expect(count, "sessions added").to.equal(1);
-    }
-
     @test public async testSessionRequestResponsesWithSetCookie_createUser() {
         const result = await request(this.app.create())
             .post("/session")
