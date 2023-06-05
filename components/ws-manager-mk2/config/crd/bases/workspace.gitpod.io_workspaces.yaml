@@ -278,6 +278,9 @@ spec:
                   closed:
                     pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h)?)+$
                     type: string
+                  maximumLifetime:
+                    pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h)?)+$
+                    type: string
                   time:
                     pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
                     type: string
