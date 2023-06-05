@@ -76,30 +76,21 @@ func GetUserByIdentity(ctx context.Context, conn *gorm.DB, authProviderID, authI
 	var user User
 
 	tx := conn.
-		Table(fmt.Sprintf("%s as user", (&User{}).TableName())).
-		Joins(fmt.Sprintf("LEFT JOIN %s as identity ON identity.userId", (&Identity{}).TableName())).
-		Where("identity.authProviderId = ?", authProviderID).
-		Where("identity.authId = ?", authID).
-		Where("identity.deleted = false").
-		Where("user.markedDeleted = 0").
+		Model(&User{}).
+		Where("id IN (?)", conn.
+			Model(&Identity{}).
+			Select("userId").
+			Where("authProviderId = ?", authProviderID).
+			Where("authId = ?", authID).
+			Where("deleted = ?", false),
+		).
 		Preload("Identities").
 		First(&user)
-
-	// Joins("JOIN emails ON emails.user_id = users.id AND emails.email = ?", "jinzhu@example.org").
-	// Joins("JOIN credit_cards ON credit_cards.user_id = users.id").
-	// Where("credit_cards.number = ?", "411111111111").
-	// Find(&user)
-
-	// db.Table("users").Select("users.name, emails.email").Joins("left join emails on emails.user_id = users.id").Scan(&results)
-
-	// tx := conn.
-	// 	Joins("Identities", conn.Where(&Identity{
-	// 		AuthProviderID: authProviderID,
-	// 		AuthID:         authID,
-	// 		Deleted:        false,
-	// 	})).
-	// 	First(&user)
 	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return User{}, fmt.Errorf("User with AuthProviderID %s and AuthID %s does not exist: %w", authProviderID, authID, ErrorNotFound)
+		}
+
 		return User{}, tx.Error
 	}
 
