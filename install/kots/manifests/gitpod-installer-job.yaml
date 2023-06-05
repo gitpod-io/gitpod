@@ -29,17 +29,17 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
               - matchExpressions:
-                - key: gitpod.io/workload_workspace_regular
-                  operator: Exists
+                  - key: gitpod.io/workload_workspace_regular
+                    operator: Exists
               - matchExpressions:
-                - key: gitpod.io/workload_workspace_headless
-                  operator: Exists
+                  - key: gitpod.io/workload_workspace_headless
+                    operator: Exists
       serviceAccountName: kotsadm
       restartPolicy: OnFailure
       containers:
         - name: installer
           # This will normally be the release tag
-          image: "eu.gcr.io/gitpod-core-dev/build/installer:release-2022.11.2.16"
+          image: eu.gcr.io/gitpod-core-dev/build/installer:release-2022.11.3
           volumeMounts:
             - mountPath: /mnt/node0
               name: node-fs0
