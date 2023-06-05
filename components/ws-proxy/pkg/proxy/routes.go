@@ -751,7 +751,16 @@ func (t *blobserveTransport) DoRoundTrip(req *http.Request) (resp *http.Response
 	return resp, err
 }
 
+func isWebSocketUpgrade(req *http.Request) bool {
+	return strings.EqualFold(req.Header.Get("Upgrade"), "websocket") &&
+		strings.Contains(strings.ToLower(req.Header.Get("Connection")), "upgrade")
+}
+
 func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	if isWebSocketUpgrade(req) {
+		return nil, xerrors.Errorf("blobserve: websocket not supported")
+	}
+
 	image := t.resolveImage(t, req)
 
 	resp, err = t.DoRoundTrip(req)
