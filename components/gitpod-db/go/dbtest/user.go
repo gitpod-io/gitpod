@@ -17,11 +17,17 @@ import (
 func NewUser(t *testing.T, user db.User) db.User {
 	t.Helper()
 
+	orgID := uuid.New()
+
 	result := db.User{
-		ID:           uuid.New(),
-		AvatarURL:    "https://avatars.githubusercontent.com/u/9071",
-		Name:         "HomerJSimpson",
-		FullName:     "Homer Simpson",
+		ID:                 uuid.New(),
+		OrganizationID:     &orgID,
+		UsageAttributionID: db.NewTeamAttributionID(uuid.NewString()),
+
+		Name:      "HomerJSimpson",
+		FullName:  "Homer Simpson",
+		AvatarURL: "https://avatars.githubusercontent.com/u/9071",
+
 		CreationDate: db.NewVarCharTime(time.Now()),
 	}
 
@@ -42,7 +48,7 @@ func NewUser(t *testing.T, user db.User) db.User {
 	return result
 }
 
-func CreatUser(t *testing.T, conn *gorm.DB, user ...db.User) []db.User {
+func CreatUsers(t *testing.T, conn *gorm.DB, user ...db.User) []db.User {
 	t.Helper()
 
 	var records []db.User

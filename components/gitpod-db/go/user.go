@@ -4,7 +4,9 @@
 
 package db
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type User struct {
 	ID uuid.UUID `gorm:"primary_key;column:id;type:char;size:36;"`
