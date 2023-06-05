@@ -84,11 +84,38 @@ func GetUserByIdentity(ctx context.Context, conn *gorm.DB, authProviderID, authI
 			Where("authId = ?", authID).
 			Where("deleted = ?", false),
 		).
+		Where("markedDeleted = ?", false).
 		Preload("Identities").
 		First(&user)
 	if tx.Error != nil {
 		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
 			return User{}, fmt.Errorf("User with AuthProviderID %s and AuthID %s does not exist: %w", authProviderID, authID, ErrorNotFound)
+		}
+
+		return User{}, tx.Error
+	}
+
+	return user, nil
+}
+
+func GetUserByEmailAndOrg(ctx context.Context, conn *gorm.DB, orgID uuid.UUID, email string) (User, error) {
+	var user User
+
+	tx := conn.
+		Model(&User{}).
+		Where("id IN (?)", conn.
+			Model(&Identity{}).
+			Select("userId").
+			Where("primaryEmail = ?", email).
+			Where("deleted = ?", false),
+		).
+		Where("organizationId = ?", orgID).
+		Where("markedDeleted = ?", false).
+		Preload("Identities").
+		First(&user)
+	if tx.Error != nil {
+		if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+			return User{}, fmt.Errorf("User with Email %s and OrgID %s does not exist: %w", email, orgID, ErrorNotFound)
 		}
 
 		return User{}, tx.Error

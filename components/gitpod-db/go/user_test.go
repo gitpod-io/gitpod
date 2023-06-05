@@ -59,3 +59,38 @@ func TestGetUserByIdentity(t *testing.T) {
 	})
 
 }
+
+func TestGetUserByEmailAndOrg(t *testing.T) {
+
+	t.Run("retrieves all identities for a user", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+
+		// Create additional identities not related to our user, to ensure we're selecting correctly
+		dbtest.CreateIdentities(t, conn, db.Identity{}, db.Identity{})
+
+		userID := uuid.New()
+		identities := []db.Identity{
+			dbtest.NewIdentity(t, db.Identity{UserID: userID}),
+			dbtest.NewIdentity(t, db.Identity{UserID: userID}),
+		}
+
+		user := dbtest.CreatUsers(t, conn, db.User{
+			ID:         userID,
+			Identities: identities,
+		})[0]
+
+		// Test that given any of the identities, we can find the user
+		retrived, err := db.GetUserByEmailAndOrg(context.Background(), conn, *user.OrganizationID, user.Identities[0].PrimaryEmail)
+		require.NoError(t, err)
+		require.Len(t, user.Identities, len(user.Identities), "must return all identities for the user")
+		require.Equal(t, user, retrived)
+	})
+
+	t.Run("not found when identity does not exist", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t).Debug()
+		_, err := db.GetUserByEmailAndOrg(context.Background(), conn, uuid.New(), "some@email.com")
+		require.Error(t, err)
+		require.ErrorIs(t, err, db.ErrorNotFound)
+	})
+
+}
