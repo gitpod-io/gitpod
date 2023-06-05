@@ -87,15 +87,39 @@ export class SessionHandler {
                 if (!jwtToken) {
                     const cookie = await this.createJWTSessionCookie(user.id);
 
-                    log.info("Res", res);
                     res.cookie(cookie.name, cookie.value, cookie.opts);
 
                     reportJWTCookieIssued();
                     res.status(200);
                     res.send("New JWT cookie issued.");
                 } else {
-                    res.status(200);
-                    res.send("User session already has a valid JWT session.");
+                    try {
+                        // will throw if the token is expired
+                        const decoded = await this.authJWT.verify(jwtToken);
+
+                        const issuedAtMs = (decoded.iat || 0) * 1000;
+                        const now = new Date();
+                        const thresholdMs = 60 * 60 * 1000; // 1 hour
+
+                        // Was the token issued more than threshold ago?
+                        if (issuedAtMs + thresholdMs < now.getTime()) {
+                            // issue a new one, to refresh it
+                            const cookie = await this.createJWTSessionCookie(user.id);
+                            res.cookie(cookie.name, cookie.value, cookie.opts);
+
+                            reportJWTCookieIssued();
+                            res.status(200);
+                            res.send("Refreshed JWT cookie issued.");
+                            return;
+                        }
+
+                        res.status(200);
+                        res.send("User session already has a valid JWT session.");
+                    } catch (err) {
+                        res.status(401);
+                        res.send("JWT Session is invalid");
+                        return;
+                    }
                 }
             } else {
                 res.status(401);
