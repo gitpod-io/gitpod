@@ -36,6 +36,15 @@ export class DBIdentity implements Identity {
     @Column()
     deleted?: boolean;
 
+    @Column({
+        default: "",
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+    })
+    lastSigninTime?: string;
+
+    /**
+     * @deprecated as no longer in use since '19
+     */
     @Column()
     readonly?: boolean;
 }

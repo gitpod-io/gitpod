@@ -645,7 +645,10 @@ export interface Identity {
     primaryEmail?: string;
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
-    // readonly identities cannot be modified by the user
+    // The last time this entry was touched during a signin.
+    lastSigninTime?: string;
+
+    // @deprecated as no longer in use since '19
     readonly?: boolean;
 }
 
