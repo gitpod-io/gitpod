@@ -30,10 +30,6 @@ export function hasLoggedInBefore() {
     return GitpodCookie.isPresent(document.cookie);
 }
 
-export function hasVisitedMarketingWebsiteBefore() {
-    return document.cookie.match("gitpod-marketing-website-visited=true");
-}
-
 type LoginProps = {
     onLoggedIn?: () => void;
 };
@@ -66,8 +62,6 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
     if (hostFromContext && authProviders.data) {
         providerFromContext = authProviders.data.find((provider) => provider.host === hostFromContext);
     }
-
-    const showWelcome = !hasLoggedInBefore() && !hasVisitedMarketingWebsiteBefore() && !urlHash.startsWith("https://");
 
     const updateUser = useCallback(async () => {
         await getGitpodService().reconnect();
@@ -123,16 +117,13 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
 
     return (
         <div id="login-container" className="z-50 flex w-screen h-screen">
-            <div id="login-section" className={"flex-grow flex w-full" + (showWelcome ? " lg:w-1/2" : "")}>
-                <div
-                    id="login-section-column"
-                    className={"flex-grow max-w-2xl flex flex-col h-100 mx-auto" + (showWelcome ? " lg:my-0" : "")}
-                >
+            <div id="login-section" className={"flex-grow flex w-full"}>
+                <div id="login-section-column" className={"flex-grow max-w-2xl flex flex-col h-100 mx-auto"}>
                     {needsSetupCheckLoading ? (
                         // empty filler container to keep the layout stable
                         <div className="flex-grow" />
                     ) : needsSetup ? (
-                        <SetupPending alwaysShowHeader={!showWelcome} />
+                        <SetupPending alwaysShowHeader />
                     ) : (
                         <div className="flex-grow h-100 flex flex-row items-center justify-center">
                             <div className="rounded-xl px-10 py-10 mx-auto">
