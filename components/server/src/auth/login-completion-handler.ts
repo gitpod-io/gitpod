@@ -51,7 +51,7 @@ export class LoginCompletionHandler {
             if (authHost) {
                 increaseLoginCounter("failed", authHost);
             }
-            log.error(logContext, `Redirect to /sorry on login`, err, { err, session: request.session });
+            log.error(logContext, `Redirect to /sorry on login`, err, { err });
             response.redirect(this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
             return;
         }
@@ -69,7 +69,7 @@ export class LoginCompletionHandler {
                 .toString();
             returnTo = elevateScopesUrl;
         }
-        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`, { session: request.session });
+        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
 
         // Don't forget to mark a dynamic provider as verified
         if (authHost) {
