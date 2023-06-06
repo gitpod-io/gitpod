@@ -14,7 +14,6 @@ import { AuthProviderService } from "./auth-provider-service";
 import { increaseLoginCounter, reportJWTCookieIssued } from "../prometheus-metrics";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { SessionHandler } from "../session-handler";
 import { AuthJWT } from "./jwt";
 
