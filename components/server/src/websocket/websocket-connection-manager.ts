@@ -210,7 +210,6 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         connectionCtx?: TraceContext,
     ): GitpodServerImpl {
         const expressReq = request as express.Request;
-        const session = expressReq.session;
         const user: User | undefined = expressReq.user;
 
         const clientContext = this.getOrCreateClientContext(expressReq);
@@ -272,8 +271,6 @@ export class WebsocketConnectionManager implements ConnectionHandler {
 
         return new Proxy<GitpodServerImpl>(gitpodServer, {
             get: (target, property: keyof GitpodServerImpl) => {
-                if (session) session.touch();
-
                 return target[property];
             },
         });
