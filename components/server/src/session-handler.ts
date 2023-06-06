@@ -14,7 +14,7 @@ import { Config } from "./config";
 import { reportJWTCookieIssued, reportSessionWithJWT } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
-import { MaybePromise, WsNextFunction, WsRequestHandler } from "./express/ws-handler";
+import { WsNextFunction } from "./express/ws-handler";
 
 @injectable()
 export class SessionHandler {
