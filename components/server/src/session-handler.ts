@@ -19,6 +19,7 @@ import { reportJWTCookieIssued, reportSessionWithJWT } from "./prometheus-metric
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { login } from "./express-util";
 
 @injectable()
 export class SessionHandler {
@@ -154,7 +155,7 @@ export class SessionHandler {
             // We set the user object on the request to signal the user is authenticated.
             // Passport uses the `user` property on the request to determine if the session
             // is authenticated.
-            req.user = user;
+            await login(req, user);
 
             req.sessionID = uuidv4();
 

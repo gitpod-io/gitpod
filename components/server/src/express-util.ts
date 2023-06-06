@@ -8,6 +8,7 @@ import { URL } from "url";
 import * as express from "express";
 import * as crypto from "crypto";
 import * as session from "express-session";
+import { User } from "@gitpod/gitpod-protocol";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -50,6 +51,18 @@ export function destroySession(session: session.Session): Promise<void> {
         session.destroy((error: any) => {
             if (error) {
                 reject(error);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+export function login(req: express.Request, user: User): Promise<void> {
+    return new Promise((resolve, reject) => {
+        req.login(user, (err) => {
+            if (err) {
+                reject(err);
             } else {
                 resolve();
             }

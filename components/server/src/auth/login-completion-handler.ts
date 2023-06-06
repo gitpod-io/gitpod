@@ -17,6 +17,7 @@ import { trackLogin } from "../analytics";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { SessionHandler } from "../session-handler";
 import { AuthJWT } from "./jwt";
+import { login } from "../express-util";
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -38,15 +39,7 @@ export class LoginCompletionHandler {
         const logContext = LogContext.from({ user, request });
 
         try {
-            await new Promise<void>((resolve, reject) => {
-                request.login(user, (err) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve();
-                    }
-                });
-            });
+            await login(request, user);
         } catch (err) {
             if (authHost) {
                 increaseLoginCounter("failed", authHost);

@@ -17,7 +17,7 @@ import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SessionHandler } from "../session-handler";
 import { URL } from "url";
-import { saveSession, getRequestingClientInfo, destroySession } from "../express-util";
+import { saveSession, getRequestingClientInfo, destroySession, login } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { increaseLoginCounter } from "../prometheus-metrics";
@@ -167,15 +167,7 @@ export class UserController {
                 }
 
                 // Create a session for the admin user.
-                await new Promise<void>((resolve, reject) => {
-                    req.login(user, (err) => {
-                        if (err) {
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
-                    });
-                });
+                await login(req, user);
 
                 // Redirect the admin-user to the Org Settings page.
                 // The dashboard is expected to render the Onboading flow instead of the regular view,
