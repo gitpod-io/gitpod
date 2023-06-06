@@ -70,7 +70,7 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
                 "relative flex justify-between items-start",
                 "w-full md:w-112 max-w-full",
                 "p-4 md:rounded-md",
-                "bg-gray-800 dark:bg-gray-100",
+                "bg-gray-800 dark:bg-gray-50",
                 "text-white dark:text-gray-800",
                 "transition-transform animate-toast-in-right",
             )}
