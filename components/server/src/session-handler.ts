@@ -7,7 +7,6 @@
 import * as express from "express";
 import { injectable, inject, postConstruct } from "inversify";
 
-import * as mysqlstore from "express-mysql-session";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
