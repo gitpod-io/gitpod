@@ -18,6 +18,11 @@ type Props = {
     usage: Usage;
 };
 export const UsageEntry: FC<Props> = ({ usage }) => {
+    // We shouldn't be delivering these to the client, but just in case, don't try to render them
+    if (usage.kind !== "workspaceinstance") {
+        return null;
+    }
+
     const metadata = usage.metadata as WorkspaceInstanceUsageData;
 
     return (

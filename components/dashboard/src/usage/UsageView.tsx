@@ -88,11 +88,7 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
         return errorMessage;
     }, [usagePage.error]);
 
-    // TODO: filter this at the api layer
-    const currentPaginatedResults = useMemo(
-        () => usagePage.data?.usageEntriesList.filter((u) => u.kind === "workspaceinstance") ?? [],
-        [usagePage.data?.usageEntriesList],
-    );
+    const usageEntries = usagePage.data?.usageEntriesList || [];
 
     return (
         <>
@@ -146,13 +142,12 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
 
                         {/* results */}
                         {!usagePage.isLoading &&
-                            currentPaginatedResults &&
-                            currentPaginatedResults.map((usage) => {
+                            usageEntries.map((usage) => {
                                 return <UsageEntry key={usage.id} usage={usage} />;
                             })}
 
                         {/* No results */}
-                        {!usagePage.isLoading && currentPaginatedResults.length === 0 && !errorMessage && (
+                        {!usagePage.isLoading && usageEntries.length === 0 && !errorMessage && (
                             <div className="flex flex-col w-full mb-8">
                                 <Heading2 className="text-center mt-8">No sessions found.</Heading2>
                                 <Subheading className="text-center mt-1">

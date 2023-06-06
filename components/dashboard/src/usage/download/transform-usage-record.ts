@@ -7,8 +7,7 @@
 import { Usage, WorkspaceInstanceUsageData } from "@gitpod/gitpod-protocol/lib/usage";
 
 export const transformUsageRecord = (usage: Usage): UsageCSVRow | undefined => {
-    // TODO: figure out what we want to do w/ invoice usage entries
-    if (usage.kind === "invoice") {
+    if (usage.kind !== "workspaceinstance") {
         return;
     }
 
