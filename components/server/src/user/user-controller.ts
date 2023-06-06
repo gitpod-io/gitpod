@@ -20,7 +20,7 @@ import { URL } from "url";
 import { destroySession, getRequestingClientInfo, saveSession } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { increaseLoginCounter } from "../prometheus-metrics";
+import { increaseLoginCounter, reportJWTCookieIssued } from "../prometheus-metrics";
 import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
@@ -30,6 +30,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -43,7 +44,7 @@ export class UserController {
     @inject(Config) protected readonly config: Config;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(SessionHandler) protected readonly sessionHandlerProvider: SessionHandler;
+    @inject(SessionHandler) protected readonly sessionHandler: SessionHandler;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
     @inject(OneTimeSecretDB) protected readonly otsDb: OneTimeSecretDB;
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
@@ -166,8 +167,18 @@ export class UserController {
                     await this.teamDb.setTeamMemberRole(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id, "owner");
                 }
 
-                const cookie = await this.sessionHandlerProvider.createJWTSessionCookie(user.id);
-                res.cookie(cookie.name, cookie.value, cookie.opts);
+                const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
+                    "jwtSessionCookieEnabled",
+                    false,
+                    {
+                        user: user,
+                    },
+                );
+                if (isJWTCookieExperimentEnabled) {
+                    const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
+                    res.cookie(cookie.name, cookie.value, cookie.opts);
+                    reportJWTCookieIssued();
+                }
 
                 // Create a session for the admin user.
                 await new Promise<void>((resolve, reject) => {
@@ -271,14 +282,14 @@ export class UserController {
             }
 
             // clear cookies
-            this.sessionHandlerProvider.clearSessionCookie(res, this.config);
+            this.sessionHandler.clearSessionCookie(res, this.config);
 
             // then redirect
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
             res.redirect(redirectToUrl);
         });
 
-        router.get("/auth/jwt-cookie", this.sessionHandlerProvider.jwtSessionConvertor());
+        router.get("/auth/jwt-cookie", this.sessionHandler.jwtSessionConvertor());
 
         router.get(
             "/auth/workspace-cookie/:instanceID",
