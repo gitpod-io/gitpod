@@ -100,6 +100,7 @@ fi
 
 go install github.com/jstemmer/go-junit-report/v2@latest
 npm i -g xunit-viewer
+mkdir -p results
 
 if [ "$TEST_SUITE" == "workspace" ]; then
   TEST_NAME="workspace"
