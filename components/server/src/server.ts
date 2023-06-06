@@ -16,7 +16,7 @@ import { Authenticator } from "./auth/authenticator";
 import { UserController } from "./user/user-controller";
 import { EventEmitter } from "events";
 import { toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connection";
-import { WsExpressHandler, WsRequestHandler } from "./express/ws-handler";
+import { WsExpressHandler, WsNextFunction, WsRequestHandler } from "./express/ws-handler";
 import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from "./express-util";
 import { createWebSocketConnection } from "vscode-ws-jsonrpc/lib";
 import { MessageBusIntegration } from "./workspace/messagebus-integration";
@@ -226,11 +226,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                     const websocket = toIWebSocket(ws);
                     (request as any).wsConnection = createWebSocketConnection(websocket, console);
                 },
-<<<<<<< HEAD
                 this.sessionHandler.websocket(),
-=======
-                this.sessionHandler.websocket,
->>>>>>> d086117aa (add ws handler)
                 ...initSessionHandlers,
                 wsPingPongHandler.handler(),
                 (ws: ws, req: express.Request) => {
