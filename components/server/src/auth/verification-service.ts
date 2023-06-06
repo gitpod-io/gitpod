@@ -77,7 +77,7 @@ export class VerificationService {
         return user;
     }
 
-    public async sendVerificationToken(phoneNumber: string): Promise<void> {
+    public async sendVerificationToken(phoneNumber: string, channel: "sms" | "call" = "sms"): Promise<void> {
         if (!this.verifyService) {
             throw new Error("No verification service configured.");
         }
@@ -92,8 +92,8 @@ export class VerificationService {
         if (await isBlockedNumber) {
             throw new ResponseError(ErrorCodes.INVALID_VALUE, "The given phone number is blocked due to abuse.");
         }
-        const verification = await this.verifyService.verifications.create({ to: phoneNumber, channel: "sms" });
-        log.info("Verification code sent", { phoneNumber, status: verification.status });
+        const verification = await this.verifyService.verifications.create({ to: phoneNumber, channel });
+        log.info("Verification code sent", { phoneNumber, status: verification.status, channel });
     }
 
     public async verifyVerificationToken(phoneNumber: string, oneTimePassword: string): Promise<boolean> {

@@ -740,7 +740,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async sendPhoneNumberVerificationToken(ctx: TraceContext, rawPhoneNumber: string): Promise<void> {
         this.checkUser("sendPhoneNumberVerificationToken");
-        return this.verificationService.sendVerificationToken(formatPhoneNumber(rawPhoneNumber));
+
+        // Check if verify via call is enabled
+        const phoneVerificationByCall = await this.configCatClientFactory().getValueAsync(
+            "phoneVerificationByCall",
+            false,
+            {
+                user: this.user,
+            },
+        );
+
+        const channel = phoneVerificationByCall ? "call" : "sms";
+
+        return this.verificationService.sendVerificationToken(formatPhoneNumber(rawPhoneNumber), channel);
     }
 
     public async verifyPhoneNumberVerificationToken(
