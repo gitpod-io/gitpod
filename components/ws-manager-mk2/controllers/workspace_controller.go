@@ -32,6 +32,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
+	"github.com/go-logr/logr"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -140,20 +141,12 @@ func (r *WorkspaceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	log.Info("updating workspace status", "status", workspace.Status, "podStatus", podStatus)
 	err = r.Status().Update(ctx, &workspace)
 	if err != nil {
-		if errors.IsConflict(err) {
-			// Conflicts are to be expected, don't return as an error to reduce noise in
-			// our error logging. We still want to requeue asap though.
-			// `Requeue: true` has the same requeuing behaviour as returning an error.
-			log.Info("failed to update workspace status due to conflict", "error", err)
-			return ctrl.Result{Requeue: true}, nil
-		} else {
-			return ctrl.Result{}, fmt.Errorf("failed to update workspace status: %w", err)
-		}
+		return errorResultLogConflict(log, fmt.Errorf("failed to update workspace status: %w", err))
 	}
 
 	result, err := r.actOnStatus(ctx, &workspace, workspacePods)
 	if err != nil {
-		return result, fmt.Errorf("failed to act on status: %w", err)
+		return errorResultLogConflict(log, fmt.Errorf("failed to act on status: %w", err))
 	}
 
 	return result, nil
@@ -470,6 +463,19 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 	})
 
 	return err
+}
+
+// errorLogConflict logs the error if it's a conflict, instead of returning it as a reconciler error.
+// This is to reduce noise in our error logging, as conflicts are to be expected.
+// For conflicts, instead a result with `Requeue: true` is returned, which has the same requeuing
+// behaviour as returning an error.
+func errorResultLogConflict(log logr.Logger, err error) (ctrl.Result, error) {
+	if errors.IsConflict(err) {
+		log.Info("conflict error", "error", err)
+		return ctrl.Result{Requeue: true}, nil
+	} else {
+		return ctrl.Result{}, err
+	}
 }
 
 var (
