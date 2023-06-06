@@ -224,6 +224,19 @@ export class UserController {
                     req.session!.save((err) => (err ? reject(err) : resolve())),
                 );
 
+                const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
+                    "jwtSessionCookieEnabled",
+                    false,
+                    {
+                        user: user,
+                    },
+                );
+                if (isJWTCookieExperimentEnabled) {
+                    const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
+                    res.cookie(cookie.name, cookie.value, cookie.opts);
+                    reportJWTCookieIssued();
+                }
+
                 res.sendStatus(200);
             }),
         );
