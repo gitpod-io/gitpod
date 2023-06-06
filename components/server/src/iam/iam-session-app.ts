@@ -14,7 +14,6 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Identity, User } from "@gitpod/gitpod-protocol";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
 import { ResponseError } from "vscode-ws-jsonrpc";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
 
 @injectable()
@@ -64,31 +63,11 @@ export class IamSessionApp {
 
         const user = existingUser || (await this.createNewOIDCUser(payload));
 
-        await new Promise<void>((resolve, reject) => {
-            req.login(user, (err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve();
-                }
-            });
-        });
-
-        const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "jwtSessionCookieEnabled",
-            false,
-            {
-                user: user,
-            },
-        );
-        if (isJWTCookieExperimentEnabled) {
-            const cookie = await this.session.createJWTSessionCookie(user.id);
-            res.cookie(cookie.name, cookie.value, cookie.opts);
-            reportJWTCookieIssued();
-        }
+        const cookie = await this.session.createJWTSessionCookie(user.id);
+        res.cookie(cookie.name, cookie.value, cookie.opts);
+        reportJWTCookieIssued();
 
         return {
-            sessionId: req.sessionID,
             userId: user.id,
         };
     }

@@ -313,9 +313,15 @@ func (s *Service) createSession(ctx context.Context, flowResult *AuthFlowResult,
 	}
 
 	url := fmt.Sprintf("http://%s/session", s.sessionServiceAddress)
-	res, err := http.Post(url, "application/json", bytes.NewReader(payload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to construct session request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to make request to /session endpoint: %w", err)
 	}
 
 	body, err := io.ReadAll(res.Body)
