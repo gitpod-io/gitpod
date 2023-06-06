@@ -55,14 +55,14 @@ export class UserController {
 
         router.get("/login", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (req.isAuthenticated()) {
-                log.info({ sessionId: req.sessionID }, "(Auth) User is already authenticated.", { "login-flow": true });
+                log.info("(Auth) User is already authenticated.", { "login-flow": true });
                 // redirect immediately
                 const redirectTo = this.getSafeReturnToParam(req) || this.config.hostUrl.asDashboard().toString();
                 res.redirect(redirectTo);
                 return;
             }
             const clientInfo = getRequestingClientInfo(req);
-            log.info({ sessionId: req.sessionID }, "(Auth) User started the login process", {
+            log.info("(Auth) User started the login process", {
                 "login-flow": true,
                 clientInfo,
             });
@@ -620,7 +620,7 @@ export class UserController {
 
             if (!!contextUrlHost && authProvidersOnDashboard.find((a) => a === contextUrlHost)) {
                 req.query.host = contextUrlHost;
-                log.debug({ sessionId: req.sessionID }, "Guessed auth provider from returnTo URL: " + contextUrlHost, {
+                log.debug("Guessed auth provider from returnTo URL: " + contextUrlHost, {
                     "login-flow": true,
                     query: req.query,
                 });
@@ -642,7 +642,7 @@ export class UserController {
         // @ts-ignore Type 'ParsedQs' is not assignable
         const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
         if (!returnToURL) {
-            log.debug({ sessionId: req.sessionID }, "Empty redirect URL");
+            log.debug("Empty redirect URL");
             return;
         }
 
@@ -653,7 +653,7 @@ export class UserController {
             return returnToURL;
         }
 
-        log.debug({ sessionId: req.sessionID }, "The redirect URL does not match", { query: req.query });
+        log.debug("The redirect URL does not match", { query: req.query });
         return;
     }
 
