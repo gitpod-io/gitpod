@@ -5,6 +5,7 @@
  */
 
 import * as express from "express";
+import * as websocket from "ws";
 import { injectable, inject, postConstruct } from "inversify";
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -13,6 +14,7 @@ import { Config } from "./config";
 import { reportJWTCookieIssued, reportSessionWithJWT } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
+import { MaybePromise, WsNextFunction, WsRequestHandler } from "./express/ws-handler";
 
 @injectable()
 export class SessionHandler {
@@ -86,6 +88,54 @@ export class SessionHandler {
                 }
             }
         };
+    }
+
+    public async websocket(ws: websocket, req: express.Request, next: WsNextFunction): Promise<void> {
+        const cookies = parseCookieHeader(req.headers.cookie || "");
+        const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
+
+        if (!jwtToken) {
+            log.debug("No JWT session present on request");
+
+            ws.emit("error", "Request is not authenticated - no JWT session present on request.");
+            ws.terminate();
+            return;
+        }
+
+        try {
+            const claims = await this.authJWT.verify(jwtToken);
+            log.debug("JWT Session token verified", {
+                claims,
+            });
+
+            const subject = claims.sub;
+            if (!subject) {
+                throw new Error("Subject is missing from JWT session claims");
+            }
+
+            const user = await this.userDb.findUserById(subject);
+            if (!user) {
+                throw new Error("No user exists.");
+            }
+
+            // We set the user object on the request to signal the user is authenticated.
+            // Passport uses the `user` property on the request to determine if the session
+            // is authenticated.
+            req.user = user;
+
+            // Trigger the next middleware in the chain.
+            next();
+        } catch (err) {
+            log.warn("Failed to authenticate websocket with JWT Session", err);
+            // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
+
+            ws.emit("error", "Request is did not contain valid credentials - invalid JWT on request.");
+            ws.terminate();
+            // Redirect the user to an error page
+            return;
+        } finally {
+            reportSessionWithJWT(true);
+        }
     }
 
     protected async jwtSessionHandler(
