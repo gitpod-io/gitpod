@@ -226,7 +226,11 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                     const websocket = toIWebSocket(ws);
                     (request as any).wsConnection = createWebSocketConnection(websocket, console);
                 },
+<<<<<<< HEAD
                 this.sessionHandler.websocket(),
+=======
+                this.sessionHandler.websocket,
+>>>>>>> d086117aa (add ws handler)
                 ...initSessionHandlers,
                 wsPingPongHandler.handler(),
                 (ws: ws, req: express.Request) => {
