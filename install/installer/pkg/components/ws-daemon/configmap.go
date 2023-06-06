@@ -104,8 +104,6 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 		procLimit = ucfg.Workspace.ProcLimit
 
-		wscontroller.Enabled = ucfg.Workspace.UseWsmanagerMk2
-		wscontroller.WorkingAreaSuffix = "-mk2"
 		wscontroller.MaxConcurrentReconciles = 15
 
 		if ucfg.Workspace.WorkspaceCIDR != "" {
@@ -133,8 +131,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				WorkspaceCIDR: workspaceCIDR,
 			},
 			Content: content.Config{
-				WorkingArea:     "/mnt/workingarea",
-				WorkingAreaNode: HostWorkingArea,
+				WorkingArea:     ContainerWorkingAreaMk2,
+				WorkingAreaNode: HostWorkingAreaMk2,
 				TmpDir:          "/tmp",
 				UserNamespaces: content.UserNamespacesConfig{
 					FSShift: content.FSShiftMethod(fsshift),
@@ -168,7 +166,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				Enabled:  true,
 				Interval: util.Duration(5 * time.Minute),
 				Locations: []diskguard.LocationConfig{{
-					Path:          "/mnt/workingarea",
+					Path:          ContainerWorkingAreaMk2,
 					MinBytesAvail: 21474836480,
 				}},
 			},
