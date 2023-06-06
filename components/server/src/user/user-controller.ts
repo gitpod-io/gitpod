@@ -256,19 +256,18 @@ export class UserController {
 
             let redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
 
-            if (req.isAuthenticated()) {
-                req.logout();
-            }
             try {
+                if (req.isAuthenticated()) {
+                    req.logout();
+                }
                 if (req.session) {
                     await destroySession(req.session);
                 }
+                // clear cookies
+                this.sessionHandlerProvider.clearSessionCookie(res, this.config);
             } catch (error) {
                 log.warn(logContext, "(Logout) Error on Logout.", { error, req, ...logPayload });
             }
-
-            // clear cookies
-            this.sessionHandlerProvider.clearSessionCookie(res, this.config);
 
             // then redirect
             log.info(logContext, "(Logout) Redirecting...", { redirectToUrl, ...logPayload });
