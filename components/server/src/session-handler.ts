@@ -102,6 +102,7 @@ export class SessionHandler {
 
             // Redirect the user to an error page
             res.redirect(this.config.hostUrl.asSorry("No credentials present on request, please sign-in.").toString());
+            return;
         }
 
         try {
