@@ -153,7 +153,7 @@ tasks {
         // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
         var pluginChannel: String? = System.getenv("JB_GATEWAY_GITPOD_PLUGIN_CHANNEL")
         if (pluginChannel.isNullOrBlank()) {
-            pluginChannel = if (pluginVersion.contains("-main.")) {
+            pluginChannel = if (pluginVersion.contains("-main-gha.")) {
                 "Stable"
             } else {
                 "Dev"
