@@ -2844,7 +2844,7 @@
     "@types/qs" "*"
     "@types/range-parser" "*"
 
-"@types/express-session@*", "@types/express-session@1.17.4":
+"@types/express-session@*":
   version "1.17.4"
   resolved "https://registry.npmjs.org/@types/express-session/-/express-session-1.17.4.tgz"
   integrity sha512-7cNlSI8+oOBUHTfPXMwDxF/Lchx5aJ3ho7+p9jJZYVg9dVDJFh3qdMXmJtRsysnvS+C6x46k9DRYmrmCkE+MVg==
@@ -7874,7 +7874,7 @@ express-mysql-session@^2.1.0:
     mysql "2.18.1"
     underscore "1.13.1"
 
-express-session@1.17.2, express-session@^1.15.6:
+express-session@1.17.2:
   version "1.17.2"
   resolved "https://registry.npmjs.org/express-session/-/express-session-1.17.2.tgz"
   integrity sha512-mPcYcLA0lvh7D4Oqr5aNJFMtBMKPLl++OKKxkHzZ0U0oDq1rpKBnkR5f5vCHR26VeArlTOEF9td4x5IjICksRQ==

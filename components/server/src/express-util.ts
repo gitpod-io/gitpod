@@ -7,7 +7,6 @@
 import { URL } from "url";
 import * as express from "express";
 import * as crypto from "crypto";
-import * as session from "express-session";
 
 export const query = (...tuples: [string, string][]) => {
     if (tuples.length === 0) {
@@ -33,29 +32,6 @@ export const isAllowedWebsocketDomain = (originHeader: string, gitpodHostName: s
         return false;
     }
 };
-
-export function saveSession(session: session.Session): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        session.save((err: any) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve();
-            }
-        });
-    });
-}
-export function destroySession(session: session.Session): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-        session.destroy((error: any) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve();
-            }
-        });
-    });
-}
 
 /**
  * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For

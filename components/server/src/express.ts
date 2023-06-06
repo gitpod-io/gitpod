@@ -5,8 +5,6 @@
  */
 
 import { User as GitpodUser } from "@gitpod/gitpod-protocol";
-import { AuthFlow } from "./auth/auth-provider";
-import * as session from "express-session";
 
 // use declaration merging (https://www.typescriptlang.org/docs/handbook/declaration-merging.html) to augment the standard passport/express definitions
 declare global {
@@ -14,11 +12,3 @@ declare global {
         export interface User extends GitpodUser {}
     }
 }
-
-declare module "express-session" {
-    interface SessionData {
-        authFlow?: AuthFlow;
-    }
-}
-/* shortcut helper type */
-export type Session = session.Session & Partial<session.SessionData>;
