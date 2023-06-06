@@ -25,6 +25,9 @@ service WorkspacesService {
     // CreateAndStartWorkspace creates a new workspace and starts it.
     rpc CreateAndStartWorkspace(CreateAndStartWorkspaceRequest) returns (CreateAndStartWorkspaceResponse) {}
 
+    // StartWorkspace starts an existing user's workspace
+    rpc StartWorkspace(StartWorkspaceRequest) returns (StartWorkspaceResponse) {}
+
     // StopWorkspace stops a running workspace (instance).
     // Errors:
     //   NOT_FOUND:           the workspace_id is unkown

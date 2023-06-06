@@ -36,6 +36,8 @@ type WorkspacesServiceClient interface {
 	GetOwnerToken(ctx context.Context, in *GetOwnerTokenRequest, opts ...grpc.CallOption) (*GetOwnerTokenResponse, error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
 	CreateAndStartWorkspace(ctx context.Context, in *CreateAndStartWorkspaceRequest, opts ...grpc.CallOption) (*CreateAndStartWorkspaceResponse, error)
+	// StartWorkspace starts an existing user's workspace
+	StartWorkspace(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (*StartWorkspaceResponse, error)
 	// StopWorkspace stops a running workspace (instance).
 	// Errors:
 	//
@@ -125,6 +127,15 @@ func (c *workspacesServiceClient) CreateAndStartWorkspace(ctx context.Context, i
 	return out, nil
 }
 
+func (c *workspacesServiceClient) StartWorkspace(ctx context.Context, in *StartWorkspaceRequest, opts ...grpc.CallOption) (*StartWorkspaceResponse, error) {
+	out := new(StartWorkspaceResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/StartWorkspace", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *workspacesServiceClient) StopWorkspace(ctx context.Context, in *StopWorkspaceRequest, opts ...grpc.CallOption) (*StopWorkspaceResponse, error) {
 	out := new(StopWorkspaceResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/StopWorkspace", in, out, opts...)
@@ -166,6 +177,8 @@ type WorkspacesServiceServer interface {
 	GetOwnerToken(context.Context, *GetOwnerTokenRequest) (*GetOwnerTokenResponse, error)
 	// CreateAndStartWorkspace creates a new workspace and starts it.
 	CreateAndStartWorkspace(context.Context, *CreateAndStartWorkspaceRequest) (*CreateAndStartWorkspaceResponse, error)
+	// StartWorkspace starts an existing user's workspace
+	StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error)
 	// StopWorkspace stops a running workspace (instance).
 	// Errors:
 	//
@@ -198,6 +211,9 @@ func (UnimplementedWorkspacesServiceServer) GetOwnerToken(context.Context, *GetO
 }
 func (UnimplementedWorkspacesServiceServer) CreateAndStartWorkspace(context.Context, *CreateAndStartWorkspaceRequest) (*CreateAndStartWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAndStartWorkspace not implemented")
+}
+func (UnimplementedWorkspacesServiceServer) StartWorkspace(context.Context, *StartWorkspaceRequest) (*StartWorkspaceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StartWorkspace not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) StopWorkspace(context.Context, *StopWorkspaceRequest) (*StopWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method StopWorkspace not implemented")
@@ -314,6 +330,24 @@ func _WorkspacesService_CreateAndStartWorkspace_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspacesService_StartWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StartWorkspaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspacesServiceServer).StartWorkspace(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.WorkspacesService/StartWorkspace",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspacesServiceServer).StartWorkspace(ctx, req.(*StartWorkspaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _WorkspacesService_StopWorkspace_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StopWorkspaceRequest)
 	if err := dec(in); err != nil {
@@ -390,6 +424,10 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateAndStartWorkspace",
 			Handler:    _WorkspacesService_CreateAndStartWorkspace_Handler,
+		},
+		{
+			MethodName: "StartWorkspace",
+			Handler:    _WorkspacesService_StartWorkspace_Handler,
 		},
 		{
 			MethodName: "StopWorkspace",

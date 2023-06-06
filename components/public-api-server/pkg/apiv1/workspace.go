@@ -231,7 +231,7 @@ func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Reque
 	return connect.NewResponse(&v1.StopWorkspaceResponse{}), nil
 }
 
-func (s *WorkspaceService) RestartWorkspace(ctx context.Context, req *connect.Request[v1.StartWorkspaceRequest]) (*connect.Response[v1.StartWorkspaceResponse], error) {
+func (s *WorkspaceService) StartWorkspace(ctx context.Context, req *connect.Request[v1.StartWorkspaceRequest]) (*connect.Response[v1.StartWorkspaceResponse], error) {
 	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
 		return nil, err
