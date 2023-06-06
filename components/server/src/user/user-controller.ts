@@ -6,7 +6,7 @@
 
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
-import { UserDB, DBUser, WorkspaceDB, OneTimeSecretDB, TeamDB } from "@gitpod/gitpod-db/lib";
+import { DBUser, OneTimeSecretDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib/user-db";
 import * as express from "express";
 import { Authenticator } from "../auth/authenticator";
@@ -17,7 +17,7 @@ import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SessionHandler } from "../session-handler";
 import { URL } from "url";
-import { saveSession, getRequestingClientInfo, destroySession } from "../express-util";
+import { destroySession, getRequestingClientInfo, saveSession } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { increaseLoginCounter } from "../prometheus-metrics";
@@ -165,6 +165,9 @@ export class UserController {
                     await this.teamDb.addMemberToTeam(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id);
                     await this.teamDb.setTeamMemberRole(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id, "owner");
                 }
+
+                const cookie = await this.sessionHandlerProvider.createJWTSessionCookie(user.id);
+                res.cookie(cookie.name, cookie.value, cookie.opts);
 
                 // Create a session for the admin user.
                 await new Promise<void>((resolve, reject) => {
