@@ -157,18 +157,9 @@ export class UserController {
                     await this.teamDb.setTeamMemberRole(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id, "owner");
                 }
 
-                const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
-                    "jwtSessionCookieEnabled",
-                    false,
-                    {
-                        user: user,
-                    },
-                );
-                if (isJWTCookieExperimentEnabled) {
-                    const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
-                    res.cookie(cookie.name, cookie.value, cookie.opts);
-                    reportJWTCookieIssued();
-                }
+                const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
+                res.cookie(cookie.name, cookie.value, cookie.opts);
+                reportJWTCookieIssued();
 
                 // Create a session for the admin user.
                 await new Promise<void>((resolve, reject) => {
@@ -207,25 +198,11 @@ export class UserController {
                 }
 
                 // mimick the shape of a successful login
-                (req.session! as any).passport = { user: user.id };
+                req.user = user;
 
-                // Save session to DB
-                await new Promise<void>((resolve, reject) =>
-                    req.session!.save((err) => (err ? reject(err) : resolve())),
-                );
-
-                const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
-                    "jwtSessionCookieEnabled",
-                    false,
-                    {
-                        user: user,
-                    },
-                );
-                if (isJWTCookieExperimentEnabled) {
-                    const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
-                    res.cookie(cookie.name, cookie.value, cookie.opts);
-                    reportJWTCookieIssued();
-                }
+                const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
+                res.cookie(cookie.name, cookie.value, cookie.opts);
+                reportJWTCookieIssued();
 
                 res.sendStatus(200);
             }),

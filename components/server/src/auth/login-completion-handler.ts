@@ -84,20 +84,9 @@ export class LoginCompletionHandler {
             );
         }
 
-        const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "jwtSessionCookieEnabled",
-            false,
-            {
-                user: user,
-            },
-        );
-        if (isJWTCookieExperimentEnabled) {
-            const cookie = await this.session.createJWTSessionCookie(user.id);
-
-            response.cookie(cookie.name, cookie.value, cookie.opts);
-
-            reportJWTCookieIssued();
-        }
+        const cookie = await this.session.createJWTSessionCookie(user.id);
+        response.cookie(cookie.name, cookie.value, cookie.opts);
+        reportJWTCookieIssued();
 
         response.redirect(returnTo);
     }
