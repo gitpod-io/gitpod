@@ -180,8 +180,6 @@ func NewDaemon(config Config) (*Daemon, error) {
 	}
 
 	contentCfg := config.Content
-	contentCfg.WorkingArea += config.WorkspaceController.WorkingAreaSuffix
-	contentCfg.WorkingAreaNode += config.WorkspaceController.WorkingAreaSuffix
 
 	xfs, err := quota.NewXFS(contentCfg.WorkingArea)
 	if err != nil {
