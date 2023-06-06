@@ -613,6 +613,8 @@ export class WorkspaceStarter {
                         projectId: workspace.projectId,
                         contextURL: workspace.contextURL,
                         type: workspace.type,
+                        class: instance.workspaceClass,
+                        ideConfig: instance.configuration?.ideConfig,
                         usesPrebuild: spec.getInitializer()?.hasPrebuild(),
                     },
                 });
