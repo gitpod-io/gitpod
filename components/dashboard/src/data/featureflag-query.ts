@@ -23,6 +23,7 @@ const featureFlags = {
     linkedinConnectionForOnboarding: false,
     enableDedicatedOnboardingFlow: false,
     usageDownload: false,
+    phoneVerificationByCall: false,
 };
 
 export const useFeatureFlag = (featureFlag: keyof typeof featureFlags) => {
