@@ -96,9 +96,7 @@ export class SessionHandler {
 
         if (!jwtToken) {
             log.debug("No JWT session present on request");
-
-            ws.emit("error", "Request is not authenticated - no JWT session present on request.");
-            ws.terminate();
+            next();
             return;
         }
 
@@ -127,12 +125,7 @@ export class SessionHandler {
             next();
         } catch (err) {
             log.warn("Failed to authenticate websocket with JWT Session", err);
-            // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
-
-            ws.emit("error", "Request is did not contain valid credentials - invalid JWT on request.");
-            ws.terminate();
-            // Redirect the user to an error page
-            return;
+            next();
         } finally {
             reportSessionWithJWT(true);
         }
@@ -147,11 +140,7 @@ export class SessionHandler {
         const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
         if (!jwtToken) {
             log.debug("No JWT session present on request");
-            // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
-            this.clearSessionCookie(res, this.config);
-
-            // Redirect the user to an error page
-            res.redirect(this.config.hostUrl.asSorry("No credentials present on request, please sign-in.").toString());
+            next();
             return;
         }
 
@@ -181,10 +170,7 @@ export class SessionHandler {
         } catch (err) {
             log.warn("Failed to authenticate user with JWT Session", err);
             // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
-            this.clearSessionCookie(res, this.config);
-
-            // Redirect the user to an error page
-            res.redirect(this.config.hostUrl.asSorry(err).toString());
+            next();
         } finally {
             reportSessionWithJWT(true);
         }
