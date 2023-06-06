@@ -23,6 +23,7 @@ const _IDENTITY1: Identity = {
     authId: "1234",
     authName: "gero",
     deleted: false,
+    lastSigninTime: undefined,
     primaryEmail: undefined,
     readonly: false,
 };
@@ -31,6 +32,7 @@ const _IDENTITY2: Identity = {
     authId: "4321",
     authName: "gero",
     deleted: false,
+    lastSigninTime: undefined,
     primaryEmail: undefined,
     readonly: false,
 };

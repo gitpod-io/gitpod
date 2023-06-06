@@ -68,18 +68,6 @@ export namespace User {
     export function getIdentity(user: User, authProviderId: string): Identity | undefined {
         return user.identities.find((id) => id.authProviderId === authProviderId);
     }
-    export function censor(user: User): User {
-        const res = { ...user };
-        delete res.additionalData;
-        res.identities = res.identities.map((i) => {
-            // The user field is not in the Identity shape, but actually exists on DBIdentity.
-            // Trying to push this object out via JSON RPC will fail because of the cyclic nature
-            // of this field.
-            delete (i as any).user;
-            return i;
-        });
-        return res;
-    }
 
     /**
      * Returns the stored email or if it doesn't exist returns the primaryEmail of the first identity this user signed up with.
@@ -657,7 +645,10 @@ export interface Identity {
     primaryEmail?: string;
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
-    // readonly identities cannot be modified by the user
+    // The last time this entry was touched during a signin.
+    lastSigninTime?: string;
+
+    // @deprecated as no longer in use since '19
     readonly?: boolean;
 }
 

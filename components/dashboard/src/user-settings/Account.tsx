@@ -5,7 +5,7 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -17,7 +17,6 @@ import Alert from "../components/Alert";
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
     const [modal, setModal] = useState(false);
-    const primaryEmail = User.getPrimaryEmail(user!) || "";
     const [typedEmail, setTypedEmail] = useState("");
     const original = User.getProfile(user!);
     const [profileState, setProfileState] = useState(original);
@@ -25,7 +24,28 @@ export default function Account() {
     const [updated, setUpdated] = useState(false);
     const canUpdateEmail = user && !User.isOrganizationOwned(user);
 
-    const saveProfileState = () => {
+    const [email, setEmail] = useState("");
+
+    useEffect(() => {
+        if (!user) {
+            return;
+        }
+        if (User.isOrganizationOwned(user)) {
+            const compareTime = (a?: string, b?: string) => (a || "").localeCompare(b || "");
+            const recentlyUsedSSOIdentity = user.identities
+                .sort((a, b) => compareTime(a.lastSigninTime, b.lastSigninTime))
+                // optimistically pick the most recent one
+                .reverse()[0];
+            setEmail(recentlyUsedSSOIdentity?.primaryEmail!);
+        } else {
+            const primaryEmail = User.getPrimaryEmail(user!);
+            if (primaryEmail) {
+                setEmail(primaryEmail);
+            }
+        }
+    }, [user]);
+
+    const saveProfileState = useCallback(() => {
         if (profileState.name.trim() === "") {
             setErrorMessage("Name must not be empty.");
             return;
@@ -50,12 +70,12 @@ export default function Account() {
         setUser(updatedUser);
         getGitpodService().server.updateLoggedInUser(updatedUser);
         setUpdated(true);
-    };
+    }, [canUpdateEmail, profileState, setUser, user]);
 
-    const deleteAccount = async () => {
+    const deleteAccount = useCallback(async () => {
         await getGitpodService().server.deleteAccount();
         document.location.href = gitpodHostUrl.asApiLogout().toString();
-    };
+    }, []);
 
     const close = () => setModal(false);
     return (
@@ -64,7 +84,7 @@ export default function Account() {
                 title="Delete Account"
                 areYouSureText="You are about to permanently delete your account."
                 buttonText="Delete Account"
-                buttonDisabled={typedEmail !== primaryEmail}
+                buttonDisabled={typedEmail !== email}
                 visible={modal}
                 onClose={close}
                 onConfirm={deleteAccount}
@@ -100,6 +120,7 @@ export default function Account() {
                         }}
                         errorMessage={errorMessage}
                         updated={updated}
+                        email={email}
                         emailIsReadonly={!canUpdateEmail}
                     >
                         <div className="flex flex-row mt-8">
@@ -125,6 +146,7 @@ function ProfileInformation(props: {
     profileState: User.Profile;
     setProfileState: (newState: User.Profile) => void;
     errorMessage: string;
+    email: string;
     emailIsReadonly?: boolean;
     updated: boolean;
     children?: React.ReactChild[] | React.ReactChild;
@@ -160,7 +182,7 @@ function ProfileInformation(props: {
                         <h4>Email</h4>
                         <input
                             type="text"
-                            value={props.profileState.email}
+                            value={props.email}
                             disabled={props.emailIsReadonly}
                             onChange={(e) => props.setProfileState({ ...props.profileState, email: e.target.value })}
                         />

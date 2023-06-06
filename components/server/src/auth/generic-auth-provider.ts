@@ -404,7 +404,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
         if (flowContext) {
             const logPayload = {
                 withIdentity: VerifyResult.WithIdentity.is(flowContext) ? flowContext.candidate : undefined,
-                withUser: VerifyResult.WithUser.is(flowContext) ? User.censor(flowContext.user) : undefined,
+                withUser: VerifyResult.WithUser.is(flowContext) ? flowContext.user.id : undefined,
                 ...defaultLogPayload,
             };
 
@@ -544,7 +544,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                         ...defaultLogPayload,
                         authUser,
                         candidate,
-                        currentGitpodUser: User.censor(currentGitpodUser),
+                        currentGitpodUser: currentGitpodUser.id,
                         clientInfo,
                     });
                     done(
@@ -571,7 +571,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                         ...defaultLogPayload,
                         authUser,
                         candidate,
-                        currentGitpodUser: User.censor(currentGitpodUser),
+                        currentGitpodUser: currentGitpodUser.id,
                         clientInfo,
                     });
                     done(error, undefined);
@@ -615,7 +615,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
 
                 flowContext = <VerifyResult.WithUser>{
-                    user: User.censor(currentGitpodUser),
+                    user: currentGitpodUser,
                     isBlocked,
                     returnToUrl: authFlow.returnTo,
                     authHost: this.host,
