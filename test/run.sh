@@ -99,6 +99,7 @@ fi
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 
 go install github.com/jstemmer/go-junit-report/v2@latest
+npm i -g xunit-viewer
 
 if [ "$TEST_SUITE" == "workspace" ]; then
   TEST_NAME="workspace"
@@ -109,7 +110,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
 
   set +e
   # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-SERIAL.xml" -iocopy
+  go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}-SERIAL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
@@ -120,7 +121,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
   echo "running integration for ${TEST_NAME}-serial-only"
   set +e
   # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
+  go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
@@ -141,7 +142,7 @@ else
 
     cd "${TEST_PATH}"
     set +e
-    go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}.xml" -iocopy
+    go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}.xml" -iocopy
     RC=${PIPESTATUS[0]}
     set -e
     cd -
@@ -151,5 +152,7 @@ else
     fi
   done
 fi
+
+xunit-viewer -r ./results -o test-output.html
 
 exit $FAILURE_COUNT
