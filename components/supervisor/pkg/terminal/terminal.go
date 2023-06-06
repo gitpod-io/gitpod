@@ -400,6 +400,9 @@ func (term *Term) Close(ctx context.Context) error {
 	var commandErr error
 	if term.Command.Process != nil {
 		commandErr = process.TerminateSync(ctx, term.Command.Process.Pid)
+		if process.IsNotChildProcess(commandErr) {
+			commandErr = nil
+		}
 	}
 
 	writeErr := term.Stdout.Close()
