@@ -14,7 +14,6 @@ import { UserService } from "../user/user-service";
 
 import * as passport from "passport";
 import * as express from "express";
-import * as session from "express-session";
 import * as request from "supertest";
 
 import * as chai from "chai";
@@ -26,9 +25,8 @@ const expect = chai.expect;
 @suite(timeout(10000))
 class TestIamSessionApp {
     protected app: IamSessionApp;
-    protected store: session.MemoryStore;
 
-    protected cookieName = "test-session-name";
+    protected cookieName = "test-jwt-cookie-name";
 
     protected knownSubjectID = "111";
     protected knownEmail = "tester@my.org";
@@ -98,7 +96,20 @@ class TestIamSessionApp {
         const container = new Container();
         container.load(
             new ContainerModule((bind) => {
-                bind(SessionHandler).toConstantValue(<any>{}); // disable due to DB dependency
+                bind(SessionHandler).toConstantValue(<any>{
+                    createJWTSessionCookie: async () => {
+                        return {
+                            name: this.cookieName,
+                            value: "jwt-cookie-value",
+                            opts: {
+                                maxAge: 1000,
+                                httpOnly: true,
+                                sameSite: "lax",
+                                secure: true,
+                            },
+                        };
+                    },
+                }); // disable due to DB dependency
                 bind(IamSessionApp).toSelf().inSingletonScope();
                 bind(Authenticator).toConstantValue(<any>{}); // unused
                 bind(Config).toConstantValue(<any>{}); // unused
@@ -109,36 +120,7 @@ class TestIamSessionApp {
         this.app = container.get(IamSessionApp);
         passport.serializeUser<string>((user: any, done) => done(null, user.id));
 
-        this.store = new session.MemoryStore();
-        this.app.getMiddlewares = () => [
-            express.json(),
-            session({
-                secret: "test123",
-                store: this.store,
-                resave: true,
-                saveUninitialized: true,
-                name: this.cookieName,
-                genid: () => "session-123",
-            }),
-            passport.initialize(),
-            passport.session(),
-        ];
-    }
-
-    @test public async testSessionRequestStoresNewSession() {
-        var _set = this.store.set;
-        var count = 0;
-
-        this.store.set = function set() {
-            count++;
-            return _set.apply(this, arguments as any);
-        };
-        await request(this.app.create())
-            .post("/session")
-            .set("Content-Type", "application/json")
-            .send(JSON.stringify(this.payload));
-
-        expect(count, "sessions added").to.equal(1);
+        this.app.getMiddlewares = () => [express.json(), passport.initialize()];
     }
 
     @test public async testSessionRequestResponsesWithSetCookie_createUser() {
