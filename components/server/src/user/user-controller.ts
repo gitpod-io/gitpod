@@ -81,15 +81,6 @@ export class UserController {
                 return;
             }
 
-            // Make sure, the session is stored before we initialize the OAuth flow
-            try {
-                await saveSession(req.session);
-            } catch (error) {
-                increaseLoginCounter("failed", "unknown");
-                log.error(`Login failed due to session save error; redirecting to /sorry`, { req, error, clientInfo });
-                res.redirect(this.getSorryUrl("Login failed 🦄 Please try again"));
-            }
-
             // Proceed with login
             this.ensureSafeReturnToParam(req);
             await this.authenticator.authenticate(req, res, next);
@@ -100,10 +91,9 @@ export class UserController {
             _userId?: string,
         ) => {
             return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-                const sessionId = req.sessionID;
                 let userId = _userId || req.params.userId;
                 try {
-                    log.debug({ sessionId, userId }, "OTS based login started.");
+                    log.debug({ userId }, "OTS based login started.");
                     const secret = await this.otsDb.get(req.params.key);
                     if (!secret) {
                         throw new ResponseError(401, "Invalid OTS key");
@@ -116,14 +106,14 @@ export class UserController {
 
                     await verifyAndHandle(req, res, user, secret);
 
-                    log.debug({ sessionId, userId }, "OTS based login successful.");
+                    log.debug({ userId }, "OTS based login successful.");
                 } catch (err) {
                     let code = 500;
                     if (err.code !== undefined) {
                         code = err.code;
                     }
                     res.sendStatus(code);
-                    log.error({ sessionId, userId }, "OTS based login failed", err, { code });
+                    log.error({ userId }, "OTS based login failed", err, { code });
                 }
             };
         };
@@ -268,7 +258,7 @@ export class UserController {
         router.get("/logout", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             const logContext = LogContext.from({ user: req.user, request: req });
             const clientInfo = getRequestingClientInfo(req);
-            const logPayload = { session: req.session, clientInfo };
+            const logPayload = { clientInfo };
             log.info(logContext, "(Logout) Logging out.", logPayload);
 
             // stop all running workspaces
@@ -285,13 +275,6 @@ export class UserController {
 
             if (req.isAuthenticated()) {
                 req.logout();
-            }
-            try {
-                if (req.session) {
-                    await destroySession(req.session);
-                }
-            } catch (error) {
-                log.warn(logContext, "(Logout) Error on Logout.", { error, req, ...logPayload });
             }
 
             // clear cookies

@@ -23,7 +23,6 @@ import "../express"; // helps ts-loader to find the merged declarations in Expre
 @injectable()
 export class Authenticator {
     protected passportInitialize: express.Handler;
-    protected passportSession: express.Handler;
 
     @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected userDb: UserDB;
@@ -38,7 +37,6 @@ export class Authenticator {
     protected setup() {
         // Setup passport
         this.passportInitialize = passport.initialize();
-        this.passportSession = passport.session();
         passport.serializeUser<string>((user: User, done) => {
             if (user) {
                 done(null, user.id);
@@ -64,7 +62,6 @@ export class Authenticator {
     get initHandlers(): express.Handler[] {
         return [
             this.passportInitialize, // adds `passport.user` to session
-            this.passportSession, // deserializes session user into  `req.user`
         ];
     }
 
@@ -127,13 +124,6 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
             return;
         }
-        if (!req.session) {
-            // The session is missing entirely: count as client error
-            increaseLoginCounter("failed_client", authProvider.info.host);
-            log.info({}, `No session.`, { "login-flow": true });
-            res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
-            return;
-        }
 
         if (!authProvider.info.verified) {
             increaseLoginCounter("failed", authProvider.info.host);
@@ -190,11 +180,6 @@ export class Authenticator {
     }
 
     async authorize(req: express.Request, res: express.Response, next: express.NextFunction) {
-        if (!req.session) {
-            log.info({}, `No session.`, { "authorize-flow": true });
-            res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
-            return;
-        }
         const user = req.user;
         if (!req.isAuthenticated() || !User.is(user)) {
             log.info(`User is not authenticated.`, { "authorize-flow": true });

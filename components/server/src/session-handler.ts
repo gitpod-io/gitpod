@@ -5,13 +5,9 @@
  */
 
 import * as express from "express";
-import * as session from "express-session";
-import { SessionOptions } from "express-session";
-import { v4 as uuidv4 } from "uuid";
 import { injectable, inject, postConstruct } from "inversify";
 
 import * as mysqlstore from "express-mysql-session";
-const MySQLStore = mysqlstore(session);
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
@@ -31,37 +27,15 @@ export class SessionHandler {
 
     @postConstruct()
     public init() {
-        const options: SessionOptions = {} as SessionOptions;
-        options.cookie = this.getCookieOptions(this.config);
-        (options.genid = function (req: any) {
-            return uuidv4(); // use UUIDs for session IDs
-        }),
-            (options.name = SessionHandler.getCookieName(this.config));
-        // options.proxy = true    // TODO SSL Proxy
-        options.resave = true; // TODO Check with store! See docu
-        options.rolling = true; // default, new cookie and maxAge
-        options.secret = this.config.session.secret;
-        options.saveUninitialized = false; // Do not save new cookie without content (uninitialized)
-
-        options.store = this.createStore();
-
         this.sessionHandler = (req, res, next) => {
-            const cookies = parseCookieHeader(req.headers.cookie || "");
-            const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
-            if (jwtToken) {
-                // we handle the verification async, because we don't yet need to use it in the application
-                /* tslint:disable-next-line */
-                this.jwtSessionHandler(jwtToken, req, res, next)
-                    // the jwtSessionHandler is self-contained with respect to handling errors
-                    // however, if we did miss any, we at least capture it in here.
-                    .catch((err) => {
-                        log.error("Failed authenticate user with JWT Session cookie", err);
-                        res.statusCode = 500;
-                        res.send("Failed to authenticate jwt session.");
-                    });
-            } else {
-                session(options)(req, res, next);
-            }
+            this.jwtSessionHandler(req, res, next)
+                // the jwtSessionHandler is self-contained with respect to handling errors
+                // however, if we did miss any, we at least capture it in here.
+                .catch((err) => {
+                    log.error("Failed authenticate user with JWT Session cookie", err);
+                    res.statusCode = 500;
+                    res.send("Failed to authenticate jwt session.");
+                });
         };
     }
 
@@ -130,11 +104,21 @@ export class SessionHandler {
     }
 
     protected async jwtSessionHandler(
-        jwtToken: string,
         req: express.Request,
         res: express.Response,
         next: express.NextFunction,
     ): Promise<void> {
+        const cookies = parseCookieHeader(req.headers.cookie || "");
+        const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
+        if (!jwtToken) {
+            log.debug("No JWT session present on request");
+            // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
+            this.clearSessionCookie(res, this.config);
+
+            // Redirect the user to an error page
+            res.redirect(this.config.hostUrl.asSorry("No credentials present on request, please sign-in.").toString());
+        }
+
         try {
             const claims = await this.authJWT.verify(jwtToken);
             log.debug("JWT Session token verified", {
@@ -155,39 +139,6 @@ export class SessionHandler {
             // Passport uses the `user` property on the request to determine if the session
             // is authenticated.
             req.user = user;
-
-            req.sessionID = uuidv4();
-
-            const session: session.Session & Partial<session.SessionData> = {
-                cookie: {
-                    originalMaxAge: this.getCookieOptions(this.config).maxAge!,
-                    ...this.getCookieOptions(this.config),
-                },
-                // req.session.id is alias for req.sessionID
-                // https://github.com/expressjs/session/blob/master/README.md?plain=1#LL396C9-L396C19
-                id: req.sessionID,
-                regenerate: (cb) => {
-                    cb(null);
-                    return session;
-                },
-                destroy: (cb) => {
-                    cb(null);
-                    return session;
-                },
-                reload: (cb) => {
-                    cb(null);
-                    return session;
-                },
-                resetMaxAge: () => session,
-                save: (cb) => {
-                    if (cb) {
-                        cb(null);
-                    }
-                    return session;
-                },
-                touch: () => session,
-            };
-            req.session = session;
 
             // Trigger the next middleware in the chain.
             next();
@@ -256,20 +207,6 @@ export class SessionHandler {
         res.clearCookie(name, options);
 
         res.clearCookie(SessionHandler.getJWTCookieName(this.config), options);
-    }
-
-    protected createStore(): any | undefined {
-        const options = {
-            ...(this.dbConfig.dbConfig as any),
-            user: this.dbConfig.dbConfig.username,
-            database: "gitpod-sessions",
-            createDatabaseTable: true,
-        };
-        return new MySQLStore(options, undefined, (err) => {
-            if (err) {
-                log.debug("MySQL session store error: ", err);
-            }
-        });
     }
 }
 
