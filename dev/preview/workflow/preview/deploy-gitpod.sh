@@ -477,13 +477,6 @@ else
 fi
 
 #
-# wsManagerMk2
-#
-if [[ "${GITPOD_WSMANAGER_MK2}" == "true" ]]; then
-  yq w -i "${INSTALLER_CONFIG_PATH}" "experimental.workspace.useWsmanagerMk2" "true"
-fi
-
-#
 # Enable SpiceDB on all preview envs
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.spicedb.enabled "true"
