@@ -98,19 +98,19 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             name: "d_b_workspace_instance_user",
             primaryKeys: ["instanceId", "userId"],
             timeColumn: "_lastModified",
-            dependencies: ["d_b_workspace_instance", "d_b_user"],
+            dependencies: ["d_b_user"],
         },
         {
             name: "d_b_workspace_report_entry",
             primaryKeys: ["uid"],
             timeColumn: "time",
-            dependencies: ["d_b_workspace"],
+            dependencies: [],
         },
         {
             name: "d_b_snapshot",
             primaryKeys: ["id"],
             timeColumn: "creationTime",
-            dependencies: ["d_b_workspace"],
+            dependencies: [],
         },
         {
             name: "d_b_email_domain_filter",
