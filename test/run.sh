@@ -111,7 +111,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
 
   set +e
   # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}-SERIAL.xml" -iocopy
+  go test -p 1 -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}-SERIAL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
@@ -122,7 +122,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
   echo "running integration for ${TEST_NAME}-serial-only"
   set +e
   # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
+  go test -p 1 --parallel 1 -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
