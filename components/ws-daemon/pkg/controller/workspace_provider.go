@@ -6,9 +6,7 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sync"
 
@@ -72,13 +70,9 @@ func (wf *WorkspaceProvider) GetAndConnect(ctx context.Context, instanceID strin
 		// if the workspace is not in memory ws-daemon probabably has been restarted
 		// in that case we reload it from disk
 		path := filepath.Join(wf.Location, fmt.Sprintf("%s.workspace.json", instanceID))
-		loadWs, err := loadWorkspace(ctx, path)
+		loadWs, err := session.LoadWorkspace(ctx, path)
 		if err != nil {
 			return nil, err
-		}
-
-		if loadWs.NonPersistentAttrs == nil {
-			loadWs.NonPersistentAttrs = make(map[string]interface{})
 		}
 
 		ws = loadWs
@@ -104,22 +98,4 @@ func (s *WorkspaceProvider) runLifecycleHooks(ctx context.Context, ws *session.W
 		}
 	}
 	return nil
-}
-
-func loadWorkspace(ctx context.Context, path string) (ws *session.Workspace, err error) {
-	span, _ := opentracing.StartSpanFromContext(ctx, "loadWorkspace")
-	defer tracing.FinishSpan(span, &err)
-
-	fc, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("cannot load session file: %w", err)
-	}
-
-	var workspace session.Workspace
-	err = json.Unmarshal(fc, &workspace)
-	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal session file: %w", err)
-	}
-
-	return &workspace, nil
 }

@@ -12,7 +12,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"github.com/opentracing/opentracing-go"
@@ -74,9 +73,6 @@ type Workspace struct {
 	XFSProjectID int `json:"xfsProjectID"`
 
 	NonPersistentAttrs map[string]interface{} `json:"-"`
-
-	state     WorkspaceState
-	stateLock sync.RWMutex
 }
 
 // OWI produces the owner, workspace, instance log metadata from the information
@@ -122,12 +118,10 @@ func (s *Workspace) Dispose(ctx context.Context, hooks []WorkspaceLivecycleHook)
 		}
 	}
 
-	if hooks != nil {
-		for _, h := range hooks {
-			err := h(ctx, s)
-			if err != nil {
-				return err
-			}
+	for _, h := range hooks {
+		err := h(ctx, s)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -193,17 +187,12 @@ func toGitStatus(s *git.Status) *csapi.GitStatus {
 	}
 }
 
-type persistentWorkspace struct {
-	*Workspace
-	State WorkspaceState `json:"state"`
-}
-
 func (s *Workspace) persistentStateLocation() string {
 	return filepath.Join(filepath.Dir(s.Location), fmt.Sprintf("%s.workspace.json", s.InstanceID))
 }
 
 func (s *Workspace) Persist() error {
-	fc, err := json.Marshal(persistentWorkspace{s, s.state})
+	fc, err := json.Marshal(s)
 	if err != nil {
 		return xerrors.Errorf("cannot marshal workspace: %w", err)
 	}
@@ -216,24 +205,21 @@ func (s *Workspace) Persist() error {
 	return nil
 }
 
-func loadWorkspace(ctx context.Context, path string) (sess *Workspace, err error) {
+func LoadWorkspace(ctx context.Context, path string) (sess *Workspace, err error) {
 	span, _ := opentracing.StartSpanFromContext(ctx, "loadWorkspace")
 	defer tracing.FinishSpan(span, &err)
 
 	fc, err := os.ReadFile(path)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot load session file: %w", err)
+		return nil, fmt.Errorf("cannot load session file: %w", err)
 	}
 
-	var p persistentWorkspace
-	err = json.Unmarshal(fc, &p)
+	var workspace Workspace
+	err = json.Unmarshal(fc, &workspace)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot load session file: %w", err)
+		return nil, fmt.Errorf("cannot unmarshal session file: %w", err)
 	}
 
-	ws := p.Workspace
-	ws.NonPersistentAttrs = make(map[string]interface{})
-	ws.state = p.State
-
-	return ws, nil
+	workspace.NonPersistentAttrs = make(map[string]interface{})
+	return &workspace, nil
 }
