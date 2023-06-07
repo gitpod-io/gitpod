@@ -84,6 +84,11 @@ export class SessionHandler {
         };
     }
 
+    // Handler extracts authentication cookies from the incoming request, and
+    // resolves a User from it.
+    // If succesful, the `req.user` is set with the User which effectively marks the user as authenticated
+    // On failure, the next handler is called and the `req.user` is not set. Some APIs/Websocket RPCs do
+    // not require authentication, and as such we cannot fail the request at this stage.
     protected async handler(req: express.Request, next: express.NextFunction): Promise<void> {
         const cookies = parseCookieHeader(req.headers.cookie || "");
         const jwtToken = cookies[this.getJWTCookieName(this.config)];
