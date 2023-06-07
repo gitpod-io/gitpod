@@ -59,7 +59,7 @@ export function scrubKeyValue(key: string, value: string): string {
 
 export function scrubValue(value: string): string {
     for (const [key, expr] of hashedValues.entries()) {
-        value = value.replaceAll(expr, (s) => SanitiseHash(s, { key }));
+        value = value.replace(expr, (s) => SanitiseHash(s, { key }));
     }
     return value;
 }
