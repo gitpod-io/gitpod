@@ -61,7 +61,6 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { LogContext, log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
@@ -881,8 +880,13 @@ export class WorkspaceStarter {
 
             featureFlags = featureFlags.filter((f) => !excludeFeatureFlags.includes(f));
 
-            await this.tryEnableConnectionLimiting(featureFlags, user, billingTier);
-            await this.tryEnablePSI(featureFlags, user, billingTier);
+            if (await this.shouldEnableConnectionLimiting(user)) {
+                featureFlags.push("workspace_connection_limiting");
+            }
+
+            if (this.shouldEnablePSI(billingTier)) {
+                featureFlags.push("workspace_psi");
+            }
 
             // if the workspace has been created in an organization, we need to use the organization's attribution ID
             let usageAttributionId = AttributionId.createFromOrganizationId(workspace.organizationId);
@@ -950,40 +954,12 @@ export class WorkspaceStarter {
         }
     }
 
-    private async tryEnableConnectionLimiting(
-        featureFlags: NamedWorkspaceFeatureFlag[],
-        user: User,
-        billingTier: BillingTier,
-    ) {
-        const wsConnectionLimitingEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "workspace_connection_limiting",
-            false,
-            {
-                user,
-                billingTier,
-            },
-        );
-
-        if (wsConnectionLimitingEnabled) {
-            const shouldLimitNetworkConnections = await this.entitlementService.limitNetworkConnections(
-                user,
-                new Date(),
-            );
-            if (shouldLimitNetworkConnections) {
-                featureFlags.push("workspace_connection_limiting");
-            }
-        }
+    private async shouldEnableConnectionLimiting(user: User): Promise<boolean> {
+        return this.entitlementService.limitNetworkConnections(user, new Date());
     }
 
-    private async tryEnablePSI(featureFlags: NamedWorkspaceFeatureFlag[], user: User, billingTier: BillingTier) {
-        const psiEnabled = await getExperimentsClientForBackend().getValueAsync("pressure_stall_info", false, {
-            user,
-            billingTier,
-        });
-
-        if (psiEnabled && billingTier === "paid") {
-            featureFlags.push("workspace_psi");
-        }
+    private shouldEnablePSI(billingTier: BillingTier): boolean {
+        return billingTier === "paid";
     }
 
     protected async prepareBuildRequest(
