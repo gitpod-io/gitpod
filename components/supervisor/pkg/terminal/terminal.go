@@ -104,7 +104,6 @@ func (m *Mux) Close(ctx context.Context) error {
 			err := v.Close(ctx)
 			if err != nil {
 				log.WithError(err).WithField("alias", k).Warn("Error while closing pseudo-terminal")
-				return err
 			}
 			return nil
 		})
