@@ -34,6 +34,7 @@ import (
 	"github.com/gorilla/websocket"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
@@ -42,6 +43,8 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/common-go/analytics"
@@ -1190,6 +1193,20 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 			go metricsReporter.Report(ctx)
 		}
 	}
+
+	// add gprc recover, must be last, to be executed first after the rpc handler, we want upstream interceptors to have a meaningful response to work with)
+	unaryInterceptors = append(unaryInterceptors, grpc_recovery.UnaryServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(
+		func(ctx context.Context, p interface{}) error {
+			log.WithField("stack", string(debug.Stack())).Errorf("[PANIC] %s", p)
+			return status.Errorf(codes.Internal, "%s", p)
+		},
+	)))
+	streamInterceptors = append(streamInterceptors, grpc_recovery.StreamServerInterceptor(grpc_recovery.WithRecoveryHandlerContext(
+		func(ctx context.Context, p interface{}) error {
+			log.WithField("stack", string(debug.Stack())).Errorf("[PANIC] %s", p)
+			return status.Errorf(codes.Internal, "%s", p)
+		},
+	)))
 
 	opts = append(opts,
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(unaryInterceptors...)),
