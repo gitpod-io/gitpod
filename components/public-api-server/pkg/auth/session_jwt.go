@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/bufbuild/connect-go"
-	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
 	"github.com/golang-jwt/jwt/v5"
@@ -47,7 +46,7 @@ func VerifySessionJWT(token string, verifier jws.Verifier, expectedIssuer string
 	return claims, nil
 }
 
-func NewJWTCookieInterceptor(exp experiments.Client, cookieName string, expectedIssuer string, verifier jws.Verifier) connect.UnaryInterceptorFunc {
+func NewJWTCookieInterceptor(cookieName string, expectedIssuer string, verifier jws.Verifier) connect.UnaryInterceptorFunc {
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 
 		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
@@ -62,10 +61,6 @@ func NewJWTCookieInterceptor(exp experiments.Client, cookieName string, expected
 
 			token, err := TokenFromContext(ctx)
 			if err != nil {
-				return next(ctx, req)
-			}
-
-			if !experiments.JWTSessionsEnabled(ctx, exp, experiments.Attributes{}) {
 				return next(ctx, req)
 			}
 
