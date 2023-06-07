@@ -498,6 +498,13 @@ rm -f spicedb-secret.yaml
 #
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.proxy.frontendDevEnabled "true"
 
+#
+# Enable network limiting
+#
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.enabled "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.enforce "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.connectionsPerMinute "3000"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.bucketSize "3000"
 
 log_success "Generated config at $INSTALLER_CONFIG_PATH"
 
