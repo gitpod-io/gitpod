@@ -13,6 +13,7 @@ import "react-intl-tel-input/dist/main.css";
 import "./phone-input.css";
 import { Button } from "../components/Button";
 import { LinkButton } from "../components/LinkButton";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 interface VerifyModalState {
     phoneNumber?: string;
@@ -29,6 +30,7 @@ interface VerifyModalState {
 
 export function VerifyModal() {
     const [state, setState] = useState<VerifyModalState>({});
+    const phoneVerificationByCall = useFeatureFlag("phoneVerificationByCall");
 
     if (!state.sent) {
         const sendCode = async () => {
@@ -64,7 +66,7 @@ export function VerifyModal() {
                 buttons={
                     <div>
                         <Button htmlType="submit" disabled={!state.phoneNumberValid || state.sending}>
-                            Send Code via SMS
+                            {phoneVerificationByCall ? "Send Code via Voice call" : "Send Code via SMS"}
                         </Button>
                     </div>
                 }
@@ -200,7 +202,9 @@ export function VerifyModal() {
                         autoFocus={true}
                         className="w-full"
                         type="text"
-                        placeholder="Enter code sent via SMS"
+                        placeholder={
+                            phoneVerificationByCall ? "Enter code sent via phone call" : "Enter code sent via SMS"
+                        }
                         onChange={(v) => {
                             setState({
                                 ...state,
