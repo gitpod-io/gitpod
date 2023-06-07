@@ -22,7 +22,7 @@ import { getGitpodService, gitpodHostUrl } from "../../service/service";
 import { UserContext } from "../../user-context";
 import { useToast } from "../../components/toasts/Toasts";
 
-type ProviderType = "GitHub" | "GitLab" | "BitbucketServer";
+type ProviderType = "GitHub" | "GitLab" | "Bitbucket" | "BitbucketServer";
 
 type Props = {
     provider?: AuthProviderEntry;
@@ -212,6 +212,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                     >
                         <option value="GitHub">GitHub</option>
                         <option value="GitLab">GitLab</option>
+                        <option value="Bitbucket">Bitbucket Cloud</option>
                         <option value="BitbucketServer">Bitbucket Server</option>
                     </SelectInputField>
                     <TextInputField
@@ -289,6 +290,8 @@ const getPlaceholderForIntegrationType = (type: ProviderType) => {
             return "github.example.com";
         case "GitLab":
             return "gitlab.example.com";
+        case "Bitbucket":
+            return "bitbucket.org";
         case "BitbucketServer":
             return "bitbucket.example.com";
         default:
@@ -307,6 +310,9 @@ const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = (
             break;
         case "GitLab":
             docsUrl = `https://www.gitpod.io/docs/configure/authentication/gitlab#registering-a-self-hosted-gitlab-installation`;
+            break;
+        case "Bitbucket":
+            docsUrl = `https://www.gitpod.io/docs/configure/authentication`;
             break;
         case "BitbucketServer":
             docsUrl = "https://www.gitpod.io/docs/configure/authentication/bitbucket-server";
