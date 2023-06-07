@@ -16,7 +16,7 @@ import { Authenticator } from "./auth/authenticator";
 import { UserController } from "./user/user-controller";
 import { EventEmitter } from "events";
 import { toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connection";
-import { WsExpressHandler, WsNextFunction, WsRequestHandler } from "./express/ws-handler";
+import { WsExpressHandler, WsRequestHandler } from "./express/ws-handler";
 import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from "./express-util";
 import { createWebSocketConnection } from "vscode-ws-jsonrpc/lib";
 import { MessageBusIntegration } from "./workspace/messagebus-integration";
