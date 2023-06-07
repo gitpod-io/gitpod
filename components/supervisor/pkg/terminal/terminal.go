@@ -97,18 +97,26 @@ func (m *Mux) Close(ctx context.Context) error {
 	defer m.mu.Unlock()
 
 	g := new(errgroup.Group)
-	for term := range m.terms {
-		k := term
+	for alias, term := range m.terms {
+		k := alias
+		v := term
 		g.Go(func() error {
-			cerr := m.doClose(ctx, k)
-			if cerr != nil {
-				log.WithError(cerr).WithField("alias", k).Warn("cannot properly close terminal")
-				return cerr
+			err := v.Close(ctx)
+			if err != nil {
+				log.WithError(err).WithField("alias", k).Warn("Error while closing pseudo-terminal")
+				return err
 			}
 			return nil
 		})
 	}
-	return g.Wait()
+	err := g.Wait()
+
+	m.aliases = m.aliases[:0]
+	for k := range m.terms {
+		delete(m.terms, k)
+	}
+
+	return err
 }
 
 // CloseTerminal closes a terminal and ends the process that runs in it.
