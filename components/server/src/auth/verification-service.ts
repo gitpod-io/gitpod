@@ -106,6 +106,18 @@ export class VerificationService {
             requestedChannel: channel,
         });
 
+        // Help us identify if verification codes are not able to send via requested channel
+        if (channel !== verification.channel) {
+            log.info("Verification code sent via different channel", {
+                phoneNumber,
+                status: verification.status,
+                // actual channel verification was created on
+                channel: verification.channel,
+                // channel we requested - these could differ if a channel is not enabled in a specific country
+                requestedChannel: channel,
+            });
+        }
+
         return verification;
     }
 
