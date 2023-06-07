@@ -91,7 +91,7 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 
 // Close closes all terminals.
 // force kills it's processes when the context gets cancelled
-func (m *Mux) Close(ctx context.Context) error {
+func (m *Mux) Close(ctx context.Context) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -114,8 +114,6 @@ func (m *Mux) Close(ctx context.Context) error {
 	for k := range m.terms {
 		delete(m.terms, k)
 	}
-
-	return nil
 }
 
 // CloseTerminal closes a terminal and ends the process that runs in it.
