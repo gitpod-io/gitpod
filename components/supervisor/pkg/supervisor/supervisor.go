@@ -469,10 +469,7 @@ func Run(options ...RunOption) {
 	cancel()
 	ideWG.Wait()
 	// terminate all terminal processes once the IDE is gone
-	err = termMux.Close(terminalShutdownCtx)
-	if err != nil {
-		log.WithError(err).Error("terminal closing failed")
-	}
+	termMux.Close(terminalShutdownCtx)
 
 	wg.Wait()
 }

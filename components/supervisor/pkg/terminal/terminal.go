@@ -21,7 +21,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
@@ -92,23 +91,29 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 
 // Close closes all terminals.
 // force kills it's processes when the context gets cancelled
-func (m *Mux) Close(ctx context.Context) error {
+func (m *Mux) Close(ctx context.Context) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	g := new(errgroup.Group)
-	for term := range m.terms {
-		k := term
-		g.Go(func() error {
-			cerr := m.doClose(ctx, k)
-			if cerr != nil {
-				log.WithError(cerr).WithField("alias", k).Warn("cannot properly close terminal")
-				return cerr
+	wg := sync.WaitGroup{}
+	for alias, term := range m.terms {
+		wg.Add(1)
+		k := alias
+		v := term
+		go func() {
+			defer wg.Done()
+			err := v.Close(ctx)
+			if err != nil {
+				log.WithError(err).WithField("alias", k).Warn("Error while closing pseudo-terminal")
 			}
-			return nil
-		})
+		}()
 	}
-	return g.Wait()
+	wg.Wait()
+
+	m.aliases = m.aliases[:0]
+	for k := range m.terms {
+		delete(m.terms, k)
+	}
 }
 
 // CloseTerminal closes a terminal and ends the process that runs in it.
