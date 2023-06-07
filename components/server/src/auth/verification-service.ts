@@ -14,6 +14,7 @@ import { TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ResponseError } from "vscode-ws-jsonrpc";
+import { VerificationInstance } from "twilio/lib/rest/verify/v2/service/verification";
 
 @injectable()
 export class VerificationService {
@@ -77,7 +78,10 @@ export class VerificationService {
         return user;
     }
 
-    public async sendVerificationToken(phoneNumber: string, channel: "sms" | "call" = "sms"): Promise<void> {
+    public async sendVerificationToken(
+        phoneNumber: string,
+        channel: "sms" | "call" = "sms",
+    ): Promise<VerificationInstance> {
         if (!this.verifyService) {
             throw new Error("No verification service configured.");
         }
@@ -93,10 +97,22 @@ export class VerificationService {
             throw new ResponseError(ErrorCodes.INVALID_VALUE, "The given phone number is blocked due to abuse.");
         }
         const verification = await this.verifyService.verifications.create({ to: phoneNumber, channel });
-        log.info("Verification code sent", { phoneNumber, status: verification.status, channel });
+        log.info("Verification code sent", {
+            phoneNumber,
+            status: verification.status,
+            // actual channel verification was created on
+            channel: verification.channel,
+            // channel we requested - these could differ if a channel is not enabled in a specific country
+            requestedChannel: channel,
+        });
+
+        return verification;
     }
 
-    public async verifyVerificationToken(phoneNumber: string, oneTimePassword: string): Promise<boolean> {
+    public async verifyVerificationToken(
+        phoneNumber: string,
+        oneTimePassword: string,
+    ): Promise<{ verified: boolean; channel: string }> {
         if (!this.verifyService) {
             throw new Error("No verification service configured.");
         }
@@ -104,6 +120,10 @@ export class VerificationService {
             to: phoneNumber,
             code: oneTimePassword,
         });
-        return verification_check.status === "approved";
+
+        return {
+            verified: verification_check.status === "approved",
+            channel: verification_check.channel,
+        };
     }
 }
