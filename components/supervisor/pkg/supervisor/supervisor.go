@@ -372,6 +372,9 @@ func Run(options ...RunOption) {
 		// We need to checkout dotfiles first, because they may be changing the path which affects the IDE.
 		// TODO(cw): provide better feedback if the IDE start fails because of the dotfiles (provide any feedback at all).
 		installDotfiles(ctx, cfg, tokenService)
+
+		_ = configureCodeRemoteMachineSettings(".vscode-server-insiders")
+		_ = configureCodeRemoteMachineSettings(".vscode-server")
 	}
 
 	var ideWG sync.WaitGroup
@@ -1843,4 +1846,43 @@ func waitForIde(parent context.Context, ideReady *ideReadyState, desktopIdeReady
 		return
 	case <-desktopIdeReady.Wait():
 	}
+}
+
+func configureCodeRemoteMachineSettings(folderName string) (err error) {
+	defer func() {
+		if err != nil {
+			log.WithError(err).Warnf("cannot configure code remote machine settings in %s", folderName)
+		}
+	}()
+
+	dst := filepath.Join("/home/gitpod/", folderName, "data/Machine/settings.json")
+	if err := os.MkdirAll(filepath.Dir(dst), 0o700); err != nil {
+		return err
+	}
+
+	settings := make(map[string]interface{})
+	if _, err := os.Stat(dst); !os.IsNotExist(err) {
+		prevContent, err := os.ReadFile(dst)
+		if err != nil {
+			return err
+		}
+		if err = json.Unmarshal(prevContent, &settings); err != nil {
+			return err
+		}
+	}
+	settings["remote.autoForwardPortsSource"] = "process"
+	settings["remote.autoForwardPorts"] = true
+
+	rawData, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(dst, rawData, 0o600)
+	if err != nil {
+		return err
+	}
+
+	err = exec.Command("chown", "-R", fmt.Sprintf("%d:%d", gitpodUID, gitpodGID), filepath.Join("/home/gitpod/", folderName)).Run()
+	return err
 }
