@@ -21,7 +21,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/sirupsen/logrus"
-	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
@@ -96,26 +95,27 @@ func (m *Mux) Close(ctx context.Context) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	g := new(errgroup.Group)
+	wg := sync.WaitGroup{}
 	for alias, term := range m.terms {
+		wg.Add(1)
 		k := alias
 		v := term
-		g.Go(func() error {
+		go func() {
+			defer wg.Done()
 			err := v.Close(ctx)
 			if err != nil {
 				log.WithError(err).WithField("alias", k).Warn("Error while closing pseudo-terminal")
 			}
-			return nil
-		})
+		}()
 	}
-	err := g.Wait()
+	wg.Wait()
 
 	m.aliases = m.aliases[:0]
 	for k := range m.terms {
 		delete(m.terms, k)
 	}
 
-	return err
+	return nil
 }
 
 // CloseTerminal closes a terminal and ends the process that runs in it.
