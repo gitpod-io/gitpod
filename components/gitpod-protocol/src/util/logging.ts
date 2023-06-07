@@ -4,6 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { scrubber } from "./scrubbing";
+
 const inspect: (object: any) => string = require("util").inspect; // undefined in frontend
 
 let plainLogging: boolean = false; // set to true during development to get non JSON output
@@ -303,12 +305,14 @@ function makeLogItem(
     if (context !== undefined && Object.keys(context).length == 0) {
         context = undefined;
     }
+    context = scrubPayload(context, plainLogging);
 
     let reportedErrorEvent: {} = {};
     if (GoogleLogSeverity.isGreaterOrEqualThanWarning(severity)) {
         reportedErrorEvent = makeReportedErrorEvent(error);
     }
 
+    payloadArgs = payloadArgs.map((arg) => scrubPayload(arg, plainLogging));
     const payload: any = payloadArgs.length == 0 ? undefined : payloadArgs.length == 1 ? payloadArgs[0] : payloadArgs;
     const logItem = {
         // undefined fields get eliminated in JSON.stringify()
@@ -348,6 +352,13 @@ function makeLogItem(
     }
 
     return result;
+}
+
+function scrubPayload(payload: any, plainLogging: boolean): any {
+    if (plainLogging) {
+        return payload;
+    }
+    return scrubber.scrub(payload, false);
 }
 
 // See https://cloud.google.com/error-reporting/docs/formatting-error-messages
@@ -416,7 +427,7 @@ function stringifyLogItem(logItem: any): string {
  * Jsonifies Errors properly, not as {} only.
  */
 function jsonStringifyWithErrors(value: any): string {
-    return JSON.stringify(value, (key: string, value: any): any => {
+    return JSON.stringify(value, (_, value) => {
         return value instanceof Error ? value.stack : value;
     });
 }
