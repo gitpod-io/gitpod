@@ -4,6 +4,8 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { scrubReplacer } from "./scrubbing";
+
 const inspect: (object: any) => string = require("util").inspect; // undefined in frontend
 
 let plainLogging: boolean = false; // set to true during development to get non JSON output
@@ -416,8 +418,15 @@ function stringifyLogItem(logItem: any): string {
  * Jsonifies Errors properly, not as {} only.
  */
 function jsonStringifyWithErrors(value: any): string {
-    return JSON.stringify(value, (key: string, value: any): any => {
-        return value instanceof Error ? value.stack : value;
+    const errorReplacer = (key: string, value: any): any => {
+        if (value instanceof Error) {
+            return value.stack;
+        }
+        return value;
+    };
+    return JSON.stringify(value, (key, value) => {
+        value = errorReplacer(key, value);
+        return scrubReplacer(key, value);
     });
 }
 
