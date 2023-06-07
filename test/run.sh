@@ -99,7 +99,9 @@ fi
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
 
 go install github.com/jstemmer/go-junit-report/v2@latest
-npm i -g xunit-viewer
+
+if ! npm list -g xunit-viewer; then npm install -g xunit-viewer; fi
+
 mkdir -p results
 
 if [ "$TEST_SUITE" == "workspace" ]; then
@@ -155,5 +157,6 @@ else
 fi
 
 xunit-viewer -r ./results -o test-output.html
+pkill -f "port-forward"
 
 exit $FAILURE_COUNT
