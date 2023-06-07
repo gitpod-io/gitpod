@@ -16,7 +16,7 @@ import { Authenticator } from "./auth/authenticator";
 import { UserController } from "./user/user-controller";
 import { EventEmitter } from "events";
 import { toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connection";
-import { WsExpressHandler, WsNextFunction, WsRequestHandler } from "./express/ws-handler";
+import { WsExpressHandler, WsRequestHandler } from "./express/ws-handler";
 import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from "./express-util";
 import { createWebSocketConnection } from "vscode-ws-jsonrpc/lib";
 import { MessageBusIntegration } from "./workspace/messagebus-integration";
@@ -147,7 +147,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.set("trust proxy", 1); // trust first proxy
 
         // Install Sessionhandler
-        app.use(this.sessionHandler.sessionHandler);
+        app.use(this.sessionHandler.http());
 
         // Install passport
         await this.authenticator.init(app);
@@ -226,7 +226,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                     const websocket = toIWebSocket(ws);
                     (request as any).wsConnection = createWebSocketConnection(websocket, console);
                 },
-                (ws: ws, req: express.Request, next: WsNextFunction) => this.sessionHandler.websocket(ws, req, next),
+                this.sessionHandler.websocket(),
                 ...initSessionHandlers,
                 wsPingPongHandler.handler(),
                 (ws: ws, req: express.Request) => {
