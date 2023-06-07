@@ -5,7 +5,7 @@
  */
 
 import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
-import { FunctionComponent, useCallback, useContext, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
@@ -55,6 +55,13 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
 
         return url;
     }, [host, isNew, savedProvider?.oauth.callBackUrl, type]);
+
+    // "bitbucket.org" is set as host value whenever "Bitbucket" is selected
+    useEffect(() => {
+        if (isNew) {
+            setHost(type === "Bitbucket" ? "bitbucket.org" : "");
+        }
+    }, [isNew, type]);
 
     const [savingProvider, setSavingProvider] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -218,7 +225,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                     <TextInputField
                         label="Provider Host Name"
                         value={host}
-                        disabled={!isNew}
+                        disabled={!isNew || type === "Bitbucket"}
                         placeholder={getPlaceholderForIntegrationType(type)}
                         error={hostError}
                         onChange={setHost}
