@@ -12,7 +12,10 @@ type Props = {
     value: number;
     inverted?: boolean;
 };
-export const ProgressBar: FC<Props> = ({ value: percent, inverted }) => {
+export const ProgressBar: FC<Props> = ({ value, inverted }) => {
+    // ensure we have a whole number <= 100
+    const percent = Math.min(Math.round(value), 100);
+
     return (
         <div
             className={classNames("w-full rounded-full h-2 my-1.5", invertable("bg-gray-300", "bg-gray-600", inverted))}
