@@ -29,21 +29,6 @@ export interface TableDescriptionProvider {
 export const TableDescriptionProvider = Symbol("TableDescriptionProvider");
 
 @injectable()
-export class GitpodSessionTableDescriptionProvider implements TableDescriptionProvider {
-    readonly name = "gitpod-sessions";
-    getSortedTables(): TableDescription[] {
-        return [
-            {
-                name: "sessions",
-                primaryKeys: ["session_id"],
-                timeColumn: "_lastModified",
-                expiryColumn: "expires",
-            },
-        ];
-    }
-}
-
-@injectable()
 export class GitpodTableDescriptionProvider implements TableDescriptionProvider {
     readonly name = "gitpod";
     protected readonly tables: TableDescription[] = [
