@@ -40,8 +40,6 @@ class TestGitLabAppSupport {
                 bind(GitLabTokenHelper).toSelf().inSingletonScope();
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => DevData.createGitlabTestToken(),
-                    getFreshPortAuthenticationToken: async (user: User, workspaceId: string) =>
-                        DevData.createPortAuthTestToken(workspaceId),
                 });
                 bind(GitLabAppSupport).toSelf().inSingletonScope();
             }),

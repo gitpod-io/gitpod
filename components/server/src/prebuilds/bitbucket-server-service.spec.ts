@@ -63,7 +63,6 @@ class TestBitbucketServerService {
                             scopes: [],
                         };
                     },
-                    getFreshPortAuthenticationToken: undefined as any,
                 });
                 bind(BitbucketServerApi).toSelf().inSingletonScope();
                 bind(HostContextProvider).toConstantValue({

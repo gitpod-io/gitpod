@@ -82,16 +82,6 @@ export namespace DevData {
         return JSON.parse(secret);
     }
 
-    export function createPortAuthTestToken(workspaceId: string): Token {
-        const now = new Date();
-        return {
-            value: "f3d1880e1cae34116bbb863ff524d858ae13573219886ec63e8568380aa744fe",
-            scopes: [TokenService.generateWorkspacePortAuthScope(workspaceId)],
-            updateDate: now.toISOString(),
-            expiryDate: new Date(now.getTime() + TokenService.GITPOD_PORT_AUTH_TOKEN_EXPIRY_MILLIS).toISOString(),
-        };
-    }
-
     export function createPrContext(user: User): PullRequestContext {
         const repository: Repository = {
             host: "github.com",

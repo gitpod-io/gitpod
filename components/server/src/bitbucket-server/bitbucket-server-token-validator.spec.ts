@@ -42,12 +42,6 @@ class TestBitbucketServerTokenValidator {
                 bind(BitbucketServerTokenValidator).toSelf().inSingletonScope();
                 bind(AuthProviderParams).toConstantValue(TestBitbucketServerTokenValidator.AUTH_HOST_CONFIG);
                 bind(BitbucketServerTokenHelper).toSelf().inSingletonScope();
-                // bind(TokenService).toConstantValue({
-                //     createGitpodToken: async () => ({ token: { value: "foobar123-token" } }),
-                // } as any);
-                // bind(Config).toConstantValue({
-                //     hostUrl: new GitpodHostUrl(),
-                // });
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => {
                         return {
@@ -55,10 +49,8 @@ class TestBitbucketServerTokenValidator {
                             scopes: [],
                         };
                     },
-                    getFreshPortAuthenticationToken: undefined as any,
                 });
                 bind(BitbucketServerApi).toSelf().inSingletonScope();
-                // bind(HostContextProvider).toConstantValue({});
             }),
         );
         this.validator = container.get(BitbucketServerTokenValidator);
