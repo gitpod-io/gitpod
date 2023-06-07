@@ -46,7 +46,6 @@ gitpod:summary
 
 - [ ] analytics=segment
 - [ ] with-dedicated-emulation
-- [x] with-ws-manager-mk2
 - [ ] workspace-feature-flags
   Add desired feature flags to the end of the line above, space separated
 </details>
@@ -63,5 +62,5 @@ gitpod:summary
 - [ ] with-integration-tests=all
       Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`
 </details>
- 
+
 /hold
