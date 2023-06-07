@@ -65,6 +65,20 @@ export function scrubValue(value: string): string {
 }
 
 export const scrubReplacer = (key: string, value: any): any => {
+    if (typeof value === "object" && value !== null) {
+        // https://github.com/gitpod-io/security/issues/64
+        const k = value["name"];
+        const v = value["value"];
+        if (k != "" && v != "") {
+            const scrubbedValue = scrubKeyValue(k, v);
+            if (scrubbedValue != v) {
+                return {
+                    ...value,
+                    value: scrubbedValue,
+                };
+            }
+        }
+    }
     if (typeof value === "string") {
         if (key == "" || !isNaN(Number(key))) {
             return scrubValue(value);
