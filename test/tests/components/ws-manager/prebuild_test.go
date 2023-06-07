@@ -696,7 +696,7 @@ func watchStopWorkspaceAndFindSnapshot(t *testing.T, ctx context.Context, instan
 	if err != nil {
 		return "", nil, err
 	}
-	if lastStatus.Conditions.HeadlessTaskFailed != "" {
+	if lastStatus.Conditions != nil && lastStatus.Conditions.HeadlessTaskFailed != "" {
 		return "", nil, errors.New("unexpected HeadlessTaskFailed condition")
 	}
 	if lastStatus == nil || lastStatus.Conditions == nil {
