@@ -774,21 +774,26 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const phoneNumber = formatPhoneNumber(rawPhoneNumber);
         const user = this.checkUser("verifyPhoneNumberVerificationToken");
         const { verified, channel } = await this.verificationService.verifyVerificationToken(phoneNumber, token);
-        // TODO: do we want separate events for verified/failed?
-        this.analytics.track({
-            event: "phone_verification_verified",
-            userId: user.id,
-            properties: {
-                verified,
-                channel,
-            },
-        });
         if (!verified) {
+            this.analytics.track({
+                event: "phone_verification_failed",
+                userId: user.id,
+                properties: {
+                    channel,
+                },
+            });
             return false;
         }
         this.verificationService.markVerified(user);
         user.verificationPhoneNumber = phoneNumber;
         await this.userDB.updateUserPartial(user);
+        this.analytics.track({
+            event: "phone_verification_completed",
+            userId: user.id,
+            properties: {
+                channel,
+            },
+        });
         return true;
     }
 
