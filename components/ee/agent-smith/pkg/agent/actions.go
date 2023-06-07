@@ -10,6 +10,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
@@ -22,13 +23,24 @@ import (
 // call one of ws-manager's libraries.
 
 // stopWorkspace stops a workspace
-func (agent *Smith) stopWorkspace(supervisorPID int) error {
+func (agent *Smith) stopWorkspace(supervisorPID int, instanceID string) error {
+	req := &wsmanapi.StopWorkspaceRequest{
+		Id: instanceID,
+		// Stop workspace without grace period.
+		Policy: wsmanapi.StopWorkspacePolicy_IMMEDIATELY,
+	}
+	_, err := agent.wsman.StopWorkspace(context.Background(), req)
+	if err == nil {
+		return nil
+	}
+
+	log.WithError(err).WithField("instanceID", instanceID).Warn("error stopping workspace through ws-manager, killing supervisor directly")
 	return unix.Kill(supervisorPID, unix.SIGKILL)
 }
 
 // stopWorkspaceAndBlockUser stops a workspace and blocks the user (who would have guessed?)
-func (agent *Smith) stopWorkspaceAndBlockUser(supervisorPID int, ownerID, workspaceID string) error {
-	err := agent.stopWorkspace(supervisorPID)
+func (agent *Smith) stopWorkspaceAndBlockUser(supervisorPID int, ownerID, workspaceID, instanceID string) error {
+	err := agent.stopWorkspace(supervisorPID, instanceID)
 	if err != nil {
 		log.WithError(err).WithField("owner", ownerID).WithField("workspaceID", workspaceID).Warn("error stopping workspace")
 	}

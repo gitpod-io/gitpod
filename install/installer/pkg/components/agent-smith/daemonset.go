@@ -7,6 +7,7 @@ package agentsmith
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	wsmanagermk2 "github.com/gitpod-io/gitpod/installer/pkg/components/ws-manager-mk2"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -68,6 +69,11 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 								Name:      "config",
 								MountPath: "/config",
 							},
+							{
+								Name:      "wsman-tls-certs",
+								MountPath: "/wsman-certs",
+								ReadOnly:  true,
+							},
 							common.CAVolumeMount(),
 						},
 						Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
@@ -88,6 +94,14 @@ func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 							VolumeSource: corev1.VolumeSource{ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{Name: Component},
 							}},
+						},
+						{
+							Name: "wsman-tls-certs",
+							VolumeSource: corev1.VolumeSource{
+								Secret: &corev1.SecretVolumeSource{
+									SecretName: wsmanagermk2.TLSSecretNameClient,
+								},
+							},
 						},
 						common.CAVolume(),
 					},

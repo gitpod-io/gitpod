@@ -8,7 +8,9 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
+      - components/content-service-api/go:lib
       - components/gitpod-protocol/go:lib
+      - components/ws-manager-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -24,7 +26,9 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
+      - components/content-service-api/go:lib
       - components/gitpod-protocol/go:lib
+      - components/ws-manager-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
