@@ -25,7 +25,7 @@ export class IamSessionApp {
     @inject(SessionHandler) protected readonly session: SessionHandler;
 
     public getMiddlewares() {
-        return [express.json(), this.sessionHandler.sessionHandler, ...this.authenticator.initHandlers];
+        return [express.json(), this.sessionHandler.http(), ...this.authenticator.initHandlers];
     }
 
     public create(): express.Application {

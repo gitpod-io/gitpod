@@ -17,10 +17,10 @@ import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SessionHandler } from "../session-handler";
 import { URL } from "url";
-import { destroySession, getRequestingClientInfo, saveSession } from "../express-util";
+import { getRequestingClientInfo } from "../express-util";
 import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { increaseLoginCounter, reportJWTCookieIssued } from "../prometheus-metrics";
+import { reportJWTCookieIssued } from "../prometheus-metrics";
 import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
@@ -30,7 +30,6 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export const ServerFactory = Symbol("ServerFactory");
 export type ServerFactory = () => GitpodServerImpl;
@@ -55,14 +54,14 @@ export class UserController {
 
         router.get("/login", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (req.isAuthenticated()) {
-                log.info({ sessionId: req.sessionID }, "(Auth) User is already authenticated.", { "login-flow": true });
+                log.info("(Auth) User is already authenticated.", { "login-flow": true });
                 // redirect immediately
                 const redirectTo = this.getSafeReturnToParam(req) || this.config.hostUrl.asDashboard().toString();
                 res.redirect(redirectTo);
                 return;
             }
             const clientInfo = getRequestingClientInfo(req);
-            log.info({ sessionId: req.sessionID }, "(Auth) User started the login process", {
+            log.info("(Auth) User started the login process", {
                 "login-flow": true,
                 clientInfo,
             });
@@ -81,15 +80,6 @@ export class UserController {
                 return;
             }
 
-            // Make sure, the session is stored before we initialize the OAuth flow
-            try {
-                await saveSession(req.session);
-            } catch (error) {
-                increaseLoginCounter("failed", "unknown");
-                log.error(`Login failed due to session save error; redirecting to /sorry`, { req, error, clientInfo });
-                res.redirect(this.getSorryUrl("Login failed 🦄 Please try again"));
-            }
-
             // Proceed with login
             this.ensureSafeReturnToParam(req);
             await this.authenticator.authenticate(req, res, next);
@@ -100,10 +90,9 @@ export class UserController {
             _userId?: string,
         ) => {
             return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-                const sessionId = req.sessionID;
                 let userId = _userId || req.params.userId;
                 try {
-                    log.debug({ sessionId, userId }, "OTS based login started.");
+                    log.debug({ userId }, "OTS based login started.");
                     const secret = await this.otsDb.get(req.params.key);
                     if (!secret) {
                         throw new ResponseError(401, "Invalid OTS key");
@@ -116,14 +105,14 @@ export class UserController {
 
                     await verifyAndHandle(req, res, user, secret);
 
-                    log.debug({ sessionId, userId }, "OTS based login successful.");
+                    log.debug({ userId }, "OTS based login successful.");
                 } catch (err) {
                     let code = 500;
                     if (err.code !== undefined) {
                         code = err.code;
                     }
                     res.sendStatus(code);
-                    log.error({ sessionId, userId }, "OTS based login failed", err, { code });
+                    log.error({ userId }, "OTS based login failed", err, { code });
                 }
             };
         };
@@ -167,18 +156,9 @@ export class UserController {
                     await this.teamDb.setTeamMemberRole(BUILTIN_INSTLLATION_ADMIN_USER_ID, org.id, "owner");
                 }
 
-                const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
-                    "jwtSessionCookieEnabled",
-                    false,
-                    {
-                        user: user,
-                    },
-                );
-                if (isJWTCookieExperimentEnabled) {
-                    const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
-                    res.cookie(cookie.name, cookie.value, cookie.opts);
-                    reportJWTCookieIssued();
-                }
+                const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
+                res.cookie(cookie.name, cookie.value, cookie.opts);
+                reportJWTCookieIssued();
 
                 // Create a session for the admin user.
                 await new Promise<void>((resolve, reject) => {
@@ -217,25 +197,11 @@ export class UserController {
                 }
 
                 // mimick the shape of a successful login
-                (req.session! as any).passport = { user: user.id };
+                req.user = user;
 
-                // Save session to DB
-                await new Promise<void>((resolve, reject) =>
-                    req.session!.save((err) => (err ? reject(err) : resolve())),
-                );
-
-                const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
-                    "jwtSessionCookieEnabled",
-                    false,
-                    {
-                        user: user,
-                    },
-                );
-                if (isJWTCookieExperimentEnabled) {
-                    const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
-                    res.cookie(cookie.name, cookie.value, cookie.opts);
-                    reportJWTCookieIssued();
-                }
+                const cookie = await this.sessionHandler.createJWTSessionCookie(user.id);
+                res.cookie(cookie.name, cookie.value, cookie.opts);
+                reportJWTCookieIssued();
 
                 res.sendStatus(200);
             }),
@@ -268,7 +234,7 @@ export class UserController {
         router.get("/logout", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             const logContext = LogContext.from({ user: req.user, request: req });
             const clientInfo = getRequestingClientInfo(req);
-            const logPayload = { session: req.session, clientInfo };
+            const logPayload = { clientInfo };
             log.info(logContext, "(Logout) Logging out.", logPayload);
 
             // stop all running workspaces
@@ -285,13 +251,6 @@ export class UserController {
 
             if (req.isAuthenticated()) {
                 req.logout();
-            }
-            try {
-                if (req.session) {
-                    await destroySession(req.session);
-                }
-            } catch (error) {
-                log.warn(logContext, "(Logout) Error on Logout.", { error, req, ...logPayload });
             }
 
             // clear cookies
@@ -620,7 +579,7 @@ export class UserController {
 
             if (!!contextUrlHost && authProvidersOnDashboard.find((a) => a === contextUrlHost)) {
                 req.query.host = contextUrlHost;
-                log.debug({ sessionId: req.sessionID }, "Guessed auth provider from returnTo URL: " + contextUrlHost, {
+                log.debug("Guessed auth provider from returnTo URL: " + contextUrlHost, {
                     "login-flow": true,
                     query: req.query,
                 });
@@ -642,7 +601,7 @@ export class UserController {
         // @ts-ignore Type 'ParsedQs' is not assignable
         const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
         if (!returnToURL) {
-            log.debug({ sessionId: req.sessionID }, "Empty redirect URL");
+            log.debug("Empty redirect URL");
             return;
         }
 
@@ -653,7 +612,7 @@ export class UserController {
             return returnToURL;
         }
 
-        log.debug({ sessionId: req.sessionID }, "The redirect URL does not match", { query: req.query });
+        log.debug("The redirect URL does not match", { query: req.query });
         return;
     }
 

@@ -14,7 +14,6 @@ import { AuthProviderService } from "./auth-provider-service";
 import { increaseLoginCounter, reportJWTCookieIssued } from "../prometheus-metrics";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { trackLogin } from "../analytics";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { SessionHandler } from "../session-handler";
 import { AuthJWT } from "./jwt";
 
@@ -51,7 +50,7 @@ export class LoginCompletionHandler {
             if (authHost) {
                 increaseLoginCounter("failed", authHost);
             }
-            log.error(logContext, `Redirect to /sorry on login`, err, { err, session: request.session });
+            log.error(logContext, `Redirect to /sorry on login`, err, { err });
             response.redirect(this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
             return;
         }
@@ -69,7 +68,7 @@ export class LoginCompletionHandler {
                 .toString();
             returnTo = elevateScopesUrl;
         }
-        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`, { session: request.session });
+        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
 
         // Don't forget to mark a dynamic provider as verified
         if (authHost) {
@@ -84,20 +83,9 @@ export class LoginCompletionHandler {
             );
         }
 
-        const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "jwtSessionCookieEnabled",
-            false,
-            {
-                user: user,
-            },
-        );
-        if (isJWTCookieExperimentEnabled) {
-            const cookie = await this.session.createJWTSessionCookie(user.id);
-
-            response.cookie(cookie.name, cookie.value, cookie.opts);
-
-            reportJWTCookieIssued();
-        }
+        const cookie = await this.session.createJWTSessionCookie(user.id);
+        response.cookie(cookie.name, cookie.value, cookie.opts);
+        reportJWTCookieIssued();
 
         response.redirect(returnTo);
     }

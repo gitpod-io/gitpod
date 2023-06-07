@@ -96,7 +96,6 @@ export type WebsocketAuthenticationLevel = "user" | "session" | "anonymous";
 export interface ClientMetadata {
     id: string;
     authLevel: WebsocketAuthenticationLevel;
-    sessionId?: string;
     userId?: string;
     type?: WebsocketClientType;
     origin: ClientOrigin;
@@ -110,7 +109,6 @@ interface ClientOrigin {
 export namespace ClientMetadata {
     export function from(
         userId: string | undefined,
-        sessionId?: string,
         data?: Omit<ClientMetadata, "id" | "sessionId" | "authLevel">,
     ): ClientMetadata {
         let id = "anonymous";
@@ -118,17 +116,13 @@ export namespace ClientMetadata {
         if (userId) {
             id = userId;
             authLevel = "user";
-        } else if (sessionId) {
-            id = `session-${sessionId}`;
-            authLevel = "session";
         }
-        return { id, authLevel, userId, sessionId, ...data, origin: data?.origin || {} };
+        return { id, authLevel, userId, ...data, origin: data?.origin || {} };
     }
 
     export function fromRequest(req: any) {
         const expressReq = req as express.Request;
         const user = expressReq.user;
-        const sessionId = expressReq.session?.id;
         const type = WebsocketClientType.getClientType(expressReq);
         const version = takeFirst(expressReq.headers["x-client-version"]);
         const userAgent = takeFirst(expressReq.headers["user-agent"]);
@@ -138,7 +132,7 @@ export namespace ClientMetadata {
             instanceId,
             workspaceId,
         };
-        return ClientMetadata.from(user?.id, sessionId, { type, origin, version, userAgent });
+        return ClientMetadata.from(user?.id, { type, origin, version, userAgent });
     }
 
     function getOriginWorkspaceId(req: express.Request): string | undefined {
@@ -216,7 +210,6 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         connectionCtx?: TraceContext,
     ): GitpodServerImpl {
         const expressReq = request as express.Request;
-        const session = expressReq.session;
         const user: User | undefined = expressReq.user;
 
         const clientContext = this.getOrCreateClientContext(expressReq);
@@ -278,8 +271,6 @@ export class WebsocketConnectionManager implements ConnectionHandler {
 
         return new Proxy<GitpodServerImpl>(gitpodServer, {
             get: (target, property: keyof GitpodServerImpl) => {
-                if (session) session.touch();
-
                 return target[property];
             },
         });
@@ -343,7 +334,6 @@ class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnection
         traceClientMetadata(ctx, clientMetadata);
         TraceContext.setOWI(ctx, {
             userId: clientMetadata.userId,
-            sessionId: clientMetadata.sessionId,
         });
         connection.onClose(() => span.finish());
 
@@ -390,7 +380,6 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             traceClientMetadata(ctx, this.clientMetadata);
             TraceContext.setOWI(ctx, {
                 userId,
-                sessionId: this.clientMetadata.sessionId,
             });
             TraceContext.setJsonRPCMetadata(ctx, method);
 

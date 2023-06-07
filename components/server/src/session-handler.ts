@@ -5,65 +5,21 @@
  */
 
 import * as express from "express";
-import * as session from "express-session";
-import { SessionOptions } from "express-session";
-import { v4 as uuidv4 } from "uuid";
-import { injectable, inject, postConstruct } from "inversify";
+import * as websocket from "ws";
+import { injectable, inject } from "inversify";
 
-import * as mysqlstore from "express-mysql-session";
-const MySQLStore = mysqlstore(session);
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Config as DBConfig } from "@gitpod/gitpod-db/lib/config";
 import { Config } from "./config";
-import { reportJWTCookieIssued, reportSessionWithJWT } from "./prometheus-metrics";
+import { reportJWTCookieIssued } from "./prometheus-metrics";
 import { AuthJWT } from "./auth/jwt";
 import { UserDB } from "@gitpod/gitpod-db/lib";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { WsNextFunction, WsRequestHandler } from "./express/ws-handler";
 
 @injectable()
 export class SessionHandler {
     @inject(Config) protected readonly config: Config;
-    @inject(DBConfig) protected readonly dbConfig: DBConfig;
     @inject(AuthJWT) protected readonly authJWT: AuthJWT;
     @inject(UserDB) protected userDb: UserDB;
-
-    public sessionHandler: express.RequestHandler;
-
-    @postConstruct()
-    public init() {
-        const options: SessionOptions = {} as SessionOptions;
-        options.cookie = this.getCookieOptions(this.config);
-        (options.genid = function (req: any) {
-            return uuidv4(); // use UUIDs for session IDs
-        }),
-            (options.name = SessionHandler.getCookieName(this.config));
-        // options.proxy = true    // TODO SSL Proxy
-        options.resave = true; // TODO Check with store! See docu
-        options.rolling = true; // default, new cookie and maxAge
-        options.secret = this.config.session.secret;
-        options.saveUninitialized = false; // Do not save new cookie without content (uninitialized)
-
-        options.store = this.createStore();
-
-        this.sessionHandler = (req, res, next) => {
-            const cookies = parseCookieHeader(req.headers.cookie || "");
-            const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
-            if (jwtToken) {
-                // we handle the verification async, because we don't yet need to use it in the application
-                /* tslint:disable-next-line */
-                this.jwtSessionHandler(jwtToken, req, res, next)
-                    // the jwtSessionHandler is self-contained with respect to handling errors
-                    // however, if we did miss any, we at least capture it in here.
-                    .catch((err) => {
-                        log.error("Failed authenticate user with JWT Session cookie", err);
-                        res.statusCode = 500;
-                        res.send("Failed to authenticate jwt session.");
-                    });
-            } else {
-                session(options)(req, res, next);
-            }
-        };
-    }
 
     public jwtSessionConvertor(): express.Handler {
         return async (req, res) => {
@@ -74,67 +30,74 @@ export class SessionHandler {
                 return;
             }
 
-            const isJWTCookieExperimentEnabled = await getExperimentsClientForBackend().getValueAsync(
-                "jwtSessionCookieEnabled",
-                false,
-                {
-                    user: user,
-                },
-            );
-            if (isJWTCookieExperimentEnabled) {
-                const cookies = parseCookieHeader(req.headers.cookie || "");
-                const jwtToken = cookies[SessionHandler.getJWTCookieName(this.config)];
-                if (!jwtToken) {
-                    const cookie = await this.createJWTSessionCookie(user.id);
+            const cookies = parseCookieHeader(req.headers.cookie || "");
+            const jwtToken = cookies[this.getJWTCookieName(this.config)];
+            if (!jwtToken) {
+                const cookie = await this.createJWTSessionCookie(user.id);
 
-                    res.cookie(cookie.name, cookie.value, cookie.opts);
+                res.cookie(cookie.name, cookie.value, cookie.opts);
 
-                    reportJWTCookieIssued();
-                    res.status(200);
-                    res.send("New JWT cookie issued.");
-                } else {
-                    try {
-                        // will throw if the token is expired
-                        const decoded = await this.authJWT.verify(jwtToken);
+                reportJWTCookieIssued();
+                res.status(200);
+                res.send("New JWT cookie issued.");
+            } else {
+                try {
+                    // will throw if the token is expired
+                    const decoded = await this.authJWT.verify(jwtToken);
 
-                        const issuedAtMs = (decoded.iat || 0) * 1000;
-                        const now = new Date();
-                        const thresholdMs = 60 * 60 * 1000; // 1 hour
+                    const issuedAtMs = (decoded.iat || 0) * 1000;
+                    const now = new Date();
+                    const thresholdMs = 60 * 60 * 1000; // 1 hour
 
-                        // Was the token issued more than threshold ago?
-                        if (issuedAtMs + thresholdMs < now.getTime()) {
-                            // issue a new one, to refresh it
-                            const cookie = await this.createJWTSessionCookie(user.id);
-                            res.cookie(cookie.name, cookie.value, cookie.opts);
+                    // Was the token issued more than threshold ago?
+                    if (issuedAtMs + thresholdMs < now.getTime()) {
+                        // issue a new one, to refresh it
+                        const cookie = await this.createJWTSessionCookie(user.id);
+                        res.cookie(cookie.name, cookie.value, cookie.opts);
 
-                            reportJWTCookieIssued();
-                            res.status(200);
-                            res.send("Refreshed JWT cookie issued.");
-                            return;
-                        }
-
+                        reportJWTCookieIssued();
                         res.status(200);
-                        res.send("User session already has a valid JWT session.");
-                    } catch (err) {
-                        res.status(401);
-                        res.send("JWT Session is invalid");
+                        res.send("Refreshed JWT cookie issued.");
                         return;
                     }
+
+                    res.status(200);
+                    res.send("User session already has a valid JWT session.");
+                } catch (err) {
+                    res.status(401);
+                    res.send("JWT Session is invalid");
+                    return;
                 }
-            } else {
-                res.status(401);
-                res.send("JWT Cookies are not enabled.");
-                return;
             }
         };
     }
 
-    protected async jwtSessionHandler(
-        jwtToken: string,
-        req: express.Request,
-        res: express.Response,
-        next: express.NextFunction,
-    ): Promise<void> {
+    public http(): express.Handler {
+        return (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
+            return this.handler(req, next);
+        };
+    }
+
+    public websocket(): WsRequestHandler {
+        return (ws: websocket, req: express.Request, next: WsNextFunction): Promise<void> => {
+            return this.handler(req, next);
+        };
+    }
+
+    // Handler extracts authentication cookies from the incoming request, and
+    // resolves a User from it.
+    // If succesful, the `req.user` is set with the User which effectively marks the user as authenticated
+    // On failure, the next handler is called and the `req.user` is not set. Some APIs/Websocket RPCs do
+    // not require authentication, and as such we cannot fail the request at this stage.
+    protected async handler(req: express.Request, next: express.NextFunction): Promise<void> {
+        const cookies = parseCookieHeader(req.headers.cookie || "");
+        const jwtToken = cookies[this.getJWTCookieName(this.config)];
+        if (!jwtToken) {
+            log.debug("No JWT session present on request");
+            next();
+            return;
+        }
+
         try {
             const claims = await this.authJWT.verify(jwtToken);
             log.debug("JWT Session token verified", {
@@ -156,50 +119,12 @@ export class SessionHandler {
             // is authenticated.
             req.user = user;
 
-            req.sessionID = uuidv4();
-
-            const session: session.Session & Partial<session.SessionData> = {
-                cookie: {
-                    originalMaxAge: this.getCookieOptions(this.config).maxAge!,
-                    ...this.getCookieOptions(this.config),
-                },
-                // req.session.id is alias for req.sessionID
-                // https://github.com/expressjs/session/blob/master/README.md?plain=1#LL396C9-L396C19
-                id: req.sessionID,
-                regenerate: (cb) => {
-                    cb(null);
-                    return session;
-                },
-                destroy: (cb) => {
-                    cb(null);
-                    return session;
-                },
-                reload: (cb) => {
-                    cb(null);
-                    return session;
-                },
-                resetMaxAge: () => session,
-                save: (cb) => {
-                    if (cb) {
-                        cb(null);
-                    }
-                    return session;
-                },
-                touch: () => session,
-            };
-            req.session = session;
-
             // Trigger the next middleware in the chain.
             next();
         } catch (err) {
             log.warn("Failed to authenticate user with JWT Session", err);
             // Remove the existing cookie, to force the user to re-sing in, and hence refresh it
-            this.clearSessionCookie(res, this.config);
-
-            // Redirect the user to an error page
-            res.redirect(this.config.hostUrl.asSorry(err).toString());
-        } finally {
-            reportSessionWithJWT(true);
+            next();
         }
     }
 
@@ -209,7 +134,7 @@ export class SessionHandler {
         const token = await this.authJWT.sign(userID, {});
 
         return {
-            name: SessionHandler.getJWTCookieName(this.config),
+            name: this.getJWTCookieName(this.config),
             value: token,
             opts: {
                 maxAge: this.config.auth.session.cookie.maxAge * 1000, // express does not match the HTTP spec and uses milliseconds
@@ -220,56 +145,12 @@ export class SessionHandler {
         };
     }
 
-    protected getCookieOptions(config: Config): express.CookieOptions {
-        // ############################################################################################################
-        // WARNING: Whenever we do changes here, we very likely want to have bump the cookie name as well!
-        // ############################################################################################################
-        // Do not set `domain` attribute so only the base domain (e.g. only gitpod.io) has the Gitpod cookie.
-        // If `domain` is specified, then subdomains are always included. Therefore, specifying `domain` is less restrictive than omitting it.
-        return {
-            path: "/", // default
-            httpOnly: true, // default
-            secure: false, // default, TODO SSL! Config proxy
-            maxAge: config.session.maxAgeMs,
-            sameSite: "lax", // default: true. "Lax" needed for OAuth.
-        };
-    }
-
-    static getCookieName(config: Config) {
-        const derived = config.hostUrl
-            .toString()
-            .replace(/https?/, "")
-            .replace(/[\W_]+/g, "_");
-        return `${derived}v2_`;
-    }
-
-    static getJWTCookieName(config: Config) {
+    private getJWTCookieName(config: Config) {
         return config.auth.session.cookie.name;
     }
 
     public clearSessionCookie(res: express.Response, config: Config): void {
-        // http://expressjs.com/en/api.html#res.clearCookie
-        const name = SessionHandler.getCookieName(config);
-        const options = { ...this.getCookieOptions(config) };
-        delete options.expires;
-        delete options.maxAge;
-        res.clearCookie(name, options);
-
-        res.clearCookie(SessionHandler.getJWTCookieName(this.config), options);
-    }
-
-    protected createStore(): any | undefined {
-        const options = {
-            ...(this.dbConfig.dbConfig as any),
-            user: this.dbConfig.dbConfig.username,
-            database: "gitpod-sessions",
-            createDatabaseTable: true,
-        };
-        return new MySQLStore(options, undefined, (err) => {
-            if (err) {
-                log.debug("MySQL session store error: ", err);
-            }
-        });
+        res.clearCookie(this.getJWTCookieName(this.config));
     }
 }
 

@@ -147,7 +147,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.set("trust proxy", 1); // trust first proxy
 
         // Install Sessionhandler
-        app.use(this.sessionHandler.sessionHandler);
+        app.use(this.sessionHandler.http());
 
         // Install passport
         await this.authenticator.init(app);
@@ -210,12 +210,6 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 return callback(true);
             };
 
-            // Materialize session into req.session
-            const handleSession: WsRequestHandler = (ws, req, next) => {
-                // The fake response needs to be create in a per-request context to avoid memory leaks
-                this.sessionHandler.sessionHandler(req, {} as express.Response, next);
-            };
-
             // Materialize user into req.user
             const initSessionHandlers = this.authenticator.initHandlers.map<WsRequestHandler>(
                 (handler) => (ws, req, next) => {
@@ -232,7 +226,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                     const websocket = toIWebSocket(ws);
                     (request as any).wsConnection = createWebSocketConnection(websocket, console);
                 },
-                handleSession,
+                this.sessionHandler.websocket(),
                 ...initSessionHandlers,
                 wsPingPongHandler.handler(),
                 (ws: ws, req: express.Request) => {
