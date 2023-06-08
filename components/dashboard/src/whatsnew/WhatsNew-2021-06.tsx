@@ -28,17 +28,15 @@ export const WhatsNewEntry202106: WhatsNewEntry = {
                     </p>
                 </div>
                 {user.additionalData?.ideSettings?.defaultIde !== "code" && (
-                    <>
-                        <div className="border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 pt-6 pb-4">
-                            <p className="pb-2 text-gray-900 dark:text-gray-100 text-base font-medium">
-                                New Editor <PillLabel type="warn">Deprecation Warning</PillLabel>
-                            </p>
-                            <p className="pb-2 text-gray-500 dark:text-gray-400 text-sm">
-                                We're deprecating the Theia editor. You can still switch back to Theia for the next few
-                                weeks but the preference will be removed by the end of August 2021.
-                            </p>
-                        </div>
-                    </>
+                    <div className="border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 pt-6 pb-4">
+                        <p className="pb-2 text-gray-900 dark:text-gray-100 text-base font-medium">
+                            New Editor <PillLabel type="warn">Deprecation Warning</PillLabel>
+                        </p>
+                        <p className="pb-2 text-gray-500 dark:text-gray-400 text-sm">
+                            We're deprecating the Theia editor. You can still switch back to Theia for the next few
+                            weeks but the preference will be removed by the end of August 2021.
+                        </p>
+                    </div>
                 )}
             </>
         );

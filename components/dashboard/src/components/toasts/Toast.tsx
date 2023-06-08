@@ -80,7 +80,7 @@ export const Toast: FC<Props> = ({ id, message, duration = 5000, autoHide = true
             aria-labelledby={elId}
         >
             <div className="flex-grow text-white dark:text-gray-800" id={elId}>
-                {typeof message === "string" ? <p>{message}</p> : <>{message}</>}
+                {typeof message === "string" ? <p>{message}</p> : message}
             </div>
             <div>
                 <button

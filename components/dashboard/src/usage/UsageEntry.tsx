@@ -88,7 +88,7 @@ const DisplayName: FC<{ workspaceClass: string }> = ({ workspaceClass }) => {
 
     const workspaceDisplayName = supportedClasses.data?.find((wc) => wc.id === workspaceClass)?.displayName;
 
-    return <>{workspaceDisplayName || workspaceClass}</>;
+    return <span>{workspaceDisplayName || workspaceClass}</span>;
 };
 
 const getType = (type: WorkspaceType) => {

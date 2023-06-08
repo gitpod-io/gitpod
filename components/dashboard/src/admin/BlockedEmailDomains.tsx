@@ -99,64 +99,62 @@ export function BlockedEmailDomainsList(props: Props) {
     };
 
     return (
-        <>
-            <div className="app-container">
-                {isAddModalVisible && (
-                    <AddBlockedDomainModal
-                        blockedDomain={currentBlockedDomain}
-                        validate={validate}
-                        save={save}
-                        onClose={() => setAddModalVisible(false)}
-                    />
-                )}
-                <div className="pb-3 mt-3 flex">
-                    <div className="flex justify-between w-full">
-                        <div className="flex relative h-10 my-auto">
-                            <img
-                                src={searchIcon}
-                                title="Search"
-                                className="filter-grayscale absolute top-3 left-3"
-                                alt="search icon"
-                            />
-                            <input
-                                className="w-64 pl-9 border-0"
-                                type="search"
-                                placeholder="Search by domain"
-                                onChange={(v) => {
-                                    setSearchTerm(v.target.value.trim());
-                                }}
-                            />
-                        </div>
-                        <div className="flex space-x-2">
-                            <button onClick={add}>Add Domain</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex flex-col space-y-2">
-                    <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
-                        <div className="w-9/12">Domain</div>
-                        <div className="w-1/12">Block Users</div>
-                        <div className="w-1/12"></div>
-                    </div>
-                    {searchResult.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((br) => (
-                        <BlockedDomainEntry
-                            key={br.domain}
-                            br={br}
-                            toggleBlockUser={async () => {
-                                br.negative = !br.negative;
-                                updateBlockedEmailDomainMutation.mutateAsync(br);
+        <div className="app-container">
+            {isAddModalVisible && (
+                <AddBlockedDomainModal
+                    blockedDomain={currentBlockedDomain}
+                    validate={validate}
+                    save={save}
+                    onClose={() => setAddModalVisible(false)}
+                />
+            )}
+            <div className="pb-3 mt-3 flex">
+                <div className="flex justify-between w-full">
+                    <div className="flex relative h-10 my-auto">
+                        <img
+                            src={searchIcon}
+                            title="Search"
+                            className="filter-grayscale absolute top-3 left-3"
+                            alt="search icon"
+                        />
+                        <input
+                            className="w-64 pl-9 border-0"
+                            type="search"
+                            placeholder="Search by domain"
+                            onChange={(v) => {
+                                setSearchTerm(v.target.value.trim());
                             }}
                         />
-                    ))}
-                    <Pagination
-                        currentPage={currentPage}
-                        setPage={setCurrentPage}
-                        totalNumberOfPages={Math.ceil(searchResult.length / pageSize)}
-                    />
+                    </div>
+                    <div className="flex space-x-2">
+                        <button onClick={add}>Add Domain</button>
+                    </div>
                 </div>
             </div>
-        </>
+
+            <div className="flex flex-col space-y-2">
+                <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
+                    <div className="w-9/12">Domain</div>
+                    <div className="w-1/12">Block Users</div>
+                    <div className="w-1/12"></div>
+                </div>
+                {searchResult.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((br) => (
+                    <BlockedDomainEntry
+                        key={br.domain}
+                        br={br}
+                        toggleBlockUser={async () => {
+                            br.negative = !br.negative;
+                            updateBlockedEmailDomainMutation.mutateAsync(br);
+                        }}
+                    />
+                ))}
+                <Pagination
+                    currentPage={currentPage}
+                    setPage={setCurrentPage}
+                    totalNumberOfPages={Math.ceil(searchResult.length / pageSize)}
+                />
+            </div>
+        </div>
     );
 }
 

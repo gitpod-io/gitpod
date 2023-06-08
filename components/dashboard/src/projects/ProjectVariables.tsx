@@ -75,35 +75,33 @@ export default function ProjectVariablesPage() {
                     <button onClick={() => setShowAddVariableModal(true)}>New Variable</button>
                 </div>
             ) : (
-                <>
-                    <ItemsList>
-                        <Item header={true} className="grid grid-cols-3 items-center">
-                            <ItemField>Name</ItemField>
-                            <ItemField>Visibility in Workspaces</ItemField>
-                            <ItemField></ItemField>
-                        </Item>
-                        {envVars.map((variable) => {
-                            return (
-                                <Item key={variable.id} className="grid grid-cols-3 items-center">
-                                    <ItemField className="truncate">{variable.name}</ItemField>
-                                    <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
-                                    <ItemField className="flex justify-end">
-                                        <ItemFieldContextMenu
-                                            menuEntries={[
-                                                {
-                                                    title: "Delete",
-                                                    customFontStyle:
-                                                        "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
-                                                    onClick: () => deleteEnvVar(variable.id),
-                                                },
-                                            ]}
-                                        />
-                                    </ItemField>
-                                </Item>
-                            );
-                        })}
-                    </ItemsList>
-                </>
+                <ItemsList>
+                    <Item header={true} className="grid grid-cols-3 items-center">
+                        <ItemField>Name</ItemField>
+                        <ItemField>Visibility in Workspaces</ItemField>
+                        <ItemField></ItemField>
+                    </Item>
+                    {envVars.map((variable) => {
+                        return (
+                            <Item key={variable.id} className="grid grid-cols-3 items-center">
+                                <ItemField className="truncate">{variable.name}</ItemField>
+                                <ItemField>{variable.censored ? "Hidden" : "Visible"}</ItemField>
+                                <ItemField className="flex justify-end">
+                                    <ItemFieldContextMenu
+                                        menuEntries={[
+                                            {
+                                                title: "Delete",
+                                                customFontStyle:
+                                                    "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
+                                                onClick: () => deleteEnvVar(variable.id),
+                                            },
+                                        ]}
+                                    />
+                                </ItemField>
+                            </Item>
+                        );
+                    })}
+                </ItemsList>
             )}
         </ProjectSettingsPage>
     );

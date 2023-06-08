@@ -156,9 +156,7 @@ export const Login: FC<LoginProps> = ({ onLoggedIn }) => {
                                             <Subheading>for the repository {repoPathname?.slice(1)}</Subheading>
                                         </>
                                     ) : (
-                                        <>
-                                            <Heading1>Log in to Gitpod</Heading1>
-                                        </>
+                                        <Heading1>Log in to Gitpod</Heading1>
                                     )}
                                 </div>
 

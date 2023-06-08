@@ -514,11 +514,9 @@ export default function NewProject() {
     if (!project) {
         return (
             <div className="flex flex-col w-96 mt-24 mx-auto items-center">
-                <>
-                    <Heading1>New Project</Heading1>
+                <Heading1>New Project</Heading1>
 
-                    {!selectedRepo && renderSelectRepository()}
-                </>
+                {!selectedRepo && renderSelectRepository()}
             </div>
         );
     } else {
@@ -526,32 +524,30 @@ export default function NewProject() {
         const location = !currentTeam ? (
             ""
         ) : (
-            <>
+            <span>
                 {" "}
                 in organization{" "}
                 <a className="gp-link" href={`/projects`}>
                     {currentTeam?.name}
                 </a>
-            </>
+            </span>
         );
 
         return (
             <div className="flex flex-col w-96 mt-24 mx-auto items-center">
-                <>
-                    <Heading1>Project Created</Heading1>
+                <Heading1>Project Created</Heading1>
 
-                    <Subheading className="mt-2 text-center">
-                        Created{" "}
-                        <a className="gp-link" href={projectLink}>
-                            {project.name}
-                        </a>{" "}
-                        {location}
-                    </Subheading>
+                <Subheading className="mt-2 text-center">
+                    Created{" "}
+                    <a className="gp-link" href={projectLink}>
+                        {project.name}
+                    </a>{" "}
+                    {location}
+                </Subheading>
 
-                    <div className="mt-12">
-                        <button onClick={onNewWorkspace}>New Workspace</button>
-                    </div>
-                </>
+                <div className="mt-12">
+                    <button onClick={onNewWorkspace}>New Workspace</button>
+                </div>
             </div>
         );
     }
