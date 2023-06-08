@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpod"
