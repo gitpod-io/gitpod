@@ -5,7 +5,7 @@
  */
 
 import { AuthProviderEntry } from "@gitpod/gitpod-protocol";
-import { FunctionComponent, useCallback, useContext, useMemo, useState } from "react";
+import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/Button";
 import { InputField } from "../../components/forms/InputField";
 import { SelectInputField } from "../../components/forms/SelectInputField";
@@ -22,7 +22,7 @@ import { getGitpodService, gitpodHostUrl } from "../../service/service";
 import { UserContext } from "../../user-context";
 import { useToast } from "../../components/toasts/Toasts";
 
-type ProviderType = "GitHub" | "GitLab" | "BitbucketServer";
+type ProviderType = "GitHub" | "GitLab" | "Bitbucket" | "BitbucketServer";
 
 type Props = {
     provider?: AuthProviderEntry;
@@ -55,6 +55,13 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
 
         return url;
     }, [host, isNew, savedProvider?.oauth.callBackUrl, type]);
+
+    // "bitbucket.org" is set as host value whenever "Bitbucket" is selected
+    useEffect(() => {
+        if (isNew) {
+            setHost(type === "Bitbucket" ? "bitbucket.org" : "");
+        }
+    }, [isNew, type]);
 
     const [savingProvider, setSavingProvider] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -212,12 +219,13 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                     >
                         <option value="GitHub">GitHub</option>
                         <option value="GitLab">GitLab</option>
+                        <option value="Bitbucket">Bitbucket Cloud</option>
                         <option value="BitbucketServer">Bitbucket Server</option>
                     </SelectInputField>
                     <TextInputField
                         label="Provider Host Name"
                         value={host}
-                        disabled={!isNew}
+                        disabled={!isNew || type === "Bitbucket"}
                         placeholder={getPlaceholderForIntegrationType(type)}
                         error={hostError}
                         onChange={setHost}
@@ -289,6 +297,8 @@ const getPlaceholderForIntegrationType = (type: ProviderType) => {
             return "github.example.com";
         case "GitLab":
             return "gitlab.example.com";
+        case "Bitbucket":
+            return "bitbucket.org";
         case "BitbucketServer":
             return "bitbucket.example.com";
         default:
@@ -307,6 +317,9 @@ const RedirectUrlDescription: FunctionComponent<RedirectUrlDescriptionProps> = (
             break;
         case "GitLab":
             docsUrl = `https://www.gitpod.io/docs/configure/authentication/gitlab#registering-a-self-hosted-gitlab-installation`;
+            break;
+        case "Bitbucket":
+            docsUrl = `https://www.gitpod.io/docs/configure/authentication`;
             break;
         case "BitbucketServer":
             docsUrl = "https://www.gitpod.io/docs/configure/authentication/bitbucket-server";

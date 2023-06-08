@@ -23,7 +23,6 @@ import exclamation from "../images/exclamation.svg";
 import { openAuthorizeWindow } from "../provider-utils";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
-import { isGitpodIo } from "../utils";
 import { AuthEntryItem } from "./AuthEntryItem";
 import { IntegrationEntryItem } from "./IntegrationItemEntry";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
@@ -546,14 +545,6 @@ export function GitIntegrationModal(
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clientId, clientSecret, type]);
 
-    // "bitbucket.org" is set as host value whenever "Bitbucket" is selected
-    useEffect(() => {
-        if (props.mode === "new") {
-            updateHostValue(type === "Bitbucket" ? "bitbucket.org" : "");
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [type]);
-
     const onClose = () => props.onClose && props.onClose();
     const onUpdate = () => props.onUpdate && props.onUpdate();
 
@@ -717,8 +708,6 @@ export function GitIntegrationModal(
                 return "gitlab.example.com";
             case "BitbucketServer":
                 return "bitbucket.example.com";
-            case "Bitbucket":
-                return "bitbucket.org";
             default:
                 return "";
         }
@@ -766,7 +755,6 @@ export function GitIntegrationModal(
                             >
                                 <option value="GitHub">GitHub</option>
                                 <option value="GitLab">GitLab</option>
-                                {!isGitpodIo() && <option value="Bitbucket">Bitbucket</option>}
                                 <option value="BitbucketServer">Bitbucket Server</option>
                             </select>
                         </div>
@@ -790,7 +778,7 @@ export function GitIntegrationModal(
                         </label>
                         <input
                             id="hostName"
-                            disabled={mode === "edit" || type === "Bitbucket"}
+                            disabled={mode === "edit"}
                             type="text"
                             placeholder={getPlaceholderForIntegrationType(type)}
                             value={host}
