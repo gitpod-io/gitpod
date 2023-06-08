@@ -262,20 +262,22 @@ export class UserService {
         return user;
     }
 
-    async updateUserOnLogin(user: User, authUser: AuthUser, candidate: Identity, token: Token) {
+    async updateUserOnLogin(user: User, authUser: AuthUser, candidate: Identity, token: Token): Promise<User> {
         // update user
         user.name = user.name || authUser.name || authUser.primaryEmail;
         user.avatarUrl = user.avatarUrl || authUser.avatarUrl;
         await this.onAfterUserLoad(user);
-        await this.updateUserIdentity(user, candidate);
+        const udpated = await this.updateUserIdentity(user, candidate);
         await this.userDb.storeSingleToken(candidate, token);
+
+        return udpated;
     }
 
     async onAfterUserLoad(user: User): Promise<User> {
         return user;
     }
 
-    async updateUserIdentity(user: User, candidate: Identity) {
+    async updateUserIdentity(user: User, candidate: Identity): Promise<User> {
         log.info("Updating user identity", {
             user,
             candidate,
@@ -284,7 +286,7 @@ export class UserService {
         user.identities = user.identities.filter((i) => i.authProviderId !== candidate.authProviderId);
         user.identities.push(candidate);
 
-        await this.userDb.storeUser(user);
+        return await this.userDb.storeUser(user);
     }
 
     async deauthorize(user: User, authProviderId: string) {

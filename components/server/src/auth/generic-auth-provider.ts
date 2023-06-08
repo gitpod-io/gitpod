@@ -614,10 +614,13 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     : await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
                 const isBlocked = await this.userService.isBlocked({ user: currentGitpodUser });
 
-                await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
+                log.info("User before update", currentGitpodUser);
+                const user = await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
+                log.info("user after update", user);
+                req.user = user;
 
                 flowContext = <VerifyResult.WithUser>{
-                    user: currentGitpodUser,
+                    user: user,
                     isBlocked,
                     returnToUrl: authFlow.returnTo,
                     authHost: this.host,
