@@ -471,8 +471,8 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 // behaviour as returning an error.
 func errorResultLogConflict(log logr.Logger, err error) (ctrl.Result, error) {
 	if errors.IsConflict(err) {
-		log.Info("conflict error", "error", err.Error())
-		return ctrl.Result{Requeue: true}, nil
+		log.Info("conflict error, requeuing", "error", err.Error())
+		return ctrl.Result{RequeueAfter: 100 * time.Millisecond}, nil
 	} else {
 		return ctrl.Result{}, err
 	}
