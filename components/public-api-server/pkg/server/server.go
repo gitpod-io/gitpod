@@ -192,7 +192,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 			NewLogInterceptor(log.Log),
 			auth.NewServerInterceptor(),
 			origin.NewInterceptor(),
-			auth.NewJWTCookieInterceptor(deps.expClient, deps.authCfg.Session.Cookie.Name, deps.authCfg.Session.Issuer, deps.sessionVerifier),
+			auth.NewJWTCookieInterceptor(deps.authCfg.Session.Cookie.Name, deps.authCfg.Session.Issuer, deps.sessionVerifier),
 		),
 	}
 
