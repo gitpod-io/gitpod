@@ -70,6 +70,7 @@ export class LoginCompletionHandler {
         }
         log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
 
+        log.info("Auth host", authHost);
         // Don't forget to mark a dynamic provider as verified
         if (authHost) {
             await this.updateAuthProviderAsVerified(authHost, user);
