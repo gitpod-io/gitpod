@@ -267,10 +267,14 @@ export class UserService {
         user.name = user.name || authUser.name || authUser.primaryEmail;
         user.avatarUrl = user.avatarUrl || authUser.avatarUrl;
         await this.onAfterUserLoad(user);
-        const udpated = await this.updateUserIdentity(user, candidate);
+        await this.updateUserIdentity(user, candidate);
         await this.userDb.storeSingleToken(candidate, token);
 
-        return udpated;
+        const updated = await this.userDb.findUserById(user.id);
+        if (!updated) {
+            throw new Error("user does not exist");
+        }
+        return updated;
     }
 
     async onAfterUserLoad(user: User): Promise<User> {
