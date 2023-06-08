@@ -165,8 +165,9 @@ type Kubernetes struct {
 
 // Config configures Agent Smith
 type Config struct {
-	GitpodAPI           GitpodAPI `json:"gitpodAPI"`
-	KubernetesNamespace string    `json:"namespace"`
+	WorkspaceManager    WorkspaceManagerConfig `json:"wsman"`
+	GitpodAPI           GitpodAPI              `json:"gitpodAPI"`
+	KubernetesNamespace string                 `json:"namespace"`
 
 	Blocklists *Blocklists `json:"blocklists,omitempty"`
 
@@ -175,6 +176,17 @@ type Config struct {
 	Kubernetes        Kubernetes         `json:"kubernetes"`
 
 	ProbePath string `json:"probePath,omitempty"`
+}
+
+type TLS struct {
+	Authority   string `json:"ca"`
+	Certificate string `json:"crt"`
+	PrivateKey  string `json:"key"`
+}
+
+type WorkspaceManagerConfig struct {
+	Address string `json:"address"`
+	TLS     TLS    `json:"tls,omitempty"`
 }
 
 // Slackwebhooks holds slack notification configuration for different levels of penalty severity
