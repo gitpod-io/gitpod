@@ -415,45 +415,29 @@ export abstract class GenericAuthProvider implements AuthProvider {
             };
 
             if (VerifyResult.WithIdentity.is(flowContext)) {
-                const { returnTo } = authFlow;
-                if (request.user) {
-                    log.info(context, `(${strategyName}) Updating user identity and completing login.`, logPayload);
-                    // There is a current user session, so we only need to extend the
-                    // user identities with our new identity.
-                    await this.userService.updateUserIdentity(request.user, flowContext.candidate);
+                log.info(context, `(${strategyName}) Creating new user and completing login.`, logPayload);
+                // There is no current session, we need to create a new user because this
+                // identity does not yet exist.
+                const newUser = await this.createNewUser({
+                    request,
+                    candidate: flowContext.candidate,
+                    token: flowContext.token,
+                    authUser: flowContext.authUser,
+                    isBlocked: flowContext.isBlocked,
+                });
 
-                    const returnToURL = returnTo || this.config.hostUrl.asDashboard().toString();
-                    response.redirect(returnToURL);
-                    return;
-                } else {
-                    log.info(context, `(${strategyName}) Creating new user and completing login.`, logPayload);
-                    // There is no current session, we need to create a new user because this
-                    // identity does not yet exist.
-                    const newUser = await this.createNewUser({
-                        request,
-                        candidate: flowContext.candidate,
-                        token: flowContext.token,
-                        authUser: flowContext.authUser,
-                        isBlocked: flowContext.isBlocked,
-                    });
-
-                    await this.loginCompletionHandler.complete(request, response, {
-                        user: newUser,
-                        returnToUrl: authFlow.returnTo,
-                        authHost: authFlow.host,
-                    });
-                }
+                await this.loginCompletionHandler.complete(request, response, {
+                    user: newUser,
+                    returnToUrl: authFlow.returnTo,
+                    authHost: authFlow.host,
+                });
             } else {
-                const { user, elevateScopes } = flowContext as VerifyResult.WithUser;
+                // const { user, elevateScopes } = flowContext as VerifyResult.WithUser;
                 log.info(context, `(${strategyName}) Directly log in and proceed.`, logPayload);
 
-                const { host, returnTo } = authFlow;
-                await this.loginCompletionHandler.complete(request, response, {
-                    user,
-                    returnToUrl: returnTo,
-                    authHost: host,
-                    elevateScopes,
-                });
+                const { returnTo } = authFlow;
+                response.redirect(returnTo);
+                return;
             }
         }
     }
