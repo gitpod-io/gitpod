@@ -739,20 +739,31 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async sendPhoneNumberVerificationToken(ctx: TraceContext, rawPhoneNumber: string): Promise<void> {
-        this.checkUser("sendPhoneNumberVerificationToken");
+        const user = this.checkUser("sendPhoneNumberVerificationToken");
 
         // Check if verify via call is enabled
         const phoneVerificationByCall = await this.configCatClientFactory().getValueAsync(
             "phoneVerificationByCall",
             false,
             {
-                user: this.user,
+                user,
             },
         );
 
         const channel = phoneVerificationByCall ? "call" : "sms";
 
-        return this.verificationService.sendVerificationToken(formatPhoneNumber(rawPhoneNumber), channel);
+        const verification = await this.verificationService.sendVerificationToken(
+            formatPhoneNumber(rawPhoneNumber),
+            channel,
+        );
+        this.analytics.track({
+            event: "phone_verification_sent",
+            userId: user.id,
+            properties: {
+                channel: verification.channel,
+                requestedChannel: channel,
+            },
+        });
     }
 
     public async verifyPhoneNumberVerificationToken(
@@ -762,13 +773,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<boolean> {
         const phoneNumber = formatPhoneNumber(rawPhoneNumber);
         const user = this.checkUser("verifyPhoneNumberVerificationToken");
-        const checked = await this.verificationService.verifyVerificationToken(phoneNumber, token);
-        if (!checked) {
+        const { verified, channel } = await this.verificationService.verifyVerificationToken(phoneNumber, token);
+        if (!verified) {
+            this.analytics.track({
+                event: "phone_verification_failed",
+                userId: user.id,
+                properties: {
+                    channel,
+                },
+            });
             return false;
         }
         this.verificationService.markVerified(user);
         user.verificationPhoneNumber = phoneNumber;
         await this.userDB.updateUserPartial(user);
+        this.analytics.track({
+            event: "phone_verification_completed",
+            userId: user.id,
+            properties: {
+                channel,
+            },
+        });
         return true;
     }
 
