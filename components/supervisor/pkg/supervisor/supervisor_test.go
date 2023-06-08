@@ -21,6 +21,7 @@ func TestBuildChildProcEnv(t *testing.T) {
 			"SUPERVISOR_ADDR=localhost:8080",
 			"HOME=/home/gitpod",
 			"USER=gitpod",
+			"BROWSER=gp preview --external",
 			"HISTFILE=/workspace/.gitpod/.shell_history",
 			"PROMPT_COMMAND=history -a",
 		)
@@ -90,14 +91,20 @@ func TestBuildChildProcEnv(t *testing.T) {
 			Name:  "ots",
 			Input: []string{},
 			OTS:   `[{"name":"foo","value":"bar"},{"name":"GITPOD_TOKENS","value":"foobar"}]`,
-			Expectation: []string{"HOME=/home/gitpod", "HISTFILE=/workspace/.gitpod/.shell_history",
+			Expectation: []string{
+				"HOME=/home/gitpod",
+				"BROWSER=gp preview --external",
+				"HISTFILE=/workspace/.gitpod/.shell_history",
 				"PROMPT_COMMAND=history -a", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod", "foo=bar"},
 		},
 		{
 			Name:  "failed ots",
 			Input: []string{},
 			OTS:   `invalid json`,
-			Expectation: []string{"HOME=/home/gitpod", "HISTFILE=/workspace/.gitpod/.shell_history",
+			Expectation: []string{
+				"HOME=/home/gitpod",
+				"BROWSER=gp preview --external",
+				"HISTFILE=/workspace/.gitpod/.shell_history",
 				"PROMPT_COMMAND=history -a", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod"},
 		},
 	}

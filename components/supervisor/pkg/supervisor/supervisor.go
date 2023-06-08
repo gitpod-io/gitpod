@@ -1011,6 +1011,10 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 		envs["PROMPT_COMMAND"] = "history -a"
 	}
 
+	if _, ok := envs["BROWSER"]; !ok {
+		envs["BROWSER"] = "gp preview --external"
+	}
+
 	var env, envn []string
 	for nme, val := range envs {
 		log.WithField("envvar", nme).Debug("passing environment variable to IDE")
