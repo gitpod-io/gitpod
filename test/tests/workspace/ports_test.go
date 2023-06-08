@@ -32,8 +32,8 @@ func TestRegularWorkspacePorts(t *testing.T) {
 	testRepoName := "gitpod-test-repo"
 	wsLoc := fmt.Sprintf("/workspace/%s", testRepoName)
 
-	f := features.New("ws-manager").
-		WithLabel("component", "ws-manager").
+	f := features.New("ports").
+		WithLabel("component", "workspace").
 		WithLabel("type", "ports").
 		Assess("it can open and access workspace ports", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
