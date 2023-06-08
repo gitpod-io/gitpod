@@ -174,7 +174,6 @@ type registerDependencies struct {
 
 func register(srv *baseserver.Server, deps *registerDependencies) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
-	auth.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
 	err := connectMetrics.Register(srv.MetricsRegistry())
