@@ -422,7 +422,9 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     // user identities with our new identity.
                     await this.userService.updateUserIdentity(request.user, flowContext.candidate);
 
-                    response.redirect(returnTo);
+                    const returnToURL = returnTo || this.config.hostUrl.asDashboard().toString();
+                    response.redirect(returnToURL);
+                    return;
                 } else {
                     log.info(context, `(${strategyName}) Creating new user and completing login.`, logPayload);
                     // There is no current session, we need to create a new user because this
