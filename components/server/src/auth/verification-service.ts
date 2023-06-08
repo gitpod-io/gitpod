@@ -108,7 +108,7 @@ export class VerificationService {
 
         // Help us identify if verification codes are not able to send via requested channel
         if (channel !== verification.channel) {
-            log.info("Verification code sent via different channel", {
+            log.info("Verification code sent via different channel than system requested", {
                 phoneNumber,
                 status: verification.status,
                 // actual channel verification was created on
