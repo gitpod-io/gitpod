@@ -276,6 +276,10 @@ export class UserService {
     }
 
     async updateUserIdentity(user: User, candidate: Identity) {
+        log.info("Updating user identity", {
+            user,
+            candidate,
+        });
         // ensure single identity per auth provider instance
         user.identities = user.identities.filter((i) => i.authProviderId !== candidate.authProviderId);
         user.identities.push(candidate);
