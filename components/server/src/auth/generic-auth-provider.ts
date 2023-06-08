@@ -618,6 +618,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 const user = await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
                 log.info("user after update", user);
                 req.user = user;
+                currentGitpodUser = user;
 
                 flowContext = <VerifyResult.WithUser>{
                     user: user,
