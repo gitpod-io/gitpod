@@ -114,32 +114,41 @@ func TestRegularWorkspacePorts(t *testing.T) {
 				} `json:"result"`
 			}
 
-			// Wait for port auto-detection to pick up the open port.
-			time.Sleep(4 * time.Second)
-
 			expectPort := func(expected Port) {
-				var res agent.ExecResponse
-				err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
-					Dir:     wsLoc,
-					Command: "curl",
-					// nftable rule only forwards to this ip address
-					Args: []string{"10.0.5.2:22999/_supervisor/v1/status/ports"},
-				}, &res)
-				if err != nil {
-					t.Fatal(err)
-				}
-				err = json.Unmarshal([]byte(res.Stdout), &portsResp)
-				if err != nil {
-					t.Fatalf("cannot decode supervisor ports status response: %s", err)
+				for i := 0; i < 10; i++ {
+					var res agent.ExecResponse
+					err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+						Dir:     wsLoc,
+						Command: "curl",
+						// nftable rule only forwards to this ip address
+						Args: []string{"10.0.5.2:22999/_supervisor/v1/status/ports"},
+					}, &res)
+					if err != nil {
+						t.Fatal(err)
+					}
+					err = json.Unmarshal([]byte(res.Stdout), &portsResp)
+					if err != nil {
+						t.Fatalf("cannot decode supervisor ports status response: %s", err)
+					}
+
+					t.Logf("ports: %s (%d)", res.Stdout, res.ExitCode)
+					if len(portsResp.Result.Ports) != 1 {
+						t.Logf("expected one port to be open, but got %d, retrying", len(portsResp.Result.Ports))
+						time.Sleep(2 * time.Second)
+						continue
+					}
+					if !reflect.DeepEqual(expected, *portsResp.Result.Ports[0]) {
+						t.Logf("expected %v but got %v, retrying", expected, *portsResp.Result.Ports[0])
+						time.Sleep(2 * time.Second)
+						continue
+					}
+
+					// Got expected port.
+					return
 				}
 
-				t.Logf("ports: %s (%d)", res.Stdout, res.ExitCode)
-				if len(portsResp.Result.Ports) != 1 {
-					t.Fatalf("expected one port to be open, but got %d", len(portsResp.Result.Ports))
-				}
-				if !reflect.DeepEqual(expected, *portsResp.Result.Ports[0]) {
-					t.Fatalf("expected %v but got %v", expected, *portsResp.Result.Ports[0])
-				}
+				// If we get here, we didn't get the expected port status after retrying.
+				t.Fatalf("did not get expected port status after 10 attempts")
 			}
 
 			t.Logf("checking that port has been auto-detected, and is private")
@@ -178,8 +187,6 @@ func TestRegularWorkspacePorts(t *testing.T) {
 			}
 			t.Logf("debug: gp CLI output: %s, %s, %d", res1.Stdout, res1.Stderr, res1.ExitCode)
 
-			// Wait for workspace to pick up the port change.
-			time.Sleep(3 * time.Second)
 			t.Logf("checking that port is now public")
 			expectPort(Port{
 				LocalPort: 3000,
