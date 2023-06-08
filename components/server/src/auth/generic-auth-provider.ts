@@ -365,6 +365,12 @@ export abstract class GenericAuthProvider implements AuthProvider {
          * - redirect to `returnTo` (from request parameter)
          */
 
+        log.info("Auth provider result", {
+            err,
+            userOrIdentity,
+            flowContext,
+        });
+
         const context = LogContext.from({
             user: User.is(userOrIdentity) ? { userId: userOrIdentity.id } : undefined,
             request,
