@@ -63,17 +63,20 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
                     <span className="text-4xl">🎁</span>
                     {/* TODO: Shouldn't need a fixed width here, but was hard to center otherwise  */}
                     <p className="w-64 text-base text-gray-500 dark:text-gray-100">
-                        Receive <strong>50 hours</strong> of usage per month by connecting your <strong>LinkedIn</strong>{" "}
-                        account.
+                        Receive <strong>50 hours</strong> of usage per month by connecting your{" "}
+                        <strong>LinkedIn</strong> account.
                     </p>
                 </div>
                 <Button
-                    className="w-full flex items-center justify-center space-x-2"
-                    onClick={(event) => { event.preventDefault(); linkedInLogin(); }}
+                    size="block"
+                    onClick={(event) => {
+                        event.preventDefault();
+                        linkedInLogin();
+                    }}
                     disabled={isLoading || !clientID}
+                    icon={<img src={SignInWithLinkedIn} width={20} height={20} alt="Sign in with Linked In" />}
                 >
-                    <img src={SignInWithLinkedIn} width={20} height={20} alt="Sign in with Linked In" />
-                    <span>Connect with LinkedIn</span>
+                    Connect with LinkedIn
                 </Button>
             </div>
             {/* TODO: Figure out if there's a different way we want to handle an error getting the clientID */}
