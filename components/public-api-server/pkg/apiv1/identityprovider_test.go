@@ -12,10 +12,13 @@ import (
 	"testing"
 
 	connect "github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/components/public-api/go/config"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/auth"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws/jwstest"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -189,8 +192,17 @@ func TestGetIDToken(t *testing.T) {
 				test.ServerSetup(serverMock)
 			}
 
+			keyset := jwstest.GenerateKeySet(t)
+			rsa256, err := jws.NewRSA256(keyset)
+			require.NoError(t, err)
+
 			svc := NewIdentityProviderService(&FakeServerConnPool{api: serverMock}, test.TokenSource(t))
-			_, handler := v1connect.NewIdentityProviderServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor()))
+			_, handler := v1connect.NewIdentityProviderServiceHandler(svc, connect.WithInterceptors(auth.NewServerInterceptor(config.SessionConfig{
+				Issuer: "unitetest.com",
+				Cookie: config.CookieConfig{
+					Name: "cookie_jwt",
+				},
+			}, rsa256)))
 			srv := httptest.NewServer(handler)
 			t.Cleanup(srv.Close)
 

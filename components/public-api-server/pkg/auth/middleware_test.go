@@ -12,6 +12,9 @@ import (
 	"testing"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/components/public-api/go/config"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws/jwstest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,7 +63,16 @@ func TestNewServerInterceptor(t *testing.T) {
 				request.Header().Add(header.Key, header.Value)
 			}
 
-			interceptor := NewServerInterceptor()
+			keyset := jwstest.GenerateKeySet(t)
+			rsa256, err := jws.NewRSA256(keyset)
+			require.NoError(t, err)
+
+			interceptor := NewServerInterceptor(config.SessionConfig{
+				Issuer: "unittest.com",
+				Cookie: config.CookieConfig{
+					Name: "cookie_jwt",
+				},
+			}, rsa256)
 			resp, err := interceptor.WrapUnary(handler)(ctx, request)
 
 			require.Equal(t, s.ExpectedError, err)
