@@ -88,7 +88,7 @@ func (i *Interceptor) tokenFromHeaders(ctx context.Context, headers http.Header)
 		return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("JWT session could not be verified."))
 	}
 
-	return NewCookieToken(cookie.Value), nil
+	return NewCookieToken(cookie.String()), nil
 }
 
 // NewClientInterceptor creates a client-side interceptor which injects token as a Bearer Authorization header
