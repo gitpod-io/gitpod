@@ -492,7 +492,7 @@ const ErrorMessage: FunctionComponent<StatusMessageProps> = ({
     createWorkspace,
 }) => {
     if (!error) {
-        return null;
+        return <></>;
     }
     switch (error.code) {
         case ErrorCodes.CONTEXT_PARSE_ERROR:
@@ -515,7 +515,7 @@ const ErrorMessage: FunctionComponent<StatusMessageProps> = ({
             return renderError(`Access is not allowed`);
         case ErrorCodes.USER_BLOCKED:
             window.location.href = "/blocked";
-            return null;
+            return <></>;
         case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
             return <LimitReachedParallelWorkspacesModal />;
         case ErrorCodes.INVALID_COST_CENTER:
