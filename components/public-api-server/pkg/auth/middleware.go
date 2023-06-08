@@ -7,12 +7,14 @@ package auth
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/bufbuild/connect-go"
 )
 
 type Interceptor struct {
 	accessToken string
+	cookieName  string
 }
 
 func (a *Interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
@@ -24,7 +26,7 @@ func (a *Interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 			return next(ctx, req)
 		}
 
-		token, err := tokenFromRequest(ctx, req)
+		token, err := tokenFromHeaders(ctx, req.Header())
 		if err != nil {
 			return nil, err
 		}
@@ -44,7 +46,7 @@ func (a *Interceptor) WrapStreamingClient(next connect.StreamingClientFunc) conn
 
 func (a *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
-		token, err := tokenFromConn(ctx, conn)
+		token, err := tokenFromHeaders(ctx, conn.RequestHeader())
 		if err != nil {
 			return err
 		}
@@ -53,37 +55,25 @@ func (a *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) co
 }
 
 // NewServerInterceptor creates a server-side interceptor which validates that an incoming request contains a Bearer Authorization header
-func NewServerInterceptor() connect.Interceptor {
+func NewServerInterceptor(cookieName string) connect.Interceptor {
 	return &Interceptor{}
 }
 
-func tokenFromRequest(ctx context.Context, req connect.AnyRequest) (Token, error) {
-	headers := req.Header()
-
+func tokenFromHeaders(ctx context.Context, headers http.Header, cookieName string) (Token, error) {
 	bearerToken, err := BearerTokenFromHeaders(headers)
 	if err == nil {
 		return NewAccessToken(bearerToken), nil
 	}
 
-	cookie := req.Header().Get("Cookie")
-	if cookie != "" {
-		return NewCookieToken(cookie), nil
-	}
+	rawCookie := headers.Get("Cookie")
+	if rawCookie != "" {
+		// Extract the JWT token header
+		cookie, err := cookieFromString(rawCookie, cookieName)
+		if err == nil {
+			return NewCookieToken(cookie.Value), nil
+		}
 
-	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
-}
-
-func tokenFromConn(ctx context.Context, conn connect.StreamingHandlerConn) (Token, error) {
-	headers := conn.RequestHeader()
-
-	bearerToken, err := BearerTokenFromHeaders(headers)
-	if err == nil {
-		return NewAccessToken(bearerToken), nil
-	}
-
-	cookie := conn.RequestHeader().Get("Cookie")
-	if cookie != "" {
-		return NewCookieToken(cookie), nil
+		// There's no JWT cookie
 	}
 
 	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))

@@ -190,7 +190,7 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 		connect.WithInterceptors(
 			NewMetricsInterceptor(connectMetrics),
 			NewLogInterceptor(log.Log),
-			auth.NewServerInterceptor(),
+			auth.NewServerInterceptor(deps.authCfg.Session.Cookie.Name),
 			origin.NewInterceptor(),
 			auth.NewJWTCookieInterceptor(deps.authCfg.Session.Cookie.Name, deps.authCfg.Session.Issuer, deps.sessionVerifier),
 		),
