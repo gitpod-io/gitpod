@@ -10,23 +10,27 @@ import (
 	"net/http"
 
 	"github.com/bufbuild/connect-go"
+	"github.com/gitpod-io/gitpod/components/public-api/go/config"
+	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
 )
 
 type Interceptor struct {
 	accessToken string
-	cookieName  string
+
+	sessionCfg config.SessionConfig
+	verifier   jws.Verifier
 }
 
-func (a *Interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+func (i *Interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
 		if req.Spec().IsClient {
-			ctx = TokenToContext(ctx, NewAccessToken(a.accessToken))
+			ctx = TokenToContext(ctx, NewAccessToken(i.accessToken))
 
-			req.Header().Add(authorizationHeaderKey, bearerPrefix+a.accessToken)
+			req.Header().Add(authorizationHeaderKey, bearerPrefix+i.accessToken)
 			return next(ctx, req)
 		}
 
-		token, err := tokenFromHeaders(ctx, req.Header())
+		token, err := i.tokenFromHeaders(ctx, req.Header())
 		if err != nil {
 			return nil, err
 		}
@@ -35,18 +39,18 @@ func (a *Interceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	})
 }
 
-func (a *Interceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+func (i *Interceptor) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
 	return func(ctx context.Context, s connect.Spec) connect.StreamingClientConn {
-		ctx = TokenToContext(ctx, NewAccessToken(a.accessToken))
+		ctx = TokenToContext(ctx, NewAccessToken(i.accessToken))
 		conn := next(ctx, s)
-		conn.RequestHeader().Add(authorizationHeaderKey, bearerPrefix+a.accessToken)
+		conn.RequestHeader().Add(authorizationHeaderKey, bearerPrefix+i.accessToken)
 		return conn
 	}
 }
 
-func (a *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+func (i *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
-		token, err := tokenFromHeaders(ctx, conn.RequestHeader())
+		token, err := i.tokenFromHeaders(ctx, conn.RequestHeader())
 		if err != nil {
 			return err
 		}
@@ -55,28 +59,36 @@ func (a *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) co
 }
 
 // NewServerInterceptor creates a server-side interceptor which validates that an incoming request contains a Bearer Authorization header
-func NewServerInterceptor(cookieName string) connect.Interceptor {
-	return &Interceptor{}
+func NewServerInterceptor(sessionCfg config.SessionConfig, verifier jws.Verifier) connect.Interceptor {
+	return &Interceptor{
+		sessionCfg: sessionCfg,
+		verifier:   verifier,
+	}
 }
 
-func tokenFromHeaders(ctx context.Context, headers http.Header, cookieName string) (Token, error) {
+func (i *Interceptor) tokenFromHeaders(ctx context.Context, headers http.Header) (Token, error) {
 	bearerToken, err := BearerTokenFromHeaders(headers)
 	if err == nil {
 		return NewAccessToken(bearerToken), nil
 	}
 
 	rawCookie := headers.Get("Cookie")
-	if rawCookie != "" {
-		// Extract the JWT token header
-		cookie, err := cookieFromString(rawCookie, cookieName)
-		if err == nil {
-			return NewCookieToken(cookie.Value), nil
-		}
-
-		// There's no JWT cookie
+	if rawCookie == "" {
+		return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
 	}
 
-	return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No access token or cookie credentials available on request."))
+	// Extract the JWT token from Cookies
+	cookie, err := cookieFromString(rawCookie, i.sessionCfg.Cookie.Name)
+	if err != nil {
+		return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("No cookie credentials present on request."))
+	}
+
+	_, err = VerifySessionJWT(cookie.Value, i.verifier, i.sessionCfg.Issuer)
+	if err != nil {
+		return Token{}, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("JWT session could not be verified."))
+	}
+
+	return NewCookieToken(cookie.Value), nil
 }
 
 // NewClientInterceptor creates a client-side interceptor which injects token as a Bearer Authorization header
@@ -84,4 +96,14 @@ func NewClientInterceptor(accessToken string) connect.Interceptor {
 	return &Interceptor{
 		accessToken: accessToken,
 	}
+}
+
+func cookieFromString(rawCookieHeader, name string) (*http.Cookie, error) {
+	// To access the cookie as an http.Cookie, we sadly have to construct a request with the appropriate header such
+	// that we can then extract the cookie.
+	header := http.Header{}
+	header.Add("Cookie", rawCookieHeader)
+	req := http.Request{Header: header}
+
+	return req.Cookie(name)
 }

@@ -5,9 +5,7 @@
 package auth
 
 import (
-	"context"
 	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/bufbuild/connect-go"
@@ -44,55 +42,4 @@ func VerifySessionJWT(token string, verifier jws.Verifier, expectedIssuer string
 	}
 
 	return claims, nil
-}
-
-func NewJWTCookieInterceptor(cookieName string, expectedIssuer string, verifier jws.Verifier) connect.UnaryInterceptorFunc {
-	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
-
-		return connect.UnaryFunc(func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			validJWT := false
-			defer func() {
-				reportRequestWithJWT(validJWT)
-			}()
-
-			if req.Spec().IsClient {
-				return next(ctx, req)
-			}
-
-			token, err := TokenFromContext(ctx)
-			if err != nil {
-				return next(ctx, req)
-			}
-
-			if token.Type != CookieTokenType {
-				return next(ctx, req)
-			}
-
-			jwtSessionCookie, err := cookieFromString(token.Value, cookieName)
-			if err != nil {
-				return next(ctx, req)
-			}
-
-			claims, err := VerifySessionJWT(jwtSessionCookie.Value, verifier, expectedIssuer)
-			if err != nil {
-				log.Extract(ctx).WithError(err).Warnf("Failed to verify JWT session token")
-				return next(ctx, req)
-			}
-
-			validJWT = claims != nil
-
-			return next(ctx, req)
-		})
-	}
-	return connect.UnaryInterceptorFunc(interceptor)
-}
-
-func cookieFromString(rawCookieHeader, name string) (*http.Cookie, error) {
-	// To access the cookie as an http.Cookie, we sadly have to construct a request with the appropriate header such
-	// that we can then extract the cookie.
-	header := http.Header{}
-	header.Add("Cookie", rawCookieHeader)
-	req := http.Request{Header: header}
-
-	return req.Cookie(name)
 }
