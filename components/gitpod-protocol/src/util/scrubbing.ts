@@ -69,7 +69,7 @@ export const scrubReplacer = (key: string, value: any): any => {
         // https://github.com/gitpod-io/security/issues/64
         const k = value["name"];
         const v = value["value"];
-        if (k != "" && v != "") {
+        if (typeof k === "string" && typeof v === "string" && k != "" && v != "") {
             const scrubbedValue = scrubKeyValue(k, v);
             if (scrubbedValue != v) {
                 return {
