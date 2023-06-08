@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bufbuild/connect-go"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/public-api-server/pkg/jws"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
