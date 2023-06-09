@@ -765,9 +765,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             event: "phone_verification_sent",
             userId: user.id,
             properties: {
-                verificationId,
+                verification_id: verificationId,
                 channel: verification.channel,
-                requestedChannel: channel,
+                requested_channel: channel,
             },
         });
 
@@ -795,7 +795,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 userId: user.id,
                 properties: {
                     channel,
-                    verificationId,
+                    verification_id: verificationId,
                 },
             });
             return false;
@@ -808,7 +808,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             userId: user.id,
             properties: {
                 channel,
-                verificationId,
+                verification_id: verificationId,
             },
         });
         return true;

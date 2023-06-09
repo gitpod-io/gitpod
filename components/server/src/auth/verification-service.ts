@@ -15,7 +15,7 @@ import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { VerificationInstance } from "twilio/lib/rest/verify/v2/service/verification";
-import { v4 } from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
 @injectable()
 export class VerificationService {
@@ -101,7 +101,7 @@ export class VerificationService {
 
         // Create a unique id to correlate starting/completing of verification flow
         // Clients receive this and send it back when they call send the verification code
-        const verificationId = v4();
+        const verificationId = uuidv4();
 
         log.info("Verification code sent", {
             verificationId,
