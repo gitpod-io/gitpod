@@ -408,19 +408,17 @@ export function CreateWorkspacePage() {
                 {existingWorkspaces.length > 0 && !createWorkspaceMutation.isStarting && (
                     <div className="w-full flex flex-col justify-end px-6">
                         <p className="mt-6 text-center text-base">Running workspaces on this revision</p>
-                        <>
-                            {existingWorkspaces.map((w) => {
-                                return (
-                                    <a
-                                        key={w.workspace.id}
-                                        href={w.latestInstance?.ideUrl || `/start/${w.workspace.id}}`}
-                                        className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex"
-                                    >
-                                        <WorkspaceEntry info={w} shortVersion={true} />
-                                    </a>
-                                );
-                            })}
-                        </>
+                        {existingWorkspaces.map((w) => {
+                            return (
+                                <a
+                                    key={w.workspace.id}
+                                    href={w.latestInstance?.ideUrl || `/start/${w.workspace.id}}`}
+                                    className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex"
+                                >
+                                    <WorkspaceEntry info={w} shortVersion={true} />
+                                </a>
+                            );
+                        })}
                     </div>
                 )}
             </div>

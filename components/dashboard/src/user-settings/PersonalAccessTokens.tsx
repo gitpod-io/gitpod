@@ -184,58 +184,43 @@ function ListAccessTokensView() {
                     </Link>
                 )}
             </div>
-            <>
-                {errorMsg.length > 0 && (
-                    <Alert type="error" className="mb-2">
-                        {errorMsg}
-                    </Alert>
-                )}
-            </>
-            <>
-                {tokenInfo && (
-                    <>
-                        <div className="p-4 mb-4 divide-y rounded-xl bg-gray-50 dark:bg-gray-800">
-                            <div className="pb-2">
-                                <div className="flex gap-2 content-center font-semibold text-gray-700 dark:text-gray-200">
-                                    <span>{tokenInfo.data.name}</span>
-                                    <PillLabel
-                                        type={tokenInfo.method === TokenAction.Create ? "success" : "info"}
-                                        className="py-0.5 px-1"
-                                    >
-                                        {tokenInfo.method.toUpperCase()}
-                                    </PillLabel>
-                                </div>
-                                <div className="text-gray-400 dark:text-gray-300">
-                                    <span>
-                                        Expires on{" "}
-                                        {dayjs(tokenInfo.data.expirationTime!.toDate()).format("MMM D, YYYY")}
-                                    </span>
-                                    <span> · </span>
-                                    <span>
-                                        Created on {dayjs(tokenInfo.data.createdAt!.toDate()).format("MMM D, YYYY")}
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="pt-2">
-                                <div className="font-semibold text-gray-600 dark:text-gray-200">
-                                    Your New Access Token
-                                </div>
-                                <InputWithCopy
-                                    className="my-2 max-w-md"
-                                    value={tokenInfo.data.value}
-                                    tip="Copy Token"
-                                />
-                                <div className="mb-2 font-medium text-sm text-gray-500 dark:text-gray-300">
-                                    Make sure to copy your access token — you won't be able to access it again.
-                                </div>
-                                <button className="secondary" onClick={handleCopyToken}>
-                                    Copy Token to Clipboard
-                                </button>
-                            </div>
+            {errorMsg.length > 0 && (
+                <Alert type="error" className="mb-2">
+                    {errorMsg}
+                </Alert>
+            )}
+            {tokenInfo && (
+                <div className="p-4 mb-4 divide-y rounded-xl bg-gray-50 dark:bg-gray-800">
+                    <div className="pb-2">
+                        <div className="flex gap-2 content-center font-semibold text-gray-700 dark:text-gray-200">
+                            <span>{tokenInfo.data.name}</span>
+                            <PillLabel
+                                type={tokenInfo.method === TokenAction.Create ? "success" : "info"}
+                                className="py-0.5 px-1"
+                            >
+                                {tokenInfo.method.toUpperCase()}
+                            </PillLabel>
                         </div>
-                    </>
-                )}
-            </>
+                        <div className="text-gray-400 dark:text-gray-300">
+                            <span>
+                                Expires on {dayjs(tokenInfo.data.expirationTime!.toDate()).format("MMM D, YYYY")}
+                            </span>
+                            <span> · </span>
+                            <span>Created on {dayjs(tokenInfo.data.createdAt!.toDate()).format("MMM D, YYYY")}</span>
+                        </div>
+                    </div>
+                    <div className="pt-2">
+                        <div className="font-semibold text-gray-600 dark:text-gray-200">Your New Access Token</div>
+                        <InputWithCopy className="my-2 max-w-md" value={tokenInfo.data.value} tip="Copy Token" />
+                        <div className="mb-2 font-medium text-sm text-gray-500 dark:text-gray-300">
+                            Make sure to copy your access token — you won't be able to access it again.
+                        </div>
+                        <button className="secondary" onClick={handleCopyToken}>
+                            Copy Token to Clipboard
+                        </button>
+                    </div>
+                </div>
+            )}
             {loading ? (
                 <SpinnerLoader content="loading access token list" />
             ) : (

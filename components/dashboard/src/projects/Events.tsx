@@ -211,7 +211,7 @@ export default function EventsPage() {
                                                         className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer"
                                                         href={`/projects/${Project.slug(project!)}/${event.prebuildId}`}
                                                     >
-                                                        {<>{status}</>}
+                                                        {status}
                                                     </a>
                                                 )}
                                                 {!event.prebuildId && (

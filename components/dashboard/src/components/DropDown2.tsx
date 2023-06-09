@@ -154,59 +154,55 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                 </div>
             </div>
             {showDropDown && (
-                <>
-                    <div className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 max-h-72 overflow-auto rounded-b-lg mt-3 z-50 p-2">
-                        {!props.disableSearch && (
-                            <div className="h-12">
-                                <input
-                                    type="text"
-                                    autoFocus
-                                    className={"w-full focus rounded-lg"}
-                                    placeholder={props.searchPlaceholder}
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                />
-                            </div>
-                        )}
-                        <ul>
-                            {filteredOptions.length > 0 ? (
-                                filteredOptions.map((element) => {
-                                    let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
-                                    if (element.id === selectedElementTemp) {
-                                        selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer  focus:outline-none focus:ring-0`;
-                                    }
-                                    if (!element.isSelectable) {
-                                        selectionClasses = ``;
-                                    }
-                                    return (
-                                        <li
-                                            key={element.id}
-                                            id={element.id}
-                                            tabIndex={0}
-                                            className={
-                                                "h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses
+                <div className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 max-h-72 overflow-auto rounded-b-lg mt-3 z-50 p-2">
+                    {!props.disableSearch && (
+                        <div className="h-12">
+                            <input
+                                type="text"
+                                autoFocus
+                                className={"w-full focus rounded-lg"}
+                                placeholder={props.searchPlaceholder}
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
+                        </div>
+                    )}
+                    <ul>
+                        {filteredOptions.length > 0 ? (
+                            filteredOptions.map((element) => {
+                                let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
+                                if (element.id === selectedElementTemp) {
+                                    selectionClasses = `bg-gray-200 dark:bg-gray-700 cursor-pointer  focus:outline-none focus:ring-0`;
+                                }
+                                if (!element.isSelectable) {
+                                    selectionClasses = ``;
+                                }
+                                return (
+                                    <li
+                                        key={element.id}
+                                        id={element.id}
+                                        tabIndex={0}
+                                        className={"h-min rounded-lg flex items-center px-2 py-1.5 " + selectionClasses}
+                                        onMouseDown={() => {
+                                            if (element.isSelectable) {
+                                                setFocussedElement(element.id);
+                                                onSelected(element.id);
                                             }
-                                            onMouseDown={() => {
-                                                if (element.isSelectable) {
-                                                    setFocussedElement(element.id);
-                                                    onSelected(element.id);
-                                                }
-                                            }}
-                                            onMouseOver={() => setFocussedElement(element.id)}
-                                            onFocus={() => setFocussedElement(element.id)}
-                                        >
-                                            {element.element}
-                                        </li>
-                                    );
-                                })
-                            ) : (
-                                <li key="no-elements" className={"rounded-md "}>
-                                    <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
-                                </li>
-                            )}
-                        </ul>
-                    </div>
-                </>
+                                        }}
+                                        onMouseOver={() => setFocussedElement(element.id)}
+                                        onFocus={() => setFocussedElement(element.id)}
+                                    >
+                                        {element.element}
+                                    </li>
+                                );
+                            })
+                        ) : (
+                            <li key="no-elements" className={"rounded-md "}>
+                                <div className="h-12 pl-8 py-3 text-gray-800 dark:text-gray-200">No results</div>
+                            </li>
+                        )}
+                    </ul>
+                </div>
             )}
         </div>
     );

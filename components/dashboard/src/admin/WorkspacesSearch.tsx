@@ -115,55 +115,53 @@ export function WorkspaceSearch(props: Props) {
         }
     };
     return (
-        <>
-            <div className="app-container">
-                <div className="mt-3 mb-3 flex">
-                    <div className="flex justify-between w-full">
-                        <div className="flex relative h-10 my-auto">
-                            {searching ? (
-                                <span className="filter-grayscale absolute top-3 left-3">
-                                    <SpinnerLoader small={true} />
-                                </span>
-                            ) : (
-                                <img
-                                    src={searchIcon}
-                                    title="Search"
-                                    className="filter-grayscale absolute top-3 left-3"
-                                    alt="search icon"
-                                />
-                            )}
-                            <input
-                                className="w-64 pl-9 border-0"
-                                type="search"
-                                placeholder="Search Workspace IDs"
-                                onKeyDown={(ke) => ke.key === "Enter" && search()}
-                                onChange={(v) => {
-                                    setQueryTerm(v.target.value.trim());
-                                }}
+        <div className="app-container">
+            <div className="mt-3 mb-3 flex">
+                <div className="flex justify-between w-full">
+                    <div className="flex relative h-10 my-auto">
+                        {searching ? (
+                            <span className="filter-grayscale absolute top-3 left-3">
+                                <SpinnerLoader small={true} />
+                            </span>
+                        ) : (
+                            <img
+                                src={searchIcon}
+                                title="Search"
+                                className="filter-grayscale absolute top-3 left-3"
+                                alt="search icon"
                             />
-                        </div>
+                        )}
+                        <input
+                            className="w-64 pl-9 border-0"
+                            type="search"
+                            placeholder="Search Workspace IDs"
+                            onKeyDown={(ke) => ke.key === "Enter" && search()}
+                            onChange={(v) => {
+                                setQueryTerm(v.target.value.trim());
+                            }}
+                        />
                     </div>
                 </div>
-                <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
-                    Search workspaces using workspace ID.
-                </Alert>
-                <div className="flex flex-col space-y-2">
-                    <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
-                        <div className="w-4/12">Name</div>
-                        <div className="w-6/12">Context</div>
-                        <div className="w-2/12">Last Started</div>
-                    </div>
-                    {searchResult.rows.map((ws) => (
-                        <WorkspaceEntry key={ws.workspaceId} ws={ws} />
-                    ))}
-                </div>
-                <Pagination
-                    currentPage={currentPage}
-                    setPage={search}
-                    totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
-                />
             </div>
-        </>
+            <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
+                Search workspaces using workspace ID.
+            </Alert>
+            <div className="flex flex-col space-y-2">
+                <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
+                    <div className="w-4/12">Name</div>
+                    <div className="w-6/12">Context</div>
+                    <div className="w-2/12">Last Started</div>
+                </div>
+                {searchResult.rows.map((ws) => (
+                    <WorkspaceEntry key={ws.workspaceId} ws={ws} />
+                ))}
+            </div>
+            <Pagination
+                currentPage={currentPage}
+                setPage={search}
+                totalNumberOfPages={Math.ceil(searchResult.total / pageLength)}
+            />
+        </div>
     );
 }
 

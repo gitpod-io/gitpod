@@ -41,9 +41,9 @@ export function UsageLimitReachedModal(p: { hints: any; onClose?: () => void }) 
                 <p className="mt-3 text-base text-gray-600 dark:text-gray-300">
                     {"Contact an organization owner "}
                     {attributedTeamName && (
-                        <>
+                        <span>
                             of <strong>{attributedTeamName} </strong>
-                        </>
+                        </span>
                     )}
                     to increase the usage limit, or change your <a href={billingLink}>billing settings</a>.
                 </p>

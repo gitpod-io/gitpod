@@ -28,11 +28,9 @@ function TeamUsageBasedBilling() {
     }
 
     return (
-        <>
-            <UsageBasedBillingConfig
-                hideSubheading
-                attributionId={org && AttributionId.render({ kind: "team", teamId: org.id })}
-            />
-        </>
+        <UsageBasedBillingConfig
+            hideSubheading
+            attributionId={org && AttributionId.render({ kind: "team", teamId: org.id })}
+        />
     );
 }

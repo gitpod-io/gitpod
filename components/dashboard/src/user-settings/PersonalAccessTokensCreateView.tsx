@@ -169,27 +169,23 @@ function PersonalAccessTokenCreateView() {
                         </button>
                     )}
                 </div>
-                <>
-                    {errorMsg.length > 0 && (
-                        <Alert type="error" className="mb-2 max-w-md">
-                            {errorMsg}
-                        </Alert>
-                    )}
-                </>
-                <>
-                    {modalData && (
-                        <ShowTokenModal
-                            token={modalData.token}
-                            title="Regenerate Token"
-                            description="Are you sure you want to regenerate this access token?"
-                            descriptionImportant="Any applications using this token will no longer be able to access the Gitpod API."
-                            actionDescription="Regenerate Token"
-                            showDateSelector
-                            onSave={({ expirationDate }) => handleRegenerate(modalData.token.id, expirationDate)}
-                            onClose={() => setModalData(undefined)}
-                        />
-                    )}
-                </>
+                {errorMsg.length > 0 && (
+                    <Alert type="error" className="mb-2 max-w-md">
+                        {errorMsg}
+                    </Alert>
+                )}
+                {modalData && (
+                    <ShowTokenModal
+                        token={modalData.token}
+                        title="Regenerate Token"
+                        description="Are you sure you want to regenerate this access token?"
+                        descriptionImportant="Any applications using this token will no longer be able to access the Gitpod API."
+                        actionDescription="Regenerate Token"
+                        showDateSelector
+                        onSave={({ expirationDate }) => handleRegenerate(modalData.token.id, expirationDate)}
+                        onClose={() => setModalData(undefined)}
+                    />
+                )}
                 <SpinnerOverlayLoader content="loading access token" loading={loading}>
                     <div className="mb-6">
                         <div className="flex flex-col mb-4">

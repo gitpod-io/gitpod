@@ -98,49 +98,47 @@ function FeedbackComponent(props: {
                 </div>
             )}
             {expandedWithTextView && (
-                <>
-                    <div
-                        className={
-                            "flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 " +
-                            (props.isError
-                                ? "w-96 mt-6 bg-gray-100 dark:bg-gray-800 rounded-xl"
-                                : "-mx-6 border-t border-b")
-                        }
-                    >
-                        <div className="relative">
-                            <textarea
-                                style={{ height: "160px", borderRadius: "6px" }}
-                                autoFocus
-                                className="w-full resize-none text-gray-400 dark:text-gray-400 focus:ring-0 focus:border-gray-400 dark:focus:border-gray-400 rounded-md border dark:bg-gray-800 dark:border-gray-500 border-gray-500"
-                                name="name"
-                                value={text}
-                                placeholder="Have more feedback?"
-                                onChange={(e) => setText(e.target.value)}
-                            />
-                        </div>
+                <div
+                    className={
+                        "flex flex-col px-6 py-4 border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 " +
+                        (props.isError
+                            ? "w-96 mt-6 bg-gray-100 dark:bg-gray-800 rounded-xl"
+                            : "-mx-6 border-t border-b")
+                    }
+                >
+                    <div className="relative">
+                        <textarea
+                            style={{ height: "160px", borderRadius: "6px" }}
+                            autoFocus
+                            className="w-full resize-none text-gray-400 dark:text-gray-400 focus:ring-0 focus:border-gray-400 dark:focus:border-gray-400 rounded-md border dark:bg-gray-800 dark:border-gray-500 border-gray-500"
+                            name="name"
+                            value={text}
+                            placeholder="Have more feedback?"
+                            onChange={(e) => setText(e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <p className="text-gray-500">
+                            {" "}
+                            By submitting this form you acknowledge that you have read and understood our{" "}
+                            <a className="gp-link" target="gitpod-privacy" href="https://www.gitpod.io/privacy/">
+                                privacy policy
+                            </a>
+                            .
+                        </p>
+                    </div>
+                    <div className="flex justify-between mt-6">
+                        <div className="flex bottom-5 right-5 -space-x-3">{emojiGroup(24)}</div>
                         <div>
-                            <p className="text-gray-500">
-                                {" "}
-                                By submitting this form you acknowledge that you have read and understood our{" "}
-                                <a className="gp-link" target="gitpod-privacy" href="https://www.gitpod.io/privacy/">
-                                    privacy policy
-                                </a>
-                                .
-                            </p>
-                        </div>
-                        <div className="flex justify-between mt-6">
-                            <div className="flex bottom-5 right-5 -space-x-3">{emojiGroup(24)}</div>
-                            <div>
-                                <button className="secondary" onClick={onClose}>
-                                    Cancel
-                                </button>
-                                <button className="ml-2" onClick={onSubmit}>
-                                    Send Feedback
-                                </button>
-                            </div>
+                            <button className="secondary" onClick={onClose}>
+                                Cancel
+                            </button>
+                            <button className="ml-2" onClick={onSubmit}>
+                                Send Feedback
+                            </button>
                         </div>
                     </div>
-                </>
+                </div>
             )}
             {isFeedbackSubmitted && (
                 <div

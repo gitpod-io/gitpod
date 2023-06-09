@@ -94,13 +94,13 @@ type ButtonContentProps = {
 };
 const ButtonContent: FC<ButtonContentProps> = ({ loading, icon, children }) => {
     if (!loading && !icon) {
-        return <>{children}</>;
+        return <span>{children}</span>;
     }
 
     return (
         <div className="flex items-center justify-center space-x-2">
             <span className="flex items-center w-5 h-5">
-                {loading ? <SpinnerWhite className="animate-spin" /> : icon ? <>{icon}</> : null}
+                {loading ? <SpinnerWhite className="animate-spin" /> : icon ? icon : null}
             </span>
             <span>{children}</span>
         </div>

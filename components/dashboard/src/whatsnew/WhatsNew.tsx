@@ -73,19 +73,17 @@ export function WhatsNew(props: { onClose: () => void }) {
             <ModalHeader>What's New 🎁</ModalHeader>
             <>{visibleEntry && user ? visibleEntry.children(user, setUser) : <></>}</>
             {hasNext() ? (
-                <>
-                    <div className="flex items-center justify-end mt-6 space-x-2">
-                        <div className="text-sm mr-auto italic">
-                            {unseenEntries.length} more update{unseenEntries.length > 1 ? "s" : ""}
-                        </div>
-                        <button className="ml-2 secondary" onClick={internalClose}>
-                            Dismiss All
-                        </button>
-                        <button className="ml-2" onClick={next}>
-                            Next
-                        </button>
+                <div className="flex items-center justify-end mt-6 space-x-2">
+                    <div className="text-sm mr-auto italic">
+                        {unseenEntries.length} more update{unseenEntries.length > 1 ? "s" : ""}
                     </div>
-                </>
+                    <button className="ml-2 secondary" onClick={internalClose}>
+                        Dismiss All
+                    </button>
+                    <button className="ml-2" onClick={next}>
+                        Next
+                    </button>
+                </div>
             ) : (
                 <div className="flex justify-end mt-6 space-x-2">
                     <button onClick={internalClose}>Continue</button>

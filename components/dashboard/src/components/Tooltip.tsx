@@ -47,26 +47,24 @@ function Tooltip(props: TooltipProps) {
     }, [showTooltipTimeout]);
 
     return (
-        <>
-            <span onMouseLeave={handleMouseLeave} onMouseEnter={handleMouseEnter} ref={setTriggerEl}>
-                {props.children}
-                {expanded ? (
-                    <Portal>
-                        <div
-                            ref={setTooltipEl}
-                            style={styles.popper}
-                            className={
-                                `max-w-md z-50 py-1 px-2 bg-gray-900 text-gray-100 text-sm absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-md truncated ` +
-                                (props.allowWrap ? "whitespace-normal" : "whitespace-nowrap")
-                            }
-                            {...attributes.popper}
-                        >
-                            {props.content}
-                        </div>
-                    </Portal>
-                ) : null}
-            </span>
-        </>
+        <span onMouseLeave={handleMouseLeave} onMouseEnter={handleMouseEnter} ref={setTriggerEl}>
+            {props.children}
+            {expanded ? (
+                <Portal>
+                    <div
+                        ref={setTooltipEl}
+                        style={styles.popper}
+                        className={
+                            `max-w-md z-50 py-1 px-2 bg-gray-900 text-gray-100 text-sm absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-md truncated ` +
+                            (props.allowWrap ? "whitespace-normal" : "whitespace-nowrap")
+                        }
+                        {...attributes.popper}
+                    >
+                        {props.content}
+                    </div>
+                </Portal>
+            ) : null}
+        </span>
     );
 }
 

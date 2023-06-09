@@ -102,69 +102,67 @@ export function BlockedRepositoriesList(props: Props) {
     };
 
     return (
-        <>
-            <div className="app-container">
-                {isAddModalVisible && (
-                    <AddBlockedRepositoryModal
-                        blockedRepository={currentBlockedRepository}
-                        validate={validate}
-                        save={save}
-                        onClose={() => setAddModalVisible(false)}
-                    />
-                )}
-                {isDeleteModalVisible && (
-                    <DeleteBlockedRepositoryModal
-                        blockedRepository={currentBlockedRepository}
-                        deleteBlockedRepository={async () => await deleteBlockedRepository(currentBlockedRepository)}
-                        onClose={() => setDeleteModalVisible(false)}
-                    />
-                )}
-                <div className="pb-3 mt-3 flex">
-                    <div className="flex justify-between w-full">
-                        <div className="flex relative h-10 my-auto">
-                            {searching ? (
-                                <span className="filter-grayscale absolute top-3 left-3">
-                                    <SpinnerLoader small={true} />
-                                </span>
-                            ) : (
-                                <img
-                                    src={searchIcon}
-                                    title="Search"
-                                    className="filter-grayscale absolute top-3 left-3"
-                                    alt="search icon"
-                                />
-                            )}
-                            <input
-                                className="w-64 pl-9 border-0"
-                                type="search"
-                                placeholder="Search by URL RegEx"
-                                onKeyDown={(ke) => ke.key === "Enter" && search()}
-                                onChange={(v) => {
-                                    setQueryTerm(v.target.value.trim());
-                                }}
+        <div className="app-container">
+            {isAddModalVisible && (
+                <AddBlockedRepositoryModal
+                    blockedRepository={currentBlockedRepository}
+                    validate={validate}
+                    save={save}
+                    onClose={() => setAddModalVisible(false)}
+                />
+            )}
+            {isDeleteModalVisible && (
+                <DeleteBlockedRepositoryModal
+                    blockedRepository={currentBlockedRepository}
+                    deleteBlockedRepository={async () => await deleteBlockedRepository(currentBlockedRepository)}
+                    onClose={() => setDeleteModalVisible(false)}
+                />
+            )}
+            <div className="pb-3 mt-3 flex">
+                <div className="flex justify-between w-full">
+                    <div className="flex relative h-10 my-auto">
+                        {searching ? (
+                            <span className="filter-grayscale absolute top-3 left-3">
+                                <SpinnerLoader small={true} />
+                            </span>
+                        ) : (
+                            <img
+                                src={searchIcon}
+                                title="Search"
+                                className="filter-grayscale absolute top-3 left-3"
+                                alt="search icon"
                             />
-                        </div>
-                        <div className="flex space-x-2">
-                            <button onClick={add}>New Blocked Repository</button>
-                        </div>
+                        )}
+                        <input
+                            className="w-64 pl-9 border-0"
+                            type="search"
+                            placeholder="Search by URL RegEx"
+                            onKeyDown={(ke) => ke.key === "Enter" && search()}
+                            onChange={(v) => {
+                                setQueryTerm(v.target.value.trim());
+                            }}
+                        />
                     </div>
-                </div>
-
-                <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
-                    Search by repository URL using <abbr title="regular expression">RegEx</abbr>.
-                </Alert>
-                <div className="flex flex-col space-y-2">
-                    <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
-                        <div className="w-9/12">Repository URL (RegEx)</div>
-                        <div className="w-1/12">Block Users</div>
-                        <div className="w-1/12"></div>
+                    <div className="flex space-x-2">
+                        <button onClick={add}>New Blocked Repository</button>
                     </div>
-                    {searchResult.rows.map((br) => (
-                        <BlockedRepositoryEntry br={br} confirmedDelete={confirmDeleteBlockedRepository} />
-                    ))}
                 </div>
             </div>
-        </>
+
+            <Alert type={"info"} closable={false} showIcon={true} className="flex rounded p-2 mb-2 w-full">
+                Search by repository URL using <abbr title="regular expression">RegEx</abbr>.
+            </Alert>
+            <div className="flex flex-col space-y-2">
+                <div className="px-6 py-3 flex justify-between text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800 mb-2">
+                    <div className="w-9/12">Repository URL (RegEx)</div>
+                    <div className="w-1/12">Block Users</div>
+                    <div className="w-1/12"></div>
+                </div>
+                {searchResult.rows.map((br) => (
+                    <BlockedRepositoryEntry br={br} confirmedDelete={confirmDeleteBlockedRepository} />
+                ))}
+            </div>
+        </div>
     );
 }
 

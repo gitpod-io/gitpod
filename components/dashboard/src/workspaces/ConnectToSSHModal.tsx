@@ -76,15 +76,15 @@ function SSHView(props: SSHProps) {
 
                 <p className="text-gray-500 whitespace-normal text-base">
                     {!selectSSHKey ? (
-                        "The following shell command can be used to SSH into this workspace."
+                        <span>The following shell command can be used to SSH into this workspace.</span>
                     ) : (
-                        <>
+                        <span>
                             The following shell command can be used to SSH into this workspace with a{" "}
                             <Link to={settingsPathSSHKeys} className="gp-link">
                                 ssh key
                             </Link>
                             .
-                        </>
+                        </span>
                     )}
                 </p>
             </div>

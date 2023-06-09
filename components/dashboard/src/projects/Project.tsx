@@ -267,9 +267,9 @@ export default function ProjectsPage() {
                                     To reduce resource usage, prebuilds are automatically paused when not used for a
                                     workspace after 7 days.{" "}
                                     {isResuming && (
-                                        <>
+                                        <span>
                                             Resuming <Spinner className="h-4 w-4 animate-spin" />
-                                        </>
+                                        </span>
                                     )}
                                     {!isResuming && (
                                         <button

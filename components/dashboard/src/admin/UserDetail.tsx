@@ -368,11 +368,7 @@ export default function UserDetail(p: { user: User }) {
 function renderBillingModeProperty(billingMode?: BillingMode): JSX.Element {
     const text = billingMode?.mode || "---";
 
-    return (
-        <Property name="Billing Mode">
-            <>{text}</>
-        </Property>
-    );
+    return <Property name="Billing Mode">{text}</Property>;
 }
 
 function Label(p: { text: string; color: string }) {
