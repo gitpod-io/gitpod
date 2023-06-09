@@ -375,7 +375,7 @@ export default function UsageBasedBillingConfig({ attributionId, hideSubheading 
 
                             <a className="mt-5 self-end" href={stripePortalUrl}>
                                 <button className="secondary" disabled={!stripePortalUrl}>
-                                    Manage Plan ↗
+                                    Manage Billing Settings ↗
                                 </button>
                             </a>
                         </div>
