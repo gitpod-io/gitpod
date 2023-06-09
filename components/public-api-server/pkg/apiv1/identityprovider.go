@@ -71,12 +71,15 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 	}
 
 	var email string
+	var lastSigninTime string
 	for _, id := range user.Identities {
 		if id == nil || id.Deleted || id.PrimaryEmail == "" {
 			continue
 		}
-		email = id.PrimaryEmail
-		break
+		if email == "" || id.LastSigninTime > lastSigninTime {
+			email = id.PrimaryEmail
+			lastSigninTime = id.LastSigninTime
+		}
 	}
 
 	if workspace.Workspace == nil {

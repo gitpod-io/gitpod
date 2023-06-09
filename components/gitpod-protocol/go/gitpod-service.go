@@ -2159,6 +2159,9 @@ type Identity struct {
 	PrimaryEmail string   `json:"primaryEmail,omitempty"`
 	Readonly     bool     `json:"readonly,omitempty"`
 	Tokens       []*Token `json:"tokens,omitempty"`
+
+	// The last time this entry was touched during a signin.
+	LastSigninTime string `json:"last_signin_time,omitempty"`
 }
 
 // User is the User message type
