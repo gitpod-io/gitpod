@@ -5,7 +5,7 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useState } from "react";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import ConfirmationModal from "../components/ConfirmationModal";
@@ -13,6 +13,9 @@ import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { Button } from "../components/Button";
 import { Heading2, Subheading } from "../components/typography/headings";
 import Alert from "../components/Alert";
+import { TextInputField } from "../components/forms/TextInputField";
+import isEmail from "validator/lib/isEmail";
+import { useToast } from "../components/toasts/Toasts";
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
@@ -21,31 +24,14 @@ export default function Account() {
     const original = User.getProfile(user!);
     const [profileState, setProfileState] = useState(original);
     const [errorMessage, setErrorMessage] = useState("");
-    const [updated, setUpdated] = useState(false);
     const canUpdateEmail = user && !User.isOrganizationOwned(user);
+    const { toast } = useToast();
 
-    const [email, setEmail] = useState("");
-
-    useEffect(() => {
+    const saveProfileState = useCallback(() => {
         if (!user) {
             return;
         }
-        if (User.isOrganizationOwned(user)) {
-            const compareTime = (a?: string, b?: string) => (a || "").localeCompare(b || "");
-            const recentlyUsedSSOIdentity = user.identities
-                .sort((a, b) => compareTime(a.lastSigninTime, b.lastSigninTime))
-                // optimistically pick the most recent one
-                .reverse()[0];
-            setEmail(recentlyUsedSSOIdentity?.primaryEmail!);
-        } else {
-            const primaryEmail = User.getPrimaryEmail(user!);
-            if (primaryEmail) {
-                setEmail(primaryEmail);
-            }
-        }
-    }, [user]);
 
-    const saveProfileState = useCallback(() => {
         if (profileState.name.trim() === "") {
             setErrorMessage("Name must not be empty.");
             return;
@@ -56,21 +42,19 @@ export default function Account() {
                 return;
             }
             // check valid email
-            if (
-                !/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(
-                    profileState.email.trim(),
-                )
-            ) {
+            if (!isEmail(profileState.email.trim())) {
                 setErrorMessage("Please enter a valid email.");
                 return;
             }
+        } else {
+            profileState.email = User.getPrimaryEmail(user) || "";
         }
 
-        const updatedUser = User.setProfile(user!, profileState);
+        const updatedUser = User.setProfile(user, profileState);
         setUser(updatedUser);
         getGitpodService().server.updateLoggedInUser(updatedUser);
-        setUpdated(true);
-    }, [canUpdateEmail, profileState, setUser, user]);
+        toast("Your profile information has been updated.");
+    }, [canUpdateEmail, profileState, setUser, toast, user]);
 
     const deleteAccount = useCallback(async () => {
         await getGitpodService().server.deleteAccount();
@@ -84,7 +68,7 @@ export default function Account() {
                 title="Delete Account"
                 areYouSureText="You are about to permanently delete your account."
                 buttonText="Delete Account"
-                buttonDisabled={typedEmail !== email}
+                buttonDisabled={typedEmail !== original.email}
                 visible={modal}
                 onClose={close}
                 onConfirm={deleteAccount}
@@ -108,25 +92,20 @@ export default function Account() {
                 <Heading2>Profile</Heading2>
                 <form
                     onSubmit={(e) => {
-                        saveProfileState();
                         e.preventDefault();
+                        saveProfileState();
                     }}
                 >
                     <ProfileInformation
                         profileState={profileState}
                         setProfileState={(state) => {
                             setProfileState(state);
-                            setUpdated(false);
                         }}
                         errorMessage={errorMessage}
-                        updated={updated}
-                        email={email}
                         emailIsReadonly={!canUpdateEmail}
                     >
                         <div className="flex flex-row mt-8">
-                            <Button htmlType="submit" onClick={saveProfileState}>
-                                Update Profile
-                            </Button>
+                            <Button htmlType="submit">Update Profile</Button>
                         </div>
                     </ProfileInformation>
                 </form>
@@ -146,9 +125,7 @@ function ProfileInformation(props: {
     profileState: User.Profile;
     setProfileState: (newState: User.Profile) => void;
     errorMessage: string;
-    email: string;
     emailIsReadonly?: boolean;
-    updated: boolean;
     children?: React.ReactChild[] | React.ReactChild;
 }) {
     return (
@@ -163,34 +140,25 @@ function ProfileInformation(props: {
                     {props.errorMessage}
                 </Alert>
             )}
-            {props.updated && (
-                <Alert type="message" closable={true} className="mb-2 max-w-xl rounded-md">
-                    Profile information has been updated.
-                </Alert>
-            )}
             <div className="flex flex-col lg:flex-row">
                 <div>
-                    <div className="mt-4">
-                        <h4>Name</h4>
-                        <input
-                            type="text"
-                            value={props.profileState.name}
-                            onChange={(e) => props.setProfileState({ ...props.profileState, name: e.target.value })}
-                        />
-                    </div>
-                    <div className="mt-4">
-                        <h4>Email</h4>
-                        <input
-                            type="text"
-                            value={props.email}
-                            disabled={props.emailIsReadonly}
-                            onChange={(e) => props.setProfileState({ ...props.profileState, email: e.target.value })}
-                        />
-                    </div>
+                    <TextInputField
+                        label="Name"
+                        value={props.profileState.name}
+                        onChange={(val) => props.setProfileState({ ...props.profileState, name: val })}
+                    />
+                    <TextInputField
+                        label="Email"
+                        value={props.profileState.email}
+                        disabled={props.emailIsReadonly}
+                        onChange={(val) => {
+                            props.setProfileState({ ...props.profileState, email: val });
+                        }}
+                    />
                 </div>
                 <div className="lg:pl-14">
                     <div className="mt-4">
-                        <h4>Avatar</h4>
+                        <Subheading>Avatar</Subheading>
                         <img
                             className="rounded-full w-24 h-24"
                             src={props.profileState.avatarURL}

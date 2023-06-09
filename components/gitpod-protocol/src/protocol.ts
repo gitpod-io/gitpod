@@ -70,14 +70,35 @@ export namespace User {
     }
 
     /**
-     * Returns the stored email or if it doesn't exist returns the primaryEmail of the first identity this user signed up with.
+     * Returns a primary email address of a user.
+     *
+     * For accounts owned by an organization, it returns the email of the most recently used SSO identity.
+     *
+     * For personal accounts, first it looks for a email stored by the user, and falls back to any of the Git provider identities.
+     *
      * @param user
-     * @returns A primaryEmail, or undefined if there is none.
+     * @returns A primaryEmail, or undefined.
      */
     export function getPrimaryEmail(user: User): string | undefined {
+        // If the accounts is owned by an organization, use the email of the most recently
+        // used SSO identity.
+        if (User.isOrganizationOwned(user)) {
+            const compareTime = (a?: string, b?: string) => (a || "").localeCompare(b || "");
+            const recentlyUsedSSOIdentity = user.identities
+                .sort((a, b) => compareTime(a.lastSigninTime, b.lastSigninTime))
+                // optimistically pick the most recent one
+                .reverse()[0];
+            return recentlyUsedSSOIdentity?.primaryEmail;
+        }
+
+        // In case of a personal account, check for the email stored by the user.
         if (!isOrganizationOwned(user) && user.additionalData?.profile?.emailAddress) {
             return user.additionalData?.profile?.emailAddress;
         }
+
+        // Otherwise pick any
+        // FIXME(at) this is still not correct, as it doesn't distinguish between
+        // sign-in providers and additional Git hosters.
         const identities = user.identities.filter((i) => !!i.primaryEmail);
         if (identities.length <= 0) {
             return undefined;
