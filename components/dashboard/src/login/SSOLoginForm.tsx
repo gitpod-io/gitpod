@@ -19,7 +19,12 @@ type Props = {
 };
 
 function getOrgSlugFromPath(path: string) {
-    return path.split("/")[2];
+    // '/login/acme' => ['', 'login', 'acme']
+    const pathSegments = path.split("/");
+    if (pathSegments[1] !== "login") {
+        return;
+    }
+    return pathSegments[2];
 }
 
 export const SSOLoginForm: FC<Props> = ({ singleOrgMode, onSuccess }) => {
