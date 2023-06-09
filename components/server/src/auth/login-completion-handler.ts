@@ -68,7 +68,6 @@ export class LoginCompletionHandler {
                 .toString();
             returnTo = elevateScopesUrl;
         }
-        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
 
         // Don't forget to mark a dynamic provider as verified
         if (authHost) {
@@ -87,11 +86,13 @@ export class LoginCompletionHandler {
         response.cookie(cookie.name, cookie.value, cookie.opts);
         reportJWTCookieIssued();
 
+        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`);
         response.redirect(returnTo);
     }
 
-    protected async updateAuthProviderAsVerified(hostname: string, user: User) {
+    public async updateAuthProviderAsVerified(hostname: string, user: User) {
         const hostCtx = this.hostContextProvider.get(hostname);
+        log.info("Updating auth provider as verified", { hostname, hostCtx });
         if (hostCtx) {
             const { params: config } = hostCtx.authProvider;
             const { id, verified, builtin } = config;

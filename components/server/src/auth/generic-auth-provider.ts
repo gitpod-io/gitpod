@@ -349,7 +349,11 @@ export abstract class GenericAuthProvider implements AuthProvider {
             return;
         }
         const [err, userOrIdentity, flowContext] = result;
-
+        log.debug("Auth provider result", {
+            err,
+            userOrIdentity,
+            flowContext,
+        });
         /*
          * (3) this callback function is called after the "verify" function as the final step in the authentication process in passport.
          *
@@ -409,8 +413,9 @@ export abstract class GenericAuthProvider implements AuthProvider {
             };
 
             if (VerifyResult.WithIdentity.is(flowContext)) {
-                log.info(context, `(${strategyName}) Creating new user and complete login.`, logPayload);
-
+                log.info(context, `(${strategyName}) Creating new user and completing login.`, logPayload);
+                // There is no current session, we need to create a new user because this
+                // identity does not yet exist.
                 const newUser = await this.createNewUser({
                     request,
                     candidate: flowContext.candidate,
@@ -425,17 +430,21 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     authHost: authFlow.host,
                 });
             } else {
-                const { user, elevateScopes } = flowContext as VerifyResult.WithUser;
-                log.info(context, `(${strategyName}) Directly log in and proceed.`, logPayload);
+                const { user } = flowContext as VerifyResult.WithUser;
 
-                // Complete login
-                const { host, returnTo } = authFlow;
-                await this.loginCompletionHandler.complete(request, response, {
-                    user,
-                    returnToUrl: returnTo,
-                    authHost: host,
-                    elevateScopes,
-                });
+                if (authFlow.host) {
+                    await this.loginCompletionHandler.updateAuthProviderAsVerified(authFlow.host, user);
+                }
+
+                log.info(
+                    context,
+                    `(${strategyName}) Authorization callback for an existing user. Auth provider ${authFlow.host} marked as verified.`,
+                    logPayload,
+                );
+
+                const { returnTo } = authFlow;
+                response.redirect(returnTo);
+                return;
             }
         }
     }
@@ -612,10 +621,11 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     : await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
                 const isBlocked = await this.userService.isBlocked({ user: currentGitpodUser });
 
-                await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
+                const user = await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
+                currentGitpodUser = user;
 
                 flowContext = <VerifyResult.WithUser>{
-                    user: currentGitpodUser,
+                    user: user,
                     isBlocked,
                     returnToUrl: authFlow.returnTo,
                     authHost: this.host,

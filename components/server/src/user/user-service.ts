@@ -76,7 +76,7 @@ export class UserService {
         if (token) {
             await this.userDb.storeSingleToken(identity, token);
         }
-        newUser = await this.migrationService.migrateUser(newUser, false, "new user");
+        newUser = await this.migrationService.migrateUser(newUser.id, false, "new user");
 
         return newUser;
     }
@@ -262,13 +262,19 @@ export class UserService {
         return user;
     }
 
-    async updateUserOnLogin(user: User, authUser: AuthUser, candidate: Identity, token: Token) {
+    async updateUserOnLogin(user: User, authUser: AuthUser, candidate: Identity, token: Token): Promise<User> {
         // update user
         user.name = user.name || authUser.name || authUser.primaryEmail;
         user.avatarUrl = user.avatarUrl || authUser.avatarUrl;
         await this.onAfterUserLoad(user);
         await this.updateUserIdentity(user, candidate);
         await this.userDb.storeSingleToken(candidate, token);
+
+        const updated = await this.userDb.findUserById(user.id);
+        if (!updated) {
+            throw new Error("User does not exist");
+        }
+        return updated;
     }
 
     async onAfterUserLoad(user: User): Promise<User> {
@@ -276,6 +282,10 @@ export class UserService {
     }
 
     async updateUserIdentity(user: User, candidate: Identity) {
+        log.info("Updating user identity", {
+            user,
+            candidate,
+        });
         // ensure single identity per auth provider instance
         user.identities = user.identities.filter((i) => i.authProviderId !== candidate.authProviderId);
         user.identities.push(candidate);

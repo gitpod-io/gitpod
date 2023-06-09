@@ -73,7 +73,7 @@ describe.skip("Migration Service", () => {
             userId: user.id,
         });
 
-        await migrationService.migrateUser(user);
+        await migrationService.migrateUser(user.id);
         let teams = await teamDB.findTeamsByUser(user.id);
         expect(teams.length, "rerunning the migration should not create a new team.").to.be.eq(1);
 
@@ -81,7 +81,7 @@ describe.skip("Migration Service", () => {
         expect(userProjects.length, "personal projects should be migrated to the new team.").to.be.eq(0);
 
         await teamDB.removeMemberFromTeam(user.id, teams[0].id);
-        await migrationService.migrateUser(user);
+        await migrationService.migrateUser(user.id);
         teams = await teamDB.findTeamsByUser(user.id);
         expect(teams.length, "rerunning the migration should not create a new team.").to.be.eq(1);
     });
@@ -117,7 +117,7 @@ describe.skip("Migration Service", () => {
             "INSERT INTO d_b_stripe_customer (stripeCustomerId, attributionId, creationTime) VALUES (?,?,?)",
             ["foo-stripe-id", attrId, new Date().toISOString()],
         );
-        await migrationService.migrateUser(user);
+        await migrationService.migrateUser(user.id);
         let teams = await teamDB.findTeamsByUser(user.id);
         const newAttrId = "team:" + teams[0].id;
         expect(
@@ -136,7 +136,7 @@ describe.skip("Migration Service", () => {
         const conn = await typeORM.getConnection();
 
         // first migration
-        await migrationService.migrateUser(user);
+        await migrationService.migrateUser(user.id);
         let teams = await teamDB.findTeamsByUser(user.id);
         expect(teams.length).to.be.eq(1);
         await teamDB.deleteTeam(teams[0].id);
@@ -145,7 +145,7 @@ describe.skip("Migration Service", () => {
         expect(teams.length, "teams after deleting first migration").to.be.eq(0);
 
         // second migration after deleting the team
-        await migrationService.migrateUser(user);
+        await migrationService.migrateUser(user.id);
         teams = await teamDB.findTeamsByUser(user.id);
         expect(teams.length, "teams after second migration").to.be.eq(1);
         await teamDB.deleteTeam(teams[0].id);
@@ -165,9 +165,9 @@ describe.skip("Migration Service", () => {
 
         // run multiple migration
         await Promise.all([
-            migrationService.migrateUser(user),
-            migrationService.migrateUser(user),
-            migrationService.migrateUser(user),
+            migrationService.migrateUser(user.id),
+            migrationService.migrateUser(user.id),
+            migrationService.migrateUser(user.id),
         ]);
         const teams = await teamDB.findTeamsByUser(user.id);
         expect(teams.length, "not exactly one team: " + JSON.stringify(teams)).to.be.eq(1);
@@ -179,7 +179,7 @@ describe.skip("Migration Service", () => {
         user.fullName = "X";
         await userDB.storeUser(user);
 
-        await migrationService.migrateUser(user);
+        await migrationService.migrateUser(user.id);
         const teams = await teamDB.findTeamsByUser(user.id);
         expect(teams[0].name).to.be.eq("X Organization");
     });
@@ -215,7 +215,7 @@ describe.skip("Migration Service", () => {
             workspaceId: ws.id,
         });
 
-        await migrationService.migrateUser(user);
+        await migrationService.migrateUser(user.id);
         const wsAndI = await workspaceDB.findWorkspaceAndInstance(ws.id);
         const teams = await teamDB.findTeamsByUser(user.id);
         expect(wsAndI?.organizationId).to.be.eq(teams[0].id);
