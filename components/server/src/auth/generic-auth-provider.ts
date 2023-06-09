@@ -430,21 +430,38 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     authHost: authFlow.host,
                 });
             } else {
-                const { user } = flowContext as VerifyResult.WithUser;
+                const { user, elevateScopes } = flowContext as VerifyResult.WithUser;
 
-                if (authFlow.host) {
-                    await this.loginCompletionHandler.updateAuthProviderAsVerified(authFlow.host, user);
+                if (request.user) {
+                    // Git authorization request, the User.identities entry is expected to be updated already.
+                    // We're marking this AP as verified and redirect to the provided URL.
+
+                    if (authFlow.host) {
+                        await this.loginCompletionHandler.updateAuthProviderAsVerified(authFlow.host, user);
+                    }
+
+                    log.info(
+                        context,
+                        `(${strategyName}) Authorization callback for an existing user. Auth provider ${authFlow.host} marked as verified.`,
+                        logPayload,
+                    );
+
+                    const { returnTo } = authFlow;
+                    response.redirect(returnTo);
+                    return;
+                } else {
+                    // Complete login into an existing account
+
+                    log.info(context, `(${strategyName}) Directly log in and proceed.`, logPayload);
+
+                    const { host, returnTo } = authFlow;
+                    await this.loginCompletionHandler.complete(request, response, {
+                        user,
+                        returnToUrl: returnTo,
+                        authHost: host,
+                        elevateScopes,
+                    });
                 }
-
-                log.info(
-                    context,
-                    `(${strategyName}) Authorization callback for an existing user. Auth provider ${authFlow.host} marked as verified.`,
-                    logPayload,
-                );
-
-                const { returnTo } = authFlow;
-                response.redirect(returnTo);
-                return;
             }
         }
     }
