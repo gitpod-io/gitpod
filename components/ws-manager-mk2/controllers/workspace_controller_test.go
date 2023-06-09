@@ -372,49 +372,146 @@ var _ = Describe("WorkspaceController", func() {
 	})
 
 	Context("with headless workspaces", func() {
-		var (
-			ws  *workspacev1.Workspace
-			pod *corev1.Pod
-		)
-		BeforeEach(func() {
-			Skip("TODO(wv): Enable once headless workspaces are implemented")
-			// TODO(wv): Test both image builds and prebuilds.
-			// TODO(wv): Test prebuild archive gets saved.
+		It("should handle headless task failure", func() {
+			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
+			m := collectMetricCounts(wsMetrics, ws)
+			updateObjWithRetries(k8sClient, pod, true, func(p *corev1.Pod) {
+				p.Status.Phase = corev1.PodFailed
+				p.Status.ContainerStatuses = []corev1.ContainerStatus{
+					{
+						Name: "workspace",
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{
+								Message:  headlessTaskFailedPrefix,
+								ExitCode: 5,
+							},
+						},
+					},
+				}
+			})
 
-			ws = newWorkspace(uuid.NewString(), "default")
-			ws.Spec.Type = workspacev1.WorkspaceTypePrebuild
-			pod = createWorkspaceExpectPod(ws)
-
-			// Expect headless.
-			Expect(ws.IsHeadless()).To(BeTrue())
-
-			// Expect runtime status also gets reported for headless workspaces.
-			expectRuntimeStatus(ws, pod)
+			expectWorkspaceCleanup(ws, pod)
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:       1,
+				backups:        0,
+				backupFailures: 0,
+				failures:       0,
+				stops:          map[StopReason]int{StopReasonRegular: 1},
+			})
 		})
 
-		It("should cleanup on successful exit", func() {
-			// Manually update pod phase & delete pod to simulate pod exiting successfully.
+		It("should handle successful prebuild", func() {
+			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
+			m := collectMetricCounts(wsMetrics, ws)
 			updateObjWithRetries(k8sClient, pod, true, func(p *corev1.Pod) {
 				p.Status.Phase = corev1.PodSucceeded
 			})
-			Expect(k8sClient.Delete(ctx, pod)).To(Succeed())
 
-			// No backup for headless workspace.
+			expectFinalizerAndMarkBackupCompleted(ws, pod)
 			expectWorkspaceCleanup(ws, pod)
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:       1,
+				backups:        1,
+				backupFailures: 0,
+				failures:       0,
+				stops:          map[StopReason]int{StopReasonRegular: 1},
+			})
 		})
 
-		It("should cleanup on failed exit", func() {
-			// Manually update pod phase & delete pod to simulate pod exiting with failure.
+		It("should handle failed prebuild", func() {
+			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
+			m := collectMetricCounts(wsMetrics, ws)
 			updateObjWithRetries(k8sClient, pod, true, func(p *corev1.Pod) {
 				p.Status.Phase = corev1.PodFailed
+				p.Status.ContainerStatuses = []corev1.ContainerStatus{
+					{
+						Name: "workspace",
+						State: corev1.ContainerState{
+							Terminated: &corev1.ContainerStateTerminated{
+								Message:  "prebuild failed",
+								ExitCode: 5,
+							},
+						},
+					},
+				}
 			})
-			Expect(k8sClient.Delete(ctx, pod)).To(Succeed())
 
-			// No backup for headless workspace.
+			// should not take a backup
 			expectWorkspaceCleanup(ws, pod)
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:       1,
+				backups:        0,
+				backupFailures: 0,
+				failures:       1,
+				stops:          map[StopReason]int{StopReasonFailed: 1},
+			})
+		})
+
+		It("should handle aborted prebuild", func() {
+			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
+			m := collectMetricCounts(wsMetrics, ws)
+			// abort workspace
+			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
+				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionAborted("StopWorkspaceRequest"))
+			})
+
+			requestStop(ws)
+
+			// should not take a backup
+			expectWorkspaceCleanup(ws, pod)
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:       1,
+				backups:        0,
+				backupFailures: 0,
+				failures:       0,
+				stops:          map[StopReason]int{StopReasonAborted: 1},
+			})
+		})
+
+		It("should handle imagebuild", func() {
+			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypeImageBuild)
+			m := collectMetricCounts(wsMetrics, ws)
+			updateObjWithRetries(k8sClient, pod, true, func(p *corev1.Pod) {
+				p.Status.Phase = corev1.PodSucceeded
+			})
+
+			// should not take a backup
+			expectWorkspaceCleanup(ws, pod)
+			expectMetricsDelta(m, collectMetricCounts(wsMetrics, ws), metricCounts{
+				restores:       1,
+				backups:        0,
+				backupFailures: 0,
+				failures:       0,
+				stops:          map[StopReason]int{StopReasonRegular: 1},
+			})
 		})
 	})
 })
+
+func createHeadlessWorkspace(typ workspacev1.WorkspaceType) (ws *workspacev1.Workspace, pod *corev1.Pod) {
+	name := uuid.NewString()
+
+	ws = newWorkspace(name, "default")
+	ws.Spec.Type = typ
+	pod = createWorkspaceExpectPod(ws)
+
+	// Expect headless
+	Expect(ws.IsHeadless()).To(BeTrue())
+	Expect(controllerutil.ContainsFinalizer(pod, workspacev1.GitpodFinalizerName)).To(BeTrue())
+
+	// Expect runtime status also gets reported for headless workspaces.
+	expectRuntimeStatus(ws, pod)
+
+	By("controller setting status after creation")
+	Eventually(func(g Gomega) {
+		g.Expect(k8sClient.Get(ctx, types.NamespacedName{Name: ws.Name, Namespace: ws.Namespace}, ws)).To(Succeed())
+		g.Expect(ws.Status.OwnerToken).ToNot(BeEmpty())
+		g.Expect(ws.Status.URL).ToNot(BeEmpty())
+	}, timeout, interval).Should(Succeed())
+
+	markReady(ws)
+	return
+}
 
 func updateObjWithRetries[O client.Object](c client.Client, obj O, updateStatus bool, update func(obj O)) {
 	GinkgoHelper()
