@@ -428,7 +428,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             }
             if (pr.headRef === null) {
                 throw new Error(
-                    `Could not open pull request ${owner}/${repoName}#${pullRequestNr}. Source branch may have been removed.`,
+                    `Could not open pull request ${owner}/${repoName}#${pullRequestNr}. Source branch may have been merged or closed.`,
                 );
             }
             return <PullRequestContext>{
