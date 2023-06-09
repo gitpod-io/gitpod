@@ -432,8 +432,12 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     authHost: authFlow.host,
                 });
             } else {
-                // const { user, elevateScopes } = flowContext as VerifyResult.WithUser;
+                const { user } = flowContext as VerifyResult.WithUser;
                 log.info(context, `(${strategyName}) Directly log in and proceed.`, logPayload);
+
+                if (authFlow.host) {
+                    await this.loginCompletionHandler.updateAuthProviderAsVerified(authFlow.host, user);
+                }
 
                 const { returnTo } = authFlow;
                 response.redirect(returnTo);
