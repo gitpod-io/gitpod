@@ -39,7 +39,7 @@ export class OrgOnlyMigrationJob implements Job<MigrationState> {
 
             const result: User[] = [];
             for (const user of users) {
-                result.push(await this.migrationService.migrateUser(user, true, this.name));
+                result.push(await this.migrationService.migrateUser(user.id, true, this.name));
             }
             log.info("org-only-migration-job: migrated users", { count: result.length });
             return result;

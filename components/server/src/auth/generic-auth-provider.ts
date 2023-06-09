@@ -349,7 +349,11 @@ export abstract class GenericAuthProvider implements AuthProvider {
             return;
         }
         const [err, userOrIdentity, flowContext] = result;
-
+        log.debug("Auth provider result", {
+            err,
+            userOrIdentity,
+            flowContext,
+        });
         /*
          * (3) this callback function is called after the "verify" function as the final step in the authentication process in passport.
          *
@@ -364,12 +368,6 @@ export abstract class GenericAuthProvider implements AuthProvider {
          * - call `request.login` on new sessions
          * - redirect to `returnTo` (from request parameter)
          */
-
-        log.info("Auth provider result", {
-            err,
-            userOrIdentity,
-            flowContext,
-        });
 
         const context = LogContext.from({
             user: User.is(userOrIdentity) ? { userId: userOrIdentity.id } : undefined,
@@ -433,11 +431,16 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 });
             } else {
                 const { user } = flowContext as VerifyResult.WithUser;
-                log.info(context, `(${strategyName}) Directly log in and proceed.`, logPayload);
 
                 if (authFlow.host) {
                     await this.loginCompletionHandler.updateAuthProviderAsVerified(authFlow.host, user);
                 }
+
+                log.info(
+                    context,
+                    `(${strategyName}) Authorization callback for an existing user. Auth provider ${authFlow.host} marked as verified.`,
+                    logPayload,
+                );
 
                 const { returnTo } = authFlow;
                 response.redirect(returnTo);
@@ -618,10 +621,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     : await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
                 const isBlocked = await this.userService.isBlocked({ user: currentGitpodUser });
 
-                log.info("User before update", currentGitpodUser);
                 const user = await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
-                log.info("user after update", user);
-                req.user = user;
                 currentGitpodUser = user;
 
                 flowContext = <VerifyResult.WithUser>{

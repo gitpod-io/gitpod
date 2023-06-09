@@ -24,7 +24,12 @@ export class UserToTeamMigrationService {
     @inject(RedisMutex) protected readonly redisMutex: RedisMutex;
     @inject(StripeService) protected readonly stripeService: StripeService;
 
-    async migrateUser(candidate: User, shouldSeeMessage?: boolean, caller?: string): Promise<User> {
+    async migrateUser(candidateID: string, shouldSeeMessage?: boolean, caller?: string): Promise<User> {
+        const candidate = await this.userDB.findUserById(candidateID);
+        if (!candidate) {
+            throw new Error(`User ${candidateID} does not exist.`);
+        }
+
         // org-owned users have an org and the technical users should not get one automatically
         if (candidate.organizationId || isBuiltinUser(candidate.id)) {
             AdditionalUserData.set(candidate, { isMigratedToTeamOnlyAttribution: true });

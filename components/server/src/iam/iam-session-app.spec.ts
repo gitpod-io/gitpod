@@ -236,7 +236,6 @@ class TestIamSessionApp {
         let newEmail: string | undefined;
         this.userServiceMock.updateUserIdentity = async (user, updatedIdentity) => {
             newEmail = updatedIdentity.primaryEmail;
-            return user;
         };
 
         const result = await request(this.app.create())
@@ -262,7 +261,6 @@ class TestIamSessionApp {
         let updateUserIdentityCalled = false;
         this.userServiceMock.updateUserIdentity = async () => {
             updateUserIdentityCalled = true;
-            return {} as User;
         };
 
         const result = await request(this.app.create())
