@@ -30,18 +30,9 @@ export default function Account() {
         if (!user) {
             return;
         }
-        if (User.isOrganizationOwned(user)) {
-            const compareTime = (a?: string, b?: string) => (a || "").localeCompare(b || "");
-            const recentlyUsedSSOIdentity = user.identities
-                .sort((a, b) => compareTime(a.lastSigninTime, b.lastSigninTime))
-                // optimistically pick the most recent one
-                .reverse()[0];
-            setEmail(recentlyUsedSSOIdentity?.primaryEmail!);
-        } else {
-            const primaryEmail = User.getPrimaryEmail(user!);
-            if (primaryEmail) {
-                setEmail(primaryEmail);
-            }
+        const primaryEmail = User.getPrimaryEmail(user!);
+        if (primaryEmail) {
+            setEmail(primaryEmail);
         }
     }, [user]);
 
