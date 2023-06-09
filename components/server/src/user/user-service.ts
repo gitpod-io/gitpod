@@ -289,6 +289,8 @@ export class UserService {
         // ensure single identity per auth provider instance
         user.identities = user.identities.filter((i) => i.authProviderId !== candidate.authProviderId);
         user.identities.push(candidate);
+
+        await this.userDb.storeUser(user);
     }
 
     async deauthorize(user: User, authProviderId: string) {
