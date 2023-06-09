@@ -1020,6 +1020,10 @@ func (wsm *WorkspaceManagerServer) extractWorkspaceStatus(ws *workspacev1.Worksp
 		if p.Visibility == workspacev1.AdmissionLevelEveryone {
 			v = wsmanapi.PortVisibility_PORT_VISIBILITY_PUBLIC
 		}
+		protocol := wsmanapi.PortProtocol_PORT_PROTOCOL_HTTP
+		if p.Protocol == workspacev1.PortProtocolHttps {
+			protocol = wsmanapi.PortProtocol_PORT_PROTOCOL_HTTPS
+		}
 		url, err := config.RenderWorkspacePortURL(wsm.Config.WorkspacePortURLTemplate, config.PortURLContext{
 			Host:          wsm.Config.GitpodHostURL,
 			ID:            ws.Name,
@@ -1035,6 +1039,7 @@ func (wsm *WorkspaceManagerServer) extractWorkspaceStatus(ws *workspacev1.Worksp
 			Port:       p.Port,
 			Visibility: v,
 			Url:        url,
+			Protocol:   protocol,
 		})
 	}
 

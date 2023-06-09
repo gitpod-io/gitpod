@@ -818,6 +818,7 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 	if mp.Exposed && mp.URL != "" {
 		ps.Exposed = &api.ExposedPortInfo{
 			Visibility: mp.Visibility,
+			Protocol:   mp.Protocol,
 			Url:        mp.URL,
 			OnExposed:  mp.OnExposed,
 		}

@@ -243,7 +243,7 @@ export class WorkspaceManagerBridge implements Disposable {
                     return <WorkspaceInstancePort>{
                         port: p.port,
                         visibility: mapPortVisibility(p.visibility),
-                        protocol: mapPortProcotol(p.protocol),
+                        protocol: mapPortProtocol(p.protocol),
                         url: p.url,
                     };
                 });
@@ -408,7 +408,7 @@ const mapPortVisibility = (visibility: WsManPortVisibility | undefined): PortVis
     }
 };
 
-const mapPortProcotol = (protocol: WsManPortProtocol | undefined): PortProtocol | undefined => {
+const mapPortProtocol = (protocol: WsManPortProtocol | undefined): PortProtocol | undefined => {
     switch (protocol) {
         case WsManPortProtocol.PORT_PROTOCOL_HTTPS:
             return "https";
