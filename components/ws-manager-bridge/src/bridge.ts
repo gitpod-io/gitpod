@@ -408,7 +408,7 @@ const mapPortVisibility = (visibility: WsManPortVisibility | undefined): PortVis
     }
 };
 
-const mapPortProtocol = (protocol: WsManPortProtocol | undefined): PortProtocol | undefined => {
+const mapPortProtocol = (protocol: WsManPortProtocol): PortProtocol => {
     switch (protocol) {
         case WsManPortProtocol.PORT_PROTOCOL_HTTPS:
             return "https";
