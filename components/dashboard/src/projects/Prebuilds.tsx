@@ -19,7 +19,7 @@ import StatusRunning from "../icons/StatusRunning.svg";
 import { getGitpodService } from "../service/service";
 import { shortCommitMessage } from "./render-utils";
 import { Link, Redirect } from "react-router-dom";
-import { Disposable } from "vscode-jsonrpc";
+// import { Disposable } from "vscode-jsonrpc";
 import { useCurrentProject } from "./project-context";
 import { getProjectTabs } from "./projects.routes";
 import search from "../icons/search.svg";
@@ -37,7 +37,7 @@ export default function PrebuildsPage(props: { project?: Project; isAdminDashboa
     const [isRunningPrebuild, setIsRunningPrebuild] = useState<boolean>(false);
 
     useEffect(() => {
-        let registration: Disposable;
+        let registration: any;
         if (!project) {
             return;
         }

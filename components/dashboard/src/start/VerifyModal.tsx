@@ -9,7 +9,7 @@ import Alert, { AlertType } from "../components/Alert";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { getGitpodService } from "../service/service";
 import PhoneInput from "react-intl-tel-input";
-import "react-intl-tel-input/dist/main.css";
+// import "react-intl-tel-input/dist/main.css";
 import "./phone-input.css";
 import { Button } from "../components/Button";
 import { LinkButton } from "../components/LinkButton";
