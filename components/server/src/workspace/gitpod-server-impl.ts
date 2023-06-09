@@ -3963,7 +3963,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
 
-        await this.guardTeamOperation(authProvider.organizationId || "", "delete", "org_authprovider_write");
+        await this.guardTeamOperation(authProvider.organizationId || "", "update", "org_authprovider_write");
 
         try {
             await this.authProviderService.deleteAuthProvider(authProvider);
