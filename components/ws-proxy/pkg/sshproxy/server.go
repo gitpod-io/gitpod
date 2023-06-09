@@ -43,12 +43,13 @@ var (
 )
 
 var (
-	ErrWorkspaceNotFound  = NewSSHErrorWithReject("WS_NOTFOUND", "not found workspace")
-	ErrWorkspaceIDInvalid = NewSSHErrorWithReject("WS_ID_INVALID", "workspace id invalid")
-	ErrUsernameFormat     = NewSSHErrorWithReject("USER_FORMAT", "username format is not correct")
-	ErrMissPrivateKey     = NewSSHErrorWithReject("MISS_KEY", "missing privateKey")
-	ErrConnFailed         = NewSSHError("CONN_FAILED", "cannot to connect with workspace")
-	ErrCreateSSHKey       = NewSSHError("CREATE_KEY_FAILED", "cannot create private pair in workspace")
+	ErrWorkspaceNotFound   = NewSSHErrorWithReject("WS_NOTFOUND", "not found workspace")
+	ErrWorkspaceNotRunning = NewSSHErrorWithReject("WS_NOT_RUNNING", "workspace not running")
+	ErrWorkspaceIDInvalid  = NewSSHErrorWithReject("WS_ID_INVALID", "workspace id invalid")
+	ErrUsernameFormat      = NewSSHErrorWithReject("USER_FORMAT", "username format is not correct")
+	ErrMissPrivateKey      = NewSSHErrorWithReject("MISS_KEY", "missing privateKey")
+	ErrConnFailed          = NewSSHError("CONN_FAILED", "cannot to connect with workspace")
+	ErrCreateSSHKey        = NewSSHError("CREATE_KEY_FAILED", "cannot create private pair in workspace")
 
 	ErrAuthFailed = NewSSHError("AUTH_FAILED", "auth failed")
 	// ErrAuthFailedWithReject is same with ErrAuthFailed, it will just disconnect immediately to avoid pointless retries
@@ -244,9 +245,9 @@ func (s *Server) HandleConn(c net.Conn) {
 	}
 	workspaceId := clientConn.Permissions.Extensions["workspaceId"]
 	debugWorkspace := clientConn.Permissions.Extensions["debugWorkspace"] == "true"
-	wsInfo := s.workspaceInfoProvider.WorkspaceInfo(workspaceId)
-	if wsInfo == nil {
-		ReportSSHAttemptMetrics(ErrWorkspaceNotFound)
+	wsInfo, err := s.GetWorkspaceInfo(workspaceId)
+	if err != nil {
+		ReportSSHAttemptMetrics(err)
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -356,6 +357,9 @@ func (s *Server) GetWorkspaceInfo(workspaceId string) (*proxy.WorkspaceInfo, err
 			return nil, ErrWorkspaceNotFound
 		}
 		return nil, ErrWorkspaceIDInvalid
+	}
+	if !wsInfo.IsRunning {
+		return nil, ErrWorkspaceNotRunning
 	}
 	return wsInfo, nil
 }
