@@ -18,6 +18,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"google.golang.org/protobuf/proto"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -373,8 +374,8 @@ var _ = Describe("WorkspaceController", func() {
 
 	Context("with headless workspaces", func() {
 		It("should handle headless task failure", func() {
-			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
-			m := collectMetricCounts(wsMetrics, ws)
+			ws, pod, m := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
+
 			updateObjWithRetries(k8sClient, pod, true, func(p *corev1.Pod) {
 				p.Status.Phase = corev1.PodFailed
 				p.Status.ContainerStatuses = []corev1.ContainerStatus{
@@ -401,8 +402,7 @@ var _ = Describe("WorkspaceController", func() {
 		})
 
 		It("should handle successful prebuild", func() {
-			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
-			m := collectMetricCounts(wsMetrics, ws)
+			ws, pod, m := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
 			updateObjWithRetries(k8sClient, pod, true, func(p *corev1.Pod) {
 				p.Status.Phase = corev1.PodSucceeded
 			})
@@ -419,8 +419,7 @@ var _ = Describe("WorkspaceController", func() {
 		})
 
 		It("should handle failed prebuild", func() {
-			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
-			m := collectMetricCounts(wsMetrics, ws)
+			ws, pod, m := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
 			updateObjWithRetries(k8sClient, pod, true, func(p *corev1.Pod) {
 				p.Status.Phase = corev1.PodFailed
 				p.Status.ContainerStatuses = []corev1.ContainerStatus{
@@ -448,8 +447,7 @@ var _ = Describe("WorkspaceController", func() {
 		})
 
 		It("should handle aborted prebuild", func() {
-			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
-			m := collectMetricCounts(wsMetrics, ws)
+			ws, pod, m := createHeadlessWorkspace(workspacev1.WorkspaceTypePrebuild)
 			// abort workspace
 			updateObjWithRetries(k8sClient, ws, true, func(ws *workspacev1.Workspace) {
 				ws.Status.SetCondition(workspacev1.NewWorkspaceConditionAborted("StopWorkspaceRequest"))
@@ -469,8 +467,7 @@ var _ = Describe("WorkspaceController", func() {
 		})
 
 		It("should handle imagebuild", func() {
-			ws, pod := createHeadlessWorkspace(workspacev1.WorkspaceTypeImageBuild)
-			m := collectMetricCounts(wsMetrics, ws)
+			ws, pod, m := createHeadlessWorkspace(workspacev1.WorkspaceTypeImageBuild)
 			updateObjWithRetries(k8sClient, pod, true, func(p *corev1.Pod) {
 				p.Status.Phase = corev1.PodSucceeded
 			})
@@ -488,11 +485,12 @@ var _ = Describe("WorkspaceController", func() {
 	})
 })
 
-func createHeadlessWorkspace(typ workspacev1.WorkspaceType) (ws *workspacev1.Workspace, pod *corev1.Pod) {
+func createHeadlessWorkspace(typ workspacev1.WorkspaceType) (ws *workspacev1.Workspace, pod *corev1.Pod, m metricCounts) {
 	name := uuid.NewString()
 
 	ws = newWorkspace(name, "default")
 	ws.Spec.Type = typ
+	m = collectMetricCounts(wsMetrics, ws)
 	pod = createWorkspaceExpectPod(ws)
 
 	// Expect headless
