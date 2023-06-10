@@ -428,14 +428,14 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             }
 
             if (pr.merged) {
-                // Return a merged pull request as a commit to navigate
-                return await this.handleCommitContext({ span }, user, host, owner, repoName, pr.headRef.target.oid);
+                // Return a merged pull request as a commit to navigate to the merge commit
+                return await this.handleCommitContext({ span }, user, host, owner, repoName, pr.mergeCommit.oid);
             }
-            if (pr.headRef === null) {
-                throw new Error(
-                    `Could not open pull request ${owner}/${repoName}#${pullRequestNr}. Source branch may have been removed.`,
-                );
-            }
+            // if (pr.headRef === null) {
+            //     throw new Error(
+            //         `Could not open pull request ${owner}/${repoName}#${pullRequestNr}. Source branch may have been removed.`,
+            //     );
+            // }
             return <PullRequestContext>{
                 title: pr.title,
                 repository: this.toRepository(host, pr.headRef.repository),
