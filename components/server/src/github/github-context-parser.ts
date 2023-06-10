@@ -427,6 +427,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 }
             }
 
+            log.info(`PR Status: `, pr.merged);
             if (pr.merged || pr.headRef === null) {
                 // Return a merged pull request as a commit to navigate to the merge commit
                 // return await this.handleCommitContext({ span }, user, host, owner, repoName, pr.mergeCommit.oid);
