@@ -358,7 +358,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         repoName: string,
         pullRequestNr: number,
         tryIssueContext: boolean = true,
-    ): Promise<IssueContext | PullRequestContext> {
+    ): Promise<IssueContext | PullRequestContext | NavigatorContext | any> {
         const span = TraceContext.startSpan("handlePullRequestContext", ctx);
 
         try {
@@ -425,6 +425,11 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                         `Could not find issue or pull request #${pullRequestNr} in repository ${owner}/${repoName}.`,
                     );
                 }
+            }
+
+            if (pr.merged) {
+                // Return a merged pull request as a commit to navigate
+                return await this.handleCommitContext({ span }, user, host, owner, repoName, pr.headRef.target.oid);
             }
             if (pr.headRef === null) {
                 throw new Error(
