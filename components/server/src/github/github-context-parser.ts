@@ -427,9 +427,20 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 }
             }
 
-            if (pr.merged) {
+            if (pr.merged || pr.headRef === null) {
                 // Return a merged pull request as a commit to navigate to the merge commit
-                return await this.handleCommitContext({ span }, user, host, owner, repoName, pr.mergeCommit.oid);
+                // return await this.handleCommitContext({ span }, user, host, owner, repoName, pr.mergeCommit.oid);
+
+                return <NavigatorContext>{
+                    path: "",
+                    ref: "",
+                    refType: "revision",
+                    isFile: false,
+                    title: `${owner}/${repoName} - ${pr.mergeCommit.messageHeadline}`,
+                    owner,
+                    revision: pr.mergeCommit.oid,
+                    repository: this.toRepository(host, result.data.repository),
+                };
             }
             // if (pr.headRef === null) {
             //     throw new Error(
