@@ -138,10 +138,6 @@ class TestGithubContextParser {
         }
     }
 
-    @test public async testPullRequestContext_05() {
-        
-    }
-
     @test public async testTreeContext_01() {
         const result = await this.parser.handle({}, this.user, "https://github.com/eclipse-theia/theia");
         expect(result).to.deep.include({
