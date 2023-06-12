@@ -138,7 +138,7 @@ export class VerificationService {
             throw new Error("No verification service configured.");
         }
         if (!uuidValidate(verificationId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "verificatioId must be a valid UUID");
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Verification ID must be a valid UUID");
         }
 
         const verification_check = await this.verifyService.verificationChecks.create({
