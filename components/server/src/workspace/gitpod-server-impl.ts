@@ -2378,7 +2378,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         request.setReturnImmediately(true);
 
         // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
-        const resp = await client.takeSnapshot(ctx, request).catch((err) => {
+        let snapshotUrl;
+        try {
+            const resp = await client.takeSnapshot(ctx, request);
+            snapshotUrl = resp.getUrl();
+        } catch (err) {
             if (isClusterMaintenanceError(err)) {
                 throw new ResponseError(
                     ErrorCodes.PRECONDITION_FAILED,
@@ -2386,9 +2390,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 );
             }
             throw err;
-        });
+        }
 
-        const snapshot = await this.snapshotService.createSnapshot(options, resp.getUrl());
+        const snapshot = await this.snapshotService.createSnapshot(options, snapshotUrl);
 
         // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
         const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
