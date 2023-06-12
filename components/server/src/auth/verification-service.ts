@@ -15,7 +15,7 @@ import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { VerificationInstance } from "twilio/lib/rest/verify/v2/service/verification";
-import { v4 as uuidv4 } from "uuid";
+import { v4 as uuidv4, validate as uuidValidate } from "uuid";
 
 @injectable()
 export class VerificationService {
@@ -137,6 +137,10 @@ export class VerificationService {
         if (!this.verifyService) {
             throw new Error("No verification service configured.");
         }
+        if (!uuidValidate(verificationId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "verificatioId must be a valid UUID");
+        }
+
         const verification_check = await this.verifyService.verificationChecks.create({
             to: phoneNumber,
             code: oneTimePassword,
