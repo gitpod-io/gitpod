@@ -2161,7 +2161,7 @@ type Identity struct {
 	Tokens       []*Token `json:"tokens,omitempty"`
 
 	// The last time this entry was touched during a signin.
-	LastSigninTime string `json:"last_signin_time,omitempty"`
+	LastSigninTime time.Time `json:"last_signin_time,omitempty"`
 }
 
 // User is the User message type

@@ -7,6 +7,7 @@ package apiv1
 import (
 	"context"
 	"fmt"
+	"time"
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -71,12 +72,12 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 	}
 
 	var email string
-	var lastSigninTime string
+	var lastSigninTime time.Time
 	for _, id := range user.Identities {
 		if id == nil || id.Deleted || id.PrimaryEmail == "" {
 			continue
 		}
-		if email == "" || id.LastSigninTime > lastSigninTime {
+		if email == "" || id.LastSigninTime.After(lastSigninTime) {
 			email = id.PrimaryEmail
 			lastSigninTime = id.LastSigninTime
 		}
