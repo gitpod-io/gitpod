@@ -682,7 +682,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         if (this.userID) {
             await this.userToTeamMigrationService.migrateUser(this.userID, true, "on demand");
-            await this.userDB.findUserById(this.userID);
         }
     }
 
