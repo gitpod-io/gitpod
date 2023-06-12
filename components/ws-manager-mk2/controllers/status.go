@@ -253,7 +253,9 @@ func isDisposalFinished(ws *workspacev1.Workspace) bool {
 		// Can't dispose if node disappeared.
 		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionNodeDisappeared)) ||
 		// Image builds have nothing to dispose.
-		ws.Spec.Type == workspacev1.WorkspaceTypeImageBuild
+		ws.Spec.Type == workspacev1.WorkspaceTypeImageBuild ||
+		// headless workspaces that failed do not need to be backed up
+		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionsHeadlessTaskFailed))
 }
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then
