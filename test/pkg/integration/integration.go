@@ -458,8 +458,9 @@ func getFreePort() (int, error) {
 	return result.Port, nil
 }
 
+// 38MB for workspace agent
 func buildAgent(name string) (loc string, err error) {
-	log.Infof("%v building agent", time.Now())
+	log.Infof("%v building agent %s", time.Now(), name)
 	defer func() {
 		if err != nil {
 			err = xerrors.Errorf("cannot build agent: %w", err)
@@ -487,7 +488,17 @@ func buildAgent(name string) (loc string, err error) {
 		return "", xerrors.Errorf("%w: %s", err, string(out))
 	}
 
-	log.Infof("%v built agent", time.Now())
+	f, err = os.OpenFile(f.Name(), 0, 0)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	stat, err := f.Stat()
+	if err != nil {
+		return "", err
+	}
+
+	log.Infof("%v built agent (size %vb)", time.Now(), stat.Size())
 	return f.Name(), nil
 }
 
