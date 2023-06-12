@@ -15,6 +15,7 @@ import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { VerificationInstance } from "twilio/lib/rest/verify/v2/service/verification";
+import { v4 as uuidv4, validate as uuidValidate } from "uuid";
 
 @injectable()
 export class VerificationService {
@@ -81,7 +82,7 @@ export class VerificationService {
     public async sendVerificationToken(
         phoneNumber: string,
         channel: "sms" | "call" = "sms",
-    ): Promise<VerificationInstance> {
+    ): Promise<{ verification: VerificationInstance; verificationId: string }> {
         if (!this.verifyService) {
             throw new Error("No verification service configured.");
         }
@@ -97,7 +98,13 @@ export class VerificationService {
             throw new ResponseError(ErrorCodes.INVALID_VALUE, "The given phone number is blocked due to abuse.");
         }
         const verification = await this.verifyService.verifications.create({ to: phoneNumber, channel });
+
+        // Create a unique id to correlate starting/completing of verification flow
+        // Clients receive this and send it back when they call send the verification code
+        const verificationId = uuidv4();
+
         log.info("Verification code sent", {
+            verificationId,
             phoneNumber,
             status: verification.status,
             // actual channel verification was created on
@@ -109,6 +116,7 @@ export class VerificationService {
         // Help us identify if verification codes are not able to send via requested channel
         if (channel !== verification.channel) {
             log.info("Verification code sent via different channel than system requested", {
+                verificationId,
                 phoneNumber,
                 status: verification.status,
                 // actual channel verification was created on
@@ -118,19 +126,31 @@ export class VerificationService {
             });
         }
 
-        return verification;
+        return { verification, verificationId };
     }
 
     public async verifyVerificationToken(
         phoneNumber: string,
         oneTimePassword: string,
+        verificationId: string,
     ): Promise<{ verified: boolean; channel: string }> {
         if (!this.verifyService) {
             throw new Error("No verification service configured.");
         }
+        if (!uuidValidate(verificationId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Verification ID must be a valid UUID");
+        }
+
         const verification_check = await this.verifyService.verificationChecks.create({
             to: phoneNumber,
             code: oneTimePassword,
+        });
+
+        log.info("Verification code checked", {
+            verificationId,
+            phoneNumber,
+            status: verification_check.status,
+            channel: verification_check.channel,
         });
 
         return {

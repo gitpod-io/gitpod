@@ -740,7 +740,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.userDB.updateUserPartial(user);
     }
 
-    public async sendPhoneNumberVerificationToken(ctx: TraceContext, rawPhoneNumber: string): Promise<void> {
+    public async sendPhoneNumberVerificationToken(
+        ctx: TraceContext,
+        rawPhoneNumber: string,
+    ): Promise<{ verificationId: string }> {
         const user = await this.checkUser("sendPhoneNumberVerificationToken");
 
         // Check if verify via call is enabled
@@ -754,7 +757,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const channel = phoneVerificationByCall ? "call" : "sms";
 
-        const verification = await this.verificationService.sendVerificationToken(
+        const { verification, verificationId } = await this.verificationService.sendVerificationToken(
             formatPhoneNumber(rawPhoneNumber),
             channel,
         );
@@ -762,26 +765,38 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             event: "phone_verification_sent",
             userId: user.id,
             properties: {
+                verification_id: verificationId,
                 channel: verification.channel,
-                requestedChannel: channel,
+                requested_channel: channel,
             },
         });
+
+        return {
+            verificationId,
+        };
     }
 
     public async verifyPhoneNumberVerificationToken(
         ctx: TraceContext,
         rawPhoneNumber: string,
         token: string,
+        verificationId: string,
     ): Promise<boolean> {
         const phoneNumber = formatPhoneNumber(rawPhoneNumber);
         const user = await this.checkUser("verifyPhoneNumberVerificationToken");
-        const { verified, channel } = await this.verificationService.verifyVerificationToken(phoneNumber, token);
+
+        const { verified, channel } = await this.verificationService.verifyVerificationToken(
+            phoneNumber,
+            token,
+            verificationId,
+        );
         if (!verified) {
             this.analytics.track({
                 event: "phone_verification_failed",
                 userId: user.id,
                 properties: {
                     channel,
+                    verification_id: verificationId,
                 },
             });
             return false;
@@ -794,6 +809,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             userId: user.id,
             properties: {
                 channel,
+                verification_id: verificationId,
             },
         });
         return true;

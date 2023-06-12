@@ -30,6 +30,7 @@ interface VerifyModalState {
 
 export function VerifyModal() {
     const [state, setState] = useState<VerifyModalState>({});
+    const [verificationId, setVerificationId] = useState("");
     const phoneVerificationByCall = useFeatureFlag("phoneVerificationByCall");
 
     if (!state.sent) {
@@ -40,7 +41,8 @@ export function VerifyModal() {
                     message: undefined,
                     sending: true,
                 });
-                await getGitpodService().server.sendPhoneNumberVerificationToken(state.phoneNumber || "");
+                const resp = await getGitpodService().server.sendPhoneNumberVerificationToken(state.phoneNumber || "");
+                setVerificationId(resp.verificationId);
                 setState({
                     ...state,
                     sending: false,
@@ -124,6 +126,7 @@ export function VerifyModal() {
                 const verified = await getGitpodService().server.verifyPhoneNumberVerificationToken(
                     state.phoneNumber!,
                     state.token!,
+                    verificationId,
                 );
                 if (verified) {
                     setState({
