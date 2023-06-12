@@ -556,11 +556,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
                                         {
                                             title: "Stop Workspace",
                                             onClick: () =>
-                                                this.context.usePublicApiWorkspacesService
-                                                    ? workspacesService.stopWorkspace({
-                                                          workspaceId: this.props.workspaceId,
-                                                      })
-                                                    : getGitpodService().server.stopWorkspace(this.props.workspaceId),
+                                                workspacesService.stopWorkspace({
+                                                    workspaceId: this.props.workspaceId,
+                                                }),
                                         },
                                         {
                                             title: "Connect via SSH",
