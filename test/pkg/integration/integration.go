@@ -41,6 +41,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util"
 	"sigs.k8s.io/e2e-framework/klient"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	ide "github.com/gitpod-io/gitpod/ide-service-api/config"
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
@@ -255,11 +256,14 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		containerName string
 		err           error
 	)
+	// TODO: Cache the agent's build.
+	log.Infof("%v start of instrument", time.Now())
 	for i := 0; i < connectFailureMaxTries; i++ {
 		expectedBinaryName := fmt.Sprintf("gitpod-integration-test-%d-%s-agent", i, agentName)
 		agentLoc, _ := exec.LookPath(expectedBinaryName)
 		if agentLoc == "" {
 			var err error
+			// 2s
 			agentLoc, err = buildAgent(agentName)
 			if err != nil {
 				return nil, closer, err
@@ -267,6 +271,8 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 			defer os.Remove(agentLoc)
 		}
 
+		// 0.4s
+		log.Infof("%v selectPod", time.Now())
 		podName, containerName, err = selectPod(component, options.SPO, namespace, client)
 		if err != nil {
 			time.Sleep(10 * time.Second)
@@ -278,17 +284,22 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 			return nil, closer, err
 		}
 		podExec := NewPodExec(*client.RESTConfig(), clientConfig)
+		log.Infof("%v new pod exec", time.Now())
 
+		// 5s
 		tgtFN := filepath.Base(agentLoc)
 		_, _, _, err = podExec.PodCopyFile(agentLoc, fmt.Sprintf("%s/%s:/home/gitpod/%s", namespace, podName, tgtFN), containerName)
 		if err != nil {
 			return nil, closer, err
 		}
+		log.Infof("%v copied file", time.Now())
 
+		// 1.5s
 		res, cl, err = portfw(podExec, kubeconfig, podName, namespace, containerName, tgtFN, options)
+		log.Infof("%v portfw", time.Now())
 		if err != nil {
 			var serror error
-			waitErr := wait.PollImmediate(10*time.Second, 2*time.Minute, func() (bool, error) {
+			waitErr := wait.PollImmediate(1*time.Second, 2*time.Minute, func() (bool, error) {
 				serror = shutdownAgent(podExec, kubeconfig, podName, namespace, containerName)
 				if serror != nil {
 					if strings.Contains(serror.Error(), "exit code 7") {
@@ -408,7 +419,7 @@ L:
 
 	var res *rpc.Client
 	var lastError error
-	waitErr := wait.PollImmediate(10*time.Second, 1*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(500*time.Millisecond, 1*time.Minute, func() (bool, error) {
 		res, lastError = rpc.DialHTTP("tcp", net.JoinHostPort("localhost", strconv.Itoa(localAgentPort)))
 		if lastError != nil {
 			return false, nil
@@ -448,6 +459,7 @@ func getFreePort() (int, error) {
 }
 
 func buildAgent(name string) (loc string, err error) {
+	log.Infof("%v building agent", time.Now())
 	defer func() {
 		if err != nil {
 			err = xerrors.Errorf("cannot build agent: %w", err)
@@ -475,6 +487,7 @@ func buildAgent(name string) (loc string, err error) {
 		return "", xerrors.Errorf("%w: %s", err, string(out))
 	}
 
+	log.Infof("%v built agent", time.Now())
 	return f.Name(), nil
 }
 

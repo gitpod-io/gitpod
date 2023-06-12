@@ -19,6 +19,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/util/wait"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -165,7 +166,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		}
 	}
 
-	waitErr := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(1*time.Second, 2*time.Minute, func() (bool, error) {
 		workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
 		if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 			api.ClearImageBuilderClientCache()
@@ -348,6 +349,8 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 		defaultServerOpts = []GitpodServerOpt{WithGitpodUser(username)}
 	}
 
+	// 0s
+	log.Infof("%v before parallel limiter", time.Now())
 	parallelLimiter <- struct{}{}
 	defer func() {
 		if err != nil && stopWs == nil {
@@ -355,19 +358,26 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 		}
 	}()
 
+	// 25s
+	log.Infof("%v after limiter", time.Now())
 	server, err := api.GitpodServer(append(defaultServerOpts, serverOpts...)...)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("cannot start server: %w", err)
 	}
+
+	log.Infof("%v gitpod server", time.Now())
 
 	cctx, ccancel := context.WithTimeout(context.Background(), perCallTimeout)
 	defer ccancel()
 
 	var resp *protocol.WorkspaceCreationResult
 	for i := 0; i < 3; i++ {
+		// 7s
+		log.Infof("%v get user", time.Now())
 		u, _ := api.GetUserId(username)
 		t.Logf("attempt to create the workspace as user %v, with context %v\n", u, opts.ContextURL)
 
+		log.Infof("%v get teams", time.Now())
 		teams, _ := server.GetTeams(cctx)
 		var orgId string
 		if len(teams) == 0 {
@@ -377,6 +387,8 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 			orgId = teams[0].ID
 		}
 
+		// 1s to got workspace information
+		log.Infof("%v create ws", time.Now())
 		resp, err = server.CreateWorkspace(cctx, &protocol.CreateWorkspaceOptions{
 			ContextURL:                         opts.ContextURL,
 			OrganizationId:                     orgId,
@@ -420,7 +432,7 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 			continue
 		}
 		if wi.LatestInstance.Status.Phase != "preparing" {
-			t.Logf("not preparing")
+			t.Logf("%v not preparing", time.Now())
 			break
 		}
 		t.Logf("sleeping")
@@ -429,7 +441,7 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 	if wi == nil || wi.LatestInstance == nil {
 		return nil, nil, xerrors.Errorf("CreateWorkspace did not start the workspace")
 	}
-	t.Logf("got the workspace information: %s", wi.Workspace.ID)
+	t.Logf("%v got the workspace information: %s", time.Now(), wi.Workspace.ID)
 
 	// GetWorkspace might receive an instance before we seen the first event
 	// from ws-manager, in which case IdeURL is not set
@@ -438,6 +450,7 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 	}
 
 	if wi.LatestInstance.Status.Conditions.NeededImageBuild {
+		log.Infof("%v needed image build", time.Now())
 		for ctx.Err() == nil {
 			wi, err = server.GetWorkspace(cctx, resp.CreatedWorkspaceID)
 			if err != nil {
@@ -450,6 +463,8 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 		}
 	}
 
+	// 0s
+	log.Infof("%v create stopWsF", time.Now())
 	stopWs = stopWsF(t, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api, false)
 	defer func() {
 		if err != nil {
@@ -457,7 +472,8 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 		}
 	}()
 
-	t.Log("wait for workspace to be fully up and running")
+	// 31s
+	t.Logf("%v wait for workspace to be fully up and running", time.Now())
 	wsState, err := WaitForWorkspaceStart(t, cctx, wi.LatestInstance.ID, resp.CreatedWorkspaceID, api)
 	if err != nil {
 		return nil, nil, xerrors.Errorf("failed to wait for the workspace to start up: %w", err)
@@ -465,7 +481,7 @@ func LaunchWorkspaceWithOptions(t *testing.T, ctx context.Context, opts *LaunchW
 	if wi.LatestInstance.IdeURL == "" {
 		wi.LatestInstance.IdeURL = wsState.Spec.Url
 	}
-	t.Log("successful launch of the workspace")
+	t.Logf("%v successful launch of the workspace", time.Now())
 
 	return wi, stopWs, nil
 }
@@ -569,6 +585,7 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 		t.Log("prepare for a connection with ws-manager")
 		wsman, err := api.WorkspaceManager()
 		if err != nil {
+			t.Logf("failed to connect to ws-manager: %v", err)
 			errStatus <- err
 			return
 		}
@@ -578,6 +595,7 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 			},
 		})
 		if err != nil {
+			t.Logf("failed to subscribe to workspace updates: %v", err)
 			errStatus <- err
 			return
 		}
@@ -598,6 +616,7 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 			t.Logf("check if the status of workspace is in the running phase: %s", instanceID)
 			resp, err := sub.Recv()
 			if err != nil {
+				t.Logf("workspace update error: %v", err)
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 					sub.CloseSend()
 					api.ClearWorkspaceManagerClientCache()
@@ -625,6 +644,7 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 
 			s = resp.GetStatus()
 			if s == nil || s.Id != instanceID {
+				t.Logf("status is nil or for different instance: %v", s)
 				continue
 			}
 
@@ -692,7 +712,8 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 		return nil, true, nil
 	}
 
-	ticker := time.NewTicker(30 * time.Second)
+	// TODO: Subscribe request should receive the current status of the workspace if a workspace ID filter is set?
+	ticker := time.NewTicker(3 * time.Second)
 	for {
 		select {
 		case <-ticker.C:

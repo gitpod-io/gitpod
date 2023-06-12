@@ -164,7 +164,7 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 		}
 
 		client := cfg.Client()
-		err := wait.PollImmediate(5*time.Second, waitTimeout, func() (bool, error) {
+		err := wait.PollImmediate(1*time.Second, waitTimeout, func() (bool, error) {
 			for _, component := range components {
 				var pods corev1.PodList
 				err := client.Resources(namespace).List(context.Background(), &pods, func(opts *metav1.ListOptions) {

@@ -448,16 +448,22 @@ func (c *ComponentAPI) UpdateUserFeatureFlag(userId, featureFlag string) error {
 }
 
 func (c *ComponentAPI) CreateUser(username string, token string) (string, error) {
+	// 1s
+	log.Infof("%v find", time.Now())
 	dbConfig, err := FindDBConfigFromPodEnv("server", c.namespace, c.client)
 	if err != nil {
 		return "", err
 	}
 
+	// 6s
+	log.Infof("%v db", time.Now())
 	db, err := c.DB()
 	if err != nil {
 		return "", err
 	}
 
+	// 1s
+	log.Infof("%v query", time.Now())
 	var userId string
 	err = db.QueryRow(`SELECT id FROM d_b_user WHERE name = ? and markedDeleted != 1 and blocked != 1`, username).Scan(&userId)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -470,6 +476,8 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 			return "", err
 		}
 
+		// n/a
+		log.Infof("%v db-exec", time.Now())
 		userId = userUuid.String()
 		_, err = db.Exec(`INSERT IGNORE INTO d_b_user (id, creationDate, avatarUrl, name, fullName, featureFlags) VALUES (?, ?, ?, ?, ?, ?)`,
 			userId,
@@ -484,12 +492,16 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 		}
 	}
 
+	// 0.5s
+	log.Infof("%v query-row", time.Now())
 	var authId string
 	err = db.QueryRow(`SELECT authId FROM d_b_identity WHERE userId = ? and deleted != 1`, userId).Scan(&authId)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return "", err
 	}
 	if authId == "" {
+		// n/a
+		log.Infof("%v db-auth-exec", time.Now())
 		authId = strconv.FormatInt(time.Now().UnixMilli(), 10)
 		_, err = db.Exec(`INSERT IGNORE INTO d_b_identity (authProviderId, authId, authName, userId) VALUES (?, ?, ?, ?)`,
 			"Public-GitHub",
@@ -502,6 +514,8 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 		}
 	}
 
+	// 0.3s
+	log.Infof("%v cnt-query-row", time.Now())
 	var cnt int
 	err = db.QueryRow(`SELECT COUNT(1) AS cnt FROM d_b_token_entry WHERE authId = ? and deleted != 1`, authId).Scan(&cnt)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
@@ -530,6 +544,8 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 			return "", err
 		}
 
+		// n/a
+		log.Infof("%v before encrypt", time.Now())
 		encryptedData, iv := EncryptValue(valueBytes2, dbConfig.EncryptionKeys.Material)
 		encrypted := EncriptedDBData{}
 		encrypted.Data = encryptedData
@@ -541,6 +557,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 			return "", err
 		}
 
+		log.Infof("%v exec-insert", time.Now())
 		_, err = db.Exec(`INSERT IGNORE INTO d_b_token_entry (authProviderId, authId, token, uid) VALUES (?, ?, ?, ?)`,
 			"Public-GitHub",
 			authId,
@@ -552,6 +569,7 @@ func (c *ComponentAPI) CreateUser(username string, token string) (string, error)
 		}
 	}
 
+	log.Infof("%v user done", time.Now())
 	return userId, nil
 }
 
@@ -795,6 +813,13 @@ func DBName(name string) DBOpt {
 	}
 }
 
+var (
+	// cachedDBs caches DB connections per database name, so we don't have to re-establish connections all the time,
+	// saving us a lot of time in integration tests.
+	// The cache gets cleaned up when the component is closed.
+	cachedDBs = make(map[string]*sql.DB)
+)
+
 // DB provides access to the Gitpod database.
 // Callers must never close the DB.
 func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
@@ -805,10 +830,17 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 		o(&opts)
 	}
 
+	if db, ok := cachedDBs[opts.Database]; ok {
+		return db, nil
+	}
+
 	config, err := c.findDBConfig()
 	if err != nil {
 		return nil, err
 	}
+
+	// 1s
+	log.Infof("%v found db config", time.Now())
 
 	// if configured: setup local port-forward to DB pod
 	if config.ForwardPort != nil {
@@ -819,6 +851,8 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 			return nil, err
 		}
 		c.appendCloser(func() error { cancel(); return nil })
+		// 5s
+		log.Infof("%v port forwarded", time.Now())
 	}
 
 	db, err := sql.Open("mysql", fmt.Sprintf("gitpod:%s@tcp(%s:%d)/%s", config.Password, config.Host, config.Port, opts.Database))
@@ -826,7 +860,14 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 		return nil, err
 	}
 
-	c.appendCloser(db.Close)
+	// 0s
+	log.Infof("%v sql open", time.Now())
+
+	cachedDBs[opts.Database] = db
+	c.appendCloser(func() error {
+		delete(cachedDBs, opts.Database)
+		return db.Close()
+	})
 	return db, nil
 }
 
