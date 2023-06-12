@@ -109,6 +109,9 @@ type TimeoutSpec struct {
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h)?)+$"
 	ClosedTimeout *metav1.Duration `json:"closed,omitempty"`
+	// +kubebuilder:validation:Type=string
+	// +kubebuilder:validation:Pattern="^([0-9]+(\\.[0-9]+)?(ms|s|m|h)?)+$"
+	MaximumLifetime *metav1.Duration `json:"maximumLifetime,omitempty"`
 }
 
 type AdmissionSpec struct {

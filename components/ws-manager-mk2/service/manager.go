@@ -137,22 +137,19 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		}
 	}
 
-	var timeout *metav1.Duration
-	if req.Spec.Timeout != "" {
-		d, err := time.ParseDuration(req.Spec.Timeout)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid timeout: %v", err)
-		}
-		timeout = &metav1.Duration{Duration: d}
+	timeout, err := parseTimeout(req.Spec.Timeout)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	var closedTimeout *metav1.Duration
-	if req.Spec.ClosedTimeout != "" {
-		d, err := time.ParseDuration(req.Spec.ClosedTimeout)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid closed timeout: %v", err)
-		}
-		closedTimeout = &metav1.Duration{Duration: d}
+	closedTimeout, err := parseTimeout(req.Spec.ClosedTimeout)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	maximumLifetime, err := parseTimeout(req.Spec.MaximumLifetime)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	var admissionLevel workspacev1.AdmissionLevel
@@ -275,8 +272,9 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 			WorkspaceLocation: req.Spec.WorkspaceLocation,
 			Git:               git,
 			Timeout: workspacev1.TimeoutSpec{
-				Time:          timeout,
-				ClosedTimeout: closedTimeout,
+				Time:            timeout,
+				ClosedTimeout:   closedTimeout,
+				MaximumLifetime: maximumLifetime,
 			},
 			Admission: workspacev1.AdmissionSpec{
 				Level: admissionLevel,
@@ -1163,6 +1161,19 @@ func metadataFilterToLabelSelector(filter *wsmanapi.MetadataFilter) (labels.Sele
 		res.Add(*req)
 	}
 	return res, nil
+}
+
+func parseTimeout(timeout string) (*metav1.Duration, error) {
+	var duration *metav1.Duration
+	if timeout != "" {
+		d, err := time.ParseDuration(timeout)
+		if err != nil {
+			return nil, fmt.Errorf("invalid timeout: %v", err)
+		}
+		duration = &metav1.Duration{Duration: d}
+	}
+
+	return duration, nil
 }
 
 type filteringSubscriber struct {

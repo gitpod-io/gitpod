@@ -8105,7 +8105,8 @@ proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
     sysEnvvarsList: jspb.Message.toObjectList(msg.getSysEnvvarsList(),
     proto.wsman.EnvironmentVariable.toObject, includeInstance),
     ideImageLayersList: (f = jspb.Message.getRepeatedField(msg, 17)) == null ? undefined : f,
-    closedTimeout: jspb.Message.getFieldWithDefault(msg, 18, "")
+    closedTimeout: jspb.Message.getFieldWithDefault(msg, 18, ""),
+    maximumLifetime: jspb.Message.getFieldWithDefault(msg, 19, "")
   };
 
   if (includeInstance) {
@@ -8218,6 +8219,10 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
     case 18:
       var value = /** @type {string} */ (reader.readString());
       msg.setClosedTimeout(value);
+      break;
+    case 19:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setMaximumLifetime(value);
       break;
     default:
       reader.skipField();
@@ -8371,6 +8376,13 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
   if (f.length > 0) {
     writer.writeString(
       18,
+      f
+    );
+  }
+  f = message.getMaximumLifetime();
+  if (f.length > 0) {
+    writer.writeString(
+      19,
       f
     );
   }
@@ -8873,6 +8885,24 @@ proto.wsman.StartWorkspaceSpec.prototype.getClosedTimeout = function() {
  */
 proto.wsman.StartWorkspaceSpec.prototype.setClosedTimeout = function(value) {
   return jspb.Message.setProto3StringField(this, 18, value);
+};
+
+
+/**
+ * optional string maximum_lifetime = 19;
+ * @return {string}
+ */
+proto.wsman.StartWorkspaceSpec.prototype.getMaximumLifetime = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 19, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.StartWorkspaceSpec} returns this
+ */
+proto.wsman.StartWorkspaceSpec.prototype.setMaximumLifetime = function(value) {
+  return jspb.Message.setProto3StringField(this, 19, value);
 };
 
 

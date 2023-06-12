@@ -178,7 +178,8 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 
 	case workspacev1.WorkspacePhaseRunning:
 		// First check is always for the max lifetime
-		if msg := decide(start, timeouts.MaxLifetime, activityMaxLifetime); msg != "" {
+		maxLifetime := r.getMaxLifetime(ws)
+		if msg := decide(start, maxLifetime, activityMaxLifetime); msg != "" {
 			return msg
 		}
 
@@ -227,6 +228,14 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 		// The only other phases we can be in is stopped which is pointless to time out
 		return ""
 	}
+}
+
+func (r *TimeoutReconciler) getMaxLifetime(ws *workspacev1.Workspace) util.Duration {
+	if ws.Spec.Timeout.MaximumLifetime != nil {
+		return util.Duration(ws.Spec.Timeout.MaximumLifetime.Duration)
+	}
+
+	return r.Config.Timeouts.MaxLifetime
 }
 
 func formatDuration(d time.Duration) string {
