@@ -185,14 +185,21 @@ type GetUsageSummaryParams struct {
 
 type GetUsageSummaryResponse struct {
 	CreditCentsUsed CreditCents
-	UniqueUsers     int
 	NumberOfRecords int
+}
+
+type GetUsageSummaryV2Response struct {
+	CreditCentsUsed    CreditCents
+	UniqueUsers        int
+	NumberOfRecords    int
+	NumberOfWorkspaces int
+	NumberOfPrebuilds  int
 }
 
 func GetUsageSummary(ctx context.Context, conn *gorm.DB, params GetUsageSummaryParams) (GetUsageSummaryResponse, error) {
 	db := conn.WithContext(ctx)
 	query1 := db.Table((&Usage{}).TableName()).
-		Select("sum(creditCents) as CreditCentsUsed, count(distinct(metadata->\"$.userId\")) as UniqueUsers, count(*) as NumberOfRecords").
+		Select("sum(creditCents) as CreditCentsUsed, count(*) as NumberOfRecords").
 		Where("attributionId = ?", params.AttributionId).
 		Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
 		Where("kind = ?", WorkspaceInstanceUsageKind)
@@ -200,6 +207,50 @@ func GetUsageSummary(ctx context.Context, conn *gorm.DB, params GetUsageSummaryP
 		query1 = query1.Where("draft = ?", false)
 	}
 	var result GetUsageSummaryResponse
+	err := query1.Find(&result).Error
+	if err != nil {
+		return result, fmt.Errorf("failed to get usage meta data: %w", err)
+	}
+	return result, nil
+}
+
+func GetUsageSummaryV2(ctx context.Context, conn *gorm.DB, params GetUsageSummaryParams) (GetUsageSummaryV2Response, error) {
+	db := conn.WithContext(ctx)
+
+	appendFilters := func(query *gorm.DB) *gorm.DB {
+		query.Where("attributionId = ?", params.AttributionId).
+			Where("effectiveTime >= ? AND effectiveTime < ?", TimeToISO8601(params.From), TimeToISO8601(params.To)).
+			Where("kind = ?", WorkspaceInstanceUsageKind)
+		if params.ExcludeDrafts {
+			query.Where("draft = ?", false)
+		}
+		return query
+	}
+
+	workspacesQuery := appendFilters(db.Table((&Usage{}).TableName()).
+		Select("count(*)").
+		Where("metadata->\"$.workspaceType\" = ?", WorkspaceType_Regular))
+
+	prebuildsQuery := appendFilters(db.Table((&Usage{}).TableName()).
+		Select("count(*)").
+		Where("metadata->\"$.workspaceType\" = ?", WorkspaceType_Prebuild))
+
+	workspacesTimeQuery := appendFilters(db.Table((&Usage{}).TableName()).
+		Select("sum(effectiveTime)").
+		Select("count(*)").
+		Where("metadata->\"$.workspaceType\" = ?", WorkspaceType_Regular))
+
+	query1 := appendFilters(db.Table((&Usage{}).TableName()).
+		Select(
+			"sum(creditCents) as CreditCentsUsed, "+
+				"count(distinct(metadata->\"$.userId\")) as UniqueUsers, "+
+				"count(*) as NumberOfRecords, "+
+				"( ? ) as NumberOfWorkspaces, "+
+				"( ? ) as NumberOfPrebuilds "+
+				"( ? ) as WorkspacesTime",
+			workspacesQuery, prebuildsQuery, workspacesTimeQuery))
+
+	var result GetUsageSummaryV2Response
 	err := query1.Find(&result).Error
 	if err != nil {
 		return result, fmt.Errorf("failed to get usage meta data: %w", err)

@@ -159,7 +159,162 @@ func TestGetUsageSummary(t *testing.T) {
 
 			require.EqualValues(t, test.creditCents, usageSummary.CreditCentsUsed)
 			require.EqualValues(t, test.numberOfRecords, usageSummary.NumberOfRecords)
+		})
+	}
+}
+
+func TestGetUsageSummaryV2(t *testing.T) {
+	conn := dbtest.ConnectForTests(t)
+
+	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC)
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+
+	beforeUserID := uuid.New()
+	insideUserID := uuid.New()
+	afterUserID := uuid.New()
+
+	draftBefore := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
+		CreditCents:   100,
+		Draft:         true,
+	})
+	err := draftBefore.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID:        beforeUserID,
+		WorkspaceType: db.WorkspaceType_Regular,
+	})
+	require.NoError(t, err)
+
+	nondraftBefore := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
+		CreditCents:   200,
+		Draft:         false,
+	})
+	err = nondraftBefore.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID:        beforeUserID,
+		WorkspaceType: db.WorkspaceType_Regular,
+	})
+	require.NoError(t, err)
+
+	prebuildBefore := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(-1 * 23 * time.Hour)),
+		CreditCents:   100,
+		Draft:         false,
+	})
+	err = prebuildBefore.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID:        beforeUserID,
+		WorkspaceType: db.WorkspaceType_Prebuild,
+	})
+	require.NoError(t, err)
+
+	draftInside := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(2 * time.Hour)),
+		CreditCents:   300,
+		Draft:         true,
+	})
+	err = draftInside.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID:        insideUserID,
+		WorkspaceType: db.WorkspaceType_Regular,
+	})
+	require.NoError(t, err)
+
+	nonDraftInside := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(2 * time.Hour)),
+		CreditCents:   400,
+		Draft:         false,
+	})
+	err = nonDraftInside.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID:        insideUserID,
+		WorkspaceType: db.WorkspaceType_Regular,
+	})
+	require.NoError(t, err)
+
+	prebuildInside := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(2 * time.Hour)),
+		CreditCents:   100,
+		Draft:         false,
+	})
+	err = prebuildInside.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID:        insideUserID,
+		WorkspaceType: db.WorkspaceType_Prebuild,
+	})
+	require.NoError(t, err)
+
+	nonDraftAfter := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(end.Add(2 * time.Hour)),
+		CreditCents:   1000,
+	})
+	err = nonDraftAfter.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID:        afterUserID,
+		WorkspaceType: db.WorkspaceType_Regular,
+	})
+	require.NoError(t, err)
+
+	prebuildAfter := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(end.Add(2 * time.Hour)),
+		CreditCents:   100,
+	})
+	err = prebuildAfter.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		UserID:        afterUserID,
+		WorkspaceType: db.WorkspaceType_Prebuild,
+	})
+	require.NoError(t, err)
+
+	invoice := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		Kind:          db.InvoiceUsageKind,
+		EffectiveTime: db.NewVarCharTime(start.Add(2 * time.Hour)),
+		CreditCents:   -400,
+		Draft:         false,
+	})
+
+	dbtest.CreateUsageRecords(t, conn, draftBefore, nondraftBefore, prebuildBefore, draftInside, nonDraftInside, prebuildInside, nonDraftAfter, prebuildAfter, invoice)
+
+	tests := []struct {
+		start, end    time.Time
+		excludeDrafts bool
+		// expectations
+		creditCents        db.CreditCents
+		numberOfRecords    int
+		uniqueUsers        int
+		NumberOfWorkspaces int
+		NumberOfPrebuilds  int
+	}{
+		{start, end, false, 800, 3, 1, 2, 1},
+		{start, end, true, 500, 2, 1, 1, 1},
+		{end, end, false, 0, 0, 0, 0, 0},
+		{end, end, true, 0, 0, 0, 0, 0},
+		{start, start, false, 0, 0, 0, 0, 0},
+		{start.Add(-500 * 24 * time.Hour), end, false, 1200, 6, 2, 4, 2},
+		{start.Add(-500 * 24 * time.Hour), end.Add(500 * 24 * time.Hour), false, 2300, 8, 3, 5, 3},
+	}
+
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("Running test no %d", i+1), func(t *testing.T) {
+			usageSummary, err := db.GetUsageSummaryV2(context.Background(), conn, db.GetUsageSummaryParams{
+				AttributionId: attributionID,
+				From:          test.start,
+				To:            test.end,
+				ExcludeDrafts: test.excludeDrafts,
+			})
+			require.NoError(t, err)
+
+			fmt.Println("NumberOfWorkspaces", usageSummary.NumberOfWorkspaces)
+
+			require.EqualValues(t, test.creditCents, usageSummary.CreditCentsUsed)
+			require.EqualValues(t, test.numberOfRecords, usageSummary.NumberOfRecords)
 			require.EqualValues(t, test.uniqueUsers, usageSummary.UniqueUsers)
+			require.EqualValues(t, test.NumberOfWorkspaces, usageSummary.NumberOfWorkspaces)
+			require.EqualValues(t, test.NumberOfPrebuilds, usageSummary.NumberOfPrebuilds)
 		})
 	}
 }
