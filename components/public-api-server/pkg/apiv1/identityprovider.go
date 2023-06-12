@@ -89,7 +89,7 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 	userInfo.SetName(user.Name)
 	userInfo.SetSubject(subject)
 	if email != "" {
-		userInfo.SetEmail(email, true)
+		userInfo.SetEmail(email, user.OrganizationId != "")
 	}
 
 	token, err := srv.idTokenSource.IDToken(ctx, "gitpod", req.Msg.Audience, userInfo)

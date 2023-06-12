@@ -39,11 +39,54 @@ func TestGetIDToken(t *testing.T) {
 		Expectation Expectation
 	}{
 		{
-			Name: "happy path",
+			Name: "org-owned user",
 			TokenSource: func(t *testing.T) IDTokenSource {
 				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
 					require.Equal(t, "correct@gitpod.io", userInfo.GetEmail())
 					require.True(t, userInfo.IsEmailVerified())
+
+					return "foobar", nil
+				})
+			},
+			ServerSetup: func(ma *protocol.MockAPIInterface) {
+				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
+				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
+					&protocol.WorkspaceInfo{
+						Workspace: &protocol.Workspace{
+							ContextURL: "https://github.com/gitpod-io/gitpod",
+						},
+					},
+					nil,
+				)
+				ma.EXPECT().GetLoggedInUser(gomock.Any()).Return(
+					&protocol.User{
+						Name: "foobar",
+						Identities: []*protocol.Identity{
+							nil,
+							{Deleted: true, PrimaryEmail: "nonsense@gitpod.io"},
+							{Deleted: false, PrimaryEmail: "correct@gitpod.io"},
+						},
+						OrganizationId: "test",
+					},
+					nil,
+				)
+			},
+			Request: &v1.GetIDTokenRequest{
+				WorkspaceId: workspaceID,
+				Audience:    []string{"some.audience.com"},
+			},
+			Expectation: Expectation{
+				Response: &v1.GetIDTokenResponse{
+					Token: "foobar",
+				},
+			},
+		},
+		{
+			Name: "none org-owned user",
+			TokenSource: func(t *testing.T) IDTokenSource {
+				return functionIDTokenSource(func(ctx context.Context, org string, audience []string, userInfo oidc.UserInfo) (string, error) {
+					require.Equal(t, "correct@gitpod.io", userInfo.GetEmail())
+					require.False(t, userInfo.IsEmailVerified())
 
 					return "foobar", nil
 				})

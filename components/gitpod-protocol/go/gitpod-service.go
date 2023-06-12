@@ -2188,6 +2188,9 @@ type User struct {
 	MarkedDeleted bool   `json:"markedDeleted,omitempty"`
 	Name          string `json:"name,omitempty"`
 
+	// The ID of the Organization this user is owned by. If empty, the user is owned by the installation
+	OrganizationId string `json:"organizationId,omitempty"`
+
 	// whether this user can run workspaces in privileged mode
 	Privileged bool `json:"privileged,omitempty"`
 
