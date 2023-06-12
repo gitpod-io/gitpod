@@ -126,7 +126,8 @@ export class TypeORMUserDBImpl implements UserDB {
     public async storeUser(newUser: User): Promise<User> {
         const userRepo = await this.getUserRepo();
         const dbUser = this.mapUserToDBUser(newUser);
-        return await userRepo.save(dbUser);
+        const result = await userRepo.save(dbUser);
+        return this.mapDBUserToUser(result);
     }
 
     public async updateUserPartial(_partial: PartialUserUpdate): Promise<void> {
@@ -140,7 +141,11 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async findUserById(id: string): Promise<MaybeUser> {
         const userRepo = await this.getUserRepo();
-        return userRepo.findOne(id);
+        const result = await userRepo.findOne(id);
+        if (!result) {
+            return undefined;
+        }
+        return this.mapDBUserToUser(result);
     }
 
     public async findUserByIdentity(identity: IdentityLookup): Promise<User | undefined> {
@@ -161,7 +166,11 @@ export class TypeORMUserDBImpl implements UserDB {
                     .getQuery();
                 return `user.id IN ${subQuery}`;
             });
-        return qBuilder.getOne();
+        const result = await qBuilder.getOne();
+        if (!result) {
+            return undefined;
+        }
+        return this.mapDBUserToUser(result);
     }
 
     public async findUsersByEmail(email: string): Promise<User[]> {
@@ -201,7 +210,7 @@ export class TypeORMUserDBImpl implements UserDB {
                 return -1 * a1.localeCompare(a2);
             };
         }
-        return result.sort(order);
+        return result.map((dbUser) => this.mapDBUserToUser(dbUser)).sort(order);
     }
 
     public async findUserByGitpodToken(
@@ -223,8 +232,7 @@ export class TypeORMUserDBImpl implements UserDB {
         if (!token) {
             return;
         }
-
-        return { user: token.user, token };
+        return { user: this.mapDBUserToUser(token.user), token };
     }
 
     public async findGitpodTokensOfUser(userId: string, tokenHash: string): Promise<GitpodToken | undefined> {
@@ -356,11 +364,24 @@ export class TypeORMUserDBImpl implements UserDB {
         return entry.filter((te) => includeDeleted || !te.deleted);
     }
 
-    protected mapUserToDBUser(user: User): DBUser {
-        const dbUser = user as DBUser;
-        // Here we need to fill the pseudo column 'user' in DBIdentity (see there for details)
-        dbUser.identities.forEach((id) => (id.user = dbUser));
+    private mapUserToDBUser(user: User): DBUser {
+        const dbUser: DBUser = { ...user, identities: [] };
+        for (const identity of user.identities) {
+            dbUser.identities.push({ ...identity, user: dbUser });
+        }
         return dbUser;
+    }
+
+    private mapDBUserToUser(dbUser: DBUser): User {
+        const res = {
+            ...dbUser,
+            identities: dbUser.identities.map((i) => {
+                const identity = { ...i };
+                delete (identity as any).user;
+                return identity;
+            }),
+        };
+        return res;
     }
 
     public async getUserCount(excludeBuiltinUsers: boolean = true): Promise<number> {
@@ -475,11 +496,15 @@ export class TypeORMUserDBImpl implements UserDB {
         qBuilder.orderBy("user." + orderBy, orderDir);
         qBuilder.skip(offset).take(limit).select();
         const [rows, total] = await qBuilder.getManyAndCount();
-        return { total, rows };
+        return { total, rows: rows.map((dbUser) => this.mapDBUserToUser(dbUser)) };
     }
 
     public async findUserByName(name: string): Promise<User | undefined> {
-        return (await this.getUserRepo()).findOne({ name });
+        const result = await (await this.getUserRepo()).findOne({ name });
+        if (!result) {
+            return undefined;
+        }
+        return this.mapDBUserToUser(result);
     }
 
     // OAuthAuthCodeRepository
@@ -606,7 +631,11 @@ export class TypeORMUserDBImpl implements UserDB {
                     .getQuery();
                 return `user.id IN ${subQuery}`;
             });
-        return qBuilder.getOne();
+        const result = await qBuilder.getOne();
+        if (!result) {
+            return undefined;
+        }
+        return this.mapDBUserToUser(result);
     }
 }
 
