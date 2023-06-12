@@ -6,10 +6,11 @@
 
 import { createHash } from "crypto";
 
-const redactedFields = ["auth_", "password", "token", "key", "jwt", "secret"];
-const hashedFields = ["contextURL", "workspaceID", "username", "email"];
+const redactedFields = ["auth_", "password", "token", "key", "jwt", "secret", "email"];
+const hashedFields = ["contextURL", "workspaceID", "username"];
 
-const hashedValues = new Map<string, RegExp>([
+const hashedValues = new Map<string, RegExp>([]);
+const redactedValues = new Map<string, RegExp>([
     // https://html.spec.whatwg.org/multipage/input.html#email-state-(type=email)
     [
         "email",
@@ -61,29 +62,8 @@ export function scrubValue(value: string): string {
     for (const [key, expr] of hashedValues.entries()) {
         value = value.replace(expr, (s) => SanitiseHash(s, { key }));
     }
+    for (const [key, expr] of redactedValues.entries()) {
+        value = value.replace(expr, (s) => SanitiseRedact(s, { key }));
+    }
     return value;
 }
-
-export const scrubReplacer = (key: string, value: any): any => {
-    if (typeof value === "object" && value !== null) {
-        // https://github.com/gitpod-io/security/issues/64
-        const k = value["name"];
-        const v = value["value"];
-        if (typeof k === "string" && typeof v === "string" && k != "" && v != "") {
-            const scrubbedValue = scrubKeyValue(k, v);
-            if (scrubbedValue != v) {
-                return {
-                    ...value,
-                    value: scrubbedValue,
-                };
-            }
-        }
-    }
-    if (typeof value === "string") {
-        if (key == "" || !isNaN(Number(key))) {
-            return scrubValue(value);
-        }
-        return scrubKeyValue(key, value);
-    }
-    return value;
-};

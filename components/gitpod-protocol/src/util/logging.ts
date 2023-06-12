@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { scrubReplacer } from "./scrubbing";
+import { scrubKeyValue } from "./scrubbing";
 
 const inspect: (object: any) => string = require("util").inspect; // undefined in frontend
 
@@ -305,12 +305,14 @@ function makeLogItem(
     if (context !== undefined && Object.keys(context).length == 0) {
         context = undefined;
     }
+    context = scrubPayload(context, plainLogging);
 
     let reportedErrorEvent: {} = {};
     if (GoogleLogSeverity.isGreaterOrEqualThanWarning(severity)) {
         reportedErrorEvent = makeReportedErrorEvent(error);
     }
 
+    payloadArgs = payloadArgs.map((arg) => scrubPayload(arg, plainLogging));
     const payload: any = payloadArgs.length == 0 ? undefined : payloadArgs.length == 1 ? payloadArgs[0] : payloadArgs;
     const logItem = {
         // undefined fields get eliminated in JSON.stringify()
@@ -349,6 +351,29 @@ function makeLogItem(
         return undefined;
     }
 
+    return result;
+}
+
+function scrubPayload(payload: any, plainLogging: boolean): any {
+    if (plainLogging) {
+        return payload;
+    }
+    if (payload === undefined || payload === null) {
+        return undefined;
+    }
+    if (typeof payload !== "object") {
+        return "[redacted:not-an-object]";
+    }
+    const result: any = {};
+    for (const [key, value] of Object.entries(payload)) {
+        if (typeof value === "string") {
+            result[key] = scrubKeyValue(key, value);
+        } else if (typeof value === "boolean" || typeof value === "number") {
+            result[key] = value;
+        } else {
+            result[key] = "[redacted:nested]";
+        }
+    }
     return result;
 }
 
@@ -418,15 +443,8 @@ function stringifyLogItem(logItem: any): string {
  * Jsonifies Errors properly, not as {} only.
  */
 function jsonStringifyWithErrors(value: any): string {
-    const errorReplacer = (key: string, value: any): any => {
-        if (value instanceof Error) {
-            return value.stack;
-        }
-        return value;
-    };
-    return JSON.stringify(value, (key, value) => {
-        value = errorReplacer(key, value);
-        return scrubReplacer(key, value);
+    return JSON.stringify(value, (_, value) => {
+        return value instanceof Error ? value.stack : value;
     });
 }
 
