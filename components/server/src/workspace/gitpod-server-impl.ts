@@ -1041,7 +1041,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
         }
 
-        await this.internalStopWorkspace(ctx, workspace, "stopped via API").catch((err) => {
+        try {
+            await this.internalStopWorkspace(ctx, workspace, "stopped via API");
+        } catch (err) {
             log.error(logCtx, "stopWorkspace error: ", err);
             if (isClusterMaintenanceError(err)) {
                 throw new ResponseError(
@@ -1050,7 +1052,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 );
             }
             throw err;
-        });
+        }
     }
 
     protected async internalStopWorkspace(

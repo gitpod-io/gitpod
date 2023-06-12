@@ -48,11 +48,14 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     }, [workspace.id]);
 
     const handleStopWorkspace = useCallback(() => {
-        try {
-            stopWorkspace.mutate({ workspaceId: workspace.id });
-        } catch (err) {
-            toast(err.message || "Failed to stop workspace");
-        }
+        stopWorkspace.mutate(
+            { workspaceId: workspace.id },
+            {
+                onError: (error: any) => {
+                    toast(error.message || "Failed to stop workspace");
+                },
+            },
+        );
     }, [toast, stopWorkspace, workspace.id]);
 
     const toggleShared = useCallback(() => {
