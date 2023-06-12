@@ -108,6 +108,30 @@ export interface ListUsageResponse {
   creditsUsed: number;
 }
 
+export interface GetUsageSummaryRequest {
+  attributionId: string;
+  /**
+   * from specifies the starting time range for this request.
+   * All instances which existed starting at from will be included in data.
+   */
+  from:
+    | Date
+    | undefined;
+  /**
+   * to specifies the end time range for this request.
+   * All instances which existed ending at to will be included in data.
+   */
+  to: Date | undefined;
+}
+
+export interface GetUsageSummaryResponse {
+  creditsUsed: number;
+  uniqueUsers: number;
+  numberOfRecords: number;
+  numberOfWorkspaces: number;
+  numberOfPrebuilds: number;
+}
+
 export interface Usage {
   id: string;
   attributionId: string;
@@ -659,6 +683,158 @@ export const ListUsageResponse = {
       ? PaginatedResponse.fromPartial(object.pagination)
       : undefined;
     message.creditsUsed = object.creditsUsed ?? 0;
+    return message;
+  },
+};
+
+function createBaseGetUsageSummaryRequest(): GetUsageSummaryRequest {
+  return { attributionId: "", from: undefined, to: undefined };
+}
+
+export const GetUsageSummaryRequest = {
+  encode(message: GetUsageSummaryRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.attributionId !== "") {
+      writer.uint32(10).string(message.attributionId);
+    }
+    if (message.from !== undefined) {
+      Timestamp.encode(toTimestamp(message.from), writer.uint32(18).fork()).ldelim();
+    }
+    if (message.to !== undefined) {
+      Timestamp.encode(toTimestamp(message.to), writer.uint32(26).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetUsageSummaryRequest {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUsageSummaryRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.attributionId = reader.string();
+          break;
+        case 2:
+          message.from = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          break;
+        case 3:
+          message.to = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUsageSummaryRequest {
+    return {
+      attributionId: isSet(object.attributionId) ? String(object.attributionId) : "",
+      from: isSet(object.from) ? fromJsonTimestamp(object.from) : undefined,
+      to: isSet(object.to) ? fromJsonTimestamp(object.to) : undefined,
+    };
+  },
+
+  toJSON(message: GetUsageSummaryRequest): unknown {
+    const obj: any = {};
+    message.attributionId !== undefined && (obj.attributionId = message.attributionId);
+    message.from !== undefined && (obj.from = message.from.toISOString());
+    message.to !== undefined && (obj.to = message.to.toISOString());
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetUsageSummaryRequest>): GetUsageSummaryRequest {
+    const message = createBaseGetUsageSummaryRequest();
+    message.attributionId = object.attributionId ?? "";
+    message.from = object.from ?? undefined;
+    message.to = object.to ?? undefined;
+    return message;
+  },
+};
+
+function createBaseGetUsageSummaryResponse(): GetUsageSummaryResponse {
+  return { creditsUsed: 0, uniqueUsers: 0, numberOfRecords: 0, numberOfWorkspaces: 0, numberOfPrebuilds: 0 };
+}
+
+export const GetUsageSummaryResponse = {
+  encode(message: GetUsageSummaryResponse, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.creditsUsed !== 0) {
+      writer.uint32(9).double(message.creditsUsed);
+    }
+    if (message.uniqueUsers !== 0) {
+      writer.uint32(16).int64(message.uniqueUsers);
+    }
+    if (message.numberOfRecords !== 0) {
+      writer.uint32(24).int64(message.numberOfRecords);
+    }
+    if (message.numberOfWorkspaces !== 0) {
+      writer.uint32(32).int64(message.numberOfWorkspaces);
+    }
+    if (message.numberOfPrebuilds !== 0) {
+      writer.uint32(40).int64(message.numberOfPrebuilds);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): GetUsageSummaryResponse {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseGetUsageSummaryResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.creditsUsed = reader.double();
+          break;
+        case 2:
+          message.uniqueUsers = longToNumber(reader.int64() as Long);
+          break;
+        case 3:
+          message.numberOfRecords = longToNumber(reader.int64() as Long);
+          break;
+        case 4:
+          message.numberOfWorkspaces = longToNumber(reader.int64() as Long);
+          break;
+        case 5:
+          message.numberOfPrebuilds = longToNumber(reader.int64() as Long);
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): GetUsageSummaryResponse {
+    return {
+      creditsUsed: isSet(object.creditsUsed) ? Number(object.creditsUsed) : 0,
+      uniqueUsers: isSet(object.uniqueUsers) ? Number(object.uniqueUsers) : 0,
+      numberOfRecords: isSet(object.numberOfRecords) ? Number(object.numberOfRecords) : 0,
+      numberOfWorkspaces: isSet(object.numberOfWorkspaces) ? Number(object.numberOfWorkspaces) : 0,
+      numberOfPrebuilds: isSet(object.numberOfPrebuilds) ? Number(object.numberOfPrebuilds) : 0,
+    };
+  },
+
+  toJSON(message: GetUsageSummaryResponse): unknown {
+    const obj: any = {};
+    message.creditsUsed !== undefined && (obj.creditsUsed = message.creditsUsed);
+    message.uniqueUsers !== undefined && (obj.uniqueUsers = Math.round(message.uniqueUsers));
+    message.numberOfRecords !== undefined && (obj.numberOfRecords = Math.round(message.numberOfRecords));
+    message.numberOfWorkspaces !== undefined && (obj.numberOfWorkspaces = Math.round(message.numberOfWorkspaces));
+    message.numberOfPrebuilds !== undefined && (obj.numberOfPrebuilds = Math.round(message.numberOfPrebuilds));
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<GetUsageSummaryResponse>): GetUsageSummaryResponse {
+    const message = createBaseGetUsageSummaryResponse();
+    message.creditsUsed = object.creditsUsed ?? 0;
+    message.uniqueUsers = object.uniqueUsers ?? 0;
+    message.numberOfRecords = object.numberOfRecords ?? 0;
+    message.numberOfWorkspaces = object.numberOfWorkspaces ?? 0;
+    message.numberOfPrebuilds = object.numberOfPrebuilds ?? 0;
     return message;
   },
 };
@@ -1413,12 +1589,21 @@ export const UsageServiceDefinition = {
       responseStream: false,
       options: {},
     },
-    /** ListUsage retrieves all usage for the specified attributionId and theb given time range */
+    /** ListUsage retrieves all usage for the specified attributionId and the given time range */
     listUsage: {
       name: "ListUsage",
       requestType: ListUsageRequest,
       requestStream: false,
       responseType: ListUsageResponse,
+      responseStream: false,
+      options: {},
+    },
+    /** GetUsageSummary retrieves summary usage data for the specified attributionId and the given time range */
+    getUsageSummary: {
+      name: "GetUsageSummary",
+      requestType: GetUsageSummaryRequest,
+      requestStream: false,
+      responseType: GetUsageSummaryResponse,
       responseStream: false,
       options: {},
     },
@@ -1464,8 +1649,13 @@ export interface UsageServiceServiceImplementation<CallContextExt = {}> {
     request: ResetUsageRequest,
     context: CallContext & CallContextExt,
   ): Promise<DeepPartial<ResetUsageResponse>>;
-  /** ListUsage retrieves all usage for the specified attributionId and theb given time range */
+  /** ListUsage retrieves all usage for the specified attributionId and the given time range */
   listUsage(request: ListUsageRequest, context: CallContext & CallContextExt): Promise<DeepPartial<ListUsageResponse>>;
+  /** GetUsageSummary retrieves summary usage data for the specified attributionId and the given time range */
+  getUsageSummary(
+    request: GetUsageSummaryRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<GetUsageSummaryResponse>>;
   /** GetBalance returns the current credits balance for the given attributionId */
   getBalance(
     request: GetBalanceRequest,
@@ -1499,8 +1689,13 @@ export interface UsageServiceClient<CallOptionsExt = {}> {
     request: DeepPartial<ResetUsageRequest>,
     options?: CallOptions & CallOptionsExt,
   ): Promise<ResetUsageResponse>;
-  /** ListUsage retrieves all usage for the specified attributionId and theb given time range */
+  /** ListUsage retrieves all usage for the specified attributionId and the given time range */
   listUsage(request: DeepPartial<ListUsageRequest>, options?: CallOptions & CallOptionsExt): Promise<ListUsageResponse>;
+  /** GetUsageSummary retrieves summary usage data for the specified attributionId and the given time range */
+  getUsageSummary(
+    request: DeepPartial<GetUsageSummaryRequest>,
+    options?: CallOptions & CallOptionsExt,
+  ): Promise<GetUsageSummaryResponse>;
   /** GetBalance returns the current credits balance for the given attributionId */
   getBalance(
     request: DeepPartial<GetBalanceRequest>,

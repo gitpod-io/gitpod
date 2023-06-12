@@ -162,6 +162,58 @@ func (s *UsageService) ListUsage(ctx context.Context, in *v1.ListUsageRequest) (
 	}, nil
 }
 
+func (s *UsageService) GetUsageSummary(ctx context.Context, in *v1.GetUsageSummaryRequest) (*v1.GetUsageSummaryResponse, error) {
+	to := time.Now()
+	if in.To != nil {
+		to = in.To.AsTime()
+	}
+	from := to.Add(-maxQuerySize)
+	if in.From != nil {
+		from = in.From.AsTime()
+	}
+
+	if from.After(to) {
+		return nil, status.Errorf(codes.InvalidArgument, "Specified From timestamp is after To. Please ensure From is always before To")
+	}
+
+	if to.Sub(from) > maxQuerySize {
+		return nil, status.Errorf(codes.InvalidArgument, "Maximum range exceeded. Range specified can be at most %s", maxQuerySize.String())
+	}
+
+	attributionId, err := db.ParseAttributionID(in.AttributionId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AttributionID '%s' couldn't be parsed (error: %s).", in.AttributionId, err)
+	}
+
+	logger := log.Log.
+		WithField("attribution_id", in.AttributionId).
+		WithField("from", from).
+		WithField("to", to)
+	logger.Debug("Fetching usage summary data")
+
+	excludeDrafts := false
+	usageSummary, err := db.GetUsageSummaryV2(ctx, s.conn,
+		db.GetUsageSummaryParams{
+			AttributionId: attributionId,
+			From:          from,
+			To:            to,
+			ExcludeDrafts: excludeDrafts,
+		},
+	)
+
+	if err != nil {
+		logger.WithError(err).Error("Failed to fetch usage summary data.")
+		return nil, status.Error(codes.Internal, "unable to retrieve usage")
+	}
+	return &v1.GetUsageSummaryResponse{
+		CreditsUsed:        float64(usageSummary.CreditCentsUsed.ToCredits()),
+		UniqueUsers:        int64(usageSummary.UniqueUsers),
+		NumberOfRecords:    int64(usageSummary.NumberOfRecords),
+		NumberOfWorkspaces: int64(usageSummary.NumberOfWorkspaces),
+		NumberOfPrebuilds:  int64(usageSummary.NumberOfPrebuilds),
+	}, nil
+}
+
 func (s *UsageService) GetBalance(ctx context.Context, in *v1.GetBalanceRequest) (*v1.GetBalanceResponse, error) {
 	attrId, err := db.ParseAttributionID(in.AttributionId)
 	if err != nil {

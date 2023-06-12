@@ -235,20 +235,14 @@ func GetUsageSummaryV2(ctx context.Context, conn *gorm.DB, params GetUsageSummar
 		Select("count(*)").
 		Where("metadata->\"$.workspaceType\" = ?", WorkspaceType_Prebuild))
 
-	workspacesTimeQuery := appendFilters(db.Table((&Usage{}).TableName()).
-		Select("sum(effectiveTime)").
-		Select("count(*)").
-		Where("metadata->\"$.workspaceType\" = ?", WorkspaceType_Regular))
-
 	query1 := appendFilters(db.Table((&Usage{}).TableName()).
 		Select(
 			"sum(creditCents) as CreditCentsUsed, "+
 				"count(distinct(metadata->\"$.userId\")) as UniqueUsers, "+
 				"count(*) as NumberOfRecords, "+
 				"( ? ) as NumberOfWorkspaces, "+
-				"( ? ) as NumberOfPrebuilds "+
-				"( ? ) as WorkspacesTime",
-			workspacesQuery, prebuildsQuery, workspacesTimeQuery))
+				"( ? ) as NumberOfPrebuilds",
+			workspacesQuery, prebuildsQuery))
 
 	var result GetUsageSummaryV2Response
 	err := query1.Find(&result).Error

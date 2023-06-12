@@ -20,8 +20,11 @@ service UsageService {
     // ResetUsage resets Usage for CostCenters which have expired or will explire shortly
     rpc ResetUsage(ResetUsageRequest) returns (ResetUsageResponse) {}
 
-    // ListUsage retrieves all usage for the specified attributionId and theb given time range
+    // ListUsage retrieves all usage for the specified attributionId and the given time range
     rpc ListUsage(ListUsageRequest) returns (ListUsageResponse) {}
+
+    // GetUsageSummary retrieves summary usage data for the specified attributionId and the given time range
+    rpc GetUsageSummary(GetUsageSummaryRequest) returns (GetUsageSummaryResponse) {}
 
     // GetBalance returns the current credits balance for the given attributionId
     rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse) {}
@@ -78,6 +81,26 @@ message ListUsageResponse {
     PaginatedResponse pagination = 2;
     // the amount of credits the given account (attributionId) has used during the requested period
     double credits_used = 3;
+}
+
+message GetUsageSummaryRequest {
+    string attribution_id = 1;
+
+    // from specifies the starting time range for this request.
+    // All instances which existed starting at from will be included in data.
+    google.protobuf.Timestamp from = 2;
+
+    // to specifies the end time range for this request.
+    // All instances which existed ending at to will be included in data.
+    google.protobuf.Timestamp to = 3;
+}
+
+message GetUsageSummaryResponse {
+    double credits_used = 1;
+    int64 unique_users = 2;
+    int64 number_of_records = 3;
+    int64 number_of_workspaces = 4;
+    int64 number_of_prebuilds = 5;
 }
 
 message Usage {

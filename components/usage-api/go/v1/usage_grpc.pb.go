@@ -34,8 +34,10 @@ type UsageServiceClient interface {
 	ReconcileUsage(ctx context.Context, in *ReconcileUsageRequest, opts ...grpc.CallOption) (*ReconcileUsageResponse, error)
 	// ResetUsage resets Usage for CostCenters which have expired or will explire shortly
 	ResetUsage(ctx context.Context, in *ResetUsageRequest, opts ...grpc.CallOption) (*ResetUsageResponse, error)
-	// ListUsage retrieves all usage for the specified attributionId and theb given time range
+	// ListUsage retrieves all usage for the specified attributionId and the given time range
 	ListUsage(ctx context.Context, in *ListUsageRequest, opts ...grpc.CallOption) (*ListUsageResponse, error)
+	// GetUsageSummary retrieves summary usage data for the specified attributionId and the given time range
+	GetUsageSummary(ctx context.Context, in *GetUsageSummaryRequest, opts ...grpc.CallOption) (*GetUsageSummaryResponse, error)
 	// GetBalance returns the current credits balance for the given attributionId
 	GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error)
 	// AddUsageCreditNote adds a usage credit note to the given cost center with the effective date of now
@@ -95,6 +97,15 @@ func (c *usageServiceClient) ListUsage(ctx context.Context, in *ListUsageRequest
 	return out, nil
 }
 
+func (c *usageServiceClient) GetUsageSummary(ctx context.Context, in *GetUsageSummaryRequest, opts ...grpc.CallOption) (*GetUsageSummaryResponse, error) {
+	out := new(GetUsageSummaryResponse)
+	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/GetUsageSummary", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usageServiceClient) GetBalance(ctx context.Context, in *GetBalanceRequest, opts ...grpc.CallOption) (*GetBalanceResponse, error) {
 	out := new(GetBalanceResponse)
 	err := c.cc.Invoke(ctx, "/usage.v1.UsageService/GetBalance", in, out, opts...)
@@ -125,8 +136,10 @@ type UsageServiceServer interface {
 	ReconcileUsage(context.Context, *ReconcileUsageRequest) (*ReconcileUsageResponse, error)
 	// ResetUsage resets Usage for CostCenters which have expired or will explire shortly
 	ResetUsage(context.Context, *ResetUsageRequest) (*ResetUsageResponse, error)
-	// ListUsage retrieves all usage for the specified attributionId and theb given time range
+	// ListUsage retrieves all usage for the specified attributionId and the given time range
 	ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error)
+	// GetUsageSummary retrieves summary usage data for the specified attributionId and the given time range
+	GetUsageSummary(context.Context, *GetUsageSummaryRequest) (*GetUsageSummaryResponse, error)
 	// GetBalance returns the current credits balance for the given attributionId
 	GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error)
 	// AddUsageCreditNote adds a usage credit note to the given cost center with the effective date of now
@@ -152,6 +165,9 @@ func (UnimplementedUsageServiceServer) ResetUsage(context.Context, *ResetUsageRe
 }
 func (UnimplementedUsageServiceServer) ListUsage(context.Context, *ListUsageRequest) (*ListUsageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListUsage not implemented")
+}
+func (UnimplementedUsageServiceServer) GetUsageSummary(context.Context, *GetUsageSummaryRequest) (*GetUsageSummaryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUsageSummary not implemented")
 }
 func (UnimplementedUsageServiceServer) GetBalance(context.Context, *GetBalanceRequest) (*GetBalanceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBalance not implemented")
@@ -262,6 +278,24 @@ func _UsageService_ListUsage_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsageService_GetUsageSummary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUsageSummaryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsageServiceServer).GetUsageSummary(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/usage.v1.UsageService/GetUsageSummary",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsageServiceServer).GetUsageSummary(ctx, req.(*GetUsageSummaryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsageService_GetBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetBalanceRequest)
 	if err := dec(in); err != nil {
@@ -324,6 +358,10 @@ var UsageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListUsage",
 			Handler:    _UsageService_ListUsage_Handler,
+		},
+		{
+			MethodName: "GetUsageSummary",
+			Handler:    _UsageService_GetUsageSummary_Handler,
 		},
 		{
 			MethodName: "GetBalance",
