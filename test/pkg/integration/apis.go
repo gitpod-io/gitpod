@@ -795,6 +795,13 @@ func DBName(name string) DBOpt {
 	}
 }
 
+var (
+	// cachedDBs caches DB connections per database name, so we don't have to re-establish connections all the time,
+	// saving us a lot of time in integration tests.
+	// The cache gets cleaned up when the component is closed.
+	cachedDBs = make(map[string]*sql.DB)
+)
+
 // DB provides access to the Gitpod database.
 // Callers must never close the DB.
 func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
@@ -803,6 +810,10 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 	}
 	for _, o := range options {
 		o(&opts)
+	}
+
+	if db, ok := cachedDBs[opts.Database]; ok {
+		return db, nil
 	}
 
 	config, err := c.findDBConfig()
@@ -826,7 +837,11 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 		return nil, err
 	}
 
-	c.appendCloser(db.Close)
+	cachedDBs[opts.Database] = db
+	c.appendCloser(func() error {
+		delete(cachedDBs, opts.Database)
+		return db.Close()
+	})
 	return db, nil
 }
 

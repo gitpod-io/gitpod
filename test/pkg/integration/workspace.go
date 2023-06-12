@@ -165,7 +165,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 		}
 	}
 
-	waitErr := wait.PollImmediate(5*time.Second, 2*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(1*time.Second, 2*time.Minute, func() (bool, error) {
 		workspaceImage, err = resolveOrBuildImage(ctx, api, options.BaseImage)
 		if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
 			api.ClearImageBuilderClientCache()
@@ -692,7 +692,7 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 		return nil, true, nil
 	}
 
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
 		case <-ticker.C:

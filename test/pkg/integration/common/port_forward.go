@@ -80,7 +80,7 @@ func forwardPort(ctx context.Context, kubeconfig string, namespace, resourceType
 	// wait until we can reach the local port before signaling we are ready
 	go func() {
 		localPort := strings.Split(port, ":")[0]
-		waitErr := wait.PollImmediate(5*time.Second, 1*time.Minute, func() (bool, error) {
+		waitErr := wait.PollImmediate(500*time.Millisecond, 1*time.Minute, func() (bool, error) {
 			conn, err := net.DialTimeout("tcp", net.JoinHostPort("localhost", localPort), 1*time.Second)
 			if err != nil {
 				return false, nil
