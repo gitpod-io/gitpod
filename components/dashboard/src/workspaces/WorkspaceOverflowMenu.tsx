@@ -15,6 +15,7 @@ import { useToggleWorkspaceSharedMutation } from "../data/workspaces/toggle-work
 import { getGitpodService } from "../service/service";
 import ConnectToSSHModal from "./ConnectToSSHModal";
 import { DeleteWorkspaceModal } from "./DeleteWorkspaceModal";
+import { useToast } from "../components/toasts/Toasts";
 import { RenameWorkspaceModal } from "./RenameWorkspaceModal";
 
 type WorkspaceEntryOverflowMenuProps = {
@@ -30,6 +31,7 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     const [isRenameModalVisible, setRenameModalVisible] = useState(false);
     const [isSSHModalVisible, setSSHModalVisible] = useState(false);
     const [ownerToken, setOwnerToken] = useState("");
+    const { toast } = useToast();
 
     const stopWorkspace = useStopWorkspaceMutation();
     const toggleWorkspaceShared = useToggleWorkspaceSharedMutation();
@@ -46,8 +48,15 @@ export const WorkspaceEntryOverflowMenu: FunctionComponent<WorkspaceEntryOverflo
     }, [workspace.id]);
 
     const handleStopWorkspace = useCallback(() => {
-        stopWorkspace.mutate({ workspaceId: workspace.id });
-    }, [stopWorkspace, workspace.id]);
+        stopWorkspace.mutate(
+            { workspaceId: workspace.id },
+            {
+                onError: (error: any) => {
+                    toast(error.message || "Failed to stop workspace");
+                },
+            },
+        );
+    }, [toast, stopWorkspace, workspace.id]);
 
     const toggleShared = useCallback(() => {
         const newLevel = workspace.shareable ? "owner" : "everyone";

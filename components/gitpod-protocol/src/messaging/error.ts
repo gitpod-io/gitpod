@@ -23,6 +23,9 @@ export namespace ErrorCodes {
     // 411 No User
     export const NEEDS_VERIFICATION = 411;
 
+    // 412 Precondition Failed
+    export const PRECONDITION_FAILED = 412;
+
     // 429 Too Many Requests
     export const TOO_MANY_REQUESTS = 429;
 

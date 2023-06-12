@@ -142,7 +142,7 @@ import { ContextParser } from "./context-parser-service";
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
 import { WorkspaceDeletionService } from "./workspace-deletion-service";
 import { WorkspaceFactory } from "./workspace-factory";
-import { WorkspaceStarter } from "./workspace-starter";
+import { WorkspaceStarter, isClusterMaintenanceError } from "./workspace-starter";
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
 import { ConfigProvider, InvalidGitpodYMLError } from "./config-provider";
@@ -1070,9 +1070,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
         }
 
-        this.internalStopWorkspace(ctx, workspace, "stopped via API").catch((err) => {
+        try {
+            await this.internalStopWorkspace(ctx, workspace, "stopped via API");
+        } catch (err) {
             log.error(logCtx, "stopWorkspace error: ", err);
-        });
+            if (isClusterMaintenanceError(err)) {
+                throw new ResponseError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    "Cannot stop the workspace because the workspace cluster is under maintenance. Please try again in a few minutes",
+                );
+            }
+            throw err;
+        }
     }
 
     protected async internalStopWorkspace(
@@ -2403,9 +2412,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         request.setReturnImmediately(true);
 
         // this triggers the snapshots, but returns early! cmp. waitForSnapshot to wait for it's completion
-        const resp = await client.takeSnapshot(ctx, request);
+        let snapshotUrl;
+        try {
+            const resp = await client.takeSnapshot(ctx, request);
+            snapshotUrl = resp.getUrl();
+        } catch (err) {
+            if (isClusterMaintenanceError(err)) {
+                throw new ResponseError(
+                    ErrorCodes.PRECONDITION_FAILED,
+                    "Cannot take a snapshot because the workspace cluster is under maintenance. Please try again in a few minutes",
+                );
+            }
+            throw err;
+        }
 
-        const snapshot = await this.snapshotService.createSnapshot(options, resp.getUrl());
+        const snapshot = await this.snapshotService.createSnapshot(options, snapshotUrl);
 
         // to be backwards compatible during rollout, we require new clients to explicitly pass "dontWait: true"
         const waitOpts = { workspaceOwner: workspace.ownerId, snapshot };
