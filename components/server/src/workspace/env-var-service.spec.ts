@@ -82,16 +82,16 @@ const contextEnvVars = {
 class TestEnvVarService {
     protected envVarService: EnvVarService;
 
-    public before() {
+    protected init(userEnvVars: UserEnvVar[], projectEnvVar: ProjectEnvVarWithValue[]) {
         this.envVarService = new EnvVarService();
         this.envVarService["userDB"] = {
             getEnvVars: (_) => {
-                return Promise.resolve([fooAnyUserEnvVar, barUserCommitEnvVar, barUserAnotherCommitEnvVar]);
+                return Promise.resolve(userEnvVars);
             },
         } as UserDB;
         this.envVarService["projectsService"] = {
             getProjectEnvironmentVariables: (_) => {
-                return Promise.resolve([barProjectCensoredEnvVar, bazProjectEnvVar] as ProjectEnvVar[]);
+                return Promise.resolve(projectEnvVar as ProjectEnvVar[]);
             },
         } as ProjectsService;
         this.envVarService["projectDB"] = {
@@ -101,8 +101,16 @@ class TestEnvVarService {
         } as ProjectDB;
     }
 
+    public before() {
+        this.init([], []);
+    }
+
     @test
     public async testRegular() {
+        this.init(
+            [fooAnyUserEnvVar, barUserCommitEnvVar, barUserAnotherCommitEnvVar],
+            [barProjectCensoredEnvVar, bazProjectEnvVar],
+        );
         const envVars = await this.envVarService.resolve({
             ownerId: "1",
             type: "regular",
@@ -116,6 +124,10 @@ class TestEnvVarService {
 
     @test
     public async testPrebuild() {
+        this.init(
+            [fooAnyUserEnvVar, barUserCommitEnvVar, barUserAnotherCommitEnvVar],
+            [barProjectCensoredEnvVar, bazProjectEnvVar],
+        );
         const envVars = await this.envVarService.resolve({
             ownerId: "1",
             type: "prebuild",
@@ -129,6 +141,10 @@ class TestEnvVarService {
 
     @test
     public async testRegularWithProject() {
+        this.init(
+            [fooAnyUserEnvVar, barUserCommitEnvVar, barUserAnotherCommitEnvVar],
+            [barProjectCensoredEnvVar, bazProjectEnvVar],
+        );
         const envVars = await this.envVarService.resolve({
             ownerId: "1",
             type: "regular",
@@ -143,6 +159,10 @@ class TestEnvVarService {
 
     @test
     public async testPrebuildWithProject() {
+        this.init(
+            [fooAnyUserEnvVar, barUserCommitEnvVar, barUserAnotherCommitEnvVar],
+            [barProjectCensoredEnvVar, bazProjectEnvVar],
+        );
         const envVars = await this.envVarService.resolve({
             type: "prebuild",
             context: commitContext,
@@ -155,7 +175,37 @@ class TestEnvVarService {
     }
 
     @test
+    public async testDontMatchSingleSegment() {
+        const userEnvVars: UserEnvVar[] = [
+            {
+                id: "1",
+                name: "USER_SINGLE_SEGMENT_NEGATIVE_TEST",
+                value: "true",
+                repositoryPattern: "*",
+                userId: "1",
+            },
+        ];
+
+        this.init(userEnvVars, []);
+
+        const envVars = await this.envVarService.resolve({
+            ownerId: "1",
+            type: "regular",
+            context: commitContext,
+            projectId: "1",
+        } as any);
+        expect(envVars).to.deep.equal({
+            project: [],
+            workspace: [],
+        });
+    }
+
+    @test
     public async testRegularFromContext() {
+        this.init(
+            [fooAnyUserEnvVar, barUserCommitEnvVar, barUserAnotherCommitEnvVar],
+            [barProjectCensoredEnvVar, bazProjectEnvVar],
+        );
         const envVars = await this.envVarService.resolve({
             owerId: "1",
             type: "regular",
@@ -169,6 +219,10 @@ class TestEnvVarService {
 
     @test
     public async testRegularFromContextWithProject() {
+        this.init(
+            [fooAnyUserEnvVar, barUserCommitEnvVar, barUserAnotherCommitEnvVar],
+            [barProjectCensoredEnvVar, bazProjectEnvVar],
+        );
         const envVars = await this.envVarService.resolve({
             owerId: "1",
             type: "regular",
@@ -179,6 +233,58 @@ class TestEnvVarService {
             project: [barProjectCensoredEnvVar, bazProjectEnvVar],
             workspace: [fooAnyUserEnvVar, barContextEnvVar, bazProjectEnvVar],
         });
+    }
+
+    @test
+    public async testPrecedence() {
+        // In this test, we'll repeatedly remove one of the entries from the top, always expecting the first one to be the one that takes precedence (because of matching rules)
+        const userEnvVars: UserEnvVar[] = [
+            {
+                id: "1",
+                name: "MULTIPLE_VARS_WITH_SAME_NAME",
+                value: "true",
+                repositoryPattern: "gitpod/gitpod-io",
+                userId: "1",
+            },
+            {
+                id: "2",
+                name: "MULTIPLE_VARS_WITH_SAME_NAME",
+                value: "true",
+                repositoryPattern: "gitpod/*",
+                userId: "1",
+            },
+            {
+                id: "3",
+                name: "MULTIPLE_VARS_WITH_SAME_NAME",
+                value: "true",
+                repositoryPattern: "*/gitpod-io",
+                userId: "1",
+            },
+            {
+                id: "4",
+                name: "MULTIPLE_VARS_WITH_SAME_NAME",
+                value: "true",
+                repositoryPattern: "*/*",
+                userId: "1",
+            },
+        ];
+
+        for (let i = 0; i < userEnvVars.length; i++) {
+            const inputVars = userEnvVars.slice(i);
+            const expectedVars = [inputVars[0]];
+
+            this.init(inputVars, []);
+            const envVars = await this.envVarService.resolve({
+                owerId: "1",
+                type: "regular",
+                context: { ...commitContext },
+                projectId: "1",
+            } as any);
+            expect(envVars, `test case: ${i}`).to.deep.equal({
+                project: [],
+                workspace: expectedVars,
+            });
+        }
     }
 }
 
