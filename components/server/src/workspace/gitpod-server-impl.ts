@@ -801,7 +801,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async getClientRegion(ctx: TraceContext): Promise<string | undefined> {
-        this.checkUser("getClientRegion");
+        await this.checkUser("getClientRegion");
         return this.clientHeaderFields?.clientRegion;
     }
 
@@ -2062,7 +2062,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { workspaceId });
         traceWI(ctx, { workspaceId });
 
-        this.checkAndBlockUser("getOpenPorts");
+        await this.checkAndBlockUser("getOpenPorts");
 
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
@@ -2299,7 +2299,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getHeadlessLog(ctx: TraceContext, instanceId: string): Promise<HeadlessLogUrls> {
         traceAPIParams(ctx, { instanceId });
 
-        this.checkAndBlockUser("getHeadlessLog", { instanceId });
+        await this.checkAndBlockUser("getHeadlessLog", { instanceId });
         const logCtx: LogContext = { instanceId };
 
         const ws = await this.workspaceDb.trace(ctx).findByInstanceId(instanceId);
@@ -2364,7 +2364,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async isGitHubAppEnabled(ctx: TraceContext): Promise<boolean> {
-        this.checkAndBlockUser();
+        await this.checkAndBlockUser();
         return !!this.config.githubApp?.enabled;
     }
 
@@ -2811,7 +2811,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeam(ctx: TraceContext, teamId: string): Promise<Team> {
         traceAPIParams(ctx, { teamId });
 
-        this.checkAndBlockUser("getTeam");
+        await this.checkAndBlockUser("getTeam");
 
         const { team } = await this.guardTeamOperation(teamId, "get", "org_members_read");
         return team;
@@ -2819,7 +2819,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async updateTeam(ctx: TraceContext, teamId: string, team: Pick<Team, "name">): Promise<Team> {
         traceAPIParams(ctx, { teamId });
-        this.checkUser("updateTeam");
+        await this.checkUser("updateTeam");
 
         await this.guardTeamOperation(teamId, "update", "org_metadata_write");
 
@@ -2830,7 +2830,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeamMembers(ctx: TraceContext, teamId: string): Promise<TeamMemberInfo[]> {
         traceAPIParams(ctx, { teamId });
 
-        this.checkUser("getTeamMembers");
+        await this.checkUser("getTeamMembers");
         const { members } = await this.guardTeamOperation(teamId, "get", "org_members_read");
 
         return members;
@@ -2935,7 +2935,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "invalid role name");
         }
 
-        this.checkAndBlockUser("setTeamMemberRole");
+        await this.checkAndBlockUser("setTeamMemberRole");
         await this.guardTeamOperation(teamId, "update", "org_members_write");
 
         await this.teamDB.setTeamMemberRole(userId, teamId, role);
@@ -2988,7 +2988,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         traceAPIParams(ctx, { teamId });
 
-        this.checkUser("getGenericInvite");
+        await this.checkUser("getGenericInvite");
         await this.guardTeamOperation(teamId, "get", "org_members_write");
 
         if (await this.teamDB.hasActiveSSO(teamId)) {
@@ -3005,7 +3005,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async resetGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         traceAPIParams(ctx, { teamId });
 
-        this.checkAndBlockUser("resetGenericInvite");
+        await this.checkAndBlockUser("resetGenericInvite");
         await this.guardTeamOperation(teamId, "update", "org_members_write");
         if (await this.teamDB.hasActiveSSO(teamId)) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
@@ -3101,7 +3101,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeamProjects(ctx: TraceContext, teamId: string): Promise<Project[]> {
         traceAPIParams(ctx, { teamId });
 
-        this.checkUser("getTeamProjects");
+        await this.checkUser("getTeamProjects");
 
         await this.guardTeamOperation(teamId, "get", "not_implemented");
         return this.projectsService.getTeamProjects(teamId);
@@ -3123,7 +3123,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async getPrebuild(ctx: TraceContext, prebuildId: string): Promise<PrebuildWithStatus | undefined> {
         traceAPIParams(ctx, { prebuildId });
-        this.checkAndBlockUser("getPrebuild");
+        await this.checkAndBlockUser("getPrebuild");
 
         const pbws = await this.workspaceDb.trace(ctx).findPrebuiltWorkspaceById(prebuildId);
         if (!pbws) {
@@ -3156,7 +3156,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         workspaceId: string,
     ): Promise<PrebuiltWorkspace | undefined> {
         traceAPIParams(ctx, { workspaceId });
-        this.checkAndBlockUser("findPrebuildByWorkspaceID");
+        await this.checkAndBlockUser("findPrebuildByWorkspaceID");
 
         const [pbws, workspace] = await Promise.all([
             this.workspaceDb.trace(ctx).findPrebuildByWorkspaceID(workspaceId),
@@ -4098,7 +4098,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getSupportedWorkspaceClasses(ctx: TraceContext): Promise<SupportedWorkspaceClass[]> {
-        this.checkAndBlockUser("getSupportedWorkspaceClasses");
+        await this.checkAndBlockUser("getSupportedWorkspaceClasses");
         const classes = this.config.workspaceClasses.map((c) => ({
             id: c.id,
             category: c.category,
@@ -4133,7 +4133,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async getLinkedInClientId(ctx: TraceContextWithSpan): Promise<string> {
         traceAPIParams(ctx, {});
-        this.checkAndBlockUser("getLinkedInClientID");
+        await this.checkAndBlockUser("getLinkedInClientID");
         const clientId = this.config.linkedInSecrets?.clientId;
         if (!clientId) {
             throw new ResponseError(
@@ -4283,7 +4283,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getStripePublishableKey(ctx: TraceContext): Promise<string> {
-        this.checkAndBlockUser("getStripePublishableKey");
+        await this.checkAndBlockUser("getStripePublishableKey");
         const publishableKey = this.config.stripeSecrets?.publishableKey;
         if (!publishableKey) {
             throw new ResponseError(
@@ -4410,7 +4410,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         ctx: TraceContext,
         attributionId: string,
     ): Promise<{ paymentIntentId: string; paymentIntentClientSecret: string }> {
-        this.checkAndBlockUser("createHoldPaymentIntent");
+        await this.checkAndBlockUser("createHoldPaymentIntent");
 
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
@@ -4502,7 +4502,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getStripePortalUrl(ctx: TraceContext, attributionId: string): Promise<string> {
-        this.checkAndBlockUser("getStripePortalUrl");
+        await this.checkAndBlockUser("getStripePortalUrl");
 
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
@@ -4702,7 +4702,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getBillingModeForTeam(ctx: TraceContextWithSpan, teamId: string): Promise<BillingMode> {
         traceAPIParams(ctx, { teamId });
 
-        this.checkAndBlockUser("getBillingModeForTeam");
+        await this.checkAndBlockUser("getBillingModeForTeam");
         const { team } = await this.guardTeamOperation(teamId, "get", "not_implemented");
 
         return this.billingModes.getBillingModeForTeam(team, new Date());
