@@ -45,6 +45,7 @@ var _ = Describe("TimeoutController", func() {
 			lastActivityAgo   *time.Duration
 			age               time.Duration
 			customTimeout     *time.Duration
+			customMaxLifetime *time.Duration
 			update            func(ws *workspacev1.Workspace)
 			updateStatus      func(ws *workspacev1.Workspace)
 			controllerRestart time.Time
@@ -64,6 +65,9 @@ var _ = Describe("TimeoutController", func() {
 				updateObjWithRetries(fakeClient, ws, false, func(ws *workspacev1.Workspace) {
 					if tc.customTimeout != nil {
 						ws.Spec.Timeout.Time = &metav1.Duration{Duration: *tc.customTimeout}
+					}
+					if tc.customMaxLifetime != nil {
+						ws.Spec.Timeout.MaximumLifetime = &metav1.Duration{Duration: *tc.customMaxLifetime}
 					}
 					if tc.update != nil {
 						tc.update(ws)
@@ -142,11 +146,18 @@ var _ = Describe("TimeoutController", func() {
 				lastActivityAgo: nil,
 				expectTimeout:   true,
 			}),
-			Entry("should timeout workspace over max lifetime", testCase{
+			Entry("should timeout workspace with no custom lifetime", testCase{
 				phase:           workspacev1.WorkspacePhaseRunning,
 				age:             50 * time.Hour,
 				lastActivityAgo: pointer.Duration(1 * time.Minute),
 				expectTimeout:   true,
+			}),
+			Entry("should timeout workspace with custom lifetime", testCase{
+				phase:             workspacev1.WorkspacePhaseRunning,
+				age:               12 * time.Hour,
+				customMaxLifetime: pointer.Duration(8 * time.Hour),
+				lastActivityAgo:   pointer.Duration(1 * time.Minute),
+				expectTimeout:     true,
 			}),
 			Entry("shouldn't timeout after controller restart", testCase{
 				phase: workspacev1.WorkspacePhaseRunning,
