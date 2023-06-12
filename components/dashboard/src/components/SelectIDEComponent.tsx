@@ -22,6 +22,24 @@ function filteredIdeOptions(ideOptions: IDEOptions) {
     return IDEOptions.asArray(ideOptions).filter((x) => !x.hidden);
 }
 
+function sortedIdeOptions(ideOptions: IDEOptions) {
+    return filteredIdeOptions(ideOptions).sort((a, b) => {
+        // Prefer experimental options
+        if (a.experimental && !b.experimental) {
+            return -1;
+        }
+        if (!a.experimental && b.experimental) {
+            return 1;
+        }
+
+        if (!a.orderKey || !b.orderKey) {
+            return 0;
+        }
+
+        return parseInt(a.orderKey, 10) - parseInt(b.orderKey, 10);
+    });
+}
+
 export default function SelectIDEComponent(props: SelectIDEComponentProps) {
     const [ideOptions, setIdeOptions] = useState<IDEOptions>();
 
@@ -33,7 +51,7 @@ export default function SelectIDEComponent(props: SelectIDEComponentProps) {
             if (!ideOptions) {
                 return [];
             }
-            const options = filteredIdeOptions(ideOptions);
+            const options = sortedIdeOptions(ideOptions);
             const result: DropDown2Element[] = [];
             for (const ide of options.filter((ide) =>
                 `${ide.label}${ide.title}${ide.notes}${ide.id}`.toLowerCase().includes(search.toLowerCase()),
