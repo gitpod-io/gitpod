@@ -784,6 +784,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<boolean> {
         const phoneNumber = formatPhoneNumber(rawPhoneNumber);
         const user = await this.checkUser("verifyPhoneNumberVerificationToken");
+
+        if (!uuidValidate(verificationId)) {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "verificatioId must be a valid UUID");
+        }
+
         const { verified, channel } = await this.verificationService.verifyVerificationToken(
             phoneNumber,
             token,
