@@ -288,7 +288,7 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		res, cl, err = portfw(podExec, kubeconfig, podName, namespace, containerName, tgtFN, options)
 		if err != nil {
 			var serror error
-			waitErr := wait.PollImmediate(10*time.Second, 2*time.Minute, func() (bool, error) {
+			waitErr := wait.PollImmediate(1*time.Second, 2*time.Minute, func() (bool, error) {
 				serror = shutdownAgent(podExec, kubeconfig, podName, namespace, containerName)
 				if serror != nil {
 					if strings.Contains(serror.Error(), "exit code 7") {
@@ -408,7 +408,7 @@ L:
 
 	var res *rpc.Client
 	var lastError error
-	waitErr := wait.PollImmediate(10*time.Second, 1*time.Minute, func() (bool, error) {
+	waitErr := wait.PollImmediate(500*time.Millisecond, 1*time.Minute, func() (bool, error) {
 		res, lastError = rpc.DialHTTP("tcp", net.JoinHostPort("localhost", strconv.Itoa(localAgentPort)))
 		if lastError != nil {
 			return false, nil
