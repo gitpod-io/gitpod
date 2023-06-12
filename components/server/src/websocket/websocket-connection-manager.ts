@@ -243,7 +243,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
 
         gitpodServer.initialize(
             client,
-            user,
+            user?.id,
             resourceGuard,
             clientContext.clientMetadata,
             connectionCtx,
