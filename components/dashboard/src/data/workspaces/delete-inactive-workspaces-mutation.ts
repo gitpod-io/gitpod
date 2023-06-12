@@ -6,17 +6,14 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { workspacesService } from "../../service/public-api";
-import { getGitpodService } from "../../service/service";
 import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { useFeatureFlag } from "../featureflag-query";
 
 type DeleteInactiveWorkspacesArgs = {
     workspaceIds: string[];
 };
 export const useDeleteInactiveWorkspacesMutation = () => {
     const queryClient = useQueryClient();
-    const usePublicApiWorkspacesService = useFeatureFlag("publicApiExperimentalWorkspaceService");
     const org = useCurrentOrg();
 
     return useMutation({
@@ -25,9 +22,7 @@ export const useDeleteInactiveWorkspacesMutation = () => {
 
             for (const workspaceId of workspaceIds) {
                 try {
-                    usePublicApiWorkspacesService
-                        ? await workspacesService.deleteWorkspace({ workspaceId })
-                        : await getGitpodService().server.deleteWorkspace(workspaceId);
+                    await workspacesService.deleteWorkspace({ workspaceId });
 
                     deletedWorkspaceIds.push(workspaceId);
                 } catch (e) {
