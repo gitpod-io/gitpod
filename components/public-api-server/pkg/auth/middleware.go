@@ -58,7 +58,7 @@ func (i *Interceptor) WrapStreamingHandler(next connect.StreamingHandlerFunc) co
 	}
 }
 
-// NewServerInterceptor creates a server-side interceptor which validates that an incoming request contains a Bearer Authorization header
+// NewServerInterceptor creates a server-side interceptor which validates that an incoming request contains a valid Authorization header
 func NewServerInterceptor(sessionCfg config.SessionConfig, verifier jws.Verifier) connect.Interceptor {
 	return &Interceptor{
 		sessionCfg: sessionCfg,
