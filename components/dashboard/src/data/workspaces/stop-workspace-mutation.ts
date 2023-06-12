@@ -19,7 +19,7 @@ export const useStopWorkspaceMutation = () => {
     // No need to manually update workspace in cache here, we'll receive messages over the ws that will update it
     return useMutation({
         mutationFn: async ({ workspaceId }: StopWorkspaceArgs) => {
-            usePublicApiWorkspacesService
+            return usePublicApiWorkspacesService
                 ? workspacesService.stopWorkspace({ workspaceId })
                 : getGitpodService().server.stopWorkspace(workspaceId);
         },
