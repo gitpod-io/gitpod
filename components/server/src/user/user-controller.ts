@@ -6,7 +6,7 @@
 
 import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
-import { DBUser, OneTimeSecretDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { OneTimeSecretDB, TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib/user-db";
 import * as express from "express";
 import { Authenticator } from "../auth/authenticator";
@@ -445,11 +445,11 @@ export class UserController {
 
                     const token = crypto.randomBytes(30).toString("hex");
                     const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
-                    const dbToken: GitpodToken & { user: DBUser } = {
+                    const dbToken: GitpodToken = {
                         tokenHash,
                         name: `local-app`,
                         type: GitpodTokenType.MACHINE_AUTH_TOKEN,
-                        user: req.user as DBUser,
+                        userId: req.user.id,
                         scopes: [
                             "function:getWorkspaces",
                             "function:listenForWorkspaceInstanceUpdates",

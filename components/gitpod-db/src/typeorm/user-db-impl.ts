@@ -218,7 +218,7 @@ export class TypeORMUserDBImpl implements UserDB {
         tokenType?: GitpodTokenType,
     ): Promise<{ user: User; token: GitpodToken } | undefined> {
         const repo = await this.getGitpodTokenRepo();
-        const qBuilder = repo.createQueryBuilder("gitpodToken").leftJoinAndSelect("gitpodToken.user", "user");
+        const qBuilder = repo.createQueryBuilder("gitpodToken");
         if (!!tokenType) {
             qBuilder.where("gitpodToken.tokenHash = :tokenHash AND gitpodToken.type = :tokenType", {
                 tokenHash,
@@ -227,29 +227,34 @@ export class TypeORMUserDBImpl implements UserDB {
         } else {
             qBuilder.where("gitpodToken.tokenHash = :tokenHash", { tokenHash });
         }
-        qBuilder.andWhere("gitpodToken.deleted <> TRUE AND user.markedDeleted <> TRUE AND user.blocked <> TRUE");
+        qBuilder.andWhere("gitpodToken.deleted <> TRUE");
         const token = await qBuilder.getOne();
         if (!token) {
             return;
         }
-        return { user: this.mapDBUserToUser(token.user), token };
+        // we want to make sure the full user is loaded(incl. identities)
+        const user = await this.findUserById(token.userId);
+        if (!user || user.markedDeleted || user.blocked) {
+            return;
+        }
+        return { user, token };
     }
 
     public async findGitpodTokensOfUser(userId: string, tokenHash: string): Promise<GitpodToken | undefined> {
         const repo = await this.getGitpodTokenRepo();
-        const qBuilder = repo.createQueryBuilder("gitpodToken").leftJoinAndSelect("gitpodToken.user", "user");
-        qBuilder.where("user.id = :userId AND gitpodToken.tokenHash = :tokenHash", { userId, tokenHash });
+        const qBuilder = repo.createQueryBuilder("gitpodToken");
+        qBuilder.where("userId = :userId AND gitpodToken.tokenHash = :tokenHash", { userId, tokenHash });
         return qBuilder.getOne();
     }
 
     public async findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]> {
         const repo = await this.getGitpodTokenRepo();
-        const qBuilder = repo.createQueryBuilder("gitpodToken").leftJoinAndSelect("gitpodToken.user", "user");
-        qBuilder.where("user.id = :userId", { userId });
+        const qBuilder = repo.createQueryBuilder("gitpodToken");
+        qBuilder.where("userId = :userId", { userId });
         return qBuilder.getMany();
     }
 
-    public async storeGitpodToken(token: GitpodToken & { user: DBUser }): Promise<void> {
+    public async storeGitpodToken(token: GitpodToken): Promise<void> {
         const repo = await this.getGitpodTokenRepo();
         await repo.insert(token);
     }
@@ -555,7 +560,7 @@ export class TypeORMUserDBImpl implements UserDB {
         const scopes = accessToken.scopes.map((s) => s.name);
 
         // Does the token already exist?
-        var dbToken: GitpodToken & { user: DBUser };
+        var dbToken: GitpodToken;
         const tokenHash = crypto.createHash("sha256").update(accessToken.accessToken, "utf8").digest("hex");
         const userAndToken = await this.findUserByGitpodToken(tokenHash);
         if (userAndToken) {
@@ -568,15 +573,15 @@ export class TypeORMUserDBImpl implements UserDB {
             await repo.update(tokenHash, dbToken);
             return;
         } else {
-            var user: MaybeUser;
-            if (accessToken.user) {
-                user = await this.findUserById(accessToken.user.id.toString());
+            if (!accessToken.user) {
+                log.error({}, "No user in accessToken", { accessToken });
+                return;
             }
             dbToken = {
                 tokenHash,
                 name: accessToken.client.id,
                 type: GitpodTokenType.MACHINE_AUTH_TOKEN,
-                user: user as DBUser,
+                userId: accessToken.user.id.toString(),
                 scopes: scopes,
                 created: new Date().toISOString(),
             };

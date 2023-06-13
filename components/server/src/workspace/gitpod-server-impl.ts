@@ -17,7 +17,6 @@ import {
     DBWithTracing,
     TracedWorkspaceDB,
     DBGitpodToken,
-    DBUser,
     UserStorageResourcesDB,
     TeamDB,
     ProjectDB,
@@ -3404,7 +3403,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             tokenHash,
             name: options.name,
             type: options.type,
-            user: user as DBUser,
+            userId: user.id,
             scopes: options.scopes || [],
             created: new Date().toISOString(),
         };
