@@ -1458,19 +1458,8 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	fn := "/workspace/.gitpod/content.json"
 	fnReady := "/workspace/.gitpod/ready"
-	if _, err := os.Stat("/.workspace/.gitpod/pvc"); !os.IsNotExist(err) {
-		fn = "/.workspace/.gitpod/content.json"
-		fnReady = "/.workspace/.gitpod/ready"
-		log.Info("Detected pvc file in /.workspace folder, assuming PVC feature enabled")
-	} else if _, err := os.Stat("/.workspace/.gitpod/content.json"); !os.IsNotExist(err) {
-		// todo(pavel): remove this after gen65 has shipped
-		fn = "/.workspace/.gitpod/content.json"
-		log.Info("[deprecated] Detected content.json in /.workspace folder, assuming PVC feature enabled")
-	}
 
-	var contentFile *os.File
-
-	contentFile, err = os.Open(fn)
+	contentFile, err := os.Open(fn)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			log.WithError(err).Error("cannot open init descriptor")

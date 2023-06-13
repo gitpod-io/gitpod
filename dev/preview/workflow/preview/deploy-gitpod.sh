@@ -278,23 +278,11 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].nam
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].resources.requests.cpu "100m"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].resources.requests.memory "128Mi"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].resources.limits.storage "10Gi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].prebuildPVC.size "10Gi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].prebuildPVC.storageClass "rook-ceph-block"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].prebuildPVC.snapshotClass "csi-rbdplugin-snapclass"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].pvc.size "10Gi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].pvc.storageClass "rook-ceph-block"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].pvc.snapshotClass "csi-rbdplugin-snapclass"
 
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].name "small"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].resources.requests.cpu "100m"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].resources.requests.memory "128Mi"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].resources.limits.storage "5Gi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].prebuildPVC.size "5Gi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].prebuildPVC.storageClass "rook-ceph-block"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].prebuildPVC.snapshotClass "csi-rbdplugin-snapclass"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].pvc.size "5Gi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].pvc.storageClass "rook-ceph-block"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].pvc.snapshotClass "csi-rbdplugin-snapclass"
 
 #
 # configureObjectStorage

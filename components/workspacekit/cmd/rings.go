@@ -123,7 +123,6 @@ var ring0Cmd = &cobra.Command{
 		cmd.Stderr = os.Stderr
 		cmd.Env = append(os.Environ(),
 			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
-			fmt.Sprintf("WORKSPACEKIT_NO_WORKSPACE_MOUNT=%v", prep.PersistentVolumeClaim),
 		)
 
 		if err := cmd.Start(); err != nil {
@@ -319,14 +318,9 @@ var ring1Cmd = &cobra.Command{
 			}
 		}
 
-		// FWB workspaces do not require mounting /workspace
-		// if that is done, the backup will not contain any change in the directory
-		// same applies to persistent volume claims, we cannot mount /workspace folder when PVC is used
-		if os.Getenv("WORKSPACEKIT_NO_WORKSPACE_MOUNT") != "true" {
-			mnts = append(mnts,
-				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
-			)
-		}
+		mnts = append(mnts,
+			mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
+		)
 
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
@@ -577,22 +571,6 @@ var ring1Cmd = &cobra.Command{
 			log.Error("failed to start workspace info service")
 		}
 		defer stopHook()
-
-		// run prestophook when ring1 exits. This is more reliable way of running this script then
-		// using PreStop Lifecycle Handler of the pod (it would not execute for prebuilds for example)
-		prestophookFunc := func() {
-			if _, err := os.Stat("/.supervisor/prestophook.sh"); errors.Is(err, fs.ErrNotExist) {
-				return
-			}
-			cmd := exec.Command("/.supervisor/prestophook.sh")
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			err := cmd.Run()
-			if err != nil {
-				log.WithError(err).Error("error when running prestophook.sh")
-			}
-		}
-		defer prestophookFunc()
 
 		err = cmd.Wait()
 		if err != nil {

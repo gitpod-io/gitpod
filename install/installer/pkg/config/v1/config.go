@@ -74,12 +74,6 @@ func (v version) Defaults(in interface{}) error {
 	cfg.Workspace.Runtime.ContainerDSocketDir = containerd.ContainerdSocketLocationDefault.String()
 	cfg.Workspace.Runtime.ContainerDRuntimeDir = containerd.ContainerdLocationDefault.String()
 	cfg.Workspace.MaxLifetime = util.Duration(36 * time.Hour)
-	cfg.Workspace.PrebuildPVC.Size = resource.MustParse("30Gi")
-	cfg.Workspace.PrebuildPVC.StorageClass = ""
-	cfg.Workspace.PrebuildPVC.SnapshotClass = ""
-	cfg.Workspace.PVC.Size = resource.MustParse("30Gi")
-	cfg.Workspace.PVC.StorageClass = ""
-	cfg.Workspace.PVC.SnapshotClass = ""
 	cfg.OpenVSX.URL = defaultOpenVSXURL
 	cfg.DisableDefinitelyGP = true
 
@@ -337,27 +331,10 @@ type WorkspaceTemplates struct {
 	Regular    *corev1.Pod `json:"regular"`
 }
 
-type PersistentVolumeClaim struct {
-	// Size is a size of persistent volume claim to use
-	Size resource.Quantity `json:"size" validate:"required"`
-
-	// StorageClass is a storage class of persistent volume claim to use
-	StorageClass string `json:"storageClass"`
-
-	// SnapshotClass is a snapshot class name that is used to create volume snapshot
-	SnapshotClass string `json:"snapshotClass"`
-}
-
 type Workspace struct {
 	Runtime   WorkspaceRuntime    `json:"runtime" validate:"required"`
 	Resources Resources           `json:"resources" validate:"required"`
 	Templates *WorkspaceTemplates `json:"templates,omitempty"`
-
-	// PrebuildPVC is the struct that describes how to setup persistent volume claim for prebuild workspace
-	PrebuildPVC PersistentVolumeClaim `json:"prebuildPVC" validate:"required"`
-
-	// PVC is the struct that describes how to setup persistent volume claim for regular workspace
-	PVC PersistentVolumeClaim `json:"pvc" validate:"required"`
 
 	// MaxLifetime is the maximum time a workspace is allowed to run. After that, the workspace times out despite activity
 	MaxLifetime util.Duration `json:"maxLifetime" validate:"required"`

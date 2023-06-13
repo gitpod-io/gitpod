@@ -595,7 +595,7 @@ message StartWorkspaceSpec {
     string class = 13;
 
     // volume_snapshot to use to restore PVC from, if set
-    VolumeSnapshotInfo volume_snapshot = 14;
+    reserved 14;
 
     // ssh_public_keys is user's uploaded ssh public keys
     repeated string ssh_public_keys = 15;
@@ -644,7 +644,7 @@ enum WorkspaceFeatureFlag {
     reserved 6;
 
     // PERSISTENT_VOLUME_CLAIM feature flag for enabling PVC\Snapshot feature support
-    PERSISTENT_VOLUME_CLAIM = 7;
+    reserved 7;
 
     // Was used for PROTECTED_SECRETS feature flag to enable secrets support
     reserved 8;
