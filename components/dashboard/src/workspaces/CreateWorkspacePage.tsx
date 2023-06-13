@@ -44,6 +44,7 @@ export const useNewCreateWorkspacePage = () => {
     return !!startWithOptions || !!user?.additionalData?.isMigratedToTeamOnlyAttribution;
 };
 
+// TODO: wip for not changing "dirty" option values when context arrives
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const currentOrg = useCurrentOrg().data;
