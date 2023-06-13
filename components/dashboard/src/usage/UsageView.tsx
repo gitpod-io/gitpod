@@ -22,7 +22,6 @@ import { UsageEntry } from "./UsageEntry";
 import Alert from "../components/Alert";
 import classNames from "classnames";
 import { UsageDateFilters } from "./UsageDateFilters";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { DownloadUsage } from "./download/DownloadUsage";
 import { useQueryParams } from "../hooks/use-query-params";
 
@@ -34,7 +33,6 @@ interface UsageViewProps {
 export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
     const location = useLocation();
     const history = useHistory();
-    const usageDownload = useFeatureFlag("usageDownload");
     const params = useQueryParams();
 
     // page filter params are all in the url as querystring params
@@ -101,9 +99,7 @@ export const UsageView: FC<UsageViewProps> = ({ attributionId }) => {
                     )}
                 >
                     <UsageDateFilters startDate={startDate} endDate={endDate} onDateRangeChange={updatePageParams} />
-                    {usageDownload && (
-                        <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />
-                    )}
+                    <DownloadUsage attributionId={attributionId} startDate={startDate} endDate={endDate} />
                 </div>
 
                 {errorMessage && (

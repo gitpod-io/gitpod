@@ -22,7 +22,6 @@ const featureFlags = {
     userGitAuthProviders: false,
     linkedinConnectionForOnboarding: false,
     enableDedicatedOnboardingFlow: false,
-    usageDownload: false,
     phoneVerificationByCall: false,
 };
 
