@@ -97,7 +97,14 @@ export class VerificationService {
         if (await isBlockedNumber) {
             throw new ResponseError(ErrorCodes.INVALID_VALUE, "The given phone number is blocked due to abuse.");
         }
-        const verification = await this.verifyService.verifications.create({ to: phoneNumber, channel });
+
+        let verification: VerificationInstance;
+        try {
+            verification = await this.verifyService.verifications.create({ to: phoneNumber, channel });
+        } catch (e) {
+            log.error("Error creating phone verification", { error: e, phoneNumber, channel });
+            throw e;
+        }
 
         // Create a unique id to correlate starting/completing of verification flow
         // Clients receive this and send it back when they call send the verification code
