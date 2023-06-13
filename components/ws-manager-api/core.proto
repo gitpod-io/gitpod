@@ -650,7 +650,7 @@ enum WorkspaceFeatureFlag {
     reserved 8;
 
     // WORKSPACE_CLASS_LIMITING feature flag for enabling resuorce limiting based on workspace class
-    WORKSPACE_CLASS_LIMITING = 9;
+    reserved 9;
 
     // WORKSPACE_CONNECTION_LIMITING feature flag for enabling network connection rate limiting
     WORKSPACE_CONNECTION_LIMITING = 10;

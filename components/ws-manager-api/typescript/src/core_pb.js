@@ -10192,7 +10192,6 @@ proto.wsman.WorkspacePhase = {
  */
 proto.wsman.WorkspaceFeatureFlag = {
   NOOP: 0,
-  WORKSPACE_CLASS_LIMITING: 9,
   WORKSPACE_CONNECTION_LIMITING: 10,
   WORKSPACE_PSI: 11
 };
