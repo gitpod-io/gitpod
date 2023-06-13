@@ -281,9 +281,14 @@ export function CreateWorkspacePage() {
                 }
             }
             setRememberOptions(true);
-            setSelectedIde(rememberedOptions.ideSettings?.defaultIde, false);
-            setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
-            setSelectedWsClass(rememberedOptions.workspaceClass, false);
+            if (!selectedIdeIsDirty) {
+                setSelectedIde(rememberedOptions.ideSettings?.defaultIde, false);
+                setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
+            }
+
+            if (!selectedWsClassIsDirty) {
+                setSelectedWsClass(rememberedOptions.workspaceClass, false);
+            }
             if (autostart === undefined) {
                 setAutostart(true);
             }
@@ -305,12 +310,12 @@ export function CreateWorkspacePage() {
     // if the context URL has a referrer prefix, we set the referrerIde as the selected IDE and autostart the workspace.
     useEffect(() => {
         if (workspaceContext.data && WithReferrerContext.is(workspaceContext.data)) {
-            if (workspaceContext.data.referrerIde) {
+            if (workspaceContext.data.referrerIde && !selectedIdeIsDirty) {
                 setSelectedIde(workspaceContext.data.referrerIde, false);
             }
             setAutostart(true);
         }
-    }, [setSelectedIde, workspaceContext.data]);
+    }, [selectedIdeIsDirty, setSelectedIde, workspaceContext.data]);
 
     if (SelectAccountPayload.is(selectAccountError)) {
         return (
