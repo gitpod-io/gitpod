@@ -267,7 +267,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 
 	var sresp *wsmanapi.StartWorkspaceResponse
 	for i := 0; i < 3; i++ {
-		t.Logf("attemp to start up the workspace directly: %s, %s", instanceID, workspaceID)
+		t.Logf("attempt to start up the workspace directly: %s, %s", instanceID, workspaceID)
 		sresp, err = wsm.StartWorkspace(ctx, req)
 		if err != nil {
 			scode := status.Code(err)
@@ -511,7 +511,7 @@ func stopWsF(t *testing.T, instanceID string, workspaceID string, api *Component
 		<-ready
 
 		for {
-			t.Logf("attemp to delete the workspace: %s", instanceID)
+			t.Logf("attempt to delete the workspace: %s", instanceID)
 			err := DeleteWorkspace(sctx, api, instanceID)
 			if err != nil {
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
