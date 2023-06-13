@@ -53,7 +53,6 @@ class TestBitbucketServerApi {
                             scopes: [],
                         };
                     },
-                    getFreshPortAuthenticationToken: undefined as any,
                 });
                 bind(HostContextProvider).toConstantValue({
                     get: (hostname: string) => {

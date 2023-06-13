@@ -41,8 +41,6 @@ class TestFileProvider {
                 bind(GitHubTokenHelper).toSelf().inSingletonScope();
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => DevData.createGitHubTestToken(),
-                    getFreshPortAuthenticationToken: async (user: User, workspaceId: string) =>
-                        DevData.createPortAuthTestToken(workspaceId),
                 });
                 bind(GithubFileProvider).toSelf().inSingletonScope();
             }),

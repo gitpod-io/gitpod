@@ -49,8 +49,6 @@ class TestBitbucketContextParser {
                 bind(BitbucketTokenHelper).toSelf().inSingletonScope();
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => DevData.createBitbucketTestToken(),
-                    getFreshPortAuthenticationToken: async (user: User, workspaceId: string) =>
-                        DevData.createPortAuthTestToken(workspaceId),
                 });
                 bind(BitbucketApiFactory).to(BasicAuthBitbucketApiFactory).inSingletonScope();
                 bind(HostContextProvider).toConstantValue({

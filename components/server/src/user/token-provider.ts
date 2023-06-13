@@ -14,11 +14,4 @@ export interface TokenProvider {
      * @param host
      */
     getTokenForHost(user: User, host: string): Promise<Token>;
-
-    /**
-     * Retrieves a fresh port authentication token for the given user
-     * @param user
-     * @param workspaceId
-     */
-    getFreshPortAuthenticationToken(user: User, workspaceId: string): Promise<Token>;
 }

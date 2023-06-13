@@ -35,8 +35,6 @@ class TestGitlabContextParser {
                 bind(GitLabTokenHelper).toSelf().inSingletonScope();
                 bind(TokenProvider).toConstantValue(<TokenProvider>{
                     getTokenForHost: async () => DevData.createGitlabTestToken(),
-                    getFreshPortAuthenticationToken: async (user: User, workspaceId: string) =>
-                        DevData.createPortAuthTestToken(workspaceId),
                 });
                 bind(HostContextProvider).toConstantValue(DevData.createDummyHostContextProvider());
             }),

@@ -84,34 +84,6 @@ export class TokenService implements TokenProvider {
         return await this.userDB.addToken(identity, token);
     }
 
-    /**
-     * Currently this methods creates a new Token with every call.
-     * This relies on two things:
-     *  - the frontends to not request too many tokens (puts load on the DB)
-     *  - the TokenGarbageCollector to cleanup expired tokens
-     * @param user
-     * @param workspaceId
-     */
-    async getFreshPortAuthenticationToken(user: User, workspaceId: string): Promise<Token> {
-        const newPortAuthToken = (): Token => {
-            return {
-                value: uuidv4(),
-                scopes: [TokenService.generateWorkspacePortAuthScope(workspaceId)],
-                updateDate: new Date().toISOString(),
-                expiryDate: new Date(Date.now() + TokenService.GITPOD_PORT_AUTH_TOKEN_EXPIRY_MILLIS).toISOString(),
-            };
-        };
-
-        const identity = await this.getOrCreateGitpodIdentity(user);
-        const token = newPortAuthToken();
-        const tokenEntry = await this.userDB.addToken(identity, token);
-        // The following necessary to allow fast retrieval.
-        // TODO: Move tokens like this into a separate data store
-        tokenEntry.token.value = tokenEntry.uid;
-        await this.userDB.updateTokenEntry(tokenEntry);
-        return token;
-    }
-
     protected getIdentityForHost(user: User, host: string): Identity {
         const authProviderId = this.getAuthProviderId(host);
         const hostIdentity = authProviderId && User.getIdentity(user, authProviderId);
@@ -127,9 +99,5 @@ export class TokenService implements TokenProvider {
             return undefined;
         }
         return hostContext.authProvider.authProviderId;
-    }
-
-    public static generateWorkspacePortAuthScope(workspaceId: string): string {
-        return `access/workspace/${workspaceId}/port/*`;
     }
 }
