@@ -5,7 +5,7 @@
   "license": "AGPL-3.0",
   "scripts": {
     "start": "node ./dist/main.js",
-    "start-inspect": "node --inspect=9229 ./dist/main.js",
+    "start-inspect": "node --inspect=0.0.0.0:9229 ./dist/main.js",
     "prepare": "yarn clean && yarn build",
     "build": "yarn lint && npx tsc",
     "build:clean": "yarn clean && yarn build",
@@ -22,7 +22,8 @@
     "telepresence": "telepresence --swap-deployment server --method inject-tcp --run yarn start-inspect"
   },
   "files": [
-    "/dist"
+    "/dist",
+    "/src"
   ],
   "dependencies": {
     "@authzed/authzed-node": "^0.10.0",
