@@ -276,7 +276,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			Labels: []config.LabelAllowList{
 				{
 					Name:        "status",
-					AllowValues: []string{"succeed", "failure"},
+					AllowValues: []string{"success", "failure"},
 				},
 			},
 			Client: &config.ClientAllowList{
