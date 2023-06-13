@@ -69,6 +69,7 @@ type WorkspaceInfo struct {
 
 	OwnerUserId   string
 	SSHPublicKeys []string
+	IsRunning     bool
 }
 
 // RemoteWorkspaceInfoProvider provides (cached) infos about running workspaces that it queries from ws-manager.
@@ -170,6 +171,7 @@ func mapPodToWorkspaceInfo(pod *corev1.Pod) *WorkspaceInfo {
 		StartedAt:       pod.CreationTimestamp.Time,
 		OwnerUserId:     pod.Labels[kubernetes.OwnerLabel],
 		SSHPublicKeys:   extractUserSSHPublicKeys(pod),
+		IsRunning:       pod.DeletionTimestamp == nil,
 	}
 }
 
@@ -297,6 +299,7 @@ func (r *CRDWorkspaceInfoProvider) Reconcile(ctx context.Context, req ctrl.Reque
 		Auth:            &wsapi.WorkspaceAuthentication{Admission: admission, OwnerToken: ws.Status.OwnerToken},
 		StartedAt:       ws.CreationTimestamp.Time,
 		SSHPublicKeys:   ws.Spec.SshPublicKeys,
+		IsRunning:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
 	}
 
 	r.store.Update(req.Name, wsinfo)
