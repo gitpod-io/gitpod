@@ -1012,7 +1012,22 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	}
 
 	if _, ok := envs["BROWSER"]; !ok {
-		envs["BROWSER"] = "gp preview --external"
+		// Create browser script
+		browser_script := filepath.Join("/ide", "gp_browser.sh")
+		if _, err := os.Stat(browser_script); err != nil {
+			if file, err := os.OpenFile(browser_script, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755); err == nil {
+				defer file.Close()
+				scriptContent := `#!/usr/bin/env bash
+gp preview --external "$@"`
+				if _, err := file.WriteString(scriptContent); err != nil {
+					log.WithError(err).Error("Error while writing")
+				}
+			} else {
+				log.WithError(err).Error("Failed to create script for $BROWSER")
+			}
+		}
+
+		envs["BROWSER"] = browser_script
 	}
 
 	var env, envn []string
