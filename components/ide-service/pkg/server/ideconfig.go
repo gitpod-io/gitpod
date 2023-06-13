@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/containerd/containerd/remotes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ide-service-api/config"
 	oci_tool "github.com/gitpod-io/gitpod/ide-service/pkg/ocitool"
@@ -21,7 +22,7 @@ import (
 var jsonScheme []byte
 
 // ParseConfig parse and validate ide config
-func ParseConfig(ctx context.Context, b []byte) (*config.IDEConfig, error) {
+func ParseConfig(ctx context.Context, res remotes.Resolver, b []byte) (*config.IDEConfig, error) {
 	var cfg config.IDEConfig
 	if err := json.Unmarshal(b, &cfg); err != nil {
 		return nil, xerrors.Errorf("cannot parse ide config: %w", err)
@@ -65,26 +66,26 @@ func ParseConfig(ctx context.Context, b []byte) (*config.IDEConfig, error) {
 	// resolve image digest
 	for id, option := range cfg.IdeOptions.Options {
 		if option.ResolveImageDigest {
-			if resolved, err := oci_tool.Resolve(ctx, option.Image); err != nil {
+			if resolved, err := oci_tool.Resolve(ctx, res, option.Image); err != nil {
 				log.WithError(err).Error("ide config: cannot resolve image digest")
 			} else {
 				log.WithField("ide", id).WithField("image", option.Image).WithField("resolved", resolved).Info("ide config: resolved latest image digest")
 				option.Image = resolved
 			}
 		}
-		if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.Image); err != nil {
+		if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, res, option.Image); err != nil {
 			log.WithError(err).Error("ide config: cannot get version from image")
 		} else {
 			option.ImageVersion = resolvedVersion
 		}
 		if option.LatestImage != "" {
-			if resolved, err := oci_tool.Resolve(ctx, option.LatestImage); err != nil {
+			if resolved, err := oci_tool.Resolve(ctx, res, option.LatestImage); err != nil {
 				log.WithError(err).Error("ide config: cannot resolve latest image digest")
 			} else {
 				log.WithField("ide", id).WithField("image", option.LatestImage).WithField("resolved", resolved).Info("ide config: resolved latest image digest")
 				option.LatestImage = resolved
 			}
-			if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, option.LatestImage); err != nil {
+			if resolvedVersion, err := oci_tool.ResolveIDEVersion(ctx, res, option.LatestImage); err != nil {
 				log.WithError(err).Error("ide config: cannot get version from image")
 			} else {
 				option.LatestImageVersion = resolvedVersion

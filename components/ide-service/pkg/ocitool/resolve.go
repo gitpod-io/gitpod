@@ -12,15 +12,13 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/remotes"
-	"github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/distribution/reference"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-func Resolve(ctx context.Context, ref string) (string, error) {
+func Resolve(ctx context.Context, res remotes.Resolver, ref string) (string, error) {
 	newCtx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
-	res := docker.NewResolver(docker.ResolverOptions{})
 
 	name, desc, err := res.Resolve(newCtx, ref)
 	if err != nil {
@@ -71,10 +69,9 @@ func interactiveFetchManifestOrIndex(ctx context.Context, res remotes.Resolver, 
 	return "", nil, nil
 }
 
-func ResolveIDEVersion(ctx context.Context, ref string) (string, error) {
+func ResolveIDEVersion(ctx context.Context, res remotes.Resolver, ref string) (string, error) {
 	newCtx, cancel := context.WithTimeout(ctx, time.Second*30)
 	defer cancel()
-	res := docker.NewResolver(docker.ResolverOptions{})
 
 	name, mf, err := interactiveFetchManifestOrIndex(newCtx, res, ref)
 	if err != nil {

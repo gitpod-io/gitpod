@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/gitpod-io/gitpod/ide-service-api/config"
 
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
@@ -35,7 +36,7 @@ func TestParseConfig(t *testing.T) {
 				return &gold{Err: err.Error()}
 			}
 
-			config, err := ParseConfig(context.Background(), b)
+			config, err := ParseConfig(context.Background(), docker.NewResolver(docker.ResolverOptions{}), b)
 			if err != nil {
 				return &gold{Err: err.Error()}
 			}
