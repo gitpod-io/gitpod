@@ -1012,7 +1012,7 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	}
 
 	if _, ok := envs["BROWSER"]; !ok {
-		envs["BROWSER"] = "gp preview --external"
+		envs["BROWSER"] = "/.supervisor/browser.sh"
 	}
 
 	var env, envn []string
