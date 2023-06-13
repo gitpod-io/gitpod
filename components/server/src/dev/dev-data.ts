@@ -7,7 +7,6 @@
 import { IssueContext, User, PullRequestContext, Repository, Token } from "@gitpod/gitpod-protocol";
 import { GitHubScope } from "../github/scopes";
 import { GitLabScope } from "../gitlab/scopes";
-import { TokenService } from "../user/token-service";
 
 export namespace DevData {
     export function createTestUser(): User {
