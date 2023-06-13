@@ -910,8 +910,6 @@ export class WorkspaceStarter {
                 this.config.workspaceClasses,
             );
 
-            featureFlags = featureFlags.concat(["workspace_class_limiting"]);
-
             if (!!featureFlags) {
                 // only set feature flags if there actually are any. Otherwise we waste the
                 // few bytes of JSON in the database for no good reason.
