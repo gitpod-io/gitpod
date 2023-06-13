@@ -23,6 +23,7 @@ packages:
     type: docker
     srcs:
       - "supervisor-config.json"
+      - "browser.sh"
     deps:
       - :app
       - components/supervisor/frontend:app
