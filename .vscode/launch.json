@@ -1,6 +1,19 @@
 {
     "configurations": [
         {
+            "name": "Attach to Kubernetes Node",
+            "type": "node",
+            "request": "attach",
+            "smartStep": true,
+            "port": 9229,
+            "address": "127.0.0.1",
+            "localRoot": "${workspaceFolder}/components",
+            "remoteRoot": "/app/node_modules/@gitpod",
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
             "name": "Attach to Node",
             "type": "node",
             "request": "attach",
@@ -21,15 +34,14 @@
             "mode": "remote"
         },
         {
-            // This will run the db-test yarn target in the gitpod-db component.
-            // This allows you to set breakpoints in your tests and step through
-            // them with the VSCode debugger.
             "type": "node",
             "request": "launch",
             "name": "gitpod-db-tests",
             "cwd": "${workspaceFolder}/components/gitpod-db",
             "runtimeExecutable": "yarn",
-            "runtimeArgs": ["db-test"],
+            "runtimeArgs": [
+                "db-test"
+            ],
             "internalConsoleOptions": "openOnSessionStart",
             "skipFiles": [
                 "<node_internals>/**"
