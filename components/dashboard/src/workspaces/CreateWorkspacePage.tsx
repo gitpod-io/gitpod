@@ -37,6 +37,7 @@ import { settingsPathPreferences } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
 import { settingsPathIntegrations } from "../user-settings/settings.routes";
+import { useDirtyState } from "../hooks/use-dirty-state";
 
 export const useNewCreateWorkspacePage = () => {
     const startWithOptions = useFeatureFlag("start_with_options");
@@ -44,7 +45,6 @@ export const useNewCreateWorkspacePage = () => {
     return !!startWithOptions || !!user?.additionalData?.isMigratedToTeamOnlyAttribution;
 };
 
-// TODO: wip for not changing "dirty" option values when context arrives
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const currentOrg = useCurrentOrg().data;
@@ -66,8 +66,8 @@ export function CreateWorkspacePage() {
         props.ideSettings?.defaultIde !== undefined
             ? props.ideSettings.defaultIde
             : user?.additionalData?.ideSettings?.defaultIde;
-    const [selectedIde, setSelectedIde] = useState(defaultIde);
-    const [selectedWsClass, setSelectedWsClass] = useState<string | undefined>(props.workspaceClass);
+    const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState(defaultIde);
+    const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(props.workspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
@@ -130,10 +130,12 @@ export function CreateWorkspacePage() {
             return;
         }
         const wsClass = project.settings?.workspaceClasses;
-        if (wsClass?.regular) {
-            setSelectedWsClass(wsClass?.regular);
+
+        // only set if user hasn't changed the value themselves, and project has a vaue
+        if (wsClass?.regular && !selectedWsClassIsDirty) {
+            setSelectedWsClass(wsClass?.regular, false);
         }
-    }, [project, props.workspaceClass]);
+    }, [project, props.workspaceClass, selectedWsClassIsDirty, setSelectedWsClass]);
 
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
@@ -279,17 +281,19 @@ export function CreateWorkspacePage() {
                 }
             }
             setRememberOptions(true);
-            setSelectedIde(rememberedOptions.ideSettings?.defaultIde);
+            setSelectedIde(rememberedOptions.ideSettings?.defaultIde, false);
             setUseLatestIde(!!rememberedOptions.ideSettings?.useLatestVersion);
-            setSelectedWsClass(rememberedOptions.workspaceClass);
+            setSelectedWsClass(rememberedOptions.workspaceClass, false);
             if (autostart === undefined) {
                 setAutostart(true);
             }
         } else {
             setRememberOptions(false);
-            // reset the ide settings to the user's default
-            setSelectedIde(defaultIde);
-            setUseLatestIde(defaultLatestIde);
+            // reset the ide settings to the user's default IF they haven't changed it manually
+            if (!selectedIdeIsDirty) {
+                setSelectedIde(defaultIde, false);
+                setUseLatestIde(defaultLatestIde);
+            }
         }
         // we only update the remembered options when the workspaceContext changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -302,11 +306,11 @@ export function CreateWorkspacePage() {
     useEffect(() => {
         if (workspaceContext.data && WithReferrerContext.is(workspaceContext.data)) {
             if (workspaceContext.data.referrerIde) {
-                setSelectedIde(workspaceContext.data.referrerIde);
+                setSelectedIde(workspaceContext.data.referrerIde, false);
             }
             setAutostart(true);
         }
-    }, [workspaceContext.data]);
+    }, [setSelectedIde, workspaceContext.data]);
 
     if (SelectAccountPayload.is(selectAccountError)) {
         return (
