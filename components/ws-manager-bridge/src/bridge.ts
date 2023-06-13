@@ -320,6 +320,7 @@ export class WorkspaceManagerBridge implements Disposable {
                             messageId: `bridge-wsrun-${instance.id}`,
                             properties: { instanceId: instance.id, workspaceId: workspaceId },
                             userId,
+                            timestamp: new Date(instance.startedTime),
                         });
                     }
 

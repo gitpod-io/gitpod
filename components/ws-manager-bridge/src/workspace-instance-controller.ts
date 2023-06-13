@@ -294,7 +294,14 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
                 userId: ownerUserID,
                 event: "workspace_stopped",
                 messageId: `bridge-wsstopped-${instance.id}`,
-                properties: { instanceId: instance.id, workspaceId: instance.workspaceId },
+                properties: {
+                    instanceId: instance.id,
+                    workspaceId: instance.workspaceId,
+                    stoppingTime: new Date(instance.stoppingTime!),
+                    conditions: instance.status.conditions,
+                    timeout: instance.status.timeout,
+                },
+                timestamp: new Date(instance.stoppedTime!),
             });
         } catch (err) {
             TraceContext.setError({ span }, err);
