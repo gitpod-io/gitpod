@@ -11,10 +11,11 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Container } from "inversify";
 import { productionContainerModule } from "./container-module";
 import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
+import { DataCacheRedis } from "./redis/data-cache";
 
 const container = new Container();
+container.load(dbContainerModule(DataCacheRedis));
 container.load(productionContainerModule);
-container.load(dbContainerModule);
 
 start(container).catch((err) => {
     log.error("Error during startup or operation. Exiting.", err);

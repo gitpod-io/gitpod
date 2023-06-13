@@ -45,71 +45,74 @@ import { PersonalAccessTokenDBImpl } from "./typeorm/personal-access-token-db-im
 import { LinkedInProfileDBImpl } from "./typeorm/linked-in-profile-db-impl";
 import { LinkedInProfileDB } from "./linked-in-profile-db";
 import { JobStateDbImpl } from "./typeorm/job-state-db-impl";
+import { DataCache, DataCacheNoop } from "./data-cache";
 
 // THE DB container module that contains all DB implementations
-export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
-    bind(Config).toSelf().inSingletonScope();
-    bind(TypeORM).toSelf().inSingletonScope();
-    bind(DBWithTracing).toSelf().inSingletonScope();
-    bind(TransactionalWorkspaceDbImpl).toSelf().inSingletonScope();
+export const dbContainerModule = (cacheClass = DataCacheNoop) =>
+    new ContainerModule((bind, unbind, isBound, rebind) => {
+        bind(Config).toSelf().inSingletonScope();
+        bind(TypeORM).toSelf().inSingletonScope();
+        bind(DBWithTracing).toSelf().inSingletonScope();
+        bind(DataCache).to(cacheClass).inSingletonScope();
+        bind(TransactionalWorkspaceDbImpl).toSelf().inSingletonScope();
 
-    bind(TypeORMBlockedRepositoryDBImpl).toSelf().inSingletonScope();
-    bind(BlockedRepositoryDB).toService(TypeORMBlockedRepositoryDBImpl);
+        bind(TypeORMBlockedRepositoryDBImpl).toSelf().inSingletonScope();
+        bind(BlockedRepositoryDB).toService(TypeORMBlockedRepositoryDBImpl);
 
-    bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
-    bind(UserDB).toService(TypeORMUserDBImpl);
-    bindDbWithTracing(TracedUserDB, bind, UserDB).inSingletonScope();
+        bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
+        bind(UserDB).toService(TypeORMUserDBImpl);
+        bindDbWithTracing(TracedUserDB, bind, UserDB).inSingletonScope();
 
-    bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
+        bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
 
-    bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope();
-    bind(WorkspaceDB).toService(TypeORMWorkspaceDBImpl);
-    bindDbWithTracing(TracedWorkspaceDB, bind, WorkspaceDB).inSingletonScope();
+        bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope();
+        bind(WorkspaceDB).toService(TypeORMWorkspaceDBImpl);
+        bindDbWithTracing(TracedWorkspaceDB, bind, WorkspaceDB).inSingletonScope();
 
-    bind(TypeORMUserStorageResourcesDBImpl).toSelf().inSingletonScope();
-    bind(UserStorageResourcesDB).toService(TypeORMUserStorageResourcesDBImpl);
+        bind(TypeORMUserStorageResourcesDBImpl).toSelf().inSingletonScope();
+        bind(UserStorageResourcesDB).toService(TypeORMUserStorageResourcesDBImpl);
 
-    bind(TypeORMAppInstallationDBImpl).toSelf().inSingletonScope();
-    bind(AppInstallationDB).toService(TypeORMAppInstallationDBImpl);
+        bind(TypeORMAppInstallationDBImpl).toSelf().inSingletonScope();
+        bind(AppInstallationDB).toService(TypeORMAppInstallationDBImpl);
 
-    bind(TypeORMOneTimeSecretDBImpl).toSelf().inSingletonScope();
-    bind(OneTimeSecretDB).toService(TypeORMOneTimeSecretDBImpl);
-    bindDbWithTracing(TracedOneTimeSecretDB, bind, OneTimeSecretDB).inSingletonScope();
+        bind(TypeORMOneTimeSecretDBImpl).toSelf().inSingletonScope();
+        bind(OneTimeSecretDB).toService(TypeORMOneTimeSecretDBImpl);
+        bindDbWithTracing(TracedOneTimeSecretDB, bind, OneTimeSecretDB).inSingletonScope();
 
-    encryptionModule(bind, unbind, isBound, rebind);
-    bind(KeyProviderConfig)
-        .toDynamicValue((ctx) => {
-            const config = ctx.container.get<Config>(Config);
-            return {
-                keys: KeyProviderImpl.loadKeyConfigFromJsonString(config.dbEncryptionKeys),
-            };
-        })
-        .inSingletonScope();
+        encryptionModule(bind, unbind, isBound, rebind);
+        bind(KeyProviderConfig)
+            .toDynamicValue((ctx) => {
+                const config = ctx.container.get<Config>(Config);
+                return {
+                    keys: KeyProviderImpl.loadKeyConfigFromJsonString(config.dbEncryptionKeys),
+                };
+            })
+            .inSingletonScope();
 
-    bind(GitpodTableDescriptionProvider).toSelf().inSingletonScope();
-    bind(TableDescriptionProvider).toService(GitpodTableDescriptionProvider);
-    bind(PeriodicDbDeleter).toSelf().inSingletonScope();
+        bind(GitpodTableDescriptionProvider).toSelf().inSingletonScope();
+        bind(TableDescriptionProvider).toService(GitpodTableDescriptionProvider);
+        bind(PeriodicDbDeleter).toSelf().inSingletonScope();
 
-    bind(CodeSyncResourceDB).toSelf().inSingletonScope();
+        bind(CodeSyncResourceDB).toSelf().inSingletonScope();
 
-    bind(WorkspaceClusterDB).to(WorkspaceClusterDBImpl).inSingletonScope();
+        bind(WorkspaceClusterDB).to(WorkspaceClusterDBImpl).inSingletonScope();
 
-    bind(AuthCodeRepositoryDB).toSelf().inSingletonScope();
+        bind(AuthCodeRepositoryDB).toSelf().inSingletonScope();
 
-    bind(TeamDBImpl).toSelf().inSingletonScope();
-    bind(TeamDB).toService(TeamDBImpl);
-    bind(ProjectDBImpl).toSelf().inSingletonScope();
-    bind(ProjectDB).toService(ProjectDBImpl);
-    bind(WebhookEventDBImpl).toSelf().inSingletonScope();
-    bind(WebhookEventDB).toService(WebhookEventDBImpl);
+        bind(TeamDBImpl).toSelf().inSingletonScope();
+        bind(TeamDB).toService(TeamDBImpl);
+        bind(ProjectDBImpl).toSelf().inSingletonScope();
+        bind(ProjectDB).toService(ProjectDBImpl);
+        bind(WebhookEventDBImpl).toSelf().inSingletonScope();
+        bind(WebhookEventDB).toService(WebhookEventDBImpl);
 
-    bind(PersonalAccessTokenDBImpl).toSelf().inSingletonScope();
-    bind(PersonalAccessTokenDB).toService(PersonalAccessTokenDBImpl);
+        bind(PersonalAccessTokenDBImpl).toSelf().inSingletonScope();
+        bind(PersonalAccessTokenDB).toService(PersonalAccessTokenDBImpl);
 
-    bind(JobStateDbImpl).toSelf().inSingletonScope();
+        bind(JobStateDbImpl).toSelf().inSingletonScope();
 
-    // com concerns
-    bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
-    bind(LinkedInProfileDBImpl).toSelf().inSingletonScope();
-    bind(LinkedInProfileDB).toService(LinkedInProfileDBImpl);
-});
+        // com concerns
+        bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
+        bind(LinkedInProfileDBImpl).toSelf().inSingletonScope();
+        bind(LinkedInProfileDB).toService(LinkedInProfileDBImpl);
+    });

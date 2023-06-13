@@ -64,6 +64,7 @@
     "heapdump": "^0.3.15",
     "inversify": "^5.0.1",
     "ioredis": "^5.3.2",
+    "ioredis-mock": "^8.7.0",
     "is-reachable": "^5.2.1",
     "js-yaml": "^3.10.0",
     "json-stream": "^1.0.0",

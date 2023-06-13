@@ -46,8 +46,8 @@ class TestAuthenticationGitHub {
 
         // Create Server
         const container = new Container();
+        container.load(dbContainerModule());
         container.load(productionContainerModule);
-        container.load(dbContainerModule);
         const server = container.get(Server);
         server.init(app).catch((err) => {
             /** ignore */

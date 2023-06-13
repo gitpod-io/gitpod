@@ -15,6 +15,6 @@ import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
 const container = new Container();
 container.load(containerModule);
 container.load(containerModuleEE);
-container.load(dbContainerModule);
+container.load(dbContainerModule());
 
 start(container);

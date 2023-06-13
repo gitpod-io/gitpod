@@ -47,6 +47,7 @@ import { DBWorkspace } from "./entity/db-workspace";
 import { DBUserSshPublicKey } from "./entity/db-user-ssh-public-key";
 import { TypeORM } from "./typeorm";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { DataCache } from "../data-cache";
 
 // OAuth token expiry
 const tokenExpiryInFuture = new DateInterval("7d");
@@ -54,10 +55,16 @@ const tokenExpiryInFuture = new DateInterval("7d");
 /** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
 export let encryptionService: EncryptionService;
 
+const userCacheKeyPrefix = "user:";
+function getUserCacheKey(id: string): string {
+    return userCacheKeyPrefix + id;
+}
+
 @injectable()
 export class TypeORMUserDBImpl implements UserDB {
     @inject(TypeORM) protected readonly typeorm: TypeORM;
     @inject(EncryptionService) protected readonly encryptionService: EncryptionService;
+    @inject(DataCache) protected readonly cache: DataCache;
 
     @postConstruct()
     init() {
@@ -79,7 +86,7 @@ export class TypeORMUserDBImpl implements UserDB {
     async transaction<T>(code: (db: UserDB) => Promise<T>): Promise<T> {
         const manager = await this.getEntityManager();
         return await manager.transaction(async (manager) => {
-            return await code(new TransactionalUserDBImpl(manager));
+            return await code(new TransactionalUserDBImpl(manager, this.cache, this.encryptionService));
         });
     }
 
@@ -127,6 +134,7 @@ export class TypeORMUserDBImpl implements UserDB {
         const userRepo = await this.getUserRepo();
         const dbUser = this.mapUserToDBUser(newUser);
         const result = await userRepo.save(dbUser);
+        await this.cache.invalidate(getUserCacheKey(dbUser.id));
         return this.mapDBUserToUser(result);
     }
 
@@ -137,15 +145,18 @@ export class TypeORMUserDBImpl implements UserDB {
         // Still, sometimes it's convenient to pass in a full-blown "User" here. To make that work as expected, we're ignoring "identities" here.
         delete (partial as any).identities;
         await userRepo.update(partial.id, partial);
+        await this.cache.invalidate(getUserCacheKey(_partial.id));
     }
 
     public async findUserById(id: string): Promise<MaybeUser> {
-        const userRepo = await this.getUserRepo();
-        const result = await userRepo.findOne(id);
-        if (!result) {
-            return undefined;
-        }
-        return this.mapDBUserToUser(result);
+        return this.cache.get(getUserCacheKey(id), async () => {
+            const userRepo = await this.getUserRepo();
+            const result = await userRepo.findOne(id);
+            if (!result) {
+                return undefined;
+            }
+            return this.mapDBUserToUser(result);
+        });
     }
 
     public async findUserByIdentity(identity: IdentityLookup): Promise<User | undefined> {
@@ -257,6 +268,7 @@ export class TypeORMUserDBImpl implements UserDB {
     public async storeGitpodToken(token: GitpodToken): Promise<void> {
         const repo = await this.getGitpodTokenRepo();
         await repo.insert(token);
+        await this.cache.invalidate(getUserCacheKey(token.userId));
     }
 
     public async deleteGitpodToken(tokenHash: string): Promise<void> {
@@ -645,7 +657,11 @@ export class TypeORMUserDBImpl implements UserDB {
 }
 
 export class TransactionalUserDBImpl extends TypeORMUserDBImpl {
-    constructor(protected readonly manager: EntityManager) {
+    constructor(
+        protected readonly manager: EntityManager,
+        protected readonly cache: DataCache,
+        protected readonly encryptionService: EncryptionService,
+    ) {
         super();
     }
 
