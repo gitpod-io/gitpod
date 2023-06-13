@@ -75,14 +75,9 @@ const (
 type AdmissionConstraintPermission string
 
 const (
-	AdmissionConstraintPermissionMonitor             AdmissionConstraintPermission = "monitor"
-	AdmissionConstraintPermissionEnforcement         AdmissionConstraintPermission = "enforcement"
-	AdmissionConstraintPermissionPrivilegedWS        AdmissionConstraintPermission = "privileged-ws"
 	AdmissionConstraintPermissionRegistryAccess      AdmissionConstraintPermission = "registry-access"
 	AdmissionConstraintPermissionAdminUsers          AdmissionConstraintPermission = "admin-users"
 	AdmissionConstraintPermissionAdminWorkspaces     AdmissionConstraintPermission = "admin-workspaces"
-	AdmissionConstraintPermissionAdminApi            AdmissionConstraintPermission = "admin-api"
-	AdmissionConstraintPermissionIDESettings         AdmissionConstraintPermission = "ide-settings"
 	AdmissionConstraintPermissionNewWorkspaceCluster AdmissionConstraintPermission = "new-workspace-cluster"
 	AdmissionConstraintPermissionTeamsAndProjects    AdmissionConstraintPermission = "teams-and-projects"
 )

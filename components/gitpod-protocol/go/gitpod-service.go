@@ -1578,20 +1578,12 @@ func (gp *APIoverJSONRPC) GetIDToken(ctx context.Context) (err error) {
 type PermissionName string
 
 const (
-	// PermissionNameMonitor is the "monitor" permission
-	PermissionNameMonitor PermissionName = "monitor"
-	// PermissionNameEnforcement is the "enforcement" permission
-	PermissionNameEnforcement PermissionName = "enforcement"
-	// PermissionNamePrivilegedWs is the "privileged-ws" permission
-	PermissionNamePrivilegedWs PermissionName = "privileged-ws"
 	// PermissionNameRegistryAccess is the "registry-access" permission
 	PermissionNameRegistryAccess PermissionName = "registry-access"
 	// PermissionNameAdminUsers is the "admin-users" permission
 	PermissionNameAdminUsers PermissionName = "admin-users"
 	// PermissionNameAdminWorkspaces is the "admin-workspaces" permission
 	PermissionNameAdminWorkspaces PermissionName = "admin-workspaces"
-	// PermissionNameAdminAPI is the "admin-api" permission
-	PermissionNameAdminAPI PermissionName = "admin-api"
 )
 
 // AdmissionLevel is the admission level to a workspace

@@ -522,21 +522,6 @@ export class UserController {
                 res.sendStatus(401);
             },
         );
-        router.get("/auth/monitor", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            if (!req.isAuthenticated() || !User.is(req.user)) {
-                // Pretend there's nothing to see
-                res.sendStatus(403);
-                return;
-            }
-
-            const user = req.user as User;
-            if (this.authService.hasPermission(user, Permission.MONITOR)) {
-                res.sendStatus(200);
-                return;
-            }
-
-            res.sendStatus(403);
-        });
 
         return router;
     }
