@@ -250,6 +250,61 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 				},
 			},
 		},
+		{
+			Name: "vscode_desktop_local_ssh_config_total",
+			Help: "Total number of vscode desktop extension config local ssh configuration",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "status",
+					AllowValues: []string{"success", "failure"},
+				},
+				{
+					Name:         "failure_code",
+					AllowValues:  []string{"*"},
+					DefaultValue: "Unknown",
+				},
+			},
+			Client: &config.ClientAllowList{
+				Name:         "metric_client",
+				AllowValues:  []string{"vscode-desktop-extension"},
+				DefaultValue: "unknown",
+			},
+		},
+		{
+			Name: "vscode_desktop_ping_extension_server_total",
+			Help: "Total number of vscode desktop extension local ssh extension ipc server ping",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "status",
+					AllowValues: []string{"success", "failure"},
+				},
+			},
+			Client: &config.ClientAllowList{
+				Name:         "metric_client",
+				AllowValues:  []string{"vscode-desktop-extension"},
+				DefaultValue: "unknown",
+			},
+		},
+		{
+			Name: "vscode_desktop_local_ssh_total",
+			Help: "Total number of vscode desktop local ssh proxy connection",
+			Labels: []config.LabelAllowList{
+				{
+					Name:        "phase",
+					AllowValues: []string{"connecting", "connected", "failed"},
+				},
+				{
+					Name:         "failure_code",
+					AllowValues:  []string{"*"},
+					DefaultValue: "Unknown",
+				},
+			},
+			Client: &config.ClientAllowList{
+				Name:         "metric_client",
+				AllowValues:  []string{"vscode-desktop-extension"},
+				DefaultValue: "unknown",
+			},
+		},
 	}
 
 	histogramMetrics := []config.HistogramMetricsConfiguration{
