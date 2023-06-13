@@ -141,7 +141,7 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
     ): Promise<{ user: User; token: GitpodToken } | undefined>;
     findGitpodTokensOfUser(userId: string, tokenHash: string): Promise<GitpodToken | undefined>;
     findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]>;
-    storeGitpodToken(token: GitpodToken & { user: DBUser }): Promise<void>;
+    storeGitpodToken(token: GitpodToken): Promise<void>;
     deleteGitpodToken(tokenHash: string): Promise<void>;
     deleteGitpodTokensNamedLike(userId: string, namePattern: string): Promise<void>;
     countUsagesOfPhoneNumber(phoneNumber: string): Promise<number>;

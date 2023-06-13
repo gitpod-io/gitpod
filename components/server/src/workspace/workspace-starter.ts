@@ -16,7 +16,6 @@ import {
 } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
 import {
-    DBUser,
     DBWithTracing,
     ProjectDB,
     TeamDB,
@@ -1392,11 +1391,11 @@ export class WorkspaceStarter {
             const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
             const token = crypto.randomBytes(30).toString("hex");
             const tokenHash = crypto.createHash("sha256").update(token, "utf8").digest("hex");
-            const dbToken: GitpodToken & { user: DBUser } = {
+            const dbToken: GitpodToken = {
                 tokenHash,
                 name: `${instance.id}-default`,
                 type: GitpodTokenType.MACHINE_AUTH_TOKEN,
-                user: user as DBUser,
+                userId: user.id,
                 scopes,
                 created: new Date().toISOString(),
             };

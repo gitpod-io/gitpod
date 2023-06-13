@@ -8,7 +8,7 @@ import * as chai from "chai";
 const expect = chai.expect;
 import { suite, test, timeout } from "mocha-typescript";
 
-import { Identity, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { GitpodTokenType, Identity, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { testContainer } from "./test-container";
 import { DBIdentity } from "./typeorm/entity/db-identity";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
@@ -17,6 +17,7 @@ import { TypeORM } from "./typeorm/typeorm";
 import { DBUser } from "./typeorm/entity/db-user";
 import { DBWorkspace } from "./typeorm/entity/db-workspace";
 import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
+import { DBGitpodToken } from "./typeorm/entity/db-gitpod-token";
 
 const _IDENTITY1: Identity = {
     authProviderId: "GitHub",
@@ -59,6 +60,7 @@ class UserDBSpec {
         await mnr.getRepository(DBIdentity).delete({});
         await mnr.getRepository(DBWorkspace).delete({});
         await mnr.getRepository(DBWorkspaceInstance).delete({});
+        await mnr.getRepository(DBGitpodToken).delete({});
     }
 
     // Copy to avoid pollution
@@ -198,6 +200,80 @@ class UserDBSpec {
 
         const result2 = await this.db.findOrgOwnedUser("org1", "unknown@some.org");
         expect(result2, "no user should be found").to.be.undefined;
+    }
+
+    @test(timeout(10000))
+    public async findTokenAndOwner() {
+        let user1 = await this.db.newUser();
+        user1.name = "ABC";
+        user1.identities.push(TestData.ID1);
+        user1.identities.push(TestData.ID2);
+        user1 = await this.db.storeUser(user1);
+
+        await this.db.storeGitpodToken({
+            tokenHash: "tokenhash",
+            created: new Date().toISOString(),
+            scopes: ["read-only"],
+            type: GitpodTokenType.API_AUTH_TOKEN,
+            userId: user1.id,
+        });
+        const result = await this.db.findUserByGitpodToken("tokenhash");
+        expect(result).to.not.be.undefined;
+        expect(result?.user.id).to.eq(user1.id);
+        expect(result?.token.userId).to.eq(user1.id);
+    }
+
+    @test(timeout(10000))
+    public async findGitpodTokenOfUser() {
+        let user1 = await this.db.newUser();
+        user1.name = "ABC";
+        user1.identities.push(TestData.ID1);
+        user1.identities.push(TestData.ID2);
+        user1 = await this.db.storeUser(user1);
+
+        const token = {
+            tokenHash: "tokenhash",
+            created: new Date().toISOString(),
+            scopes: ["read-only"],
+            type: GitpodTokenType.API_AUTH_TOKEN,
+            userId: user1.id,
+        };
+        await this.db.storeGitpodToken(token);
+        const result = await this.db.findGitpodTokensOfUser(user1.id, token.tokenHash);
+        expect(result).to.not.be.undefined;
+        expect(result?.userId).to.eq(user1.id);
+        expect(result?.tokenHash).to.eq(token.tokenHash);
+    }
+
+    @test(timeout(10000))
+    public async findAllGitpodTokensOfUser() {
+        let user1 = await this.db.newUser();
+        user1.name = "ABC";
+        user1.identities.push(TestData.ID1);
+        user1.identities.push(TestData.ID2);
+        user1 = await this.db.storeUser(user1);
+
+        const token = {
+            tokenHash: "tokenhash",
+            created: new Date().toISOString(),
+            scopes: ["read-only"],
+            type: GitpodTokenType.API_AUTH_TOKEN,
+            userId: user1.id,
+        };
+        await this.db.storeGitpodToken(token);
+        const token2 = {
+            tokenHash: "tokenhash2",
+            created: new Date().toISOString(),
+            scopes: ["read-only"],
+            type: GitpodTokenType.API_AUTH_TOKEN,
+            userId: user1.id,
+        };
+        await this.db.storeGitpodToken(token2);
+        const result = await this.db.findAllGitpodTokensOfUser(user1.id);
+        expect(result).to.not.be.undefined;
+        expect(result.length).to.eq(2);
+        expect(result.some((t) => t.tokenHash === token.tokenHash)).to.be.true;
+        expect(result.some((t) => t.tokenHash === token2.tokenHash)).to.be.true;
     }
 }
 

@@ -5,9 +5,9 @@
  */
 
 import { GitpodToken, GitpodTokenType } from "@gitpod/gitpod-protocol";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import { Column, Entity, PrimaryColumn } from "typeorm";
 import { Transformer } from "../transformer";
-import { DBUser } from "./db-user";
+import { TypeORM } from "../typeorm";
 
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
@@ -24,9 +24,8 @@ export class DBGitpodToken implements GitpodToken {
     @Column({ type: "int" })
     type: GitpodTokenType;
 
-    @ManyToOne((type) => DBUser)
-    @JoinColumn()
-    user: DBUser;
+    @Column(TypeORM.UUID_COLUMN_TYPE)
+    userId: string;
 
     @Column("simple-array")
     scopes: string[];

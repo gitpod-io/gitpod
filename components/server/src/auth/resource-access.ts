@@ -222,7 +222,7 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
             case "contentBlob":
                 return resource.userID === this.userId;
             case "gitpodToken":
-                return resource.subject.user.id === this.userId;
+                return resource.subject.userId === this.userId;
             case "snapshot":
                 return resource.workspace.ownerId === this.userId;
             case "token":

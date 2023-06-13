@@ -624,7 +624,7 @@ export interface GitpodToken {
     type: GitpodTokenType;
 
     /** The user the token belongs to. */
-    user: User;
+    userId: string;
 
     /** Scopes (e.g. limition to read-only) */
     scopes: string[];
