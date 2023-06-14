@@ -36,10 +36,6 @@ jobs:
             name: ${{ steps.configuration.outputs.name }}
             version: ${{ steps.configuration.outputs.version }}
         steps:
-            # sometimes auth fails with:
-            # google-github-actions/setup-gcloud failed with: EACCES: permission denied, mkdir '/__t/gcloud'
-            - name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@v1
             - id: auth
               uses: google-github-actions/auth@v1
               continue-on-error: true
@@ -133,14 +129,6 @@ jobs:
                 - /tmp:/tmp
         steps:
             - uses: actions/checkout@v3
-            - name: Configure workspace
-              run: |
-                # Needed by google-github-actions/setup-gcloud
-                sudo chown -R gitpod:gitpod /__t
-
-            - id: gcloud-sdk-setup
-              name: Set up Cloud SDK
-              uses: google-github-actions/setup-gcloud@v1
             - id: auth
               uses: google-github-actions/auth@v1
               with:
