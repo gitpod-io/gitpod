@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/mitchellh/reflectwalk"
@@ -30,6 +31,7 @@ type Scrubber interface {
 	JSON(msg json.RawMessage) (json.RawMessage, error)
 
 	// Struct scrubes a struct. val must be a pointer, otherwise an error is returned.
+	// It mutates the struct in-place.
 	// By default only string and json.RawMessage fields are scrubbed.
 	// The `scrub` struct tag can be used to influnce the scrubber. The struct tag takes the following values:
 	//   - `ignore` which causes the scrubber to ignore the field
@@ -55,33 +57,40 @@ type Scrub interface {
 var Default Scrubber = newScrubberImpl()
 
 func newScrubberImpl() *scrubberImpl {
-	fieldIndex := make(map[string]Sanitisatiser, len(HashedFieldNames)+len(RedactedFieldNames))
-	for _, f := range HashedFieldNames {
-		fieldIndex[strings.ToLower(f)] = SanitiseHash
+	hashedRegex, err := regexp.Compile("(?i)(" + strings.Join(HashedFieldNames, "|") + ")")
+	if err != nil {
+		panic(fmt.Errorf("cannot compile hashed regex: %w", err))
 	}
-	for _, f := range RedactedFieldNames {
-		fieldIndex[strings.ToLower(f)] = SanitiseRedact
+
+	redactedRegex, err := regexp.Compile("(?i)(" + strings.Join(RedactedFieldNames, "|") + ")")
+	if err != nil {
+		panic(fmt.Errorf("cannot compile redacted regex: %w", err))
 	}
+
 	res := &scrubberImpl{
-		FieldIndex: fieldIndex,
+		RegexpIndex: map[*regexp.Regexp]Sanitisatiser{
+			hashedRegex:   SanitiseHash,
+			redactedRegex: SanitiseRedact,
+		},
 	}
 	res.Walker = &structScrubber{Parent: res}
+
 	return res
 }
 
 type scrubberImpl struct {
-	Walker     *structScrubber
-	FieldIndex map[string]Sanitisatiser
+	Walker      *structScrubber
+	RegexpIndex map[*regexp.Regexp]Sanitisatiser
 }
 
 // JSON implements Scrubber
 func (s *scrubberImpl) JSON(msg json.RawMessage) (json.RawMessage, error) {
-	var content map[string]interface{}
+	var content any
 	err := json.Unmarshal(msg, &content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot scrub JSON: %w", err)
 	}
-	err = s.Struct(content)
+	err = s.scrubJsonValue(&content)
 	if err != nil {
 		return nil, fmt.Errorf("cannot scrub JSON: %w", err)
 	}
@@ -94,20 +103,90 @@ func (s *scrubberImpl) JSON(msg json.RawMessage) (json.RawMessage, error) {
 
 // KeyValue implements Scrubber
 func (s *scrubberImpl) KeyValue(key string, value string) (sanitisedValue string) {
-	f, ok := s.FieldIndex[strings.ToLower(key)]
-	if !ok {
+	sanitisatiser := s.getSanitisatiser(key)
+	if sanitisatiser == nil {
 		return value
 	}
-	return f(value)
+	return sanitisatiser(value)
+}
+
+// getSanitisatiser implements
+func (s *scrubberImpl) getSanitisatiser(key string) Sanitisatiser {
+	for re, sanitisatiser := range s.RegexpIndex {
+		if re.MatchString(key) {
+			return sanitisatiser
+		}
+	}
+
+	return nil
+}
+
+func (s *scrubberImpl) scrubJsonValue(val *any) error {
+	if val == nil {
+		return nil
+	}
+	if v, ok := (*val).(string); ok {
+		*val = s.Value(v)
+		return nil
+	}
+	return s.Struct(*val)
 }
 
 // Struct implements Scrubber
 func (s *scrubberImpl) Struct(val any) error {
-	return reflectwalk.Walk(val, s.Walker)
+	if val == nil {
+		return nil
+	}
+	switch v := val.(type) {
+	case map[string]interface{}:
+		err := s.scrubJsonObject(v)
+		if err != nil {
+			return err
+		}
+	case []interface{}:
+		err := s.scrubJsonSlice(v)
+		if err != nil {
+			return err
+		}
+	default:
+		return reflectwalk.Walk(val, s.Walker)
+	}
+	return nil
+}
+
+func (s *scrubberImpl) scrubJsonObject(val map[string]interface{}) error {
+	// fix https://github.com/gitpod-io/security/issues/64
+	name, _ := val["name"].(string)
+	value, _ := val["value"].(string)
+	if name != "" && value != "" {
+		val["value"] = s.KeyValue(name, value)
+	}
+
+	for k, v := range val {
+		if str, ok := v.(string); ok {
+			val[k] = s.KeyValue(k, str)
+		} else {
+			err := s.scrubJsonValue(&v)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (s *scrubberImpl) scrubJsonSlice(val []interface{}) error {
+	for i := range val {
+		err := s.scrubJsonValue(&(val[i]))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Value implements Scrubber
-func (scrubberImpl) Value(value string) string {
+func (s *scrubberImpl) Value(value string) string {
 	for key, expr := range HashedValues {
 		value = expr.ReplaceAllStringFunc(value, func(s string) string {
 			return SanitiseHash(s, SanitiseWithKeyName(key))
@@ -123,18 +202,7 @@ func (scrubberImpl) Value(value string) string {
 }
 
 type structScrubber struct {
-	Parent Scrubber
-}
-
-// Primitive implements reflectwalk.PrimitiveWalker
-func (s *structScrubber) Primitive(val reflect.Value) error {
-	if val.Kind() == reflect.String && val.CanSet() {
-		val.SetString(s.Parent.Value(val.String()))
-	}
-
-	// We don't call reflectwalk here because we're at the a leaf of the object tree.
-
-	return nil
+	Parent *scrubberImpl
 }
 
 var (
@@ -143,8 +211,17 @@ var (
 	_ reflectwalk.PrimitiveWalker = &structScrubber{}
 )
 
+// Primitive implements reflectwalk.PrimitiveWalker
+func (s *structScrubber) Primitive(val reflect.Value) error {
+	if val.Kind() == reflect.String && val.CanSet() {
+		val.SetString(s.Parent.Value(val.String()))
+	}
+
+	return nil
+}
+
 // Struct implements reflectwalk.StructWalker
-func (*structScrubber) Struct(reflect.Value) error {
+func (s *structScrubber) Struct(val reflect.Value) error {
 	return nil
 }
 
@@ -158,7 +235,7 @@ func (s *structScrubber) StructField(field reflect.StructField, val reflect.Valu
 		tag := field.Tag.Get("scrub")
 		switch tag {
 		case "ignore":
-			return nil
+			return reflectwalk.SkipEntry
 		case "hash":
 			setExplicitValue = true
 			explicitValue = SanitiseHash(val.String())
@@ -167,22 +244,57 @@ func (s *structScrubber) StructField(field reflect.StructField, val reflect.Valu
 			explicitValue = SanitiseRedact(val.String())
 		}
 
-		if !val.CanSet() {
-			return fmt.Errorf("cannot set %s", field.PkgPath)
-		}
 		if setExplicitValue {
+			if !val.CanSet() {
+				return fmt.Errorf("cannot set %s", field.PkgPath)
+			}
 			val.SetString(explicitValue)
-			return nil
+		} else {
+			sanitisatiser := s.Parent.getSanitisatiser(field.Name)
+			if sanitisatiser != nil {
+				if !val.CanSet() {
+					return fmt.Errorf("cannot set %s", field.PkgPath)
+				}
+				val.SetString(sanitisatiser(val.String()))
+			}
 		}
-		val.SetString(s.Parent.KeyValue(field.Name, val.String()))
-		return nil
+		return reflectwalk.SkipEntry
 	}
 
-	return reflectwalk.Walk(val.Interface(), s)
+	return nil
 }
 
 // Map implements reflectwalk.MapWalker
 func (s *structScrubber) Map(m reflect.Value) error {
+	// fix https://github.com/gitpod-io/security/issues/64
+	var (
+		nameV  reflect.Value
+		valueK reflect.Value
+		valueV reflect.Value
+	)
+	for _, k := range m.MapKeys() {
+		kv := m.MapIndex(k)
+		if k.String() == "name" {
+			nameV = kv
+		} else if k.String() == "value" {
+			valueK = k
+			valueV = kv
+		}
+	}
+	if nameV.Kind() == reflect.Interface {
+		nameV = nameV.Elem()
+	}
+	if valueV.Kind() == reflect.Interface {
+		valueV = valueV.Elem()
+	}
+
+	if nameV.Kind() == reflect.String && valueV.Kind() == reflect.String {
+		sanitisatiser := s.Parent.getSanitisatiser(nameV.String())
+		if sanitisatiser != nil {
+			value := sanitisatiser(valueV.String())
+			m.SetMapIndex(valueK, reflect.ValueOf(value))
+		}
+	}
 	return nil
 }
 
@@ -195,8 +307,7 @@ func (s *structScrubber) MapElem(m reflect.Value, k reflect.Value, v reflect.Val
 	}
 	if kind == reflect.String {
 		m.SetMapIndex(k, reflect.ValueOf(s.Parent.KeyValue(k.String(), v.String())))
-		return nil
 	}
 
-	return reflectwalk.Walk(v.Interface(), s)
+	return nil
 }

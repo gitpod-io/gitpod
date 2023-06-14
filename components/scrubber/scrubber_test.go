@@ -163,13 +163,31 @@ func TestJSON(t *testing.T) {
 			Name:  "basic happy path",
 			Input: `{"ok": true, "email": "foo@bar.com", "workspaceID": "gitpodio-gitpod-uesaddev73c"}`,
 			Expectation: Expectation{
-				Result: `{"email":"[redacted:md5:f3ada405ce890b6f8204094deb12d8a8]","ok":true,"workspaceID":"[redacted:md5:a35538939333def8477b5c19ac694b35]"}`,
+				Result: `{"email":"[redacted]","ok":true,"workspaceID":"[redacted:md5:a35538939333def8477b5c19ac694b35]"}`,
 			},
 		},
 		{
 			Name:        "analytics",
 			Input:       `{"batch":[{"event":"signup","foo":"bar","type":"track"}],"foo":"bar"}`,
 			Expectation: Expectation{Result: `{"batch":[{"event":"signup","foo":"bar","type":"track"}],"foo":"bar"}`},
+		},
+		{
+			// https://github.com/gitpod-io/security/issues/64
+			Name:  "complex",
+			Input: `{"auth":{"owner_token":"abcsecrettokendef","total":{}},"env":[{"name":"SECRET_PASSWORD","value":"i-am-leaked-in-the-logs-yikes"},{"name":"GITHUB_TOKEN","value":"thisismyGitHubTokenDontStealIt"},{"name":"SUPER_SEKRET","value":"you.cant.see.me.or.can.you"},{"name":"GITHUB_SSH_PRIVATE_KEY","value":"super-secret-private-ssh-key-from-github"},{"name":"SHELL","value":"zsh"},{"name":"GITLAB_TOKEN","value":"abcsecrettokendef"}],"source":{"file":{"contextPath":".","dockerfilePath":".gitpod.dockerfile","dockerfileVersion":"82561e7f6455e3c0e6ee98be03c4d9aab4d459f8","source":{"git":{"checkoutLocation":"test.repo","cloneTaget":"good-workspace-image","config":{"authPassword":"super-secret-password","authUser":"oauth2","authentication":"BASIC_AUTH"},"remoteUri":"https://github.com/AlexTugarev/test.repo.git","targetMode":"REMOTE_BRANCH"}}}}}`,
+			Expectation: Expectation{
+				Result: `{"auth":{"owner_token":"[redacted]","total":{}},"env":[{"name":"SECRET_PASSWORD","value":"[redacted]"},{"name":"GITHUB_TOKEN","value":"[redacted]"},{"name":"SUPER_SEKRET","value":"you.cant.see.me.or.can.you"},{"name":"GITHUB_SSH_PRIVATE_KEY","value":"[redacted]"},{"name":"SHELL","value":"zsh"},{"name":"GITLAB_TOKEN","value":"[redacted]"}],"source":{"file":{"contextPath":".","dockerfilePath":".gitpod.dockerfile","dockerfileVersion":"82561e7f6455e3c0e6ee98be03c4d9aab4d459f8","source":{"git":{"checkoutLocation":"test.repo","cloneTaget":"good-workspace-image","config":{"authPassword":"[redacted]","authUser":"oauth2","authentication":"BASIC_AUTH"},"remoteUri":"https://github.com/AlexTugarev/test.repo.git","targetMode":"REMOTE_BRANCH"}}}}}`,
+			},
+		},
+		{
+			Name:        "string",
+			Input:       `"foo@bar.com"`,
+			Expectation: Expectation{Result: `"[redacted:email]"`},
+		},
+		{
+			Name:        "array",
+			Input:       `["foo@bar.com"]`,
+			Expectation: Expectation{Result: `["[redacted:email]"]`},
 		},
 	}
 
