@@ -23,7 +23,9 @@ const (
 )
 
 type Token struct {
-	Type  TokenType
+	Type TokenType
+	// When Type is AccessTokenType, the value is the raw token value
+	// When Type is CookieTokenType, the value is cookie_name=cooke_value
 	Value string
 }
 

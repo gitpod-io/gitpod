@@ -174,7 +174,6 @@ type registerDependencies struct {
 
 func register(srv *baseserver.Server, deps *registerDependencies) error {
 	proxy.RegisterMetrics(srv.MetricsRegistry())
-	auth.RegisterMetrics(srv.MetricsRegistry())
 
 	connectMetrics := NewConnectMetrics()
 	err := connectMetrics.Register(srv.MetricsRegistry())
@@ -190,9 +189,8 @@ func register(srv *baseserver.Server, deps *registerDependencies) error {
 		connect.WithInterceptors(
 			NewMetricsInterceptor(connectMetrics),
 			NewLogInterceptor(log.Log),
-			auth.NewServerInterceptor(),
+			auth.NewServerInterceptor(deps.authCfg.Session, deps.sessionVerifier),
 			origin.NewInterceptor(),
-			auth.NewJWTCookieInterceptor(deps.authCfg.Session.Cookie.Name, deps.authCfg.Session.Issuer, deps.sessionVerifier),
 		),
 	}
 
