@@ -12,7 +12,6 @@ import { projectsPathInstallGitHubApp, projectsPathNew } from "../projects/proje
 import { parseProps } from "../start/StartWorkspace";
 import {
     settingsPathAccount,
-    settingsPathBilling,
     settingsPathIntegrations,
     settingsPathMain,
     settingsPathNotifications,
@@ -46,7 +45,6 @@ import { BlockedEmailDomains } from "../admin/BlockedEmailDomains";
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ "../workspaces/Workspaces"));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Account"));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Notifications"));
-const Billing = React.lazy(() => import(/* webpackPrefetch: true */ "../user-settings/Billing"));
 const EnvironmentVariables = React.lazy(
     () => import(/* webpackPrefetch: true */ "../user-settings/EnvironmentVariables"),
 );
@@ -156,7 +154,6 @@ export const AppRoutes = () => {
                     <Route path={usagePathMain} exact component={Usage} />
                     <Route path={settingsPathIntegrations} exact component={Integrations} />
                     <Route path={settingsPathNotifications} exact component={Notifications} />
-                    <Route path={settingsPathBilling} exact component={Billing} />
                     <Route path={settingsPathVariables} exact component={EnvironmentVariables} />
                     <Route path={settingsPathSSHKeys} exact component={SSHKeys} />
                     <Route path={settingsPathPersonalAccessTokens} exact component={PersonalAccessTokens} />
@@ -231,8 +228,8 @@ export const AppRoutes = () => {
                     <Route path="/notifications" exact>
                         <Redirect to={settingsPathNotifications} />
                     </Route>
-                    <Route path="/billing" exact>
-                        <Redirect to={settingsPathBilling} />
+                    <Route path="/user/billing" exact>
+                        <Redirect to={"/billing"} />
                     </Route>
                     <Route path="/preferences" exact>
                         <Redirect to={settingsPathPreferences} />

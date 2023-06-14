@@ -14,6 +14,7 @@ import { getGitpodService } from "../service/service";
 import { getProjectPath } from "../workspaces/WorkspaceEntry";
 import { WorkspaceStatusIndicator } from "../workspaces/WorkspaceStatusIndicator";
 import Property from "./Property";
+import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 
 export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance }) {
     const [workspace, setWorkspace] = useState(props.workspace);
@@ -166,30 +167,33 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                 </div>
                 {workspaceInstances
                     .sort((a, b) => a.creationTime.localeCompare(b.creationTime) * -1)
-                    .map((wsi) => (
-                        <div className="px-6 py-3 flex justify-between text-sm text-gray-400 mb-2">
-                            <span className="my-1 ml-3">
-                                <WorkspaceStatusIndicator instance={wsi} />
-                            </span>
-                            <div className="w-4/12">{wsi.id}</div>
-                            <div className="w-2/12">{dayjs(wsi.startedTime).fromNow()}</div>
-                            <div className="w-2/12">
-                                {dayjs.duration(dayjs(wsi.stoppingTime).diff(wsi.startedTime)).humanize()}
+                    .map((wsi) => {
+                        const attributionId = wsi.usageAttributionId && AttributionId.parse(wsi.usageAttributionId);
+                        return (
+                            <div className="px-6 py-3 flex justify-between text-sm text-gray-400 mb-2">
+                                <span className="my-1 ml-3">
+                                    <WorkspaceStatusIndicator instance={wsi} />
+                                </span>
+                                <div className="w-4/12">{wsi.id}</div>
+                                <div className="w-2/12">{dayjs(wsi.startedTime).fromNow()}</div>
+                                <div className="w-2/12">
+                                    {dayjs.duration(dayjs(wsi.stoppingTime).diff(wsi.startedTime)).humanize()}
+                                </div>
+                                <div className="w-2/12">
+                                    {attributionId && attributionId?.kind === "team" ? (
+                                        <Link
+                                            className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
+                                            to={"/admin/orgs/" + attributionId.teamId}
+                                        >
+                                            {attributionId.teamId}
+                                        </Link>
+                                    ) : (
+                                        "personal"
+                                    )}
+                                </div>
                             </div>
-                            <div className="w-2/12">
-                                {wsi.usageAttributionId && wsi.usageAttributionId?.startsWith("team:") ? (
-                                    <Link
-                                        className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400"
-                                        to={"/admin/orgs/" + wsi.usageAttributionId.substring(5)}
-                                    >
-                                        {wsi.usageAttributionId.substring(5)}
-                                    </Link>
-                                ) : (
-                                    "personal"
-                                )}
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 <div className="py-20"></div>
             </div>
         </div>

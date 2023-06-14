@@ -8,7 +8,6 @@ import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { useQuery } from "@tanstack/react-query";
 import { getGitpodService } from "../../service/service";
 import { useCurrentOrg } from "../organizations/orgs-query";
-import { useCurrentUser } from "../../user-context";
 
 export type ListWorkspacesQueryResult = WorkspaceInfo[];
 
@@ -16,27 +15,17 @@ type UseListWorkspacesQueryArgs = {
     limit: number;
 };
 
-export function useOrganizationIdForWorkspaceList() {
-    const user = useCurrentUser();
-    const currentOrg = useCurrentOrg();
-    let organizationId = currentOrg.data?.id;
-    if (!user?.additionalData?.isMigratedToTeamOnlyAttribution) {
-        organizationId = undefined;
-    }
-    return organizationId;
-}
-
 export const useListWorkspacesQuery = ({ limit }: UseListWorkspacesQueryArgs) => {
-    const organizationId = useOrganizationIdForWorkspaceList();
+    const currentOrg = useCurrentOrg();
     return useQuery<ListWorkspacesQueryResult>({
-        queryKey: getListWorkspacesQueryKey(organizationId),
+        queryKey: getListWorkspacesQueryKey(currentOrg.data?.id),
         queryFn: async () => {
             // TODO: Can we update the backend api to sort & rank pinned over non-pinned for us?
             const [infos, pinned] = await Promise.all([
                 getGitpodService().server.getWorkspaces({
                     limit,
                     includeWithoutProject: true,
-                    organizationId,
+                    organizationId: currentOrg.data?.id,
                 }),
                 // Additional fetch for pinned workspaces
                 // see also: https://github.com/gitpod-io/gitpod/issues/4488
@@ -44,7 +33,7 @@ export const useListWorkspacesQuery = ({ limit }: UseListWorkspacesQueryArgs) =>
                     limit,
                     pinnedOnly: true,
                     includeWithoutProject: true,
-                    organizationId,
+                    organizationId: currentOrg.data?.id,
                 }),
             ]);
 
@@ -55,6 +44,7 @@ export const useListWorkspacesQuery = ({ limit }: UseListWorkspacesQueryArgs) =>
 
             return workspaces;
         },
+        enabled: !!currentOrg.data,
     });
 };
 

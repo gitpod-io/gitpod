@@ -10,7 +10,6 @@ import { useCallback } from "react";
 import { useLocation } from "react-router";
 import { publicApiTeamMembersToProtocol, publicApiTeamToProtocol, teamsService } from "../../service/public-api";
 import { useCurrentUser } from "../../user-context";
-import { getUserBillingModeQueryKey } from "../billing-mode/user-billing-mode-query";
 import { noPersistence } from "../setup";
 
 export interface OrganizationInfo extends Organization {
@@ -30,7 +29,6 @@ export function useOrganizationsInvalidator() {
 
 export function useOrganizations() {
     const user = useCurrentUser();
-    const queryClient = useQueryClient();
     const query = useQuery<OrganizationInfo[], Error>(
         getQueryKey(user),
         async () => {
@@ -55,14 +53,6 @@ export function useOrganizations() {
             return result;
         },
         {
-            onSuccess: (data) => {
-                if (!user) {
-                    return;
-                }
-
-                // refresh user billing mode to update the billing mode in the user context as it depends on the orgs
-                queryClient.invalidateQueries(getUserBillingModeQueryKey(user.id));
-            },
             enabled: !!user,
             cacheTime: 1000 * 60 * 60 * 1, // 1 hour
             staleTime: 1000 * 60 * 60 * 1, // 1 hour
@@ -92,8 +82,7 @@ export function useCurrentOrg(): { data?: OrganizationInfo; isLoading: boolean }
         orgId = orgIdParam;
     }
     let org = orgs.data.find((org) => org.id === orgId);
-    if (!org && user?.additionalData?.isMigratedToTeamOnlyAttribution) {
-        // if the user is migrated to team-only attribution, we return the first org
+    if (!org) {
         org = orgs.data[0];
     }
     if (org) {

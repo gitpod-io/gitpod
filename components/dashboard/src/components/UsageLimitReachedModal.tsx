@@ -4,31 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { useEffect, useState } from "react";
-import { OrganizationInfo, useOrganizations } from "../data/organizations/orgs-query";
-import { settingsPathBilling } from "../user-settings/settings.routes";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 import Alert from "./Alert";
 import Modal from "./Modal";
 import { Heading2 } from "./typography/headings";
 
 export function UsageLimitReachedModal(p: { hints: any; onClose?: () => void }) {
-    const orgs = useOrganizations();
-    const [attributedTeam, setAttributedTeam] = useState<OrganizationInfo | undefined>();
+    const currentOrg = useCurrentOrg();
 
-    useEffect(() => {
-        const attributionId: AttributionId | undefined = p.hints && p.hints.attributionId;
-        if (attributionId) {
-            // setAttributionId(attributionId);
-            if (attributionId.kind === "team") {
-                const team = orgs?.data?.find((t) => t.id === attributionId.teamId);
-                setAttributedTeam(team);
-            }
-        }
-    }, [orgs?.data, p.hints]);
-
-    const attributedTeamName = attributedTeam?.name;
-    const billingLink = attributedTeam ? "/billing" : settingsPathBilling;
+    const orgName = currentOrg.data?.name;
+    const billingLink = "/billing";
     return (
         <Modal visible={true} closeable={!!p.onClose} onClose={p.onClose || (() => {})}>
             <Heading2 className="flex">
@@ -40,9 +25,9 @@ export function UsageLimitReachedModal(p: { hints: any; onClose?: () => void }) 
                 </Alert>
                 <p className="mt-3 text-base text-gray-600 dark:text-gray-300">
                     {"Contact an organization owner "}
-                    {attributedTeamName && (
+                    {orgName && (
                         <span>
-                            of <strong>{attributedTeamName} </strong>
+                            of <strong>{orgName} </strong>
                         </span>
                     )}
                     to increase the usage limit, or change your <a href={billingLink}>billing settings</a>.

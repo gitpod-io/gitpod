@@ -25,16 +25,16 @@ import { ProgressBar } from "./ProgressBar";
 const BASE_USAGE_LIMIT_FOR_STRIPE_USERS = 1000;
 
 interface Props {
-    attributionId?: string;
     hideSubheading?: boolean;
 }
 
 // Guard against multiple calls to subscripe (per page load)
 let didAlreadyCallSubscribe = false;
 
-export default function UsageBasedBillingConfig({ attributionId, hideSubheading = false }: Props) {
+export default function UsageBasedBillingConfig({ hideSubheading = false }: Props) {
     const currentOrg = useCurrentOrg().data;
-    const attrId = attributionId ? AttributionId.parse(attributionId) : undefined;
+    const attrId = currentOrg ? AttributionId.create(currentOrg) : undefined;
+    const attributionId = attrId && AttributionId.render(attrId);
     const [showUpdateLimitModal, setShowUpdateLimitModal] = useState<boolean>(false);
     const [stripeSubscriptionId, setStripeSubscriptionId] = useState<string | undefined>();
     const [isLoadingStripeSubscription, setIsLoadingStripeSubscription] = useState<boolean>(true);
