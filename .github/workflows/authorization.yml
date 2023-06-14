@@ -2,6 +2,7 @@ on:
   pull_request:
     paths:
     - install/installer/pkg/components/spicedb/data/**
+    - .github/workflows/authorization.yml
 name: SpiceDB Authorization Validation
 jobs:
   scan-repo:
