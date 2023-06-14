@@ -8,7 +8,7 @@ metadata:
   labels:
     prometheus: k8s
     role: alert-rules
-  name: openvsx-proxy-monitoring-rules
+  name: openvsx-monitoring-rules
   namespace: monitoring-satellite
 spec:
   groups:
