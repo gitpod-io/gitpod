@@ -222,12 +222,6 @@ export class UserService {
         return response.usedCredits < response.usageLimit;
     }
 
-    async setUsageAttribution(user: User, usageAttributionId: string): Promise<void> {
-        await this.validateUsageAttributionId(user, usageAttributionId);
-        user.usageAttributionId = usageAttributionId;
-        await this.userDb.storeUser(user);
-    }
-
     /**
      * Lists all valid AttributionIds a user can attributed (billed) usage to.
      * @param user
