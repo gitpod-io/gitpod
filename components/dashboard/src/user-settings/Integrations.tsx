@@ -504,13 +504,8 @@ export function GitIntegrationModal(
         onAuthorize?: (payload?: string) => void;
     },
 ) {
-    const callbackUrl = (host: string) => {
-        // Negative Lookahead (?!\/)
-        // `\/` matches the character `/`
-        // "https://foobar:80".replace(/:(?!\/)/, "_")
-        // => 'https://foobar_80'
-        host = host.replace(/:(?!\/)/, "_");
-        const pathname = `/auth/${host}/callback`;
+    const callbackUrl = () => {
+        const pathname = `/auth/callback`;
         return gitpodHostUrl.with({ pathname }).toString();
     };
 
@@ -519,7 +514,7 @@ export function GitIntegrationModal(
 
     const [type, setType] = useState<string>("GitLab");
     const [host, setHost] = useState<string>("");
-    const [redirectURI, setRedirectURI] = useState<string>(callbackUrl("gitlab.example.com"));
+    const [redirectURI, setRedirectURI] = useState<string>(callbackUrl());
     const [clientId, setClientId] = useState<string>("");
     const [clientSecret, setClientSecret] = useState<string>("");
     const [busy, setBusy] = useState<boolean>(false);
@@ -632,7 +627,6 @@ export function GitIntegrationModal(
             }
 
             setHost(newHostValue);
-            setRedirectURI(callbackUrl(newHostValue));
             setErrorMessage(undefined);
         }
     };
