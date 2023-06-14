@@ -1,7 +1,7 @@
 on:
-  push:
-    branches:
-    - main
+  pull_request:
+    paths:
+    - install/installer/pkg/components/spicedb/data/**
 name: SpiceDB Authorization Validation
 jobs:
   scan-repo:
