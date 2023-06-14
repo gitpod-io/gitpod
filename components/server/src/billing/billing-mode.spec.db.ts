@@ -164,7 +164,7 @@ class BillingModeSpec {
         for (const test of tests) {
             // Setup test code, environment and data
             const testContainer = new Container();
-            testContainer.load(dbContainerModule);
+            testContainer.load(dbContainerModule());
             testContainer.load(
                 new ContainerModule((bind, unbind, isBound, rebind) => {
                     bind(Config).toConstantValue({ enablePayment: test.config.enablePayment } as Config);

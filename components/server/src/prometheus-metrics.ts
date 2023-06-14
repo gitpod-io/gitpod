@@ -29,6 +29,8 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(jobStartedTotal);
     registry.registerMetric(jobsCompletedTotal);
     registry.registerMetric(jobsDurationSeconds);
+    registry.registerMetric(redisCacheGetLatencyHistogram);
+    registry.registerMetric(redisCacheRequestsTotal);
 }
 
 const loginCounter = new prometheusClient.Counter({
@@ -285,4 +287,29 @@ export const jobsDurationSeconds = new prometheusClient.Histogram({
     help: "Histogram of job duration",
     buckets: [10, 30, 60, 2 * 60, 3 * 60, 5 * 60, 10 * 60, 15 * 60],
     labelNames: ["name"],
+});
+
+// Total requests (with label on hit/miss)
+export const redisCacheRequestsTotal = new prometheusClient.Counter({
+    name: "gitpod_redis_cache_requests_total",
+    help: "Total number of cache requests",
+    labelNames: ["hit"],
+});
+
+export function reportRedisCacheRequest(hit: boolean) {
+    redisCacheRequestsTotal.inc({ hit: String(hit) });
+}
+
+export const redisCacheGetLatencyHistogram = new prometheusClient.Histogram({
+    name: "gitpod_redis_cache_get_latency_seconds",
+    help: "Cache get latency in seconds",
+    labelNames: ["cache_group"],
+    buckets: [0.01, 0.1, 0.2, 0.5, 1, 2, 5, 10],
+});
+
+export const redisCacheSetLatencyHistogram = new prometheusClient.Histogram({
+    name: "gitpod_redis_cache_set_latency_seconds",
+    help: "Cache set latency in seconds",
+    labelNames: ["cache_group"],
+    buckets: [0.01, 0.1, 0.2, 0.5, 1, 2, 5, 10],
 });

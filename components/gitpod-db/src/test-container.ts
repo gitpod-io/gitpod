@@ -8,4 +8,4 @@ import { Container } from "inversify";
 import { dbContainerModule } from "./container-module";
 
 export const testContainer = new Container();
-testContainer.load(dbContainerModule);
+testContainer.load(dbContainerModule());

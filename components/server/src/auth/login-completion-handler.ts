@@ -92,7 +92,7 @@ export class LoginCompletionHandler {
 
     public async updateAuthProviderAsVerified(hostname: string, user: User) {
         const hostCtx = this.hostContextProvider.get(hostname);
-        log.info("Updating auth provider as verified", { hostname, hostCtx });
+        log.info("Updating auth provider as verified", { hostname });
         if (hostCtx) {
             const { params: config } = hostCtx.authProvider;
             const { id, verified, builtin } = config;

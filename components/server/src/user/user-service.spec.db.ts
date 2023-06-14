@@ -18,26 +18,25 @@ import { User } from "@gitpod/gitpod-protocol";
 
 const expect = chai.expect;
 
-export const testContainer = new Container();
+const testContainer = new Container();
+testContainer.load(dbContainerModule());
 testContainer.load(productionContainerModule);
-testContainer.load(dbContainerModule);
+testContainer.rebind(Config).toConstantValue({
+    blockNewUsers: {
+        enabled: false,
+    },
+} as any);
+testContainer.rebind(UserToTeamMigrationService).toConstantValue({
+    migrateUser: (user: User) => {
+        return user;
+    },
+} as any);
 
 @suite
 class UserServiceSpec {
     userDB = testContainer.get<TypeORMUserDBImpl>(TypeORMUserDBImpl);
 
     async before() {
-        testContainer.rebind(Config).toConstantValue({
-            blockNewUsers: {
-                enabled: false,
-            },
-        } as any);
-        testContainer.rebind(UserToTeamMigrationService).toConstantValue({
-            migrateUser: (user: User) => {
-                return user;
-            },
-        } as any);
-
         await this.wipeRepos();
     }
 

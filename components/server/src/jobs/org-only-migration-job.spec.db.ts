@@ -34,7 +34,7 @@ class TestingRedisMutex extends RedisMutex {
     }
 }
 export const testContainer = new Container();
-testContainer.load(dbContainerModule);
+testContainer.load(dbContainerModule());
 testContainer.load(
     new ContainerModule((bind) => {
         bind(StripeService).toConstantValue(mockedStripe);
