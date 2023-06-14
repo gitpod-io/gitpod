@@ -65,7 +65,7 @@ func TestStaticLayerSource(t *testing.T) {
 		Test: func(t *testing.T, input interface{}) interface{} {
 			fixture := input.(*testStaticLayerSourceFixture)
 
-			src, err := NewStaticSourceFromImage(context.Background(), &fakeFetcher{Content: fixture.Content}, fixture.SourceRef)
+			src, err := NewStaticSourceFromImage(context.Background(), func() remotes.Resolver { return &fakeFetcher{Content: fixture.Content} }, fixture.SourceRef)
 			if err != nil {
 				return &gold{Error: err.Error()}
 			}

@@ -52,7 +52,7 @@ func buildStaticLayer(ctx context.Context, cfg []config.StaticLayerCfg, newResol
 			}
 			l = append(l, src)
 		case "image":
-			src, err := NewStaticSourceFromImage(ctx, newResolver(), sl.Ref)
+			src, err := NewStaticSourceFromImage(ctx, newResolver, sl.Ref)
 			if err != nil {
 				return nil, xerrors.Errorf("cannot source layer from %s: %w", sl.Ref, err)
 			}

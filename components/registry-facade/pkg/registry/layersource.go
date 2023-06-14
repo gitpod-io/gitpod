@@ -167,7 +167,7 @@ func NewFileLayerSource(ctx context.Context, file ...string) (FileLayerSource, e
 
 type imagebackedLayer struct {
 	AddonLayer
-	Fetcher remotes.Fetcher
+	NewFetcher func() (remotes.Fetcher, error)
 }
 
 // ImageLayerSource provides additional layers from another image
@@ -213,12 +213,16 @@ func (s ImageLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 			src = l
 		}
 	}
-	if src.Fetcher == nil {
+	if src.NewFetcher == nil {
 		err = errdefs.ErrNotFound
 		return
 	}
 
-	rc, err := src.Fetcher.Fetch(ctx, src.Descriptor)
+	fetcher, err := src.NewFetcher()
+	if err != nil {
+		return
+	}
+	rc, err := fetcher.Fetch(ctx, src.Descriptor)
 	if err != nil {
 		return
 	}
@@ -233,7 +237,8 @@ const (
 )
 
 // NewStaticSourceFromImage downloads image layers into the store and uses them as static layer
-func NewStaticSourceFromImage(ctx context.Context, resolver remotes.Resolver, ref string) (*ImageLayerSource, error) {
+func NewStaticSourceFromImage(ctx context.Context, newResolver ResolverProvider, ref string) (*ImageLayerSource, error) {
+	resolver := newResolver()
 	_, desc, err := resolver.Resolve(ctx, ref)
 	if err != nil {
 		return nil, err
@@ -271,7 +276,12 @@ func NewStaticSourceFromImage(ctx context.Context, resolver remotes.Resolver, re
 				Descriptor: ml,
 				DiffID:     cfg.RootFS.DiffIDs[i],
 			},
-			Fetcher: fetcher,
+			NewFetcher: func() (remotes.Fetcher, error) {
+				// Must create a new resolver for each fetcher, otherwise this will keep using the originally
+				// provided pull secret which eventually expires.
+				resolver := newResolver()
+				return resolver.Fetcher(ctx, ref)
+			},
 		}
 		res = append(res, l)
 	}
@@ -498,7 +508,7 @@ func (src *SpecMappedImagedSource) getDelegate(ctx context.Context, spec *api.Im
 			layers[i] = s.(LayerSource)
 			continue
 		}
-		lsrc, err := NewStaticSourceFromImage(ctx, src.Resolver(), ref)
+		lsrc, err := NewStaticSourceFromImage(ctx, src.Resolver, ref)
 		if err != nil {
 			return nil, err
 		}
