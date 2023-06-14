@@ -429,6 +429,8 @@ export interface UserEnvVar extends UserEnvVarValue {
 export namespace UserEnvVar {
     export const DELIMITER = "/";
     export const WILDCARD_ASTERISK = "*";
+    // This wildcard is only allowed on the last segment, and matches arbitrary segments to the right
+    export const WILDCARD_DOUBLE_ASTERISK = "**";
     const WILDCARD_SHARP = "#"; // TODO(gpl) Where does this come from? Bc we have/had patterns as part of URLs somewhere, maybe...?
     const MIN_PATTERN_SEGMENTS = 2;
 
@@ -505,6 +507,12 @@ export namespace UserEnvVar {
             return false;
         }
 
+        function isWildcardMatch(patternSegment: string, isLastSegment: boolean): boolean {
+            if (isWildcard(patternSegment)) {
+                return true;
+            }
+            return isLastSegment && patternSegment === WILDCARD_DOUBLE_ASTERISK;
+        }
         let i = 0;
         for (; i < patternSegments.length; i++) {
             if (i >= fqnSegments.length) {
@@ -512,13 +520,14 @@ export namespace UserEnvVar {
             }
             const fqnSegment = fqnSegments[i];
             const patternSegment = patternSegments[i];
-            if (!isWildcard(patternSegment) && patternSegment !== fqnSegment.toLocaleLowerCase()) {
+            const isLastSegment = patternSegments.length === i + 1;
+            if (!isWildcardMatch(patternSegment, isLastSegment) && patternSegment !== fqnSegment.toLocaleLowerCase()) {
                 return false;
             }
         }
-        if (fqnSegments.length > i + 1) {
-            // Special case: "*" also matches arbitrary # of segments to the right
-            if (isWildcard(patternSegments[i])) {
+        if (fqnSegments.length > i) {
+            // Special case: "**" as last segment matches arbitrary # of segments to the right
+            if (patternSegments[i - 1] === WILDCARD_DOUBLE_ASTERISK) {
                 return true;
             }
             return false;
@@ -551,11 +560,23 @@ export namespace UserEnvVar {
         // In cases of multiple matches per env var: find the best match
         // Best match is the most specific pattern, where the left-most segment is most significant
         function scoreMatchedEnvVar(e: T): number {
+            function valueSegment(segment: string): number {
+                switch (segment) {
+                    case WILDCARD_ASTERISK:
+                        return 2;
+                    case WILDCARD_SHARP:
+                        return 2;
+                    case WILDCARD_DOUBLE_ASTERISK:
+                        return 1;
+                    default:
+                        return 3;
+                }
+            }
             const patternSegments = splitRepositoryPattern(e.repositoryPattern);
             let result = 0;
             for (const segment of patternSegments) {
                 // We can assume the pattern matches from context, so we just need to check whether it's a wildcard or not
-                const val = isWildcard(segment) ? 1 : 2;
+                const val = valueSegment(segment);
                 result = result * 10 + val;
             }
             return result;
