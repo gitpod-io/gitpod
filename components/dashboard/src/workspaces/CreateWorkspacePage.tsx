@@ -508,12 +508,6 @@ const ErrorMessage: FunctionComponent<StatusMessageProps> = ({
         return <></>;
     }
     switch (error.code) {
-        case ErrorCodes.CONTEXT_PARSE_ERROR:
-            return renderError(
-                `Are you trying to open a Git repository from a self-managed git hoster?`,
-                "Add integration",
-                gitpodHostUrl.asAccessControl().toString(),
-            );
         case ErrorCodes.INVALID_GITPOD_YML:
             return renderError(`The gitpod.yml is invalid.`, `Use default config`, undefined, () => {
                 createWorkspace({ forceDefaultConfig: true });
