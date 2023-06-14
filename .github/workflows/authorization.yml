@@ -6,7 +6,7 @@ name: SpiceDB Authorization Validation
 jobs:
   scan-repo:
     runs-on: ubuntu-latest
-    name: Scan repository for configcat code references
+    name: Validate spicedb schema and assertions
     steps:
     - name: Checkout
       uses: actions/checkout@v2
