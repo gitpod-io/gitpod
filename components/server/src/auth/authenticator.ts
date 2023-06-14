@@ -12,7 +12,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { Config } from "../config";
 import { HostContextProvider } from "./host-context-provider";
-import { AuthProvider } from "./auth-provider";
+import { AuthFlow, AuthProvider } from "./auth-provider";
 import { TokenProvider } from "../user/token-provider";
 import { AuthProviderService } from "./auth-provider-service";
 import { UserService } from "../user/user-service";
@@ -72,18 +72,45 @@ export class Authenticator {
         });
     }
     protected async authCallbackHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
-        if (req.url.startsWith("/auth/")) {
-            const hostContexts = this.hostContextProvider.getAll();
-            for (const { authProvider } of hostContexts) {
-                const authCallbackPath = authProvider.authCallbackPath;
-                if (req.url.startsWith(authCallbackPath)) {
-                    log.info(`Auth Provider Callback. Path: ${authCallbackPath}`);
-                    await authProvider.callback(req, res, next);
-                    return;
+        // Should match:
+        // * /auth/callback
+        // * /auth/<host_of_git_provider>/callback
+        if (req.path.startsWith("/auth/") && req.path.endsWith("/callback")) {
+            const stateParam = req.query.state;
+            try {
+                const flowState = await this.parseState(`${stateParam}`);
+                const host = flowState.host;
+                if (!host) {
+                    throw new Error("Auth flow state is missing 'host' attribute.");
                 }
+                const hostContext = this.hostContextProvider.get(host);
+                if (!hostContext) {
+                    throw new Error("No host context found.");
+                }
+                log.info(`Auth Provider Callback. Host: ${host}`);
+                await hostContext.authProvider.callback(req, res, next);
+            } catch (error) {
+                log.error(`Failed to handle callback.`, error, { url: req.url });
             }
+        } else {
+            // Otherwise proceed with other handlers
+            return next();
         }
-        return next();
+    }
+
+    // TODO(at) deduplicate `parseState`
+    private async parseState(state: string): Promise<AuthFlow> {
+        // In preview environments, we prepend the current development branch to the state, to allow
+        // our preview proxy to route the Auth callback appropriately.
+        // See https://github.com/gitpod-io/ops/pull/9398/files
+        //
+        // We need to strip the branch out of the state, if it's present
+        if (state.indexOf(",") >= 0) {
+            const [, actualState] = state.split(",", 2);
+            state = actualState;
+        }
+
+        return await this.signInJWT.verify(state as string);
     }
 
     protected async getAuthProviderForHost(host: string): Promise<AuthProvider | undefined> {
