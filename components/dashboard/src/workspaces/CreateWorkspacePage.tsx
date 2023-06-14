@@ -125,8 +125,20 @@ export function CreateWorkspacePage() {
         }
     }, [projects.data, workspaceContext.data]);
 
+    // Apply project ws class settings
     useEffect(() => {
-        if (!project || props.workspaceClass) {
+        // If URL has a ws class set, we don't override it w/ project settings
+        if (props.workspaceClass) {
+            return;
+        }
+
+        if (!project) {
+            // If no project and user hasn't changed ws class, reset it to default value
+            // Empty value causes SelectWorkspaceClassComponent to use the dfeault ws class
+            if (!selectedWsClassIsDirty) {
+                console.log("resetting ws class");
+                setSelectedWsClass("", false);
+            }
             return;
         }
         const wsClass = project.settings?.workspaceClasses;
