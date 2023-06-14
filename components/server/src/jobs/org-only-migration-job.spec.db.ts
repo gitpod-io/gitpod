@@ -4,8 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
-import { AdditionalUserData } from "@gitpod/gitpod-protocol";
+import { TeamDB, TypeORM, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import * as chai from "chai";
 import { Container, ContainerModule } from "inversify";
 import { RedlockAbortSignal } from "redlock";
@@ -14,6 +13,7 @@ import { RedisMutex } from "../redis/mutex";
 import { StripeService } from "../user/stripe-service";
 import { OrgOnlyMigrationJob } from "./org-only-migration-job";
 import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
+import { v4 as uuidv4 } from "uuid";
 const expect = chai.expect;
 
 const mockedStripe = new StripeService();
@@ -47,49 +47,36 @@ testContainer.load(
 describe("Migration Job", () => {
     const typeORM = testContainer.get<TypeORM>(TypeORM);
     const migrationJob = testContainer.get<OrgOnlyMigrationJob>(OrgOnlyMigrationJob);
+    const workspaceDB = testContainer.get<WorkspaceDB>(WorkspaceDB);
     const userDB = testContainer.get<UserDB>(UserDB);
+    const teamDB = testContainer.get<TeamDB>(TeamDB);
 
-    it("should migrate non migrated user", async () => {
-        const migratedUser = await userDB.newUser();
-        AdditionalUserData.set(migratedUser, { isMigratedToTeamOnlyAttribution: true });
-        await userDB.storeUser(migratedUser);
-        const nonMigratedUser = await userDB.newUser();
-        AdditionalUserData.set(nonMigratedUser, { isMigratedToTeamOnlyAttribution: undefined });
-        await userDB.storeUser(nonMigratedUser);
+    it("should migrate non migrated workspaces", async () => {
+        const user = await userDB.newUser();
+        const org = await teamDB.createTeam(user.id, "test");
+        const ws = await workspaceDB.store({
+            id: uuidv4(),
+            ownerId: user.id,
+            config: {},
+            creationTime: "2021-01-01",
+            type: "regular",
+            contextURL: "",
+            context: {
+                title: "",
+            },
+            description: "",
+        });
 
-        const users = await migrationJob.migrateUsers(1000, "1900-01-01");
+        const workspaces = await migrationJob.migrateWorkspaces(1000, "1900-01-01");
 
         expect(
-            users.some((u) => u.id === nonMigratedUser.id),
-            "should migrate non migrated user",
-        ).to.be.true;
-        expect(
-            users.some((u) => u.id === migratedUser.id),
-            "should not migrate already migrated user",
-        ).to.be.false;
-        expect(
-            users.find((u) => u.id === nonMigratedUser.id)?.additionalData?.isMigratedToTeamOnlyAttribution,
-            "user should be migrated",
+            workspaces.some((w) => w.organizationId === org.id && w.id === ws.id),
+            "should migrate non migrated workspace",
         ).to.be.true;
 
         const c = await typeORM.getConnection();
-        await c.query("DELETE FROM d_b_user WHERE id in (?)", [[migratedUser.id, nonMigratedUser.id]]);
-    });
-
-    it("should migrate in badges", async () => {
-        const user1 = await userDB.newUser();
-        user1.creationDate = "2021-01-01";
-        await userDB.storeUser(user1);
-        const user2 = await userDB.newUser();
-        user2.creationDate = "2022-01-01";
-        await userDB.storeUser(user2);
-
-        let users = await migrationJob.migrateUsers(1, "1900-01-01");
-        expect(users[0].id === user1.id, "should migrate the older user").to.be.true;
-        users = await migrationJob.migrateUsers(1, users[0].creationDate);
-        expect(users[0].id === user2.id, "should migrate the younger user next").to.be.true;
-
-        const c = await typeORM.getConnection();
-        await c.query("DELETE FROM d_b_user WHERE id in (?)", [[user1.id, user2.id]]);
+        await c.query("DELETE FROM d_b_user WHERE id in (?)", [[user.id]]);
+        await c.query("DELETE FROM d_b_team WHERE id in (?)", [[org.id]]);
+        await c.query("DELETE FROM d_b_workspace WHERE id in (?)", [[ws.id]]);
     });
 });

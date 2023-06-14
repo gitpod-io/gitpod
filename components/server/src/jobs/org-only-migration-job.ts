@@ -4,12 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { DBWorkspace, TypeORM, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { Workspace } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
-import { Job } from "./runner";
 import { UserToTeamMigrationService } from "../migration/user-to-team-migration-service";
-import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
-import { User } from "@gitpod/gitpod-protocol";
+import { Job } from "./runner";
 
 interface MigrationState {
     migratedUpToCreationDate: string;
@@ -20,28 +20,36 @@ export class OrgOnlyMigrationJob implements Job<MigrationState> {
     @inject(UserToTeamMigrationService) protected readonly migrationService: UserToTeamMigrationService;
     @inject(TypeORM) protected readonly db: TypeORM;
     @inject(UserDB) protected readonly userDB: UserDB;
+    @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
 
     public readonly name = "org-only-migration-job";
     public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
-    public async migrateUsers(limit: number, usersNewerThan: string): Promise<User[]> {
+    public async migrateWorkspaces(limit: number, newerThan: string): Promise<Workspace[]> {
         try {
-            const userRepo = (await this.db.getConnection()).manager.getRepository<DBUser>(DBUser);
-            const users = await userRepo
-                .createQueryBuilder("user")
-                .leftJoinAndSelect("user.identities", "identity")
-                .where("user.creationDate > :usersNewerThan", { usersNewerThan })
-                .andWhere("additionalData->>'$.isMigratedToTeamOnlyAttribution' IS NULL")
-                .orWhere("additionalData->>'$.isMigratedToTeamOnlyAttribution' != 'true'")
-                .orderBy("user.creationDate", "ASC")
+            const workspaceRepo = (await this.db.getConnection()).manager.getRepository<DBWorkspace>(DBWorkspace);
+            const workspaces = await workspaceRepo
+                .createQueryBuilder("ws")
+                .where("ws.organizationId IS NULL")
+                .andWhere("contentDeletedTime = ''")
+                .andWhere("creationTime > :newerThan", { newerThan })
+                .orderBy("creationTime", "ASC")
                 .limit(limit)
                 .getMany();
 
-            const result: User[] = [];
-            for (const user of users) {
-                result.push(await this.migrationService.migrateUser(user.id, true, this.name));
+            const result: Workspace[] = [];
+            for (const ws of workspaces) {
+                const user = await this.userDB.findUserById(ws.ownerId);
+                if (!user) {
+                    log.error({ userId: ws.ownerId, workspaceId: ws.id }, "No user found for workspace");
+                    continue;
+                }
+                const org = await this.migrationService.getUserOrganization(user);
+                const wsInfos = await this.workspaceDB.find({ userId: ws.ownerId });
+                const migrated = await this.migrationService.updateWorkspacesOrganizationId(wsInfos, org.id);
+                result.push(...migrated.map((wsInfo) => wsInfo.workspace));
             }
-            log.info("org-only-migration-job: migrated users", { count: result.length });
+            log.info("org-only-migration-job: migrated workspaces", { count: result.length });
             return result;
         } catch (err) {
             log.error("org-only-migration-job: error during run", err);
@@ -50,11 +58,11 @@ export class OrgOnlyMigrationJob implements Job<MigrationState> {
     }
 
     public async run(state?: MigrationState): Promise<MigrationState> {
-        const migratedUsers = await this.migrateUsers(3000, state?.migratedUpToCreationDate || "1900-01-01"); // in prod we do ~300 / minute
-        if (migratedUsers.length > 0) {
-            const lastUser = migratedUsers[migratedUsers.length - 1];
+        const migratedWorkspaces = await this.migrateWorkspaces(3000, state?.migratedUpToCreationDate || "1900-01-01"); // in prod we do ~300 / minute
+        if (migratedWorkspaces.length > 0) {
+            const migratedWorkspace = migratedWorkspaces[migratedWorkspaces.length - 1];
             return {
-                migratedUpToCreationDate: lastUser.creationDate,
+                migratedUpToCreationDate: migratedWorkspace.creationTime,
             };
         }
         return {
