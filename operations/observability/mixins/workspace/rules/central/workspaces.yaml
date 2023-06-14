@@ -93,19 +93,19 @@ spec:
 
     - alert: GitpodImagebuildDoneSuccess
       labels:
-        severity: critical
+        severity: warning
         team: workspace
-      for: 4h
+      for: 12h
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildDoneSuccess.md
         summary: imagebuilds done are failing at a high rate in cluster {{ $labels.cluster }}.
-        description: imagebuilds`s are not reaching done at too high of a rate in cluster {{ $labels.cluster }}.
+        description: imagebuilds are not reaching done at too high of a rate in cluster {{ $labels.cluster }}.
       expr: |
         (1 - (sum(rate(gitpod_image_builder_builds_done_total{success="false", cluster!~"ephemeral.*"}[4h])) / sum(rate(gitpod_image_builder_builds_done_total{cluster!~"ephemeral.*"}[4h])))) < 0.60
 
     - alert: GitpodImagebuildStartSuccess
       labels:
-        severity: critical
+        severity: warning
         team: workspace
       for: 2h
       annotations:
@@ -113,4 +113,4 @@ spec:
         summary: imagebuild start success rate is failing in cluster {{ $labels.cluster }}.
         description: imagebuild starts are failing at too high of a rate in cluster {{ $labels.cluster }}.
       expr: |
-        (1 - (sum(rate(gitpod_ws_manager_mk2_workspace_starts_failure_total{type="IMAGEBUILD",cluster!~"ephemeral.*"}[4h])) / sum(rate(gitpod_ws_manager_mk2_workspace_starts_total{type="IMAGEBUILD", cluster!~"ephemeral.*"}[4h])))) < 0.99
+        (1 - (sum(rate(gitpod_ws_manager_mk2_workspace_starts_failure_total{type="IMAGEBUILD",cluster!~"ephemeral.*"}[8h])) / sum(rate(gitpod_ws_manager_mk2_workspace_starts_total{type="IMAGEBUILD", cluster!~"ephemeral.*"}[4h])))) < 0.99
