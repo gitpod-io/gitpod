@@ -25,6 +25,7 @@ spec:
     - alert: GitpodWsManagerCrashLoopingMk2
       labels:
         severity: critical
+        dedicated: included
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWsManagerCrashLooping.md
         summary: ws-manager-mk2 is crashlooping in cluster {{ $labels.cluster }}.
