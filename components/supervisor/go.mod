@@ -45,7 +45,11 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require inet.af/tcpproxy v0.0.0-20221017015627-91f861402626 // indirect
+require (
+	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-20230530092704-f7d81a8eef6f // indirect
+	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626
+)
 
 require (
 	cloud.google.com/go v0.110.0 // indirect

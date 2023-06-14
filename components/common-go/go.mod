@@ -42,6 +42,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
+	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-20230530092704-f7d81a8eef6f
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/godbus/dbus/v5 v5.0.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -70,6 +71,8 @@ require (
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
+
+require github.com/mitchellh/reflectwalk v1.0.2 // indirect
 
 replace k8s.io/api => k8s.io/api v0.26.2
 
@@ -120,3 +123,5 @@ replace k8s.io/kubectl => k8s.io/kubectl v0.26.2
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.26.2
 
 replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.26.2
+
+replace github.com/gitpod-io/gitpod/components/scrubber => ../scrubber // leeway
