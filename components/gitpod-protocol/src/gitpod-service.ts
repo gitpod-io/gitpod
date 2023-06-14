@@ -243,9 +243,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     listUsage(req: ListUsageRequest): Promise<ListUsageResponse>;
 
-    setUsageAttribution(usageAttribution: string): Promise<void>;
-    listAvailableUsageAttributionIds(): Promise<string[]>;
-
     getBillingModeForUser(): Promise<BillingMode>;
     getBillingModeForTeam(teamId: string): Promise<BillingMode>;
 

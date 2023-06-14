@@ -4127,20 +4127,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return classes;
     }
 
-    //#region gitpod.io concerns
-    async setUsageAttribution(ctx: TraceContext, usageAttributionId: string): Promise<void> {
-        const user = await this.checkAndBlockUser("setUsageAttribution");
-        try {
-            const attrId = AttributionId.parse(usageAttributionId);
-            if (attrId) {
-                await this.userService.setUsageAttribution(user, usageAttributionId);
-            }
-        } catch (error) {
-            log.error({ userId: user.id }, "Cannot set usage attribution", error, { usageAttributionId });
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Cannot set usage attribution`);
-        }
-    }
-
     async getLinkedInClientId(ctx: TraceContextWithSpan): Promise<string> {
         traceAPIParams(ctx, {});
         await this.checkAndBlockUser("getLinkedInClientID");
