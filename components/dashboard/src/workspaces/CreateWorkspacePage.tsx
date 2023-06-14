@@ -136,7 +136,6 @@ export function CreateWorkspacePage() {
             // If no project and user hasn't changed ws class, reset it to default value
             // Empty value causes SelectWorkspaceClassComponent to use the dfeault ws class
             if (!selectedWsClassIsDirty) {
-                console.log("resetting ws class");
                 setSelectedWsClass("", false);
             }
             return;
