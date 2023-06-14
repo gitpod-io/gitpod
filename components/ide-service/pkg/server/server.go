@@ -13,8 +13,12 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/containerd/containerd/remotes"
+	"github.com/containerd/containerd/remotes/docker"
+	"github.com/docker/cli/cli/config/configfile"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/common-go/experiments"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -30,6 +34,9 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
+// ResolverProvider provides new resolver
+type ResolverProvider func() remotes.Resolver
+
 type IDEServiceServer struct {
 	config                   *config.ServiceConfiguration
 	originIDEConfig          []byte
@@ -39,6 +46,7 @@ type IDEServiceServer struct {
 	nonExperimentalIDEConfig *config.IDEConfig
 	ideConfigFileName        string
 	experimentsClient        experiments.Client
+	resolver                 ResolverProvider
 
 	api.UnimplementedIDEServiceServer
 }
@@ -60,8 +68,38 @@ func Start(logger *logrus.Entry, cfg *config.ServiceConfiguration) error {
 	if err != nil {
 		return fmt.Errorf("failed to initialize ide-service: %w", err)
 	}
+	var (
+		dockerCfg   *configfile.ConfigFile
+		dockerCfgMu sync.RWMutex
+	)
 
-	s := New(cfg)
+	resolverProvider := func() remotes.Resolver {
+		var resolverOpts docker.ResolverOptions
+
+		dockerCfgMu.RLock()
+		defer dockerCfgMu.RUnlock()
+		if dockerCfg != nil {
+			resolverOpts.Hosts = docker.ConfigureDefaultRegistries(
+				docker.WithAuthorizer(authorizerFromDockerConfig(dockerCfg)),
+			)
+		}
+
+		return docker.NewResolver(resolverOpts)
+	}
+	if cfg.DockerCfg != "" {
+		dockerCfg = loadDockerCfg(cfg.DockerCfg)
+		err = watch.File(ctx, cfg.DockerCfg, func() {
+			dockerCfgMu.Lock()
+			defer dockerCfgMu.Unlock()
+
+			dockerCfg = loadDockerCfg(cfg.DockerCfg)
+		})
+		if err != nil {
+			log.WithError(err).Fatal("cannot start watch of Docker auth configuration file")
+		}
+	}
+
+	s := New(cfg, resolverProvider)
 	go s.watchIDEConfig(ctx)
 	go s.scheduleUpdate(ctx)
 	s.register(srv.GRPC())
@@ -81,7 +119,40 @@ func Start(logger *logrus.Entry, cfg *config.ServiceConfiguration) error {
 	return nil
 }
 
-func New(cfg *config.ServiceConfiguration) *IDEServiceServer {
+func loadDockerCfg(fn string) *configfile.ConfigFile {
+	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
+		fn = filepath.Join(tproot, fn)
+	}
+	fr, err := os.OpenFile(fn, os.O_RDONLY, 0)
+	if err != nil {
+		log.WithError(err).Fatal("cannot read docker auth config")
+	}
+
+	dockerCfg := configfile.New(fn)
+	err = dockerCfg.LoadFromReader(fr)
+	fr.Close()
+	if err != nil {
+		log.WithError(err).Fatal("cannot read docker config")
+	}
+	log.WithField("fn", fn).Info("using authentication for backing registries")
+
+	return dockerCfg
+}
+
+// FromDockerConfig turns docker client config into docker registry hosts
+func authorizerFromDockerConfig(cfg *configfile.ConfigFile) docker.Authorizer {
+	return docker.NewDockerAuthorizer(docker.WithAuthCreds(func(host string) (user, pass string, err error) {
+		auth, err := cfg.GetAuthConfig(host)
+		if err != nil {
+			return
+		}
+		user = auth.Username
+		pass = auth.Password
+		return
+	}))
+}
+
+func New(cfg *config.ServiceConfiguration, resolver ResolverProvider) *IDEServiceServer {
 	fn, err := filepath.Abs(cfg.IDEConfigPath)
 	if err != nil {
 		log.WithField("path", cfg.IDEConfigPath).WithError(err).Fatal("cannot convert ide config path to abs path")
@@ -90,6 +161,7 @@ func New(cfg *config.ServiceConfiguration) *IDEServiceServer {
 		config:            cfg,
 		ideConfigFileName: fn,
 		experimentsClient: experiments.NewClient(),
+		resolver:          resolver,
 	}
 	return s
 }
@@ -123,7 +195,7 @@ func (s *IDEServiceServer) readIDEConfig(ctx context.Context, isInit bool) {
 		log.WithError(err).Warn("cannot read ide config file")
 		return
 	}
-	if ideConfig, err := ParseConfig(ctx, b); err != nil {
+	if ideConfig, err := ParseConfig(ctx, s.resolver(), b); err != nil {
 		if !isInit {
 			log.WithError(err).Fatal("cannot parse ide config")
 		}

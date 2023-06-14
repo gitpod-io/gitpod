@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/containerd/containerd/remotes"
+	"github.com/containerd/containerd/remotes/docker"
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	api "github.com/gitpod-io/gitpod/ide-service-api"
 	"github.com/gitpod-io/gitpod/ide-service-api/config"
@@ -29,7 +31,9 @@ func TestResolveWorkspaceConfig(t *testing.T) {
 		Server:        &baseserver.Configuration{},
 		IDEConfigPath: "../../example-ide-config.json",
 	}
-	server := New(cfg)
+	server := New(cfg, func() remotes.Resolver {
+		return docker.NewResolver(docker.ResolverOptions{})
+	})
 	server.readIDEConfig(context.Background(), true)
 
 	test := ctesting.FixtureTest{

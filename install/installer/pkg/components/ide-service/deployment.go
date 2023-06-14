@@ -5,9 +5,12 @@
 package ide_service
 
 import (
+	"fmt"
+
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
 	"github.com/gitpod-io/gitpod/installer/pkg/cluster"
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	dockerregistry "github.com/gitpod-io/gitpod/installer/pkg/components/docker-registry"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -20,6 +23,18 @@ import (
 
 func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	labels := common.CustomizeLabel(ctx, Component, common.TypeMetaDeployment)
+
+	volumeName := "pull-secret"
+	var secretName string
+	if pointer.BoolDeref(ctx.Config.ContainerRegistry.InCluster, false) {
+		secretName = dockerregistry.BuiltInRegistryAuth
+	} else if ctx.Config.ContainerRegistry.External != nil {
+		if ctx.Config.ContainerRegistry.External.Certificate != nil {
+			secretName = ctx.Config.ContainerRegistry.External.Certificate.Name
+		}
+	} else {
+		return nil, fmt.Errorf("%s: invalid container registry config", Component)
+	}
 
 	configHash, err := common.ObjectHash(configmap(ctx))
 	if err != nil {
@@ -92,6 +107,10 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 									MountPath: "/ide-config",
 									ReadOnly:  true,
 								},
+								{
+									Name:      volumeName,
+									MountPath: "/mnt/pull-secret",
+								},
 							},
 							ReadinessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
@@ -121,6 +140,15 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								VolumeSource: corev1.VolumeSource{
 									ConfigMap: &corev1.ConfigMapVolumeSource{
 										LocalObjectReference: corev1.LocalObjectReference{Name: "ide-config"},
+									},
+								},
+							},
+							{
+								Name: volumeName,
+								VolumeSource: corev1.VolumeSource{
+									Secret: &corev1.SecretVolumeSource{
+										SecretName: secretName,
+										Items:      []corev1.KeyToPath{{Key: ".dockerconfigjson", Path: "pull-secret.json"}},
 									},
 								},
 							},

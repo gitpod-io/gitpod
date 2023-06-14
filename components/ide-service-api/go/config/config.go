@@ -16,6 +16,7 @@ import (
 type ServiceConfiguration struct {
 	Server        *baseserver.Configuration `json:"server,omitempty"`
 	IDEConfigPath string                    `json:"ideConfigPath"`
+	DockerCfg     string                    `json:"dockerCfg"`
 }
 
 func Read(fn string) (*ServiceConfiguration, error) {

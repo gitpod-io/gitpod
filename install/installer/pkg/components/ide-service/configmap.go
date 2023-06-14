@@ -27,6 +27,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			},
 		},
 		IDEConfigPath: "/ide-config/config.json",
+		DockerCfg:     "/mnt/pull-secret/pull-secret.json",
 	}
 
 	fc, err := common.ToJSONString(cfg)
