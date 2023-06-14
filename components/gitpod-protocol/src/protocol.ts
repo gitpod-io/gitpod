@@ -463,7 +463,7 @@ export namespace UserEnvVar {
         }
         const split = splitRepositoryPattern(pattern);
         if (split.length < MIN_PATTERN_SEGMENTS) {
-            return "A scope must use the form 'organization/repo(/...)'.";
+            return "A scope must use the form 'organization/repo'.";
         }
         for (const name of split) {
             if (name !== "*") {
@@ -479,35 +479,12 @@ export namespace UserEnvVar {
         return pattern.toLocaleLowerCase();
     }
 
-    export function splitRepositoryPattern(pattern: string): string[] {
+    function splitRepositoryPattern(pattern: string): string[] {
         return pattern.split(DELIMITER);
     }
 
     function joinRepositoryPattern(...parts: string[]): string {
         return parts.join(DELIMITER);
-    }
-
-    // DEPRECATED
-    export function score(value: UserEnvVarValue): number {
-        // We use a score to enforce precedence:
-        //      value/value = 0
-        //      value/*     = 1
-        //      */value     = 2
-        //      */*         = 3
-        //      #/#         = 4 (used for env vars passed through the URL)
-        // the lower the score, the higher the precedence.
-        const [ownerPattern, repoPattern] = splitRepositoryPattern(value.repositoryPattern);
-        let score = 0;
-        if (repoPattern == "*") {
-            score += 1;
-        }
-        if (ownerPattern == "*") {
-            score += 2;
-        }
-        if (ownerPattern == "#" || repoPattern == "#") {
-            score = 4;
-        }
-        return score;
     }
 
     /**
