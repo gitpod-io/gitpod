@@ -4141,13 +4141,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    async listAvailableUsageAttributionIds(ctx: TraceContext): Promise<string[]> {
-        const user = await this.checkAndBlockUser("listAvailableUsageAttributionIds");
-
-        const attributionIds = await this.userService.listAvailableUsageAttributionIds(user);
-        return attributionIds.map(AttributionId.render);
-    }
-
     async getLinkedInClientId(ctx: TraceContextWithSpan): Promise<string> {
         traceAPIParams(ctx, {});
         await this.checkAndBlockUser("getLinkedInClientID");

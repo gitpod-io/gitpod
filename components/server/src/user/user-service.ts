@@ -228,20 +228,6 @@ export class UserService {
         await this.userDb.storeUser(user);
     }
 
-    /**
-     * Lists all valid AttributionIds a user can attributed (billed) usage to.
-     * @param user
-     * @returns
-     */
-    async listAvailableUsageAttributionIds(user: User): Promise<AttributionId[]> {
-        // List all teams available for attribution
-        const result = (await this.teamDB.findTeamsByUser(user.id)).map((team) => AttributionId.create(team));
-        if (user?.additionalData?.isMigratedToTeamOnlyAttribution) {
-            return result;
-        }
-        return [AttributionId.create(user)].concat(result);
-    }
-
     async blockUser(targetUserId: string, block: boolean): Promise<User> {
         const target = await this.userDb.findUserById(targetUserId);
         if (!target) {
