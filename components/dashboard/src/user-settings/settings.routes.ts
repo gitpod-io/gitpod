@@ -10,7 +10,6 @@ export const usagePathMain = "/usage";
 export const settingsPathAccount = "/user/account";
 export const settingsPathIntegrations = "/user/integrations";
 export const settingsPathNotifications = "/user/notifications";
-export const settingsPathBilling = "/user/billing";
 export const settingsPathPreferences = "/user/preferences";
 export const settingsPathVariables = "/user/variables";
 export const settingsPathPersonalAccessTokens = "/user/tokens";

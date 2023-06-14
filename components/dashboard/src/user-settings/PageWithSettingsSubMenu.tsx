@@ -4,15 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "@gitpod/gitpod-protocol";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
 import { useMemo } from "react";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query";
-import { useCurrentUser } from "../user-context";
+import { useFeatureFlag } from "../data/featureflag-query";
 import {
     settingsPathAccount,
-    settingsPathBilling,
     settingsPathIntegrations,
     settingsPathMain,
     settingsPathNotifications,
@@ -23,20 +19,17 @@ import {
     settingsPathSSHKeys,
     settingsPathVariables,
 } from "./settings.routes";
-import { useFeatureFlag } from "../data/featureflag-query";
 
 export interface PageWithAdminSubMenuProps {
     children: React.ReactNode;
 }
 
 export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps) {
-    const user = useCurrentUser();
-    const userBillingMode = useUserBillingMode();
     const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
 
     const settingsMenu = useMemo(() => {
-        return getSettingsMenu(user, userBillingMode.data, enablePersonalAccessTokens);
-    }, [user, userBillingMode, enablePersonalAccessTokens]);
+        return getSettingsMenu(enablePersonalAccessTokens);
+    }, [enablePersonalAccessTokens]);
 
     return (
         <PageWithSubMenu subMenu={settingsMenu} title="User Settings" subtitle="Manage your personal account settings.">
@@ -45,7 +38,7 @@ export function PageWithSettingsSubMenu({ children }: PageWithAdminSubMenuProps)
     );
 }
 
-function getSettingsMenu(user?: User, userBillingMode?: BillingMode, enablePersonalAccessTokens?: boolean) {
+function getSettingsMenu(enablePersonalAccessTokens?: boolean) {
     return [
         {
             title: "Account",
@@ -55,7 +48,6 @@ function getSettingsMenu(user?: User, userBillingMode?: BillingMode, enablePerso
             title: "Notifications",
             link: [settingsPathNotifications],
         },
-        ...renderBillingMenuEntries(user, userBillingMode),
         {
             title: "Variables",
             link: [settingsPathVariables],
@@ -85,23 +77,4 @@ function getSettingsMenu(user?: User, userBillingMode?: BillingMode, enablePerso
             link: [settingsPathPreferences],
         },
     ];
-}
-
-function renderBillingMenuEntries(user?: User, billingMode?: BillingMode) {
-    if (!billingMode || user?.additionalData?.isMigratedToTeamOnlyAttribution) {
-        return [];
-    }
-    switch (billingMode.mode) {
-        case "none":
-            return [];
-        case "usage-based":
-            return [
-                {
-                    title: "Billing",
-                    link: [settingsPathBilling],
-                },
-            ];
-        default:
-            return [];
-    }
 }

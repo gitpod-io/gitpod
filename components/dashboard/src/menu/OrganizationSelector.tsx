@@ -8,8 +8,6 @@ import { FunctionComponent, useCallback } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { OrgIcon, OrgIconProps } from "../components/org-icon/OrgIcon";
 import { useCurrentUser } from "../user-context";
-import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
-import { useUserBillingMode } from "../data/billing-mode/user-billing-mode-query";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useLocation } from "react-router";
 import { User } from "@gitpod/gitpod-protocol";
@@ -18,7 +16,6 @@ export default function OrganizationSelector() {
     const user = useCurrentUser();
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
-    const { data: userBillingMode } = useUserBillingMode();
     const getOrgURL = useGetOrgURL();
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
@@ -64,15 +61,6 @@ export default function OrganizationSelector() {
             separator: true,
             link: "/members",
         });
-    }
-
-    // Show usage for personal account if usage based billing enabled for user
-    const showUsageForPersonalAccount =
-        !currentOrg.data &&
-        BillingMode.showUsageBasedBilling(userBillingMode) &&
-        !user?.additionalData?.isMigratedToTeamOnlyAttribution;
-
-    if (showUsageForPersonalAccount || currentOrg.data) {
         linkEntries.push({
             title: "Usage",
             customContent: <LinkEntry>Usage</LinkEntry>,
@@ -125,27 +113,9 @@ export default function OrganizationSelector() {
             link: getOrgURL(org.id),
         }));
 
-    const userMigrated = user?.additionalData?.isMigratedToTeamOnlyAttribution ?? false;
-    const showPersonalEntry = !userMigrated && !!currentOrg.data;
-
     const entries = [
         activeOrgEntry,
         ...linkEntries,
-        // If user has not been migrated, and isn't currently selected, show personal account
-        ...(showPersonalEntry
-            ? [
-                  {
-                      title: userFullName,
-                      customContent: (
-                          <OrgEntry id={user?.id ?? "self"} title={userFullName} subtitle="Personal Account" />
-                      ),
-                      // marking as active for styles
-                      active: true,
-                      separator: true,
-                      link: getOrgURL("0"),
-                  },
-              ]
-            : []),
         ...otherOrgEntries,
         ...(canCreateOrgs
             ? [

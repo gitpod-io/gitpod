@@ -8,15 +8,12 @@ import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getGitpodService } from "../../service/service";
-import {
-    getListWorkspacesQueryKey,
-    ListWorkspacesQueryResult,
-    useOrganizationIdForWorkspaceList,
-} from "./list-workspaces-query";
+import { getListWorkspacesQueryKey, ListWorkspacesQueryResult } from "./list-workspaces-query";
+import { useCurrentOrg } from "../organizations/orgs-query";
 
 export const useListenToWorkspacesWSMessages = () => {
     const queryClient = useQueryClient();
-    const organizationId = useOrganizationIdForWorkspaceList();
+    const organizationId = useCurrentOrg().data?.id;
 
     useEffect(() => {
         const disposable = getGitpodService().registerClient({

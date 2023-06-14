@@ -32,6 +32,7 @@ export default function TeamDetail(props: { team: Team }) {
     const [creditNote, setCreditNote] = useState<{ credits: number; note?: string }>({ credits: 0 });
     const [editAddCreditNote, setEditAddCreditNote] = useState<boolean>(false);
 
+    const attributionId = AttributionId.render(AttributionId.create(team));
     const initialize = () => {
         (async () => {
             const members = await getGitpodService().server.adminGetTeamMembers(team.id);
@@ -39,16 +40,12 @@ export default function TeamDetail(props: { team: Team }) {
                 setTeamMembers(members);
             }
         })();
-        getGitpodService()
-            .server.adminGetBillingMode(AttributionId.render({ kind: "team", teamId: team.id }))
-            .then((bm) => setBillingMode(bm));
-        const attributionId = AttributionId.render(AttributionId.create(team));
         getGitpodService().server.adminGetBillingMode(attributionId).then(setBillingMode);
         getGitpodService().server.adminGetCostCenter(attributionId).then(setCostCenter);
         getGitpodService().server.adminGetUsageBalance(attributionId).then(setUsageBalance);
     };
 
-    useEffect(initialize, [team]);
+    useEffect(initialize, [team, attributionId]);
 
     useEffect(() => {
         if (!costCenter) {
@@ -233,10 +230,7 @@ export default function TeamDetail(props: { team: Team }) {
                         disabled={usageLimit === costCenter?.spendingLimit}
                         onClick={async () => {
                             if (usageLimit !== undefined) {
-                                await getGitpodService().server.adminSetUsageLimit(
-                                    AttributionId.render(AttributionId.create(team)),
-                                    usageLimit || 0,
-                                );
+                                await getGitpodService().server.adminSetUsageLimit(attributionId, usageLimit || 0);
                                 setUsageLimit(undefined);
                                 initialize();
                                 setEditSpendingLimit(false);
@@ -271,7 +265,7 @@ export default function TeamDetail(props: { team: Team }) {
                         onClick={async () => {
                             if (creditNote.credits !== 0 && !!creditNote.note) {
                                 await getGitpodService().server.adminAddUsageCreditNote(
-                                    AttributionId.render(AttributionId.create(team)),
+                                    attributionId,
                                     creditNote.credits,
                                     creditNote.note,
                                 );

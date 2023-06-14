@@ -20,7 +20,6 @@ import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { Heading1 } from "../components/typography/headings";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
-import { useFeatureFlag } from "../data/featureflag-query";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
@@ -37,12 +36,6 @@ import { settingsPathPreferences } from "../user-settings/settings.routes";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
 import { settingsPathIntegrations } from "../user-settings/settings.routes";
-
-export const useNewCreateWorkspacePage = () => {
-    const startWithOptions = useFeatureFlag("start_with_options");
-    const user = useCurrentUser();
-    return !!startWithOptions || !!user?.additionalData?.isMigratedToTeamOnlyAttribution;
-};
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -193,9 +186,9 @@ export function CreateWorkspacePage() {
             }
 
             const organizationId = currentOrg?.id;
-            if (!organizationId && !!user?.additionalData?.isMigratedToTeamOnlyAttribution) {
+            if (!organizationId) {
                 // We need an organizationId for this group of users
-                console.warn("Skipping createWorkspace");
+                console.error("Skipping createWorkspace");
                 return;
             }
 
@@ -230,7 +223,6 @@ export function CreateWorkspacePage() {
         [
             contextURL,
             currentOrg?.id,
-            user?.additionalData?.isMigratedToTeamOnlyAttribution,
             selectedWsClass,
             selectedIde,
             useLatestIde,
