@@ -29,7 +29,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api/config"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
@@ -203,20 +202,19 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		annotations[k] = v
 	}
 
+	limits := class.Container.Limits
+	if limits != nil && limits.CPU != nil {
+		if limits.CPU.MinLimit != "" {
+			annotations[wsk8s.WorkspaceCpuMinLimitAnnotation] = limits.CPU.MinLimit
+		}
+
+		if limits.CPU.BurstLimit != "" {
+			annotations[wsk8s.WorkspaceCpuBurstLimitAnnotation] = limits.CPU.BurstLimit
+		}
+	}
+
 	for _, feature := range req.Spec.FeatureFlags {
 		switch feature {
-		case wsmanapi.WorkspaceFeatureFlag_WORKSPACE_CLASS_LIMITING:
-			limits := class.Container.Limits
-			if limits != nil && limits.CPU != nil {
-				if limits.CPU.MinLimit != "" {
-					annotations[wsk8s.WorkspaceCpuMinLimitAnnotation] = limits.CPU.MinLimit
-				}
-
-				if limits.CPU.BurstLimit != "" {
-					annotations[wsk8s.WorkspaceCpuBurstLimitAnnotation] = limits.CPU.BurstLimit
-				}
-			}
-
 		case wsmanapi.WorkspaceFeatureFlag_WORKSPACE_CONNECTION_LIMITING:
 			annotations[wsk8s.WorkspaceNetConnLimitAnnotation] = util.BooleanTrueString
 
@@ -544,7 +542,7 @@ func (wsm *WorkspaceManagerServer) SetTimeout(ctx context.Context, req *wsmanapi
 			ws.Spec.Timeout.ClosedTimeout = &metav1.Duration{Duration: time.Duration(0)}
 			return nil
 		})
-	} else if req.Type == api.TimeoutType_CLOSED_TIMEOUT {
+	} else if req.Type == wsmanapi.TimeoutType_CLOSED_TIMEOUT {
 		err = wsm.modifyWorkspace(ctx, req.Id, false, func(ws *workspacev1.Workspace) error {
 			ws.Spec.Timeout.ClosedTimeout = &metav1.Duration{Duration: duration}
 			return nil
