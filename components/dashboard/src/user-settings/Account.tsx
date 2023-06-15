@@ -16,6 +16,7 @@ import Alert from "../components/Alert";
 import { TextInputField } from "../components/forms/TextInputField";
 import isEmail from "validator/lib/isEmail";
 import { useToast } from "../components/toasts/Toasts";
+import { InputWithCopy } from "../components/InputWithCopy";
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
@@ -103,6 +104,7 @@ export default function Account() {
                         }}
                         errorMessage={errorMessage}
                         emailIsReadonly={!canUpdateEmail}
+                        user={user}
                     >
                         <div className="flex flex-row mt-8">
                             <Button htmlType="submit">Update Profile</Button>
@@ -126,6 +128,7 @@ function ProfileInformation(props: {
     setProfileState: (newState: User.Profile) => void;
     errorMessage: string;
     emailIsReadonly?: boolean;
+    user?: User;
     children?: React.ReactChild[] | React.ReactChild;
 }) {
     return (
@@ -164,6 +167,12 @@ function ProfileInformation(props: {
                             src={props.profileState.avatarURL}
                             alt={props.profileState.name}
                         />
+                        {props.user && (
+                            <p className={"text-sm text-gray-500 dark:text-gray-500"}>
+                                User ID:
+                                <InputWithCopy className="max-w-md" value={props.user.id} tip="Copy Token" />
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
