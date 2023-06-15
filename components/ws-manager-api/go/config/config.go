@@ -27,7 +27,7 @@ import (
 )
 
 // DefaultWorkspaceClass is the name of the default workspace class
-const DefaultWorkspaceClass = "default"
+const DefaultWorkspaceClass = "g1-standard"
 
 type osFS struct{}
 
