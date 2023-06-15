@@ -14,17 +14,6 @@ spec:
 
   - name: workspace-alerts
     rules:
-    - alert: GitpodWorkspaceStuckOnStopped
-      labels:
-        severity: warning
-        team: workspace
-      for: 20m
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopped.md
-        summary: Workspaces are stuck in STOPPED phase on cluster {{ $labels.cluster }}.
-        description: '{{ printf "%.2f" $value }} regular workspaces are stuck on stopped for more than 20 minutes. Current status: {{ $labels.reason }}'
-      expr: |
-        sum(gitpod_ws_manager_workspace_phase_total{phase="STOPPED", cluster!~"ephemeral.*"}) > 5
     - alert: GitpodWorkspaceStuckOnStoppedMk2
       labels:
         severity: warning
@@ -37,18 +26,6 @@ spec:
       expr: |
         sum(gitpod_ws_manager_mk2_workspace_phase_total{phase="STOPPED", cluster!~"ephemeral.*"}) > 5
 
-    - alert: GitpodWorkspaceStuckOnStopping
-      labels:
-        severity: critical
-      for: 30m
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopping.md
-        summary: 15 or more workspaces are stuck on stopping in cluster {{ $labels.cluster }}.
-        description: '{{ printf "%.2f" $value }} {{ $labels.workspace_type }} workspaces are stuck on stopping for more than 20 minutes.'
-      expr: |
-        sum(
-          gitpod_ws_manager_workspace_phase_total{type="REGULAR", phase="STOPPING", cluster!~"ephemeral.*"}
-        ) without(phase) > 15
     - alert: GitpodWorkspaceStuckOnStoppingMk2
       labels:
         severity: critical
@@ -62,15 +39,6 @@ spec:
           gitpod_ws_manager_mk2_workspace_phase_total{type="REGULAR", phase="STOPPING", cluster!~"ephemeral.*"}
         ) without(phase) > 15
 
-    - alert: GitpodWorkspaceHighFailureRate
-      labels:
-        severity: critical
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceHighFailureRate.md
-        summary: Workspaces are failing in cluster {{ $labels.cluster }}.
-        description: Multiple workspaces are failing for the last 5 minutes
-      expr: |
-          rate(gitpod_ws_manager_workspace_stops_total{reason="failed", type="REGULAR", cluster!~"ephemeral.*"}[5m]) >= 1
     - alert: GitpodWorkspaceHighFailureRateMk2
       labels:
         severity: critical
@@ -91,16 +59,6 @@ spec:
       expr: |
         sum(rate(gitpod_ws_manager_bridge_status_updates_total[1m])) == 0 AND sum(rate(grpc_client_handled_total{grpc_method="StartWorkspace", grpc_service="wsman.WorkspaceManager"}[1m])) != 0
 
-    - alert: GitpodTooManyWorkspacesInPending
-      labels:
-        severity: critical
-      for: 15m
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyWorkspacesInPending.md
-        summary: workspaces are in pending phase
-        description: regular workspaces are stuck in pending phase in cluster {{ $labels.cluster }}.
-      expr: |
-        gitpod_ws_manager_workspace_phase_total{phase="PENDING", type="REGULAR", cluster!~"ephemeral.*"} > 20
     - alert: GitpodTooManyWorkspacesInPendingMk2
       labels:
         severity: critical
@@ -112,16 +70,6 @@ spec:
       expr: |
         gitpod_ws_manager_mk2_workspace_phase_total{phase="PENDING", type="REGULAR", cluster!~"ephemeral.*"} > 20
 
-    - alert: GitpodTooManyPrebuildsInPending
-      labels:
-        severity: critical
-      for: 15m
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyPrebuildsInPending.md
-        summary: workspaces are in pending phase
-        description: prebuilds are stuck in pending phase in cluster {{ $labels.cluster }}.
-      expr: |
-        gitpod_ws_manager_workspace_phase_total{phase="PENDING", type="PREBUILD", cluster!~"ephemeral.*"} > 20
     - alert: GitpodTooManyPrebuildsInPendingMk2
       labels:
         severity: critical
@@ -145,19 +93,19 @@ spec:
 
     - alert: GitpodImagebuildDoneSuccess
       labels:
-        severity: critical
+        severity: warning
         team: workspace
-      for: 4h
+      for: 12h
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildDoneSuccess.md
         summary: imagebuilds done are failing at a high rate in cluster {{ $labels.cluster }}.
-        description: imagebuilds`s are not reaching done at too high of a rate in cluster {{ $labels.cluster }}.
+        description: imagebuilds are not reaching done at too high of a rate in cluster {{ $labels.cluster }}.
       expr: |
         (1 - (sum(rate(gitpod_image_builder_builds_done_total{success="false", cluster!~"ephemeral.*"}[4h])) / sum(rate(gitpod_image_builder_builds_done_total{cluster!~"ephemeral.*"}[4h])))) < 0.60
 
     - alert: GitpodImagebuildStartSuccess
       labels:
-        severity: critical
+        severity: warning
         team: workspace
       for: 2h
       annotations:
@@ -165,15 +113,4 @@ spec:
         summary: imagebuild start success rate is failing in cluster {{ $labels.cluster }}.
         description: imagebuild starts are failing at too high of a rate in cluster {{ $labels.cluster }}.
       expr: |
-        (1 - (sum(rate(gitpod_ws_manager_workspace_starts_failure_total{type="IMAGEBUILD",cluster!~"ephemeral.*"}[4h])) / sum(rate(gitpod_ws_manager_workspace_starts_total{type="IMAGEBUILD", cluster!~"ephemeral.*"}[4h])))) < 0.99
-    - alert: GitpodImagebuildStartSuccess
-      labels:
-        severity: critical
-        team: workspace
-      for: 2h
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodImagebuildStartSuccess.md
-        summary: imagebuild start success rate is failing in cluster {{ $labels.cluster }}.
-        description: imagebuild starts are failing at too high of a rate in cluster {{ $labels.cluster }}.
-      expr: |
-        (1 - (sum(rate(gitpod_ws_manager_mk2_workspace_starts_failure_total{type="IMAGEBUILD",cluster!~"ephemeral.*"}[4h])) / sum(rate(gitpod_ws_manager_mk2_workspace_starts_total{type="IMAGEBUILD", cluster!~"ephemeral.*"}[4h])))) < 0.99
+        (1 - (sum(rate(gitpod_ws_manager_mk2_workspace_starts_failure_total{type="IMAGEBUILD",cluster!~"ephemeral.*"}[8h])) / sum(rate(gitpod_ws_manager_mk2_workspace_starts_total{type="IMAGEBUILD", cluster!~"ephemeral.*"}[4h])))) < 0.99
