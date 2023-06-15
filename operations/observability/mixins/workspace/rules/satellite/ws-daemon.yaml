@@ -8,7 +8,7 @@ metadata:
   labels:
     prometheus: k8s
     role: alert-rules
-  name: ws-daemon-monitoring-rules
+  name: ws-daemon-monitoring-satellite-rules
 spec:
   groups:
   - name: ws-daemon
