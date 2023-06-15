@@ -67,7 +67,7 @@ describe("Migration Job", () => {
             description: "",
         });
 
-        const workspaces = await migrationJob.migrateWorkspaces(1000, "1900-01-01");
+        const workspaces = await migrationJob.migrateWorkspaces(1000);
 
         expect(
             workspaces.some((w) => w.organizationId === org.id && w.id === ws.id),

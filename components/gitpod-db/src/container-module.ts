@@ -44,7 +44,6 @@ import { WebhookEventDBImpl } from "./typeorm/webhook-event-db-impl";
 import { PersonalAccessTokenDBImpl } from "./typeorm/personal-access-token-db-impl";
 import { LinkedInProfileDBImpl } from "./typeorm/linked-in-profile-db-impl";
 import { LinkedInProfileDB } from "./linked-in-profile-db";
-import { JobStateDbImpl } from "./typeorm/job-state-db-impl";
 import { DataCache, DataCacheNoop } from "./data-cache";
 
 // THE DB container module that contains all DB implementations
@@ -108,8 +107,6 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
 
         bind(PersonalAccessTokenDBImpl).toSelf().inSingletonScope();
         bind(PersonalAccessTokenDB).toService(PersonalAccessTokenDBImpl);
-
-        bind(JobStateDbImpl).toSelf().inSingletonScope();
 
         // com concerns
         bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
