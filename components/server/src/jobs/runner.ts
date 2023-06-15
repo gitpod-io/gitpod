@@ -18,16 +18,15 @@ import { WebhookEventGarbageCollector } from "./webhook-gc";
 import { WorkspaceGarbageCollector } from "./workspace-gc";
 import { SnapshotsJob } from "./snapshots";
 import { OrgOnlyMigrationJob } from "./org-only-migration-job";
-import { JobStateDbImpl } from "@gitpod/gitpod-db/lib/typeorm/job-state-db-impl";
 import { FixStripeJob } from "./fix-stripe-job";
 
 export const Job = Symbol("Job");
 
-export interface Job<T = any> {
+export interface Job {
     readonly name: string;
     readonly frequencyMs: number;
     readonly lockedResources?: string[];
-    run: (previousState?: T) => Promise<T>;
+    run: () => Promise<void>;
 }
 
 @injectable()
@@ -42,7 +41,6 @@ export class JobRunner {
     @inject(SnapshotsJob) protected snapshotsJob: SnapshotsJob;
     @inject(OrgOnlyMigrationJob) protected orgOnlyMigrationJob: OrgOnlyMigrationJob;
     @inject(FixStripeJob) protected fixStripeJob: FixStripeJob;
-    @inject(JobStateDbImpl) protected jobStateDb: JobStateDbImpl;
 
     public start(): DisposableCollection {
         const disposables = new DisposableCollection();
@@ -89,11 +87,7 @@ export class JobRunner {
                 reportJobStarted(job.name);
                 const now = new Date().getTime();
                 try {
-                    const stateBefore = await this.jobStateDb.getState(job.name);
-                    const stateAfter = await job.run(stateBefore?.state);
-                    if (stateAfter !== undefined && typeof stateAfter === "object") {
-                        await this.jobStateDb.setState(job.name, stateAfter);
-                    }
+                    await job.run();
                     log.info(`Successfully finished job ${job.name}`, {
                         ...logCtx,
                         jobTookSec: `${(new Date().getTime() - now) / 1000}s`,

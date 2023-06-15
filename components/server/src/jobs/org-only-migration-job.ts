@@ -11,12 +11,8 @@ import { inject, injectable } from "inversify";
 import { UserToTeamMigrationService } from "../migration/user-to-team-migration-service";
 import { Job } from "./runner";
 
-interface MigrationState {
-    migratedUpToCreationDate: string;
-}
-
 @injectable()
-export class OrgOnlyMigrationJob implements Job<MigrationState> {
+export class OrgOnlyMigrationJob implements Job {
     @inject(UserToTeamMigrationService) protected readonly migrationService: UserToTeamMigrationService;
     @inject(TypeORM) protected readonly db: TypeORM;
     @inject(UserDB) protected readonly userDB: UserDB;
@@ -25,15 +21,13 @@ export class OrgOnlyMigrationJob implements Job<MigrationState> {
     public readonly name = "org-only-migration-job";
     public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
-    public async migrateWorkspaces(limit: number, newerThan: string): Promise<Workspace[]> {
+    public async migrateWorkspaces(limit: number): Promise<Workspace[]> {
         try {
             const workspaceRepo = (await this.db.getConnection()).manager.getRepository<DBWorkspace>(DBWorkspace);
             const workspaces = await workspaceRepo
                 .createQueryBuilder("ws")
                 .where("ws.organizationId IS NULL")
                 .andWhere("contentDeletedTime = ''")
-                .andWhere("creationTime > :newerThan", { newerThan })
-                .orderBy("creationTime", "ASC")
                 .limit(limit)
                 .getMany();
 
@@ -57,16 +51,7 @@ export class OrgOnlyMigrationJob implements Job<MigrationState> {
         }
     }
 
-    public async run(state?: MigrationState): Promise<MigrationState> {
-        const migratedWorkspaces = await this.migrateWorkspaces(3000, state?.migratedUpToCreationDate || "1900-01-01"); // in prod we do ~300 / minute
-        if (migratedWorkspaces.length > 0) {
-            const migratedWorkspace = migratedWorkspaces[migratedWorkspaces.length - 1];
-            return {
-                migratedUpToCreationDate: migratedWorkspace.creationTime,
-            };
-        }
-        return {
-            migratedUpToCreationDate: new Date().toISOString(),
-        };
+    public async run(): Promise<void> {
+        await this.migrateWorkspaces(3000);
     }
 }
