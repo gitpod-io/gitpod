@@ -31,7 +31,7 @@ export class FixStripeJob implements Job {
             const c = await this.typeorm.getConnection();
             const result = await c.query(`
                 SELECT
-                    c.stripeCustomerid, o.id as organizationId, u.id as userId
+                    c.stripeCustomerId as stripeCustomerId, o.id as organizationId, u.id as userId
                 FROM
                     d_b_stripe_customer c, d_b_team o, d_b_team_membership m, d_b_user u
                 WHERE
@@ -49,7 +49,7 @@ export class FixStripeJob implements Job {
             for (const row of result) {
                 const userId = row.userId;
                 const organizationId = row.organizationId;
-                const stripeCustomerId = row.stripeCustomerid;
+                const stripeCustomerId = row.stripeCustomerId;
                 const newAttributionID = AttributionId.render({ kind: "team", teamId: organizationId });
                 const oldAttributionID = AttributionId.render({ kind: "user", userId: userId });
                 try {
@@ -86,6 +86,9 @@ export async function fixInvoice(c: Connection, oldAttributionID: string, newAtt
     const result = await c.query(`SELECT effectiveTime, kind FROM d_b_usage where attributionId = ?`, [
         oldAttributionID,
     ]);
+    if (result.length > 1) {
+        log.error(`Error fixing invoice. Expected 1 result, got ${result.length} (attributionId: ${oldAttributionID})`);
+    }
     if (result.length === 1) {
         const invoiceTime = result[0].effectiveTime;
         if (result[0].kind !== "invoice") {
