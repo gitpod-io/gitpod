@@ -187,27 +187,12 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 	newCC.BillingCycleStart = existingCC.BillingCycleStart
 	newCC.NextBillingTime = existingCC.NextBillingTime
 
-	isTeam := attributionID.IsEntity(AttributionEntity_Team)
-	isUser := attributionID.IsEntity(AttributionEntity_User)
-
-	var defaultSpendingLimit int32
-	if isUser {
-		defaultSpendingLimit = c.cfg.ForUsers
-		// New billing strategy is Stripe
-		if newCC.BillingStrategy == CostCenter_Stripe {
-			if newCC.SpendingLimit < c.cfg.MinForUsersOnStripe {
-				return CostCenter{}, status.Errorf(codes.FailedPrecondition, "individual users cannot lower their spending below %d", c.cfg.ForUsers)
-			}
-		}
-	} else if isTeam {
-		defaultSpendingLimit = c.cfg.ForTeams
-	} else {
-		return CostCenter{}, status.Errorf(codes.InvalidArgument, "Unknown attribution entity %s", string(attributionID))
-	}
-
 	// Transitioning into free plan
 	if existingCC.BillingStrategy != CostCenter_Other && newCC.BillingStrategy == CostCenter_Other {
-		newCC.SpendingLimit = defaultSpendingLimit
+		newCC.SpendingLimit, err = c.getPreviousSpendingLimit(newCC.ID)
+		if err != nil {
+			return CostCenter{}, err
+		}
 		newCC.BillingCycleStart = NewVarCharTime(now)
 		// see you next month
 		newCC.NextBillingTime = NewVarCharTime(now.AddDate(0, 1, 0))
@@ -231,6 +216,23 @@ func (c *CostCenterManager) UpdateCostCenter(ctx context.Context, newCC CostCent
 		return CostCenter{}, fmt.Errorf("failed to save cost center for attributionID %s: %w", newCC.ID, db.Error)
 	}
 	return newCC, nil
+}
+
+func (c *CostCenterManager) getPreviousSpendingLimit(attributionID AttributionID) (int32, error) {
+	var previousCostCenter CostCenter
+	// find the youngest cost center with billingStrategy='other'
+	db := c.conn.
+		Where("id = ? AND billingStrategy = ?", attributionID, CostCenter_Other).
+		Order("creationTime DESC").
+		Limit(1).
+		Find(&previousCostCenter)
+	if db.Error != nil {
+		return 0, fmt.Errorf("failed to get previous cost center: %w", db.Error)
+	}
+	if previousCostCenter.ID == "" {
+		return c.cfg.ForTeams, nil
+	}
+	return previousCostCenter.SpendingLimit, nil
 }
 
 func (c *CostCenterManager) BalanceOutUsage(ctx context.Context, attributionID AttributionID, maxCreditCentsCovered CreditCents) error {

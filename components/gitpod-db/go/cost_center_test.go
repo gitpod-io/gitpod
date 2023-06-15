@@ -200,46 +200,6 @@ func TestCostCenterManager_UpdateCostCenter(t *testing.T) {
 
 	})
 
-	t.Run("individual user upgrading to stripe can set a limit of 1000 or more, but not less than 1000", func(t *testing.T) {
-		mnr := db.NewCostCenterManager(conn, limits)
-		userAttributionID := db.NewUserAttributionID(uuid.New().String())
-		cleanUp(t, conn, userAttributionID)
-
-		// Upgrading to Stripe requires spending limit
-		res, err := mnr.UpdateCostCenter(context.Background(), db.CostCenter{
-			ID:              userAttributionID,
-			BillingStrategy: db.CostCenter_Stripe,
-			SpendingLimit:   1000,
-		})
-		require.NoError(t, err)
-		requireCostCenterEqual(t, db.CostCenter{
-			ID:              userAttributionID,
-			SpendingLimit:   1000,
-			BillingStrategy: db.CostCenter_Stripe,
-		}, res)
-
-		// Try to lower the spending limit below configured limit
-		_, err = mnr.UpdateCostCenter(context.Background(), db.CostCenter{
-			ID:              userAttributionID,
-			BillingStrategy: db.CostCenter_Stripe,
-			SpendingLimit:   999,
-		})
-		require.Error(t, err, "lowering spending limit  below configured value is not allowed for user subscriptions")
-
-		// Try to update the cost center to higher usage limit
-		res, err = mnr.UpdateCostCenter(context.Background(), db.CostCenter{
-			ID:              userAttributionID,
-			BillingStrategy: db.CostCenter_Stripe,
-			SpendingLimit:   1001,
-		})
-		require.NoError(t, err)
-		requireCostCenterEqual(t, db.CostCenter{
-			ID:              userAttributionID,
-			SpendingLimit:   1001,
-			BillingStrategy: db.CostCenter_Stripe,
-		}, res)
-	})
-
 	t.Run("team on Other billing strategy get a spending limit of 0", func(t *testing.T) {
 		mnr := db.NewCostCenterManager(conn, limits)
 		teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
@@ -463,6 +423,40 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 		require.Equal(t, db.CostCenter_Other, newCC.BillingStrategy)
 		require.Equal(t, db.NewVarCharTime(ts.AddDate(0, 1, 0)).Time(), newCC.NextBillingTime.Time())
 
+	})
+
+	t.Run("transitioning from stripe back to other restores previous limit", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
+			ForTeams: 0,
+			ForUsers: 500,
+		})
+		var originalSpendingLimit int32 = 10
+		cc := dbtest.CreateCostCenters(t, conn, db.CostCenter{
+			ID:                db.NewTeamAttributionID(uuid.New().String()),
+			CreationTime:      db.NewVarCharTime(time.Now()),
+			SpendingLimit:     originalSpendingLimit,
+			BillingStrategy:   db.CostCenter_Other,
+			NextBillingTime:   db.NewVarCharTime(ts),
+			BillingCycleStart: db.NewVarCharTime(ts.AddDate(0, -1, 0)),
+		})[0]
+		cc.BillingStrategy = db.CostCenter_Stripe
+		_, err := mnr.UpdateCostCenter(context.Background(), cc)
+		require.NoError(t, err)
+		// change spending limit
+		cc.SpendingLimit = int32(20)
+		_, err = mnr.UpdateCostCenter(context.Background(), cc)
+		require.NoError(t, err)
+
+		cc, err = mnr.GetOrCreateCostCenter(context.Background(), cc.ID)
+		require.NoError(t, err)
+		require.Equal(t, int32(20), cc.SpendingLimit)
+
+		// change to other strategy again and verify the original limit is restored
+		cc.BillingStrategy = db.CostCenter_Other
+		cc, err = mnr.UpdateCostCenter(context.Background(), cc)
+		require.NoError(t, err)
+		require.Equal(t, originalSpendingLimit, cc.SpendingLimit)
 	})
 
 }
