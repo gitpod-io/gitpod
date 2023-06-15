@@ -123,7 +123,7 @@ func NewWorkspaceOperations(config content.Config, provider *WorkspaceProvider, 
 }
 
 func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, options InitOptions) (string, error) {
-	ws, err := wso.provider.Create(ctx, options.Meta.InstanceID, filepath.Join(wso.provider.Location, options.Meta.InstanceID),
+	ws, err := wso.provider.NewWorkspace(ctx, options.Meta.InstanceID, filepath.Join(wso.provider.Location, options.Meta.InstanceID),
 		wso.creator(options.Meta.Owner, options.Meta.WorkspaceID, options.Meta.InstanceID, options.Initializer, false, options.StorageQuota))
 
 	if err != nil {
@@ -186,7 +186,7 @@ func (wso *DefaultWorkspaceOperations) InitWorkspace(ctx context.Context, option
 	return "", nil
 }
 
-func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID string, init *csapi.WorkspaceInitializer, storageDisabled bool, storageQuota int) session.WorkspaceFactory {
+func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID string, init *csapi.WorkspaceInitializer, storageDisabled bool, storageQuota int) WorkspaceFactory {
 	var checkoutLocation string
 	allLocations := csapi.GetCheckoutLocationsFromInitializer(init)
 	if len(allLocations) > 0 {
@@ -203,7 +203,6 @@ func (wso *DefaultWorkspaceOperations) creator(owner, workspaceID, instanceID st
 			WorkspaceID:           workspaceID,
 			InstanceID:            instanceID,
 			RemoteStorageDisabled: storageDisabled,
-			IsMk2:                 true,
 			StorageQuota:          storageQuota,
 
 			ServiceLocDaemon: filepath.Join(wso.config.WorkingArea, serviceDirName),
@@ -277,6 +276,7 @@ func (wso *DefaultWorkspaceOperations) DeleteWorkspace(ctx context.Context, inst
 		glog.WithError(err).Error("cannot delete workspace daemon directory")
 		return err
 	}
+	wso.provider.Remove(ctx, instanceID)
 
 	return nil
 }

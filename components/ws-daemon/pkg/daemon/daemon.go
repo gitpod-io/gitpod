@@ -194,7 +194,7 @@ func NewDaemon(config Config) (*Daemon, error) {
 		config.CPULimit.CGroupBasePath,
 	)
 
-	workspaceOps, err := controller.NewWorkspaceOperations(contentCfg, controller.NewWorkspaceProvider(hooks, contentCfg.WorkingArea), wrappedReg)
+	workspaceOps, err := controller.NewWorkspaceOperations(contentCfg, controller.NewWorkspaceProvider(contentCfg.WorkingArea, hooks), wrappedReg)
 	if err != nil {
 		return nil, err
 	}
