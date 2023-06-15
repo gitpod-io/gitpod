@@ -366,6 +366,45 @@ func TestListUsage(t *testing.T) {
 
 }
 
+func TestListUsageEncoding(t *testing.T) {
+
+	start := time.Date(2022, 7, 1, 0, 0, 0, 0, time.UTC)
+	end := time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC)
+
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
+
+	workspaceIntance := dbtest.NewUsage(t, db.Usage{
+		AttributionID: attributionID,
+		EffectiveTime: db.NewVarCharTime(start.Add(2 * time.Hour)),
+		CreditCents:   100,
+		Draft:         false,
+	})
+	err := workspaceIntance.SetMetadataWithWorkspaceInstance(db.WorkspaceInstanceUsageData{
+		WorkspaceType: db.WorkspaceType_Regular,
+		UserName:      "Filip Troníček",
+	})
+	require.NoError(t, err)
+
+	conn := dbtest.ConnectForTests(t)
+	dbtest.CreateUsageRecords(t, conn, workspaceIntance)
+
+	usageService := newUsageService(t, conn)
+
+	metaData, err := usageService.ListUsage(context.Background(), &v1.ListUsageRequest{
+		AttributionId: string(attributionID),
+		From:          timestamppb.New(start),
+		To:            timestamppb.New(end),
+		Order:         v1.ListUsageRequest_ORDERING_DESCENDING,
+		Pagination: &v1.PaginatedRequest{
+			PerPage: 1,
+			Page:    1,
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, metaData.UsageEntries, 1)
+	require.Contains(t, metaData.UsageEntries[0].Metadata, "Filip Troníček")
+}
+
 func TestAddUSageCreditNote(t *testing.T) {
 	tests := []struct {
 		credits     int32
