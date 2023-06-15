@@ -39,6 +39,8 @@ import { settingsPathIntegrations } from "../user-settings/settings.routes";
 import { useDirtyState } from "../hooks/use-dirty-state";
 import { LinkButton } from "../components/LinkButton";
 import { InputField } from "../components/forms/InputField";
+import classNames from "classnames";
+import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -188,8 +190,8 @@ export function CreateWorkspacePage() {
             opts.ignoreRunningWorkspaceOnSameCommit = true;
             opts.ignoreRunningPrebuild = true;
 
-            // if user received an INVALID_GITPOD_YML yml, they can choose to proceed using default configuration
-            if (createWorkspaceMutation.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
+            // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
+            if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
                 opts.forceDefaultConfig = true;
             }
 
@@ -242,15 +244,16 @@ export function CreateWorkspacePage() {
             }
         },
         [
+            workspaceContext.error?.code,
             contextURL,
             currentOrg?.id,
             selectedWsClass,
             selectedIde,
             useLatestIde,
             createWorkspaceMutation,
-            autostart,
             storeAutoStartOptions,
             history,
+            autostart,
         ],
     );
 
@@ -326,6 +329,23 @@ export function CreateWorkspacePage() {
             setAutostart(true);
         }
     }, [selectedIdeIsDirty, setSelectedIde, workspaceContext.data]);
+
+    // Derive if the continue button is disabled based on current state
+    const continueButtonDisabled = useMemo(() => {
+        if (workspaceContext.isLoading || !contextURL || contextURL.length === 0 || !!errorIde || !!errorWsClass) {
+            return true;
+        }
+        if (workspaceContext.error) {
+            // For INVALID_GITPOD_YML we don't want to disable the button
+            // The user see a warning that their file is invalid, but they can continue and it will be ignored
+            if (workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML) {
+                return false;
+            }
+            return true;
+        }
+
+        return false;
+    }, [contextURL, errorIde, errorWsClass, workspaceContext.error, workspaceContext.isLoading]);
 
     if (SelectAccountPayload.is(selectAccountError)) {
         return (
@@ -410,14 +430,7 @@ export function CreateWorkspacePage() {
                         autoFocus={true}
                         size="block"
                         loading={createWorkspaceMutation.isStarting}
-                        disabled={
-                            workspaceContext.isLoading ||
-                            !contextURL ||
-                            contextURL.length === 0 ||
-                            !!errorIde ||
-                            !!errorWsClass ||
-                            !!workspaceContext.error
-                        }
+                        disabled={continueButtonDisabled}
                     >
                         {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
                     </Button>
@@ -516,12 +529,10 @@ const ErrorMessage: FunctionComponent<ErrorMessageProps> = ({ error, reset, setS
     switch (error.code) {
         case ErrorCodes.INVALID_GITPOD_YML:
             return (
-                // TODO: verify the "use default config" click works
-                // https://linear.app/gitpod/issue/WEB-405/new-workspace-use-default-config-broken
                 <RepositoryInputError
-                    title="The .gitpod.yml file is invalid. You may continue, but it will be ignored and default configuration will be used."
+                    type="warning"
+                    title="The .gitpod.yml file is invalid. You may continue, but it will be ignored."
                     message={error.message}
-                    // linkOnClick={() => createWorkspace({ forceDefaultConfig: true })}
                 />
             );
         case ErrorCodes.NOT_AUTHENTICATED:
@@ -552,39 +563,70 @@ const ErrorMessage: FunctionComponent<ErrorMessageProps> = ({ error, reset, setS
         case ErrorCodes.NEEDS_VERIFICATION:
             return <VerifyModal />;
         default:
-            return <RepositoryInputError title="Error" message={error.message || JSON.stringify(error)} />;
+            // Catch-All error message
+            return (
+                <RepositoryInputError
+                    title="We're sorry, there seems to have been an error."
+                    message={error.message || JSON.stringify(error)}
+                />
+            );
     }
 };
 
 type RepositoryInputErrorProps = {
+    type?: "error" | "warning";
     title: string;
     message?: string;
     linkText?: string;
     linkHref?: string;
     linkOnClick?: () => void;
 };
-const RepositoryInputError: FC<RepositoryInputErrorProps> = ({ title, message, linkText, linkHref, linkOnClick }) => {
+const RepositoryInputError: FC<RepositoryInputErrorProps> = ({
+    type = "error",
+    title,
+    message,
+    linkText,
+    linkHref,
+    linkOnClick,
+}) => {
     return (
-        <div className="mx-2">
-            <div>
-                <span className="text-sm">{title}</span>
-                {linkText && (
-                    <>
-                        {" "}
-                        {linkOnClick ? (
-                            <LinkButton className="whitespace-nowrap text-sm" onClick={linkOnClick}>
-                                {linkText}
-                            </LinkButton>
-                        ) : (
-                            <a className="gp-link whitespace-nowrap text-sm" href={linkHref}>
-                                {linkText}
-                            </a>
-                        )}
-                    </>
+        <div
+            className={classNames("mx-2", {
+                "text-yellow-600 dark:text-yellow-50": type === "warning",
+            })}
+        >
+            <div className="flex space-x-3">
+                {type === "warning" && (
+                    <span className={`mt-1 h-4 w-4 text-yellow-400 dark:text-yellow-900`}>
+                        <Exclamation2 className="w-4 h-4" />
+                    </span>
                 )}
+                <div>
+                    <div>
+                        <span className="text-sm">{title}</span>
+                        {linkText && (
+                            <>
+                                {" "}
+                                {linkOnClick ? (
+                                    <LinkButton className="whitespace-nowrap text-sm" onClick={linkOnClick}>
+                                        {linkText}
+                                    </LinkButton>
+                                ) : (
+                                    <a className="gp-link whitespace-nowrap text-sm" href={linkHref}>
+                                        {linkText}
+                                    </a>
+                                )}
+                            </>
+                        )}
+                    </div>
+                    {/* TODO: Default this to a smaller fixed height (2 lines) and add a show more link button that expands */}
+                    {message && (
+                        <div className="mt-2 font-mono text-xs">
+                            <span>{message}</span>
+                        </div>
+                    )}
+                </div>
             </div>
-            {/* TODO: style this */}
-            {message && <div>{message}</div>}
         </div>
     );
 };
@@ -595,7 +637,7 @@ export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }
     const authProviders = useAuthProviders();
     const authProvider = authProviders.data?.find((a) => a.host === host);
     if (!authProvider) {
-        return null;
+        return <RepositoryInputError title="The repository was not found in your account." />;
     }
 
     // TODO: this should be aware of already granted permissions
