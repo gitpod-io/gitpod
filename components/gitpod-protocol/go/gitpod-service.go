@@ -1683,9 +1683,11 @@ type Workspace struct {
 	// during workspace creation. Once a base image has been built the information in here
 	// is superseded by baseImageNameResolved.
 	ImageSource interface{} `json:"imageSource,omitempty"`
-	OwnerID     string      `json:"ownerId,omitempty"`
-	Pinned      bool        `json:"pinned,omitempty"`
-	Shareable   bool        `json:"shareable,omitempty"`
+	// undefined means it is owned by the user (legacy mode, soon to be removed)
+	OrganizationId string `json:"organizationId,omitempty"`
+	OwnerID        string `json:"ownerId,omitempty"`
+	Pinned         bool   `json:"pinned,omitempty"`
+	Shareable      bool   `json:"shareable,omitempty"`
 
 	// Mark as deleted (user-facing). The actual deletion of the workspace content is executed
 	// with a (configurable) delay
