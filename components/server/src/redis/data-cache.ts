@@ -25,7 +25,7 @@ export class DataCacheRedis implements DataCache {
         const stopGetTimer = redisCacheGetLatencyHistogram.startTimer({ cache_group });
         let result: string | null = null;
         try {
-            result = await this.redis.get().get(cacheKey);
+            result = await this.redis.get().getex(cacheKey, "EX", TTL_SEC);
         } catch (error) {
             log.error("Error retrieving cache value", error, { cacheKey });
         } finally {
