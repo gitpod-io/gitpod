@@ -303,14 +303,14 @@ class TestEnvVarService {
                 id: "1",
                 name: "USER_GLOBAL_TEST",
                 value: "true",
-                repositoryPattern: "*/*",
+                repositoryPattern: "*/**",
                 userId: "1",
             },
             {
                 id: "2",
                 name: "USER_GROUP_TEST",
                 value: "true",
-                repositoryPattern: "geropl-test-group/*",
+                repositoryPattern: "geropl-test-group/**",
                 userId: "1",
             },
             {
