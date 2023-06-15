@@ -119,6 +119,15 @@ export class StripeService {
         newAttributionId: string,
         oldAttributionId: string,
     ): Promise<boolean> {
+        if (stripeCustomerId.length === 0) {
+            throw new Error(`Cannot update Stripe customer with empty stripeCustomerId`);
+        }
+        if (newAttributionId.length === 0) {
+            throw new Error(`Cannot update Stripe customer with empty newAttributionId`);
+        }
+        if (oldAttributionId.length === 0) {
+            throw new Error(`Cannot update Stripe customer with empty oldAttributionId`);
+        }
         const result = await this.getStripe().customers.search({
             query: `metadata['attributionId']:'${oldAttributionId}'`,
         });
