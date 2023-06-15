@@ -33,7 +33,7 @@ func NewWorkspaceProvider(location string, hooks map[session.WorkspaceState][]se
 }
 
 func (wf *WorkspaceProvider) NewWorkspace(ctx context.Context, instanceID, location string, create WorkspaceFactory) (ws *session.Workspace, err error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "WorkspaceProvider.Create")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "WorkspaceProvider.NewWorkspace")
 	tracing.ApplyOWI(span, log.OWI("", "", instanceID))
 	defer tracing.FinishSpan(span, &err)
 
@@ -57,7 +57,7 @@ func (wf *WorkspaceProvider) NewWorkspace(ctx context.Context, instanceID, locat
 }
 
 func (wf *WorkspaceProvider) Remove(ctx context.Context, instanceID string) {
-	span, _ := opentracing.StartSpanFromContext(ctx, "WorkspaceProvider.Create")
+	span, _ := opentracing.StartSpanFromContext(ctx, "WorkspaceProvider.Remove")
 	tracing.ApplyOWI(span, log.OWI("", "", instanceID))
 	defer tracing.FinishSpan(span, nil)
 
