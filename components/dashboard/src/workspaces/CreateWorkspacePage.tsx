@@ -188,6 +188,11 @@ export function CreateWorkspacePage() {
             opts.ignoreRunningWorkspaceOnSameCommit = true;
             opts.ignoreRunningPrebuild = true;
 
+            // if user received an INVALID_GITPOD_YML yml, they can choose to proceed using default configuration
+            if (createWorkspaceMutation.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
+                opts.forceDefaultConfig = true;
+            }
+
             if (!opts.workspaceClass) {
                 opts.workspaceClass = selectedWsClass;
             }
