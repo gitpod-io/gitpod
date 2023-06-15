@@ -81,7 +81,7 @@ var clustersGetTlsConfigCmd = &cobra.Command{
 }
 
 func init() {
-	clustersGetTlsConfigCmd.Flags().String("secretName", "ws-manager-client-tls", "secret name")
+	clustersGetTlsConfigCmd.Flags().String("secretName", "ws-manager-mk2-client-tls", "secret name")
 	clustersGetTlsConfigCmd.Flags().String("namespace", "", "override the namespace in the current kubectx")
 	clustersGetTlsConfigCmd.Flags().String("tls-path", "./wsman-tls", "folder to write the secrets to")
 

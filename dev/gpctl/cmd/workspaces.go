@@ -79,11 +79,11 @@ func getWorkspacesClient(ctx context.Context) (*grpc.ClientConn, api.WorkspaceMa
 		}
 
 		if certFromSecret, _ := workspacesCmd.Flags().GetBool("tls-from-secret"); certFromSecret {
-			certPool, err := util.CertPoolFromSecret(clientSet, namespace, "ws-manager-tls", []string{"ca.crt"})
+			certPool, err := util.CertPoolFromSecret(clientSet, namespace, "ws-manager-mk2-tls", []string{"ca.crt"})
 			if err != nil {
 				return nil, nil, xerrors.Errorf("could not load ca cert: %w", err)
 			}
-			cert, err := util.CertFromSecret(clientSet, namespace, "ws-manager-client-tls", "tls.crt", "tls.key")
+			cert, err := util.CertFromSecret(clientSet, namespace, "ws-manager-mk2-client-tls", "tls.crt", "tls.key")
 			if err != nil {
 				return nil, nil, xerrors.Errorf("could not load tls cert: %w", err)
 			}

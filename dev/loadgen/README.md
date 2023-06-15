@@ -14,7 +14,7 @@ You can find a short explanation of this tool in this [loom video](https://www.l
   ```
 - Fetch the TLS config from ws-manager
   ```console
-  gpctl clusters get-tls-config --secretName ws-manager-mk2-client-tls
+  gpctl clusters get-tls-config
   ```
 - Port-forward ws-manager
   ```console
