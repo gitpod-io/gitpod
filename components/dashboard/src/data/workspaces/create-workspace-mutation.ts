@@ -19,7 +19,6 @@ export const useCreateWorkspaceMutation = () => {
             setIsStarting(true);
         },
         onError: (error) => {
-            console.error(error);
             setIsStarting(false);
         },
         onSuccess: (result) => {
@@ -37,6 +36,7 @@ export const useCreateWorkspaceMutation = () => {
         createWorkspace: (options: GitpodServer.CreateWorkspaceOptions) => {
             return mutation.mutateAsync(options);
         },
+        // Can we use mutation.isLoading here instead?
         isStarting,
         error: mutation.error,
         reset: mutation.reset,
