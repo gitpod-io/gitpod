@@ -8,7 +8,7 @@ metadata:
   labels:
     prometheus: k8s
     role: alert-rules
-  name: workspace-monitoring-rules
+  name: workspace-monitoring-satellite-rules
 spec:
   groups:
   - name: workspace-rules
