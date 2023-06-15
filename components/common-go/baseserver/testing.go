@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -48,8 +49,24 @@ func StartServerForTests(t *testing.T, srv *Server) {
 	t.Helper()
 
 	go func() {
-		err := srv.ListenAndServe()
-		require.NoError(t, err)
+		retry := 0
+		for ; retry <= 3; retry++ {
+			err := srv.ListenAndServe()
+
+			// TODO(gpl) This is a bandaid, because we are experiencing build reliability issues.
+			// ":0" should trigger the kernel you choose a free port for us, but somehow this fails. Google points to
+			// potential recent kernel bug or tcp4 vs. tcp6 (network stack config) problems.
+			// To not waste more energy debugging our build setup her and now, this bandaid to re-try.
+			// NOTE: If you ask for a specific port (not ":0"), the test still fails
+			if strings.Contains(err.Error(), ":0: bind: address already in use") {
+				time.Sleep(time.Millisecond * 200)
+				continue
+			}
+
+			require.NoError(t, err)
+			return
+		}
+		t.Errorf("Cannot bind to %s after %d retries", srv.options.config.Services.HTTP.Address, retry)
 	}()
 
 	waitForServerToBeReachable(t, srv, 3*time.Second)
