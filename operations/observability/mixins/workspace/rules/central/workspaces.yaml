@@ -8,7 +8,7 @@ metadata:
   labels:
     prometheus: k8s
     role: alert-rules
-  name: workspace-monitoring-rules
+  name: workspace-monitoring-central-rules
 spec:
   groups:
 
@@ -29,6 +29,7 @@ spec:
     - alert: GitpodWorkspaceStuckOnStoppingMk2
       labels:
         severity: critical
+        dedicated: included
       for: 30m
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceStuckOnStopping.md
@@ -42,6 +43,7 @@ spec:
     - alert: GitpodWorkspaceHighFailureRateMk2
       labels:
         severity: critical
+        dedicated: included
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceHighFailureRate.md
         summary: Workspaces are failing in cluster {{ $labels.cluster }}.
@@ -62,6 +64,7 @@ spec:
     - alert: GitpodTooManyWorkspacesInPendingMk2
       labels:
         severity: critical
+        dedicated: included
       for: 15m
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyWorkspacesInPending.md
@@ -73,6 +76,7 @@ spec:
     - alert: GitpodTooManyPrebuildsInPendingMk2
       labels:
         severity: critical
+        dedicated: included
       for: 15m
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodTooManyPrebuildsInPending.md
