@@ -286,6 +286,83 @@ class TestEnvVarService {
             });
         }
     }
+
+    @test
+    public async testRegularGitlabSubgroupWithUserEnvVars() {
+        const gitlabSubgroupCommitContext = {
+            repository: {
+                owner: "geropl-test-group/subgroup1",
+                name: "test-project-1",
+            },
+            revision: "abcd123",
+            title: "geropl-test-group/subgroup1/test-project-1",
+        } as CommitContext;
+
+        const userEnvVars: UserEnvVar[] = [
+            {
+                id: "1",
+                name: "USER_GLOBAL_TEST",
+                value: "true",
+                repositoryPattern: "*/**",
+                userId: "1",
+            },
+            {
+                id: "2",
+                name: "USER_GROUP_TEST",
+                value: "true",
+                repositoryPattern: "geropl-test-group/**",
+                userId: "1",
+            },
+            {
+                id: "3",
+                name: "USER_SUBGROUP_TEST",
+                value: "true",
+                repositoryPattern: "geropl-test-group/subgroup1/*",
+                userId: "1",
+            },
+            {
+                id: "4",
+                name: "USER_SUBGROUP_PROJECT_NEGATIVE_TEST",
+                value: "false",
+                repositoryPattern: "*/test-project-1",
+                userId: "1",
+            },
+            {
+                id: "5",
+                name: "USER_SUBGROUP_STAR_TEST",
+                value: "true",
+                repositoryPattern: "geropl-test-group/*/*",
+                userId: "1",
+            },
+            {
+                id: "6",
+                name: "USER_SUBGROUP_NEGATIVE_TEST",
+                value: "false",
+                repositoryPattern: "geropl-test-group/subgroup2/*",
+                userId: "1",
+            },
+            {
+                id: "7",
+                name: "USER_SUBGROUP_PROJECT_TEST",
+                value: "true",
+                repositoryPattern: "*/subgroup1/test-project-1",
+                userId: "1",
+            },
+        ];
+
+        this.init(userEnvVars, []);
+
+        const envVars = await this.envVarService.resolve({
+            owerId: "1",
+            type: "regular",
+            context: { ...gitlabSubgroupCommitContext },
+            projectId: "1",
+        } as any);
+        expect(envVars).to.deep.equal({
+            project: [],
+            workspace: userEnvVars.filter((ev) => ev.value === "true"),
+        });
+    }
 }
 
 module.exports = new TestEnvVarService();

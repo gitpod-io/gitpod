@@ -314,15 +314,22 @@ export class ScopedResourceGuard<K extends GuardedResourceKind = GuardedResource
 }
 
 export class WorkspaceEnvVarAccessGuard extends ScopedResourceGuard<"envVar"> {
-    private readAccessWildcardPatterns: Set<string> | undefined;
+    private _envVarScopes: string[];
+    protected get envVarScopes() {
+        return (this._envVarScopes = this._envVarScopes || []);
+    }
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         if (resource.kind !== "envVar") {
             return false;
         }
         // allow read access based on wildcard repo patterns matching
-        if (operation === "get" && this.readAccessWildcardPatterns?.has(resource.subject.repositoryPattern)) {
-            return true;
+        if (operation === "get") {
+            for (const scope of this.envVarScopes) {
+                if (UserEnvVar.matchEnvVarPattern(resource.subject.repositoryPattern, scope)) {
+                    return true;
+                }
+            }
         }
         // but mutations only based on exact matching
         return super.canAccess(resource, operation);
@@ -333,11 +340,7 @@ export class WorkspaceEnvVarAccessGuard extends ScopedResourceGuard<"envVar"> {
         if (!scope.operations.includes("get")) {
             return;
         }
-        const [owner, repo] = UserEnvVar.splitRepositoryPattern(scope.subjectID);
-        this.readAccessWildcardPatterns = this.readAccessWildcardPatterns || new Set<string>();
-        this.readAccessWildcardPatterns.add("*/*");
-        this.readAccessWildcardPatterns.add(`${owner}/*`);
-        this.readAccessWildcardPatterns.add(`*/${repo}`);
+        this.envVarScopes.push(scope.subjectID); // the repository that this scope allows access to
     }
 }
 

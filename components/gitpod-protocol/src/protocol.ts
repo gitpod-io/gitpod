@@ -427,6 +427,17 @@ export interface UserEnvVar extends UserEnvVarValue {
 }
 
 export namespace UserEnvVar {
+    export const DELIMITER = "/";
+    export const WILDCARD_ASTERISK = "*";
+    // This wildcard is only allowed on the last segment, and matches arbitrary segments to the right
+    export const WILDCARD_DOUBLE_ASTERISK = "**";
+    const WILDCARD_SHARP = "#"; // TODO(gpl) Where does this come from? Bc we have/had patterns as part of URLs somewhere, maybe...?
+    const MIN_PATTERN_SEGMENTS = 2;
+
+    function isWildcard(c: string): boolean {
+        return c === WILDCARD_ASTERISK || c === WILDCARD_SHARP;
+    }
+
     /**
      * @param variable
      * @returns Either a string containing an error message or undefined.
@@ -452,8 +463,8 @@ export namespace UserEnvVar {
         if (pattern.trim() === "") {
             return "Scope must not be empty.";
         }
-        const split = pattern.split("/");
-        if (split.length < 2) {
+        const split = splitRepositoryPattern(pattern);
+        if (split.length < MIN_PATTERN_SEGMENTS) {
             return "A scope must use the form 'organization/repo'.";
         }
         for (const name of split) {
@@ -466,55 +477,111 @@ export namespace UserEnvVar {
         return undefined;
     }
 
-    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
     export function normalizeRepoPattern(pattern: string) {
         return pattern.toLocaleLowerCase();
     }
 
-    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
-    export function score(value: UserEnvVarValue): number {
-        // We use a score to enforce precedence:
-        //      value/value = 0
-        //      value/*     = 1
-        //      */value     = 2
-        //      */*         = 3
-        //      #/#         = 4 (used for env vars passed through the URL)
-        // the lower the score, the higher the precedence.
-        const [ownerPattern, repoPattern] = splitRepositoryPattern(value.repositoryPattern);
-        let score = 0;
-        if (repoPattern == "*") {
-            score += 1;
-        }
-        if (ownerPattern == "*") {
-            score += 2;
-        }
-        if (ownerPattern == "#" || repoPattern == "#") {
-            score = 4;
-        }
-        return score;
+    function splitRepositoryPattern(pattern: string): string[] {
+        return pattern.split(DELIMITER);
     }
 
-    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
-    export function filter<T extends UserEnvVarValue>(vars: T[], owner: string, repo: string): T[] {
-        let result = vars.filter((e) => {
-            const [ownerPattern, repoPattern] = splitRepositoryPattern(e.repositoryPattern);
-            if (ownerPattern !== "*" && ownerPattern !== "#" && !!owner && ownerPattern !== owner.toLocaleLowerCase()) {
-                return false;
-            }
-            if (repoPattern !== "*" && repoPattern !== "#" && !!repo && repoPattern !== repo.toLocaleLowerCase()) {
-                return false;
-            }
-            return true;
-        });
+    function joinRepositoryPattern(...parts: string[]): string {
+        return parts.join(DELIMITER);
+    }
 
+    /**
+     * Matches the given EnvVar pattern against the fully qualified name of the repository:
+     *  - GitHub: "repo/owner"
+     *  - GitLab: "some/nested/repo" (up to MAX_PATTERN_SEGMENTS deep)
+     * @param pattern
+     * @param repoFqn
+     * @returns True if the pattern matches that fully qualified name
+     */
+    export function matchEnvVarPattern(pattern: string, repoFqn: string): boolean {
+        const fqnSegments = splitRepositoryPattern(repoFqn);
+        const patternSegments = splitRepositoryPattern(pattern);
+        if (patternSegments.length < MIN_PATTERN_SEGMENTS) {
+            // Technically not a problem, but we should not allow this for safety reasons.
+            // And because we hisotrically never allowed this (GitHub would always require at least "*/*") we are just keeping old constraints.
+            // Note: Most importantly this guards against arbitrary wildcard matches
+            return false;
+        }
+
+        function isWildcardMatch(patternSegment: string, isLastSegment: boolean): boolean {
+            if (isWildcard(patternSegment)) {
+                return true;
+            }
+            return isLastSegment && patternSegment === WILDCARD_DOUBLE_ASTERISK;
+        }
+        let i = 0;
+        for (; i < patternSegments.length; i++) {
+            if (i >= fqnSegments.length) {
+                return false;
+            }
+            const fqnSegment = fqnSegments[i];
+            const patternSegment = patternSegments[i];
+            const isLastSegment = patternSegments.length === i + 1;
+            if (!isWildcardMatch(patternSegment, isLastSegment) && patternSegment !== fqnSegment.toLocaleLowerCase()) {
+                return false;
+            }
+        }
+        if (fqnSegments.length > i) {
+            // Special case: "**" as last segment matches arbitrary # of segments to the right
+            if (patternSegments[i - 1] === WILDCARD_DOUBLE_ASTERISK) {
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    // Matches the following patterns for "some/nested/repo", ordered by highest score:
+    //  - exact: some/nested/repo ()
+    //  - partial:
+    //    - some/nested/*
+    //    - some/*
+    //  - generic:
+    //    - */*/*
+    //    - */*
+    // Does NOT match:
+    //  - */repo (number of parts does not match)
+    // cmp. test cases in env-var-service.spec.ts
+    export function filter<T extends UserEnvVarValue>(vars: T[], owner: string, repo: string): T[] {
+        const matchedEnvVars = vars.filter((e) =>
+            matchEnvVarPattern(e.repositoryPattern, joinRepositoryPattern(owner, repo)),
+        );
         const resmap = new Map<string, T[]>();
-        result.forEach((e) => {
+        matchedEnvVars.forEach((e) => {
             const l = resmap.get(e.name) || [];
             l.push(e);
             resmap.set(e.name, l);
         });
 
-        result = [];
+        // In cases of multiple matches per env var: find the best match
+        // Best match is the most specific pattern, where the left-most segment is most significant
+        function scoreMatchedEnvVar(e: T): number {
+            function valueSegment(segment: string): number {
+                switch (segment) {
+                    case WILDCARD_ASTERISK:
+                        return 2;
+                    case WILDCARD_SHARP:
+                        return 2;
+                    case WILDCARD_DOUBLE_ASTERISK:
+                        return 1;
+                    default:
+                        return 3;
+                }
+            }
+            const patternSegments = splitRepositoryPattern(e.repositoryPattern);
+            let result = 0;
+            for (const segment of patternSegments) {
+                // We can assume the pattern matches from context, so we just need to check whether it's a wildcard or not
+                const val = valueSegment(segment);
+                result = result * 10 + val;
+            }
+            return result;
+        }
+        const result = [];
         for (const name of resmap.keys()) {
             const candidates = resmap.get(name);
             if (!candidates) {
@@ -527,12 +594,12 @@ export namespace UserEnvVar {
                 continue;
             }
 
-            let minscore = 10;
-            let bestCandidate: T | undefined;
-            for (const e of candidates) {
-                const score = UserEnvVar.score(e);
-                if (!bestCandidate || score < minscore) {
-                    minscore = score;
+            let bestCandidate = candidates[0];
+            let bestScore = scoreMatchedEnvVar(bestCandidate);
+            for (const e of candidates.slice(1)) {
+                const score = scoreMatchedEnvVar(e);
+                if (score > bestScore) {
+                    bestScore = score;
                     bestCandidate = e;
                 }
             }
@@ -540,14 +607,6 @@ export namespace UserEnvVar {
         }
 
         return result;
-    }
-
-    // DEPRECATED: Use ProjectEnvVar instead of repositoryPattern - https://github.com/gitpod-com/gitpod/issues/5322
-    export function splitRepositoryPattern(repositoryPattern: string): string[] {
-        const patterns = repositoryPattern.split("/");
-        const repoPattern = patterns.slice(1).join("/");
-        const ownerPattern = patterns[0];
-        return [ownerPattern, repoPattern];
     }
 }
 
