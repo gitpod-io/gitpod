@@ -35,7 +35,6 @@ spec:
     - alert: IgnoreMe
       labels:
         severity: critical
-        dedicated: included
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/404.md
         summary: ignore me in cluster {{ $labels.cluster }}.
