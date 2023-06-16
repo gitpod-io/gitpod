@@ -110,4 +110,3 @@ spec:
       labels:
         severity: critical
         team: platform
-        dedicated: included
