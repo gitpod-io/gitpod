@@ -48,7 +48,7 @@ import { DataCache, DataCacheNoop } from "./data-cache";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = (cacheClass = DataCacheNoop) =>
-    new ContainerModule((bind, unbind, isBound, rebind) => {
+    new ContainerModule((bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
         bind(Config).toSelf().inSingletonScope();
         bind(TypeORM).toSelf().inSingletonScope();
         bind(DBWithTracing).toSelf().inSingletonScope();
@@ -78,7 +78,7 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
         bind(OneTimeSecretDB).toService(TypeORMOneTimeSecretDBImpl);
         bindDbWithTracing(TracedOneTimeSecretDB, bind, OneTimeSecretDB).inSingletonScope();
 
-        encryptionModule(bind, unbind, isBound, rebind);
+        encryptionModule(bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation);
         bind(KeyProviderConfig)
             .toDynamicValue((ctx) => {
                 const config = ctx.container.get<Config>(Config);
