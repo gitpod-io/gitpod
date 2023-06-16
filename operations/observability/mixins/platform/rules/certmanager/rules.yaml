@@ -25,6 +25,7 @@ spec:
       labels:
         severity: critical
         team: platform
+        dedicated: included
   - name: certificates
     rules:
     - alert: CertManagerCertExpirySoon
