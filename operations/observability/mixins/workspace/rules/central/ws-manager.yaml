@@ -32,3 +32,13 @@ spec:
         description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 10 minutes.
       expr: |
         increase(kube_pod_container_status_restarts_total{container="ws-manager-mk2", cluster!~"ephemeral.*"}[10m]) > 0
+    - alert: IgnoreMe
+      labels:
+        severity: critical
+        dedicated: included
+      annotations:
+        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/404.md
+        summary: ignore me in cluster {{ $labels.cluster }}.
+        description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 10 minutes.
+      expr: |
+        sum(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="Regular"}) > 1
