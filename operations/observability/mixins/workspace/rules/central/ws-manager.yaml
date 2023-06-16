@@ -41,4 +41,4 @@ spec:
         summary: ignore me in cluster {{ $labels.cluster }}.
         description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 10 minutes.
       expr: |
-        sum(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="Regular"}) > 1
+        sum(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="Regular"}) > 0
