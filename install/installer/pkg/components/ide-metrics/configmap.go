@@ -86,7 +86,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		},
 		{
 			Name: "grpc_server_started_total",
-			Help: "Total number of RPCs started on the server",
+			Help: "Total number of RPCs started on the server.",
 			Labels: []config.LabelAllowList{
 				{
 					Name:        "grpc_method",
