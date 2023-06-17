@@ -433,6 +433,10 @@ func (w *Workspace) IsHeadless() bool {
 	return w.Spec.Type != WorkspaceTypeRegular
 }
 
+func (w *Workspace) IsConditionTrue(condition WorkspaceCondition) bool {
+	return wsk8s.ConditionPresentAndTrue(w.Status.Conditions, string(condition))
+}
+
 func init() {
 	SchemeBuilder.Register(&Workspace{}, &WorkspaceList{})
 }
