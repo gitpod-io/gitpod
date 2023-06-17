@@ -241,11 +241,11 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 
 	switch {
 	// if there is a pod, and it's failed, delete it
-	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) && !isPodBeingDeleted(pod):
+	case workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) && !isPodBeingDeleted(pod):
 		return r.deleteWorkspacePod(ctx, pod, "workspace failed")
 
 	// if the pod was stopped by request, delete it
-	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)) && !isPodBeingDeleted(pod):
+	case workspace.IsConditionTrue(workspacev1.WorkspaceConditionStoppedByRequest) && !isPodBeingDeleted(pod):
 		var gracePeriodSeconds *int64
 		if c := wsk8s.GetCondition(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest)); c != nil {
 			if dt, err := time.ParseDuration(c.Message); err == nil {
@@ -263,11 +263,11 @@ func (r *WorkspaceReconciler) actOnStatus(ctx context.Context, workspace *worksp
 		}
 
 	// if the node disappeared, delete the pod.
-	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionNodeDisappeared)) && !isPodBeingDeleted(pod):
+	case workspace.IsConditionTrue(workspacev1.WorkspaceConditionNodeDisappeared) && !isPodBeingDeleted(pod):
 		return r.deleteWorkspacePod(ctx, pod, "node disappeared")
 
 	// if the workspace timed out, delete it
-	case wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) && !isPodBeingDeleted(pod):
+	case workspace.IsConditionTrue(workspacev1.WorkspaceConditionTimeout) && !isPodBeingDeleted(pod):
 		return r.deleteWorkspacePod(ctx, pod, "timed out")
 
 	// if the content initialization failed, delete the pod
@@ -323,23 +323,23 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 		lastState.recordedInitFailure = true
 	}
 
-	if !lastState.recordedFailure && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
+	if !lastState.recordedFailure && workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) {
 		r.metrics.countWorkspaceFailure(&log, workspace)
 		lastState.recordedFailure = true
 	}
 
-	if !lastState.recordedContentReady && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) {
+	if !lastState.recordedContentReady && workspace.IsConditionTrue(workspacev1.WorkspaceConditionContentReady) {
 		r.metrics.countTotalRestores(&log, workspace)
 		lastState.recordedContentReady = true
 	}
 
-	if !lastState.recordedBackupFailed && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
+	if !lastState.recordedBackupFailed && workspace.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure) {
 		r.metrics.countTotalBackups(&log, workspace)
 		r.metrics.countTotalBackupFailures(&log, workspace)
 		lastState.recordedBackupFailed = true
 	}
 
-	if !lastState.recordedBackupCompleted && wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
+	if !lastState.recordedBackupCompleted && workspace.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete) {
 		r.metrics.countTotalBackups(&log, workspace)
 		lastState.recordedBackupCompleted = true
 	}
@@ -368,12 +368,12 @@ func (r *WorkspaceReconciler) updateMetrics(ctx context.Context, workspace *work
 
 func isStartFailure(ws *workspacev1.Workspace) bool {
 	// Consider workspaces that never became ready as start failures.
-	everReady := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady))
+	everReady := ws.IsConditionTrue(workspacev1.WorkspaceConditionEverReady)
 	// Except for aborted prebuilds, as they can get aborted before becoming ready, which shouldn't be counted
 	// as a start failure.
-	isAborted := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted))
+	isAborted := ws.IsConditionTrue(workspacev1.WorkspaceConditionAborted)
 	// Also ignore workspaces that are requested to be stopped before they became ready.
-	isStoppedByRequest := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionStoppedByRequest))
+	isStoppedByRequest := ws.IsConditionTrue(workspacev1.WorkspaceConditionStoppedByRequest)
 	return !everReady && !isAborted && !isStoppedByRequest
 }
 

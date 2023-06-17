@@ -495,7 +495,7 @@ func (wsm *WorkspaceManagerServer) MarkActive(ctx context.Context, req *wsmanapi
 
 	// We do however maintain the the "closed" flag as condition on the workspace. This flag should not change
 	// very often and provides a better UX if it persists across ws-manager restarts.
-	isMarkedClosed := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed))
+	isMarkedClosed := ws.IsConditionTrue(workspacev1.WorkspaceConditionClosed)
 	if req.Closed && !isMarkedClosed {
 		err = wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
 			ws.Status.SetCondition(workspacev1.NewWorkspaceConditionClosed(metav1.ConditionTrue, "MarkActiveRequest"))

@@ -235,15 +235,15 @@ func (wsc *WorkspaceController) handleWorkspaceStop(ctx context.Context, ws *wor
 		return ctrl.Result{}, fmt.Errorf("workspace content was never ready")
 	}
 
-	if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
+	if ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete) {
 		return ctrl.Result{}, nil
 	}
 
-	if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) {
+	if ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure) {
 		return ctrl.Result{}, nil
 	}
 
-	if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) {
+	if ws.IsConditionTrue(workspacev1.WorkspaceConditionAborted) {
 		span.LogKV("event", "workspace was aborted")
 		return ctrl.Result{}, nil
 	}

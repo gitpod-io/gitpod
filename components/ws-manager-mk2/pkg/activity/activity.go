@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 )
 
@@ -38,7 +37,7 @@ func (w *WorkspaceActivity) GetLastActivity(ws *workspacev1.Workspace) *time.Tim
 
 	// In case we don't have a record of the workspace's last activity, check for the FirstUserActivity condition
 	// to see if the lastActivity got lost on a manager restart.
-	if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFirstUserActivity)) {
+	if ws.IsConditionTrue(workspacev1.WorkspaceConditionFirstUserActivity) {
 		// Manager was restarted, consider the workspace's last activity to be the time the manager restarted.
 		return &w.ManagerStartedAt
 	}

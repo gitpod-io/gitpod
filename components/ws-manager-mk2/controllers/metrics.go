@@ -164,17 +164,17 @@ func (m *controllerMetrics) countWorkspaceStop(log *logr.Logger, ws *workspacev1
 	var reason string
 	if c := wsk8s.GetCondition(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)); c != nil {
 		reason = StopReasonFailed
-		if !wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)) {
+		if !ws.IsConditionTrue(workspacev1.WorkspaceConditionEverReady) {
 			// Don't record 'failed' if there was a start failure.
 			reason = StopReasonStartFailure
 		} else if strings.Contains(c.Message, "Pod ephemeral local storage usage exceeds the total limit of containers") {
 			reason = StopReasonOutOfSpace
 		}
-	} else if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) {
+	} else if ws.IsConditionTrue(workspacev1.WorkspaceConditionAborted) {
 		reason = StopReasonAborted
-	} else if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) {
+	} else if ws.IsConditionTrue(workspacev1.WorkspaceConditionTimeout) {
 		reason = StopReasonTimeout
-	} else if wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed)) {
+	} else if ws.IsConditionTrue(workspacev1.WorkspaceConditionClosed) {
 		reason = StopReasonTabClosed
 	} else {
 		reason = StopReasonRegular
@@ -278,10 +278,10 @@ func newMetricState(ws *workspacev1.Workspace) metricState {
 		recordedStartTime:       ws.Status.Phase == workspacev1.WorkspacePhaseRunning,
 		recordedInitFailure:     wsk8s.ConditionWithStatusAndReason(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady), false, workspacev1.ReasonInitializationFailure),
 		recordedStartFailure:    ws.Status.Phase == workspacev1.WorkspacePhaseStopped && isStartFailure(ws),
-		recordedFailure:         wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)),
-		recordedContentReady:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)),
-		recordedBackupFailed:    wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)),
-		recordedBackupCompleted: wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)),
+		recordedFailure:         ws.IsConditionTrue(workspacev1.WorkspaceConditionFailed),
+		recordedContentReady:    ws.IsConditionTrue(workspacev1.WorkspaceConditionContentReady),
+		recordedBackupFailed:    ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure),
+		recordedBackupCompleted: ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete),
 	}
 }
 

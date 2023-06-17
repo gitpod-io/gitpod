@@ -109,14 +109,14 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		workspace.Status.Phase = *phase
 	}
 
-	if failure != "" && !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionFailed)) {
+	if failure != "" && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionFailed) {
 		// workspaces can fail only once - once there is a failed condition set, stick with it
 		log.Info("workspace failed", "workspace", workspace.Name, "reason", failure)
 		workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionFailed(failure))
 		r.Recorder.Event(workspace, corev1.EventTypeWarning, "Failed", failure)
 	}
 
-	if workspace.IsHeadless() && !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionsHeadlessTaskFailed)) {
+	if workspace.IsHeadless() && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionsHeadlessTaskFailed) {
 		for _, cs := range pod.Status.ContainerStatuses {
 			if cs.State.Terminated != nil && cs.State.Terminated.Message != "" {
 				workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionHeadlessTaskFailed(cs.State.Terminated.Message))
@@ -156,14 +156,14 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		}
 
 	case pod.Status.Phase == corev1.PodRunning:
-		everReady := wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady))
+		everReady := workspace.IsConditionTrue(workspacev1.WorkspaceConditionEverReady)
 		if everReady {
 			// If the workspace has been ready before, stay in a Running state, even
 			// if the workspace container is not ready anymore. This is to avoid the workspace
 			// moving back to Initializing and becoming unusable.
 			workspace.Status.Phase = workspacev1.WorkspacePhaseRunning
 		} else {
-			contentReady := wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady))
+			contentReady := workspace.IsConditionTrue(workspacev1.WorkspaceConditionContentReady)
 			var ideReady bool
 			for _, cs := range pod.Status.ContainerStatuses {
 				if cs.Ready {
@@ -176,7 +176,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 			if ready {
 				// workspace is ready - hence content init is done
 				workspace.Status.Phase = workspacev1.WorkspacePhaseRunning
-				if !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)) {
+				if !workspace.IsConditionTrue(workspacev1.WorkspaceConditionEverReady) {
 					workspace.Status.SetCondition(workspacev1.NewWorkspaceConditionEverReady())
 				}
 			} else {
@@ -186,7 +186,7 @@ func (r *WorkspaceReconciler) updateWorkspaceStatus(ctx context.Context, workspa
 		}
 
 	case workspace.IsHeadless() && (pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed):
-		if pod.Status.Phase == corev1.PodSucceeded && !wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionEverReady)) {
+		if pod.Status.Phase == corev1.PodSucceeded && !workspace.IsConditionTrue(workspacev1.WorkspaceConditionEverReady) {
 			// Fix for Prebuilds that instantly succeed (e.g. empty task), sometimes we don't observe the
 			// workspace `Running` phase for these, and never had the opportunity to add the EverReady condition.
 			// This would then cause a "start failure" in the metrics. So we retroactively add the EverReady
@@ -229,7 +229,7 @@ func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspac
 	}
 
 	// If NodeDisappeared is already set, return early, we've already made the below checks previously.
-	if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionNodeDisappeared)) {
+	if workspace.IsConditionTrue(workspacev1.WorkspaceConditionNodeDisappeared) {
 		return nil
 	}
 
@@ -245,17 +245,17 @@ func (r *WorkspaceReconciler) checkNodeDisappeared(ctx context.Context, workspac
 }
 
 func isDisposalFinished(ws *workspacev1.Workspace) bool {
-	return wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) ||
-		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupFailure)) ||
-		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionAborted)) ||
+	return ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete) ||
+		ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupFailure) ||
+		ws.IsConditionTrue(workspacev1.WorkspaceConditionAborted) ||
 		// Nothing to dispose if content wasn't ready.
-		!wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionContentReady)) ||
+		!ws.IsConditionTrue(workspacev1.WorkspaceConditionContentReady) ||
 		// Can't dispose if node disappeared.
-		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionNodeDisappeared)) ||
+		ws.IsConditionTrue(workspacev1.WorkspaceConditionNodeDisappeared) ||
 		// Image builds have nothing to dispose.
 		ws.Spec.Type == workspacev1.WorkspaceTypeImageBuild ||
 		// headless workspaces that failed do not need to be backed up
-		wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionsHeadlessTaskFailed))
+		ws.IsConditionTrue(workspacev1.WorkspaceConditionsHeadlessTaskFailed)
 }
 
 // extractFailure returns a pod failure reason and possibly a phase. If phase is nil then

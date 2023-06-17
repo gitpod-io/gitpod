@@ -19,7 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	wsactivity "github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/activity"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
@@ -81,7 +80,7 @@ func (r *TimeoutReconciler) Reconcile(ctx context.Context, req ctrl.Request) (re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if wsk8s.ConditionPresentAndTrue(workspace.Status.Conditions, string(workspacev1.WorkspaceConditionTimeout)) {
+	if workspace.IsConditionTrue(workspacev1.WorkspaceConditionTimeout) {
 		// Workspace has already been marked as timed out.
 		// Return and don't requeue another reconciliation.
 		return ctrl.Result{}, nil
@@ -159,7 +158,7 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 
 	start := ws.ObjectMeta.CreationTimestamp.Time
 	lastActivity := r.activity.GetLastActivity(ws)
-	isClosed := wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionClosed))
+	isClosed := ws.IsConditionTrue(workspacev1.WorkspaceConditionClosed)
 
 	switch phase {
 	case workspacev1.WorkspacePhasePending:
@@ -213,7 +212,7 @@ func (r *TimeoutReconciler) isWorkspaceTimedOut(ws *workspacev1.Workspace) (reas
 		return decide(*lastActivity, timeout, activity)
 
 	case workspacev1.WorkspacePhaseStopping:
-		if isWorkspaceBeingDeleted(ws) && !wsk8s.ConditionPresentAndTrue(ws.Status.Conditions, string(workspacev1.WorkspaceConditionBackupComplete)) {
+		if isWorkspaceBeingDeleted(ws) && !ws.IsConditionTrue(workspacev1.WorkspaceConditionBackupComplete) {
 			// Beware: we apply the ContentFinalization timeout only to workspaces which are currently being deleted.
 			//         We basically don't expect a workspace to be in content finalization before it's been deleted.
 			return decide(ws.DeletionTimestamp.Time, timeouts.ContentFinalization, activityBackup)
