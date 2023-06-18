@@ -120,7 +120,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vscode_desktop_local_ssh_total{phase=\"connected\"}[2m])) / sum(rate(vscode_desktop_local_ssh_total{phase=\"connecting\"}[2m]))",
+          "expr": "sum(vscode_desktop_local_ssh_total{phase=\"connected\"}) / sum(vscode_desktop_local_ssh_total{phase=\"connecting\"})",
           "legendFormat": "total ratio",
           "range": true,
           "refId": "A"
@@ -321,7 +321,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vscode_desktop_ping_extension_server_total{status=\"success\"}[2m])) / sum(rate(vscode_desktop_ping_extension_server_total{}[2m]))",
+          "expr": "sum(vscode_desktop_ping_extension_server_total{status=\"success\"}) / sum(vscode_desktop_ping_extension_server_total{})",
           "legendFormat": "total ratio",
           "range": true,
           "refId": "A"
@@ -415,7 +415,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vscode_desktop_local_ssh_config_total{status=\"failure\"}[2m])) by (failure_code)",
+          "expr": "sum(vscode_desktop_local_ssh_config_total{status=\"failure\"}) by (failure_code)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -469,7 +469,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -508,7 +509,8 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vscode_desktop_local_ssh_config_total{status=\"success\"}[2m])) / sum(rate(vscode_desktop_local_ssh_config_total{}[2m]))",
+          "expr": "sum(vscode_desktop_local_ssh_config_total{status=\"success\"}) / sum(vscode_desktop_local_ssh_config_total{})",
+          "hide": false,
           "legendFormat": "total ratio",
           "range": true,
           "refId": "A"
@@ -552,6 +554,6 @@
   "timezone": "",
   "title": "Local SSH Reliability",
   "uid": "e78bdf2b-ad72-4bc7-832d-94eec9e7a2e6",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
