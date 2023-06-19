@@ -727,7 +727,12 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 
 // WaitForWorkspaceStop waits until a workspace is stopped. Fails the test if the workspace
 // fails or does not stop before the context is canceled.
-func WaitForWorkspaceStop(t *testing.T, ctx context.Context, ready chan<- struct{}, api *ComponentAPI, instanceID string, workspaceID string) (lastStatus *wsmanapi.WorkspaceStatus, err error) {
+func WaitForWorkspaceStop(t *testing.T, ctx context.Context, ready chan<- struct{}, api *ComponentAPI, instanceID string, workspaceID string, opts ...WaitForWorkspaceOpt) (lastStatus *wsmanapi.WorkspaceStatus, err error) {
+	var cfg waitForWorkspaceOpts
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	wsman, err := api.WorkspaceManager()
 	if err != nil {
 		return nil, err
@@ -789,7 +794,7 @@ func WaitForWorkspaceStop(t *testing.T, ctx context.Context, ready chan<- struct
 			}
 
 			wss = resp.GetStatus()
-			if wss.Conditions.Failed != "" {
+			if wss.Conditions.Failed != "" && !cfg.CanFail {
 				errCh <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, wss.Conditions.Failed)
 				return
 			}
