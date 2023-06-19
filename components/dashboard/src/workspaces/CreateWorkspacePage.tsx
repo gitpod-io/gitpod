@@ -590,14 +590,13 @@ const RepositoryInputError: FC<RepositoryInputErrorProps> = ({ title, message, l
                 )}
             </div>
             {linkText && (
-                <div className="mt-4">
-                    {" "}
+                <div>
                     {linkOnClick ? (
-                        <LinkButton className="whitespace-nowrap text-sm" onClick={linkOnClick}>
+                        <LinkButton className="whitespace-nowrap text-sm font-semibold" onClick={linkOnClick}>
                             {linkText}
                         </LinkButton>
                     ) : (
-                        <a className="gp-link whitespace-nowrap text-sm" href={linkHref}>
+                        <a className="gp-link whitespace-nowrap text-sm font-semibold" href={linkHref}>
                             {linkText}
                         </a>
                     )}
