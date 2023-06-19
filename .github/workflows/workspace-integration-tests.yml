@@ -16,11 +16,6 @@ on:
                 required: false
                 type: boolean
                 description: "Skip delete preview environment (debug only)"
-            wsman_mk2:
-                required: false
-                type: boolean
-                default: true
-                description: "Run tests against ws-manager-mk2"
     schedule:
         - cron: "0 3,12 * * *"
 jobs:
@@ -81,10 +76,6 @@ jobs:
                           echo "version=$(gh run view "$RUNID" --log -R gitpod-io/gitpod | grep 'main-gha.[0-9]*' -o | head -n 1)"
                       } >> $GITHUB_OUTPUT
                   fi
-
-                  {
-                      echo "Using ws-manager-mk2: ${{ github.event.inputs.wsman_mk2 != 'false' }}"
-                  } >> "${GITHUB_STEP_SUMMARY}"
             - name: Slack Notification
               uses: rtCamp/action-slack-notify@v2
               if: failure()
@@ -116,7 +107,6 @@ jobs:
             name: ${{ needs.configuration.outputs.name }}
             sa_key: ${{ secrets.GCP_CREDENTIALS }}
             version: ${{ needs.configuration.outputs.version}}
-            wsmanager_mk2: ${{ github.event.inputs.wsman_mk2 != 'false' }}
 
     check:
         name: Check for regressions
@@ -183,8 +173,6 @@ jobs:
                   WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
                   WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
 
-                  export WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 != 'false' }}"
-
                   go install github.com/jstemmer/go-junit-report/v2@latest
 
                   FAILURE_COUNT=0
@@ -230,7 +218,7 @@ jobs:
               env:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed (mk2: ${{ github.event.inputs.wsman_mk2 != 'false' }})"
+                  SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }}/${{ steps.test_summary.outputs.total }} tests passed"
 
     delete:
       name: Delete preview environment

@@ -16,11 +16,6 @@ on:
                 description: "The infrastructure provider to use. Valid options: harvester, gcp"
                 required: false
                 default: gcp
-            wsman_mk2:
-                required: false
-                type: boolean
-                default: true
-                description: "Run tests against ws-manager-mk2"
 
 jobs:
     configuration:
@@ -76,7 +71,6 @@ jobs:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
-                  wsmanager_mk2: ${{ github.event.inputs.wsman_mk2 != 'false' }}
 
     check:
         name: Check for regressions
@@ -123,8 +117,6 @@ jobs:
                   args+=( "-timeout=60m" )
 
                   TESTS_DIR="$GITHUB_WORKSPACE/test/tests/smoke-test"
-
-                  export WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 != 'false' }}"
 
                   go install github.com/jstemmer/go-junit-report/v2@latest
 
