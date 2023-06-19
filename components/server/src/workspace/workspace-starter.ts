@@ -80,7 +80,13 @@ import {
     ResolveBaseImageRequest,
     ResolveWorkspaceImageRequest,
 } from "@gitpod/image-builder/lib";
-import { IDEImage, StartWorkspaceResponse, StartWorkspaceSpec, WorkspaceFeatureFlag } from "@gitpod/ws-manager/lib";
+import {
+    IDEImage,
+    PromisifiedWorkspaceManagerClient,
+    StartWorkspaceResponse,
+    StartWorkspaceSpec,
+    WorkspaceFeatureFlag,
+} from "@gitpod/ws-manager/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     AdmissionLevel,
@@ -215,6 +221,7 @@ export class WorkspaceStarter {
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(BillingModes) protected readonly billingModes: BillingModes;
     @inject(RedisMutex) protected readonly redisMutex: RedisMutex;
+    @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
 
     public async startWorkspace(
         ctx: TraceContext,
@@ -426,14 +433,40 @@ export class WorkspaceStarter {
         reason: string,
         policy?: StopWorkspacePolicy,
     ): Promise<void> {
-        ctx.span?.setTag("stopWorkspaceReason", reason);
+        const span = TraceContext.startSpan("stopWorkspaceInstance", ctx);
+        span.setTag("stopWorkspaceReason", reason);
         log.info({ instanceId }, "Stopping workspace instance", { reason });
 
         const req = new StopWorkspaceRequest();
         req.setId(instanceId);
         req.setPolicy(policy || StopWorkspacePolicy.NORMALLY);
 
-        const client = await this.clientProvider.get(instanceRegion);
+        let client: PromisifiedWorkspaceManagerClient | undefined;
+        try {
+            client = await this.clientProvider.get(instanceRegion);
+        } catch (err) {
+            log.error({ instanceId }, "cannot stop workspace instance", err);
+            // we want to stop a workspace but the region doesn't exist. So we can assume it doesn't run anyymore and there will never be updates coming to bridge.
+            // let's mark this workspace as stopped if it is not already stopped.
+            const workspace = await this.workspaceDb.trace(ctx).findByInstanceId(instanceId);
+            const instance = await this.workspaceDb.trace(ctx).findInstanceById(instanceId);
+            if (workspace && instance && instance?.status.phase !== "stopped") {
+                log.error(
+                    { instanceId },
+                    "Workspace instance is still running although the region doesn't exist anymore. Marking workspace as stopped.",
+                );
+                const updated = await this.workspaceDb.trace(ctx).updateInstancePartial(instanceId, {
+                    status: {
+                        phase: "stopped",
+                        message: "Manually marked stopped, because workspace region does not exist anymore.",
+                    },
+                    stoppedTime: new Date().toISOString(),
+                });
+                await this.userDB.trace({ span }).deleteGitpodTokensNamedLike(workspace.ownerId, `${instance.id}-%`);
+                await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, updated);
+            }
+            return;
+        }
         await client.stopWorkspace(ctx, req);
     }
 
