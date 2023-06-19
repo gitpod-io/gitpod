@@ -41,8 +41,7 @@ schema: |-
     //  * The user has direct editor relation
     permission write_info = org->owner + editor
     // Project can be accessed by:
-    //  * Organization Owners
-    //  * Direct editors
+    //  * Anyone with write_info permission
     //  * Direct viewers
     permission read_info = write_info + viewer
   }
