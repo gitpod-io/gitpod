@@ -36,7 +36,7 @@ while getopts rs-: opt; do
 done
 shift $((OPTIND - 1))
 
-THIS_DIR="$(dirname "$0")"
+THIS_DIR="$(dirname "$(readlink -f "$0")")"
 FAILURE_COUNT=0
 LOGS_DIR=$(mktemp -d)
 
@@ -102,7 +102,7 @@ go install github.com/jstemmer/go-junit-report/v2@latest
 
 if ! npm list -g xunit-viewer; then npm install -g xunit-viewer; fi
 
-mkdir -p results
+mkdir -p "${THIS_DIR}/results"
 
 if [ "$TEST_SUITE" == "workspace" ]; then
   TEST_NAME="workspace"
@@ -113,7 +113,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
 
   set +e
   # shellcheck disable=SC2086
-  go test -p 1 -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}-SERIAL.xml" -iocopy
+  go test -p 1 -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${THIS_DIR}/results/TEST-${TEST_NAME}-SERIAL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
@@ -124,7 +124,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
   echo "running integration for ${TEST_NAME}-serial-only"
   set +e
   # shellcheck disable=SC2086
-  go test -p 1 --parallel 1 -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
+  go test -p 1 --parallel 1 -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${THIS_DIR}/results/TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
@@ -134,7 +134,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
 
   cd -
   if [ "${REPORT}" != "" ]; then
-     ./report.sh "${LOG_FILE}" > "$REPORT"
+     "${THIS_DIR}/report.sh" "${LOG_FILE}" > "$REPORT"
   fi
 else
   for TEST_PATH in ${TEST_LIST}
@@ -145,7 +145,7 @@ else
 
     cd "${TEST_PATH}"
     set +e
-    go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "results/TEST-${TEST_NAME}.xml" -iocopy
+    go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${THIS_DIR}/results/TEST-${TEST_NAME}.xml" -iocopy
     RC=${PIPESTATUS[0]}
     set -e
     cd -
@@ -156,7 +156,7 @@ else
   done
 fi
 
-xunit-viewer -r ./results -o test-output.html
+xunit-viewer -r "${THIS_DIR}/results" -o "${THIS_DIR}/test-output.html"
 pkill -f "port-forward"
 
 exit $FAILURE_COUNT
