@@ -44,7 +44,7 @@ schema: |-
     //  * Organization Owners
     //  * Direct editors
     //  * Direct viewers
-    permission read_info = editor + viewer
+    permission read_info = write_info + viewer
   }
 
 # relationships to be used for assertions & validation
