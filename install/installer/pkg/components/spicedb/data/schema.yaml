@@ -48,7 +48,6 @@ schema: |-
 
 # relationships to be used for assertions & validation
 relationships: |-
-
   // We have an organization org_1, which has some members & owners
   organization:org_1#owner@user:user_0
   organization:org_1#member@user:user_1
@@ -74,22 +73,20 @@ relationships: |-
 # assertions should assert that a particular permission holds, or not
 assertions:
   assertTrue:
-    - "organization:org_1#organization_read@user:user_0"
+    - "organization:org_1#read_info@user:user_0"
     # user 0 can edit project_0, because they are the Org Owner
-    - "project:project_1#project_write@user:user_0"
+    - "project:project_1#write_info@user:user_0"
 
   assertFalse:
     # user 10 cannot access project_1
-    - "project:project_1#project_read@user:user_10"
-    - "project:project_2#project_write@user:user_10"
-    # organization member cannot write to an organization
-    - "organization:org1#organization_write@user:user2"
+    - "project:project_1#read_info@user:user_10"
+    - "project:project_2#write_info@user:user_10"
 
     # non-member/owner cannot access organization
-    - "organization:org1#organization_read@user:user3"
-    - "organization:org1#organization_write@user:user3"
-    - "organization:org1#organization_members_read@user:user3"
-    - "organization:org1#organization_members_write@user:user3"
+    - "organization:org1#read_info@user:user3"
+    - "organization:org1#write_info@user:user3"
+    - "organization:org1#read_members@user:user3"
+    - "organization:org1#write_members@user:user3"
 
 # validation should assert that a particular relation exists between an entity, and a subject
 # validations are not used to assert that a permission exists
@@ -103,12 +100,12 @@ validation:
     - "[user:user_2] is <organization:org_1#member>"
   organization:org_1#owner:
     - "[user:user_0] is <organization:org_1#owner>"
-  project:project_1#project_read:
+  project:project_1#read_info:
     - "[organization:org_1#membership] is <project:project_1#viewer>"
     - "[user:user_0] is <organization:org_1#owner>"
     - "[user:user_1] is <organization:org_1#member>"
     - "[user:user_2] is <organization:org_1#member>"
-  project:project_2#project_read:
+  project:project_2#read_info:
     - "[user:user_1] is <project:project_2#viewer>"
-  project:project_2#project_write:
+  project:project_2#write_info:
     - "[user:user_0] is <organization:org_2#owner>"
