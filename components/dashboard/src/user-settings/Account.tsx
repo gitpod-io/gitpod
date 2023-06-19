@@ -16,6 +16,7 @@ import Alert from "../components/Alert";
 import { TextInputField } from "../components/forms/TextInputField";
 import isEmail from "validator/lib/isEmail";
 import { useToast } from "../components/toasts/Toasts";
+import { InputWithCopy } from "../components/InputWithCopy";
 
 export default function Account() {
     const { user, setUser } = useContext(UserContext);
@@ -103,6 +104,7 @@ export default function Account() {
                         }}
                         errorMessage={errorMessage}
                         emailIsReadonly={!canUpdateEmail}
+                        user={user}
                     >
                         <div className="flex flex-row mt-8">
                             <Button htmlType="submit">Update Profile</Button>
@@ -126,6 +128,7 @@ function ProfileInformation(props: {
     setProfileState: (newState: User.Profile) => void;
     errorMessage: string;
     emailIsReadonly?: boolean;
+    user?: User;
     children?: React.ReactChild[] | React.ReactChild;
 }) {
     return (
@@ -141,7 +144,7 @@ function ProfileInformation(props: {
                 </Alert>
             )}
             <div className="flex flex-col lg:flex-row">
-                <div>
+                <fieldset>
                     <TextInputField
                         label="Name"
                         value={props.profileState.name}
@@ -155,7 +158,15 @@ function ProfileInformation(props: {
                             props.setProfileState({ ...props.profileState, email: val });
                         }}
                     />
-                </div>
+                    {props.user && (
+                        <div className="flex flex-col space-y-2 mt-4">
+                            <label className={"text-md font-semibold dark:text-gray-400 text-gray-600"}>User ID</label>
+                            <p className={"text-sm text-gray-500 dark:text-gray-500"}>
+                                <InputWithCopy className="max-w-md w-32" value={props.user.id} tip="Copy Token" />
+                            </p>
+                        </div>
+                    )}
+                </fieldset>
                 <div className="lg:pl-14">
                     <div className="mt-4">
                         <Subheading>Avatar</Subheading>
