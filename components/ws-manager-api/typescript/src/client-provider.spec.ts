@@ -109,7 +109,7 @@ class TestClientProvider {
                         state: "available",
                         url: "",
                         admissionConstraints: [
-                            { type: "has-permission", permission: "monitor" }, // This is meant to represent a permission that does not take special precedence (cmp. constraints.ts)
+                            { type: "has-permission", permission: "admin-workspace-content" }, // This is meant to represent a permission that does not take special precedence (cmp. constraints.ts)
                         ],
                         region: "europe",
                     },
@@ -151,7 +151,7 @@ class TestClientProvider {
         await this.expectInstallations(
             [["a2", "a3", "con2"]],
             await this.provider.getStartClusterSets(
-                { rolesOrPermissions: ["monitor"] } as User,
+                { rolesOrPermissions: ["admin-workspace-content"] } as User,
                 {} as Workspace,
                 {} as WorkspaceInstance,
             ),
@@ -213,7 +213,7 @@ class TestClientProvider {
             { name: "b1" } as WorkspaceClusterWoTLS,
         ];
         expect(
-            constraintHasPermissions("monitor")(clusters, {
+            constraintHasPermissions("admin-workspace-content")(clusters, {
                 user: {} as User,
                 workspace: {} as Workspace,
                 instance: {} as WorkspaceInstance,
