@@ -107,6 +107,7 @@ validation:
     - "[user:user_1] is <organization:org_1#member>"
     - "[user:user_2] is <organization:org_1#member>"
   project:project_2#read_info:
+    - "[user:user_0] is <organization:org_2#owner>"
     - "[user:user_1] is <project:project_2#viewer>"
   project:project_2#write_info:
     - "[user:user_0] is <organization:org_2#owner>"
