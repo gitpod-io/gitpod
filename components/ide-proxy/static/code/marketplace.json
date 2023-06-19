@@ -153,6 +153,13 @@
                 "displayName": "uni-ui-snippets"
             }
         },
+        "redhat.vscode-extension-serverless-workflow-editor": {
+			"disallowInstall": true,
+			"extension": {
+				"id": "kie-group.swf-vscode-extension",
+				"displayName": "KIE Serverless Workflow Editor"
+			}
+		},
         "redhat.vscode-wsdl2rest": true,
         "ms-vscode.node-debug2": true,
         "ms-vscode.node-debug": true,
