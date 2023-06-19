@@ -53,6 +53,7 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
     }
 
     track(msg: TrackMessage) {
+        log.info("analytics.track", msg);
         try {
             this.analytics.track(
                 {
