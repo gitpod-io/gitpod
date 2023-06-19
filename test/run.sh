@@ -102,7 +102,8 @@ go install github.com/jstemmer/go-junit-report/v2@latest
 
 if ! npm list -g xunit-viewer; then npm install -g xunit-viewer; fi
 
-mkdir -p "${THIS_DIR}/results"
+RESULTS_DIR="${THIS_DIR}/results/$(date +%Y-%m-%d-%H-%M-%S)"
+mkdir -p "${RESULTS_DIR}"
 
 if [ "$TEST_SUITE" == "workspace" ]; then
   TEST_NAME="workspace"
@@ -113,7 +114,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
 
   set +e
   # shellcheck disable=SC2086
-  go test -p 1 -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${THIS_DIR}/results/TEST-${TEST_NAME}-SERIAL.xml" -iocopy
+  go test -p 1 -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}-SERIAL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
@@ -124,7 +125,7 @@ if [ "$TEST_SUITE" == "workspace" ]; then
   echo "running integration for ${TEST_NAME}-serial-only"
   set +e
   # shellcheck disable=SC2086
-  go test -p 1 --parallel 1 -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${THIS_DIR}/results/TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
+  go test -p 1 --parallel 1 -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
@@ -145,7 +146,7 @@ else
 
     cd "${TEST_PATH}"
     set +e
-    go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${THIS_DIR}/results/TEST-${TEST_NAME}.xml" -iocopy
+    go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
     RC=${PIPESTATUS[0]}
     set -e
     cd -
@@ -156,7 +157,7 @@ else
   done
 fi
 
-xunit-viewer -r "${THIS_DIR}/results" -o "${THIS_DIR}/test-output.html"
+xunit-viewer -r "${RESULTS_DIR}" -o "${THIS_DIR}/test-output.html"
 pkill -f "port-forward"
 
 exit $FAILURE_COUNT
