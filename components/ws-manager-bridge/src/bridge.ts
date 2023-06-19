@@ -312,7 +312,9 @@ export class WorkspaceManagerBridge implements Disposable {
                     instance.status.phase = "initializing";
                     break;
                 case WorkspacePhase.RUNNING:
+                    log.info(logContext, "Workspace is running.", instance);
                     if (!instance.startedTime) {
+                        log.info(logContext, "Workspace is running first time", instance);
                         instance.startedTime = new Date().toISOString();
                         this.prometheusExporter.observeWorkspaceStartupTime(instance);
                         this.analytics.track({
