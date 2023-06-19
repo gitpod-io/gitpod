@@ -39,8 +39,7 @@ import { settingsPathIntegrations } from "../user-settings/settings.routes";
 import { useDirtyState } from "../hooks/use-dirty-state";
 import { LinkButton } from "../components/LinkButton";
 import { InputField } from "../components/forms/InputField";
-import classNames from "classnames";
-import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
+import Alert from "../components/Alert";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -381,23 +380,22 @@ export function CreateWorkspacePage() {
                     <span className="font-semibold text-gray-600 dark:text-gray-400">{currentOrg?.name}</span>{" "}
                     organization.
                 </div>
+
                 <div className="-mx-6 px-6 mt-6 w-full">
-                    <InputField
-                        error={
-                            createWorkspaceMutation.error || workspaceContext.error ? (
-                                <ErrorMessage
-                                    error={
-                                        (createWorkspaceMutation.error as StartWorkspaceError) ||
-                                        (workspaceContext.error as StartWorkspaceError)
-                                    }
-                                    setSelectAccountError={setSelectAccountError}
-                                    reset={() => {
-                                        createWorkspaceMutation.reset();
-                                    }}
-                                />
-                            ) : undefined
-                        }
-                    >
+                    {createWorkspaceMutation.error || workspaceContext.error ? (
+                        <ErrorMessage
+                            error={
+                                (createWorkspaceMutation.error as StartWorkspaceError) ||
+                                (workspaceContext.error as StartWorkspaceError)
+                            }
+                            setSelectAccountError={setSelectAccountError}
+                            reset={() => {
+                                createWorkspaceMutation.reset();
+                            }}
+                        />
+                    ) : null}
+
+                    <InputField>
                         <RepositoryFinder
                             setSelection={handleContextURLChange}
                             initialValue={contextURL}
@@ -530,8 +528,7 @@ const ErrorMessage: FunctionComponent<ErrorMessageProps> = ({ error, reset, setS
         case ErrorCodes.INVALID_GITPOD_YML:
             return (
                 <RepositoryInputError
-                    type="warning"
-                    title="The .gitpod.yml file is invalid. You may continue, but it will be ignored."
+                    title="Invalid YAML configuration; using default settings."
                     message={error.message}
                 />
             );
@@ -581,53 +578,32 @@ type RepositoryInputErrorProps = {
     linkHref?: string;
     linkOnClick?: () => void;
 };
-const RepositoryInputError: FC<RepositoryInputErrorProps> = ({
-    type = "error",
-    title,
-    message,
-    linkText,
-    linkHref,
-    linkOnClick,
-}) => {
+const RepositoryInputError: FC<RepositoryInputErrorProps> = ({ title, message, linkText, linkHref, linkOnClick }) => {
     return (
-        <div
-            className={classNames("mx-2", {
-                "text-yellow-600 dark:text-yellow-50": type === "warning",
-            })}
-        >
-            <div className="flex space-x-3">
-                {type === "warning" && (
-                    <span className={`mt-1 h-4 w-4 text-yellow-400 dark:text-yellow-900`}>
-                        <Exclamation2 className="w-4 h-4" />
-                    </span>
-                )}
-                <div>
-                    <div>
-                        <span className="text-sm">{title}</span>
-                        {linkText && (
-                            <>
-                                {" "}
-                                {linkOnClick ? (
-                                    <LinkButton className="whitespace-nowrap text-sm" onClick={linkOnClick}>
-                                        {linkText}
-                                    </LinkButton>
-                                ) : (
-                                    <a className="gp-link whitespace-nowrap text-sm" href={linkHref}>
-                                        {linkText}
-                                    </a>
-                                )}
-                            </>
-                        )}
+        <Alert type="warning">
+            <div>
+                <span className="text-sm font-semibold">{title}</span>
+                {message && (
+                    <div className="font-mono text-xs">
+                        <span>{message}</span>
                     </div>
-                    {/* TODO: Default this to a smaller fixed height (2 lines) and add a show more link button that expands */}
-                    {message && (
-                        <div className="mt-2 font-mono text-xs">
-                            <span>{message}</span>
-                        </div>
+                )}
+            </div>
+            {linkText && (
+                <div className="mt-4">
+                    {" "}
+                    {linkOnClick ? (
+                        <LinkButton className="whitespace-nowrap text-sm" onClick={linkOnClick}>
+                            {linkText}
+                        </LinkButton>
+                    ) : (
+                        <a className="gp-link whitespace-nowrap text-sm" href={linkHref}>
+                            {linkText}
+                        </a>
                     )}
                 </div>
-            </div>
-        </div>
+            )}
+        </Alert>
     );
 };
 
