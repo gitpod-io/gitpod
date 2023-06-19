@@ -13,15 +13,16 @@ schema: |-
     // Membership is the union of all organization specific roles
     permission membership = owner + member
 
-    // Operations on organizations
-    permission organization_read = owner + member
-    permission organization_write = owner
+    // General operations on organization
+    permission read_info = owner + member
+    permission write_info = owner
 
-    // // Operations on Organization's Members
-    permission organization_members_read = owner + member
-    permission organization_members_write = owner + member
+    // Operations on Organization's Members
+    permission read_members = owner + member
+    permission write_members = owner + member
 
-    permission project_create = owner
+    // Only owners can create new projects
+    permission create_project = owner
   }
 
   definition project {
@@ -38,12 +39,12 @@ schema: |-
     // Project can be modified by:
     //  * Organization owners
     //  * The user has direct editor relation
-    permission project_write = org->owner + editor
+    permission write_info = org->owner + editor
     // Project can be accessed by:
     //  * Organization Owners
     //  * Direct editors
     //  * Direct viewers
-    permission project_read = editor + viewer
+    permission read_info = editor + viewer
   }
 
 # relationships to be used for assertions & validation
