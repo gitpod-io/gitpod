@@ -10,11 +10,6 @@ on:
                 required: true
                 description: "The version of Gitpod to install"
                 default: "latest"
-            wsman_mk2:
-                required: false
-                type: boolean
-                default: true
-                description: "Run tests against ws-manager-mk2"
             skip_deploy:
                 required: false
                 description: "Skip deploy preview environment (debug only)"
@@ -90,7 +85,6 @@ jobs:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
                   version: ${{ needs.configuration.outputs.version}}
-                  wsmanager_mk2: ${{ github.event.inputs.wsman_mk2 != 'false' }}
 
     check:
         name: Check for regressions
@@ -142,8 +136,6 @@ jobs:
                   JETBRAINS_TESTS="$IDE_TESTS_DIR/jetbrains"
                   VSCODE_TESTS="$IDE_TESTS_DIR/vscode"
                   SSH_TESTS="$IDE_TESTS_DIR/ssh"
-
-                  export WS_MANAGER_MK2="${{ github.event.inputs.wsman_mk2 != 'false' }}"
 
                   go install github.com/jstemmer/go-junit-report/v2@latest
 

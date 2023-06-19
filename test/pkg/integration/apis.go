@@ -660,11 +660,7 @@ func (c *ComponentAPI) WorkspaceManager() (wsmanapi.WorkspaceManagerClient, erro
 		return c.wsmanStatus.Client, nil
 	}
 
-	var wsman = ComponentWorkspaceManager
-	if UseWsmanMk2() {
-		wsman = ComponentWorkspaceManagerMK2
-	}
-
+	var wsman = ComponentWorkspaceManagerMK2
 	if c.wsmanStatus.Port == 0 {
 		c.wsmanStatusMu.Lock()
 		defer c.wsmanStatusMu.Unlock()

@@ -70,8 +70,6 @@ If your integration tests depends on having having a user token available, then 
 1. Get credentials persisted as secrets (either in Github Actions, or GCP Secret Manager via the `core-dev` project), which vary by job that trigger tests. Refer to `run.sh` for details.
 2. In your Gitpod (preview) environment, log into the preview environment, set `USER_NAME` to the user you logged in with, and set `USER_TOKEN` to any (does not have to be valid).
 
-By default the workspace tests run against `ws-manager-mk2`, set `WS_MANAGER_MK2=false` to run against mk1.
-
 ```console
 cd test
 go test -v ./... \
