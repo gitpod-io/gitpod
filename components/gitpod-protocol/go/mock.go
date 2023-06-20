@@ -432,20 +432,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetGitpodTokens(ctx interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGitpodTokens", reflect.TypeOf((*MockAPIInterface)(nil).GetGitpodTokens), ctx)
 }
 
-// GetIDToken mocks base method.
-func (m *MockAPIInterface) GetIDToken(ctx context.Context) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetIDToken", ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// GetIDToken indicates an expected call of GetIDToken.
-func (mr *MockAPIInterfaceMockRecorder) GetIDToken(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIDToken", reflect.TypeOf((*MockAPIInterface)(nil).GetIDToken), ctx)
-}
-
 // GetLoggedInUser mocks base method.
 func (m *MockAPIInterface) GetLoggedInUser(ctx context.Context) (*User, error) {
 	m.ctrl.T.Helper()

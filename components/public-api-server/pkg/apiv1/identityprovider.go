@@ -52,12 +52,6 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 		return nil, err
 	}
 
-	// We use GetIDToken as standin for the IDP operation authorisation until we have a better way of handling this
-	err = conn.GetIDToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	workspace, err := conn.GetWorkspace(ctx, workspaceID)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to get workspace.")

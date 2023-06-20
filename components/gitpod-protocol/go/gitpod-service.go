@@ -102,9 +102,6 @@ type APIInterface interface {
 	GetTeamProjects(ctx context.Context, teamID string) ([]*Project, error)
 
 	WorkspaceUpdates(ctx context.Context, workspaceID string) (<-chan *WorkspaceInstance, error)
-
-	// GetIDToken doesn't actually do anything, it just authorises
-	GetIDToken(ctx context.Context) (err error)
 }
 
 // FunctionName is the name of an RPC function
@@ -252,8 +249,6 @@ const (
 
 	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
 	FunctionOnInstanceUpdate = "onInstanceUpdate"
-
-	FunctionGetIDToken FunctionName = "getIDToken"
 )
 
 var errNotConnected = errors.New("not connected to Gitpod server")
@@ -1561,16 +1556,6 @@ func (gp *APIoverJSONRPC) GetTeamProjects(ctx context.Context, teamID string) (r
 	}
 	_params := []interface{}{teamID}
 	err = gp.C.Call(ctx, string(FunctionGetTeamProjects), _params, &res)
-	return
-}
-
-func (gp *APIoverJSONRPC) GetIDToken(ctx context.Context) (err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	_params := []interface{}{}
-	err = gp.C.Call(ctx, string(FunctionGetIDToken), _params, nil)
 	return
 }
 
