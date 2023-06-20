@@ -27,7 +27,7 @@ import {
     OAuthToken,
     OAuthUser,
 } from "@jmondi/oauth2-server";
-import { inject, injectable, postConstruct } from "inversify";
+import { inject, injectable, postConstruct, optional } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -65,7 +65,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
     constructor(
         @inject(EncryptionService) protected readonly encryptionService: EncryptionService,
         @inject(DataCache) protected readonly cache: DataCache,
-        transactionalEM: EntityManager,
+        @optional() transactionalEM: EntityManager,
     ) {
         super(transactionalEM);
     }

@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable } from "inversify";
+import { inject, injectable, optional } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
@@ -14,7 +14,7 @@ import { DBProject } from "./entity/db-project";
 import { DBProjectEnvVar } from "./entity/db-project-env-vars";
 import { DBProjectInfo } from "./entity/db-project-info";
 import { DBProjectUsage } from "./entity/db-project-usage";
-import { TransactionalDBImpl } from "./transactional-db-impl";
+import { TransactionalDBImpl, UndefinedEntityManager } from "./transactional-db-impl";
 
 function toProjectEnvVar(envVarWithValue: ProjectEnvVarWithValue): ProjectEnvVar {
     const envVar = { ...envVarWithValue };
@@ -26,7 +26,7 @@ function toProjectEnvVar(envVarWithValue: ProjectEnvVarWithValue): ProjectEnvVar
 export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements ProjectDB {
     constructor(
         @inject(EncryptionService) protected readonly encryptionService: EncryptionService,
-        transactionalEM: EntityManager | undefined,
+        @inject(UndefinedEntityManager) @optional() transactionalEM: EntityManager | undefined,
     ) {
         super(transactionalEM);
     }

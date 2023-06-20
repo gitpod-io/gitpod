@@ -5,7 +5,7 @@
  */
 
 import * as crypto from "crypto";
-import { injectable } from "inversify";
+import { injectable, inject, optional } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
 import {
     MaybeWorkspace,
@@ -55,7 +55,7 @@ import {
     reportWorkspaceInstancePurged,
     reportWorkspacePurged,
 } from "./metrics";
-import { TransactionalDBImpl } from "./transactional-db-impl";
+import { TransactionalDBImpl, UndefinedEntityManager } from "./transactional-db-impl";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -65,7 +65,7 @@ interface OrderBy {
 
 @injectable()
 export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> implements WorkspaceDB {
-    constructor(transactionalEM: EntityManager | undefined) {
+    constructor(@inject(UndefinedEntityManager) @optional() transactionalEM: EntityManager | undefined) {
         super(transactionalEM);
     }
 

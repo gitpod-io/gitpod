@@ -6,17 +6,21 @@
 
 import { EntityManager } from "typeorm";
 import { TypeORM } from "./typeorm";
-import { inject } from "inversify";
+import { inject, injectable, optional } from "inversify";
 
 export interface TransactionalDB<DB> {
     transaction<R>(code: (db: DB) => Promise<R>): Promise<R>;
 }
 
+// A symbol we never bind to
+export const UndefinedEntityManager = Symbol("UndefinedEntityManager");
+
+@injectable()
 export abstract class TransactionalDBImpl<DB> implements TransactionalDB<DB> {
     @inject(TypeORM) protected readonly typeorm: TypeORM;
 
     constructor(
-        protected transactionalEM: EntityManager | undefined, // will be undefined when constructed with inversify, which is inteded
+        @optional() protected transactionalEM: EntityManager | undefined, // will be undefined when constructed with inversify, which is inteded
     ) {}
 
     protected async getEntityManager(): Promise<EntityManager> {
