@@ -60,7 +60,6 @@ const defaultFunctions: FunctionsConfig = {
     getToken: { group: "default", points: 1 },
     deleteAccount: { group: "default", points: 1 },
     getClientRegion: { group: "default", points: 1 },
-    hasPermission: { group: "default", points: 1 },
     getWorkspaces: { group: "default", points: 1 },
     getWorkspaceOwner: { group: "default", points: 1 },
     getWorkspaceUsers: { group: "default", points: 1 },
