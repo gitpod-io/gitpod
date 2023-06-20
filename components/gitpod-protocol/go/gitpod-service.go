@@ -70,8 +70,6 @@ type APIInterface interface {
 	GetSSHPublicKeys(ctx context.Context) (res []*UserSSHPublicKeyValue, err error)
 	AddSSHPublicKey(ctx context.Context, value *SSHPublicKeyValue) (res *UserSSHPublicKeyValue, err error)
 	DeleteSSHPublicKey(ctx context.Context, id string) (err error)
-	GetContentBlobUploadURL(ctx context.Context, name string) (url string, err error)
-	GetContentBlobDownloadURL(ctx context.Context, name string) (url string, err error)
 	GetGitpodTokens(ctx context.Context) (res []*APIToken, err error)
 	GenerateNewGitpodToken(ctx context.Context, options *GenerateNewGitpodTokenOptions) (res string, err error)
 	DeleteGitpodToken(ctx context.Context, tokenHash string) (err error)
@@ -199,10 +197,6 @@ const (
 	FunctionAddSSHPublicKey FunctionName = "addSSHPublicKey"
 	// FunctionDeleteSSHPublicKey is the name of the deleteSSHPublicKey function
 	FunctionDeleteSSHPublicKey FunctionName = "deleteSSHPublicKey"
-	// FunctionGetContentBlobUploadURL is the name fo the getContentBlobUploadUrl function
-	FunctionGetContentBlobUploadURL FunctionName = "getContentBlobUploadUrl"
-	// FunctionGetContentBlobDownloadURL is the name fo the getContentBlobDownloadUrl function
-	FunctionGetContentBlobDownloadURL FunctionName = "getContentBlobDownloadUrl"
 	// FunctionGetGitpodTokens is the name of the getGitpodTokens function
 	FunctionGetGitpodTokens FunctionName = "getGitpodTokens"
 	// FunctionGenerateNewGitpodToken is the name of the generateNewGitpodToken function
@@ -1209,46 +1203,6 @@ func (gp *APIoverJSONRPC) DeleteSSHPublicKey(ctx context.Context, id string) (er
 	}
 	_params := []interface{}{id}
 	err = gp.C.Call(ctx, "deleteSSHPublicKey", _params, nil)
-	return
-}
-
-// GetContentBlobUploadURL calls getContentBlobUploadUrl on the server
-func (gp *APIoverJSONRPC) GetContentBlobUploadURL(ctx context.Context, name string) (url string, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, name)
-
-	var result string
-	err = gp.C.Call(ctx, string(FunctionGetContentBlobUploadURL), _params, &result)
-	if err != nil {
-		return
-	}
-	url = result
-
-	return
-}
-
-// GetContentBlobDownloadURL calls getContentBlobDownloadUrl on the server
-func (gp *APIoverJSONRPC) GetContentBlobDownloadURL(ctx context.Context, name string) (url string, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, name)
-
-	var result string
-	err = gp.C.Call(ctx, string(FunctionGetContentBlobDownloadURL), _params, &result)
-	if err != nil {
-		return
-	}
-	url = result
-
 	return
 }
 

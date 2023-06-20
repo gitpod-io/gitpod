@@ -1575,8 +1575,6 @@ export class WorkspaceStarter {
             "function:stopWorkspace",
             "function:getToken",
             "function:getGitpodTokenScopes",
-            "function:getContentBlobUploadUrl",
-            "function:getContentBlobDownloadUrl",
             "function:accessCodeSyncStorage",
             "function:guessGitTokenScopes",
             "function:getWorkspaceEnvVars",

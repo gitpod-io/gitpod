@@ -327,36 +327,6 @@ func (mr *MockAPIInterfaceMockRecorder) GetConfiguration(ctx interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfiguration", reflect.TypeOf((*MockAPIInterface)(nil).GetConfiguration), ctx)
 }
 
-// GetContentBlobDownloadURL mocks base method.
-func (m *MockAPIInterface) GetContentBlobDownloadURL(ctx context.Context, name string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContentBlobDownloadURL", ctx, name)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetContentBlobDownloadURL indicates an expected call of GetContentBlobDownloadURL.
-func (mr *MockAPIInterfaceMockRecorder) GetContentBlobDownloadURL(ctx, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentBlobDownloadURL", reflect.TypeOf((*MockAPIInterface)(nil).GetContentBlobDownloadURL), ctx, name)
-}
-
-// GetContentBlobUploadURL mocks base method.
-func (m *MockAPIInterface) GetContentBlobUploadURL(ctx context.Context, name string) (string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetContentBlobUploadURL", ctx, name)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetContentBlobUploadURL indicates an expected call of GetContentBlobUploadURL.
-func (mr *MockAPIInterfaceMockRecorder) GetContentBlobUploadURL(ctx, name interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContentBlobUploadURL", reflect.TypeOf((*MockAPIInterface)(nil).GetContentBlobUploadURL), ctx, name)
-}
-
 // GetEnvVars mocks base method.
 func (m *MockAPIInterface) GetEnvVars(ctx context.Context) ([]*EnvVar, error) {
 	m.ctrl.T.Helper()
