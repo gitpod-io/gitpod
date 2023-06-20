@@ -8,7 +8,7 @@ import { AdditionalUserData, CommitContext, GitpodServer, WithReferrerContext } 
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
-import { FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { FC, FunctionComponent, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import { Button } from "../components/Button";
@@ -37,6 +37,9 @@ import { WorkspaceEntry } from "./WorkspaceEntry";
 import { AuthorizeGit, useNeedsGitAuthorization } from "../components/AuthorizeGit";
 import { settingsPathIntegrations } from "../user-settings/settings.routes";
 import { useDirtyState } from "../hooks/use-dirty-state";
+import { LinkButton } from "../components/LinkButton";
+import { InputField } from "../components/forms/InputField";
+import Alert from "../components/Alert";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -186,6 +189,11 @@ export function CreateWorkspacePage() {
             opts.ignoreRunningWorkspaceOnSameCommit = true;
             opts.ignoreRunningPrebuild = true;
 
+            // if user received an INVALID_GITPOD_YML yml for their contextURL they can choose to proceed using default configuration
+            if (workspaceContext.error?.code === ErrorCodes.INVALID_GITPOD_YML) {
+                opts.forceDefaultConfig = true;
+            }
+
             if (!opts.workspaceClass) {
                 opts.workspaceClass = selectedWsClass;
             }
@@ -235,15 +243,16 @@ export function CreateWorkspacePage() {
             }
         },
         [
+            workspaceContext.error?.code,
             contextURL,
             currentOrg?.id,
             selectedWsClass,
             selectedIde,
             useLatestIde,
             createWorkspaceMutation,
-            autostart,
             storeAutoStartOptions,
             history,
+            autostart,
         ],
     );
 
@@ -320,6 +329,23 @@ export function CreateWorkspacePage() {
         }
     }, [selectedIdeIsDirty, setSelectedIde, workspaceContext.data]);
 
+    // Derive if the continue button is disabled based on current state
+    const continueButtonDisabled = useMemo(() => {
+        if (workspaceContext.isLoading || !contextURL || contextURL.length === 0 || !!errorIde || !!errorWsClass) {
+            return true;
+        }
+        if (workspaceContext.error) {
+            // For INVALID_GITPOD_YML we don't want to disable the button
+            // The user see a warning that their file is invalid, but they can continue and it will be ignored
+            if (workspaceContext.error.code === ErrorCodes.INVALID_GITPOD_YML) {
+                return false;
+            }
+            return true;
+        }
+
+        return false;
+    }, [contextURL, errorIde, errorWsClass, workspaceContext.error, workspaceContext.isLoading]);
+
     if (SelectAccountPayload.is(selectAccountError)) {
         return (
             <SelectAccountModal
@@ -354,13 +380,9 @@ export function CreateWorkspacePage() {
                     <span className="font-semibold text-gray-600 dark:text-gray-400">{currentOrg?.name}</span>{" "}
                     organization.
                 </div>
+
                 <div className="-mx-6 px-6 mt-6 w-full">
-                    <div className="pt-3">
-                        <RepositoryFinder
-                            setSelection={handleContextURLChange}
-                            initialValue={contextURL}
-                            disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
-                        />
+                    {createWorkspaceMutation.error || workspaceContext.error ? (
                         <ErrorMessage
                             error={
                                 (createWorkspaceMutation.error as StartWorkspaceError) ||
@@ -370,10 +392,18 @@ export function CreateWorkspacePage() {
                             reset={() => {
                                 createWorkspaceMutation.reset();
                             }}
-                            createWorkspace={createWorkspace}
                         />
-                    </div>
-                    <div className="pt-3">
+                    ) : null}
+
+                    <InputField>
+                        <RepositoryFinder
+                            setSelection={handleContextURLChange}
+                            initialValue={contextURL}
+                            disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
+                        />
+                    </InputField>
+
+                    <InputField error={errorIde}>
                         <SelectIDEComponent
                             onSelectionChange={onSelectEditorChange}
                             setError={setErrorIde}
@@ -381,17 +411,16 @@ export function CreateWorkspacePage() {
                             useLatest={useLatestIde}
                             disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
                         />
-                        {errorIde && <div className="text-red-500 text-sm">{errorIde}</div>}
-                    </div>
-                    <div className="pt-3">
+                    </InputField>
+
+                    <InputField error={errorWsClass}>
                         <SelectWorkspaceClassComponent
                             onSelectionChange={setSelectedWsClass}
                             setError={setErrorWsClass}
                             selectedWorkspaceClass={selectedWsClass}
                             disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
                         />
-                        {errorWsClass && <div className="text-red-500 text-sm">{errorWsClass}</div>}
-                    </div>
+                    </InputField>
                 </div>
                 <div className="w-full flex justify-end mt-3 space-x-2 px-6">
                     <Button
@@ -399,14 +428,7 @@ export function CreateWorkspacePage() {
                         autoFocus={true}
                         size="block"
                         loading={createWorkspaceMutation.isStarting}
-                        disabled={
-                            workspaceContext.isLoading ||
-                            !contextURL ||
-                            contextURL.length === 0 ||
-                            !!errorIde ||
-                            !!errorWsClass ||
-                            !!workspaceContext.error
-                        }
+                        disabled={continueButtonDisabled}
                     >
                         {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
                     </Button>
@@ -492,80 +514,105 @@ function tryAuthorize(host: string, scopes?: string[]): Promise<SelectAccountPay
     return result.promise;
 }
 
-interface StatusMessageProps {
+interface ErrorMessageProps {
     error?: StartWorkspaceError;
     reset: () => void;
     setSelectAccountError: (error?: SelectAccountPayload) => void;
-    createWorkspace: (opts: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl">) => void;
 }
-const ErrorMessage: FunctionComponent<StatusMessageProps> = ({
-    error,
-    reset,
-    setSelectAccountError,
-    createWorkspace,
-}) => {
+const ErrorMessage: FunctionComponent<ErrorMessageProps> = ({ error, reset, setSelectAccountError }) => {
     if (!error) {
-        return <></>;
+        return null;
     }
+
     switch (error.code) {
-        case ErrorCodes.CONTEXT_PARSE_ERROR:
-            return renderError(
-                `Are you trying to open a Git repository from a self-managed git hoster?`,
-                "Add integration",
-                gitpodHostUrl.asAccessControl().toString(),
-            );
         case ErrorCodes.INVALID_GITPOD_YML:
-            return renderError(`The gitpod.yml is invalid.`, `Use default config`, undefined, () => {
-                createWorkspace({ forceDefaultConfig: true });
-            });
+            return (
+                <RepositoryInputError
+                    title="Invalid YAML configuration; using default settings."
+                    message={error.message}
+                />
+            );
         case ErrorCodes.NOT_AUTHENTICATED:
-            return renderError("You are not authenticated.", `Authorize with ${error.data.host}`, undefined, () => {
-                tryAuthorize(error?.data.host, error?.data.scopes).then((payload) => setSelectAccountError(payload));
-            });
+            return (
+                <RepositoryInputError
+                    title="You are not authenticated."
+                    linkText={`Authorize with ${error.data?.host}`}
+                    linkOnClick={() => {
+                        tryAuthorize(error.data?.host, error.data?.scopes).then((payload) =>
+                            setSelectAccountError(payload),
+                        );
+                    }}
+                />
+            );
         case ErrorCodes.NOT_FOUND:
             return <RepositoryNotFound error={error} />;
         case ErrorCodes.PERMISSION_DENIED:
-            return renderError(`Access is not allowed`);
+            return <RepositoryInputError title="Access is not allowed" />;
         case ErrorCodes.USER_BLOCKED:
             window.location.href = "/blocked";
-            return <></>;
+            return null;
         case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
             return <LimitReachedParallelWorkspacesModal />;
         case ErrorCodes.INVALID_COST_CENTER:
-            return renderError(`The organization '${error.data}' is not valid.`);
+            return <RepositoryInputError title={`The organization '${error.data}' is not valid.`} />;
         case ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED:
             return <UsageLimitReachedModal onClose={reset} hints={error?.data} />;
         case ErrorCodes.NEEDS_VERIFICATION:
             return <VerifyModal />;
         default:
-            return renderError(error.message || JSON.stringify(error));
+            // Catch-All error message
+            return (
+                <RepositoryInputError
+                    title="We're sorry, there seems to have been an error."
+                    message={error.message || JSON.stringify(error)}
+                />
+            );
     }
 };
 
-function renderError(message: string, linkText?: string, linkHref?: string, linkOnClick?: () => void) {
+type RepositoryInputErrorProps = {
+    type?: "error" | "warning";
+    title: string;
+    message?: string;
+    linkText?: string;
+    linkHref?: string;
+    linkOnClick?: () => void;
+};
+const RepositoryInputError: FC<RepositoryInputErrorProps> = ({ title, message, linkText, linkHref, linkOnClick }) => {
     return (
-        <div className="mt-2 flex space-x-1">
-            <p className="text-sm text-gitpod-red">{message}</p>
-            {linkText &&
-                (linkHref ? (
-                    <a className="gp-link whitespace-nowrap text-sm" href={linkHref}>
-                        {linkText}
-                    </a>
-                ) : (
-                    <p className="gp-link whitespace-nowrap text-sm" onClick={linkOnClick}>
-                        {linkText}
-                    </p>
-                ))}
-        </div>
+        <Alert type="warning">
+            <div>
+                <span className="text-sm font-semibold">{title}</span>
+                {message && (
+                    <div className="font-mono text-xs">
+                        <span>{message}</span>
+                    </div>
+                )}
+            </div>
+            {linkText && (
+                <div>
+                    {linkOnClick ? (
+                        <LinkButton className="whitespace-nowrap text-sm font-semibold" onClick={linkOnClick}>
+                            {linkText}
+                        </LinkButton>
+                    ) : (
+                        <a className="gp-link whitespace-nowrap text-sm font-semibold" href={linkHref}>
+                            {linkText}
+                        </a>
+                    )}
+                </div>
+            )}
+        </Alert>
     );
-}
+};
 
-export function RepositoryNotFound(p: { error: StartWorkspaceError }) {
-    const { host, owner, userIsOwner, userScopes, lastUpdate } = p.error.data;
+export const RepositoryNotFound: FC<{ error: StartWorkspaceError }> = ({ error }) => {
+    const { host, owner, userIsOwner, userScopes = [], lastUpdate } = error.data || {};
+
     const authProviders = useAuthProviders();
     const authProvider = authProviders.data?.find((a) => a.host === host);
     if (!authProvider) {
-        return null;
+        return <RepositoryInputError title="The repository was not found in your account." />;
     }
 
     // TODO: this should be aware of already granted permissions
@@ -578,15 +625,17 @@ export function RepositoryNotFound(p: { error: StartWorkspaceError }) {
         .toString();
 
     if (!userScopes.includes(missingScope)) {
-        return renderError(
-            "The repository may be private. Please authorize Gitpod to access private repositories.",
-            "Grant access",
-            authorizeURL,
+        return (
+            <RepositoryInputError
+                title="The repository may be private. Please authorize Gitpod to access private repositories."
+                linkText="Grant access"
+                linkHref={authorizeURL}
+            />
         );
     }
 
     if (userIsOwner) {
-        return renderError("The repository was not found in your account.");
+        return <RepositoryInputError title="The repository was not found in your account." />;
     }
 
     let updatedRecently = false;
@@ -600,20 +649,23 @@ export function RepositoryNotFound(p: { error: StartWorkspaceError }) {
     }
 
     if (!updatedRecently) {
-        return renderError(
-            `Permission to access private repositories has been granted. If you are a member of '${owner}', please try to request access for Gitpod.`,
-            "Request access",
-            authorizeURL,
+        return (
+            <RepositoryInputError
+                title={`Permission to access private repositories has been granted. If you are a member of '${owner}', please try to request access for Gitpod.`}
+                linkText="Request access"
+                linkHref={authorizeURL}
+            />
         );
     }
 
-    return renderError(
-        `Your access token was updated recently. Please try again if the repository exists and Gitpod was
-            approved for '${owner}'.`,
-        "Authorize again",
-        authorizeURL,
+    return (
+        <RepositoryInputError
+            title={`Your access token was updated recently. Please try again if the repository exists and Gitpod was approved for '${owner}'.`}
+            linkText="Authorize again"
+            linkHref={authorizeURL}
+        />
     );
-}
+};
 
 export function LimitReachedParallelWorkspacesModal() {
     return (
