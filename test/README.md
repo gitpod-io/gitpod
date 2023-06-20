@@ -74,7 +74,6 @@ If your integration tests depends on having having a user token available, then 
 cd test
 go test -v ./... \
     -run <test> \
-    -kubeconfig=/home/gitpod/.kube/config \
     -namespace=default \
     -username=<gitpod_user_with_oauth_setup> \
     -enterprise=<true|false> \
@@ -86,7 +85,6 @@ A concrete example would be
 ```console
 cd test
 go test -v ./... \
-    -kubeconfig=/home/gitpod/.kube/config \
     -namespace=default \
     -run TestWorkspaceInstrumentation
 ```
