@@ -36,7 +36,7 @@ while getopts rs-: opt; do
 done
 shift $((OPTIND - 1))
 
-THIS_DIR="$(dirname "$0")"
+THIS_DIR="$(dirname "$(readlink -f "$0")")"
 FAILURE_COUNT=0
 LOGS_DIR=$(mktemp -d)
 
@@ -84,80 +84,80 @@ args+=( "-timeout=60m" )
 args+=( "-p=2" )
 
 if [[ "${GITPOD_REPO_ROOT:-}" != "" ]]; then
-  echo "Running in Gitpod workspace. Fetching USERNAME and USER_TOKEN" | werft log slice "test-setup"
+  echo "Running in Gitpod workspace. Fetching USERNAME and USER_TOKEN"
   USERNAME="$(kubectl --context=dev -n werft get secret integration-test-user -o jsonpath='{.data.username}' | base64 -d)"
   USER_TOKEN="$(kubectl --context=dev -n werft get secret integration-test-user -o jsonpath='{.data.token}' | base64 -d)"
   export USER_TOKEN
 else
-  echo "Running in Werft. Using INTEGRATION_TEST_USERNAME and INTEGRATION_TEST_USER_TOKEN for USERNAME and USER_TOKEN"  | werft log slice "test-setup"
+  echo "Using INTEGRATION_TEST_USERNAME and INTEGRATION_TEST_USER_TOKEN for USERNAME and USER_TOKEN"
   USERNAME="${INTEGRATION_TEST_USERNAME}"
   USER_TOKEN="${INTEGRATION_TEST_USER_TOKEN}"
   export USERNAME
   export USER_TOKEN
 fi
-werft log slice "test-setup" --done
 
 [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
+
+go install github.com/jstemmer/go-junit-report/v2@latest
+
+if ! npm list -g xunit-viewer; then npm install -g xunit-viewer; fi
+
+RESULTS_DIR="${THIS_DIR}/results/$(date +%Y-%m-%d-%H-%M-%S)"
+mkdir -p "${RESULTS_DIR}"
 
 if [ "$TEST_SUITE" == "workspace" ]; then
   TEST_NAME="workspace"
   LOG_FILE="${LOGS_DIR}/${TEST_NAME}.log"
 
   cd "$THIS_DIR"
-  echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_NAME}-parallel"
+  echo "running integration for ${TEST_NAME}-parallel"
 
   set +e
   # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-parallel"
+  go test -p 1 -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}-SERIAL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
   if [ "${RC}" -ne "0" ]; then
     FAILURE_COUNT=$((FAILURE_COUNT+1))
-    werft log slice "test-${TEST_NAME}-parallel" --fail "${RC}"
-  else
-    werft log slice "test-${TEST_NAME}-parallel" --done
   fi
 
-  echo "running integration for ${TEST_NAME} - log file at ${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
+  echo "running integration for ${TEST_NAME}-serial-only"
   set +e
   # shellcheck disable=SC2086
-  go test -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | tee -a "${LOG_FILE}" | werft log slice "test-${TEST_NAME}-serial-only"
+  go test -p 1 --parallel 1 -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' -p 1 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 
   if [ "${RC}" -ne "0" ]; then
     FAILURE_COUNT=$((FAILURE_COUNT+1))
-    werft log slice "test-${TEST_NAME}-serial-only" --fail "${RC}"
-  else
-    werft log slice "test-${TEST_NAME}-serial-only" --done
   fi
 
   cd -
   if [ "${REPORT}" != "" ]; then
-     ./report.sh "${LOG_FILE}" > "$REPORT"
+     "${THIS_DIR}/report.sh" "${LOG_FILE}" > "$REPORT"
   fi
 else
   for TEST_PATH in ${TEST_LIST}
   do
     TEST_NAME=$(basename "${TEST_PATH}")
     LOG_FILE="${LOGS_DIR}/${TEST_NAME}.log"
-    echo "running integration for ""${TEST_NAME}"" - log file at ${LOG_FILE}" | werft log slice "test-${TEST_NAME}"
+    echo "running integration for ""${TEST_NAME}"""
 
     cd "${TEST_PATH}"
     set +e
-    go test -v ./... "${args[@]}" 2>&1 | tee "${LOG_FILE}" | werft log slice "test-${TEST_NAME}"
+    go test -v ./... "${args[@]}" 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
     RC=${PIPESTATUS[0]}
     set -e
     cd -
 
     if [ "${RC}" -ne "0" ]; then
       FAILURE_COUNT=$((FAILURE_COUNT+1))
-      werft log slice "test-${TEST_NAME}" --fail "${RC}"
-    else
-      werft log slice "test-${TEST_NAME}" --done
     fi
   done
 fi
+
+xunit-viewer -r "${RESULTS_DIR}" -o "${THIS_DIR}/test-output.html"
+pkill -f "port-forward"
 
 exit $FAILURE_COUNT
