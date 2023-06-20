@@ -7,6 +7,7 @@ package proxy
 import (
 	"context"
 	"net/url"
+	"sort"
 	"time"
 
 	"golang.org/x/xerrors"
@@ -122,7 +123,18 @@ func (r *CRDWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceI
 		return nil
 	}
 
-	if len(workspaces) == 1 {
+	if len(workspaces) >= 1 {
+		if len(workspaces) != 1 {
+			log.Warnf("multiple instances (%d) for workspace %s", len(workspaces), workspaceID)
+		}
+
+		sort.Slice(workspaces, func(i, j int) bool {
+			a := workspaces[i].(*WorkspaceInfo)
+			b := workspaces[j].(*WorkspaceInfo)
+
+			return a.StartedAt.After(b.StartedAt)
+		})
+
 		return workspaces[0].(*WorkspaceInfo)
 	}
 
