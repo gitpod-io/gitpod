@@ -68,18 +68,14 @@ func TestCostCenterManager_GetOrCreateCostCenter(t *testing.T) {
 		ForUsers: 500,
 	})
 	team := db.NewTeamAttributionID(uuid.New().String())
-	user := db.NewUserAttributionID(uuid.New().String())
-	cleanUp(t, conn, team, user)
+	cleanUp(t, conn, team)
 
 	teamCC, err := mnr.GetOrCreateCostCenter(context.Background(), team)
 	require.NoError(t, err)
-	userCC, err := mnr.GetOrCreateCostCenter(context.Background(), user)
-	require.NoError(t, err)
 	t.Cleanup(func() {
-		conn.Model(&db.CostCenter{}).Delete(teamCC, userCC)
+		conn.Model(&db.CostCenter{}).Delete(teamCC)
 	})
 	require.Equal(t, int32(0), teamCC.SpendingLimit)
-	require.Equal(t, int32(500), userCC.SpendingLimit)
 }
 
 func TestCostCenterManager_GetOrCreateCostCenter_ResetsExpired(t *testing.T) {
@@ -457,6 +453,44 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 		cc, err = mnr.UpdateCostCenter(context.Background(), cc)
 		require.NoError(t, err)
 		require.Equal(t, originalSpendingLimit, cc.SpendingLimit)
+	})
+
+	t.Run("users get free credits only once for the first org", func(t *testing.T) {
+		conn := dbtest.ConnectForTests(t)
+		limitForUsers := int32(500)
+		limitForTeams := int32(0)
+		mnr := db.NewCostCenterManager(conn, db.DefaultSpendingLimit{
+			ForTeams: limitForTeams,
+			ForUsers: limitForUsers,
+		})
+		createMembership := func(t *testing.T, anOrgID string, aUserID string) {
+			memberShipID := uuid.New().String()
+			db := conn.Exec(`INSERT INTO d_b_team_membership (id, teamid, userid, role, creationtime) VALUES (?, ?, ?, ?, ?)`,
+				memberShipID,
+				anOrgID,
+				aUserID,
+				"owner",
+				db.TimeToISO8601(time.Now()))
+			require.NoError(t, db.Error)
+			t.Cleanup(func() {
+				conn.Exec(`DELETE FROM d_b_team_membership WHERE id = ?`, memberShipID)
+			})
+		}
+
+		orgID := uuid.New().String()
+		orgID2 := uuid.New().String()
+		userID := uuid.New().String()
+		t.Cleanup(func() {
+			conn.Exec(`DELETE FROM d_b_free_credits WHERE userId = ?`, userID)
+		})
+		createMembership(t, orgID, userID)
+		createMembership(t, orgID2, userID)
+		cc1, err := mnr.GetOrCreateCostCenter(context.Background(), db.NewTeamAttributionID(orgID))
+		require.NoError(t, err)
+		cc2, err := mnr.GetOrCreateCostCenter(context.Background(), db.NewTeamAttributionID(orgID2))
+		require.NoError(t, err)
+		require.Equal(t, limitForUsers, cc1.SpendingLimit)
+		require.Equal(t, limitForTeams, cc2.SpendingLimit)
 	})
 
 }

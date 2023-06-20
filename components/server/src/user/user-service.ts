@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from "inversify";
-import { User, Identity, Token, IdentityLookup } from "@gitpod/gitpod-protocol";
+import { User, Identity, Token, IdentityLookup, AdditionalUserData } from "@gitpod/gitpod-protocol";
 import { EmailDomainFilterDB, MaybeUser, ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -72,14 +72,15 @@ export class UserService {
         // state. This measure of prevention is considered in the period deleter as well.
         newUser.identities.push({ ...identity, deleted: false });
         this.handleNewUser(newUser);
+        // all new users are considered migrated
+        AdditionalUserData.set(newUser, { shouldSeeMigrationMessage: false, isMigratedToTeamOnlyAttribution: true });
         newUser = await this.userDb.storeUser(newUser);
         if (token) {
             await this.userDb.storeSingleToken(identity, token);
         }
-        newUser = await this.migrationService.migrateUser(newUser.id, false, "new user");
-
         return newUser;
     }
+
     protected handleNewUser(newUser: User) {
         if (this.config.blockNewUsers.enabled) {
             const emailDomainInPasslist = (mail: string) =>
