@@ -6,13 +6,10 @@ package proxy
 
 import (
 	"context"
-	"encoding/base64"
 	"net/url"
 	"time"
 
 	"golang.org/x/xerrors"
-	"google.golang.org/protobuf/proto"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
@@ -21,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	"github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
@@ -226,33 +222,4 @@ func (fp *fixedInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
 		return nil
 	}
 	return fp.Infos[workspaceID]
-}
-
-func extractExposedPorts(pod *corev1.Pod) *api.ExposedPorts {
-	if data, ok := pod.Annotations[kubernetes.WorkspaceExposedPorts]; ok {
-		ports, _ := api.ExposedPortsFromBase64(data)
-		return ports
-	}
-
-	return &api.ExposedPorts{}
-}
-
-func extractUserSSHPublicKeys(pod *corev1.Pod) []string {
-	if data, ok := pod.Annotations[kubernetes.WorkspaceSSHPublicKeys]; ok && len(data) != 0 {
-		specPB, err := base64.StdEncoding.DecodeString(data)
-		if err != nil {
-			return nil
-		}
-		return unmarshalUserSSHPublicKey(specPB)
-	}
-	return nil
-}
-
-func unmarshalUserSSHPublicKey(keys []byte) []string {
-	var spec api.SSHPublicKeys
-	err := proto.Unmarshal(keys, &spec)
-	if err != nil {
-		return nil
-	}
-	return spec.Keys
 }
