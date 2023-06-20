@@ -34,8 +34,8 @@ function check(subjectT: SubjectType, op: string, resourceT: ResourceType): Subj
         });
 }
 
-export const ReadOrganizationMetadata = check("user", "organization_metadata_read", "organization");
-export const WriteOrganizationMetadata = check("user", "organization_metadata_write", "organization");
+export const ReadOrganizationInfo = check("user", "read_info", "organization");
+export const WriteOrganizationInfo = check("user", "write_info", "organization");
 
-export const ReadOrganizationMembers = check("user", "organization_members_read", "organization");
-export const WriteOrganizationMembers = check("user", "organization_members_write", "organization");
+export const ReadOrganizationMembers = check("user", "read_members", "organization");
+export const WriteOrganizationMembers = check("user", "write_members", "organization");
