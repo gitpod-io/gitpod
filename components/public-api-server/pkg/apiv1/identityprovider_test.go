@@ -52,7 +52,6 @@ func TestGetIDToken(t *testing.T) {
 				})
 			},
 			ServerSetup: func(ma *protocol.MockAPIInterface) {
-				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
 				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
 					&protocol.WorkspaceInfo{
 						Workspace: &protocol.Workspace{
@@ -95,7 +94,6 @@ func TestGetIDToken(t *testing.T) {
 				})
 			},
 			ServerSetup: func(ma *protocol.MockAPIInterface) {
-				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
 				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
 					&protocol.WorkspaceInfo{
 						Workspace: &protocol.Workspace{
@@ -134,7 +132,6 @@ func TestGetIDToken(t *testing.T) {
 				})
 			},
 			ServerSetup: func(ma *protocol.MockAPIInterface) {
-				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
 				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
 					nil,
 					&jsonrpc2.Error{Code: 400, Message: "workspace not found"},
@@ -156,7 +153,6 @@ func TestGetIDToken(t *testing.T) {
 				})
 			},
 			ServerSetup: func(ma *protocol.MockAPIInterface) {
-				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
 				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
 					&protocol.WorkspaceInfo{
 						Workspace: &protocol.Workspace{
@@ -200,7 +196,6 @@ func TestGetIDToken(t *testing.T) {
 				})
 			},
 			ServerSetup: func(ma *protocol.MockAPIInterface) {
-				ma.EXPECT().GetIDToken(gomock.Any()).MinTimes(1).Return(nil)
 				ma.EXPECT().GetWorkspace(gomock.Any(), workspaceID).MinTimes(1).Return(
 					&protocol.WorkspaceInfo{
 						Workspace: &protocol.Workspace{
