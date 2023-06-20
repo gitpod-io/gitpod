@@ -1779,14 +1779,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return prebuild;
     }
 
-    /**
-     * This is an explicit extension point for allowing downstream versions of Gitpod to selectively restrict access.
-     * @returns true if the user is allowed to access the repository
-     */
-    protected async mayStartWorkspaceOnRepo(): Promise<boolean> {
-        return true;
-    }
-
     protected parseErrorCode(error: any) {
         const errorCode = error && error.code;
         if (errorCode) {
