@@ -32,7 +32,7 @@ type DaemonConfig struct {
 }
 
 func TestCpuBurst(t *testing.T) {
-	f := features.New("cpulimiting").WithLabel("component", "ws-daemon").Assess("check cpu limiting", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+	f := features.New("cpulimiting").WithLabel("component", "ws-daemon").Assess("check cpu limiting", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Parallel()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)
@@ -149,7 +149,7 @@ func TestCpuBurst(t *testing.T) {
 		if resp.CpuQuota != daemonConfig.CpuLimitConfig.BurstLimit {
 			t.Fatalf("expected cpu burst limit quota of %v, but was %v", daemonConfig.CpuLimitConfig.BurstLimit, resp.CpuQuota)
 		}
-		return ctx
+		return testCtx
 	}).Feature()
 
 	testEnv.Test(t, f)

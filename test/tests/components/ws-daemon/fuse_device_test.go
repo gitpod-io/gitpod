@@ -17,7 +17,7 @@ import (
 func TestFuseDevice(t *testing.T) {
 	f := features.New("fuse devive").
 		WithLabel("component", "ws-daemon").
-		Assess("verify fuse device", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("verify fuse device", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -61,7 +61,7 @@ func TestFuseDevice(t *testing.T) {
 				t.Fatalf("fuse device is not available: %v", err)
 			}
 
-			return ctx
+			return testCtx
 		}).Feature()
 
 	testEnv.Test(t, f)

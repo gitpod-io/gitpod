@@ -19,7 +19,7 @@ import (
 func TestServerAccess(t *testing.T) {
 	f := features.New("GetLoggedInUser").
 		WithLabel("component", "server").
-		Assess("it can get a not built-in logged user", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can get a not built-in logged user", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
@@ -40,7 +40,7 @@ func TestServerAccess(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -52,7 +52,7 @@ func TestStartWorkspace(t *testing.T) {
 
 	f := features.New("CreateWorkspace").
 		WithLabel("component", "server").
-		Assess("it can run workspace tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can run workspace tasks", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
@@ -100,7 +100,7 @@ func TestStartWorkspace(t *testing.T) {
 			}
 
 			t.Logf("workspace is running: instanceID=%s", nfo.LatestInstance.ID)
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

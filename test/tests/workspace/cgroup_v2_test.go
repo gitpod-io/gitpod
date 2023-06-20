@@ -25,7 +25,7 @@ import (
 func TestCgroupV2(t *testing.T) {
 	f := features.New("cgroup v2").
 		WithLabel("component", "workspace").
-		Assess("it should create a new cgroup when cgroup v2 is enabled", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should create a new cgroup when cgroup v2 is enabled", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			report.SetupReport(t, report.FeatureResourceLimit, "this is the test for cgroup v2")
 			t.Parallel()
 
@@ -121,7 +121,7 @@ func TestCgroupV2(t *testing.T) {
 				}
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

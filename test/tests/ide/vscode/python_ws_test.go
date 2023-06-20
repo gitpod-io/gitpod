@@ -47,7 +47,7 @@ func TestPythonExtWorkspace(t *testing.T) {
 
 	f := features.New("PythonExtensionWorkspace").
 		WithLabel("component", "server").
-		Assess("it can run python extension in a workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can run python extension in a workspace", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
@@ -175,7 +175,7 @@ func TestPythonExtWorkspace(t *testing.T) {
 				t.Fatal("There was an error running ide test")
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

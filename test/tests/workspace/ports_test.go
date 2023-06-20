@@ -35,7 +35,7 @@ func TestRegularWorkspacePorts(t *testing.T) {
 	f := features.New("ports").
 		WithLabel("component", "workspace").
 		WithLabel("type", "ports").
-		Assess("it can open and access workspace ports", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can open and access workspace ports", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Minute))
@@ -208,7 +208,7 @@ func TestRegularWorkspacePorts(t *testing.T) {
 				t.Fatalf("expected status code 200, but got %d", res.StatusCode)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

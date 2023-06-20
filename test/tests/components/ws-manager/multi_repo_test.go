@@ -65,7 +65,7 @@ var repos = []struct {
 }
 
 func TestMultiRepoWorkspaceSuccess(t *testing.T) {
-	f := features.New("multi-repo").WithLabel("component", "ws-manager").Assess("can create multi repo workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+	f := features.New("multi-repo").WithLabel("component", "ws-manager").Assess("can create multi repo workspace", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Parallel()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -140,7 +140,7 @@ func TestMultiRepoWorkspaceSuccess(t *testing.T) {
 
 		assertRepositories(t, rsa)
 
-		return ctx
+		return testCtx
 	}).Feature()
 
 	testEnv.Test(t, f)

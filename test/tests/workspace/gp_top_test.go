@@ -20,7 +20,7 @@ func TestGpTop(t *testing.T) {
 	f := features.New("gp top").
 		WithLabel("component", "workspace").
 		WithLabel("type", "gp top").
-		Assess("it can run gp top and retrieve cpu/memory usage", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can run gp top and retrieve cpu/memory usage", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Minute))
@@ -104,7 +104,7 @@ func TestGpTop(t *testing.T) {
 				t.Errorf("gp top reports 0 memory limit")
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

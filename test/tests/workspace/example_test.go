@@ -36,7 +36,7 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 
 	f := features.New("instrumentation").
 		WithLabel("component", "server").
-		Assess("it can instrument a workspace", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can instrument a workspace", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			for _, test := range tests {
 				test := test
 				t.Run(test.ContextURL, func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 				})
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -105,7 +105,7 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 func TestLaunchWorkspaceDirectly(t *testing.T) {
 	f := features.New("workspace").
 		WithLabel("component", "server").
-		Assess("it can run workspace tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can run workspace tasks", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -134,7 +134,7 @@ func TestLaunchWorkspaceDirectly(t *testing.T) {
 				}
 			})
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

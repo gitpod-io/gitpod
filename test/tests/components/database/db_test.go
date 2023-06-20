@@ -18,7 +18,7 @@ import (
 func TestBuiltinUserExists(t *testing.T) {
 	f := features.New("database").
 		WithLabel("component", "database").
-		Assess("it should exists a builtin user workspace", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should exists a builtin user workspace", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
@@ -52,7 +52,7 @@ func TestBuiltinUserExists(t *testing.T) {
 				t.Fatalf("expected a single builtin-user-workspace-probe-0000000, but found %d", count)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

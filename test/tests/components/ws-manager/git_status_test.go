@@ -24,7 +24,7 @@ import (
 func TestGitStatus(t *testing.T) {
 	f := features.New("git-status").
 		WithLabel("component", "ws-manager").
-		Assess("it should report the git status of a workspace when it stops", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should report the git status of a workspace when it stops", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name             string
 				ContextURL       string
@@ -124,7 +124,7 @@ func TestGitStatus(t *testing.T) {
 					}
 				})
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

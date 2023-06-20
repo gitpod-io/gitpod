@@ -29,7 +29,7 @@ func TestDotfiles(t *testing.T) {
 	integration.SkipWithoutUsername(t, username)
 	integration.SkipWithoutUserToken(t, userToken)
 
-	f := features.New("dotfiles").WithLabel("component", "ws-manager").Assess("ensure dotfiles are loaded", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+	f := features.New("dotfiles").WithLabel("component", "ws-manager").Assess("ensure dotfiles are loaded", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Parallel()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -124,7 +124,7 @@ func TestDotfiles(t *testing.T) {
 
 		assertDotfiles(t, rsa)
 
-		return ctx
+		return testCtx
 	}).Feature()
 
 	testEnv.Test(t, f)

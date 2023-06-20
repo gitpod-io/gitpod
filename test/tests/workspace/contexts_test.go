@@ -110,7 +110,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 
 	f := features.New("context").
 		WithLabel("component", "server").
-		Assess("should run context tests", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("should run context tests", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 
 			sctx, scancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
 			defer scancel()
@@ -188,7 +188,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 					}
 				})
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

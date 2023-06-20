@@ -46,7 +46,7 @@ func loadMountProc(t *testing.T, rsa *integration.RpcClient) {
 func TestMountProc(t *testing.T) {
 	f := features.New("proc mount").
 		WithLabel("component", "workspace").
-		Assess("load test proc mount", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("load test proc mount", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
@@ -92,7 +92,7 @@ func TestMountProc(t *testing.T) {
 			}
 			wg.Wait()
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

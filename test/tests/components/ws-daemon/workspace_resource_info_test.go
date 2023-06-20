@@ -15,11 +15,11 @@ import (
 func TestIWSWorkspaceInfo(t *testing.T) {
 	f := features.New("/iws.InWorkspaceService/WorkspaceInfo").
 		WithLabel("component", "ws-daemon").
-		Assess("check /iws.InWorkspaceService/WorkspaceInfo", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("check /iws.InWorkspaceService/WorkspaceInfo", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 			// TODO(toru): we can implement this case with `gp top`
 			t.Skip("unimplemented")
-			return ctx
+			return testCtx
 		}).Feature()
 
 	testEnv.Test(t, f)

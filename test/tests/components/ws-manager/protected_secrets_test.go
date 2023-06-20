@@ -27,7 +27,7 @@ const (
 )
 
 func TestProtectedSecrets(t *testing.T) {
-	f := features.New("protected_secrets").WithLabel("component", "ws-manager").Assess("can use protected secrets", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+	f := features.New("protected_secrets").WithLabel("component", "ws-manager").Assess("can use protected secrets", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Parallel()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -98,7 +98,7 @@ func TestProtectedSecrets(t *testing.T) {
 		integration.DeferCloser(t, closer)
 		defer rsa.Close()
 
-		return ctx
+		return testCtx
 	}).Feature()
 
 	testEnv.Test(t, f)

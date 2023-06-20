@@ -29,7 +29,7 @@ func TestSSHGatewayConnection(t *testing.T) {
 
 	f := features.New("TestSSHGatewayConnection").
 		WithLabel("component", "server").
-		Assess("it can connect to a workspace via SSH gateway", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can connect to a workspace via SSH gateway", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 			defer cancel()
 
@@ -108,7 +108,7 @@ World`,
 
 			t.Log(string(output))
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

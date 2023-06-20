@@ -20,7 +20,7 @@ import (
 func TestRunDocker(t *testing.T) {
 	f := features.New("docker").
 		WithLabel("component", "workspace").
-		Assess("it should start a container", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should start a container", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -76,7 +76,7 @@ func TestRunDocker(t *testing.T) {
 				t.Fatalf("docker run failed: %s\n%s", resp.Stdout, resp.Stderr)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

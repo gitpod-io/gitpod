@@ -131,7 +131,7 @@ func TestGitActions(t *testing.T) {
 
 	f := features.New("GitActions").
 		WithLabel("component", "workspace").
-		Assess("it can run git actions", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can run git actions", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
 			defer cancel()
 
@@ -199,7 +199,7 @@ func TestGitActions(t *testing.T) {
 					})
 				}
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

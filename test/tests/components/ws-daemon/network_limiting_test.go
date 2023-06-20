@@ -15,10 +15,10 @@ import (
 func TestNetworkdLimiting(t *testing.T) {
 	f := features.New("network limiting").
 		WithLabel("component", "ws-daemon").
-		Assess("verify if network limiting works fine", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("verify if network limiting works fine", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 			t.Skip("unimplemented")
-			return ctx
+			return testCtx
 		}).Feature()
 
 	testEnv.Test(t, f)

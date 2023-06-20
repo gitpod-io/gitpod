@@ -27,7 +27,7 @@ import (
 func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
-		Assess("it should create a prebuild and succeed the defined tasks", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should create a prebuild and succeed the defined tasks", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name             string
 				ContextURL       string
@@ -110,7 +110,7 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 					}
 				})
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -120,7 +120,7 @@ func TestPrebuildWorkspaceTaskSuccess(t *testing.T) {
 func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "server").
-		Assess("it should create a prebuild and fail after running the defined tasks", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should create a prebuild and fail after running the defined tasks", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -164,7 +164,7 @@ func TestPrebuildWorkspaceTaskFail(t *testing.T) {
 				t.Fatalf("failed for wait workspace stop: %q", err)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -195,7 +195,7 @@ const (
 func TestOpenWorkspaceFromPrebuildSerialOnly(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
-		Assess("it should open workspace from prebuild successfully", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should open workspace from prebuild successfully", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name             string
 				ContextURL       string
@@ -401,7 +401,7 @@ func TestOpenWorkspaceFromPrebuildSerialOnly(t *testing.T) {
 					}
 				})
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
@@ -416,7 +416,7 @@ func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
 
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
-		Assess("it should open a workspace from with an older prebuild initializer successfully and run the init task", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should open a workspace from with an older prebuild initializer successfully and run the init task", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name                    string
 				RemoteUri               string
@@ -566,7 +566,7 @@ func TestOpenWorkspaceFromOutdatedPrebuild(t *testing.T) {
 					}
 				})
 			}
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

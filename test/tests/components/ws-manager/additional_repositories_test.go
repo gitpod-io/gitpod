@@ -23,7 +23,7 @@ import (
 func TestAdditionalRepositories(t *testing.T) {
 	f := features.New("additional-repositories").
 		WithLabel("component", "ws-manager").
-		Assess("can open a workspace using the additionalRepositories property", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("can open a workspace using the additionalRepositories property", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			tests := []struct {
 				Name       string
 				ContextURL string
@@ -112,7 +112,7 @@ func TestAdditionalRepositories(t *testing.T) {
 				})
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
