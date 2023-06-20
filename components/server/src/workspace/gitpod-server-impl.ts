@@ -4253,8 +4253,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return targetRegion;
     }
 
-    async getIDToken(): Promise<void> {}
-
     public async controlAdmission(ctx: TraceContext, workspaceId: string, level: "owner" | "everyone"): Promise<void> {
         traceAPIParams(ctx, { workspaceId, level });
         traceWI(ctx, { workspaceId });
