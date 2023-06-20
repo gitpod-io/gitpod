@@ -5,12 +5,6 @@
  */
 
 import {
-    DownloadUrlRequest,
-    DownloadUrlResponse,
-    UploadUrlRequest,
-    UploadUrlResponse,
-} from "@gitpod/content-service/lib/blobs_pb";
-import {
     AppInstallationDB,
     UserDB,
     WorkspaceDB,
@@ -169,7 +163,6 @@ import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import * as grpc from "@grpc/grpc-js";
-import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
 import {
@@ -269,9 +262,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
 
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-
-    @inject(CachingBlobServiceClientProvider)
-    protected readonly blobServiceClientProvider: CachingBlobServiceClientProvider;
 
     @inject(GitTokenScopeGuesser) protected readonly gitTokenScopeGuesser: GitTokenScopeGuesser;
 
