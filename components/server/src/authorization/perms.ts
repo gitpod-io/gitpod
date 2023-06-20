@@ -43,8 +43,6 @@ export type OrganizationOperation =
     // Ability to read Organization Auth Providers.
     | "org_authprovider_read";
 
-export type ResourceType = "organization";
-
 export type SubjectType = "user";
 
 export type CheckResult = {
