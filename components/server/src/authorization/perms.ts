@@ -64,6 +64,8 @@ export class Authorizer {
             log.info("[spicedb] Succesfully wrote relationships.", { response });
         } catch (err) {
             log.error("[spicedb] Failed to write relationships.", err, { req });
+
+            throw err;
         }
     }
 }
