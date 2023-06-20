@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -84,13 +85,17 @@ func Setup(ctx context.Context) (string, string, env.Environment, bool, string, 
 	flagset := flag.CommandLine
 	klog.InitFlags(flagset)
 
+	defaultKubeConfig := os.Getenv("KUBE_CONFIG")
+	if defaultKubeConfig == "" {
+		defaultKubeConfig = "/home/gitpod/.kube/config"
+	}
 	flagset.StringVar(&username, "username", os.Getenv("USER_NAME"), "username to execute the tests with. Chooses one automatically if left blank.")
 	flagset.BoolVar(&enterprise, "enterprise", false, "whether to test enterprise features. requires enterprise lisence installed.")
 	flagset.BoolVar(&gitlab, "gitlab", false, "whether to test gitlab integration.")
 	flagset.BoolVar(&parallel, "parallel", false, "Run test features in parallel")
 	flagset.DurationVar(&waitGitpodReady, "wait-gitpod-timeout", 5*time.Minute, `wait time for Gitpod components before starting integration test`)
 	flagset.StringVar(&namespace, "namespace", "", "Kubernetes cluster namespaces to use")
-	flagset.StringVar(&kubeconfig, "kubeconfig", os.Getenv("KUBE_CONFIG"), "The path to the kubeconfig file")
+	flagset.StringVar(&kubeconfig, "kubeconfig", defaultKubeConfig, "The path to the kubeconfig file")
 	flagset.StringVar(&feature, "feature", "", "Regular expression that targets features to test")
 	flagset.StringVar(&assess, "assess", "", "Regular expression that targets assertive steps to run")
 	flagset.Var(&labels, "labels", "Comma-separated key/value pairs to filter tests by labels")
@@ -159,34 +164,48 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 
 		client := cfg.Client()
 		err := wait.PollImmediate(1*time.Second, waitTimeout, func() (bool, error) {
+			var wg sync.WaitGroup
+			ready := true
 			for _, component := range components {
-				var pods corev1.PodList
-				err := client.Resources(namespace).List(context.Background(), &pods, func(opts *metav1.ListOptions) {
-					opts.LabelSelector = fmt.Sprintf("component=%v", component)
-				})
-				if err != nil {
-					klog.Errorf("unexpected error searching Gitpod components: %v", err)
-					return false, nil
-				}
+				wg.Add(1)
+				go func(component string) {
+					defer wg.Done()
+					var pods corev1.PodList
+					err := client.Resources(namespace).List(context.Background(), &pods, func(opts *metav1.ListOptions) {
+						opts.LabelSelector = fmt.Sprintf("component=%v", component)
+					})
+					if err != nil {
+						klog.Errorf("unexpected error searching Gitpod components: %v", err)
+						ready = false
+						return
+					}
 
-				if len(pods.Items) == 0 {
-					klog.Warningf("no pod ready for component %v", component)
-					return false, nil
-				}
+					if len(pods.Items) == 0 {
+						klog.Warningf("no pod ready for component %v", component)
+						ready = false
+						return
+					}
 
-				for _, p := range pods.Items {
-					var isReady bool
-					for _, cond := range p.Status.Conditions {
-						if cond.Type == corev1.PodReady {
-							isReady = cond.Status == corev1.ConditionTrue
-							break
+					for _, p := range pods.Items {
+						var isReady bool
+						for _, cond := range p.Status.Conditions {
+							if cond.Type == corev1.PodReady {
+								isReady = cond.Status == corev1.ConditionTrue
+								break
+							}
+						}
+						if !isReady {
+							klog.Warningf("no pod ready for component %v", component)
+							ready = false
+							return
 						}
 					}
-					if !isReady {
-						klog.Warningf("no pod ready for component %v", component)
-						return false, nil
-					}
-				}
+				}(component)
+			}
+
+			wg.Wait()
+			if !ready {
+				return false, nil
 			}
 
 			klog.V(2).Info("All Gitpod components are running...")
