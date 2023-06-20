@@ -7,7 +7,7 @@
 import { ContainerModule } from "inversify";
 
 import { WorkspaceDB } from "./workspace-db";
-import { TypeORMWorkspaceDBImpl, TransactionalWorkspaceDbImpl } from "./typeorm/workspace-db-impl";
+import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { UserDB } from "./user-db";
 import { Config } from "./config";
@@ -53,7 +53,6 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
         bind(TypeORM).toSelf().inSingletonScope();
         bind(DBWithTracing).toSelf().inSingletonScope();
         bind(DataCache).to(cacheClass).inSingletonScope();
-        bind(TransactionalWorkspaceDbImpl).toSelf().inSingletonScope();
 
         bind(TypeORMBlockedRepositoryDBImpl).toSelf().inSingletonScope();
         bind(BlockedRepositoryDB).toService(TypeORMBlockedRepositoryDBImpl);

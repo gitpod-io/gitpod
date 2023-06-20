@@ -5,9 +5,10 @@
  */
 
 import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
+import { TransactionalDB } from "./typeorm/transactional-db-impl";
 
 export const ProjectDB = Symbol("ProjectDB");
-export interface ProjectDB {
+export interface ProjectDB extends TransactionalDB<ProjectDB> {
     findProjectById(projectId: string): Promise<Project | undefined>;
     findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined>;
     findProjectsByCloneUrls(cloneUrls: string[]): Promise<(Project & { teamOwners?: string[] })[]>;

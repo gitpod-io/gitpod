@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TypeORM, TypeORMUserDBImpl } from "@gitpod/gitpod-db/lib";
+import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { Container } from "inversify";
 import { suite, test } from "mocha-typescript";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
@@ -34,7 +34,7 @@ testContainer.rebind(UserToTeamMigrationService).toConstantValue({
 
 @suite
 class UserServiceSpec {
-    userDB = testContainer.get<TypeORMUserDBImpl>(TypeORMUserDBImpl);
+    userDB = testContainer.get<UserDB>(UserDB);
 
     async before() {
         await this.wipeRepos();
