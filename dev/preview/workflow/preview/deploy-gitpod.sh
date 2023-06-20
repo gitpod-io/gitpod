@@ -255,6 +255,7 @@ CONTAINERD_RUNTIME_DIR="/var/lib/containerd/io.containerd.runtime.v2.task/k8s.io
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.runtime.containerdRuntimeDir ${CONTAINERD_RUNTIME_DIR}
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.resources.requests.cpu "100m"
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.resources.requests.memory "256Mi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.procLimit 1000
 
 # create two workspace classes (default and small) in server-config configmap
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-standard"

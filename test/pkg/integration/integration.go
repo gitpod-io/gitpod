@@ -50,6 +50,10 @@ const (
 	errorDialingBackendEOF = "error dialing backend: EOF"
 )
 
+var (
+	errorNoPods = fmt.Errorf("no pods found")
+)
+
 type PodExec struct {
 	RestConfig *rest.Config
 	*kubernetes.Clientset
@@ -269,6 +273,11 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 
 		podName, containerName, err = selectPod(component, options.SPO, namespace, client)
 		if err != nil {
+			if errors.Is(err, errorNoPods) {
+				// When there are no pods, assume that the component has already
+				// stopped, so return the error and don't retry.
+				return nil, closer, err
+			}
 			time.Sleep(10 * time.Second)
 			continue
 		}
@@ -513,7 +522,7 @@ func selectPod(component ComponentType, options selectPodOptions, namespace stri
 	}
 
 	if len(pods.Items) == 0 {
-		return "", "", xerrors.Errorf("no pods for %s", component)
+		return "", "", xerrors.Errorf("no pods for %s: %w", component, errorNoPods)
 	}
 
 	p := pods.Items[0]
