@@ -761,21 +761,6 @@ func (mr *MockAPIInterfaceMockRecorder) GuessGitTokenScopes(ctx, params interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GuessGitTokenScopes", reflect.TypeOf((*MockAPIInterface)(nil).GuessGitTokenScopes), ctx, params)
 }
 
-// HasPermission mocks base method.
-func (m *MockAPIInterface) HasPermission(ctx context.Context, permission *PermissionName) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasPermission", ctx, permission)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// HasPermission indicates an expected call of HasPermission.
-func (mr *MockAPIInterfaceMockRecorder) HasPermission(ctx, permission interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasPermission", reflect.TypeOf((*MockAPIInterface)(nil).HasPermission), ctx, permission)
-}
-
 // HasSSHPublicKey mocks base method.
 func (m *MockAPIInterface) HasSSHPublicKey(ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
