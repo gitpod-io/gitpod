@@ -73,24 +73,14 @@ var runCmd = &cobra.Command{
 		}
 
 		var infoprov proxy.CompositeInfoProvider
-		podInfoProv := proxy.NewRemoteWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
-		if err = podInfoProv.SetupWithManager(mgr); err != nil {
-			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
+		crdInfoProv, err := proxy.NewCRDWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
+		if err != nil {
+			log.WithError(err).Fatal("cannot create CRD-based info provider")
 		}
-		infoprov = append(infoprov, podInfoProv)
-
-		if cfg.EnableWorkspaceCRD {
-			crdInfoProv, err := proxy.NewCRDWorkspaceInfoProvider(mgr.GetClient(), mgr.GetScheme())
-			if err == nil {
-				if err = crdInfoProv.SetupWithManager(mgr); err != nil {
-					log.WithError(err).Warn(err, "unable to create CRD-based info provider", "controller", "Workspace")
-				} else {
-					infoprov = append(infoprov, crdInfoProv)
-				}
-			} else {
-				log.WithError(err).Warn("cannot create CRD-based info provider")
-			}
+		if err = crdInfoProv.SetupWithManager(mgr); err != nil {
+			log.WithError(err).Fatal(err, "unable to create CRD-based info provider", "controller", "Workspace")
 		}
+		infoprov = append(infoprov, crdInfoProv)
 
 		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 			log.WithError(err).Fatal("unable to set up health check")
