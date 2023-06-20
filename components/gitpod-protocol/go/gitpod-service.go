@@ -38,7 +38,6 @@ type APIInterface interface {
 	GetToken(ctx context.Context, query *GetTokenSearchOptions) (res *Token, err error)
 	DeleteAccount(ctx context.Context) (err error)
 	GetClientRegion(ctx context.Context) (res string, err error)
-	HasPermission(ctx context.Context, permission *PermissionName) (res bool, err error)
 	GetWorkspaces(ctx context.Context, options *GetWorkspacesOptions) (res []*WorkspaceInfo, err error)
 	GetWorkspaceOwner(ctx context.Context, workspaceID string) (res *UserInfo, err error)
 	GetWorkspaceUsers(ctx context.Context, workspaceID string) (res []*WorkspaceInstanceUser, err error)
@@ -137,8 +136,6 @@ const (
 	FunctionDeleteAccount FunctionName = "deleteAccount"
 	// FunctionGetClientRegion is the name of the getClientRegion function
 	FunctionGetClientRegion FunctionName = "getClientRegion"
-	// FunctionHasPermission is the name of the hasPermission function
-	FunctionHasPermission FunctionName = "hasPermission"
 	// FunctionGetWorkspaces is the name of the getWorkspaces function
 	FunctionGetWorkspaces FunctionName = "getWorkspaces"
 	// FunctionGetWorkspaceOwner is the name of the getWorkspaceOwner function
@@ -619,26 +616,6 @@ func (gp *APIoverJSONRPC) GetClientRegion(ctx context.Context) (res string, err 
 
 	var result string
 	err = gp.C.Call(ctx, "getClientRegion", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
-// HasPermission calls hasPermission on the server
-func (gp *APIoverJSONRPC) HasPermission(ctx context.Context, permission *PermissionName) (res bool, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, permission)
-
-	var result bool
-	err = gp.C.Call(ctx, "hasPermission", _params, &result)
 	if err != nil {
 		return
 	}
