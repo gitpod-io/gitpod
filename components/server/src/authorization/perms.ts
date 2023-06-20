@@ -54,7 +54,7 @@ export class Authorizer {
         }
     }
 
-    async writeRelationships(req: v1.WriteRelationshipsRequest): Promise<void> {
+    async writeRelationships(req: v1.WriteRelationshipsRequest): Promise<v1.WriteRelationshipsResponse> {
         if (!this.client) {
             throw new Error("Authorization client is not available");
         }
@@ -62,6 +62,8 @@ export class Authorizer {
         try {
             const response = await this.client.writeRelationships(req);
             log.info("[spicedb] Succesfully wrote relationships.", { response });
+
+            return response;
         } catch (err) {
             log.error("[spicedb] Failed to write relationships.", err, { req });
 
