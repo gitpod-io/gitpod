@@ -5,7 +5,7 @@
  */
 
 import { v1 } from "@authzed/authzed-node";
-import { Permission, ResourceType } from "./definitions";
+import { Permission, ResourceType, objectRef, subject } from "./definitions";
 
 const FULLY_CONSISTENT = v1.Consistency.create({
     requirement: {
@@ -19,17 +19,9 @@ type SubjectResourceCheckFn = (subjectID: string, resourceID: string) => v1.Chec
 function check(subjectT: ResourceType, op: Permission, resourceT: ResourceType): SubjectResourceCheckFn {
     return (subjectID, resourceID) =>
         v1.CheckPermissionRequest.create({
-            subject: v1.SubjectReference.create({
-                object: v1.ObjectReference.create({
-                    objectId: subjectID,
-                    objectType: subjectT,
-                }),
-            }),
+            subject: subject(subjectT, subjectID),
             permission: op,
-            resource: v1.ObjectReference.create({
-                objectId: resourceID,
-                objectType: resourceT,
-            }),
+            resource: objectRef(resourceT, resourceID),
             consistency: FULLY_CONSISTENT,
         });
 }
