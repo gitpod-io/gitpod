@@ -133,7 +133,7 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	parallelLimiter <- struct{}{}
 	defer func() {
 		if err != nil && stopWs == nil {
-			t.Log("unlock the parallelLimiter because of error during stating the workspace")
+			t.Logf("unlock the parallelLimiter because of error during starting the workspace: %v", err)
 			<-parallelLimiter
 		}
 	}()

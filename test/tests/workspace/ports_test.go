@@ -35,10 +35,10 @@ func TestRegularWorkspacePorts(t *testing.T) {
 	f := features.New("ports").
 		WithLabel("component", "workspace").
 		WithLabel("type", "ports").
-		Assess("it can open and access workspace ports", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it can open and access workspace ports", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(ctx, time.Duration(5*time.Minute))
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Minute))
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

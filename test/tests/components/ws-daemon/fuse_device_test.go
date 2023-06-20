@@ -17,10 +17,10 @@ import (
 func TestFuseDevice(t *testing.T) {
 	f := features.New("fuse devive").
 		WithLabel("component", "ws-daemon").
-		Assess("verify fuse device", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("verify fuse device", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

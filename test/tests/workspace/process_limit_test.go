@@ -22,10 +22,10 @@ func TestProcessLimit(t *testing.T) {
 	f := features.New("process limit").
 		WithLabel("component", "workspace").
 		WithLabel("type", "process limit").
-		Assess("it has a proc limit", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it has a proc limit", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(ctx, time.Duration(5*time.Minute))
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Minute))
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
