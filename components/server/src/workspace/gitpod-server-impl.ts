@@ -185,9 +185,9 @@ import {
 } from "../authorization/perms";
 import {
     ReadOrganizationMembers,
-    ReadOrganizationMetadata,
+    ReadOrganizationInfo,
     WriteOrganizationMembers,
-    WriteOrganizationMetadata,
+    WriteOrganizationInfo,
 } from "../authorization/checks";
 import { increaseDashboardErrorBoundaryCounter, reportCentralizedPermsValidation } from "../prometheus-metrics";
 import { RegionService } from "./region-service";
@@ -2814,9 +2814,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         switch (op) {
             case "org_metadata_read":
-                return await this.authorizer.check(ReadOrganizationMetadata(user.id, orgId));
+                return await this.authorizer.check(ReadOrganizationInfo(user.id, orgId));
             case "org_metadata_write":
-                return await this.authorizer.check(WriteOrganizationMetadata(user.id, orgId));
+                return await this.authorizer.check(WriteOrganizationInfo(user.id, orgId));
 
             case "org_members_read":
                 return await this.authorizer.check(ReadOrganizationMembers(user.id, orgId));
