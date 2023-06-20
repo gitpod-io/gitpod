@@ -5,7 +5,7 @@
  */
 
 import { v1 } from "@authzed/authzed-node";
-import { Permission, ResourceType } from "./defs";
+import { Permission, ResourceType } from "./definitions";
 
 const FULLY_CONSISTENT = v1.Consistency.create({
     requirement: {
