@@ -3444,13 +3444,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.userDB.deleteGitpodToken(tokenHash);
     }
 
-    public async hasPermission(ctx: TraceContext, permission: PermissionName): Promise<boolean> {
-        traceAPIParams(ctx, { permission });
-
-        const user = await this.checkUser("hasPermission");
-        return this.authorizationService.hasPermission(user, permission);
-    }
-
     async guessGitTokenScopes(ctx: TraceContext, params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {
         traceAPIParams(ctx, { params: censor(params, "currentToken") });
 

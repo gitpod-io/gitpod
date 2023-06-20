@@ -50,7 +50,6 @@ import { WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstancePhase } from
 import { AdminServer } from "./admin-protocol";
 import { GitpodHostUrl } from "./util/gitpod-host-url";
 import { WebSocketConnectionProvider } from "./messaging/browser/connection";
-import { PermissionName } from "./permission";
 import { Emitter } from "./util/event";
 import { RemotePageMessage, RemoteTrackMessage, RemoteIdentifyMessage } from "./analytics";
 import { IDEServer } from "./ide-protocol";
@@ -87,7 +86,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getGitpodTokenScopes(tokenHash: string): Promise<string[]>;
     deleteAccount(): Promise<void>;
     getClientRegion(): Promise<string | undefined>;
-    hasPermission(permission: PermissionName): Promise<boolean>;
 
     // Query/retrieve workspaces
     getWorkspaces(options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]>;
