@@ -87,6 +87,10 @@ export class Authenticator {
                 if (!hostContext) {
                     throw new Error("No host context found.");
                 }
+
+                // remember parsed state to be availble in the auth provider implementation
+                req.authFlow = flowState;
+
                 log.info(`Auth Provider Callback. Host: ${host}`);
                 await hostContext.authProvider.callback(req, res, next);
             } catch (error) {
@@ -98,7 +102,6 @@ export class Authenticator {
         }
     }
 
-    // TODO(at) deduplicate `parseState`
     private async parseState(state: string): Promise<AuthFlow> {
         // In preview environments, we prepend the current development branch to the state, to allow
         // our preview proxy to route the Auth callback appropriately.
@@ -111,6 +114,17 @@ export class Authenticator {
         }
 
         return await this.signInJWT.verify(state as string);
+    }
+
+    private deriveAuthState(state: string): string {
+        // In preview environments, we prepend the current development branch to the state, to allow
+        // our preview proxy to route the Auth callback appropriately.
+        // See https://github.com/gitpod-io/ops/pull/9398/files
+        if (this.config.devBranch) {
+            return `${this.config.devBranch},${state}`;
+        }
+
+        return state;
     }
 
     protected async getAuthProviderForHost(host: string): Promise<AuthProvider | undefined> {
@@ -168,7 +182,7 @@ export class Authenticator {
         });
 
         // authenticate user
-        authProvider.authorize(req, res, next, state);
+        authProvider.authorize(req, res, next, this.deriveAuthState(state));
     }
 
     async deauthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -283,7 +297,7 @@ export class Authenticator {
         // authorize Gitpod
         log.info(`(doAuthorize) wanted scopes (${override ? "overriding" : "merging"}): ${wantedScopes.join(",")}`);
         const state = await this.signInJWT.sign({ host, returnTo, overrideScopes: override });
-        authProvider.authorize(req, res, next, state, wantedScopes);
+        authProvider.authorize(req, res, next, this.deriveAuthState(state), wantedScopes);
     }
     protected mergeScopes(a: string[], b: string[]) {
         const set = new Set(a);
