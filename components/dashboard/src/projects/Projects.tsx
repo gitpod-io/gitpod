@@ -20,6 +20,7 @@ import projectsEmpty from "../images/projects-empty.svg";
 import { ThemeContext } from "../theme-context";
 import { ProjectListItem } from "./ProjectListItem";
 import { projectsPathNew } from "./projects.routes";
+import { Button } from "../components/Button";
 
 export default function ProjectsPage() {
     const history = useHistory();
@@ -86,9 +87,9 @@ export default function ProjectsPage() {
                             <button>New Project</button>
                         </Link>
                         {team && (
-                            <Link to="./members">
-                                <button className="secondary">Invite Members</button>
-                            </Link>
+                            <Button href="./members" className="secondary">
+                                Invite Members
+                            </Button>
                         )}
                     </div>
                 </div>
@@ -113,9 +114,9 @@ export default function ProjectsPage() {
                         <div className="flex-1" />
                         <div className="py-2 pl-3"></div>
                         {team && (
-                            <Link to="./members" className="flex">
-                                <button className="ml-2 secondary">Invite Members</button>
-                            </Link>
+                            <Button href="./members" className="ml-2 secondary">
+                                Invite Members
+                            </Button>
                         )}
                         <button className="ml-2" onClick={() => onNewProject()}>
                             New Project
