@@ -2889,14 +2889,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 );
             }
 
-            try {
-                await this.projectDB.transaction(async (db) => {
-                    await db.setTeamMemberRole(userId, teamId, role);
-                    await this.authorizer.writeRelationships(permWriteRequest);
-                });
-            } catch (err) {
-                // TODO: Delete relationship
-            }
+            // TODO: Wrap in a transaction
+            await this.teamDB.setTeamMemberRole(userId, teamId, role);
+            await this.authorizer.writeRelationships(permWriteRequest);
         } else {
             await this.teamDB.setTeamMemberRole(userId, teamId, role);
         }
