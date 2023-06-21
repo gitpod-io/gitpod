@@ -65,9 +65,9 @@ export const AuthorizeGit: FC<{ className?: string }> = ({ className }) => {
                     {!!org.data?.isOwner ? (
                         <div className="px-6">
                             <Subheading>You need to configure at least one Git integration.</Subheading>
-                            <Link to="/settings/git">
-                                <Button className="mt-6 w-full">Add a Git integration</Button>
-                            </Link>
+                            <Button href="/settings/git" className="mt-6 w-full">
+                                Add a Git integration
+                            </Button>
                         </div>
                     ) : (
                         <>
