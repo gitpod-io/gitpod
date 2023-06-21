@@ -19,7 +19,8 @@ import (
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
 	Short: "Show the SSH connection command for the current workspace",
-	Long: `The command which is outputted requires SSH keys to be configured with Gitpod.
+	Long: `Displays a command with which you can connect to the current workspace.
+The returned command requires SSH keys to be configured with Gitpod.
 See https://www.gitpod.io/docs/configure/user-settings/ssh for a guide on setting them up.
 `, RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Second)
