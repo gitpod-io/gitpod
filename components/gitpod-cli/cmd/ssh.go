@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// sshCmd commands collection
+// sshCmd represents the ssh command
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
 	Short: "Show the SSH connection command for the current workspace",
@@ -28,7 +28,7 @@ See https://www.gitpod.io/docs/configure/user-settings/ssh for a guide on settin
 
 		wsInfo, err := gitpod.GetWSInfo(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("cannot get workspace info: %w", err)
 		}
 
 		host := strings.Replace(wsInfo.WorkspaceUrl, wsInfo.WorkspaceId, wsInfo.WorkspaceId+".ssh", -1)
