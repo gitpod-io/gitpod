@@ -16,12 +16,7 @@ export class SpiceDBMigrationJob implements Job {
     @inject(Config) protected readonly config: Config;
 
     public name = "spicedb";
-    public frequencyMs: number;
-
-    @postConstruct()
-    protected init() {
-        this.frequencyMs = this.config.workspaceGarbageCollection.intervalSeconds * 1000;
-    }
+    public frequencyMs = 5 * 60 * 1000; // every 5 minutes
 
     public async run(): Promise<void> {
         if (this.config.permissionsMigration.enabled) {

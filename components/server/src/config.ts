@@ -60,7 +60,6 @@ export type Config = Omit<
     };
 
     permissionsMigration: {
-        frequencySeconds: number;
         enabled: boolean;
     };
 };
