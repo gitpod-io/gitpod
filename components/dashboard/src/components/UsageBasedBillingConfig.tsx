@@ -8,7 +8,6 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
-import { Link } from "react-router-dom";
 import Modal, { ModalBody, ModalFooter, ModalHeader } from "../components/Modal";
 import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { ReactComponent as Spinner } from "../icons/Spinner.svg";
@@ -284,15 +283,16 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                                 </div>
                             </div>
                             <div>
-                                <Link
-                                    to={`/usage?org=${
+                                <Button
+                                    href={`/usage?org=${
                                         attrId?.kind === "team" ? attrId.teamId : "0"
                                     }&start=${billingCycleFrom.format("YYYY-MM-DD")}&end=${billingCycleTo.format(
                                         "YYYY-MM-DD",
                                     )}`}
+                                    className="secondary"
                                 >
-                                    <button className="secondary">View Usage →</button>
-                                </Link>
+                                    View Usage →
+                                </Button>
                             </div>
                         </div>
                     </div>
