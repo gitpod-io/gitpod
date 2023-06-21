@@ -58,6 +58,11 @@ export type Config = Omit<
             cookie: CookieConfig;
         };
     };
+
+    permissionsMigration: {
+        frequencySeconds: number;
+        enabled: boolean;
+    };
 };
 
 export interface WorkspaceDefaults {

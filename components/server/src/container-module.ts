@@ -129,6 +129,7 @@ import { DatabaseGarbageCollector } from "./jobs/database-gc";
 import { OTSGarbageCollector } from "./jobs/ots-gc";
 import { SnapshotsJob } from "./jobs/snapshots";
 import { APIStatsService } from "./api/stats";
+import { SpiceDBMigrationJob } from "./jobs/spicedb-migration";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -354,6 +355,7 @@ export const productionContainerModule = new ContainerModule(
         bind(OTSGarbageCollector).toSelf().inSingletonScope();
         bind(SnapshotsJob).toSelf().inSingletonScope();
         bind(JobRunner).toSelf().inSingletonScope();
+        bind(SpiceDBMigrationJob).toSelf().inSingletonScope();
 
         // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
         rebind(UsageService)
