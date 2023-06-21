@@ -32,7 +32,7 @@ func TestDotfiles(t *testing.T) {
 	f := features.New("dotfiles").WithLabel("component", "ws-manager").Assess("ensure dotfiles are loaded", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Parallel()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 		defer cancel()
 
 		api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

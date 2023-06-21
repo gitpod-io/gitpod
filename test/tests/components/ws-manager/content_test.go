@@ -44,7 +44,7 @@ func TestBackup(t *testing.T) {
 				t.Run(test.Name, func(t *testing.T) {
 					t.Parallel()
 
-					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
+					ctx, cancel := context.WithTimeout(testCtx, time.Duration(10*len(tests))*time.Minute)
 					defer cancel()
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -186,7 +186,7 @@ func TestMissingBackup(t *testing.T) {
 	f := features.New("CreateWorkspace").
 		WithLabel("component", "ws-manager").
 		Assess("it ensures workspace fail if they should have a backup but don't have one", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

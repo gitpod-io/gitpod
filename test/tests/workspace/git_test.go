@@ -132,7 +132,7 @@ func TestGitActions(t *testing.T) {
 	f := features.New("GitActions").
 		WithLabel("component", "workspace").
 		Assess("it can run git actions", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(5*len(tests))*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, time.Duration(5*len(tests))*time.Minute)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

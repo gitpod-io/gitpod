@@ -35,7 +35,7 @@ func TestCpuBurst(t *testing.T) {
 	f := features.New("cpulimiting").WithLabel("component", "ws-daemon").Assess("check cpu limiting", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 		t.Parallel()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 8*time.Minute)
+		ctx, cancel := context.WithTimeout(testCtx, 8*time.Minute)
 		defer cancel()
 
 		api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

@@ -43,7 +43,7 @@ func TestGitStatus(t *testing.T) {
 				t.Run(test.Name, func(t *testing.T) {
 					t.Parallel()
 
-					ctx, cancel := context.WithTimeout(context.Background(), time.Duration(10*len(tests))*time.Minute)
+					ctx, cancel := context.WithTimeout(testCtx, time.Duration(10*len(tests))*time.Minute)
 					defer cancel()
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

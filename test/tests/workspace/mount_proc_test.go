@@ -47,7 +47,7 @@ func TestMountProc(t *testing.T) {
 	f := features.New("proc mount").
 		WithLabel("component", "workspace").
 		Assess("load test proc mount", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
 			t.Parallel()

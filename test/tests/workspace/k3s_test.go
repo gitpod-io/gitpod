@@ -29,7 +29,7 @@ func TestK3s(t *testing.T) {
 			t.Skip("k3s is currently not supported in workspaces")
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), TIME_OUT)
+			ctx, cancel := context.WithTimeout(testCtx, TIME_OUT)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())

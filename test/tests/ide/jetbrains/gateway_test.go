@@ -252,7 +252,7 @@ func TestGoLand(t *testing.T) {
 		WithLabel("component", "IDE").
 		WithLabel("ide", "GoLand").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			JetBrainsIDETest(ctx, t, cfg, "goland", "https://github.com/gitpod-samples/template-golang-cli")
 			return testCtx
@@ -271,7 +271,7 @@ func TestIntellij(t *testing.T) {
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Intellij").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			JetBrainsIDETest(ctx, t, cfg, "intellij", "https://github.com/gitpod-samples/spring-petclinic")
 			return testCtx
@@ -290,7 +290,7 @@ func TestPhpStorm(t *testing.T) {
 		WithLabel("component", "IDE").
 		WithLabel("ide", "PhpStorm").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			JetBrainsIDETest(ctx, t, cfg, "phpstorm", "https://github.com/gitpod-samples/template-php-laravel-mysql")
 			return testCtx
@@ -309,7 +309,7 @@ func TestPyCharm(t *testing.T) {
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Pycharm").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			JetBrainsIDETest(ctx, t, cfg, "pycharm", "https://github.com/gitpod-samples/template-python-django")
 			return testCtx
@@ -328,7 +328,7 @@ func TestRubyMine(t *testing.T) {
 		WithLabel("component", "IDE").
 		WithLabel("ide", "RubyMine").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			// TODO: open comment after https://github.com/gitpod-io/gitpod/issues/16302 resolved
 			// JetBrainsIDETest(ctx, t, cfg, "rubymine", "https://github.com/gitpod-samples/template-ruby-on-rails-postgres")
@@ -349,7 +349,7 @@ func TestWebStorm(t *testing.T) {
 		WithLabel("component", "IDE").
 		WithLabel("ide", "WebStorm").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			JetBrainsIDETest(ctx, t, cfg, "webstorm", "https://github.com/gitpod-samples/template-typescript-react")
 			return testCtx
@@ -368,7 +368,7 @@ func TestRider(t *testing.T) {
 		WithLabel("component", "IDE").
 		WithLabel("ide", "Rider").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			JetBrainsIDETest(ctx, t, cfg, "rider", "https://github.com/gitpod-samples/template-dotnet-core-cli-csharp")
 			return testCtx
@@ -387,7 +387,7 @@ func TestCLion(t *testing.T) {
 		WithLabel("component", "IDE").
 		WithLabel("ide", "CLion").
 		Assess("it can let JetBrains Gateway connect", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+			ctx, cancel := context.WithTimeout(testCtx, 30*time.Minute)
 			defer cancel()
 			JetBrainsIDETest(ctx, t, cfg, "clion", "https://github.com/gitpod-samples/template-cpp")
 			return testCtx
