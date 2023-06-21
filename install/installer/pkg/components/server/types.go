@@ -64,6 +64,12 @@ type ConfigSerialized struct {
 	InactivityPeriodForReposInDays int                  `json:"inactivityPeriodForReposInDays"`
 
 	Redis redis.Configuration `json:"redis"`
+
+	PermissionsMigration PermissionsMigration `json:"permissionsMigration"`
+}
+
+type PermissionsMigration struct {
+	Enabled bool `json:"enabled"`
 }
 
 type CodeSyncResources struct {

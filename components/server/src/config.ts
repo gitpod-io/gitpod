@@ -58,10 +58,6 @@ export type Config = Omit<
             cookie: CookieConfig;
         };
     };
-
-    permissionsMigration: {
-        enabled: boolean;
-    };
 };
 
 export interface WorkspaceDefaults {
@@ -270,6 +266,10 @@ export interface ConfigSerialized {
     };
 
     isSingleOrgInstallation: boolean;
+
+    permissionsMigration: {
+        enabled: boolean;
+    };
 }
 
 export interface CookieConfig {

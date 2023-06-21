@@ -256,6 +256,8 @@ type ServerConfig struct {
 
 	// @deprecated use containerRegistry.privateBaseImageAllowList instead
 	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`
+
+	PermissionsMigrationEnabled bool `json:"permissionsMigrationEnabled"`
 }
 
 type ProxyConfig struct {

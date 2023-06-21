@@ -188,6 +188,13 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		return nil
 	})
 
+	var permissionsMigrationEnabled bool
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.PermissionsMigrationEnabled {
+			permissionsMigrationEnabled = cfg.WebApp.Server.PermissionsMigrationEnabled
+		}
+	})
+
 	_, _, adminCredentialsPath := getAdminCredentials()
 
 	_, _, authCfg := auth.GetConfig(ctx)
@@ -291,6 +298,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		Auth:                    authCfg,
 		Redis:                   redis.GetConfiguration(ctx),
 		IsSingleOrgInstallation: isSingleOrgInstallation,
+		PermissionsMigration: PermissionsMigration{
+			Enabled: permissionsMigrationEnabled,
+		},
 	}
 
 	fc, err := common.ToJSONString(scfg)
