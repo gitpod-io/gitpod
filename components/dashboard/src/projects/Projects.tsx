@@ -83,9 +83,7 @@ export default function ProjectsPage() {
                         </a>
                     </p>
                     <div className="flex space-x-2 justify-center mt-7">
-                        <Link to={projectsPathNew}>
-                            <button>New Project</button>
-                        </Link>
+                        <Button href={projectsPathNew}>New Project</Button>
                         {team && (
                             <Button href="./members" className="secondary">
                                 Invite Members
