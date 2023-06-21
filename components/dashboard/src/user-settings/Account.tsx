@@ -162,7 +162,7 @@ function ProfileInformation(props: {
                         <div className="flex flex-col space-y-2 mt-4">
                             <label className={"text-md font-semibold dark:text-gray-400 text-gray-600"}>User ID</label>
                             <p className={"text-sm text-gray-500 dark:text-gray-500"}>
-                                <InputWithCopy className="max-w-md w-32" value={props.user.id} tip="Copy Token" />
+                                <InputWithCopy className="max-w-md w-32" value={props.user.id} tip="Copy User ID" />
                             </p>
                         </div>
                     )}
