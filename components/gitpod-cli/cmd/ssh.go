@@ -37,8 +37,7 @@ See %s/user/keys for a guide on setting them up.
 		host := strings.Replace(wsInfo.WorkspaceUrl, wsInfo.WorkspaceId, wsInfo.WorkspaceId+".ssh", -1)
 		sshKeyHost := fmt.Sprintf(`%s@%s`, wsInfo.WorkspaceId, host)
 
-		sshHost := sshKeyHost
-		sshCommand := fmt.Sprintf(`ssh '%s'`, sshHost)
+		sshCommand := fmt.Sprintf(`ssh '%s'`, sshKeyHost)
 		fmt.Println(sshCommand)
 
 		return nil
