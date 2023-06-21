@@ -5,7 +5,7 @@
  */
 
 import * as crypto from "crypto";
-import { injectable, inject } from "inversify";
+import { injectable, inject, optional } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
 import {
     MaybeWorkspace,
@@ -37,7 +37,6 @@ import {
     SnapshotState,
     PrebuiltWorkspaceState,
 } from "@gitpod/gitpod-protocol";
-import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
 import { DBSnapshot } from "./entity/db-snapshot";
@@ -56,6 +55,7 @@ import {
     reportWorkspaceInstancePurged,
     reportWorkspacePurged,
 } from "./metrics";
+import { TransactionalDBImpl, UndefinedEntityManager } from "./transactional-db-impl";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -64,46 +64,54 @@ interface OrderBy {
 }
 
 @injectable()
-export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
-    protected abstract getManager(): Promise<EntityManager>;
+export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> implements WorkspaceDB {
+    constructor(@inject(UndefinedEntityManager) @optional() transactionalEM: EntityManager | undefined) {
+        super(transactionalEM);
+    }
+
+    protected createTransactionalDB(transactionalEM: EntityManager): WorkspaceDB {
+        return new TypeORMWorkspaceDBImpl(transactionalEM);
+    }
 
     protected async getWorkspaceRepo(): Promise<Repository<DBWorkspace>> {
-        return (await this.getManager()).getRepository<DBWorkspace>(DBWorkspace);
+        return (await this.getEntityManager()).getRepository<DBWorkspace>(DBWorkspace);
     }
 
     protected async getWorkspaceInstanceRepo(): Promise<Repository<DBWorkspaceInstance>> {
-        return (await this.getManager()).getRepository<DBWorkspaceInstance>(DBWorkspaceInstance);
+        return (await this.getEntityManager()).getRepository<DBWorkspaceInstance>(DBWorkspaceInstance);
     }
 
     protected async getWorkspaceInstanceUserRepo(): Promise<Repository<DBWorkspaceInstanceUser>> {
-        return (await this.getManager()).getRepository<DBWorkspaceInstanceUser>(DBWorkspaceInstanceUser);
+        return (await this.getEntityManager()).getRepository<DBWorkspaceInstanceUser>(DBWorkspaceInstanceUser);
     }
 
     protected async getRepositoryWhitelist(): Promise<Repository<DBRepositoryWhiteList>> {
-        return (await this.getManager()).getRepository<DBRepositoryWhiteList>(DBRepositoryWhiteList);
+        return (await this.getEntityManager()).getRepository<DBRepositoryWhiteList>(DBRepositoryWhiteList);
     }
 
     protected async getSnapshotRepo(): Promise<Repository<DBSnapshot>> {
-        return (await this.getManager()).getRepository<DBSnapshot>(DBSnapshot);
+        return (await this.getEntityManager()).getRepository<DBSnapshot>(DBSnapshot);
     }
 
     protected async getPrebuiltWorkspaceRepo(): Promise<Repository<DBPrebuiltWorkspace>> {
-        return (await this.getManager()).getRepository<DBPrebuiltWorkspace>(DBPrebuiltWorkspace);
+        return (await this.getEntityManager()).getRepository<DBPrebuiltWorkspace>(DBPrebuiltWorkspace);
     }
 
     protected async getPrebuildInfoRepo(): Promise<Repository<DBPrebuildInfo>> {
-        return (await this.getManager()).getRepository<DBPrebuildInfo>(DBPrebuildInfo);
+        return (await this.getEntityManager()).getRepository<DBPrebuildInfo>(DBPrebuildInfo);
     }
 
     protected async getPrebuiltWorkspaceUpdatableRepo(): Promise<Repository<DBPrebuiltWorkspaceUpdatable>> {
-        return (await this.getManager()).getRepository<DBPrebuiltWorkspaceUpdatable>(DBPrebuiltWorkspaceUpdatable);
+        return (await this.getEntityManager()).getRepository<DBPrebuiltWorkspaceUpdatable>(
+            DBPrebuiltWorkspaceUpdatable,
+        );
     }
 
     public async connect(maxTries: number = 3, timeout: number = 2000): Promise<void> {
         let tries = 1;
         while (tries <= maxTries) {
             try {
-                await this.getManager();
+                await this.getEntityManager();
                 return;
             } catch (err) {
                 log.error(`DB connection error (attempt ${tries} of ${maxTries})`, err);
@@ -112,10 +120,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
             tries++;
         }
         throw new Error("Could not establish connection to database!");
-    }
-
-    public async transaction<T>(code: (db: WorkspaceDB) => Promise<T>): Promise<T> {
-        return code(this);
     }
 
     async storeInstance(instance: WorkspaceInstance): Promise<WorkspaceInstance> {
@@ -1194,36 +1198,6 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
         const res = await query.getMany();
         return res.map((r) => r.info);
-    }
-}
-
-@injectable()
-export class TypeORMWorkspaceDBImpl extends AbstractTypeORMWorkspaceDBImpl {
-    @inject(TypeORM) protected readonly typeorm: TypeORM;
-
-    protected async getManager() {
-        return (await this.typeorm.getConnection()).manager;
-    }
-
-    public async transaction<T>(code: (db: WorkspaceDB) => Promise<T>): Promise<T> {
-        const connection = await this.typeorm.getConnection();
-        return connection.transaction((manager) => {
-            return code(new TransactionalWorkspaceDbImpl(manager));
-        });
-    }
-}
-
-export class TransactionalWorkspaceDbImpl extends AbstractTypeORMWorkspaceDBImpl {
-    constructor(protected readonly manager: EntityManager) {
-        super();
-    }
-
-    protected async getManager() {
-        return this.manager;
-    }
-
-    public async transaction<T>(code: (sb: WorkspaceDB) => Promise<T>): Promise<T> {
-        return await code(this);
     }
 }
 

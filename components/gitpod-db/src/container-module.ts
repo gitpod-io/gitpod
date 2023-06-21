@@ -7,7 +7,7 @@
 import { ContainerModule } from "inversify";
 
 import { WorkspaceDB } from "./workspace-db";
-import { TypeORMWorkspaceDBImpl, TransactionalWorkspaceDbImpl } from "./typeorm/workspace-db-impl";
+import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { UserDB } from "./user-db";
 import { Config } from "./config";
@@ -48,12 +48,11 @@ import { DataCache, DataCacheNoop } from "./data-cache";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = (cacheClass = DataCacheNoop) =>
-    new ContainerModule((bind, unbind, isBound, rebind) => {
+    new ContainerModule((bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
         bind(Config).toSelf().inSingletonScope();
         bind(TypeORM).toSelf().inSingletonScope();
         bind(DBWithTracing).toSelf().inSingletonScope();
         bind(DataCache).to(cacheClass).inSingletonScope();
-        bind(TransactionalWorkspaceDbImpl).toSelf().inSingletonScope();
 
         bind(TypeORMBlockedRepositoryDBImpl).toSelf().inSingletonScope();
         bind(BlockedRepositoryDB).toService(TypeORMBlockedRepositoryDBImpl);
@@ -78,7 +77,7 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
         bind(OneTimeSecretDB).toService(TypeORMOneTimeSecretDBImpl);
         bindDbWithTracing(TracedOneTimeSecretDB, bind, OneTimeSecretDB).inSingletonScope();
 
-        encryptionModule(bind, unbind, isBound, rebind);
+        encryptionModule(bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation);
         bind(KeyProviderConfig)
             .toDynamicValue((ctx) => {
                 const config = ctx.container.get<Config>(Config);

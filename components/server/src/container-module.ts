@@ -133,244 +133,246 @@ import { OrgOnlyMigrationJob } from "./jobs/org-only-migration-job";
 import { APIStatsService } from "./api/stats";
 import { FixStripeJob } from "./jobs/fix-stripe-job";
 
-export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
-    // gpl: Making this dynamic enables re-use insides tests
-    bind(Config)
-        .toDynamicValue((ctx) => ConfigFile.fromFile())
-        .inSingletonScope();
-    bind(IDEService).toSelf().inSingletonScope();
+export const productionContainerModule = new ContainerModule(
+    (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
+        // gpl: Making this dynamic enables re-use insides tests
+        bind(Config)
+            .toDynamicValue((ctx) => ConfigFile.fromFile())
+            .inSingletonScope();
+        bind(IDEService).toSelf().inSingletonScope();
 
-    bind(UserService).toSelf().inSingletonScope();
-    bind(UserDeletionService).toSelf().inSingletonScope();
-    bind(AuthorizationService).to(AuthorizationServiceImpl).inSingletonScope();
+        bind(UserService).toSelf().inSingletonScope();
+        bind(UserDeletionService).toSelf().inSingletonScope();
+        bind(AuthorizationService).to(AuthorizationServiceImpl).inSingletonScope();
 
-    bind(TokenService).toSelf().inSingletonScope();
-    bind(TokenProvider).toService(TokenService);
+        bind(TokenService).toSelf().inSingletonScope();
+        bind(TokenProvider).toService(TokenService);
 
-    bind(Authenticator).toSelf().inSingletonScope();
-    bind(LoginCompletionHandler).toSelf().inSingletonScope();
+        bind(Authenticator).toSelf().inSingletonScope();
+        bind(LoginCompletionHandler).toSelf().inSingletonScope();
 
-    bind(SessionHandler).toSelf().inSingletonScope();
-    bind(Server).toSelf().inSingletonScope();
-    bind(DebugApp).toSelf().inSingletonScope();
+        bind(SessionHandler).toSelf().inSingletonScope();
+        bind(Server).toSelf().inSingletonScope();
+        bind(DebugApp).toSelf().inSingletonScope();
 
-    bind(GitpodFileParser).toSelf().inSingletonScope();
+        bind(GitpodFileParser).toSelf().inSingletonScope();
 
-    bind(ConfigProvider).toSelf().inSingletonScope();
-    bind(ConfigurationService).toSelf().inSingletonScope();
+        bind(ConfigProvider).toSelf().inSingletonScope();
+        bind(ConfigurationService).toSelf().inSingletonScope();
 
-    bind(SnapshotService).toSelf().inSingletonScope();
-    bind(WorkspaceFactory).toSelf().inSingletonScope();
-    bind(WorkspaceDeletionService).toSelf().inSingletonScope();
-    bind(WorkspaceStarter).toSelf().inSingletonScope();
-    bind(ImageSourceProvider).toSelf().inSingletonScope();
+        bind(SnapshotService).toSelf().inSingletonScope();
+        bind(WorkspaceFactory).toSelf().inSingletonScope();
+        bind(WorkspaceDeletionService).toSelf().inSingletonScope();
+        bind(WorkspaceStarter).toSelf().inSingletonScope();
+        bind(ImageSourceProvider).toSelf().inSingletonScope();
 
-    bind(ServerFactory).toAutoFactory(GitpodServerImpl);
-    bind(UserController).toSelf().inSingletonScope();
+        bind(ServerFactory).toAutoFactory(GitpodServerImpl);
+        bind(UserController).toSelf().inSingletonScope();
 
-    bind(MessagebusConfiguration).toSelf().inSingletonScope();
-    bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
-    bind(MessageBusIntegration).toSelf().inSingletonScope();
-    bind(LocalMessageBroker).to(LocalRabbitMQBackedMessageBroker).inSingletonScope();
+        bind(MessagebusConfiguration).toSelf().inSingletonScope();
+        bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
+        bind(MessageBusIntegration).toSelf().inSingletonScope();
+        bind(LocalMessageBroker).to(LocalRabbitMQBackedMessageBroker).inSingletonScope();
 
-    bind(GitpodServerImpl).toSelf();
-    bind(WebsocketConnectionManager)
-        .toDynamicValue((ctx) => {
-            const serverFactory = () => ctx.container.get<GitpodServerImpl>(GitpodServerImpl);
-            const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
+        bind(GitpodServerImpl).toSelf();
+        bind(WebsocketConnectionManager)
+            .toDynamicValue((ctx) => {
+                const serverFactory = () => ctx.container.get<GitpodServerImpl>(GitpodServerImpl);
+                const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
+                const config = ctx.container.get<Config>(Config);
+                return new WebsocketConnectionManager(serverFactory, hostContextProvider, config.rateLimiter);
+            })
+            .inSingletonScope();
+
+        bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
+        bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
+
+        bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope();
+        bind(ImageBuilderClientProvider).toService(WorkspaceClusterImagebuilderClientProvider);
+        bind(ImageBuilderClientCallMetrics).toService(IClientCallMetrics);
+
+        /* The binding order of the context parser does not configure preference/a working order. Each context parser must be able
+         * to decide for themselves, independently and without overlap to the other parsers what to do.
+         */
+        bind(ContextParser).toSelf().inSingletonScope();
+        bind(SnapshotContextParser).toSelf().inSingletonScope();
+        bind(IContextParser).to(SnapshotContextParser).inSingletonScope();
+        bind(IPrefixContextParser).to(ReferrerPrefixParser).inSingletonScope();
+        bind(IPrefixContextParser).to(EnvvarPrefixParser).inSingletonScope();
+        bind(IPrefixContextParser).to(ImageBuildPrefixContextParser).inSingletonScope();
+        bind(IPrefixContextParser).to(OpenPrebuildPrefixContextParser).inSingletonScope();
+
+        bind(GitTokenScopeGuesser).toSelf().inSingletonScope();
+        bind(GitTokenValidator).toSelf().inSingletonScope();
+
+        bind(MonitoringEndpointsApp).toSelf().inSingletonScope();
+
+        bind(HostContainerMapping).toSelf().inSingletonScope();
+        bind(HostContextProviderFactory)
+            .toDynamicValue(({ container }) => ({
+                createHostContext: (config: AuthProviderParams) =>
+                    HostContextProviderImpl.createHostContext(container, config),
+            }))
+            .inSingletonScope();
+        bind(HostContextProvider).to(HostContextProviderImpl).inSingletonScope();
+
+        bind(TracingManager).toSelf().inSingletonScope();
+
+        bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
+        bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
+        bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderEnvSource).inSingletonScope();
+        bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderDBSource).inSingletonScope();
+        bind(IWorkspaceManagerClientCallMetrics).toService(IClientCallMetrics);
+
+        bind(WorkspaceDownloadService).toSelf().inSingletonScope();
+        bind(LivenessController).toSelf().inSingletonScope();
+
+        bind(OneTimeSecretServer).toSelf().inSingletonScope();
+
+        bind(AuthProviderService).toSelf().inSingletonScope();
+        bind(BearerAuth).toSelf().inSingletonScope();
+
+        // binds all content services
+        contentServiceBinder((ctx) => {
             const config = ctx.container.get<Config>(Config);
-            return new WebsocketConnectionManager(serverFactory, hostContextProvider, config.rateLimiter);
-        })
-        .inSingletonScope();
-
-    bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
-    bind(IClientCallMetrics).to(PrometheusClientCallMetrics).inSingletonScope();
-
-    bind(WorkspaceClusterImagebuilderClientProvider).toSelf().inSingletonScope();
-    bind(ImageBuilderClientProvider).toService(WorkspaceClusterImagebuilderClientProvider);
-    bind(ImageBuilderClientCallMetrics).toService(IClientCallMetrics);
-
-    /* The binding order of the context parser does not configure preference/a working order. Each context parser must be able
-     * to decide for themselves, independently and without overlap to the other parsers what to do.
-     */
-    bind(ContextParser).toSelf().inSingletonScope();
-    bind(SnapshotContextParser).toSelf().inSingletonScope();
-    bind(IContextParser).to(SnapshotContextParser).inSingletonScope();
-    bind(IPrefixContextParser).to(ReferrerPrefixParser).inSingletonScope();
-    bind(IPrefixContextParser).to(EnvvarPrefixParser).inSingletonScope();
-    bind(IPrefixContextParser).to(ImageBuildPrefixContextParser).inSingletonScope();
-    bind(IPrefixContextParser).to(OpenPrebuildPrefixContextParser).inSingletonScope();
-
-    bind(GitTokenScopeGuesser).toSelf().inSingletonScope();
-    bind(GitTokenValidator).toSelf().inSingletonScope();
-
-    bind(MonitoringEndpointsApp).toSelf().inSingletonScope();
-
-    bind(HostContainerMapping).toSelf().inSingletonScope();
-    bind(HostContextProviderFactory)
-        .toDynamicValue(({ container }) => ({
-            createHostContext: (config: AuthProviderParams) =>
-                HostContextProviderImpl.createHostContext(container, config),
-        }))
-        .inSingletonScope();
-    bind(HostContextProvider).to(HostContextProviderImpl).inSingletonScope();
-
-    bind(TracingManager).toSelf().inSingletonScope();
-
-    bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
-    bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
-    bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderEnvSource).inSingletonScope();
-    bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderDBSource).inSingletonScope();
-    bind(IWorkspaceManagerClientCallMetrics).toService(IClientCallMetrics);
-
-    bind(WorkspaceDownloadService).toSelf().inSingletonScope();
-    bind(LivenessController).toSelf().inSingletonScope();
-
-    bind(OneTimeSecretServer).toSelf().inSingletonScope();
-
-    bind(AuthProviderService).toSelf().inSingletonScope();
-    bind(BearerAuth).toSelf().inSingletonScope();
-
-    // binds all content services
-    contentServiceBinder((ctx) => {
-        const config = ctx.container.get<Config>(Config);
-        const options: grpc.ClientOptions = {
-            ...defaultGRPCOptions,
-        };
-        return {
-            address: config.contentServiceAddr,
-            credentials: grpc.credentials.createInsecure(),
-            options,
-        };
-    })(bind, unbind, isBound, rebind);
-
-    bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();
-
-    bind(CodeSyncService).toSelf().inSingletonScope();
-
-    bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
-
-    bind(OAuthController).toSelf().inSingletonScope();
-
-    bind(HeadlessLogService).toSelf().inSingletonScope();
-    bind(HeadlessLogController).toSelf().inSingletonScope();
-
-    bind(ProjectsService).toSelf().inSingletonScope();
-
-    bind(EnvVarService).toSelf().inSingletonScope();
-
-    bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
-
-    bind<UsageServiceClient>(UsageServiceDefinition.name)
-        .toDynamicValue((ctx) => {
-            const config = ctx.container.get<Config>(Config);
-            return createClient(UsageServiceDefinition, createChannel(config.usageServiceAddr));
-        })
-        .inSingletonScope();
-
-    bind<BillingServiceClient>(BillingServiceDefinition.name)
-        .toDynamicValue((ctx) => {
-            const config = ctx.container.get<Config>(Config);
-            return createClient(BillingServiceDefinition, createChannel(config.usageServiceAddr));
-        })
-        .inSingletonScope();
-
-    bind<IDEServiceClient>(IDEServiceDefinition.name)
-        .toDynamicValue((ctx) => {
-            const config = ctx.container.get<Config>(Config);
-            const metricsClient = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
             const options: grpc.ClientOptions = {
                 ...defaultGRPCOptions,
             };
-            return createClientFactory()
-                .use(prometheusClientMiddleware(metricsClient))
-                .use(retryMiddleware)
-                .create(IDEServiceDefinition, createChannel(config.ideServiceAddr, undefined, options), {
-                    "*": {
-                        retryBaseDelayMs: 200,
-                        retryMaxAttempts: 15,
-                    },
-                });
-        })
-        .inSingletonScope();
+            return {
+                address: config.contentServiceAddr,
+                credentials: grpc.credentials.createInsecure(),
+                options,
+            };
+        })(bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation);
 
-    bind(ConfigCatClientFactory)
-        .toDynamicValue((ctx) => {
-            return () => getExperimentsClientForBackend();
-        })
-        .inSingletonScope();
+        bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();
 
-    bind(VerificationService).toSelf().inSingletonScope();
+        bind(CodeSyncService).toSelf().inSingletonScope();
 
-    bind(UsageServiceImpl).toSelf().inSingletonScope();
-    bind(UsageService).toService(UsageServiceImpl);
+        bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
-    bind(LinkedInService).toSelf().inSingletonScope();
-    bind(UserToTeamMigrationService).toSelf().inSingletonScope();
+        bind(OAuthController).toSelf().inSingletonScope();
 
-    // IAM Support
-    bind(IamSessionApp).toSelf().inSingletonScope();
+        bind(HeadlessLogService).toSelf().inSingletonScope();
+        bind(HeadlessLogController).toSelf().inSingletonScope();
 
-    // Authorization & Perms
-    bind(SpiceDBClient)
-        .toDynamicValue(() => spicedbClientFromEnv())
-        .inSingletonScope();
-    bind(PermissionChecker).to(Authorizer).inSingletonScope();
+        bind(ProjectsService).toSelf().inSingletonScope();
 
-    // grpc / Connect API
-    bind(APIUserService).toSelf().inSingletonScope();
-    bind(APITeamsService).toSelf().inSingletonScope();
-    bind(APIWorkspacesService).toSelf().inSingletonScope();
-    bind(APIStatsService).toSelf().inSingletonScope();
-    bind(API).toSelf().inSingletonScope();
+        bind(EnvVarService).toSelf().inSingletonScope();
 
-    bind(AuthJWT).toSelf().inSingletonScope();
-    bind(SignInJWT).toSelf().inSingletonScope();
+        bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
 
-    bind(PrebuildManager).toSelf().inSingletonScope();
-    bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
-    bind(GithubApp).toSelf().inSingletonScope();
-    bind(GitHubAppSupport).toSelf().inSingletonScope();
-    bind(GithubAppRules).toSelf().inSingletonScope();
-    bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
-    bind(GitLabApp).toSelf().inSingletonScope();
-    bind(GitLabAppSupport).toSelf().inSingletonScope();
-    bind(BitbucketApp).toSelf().inSingletonScope();
-    bind(BitbucketAppSupport).toSelf().inSingletonScope();
-    bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
-    bind(BitbucketServerApp).toSelf().inSingletonScope();
-    bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
+        bind<UsageServiceClient>(UsageServiceDefinition.name)
+            .toDynamicValue((ctx) => {
+                const config = ctx.container.get<Config>(Config);
+                return createClient(UsageServiceDefinition, createChannel(config.usageServiceAddr));
+            })
+            .inSingletonScope();
 
-    // payment/billing
-    bind(StripeService).toSelf().inSingletonScope();
+        bind<BillingServiceClient>(BillingServiceDefinition.name)
+            .toDynamicValue((ctx) => {
+                const config = ctx.container.get<Config>(Config);
+                return createClient(BillingServiceDefinition, createChannel(config.usageServiceAddr));
+            })
+            .inSingletonScope();
 
-    bind(EntitlementServiceUBP).toSelf().inSingletonScope();
-    bind(EntitlementServiceImpl).toSelf().inSingletonScope();
-    bind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
-    bind(BillingModes).to(BillingModesImpl).inSingletonScope();
+        bind<IDEServiceClient>(IDEServiceDefinition.name)
+            .toDynamicValue((ctx) => {
+                const config = ctx.container.get<Config>(Config);
+                const metricsClient = ctx.container.get<IClientCallMetrics>(IClientCallMetrics);
+                const options: grpc.ClientOptions = {
+                    ...defaultGRPCOptions,
+                };
+                return createClientFactory()
+                    .use(prometheusClientMiddleware(metricsClient))
+                    .use(retryMiddleware)
+                    .create(IDEServiceDefinition, createChannel(config.ideServiceAddr, undefined, options), {
+                        "*": {
+                            retryBaseDelayMs: 200,
+                            retryMaxAttempts: 15,
+                        },
+                    });
+            })
+            .inSingletonScope();
 
-    // Periodic jobs
-    bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
-    bind(TokenGarbageCollector).toSelf().inSingletonScope();
-    bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
-    bind(DatabaseGarbageCollector).toSelf().inSingletonScope();
-    bind(OTSGarbageCollector).toSelf().inSingletonScope();
-    bind(SnapshotsJob).toSelf().inSingletonScope();
-    bind(OrgOnlyMigrationJob).toSelf().inSingletonScope();
-    bind(FixStripeJob).toSelf().inSingletonScope();
-    bind(JobRunner).toSelf().inSingletonScope();
+        bind(ConfigCatClientFactory)
+            .toDynamicValue((ctx) => {
+                return () => getExperimentsClientForBackend();
+            })
+            .inSingletonScope();
 
-    // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
-    rebind(UsageService)
-        .toDynamicValue((ctx) => {
-            const config = ctx.container.get<Config>(Config);
-            if (config.enablePayment) {
-                return ctx.container.get<UsageServiceImpl>(UsageServiceImpl);
-            }
-            return new NoOpUsageService();
-        })
-        .inSingletonScope();
+        bind(VerificationService).toSelf().inSingletonScope();
 
-    bind(RedisClient).toSelf().inSingletonScope();
-    bind(RedisMutex).toSelf().inSingletonScope();
-});
+        bind(UsageServiceImpl).toSelf().inSingletonScope();
+        bind(UsageService).toService(UsageServiceImpl);
+
+        bind(LinkedInService).toSelf().inSingletonScope();
+        bind(UserToTeamMigrationService).toSelf().inSingletonScope();
+
+        // IAM Support
+        bind(IamSessionApp).toSelf().inSingletonScope();
+
+        // Authorization & Perms
+        bind(SpiceDBClient)
+            .toDynamicValue(() => spicedbClientFromEnv())
+            .inSingletonScope();
+        bind(PermissionChecker).to(Authorizer).inSingletonScope();
+
+        // grpc / Connect API
+        bind(APIUserService).toSelf().inSingletonScope();
+        bind(APITeamsService).toSelf().inSingletonScope();
+        bind(APIWorkspacesService).toSelf().inSingletonScope();
+        bind(APIStatsService).toSelf().inSingletonScope();
+        bind(API).toSelf().inSingletonScope();
+
+        bind(AuthJWT).toSelf().inSingletonScope();
+        bind(SignInJWT).toSelf().inSingletonScope();
+
+        bind(PrebuildManager).toSelf().inSingletonScope();
+        bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
+        bind(GithubApp).toSelf().inSingletonScope();
+        bind(GitHubAppSupport).toSelf().inSingletonScope();
+        bind(GithubAppRules).toSelf().inSingletonScope();
+        bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
+        bind(GitLabApp).toSelf().inSingletonScope();
+        bind(GitLabAppSupport).toSelf().inSingletonScope();
+        bind(BitbucketApp).toSelf().inSingletonScope();
+        bind(BitbucketAppSupport).toSelf().inSingletonScope();
+        bind(GitHubEnterpriseApp).toSelf().inSingletonScope();
+        bind(BitbucketServerApp).toSelf().inSingletonScope();
+        bind(IncrementalPrebuildsService).toSelf().inSingletonScope();
+
+        // payment/billing
+        bind(StripeService).toSelf().inSingletonScope();
+
+        bind(EntitlementServiceUBP).toSelf().inSingletonScope();
+        bind(EntitlementServiceImpl).toSelf().inSingletonScope();
+        bind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
+        bind(BillingModes).to(BillingModesImpl).inSingletonScope();
+
+        // Periodic jobs
+        bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
+        bind(TokenGarbageCollector).toSelf().inSingletonScope();
+        bind(WebhookEventGarbageCollector).toSelf().inSingletonScope();
+        bind(DatabaseGarbageCollector).toSelf().inSingletonScope();
+        bind(OTSGarbageCollector).toSelf().inSingletonScope();
+        bind(SnapshotsJob).toSelf().inSingletonScope();
+        bind(OrgOnlyMigrationJob).toSelf().inSingletonScope();
+        bind(FixStripeJob).toSelf().inSingletonScope();
+        bind(JobRunner).toSelf().inSingletonScope();
+
+        // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
+        rebind(UsageService)
+            .toDynamicValue((ctx) => {
+                const config = ctx.container.get<Config>(Config);
+                if (config.enablePayment) {
+                    return ctx.container.get<UsageServiceImpl>(UsageServiceImpl);
+                }
+                return new NoOpUsageService();
+            })
+            .inSingletonScope();
+
+        bind(RedisClient).toSelf().inSingletonScope();
+        bind(RedisMutex).toSelf().inSingletonScope();
+    },
+);

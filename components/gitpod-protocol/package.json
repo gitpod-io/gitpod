@@ -50,7 +50,7 @@
         "cookie": "^0.4.2",
         "express": "^4.17.3",
         "google-protobuf": "^3.19.1",
-        "inversify": "^5.1.1",
+        "inversify": "^6.0.1",
         "jaeger-client": "^3.18.1",
         "js-yaml": "^3.10.0",
         "nice-grpc-common": "^2.0.0",

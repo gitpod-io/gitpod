@@ -27,7 +27,7 @@ import {
     OAuthToken,
     OAuthUser,
 } from "@jmondi/oauth2-server";
-import { inject, injectable, postConstruct } from "inversify";
+import { inject, injectable, postConstruct, optional } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -45,9 +45,9 @@ import { DBUser } from "./entity/db-user";
 import { DBUserEnvVar } from "./entity/db-user-env-vars";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBUserSshPublicKey } from "./entity/db-user-ssh-public-key";
-import { TypeORM } from "./typeorm";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { DataCache } from "../data-cache";
+import { TransactionalDBImpl } from "./transactional-db-impl";
 
 // OAuth token expiry
 const tokenExpiryInFuture = new DateInterval("7d");
@@ -61,10 +61,14 @@ function getUserCacheKey(id: string): string {
 }
 
 @injectable()
-export class TypeORMUserDBImpl implements UserDB {
-    @inject(TypeORM) protected readonly typeorm: TypeORM;
-    @inject(EncryptionService) protected readonly encryptionService: EncryptionService;
-    @inject(DataCache) protected readonly cache: DataCache;
+export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements UserDB {
+    constructor(
+        @inject(EncryptionService) protected readonly encryptionService: EncryptionService,
+        @inject(DataCache) protected readonly cache: DataCache,
+        @optional() transactionalEM: EntityManager,
+    ) {
+        super(transactionalEM);
+    }
 
     @postConstruct()
     init() {
@@ -72,8 +76,8 @@ export class TypeORMUserDBImpl implements UserDB {
         encryptionService = this.encryptionService;
     }
 
-    protected async getEntityManager(): Promise<EntityManager> {
-        return (await this.typeorm.getConnection()).manager;
+    protected createTransactionalDB(transactionalEM: EntityManager): UserDB {
+        return new TypeORMUserDBImpl(this.encryptionService, this.cache, transactionalEM);
     }
 
     async getUserRepo(): Promise<Repository<DBUser>> {
@@ -81,13 +85,6 @@ export class TypeORMUserDBImpl implements UserDB {
     }
     protected async getWorkspaceRepo(): Promise<Repository<DBWorkspace>> {
         return (await this.getEntityManager()).getRepository<DBWorkspace>(DBWorkspace);
-    }
-
-    async transaction<T>(code: (db: UserDB) => Promise<T>): Promise<T> {
-        const manager = await this.getEntityManager();
-        return await manager.transaction(async (manager) => {
-            return await code(new TransactionalUserDBImpl(manager, this.cache, this.encryptionService));
-        });
     }
 
     protected async getTokenRepo(): Promise<Repository<DBTokenEntry>> {
@@ -653,19 +650,5 @@ export class TypeORMUserDBImpl implements UserDB {
             return undefined;
         }
         return this.mapDBUserToUser(result);
-    }
-}
-
-export class TransactionalUserDBImpl extends TypeORMUserDBImpl {
-    constructor(
-        protected readonly manager: EntityManager,
-        protected readonly cache: DataCache,
-        protected readonly encryptionService: EncryptionService,
-    ) {
-        super();
-    }
-
-    async getEntityManager(): Promise<EntityManager> {
-        return this.manager;
     }
 }

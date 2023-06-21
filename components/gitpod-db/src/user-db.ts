@@ -19,13 +19,12 @@ import {
 import { OAuthTokenRepository, OAuthUserRepository } from "@jmondi/oauth2-server";
 import { Repository } from "typeorm";
 import { DBUser } from "./typeorm/entity/db-user";
+import { TransactionalDB } from "./typeorm/transactional-db-impl";
 
 export type MaybeUser = User | undefined;
 
 export const UserDB = Symbol("UserDB");
-export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
-    transaction<T>(code: (db: UserDB) => Promise<T>): Promise<T>;
-
+export interface UserDB extends OAuthUserRepository, OAuthTokenRepository, TransactionalDB<UserDB> {
     newUser(): Promise<User>;
     storeUser(newUser: User): Promise<User>;
     updateUserPartial(partial: PartialUserUpdate): Promise<void>;
