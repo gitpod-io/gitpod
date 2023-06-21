@@ -169,13 +169,7 @@ import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import {
-    Authorizer,
-    CheckResult,
-    OrganizationOperation,
-    NotPermitted,
-    PermissionChecker,
-} from "../authorization/perms";
+import { Authorizer, CheckResult, NotPermitted, PermissionChecker } from "../authorization/perms";
 import {
     ReadOrganizationMembers,
     ReadOrganizationInfo,
