@@ -7,7 +7,6 @@
 import { PersonalAccessToken } from "@gitpod/public-api/lib/gitpod/experimental/v1/tokens_pb";
 import { useCallback, useEffect, useState } from "react";
 import { Redirect, useLocation } from "react-router";
-import { Link } from "react-router-dom";
 import { personalAccessTokensService } from "../service/public-api";
 import { PageWithSettingsSubMenu } from "./PageWithSettingsSubMenu";
 import { settingsPathPersonalAccessTokenCreate, settingsPathPersonalAccessTokenEdit } from "./settings.routes";
@@ -23,6 +22,7 @@ import ShowTokenModal from "./ShowTokenModal";
 import Pagination from "../Pagination/Pagination";
 import { Heading2, Subheading } from "../components/typography/headings";
 import { useFeatureFlag } from "../data/featureflag-query";
+import { Button } from "../components/Button";
 
 export default function PersonalAccessTokens() {
     const enablePersonalAccessTokens = useFeatureFlag("personalAccessTokensEnabled");
@@ -178,11 +178,7 @@ function ListAccessTokensView() {
                         </a>
                     </Subheading>
                 </div>
-                {tokens.length > 0 && (
-                    <Link to={settingsPathPersonalAccessTokenCreate}>
-                        <button>New Access Token</button>
-                    </Link>
-                )}
+                {tokens.length > 0 && <Button href={settingsPathPersonalAccessTokenCreate}>New Access Token</Button>}
             </div>
             {errorMsg.length > 0 && (
                 <Alert type="error" className="mb-2">
@@ -233,9 +229,7 @@ function ListAccessTokensView() {
                             <Subheading className="text-center pb-6 w-96">
                                 Generate an access token for applications that need access to the Gitpod API.{" "}
                             </Subheading>
-                            <Link to={settingsPathPersonalAccessTokenCreate}>
-                                <button>New Access Token</button>
-                            </Link>
+                            <Button href={settingsPathPersonalAccessTokenCreate}>New Access Token</Button>
                         </div>
                     ) : (
                         <>
