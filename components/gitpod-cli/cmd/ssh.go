@@ -7,6 +7,8 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -15,14 +17,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var gitpodHost = os.Getenv("GITPOD_HOST")
+
 // sshCmd represents the ssh command
 var sshCmd = &cobra.Command{
 	Use:   "ssh",
 	Short: "Show the SSH connection command for the current workspace",
-	Long: `Displays a command with which you can connect to the current workspace.
+	Long: fmt.Sprintf(`Displays a command with which you can connect to the current workspace.
 The returned command requires SSH keys to be configured with Gitpod.
-See https://www.gitpod.io/docs/configure/user-settings/ssh for a guide on setting them up.
-`, RunE: func(cmd *cobra.Command, args []string) error {
+See %s/user/keys for a guide on setting them up.
+`, gitpodHost), RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Second)
 		defer cancel()
 
