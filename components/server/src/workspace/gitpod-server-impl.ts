@@ -2877,21 +2877,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const centralizedPermsEnabled = await this.centralizedPermissionsEnabled(requestor, team.id);
         if (centralizedPermsEnabled) {
-            let permWriteRequest: v1.WriteRelationshipsRequest;
-            if (role === "owner") {
-                permWriteRequest = organizationOwnerRole(team.id, userId);
-            } else if (role === "member") {
-                permWriteRequest = organizationMemberRole(team.id, userId);
-            } else {
-                throw new ResponseError(
-                    ErrorCodes.INTERNAL_SERVER_ERROR,
-                    `Role ${role} does not have a valid implementation of permissions.`,
-                );
-            }
+            const writeRequest =
+                role === "owner" ? organizationOwnerRole(team.id, userId) : organizationMemberRole(team.id, userId);
 
             // TODO: Wrap in a transaction
             await this.teamDB.setTeamMemberRole(userId, teamId, role);
-            await this.authorizer.writeRelationships(permWriteRequest);
+            await this.authorizer.writeRelationships(writeRequest);
         } else {
             await this.teamDB.setTeamMemberRole(userId, teamId, role);
         }
