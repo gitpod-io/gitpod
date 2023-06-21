@@ -4,14 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import {
-    OrganizationPermission,
-    OrganizationResourceType,
-    UserResourceType,
-    objectRef,
-    relationship,
-    subject,
-} from "./definitions";
+import { OrganizationResourceType, UserResourceType, objectRef, relationship, subject } from "./definitions";
 import { v1 } from "@authzed/authzed-node";
 
 export function organizationOwnerRole(requestor: string, orgID: string, userID: string): v1.WriteRelationshipsRequest {
@@ -22,7 +15,7 @@ export function organizationOwnerRole(requestor: string, orgID: string, userID: 
                 filter: v1.RelationshipFilter.create({
                     resourceType: OrganizationResourceType,
                     optionalResourceId: orgID,
-                    optionalRelation: "write_members" as OrganizationPermission,
+                    optionalRelation: "owner",
                     optionalSubjectFilter: v1.SubjectFilter.create({
                         subjectType: UserResourceType,
                         optionalSubjectId: requestor,
