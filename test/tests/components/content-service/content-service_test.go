@@ -223,64 +223,6 @@ func TestUploadDownloadBlob(t *testing.T) {
 	testEnv.Test(t, f)
 }
 
-// TestUploadDownloadBlobViaServer uploads a blob via server → content-server and downloads it afterwards
-func TestUploadDownloadBlobViaServer(t *testing.T) {
-	integration.SkipWithoutUsername(t, username)
-	f := features.New("UploadDownloadBlobViaServer").
-		WithLabel("component", "content-server").
-		Assess("it should uploads a blob via server → content-server and downloads it afterwards", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-			defer cancel()
-
-			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
-			t.Cleanup(func() {
-				api.Done(t)
-			})
-
-			blobContent := fmt.Sprintf("Hello Blobs! It's %s!", time.Now())
-
-			server, err := api.GitpodServer()
-			if err != nil {
-				t.Fatalf("cannot get content blob upload URL: %q", err)
-			}
-
-			originalUrl, err := server.GetContentBlobUploadURL(ctx, "test-blob")
-			if err != nil {
-				t.Fatalf("cannot get content blob upload URL: %q", err)
-			}
-			updatedUrl, err := api.Storage(originalUrl)
-			if err != nil {
-				t.Fatalf("error resolving blob upload target url")
-			}
-			t.Logf("upload URL: %s", updatedUrl)
-
-			uploadBlob(t, originalUrl, updatedUrl, blobContent)
-
-			originalUrl, err = server.GetContentBlobDownloadURL(ctx, "test-blob")
-			if err != nil {
-				t.Fatalf("cannot get content blob download URL: %q", err)
-			}
-
-			updatedUrl, err = api.Storage(originalUrl)
-			if err != nil {
-				t.Fatalf("error resolving blob download target url, %q", err)
-			}
-			t.Logf("download URL: %s", updatedUrl)
-
-			body := downloadBlob(t, originalUrl, updatedUrl)
-			if string(body) != blobContent {
-				t.Fatalf("blob content mismatch: should '%s' but is '%s'", blobContent, body)
-			}
-
-			t.Log("Uploading and downloading blob to content store succeeded.")
-
-			return ctx
-		}).
-		Feature()
-
-	testEnv.Test(t, f)
-}
-
 func uploadBlob(t *testing.T, originalUrl, updatedUrl, content string) {
 	// Always use original URL to extract the host information.
 	// This will avoid any Signature mismatch errors

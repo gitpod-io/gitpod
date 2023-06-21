@@ -123,8 +123,6 @@ const defaultFunctions: FunctionsConfig = {
     triggerPrebuild: { group: "default", points: 1 },
     cancelPrebuild: { group: "default", points: 1 },
     updateProjectPartial: { group: "default", points: 1 },
-    getContentBlobUploadUrl: { group: "default", points: 1 },
-    getContentBlobDownloadUrl: { group: "default", points: 1 },
     getGitpodTokens: { group: "default", points: 1 },
     generateNewGitpodToken: { group: "default", points: 1 },
     deleteGitpodToken: { group: "default", points: 1 },

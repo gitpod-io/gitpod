@@ -192,10 +192,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]>;
     deleteProjectEnvironmentVariable(variableId: string): Promise<void>;
 
-    // content service
-    getContentBlobUploadUrl(name: string): Promise<string>;
-    getContentBlobDownloadUrl(name: string): Promise<string>;
-
     // Gitpod token
     getGitpodTokens(): Promise<GitpodToken[]>;
     generateNewGitpodToken(options: GitpodServer.GenerateNewGitpodTokenOptions): Promise<string>;

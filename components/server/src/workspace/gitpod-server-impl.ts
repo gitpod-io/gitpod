@@ -5,12 +5,6 @@
  */
 
 import {
-    DownloadUrlRequest,
-    DownloadUrlResponse,
-    UploadUrlRequest,
-    UploadUrlResponse,
-} from "@gitpod/content-service/lib/blobs_pb";
-import {
     AppInstallationDB,
     UserDB,
     WorkspaceDB,
@@ -169,7 +163,6 @@ import { formatPhoneNumber } from "../user/phone-numbers";
 import { IDEService } from "../ide-service";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import * as grpc from "@grpc/grpc-js";
-import { CachingBlobServiceClientProvider } from "../util/content-service-sugar";
 import { CostCenterJSON } from "@gitpod/gitpod-protocol/lib/usage";
 import { createCookielessId, maskIp } from "../analytics";
 import {
@@ -269,9 +262,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
 
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-
-    @inject(CachingBlobServiceClientProvider)
-    protected readonly blobServiceClientProvider: CachingBlobServiceClientProvider;
 
     @inject(GitTokenScopeGuesser) protected readonly gitTokenScopeGuesser: GitTokenScopeGuesser;
 
@@ -3315,64 +3305,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             }
         }
         await this.projectsService.updateProjectPartial(partial);
-    }
-
-    public async getContentBlobUploadUrl(ctx: TraceContext, name: string): Promise<string> {
-        traceAPIParams(ctx, { name });
-
-        const user = await this.checkAndBlockUser("getContentBlobUploadUrl");
-        await this.guardAccess({ kind: "contentBlob", name: name, userID: user.id }, "create");
-
-        const uploadUrlRequest = new UploadUrlRequest();
-        uploadUrlRequest.setName(name);
-        uploadUrlRequest.setOwnerId(user.id);
-
-        const uploadUrlPromise = new Promise<UploadUrlResponse>((resolve, reject) => {
-            const client = this.blobServiceClientProvider.getDefault();
-            client.uploadUrl(uploadUrlRequest, (err: any, resp: UploadUrlResponse) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(resp);
-                }
-            });
-        });
-        try {
-            const resp = (await uploadUrlPromise).toObject();
-            return resp.url;
-        } catch (err) {
-            log.error("Error getting content blob upload url: ", err);
-            throw err;
-        }
-    }
-
-    public async getContentBlobDownloadUrl(ctx: TraceContext, name: string): Promise<string> {
-        traceAPIParams(ctx, { name });
-
-        const user = await this.checkAndBlockUser("getContentBlobDownloadUrl");
-        await this.guardAccess({ kind: "contentBlob", name: name, userID: user.id }, "get");
-
-        const downloadUrlRequest = new DownloadUrlRequest();
-        downloadUrlRequest.setName(name);
-        downloadUrlRequest.setOwnerId(user.id);
-
-        const downloadUrlPromise = new Promise<DownloadUrlResponse>((resolve, reject) => {
-            const client = this.blobServiceClientProvider.getDefault();
-            client.downloadUrl(downloadUrlRequest, (err: any, resp: DownloadUrlResponse) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(resp);
-                }
-            });
-        });
-        try {
-            const resp = (await downloadUrlPromise).toObject();
-            return resp.url;
-        } catch (err) {
-            log.error("Error getting content blob download url: ", err);
-            throw err;
-        }
     }
 
     public async getGitpodTokens(ctx: TraceContext): Promise<GitpodToken[]> {
