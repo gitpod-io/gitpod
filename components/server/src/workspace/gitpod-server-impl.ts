@@ -167,7 +167,7 @@ import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { Authorizer, CheckResult, NotPermitted, PermissionChecker } from "../authorization/perms";
+import { Authorizer, CheckResult, NotPermitted } from "../authorization/perms";
 import {
     ReadOrganizationMembers,
     ReadOrganizationInfo,
@@ -268,7 +268,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(ConfigCatClientFactory) private readonly configCatClientFactory: ConfigCatClientFactory,
 
-        @inject(PermissionChecker) private readonly authorizer: Authorizer,
+        @inject(Authorizer) protected readonly authorizer: Authorizer,
 
         @inject(BillingModes) private readonly billingModes: BillingModes,
         @inject(StripeService) private readonly stripeService: StripeService,
@@ -2639,14 +2639,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const user = await this.checkUser();
-        const centralizedPermissionsEnabled = await getExperimentsClientForBackend().getValueAsync(
-            "centralizedPermissions",
-            false,
-            {
-                user: user,
-                teamId: teamId,
-            },
-        );
+        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
 
         const checkAgainstDB = async (): Promise<{ team: Team; members: TeamMemberInfo[] }> => {
             // We deliberately wrap the entiry check in try-catch, because we're using Promise.all, which rejects if any of the promises reject.
@@ -2789,6 +2782,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.usageService.getCostCenter({
             attributionId: AttributionId.render(AttributionId.create(team)),
         });
+        const centralizedPermsEnabled = await this.centralizedPermissionsEnabled(user, team.id);
+        if (centralizedPermsEnabled) {
+            this.authorizer.writeRelationships(
+                v1.WriteRelationshipsRequest.create({
+                    updates: organizationOwnerRole(team.id, user.id),
+                }),
+            );
+        }
         const invite = await this.getGenericInvite(ctx, team.id);
         ctx.span?.setTag("teamId", team.id);
         this.analytics.track({
@@ -3869,6 +3870,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!isEnabled) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Method not available");
         }
+    }
+
+    private async centralizedPermissionsEnabled(user?: User, teamID?: string): Promise<boolean> {
+        return await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            user: user,
+            teamId: teamID,
+        });
     }
 
     public async trackEvent(ctx: TraceContext, event: RemoteTrackMessage): Promise<void> {

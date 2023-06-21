@@ -97,7 +97,7 @@ import { contentServiceBinder } from "./util/content-service-sugar";
 import { retryMiddleware } from "nice-grpc-client-middleware-retry";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { spicedbClientFromEnv, SpiceDBClient } from "./authorization/spicedb";
-import { Authorizer, PermissionChecker } from "./authorization/perms";
+import { Authorizer } from "./authorization/perms";
 import { EnvVarService } from "./workspace/env-var-service";
 import { APIUserService } from "./api/user";
 import { APITeamsService } from "./api/teams";
@@ -254,7 +254,6 @@ export const productionContainerModule = new ContainerModule(
         bind(HeadlessLogController).toSelf().inSingletonScope();
 
         bind(ProjectsService).toSelf().inSingletonScope();
-
         bind(EnvVarService).toSelf().inSingletonScope();
 
         bind(NewsletterSubscriptionController).toSelf().inSingletonScope();
@@ -312,7 +311,7 @@ export const productionContainerModule = new ContainerModule(
         bind(SpiceDBClient)
             .toDynamicValue(() => spicedbClientFromEnv())
             .inSingletonScope();
-        bind(PermissionChecker).to(Authorizer).inSingletonScope();
+        bind(Authorizer).to(Authorizer).inSingletonScope();
 
         // grpc / Connect API
         bind(APIUserService).toSelf().inSingletonScope();

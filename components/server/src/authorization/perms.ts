@@ -23,14 +23,8 @@ export type CheckResult = {
 
 export const NotPermitted = { permitted: false };
 
-export const PermissionChecker = Symbol("PermissionChecker");
-
-export interface PermissionChecker {
-    check(req: v1.CheckPermissionRequest): Promise<CheckResult>;
-}
-
 @injectable()
-export class Authorizer implements PermissionChecker {
+export class Authorizer {
     @inject(SpiceDBClient)
     private client: SpiceDBClient;
 
@@ -57,6 +51,19 @@ export class Authorizer implements PermissionChecker {
             observeSpicedbClientLatency("check", req.permission, err, timer());
 
             throw err;
+        }
+    }
+
+    async writeRelationships(req: v1.WriteRelationshipsRequest): Promise<void> {
+        if (!this.client) {
+            throw new Error("Authorization client is not available");
+        }
+
+        try {
+            const response = await this.client.writeRelationships(req);
+            log.info("[spicedb] Succesfully wrote relationships.", { response });
+        } catch (err) {
+            log.error("[spicedb] Failed to write relationships.", err, { req });
         }
     }
 }
