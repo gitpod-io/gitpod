@@ -20,6 +20,9 @@ schema: |-
     permission read_members = member + owner
     permission write_members = member + owner
 
+    // Any user in the organization can try to leave their organization
+    permission leave = owner + member
+
     // Only owners can create new projects
     permission create_project = owner
 
@@ -97,6 +100,10 @@ assertions:
 validation:
   organization:org_1#member:
     - "[user:user_0] is <organization:org_1#member>"
+    - "[user:user_1] is <organization:org_1#member>"
+    - "[user:user_2] is <organization:org_1#member>"
+  organization:org_1#leave:
+    - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
     - "[user:user_1] is <organization:org_1#member>"
     - "[user:user_2] is <organization:org_1#member>"
   organization:org_1#owner:
