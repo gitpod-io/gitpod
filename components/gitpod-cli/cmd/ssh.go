@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var accessKey bool
+var accessToken bool
 
 // sshCmd commands collection
 var sshCmd = &cobra.Command{
@@ -42,7 +42,7 @@ var sshCmd = &cobra.Command{
 
 		sshHost := sshKeyHost
 
-		if accessKey {
+		if accessToken {
 			var err error
 
 			supervisorConn, err := grpc.Dial(util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -91,5 +91,5 @@ var sshCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(sshCmd)
-	sshCmd.Flags().BoolVar(&accessKey, "access-key", false, "Show the ssh access token command")
+	sshCmd.Flags().BoolVar(&accessToken, "access-token", false, "Show the SSH access token command instead")
 }
