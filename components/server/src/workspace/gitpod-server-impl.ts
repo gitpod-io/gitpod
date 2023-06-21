@@ -2784,11 +2784,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
         const centralizedPermsEnabled = await this.centralizedPermissionsEnabled(user, team.id);
         if (centralizedPermsEnabled) {
-            await this.authorizer.writeRelationships(
-                v1.WriteRelationshipsRequest.create({
-                    updates: organizationOwnerRole(team.id, user.id),
-                }),
-            );
+            await this.authorizer.writeRelationships(organizationOwnerRole(user.id, team.id, user.id));
         }
         const invite = await this.getGenericInvite(ctx, team.id);
         ctx.span?.setTag("teamId", team.id);
