@@ -203,7 +203,8 @@ import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { OrganizationPermission } from "../authorization/definitions";
-import { organizationOwnerRole } from "../authorization/relationships";
+import { organizationMemberRole, organizationOwnerRole } from "../authorization/relationships";
+import { v1 } from "@authzed/authzed-node";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2876,19 +2877,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const centralizedPermsEnabled = await this.centralizedPermissionsEnabled(requestor, team.id);
         if (centralizedPermsEnabled) {
+            let permWriteRequest: v1.WriteRelationshipsRequest;
             if (role === "owner") {
-                await this.authorizer.writeRelationships(organizationOwnerRole(requestor.id, team.id, userId));
+                permWriteRequest = organizationOwnerRole(team.id, userId);
             } else if (role === "member") {
-                // TODO
+                permWriteRequest = organizationMemberRole(team.id, userId);
             } else {
                 throw new ResponseError(
                     ErrorCodes.INTERNAL_SERVER_ERROR,
                     `Role ${role} does not have a valid implementation of permissions.`,
                 );
             }
-        }
 
-        await this.teamDB.setTeamMemberRole(userId, teamId, role);
+            try {
+                await this.projectDB.transaction(async (db) => {
+                    await db.setTeamMemberRole(userId, teamId, role);
+                    await this.authorizer.writeRelationships(permWriteRequest);
+                });
+            } catch (err) {
+                // TODO: Delete relationship
+            }
+        } else {
+            await this.teamDB.setTeamMemberRole(userId, teamId, role);
+        }
     }
 
     public async removeTeamMember(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
