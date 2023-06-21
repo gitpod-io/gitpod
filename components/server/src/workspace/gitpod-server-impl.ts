@@ -2778,16 +2778,23 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         }
 
-        const team = await this.teamDB.createTeam(user.id, name);
+        let team: Team;
+        let invite: TeamMembershipInvite;
+        const centralizedPermsEnabled = await this.centralizedPermissionsEnabled(user);
+        if (centralizedPermsEnabled) {
+            // TODO: Run in a transaction
+            team = await this.teamDB.createTeam(user.id, name);
+            invite = await this.getGenericInvite(ctx, team.id);
+            await this.authorizer.writeRelationships(organizationOwnerRole(team.id, user.id));
+        } else {
+            team = await this.teamDB.createTeam(user.id, name);
+            invite = await this.getGenericInvite(ctx, team.id);
+        }
         // create a cost center
         await this.usageService.getCostCenter({
             attributionId: AttributionId.render(AttributionId.create(team)),
         });
-        const centralizedPermsEnabled = await this.centralizedPermissionsEnabled(user, team.id);
-        if (centralizedPermsEnabled) {
-            await this.authorizer.writeRelationships(organizationOwnerRole(user.id, team.id, user.id));
-        }
-        const invite = await this.getGenericInvite(ctx, team.id);
+
         ctx.span?.setTag("teamId", team.id);
         this.analytics.track({
             userId: user.id,
