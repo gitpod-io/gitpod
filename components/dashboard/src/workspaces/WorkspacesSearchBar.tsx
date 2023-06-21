@@ -5,7 +5,6 @@
  */
 
 import { FunctionComponent } from "react";
-import { Link } from "react-router-dom";
 import { StartWorkspaceModalKeyBinding } from "../App";
 import DropDown from "../components/DropDown";
 import search from "../icons/search.svg";
@@ -67,11 +66,9 @@ export const WorkspacesSearchBar: FunctionComponent<WorkspacesSearchBarProps> = 
                     ]}
                 />
             </div>
-            <Link to={"/new"}>
-                <Button className="ml-2">
-                    New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
-                </Button>
-            </Link>
+            <Button className="ml-2" href="/new">
+                New Workspace <span className="opacity-60 hidden md:inline">{StartWorkspaceModalKeyBinding}</span>
+            </Button>
         </div>
     );
 };
