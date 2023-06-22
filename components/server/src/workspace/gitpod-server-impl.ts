@@ -2784,7 +2784,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             [team, invite] = await this.teamDB.transaction(async (db) => {
                 team = await db.createTeam(user.id, name);
-                teamID = team.id;
                 await this.authorizer.writeRelationships(addOrganizationOwnerRole(team.id, user.id));
                 // invite generation has to happen after writing the perms relationship, as it checks if the caller
                 // has access
