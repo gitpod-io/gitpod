@@ -4,17 +4,18 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
+import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { inject, injectable, optional } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
-import { PartialProject, Project, ProjectEnvVar, ProjectEnvVarWithValue, ProjectUsage } from "@gitpod/gitpod-protocol";
-import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
 import { DBProjectEnvVar } from "./entity/db-project-env-vars";
 import { DBProjectInfo } from "./entity/db-project-info";
 import { DBProjectUsage } from "./entity/db-project-usage";
-import { TransactionalDBImpl, UndefinedEntityManager } from "./transactional-db-impl";
+import { TransactionalDBImpl } from "./transactional-db-impl";
+import { TypeORM } from "./typeorm";
 
 function toProjectEnvVar(envVarWithValue: ProjectEnvVarWithValue): ProjectEnvVar {
     const envVar = { ...envVarWithValue };
@@ -25,29 +26,30 @@ function toProjectEnvVar(envVarWithValue: ProjectEnvVarWithValue): ProjectEnvVar
 @injectable()
 export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements ProjectDB {
     constructor(
-        @inject(EncryptionService) protected readonly encryptionService: EncryptionService,
-        @inject(UndefinedEntityManager) @optional() transactionalEM: EntityManager | undefined,
+        @inject(TypeORM) typeorm: TypeORM,
+        @inject(EncryptionService) private readonly encryptionService: EncryptionService,
+        @optional() transactionalEM?: EntityManager,
     ) {
-        super(transactionalEM);
+        super(typeorm, transactionalEM);
     }
 
     protected createTransactionalDB(transactionalEM: EntityManager): ProjectDB {
-        return new ProjectDBImpl(this.encryptionService, transactionalEM);
+        return new ProjectDBImpl(this.typeorm, this.encryptionService, transactionalEM);
     }
 
-    protected async getRepo(): Promise<Repository<DBProject>> {
+    private async getRepo(): Promise<Repository<DBProject>> {
         return (await this.getEntityManager()).getRepository<DBProject>(DBProject);
     }
 
-    protected async getProjectEnvVarRepo(): Promise<Repository<DBProjectEnvVar>> {
+    private async getProjectEnvVarRepo(): Promise<Repository<DBProjectEnvVar>> {
         return (await this.getEntityManager()).getRepository<DBProjectEnvVar>(DBProjectEnvVar);
     }
 
-    protected async getProjectInfoRepo(): Promise<Repository<DBProjectInfo>> {
+    private async getProjectInfoRepo(): Promise<Repository<DBProjectInfo>> {
         return (await this.getEntityManager()).getRepository<DBProjectInfo>(DBProjectInfo);
     }
 
-    protected async getProjectUsageRepo(): Promise<Repository<DBProjectUsage>> {
+    private async getProjectUsageRepo(): Promise<Repository<DBProjectUsage>> {
         return (await this.getEntityManager()).getRepository<DBProjectUsage>(DBProjectUsage);
     }
 

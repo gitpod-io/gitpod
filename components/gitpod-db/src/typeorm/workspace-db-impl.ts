@@ -4,50 +4,50 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as crypto from "crypto";
-import { injectable, inject, optional } from "inversify";
-import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder, Brackets } from "typeorm";
 import {
+    AdminGetWorkspacesQuery,
+    PrebuildInfo,
+    PrebuiltWorkspace,
+    PrebuiltWorkspaceState,
+    PrebuiltWorkspaceUpdatable,
+    RunningWorkspaceInfo,
+    Snapshot,
+    SnapshotState,
+    WhitelistedRepository,
+    Workspace,
+    WorkspaceAndInstance,
+    WorkspaceInfo,
+    WorkspaceInstance,
+    WorkspaceInstanceUser,
+    WorkspaceType,
+} from "@gitpod/gitpod-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import * as crypto from "crypto";
+import { inject, injectable, optional } from "inversify";
+import { Brackets, DeepPartial, EntityManager, Repository } from "typeorm";
+import { BUILTIN_WORKSPACE_PROBE_USER_ID } from "../user-db";
+import {
+    FindWorkspacesOptions,
     MaybeWorkspace,
     MaybeWorkspaceInstance,
-    WorkspaceDB,
-    FindWorkspacesOptions,
-    PrebuiltUpdatableAndWorkspace,
-    WorkspaceInstanceSessionWithWorkspace,
     PrebuildWithWorkspace,
-    WorkspaceAndOwner,
-    WorkspacePortsAuthData,
-    WorkspaceOwnerAndSoftDeleted,
     PrebuildWithWorkspaceAndInstances,
+    PrebuiltUpdatableAndWorkspace,
+    WorkspaceAndOwner,
+    WorkspaceDB,
+    WorkspaceInstanceSessionWithWorkspace,
+    WorkspaceOwnerAndSoftDeleted,
+    WorkspacePortsAuthData,
 } from "../workspace-db";
-import {
-    Workspace,
-    WorkspaceInstance,
-    WorkspaceInfo,
-    WorkspaceInstanceUser,
-    WhitelistedRepository,
-    Snapshot,
-    PrebuiltWorkspace,
-    RunningWorkspaceInfo,
-    PrebuiltWorkspaceUpdatable,
-    WorkspaceAndInstance,
-    WorkspaceType,
-    PrebuildInfo,
-    AdminGetWorkspacesQuery,
-    SnapshotState,
-    PrebuiltWorkspaceState,
-} from "@gitpod/gitpod-protocol";
-import { DBWorkspace } from "./entity/db-workspace";
-import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
-import { DBSnapshot } from "./entity/db-snapshot";
-import { DBWorkspaceInstanceUser } from "./entity/db-workspace-instance-user";
-import { DBRepositoryWhiteList } from "./entity/db-repository-whitelist";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { DBPrebuildInfo } from "./entity/db-prebuild-info-entry";
 import { DBPrebuiltWorkspace } from "./entity/db-prebuilt-workspace";
 import { DBPrebuiltWorkspaceUpdatable } from "./entity/db-prebuilt-workspace-updatable";
-import { BUILTIN_WORKSPACE_PROBE_USER_ID } from "../user-db";
-import { DBPrebuildInfo } from "./entity/db-prebuild-info-entry";
-import { daysBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { DBRepositoryWhiteList } from "./entity/db-repository-whitelist";
+import { DBSnapshot } from "./entity/db-snapshot";
+import { DBWorkspace } from "./entity/db-workspace";
+import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
+import { DBWorkspaceInstanceUser } from "./entity/db-workspace-instance-user";
 import {
     reportPrebuildInfoPurged,
     reportPrebuiltWorkspacePurged,
@@ -55,7 +55,8 @@ import {
     reportWorkspaceInstancePurged,
     reportWorkspacePurged,
 } from "./metrics";
-import { TransactionalDBImpl, UndefinedEntityManager } from "./transactional-db-impl";
+import { TransactionalDBImpl } from "./transactional-db-impl";
+import { TypeORM } from "./typeorm";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -65,43 +66,43 @@ interface OrderBy {
 
 @injectable()
 export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> implements WorkspaceDB {
-    constructor(@inject(UndefinedEntityManager) @optional() transactionalEM: EntityManager | undefined) {
-        super(transactionalEM);
+    constructor(@inject(TypeORM) typeorm: TypeORM, @optional() transactionalEM?: EntityManager) {
+        super(typeorm, transactionalEM);
     }
 
     protected createTransactionalDB(transactionalEM: EntityManager): WorkspaceDB {
-        return new TypeORMWorkspaceDBImpl(transactionalEM);
+        return new TypeORMWorkspaceDBImpl(this.typeorm, transactionalEM);
     }
 
-    protected async getWorkspaceRepo(): Promise<Repository<DBWorkspace>> {
+    private async getWorkspaceRepo(): Promise<Repository<DBWorkspace>> {
         return (await this.getEntityManager()).getRepository<DBWorkspace>(DBWorkspace);
     }
 
-    protected async getWorkspaceInstanceRepo(): Promise<Repository<DBWorkspaceInstance>> {
+    private async getWorkspaceInstanceRepo(): Promise<Repository<DBWorkspaceInstance>> {
         return (await this.getEntityManager()).getRepository<DBWorkspaceInstance>(DBWorkspaceInstance);
     }
 
-    protected async getWorkspaceInstanceUserRepo(): Promise<Repository<DBWorkspaceInstanceUser>> {
+    private async getWorkspaceInstanceUserRepo(): Promise<Repository<DBWorkspaceInstanceUser>> {
         return (await this.getEntityManager()).getRepository<DBWorkspaceInstanceUser>(DBWorkspaceInstanceUser);
     }
 
-    protected async getRepositoryWhitelist(): Promise<Repository<DBRepositoryWhiteList>> {
+    private async getRepositoryWhitelist(): Promise<Repository<DBRepositoryWhiteList>> {
         return (await this.getEntityManager()).getRepository<DBRepositoryWhiteList>(DBRepositoryWhiteList);
     }
 
-    protected async getSnapshotRepo(): Promise<Repository<DBSnapshot>> {
+    private async getSnapshotRepo(): Promise<Repository<DBSnapshot>> {
         return (await this.getEntityManager()).getRepository<DBSnapshot>(DBSnapshot);
     }
 
-    protected async getPrebuiltWorkspaceRepo(): Promise<Repository<DBPrebuiltWorkspace>> {
+    private async getPrebuiltWorkspaceRepo(): Promise<Repository<DBPrebuiltWorkspace>> {
         return (await this.getEntityManager()).getRepository<DBPrebuiltWorkspace>(DBPrebuiltWorkspace);
     }
 
-    protected async getPrebuildInfoRepo(): Promise<Repository<DBPrebuildInfo>> {
+    private async getPrebuildInfoRepo(): Promise<Repository<DBPrebuildInfo>> {
         return (await this.getEntityManager()).getRepository<DBPrebuildInfo>(DBPrebuildInfo);
     }
 
-    protected async getPrebuiltWorkspaceUpdatableRepo(): Promise<Repository<DBPrebuiltWorkspaceUpdatable>> {
+    private async getPrebuiltWorkspaceUpdatableRepo(): Promise<Repository<DBPrebuiltWorkspaceUpdatable>> {
         return (await this.getEntityManager()).getRepository<DBPrebuiltWorkspaceUpdatable>(
             DBPrebuiltWorkspaceUpdatable,
         );
@@ -147,7 +148,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return await workspaceRepo.save(dbWorkspace);
     }
 
-    protected toCloneUrl255(cloneUrl: string) {
+    private toCloneUrl255(cloneUrl: string) {
         if (cloneUrl.length > 255) {
             return `cloneUrl-sha:${crypto.createHash("sha256").update(cloneUrl, "utf8").digest("hex")}`;
         }
@@ -272,18 +273,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         };
     }
 
-    protected async augmentWithCurrentInstance(workspaces: Workspace[]): Promise<WorkspaceInfo[]> {
-        const result: WorkspaceInfo[] = [];
-        for (const workspace of workspaces) {
-            const latestInstance = await this.findCurrentInstance(workspace.id);
-            result.push({
-                workspace,
-                latestInstance,
-            });
-        }
-        return result;
-    }
-
     public async updateLastHeartbeat(
         instanceId: string,
         userId: string,
@@ -297,7 +286,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         workspaceInstanceUserRepo.query(query, [instanceId, userId, lastSeen, lastSeen, wasClosed || false]);
     }
 
-    protected toTimestampString(date: Date) {
+    private toTimestampString(date: Date) {
         return date.toISOString().split(".")[0];
     }
 
@@ -343,15 +332,6 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         }
         await workspaceInstanceRepo.update(instanceId, partial);
         return (await this.findInstanceById(instanceId))!;
-    }
-
-    protected async queryUpdateInstanceConditional(
-        instanceId: string,
-        partial: DeepPartial<WorkspaceInstance>,
-    ): Promise<UpdateQueryBuilder<WorkspaceInstance>> {
-        const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
-        const qb = workspaceInstanceRepo.createQueryBuilder("wsi").update();
-        return qb.set(partial).where("wsi.id = :instanceId", { instanceId });
     }
 
     public async findInstanceById(workspaceInstanceId: string): Promise<MaybeWorkspaceInstance> {
@@ -664,7 +644,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         return dbResults as WorkspaceAndOwner[];
     }
 
-    protected async doJoinInstanceWithWorkspace<T>(
+    private async doJoinInstanceWithWorkspace<T>(
         conditions: string[],
         conditionParams: {},
         joinConditions: string[],
