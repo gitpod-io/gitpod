@@ -311,7 +311,7 @@ export const productionContainerModule = new ContainerModule(
         bind(SpiceDBClient)
             .toDynamicValue(() => spicedbClientFromEnv())
             .inSingletonScope();
-        bind(Authorizer).to(Authorizer).inSingletonScope();
+        bind(Authorizer).toSelf().inSingletonScope();
 
         // grpc / Connect API
         bind(APIUserService).toSelf().inSingletonScope();
