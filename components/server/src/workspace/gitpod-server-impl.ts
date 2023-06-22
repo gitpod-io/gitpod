@@ -3043,7 +3043,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getOrgSettings(ctx: TraceContextWithSpan, orgId: string): Promise<OrganizationSettings> {
         const user = await this.checkAndBlockUser("getOrgSettings");
         traceAPIParams(ctx, { orgId, userId: user.id });
-        await this.guardTeamOperation(orgId, "get", "not_implemented");
+        await this.guardTeamOperation(orgId, "get", "read_settings");
         const settings = await this.teamDB.findOrgSettings(orgId);
         // TODO: make a default in protocol
         return settings ?? { workspaceSharingDisabled: false };
@@ -3056,7 +3056,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<OrganizationSettings> {
         const user = await this.checkAndBlockUser("updateOrgSettings");
         traceAPIParams(ctx, { orgId, userId: user.id });
-        await this.guardTeamOperation(orgId, "update", "not_implemented");
+        await this.guardTeamOperation(orgId, "update", "write_settings");
         await this.teamDB.setOrgSettings(orgId, settings);
         return (await this.teamDB.findOrgSettings(orgId))!;
     }

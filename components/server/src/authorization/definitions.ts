@@ -20,6 +20,8 @@ export type OrganizationPermission =
     | "write_info"
     | "read_members"
     | "write_members"
+    | "read_settings"
+    | "write_settings"
     | "create_project";
 export type ProjectPermission = "write_info" | "read_info";
 export type Permission = OrganizationPermission;

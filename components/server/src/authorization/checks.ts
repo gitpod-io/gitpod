@@ -31,3 +31,6 @@ export const WriteOrganizationInfo = check("user", "write_info", "organization")
 
 export const ReadOrganizationMembers = check("user", "read_members", "organization");
 export const WriteOrganizationMembers = check("user", "write_members", "organization");
+
+export const ReadOrganizationSettings = check("user", "read_settings", "organization");
+export const WriteOrganizationSettings = check("user", "write_settings", "organization");
