@@ -2783,7 +2783,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         let invite: TeamMembershipInvite;
         try {
             await this.teamDB.transaction(async (db) => {
-                team = await this.teamDB.createTeam(user.id, name);
+                team = await db.createTeam(user.id, name);
                 invite = await this.getGenericInvite(ctx, team.id);
                 await this.authorizer.writeRelationships(organizationOwnerRole(team.id, user.id));
             });
@@ -2888,7 +2888,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         try {
             await this.teamDB.transaction(async (db) => {
-                await this.teamDB.setTeamMemberRole(userId, teamId, role);
+                await db.setTeamMemberRole(userId, teamId, role);
                 await this.authorizer.writeRelationships(organizationRole(team.id, userId, role), {
                     teamID: team.id,
                     userID: requestor.id,
