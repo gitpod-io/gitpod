@@ -2781,7 +2781,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         let team: Team;
         let invite: TeamMembershipInvite;
-        let teamID: string;
         try {
             [team, invite] = await this.teamDB.transaction(async (db) => {
                 team = await db.createTeam(user.id, name);
@@ -2900,7 +2899,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 });
             });
         } catch (err) {
-            // TODO: Handle spicedb error
+            if (AuthorizerError.is(err)) {
+                await this.authorizer.writeRelationships(removeUserFromOrg(team.id, userId));
+            }
 
             throw err;
         }
