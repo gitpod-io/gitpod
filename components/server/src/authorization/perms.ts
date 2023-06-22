@@ -69,7 +69,7 @@ export class Authorizer {
             log.error("[spicedb] Failed to perform authorization check.", err, { req });
             observeSpicedbClientLatency("check", req.permission, err, timer());
 
-            throw err;
+            throw new AuthorizerError("Failed to perform authorization check", err);
         }
     }
 
@@ -101,7 +101,7 @@ export class Authorizer {
             log.error("[spicedb] Failed to write relationships.", err, { req });
 
             // While in we're running two authorization systems in parallel, we do not hard fail on writes.
-            return undefined;
+            throw new AuthorizerError("Failed to write relationship", err);
         }
     }
 }
@@ -117,4 +117,20 @@ function newUnathorizedError(resource: v1.ObjectReference, relation: string, sub
 
 function objString(obj?: v1.ObjectReference): string {
     return `${obj?.objectType}:${obj?.objectId}`;
+}
+
+export class AuthorizerError extends Error {
+    cause: Error;
+
+    constructor(msg: string, cause: Error) {
+        super(msg);
+        this.cause = cause;
+
+        // Set the prototype explicitly.
+        Object.setPrototypeOf(this, AuthorizerError.prototype);
+    }
+
+    public static is(err: Error): err is AuthorizerError {
+        return err instanceof AuthorizerError;
+    }
 }

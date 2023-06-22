@@ -167,7 +167,7 @@ import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { Authorizer, CheckResult, NotPermitted } from "../authorization/perms";
+import { Authorizer, AuthorizerError, CheckResult, NotPermitted } from "../authorization/perms";
 import {
     ReadOrganizationMembers,
     ReadOrganizationInfo,
@@ -203,7 +203,7 @@ import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { OrganizationPermission } from "../authorization/definitions";
-import { organizationOwnerRole, organizationRole } from "../authorization/relationships";
+import { addOrganizationOwnerRole, organizationRole, removeUserFromOrg } from "../authorization/relationships";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2781,17 +2781,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         let team: Team;
         let invite: TeamMembershipInvite;
+        let teamID: string;
         try {
             [team, invite] = await this.teamDB.transaction(async (db) => {
-                const team = await db.createTeam(user.id, name);
-                await this.authorizer.writeRelationships(organizationOwnerRole(team.id, user.id));
+                team = await db.createTeam(user.id, name);
+                teamID = team.id;
+                await this.authorizer.writeRelationships(addOrganizationOwnerRole(team.id, user.id));
                 // invite generation has to happen after writing the perms relationship, as it checks if the caller
                 // has access
-                const invite = await this.getGenericInvite(ctx, team.id);
-
+                invite = await this.getGenericInvite(ctx, team.id);
                 return [team, invite];
             });
         } catch (err) {
+            if (AuthorizerError.is(err) && team! && team.id) {
+                await this.authorizer.writeRelationships(removeUserFromOrg(team.id, user.id));
+            }
             // TODO: Rollback spicedb changes
 
             throw err;

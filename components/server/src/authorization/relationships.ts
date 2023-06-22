@@ -9,10 +9,10 @@ import { objectRef, relationship, subject } from "./definitions";
 import { v1 } from "@authzed/authzed-node";
 
 export function organizationRole(orgID: string, userID: string, role: TeamMemberRole): v1.WriteRelationshipsRequest {
-    return role === "owner" ? organizationOwnerRole(orgID, userID) : organizationMemberRole(orgID, userID);
+    return role === "owner" ? addOrganizationOwnerRole(orgID, userID) : addOrganizationMemberRole(orgID, userID);
 }
 
-export function organizationOwnerRole(orgID: string, userID: string): v1.WriteRelationshipsRequest {
+export function addOrganizationOwnerRole(orgID: string, userID: string): v1.WriteRelationshipsRequest {
     return v1.WriteRelationshipsRequest.create({
         updates: [
             v1.RelationshipUpdate.create({
@@ -20,25 +20,45 @@ export function organizationOwnerRole(orgID: string, userID: string): v1.WriteRe
                 relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
             }),
             v1.RelationshipUpdate.create({
-                // If the user does not have existing member, the operation will No-op
-                operation: v1.RelationshipUpdate_Operation.DELETE,
+                operation: v1.RelationshipUpdate_Operation.TOUCH,
                 relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
             }),
         ],
     });
 }
 
-export function organizationMemberRole(orgID: string, userID: string): v1.WriteRelationshipsRequest {
+export function addOrganizationMemberRole(orgID: string, userID: string): v1.WriteRelationshipsRequest {
     return v1.WriteRelationshipsRequest.create({
         updates: [
             v1.RelationshipUpdate.create({
                 operation: v1.RelationshipUpdate_Operation.TOUCH,
                 relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
             }),
+        ],
+    });
+}
+
+export function deleteOwnerRole(orgID: string, userID: string): v1.WriteRelationshipsRequest {
+    return v1.WriteRelationshipsRequest.create({
+        updates: [
             v1.RelationshipUpdate.create({
-                // If the user does not have existing owner, the operation will No-op
                 operation: v1.RelationshipUpdate_Operation.DELETE,
                 relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
+            }),
+        ],
+    });
+}
+
+export function removeUserFromOrg(orgID: string, userID: string): v1.WriteRelationshipsRequest {
+    return v1.WriteRelationshipsRequest.create({
+        updates: [
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.DELETE,
+                relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
+            }),
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.DELETE,
+                relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
             }),
         ],
     });
