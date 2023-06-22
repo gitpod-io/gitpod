@@ -296,27 +296,11 @@ func getPriceIdentifier(attributionID db.AttributionID, stripeCustomer *stripe_a
 			Warn("No preferred currency set. Defaulting to USD")
 	}
 
-	entity, _ := attributionID.Values()
-
-	switch entity {
-	case db.AttributionEntity_User:
-		switch preferredCurrency {
-		case "EUR":
-			return s.stripePrices.IndividualUsagePriceIDs.EUR, nil
-		default:
-			return s.stripePrices.IndividualUsagePriceIDs.USD, nil
-		}
-
-	case db.AttributionEntity_Team:
-		switch preferredCurrency {
-		case "EUR":
-			return s.stripePrices.TeamUsagePriceIDs.EUR, nil
-		default:
-			return s.stripePrices.TeamUsagePriceIDs.USD, nil
-		}
-
+	switch preferredCurrency {
+	case "EUR":
+		return s.stripePrices.TeamUsagePriceIDs.EUR, nil
 	default:
-		return "", status.Errorf(codes.InvalidArgument, "Invalid currency %s for customer ID %s", stripeCustomer.Metadata["preferredCurrency"], stripeCustomer.ID)
+		return s.stripePrices.TeamUsagePriceIDs.USD, nil
 	}
 }
 
@@ -492,30 +476,19 @@ func (s *BillingService) OnChargeDispute(ctx context.Context, req *v1.OnChargeDi
 	}
 
 	var userIDsToBlock []string
-	entity, id := attributionID.Values()
-	switch entity {
-	case db.AttributionEntity_User:
-		// legacy for cases where we've not migrated the user to a team
-		// because we attribute to the user directly, we can just block the user directly
-		userIDsToBlock = append(userIDsToBlock, id)
+	_, id := attributionID.Values()
+	team, err := s.teamsService.GetTeam(ctx, connect.NewRequest(&experimental_v1.GetTeamRequest{
+		TeamId: id,
+	}))
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to lookup team details for team ID: %s", id)
+	}
 
-	case db.AttributionEntity_Team:
-		team, err := s.teamsService.GetTeam(ctx, connect.NewRequest(&experimental_v1.GetTeamRequest{
-			TeamId: id,
-		}))
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to lookup team details for team ID: %s", id)
+	for _, member := range team.Msg.GetTeam().GetMembers() {
+		if member.GetRole() != experimental_v1.TeamRole_TEAM_ROLE_OWNER {
+			continue
 		}
-
-		for _, member := range team.Msg.GetTeam().GetMembers() {
-			if member.GetRole() != experimental_v1.TeamRole_TEAM_ROLE_OWNER {
-				continue
-			}
-			userIDsToBlock = append(userIDsToBlock, member.GetUserId())
-		}
-
-	default:
-		return nil, status.Errorf(codes.Internal, "unknown attribution entity for %s", attributionIDValue)
+		userIDsToBlock = append(userIDsToBlock, member.GetUserId())
 	}
 
 	logger = logger.WithField("teamOwners", userIDsToBlock)

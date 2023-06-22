@@ -149,20 +149,11 @@ func queryWorkspaceInstanceForUsage(ctx context.Context, conn *gorm.DB) *gorm.DB
 }
 
 const (
-	AttributionEntity_User = "user"
-	AttributionEntity_Team = "team"
+	attributionEntity_Team = "team"
 )
 
-func newAttributionID(entity, identifier string) AttributionID {
-	return AttributionID(fmt.Sprintf("%s:%s", entity, identifier))
-}
-
-func NewUserAttributionID(userID string) AttributionID {
-	return newAttributionID(AttributionEntity_User, userID)
-}
-
 func NewTeamAttributionID(teamID string) AttributionID {
-	return newAttributionID(AttributionEntity_Team, teamID)
+	return AttributionID(fmt.Sprintf("%s:%s", attributionEntity_Team, teamID))
 }
 
 // AttributionID consists of an entity, and an identifier in the form:
@@ -171,16 +162,11 @@ type AttributionID string
 
 func (a AttributionID) Values() (entity string, identifier string) {
 	tokens := strings.Split(string(a), ":")
-	if len(tokens) != 2 {
+	if len(tokens) != 2 || tokens[0] != attributionEntity_Team || tokens[1] == "" {
 		return "", ""
 	}
 
 	return tokens[0], tokens[1]
-}
-
-func (a AttributionID) IsEntity(entity string) bool {
-	e, _ := a.Values()
-	return e == entity
 }
 
 func ParseAttributionID(s string) (AttributionID, error) {
@@ -194,10 +180,8 @@ func ParseAttributionID(s string) (AttributionID, error) {
 	}
 
 	switch tokens[0] {
-	case AttributionEntity_Team:
+	case attributionEntity_Team:
 		return NewTeamAttributionID(tokens[1]), nil
-	case AttributionEntity_User:
-		return NewUserAttributionID(tokens[1]), nil
 	default:
 		return "", fmt.Errorf("unknown attribution ID type: %s", s)
 	}

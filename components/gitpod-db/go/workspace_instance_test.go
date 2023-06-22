@@ -103,8 +103,9 @@ func TestAttributionID_Values(t *testing.T) {
 		ExpectedEntity string
 		ExpectedID     string
 	}{
-		{Input: "team:123", ExpectedEntity: db.AttributionEntity_Team, ExpectedID: "123"},
-		{Input: "user:123", ExpectedEntity: db.AttributionEntity_User, ExpectedID: "123"},
+		{Input: "team:123", ExpectedEntity: "team", ExpectedID: "123"},
+		{Input: "user:123", ExpectedEntity: "", ExpectedID: ""},
+		{Input: "foo:123", ExpectedEntity: "", ExpectedID: ""},
 		{Input: "user:123:invalid", ExpectedEntity: "", ExpectedID: ""},
 		{Input: "invalid:123:", ExpectedEntity: "", ExpectedID: ""},
 		{Input: "", ExpectedEntity: "", ExpectedID: ""},
