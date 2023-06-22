@@ -105,6 +105,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		procLimit = ucfg.Workspace.ProcLimit
 
 		wscontroller.MaxConcurrentReconciles = 15
+		wscontroller.ReconcileTimeoutMinutes = 40
 
 		if ucfg.Workspace.WorkspaceCIDR != "" {
 			workspaceCIDR = ucfg.Workspace.WorkspaceCIDR

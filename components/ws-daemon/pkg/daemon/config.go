@@ -34,6 +34,7 @@ type Config struct {
 
 type WorkspaceControllerConfig struct {
 	MaxConcurrentReconciles int `json:"maxConcurrentReconciles,omitempty"`
+	ReconcileTimeoutMinutes int `json:"reconcileTimeoutMinutes,omitempty"`
 }
 
 type RuntimeConfig struct {

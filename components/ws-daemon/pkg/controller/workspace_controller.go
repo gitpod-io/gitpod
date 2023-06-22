@@ -14,9 +14,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	workspacev1 "github.com/gitpod-io/gitpod/ws-manager/api/crd/v1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
@@ -44,15 +41,6 @@ var retryParams = wait.Backoff{
 	Jitter:   0.2,
 }
 
-type WorkspaceControllerOpts struct {
-	NodeName         string
-	ContentConfig    content.Config
-	UIDMapperConfig  iws.UidmapperConfig
-	ContainerRuntime container.Runtime
-	CGroupMountPoint string
-	MetricsRegistry  prometheus.Registerer
-}
-
 type WorkspaceController struct {
 	client.Client
 	NodeName                string
@@ -61,9 +49,10 @@ type WorkspaceController struct {
 	metrics                 *workspaceMetrics
 	secretNamespace         string
 	recorder                record.EventRecorder
+	reconcileTimeout        time.Duration
 }
 
-func NewWorkspaceController(c client.Client, recorder record.EventRecorder, nodeName, secretNamespace string, maxConcurrentReconciles int, ops WorkspaceOperations, reg prometheus.Registerer) (*WorkspaceController, error) {
+func NewWorkspaceController(c client.Client, recorder record.EventRecorder, nodeName, secretNamespace string, maxConcurrentReconciles int, ops WorkspaceOperations, reg prometheus.Registerer, reconcileTimeout time.Duration) (*WorkspaceController, error) {
 	metrics := newWorkspaceMetrics()
 	reg.Register(metrics)
 
@@ -75,6 +64,7 @@ func NewWorkspaceController(c client.Client, recorder record.EventRecorder, node
 		metrics:                 metrics,
 		secretNamespace:         secretNamespace,
 		recorder:                recorder,
+		reconcileTimeout:        reconcileTimeout,
 	}, nil
 }
 
@@ -115,6 +105,12 @@ func workspaceFilter(object client.Object, nodeName string) bool {
 func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request) (result ctrl.Result, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Reconcile")
 	defer tracing.FinishSpan(span, &err)
+
+	if wsc.reconcileTimeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, wsc.reconcileTimeout)
+		defer cancel()
+	}
 
 	var workspace workspacev1.Workspace
 	if err := wsc.Get(ctx, req.NamespacedName, &workspace); err != nil {
