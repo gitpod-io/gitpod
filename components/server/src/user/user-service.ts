@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 import { User, Identity, Token, IdentityLookup, AdditionalUserData } from "@gitpod/gitpod-protocol";
-import { EmailDomainFilterDB, MaybeUser, ProjectDB, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { EmailDomainFilterDB, MaybeUser, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Config } from "../config";
@@ -38,23 +38,13 @@ export interface UsageLimitReachedResult {
 
 @injectable()
 export class UserService {
-    @inject(Config) protected readonly config: Config;
-
-    @inject(EmailDomainFilterDB) protected readonly domainFilterDb: EmailDomainFilterDB;
-    @inject(UserDB) protected readonly userDb: UserDB;
-    @inject(ProjectDB) protected readonly projectDb: ProjectDB;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
-
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(UsageService) protected readonly usageService: UsageService;
-
-    protected getAuthProviderIdForHost(host: string): string | undefined {
-        const hostContext = this.hostContextProvider.get(host);
-        if (!hostContext || !hostContext.authProvider) {
-            return undefined;
-        }
-        return hostContext.authProvider.authProviderId;
-    }
+    constructor(
+        @inject(Config) private readonly config: Config,
+        @inject(EmailDomainFilterDB) private readonly domainFilterDb: EmailDomainFilterDB,
+        @inject(UserDB) private readonly userDb: UserDB,
+        @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
+        @inject(UsageService) private readonly usageService: UsageService,
+    ) {}
 
     public async createUser({ identity, token, userUpdate }: CreateUserParams): Promise<User> {
         log.debug("Creating new user.", { identity, "login-flow": true });
@@ -79,7 +69,7 @@ export class UserService {
         return newUser;
     }
 
-    protected handleNewUser(newUser: User) {
+    private handleNewUser(newUser: User) {
         if (this.config.blockNewUsers.enabled) {
             const emailDomainInPasslist = (mail: string) =>
                 this.config.blockNewUsers.passlist.some((e) => mail.endsWith(`@${e}`));
@@ -88,31 +78,6 @@ export class UserService {
             // blocked = if user already blocked OR is not allowed to pass
             newUser.blocked = newUser.blocked || !canPass;
         }
-    }
-
-    protected async validateUsageAttributionId(user: User, usageAttributionId: string): Promise<AttributionId> {
-        const attribution = AttributionId.parse(usageAttributionId);
-        if (!attribution) {
-            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "The provided attributionId is invalid.", {
-                id: usageAttributionId,
-            });
-        }
-        const team = await this.teamDB.findTeamById(attribution.teamId);
-        if (!team) {
-            throw new ResponseError(
-                ErrorCodes.INVALID_COST_CENTER,
-                "Organization not found. Please contact support if you believe this is an error.",
-            );
-        }
-        const members = await this.teamDB.findMembersByTeam(team.id);
-        if (!members.find((m) => m.userId === user.id)) {
-            // if the user's not a member of an org, they can't see it
-            throw new ResponseError(
-                ErrorCodes.INVALID_COST_CENTER,
-                "Organization not found. Please contact support if you believe this is an error.",
-            );
-        }
-        return attribution;
     }
 
     /**
@@ -152,11 +117,6 @@ export class UserService {
             reached: false,
             attributionId,
         };
-    }
-
-    protected async hasCredits(attributionId: AttributionId): Promise<boolean> {
-        const response = await this.usageService.getCurrentBalance(attributionId);
-        return response.usedCredits < response.usageLimit;
     }
 
     async blockUser(targetUserId: string, block: boolean): Promise<User> {
@@ -342,7 +302,7 @@ export class UserService {
         return false;
     }
 
-    protected parseMail(email: string): { user: string; domain: string } {
+    private parseMail(email: string): { user: string; domain: string } {
         const parts = email.split("@");
         if (parts.length !== 2) {
             throw new Error("Invalid E-Mail address: " + email);

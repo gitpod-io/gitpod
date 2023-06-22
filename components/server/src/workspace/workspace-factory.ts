@@ -5,7 +5,7 @@
  */
 
 import { v4 as uuidv4 } from "uuid";
-import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, ProjectDB, TeamDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, TeamDB } from "@gitpod/gitpod-db/lib";
 import {
     AdditionalContentContext,
     CommitContext,
@@ -14,7 +14,6 @@ import {
     PrebuiltWorkspaceContext,
     Project,
     PullRequestContext,
-    Repository,
     SnapshotContext,
     StartPrebuildContext,
     User,
@@ -38,12 +37,13 @@ import { increasePrebuildsStartedCounter } from "../prometheus-metrics";
 
 @injectable()
 export class WorkspaceFactory {
-    @inject(TracedWorkspaceDB) protected readonly db: DBWithTracing<WorkspaceDB>;
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(ConfigProvider) protected configProvider: ConfigProvider;
-    @inject(ImageSourceProvider) protected imageSourceProvider: ImageSourceProvider;
-    @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
+    constructor(
+        @inject(TracedWorkspaceDB) private readonly db: DBWithTracing<WorkspaceDB>,
+        @inject(TeamDB) private readonly teamDB: TeamDB,
+        @inject(ConfigProvider) private configProvider: ConfigProvider,
+        @inject(ImageSourceProvider) private imageSourceProvider: ImageSourceProvider,
+        @inject(IncrementalPrebuildsService) private readonly incrementalPrebuildsService: IncrementalPrebuildsService,
+    ) {}
 
     public async createForContext(
         ctx: TraceContext,
@@ -68,7 +68,7 @@ export class WorkspaceFactory {
         throw new Error("Couldn't create workspace for context");
     }
 
-    protected async createForStartPrebuild(
+    private async createForStartPrebuild(
         ctx: TraceContext,
         user: User,
         organizationId: string,
@@ -205,7 +205,7 @@ export class WorkspaceFactory {
         }
     }
 
-    protected async createForPrebuiltWorkspace(
+    private async createForPrebuiltWorkspace(
         ctx: TraceContext,
         user: User,
         organizationId: string,
@@ -304,7 +304,7 @@ export class WorkspaceFactory {
         }
     }
 
-    protected async createForSnapshot(
+    private async createForSnapshot(
         ctx: TraceContext,
         user: User,
         organizationId: string,
@@ -363,7 +363,7 @@ export class WorkspaceFactory {
         }
     }
 
-    protected async createForCommit(
+    private async createForCommit(
         ctx: TraceContext,
         user: User,
         organizationId: string,
@@ -417,25 +417,14 @@ export class WorkspaceFactory {
         }
     }
 
-    protected async isRepositoryOrSourceWhitelisted(repository: Repository): Promise<boolean> {
-        const repoIsWhiteListed = await this.db.trace({}).isWhitelisted(repository.cloneUrl);
-        if (repoIsWhiteListed) {
-            return true;
-        } else if (repository.fork) {
-            return this.isRepositoryOrSourceWhitelisted(repository.fork.parent);
-        } else {
-            return false;
-        }
-    }
-
-    protected getDescription(context: WorkspaceContext): string {
+    private getDescription(context: WorkspaceContext): string {
         if (PullRequestContext.is(context) || IssueContext.is(context)) {
             return `#${context.nr}: ${context.title}`;
         }
         return context.title;
     }
 
-    protected async generateWorkspaceID(context: WorkspaceContext): Promise<string> {
+    private async generateWorkspaceID(context: WorkspaceContext): Promise<string> {
         let ctx = context;
         if (PrebuiltWorkspaceContext.is(context)) {
             ctx = context.originalContext;
