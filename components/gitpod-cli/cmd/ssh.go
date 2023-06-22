@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// todo(ft): distribute this common metadata from the root command to all subcommands to reduce latency
 var gitpodHost = os.Getenv("GITPOD_HOST")
 
 // sshCmd represents the ssh command
