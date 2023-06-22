@@ -50,12 +50,6 @@ export class UserDeletionService {
             log.debug({ userId: id }, "Is deleted but markDeleted already set. Continuing.");
         }
 
-        const billingMode = await this.billingMode.getBillingModeForUser(user, new Date());
-        if (billingMode.mode === "usage-based") {
-            // Also cancel any usage-based (Stripe) subscription
-            await this.stripeService.cancelSubscriptionForUser(user.id);
-        }
-
         // Stop all workspaces
         await this.workspaceStarter.stopRunningWorkspacesForUser(
             {},

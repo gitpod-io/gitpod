@@ -48,15 +48,11 @@ export class WorkspaceFactory {
     public async createForContext(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         project: Project | undefined,
         context: WorkspaceContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
-        if (user.additionalData?.isMigratedToTeamOnlyAttribution && !organizationId) {
-            throw new ResponseError(ErrorCodes.INVALID_VALUE, "Cannot create workspace without organization.");
-        }
-
         if (StartPrebuildContext.is(context)) {
             return this.createForStartPrebuild(ctx, user, organizationId, context, normalizedContextURL);
         } else if (PrebuiltWorkspaceContext.is(context)) {
@@ -75,7 +71,7 @@ export class WorkspaceFactory {
     protected async createForStartPrebuild(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         context: StartPrebuildContext,
         normalizedContextURL: string,
     ): Promise<Workspace> {
@@ -212,7 +208,7 @@ export class WorkspaceFactory {
     protected async createForPrebuiltWorkspace(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         project: Project | undefined,
         context: PrebuiltWorkspaceContext,
         normalizedContextURL: string,
@@ -311,7 +307,7 @@ export class WorkspaceFactory {
     protected async createForSnapshot(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         context: SnapshotContext,
     ): Promise<Workspace> {
         const span = TraceContext.startSpan("createForSnapshot", ctx);
@@ -370,7 +366,7 @@ export class WorkspaceFactory {
     protected async createForCommit(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         project: Project | undefined,
         context: CommitContext,
         normalizedContextURL: string,

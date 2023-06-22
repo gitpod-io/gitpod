@@ -45,7 +45,7 @@ export interface EntitlementService {
      */
     mayStartWorkspace(
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult>;
@@ -98,7 +98,7 @@ export class EntitlementServiceImpl implements EntitlementService {
 
     async mayStartWorkspace(
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         date: Date = new Date(),
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {

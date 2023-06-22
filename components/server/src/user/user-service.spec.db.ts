@@ -13,8 +13,6 @@ import * as chai from "chai";
 import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
 import { productionContainerModule } from "../container-module";
 import { Config } from "../config";
-import { UserToTeamMigrationService } from "../migration/user-to-team-migration-service";
-import { User } from "@gitpod/gitpod-protocol";
 
 const expect = chai.expect;
 
@@ -24,11 +22,6 @@ testContainer.load(productionContainerModule);
 testContainer.rebind(Config).toConstantValue({
     blockNewUsers: {
         enabled: false,
-    },
-} as any);
-testContainer.rebind(UserToTeamMigrationService).toConstantValue({
-    migrateUser: (user: User) => {
-        return user;
     },
 } as any);
 

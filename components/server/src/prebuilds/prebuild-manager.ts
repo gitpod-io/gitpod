@@ -291,7 +291,7 @@ export class PrebuildManager {
         }
     }
 
-    protected async checkUsageLimitReached(user: User, organizationId?: string): Promise<void> {
+    protected async checkUsageLimitReached(user: User, organizationId: string): Promise<void> {
         let result: MayStartWorkspaceResult = {};
         try {
             result = await this.entitlementService.mayStartWorkspace(

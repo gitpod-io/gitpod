@@ -822,12 +822,14 @@ class TestResourceAccess {
             };
         };
         const otherUserId = "456";
+        const organizationId = "org-123";
 
         const workspaceId = "ws-123";
         const createWorkspace = (ownerId: string, type: WorkspaceType): Workspace => {
             return {
                 id: workspaceId,
                 ownerId,
+                organizationId,
                 type,
                 config: {},
                 creationTime: new Date(2000, 1, 2).toISOString(),

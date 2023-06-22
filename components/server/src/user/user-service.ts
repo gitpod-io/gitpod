@@ -18,7 +18,6 @@ import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
-import { UserToTeamMigrationService } from "../migration/user-to-team-migration-service";
 
 export interface CreateUserParams {
     identity: Identity;
@@ -48,7 +47,6 @@ export class UserService {
 
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(UsageService) protected readonly usageService: UsageService;
-    @inject(UserToTeamMigrationService) protected readonly migrationService: UserToTeamMigrationService;
 
     protected getAuthProviderIdForHost(host: string): string | undefined {
         const hostContext = this.hostContextProvider.get(host);
@@ -72,8 +70,8 @@ export class UserService {
         // state. This measure of prevention is considered in the period deleter as well.
         newUser.identities.push({ ...identity, deleted: false });
         this.handleNewUser(newUser);
-        // all new users are considered migrated
-        AdditionalUserData.set(newUser, { shouldSeeMigrationMessage: false, isMigratedToTeamOnlyAttribution: true });
+        // new users should not see the migration message
+        AdditionalUserData.set(newUser, { shouldSeeMigrationMessage: false });
         newUser = await this.userDb.storeUser(newUser);
         if (token) {
             await this.userDb.storeSingleToken(identity, token);
@@ -99,30 +97,16 @@ export class UserService {
                 id: usageAttributionId,
             });
         }
-        if (attribution.kind === "team") {
-            const team = await this.teamDB.findTeamById(attribution.teamId);
-            if (!team) {
-                throw new ResponseError(
-                    ErrorCodes.INVALID_COST_CENTER,
-                    "Organization not found. Please contact support if you believe this is an error.",
-                );
-            }
-            const members = await this.teamDB.findMembersByTeam(team.id);
-            if (!members.find((m) => m.userId === user.id)) {
-                // if the user's not a member of an org, they can't see it
-                throw new ResponseError(
-                    ErrorCodes.INVALID_COST_CENTER,
-                    "Organization not found. Please contact support if you believe this is an error.",
-                );
-            }
+        const team = await this.teamDB.findTeamById(attribution.teamId);
+        if (!team) {
+            throw new ResponseError(
+                ErrorCodes.INVALID_COST_CENTER,
+                "Organization not found. Please contact support if you believe this is an error.",
+            );
         }
-        if (attribution.kind === "user") {
-            if (user.id !== attribution.userId) {
-                throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Invalid organizationId.");
-            }
-        }
-        const billedAttributionIds = await this.listAvailableUsageAttributionIds(user);
-        if (billedAttributionIds.find((id) => AttributionId.equals(id, attribution)) === undefined) {
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        if (!members.find((m) => m.userId === user.id)) {
+            // if the user's not a member of an org, they can't see it
             throw new ResponseError(
                 ErrorCodes.INVALID_COST_CENTER,
                 "Organization not found. Please contact support if you believe this is an error.",
@@ -132,60 +116,12 @@ export class UserService {
     }
 
     /**
-     * Identifies the team or user to which a workspace instance's running time should be attributed to
-     * (e.g. for usage analytics or billing purposes).
-     *
-     * This is the legacy logic for determining a cost center. It's only used for workspaces that are started by users ibefore they have been migrated to org-only mode.
-     *
-     * @param user
-     * @param projectId
-     * @returns The validated AttributionId
-     */
-    async getWorkspaceUsageAttributionId(user: User, projectId?: string): Promise<AttributionId> {
-        if (user.additionalData?.isMigratedToTeamOnlyAttribution) {
-            throw new Error("getWorkspaceUsageAttributionId should not be called for users in org-only mode.");
-        }
-        // if it's a workspace for a project the user has access to and the org has credits use that
-        if (projectId) {
-            let attributionId: AttributionId | undefined;
-            const project = await this.projectDb.findProjectById(projectId);
-            if (project?.teamId) {
-                const teams = await this.teamDB.findTeamsByUser(user.id);
-                const team = teams.find((t) => t.id === project?.teamId);
-                if (team) {
-                    attributionId = AttributionId.create(team);
-                }
-            } else if (!user?.additionalData?.isMigratedToTeamOnlyAttribution) {
-                attributionId = AttributionId.create(user);
-            }
-            if (!!attributionId && (await this.hasCredits(attributionId))) {
-                return attributionId;
-            }
-        }
-        if (user.usageAttributionId) {
-            // Return the user's explicit attribution ID.
-            return await this.validateUsageAttributionId(user, user.usageAttributionId);
-        }
-        if (user?.additionalData?.isMigratedToTeamOnlyAttribution) {
-            const teams = await this.teamDB.findTeamsByUser(user.id);
-            if (teams.length > 0) {
-                return AttributionId.create(teams[0]);
-            }
-            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "No organization found for user");
-        }
-        return AttributionId.create(user);
-    }
-
-    /**
      * @param user
      * @param workspace - optional, in which case the default billing account will be checked
      * @returns
      */
-    async checkUsageLimitReached(user: User, organizationId?: string): Promise<UsageLimitReachedResult> {
-        if (!organizationId && user.additionalData?.isMigratedToTeamOnlyAttribution) {
-            throw new Error("organizationId must be provided for org-only users");
-        }
-        const attributionId = AttributionId.createFromOrganizationId(organizationId) || AttributionId.create(user);
+    async checkUsageLimitReached(user: User, organizationId: string): Promise<UsageLimitReachedResult> {
+        const attributionId = AttributionId.createFromOrganizationId(organizationId);
         const creditBalance = await this.usageService.getCurrentBalance(attributionId);
         const currentInvoiceCredits = creditBalance.usedCredits;
         const usageLimit = creditBalance.usageLimit;
@@ -221,26 +157,6 @@ export class UserService {
     protected async hasCredits(attributionId: AttributionId): Promise<boolean> {
         const response = await this.usageService.getCurrentBalance(attributionId);
         return response.usedCredits < response.usageLimit;
-    }
-
-    async setUsageAttribution(user: User, usageAttributionId: string): Promise<void> {
-        await this.validateUsageAttributionId(user, usageAttributionId);
-        user.usageAttributionId = usageAttributionId;
-        await this.userDb.storeUser(user);
-    }
-
-    /**
-     * Lists all valid AttributionIds a user can attributed (billed) usage to.
-     * @param user
-     * @returns
-     */
-    async listAvailableUsageAttributionIds(user: User): Promise<AttributionId[]> {
-        // List all teams available for attribution
-        const result = (await this.teamDB.findTeamsByUser(user.id)).map((team) => AttributionId.create(team));
-        if (user?.additionalData?.isMigratedToTeamOnlyAttribution) {
-            return result;
-        }
-        return [AttributionId.create(user)].concat(result);
     }
 
     async blockUser(targetUserId: string, block: boolean): Promise<User> {

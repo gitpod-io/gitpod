@@ -36,7 +36,7 @@ export class DBWorkspace implements Workspace {
         transformer: Transformer.MAP_NULL_TO_UNDEFINED,
     })
     @Index()
-    organizationId?: string;
+    organizationId: string;
 
     @Column(TypeORM.UUID_COLUMN_TYPE)
     @Index()

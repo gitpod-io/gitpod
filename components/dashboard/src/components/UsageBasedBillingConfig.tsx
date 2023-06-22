@@ -197,8 +197,6 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
     const showBalance = !showSpinner;
     const showUpgradeTeam =
         !showSpinner && AttributionId.parse(attributionId)?.kind === "team" && !stripeSubscriptionId;
-    const showUpgradeUser =
-        !showSpinner && AttributionId.parse(attributionId)?.kind === "user" && !stripeSubscriptionId;
     const showManageBilling = !showSpinner && !!stripeSubscriptionId;
 
     const updateUsageLimit = useCallback(
@@ -231,13 +229,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
 
     return (
         <div className="mb-16">
-            {!hideSubheading && (
-                <Subheading>
-                    {attributionId && AttributionId.parse(attributionId)?.kind === "user"
-                        ? "Manage billing for your personal account."
-                        : "Manage billing for your organization."}
-                </Subheading>
-            )}
+            {!hideSubheading && <Subheading>Manage billing for your organization.</Subheading>}
             <div className="max-w-xl flex flex-col">
                 {errorMessage && (
                     <Alert className="max-w-xl mt-2" closable={false} showIcon={true} type="error">
@@ -305,7 +297,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
                         </div>
                     </div>
                 )}
-                {(showUpgradeTeam || showUpgradeUser) && (
+                {showUpgradeTeam && (
                     <>
                         <div className="flex flex-col mt-4 p-4 rounded-t-xl bg-gray-50 dark:bg-gray-800">
                             <div className="uppercase text-sm text-gray-400 dark:text-gray-500">Current Plan</div>
@@ -391,11 +383,7 @@ export default function UsageBasedBillingConfig({ hideSubheading = false }: Prop
             )}
             {showUpdateLimitModal && (
                 <UpdateLimitModal
-                    minValue={
-                        AttributionId.parse(attributionId || "")?.kind === "user"
-                            ? BASE_USAGE_LIMIT_FOR_STRIPE_USERS
-                            : 0
-                    }
+                    minValue={0}
                     currentValue={usageLimit}
                     onClose={() => setShowUpdateLimitModal(false)}
                     onUpdate={async (newLimit) => await updateUsageLimit(newLimit)}
