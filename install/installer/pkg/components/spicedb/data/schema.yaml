@@ -52,6 +52,7 @@ schema: |-
 # relationships to be used for assertions & validation
 relationships: |-
   // We have an organization org_1, which has some members & owners
+  organization:org_1#member@user:user_0
   organization:org_1#owner@user:user_0
   organization:org_1#member@user:user_1
   organization:org_1#member@user:user_2
@@ -63,6 +64,7 @@ relationships: |-
 
 
   // We have another organization org_2, which has some users, some of which are also members of org_1
+  organization:org_2#member@user:user_0
   organization:org_2#owner@user:user_0
   organization:org_2#member@user:user_1
   organization:org_2#member@user:user_10
