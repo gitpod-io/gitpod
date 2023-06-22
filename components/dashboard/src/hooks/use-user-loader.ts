@@ -11,6 +11,7 @@ import { trackLocation } from "../Analytics";
 import { refreshSearchData } from "../components/RepositoryFinder";
 import { useQuery } from "@tanstack/react-query";
 import { noPersistence } from "../data/setup";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export const useUserLoader = () => {
     const { user, setUser } = useContext(UserContext);
@@ -27,8 +28,9 @@ export const useUserLoader = () => {
         // We'll let an ErrorBoundary catch the error
         useErrorBoundary: true,
         // It's important we don't retry as we want to show the login screen as quickly as possible if a 401
-        // TODO: In the future we can consider retrying for non 401 errors
-        retry: false,
+        retry: (_failureCount: number, error: Error & { code?: number }) => {
+            return error.code !== ErrorCodes.NOT_AUTHENTICATED;
+        },
         cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         staleTime: 1000 * 60 * 60 * 1, // 1 hour
         onSuccess: (loadedUser) => {
