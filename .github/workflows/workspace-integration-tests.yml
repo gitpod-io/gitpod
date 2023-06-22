@@ -99,6 +99,8 @@ jobs:
             sa_key: ${{ secrets.GCP_CREDENTIALS }}
             infrastructure_provider: gce
             large_vm: true
+            # Disable spot, to prevent the e2e tests from failing due to VM preemption.
+            use_spot: false
         - name: Deploy Gitpod to the preview environment
           if: github.event.inputs.skip_deploy != 'true'
           id: deploy-gitpod
