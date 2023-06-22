@@ -203,7 +203,7 @@ import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { OrganizationPermission } from "../authorization/definitions";
-import { organizationMemberRole, organizationOwnerRole } from "../authorization/relationships";
+import { organizationMemberRole, organizationOwnerRole, organizationRole } from "../authorization/relationships";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2886,19 +2886,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const requestor = await this.checkAndBlockUser("setTeamMemberRole");
         const { team } = await this.guardTeamOperation(teamId, "update", "write_members");
 
-        const centralizedPermsEnabled = await this.centralizedPermissionsEnabled(requestor, team.id);
-        if (centralizedPermsEnabled) {
-            const writeRequest =
-                role === "owner" ? organizationOwnerRole(team.id, userId) : organizationMemberRole(team.id, userId);
-
-            // TODO: Wrap in a transaction
-            await this.teamDB.setTeamMemberRole(userId, teamId, role);
-            await this.authorizer.writeRelationships(writeRequest, {
-                teamID: team.id,
-                userID: requestor.id,
+        try {
+            await this.teamDB.transaction(async (db) => {
+                await this.teamDB.setTeamMemberRole(userId, teamId, role);
+                await this.authorizer.writeRelationships(organizationRole(team.id, userId, role), {
+                    teamID: team.id,
+                    userID: requestor.id,
+                });
             });
-        } else {
-            await this.teamDB.setTeamMemberRole(userId, teamId, role);
+        } catch (err) {
+            // TODO: Handle spicedb error
+
+            throw err;
         }
     }
 

@@ -4,8 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { objectRef, relationship, subject } from "./definitions";
 import { v1 } from "@authzed/authzed-node";
+
+export function organizationRole(orgID: string, userID: string, role: TeamMemberRole): v1.WriteRelationshipsRequest {
+    return role === "owner" ? organizationOwnerRole(orgID, userID) : organizationMemberRole(orgID, userID);
+}
 
 export function organizationOwnerRole(orgID: string, userID: string): v1.WriteRelationshipsRequest {
     return v1.WriteRelationshipsRequest.create({
