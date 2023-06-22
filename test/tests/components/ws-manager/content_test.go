@@ -242,7 +242,7 @@ func TestMissingBackup(t *testing.T) {
 						}
 						w.Spec.FeatureFlags = test.FF
 						return nil
-					}), integration.WithWaitWorkspaceForOpts(integration.WorkspaceCanFail))
+					}), integration.WithWaitWorkspaceForOpts(integration.WorkspaceCanFail, integration.WaitForStopped))
 					if err != nil {
 						t.Fatal(err)
 					}
