@@ -12,9 +12,8 @@ import {
     OrganizationSettings,
     User,
 } from "@gitpod/gitpod-protocol";
-import { inject, injectable } from "inversify";
-import { TypeORM } from "./typeorm";
-import { Repository } from "typeorm";
+import { inject, injectable, optional } from "inversify";
+import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import { randomBytes } from "crypto";
 import { TeamDB } from "../team-db";
@@ -26,13 +25,16 @@ import { ResponseError } from "vscode-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import slugify from "slugify";
 import { DBOrgSettings } from "./entity/db-team-settings";
+import { TransactionalDBImpl, UndefinedEntityManager } from "./transactional-db-impl";
 
 @injectable()
-export class TeamDBImpl implements TeamDB {
-    @inject(TypeORM) typeORM: TypeORM;
+export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
+    constructor(@inject(UndefinedEntityManager) @optional() transactionalEM: EntityManager | undefined) {
+        super(transactionalEM);
+    }
 
-    protected async getEntityManager() {
-        return (await this.typeORM.getConnection()).manager;
+    protected createTransactionalDB(transactionalEM: EntityManager): TeamDB {
+        return new TeamDBImpl(transactionalEM);
     }
 
     protected async getTeamRepo(): Promise<Repository<DBTeam>> {
