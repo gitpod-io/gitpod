@@ -13,12 +13,12 @@ schema: |-
     relation owner: user
 
     // General operations on organization
-    permission read_info = owner + member
+    permission read_info = member + owner
     permission write_info = owner
 
     // Operations on Organization's Members
-    permission read_members = owner + member
-    permission write_members = owner + member
+    permission read_members = member + owner
+    permission write_members = member + owner
 
     // Only owners can create new projects
     permission create_project = owner
@@ -96,6 +96,7 @@ assertions:
 # validations are not used to assert that a permission exists
 validation:
   organization:org_1#member:
+    - "[user:user_0] is <organization:org_1#member>"
     - "[user:user_1] is <organization:org_1#member>"
     - "[user:user_2] is <organization:org_1#member>"
   organization:org_1#owner:
@@ -106,7 +107,7 @@ validation:
     - "[user:user_0] is <organization:org_1#owner>"
   project:project_1#read_info:
     - "[organization:org_1#member] is <project:project_1#viewer>"
-    - "[user:user_0] is <organization:org_1#owner>"
+    - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
     - "[user:user_1] is <organization:org_1#member>"
     - "[user:user_2] is <organization:org_1#member>"
   project:project_2#read_info:
