@@ -203,7 +203,7 @@ import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { OrganizationPermission } from "../authorization/definitions";
-import { organizationMemberRole, organizationOwnerRole, organizationRole } from "../authorization/relationships";
+import { organizationOwnerRole, organizationRole } from "../authorization/relationships";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -3891,13 +3891,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!isEnabled) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Method not available");
         }
-    }
-
-    private async centralizedPermissionsEnabled(user?: User, teamID?: string): Promise<boolean> {
-        return await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-            user: user,
-            teamId: teamID,
-        });
     }
 
     public async trackEvent(ctx: TraceContext, event: RemoteTrackMessage): Promise<void> {
