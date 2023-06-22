@@ -23,6 +23,10 @@ schema: |-
 
     // Only owners can create new projects
     permission create_project = owner
+
+    // Only owners can change settings
+    permission read_settings = owner
+    permission write_settings = owner
   }
 
   definition project {
@@ -73,21 +77,20 @@ relationships: |-
 # assertions should assert that a particular permission holds, or not
 assertions:
   assertTrue:
-    - "organization:org_1#read_info@user:user_0"
+    - organization:org_1#read_info@user:user_0
     # user 0 can edit project_0, because they are the Org Owner
-    - "project:project_1#write_info@user:user_0"
-
+    - project:project_1#write_info@user:user_0
+    - organization:org_1#write_settings@user:user_0
   assertFalse:
     # user 10 cannot access project_1
-    - "project:project_1#read_info@user:user_10"
-    - "project:project_2#write_info@user:user_10"
-
+    - project:project_1#read_info@user:user_10
+    - project:project_2#write_info@user:user_10
     # non-member/owner cannot access organization
-    - "organization:org1#read_info@user:user3"
-    - "organization:org1#write_info@user:user3"
-    - "organization:org1#read_members@user:user3"
-    - "organization:org1#write_members@user:user3"
-
+    - organization:org_1#read_info@user:user_3
+    - organization:org_1#write_info@user:user_3
+    - organization:org_1#read_members@user:user_3
+    - organization:org_1#write_members@user:user_3
+    - organization:org_1#write_settings@user:user_1
 # validation should assert that a particular relation exists between an entity, and a subject
 # validations are not used to assert that a permission exists
 validation:
@@ -99,6 +102,10 @@ validation:
     - "[user:user_1] is <organization:org_1#member>"
     - "[user:user_2] is <organization:org_1#member>"
   organization:org_1#owner:
+    - "[user:user_0] is <organization:org_1#owner>"
+  organization:org_1#read_settings:
+    - "[user:user_0] is <organization:org_1#owner>"
+  organization:org_1#write_settings:
     - "[user:user_0] is <organization:org_1#owner>"
   project:project_1#read_info:
     - "[organization:org_1#membership] is <project:project_1#viewer>"
