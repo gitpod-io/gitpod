@@ -14,6 +14,7 @@ import {
     spicedbClientLatency,
 } from "../prometheus-metrics";
 import { SpiceDBClient } from "./spicedb";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export type CheckResult = {
     permitted: boolean;
@@ -28,11 +29,29 @@ export class Authorizer {
     @inject(SpiceDBClient)
     private client: SpiceDBClient;
 
-    async check(req: v1.CheckPermissionRequest): Promise<CheckResult> {
+    async check(
+        req: v1.CheckPermissionRequest,
+        experimentsFields?: {
+            userID?: string;
+            teamID?: string;
+        },
+    ): Promise<CheckResult> {
         if (!this.client) {
             return {
                 permitted: false,
                 err: new Error("Authorization client not available."),
+                response: v1.CheckPermissionResponse.create({}),
+            };
+        }
+
+        const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            user: { id: experimentsFields?.userID || "" },
+            teamId: experimentsFields?.teamID,
+        });
+        if (!featureEnabled) {
+            return {
+                permitted: false,
+                err: new Error("Feature flag not enabled."),
                 response: v1.CheckPermissionResponse.create({}),
             };
         }
@@ -54,9 +73,23 @@ export class Authorizer {
         }
     }
 
-    async writeRelationships(req: v1.WriteRelationshipsRequest): Promise<v1.WriteRelationshipsResponse | undefined> {
+    async writeRelationships(
+        req: v1.WriteRelationshipsRequest,
+        experimentsFields?: {
+            userID?: string;
+            teamID?: string;
+        },
+    ): Promise<v1.WriteRelationshipsResponse | undefined> {
         if (!this.client) {
-            throw new Error("Authorization client is not available");
+            return undefined;
+        }
+
+        const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            user: { id: experimentsFields?.userID || "" },
+            teamId: experimentsFields?.teamID,
+        });
+        if (!featureEnabled) {
+            return undefined;
         }
 
         try {
