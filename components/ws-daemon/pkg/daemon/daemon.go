@@ -155,16 +155,6 @@ func NewDaemon(config Config) (*Daemon, error) {
 		listener = append(listener, netlimiter)
 	}
 
-	var configReloader CompositeConfigReloader
-	configReloader = append(configReloader, ConfigReloaderFunc(func(ctx context.Context, config *Config) error {
-		cgroupV2IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
-		procV2Plugin.Update(config.ProcLimit)
-		if config.NetLimit.Enabled {
-			netlimiter.Update(config.NetLimit)
-		}
-		return nil
-	}))
-
 	var mgr manager.Manager
 
 	mgr, err = ctrl.NewManager(restCfg, ctrl.Options{
@@ -225,6 +215,17 @@ func NewDaemon(config Config) (*Daemon, error) {
 	}
 
 	dsk := diskguard.FromConfig(config.DiskSpaceGuard, clientset, nodename)
+
+	var configReloader CompositeConfigReloader
+	configReloader = append(configReloader, ConfigReloaderFunc(func(ctx context.Context, config *Config) error {
+		cgroupV2IOLimiter.Update(config.IOLimit.WriteBWPerSecond.Value(), config.IOLimit.ReadBWPerSecond.Value(), config.IOLimit.WriteIOPS, config.IOLimit.ReadIOPS)
+		procV2Plugin.Update(config.ProcLimit)
+		if config.NetLimit.Enabled {
+			netlimiter.Update(config.NetLimit)
+		}
+		wsctrl.ReconcileTimeout = time.Minute * time.Duration(config.WorkspaceController.ReconcileTimeoutMinutes)
+		return nil
+	}))
 
 	return &Daemon{
 		Config:          config,

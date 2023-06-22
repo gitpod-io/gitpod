@@ -44,12 +44,12 @@ var retryParams = wait.Backoff{
 type WorkspaceController struct {
 	client.Client
 	NodeName                string
+	ReconcileTimeout        time.Duration
 	maxConcurrentReconciles int
 	operations              WorkspaceOperations
 	metrics                 *workspaceMetrics
 	secretNamespace         string
 	recorder                record.EventRecorder
-	reconcileTimeout        time.Duration
 }
 
 func NewWorkspaceController(c client.Client, recorder record.EventRecorder, nodeName, secretNamespace string, maxConcurrentReconciles int, ops WorkspaceOperations, reg prometheus.Registerer, reconcileTimeout time.Duration) (*WorkspaceController, error) {
@@ -59,12 +59,12 @@ func NewWorkspaceController(c client.Client, recorder record.EventRecorder, node
 	return &WorkspaceController{
 		Client:                  c,
 		NodeName:                nodeName,
+		ReconcileTimeout:        reconcileTimeout,
 		maxConcurrentReconciles: maxConcurrentReconciles,
 		operations:              ops,
 		metrics:                 metrics,
 		secretNamespace:         secretNamespace,
 		recorder:                recorder,
-		reconcileTimeout:        reconcileTimeout,
 	}, nil
 }
 
@@ -106,9 +106,9 @@ func (wsc *WorkspaceController) Reconcile(ctx context.Context, req ctrl.Request)
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Reconcile")
 	defer tracing.FinishSpan(span, &err)
 
-	if wsc.reconcileTimeout > 0 {
+	if timeout := wsc.ReconcileTimeout; timeout > 0 {
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, wsc.reconcileTimeout)
+		ctx, cancel = context.WithTimeout(ctx, timeout)
 		defer cancel()
 	}
 
