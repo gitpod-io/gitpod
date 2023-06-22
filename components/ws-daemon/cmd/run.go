@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"golang.org/x/xerrors"
+	"k8s.io/klog/v2"
 
 	"github.com/bombsimon/logrusr/v2"
 	"github.com/heptiolabs/healthcheck"
@@ -40,7 +41,10 @@ var runCmd = &cobra.Command{
 
 		createLVMDevices()
 
-		ctrl.SetLogger(logrusr.New(log.Log))
+		baseLogger := logrusr.New(log.Log)
+		ctrl.SetLogger(baseLogger)
+		// Set the logger used by k8s (e.g. client-go).
+		klog.SetLogger(baseLogger)
 
 		dmn, err := daemon.NewDaemon(cfg.Daemon)
 		if err != nil {

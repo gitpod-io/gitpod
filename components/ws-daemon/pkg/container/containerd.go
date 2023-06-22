@@ -300,7 +300,7 @@ func (s *Containerd) handleNewTask(cid string, rootfs []*types.Mount, pid uint32
 		mnts, err := s.Client.SnapshotService(info.Snapshotter).Mounts(ctx, info.SnapshotKey)
 		cancel()
 		if err != nil {
-			log.WithError(err).Warnf("cannot get mounts for container %v", cid)
+			log.WithError(err).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).Warnf("cannot get mounts for container %v", cid)
 		}
 		for _, m := range mnts {
 			rootfs = append(rootfs, &types.Mount{

@@ -111,7 +111,7 @@ func (s *Workspace) Dispose(ctx context.Context, hooks []WorkspaceLivecycleHook)
 	err = os.Remove(s.persistentStateLocation())
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			log.WithError(err).Warn("workspace persistent state location not exist")
+			log.WithError(err).WithFields(s.OWI()).Warn("workspace persistent state location not exist")
 			err = nil
 		} else {
 			return xerrors.Errorf("cannot remove workspace persistent state location: %w", err)

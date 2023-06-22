@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 	"golang.org/x/time/rate"
 	"golang.org/x/xerrors"
@@ -233,7 +234,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot find workspace rootfs")
 	}
 
-	log.WithField("type", wbs.FSShift).Debug("FSShift")
+	log.WithField("type", wbs.FSShift).WithFields(wbs.Session.OWI()).Debug("FSShift")
 
 	// user namespace support for FUSE landed in Linux 4.18:
 	//   - http://lkml.iu.edu/hypermail/linux/kernel/1806.0/04385.html
@@ -268,7 +269,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 				"--gidmapping", mappings)
 		})
 		if err != nil {
-			log.WithField("rootfs", rootfs).WithError(err).Error("cannot mount fusefs mark")
+			log.WithField("rootfs", rootfs).WithFields(wbs.Session.OWI()).WithError(err).Error("cannot mount fusefs mark")
 			return nil, status.Errorf(codes.Internal, "cannot mount fusefs mark")
 		}
 
@@ -289,7 +290,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		c.Args = append(c.Args, "make-shared", "--target", "/")
 	})
 	if err != nil {
-		log.WithField("containerPID", containerPID).WithError(err).Error("cannot make container's rootfs shared")
+		log.WithField("containerPID", containerPID).WithFields(wbs.Session.OWI()).WithError(err).Error("cannot make container's rootfs shared")
 		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
 	}
 
@@ -297,7 +298,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		c.Args = append(c.Args, "mount-shiftfs-mark", "--source", rootfs, "--target", mountpoint)
 	})
 	if err != nil {
-		log.WithField("rootfs", rootfs).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount shiftfs mark")
+		log.WithField("rootfs", rootfs).WithFields(wbs.Session.OWI()).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount shiftfs mark")
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
@@ -319,7 +320,7 @@ func (wbs *InWorkspaceServiceServer) createWorkspaceCgroup(ctx context.Context, 
 	unified, err := cgroups.IsUnifiedCgroupSetup()
 	if err != nil {
 		// log error and do not expose it to the user
-		log.WithError(err).Error("could not determine cgroup setup")
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("could not determine cgroup setup")
 		return status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
 	}
 
@@ -333,7 +334,7 @@ func (wbs *InWorkspaceServiceServer) createWorkspaceCgroup(ctx context.Context, 
 		return status.Errorf(codes.NotFound, "cannot find workspace container cgroup")
 	}
 
-	err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, cgroupBase, "workspace")
+	err = evacuateToCGroup(ctx, log.WithFields(wbs.Session.OWI()), wbs.CGroupMountPoint, cgroupBase, "workspace")
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("cannot create workspace cgroup")
 		return status.Errorf(codes.FailedPrecondition, "cannot create workspace cgroup")
@@ -395,7 +396,7 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 	return &api.SetupPairVethsResponse{}, nil
 }
 
-func evacuateToCGroup(ctx context.Context, mountpoint, oldGroup, child string) error {
+func evacuateToCGroup(ctx context.Context, log *logrus.Entry, mountpoint, oldGroup, child string) error {
 	newGroup := filepath.Join(oldGroup, child)
 	oldPath := filepath.Join(mountpoint, oldGroup)
 	newPath := filepath.Join(mountpoint, newGroup)
@@ -519,7 +520,7 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 			return
 		}
 
-		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("UmountProc failed")
+		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("UmountProc failed")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot umount proc")
 		}
@@ -670,7 +671,7 @@ func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.Mo
 			return
 		}
 
-		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).WithFields(wbs.Session.OWI()).Error("cannot mount sysfs")
+		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("procPID", procPID).WithField("reqPID", reqPID).WithFields(wbs.Session.OWI()).Error("cannot mount sysfs")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot mount sysfs")
 		}
@@ -835,7 +836,7 @@ func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *ap
 	unified, err := cgroups.IsUnifiedCgroupSetup()
 	if err != nil {
 		// log error and do not expose it to the user
-		log.WithError(err).Error("could not determine cgroup setup")
+		log.WithFields(wbs.Session.OWI()).WithError(err).Error("could not determine cgroup setup")
 		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
 	}
 	if !unified {
@@ -864,7 +865,7 @@ func (wbs *InWorkspaceServiceServer) EvacuateCGroup(ctx context.Context, req *ap
 		return nil, status.Errorf(codes.FailedPrecondition, "cannot find workspace cgroup")
 	}
 
-	err = evacuateToCGroup(ctx, wbs.CGroupMountPoint, workspaceCGroup, "user")
+	err = evacuateToCGroup(ctx, log.WithFields(wbs.Session.OWI()), wbs.CGroupMountPoint, workspaceCGroup, "user")
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).WithField("path", workspaceCGroup).Error("EvacuateCGroup: cannot produce user cgroup")
 		return nil, status.Errorf(codes.FailedPrecondition, "cannot produce user cgroup")
@@ -910,7 +911,7 @@ func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
 }
 
 func (wbs *InWorkspaceServiceServer) WorkspaceInfo(ctx context.Context, req *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
-	log.Debug("Received workspace info request")
+	log.WithFields(wbs.Session.OWI()).Debug("Received workspace info request")
 	rt := wbs.Uidmapper.Runtime
 	if rt == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
@@ -930,7 +931,7 @@ func (wbs *InWorkspaceServiceServer) WorkspaceInfo(ctx context.Context, req *api
 	unified, err := cgroups.IsUnifiedCgroupSetup()
 	if err != nil {
 		// log error and do not expose it to the user
-		log.WithError(err).Error("could not determine cgroup setup")
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("could not determine cgroup setup")
 		return nil, status.Errorf(codes.FailedPrecondition, "could not determine cgroup setup")
 	}
 
@@ -941,7 +942,7 @@ func (wbs *InWorkspaceServiceServer) WorkspaceInfo(ctx context.Context, req *api
 	resources, err := getWorkspaceResourceInfo(wbs.CGroupMountPoint, cgroupPath)
 	if err != nil {
 		if !errors.Is(err, os.ErrNotExist) {
-			log.WithError(err).Error("could not get resource information")
+			log.WithError(err).WithFields(wbs.Session.OWI()).Error("could not get resource information")
 		}
 		return nil, status.Error(codes.Unknown, err.Error())
 	}
