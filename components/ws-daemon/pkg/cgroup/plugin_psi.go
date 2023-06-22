@@ -91,20 +91,20 @@ func (p *PSIMetrics) scrape(cpu *cgroups.Cpu, memory *cgroups.Memory, io *cgroup
 		p.cpu.WithLabelValues(p.nodeName, instanceID, "some").Set(float64(psi.Some))
 		p.cpu.WithLabelValues(p.nodeName, instanceID, "full").Set(float64(psi.Full))
 	} else if !os.IsNotExist(err) {
-		log.WithError(err).Warn("could not retrieve cpu psi")
+		log.WithError(err).WithFields(log.OWI("", "", instanceID)).Warn("could not retrieve cpu psi")
 	}
 
 	if psi, err := memory.PSI(); err == nil {
 		p.memory.WithLabelValues(p.nodeName, instanceID, "some").Set(float64(psi.Some))
 		p.memory.WithLabelValues(p.nodeName, instanceID, "full").Set(float64(psi.Full))
 	} else if !os.IsNotExist(err) {
-		log.WithError(err).Warn("could not retrieve memory psi")
+		log.WithError(err).WithFields(log.OWI("", "", instanceID)).Warn("could not retrieve memory psi")
 	}
 
 	if psi, err := io.PSI(); err == nil {
 		p.io.WithLabelValues(p.nodeName, instanceID, "some").Set(float64(psi.Some))
 		p.io.WithLabelValues(p.nodeName, instanceID, "full").Set(float64(psi.Full))
 	} else if !os.IsNotExist(err) {
-		log.WithError(err).Warn("could not retrieve io psi")
+		log.WithError(err).WithFields(log.OWI("", "", instanceID)).Warn("could not retrieve io psi")
 	}
 }

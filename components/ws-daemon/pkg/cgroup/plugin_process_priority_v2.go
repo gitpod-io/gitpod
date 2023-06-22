@@ -78,7 +78,7 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) erro
 			// the target cgroup/workspace has gone
 			return nil
 		} else if err != nil {
-			log.WithField("path", fullCgroupPath).WithError(err).Errorf("cannot read cgroup.procs file")
+			log.WithFields(log.OWI("", "", opts.InstanceId)).WithField("path", fullCgroupPath).WithError(err).Errorf("cannot read cgroup.procs file")
 			return err
 		}
 
@@ -92,7 +92,7 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) erro
 
 			pid, err := strconv.ParseInt(line, 10, 64)
 			if err != nil {
-				log.WithError(err).WithField("line", line).Warn("cannot parse pid")
+				log.WithError(err).WithFields(log.OWI("", "", opts.InstanceId)).WithField("line", line).Warn("cannot parse pid")
 				continue
 			}
 
@@ -102,7 +102,7 @@ func (c *ProcessPriorityV2) Apply(ctx context.Context, opts *PluginOptions) erro
 					continue
 				}
 
-				log.WithError(err).WithField("pid", pid).Warn("cannot get process")
+				log.WithError(err).WithFields(log.OWI("", "", opts.InstanceId)).WithField("pid", pid).Warn("cannot get process")
 				continue
 			}
 

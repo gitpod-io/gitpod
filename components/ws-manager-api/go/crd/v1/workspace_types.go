@@ -6,6 +6,8 @@ package v1
 
 import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -435,6 +437,12 @@ func (w *Workspace) IsHeadless() bool {
 
 func (w *Workspace) IsConditionTrue(condition WorkspaceCondition) bool {
 	return wsk8s.ConditionPresentAndTrue(w.Status.Conditions, string(condition))
+}
+
+// OWI produces the owner, workspace, instance log metadata from the information
+// of this workspace.
+func (w *Workspace) OWI() logrus.Fields {
+	return log.OWI(w.Spec.Ownership.Owner, w.Spec.Ownership.WorkspaceID, w.Name)
 }
 
 func init() {
