@@ -85,7 +85,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -183,7 +183,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -301,7 +301,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "targets": [
         {
           "datasource": {
@@ -363,7 +363,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -662,7 +662,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "targets": [
         {
           "datasource": {
@@ -681,6 +681,152 @@
       "type": "heatmap"
     },
     {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*error"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*requeue.*"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": ".*success"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 19
+      },
+      "id": 78,
+      "links": [],
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "9.3.6",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "expr": "topk(20, max(workqueue_longest_running_processor_seconds{job=\"ws-daemon\", pod=~\"$pod\", name=~\"$controller\"}) by (cluster, pod, name))",
+          "hide": false,
+          "legendFormat": "{{cluster}} - {{pod}} - {{name}}",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Longest running reconciliation",
+      "type": "timeseries"
+    },
+    {
       "collapsed": true,
       "datasource": {
         "type": "datasource",
@@ -690,7 +836,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 28
       },
       "id": 52,
       "panels": [
@@ -1057,7 +1203,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 29
       },
       "id": 16,
       "panels": [],
@@ -1133,7 +1279,7 @@
         "h": 7,
         "w": 10,
         "x": 0,
-        "y": 21
+        "y": 30
       },
       "id": 63,
       "options": {
@@ -1179,7 +1325,7 @@
         "h": 7,
         "w": 7,
         "x": 10,
-        "y": 21
+        "y": 30
       },
       "hiddenSeries": false,
       "id": 2,
@@ -1202,7 +1348,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1271,7 +1417,7 @@
         "h": 7,
         "w": 7,
         "x": 17,
-        "y": 21
+        "y": 30
       },
       "hiddenSeries": false,
       "id": 4,
@@ -1291,7 +1437,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1372,7 +1518,7 @@
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 28
+        "y": 37
       },
       "hiddenSeries": false,
       "id": 6,
@@ -1393,7 +1539,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1460,7 +1606,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 28
+        "y": 37
       },
       "hiddenSeries": false,
       "id": 8,
@@ -1481,7 +1627,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1547,7 +1693,7 @@
         "h": 7,
         "w": 8,
         "x": 0,
-        "y": 35
+        "y": 44
       },
       "hiddenSeries": false,
       "id": 10,
@@ -1568,7 +1714,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1643,7 +1789,7 @@
         "h": 7,
         "w": 8,
         "x": 8,
-        "y": 35
+        "y": 44
       },
       "hiddenSeries": false,
       "id": 44,
@@ -1665,7 +1811,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1741,7 +1887,7 @@
         "h": 7,
         "w": 8,
         "x": 16,
-        "y": 35
+        "y": 44
       },
       "hiddenSeries": false,
       "id": 46,
@@ -1762,7 +1908,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.4.3",
+      "pluginVersion": "9.5.2",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -1840,7 +1986,7 @@
         "h": 9,
         "w": 8,
         "x": 0,
-        "y": 42
+        "y": 51
       },
       "hiddenSeries": false,
       "id": 36,
@@ -1929,7 +2075,7 @@
         "h": 9,
         "w": 8,
         "x": 8,
-        "y": 42
+        "y": 51
       },
       "hiddenSeries": false,
       "id": 42,
@@ -2036,7 +2182,7 @@
         "h": 9,
         "w": 8,
         "x": 16,
-        "y": 42
+        "y": 51
       },
       "hiddenSeries": false,
       "id": 40,
@@ -2138,7 +2284,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 60
       },
       "id": 22,
       "panels": [
