@@ -5,7 +5,7 @@
  */
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { inject, injectable, postConstruct } from "inversify";
+import { inject, injectable } from "inversify";
 import { Job } from "./runner";
 import { Config } from "../config";
 import { SpiceDBClient } from "../authorization/spicedb";
