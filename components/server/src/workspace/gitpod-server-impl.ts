@@ -2782,18 +2782,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         let team: Team;
         let invite: TeamMembershipInvite;
         try {
-            await this.teamDB.transaction(async (db) => {
-                team = await db.createTeam(user.id, name);
-                invite = await this.getGenericInvite(ctx, team.id);
+            [team, invite] = await this.teamDB.transaction(async (db) => {
+                const team = await db.createTeam(user.id, name);
+                const invite = await this.getGenericInvite(ctx, team.id);
                 await this.authorizer.writeRelationships(organizationOwnerRole(team.id, user.id));
+
+                return [team, invite];
             });
         } catch (err) {
             // TODO: Rollback spicedb changes
 
             throw err;
         }
-
-        team = team!;
 
         // create a cost center
         await this.usageService.getCostCenter({
