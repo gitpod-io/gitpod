@@ -4,22 +4,22 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TeamDB, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { DBUser, TeamDB, TypeORM } from "@gitpod/gitpod-db/lib";
 import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
 import { DBTeamMembership } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team-membership";
-import { Team, User } from "@gitpod/gitpod-protocol";
+import { Team } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingMode } from "@gitpod/gitpod-protocol/lib/billing-mode";
+import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import * as chai from "chai";
+import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { Container, ContainerModule } from "inversify";
 import { suite, test, timeout } from "mocha-typescript";
 import Stripe from "stripe";
 import { Config } from "../config";
-import { BillingModes, BillingModesImpl } from "./billing-mode";
-import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
-import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { UsageService } from "../user/usage-service";
+import { BillingModes, BillingModesImpl } from "./billing-mode";
 chai.use(deepEqualInAnyOrder);
 const expect = chai.expect;
 
@@ -47,17 +47,7 @@ class BillingModeSpec {
         const userId = "123";
         const teamName = "team-123";
         const stripeCustomerId = "customer-123";
-        // const stripeTeamCustomerId = "customer-t-123";
-        const creationDate = "2022-01-01T19:00:00.000Z";
         const now = "2022-01-15T20:00:00.000Z";
-        function user(): User {
-            return {
-                id: userId,
-                name: `user-${userId}`,
-                creationDate,
-                identities: [],
-            };
-        }
 
         function team(): Pick<Team, "name"> {
             return {
@@ -72,17 +62,9 @@ class BillingModeSpec {
             };
         }
 
-        // function stripeTeamSubscription() {
-        //     return {
-        //         id: "stripe-123",
-        //         customer: stripeTeamCustomerId,
-        //         isTeam: true,
-        //     };
-        // }
-
         interface Test {
             name: string;
-            subject: User | Pick<Team, "name">;
+            subject: Pick<Team, "name">;
             config: {
                 enablePayment: boolean;
                 stripeSubscription?: StripeSubscription & { isTeam?: boolean };
@@ -91,39 +73,6 @@ class BillingModeSpec {
             only?: true;
         }
         const tests: Test[] = [
-            // user: payment?
-            {
-                name: "payment disabled",
-                subject: user(),
-                config: {
-                    enablePayment: false,
-                },
-                expectation: {
-                    mode: "none",
-                },
-            },
-            // user: usage-based
-            {
-                name: "user: stripe paid",
-                subject: user(),
-                config: {
-                    enablePayment: true,
-                    stripeSubscription: stripeSubscription(),
-                },
-                expectation: {
-                    mode: "usage-based",
-                },
-            },
-            {
-                name: "user: stripe free",
-                subject: user(),
-                config: {
-                    enablePayment: true,
-                },
-                expectation: {
-                    mode: "usage-based",
-                },
-            },
             // team: payment?
             {
                 name: "payment disabled",
@@ -182,31 +131,14 @@ class BillingModeSpec {
             await manager.getRepository(DBUser).delete({});
 
             // Prepare test config
-            const userDB = testContainer.get<UserDB>(UserDB);
             const teamDB = testContainer.get<TeamDB>(TeamDB);
 
-            let isTeam = false;
-            let attributionId: AttributionId | undefined = undefined;
-            if (User.is(test.subject)) {
-                const user = test.subject;
-                await userDB.storeUser(user);
-                attributionId = { kind: "user", userId };
-            } else {
-                isTeam = true;
+            const team = await teamDB.createTeam(userId, teamName);
+            const membership = await teamDB.findTeamMembership(userId, team.id);
+            if (!membership) {
+                throw new Error(`${test.name}: Invalid test data: expected membership for team to exist!`);
             }
-            if (isTeam || test.config.stripeSubscription?.isTeam) {
-                const team = await teamDB.createTeam(userId, teamName);
-                const membership = await teamDB.findTeamMembership(userId, team.id);
-                if (!membership) {
-                    throw new Error(`${test.name}: Invalid test data: expected membership for team to exist!`);
-                }
-                if (isTeam) {
-                    attributionId = { kind: "team", teamId: team.id };
-                }
-            }
-            if (!attributionId) {
-                throw new Error("Invalid test data: no subject configured!");
-            }
+            const attributionId = AttributionId.createFromOrganizationId(team.id);
 
             // Run test
             const cut = testContainer.get<BillingModes>(BillingModes);

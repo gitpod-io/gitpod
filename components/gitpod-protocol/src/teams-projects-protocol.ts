@@ -29,7 +29,7 @@ export interface Project {
     name: string;
     slug?: string;
     cloneUrl: string;
-    teamId?: string;
+    teamId: string;
     userId?: string;
     appInstallationId: string;
     settings?: ProjectSettings;

@@ -4,16 +4,11 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { User } from "./protocol";
-import { Team } from "./teams-projects-protocol";
+import { Organization } from "./teams-projects-protocol";
 
-export type AttributionId = UserAttributionId | TeamAttributionId;
+export type AttributionId = TeamAttributionId;
 export type AttributionTarget = "user" | "team";
 
-export interface UserAttributionId {
-    kind: "user";
-    userId: string;
-}
 export interface TeamAttributionId {
     kind: "team";
     teamId: string;
@@ -22,19 +17,15 @@ export interface TeamAttributionId {
 export namespace AttributionId {
     const SEPARATOR = ":";
 
-    export function createFromOrganizationId(organizationId?: string): AttributionId | undefined {
-        return organizationId ? { kind: "team", teamId: organizationId } : undefined;
+    export function createFromOrganizationId(organizationId: string): AttributionId {
+        return { kind: "team", teamId: organizationId };
     }
 
-    export function create(userOrTeam: User | Team): AttributionId {
-        if (User.is(userOrTeam)) {
-            return { kind: "user", userId: userOrTeam.id };
-        } else {
-            return { kind: "team", teamId: userOrTeam.id };
-        }
+    export function create(organization: Organization): AttributionId {
+        return createFromOrganizationId(organization.id);
     }
 
-    export function parse(s: string): UserAttributionId | TeamAttributionId | undefined {
+    export function parse(s: string): AttributionId | undefined {
         if (!s) {
             return undefined;
         }
@@ -43,22 +34,19 @@ export namespace AttributionId {
             return undefined;
         }
         switch (parts[0]) {
-            case "user":
-                return { kind: "user", userId: parts[1] };
             case "team":
                 return { kind: "team", teamId: parts[1] };
-            default:
-                return undefined;
         }
+        return undefined;
     }
 
     export function render(id: AttributionId): string {
         switch (id.kind) {
-            case "user":
-                return `user${SEPARATOR}${id.userId}`;
             case "team":
                 return `team${SEPARATOR}${id.teamId}`;
         }
+        // allthough grayed as unreachable it is reachable at runtime
+        throw new Error("invalid attributionId kind : " + id.kind);
     }
 
     export function equals(a: AttributionId, b: AttributionId): boolean {

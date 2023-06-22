@@ -30,7 +30,7 @@ export class DBProject {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
     })
     @Index("ind_teamId")
-    teamId?: string;
+    teamId: string;
 
     @Column({
         default: "",

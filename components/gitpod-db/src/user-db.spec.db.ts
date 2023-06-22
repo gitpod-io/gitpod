@@ -287,6 +287,7 @@ namespace TestData {
         deleted: false,
         readonly: false,
     };
+    export const organizationId: string = "org1";
     export const ID1: Identity = { ...DEFAULT, authId: "2345" };
     export const ID2: Identity = { ...DEFAULT, authId: "3456", authProviderId: "Public-GitLab" };
     export const ID3: Identity = { ...DEFAULT, authId: "4567", authProviderId: "ACME" };
@@ -301,6 +302,7 @@ namespace TestData {
             image: "",
             tasks: [],
         },
+        organizationId,
         context: { title: "example" },
         contextURL: "example.org",
         description: "blabla",

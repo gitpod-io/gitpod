@@ -8,7 +8,6 @@ import { WorkspaceInstance, PortVisibility, PortProtocol } from "./workspace-ins
 import { RoleOrPermission } from "./permission";
 import { Project } from "./teams-projects-protocol";
 import { createHash } from "crypto";
-import { AttributionId } from "./attribution";
 import { WorkspaceRegion } from "./workspace-cluster";
 
 export interface UserInfo {
@@ -209,17 +208,6 @@ export namespace User {
         return user;
     }
 
-    export function getDefaultAttributionId(user: User): AttributionId {
-        if (user.usageAttributionId) {
-            const result = AttributionId.parse(user.usageAttributionId);
-            if (!result) {
-                throw new Error("Invalid attribution ID: " + user.usageAttributionId);
-            }
-            return result;
-        }
-        return AttributionId.create(user);
-    }
-
     // TODO: refactor where this is referenced so it's more clearly tied to just analytics-tracking
     // Let other places rely on the ProfileDetails type since that's what we store
     // This is the profile data we send to our Segment analytics tracking pipeline
@@ -279,8 +267,6 @@ export interface AdditionalUserData extends Partial<WorkspaceTimeoutSetting> {
     workspaceClasses?: WorkspaceClasses;
     // additional user profile data
     profile?: ProfileDetails;
-    // whether the user has been migrated to team attribution.
-    isMigratedToTeamOnlyAttribution?: boolean;
     shouldSeeMigrationMessage?: boolean;
 
     // remembered workspace auto start options
@@ -806,10 +792,7 @@ export type SnapshotState = "pending" | "available" | "error";
 export interface Workspace {
     id: string;
     creationTime: string;
-    /**
-     * undefined means it is owned by the user (legacy mode, soon to be removed)
-     */
-    organizationId?: string;
+    organizationId: string;
     contextURL: string;
     description: string;
     ownerId: string;

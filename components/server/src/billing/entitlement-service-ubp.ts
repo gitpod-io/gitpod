@@ -42,7 +42,7 @@ export class EntitlementServiceUBP implements EntitlementService {
 
     async mayStartWorkspace(
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         date: Date,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<MayStartWorkspaceResult> {
@@ -70,7 +70,7 @@ export class EntitlementServiceUBP implements EntitlementService {
 
     protected async checkUsageLimitReached(
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         date: Date,
     ): Promise<AttributionId | undefined> {
         const result = await this.userService.checkUsageLimitReached(user, organizationId);
@@ -118,14 +118,7 @@ export class EntitlementServiceUBP implements EntitlementService {
         return true;
     }
 
-    protected async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
-        // Paid user?
-        const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(
-            AttributionId.render({ kind: "user", userId: user.id }),
-        );
-        if (subscriptionId) {
-            return true;
-        }
+    private async hasPaidSubscription(user: User, date: Date): Promise<boolean> {
         // Member of paid team?
         const teams = await this.teamDB.findTeamsByUser(user.id);
         const isTeamSubscribedPromises = teams.map(async (team: Team) => {
