@@ -193,6 +193,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if cfg.WebApp != nil && cfg.WebApp.Server != nil && cfg.WebApp.Server.PermissionsMigrationEnabled {
 			permissionsMigrationEnabled = cfg.WebApp.Server.PermissionsMigrationEnabled
 		}
+		return nil
 	})
 
 	_, _, adminCredentialsPath := getAdminCredentials()
