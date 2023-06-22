@@ -265,7 +265,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	}()
 
 	var cmdOut bytes.Buffer
-	cmd := exec.Command("runc", args...)
+	cmd := exec.CommandContext(ctx, "runc", args...)
 	cmd.Dir = tmpdir
 	cmd.Stdout = &cmdOut
 	cmd.Stderr = os.Stderr
@@ -406,7 +406,7 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 		"-o", tempFile.Name(),
 	}
 
-	cmd := exec.Command("aria2c", args...)
+	cmd := exec.CommandContext(ctx, "aria2c", args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.WithError(err).WithField("out", string(out)).Error("unexpected error downloading file")
