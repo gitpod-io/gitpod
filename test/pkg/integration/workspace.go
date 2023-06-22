@@ -546,12 +546,17 @@ func stopWsF(t *testing.T, instanceID string, workspaceID string, api *Component
 type WaitForWorkspaceOpt func(*waitForWorkspaceOpts)
 
 type waitForWorkspaceOpts struct {
-	CanFail bool
+	CanFail        bool
+	WaitForStopped bool
 }
 
 // WorkspaceCanFail doesn't fail the test if the workspace fails to start
 func WorkspaceCanFail(o *waitForWorkspaceOpts) {
 	o.CanFail = true
+}
+
+func WaitForStopped(o *waitForWorkspaceOpts) {
+	o.WaitForStopped = true
 }
 
 // WaitForWorkspace waits until a workspace is running. Fails the test if the workspace
@@ -560,6 +565,34 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 	var cfg waitForWorkspaceOpts
 	for _, o := range opts {
 		o(&cfg)
+	}
+
+	checkStatus := func(status *wsmanapi.WorkspaceStatus) (done bool, err error) {
+		if status == nil {
+			return false, nil
+		}
+		if !cfg.CanFail && status.Conditions != nil && status.Conditions.Failed != "" {
+			return true, xerrors.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
+		}
+
+		switch status.Phase {
+		case wsmanapi.WorkspacePhase_RUNNING:
+			if !cfg.WaitForStopped {
+				// Done.
+				return true, nil
+			}
+		case wsmanapi.WorkspacePhase_STOPPING:
+			if !cfg.WaitForStopped {
+				return true, ErrWorkspaceInstanceStopping
+			}
+		case wsmanapi.WorkspacePhase_STOPPED:
+			if !cfg.WaitForStopped {
+				return true, ErrWorkspaceInstanceStopped
+			} else {
+				return true, nil
+			}
+		}
+		return false, nil
 	}
 
 	done := make(chan *wsmanapi.WorkspaceStatus)
@@ -595,7 +628,11 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 			close(done)
 		}()
 		for {
-			t.Logf("check if the status of workspace is in the running phase: %s", instanceID)
+			waitForPhase := "running"
+			if cfg.WaitForStopped {
+				waitForPhase = "stopped"
+			}
+			t.Logf("check if the status of workspace is in the %s phase: %s", waitForPhase, instanceID)
 			resp, err := sub.Recv()
 			if err != nil {
 				if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
@@ -630,30 +667,15 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 
 			t.Logf("status: %s, %s", s.Id, s.Phase)
 
-			if cfg.CanFail {
-				if s.Phase == wsmanapi.WorkspacePhase_STOPPING {
-					return
-				}
-				if s.Phase == wsmanapi.WorkspacePhase_STOPPED {
-					return
-				}
-			} else {
-				if s.Conditions.Failed != "" {
-					errStatus <- xerrors.Errorf("workspace instance %s failed: %s", instanceID, s.Conditions.Failed)
-					return
-				} else if s.Phase == wsmanapi.WorkspacePhase_STOPPING || s.Phase == wsmanapi.WorkspacePhase_STOPPED {
-					errStatus <- xerrors.Errorf("workspace instance %s is %s", instanceID, s.Phase)
-					return
-				}
-			}
-			if s.Phase != wsmanapi.WorkspacePhase_RUNNING {
-				// we're still starting
-				continue
+			done2, err := checkStatus(s)
+			if err != nil {
+				errStatus <- err
+				return
 			}
 
-			// all is well, the workspace is running
-			t.Logf("confirmed that the worksapce is running: %s, %s", s.Id, s.Phase)
-			return
+			if done2 {
+				return
+			}
 		}
 	}()
 
@@ -675,21 +697,9 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 				return nil, false, nil
 			}
 		}
-		if desc != nil && desc.Status != nil {
-			switch desc.Status.Phase {
-			case wsmanapi.WorkspacePhase_RUNNING:
-				return desc.Status, false, nil
-			case wsmanapi.WorkspacePhase_STOPPING:
-				if !cfg.CanFail {
-					return nil, false, ErrWorkspaceInstanceStopping
-				}
-			case wsmanapi.WorkspacePhase_STOPPED:
-				if !cfg.CanFail {
-					return nil, false, ErrWorkspaceInstanceStopped
-				}
-			}
-		}
-		return nil, true, nil
+
+		done, err := checkStatus(desc.Status)
+		return desc.Status, done, err
 	}
 
 	ticker := time.NewTicker(1 * time.Second)
@@ -697,8 +707,8 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 		select {
 		case <-ticker.C:
 			// For in case missed the status change
-			desc, cont, err := handle()
-			if cont {
+			desc, done, err := handle()
+			if !done {
 				continue
 			} else if err != nil {
 				return nil, err
@@ -707,8 +717,8 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 			}
 		case <-reboot:
 			// Consider workspace state changes during subscriber reboot
-			desc, cont, err := handle()
-			if cont {
+			desc, done, err := handle()
+			if !done {
 				continue
 			} else if err != nil {
 				return nil, err
@@ -1008,17 +1018,12 @@ func DeleteWorkspace(ctx context.Context, api *ComponentAPI, instanceID string) 
 		Id: instanceID,
 	})
 	if err != nil {
+		s, ok := status.FromError(err)
+		if ok && s.Code() == codes.NotFound {
+			// Workspace is already gone.
+			return nil
+		}
 		return err
 	}
-
-	if err == nil {
-		return nil
-	}
-
-	s, ok := status.FromError(err)
-	if ok && s.Code() == codes.NotFound {
-		return nil
-	}
-
-	return err
+	return nil
 }

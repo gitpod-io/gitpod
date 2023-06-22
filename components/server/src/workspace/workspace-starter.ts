@@ -921,17 +921,6 @@ export class WorkspaceStarter {
                 featureFlags.push("workspace_psi");
             }
 
-            // if the workspace has been created in an organization, we need to use the organization's attribution ID
-            let usageAttributionId = AttributionId.createFromOrganizationId(workspace.organizationId);
-            if (!usageAttributionId) {
-                if (!user.additionalData?.isMigratedToTeamOnlyAttribution) {
-                    usageAttributionId = await this.userService.getWorkspaceUsageAttributionId(user);
-                } else {
-                    if (usageAttributionId === undefined) {
-                        throw new Error("No usage attribution ID found");
-                    }
-                }
-            }
             let workspaceClass = await getWorkspaceClassForInstance(
                 ctx,
                 workspace,
@@ -951,6 +940,7 @@ export class WorkspaceStarter {
                 configuration.featureFlags = featureFlags;
             }
 
+            const usageAttributionId = AttributionId.createFromOrganizationId(workspace.organizationId);
             const now = new Date().toISOString();
             const instance: WorkspaceInstance = {
                 id: uuidv4(),

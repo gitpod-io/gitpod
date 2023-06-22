@@ -8,7 +8,6 @@ import * as chai from "chai";
 const expect = chai.expect;
 import { suite, test, timeout } from "mocha-typescript";
 import { fail } from "assert";
-import { v4 as uuidv4 } from "uuid";
 
 import { WorkspaceInstance, Workspace, PrebuiltWorkspace, CommitContext } from "@gitpod/gitpod-protocol";
 import { testContainer } from "./test-container";
@@ -193,27 +192,6 @@ class WorkspaceDBSpec {
     }
 
     @test(timeout(10000))
-    public async testStoreUndefinedOrganizationId() {
-        const workspace: Workspace = {
-            ...this.ws,
-            organizationId: undefined,
-        };
-        const instance = {
-            ...this.wsi1,
-        };
-
-        await this.db.store(workspace);
-        await this.db.storeInstance(instance);
-        let fetchedWs = await this.db.findWorkspaceAndInstance(workspace.id);
-        expect(fetchedWs).to.not.be.undefined;
-        expect(fetchedWs!.organizationId).to.be.undefined;
-        workspace.organizationId = uuidv4();
-        await this.db.store(workspace);
-        fetchedWs = await this.db.findWorkspaceAndInstance(workspace.id);
-        expect(fetchedWs?.organizationId).to.eq(workspace.organizationId);
-    }
-
-    @test(timeout(10000))
     public async testFindInstancesLast() {
         try {
             await this.db.transaction(async (db) => {
@@ -273,6 +251,7 @@ class WorkspaceDBSpec {
             description: "something",
             contextURL: "https://github.com/foo/bar",
             ownerId: "1221423",
+            organizationId: "org123",
             context: {
                 title: "my title",
             },
@@ -297,6 +276,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "https://github.com/foo/bar",
                 ownerId: "1221423",
+                organizationId: "org123",
                 context: {
                     title: "my title",
                 },
@@ -592,6 +572,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/inactive",
                 ownerId: "1221423",
+                organizationId: "org123",
                 context: <CommitContext>{
                     title: "my title",
                     repository: {
@@ -607,6 +588,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/active",
                 ownerId: "1221423",
+                organizationId: "org123",
                 context: <CommitContext>{
                     title: "my title",
                     repository: {
@@ -692,6 +674,7 @@ class WorkspaceDBSpec {
     public async findWorkspacesForPurging() {
         const creationTime = "2018-01-01T00:00:00.000Z";
         const ownerId = "1221423";
+        const organizationId = "org123";
         const purgeDate = new Date("2019-02-01T00:00:00.000Z");
         const d20180202 = "2018-02-02T00:00:00.000Z";
         const d20180201 = "2018-02-01T00:00:00.000Z";
@@ -703,6 +686,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/inactive",
                 ownerId,
+                organizationId,
                 context: {
                     title: "my title",
                 },
@@ -716,6 +700,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/active",
                 ownerId,
+                organizationId,
                 context: {
                     title: "my title",
                 },
@@ -729,6 +714,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/active",
                 ownerId,
+                organizationId,
                 context: {
                     title: "my title",
                 },
@@ -742,6 +728,7 @@ class WorkspaceDBSpec {
                 description: "something",
                 contextURL: "http://github.com/myorg/active",
                 ownerId,
+                organizationId,
                 context: {
                     title: "my title",
                 },

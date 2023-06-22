@@ -51,6 +51,7 @@ class ProjectDBSpec {
             slug: "some-project",
             cloneUrl: "some-random-clone-url",
             userId: user.id,
+            teamId: "team-1",
             appInstallationId: "app-1",
         });
         const searchTerm = "rand";

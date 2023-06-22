@@ -193,7 +193,6 @@ import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
-import { UserToTeamMigrationService } from "../migration/user-to-team-migration-service";
 import { StripeService } from "../user/stripe-service";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import {
@@ -287,9 +286,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     @inject(EnvVarService)
     private readonly envVarService: EnvVarService;
-
-    @inject(UserToTeamMigrationService)
-    private readonly userToTeamMigrationService: UserToTeamMigrationService;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -667,10 +663,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 gitpodHost: new URL(this.config.hostUrl.toString()).host,
             },
         );
-
-        if (this.userID) {
-            await this.userToTeamMigrationService.migrateUser(this.userID, true, "on demand");
-        }
     }
 
     public async updateLoggedInUser(ctx: TraceContext, update: Partial<User>): Promise<User> {
@@ -1212,17 +1204,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ),
             ),
         );
-
-        // we need to update old workspaces on the fly that didn't get an orgId because we lack attribution on their instances.
-        // this can be removed eventually.
-        if (user.additionalData?.isMigratedToTeamOnlyAttribution) {
-            try {
-                const userOrg = await this.userToTeamMigrationService.getUserOrganization(user);
-                await this.userToTeamMigrationService.updateWorkspacesOrganizationId(res, userOrg.id);
-            } catch (error) {
-                log.error({ userId: user.id }, "Error updating workspaces without orgId.", error);
-            }
-        }
         return res;
     }
 
@@ -1314,19 +1295,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const workspace = await db.findById(id);
         if (!workspace) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Workspace not found.");
-        }
-        if (!workspace.organizationId && user.additionalData?.isMigratedToTeamOnlyAttribution) {
-            try {
-                log.info({ userId: user.id }, "Updating workspace without orgId.");
-                const userOrg = await this.userToTeamMigrationService.getUserOrganization(user);
-                const latestInstance = await this.workspaceDb.trace({}).findCurrentInstance(workspace.id);
-                await this.userToTeamMigrationService.updateWorkspacesOrganizationId(
-                    [{ workspace, latestInstance }],
-                    userOrg.id,
-                );
-            } catch (error) {
-                log.error({ userId: user.id }, "Error updating workspaces without orgId.", error);
-            }
         }
         return workspace;
     }
@@ -1509,16 +1477,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 ? await this.projectDB.findProjectByCloneUrl(context.repository.cloneUrl)
                 : undefined;
 
-            let organizationId = options.organizationId;
-            if (!organizationId) {
-                if (!user.additionalData?.isMigratedToTeamOnlyAttribution) {
-                    const attributionId = await this.userService.getWorkspaceUsageAttributionId(user, project?.id);
-                    organizationId = attributionId.kind === "team" ? attributionId.teamId : undefined;
-                } else {
-                    throw new ResponseError(ErrorCodes.BAD_REQUEST, "No organizationId provided.");
-                }
-            }
-            const mayStartWorkspacePromise = this.mayStartWorkspace(ctx, user, organizationId, runningInstancesPromise);
+            const mayStartWorkspacePromise = this.mayStartWorkspace(
+                ctx,
+                user,
+                options.organizationId,
+                runningInstancesPromise,
+            );
 
             // TODO (se) findPrebuiltWorkspace also needs the organizationId once we limit prebuild reuse to the same org
             const prebuiltWorkspace = await this.findPrebuiltWorkspace(
@@ -1537,28 +1501,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 context = prebuiltWorkspace;
             }
 
-            try {
-                await mayStartWorkspacePromise;
-            } catch (error) {
-                // if the user is not migrated, yet, and the selected organization doesn't have credits, we fall back to what is set on the user preferences
-                // can be deleted when everyone is migrated
-                if (
-                    !user.additionalData?.isMigratedToTeamOnlyAttribution &&
-                    error instanceof ResponseError &&
-                    error.code === ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED
-                ) {
-                    const attributionId = await this.userService.getWorkspaceUsageAttributionId(user, project?.id);
-                    organizationId = attributionId.kind === "team" ? attributionId.teamId : undefined;
-                    // verify again with the updated organizationId
-                    await this.mayStartWorkspace(ctx, user, organizationId, runningInstancesPromise);
-                } else {
-                    throw error;
-                }
-            }
+            await mayStartWorkspacePromise;
+
             const workspace = await this.workspaceFactory.createForContext(
                 ctx,
                 user,
-                organizationId,
+                options.organizationId,
                 project,
                 context,
                 normalizedContextUrl,
@@ -1807,7 +1755,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     protected async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
-        organizationId: string | undefined,
+        organizationId: string,
         runningInstances: Promise<WorkspaceInstance[]>,
     ): Promise<void> {
         let result: MayStartWorkspaceResult = {};
@@ -2867,6 +2815,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const team = await this.teamDB.createTeam(user.id, name);
+        // create a cost center
+        await this.usageService.getCostCenter({
+            attributionId: AttributionId.render(AttributionId.create(team)),
+        });
         const invite = await this.getGenericInvite(ctx, team.id);
         ctx.span?.setTag("teamId", team.id);
         this.analytics.track({
@@ -4045,26 +3997,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     //#region gitpod.io concerns
-    async setUsageAttribution(ctx: TraceContext, usageAttributionId: string): Promise<void> {
-        const user = await this.checkAndBlockUser("setUsageAttribution");
-        try {
-            const attrId = AttributionId.parse(usageAttributionId);
-            if (attrId) {
-                await this.userService.setUsageAttribution(user, usageAttributionId);
-            }
-        } catch (error) {
-            log.error({ userId: user.id }, "Cannot set usage attribution", error, { usageAttributionId });
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Cannot set usage attribution`);
-        }
-    }
-
-    async listAvailableUsageAttributionIds(ctx: TraceContext): Promise<string[]> {
-        const user = await this.checkAndBlockUser("listAvailableUsageAttributionIds");
-
-        const attributionIds = await this.userService.listAvailableUsageAttributionIds(user);
-        return attributionIds.map(AttributionId.render);
-    }
-
     async getLinkedInClientId(ctx: TraceContextWithSpan): Promise<string> {
         traceAPIParams(ctx, {});
         await this.checkAndBlockUser("getLinkedInClientID");
@@ -4229,8 +4161,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async findStripeSubscriptionId(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
-        const user = await this.checkAndBlockUser("findStripeSubscriptionId");
-
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
@@ -4238,16 +4168,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            if (attrId.kind == "team") {
-                await this.guardTeamOperation(attrId.teamId, "get", "not_implemented");
-            } else {
-                if (attrId.userId !== user.id) {
-                    throw new ResponseError(
-                        ErrorCodes.PERMISSION_DENIED,
-                        "Cannot get subscription id for another user",
-                    );
-                }
-            }
+            await this.guardTeamOperation(attrId.teamId, "get", "not_implemented");
             const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(attributionId);
             return subscriptionId;
         } catch (error) {
@@ -4260,22 +4181,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     async getPriceInformation(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
-        const user = await this.checkAndBlockUser("getPriceInformation");
         const attrId = AttributionId.parse(attributionId);
         if (!attrId) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
 
-        if (attrId.kind === "team") {
-            await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
-        } else {
-            if (attrId.userId !== user.id) {
-                throw new ResponseError(
-                    ErrorCodes.PERMISSION_DENIED,
-                    "Cannot get pricing information for another user",
-                );
-            }
-        }
+        await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
         return this.stripeService.getPriceInformation(attributionId);
     }
 
@@ -4286,20 +4197,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
 
-        let team: Team | undefined;
-        if (attrId.kind === "team") {
-            team = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
-        } else {
-            if (attrId.userId !== user.id) {
-                throw new ResponseError(
-                    ErrorCodes.PERMISSION_DENIED,
-                    "Cannot create Stripe customer profile for another user",
-                );
-            }
-        }
+        const org = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
 
+        //TODO billing email should be editable within the org
         const billingEmail = User.getPrimaryEmail(user);
-        const billingName = attrId.kind === "team" ? team!.name : User.getName(user);
+        const billingName = org.name;
 
         let customer: StripeCustomer | undefined;
         try {
@@ -4376,8 +4278,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         paymentIntentId: string,
         usageLimit: number,
     ): Promise<number | undefined> {
-        const user = await this.checkAndBlockUser("subscribeToStripe");
-
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
@@ -4385,13 +4285,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            if (attrId.kind === "team") {
-                await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
-            } else {
-                if (attrId.userId !== user.id) {
-                    throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot sign up for another user");
-                }
-            }
+            await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
 
             const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
             if (!customerId) {
@@ -4447,11 +4341,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         let returnUrl = this.config.hostUrl
             .with(() => ({ pathname: `/billing`, search: `org=${attrId.kind === "team" ? attrId.teamId : "0"}` }))
             .toString();
-        if (attrId.kind === "user") {
-            returnUrl = this.config.hostUrl.with(() => ({ pathname: `/user/billing`, search: `org=0` })).toString();
-        } else if (attrId.kind === "team") {
-            await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
-        }
+        await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
         let url: string;
         try {
             url = await this.stripeService.getPortalUrlForAttributionId(attributionId, returnUrl);
@@ -4615,9 +4505,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 }
                 const members = await this.teamDB.findMembersByTeam(team.id);
                 owner = { kind: "team", team, members };
-                break;
-            case "user":
-                owner = { kind: "user", userId };
                 break;
             default:
                 throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid attributionId");

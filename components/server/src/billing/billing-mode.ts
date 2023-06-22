@@ -39,12 +39,8 @@ export class BillingModesImpl implements BillingModes {
                     throw new Error(`Cannot find team with id '${attributionId.teamId}'!`);
                 }
                 return this.getBillingModeForTeam(team, now);
-            case "user":
-                const user = await this.userDB.findUserById(attributionId.userId);
-                if (!user) {
-                    throw new Error(`Cannot find user with id '${attributionId.userId}'!`);
-                }
-                return this.getBillingModeForUser(user, now);
+            default:
+                throw new Error("Invalid attributionId.");
         }
     }
 
