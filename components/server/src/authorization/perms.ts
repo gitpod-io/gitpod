@@ -33,7 +33,7 @@ export class Authorizer {
         req: v1.CheckPermissionRequest,
         experimentsFields?: {
             userID?: string;
-            teamID?: string;
+            orgID?: string;
         },
     ): Promise<CheckResult> {
         if (!this.client) {
@@ -46,7 +46,7 @@ export class Authorizer {
 
         const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
             user: { id: experimentsFields?.userID || "" },
-            teamId: experimentsFields?.teamID,
+            teamId: experimentsFields?.orgID,
         });
         if (!featureEnabled) {
             return {

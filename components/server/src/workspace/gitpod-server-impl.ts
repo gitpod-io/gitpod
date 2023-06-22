@@ -2639,9 +2639,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
-        const user = await this.checkUser();
-        const centralizedPermissionsEnabled = await this.centralizedPermissionsEnabled(user, teamId);
-
         const checkAgainstDB = async (): Promise<{ team: Team; members: TeamMemberInfo[] }> => {
             // We deliberately wrap the entiry check in try-catch, because we're using Promise.all, which rejects if any of the promises reject.
             const team = await this.teamDB.findTeamById(teamId);
@@ -2657,17 +2654,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
 
         const checkWithCentralizedPerms = async (): Promise<CheckResult> => {
-            if (centralizedPermissionsEnabled && fineGrainedOp !== "not_implemented") {
-                log.info("[perms] Checking team operations.", {
-                    org: teamId,
-                    operations: fineGrainedOp,
-                    user: user.id,
-                });
-
-                return await this.guardOrganizationOperationWithCentralizedPerms(teamId, fineGrainedOp);
+            if (fineGrainedOp === "not_implemented") {
+                throw new Error("Operation not implemented.");
             }
 
-            throw new Error("Centralized permissions feature not enabled.");
+            const result = await this.guardOrganizationOperationWithCentralizedPerms(teamId, fineGrainedOp);
+            if (result.err) {
+                throw result.err;
+            }
+
+            return result;
         };
 
         const [fromDB, fromCentralizedPerms] = await Promise.allSettled([
@@ -2714,16 +2710,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<CheckResult> {
         const user = await this.checkUser();
 
+        const experimentMetadata = {
+            userID: user.id,
+            orgID: orgId,
+        };
+
         switch (op) {
             case "read_info":
-                return await this.authorizer.check(ReadOrganizationInfo(user.id, orgId));
+                return await this.authorizer.check(ReadOrganizationInfo(user.id, orgId), experimentMetadata);
             case "write_info":
-                return await this.authorizer.check(WriteOrganizationInfo(user.id, orgId));
+                return await this.authorizer.check(WriteOrganizationInfo(user.id, orgId), experimentMetadata);
 
             case "read_members":
-                return await this.authorizer.check(ReadOrganizationMembers(user.id, orgId));
+                return await this.authorizer.check(ReadOrganizationMembers(user.id, orgId), experimentMetadata);
             case "write_members":
-                return await this.authorizer.check(WriteOrganizationMembers(user.id, orgId));
+                return await this.authorizer.check(WriteOrganizationMembers(user.id, orgId), experimentMetadata);
 
             default:
                 return NotPermitted;
@@ -2892,7 +2893,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
             // TODO: Wrap in a transaction
             await this.teamDB.setTeamMemberRole(userId, teamId, role);
-            await this.authorizer.writeRelationships(writeRequest);
+            await this.authorizer.writeRelationships(writeRequest, {
+                teamID: team.id,
+                userID: requestor.id,
+            });
         } else {
             await this.teamDB.setTeamMemberRole(userId, teamId, role);
         }
