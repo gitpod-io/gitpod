@@ -5,9 +5,14 @@
  */
 
 import { MigrationInterface, QueryRunner } from "typeorm";
+import { tableExists } from "./helper/helper";
 
 export class FreeCredits1686907204398 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (await tableExists(queryRunner, "d_b_free_credits")) {
+            return;
+        }
+
         await queryRunner.query(
             `
             CREATE TABLE d_b_free_credits (
