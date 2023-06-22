@@ -46,6 +46,8 @@ jobs:
         runs-on: [self-hosted]
         if: ${{ needs.stale.outputs.count > 0 }}
         strategy:
+            fail-fast: false
+            max-parallel: 1
             matrix:
                 name: ${{ fromJSON(needs.stale.outputs.names) }}
         steps:
