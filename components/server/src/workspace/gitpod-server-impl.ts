@@ -2796,7 +2796,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             if (AuthorizerError.is(err) && team! && team.id) {
                 await this.authorizer.writeRelationships(removeUserFromOrg(team.id, user.id));
             }
-            // TODO: Rollback spicedb changes
 
             throw err;
         }
