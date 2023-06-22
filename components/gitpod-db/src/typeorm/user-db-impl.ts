@@ -43,11 +43,11 @@ import { DBIdentity } from "./entity/db-identity";
 import { DBTokenEntry } from "./entity/db-token-entry";
 import { DBUser } from "./entity/db-user";
 import { DBUserEnvVar } from "./entity/db-user-env-vars";
-import { DBWorkspace } from "./entity/db-workspace";
 import { DBUserSshPublicKey } from "./entity/db-user-ssh-public-key";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { DataCache } from "../data-cache";
 import { TransactionalDBImpl } from "./transactional-db-impl";
+import { TypeORM } from "./typeorm";
 
 // OAuth token expiry
 const tokenExpiryInFuture = new DateInterval("7d");
@@ -63,11 +63,12 @@ function getUserCacheKey(id: string): string {
 @injectable()
 export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements UserDB {
     constructor(
-        @inject(EncryptionService) protected readonly encryptionService: EncryptionService,
-        @inject(DataCache) protected readonly cache: DataCache,
-        @optional() transactionalEM: EntityManager,
+        @inject(TypeORM) typeorm: TypeORM,
+        @inject(EncryptionService) private readonly encryptionService: EncryptionService,
+        @inject(DataCache) private readonly cache: DataCache,
+        @optional() transactionalEM?: EntityManager,
     ) {
-        super(transactionalEM);
+        super(typeorm, transactionalEM);
     }
 
     @postConstruct()
@@ -77,33 +78,26 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
     }
 
     protected createTransactionalDB(transactionalEM: EntityManager): UserDB {
-        return new TypeORMUserDBImpl(this.encryptionService, this.cache, transactionalEM);
+        return new TypeORMUserDBImpl(this.typeorm, this.encryptionService, this.cache, transactionalEM);
     }
 
     async getUserRepo(): Promise<Repository<DBUser>> {
         return (await this.getEntityManager()).getRepository<DBUser>(DBUser);
     }
-    protected async getWorkspaceRepo(): Promise<Repository<DBWorkspace>> {
-        return (await this.getEntityManager()).getRepository<DBWorkspace>(DBWorkspace);
-    }
 
-    protected async getTokenRepo(): Promise<Repository<DBTokenEntry>> {
+    private async getTokenRepo(): Promise<Repository<DBTokenEntry>> {
         return (await this.getEntityManager()).getRepository<DBTokenEntry>(DBTokenEntry);
     }
 
-    protected async getIdentitiesRepo(): Promise<Repository<DBIdentity>> {
-        return (await this.getEntityManager()).getRepository<DBIdentity>(DBIdentity);
-    }
-
-    protected async getGitpodTokenRepo(): Promise<Repository<DBGitpodToken>> {
+    private async getGitpodTokenRepo(): Promise<Repository<DBGitpodToken>> {
         return (await this.getEntityManager()).getRepository<DBGitpodToken>(DBGitpodToken);
     }
 
-    protected async getUserEnvVarRepo(): Promise<Repository<DBUserEnvVar>> {
+    private async getUserEnvVarRepo(): Promise<Repository<DBUserEnvVar>> {
         return (await this.getEntityManager()).getRepository<DBUserEnvVar>(DBUserEnvVar);
     }
 
-    protected async getSSHPublicKeyRepo(): Promise<Repository<DBUserSshPublicKey>> {
+    private async getSSHPublicKeyRepo(): Promise<Repository<DBUserSshPublicKey>> {
         return (await this.getEntityManager()).getRepository<DBUserSshPublicKey>(DBUserSshPublicKey);
     }
 

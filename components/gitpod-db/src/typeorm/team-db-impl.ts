@@ -5,55 +5,56 @@
  */
 
 import {
+    OrganizationSettings,
     Team,
     TeamMemberInfo,
     TeamMemberRole,
     TeamMembershipInvite,
-    OrganizationSettings,
     User,
 } from "@gitpod/gitpod-protocol";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { randomBytes } from "crypto";
 import { inject, injectable, optional } from "inversify";
+import slugify from "slugify";
 import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
-import { randomBytes } from "crypto";
+import { ResponseError } from "vscode-jsonrpc";
 import { TeamDB } from "../team-db";
 import { DBTeam } from "./entity/db-team";
 import { DBTeamMembership } from "./entity/db-team-membership";
-import { DBUser } from "./entity/db-user";
 import { DBTeamMembershipInvite } from "./entity/db-team-membership-invite";
-import { ResponseError } from "vscode-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import slugify from "slugify";
 import { DBOrgSettings } from "./entity/db-team-settings";
-import { TransactionalDBImpl, UndefinedEntityManager } from "./transactional-db-impl";
+import { DBUser } from "./entity/db-user";
+import { TransactionalDBImpl } from "./transactional-db-impl";
+import { TypeORM } from "./typeorm";
 
 @injectable()
 export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
-    constructor(@inject(UndefinedEntityManager) @optional() transactionalEM: EntityManager | undefined) {
-        super(transactionalEM);
+    constructor(@inject(TypeORM) typeorm: TypeORM, @optional() transactionalEM?: EntityManager) {
+        super(typeorm, transactionalEM);
     }
 
     protected createTransactionalDB(transactionalEM: EntityManager): TeamDB {
-        return new TeamDBImpl(transactionalEM);
+        return new TeamDBImpl(this.typeorm, transactionalEM);
     }
 
-    protected async getTeamRepo(): Promise<Repository<DBTeam>> {
+    private async getTeamRepo(): Promise<Repository<DBTeam>> {
         return (await this.getEntityManager()).getRepository<DBTeam>(DBTeam);
     }
 
-    protected async getMembershipRepo(): Promise<Repository<DBTeamMembership>> {
+    private async getMembershipRepo(): Promise<Repository<DBTeamMembership>> {
         return (await this.getEntityManager()).getRepository<DBTeamMembership>(DBTeamMembership);
     }
 
-    protected async getMembershipInviteRepo(): Promise<Repository<DBTeamMembershipInvite>> {
+    private async getMembershipInviteRepo(): Promise<Repository<DBTeamMembershipInvite>> {
         return (await this.getEntityManager()).getRepository<DBTeamMembershipInvite>(DBTeamMembershipInvite);
     }
 
-    protected async getOrgSettingsRepo(): Promise<Repository<DBOrgSettings>> {
+    private async getOrgSettingsRepo(): Promise<Repository<DBOrgSettings>> {
         return (await this.getEntityManager()).getRepository<DBOrgSettings>(DBOrgSettings);
     }
 
-    protected async getUserRepo(): Promise<Repository<DBUser>> {
+    private async getUserRepo(): Promise<Repository<DBUser>> {
         return (await this.getEntityManager()).getRepository<DBUser>(DBUser);
     }
 
