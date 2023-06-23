@@ -2734,7 +2734,29 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeams(ctx: TraceContext): Promise<Team[]> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = await this.checkUser("getTeams");
-        return this.teamDB.findTeamsByUser(user.id);
+        const teams = await this.teamDB.findTeamsByUser(user.id);
+
+        // We need to check each team individually against our permission system.
+        // checks are promises, which resolve to { team, check } object
+        const checks = teams.map((team) =>
+            this.authorizer.check(ReadOrganizationInfo(user.id, team.id)).then((check) => ({ team, check })),
+        );
+        const checkResults = await Promise.allSettled(checks);
+
+        const accessibleTeams = [];
+        for (let result of checkResults) {
+            if (result.status !== "fulfilled") {
+                continue;
+            }
+
+            const { team, check } = result.value;
+
+            if (check.permitted) {
+                accessibleTeams.push(team);
+            }
+        }
+
+        return accessibleTeams;
     }
 
     public async getTeam(ctx: TraceContext, teamId: string): Promise<Team> {
