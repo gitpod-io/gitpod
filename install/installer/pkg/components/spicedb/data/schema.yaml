@@ -23,6 +23,10 @@ schema: |-
     // Any user in the organization can try to leave their organization
     permission leave = owner + member
 
+    // Owners can delete the organization,
+    // and through this process also disconnect all users from the organization
+    permission delete = owner
+
     // Only owners can create new projects
     permission create_project = owner
 
@@ -85,6 +89,8 @@ assertions:
     # user 0 can edit project_0, because they are the Org Owner
     - project:project_1#write_info@user:user_0
     - organization:org_1#write_settings@user:user_0
+    # Org Owner can delete the organization
+    - organization:org_1#delete@user:user_0
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -122,3 +128,5 @@ validation:
     - "[user:user_1] is <project:project_2#viewer>"
   project:project_2#write_info:
     - "[user:user_0] is <organization:org_2#owner>"
+  organization:org_1#delete:
+  - "[user:user_0] is <organization:org_1#owner>"
