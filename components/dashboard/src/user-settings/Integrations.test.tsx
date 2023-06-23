@@ -20,5 +20,5 @@ test("should update redirectURL preview", async () => {
 
     const redirectURL = screen.getByLabelText(/Redirect/i);
     // screen.debug(redirectURL);
-    expect((redirectURL as HTMLInputElement).value).toEqual("http://localhost/auth/gitlab.gitpod.io_80/callback");
+    expect((redirectURL as HTMLInputElement).value).toEqual("http://localhost/auth/callback");
 });

@@ -5,10 +5,15 @@
  */
 
 import { User as GitpodUser } from "@gitpod/gitpod-protocol";
+import { AuthFlow } from "./auth/auth-provider";
 
 // use declaration merging (https://www.typescriptlang.org/docs/handbook/declaration-merging.html) to augment the standard passport/express definitions
 declare global {
     namespace Express {
         export interface User extends GitpodUser {}
+
+        interface Request {
+            authFlow?: AuthFlow;
+        }
     }
 }

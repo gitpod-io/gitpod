@@ -175,7 +175,7 @@ export class AuthProviderService {
         }
         const oauth: AuthProviderEntry["oauth"] = {
             ...urls,
-            callBackUrl: this.callbackUrl(host),
+            callBackUrl: this.callbackUrl(),
             clientId: clientId!,
             clientSecret: clientSecret!,
         };
@@ -239,9 +239,8 @@ export class AuthProviderService {
         }
     }
 
-    protected callbackUrl = (host: string) => {
-        const safeHost = host.replace(":", "_");
-        const pathname = `/auth/${safeHost}/callback`;
+    protected callbackUrl = () => {
+        const pathname = `/auth/callback`;
         return this.config.hostUrl.with({ pathname }).toString();
     };
 
