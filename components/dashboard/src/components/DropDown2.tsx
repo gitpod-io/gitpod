@@ -154,7 +154,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                 </div>
             </div>
             {showDropDown && (
-                <div className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 max-h-72 overflow-auto rounded-b-lg mt-3 z-50 p-2 filter drop-shadow-xl">
+                <div className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 rounded-b-lg mt-3 z-50 p-2 filter drop-shadow-xl">
                     {!props.disableSearch && (
                         <div className="h-12">
                             <input
@@ -167,7 +167,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                             />
                         </div>
                     )}
-                    <ul>
+                    <ul className="max-h-60 overflow-auto">
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map((element) => {
                                 let selectionClasses = `dark:bg-gray-800 cursor-pointer`;
