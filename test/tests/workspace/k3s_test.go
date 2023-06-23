@@ -25,11 +25,11 @@ const (
 func TestK3s(t *testing.T) {
 	f := features.New("k3s").
 		WithLabel("component", "workspace").
-		Assess("it should start a k3s", func(_ context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it should start a k3s", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Skip("k3s is currently not supported in workspaces")
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), TIME_OUT)
+			ctx, cancel := context.WithTimeout(testCtx, TIME_OUT)
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -143,7 +143,7 @@ func TestK3s(t *testing.T) {
 				t.Fatalf("failed to get nodes: %s\n%s", respGetPods.Stdout, respGetPods.Stderr)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 

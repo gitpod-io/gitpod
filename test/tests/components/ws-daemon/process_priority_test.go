@@ -15,10 +15,10 @@ import (
 func TestProcessPriority(t *testing.T) {
 	f := features.New("process priority").
 		WithLabel("component", "ws-daemon").
-		Assess("check process priority of some processes of importance", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("check process priority of some processes of importance", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 			t.Skip("unimplemented")
-			return ctx
+			return testCtx
 		}).Feature()
 
 	testEnv.Test(t, f)

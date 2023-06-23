@@ -22,10 +22,10 @@ func TestProcessLimit(t *testing.T) {
 	f := features.New("process limit").
 		WithLabel("component", "workspace").
 		WithLabel("type", "process limit").
-		Assess("it has a proc limit", func(ctx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+		Assess("it has a proc limit", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
 
-			ctx, cancel := context.WithTimeout(ctx, time.Duration(5*time.Minute))
+			ctx, cancel := context.WithTimeout(testCtx, time.Duration(5*time.Minute))
 			defer cancel()
 
 			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
@@ -107,7 +107,7 @@ func TestProcessLimit(t *testing.T) {
 				t.Errorf("expected fork error (Resource temporarily unavailable), but got none (%d): %s", res.ExitCode, res.Stdout)
 			}
 
-			return ctx
+			return testCtx
 		}).
 		Feature()
 
