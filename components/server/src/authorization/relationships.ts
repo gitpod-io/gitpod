@@ -58,7 +58,7 @@ export function removeUserFromOrg(orgID: string, userID: string): v1.WriteRelati
             }),
             v1.RelationshipUpdate.create({
                 operation: v1.RelationshipUpdate_Operation.DELETE,
-                relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
+                relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
             }),
         ],
     });
