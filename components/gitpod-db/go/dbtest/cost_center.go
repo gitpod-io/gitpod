@@ -18,7 +18,7 @@ func NewCostCenter(t *testing.T, record db.CostCenter) db.CostCenter {
 	t.Helper()
 
 	result := db.CostCenter{
-		ID:                db.NewUserAttributionID(uuid.New().String()),
+		ID:                db.NewTeamAttributionID(uuid.New().String()),
 		CreationTime:      db.NewVarCharTime(time.Now()),
 		SpendingLimit:     100,
 		BillingStrategy:   db.CostCenter_Stripe,

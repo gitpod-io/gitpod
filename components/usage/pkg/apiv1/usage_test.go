@@ -184,7 +184,7 @@ func TestReconcile(t *testing.T) {
 		// we do this to test that the fields in the usage records get updated to reflect the true values from the source of truth - instances.
 		draft := dbtest.NewUsage(t, db.Usage{
 			ID:                  uuid.New(),
-			AttributionID:       db.NewUserAttributionID(uuid.New().String()),
+			AttributionID:       db.NewTeamAttributionID(uuid.New().String()),
 			Description:         "Some description",
 			CreditCents:         1,
 			EffectiveTime:       db.VarcharTime{},
@@ -253,12 +253,12 @@ func TestGetAndSetCostCenter(t *testing.T) {
 	conn := dbtest.ConnectForTests(t)
 	costCenterUpdates := []*v1.CostCenter{
 		{
-			AttributionId:   string(db.NewUserAttributionID(uuid.New().String())),
+			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
 			SpendingLimit:   8000,
 			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_STRIPE,
 		},
 		{
-			AttributionId:   string(db.NewUserAttributionID(uuid.New().String())),
+			AttributionId:   string(db.NewTeamAttributionID(uuid.New().String())),
 			SpendingLimit:   500,
 			BillingStrategy: v1.CostCenter_BILLING_STRATEGY_OTHER,
 		},

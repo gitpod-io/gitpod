@@ -156,7 +156,7 @@ func (s *StubUserService) BlockUser(ctx context.Context, req *connect.Request[ex
 }
 
 func TestBalancesForStripeCostCenters(t *testing.T) {
-	attributionIDForStripe := db.NewUserAttributionID(uuid.New().String())
+	attributionIDForStripe := db.NewTeamAttributionID(uuid.New().String())
 	attributionIDForOther := db.NewTeamAttributionID(uuid.New().String())
 	dbconn := dbtest.ConnectForTests(t)
 
@@ -249,7 +249,7 @@ var IndiInvoiceTestData = `{
 	  },
 	  "livemode": false,
 	  "metadata": {
-		"attributionId": "user:12345678-1234-1234-1234-123456789abc",
+		"attributionId": "team:12345678-1234-1234-1234-123456789abc",
 		"preferredCurrency": "USD"
 	  },
 	  "name": "user-name",

@@ -99,7 +99,7 @@ func TestCostCenterManager_GetOrCreateCostCenter_ResetsExpired(t *testing.T) {
 		BillingCycleStart: db.NewVarCharTime(now),
 	}
 	unexpiredCC := db.CostCenter{
-		ID:                db.NewUserAttributionID(uuid.New().String()),
+		ID:                db.NewTeamAttributionID(uuid.New().String()),
 		CreationTime:      db.NewVarCharTime(now),
 		SpendingLimit:     500,
 		BillingStrategy:   db.CostCenter_Other,
@@ -108,7 +108,7 @@ func TestCostCenterManager_GetOrCreateCostCenter_ResetsExpired(t *testing.T) {
 	}
 	// Stripe billing strategy should not be reset
 	stripeCC := db.CostCenter{
-		ID:                db.NewUserAttributionID(uuid.New().String()),
+		ID:                db.NewTeamAttributionID(uuid.New().String()),
 		CreationTime:      db.NewVarCharTime(now),
 		SpendingLimit:     0,
 		BillingStrategy:   db.CostCenter_Stripe,
@@ -160,59 +160,16 @@ func TestCostCenterManager_UpdateCostCenter(t *testing.T) {
 
 	t.Run("prevents updates to negative spending limit", func(t *testing.T) {
 		mnr := db.NewCostCenterManager(conn, limits)
-		userAttributionID := db.NewUserAttributionID(uuid.New().String())
 		teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
-		cleanUp(t, conn, userAttributionID, teamAttributionID)
+		cleanUp(t, conn, teamAttributionID)
 
 		_, err := mnr.UpdateCostCenter(context.Background(), db.CostCenter{
-			ID:              userAttributionID,
-			BillingStrategy: db.CostCenter_Other,
-			SpendingLimit:   -1,
-		})
-		require.Error(t, err)
-		require.Equal(t, codes.InvalidArgument, status.Code(err))
-
-		_, err = mnr.UpdateCostCenter(context.Background(), db.CostCenter{
 			ID:              teamAttributionID,
 			BillingStrategy: db.CostCenter_Stripe,
 			SpendingLimit:   -1,
 		})
 		require.Error(t, err)
 		require.Equal(t, codes.InvalidArgument, status.Code(err))
-	})
-
-	t.Run("individual user on Other billing strategy can change spending limit of 500", func(t *testing.T) {
-		mnr := db.NewCostCenterManager(conn, limits)
-		userAttributionID := db.NewUserAttributionID(uuid.New().String())
-		cleanUp(t, conn, userAttributionID)
-
-		newCC, err := mnr.UpdateCostCenter(context.Background(), db.CostCenter{
-			ID:              userAttributionID,
-			BillingStrategy: db.CostCenter_Other,
-			SpendingLimit:   501,
-		})
-		require.NoError(t, err)
-		require.Equal(t, int32(501), newCC.SpendingLimit)
-
-	})
-
-	t.Run("team on Other billing strategy get a spending limit of 0", func(t *testing.T) {
-		mnr := db.NewCostCenterManager(conn, limits)
-		teamAttributionID := db.NewTeamAttributionID(uuid.New().String())
-		cleanUp(t, conn, teamAttributionID)
-
-		// Allows udpating cost center as long as spending limit remains as configured
-		res, err := mnr.UpdateCostCenter(context.Background(), db.CostCenter{
-			ID:              teamAttributionID,
-			BillingStrategy: db.CostCenter_Other,
-			SpendingLimit:   limits.ForTeams,
-		})
-		require.NoError(t, err)
-		requireCostCenterEqual(t, db.CostCenter{
-			ID:              teamAttributionID,
-			SpendingLimit:   limits.ForTeams,
-			BillingStrategy: db.CostCenter_Other,
-		}, res)
 	})
 
 	t.Run("team on Stripe billing strategy can set arbitrary positive spending limit", func(t *testing.T) {
@@ -388,7 +345,7 @@ func TestCostCenterManager_ResetUsage(t *testing.T) {
 			ForUsers: 500,
 		})
 		cc := dbtest.CreateCostCenters(t, conn, db.CostCenter{
-			ID:              db.NewUserAttributionID(uuid.New().String()),
+			ID:              db.NewTeamAttributionID(uuid.New().String()),
 			CreationTime:    db.NewVarCharTime(time.Now()),
 			SpendingLimit:   500,
 			BillingStrategy: db.CostCenter_Stripe,

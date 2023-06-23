@@ -67,7 +67,7 @@ func NewWorkspaceInstance(t *testing.T, instance db.WorkspaceInstance) db.Worksp
 		status = instance.Status
 	}
 
-	attributionID := db.NewUserAttributionID(uuid.New().String())
+	attributionID := db.NewTeamAttributionID(uuid.New().String())
 	if instance.UsageAttributionID != "" {
 		attributionID = instance.UsageAttributionID
 	}

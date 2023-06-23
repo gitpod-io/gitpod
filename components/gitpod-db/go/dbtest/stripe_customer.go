@@ -20,7 +20,7 @@ func NewStripeCustomer(t *testing.T, customer db.StripeCustomer) db.StripeCustom
 
 	result := db.StripeCustomer{
 		StripeCustomerID: fmt.Sprintf("cus_%s", uuid.New().String()),
-		AttributionID:    db.NewUserAttributionID(uuid.New().String()),
+		AttributionID:    db.NewTeamAttributionID(uuid.New().String()),
 		CreationTime:     db.NewVarCharTime(time.Now()),
 	}
 
