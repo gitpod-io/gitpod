@@ -24,6 +24,7 @@ const featureFlags = {
     enableDedicatedOnboardingFlow: false,
     usageDownload: false,
     phoneVerificationByCall: false,
+    doRetryUserLoader: true,
 };
 
 export const useFeatureFlag = (featureFlag: keyof typeof featureFlags) => {
