@@ -431,7 +431,7 @@ func ConfigcatEnv(ctx *RenderContext) []corev1.EnvVar {
 		},
 		{
 			Name:  "CONFIGCAT_BASE_URL",
-			Value: "https://" + ctx.Config.Domain + "/configcat",
+			Value: ClusterURL("http", ProxyComponent, ctx.Namespace, ProxyConfigcatPort) + "/configcat",
 		},
 	}
 }
