@@ -15,7 +15,6 @@ export type ProjectRelation = "org";
 export type Relation = OrganizationRelation | ProjectRelation;
 
 export type OrganizationPermission =
-    | "membership"
     | "read_info"
     | "write_info"
     | "read_members"

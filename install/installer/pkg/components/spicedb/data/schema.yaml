@@ -6,20 +6,19 @@ schema: |-
   definition user {}
 
   definition organization {
-    // Organization specific roles
-    relation owner: user
+    // Every user in an organization is automatically a member
     relation member: user
-
-    // Membership is the union of all organization specific roles
-    permission membership = owner + member
+    // Some users in an organization may additionally have the `owner` role
+    // granting them more privilidges with respect to the organization.
+    relation owner: user
 
     // General operations on organization
-    permission read_info = owner + member
+    permission read_info = member + owner
     permission write_info = owner
 
     // Operations on Organization's Members
-    permission read_members = owner + member
-    permission write_members = owner + member
+    permission read_members = member + owner
+    permission write_members = member + owner
 
     // Only owners can create new projects
     permission create_project = owner
@@ -37,8 +36,8 @@ schema: |-
     relation editor: user
     // A subject is a viewer, if:
     //  * the user is directly assigned as a viewer
-    //  * the project has granted access to everyone who has membership in an organization
-    relation viewer: user | organization#membership
+    //  * the project has granted access to everyone in an organization
+    relation viewer: user | organization#member
 
     // Project can be modified by:
     //  * Organization owners
@@ -53,6 +52,7 @@ schema: |-
 # relationships to be used for assertions & validation
 relationships: |-
   // We have an organization org_1, which has some members & owners
+  organization:org_1#member@user:user_0
   organization:org_1#owner@user:user_0
   organization:org_1#member@user:user_1
   organization:org_1#member@user:user_2
@@ -60,10 +60,11 @@ relationships: |-
   // org_1 has a project
   project:project_1#org@organization:org_1
   // project_1 can be accessed by anyone in the organization - it's visibility is public
-  project:project_1#viewer@organization:org_1#membership
+  project:project_1#viewer@organization:org_1#member
 
 
   // We have another organization org_2, which has some users, some of which are also members of org_1
+  organization:org_2#member@user:user_0
   organization:org_2#owner@user:user_0
   organization:org_2#member@user:user_1
   organization:org_2#member@user:user_10
@@ -95,10 +96,7 @@ assertions:
 # validations are not used to assert that a permission exists
 validation:
   organization:org_1#member:
-    - "[user:user_1] is <organization:org_1#member>"
-    - "[user:user_2] is <organization:org_1#member>"
-  organization:org_1#membership:
-    - "[user:user_0] is <organization:org_1#owner>"
+    - "[user:user_0] is <organization:org_1#member>"
     - "[user:user_1] is <organization:org_1#member>"
     - "[user:user_2] is <organization:org_1#member>"
   organization:org_1#owner:
@@ -108,8 +106,8 @@ validation:
   organization:org_1#write_settings:
     - "[user:user_0] is <organization:org_1#owner>"
   project:project_1#read_info:
-    - "[organization:org_1#membership] is <project:project_1#viewer>"
-    - "[user:user_0] is <organization:org_1#owner>"
+    - "[organization:org_1#member] is <project:project_1#viewer>"
+    - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
     - "[user:user_1] is <organization:org_1#member>"
     - "[user:user_2] is <organization:org_1#member>"
   project:project_2#read_info:
