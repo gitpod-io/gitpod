@@ -27,13 +27,11 @@ export function InputWithCopy(props: { value: string; tip?: string; className?: 
                 type="text"
                 value={props.value}
             />
-            <div className="cursor-pointer" onClick={() => handleCopyToClipboard(props.value)}>
-                <div className="absolute top-1/3 right-3">
-                    <Tooltip content={copied ? "Copied" : tip}>
-                        <img src={copy} alt="copy icon" title={tip} />
-                    </Tooltip>
-                </div>
-            </div>
+            <button className="reset absolute top-1/3 right-3" onClick={() => handleCopyToClipboard(props.value)}>
+                <Tooltip content={copied ? "Copied" : tip}>
+                    <img src={copy} alt="copy icon" title={tip} />
+                </Tooltip>
+            </button>
         </div>
     );
 }
