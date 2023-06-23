@@ -146,6 +146,13 @@
 	}
 }
 
+# Internal configcat endpoint
+:9547 {
+	handle /configcat* {
+		gitpod.configcat
+	}
+}
+
 # public-api
 api.{$GITPOD_DOMAIN} {
 	log {

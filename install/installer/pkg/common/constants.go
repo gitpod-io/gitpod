@@ -28,6 +28,7 @@ const (
 	MinioServiceAPIPort         = 9000
 	MonitoringChart             = "monitoring"
 	ProxyComponent              = "proxy"
+	ProxyConfigcatPort          = 9547
 	ProxyContainerHTTPPort      = 80
 	ProxyContainerHTTPName      = "http"
 	ProxyContainerHTTPSPort     = 443
@@ -61,6 +62,8 @@ const (
 	AnnotationConfigChecksum    = "gitpod.io/checksum_config"
 	DatabaseConfigMountPath     = "/secrets/database-config"
 	AuthPKISecretName           = "auth-pki"
+	IDEServiceComponent         = "ide-service"
+	OpenVSXProxyComponent       = "openvsx-proxy"
 )
 
 var (
