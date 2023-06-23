@@ -20,6 +20,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -41,6 +42,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util"
 	"sigs.k8s.io/e2e-framework/klient"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	ide "github.com/gitpod-io/gitpod/ide-service-api/config"
 	"github.com/gitpod-io/gitpod/test/pkg/integration/common"
 )
@@ -72,8 +74,13 @@ func NewPodExec(config rest.Config, clientset *kubernetes.Clientset) *PodExec {
 func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*bytes.Buffer, *bytes.Buffer, *bytes.Buffer, error) {
 	var in, out, errOut *bytes.Buffer
 	var ioStreams genericclioptions.IOStreams
+	log.Infof("%v start copy file", time.Now())
+	defer func() {
+		log.Infof("%v end copy file", time.Now())
+	}()
 	for count := 0; ; count++ {
-		ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
+		// ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
+		ioStreams = genericclioptions.NewTestIOStreamsDiscard()
 		copyOptions := kubectlcp.NewCopyOptions(ioStreams)
 		copyOptions.ClientConfig = p.RestConfig
 		copyOptions.Container = containername
@@ -268,7 +275,6 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 			if err != nil {
 				return nil, closer, err
 			}
-			defer os.Remove(agentLoc)
 		}
 
 		podName, containerName, err = selectPod(component, options.SPO, namespace, client)
@@ -456,7 +462,43 @@ func getFreePort() (int, error) {
 	return result.Port, nil
 }
 
+type agentBuildResult struct {
+	agentLoc string
+	err      error
+}
+
+var (
+	buildOnce   = make(map[string]*sync.Once)
+	buildMu     sync.Mutex
+	builtAgents = make(map[string]agentBuildResult)
+)
+
 func buildAgent(name string) (loc string, err error) {
+	buildMu.Lock()
+	once, ok := buildOnce[name]
+	if !ok {
+		once = &sync.Once{}
+		buildOnce[name] = once
+	}
+	buildMu.Unlock()
+
+	once.Do(func() {
+		loc, err = doBuildAgent(name)
+		builtAgents[name] = agentBuildResult{
+			agentLoc: loc,
+			err:      err,
+		}
+	})
+
+	res, ok := builtAgents[name]
+	if !ok {
+		return "", xerrors.Errorf("expected agent build result but got none: %w", err)
+	}
+	return res.agentLoc, res.err
+}
+
+func doBuildAgent(name string) (loc string, err error) {
+	log.Infof("building agent %s", name)
 	defer func() {
 		if err != nil {
 			err = xerrors.Errorf("cannot build agent: %w", err)
@@ -469,7 +511,7 @@ func buildAgent(name string) (loc string, err error) {
 		return "", err
 	}
 
-	f, err := os.CreateTemp("", "gitpod-integration-test-*")
+	f, err := os.CreateTemp("", fmt.Sprintf("gitpod-integration-test-%s-*", name))
 	if err != nil {
 		return "", err
 	}
