@@ -19,6 +19,7 @@ export type OrganizationPermission =
     | "write_info"
     | "read_members"
     | "write_members"
+    | "leave"
     | "read_settings"
     | "write_settings"
     | "create_project";

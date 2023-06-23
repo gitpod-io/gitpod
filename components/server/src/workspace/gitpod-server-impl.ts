@@ -167,7 +167,7 @@ import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { Authorizer, AuthorizerError, CheckResult, NotPermitted } from "../authorization/perms";
+import { Authorizer, CheckResult, NotPermitted } from "../authorization/perms";
 import {
     ReadOrganizationMembers,
     ReadOrganizationInfo,
@@ -2784,9 +2784,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             team = await this.teamDB.transaction(async (db) => {
                 team = await db.createTeam(user.id, name);
                 await this.authorizer.writeRelationships(addOrganizationOwnerRole(team.id, user.id));
-                // invite generation has to happen after writing the perms relationship, as it checks if the caller
-                // has access
-
                 return team;
             });
         } catch (err) {
@@ -2899,53 +2896,66 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 });
             });
         } catch (err) {
-            if (AuthorizerError.is(err)) {
-                await this.authorizer.writeRelationships(removeUserFromOrg(team.id, userId));
-            }
+            await this.authorizer.writeRelationships(removeUserFromOrg(team.id, userId));
 
             throw err;
         }
     }
 
-    public async removeTeamMember(ctx: TraceContext, teamId: string, userId: string): Promise<void> {
-        traceAPIParams(ctx, { teamId, userId });
+    public async removeTeamMember(ctx: TraceContext, orgID: string, userId: string): Promise<void> {
+        traceAPIParams(ctx, { teamId: orgID, userId });
 
         if (!uuidValidate(userId)) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
         }
 
-        const currentUser = await this.checkAndBlockUser("removeTeamMember");
+        const requestor = await this.checkAndBlockUser("removeTeamMember");
 
         // The user is leaving a team, if they are removing themselves from the team.
-        const currentUserLeavingTeam = currentUser.id === userId;
+        const currentUserLeavingTeam = requestor.id === userId;
         if (!currentUserLeavingTeam) {
-            await this.guardTeamOperation(teamId, "update", "not_implemented");
+            await this.guardTeamOperation(orgID, "update", "write_members");
         } else {
-            await this.guardTeamOperation(teamId, "get", "write_members");
+            await this.guardTeamOperation(orgID, "get", "leave");
         }
 
         // Check for existing membership.
-        const membership = await this.teamDB.findTeamMembership(userId, teamId);
+        const membership = await this.teamDB.findTeamMembership(userId, orgID);
         if (!membership) {
-            throw new Error(`Could not find membership for user '${userId}' in organization '${teamId}'`);
+            throw new ResponseError(
+                ErrorCodes.NOT_FOUND,
+                `Could not find membership for user '${userId}' in organization '${orgID}'`,
+            );
         }
 
         // Check if user's account belongs to the Org.
-        const userToBeRemoved = currentUserLeavingTeam ? currentUser : await this.userDB.findUserById(userId);
+        const userToBeRemoved = currentUserLeavingTeam ? requestor : await this.userDB.findUserById(userId);
         if (!userToBeRemoved) {
-            throw new Error(`Could not find user '${userId}'`);
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Could not find user '${userId}'`);
         }
         // Only invited members can be removed from the Org, but organizational accounts cannot.
-        if (userToBeRemoved.organizationId && teamId === userToBeRemoved.organizationId) {
-            throw new Error(`User's account '${userId}' belongs to the organization '${teamId}'`);
+        if (userToBeRemoved.organizationId && orgID === userToBeRemoved.organizationId) {
+            throw new ResponseError(
+                ErrorCodes.PRECONDITION_FAILED,
+                `User's account '${userId}' belongs to the organization '${orgID}'`,
+            );
         }
 
-        await this.teamDB.removeMemberFromTeam(userToBeRemoved.id, teamId);
+        try {
+            await this.teamDB.transaction(async (db) => {
+                await db.removeMemberFromTeam(userToBeRemoved.id, orgID);
+                await this.authorizer.writeRelationships(removeUserFromOrg(orgID, userId));
+            });
+        } catch (err) {
+            // Rollback to the original role the user had
+            await this.authorizer.writeRelationships(organizationRole(orgID, userId, membership.role));
+        }
+
         this.analytics.track({
-            userId: currentUser.id,
+            userId: requestor.id,
             event: "team_user_removed",
             properties: {
-                team_id: teamId,
+                team_id: orgID,
                 removed_user_id: userId,
             },
         });
