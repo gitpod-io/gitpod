@@ -94,7 +94,7 @@ export class Authorizer {
 
         try {
             const response = await this.client.writeRelationships(req);
-            log.info("[spicedb] Succesfully wrote relationships.", { response });
+            log.info("[spicedb] Succesfully wrote relationships.", { response, request: req });
 
             return response;
         } catch (err) {
