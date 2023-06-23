@@ -389,7 +389,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.enabled "true"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.schedule "1m"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.billInstancesAfter "2022-08-11T08:05:32.499Z"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.forUsers "500"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.forTeams "0"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.forTeams "500"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.usage.defaultSpendingLimit.minForUsersOnStripe "1000"
 
 # Configure Price IDs
