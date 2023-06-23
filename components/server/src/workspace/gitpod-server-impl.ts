@@ -173,6 +173,7 @@ import {
     ReadOrganizationInfo,
     WriteOrganizationMembers,
     WriteOrganizationInfo,
+    DeleteOrganization,
 } from "../authorization/checks";
 import { increaseDashboardErrorBoundaryCounter, reportCentralizedPermsValidation } from "../prometheus-metrics";
 import { RegionService } from "./region-service";
@@ -203,7 +204,14 @@ import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { OrganizationPermission } from "../authorization/definitions";
-import { addOrganizationOwnerRole, organizationRole, removeUserFromOrg } from "../authorization/relationships";
+import {
+    addOrganizationOwnerRole,
+    deleteOrganization,
+    organizationRole,
+    populateOrganization,
+    removeUserFromOrg,
+    writeRequest,
+} from "../authorization/relationships";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2726,6 +2734,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             case "write_members":
                 return await this.authorizer.check(WriteOrganizationMembers(user.id, orgId), experimentMetadata);
 
+            case "delete":
+                return await this.authorizer.check(DeleteOrganization(user.id, orgId), experimentMetadata);
+
             default:
                 return NotPermitted;
         }
@@ -2783,12 +2794,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             team = await this.teamDB.transaction(async (db) => {
                 team = await db.createTeam(user.id, name);
-                await this.authorizer.writeRelationships(addOrganizationOwnerRole(team.id, user.id));
+                await this.authorizer.writeRelationships(writeRequest(addOrganizationOwnerRole(team.id, user.id)));
                 return team;
             });
         } catch (err) {
             if (team! && team.id) {
-                await this.authorizer.writeRelationships(removeUserFromOrg(team.id, user.id));
+                await this.authorizer.writeRelationships(writeRequest(removeUserFromOrg(team.id, user.id)));
             }
 
             throw err;
@@ -2890,13 +2901,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             await this.teamDB.transaction(async (db) => {
                 await db.setTeamMemberRole(userId, teamId, role);
-                await this.authorizer.writeRelationships(organizationRole(team.id, userId, role), {
-                    teamID: team.id,
+                await this.authorizer.writeRelationships(writeRequest(organizationRole(team.id, userId, role)), {
+                    orgID: team.id,
                     userID: requestor.id,
                 });
             });
         } catch (err) {
-            await this.authorizer.writeRelationships(removeUserFromOrg(team.id, userId));
+            await this.authorizer.writeRelationships(writeRequest(removeUserFromOrg(team.id, userId)));
 
             throw err;
         }
@@ -2944,11 +2955,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             await this.teamDB.transaction(async (db) => {
                 await db.removeMemberFromTeam(userToBeRemoved.id, orgID);
-                await this.authorizer.writeRelationships(removeUserFromOrg(orgID, userId));
+                await this.authorizer.writeRelationships(writeRequest(removeUserFromOrg(orgID, userId)));
             });
         } catch (err) {
             // Rollback to the original role the user had
-            await this.authorizer.writeRelationships(organizationRole(orgID, userId, membership.role));
+            await this.authorizer.writeRelationships(writeRequest(organizationRole(orgID, userId, membership.role)));
         }
 
         this.analytics.track({
@@ -3025,7 +3036,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("deleteTeam");
         traceAPIParams(ctx, { teamId, userId: user.id });
 
-        await this.guardTeamOperation(teamId, "delete", "not_implemented");
+        const { team, members } = await this.guardTeamOperation(teamId, "delete", "delete");
 
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach((project) => {
@@ -3041,8 +3052,24 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             });
         });
 
-        // TODO: delete setting
-        await this.teamDB.deleteTeam(teamId);
+        try {
+            await this.teamDB.transaction(async (db) => {
+                // TODO: delete setting
+                await db.deleteTeam(teamId);
+                await this.authorizer.deleteRelationships(deleteOrganization(teamId));
+            });
+        } catch (err) {
+            await this.authorizer.writeRelationships(
+                writeRequest(
+                    populateOrganization(
+                        team.id,
+                        members.map((m) => ({ id: m.userId, role: m.role })),
+                    ),
+                ),
+            );
+
+            throw err;
+        }
 
         return this.analytics.track({
             userId: user.id,

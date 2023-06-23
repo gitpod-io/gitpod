@@ -24,18 +24,17 @@ export type CheckResult = {
 
 export const NotPermitted = { permitted: false };
 
+export type ExperimentFields = {
+    userID?: string;
+    orgID?: string;
+};
+
 @injectable()
 export class Authorizer {
     @inject(SpiceDBClient)
     private client: SpiceDBClient;
 
-    async check(
-        req: v1.CheckPermissionRequest,
-        experimentsFields?: {
-            userID?: string;
-            orgID?: string;
-        },
-    ): Promise<CheckResult> {
+    async check(req: v1.CheckPermissionRequest, experimentsFields?: ExperimentFields): Promise<CheckResult> {
         if (!this.client) {
             return {
                 permitted: false,
@@ -75,10 +74,7 @@ export class Authorizer {
 
     async writeRelationships(
         req: v1.WriteRelationshipsRequest,
-        experimentsFields?: {
-            userID?: string;
-            teamID?: string;
-        },
+        experimentsFields?: ExperimentFields,
     ): Promise<v1.WriteRelationshipsResponse | undefined> {
         if (!this.client) {
             return undefined;
@@ -86,7 +82,7 @@ export class Authorizer {
 
         const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
             user: { id: experimentsFields?.userID || "" },
-            teamId: experimentsFields?.teamID,
+            teamId: experimentsFields?.orgID,
         });
         if (!featureEnabled) {
             return undefined;
@@ -102,6 +98,35 @@ export class Authorizer {
 
             // While in we're running two authorization systems in parallel, we do not hard fail on writes.
             throw new AuthorizerError("Failed to write relationship", err);
+        }
+    }
+
+    async deleteRelationships(
+        req: v1.DeleteRelationshipsRequest,
+        experimentsFields?: ExperimentFields,
+    ): Promise<v1.DeleteRelationshipsResponse | undefined> {
+        if (!this.client) {
+            return undefined;
+        }
+
+        const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            user: { id: experimentsFields?.userID || "" },
+            teamId: experimentsFields?.orgID,
+        });
+        if (!featureEnabled) {
+            return undefined;
+        }
+
+        try {
+            const response = await this.client.deleteRelationships(req);
+            log.info("[spicedb] Succesfully deleted relationships.", { response, request: req });
+
+            return response;
+        } catch (err) {
+            log.error("[spicedb] Failed to delete relationships.", err, { req });
+
+            // While in we're running two authorization systems in parallel, we do not hard fail on writes.
+            throw new AuthorizerError("Failed to delete relationships", err);
         }
     }
 }

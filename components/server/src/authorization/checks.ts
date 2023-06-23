@@ -36,3 +36,4 @@ export const ReadOrganizationSettings = check("user", "read_settings", "organiza
 export const WriteOrganizationSettings = check("user", "write_settings", "organization");
 
 export const LeaveOrganization = check("user", "leave", "organization");
+export const DeleteOrganization = check("user", "delete", "organization");
