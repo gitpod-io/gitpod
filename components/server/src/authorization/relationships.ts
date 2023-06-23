@@ -63,3 +63,25 @@ export function removeUserFromOrg(orgID: string, userID: string): v1.WriteRelati
         ],
     });
 }
+
+export function addProjectToOrg(orgID: string, projectID: string): v1.WriteRelationshipsRequest {
+    return v1.WriteRelationshipsRequest.create({
+        updates: [
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.TOUCH,
+                relationship: relationship(objectRef("project", projectID), "org", subject("organization", orgID)),
+            }),
+        ],
+    });
+}
+
+export function removeProjectFromOrg(orgID: string, projectID: string): v1.WriteRelationshipsRequest {
+    return v1.WriteRelationshipsRequest.create({
+        updates: [
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.DELETE,
+                relationship: relationship(objectRef("project", projectID), "org", subject("organization", orgID)),
+            }),
+        ],
+    });
+}
