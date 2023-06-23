@@ -819,7 +819,7 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 
 	// if configured: setup local port-forward to DB pod
 	if config.ForwardPort != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Minute)
 		err = c.portFwdWithRetry(ctx, common.ForwardPortOfPod, config.ForwardPort.PodName, int(config.Port), int(config.ForwardPort.RemotePort))
 		if err != nil {
 			cancel()
