@@ -14,6 +14,7 @@ import {
     spicedbClientLatency,
 } from "../prometheus-metrics";
 import { SpiceDBClient } from "./spicedb";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export type CheckResult = {
     permitted: boolean;
@@ -23,22 +24,34 @@ export type CheckResult = {
 
 export const NotPermitted = { permitted: false };
 
-export const PermissionChecker = Symbol("PermissionChecker");
-
-export interface PermissionChecker {
-    check(req: v1.CheckPermissionRequest): Promise<CheckResult>;
-}
-
 @injectable()
-export class Authorizer implements PermissionChecker {
+export class Authorizer {
     @inject(SpiceDBClient)
     private client: SpiceDBClient;
 
-    async check(req: v1.CheckPermissionRequest): Promise<CheckResult> {
+    async check(
+        req: v1.CheckPermissionRequest,
+        experimentsFields?: {
+            userID?: string;
+            orgID?: string;
+        },
+    ): Promise<CheckResult> {
         if (!this.client) {
             return {
                 permitted: false,
                 err: new Error("Authorization client not available."),
+                response: v1.CheckPermissionResponse.create({}),
+            };
+        }
+
+        const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            user: { id: experimentsFields?.userID || "" },
+            teamId: experimentsFields?.orgID,
+        });
+        if (!featureEnabled) {
+            return {
+                permitted: false,
+                err: new Error("Feature flag not enabled."),
                 response: v1.CheckPermissionResponse.create({}),
             };
         }
@@ -56,7 +69,39 @@ export class Authorizer implements PermissionChecker {
             log.error("[spicedb] Failed to perform authorization check.", err, { req });
             observeSpicedbClientLatency("check", req.permission, err, timer());
 
-            throw err;
+            throw new AuthorizerError("Failed to perform authorization check", err);
+        }
+    }
+
+    async writeRelationships(
+        req: v1.WriteRelationshipsRequest,
+        experimentsFields?: {
+            userID?: string;
+            teamID?: string;
+        },
+    ): Promise<v1.WriteRelationshipsResponse | undefined> {
+        if (!this.client) {
+            return undefined;
+        }
+
+        const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            user: { id: experimentsFields?.userID || "" },
+            teamId: experimentsFields?.teamID,
+        });
+        if (!featureEnabled) {
+            return undefined;
+        }
+
+        try {
+            const response = await this.client.writeRelationships(req);
+            log.info("[spicedb] Succesfully wrote relationships.", { response, request: req });
+
+            return response;
+        } catch (err) {
+            log.error("[spicedb] Failed to write relationships.", err, { req });
+
+            // While in we're running two authorization systems in parallel, we do not hard fail on writes.
+            throw new AuthorizerError("Failed to write relationship", err);
         }
     }
 }
@@ -72,4 +117,20 @@ function newUnathorizedError(resource: v1.ObjectReference, relation: string, sub
 
 function objString(obj?: v1.ObjectReference): string {
     return `${obj?.objectType}:${obj?.objectId}`;
+}
+
+export class AuthorizerError extends Error {
+    cause: Error;
+
+    constructor(msg: string, cause: Error) {
+        super(msg);
+        this.cause = cause;
+
+        // Set the prototype explicitly.
+        Object.setPrototypeOf(this, AuthorizerError.prototype);
+    }
+
+    public static is(err: Error): err is AuthorizerError {
+        return err instanceof AuthorizerError;
+    }
 }
