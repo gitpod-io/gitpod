@@ -15,15 +15,7 @@ import {
     WorkspaceInitializer,
 } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
-import {
-    DBWithTracing,
-    ProjectDB,
-    TeamDB,
-    TracedUserDB,
-    TracedWorkspaceDB,
-    UserDB,
-    WorkspaceDB,
-} from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, ProjectDB, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
     AdditionalContentContext,
@@ -108,7 +100,6 @@ import * as path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ScopedResourceGuard } from "../auth/resource-access";
-import { BillingModes } from "../billing/billing-mode";
 import { EntitlementService } from "../billing/entitlement-service";
 import { Config } from "../config";
 import { IDEService } from "../ide-service";
@@ -124,7 +115,6 @@ import { RedisMutex } from "../redis/mutex";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
 import { UserService } from "../user/user-service";
-import { ContextParser } from "./context-parser-service";
 import { ResolvedEnvVars } from "./env-var-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { MessageBusIntegration } from "./messagebus-integration";
@@ -200,29 +190,27 @@ export function isClusterMaintenanceError(err: any): boolean {
 
 @injectable()
 export class WorkspaceStarter {
-    @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
-    @inject(Config) protected readonly config: Config;
-    @inject(IDEService) private readonly ideService: IDEService;
-    @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
-    @inject(TracedUserDB) protected readonly userDB: DBWithTracing<UserDB>;
-    @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
-    @inject(AuthorizationService) protected readonly authService: AuthorizationService;
-    @inject(ImageBuilderClientProvider) protected readonly imagebuilderClientProvider: ImageBuilderClientProvider;
-    @inject(ImageSourceProvider) protected readonly imageSourceProvider: ImageSourceProvider;
-    @inject(UserService) protected readonly userService: UserService;
-    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
-    @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(ContextParser) protected contextParser: ContextParser;
-    @inject(BlockedRepositoryDB) protected readonly blockedRepositoryDB: BlockedRepositoryDB;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
-    @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(RedisMutex) protected readonly redisMutex: RedisMutex;
-    @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
-
+    constructor(
+        @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
+        @inject(Config) private readonly config: Config,
+        @inject(IDEService) private readonly ideService: IDEService,
+        @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
+        @inject(TracedUserDB) private readonly userDB: DBWithTracing<UserDB>,
+        @inject(TokenProvider) private readonly tokenProvider: TokenProvider,
+        @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
+        @inject(MessageBusIntegration) private readonly messageBus: MessageBusIntegration,
+        @inject(AuthorizationService) private readonly authService: AuthorizationService,
+        @inject(ImageBuilderClientProvider) private readonly imagebuilderClientProvider: ImageBuilderClientProvider,
+        @inject(ImageSourceProvider) private readonly imageSourceProvider: ImageSourceProvider,
+        @inject(UserService) private readonly userService: UserService,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(OneTimeSecretServer) private readonly otsServer: OneTimeSecretServer,
+        @inject(ProjectDB) private readonly projectDB: ProjectDB,
+        @inject(BlockedRepositoryDB) private readonly blockedRepositoryDB: BlockedRepositoryDB,
+        @inject(EntitlementService) private readonly entitlementService: EntitlementService,
+        @inject(RedisMutex) private readonly redisMutex: RedisMutex,
+        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
+    ) {}
     public async startWorkspace(
         ctx: TraceContext,
         workspace: Workspace,
@@ -492,7 +480,7 @@ export class WorkspaceStarter {
         return instances.map((instance) => instance.workspace);
     }
 
-    protected async checkBlockedRepository(user: User, contextURL: string) {
+    private async checkBlockedRepository(user: User, contextURL: string) {
         const blockedRepository = await this.blockedRepositoryDB.findBlockedRepositoryByURL(contextURL);
         if (!blockedRepository) return;
 
@@ -508,7 +496,7 @@ export class WorkspaceStarter {
     }
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself.
-    protected async actuallyStartWorkspace(
+    private async actuallyStartWorkspace(
         ctx: TraceContext,
         instance: WorkspaceInstance,
         workspace: Workspace,
@@ -677,7 +665,7 @@ export class WorkspaceStarter {
         }
     }
 
-    protected logAndTraceStartWorkspaceError(ctx: TraceContext, logCtx: LogContext, err: any) {
+    private logAndTraceStartWorkspaceError(ctx: TraceContext, logCtx: LogContext, err: any) {
         TraceContext.setError(ctx, err);
 
         let reason: FailedInstanceStartReason | undefined = undefined;
@@ -691,7 +679,7 @@ export class WorkspaceStarter {
         ctx.span?.setTag("failedInstanceStartReason", reason);
     }
 
-    protected async createMetadata(workspace: Workspace): Promise<WorkspaceMetadata> {
+    private async createMetadata(workspace: Workspace): Promise<WorkspaceMetadata> {
         let metadata = new WorkspaceMetadata();
         metadata.setOwner(workspace.ownerId);
         metadata.setMetaId(workspace.id);
@@ -706,7 +694,7 @@ export class WorkspaceStarter {
         return metadata;
     }
 
-    protected async tryStartOnCluster(
+    private async tryStartOnCluster(
         ctx: TraceContext,
         startRequest: StartWorkspaceRequest,
         user: User,
@@ -755,7 +743,7 @@ export class WorkspaceStarter {
         return undefined;
     }
 
-    protected async getAdditionalImageAuth(envVars: ResolvedEnvVars): Promise<Map<string, string>> {
+    private async getAdditionalImageAuth(envVars: ResolvedEnvVars): Promise<Map<string, string>> {
         const res = new Map<string, string>();
         const imageAuth = envVars.project.find((e) => e.name === "GITPOD_IMAGE_AUTH");
         if (!imageAuth) {
@@ -772,7 +760,7 @@ export class WorkspaceStarter {
         return res;
     }
 
-    protected async notifyOnPrebuildQueued(ctx: TraceContext, workspaceId: string) {
+    private async notifyOnPrebuildQueued(ctx: TraceContext, workspaceId: string) {
         const span = TraceContext.startSpan("notifyOnPrebuildQueued", ctx);
         try {
             const prebuild = await this.workspaceDb.trace({ span }).findPrebuildByWorkspaceID(workspaceId);
@@ -794,12 +782,7 @@ export class WorkspaceStarter {
      * failInstanceStart properly fails a workspace instance if something goes wrong before the instance ever reaches
      * workspace manager. In this case we need to make sure we also fulfil the tasks of the bridge (e.g. for prebulds).
      */
-    protected async failInstanceStart(
-        ctx: TraceContext,
-        err: Error,
-        workspace: Workspace,
-        instance: WorkspaceInstance,
-    ) {
+    private async failInstanceStart(ctx: TraceContext, err: Error, workspace: Workspace, instance: WorkspaceInstance) {
         const span = TraceContext.startSpan("failInstanceStart", ctx);
 
         try {
@@ -828,7 +811,7 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async failPrebuildWorkspace(ctx: TraceContext, err: Error, workspace: Workspace) {
+    private async failPrebuildWorkspace(ctx: TraceContext, err: Error, workspace: Workspace) {
         const span = TraceContext.startSpan("failInstanceStart", ctx);
         try {
             if (workspace.type === "prebuild") {
@@ -858,7 +841,7 @@ export class WorkspaceStarter {
      *
      * @param workspace the workspace to create an instance for
      */
-    protected async newInstance(
+    private async newInstance(
         ctx: TraceContext,
         workspace: Workspace,
         previousInstance: WorkspaceInstance | undefined,
@@ -985,7 +968,7 @@ export class WorkspaceStarter {
         return billingTier === "paid";
     }
 
-    protected async prepareBuildRequest(
+    private async prepareBuildRequest(
         ctx: TraceContext,
         workspace: Workspace,
         imgsrc: WorkspaceImageSource,
@@ -1112,7 +1095,7 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async needsImageBuild(
+    private async needsImageBuild(
         ctx: TraceContext,
         user: User,
         workspace: Workspace,
@@ -1149,7 +1132,7 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async buildWorkspaceImage(
+    private async buildWorkspaceImage(
         ctx: TraceContext,
         user: User,
         workspace: Workspace,
@@ -1332,7 +1315,7 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async createSpec(
+    private async createSpec(
         traceCtx: TraceContext,
         user: User,
         workspace: Workspace,
@@ -1545,7 +1528,7 @@ export class WorkspaceStarter {
         return spec;
     }
 
-    protected createDefaultGitpodAPITokenScopes(workspace: Workspace, instance: WorkspaceInstance): string[] {
+    private createDefaultGitpodAPITokenScopes(workspace: Workspace, instance: WorkspaceInstance): string[] {
         const scopes = [
             "function:getWorkspace",
             "function:getLoggedInUser",
@@ -1631,7 +1614,7 @@ export class WorkspaceStarter {
         return scopes;
     }
 
-    protected createGitSpec(workspace: Workspace, user: User): GitSpec {
+    private createGitSpec(workspace: Workspace, user: User): GitSpec {
         const context = workspace.context;
         if (!CommitContext.is(context)) {
             // this is not a commit context, thus we cannot produce a sensible GitSpec
@@ -1655,7 +1638,7 @@ export class WorkspaceStarter {
         return gitSpec;
     }
 
-    protected async createInitializer(
+    private async createInitializer(
         traceCtx: TraceContext,
         workspace: Workspace,
         context: WorkspaceContext,
@@ -1743,7 +1726,7 @@ export class WorkspaceStarter {
         return { initializer: result, disposable: disp };
     }
 
-    protected async createCommitInitializer(
+    private async createCommitInitializer(
         ctx: TraceContext,
         workspace: Workspace,
         context: CommitContext,
@@ -1777,7 +1760,7 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async createGitInitializer(
+    private async createGitInitializer(
         traceCtx: TraceContext,
         workspace: Workspace,
         context: GitCheckoutInfo,
@@ -1853,7 +1836,7 @@ export class WorkspaceStarter {
         };
     }
 
-    protected toWorkspaceFeatureFlags(featureFlags: NamedWorkspaceFeatureFlag[]): WorkspaceFeatureFlag[] {
+    private toWorkspaceFeatureFlags(featureFlags: NamedWorkspaceFeatureFlag[]): WorkspaceFeatureFlag[] {
         const result = featureFlags
             .map((name) => {
                 for (const key in WorkspaceFeatureFlag) {
@@ -1876,7 +1859,7 @@ export class WorkspaceStarter {
      * @param region
      * @returns
      */
-    protected async getImageBuilderClient(
+    private async getImageBuilderClient(
         user: User,
         workspace: Workspace,
         instance?: WorkspaceInstance,

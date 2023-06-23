@@ -83,7 +83,6 @@ import {
     AdminModifyRoleOrPermissionRequest,
     WorkspaceAndInstance,
 } from "@gitpod/gitpod-protocol/lib/admin-protocol";
-import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Cancelable } from "@gitpod/gitpod-protocol/lib/util/cancelable";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -99,7 +98,6 @@ import {
     RemoteTrackMessage,
 } from "@gitpod/gitpod-protocol/lib/analytics";
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { ImageBuilderClientProvider } from "@gitpod/image-builder/lib";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import {
     AdmissionLevel,
@@ -220,79 +218,78 @@ export type GitpodServerWithTracing = InterfaceWithTraceContext<GitpodServer>;
 
 @injectable()
 export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
-    @inject(Config) protected readonly config: Config;
-    @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
-    @inject(WorkspaceFactory) protected readonly workspaceFactory: WorkspaceFactory;
-    @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
-    @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
-    @inject(ContextParser) protected contextParser: ContextParser;
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
+    constructor(
+        @inject(Config) private readonly config: Config,
+        @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
+        @inject(WorkspaceFactory) private readonly workspaceFactory: WorkspaceFactory,
+        @inject(WorkspaceDeletionService) private readonly workspaceDeletionService: WorkspaceDeletionService,
+        @inject(LocalMessageBroker) private readonly localMessageBroker: LocalMessageBroker,
+        @inject(ContextParser) private contextParser: ContextParser,
+        @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
 
-    @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
-    @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
-    @inject(BitbucketAppSupport) protected readonly bitbucketAppSupport: BitbucketAppSupport;
+        @inject(GitHubAppSupport) private readonly githubAppSupport: GitHubAppSupport,
+        @inject(GitLabAppSupport) private readonly gitLabAppSupport: GitLabAppSupport,
+        @inject(BitbucketAppSupport) private readonly bitbucketAppSupport: BitbucketAppSupport,
 
-    @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
-    @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
-    @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
-    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
-    @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
-    @inject(WorkspaceManagerClientProvider)
-    protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
-    @inject(ImageBuilderClientProvider) protected imagebuilderClientProvider: ImageBuilderClientProvider;
+        @inject(PrebuildManager) private readonly prebuildManager: PrebuildManager,
+        @inject(IncrementalPrebuildsService) private readonly incrementalPrebuildsService: IncrementalPrebuildsService,
+        @inject(ConfigProvider) private readonly configProvider: ConfigProvider,
+        @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
+        @inject(SnapshotService) private readonly snapshotService: SnapshotService,
+        @inject(WorkspaceManagerClientProvider)
+        private readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider,
 
-    @inject(UserDB) protected readonly userDB: UserDB;
-    @inject(BlockedRepositoryDB) protected readonly blockedRepostoryDB: BlockedRepositoryDB;
-    @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
-    @inject(UserService) protected readonly userService: UserService;
-    @inject(UserStorageResourcesDB) protected readonly userStorageResourcesDB: UserStorageResourcesDB;
-    @inject(UserDeletionService) protected readonly userDeletionService: UserDeletionService;
-    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
-    @inject(AuthorizationService) protected readonly authorizationService: AuthorizationService;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
-    @inject(LinkedInService) protected readonly linkedInService: LinkedInService;
+        @inject(UserDB) private readonly userDB: UserDB,
+        @inject(BlockedRepositoryDB) private readonly blockedRepostoryDB: BlockedRepositoryDB,
+        @inject(TokenProvider) private readonly tokenProvider: TokenProvider,
+        @inject(UserService) private readonly userService: UserService,
+        @inject(UserStorageResourcesDB) private readonly userStorageResourcesDB: UserStorageResourcesDB,
+        @inject(UserDeletionService) private readonly userDeletionService: UserDeletionService,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(AuthorizationService) private readonly authorizationService: AuthorizationService,
+        @inject(TeamDB) private readonly teamDB: TeamDB,
+        @inject(LinkedInService) private readonly linkedInService: LinkedInService,
 
-    @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
+        @inject(AppInstallationDB) private readonly appInstallationDB: AppInstallationDB,
 
-    @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
+        @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
 
-    @inject(GitTokenScopeGuesser) protected readonly gitTokenScopeGuesser: GitTokenScopeGuesser;
+        @inject(GitTokenScopeGuesser) private readonly gitTokenScopeGuesser: GitTokenScopeGuesser,
 
-    @inject(HeadlessLogService) protected readonly headlessLogService: HeadlessLogService;
+        @inject(HeadlessLogService) private readonly headlessLogService: HeadlessLogService,
 
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(ProjectsService) protected readonly projectsService: ProjectsService;
+        @inject(ProjectDB) private readonly projectDB: ProjectDB,
+        @inject(ProjectsService) private readonly projectsService: ProjectsService,
 
-    @inject(IDEService) protected readonly ideService: IDEService;
+        @inject(IDEService) private readonly ideService: IDEService,
 
-    @inject(VerificationService) protected readonly verificationService: VerificationService;
-    @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
+        @inject(VerificationService) private readonly verificationService: VerificationService,
+        @inject(EntitlementService) private readonly entitlementService: EntitlementService,
 
-    @inject(ConfigCatClientFactory) protected readonly configCatClientFactory: ConfigCatClientFactory;
+        @inject(ConfigCatClientFactory) private readonly configCatClientFactory: ConfigCatClientFactory,
 
-    @inject(PermissionChecker) protected readonly authorizer: Authorizer;
+        @inject(PermissionChecker) private readonly authorizer: Authorizer,
 
-    @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(StripeService) protected readonly stripeService: StripeService;
-    @inject(UsageServiceDefinition.name) protected readonly usageService: UsageServiceClient;
-    @inject(BillingServiceDefinition.name) protected readonly billingService: BillingServiceClient;
-    @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB;
+        @inject(BillingModes) private readonly billingModes: BillingModes,
+        @inject(StripeService) private readonly stripeService: StripeService,
+        @inject(UsageServiceDefinition.name) private readonly usageService: UsageServiceClient,
+        @inject(BillingServiceDefinition.name) private readonly billingService: BillingServiceClient,
+        @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
-    @inject(EnvVarService)
-    private readonly envVarService: EnvVarService;
+        @inject(EnvVarService)
+        private readonly envVarService: EnvVarService,
+    ) {}
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
     public readonly clientMetadata: ClientMetadata;
-    protected connectionCtx: TraceContext | undefined = undefined;
-    protected clientHeaderFields: ClientHeaderFields;
-    protected resourceAccessGuard: ResourceAccessGuard;
-    protected client: GitpodApiClient | undefined;
+    private clientHeaderFields: ClientHeaderFields;
+    private resourceAccessGuard: ResourceAccessGuard;
+    private client: GitpodApiClient | undefined;
 
-    protected userID: string | undefined;
+    private userID: string | undefined;
 
-    protected readonly disposables = new DisposableCollection();
+    private readonly disposables = new DisposableCollection();
 
     dispose(): void {
         this.disposables.dispose();
@@ -314,7 +311,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.resourceAccessGuard = accessGuard;
         this.clientHeaderFields = clientHeaderFields;
         (this.clientMetadata as any) = clientMetadata;
-        this.connectionCtx = connectionCtx;
 
         log.debug({ userId: this.userID }, `clientRegion: ${clientHeaderFields.clientRegion}`);
         log.debug({ userId: this.userID }, "initializeClient");
@@ -324,7 +320,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         this.listenForPrebuildUpdates().catch((err) => log.error("error registering for prebuild updates", err));
     }
 
-    protected async listenForPrebuildUpdates() {
+    private async listenForPrebuildUpdates() {
         // 'registering for prebuild updates for all projects this user has access to
         const projects = await this.getAccessibleProjects();
         for (const projectId of projects) {
@@ -349,7 +345,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // TODO(at) we need to keep the list of accessible project up to date
     }
 
-    protected async getAccessibleProjects() {
+    private async getAccessibleProjects() {
         if (!this.userID) {
             return [];
         }
@@ -364,7 +360,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return allProjects;
     }
 
-    protected async findPrebuiltWorkspace(
+    private async findPrebuiltWorkspace(
         parentCtx: TraceContext,
         user: User,
         context: WorkspaceContext,
@@ -541,7 +537,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    protected listenForWorkspaceInstanceUpdates(): void {
+    private listenForWorkspaceInstanceUpdates(): void {
         if (!this.userID || !this.client) {
             return;
         }
@@ -555,7 +551,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         );
     }
 
-    protected forwardInstanceUpdateToClient(ctx: TraceContext, instance: WorkspaceInstance) {
+    private forwardInstanceUpdateToClient(ctx: TraceContext, instance: WorkspaceInstance) {
         // gpl: We decided against tracing updates here, because it create far too much noise (cmp. history)
         this.client?.onInstanceUpdate(this.censorInstance(instance));
     }
@@ -564,7 +560,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         throw new Error("Unsupported operation. Use initialize.");
     }
 
-    protected async guardAccess(resource: GuardedResource, op: ResourceAccessOp) {
+    private async guardAccess(resource: GuardedResource, op: ResourceAccessOp) {
         if (!(await this.resourceAccessGuard.canAccess(resource, op))) {
             throw new ResponseError(
                 ErrorCodes.PERMISSION_DENIED,
@@ -579,7 +575,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
      *
      * @param wsi the workspace instance shape we want to censor
      */
-    protected censorInstance<T extends WorkspaceInstance | undefined>(wsi: T): T {
+    private censorInstance<T extends WorkspaceInstance | undefined>(wsi: T): T {
         if (!wsi) {
             return wsi;
         }
@@ -597,7 +593,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return res;
     }
 
-    protected async checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): Promise<User> {
+    private async checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): Promise<User> {
         // Generally, a user session is required.
         if (!this.userID) {
             throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
@@ -626,7 +622,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return user;
     }
 
-    protected async checkAndBlockUser(methodName?: string, logPayload?: {}, ctx?: LogContext): Promise<User> {
+    private async checkAndBlockUser(methodName?: string, logPayload?: {}, ctx?: LogContext): Promise<User> {
         const user = await this.checkUser(methodName, logPayload);
         if (user.blocked) {
             const userContext: LogContext = {
@@ -644,20 +640,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     public async getLoggedInUser(ctx: TraceContext): Promise<User> {
-        await this.doUpdateUser();
         return this.checkUser("getLoggedInUser");
-    }
-
-    protected enableDedicatedOnboardingFlow: boolean = false; // TODO(gpl): Remove once we have an onboarding setup
-    protected async doUpdateUser(): Promise<void> {
-        // Conditionally enable Dedicated Onboarding Flow
-        this.enableDedicatedOnboardingFlow = await this.configCatClientFactory().getValueAsync(
-            "enableDedicatedOnboardingFlow",
-            false,
-            {
-                gitpodHost: new URL(this.config.hostUrl.toString()).host,
-            },
-        );
     }
 
     public async updateLoggedInUser(ctx: TraceContext, update: Partial<User>): Promise<User> {
@@ -868,7 +851,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getToken(ctx: TraceContext, query: GitpodServer.GetTokenSearchOptions): Promise<Token | undefined> {
         traceAPIParams(ctx, { query });
 
-        await this.doUpdateUser();
         const user = await this.checkUser("getToken");
         const logCtx = { userId: user.id, host: query.host };
 
@@ -891,7 +873,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.userDeletionService.deleteUser(user.id);
     }
 
-    protected async getTeamMembersByProject(projectId: string | undefined): Promise<TeamMemberInfo[]> {
+    private async getTeamMembersByProject(projectId: string | undefined): Promise<TeamMemberInfo[]> {
         if (projectId) {
             const project = await this.projectsService.getProject(projectId);
             if (project && project.teamId) {
@@ -1075,7 +1057,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    protected async internalStopWorkspace(
+    private async internalStopWorkspace(
         ctx: TraceContext,
         workspace: Workspace,
         reason: string,
@@ -1109,7 +1091,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.workspaceStarter.stopWorkspaceInstance(ctx, instance.id, instance.region, reason, policy);
     }
 
-    protected async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName) {
+    private async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName) {
         const user = await this.checkAndBlockUser(method);
         if (!this.authorizationService.hasPermission(user, requiredPermission)) {
             log.warn({ userId: user.id }, "unauthorised admin access", { authorised: false, method, params });
@@ -1286,7 +1268,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             .getWorkspaceUsers(workspaceId, this.config.workspaceHeartbeat.timeoutSeconds * 1000);
     }
 
-    protected async internalGetWorkspace(user: User, id: string, db: WorkspaceDB): Promise<Workspace> {
+    private async internalGetWorkspace(user: User, id: string, db: WorkspaceDB): Promise<Workspace> {
         const workspace = await db.findById(id);
         if (!workspace) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Workspace not found.");
@@ -1712,7 +1694,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return prebuild;
     }
 
-    protected parseErrorCode(error: any) {
+    private parseErrorCode(error: any) {
         const errorCode = error && error.code;
         if (errorCode) {
             try {
@@ -1725,7 +1707,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return undefined;
     }
 
-    protected async pollDatabaseUntilPrebuildIsAvailable(
+    private async pollDatabaseUntilPrebuildIsAvailable(
         ctx: TraceContext,
         prebuildID: string,
         timeoutMS: number,
@@ -1747,7 +1729,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return result;
     }
 
-    protected async mayStartWorkspace(
+    private async mayStartWorkspace(
         ctx: TraceContext,
         user: User,
         organizationId: string,
@@ -2083,7 +2065,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    protected portVisibilityFromProto(visibility: ProtoPortVisibility): PortVisibility {
+    private portVisibilityFromProto(visibility: ProtoPortVisibility): PortVisibility {
         switch (visibility) {
             default: // the default in the protobuf def is: private
             case ProtoPortVisibility.PORT_VISIBILITY_PRIVATE:
@@ -2093,7 +2075,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    protected portVisibilityToProto(visibility: PortVisibility | undefined): ProtoPortVisibility {
+    private portVisibilityToProto(visibility: PortVisibility | undefined): ProtoPortVisibility {
         switch (visibility) {
             default: // the default for requests is: private
             case "private":
@@ -2103,7 +2085,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    protected portProtocolFromProto(protocol: ProtoPortProtocol): PortProtocol {
+    private portProtocolFromProto(protocol: ProtoPortProtocol): PortProtocol {
         switch (protocol) {
             default: // the default in the protobuf def is: http
             case ProtoPortProtocol.PORT_PROTOCOL_HTTP:
@@ -2113,7 +2095,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    protected portProtocolToProto(protocol: PortProtocol | undefined): ProtoPortProtocol {
+    private portProtocolToProto(protocol: PortProtocol | undefined): ProtoPortProtocol {
         switch (protocol) {
             default: // the default for requests is: http
             case "http":
@@ -2271,7 +2253,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return urls;
     }
 
-    protected async internGetCurrentWorkspaceInstance(
+    private async internGetCurrentWorkspaceInstance(
         ctx: TraceContext,
         user: User,
         workspaceId: string,
@@ -2416,7 +2398,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return snapshots.map((s) => s.id);
     }
 
-    protected async internalDoWaitForWorkspace(opts: WaitForSnapshotOptions) {
+    private async internalDoWaitForWorkspace(opts: WaitForSnapshotOptions) {
         try {
             await this.snapshotService.waitForSnapshot(opts);
         } catch (err) {
@@ -2586,7 +2568,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return;
     }
 
-    protected async updateSSHKeysForRegularRunningInstances(ctx: TraceContext, userId: string) {
+    private async updateSSHKeysForRegularRunningInstances(ctx: TraceContext, userId: string) {
         const keys = (await this.userDB.getSSHPublicKeys(userId)).map((e) => e.key);
         const instances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(userId);
         const updateKeyOfInstance = async (instance: WorkspaceInstance) => {
@@ -2635,14 +2617,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.projectsService.deleteProjectEnvironmentVariable(envVar.id);
     }
 
-    protected async internalGetProjectEnvVars(projectId?: string): Promise<ProjectEnvVar[]> {
-        if (!projectId) {
-            return [];
-        }
-        return await this.projectsService.getProjectEnvironmentVariables(projectId);
-    }
-
-    protected async guardSnaphotAccess(ctx: TraceContext, userId: string, workspaceId: string): Promise<Workspace> {
+    private async guardSnaphotAccess(ctx: TraceContext, userId: string, workspaceId: string): Promise<Workspace> {
         traceAPIParams(ctx, { userId, workspaceId });
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
@@ -2654,7 +2629,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return workspace;
     }
 
-    protected async guardTeamOperation(
+    private async guardTeamOperation(
         teamId: string,
         op: ResourceAccessOp,
         fineGrainedOp: OrganizationPermission | "not_implemented",
@@ -2739,7 +2714,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
     }
 
-    protected async guardOrganizationOperationWithCentralizedPerms(
+    private async guardOrganizationOperationWithCentralizedPerms(
         orgId: string,
         op: OrganizationPermission,
     ): Promise<CheckResult> {
@@ -2976,7 +2951,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.teamDB.resetGenericInvite(teamId);
     }
 
-    protected async guardProjectOperation(user: User, projectId: string, op: ResourceAccessOp): Promise<void> {
+    private async guardProjectOperation(user: User, projectId: string, op: ResourceAccessOp): Promise<void> {
         const project = await this.projectsService.getProject(projectId);
         if (!project) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
@@ -3684,7 +3659,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.CONFLICT, message);
         }
     }
-    protected redactUpdateOwnAuthProviderParams({ entry }: GitpodServer.UpdateOwnAuthProviderParams) {
+    private redactUpdateOwnAuthProviderParams({ entry }: GitpodServer.UpdateOwnAuthProviderParams) {
         const safeEntry =
             "id" in entry
                 ? <AuthProviderEntry.UpdateEntry>{
@@ -3885,7 +3860,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
     }
 
-    protected async guardWithFeatureFlag(flagName: string, user: User, teamId: string) {
+    private async guardWithFeatureFlag(flagName: string, user: User, teamId: string) {
         // Guard method w/ a feature flag check
         const isEnabled = await this.configCatClientFactory().getValueAsync(flagName, false, {
             user: user,
@@ -4015,17 +3990,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     //
     //#endregion
 
-    /**
-     * This method is temporary until we moved image-builder into workspace clusters
-     * @param user
-     * @param workspace
-     * @param instance
-     * @returns
-     */
-    protected async getImageBuilderClient(user: User, workspace: Workspace, instance?: WorkspaceInstance) {
-        return this.imagebuilderClientProvider.getClient(user, workspace, instance);
-    }
-
     async reportErrorBoundary(ctx: TraceContextWithSpan, url: string, message: string): Promise<void> {
         // Cap message and url length so the entries aren't of unbounded length
         log.warn("dashboard error boundary", {
@@ -4036,7 +4000,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         increaseDashboardErrorBoundaryCounter();
     }
 
-    protected mapGrpcError(err: Error): Error {
+    private mapGrpcError(err: Error): Error {
         function isGrpcError(err: any): err is grpc.StatusObject {
             return err.code && err.details;
         }
@@ -4483,7 +4447,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
     }
 
-    protected async guardCostCenterAccess(
+    private async guardCostCenterAccess(
         ctx: TraceContext,
         userId: string,
         attributionId: AttributionId,
