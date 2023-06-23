@@ -88,4 +88,26 @@ export class TeamDBSpec {
         const team3 = await this.teamDB.updateTeam(team2.id, team2);
         expect(team3.slug).to.match(/^my-team-[a-zA-Z0-9_-]{8}$/);
     }
+
+    @test()
+    async testNoSlugDuplicates(): Promise<void> {
+        const user = await this.userDB.newUser();
+
+        const team1 = await this.teamDB.createTeam(user.id, "My Team");
+        expect(team1.slug).to.be.eq("my-team");
+        const team2 = await this.teamDB.createTeam(user.id, "My Team");
+        expect(team2.slug).to.match(/my-team-[a-f0-9]{4}/);
+    }
+
+    @test()
+    async testNestedTransaction(): Promise<void> {
+        const user = await this.userDB.newUser();
+
+        const team1 = await this.teamDB.transaction(async (db) => {
+            return await db.transaction(async (db) => {
+                return await db.createTeam(user.id, "My Team");
+            });
+        });
+        expect(team1.slug).to.be.eq("my-team");
+    }
 }

@@ -148,8 +148,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         }
 
         // Storing entry in a TX to avoid potential slug dupes caused by racing requests.
-        const em = await this.getEntityManager();
-        return await em.transaction<DBTeam>(async (em) => {
+        return await this.internalTransaction<DBTeam>(async (em) => {
             const teamRepo = em.getRepository<DBTeam>(DBTeam);
 
             const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
@@ -187,15 +186,19 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "Please choose a name that is at most 64 characters long.");
         }
 
-        const teamRepo = await this.getTeamRepo();
+        // Storing new entry in a TX to avoid potential dupes caused by racing requests.
+        const team = await this.internalTransaction<DBTeam>(async (em) => {
+            const teamRepo = em.getRepository<DBTeam>(DBTeam);
 
-        const slug = await this.createUniqueSlug(teamRepo, name);
+            const slug = await this.createUniqueSlug(teamRepo, name);
 
-        const team = await teamRepo.save({
-            id: uuidv4(),
-            name,
-            slug,
-            creationTime: new Date().toISOString(),
+            const team: Team = {
+                id: uuidv4(),
+                name,
+                slug,
+                creationTime: new Date().toISOString(),
+            };
+            return await teamRepo.save(team);
         });
 
         const membershipRepo = await this.getMembershipRepo();

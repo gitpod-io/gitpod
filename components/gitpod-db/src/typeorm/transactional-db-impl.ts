@@ -28,8 +28,29 @@ export abstract class TransactionalDBImpl<DB> implements TransactionalDB<DB> {
 
     async transaction<R>(code: (db: DB) => Promise<R>): Promise<R> {
         const manager = await this.getEntityManager();
+        // we already have a transaction running. MYSQL does not support nested transactions, so we just run the code
+        if (manager.queryRunner?.isTransactionActive) {
+            return await code(this.createTransactionalDB(manager));
+        }
         return await manager.transaction(async (manager) => {
             return await code(this.createTransactionalDB(manager));
+        });
+    }
+
+    /**
+     * This method is only used for internal transactions. It should not be used by the outside world.
+     * It exposes the raw entity manager
+     * @param code
+     * @returns
+     */
+    protected async internalTransaction<R>(code: (em: EntityManager) => Promise<R>): Promise<R> {
+        const manager = await this.getEntityManager();
+        // we already have a transaction running. MYSQL does not support nested transactions, so we just run the code
+        if (manager.queryRunner?.isTransactionActive) {
+            return await code(manager);
+        }
+        return await manager.transaction(async (manager) => {
+            return await code(manager);
         });
     }
 
