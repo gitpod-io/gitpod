@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	connect "github.com/bufbuild/connect-go"
+	"github.com/filiptronicek/subber"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	v1 "github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1"
 	"github.com/gitpod-io/gitpod/components/public-api/go/experimental/v1/v1connect"
@@ -84,10 +85,21 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("workspace not found"))
 	}
 
-	subject := workspace.Workspace.ContextURL
+	s := subber.NewSubber(":", true)
+	fields := []subber.Claim{
+		{Key: "org_id", Value: workspace.Workspace.OrganizationId},
+		{Key: "user_id", Value: user.ID},
+		{Key: "context", Value: workspace.Workspace.ContextURL},
+	}
+
+	subClaim, err := s.PrepareClaim(fields...)
+	if err != nil {
+		log.Fatalf("Error preparing claim: %v", err)
+	}
+
 	userInfo := oidc.NewUserInfo()
 	userInfo.SetName(user.Name)
-	userInfo.SetSubject(subject)
+	userInfo.SetSubject(subClaim)
 	userInfo.AppendClaims("org_id", workspace.Workspace.OrganizationId)
 
 	if email != "" {

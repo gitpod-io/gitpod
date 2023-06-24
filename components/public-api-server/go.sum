@@ -89,6 +89,10 @@ github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1m
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/felixge/httpsnoop v1.0.1 h1:lvB5Jl89CsZtGIWuTcDM1E/vkVs49/Ml7JJe07l8SPQ=
 github.com/felixge/httpsnoop v1.0.1/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
+github.com/filiptronicek/subber v0.0.0-20230624153437-af5db65ad7a3 h1:PnNqcHQHstE4lu059g7pb86ld1nJkVH0ORc5bYaF1jw=
+github.com/filiptronicek/subber v0.0.0-20230624153437-af5db65ad7a3/go.mod h1:A1nL+cKlpixs6vV2dTSeZ+cQj20mfHXA+Ne/RUiF8WA=
+github.com/filiptronicek/subber v0.0.0-20230624155029-fc1dbd94d600 h1:rghiBAhOgMHy/OGoferPCb6VsnnUL46PhtYaRIyw2tg=
+github.com/filiptronicek/subber v0.0.0-20230624155029-fc1dbd94d600/go.mod h1:A1nL+cKlpixs6vV2dTSeZ+cQj20mfHXA+Ne/RUiF8WA=
 github.com/frankban/quicktest v1.11.2 h1:mjwHjStlXWibxOohM7HYieIViKyh56mmt3+6viyhDDI=
 github.com/frankban/quicktest v1.11.2/go.mod h1:K+q6oSqb0W0Ininfk863uOk1lMy69l/P6txr3mVT54s=
 github.com/go-chi/chi/v5 v5.0.8 h1:lD+NLqFcAi1ovnVZpsnObHGW4xb4J8lNmoYVfECH1Y0=
