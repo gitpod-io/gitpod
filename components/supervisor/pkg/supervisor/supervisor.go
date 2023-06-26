@@ -1301,8 +1301,11 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 			return
 		}
 
-		go io.Copy(conn2, conn)
-		_, _ = io.Copy(conn, conn2)
+		go io.Copy(conn, conn2)
+		_, _ = io.Copy(conn2, conn)
+
+		conn.Close()
+		conn2.Close()
 		log.Infof("tunnel ssh: Disconnect from %s", conn.RemoteAddr())
 	}))
 	if cfg.DebugEnable {

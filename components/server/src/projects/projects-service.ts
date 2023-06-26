@@ -25,6 +25,8 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
+import { Authorizer } from "../authorization/perms";
+import { addProjectToOrg, removeProjectFromOrg } from "../authorization/relationships";
 
 @injectable()
 export class ProjectsService {
@@ -34,6 +36,7 @@ export class ProjectsService {
     @inject(Config) protected readonly config: Config;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(WebhookEventDB) protected readonly webhookEventDB: WebhookEventDB;
+    @inject(Authorizer) protected readonly authorizer: Authorizer;
 
     async getProject(projectId: string): Promise<Project | undefined> {
         return this.projectDB.findProjectById(projectId);
@@ -149,7 +152,17 @@ export class ProjectsService {
             teamId,
             appInstallationId,
         });
-        await this.projectDB.storeProject(project);
+
+        try {
+            await this.projectDB.transaction(async (db) => {
+                await db.storeProject(project);
+
+                await this.authorizer.writeRelationships(addProjectToOrg(teamId, project.id));
+            });
+        } catch (err) {
+            await this.authorizer.writeRelationships(removeProjectFromOrg(teamId, project.id));
+            throw err;
+        }
         await this.onDidCreateProject(project, installer);
 
         this.analytics.track({
@@ -204,7 +217,21 @@ export class ProjectsService {
     }
 
     async deleteProject(projectId: string): Promise<void> {
-        return this.projectDB.markDeleted(projectId);
+        try {
+            await this.projectDB.transaction(async (db) => {
+                // TODO(gpl): This is a case where we'd need to extend the service + API to also accept the orgId as first parameter
+                const project = await db.findProjectById(projectId);
+                if (!project) {
+                    throw new Error("Project does not exist");
+                }
+                await db.markDeleted(projectId);
+
+                await this.authorizer.writeRelationships(removeProjectFromOrg(project.teamId, projectId));
+            });
+        } catch (err) {
+            // As the remove relationships is the last call that might fail, we don't have to do anything here.
+            throw err;
+        }
     }
 
     async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {

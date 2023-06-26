@@ -92,14 +92,14 @@ func (srv *IdentityProviderService) GetIDToken(ctx context.Context, req *connect
 		{Key: "context", Value: workspace.Workspace.ContextURL},
 	}
 
-	subClaim, err := s.PrepareClaim(fields...)
+	subject, err := s.PrepareClaim(fields...)
 	if err != nil {
 		log.Fatalf("Error preparing claim: %v", err)
 	}
 
 	userInfo := oidc.NewUserInfo()
 	userInfo.SetName(user.Name)
-	userInfo.SetSubject(subClaim)
+	userInfo.SetSubject(subject)
 	userInfo.AppendClaims("org_id", workspace.Workspace.OrganizationId)
 
 	if email != "" {

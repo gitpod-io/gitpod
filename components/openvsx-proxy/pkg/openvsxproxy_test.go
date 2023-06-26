@@ -30,7 +30,6 @@ func createFrontend(backendURL string, isDisabledCache bool) (*httptest.Server, 
 	proxy.ModifyResponse = openVSXProxy.ModifyResponse
 	handler := http.HandlerFunc(openVSXProxy.Handler(proxy))
 	frontend := httptest.NewServer(handler)
-	cfg.URLLocal = frontend.URL
 	return frontend, openVSXProxy
 }
 
