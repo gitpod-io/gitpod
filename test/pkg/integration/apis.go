@@ -832,6 +832,9 @@ func (c *ComponentAPI) DB(options ...DBOpt) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Hack: to fix new DB connections occasionally failing with `[mysql] packets.go:33: unexpected EOF` due
+	// to getting an idle connection from the pool which has for some reason been closed.
+	db.SetMaxIdleConns(0)
 
 	cachedDBs[opts.Database] = db
 	c.appendCloser(func() error {
