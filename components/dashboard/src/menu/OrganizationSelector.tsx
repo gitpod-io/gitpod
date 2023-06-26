@@ -11,11 +11,13 @@ import { useCurrentUser } from "../user-context";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useLocation } from "react-router";
 import { User } from "@gitpod/gitpod-protocol";
+import { useOrgBillingMode } from "../data/billing-mode/org-billing-mode-query";
 
 export default function OrganizationSelector() {
     const user = useCurrentUser();
     const orgs = useOrganizations();
     const currentOrg = useCurrentOrg();
+    const { data: billingMode } = useOrgBillingMode();
     const getOrgURL = useGetOrgURL();
 
     // we should have an API to ask for permissions, until then we duplicate the logic here
@@ -72,13 +74,15 @@ export default function OrganizationSelector() {
 
     // Show billing & settings if user is an owner of current org
     if (currentOrg.data && currentOrg.data.isOwner) {
-        linkEntries.push({
-            title: "Billing",
-            customContent: <LinkEntry>Billing</LinkEntry>,
-            active: false,
-            separator: false,
-            link: "/billing",
-        });
+        if (billingMode?.mode === "usage-based") {
+            linkEntries.push({
+                title: "Billing",
+                customContent: <LinkEntry>Billing</LinkEntry>,
+                active: false,
+                separator: false,
+                link: "/billing",
+            });
+        }
         linkEntries.push({
             title: "Settings",
             customContent: <LinkEntry>Settings</LinkEntry>,
