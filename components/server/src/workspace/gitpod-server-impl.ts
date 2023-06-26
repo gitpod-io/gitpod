@@ -121,7 +121,7 @@ import { Disposable, ResponseError } from "vscode-jsonrpc";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { GuardedCostCenter, GuardedResource, ResourceAccessGuard, ResourceAccessOp } from "../auth/resource-access";
+import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from "../auth/resource-access";
 import { Config } from "../config";
 import { NotFoundError, UnauthorizedError } from "../errors";
 import { RepoURL } from "../repohost/repo-url";
@@ -177,6 +177,8 @@ import {
     ReadOrganizationSettings,
     ReadGitProvider,
     WriteGitProvider,
+    ReadBilling,
+    WriteBilling,
 } from "../authorization/checks";
 import { increaseDashboardErrorBoundaryCounter, reportCentralizedPermsValidation } from "../prometheus-metrics";
 import { RegionService } from "./region-service";
@@ -2740,6 +2742,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             case "read_git_provider":
                 return await this.authorizer.check(ReadGitProvider(user.id, orgId), experimentMetadata);
 
+            case "read_billing":
+                return await this.authorizer.check(ReadBilling(user.id, orgId), experimentMetadata);
+            case "write_billing":
+                return await this.authorizer.check(WriteBilling(user.id, orgId), experimentMetadata);
+
             default:
                 return NotPermitted;
         }
@@ -4178,7 +4185,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            await this.guardTeamOperation(attrId.teamId, "get", "not_implemented");
+            await this.guardTeamOperation(attrId.teamId, "get", "read_billing");
             const subscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(attributionId);
             return subscriptionId;
         } catch (error) {
@@ -4196,7 +4203,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
 
-        await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
+        await this.guardTeamOperation(attrId.teamId, "update", "write_billing");
         return this.stripeService.getPriceInformation(attributionId);
     }
 
@@ -4207,7 +4214,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
 
-        const org = (await this.guardTeamOperation(attrId.teamId, "update", "not_implemented")).team;
+        const org = (await this.guardTeamOperation(attrId.teamId, "update", "write_billing")).team;
 
         //TODO billing email should be editable within the org
         const billingEmail = User.getPrimaryEmail(user);
@@ -4264,6 +4271,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
+        await this.guardTeamOperation(attrId.teamId, "update", "write_billing");
+
         try {
             const response = await this.billingService.createHoldPaymentIntent({ attributionId: attributionId });
             return {
@@ -4295,7 +4304,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         try {
-            await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
+            await this.guardTeamOperation(attrId.teamId, "update", "write_billing");
 
             const customerId = await this.stripeService.findCustomerByAttributionId(attributionId);
             if (!customerId) {
@@ -4351,7 +4360,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         let returnUrl = this.config.hostUrl
             .with(() => ({ pathname: `/billing`, search: `org=${attrId.kind === "team" ? attrId.teamId : "0"}` }))
             .toString();
-        await this.guardTeamOperation(attrId.teamId, "update", "not_implemented");
+        await this.guardTeamOperation(attrId.teamId, "update", "write_billing");
         let url: string;
         try {
             url = await this.stripeService.getPortalUrlForAttributionId(attributionId, returnUrl);
@@ -4372,8 +4381,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
-        const user = await this.checkAndBlockUser("getCostCenter");
-        await this.guardCostCenterAccess(ctx, user.id, attrId, "get");
+        await this.checkAndBlockUser("getCostCenter");
+        await this.guardCostCenterAccess(ctx, attrId, "get", "read_billing");
 
         const { costCenter } = await this.usageService.getCostCenter({ attributionId });
         return this.translateCostCenter(costCenter);
@@ -4400,8 +4409,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (typeof usageLimit !== "number" || usageLimit < 0) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
         }
-        const user = await this.checkAndBlockUser("setUsageLimit");
-        await this.guardCostCenterAccess(ctx, user.id, attrId, "update");
+        await this.checkAndBlockUser("setUsageLimit");
+        await this.guardCostCenterAccess(ctx, attrId, "update", "write_billing");
 
         const response = await this.usageService.getCostCenter({ attributionId });
 
@@ -4435,20 +4444,20 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 attributionId: req.attributionId,
             });
         }
-        const user = await this.checkAndBlockUser("listUsage");
-        await this.guardCostCenterAccess(ctx, user.id, attributionId, "get");
+        await this.checkAndBlockUser("listUsage");
+        await this.guardCostCenterAccess(ctx, attributionId, "get", "not_implemented");
         return this.internalListUsage(ctx, req);
     }
 
     async getUsageBalance(ctx: TraceContext, attributionId: string): Promise<number> {
-        const user = await this.checkAndBlockUser("listUsage");
+        await this.checkAndBlockUser("listUsage");
         const parsedAttributionId = AttributionId.parse(attributionId);
         if (!parsedAttributionId) {
             throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
                 attributionId,
             });
         }
-        await this.guardCostCenterAccess(ctx, user.id, parsedAttributionId, "get");
+        await this.guardCostCenterAccess(ctx, parsedAttributionId, "get", "read_billing");
         const result = await this.usageService.getBalance({ attributionId });
         return result.credits;
     }
@@ -4500,27 +4509,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private async guardCostCenterAccess(
         ctx: TraceContext,
-        userId: string,
         attributionId: AttributionId,
         operation: ResourceAccessOp,
-    ): Promise<void> {
-        traceAPIParams(ctx, { userId, attributionId });
-
-        let owner: GuardedCostCenter["owner"];
-        switch (attributionId.kind) {
-            case "team":
-                const team = await this.teamDB.findTeamById(attributionId.teamId);
-                if (!team) {
-                    throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
-                }
-                const members = await this.teamDB.findMembersByTeam(team.id);
-                owner = { kind: "team", team, members };
-                break;
-            default:
-                throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid attributionId");
+        fineGrainedOp: OrganizationPermission | "not_implemented",
+    ): Promise<{ team: Team; members: TeamMemberInfo[] }> {
+        if (attributionId.kind !== "team") {
+            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid attributionId");
         }
 
-        await this.guardAccess({ kind: "costCenter", /*subject: costCenter,*/ owner }, operation);
+        return await this.guardTeamOperation(attributionId.teamId, operation, fineGrainedOp);
     }
 
     async getBillingModeForUser(ctx: TraceContextWithSpan): Promise<BillingMode> {

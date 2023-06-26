@@ -33,6 +33,10 @@ schema: |-
     // Only owners can change Git providers
     permission read_git_provider = owner + member
     permission write_git_provider = owner
+
+    // Only owners can create and modify billing information
+    permission read_billing = member + owner
+    permission write_billing = owner
   }
 
   definition project {
@@ -131,3 +135,9 @@ validation:
     - "[user:user_1] is <project:project_2#viewer>"
   project:project_2#write_info:
     - "[user:user_0] is <organization:org_2#owner>"
+  organization:org_1#read_billing:
+  - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
+  - "[user:user_1] is <organization:org_1#member>"
+  - "[user:user_2] is <organization:org_1#member>"
+  organization:org_1#write_billing:
+  - "[user:user_0] is <organization:org_1#owner>"
