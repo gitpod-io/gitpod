@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Python",
+    "url": "https://ide.gitpod.io/code/profile-templates/python.code-profile"
+  },
+  {
+    "name": "Angular",
+    "url": "https://ide.gitpod.io/code/profile-templates/angular.code-profile"
+  },
+  {
+    "name": "Doc Writer",
+    "url": "https://ide.gitpod.io/code/profile-templates/doc-writer.code-profile"
+  },
+  {
+    "name": "Data Science",
+    "url": "https://ide.gitpod.io/code/profile-templates/data-science.code-profile"
+  },
+  {
+    "name": "Java General",
+    "url": "https://ide.gitpod.io/code/profile-templates/java-general.code-profile"
+  },
+  {
+    "name": "Java Spring",
+    "url": "https://ide.gitpod.io/code/profile-templates/java-spring.code-profile"
+  },
+  {
+    "name": "Node.js",
+    "url": "https://ide.gitpod.io/code/profile-templates/nodejs.code-profile"
+  }
+]
