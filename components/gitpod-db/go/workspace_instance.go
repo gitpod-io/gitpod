@@ -74,7 +74,7 @@ func FindStoppedWorkspaceInstancesInRange(ctx context.Context, conn *gorm.DB, fr
 	return instances, nil
 }
 
-// FindRunningWorkspaceInstances finds WorkspaceInstanceForUsage that are running at the point in time the querty is executed.
+// FindRunningWorkspaceInstances finds WorkspaceInstanceForUsage that are running at the point in time the query is executed.
 func FindRunningWorkspaceInstances(ctx context.Context, conn *gorm.DB) ([]WorkspaceInstanceForUsage, error) {
 	var instances []WorkspaceInstanceForUsage
 	var instancesInBatch []WorkspaceInstanceForUsage
@@ -82,8 +82,8 @@ func FindRunningWorkspaceInstances(ctx context.Context, conn *gorm.DB) ([]Worksp
 	tx := queryWorkspaceInstanceForUsage(ctx, conn).
 		Where("wsi.stoppingTime = ?", "").
 		Where("wsi.usageAttributionId != ?", "").
-		// We cannot guarantee data quality before this date
-		Where("wsi.startedTime > ?", TimeToISO8601(time.Date(2022, 8, 1, 0, 0, 0, 0, time.UTC))).
+		// We are only interested in instances that have been started within the last 10 days.
+		Where("wsi.startedTime > ?", TimeToISO8601(time.Now().Add(-10*24*time.Hour))).
 		FindInBatches(&instancesInBatch, 1000, func(_ *gorm.DB, _ int) error {
 			instances = append(instances, instancesInBatch...)
 			return nil
