@@ -62,6 +62,10 @@ const ideConfigs = [
                 GP_PREVIEW_BROWSER: `/ide-desktop/${name}/bin/idea-cli preview`,
                 GP_EXTERNAL_BROWSER: `/ide-desktop/${name}/bin/idea-cli preview`,
             },
+            prebuild: {
+                name: `GITPOD_JB_WARMUP_TASK`,
+                entrypointArgs: ["warmup"],
+            },
         };
         fs.writeFileSync(`supervisor-ide-config_${name}.json`, JSON.stringify(template, null, 2), "utf-8");
     });

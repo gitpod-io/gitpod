@@ -18,6 +18,7 @@ import (
 	env "github.com/Netflix/go-env"
 	"golang.org/x/xerrors"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
@@ -160,6 +161,16 @@ type IDEConfig struct {
 	// A set of name-value pairs that sets or overrides environment variables for the workspace.
 	// Environment may be referenced in the values.
 	Env *orderedmap.OrderedMap
+
+	// Prebuild configures the prebuild IDE process.
+	Prebuild *struct {
+		// Name of an IDE prebuild task
+		Name string `json:"name"`
+		// Entrypoint is an IDE prebuild entrypoint, if omitted then IDE entrypoint
+		Entrypoint string `json:"entrypoint"`
+		// Args is an IDE entrypoint args
+		Args []string `json:"args"`
+	} `json:"prebuild,omitempty"`
 }
 
 // Validate validates this configuration.
@@ -429,13 +440,48 @@ func (c WorkspaceConfig) GetDebugWorkspaceContentSource() csapi.WorkspaceInitSou
 }
 
 // getGitpodTasks parses gitpod tasks.
-func (c WorkspaceConfig) getGitpodTasks() (tasks *[]TaskConfig, err error) {
-	if c.GitpodTasks == "" {
-		return
+func (c Config) getGitpodTasks() (tasks []TaskConfig, err error) {
+	if c.GitpodTasks != "" {
+		var configured *[]TaskConfig
+		err = json.Unmarshal([]byte(c.GitpodTasks), &configured)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot parse tasks: %w", err)
+		}
+		if configured != nil {
+			tasks = append(tasks, *configured...)
+		}
 	}
-	err = json.Unmarshal([]byte(c.GitpodTasks), &tasks)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot parse tasks: %w", err)
+
+	if c.isPrebuild() {
+		for _, ideConfig := range []*IDEConfig{&c.IDE, c.DesktopIDE} {
+			if ideConfig == nil || ideConfig.Prebuild == nil {
+				continue
+			}
+			name := &ideConfig.Prebuild.Name
+			var exists bool
+			for _, task := range tasks {
+				if task.Name != nil && *task.Name == *name {
+					exists = true
+					break
+				}
+			}
+			// for backward compatibiliy till GITPOD_JB_WARMUP_TASK is not migrated from server to JB
+			if exists {
+				log.WithField("name", *name).Warn("prebuild task already exists, skipping")
+				continue
+			}
+			init := ideConfig.Prebuild.Entrypoint
+			if init == "" {
+				init = ideConfig.Entrypoint
+			}
+			for _, arg := range ideConfig.Prebuild.Args {
+				init = init + " " + arg
+			}
+			tasks = append(tasks, TaskConfig{
+				Init: &init,
+				Name: name,
+			})
+		}
 	}
 	return
 }

@@ -90,6 +90,12 @@ func main() {
 	log.Info(ServiceName + ": " + Version)
 	startTime := time.Now()
 
+	wsInfo, err := resolveWorkspaceInfo(context.Background())
+	if err != nil || wsInfo == nil {
+		log.WithError(err).WithField("wsInfo", wsInfo).Error("resolve workspace info failed")
+		return
+	}
+
 	var port string
 	var warmup bool
 
@@ -98,10 +104,6 @@ func main() {
 	}
 
 	if os.Args[1] == "warmup" {
-		if len(os.Args) < 3 {
-			log.Fatalf("Usage: %s %s <alias>\n", os.Args[0], os.Args[1])
-		}
-
 		warmup = true
 	} else {
 		if len(os.Args) < 3 {
@@ -112,6 +114,11 @@ func main() {
 	}
 
 	alias := os.Args[2]
+	if warmup && alias == "" {
+		warmUpAll(wsInfo)
+		return
+	}
+
 	label := "Open JetBrains IDE"
 	if len(os.Args) > 3 {
 		label = os.Args[3]
@@ -135,12 +142,6 @@ func main() {
 	backendVersion, err := version.NewVersion(info.Version)
 	if err != nil {
 		log.WithError(err).Error("failed to resolve backend version")
-		return
-	}
-
-	wsInfo, err := resolveWorkspaceInfo(context.Background())
-	if err != nil || wsInfo == nil {
-		log.WithError(err).WithField("wsInfo", wsInfo).Error("resolve workspace info failed")
 		return
 	}
 
@@ -382,6 +383,50 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoRespons
 		}
 	}
 	return nil, errors.New("failed with attempt 10 times")
+}
+
+// warmUpAll warmup all jetbrains IDEs
+func warmUpAll(wsInfo *supervisor.WorkspaceInfoResponse) {
+	projectDir := wsInfo.GetCheckoutLocation()
+	gitpodConfig, err := parseGitpodConfig(projectDir)
+	if err != nil {
+		log.WithError(err).Fatal("failed to parse .gitpod.yml")
+	}
+	collectPrebuilds(gitpodConfig, func(alias string, qualifier string) {
+		warmUpLog := log.WithField("alias", alias).WithField("qualifier", qualifier)
+		warmUpLog.Info("warmup: starting...")
+		cmd := exec.Command("/ide-desktop/jb-launcher", "warmup", alias)
+		cmd.Env = append(os.Environ(), "JETBRAINS_BACKEND_QUALIFIER="+qualifier)
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		if err := cmd.Run(); err != nil {
+			warmUpLog.WithError(err).Fatal("warmup: failed to run")
+		}
+		warmUpLog.Info("warmup: done")
+	})
+}
+
+// collectPrebuilds collects all prebuilds from .gitpod.yml
+func collectPrebuilds(gitpodConfig *gitpod.GitpodConfig, acceptor func(alias string, qualifier string)) {
+	if gitpodConfig.Jetbrains == nil {
+		return
+	}
+	v := reflect.ValueOf(gitpodConfig.Jetbrains).Elem()
+	t := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		f := v.Field(i)
+		alias := strings.ToLower(t.Field(i).Name)
+		product, ok := f.Interface().(*gitpod.JetbrainsProduct)
+		if ok && product != nil && product.Prebuilds != nil {
+			if product.Prebuilds.Version != "latest" {
+				acceptor(alias, "stable")
+
+			}
+			if product.Prebuilds.Version != "stable" {
+				acceptor(alias, "latest")
+			}
+		}
+	}
 }
 
 func launch(launchCtx *LaunchContext) {
