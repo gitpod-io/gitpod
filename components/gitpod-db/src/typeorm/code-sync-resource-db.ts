@@ -132,8 +132,8 @@ export class CodeSyncResourceDB {
         await connection.transaction(async (manager) => {
             await manager
                 .createQueryBuilder()
-                .update(DBCodeSyncResource)
-                .set({ deleted: true })
+                .delete()
+                .from(DBCodeSyncResource)
                 .where("userId = :userId AND kind != 'editSessions' AND collection = :collection", {
                     userId,
                     collection: uuid.NIL,
@@ -155,8 +155,8 @@ export class CodeSyncResourceDB {
             await connection.transaction(async (manager) => {
                 await manager
                     .createQueryBuilder()
-                    .update(DBCodeSyncResource)
-                    .set({ deleted: true })
+                    .delete()
+                    .from(DBCodeSyncResource)
                     .where("userId = :userId AND kind = :kind AND rev = :rev AND collection = :collection", {
                         userId,
                         kind,
@@ -170,8 +170,8 @@ export class CodeSyncResourceDB {
             await connection.transaction(async (manager) => {
                 await manager
                     .createQueryBuilder()
-                    .update(DBCodeSyncResource)
-                    .set({ deleted: true })
+                    .delete()
+                    .from(DBCodeSyncResource)
                     .where("userId = :userId AND kind = :kind AND collection = :collection", {
                         userId,
                         kind,
@@ -317,14 +317,14 @@ export class CodeSyncResourceDB {
             await connection.transaction(async (manager) => {
                 await manager
                     .createQueryBuilder()
-                    .update(DBCodeSyncCollection)
-                    .set({ deleted: true })
+                    .delete()
+                    .from(DBCodeSyncCollection)
                     .where("userId = :userId AND collection = :collection", { userId, collection })
                     .execute();
                 await manager
                     .createQueryBuilder()
-                    .update(DBCodeSyncResource)
-                    .set({ deleted: true })
+                    .delete()
+                    .from(DBCodeSyncResource)
                     .where("userId = :userId AND collection = :collection", { userId, collection })
                     .execute();
                 await doDelete(collection);
@@ -334,14 +334,14 @@ export class CodeSyncResourceDB {
             await connection.transaction(async (manager) => {
                 await manager
                     .createQueryBuilder()
-                    .update(DBCodeSyncCollection)
-                    .set({ deleted: true })
+                    .delete()
+                    .from(DBCodeSyncCollection)
                     .where("userId = :userId", { userId })
                     .execute();
                 await manager
                     .createQueryBuilder()
-                    .update(DBCodeSyncResource)
-                    .set({ deleted: true })
+                    .delete()
+                    .from(DBCodeSyncResource)
                     .where("userId = :userId AND collection != :collection", { userId, collection: uuid.NIL })
                     .execute();
                 await doDelete();
