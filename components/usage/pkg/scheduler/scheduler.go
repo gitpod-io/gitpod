@@ -70,7 +70,7 @@ func (c *Scheduler) Start() {
 				return jobErr
 			})
 			if err != nil {
-				if errors.Is(err, redsync.ErrFailed) {
+				if errors.Is(err, redsync.ErrTaken{}) {
 					logger.WithError(err).Info("Failed to acquire lock, another instance holds the lock already.")
 					return
 				}
