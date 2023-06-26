@@ -2744,8 +2744,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const checkResults = await Promise.allSettled(checks);
 
         const accessibleTeams = [];
+        const errors = [];
         for (let result of checkResults) {
             if (result.status !== "fulfilled") {
+                errors.push(result.reason);
                 continue;
             }
 
@@ -2754,6 +2756,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             if (check.permitted) {
                 accessibleTeams.push(team);
             }
+        }
+
+        if (errors.length > 0) {
+            log.warn(`Failed to check for permissions on getTeams for at least one team`, { errors });
         }
 
         return accessibleTeams;
