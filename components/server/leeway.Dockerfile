@@ -4,8 +4,6 @@
 
 FROM cgr.dev/chainguard/node@sha256:95bb4763acb8e9702c956e093932be97ab118db410a0619bb3fdd334c9198006 as builder
 
-RUN apt-get update && apt-get install -y build-essential python3
-
 COPY components-server--app /installer/
 
 WORKDIR /app
