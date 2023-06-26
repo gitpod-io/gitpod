@@ -99,7 +99,7 @@ func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*by
 		err = copyOptions.Run()
 		if err != nil {
 			if !shouldRetry(count, err) {
-				return nil, nil, nil, fmt.Errorf("could not run copy operation: %v", err)
+				return nil, nil, nil, fmt.Errorf("could not run copy operation: %v. Stdout: %v, Stderr: %v", err, out.String(), errOut.String())
 			}
 			time.Sleep(10 * time.Second)
 			continue
