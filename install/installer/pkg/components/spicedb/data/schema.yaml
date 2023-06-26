@@ -29,6 +29,10 @@ schema: |-
     // Only owners can change settings
     permission read_settings = owner
     permission write_settings = owner
+
+    // Only owners can change Git providers
+    permission read_git_provider = owner + member
+    permission write_git_provider = owner
   }
 
   definition project {
@@ -82,9 +86,12 @@ relationships: |-
 assertions:
   assertTrue:
     - organization:org_1#read_info@user:user_0
+    # user 1 can read git providers because they are a member
+    - organization:org_1#read_git_provider@user:user_1
     # user 0 can edit project_0, because they are the Org Owner
     - project:project_1#write_info@user:user_0
     - organization:org_1#write_settings@user:user_0
+    - organization:org_1#write_git_provider@user:user_0
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -95,6 +102,8 @@ assertions:
     - organization:org_1#read_members@user:user_3
     - organization:org_1#write_members@user:user_3
     - organization:org_1#write_settings@user:user_1
+    # members are not allowed to:
+    - organization:org_1#write_git_provider@user:user_1
 # validation should assert that a particular relation exists between an entity, and a subject
 # validations are not used to assert that a permission exists
 validation:

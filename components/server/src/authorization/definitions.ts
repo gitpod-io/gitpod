@@ -22,6 +22,8 @@ export type OrganizationPermission =
     | "leave"
     | "read_settings"
     | "write_settings"
+    | "read_git_provider"
+    | "write_git_provider"
     | "create_project";
 export type ProjectPermission = "write_info" | "read_info";
 export type Permission = OrganizationPermission;
