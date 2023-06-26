@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -143,68 +144,35 @@ func Setup(ctx context.Context) (string, string, env.Environment, bool, string, 
 	return username, e.Namespace(), testenv, enterprise, kubeconfig, gitlab
 }
 
+var (
+	components = []string{
+		"agent-smith",
+		"blobserve",
+		"content-service",
+		"dashboard",
+		"image-builder-mk3",
+		"proxy",
+		"registry-facade",
+		"server",
+		"ws-daemon",
+		"ws-manager-mk2",
+		"ws-manager-bridge",
+		"ws-proxy",
+	}
+)
+
 func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 	klog.V(2).Info("Checking status of Gitpod components...")
-
 	return func(ctx context.Context, cfg *envconf.Config) (context.Context, error) {
-		components := []string{
-			"agent-smith",
-			"blobserve",
-			"content-service",
-			"dashboard",
-			"image-builder-mk3",
-			"proxy",
-			"registry-facade",
-			"server",
-			"ws-daemon",
-			"ws-manager-mk2",
-			"ws-manager-bridge",
-			"ws-proxy",
-		}
-
 		client := cfg.Client()
 		err := wait.PollImmediate(1*time.Second, waitTimeout, func() (bool, error) {
-			var wg sync.WaitGroup
-			ready := true
-			for _, component := range components {
-				wg.Add(1)
-				go func(component string) {
-					defer wg.Done()
-					var pods corev1.PodList
-					err := client.Resources(namespace).List(context.Background(), &pods, func(opts *metav1.ListOptions) {
-						opts.LabelSelector = fmt.Sprintf("component=%v", component)
-					})
-					if err != nil {
-						klog.Errorf("unexpected error searching Gitpod components: %v", err)
-						ready = false
-						return
-					}
-
-					if len(pods.Items) == 0 {
-						klog.Warningf("no pod ready for component %v", component)
-						ready = false
-						return
-					}
-
-					for _, p := range pods.Items {
-						var isReady bool
-						for _, cond := range p.Status.Conditions {
-							if cond.Type == corev1.PodReady {
-								isReady = cond.Status == corev1.ConditionTrue
-								break
-							}
-						}
-						if !isReady {
-							klog.Warningf("no pod ready for component %v", component)
-							ready = false
-							return
-						}
-					}
-				}(component)
+			ready, reason, err := isPreviewReady(client, namespace)
+			if err != nil {
+				klog.Errorf("error checking if preview is ready: %v", err)
+				return false, nil
 			}
-
-			wg.Wait()
 			if !ready {
+				klog.Warningf("preview is not (yet) ready: %s", reason)
 				return false, nil
 			}
 
@@ -217,6 +185,75 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 
 		return ctx, nil
 	}
+}
+
+func isPreviewReady(client klient.Client, namespace string) (ready bool, reason string, err error) {
+	var wg sync.WaitGroup
+	ready = true
+	var reasons sync.Map
+	for _, component := range components {
+		wg.Add(1)
+		go func(component string) {
+			defer wg.Done()
+			compReady, reason, err := isComponentReady(client, namespace, component)
+			if err != nil {
+				klog.Errorf("unexpected error searching Gitpod components: %v", err)
+				ready = false
+				return
+			}
+			if !compReady {
+				klog.Warningf("no pod ready for component %v: %s", component, reason)
+				ready = false
+				reasons.Store(component, reason)
+				return
+			}
+		}(component)
+	}
+
+	wg.Wait()
+	if !ready {
+		var reasonList []string
+		reasons.Range(func(component, reason interface{}) bool {
+			reasonList = append(reasonList, fmt.Sprintf("%s: %s", component, reason))
+			return true
+		})
+		return false, strings.Join(reasonList, ", "), nil
+	}
+
+	return true, "", nil
+}
+
+func isComponentReady(client klient.Client, namespace, component string) (ready bool, reason string, err error) {
+	var pods corev1.PodList
+	err = client.Resources(namespace).List(context.Background(), &pods, func(opts *metav1.ListOptions) {
+		opts.LabelSelector = fmt.Sprintf("component=%v", component)
+	})
+	if err != nil {
+		return false, "", err
+	}
+
+	if len(pods.Items) == 0 {
+		return false, "no pod found", nil
+	}
+
+	for _, p := range pods.Items {
+		var isReady bool
+		var reason string
+		for _, cond := range p.Status.Conditions {
+			if cond.Type == corev1.PodReady {
+				isReady = cond.Status == corev1.ConditionTrue
+				if !isReady {
+					reason = fmt.Sprintf("status: %s, reason: %s, message: %s", cond.Status, cond.Reason, cond.Message)
+				}
+				break
+			}
+		}
+		if !isReady {
+			return false, reason, nil
+		}
+	}
+
+	return true, "", nil
 }
 
 func getNamespace(path string) (string, error) {
