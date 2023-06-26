@@ -210,6 +210,11 @@ func (r *RpcClient) Call(serviceMethod string, args any, reply any) error {
 	for i := 0; i < connectFailureMaxTries; i++ {
 		if r != nil {
 			if err = r.client.Call(serviceMethod, args, reply); err != nil {
+				log.Warnf("rpc call %s failed (attempt %d): %v", serviceMethod, i, err)
+				if i == connectFailureMaxTries-1 {
+					return err
+				}
+
 				time.Sleep(10 * time.Second)
 				r.Close()
 				new, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
