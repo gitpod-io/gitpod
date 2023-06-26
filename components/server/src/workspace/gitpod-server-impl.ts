@@ -173,6 +173,10 @@ import {
     ReadOrganizationInfo,
     WriteOrganizationMembers,
     WriteOrganizationInfo,
+    WriteOrganizationSettings,
+    ReadOrganizationSettings,
+    ReadGitProvider,
+    WriteGitProvider,
 } from "../authorization/checks";
 import { increaseDashboardErrorBoundaryCounter, reportCentralizedPermsValidation } from "../prometheus-metrics";
 import { RegionService } from "./region-service";
@@ -2726,6 +2730,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             case "write_members":
                 return await this.authorizer.check(WriteOrganizationMembers(user.id, orgId), experimentMetadata);
 
+            case "write_settings":
+                return await this.authorizer.check(WriteOrganizationSettings(user.id, orgId), experimentMetadata);
+            case "read_settings":
+                return await this.authorizer.check(ReadOrganizationSettings(user.id, orgId), experimentMetadata);
+
+            case "write_git_provider":
+                return await this.authorizer.check(WriteGitProvider(user.id, orgId), experimentMetadata);
+            case "read_git_provider":
+                return await this.authorizer.check(ReadGitProvider(user.id, orgId), experimentMetadata);
+
             default:
                 return NotPermitted;
         }
@@ -3757,15 +3771,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, newProvider.organizationId);
 
+        await this.guardTeamOperation(newProvider.organizationId, "update", "write_git_provider");
+
         if (!newProvider.host) {
             throw new ResponseError(
                 ErrorCodes.BAD_REQUEST,
                 "Must provider a host value when creating a new auth provider.",
             );
         }
-
-        // Ensure user can perform this operation on this organization
-        await this.guardTeamOperation(newProvider.organizationId, "update", "not_implemented");
 
         try {
             // on creating we're are checking for already existing runtime providers
@@ -3813,7 +3826,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, providerUpdate.organizationId);
 
-        await this.guardTeamOperation(providerUpdate.organizationId, "update", "not_implemented");
+        await this.guardTeamOperation(providerUpdate.organizationId, "update", "write_git_provider");
 
         try {
             const result = await this.authProviderService.updateOrgAuthProvider(providerUpdate);
@@ -3834,7 +3847,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, params.organizationId);
 
-        await this.guardTeamOperation(params.organizationId, "get", "not_implemented");
+        await this.guardTeamOperation(params.organizationId, "get", "read_git_provider");
 
         try {
             const result = await this.authProviderService.getAuthProvidersOfOrg(params.organizationId);
@@ -3858,14 +3871,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, team.id);
 
+        await this.guardTeamOperation(params.organizationId || "", "update", "write_git_provider");
+
         // Find the matching auth provider we're attempting to delete
         const orgProviders = await this.authProviderService.getAuthProvidersOfOrg(team.id);
-        const authProvider = orgProviders.find((p) => p.id === params.id);
+        const authProvider = orgProviders.find((p) => p.id === params.id && p.organizationId === params.organizationId);
         if (!authProvider) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
-
-        await this.guardTeamOperation(authProvider.organizationId || "", "update", "not_implemented");
 
         try {
             await this.authProviderService.deleteAuthProvider(authProvider);

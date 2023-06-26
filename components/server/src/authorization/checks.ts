@@ -35,4 +35,7 @@ export const WriteOrganizationMembers = check("user", "write_members", "organiza
 export const ReadOrganizationSettings = check("user", "read_settings", "organization");
 export const WriteOrganizationSettings = check("user", "write_settings", "organization");
 
+export const ReadGitProvider = check("user", "read_git_provider", "organization");
+export const WriteGitProvider = check("user", "write_git_provider", "organization");
+
 export const LeaveOrganization = check("user", "leave", "organization");
