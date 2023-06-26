@@ -305,9 +305,9 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	lastStatus, err := WaitForWorkspaceStart(t, ctx, req.Id, req.Metadata.MetaId, api, options.WaitForOpts...)
 	if err != nil {
 		// Check if the preview env is in a good state, and log details if not.
-		previewReady, reason, err := isPreviewReady(api.client, api.namespace)
-		if err != nil {
-			t.Logf("error checking if preview is ready: %v", err)
+		previewReady, reason, previewErr := isPreviewReady(api.client, api.namespace)
+		if previewErr != nil {
+			t.Logf("error checking if preview is ready: %v", previewErr)
 		} else if !previewReady {
 			t.Logf("preview env is not ready: %s", reason)
 		}
