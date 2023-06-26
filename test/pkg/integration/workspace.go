@@ -706,6 +706,11 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 			return nil, false, err
 		}
 
+		if desc == nil || desc.Status == nil {
+			t.Logf("describe status is nil: %s", instanceID)
+			return nil, false, nil
+		}
+
 		t.Logf("describe status: %s, %s", desc.Status.Id, desc.Status.Phase)
 
 		done, err := checkStatus(desc.Status)
