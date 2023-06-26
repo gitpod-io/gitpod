@@ -38,4 +38,7 @@ export const WriteOrganizationSettings = check("user", "write_settings", "organi
 export const ReadGitProvider = check("user", "read_git_provider", "organization");
 export const WriteGitProvider = check("user", "write_git_provider", "organization");
 
+export const ReadBilling = check("user", "read_billing", "organization");
+export const WriteBilling = check("user", "write_billing", "organization");
+
 export const LeaveOrganization = check("user", "leave", "organization");
