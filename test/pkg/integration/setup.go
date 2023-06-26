@@ -243,7 +243,7 @@ func isComponentReady(client klient.Client, namespace, component string) (ready 
 			if cond.Type == corev1.PodReady {
 				isReady = cond.Status == corev1.ConditionTrue
 				if !isReady {
-					reason = fmt.Sprintf("status: %s, reason: %s, message: %s", cond.Status, cond.Reason, cond.Message)
+					reason = fmt.Sprintf("status: %v", p.Status)
 				}
 				break
 			}

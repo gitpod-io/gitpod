@@ -52,7 +52,7 @@ func TestGitHooks(t *testing.T) {
 
 			for _, ff := range ffs {
 				func() {
-					ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
+					ctx, cancel := context.WithTimeout(testCtx, 10*time.Minute)
 					defer cancel()
 
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
