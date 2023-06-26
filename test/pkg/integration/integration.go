@@ -74,13 +74,8 @@ func NewPodExec(config rest.Config, clientset *kubernetes.Clientset) *PodExec {
 func (p *PodExec) PodCopyFile(src string, dst string, containername string) (*bytes.Buffer, *bytes.Buffer, *bytes.Buffer, error) {
 	var in, out, errOut *bytes.Buffer
 	var ioStreams genericclioptions.IOStreams
-	log.Infof("%v start copy file", time.Now())
-	defer func() {
-		log.Infof("%v end copy file", time.Now())
-	}()
 	for count := 0; ; count++ {
-		// ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
-		ioStreams = genericclioptions.NewTestIOStreamsDiscard()
+		ioStreams, in, out, errOut = genericclioptions.NewTestIOStreams()
 		copyOptions := kubectlcp.NewCopyOptions(ioStreams)
 		copyOptions.ClientConfig = p.RestConfig
 		copyOptions.Container = containername
