@@ -217,6 +217,7 @@ export class ProjectsService {
     }
 
     async deleteProject(projectId: string): Promise<void> {
+        let orgId: string | undefined = undefined;
         try {
             await this.projectDB.transaction(async (db) => {
                 // TODO(gpl): This is a case where we'd need to extend the service + API to also accept the orgId as first parameter
@@ -224,12 +225,15 @@ export class ProjectsService {
                 if (!project) {
                     throw new Error("Project does not exist");
                 }
+                orgId = project.teamId;
                 await db.markDeleted(projectId);
 
-                await this.authorizer.writeRelationships(removeProjectFromOrg(project.teamId, projectId));
+                await this.authorizer.writeRelationships(removeProjectFromOrg(orgId, projectId));
             });
         } catch (err) {
-            // As the remove relationships is the last call that might fail, we don't have to do anything here.
+            if (orgId) {
+                await this.authorizer.writeRelationships(addProjectToOrg(orgId, projectId));
+            }
             throw err;
         }
     }
