@@ -1135,7 +1135,7 @@
         "name": "cluster",
         "options": [],
         "query": {
-          "query": "label_values(gitpod_ws_manager_mk2_workspace_phase_total, cluster)",
+          "query": "label_values(gitpod_ws_manager_mk2_workspace_phase_total{cluster!~\"ephemeral.*\"},cluster)",
           "refId": "VictoriaMetrics-cluster-Variable-Query"
         },
         "refresh": 2,
