@@ -3,7 +3,7 @@
 # See License.AGPL.txt in the project root for license information.
 
 FROM node:16.13.0-slim as builder
-COPY components-ws-manager-bridge--app /installer/
+COPY components-server--app /installer/
 
 WORKDIR /app
 RUN /installer/install.sh
