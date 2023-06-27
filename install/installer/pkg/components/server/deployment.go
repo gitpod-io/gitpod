@@ -336,7 +336,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							SecurityContext: &corev1.SecurityContext{
 								Privileged:               pointer.Bool(false),
 								AllowPrivilegeEscalation: pointer.Bool(false),
-								RunAsUser:                pointer.Int64(31001),
 							},
 							Ports: []corev1.ContainerPort{{
 								Name:          ContainerPortName,
