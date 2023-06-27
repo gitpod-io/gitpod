@@ -10,6 +10,4 @@ const (
 	ImageName    = "gce-proxy"
 	ImageVersion = "1.11"
 	Port         = 3306
-
-	ComponentGlobal = "cloudsqlproxy-global"
 )
