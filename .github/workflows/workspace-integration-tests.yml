@@ -7,7 +7,7 @@ on:
                 description: "The name of the preview environment, or leave empty to use a default name"
             version:
                 required: false
-                description: "The version of Gitpod to install (leave empty to target the latest build on main)"
+                description: "The version of Gitpod to install (leave empty to target the latest successful build on main)"
             skip_deploy:
                 required: false
                 type: boolean
@@ -65,10 +65,10 @@ jobs:
                           echo "version=${{ github.event.inputs.version }}"
                       } >> $GITHUB_OUTPUT
                   else
-                      # others
-                      RUNID=$(gh run list -R gitpod-io/gitpod -b main -w Build --limit 1 --json databaseId --jq .[0].databaseId)
-                      if ! gh run watch "$RUNID" --exit-status -R gitpod-io/gitpod >/dev/null 2>&1; then
-                        echo main branch build is failed, see https://github.com/gitpod-io/gitpod/actions/runs/"$RUNID" for detail | tee -a $GITHUB_STEP_SUMMARY
+                      # Find the most recent successful build on main. Look back up to 10 builds.
+                      RUNID=$(gh run list --repo gitpod-io/gitpod --branch main --workflow Build --limit 10 --json createdAt,conclusion,databaseId --jq 'map(select(.conclusion == "success")) | sort_by(.createdAt) | .[-1] | .databaseId')
+                      if [ "$RUNID" == "" ]; then
+                        echo no successful build found on main branch in the last 10 commits, see https://github.com/gitpod-io/gitpod/actions/workflows/build.yml for details | tee -a $GITHUB_STEP_SUMMARY
                         exit 1
                       fi
 
