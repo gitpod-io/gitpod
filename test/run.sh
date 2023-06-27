@@ -157,7 +157,9 @@ else
   done
 fi
 
+set +e
 xunit-viewer -r "${RESULTS_DIR}" -o "${THIS_DIR}/test-output.html"
 pkill -f "port-forward"
+set -e
 
 exit $FAILURE_COUNT
