@@ -25,5 +25,8 @@
             "components/supervisor/frontend",
             "charts/"
         ]
+    },
+    "dependencies": {
+        "minimist": "1.2.6"
     }
 }
