@@ -698,6 +698,10 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 		if err != nil {
 			scode := status.Code(err)
 			if scode == codes.NotFound || strings.Contains(err.Error(), "not found") {
+				if cfg.WaitForStopped {
+					t.Logf("describe: workspace couldn't be found, but we're expecting it to stop, so wait for subscribe to give us the last status")
+					return nil, false, nil
+				}
 				if !cfg.CanFail {
 					return nil, true, xerrors.New("the workspace couldn't be found")
 				}
