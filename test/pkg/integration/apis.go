@@ -1166,6 +1166,16 @@ func (c *ComponentAPI) Done(t *testing.T) {
 			t.Logf("cleanup failed: %q", err)
 		}
 	}
+
+	if t.Failed() {
+		// Log preview env status when test fails to help debug the failure.
+		ready, reason, err := isPreviewReady(c.client, c.namespace)
+		if err != nil {
+			t.Logf("failed to check preview status: %q", err)
+		} else {
+			t.Logf("preview status: ready=%v, reason=%s", ready, reason)
+		}
+	}
 }
 
 func (c *ComponentAPI) appendCloser(closer func() error) {
