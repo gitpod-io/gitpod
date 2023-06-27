@@ -1175,6 +1175,7 @@ func (c *ComponentAPI) Done(t *testing.T) {
 		} else {
 			t.Logf("preview status: ready=%v, reason=%s", ready, reason)
 		}
+		logGitpodStatus(t, c.client, c.namespace)
 	}
 }
 
