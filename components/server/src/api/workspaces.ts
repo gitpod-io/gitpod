@@ -18,6 +18,8 @@ import {
     GetWorkspaceResponse,
     ListWorkspacesRequest,
     ListWorkspacesResponse,
+    SetWorkspaceDescriptionRequest,
+    SetWorkspaceDescriptionResponse,
     StartWorkspaceRequest,
     StartWorkspaceResponse,
     StopWorkspaceRequest,
@@ -59,6 +61,10 @@ export class APIWorkspacesService implements ServiceImpl<typeof WorkspacesServic
     }
 
     async deleteWorkspace(req: DeleteWorkspaceRequest): Promise<DeleteWorkspaceResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+
+    async setWorkspaceDescription(req: SetWorkspaceDescriptionRequest): Promise<SetWorkspaceDescriptionResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 
