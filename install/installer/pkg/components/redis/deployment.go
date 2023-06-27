@@ -57,7 +57,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						Containers: []corev1.Container{
 							{
 								Name:            ContainerName,
-								Image:           ctx.ImageDigest(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), RegistryImage, ImageDigest),
+								Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), RegistryImage, ImageTag),
 								ImagePullPolicy: corev1.PullIfNotPresent,
 								Command: []string{
 									"redis-server",
@@ -103,7 +103,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							{
 								Name:            ExporterContainerName,
-								Image:           ctx.ImageDigest(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), ExporterRegistryImage, ExporterImageDigest),
+								Image:           ctx.ImageName(common.ThirdPartyContainerRepo(ctx.Config.Repository, RegistryRepo), ExporterRegistryImage, ExporterImageTag),
 								ImagePullPolicy: corev1.PullIfNotPresent,
 								Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
 									[]v1.EnvVar{
