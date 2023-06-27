@@ -26,10 +26,17 @@ var Helm = common.CompositeHelmFunc(
 
 		imageRegistry := common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)
 
+		// We switched to specific tags because we got subtle broken versions with just specifying major versions
+		mysqlBitnamiImageTag := "5.7.34-debian-10-r55"
+		if cfg.Config.Database.InClusterMysSQL_8_0 {
+			mysqlBitnamiImageTag = "8.0.33-debian-11-r24"
+		}
+
 		return &common.HelmConfig{
 			Enabled: true,
 			Values: &values.Options{
 				Values: []string{
+					helm.KeyValue("mysql.image.tag", mysqlBitnamiImageTag),
 					helm.KeyValue("mysql.auth.existingSecret", SQLPasswordName),
 					helm.KeyValue("mysql.auth.database", Database),
 					helm.KeyValue("mysql.auth.username", Username),

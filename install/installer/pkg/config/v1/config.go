@@ -196,6 +196,8 @@ type Database struct {
 	External  *DatabaseExternal `json:"external,omitempty"`
 	CloudSQL  *DatabaseCloudSQL `json:"cloudSQL,omitempty"`
 	SSL       *SSLOptions       `json:"ssl,omitempty"`
+	// A temporary flag to help debug for the migration to MySQL 8.0
+	InClusterMysSQL_8_0 bool `json:"inClusterMySql_8_0,omitempty"`
 }
 
 type DatabaseExternal struct {
