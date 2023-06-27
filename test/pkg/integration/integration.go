@@ -268,7 +268,7 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 			var err error
 			agentLoc, err = buildAgent(agentName)
 			if err != nil {
-				return nil, closer, err
+				return nil, closer, fmt.Errorf("failed to build agent: %w", err)
 			}
 		}
 
@@ -292,7 +292,9 @@ func Instrument(component ComponentType, agentName string, namespace string, kub
 		tgtFN := filepath.Base(agentLoc)
 		_, _, _, err = podExec.PodCopyFile(agentLoc, fmt.Sprintf("%s/%s:/home/gitpod/%s", namespace, podName, tgtFN), containerName)
 		if err != nil {
-			return nil, closer, err
+			log.WithError(err).Warnf("failed to copy agent to pod (attempt %d)", i)
+			time.Sleep(10 * time.Second)
+			continue
 		}
 
 		res, cl, err = portfw(podExec, kubeconfig, podName, namespace, containerName, tgtFN, options)
