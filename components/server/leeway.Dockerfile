@@ -14,7 +14,6 @@ ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
 
 EXPOSE 3000
 
-ENV PATH="/go/bin:${PATH}"
 COPY --from=builder /app /app/
 WORKDIR /app/node_modules/@gitpod/server
 
