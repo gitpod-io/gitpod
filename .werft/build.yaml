@@ -64,7 +64,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-dev-image-gha.12149
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     resources:
