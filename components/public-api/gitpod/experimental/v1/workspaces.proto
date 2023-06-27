@@ -39,6 +39,9 @@ service WorkspacesService {
     // Deleted workspaces cannot be started again.
     rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {}
 
+    // SetWorkspaceDescription sets the description of a workspace.
+    rpc SetWorkspaceDescription(SetWorkspaceDescriptionRequest) returns (SetWorkspaceDescriptionResponse) {}
+
     rpc UpdatePort(UpdatePortRequest) returns (UpdatePortResponse) {}
 }
 
@@ -109,6 +112,14 @@ message DeleteWorkspaceRequest {
 }
 
 message DeleteWorkspaceResponse {}
+
+
+message SetWorkspaceDescriptionRequest {
+    string workspace_id = 1;
+    string description = 2;
+}
+
+message SetWorkspaceDescriptionResponse {}
 
 ////////////////////////////////
 // Shared messages come here

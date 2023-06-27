@@ -48,6 +48,8 @@ type WorkspacesServiceClient interface {
 	// When the workspace is running, it will be stopped as well.
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(ctx context.Context, in *DeleteWorkspaceRequest, opts ...grpc.CallOption) (*DeleteWorkspaceResponse, error)
+	// SetWorkspaceDescription sets the description of a workspace.
+	SetWorkspaceDescription(ctx context.Context, in *SetWorkspaceDescriptionRequest, opts ...grpc.CallOption) (*SetWorkspaceDescriptionResponse, error)
 	UpdatePort(ctx context.Context, in *UpdatePortRequest, opts ...grpc.CallOption) (*UpdatePortResponse, error)
 }
 
@@ -154,6 +156,15 @@ func (c *workspacesServiceClient) DeleteWorkspace(ctx context.Context, in *Delet
 	return out, nil
 }
 
+func (c *workspacesServiceClient) SetWorkspaceDescription(ctx context.Context, in *SetWorkspaceDescriptionRequest, opts ...grpc.CallOption) (*SetWorkspaceDescriptionResponse, error) {
+	out := new(SetWorkspaceDescriptionResponse)
+	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/SetWorkspaceDescription", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *workspacesServiceClient) UpdatePort(ctx context.Context, in *UpdatePortRequest, opts ...grpc.CallOption) (*UpdatePortResponse, error) {
 	out := new(UpdatePortResponse)
 	err := c.cc.Invoke(ctx, "/gitpod.experimental.v1.WorkspacesService/UpdatePort", in, out, opts...)
@@ -189,6 +200,8 @@ type WorkspacesServiceServer interface {
 	// When the workspace is running, it will be stopped as well.
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(context.Context, *DeleteWorkspaceRequest) (*DeleteWorkspaceResponse, error)
+	// SetWorkspaceDescription sets the description of a workspace.
+	SetWorkspaceDescription(context.Context, *SetWorkspaceDescriptionRequest) (*SetWorkspaceDescriptionResponse, error)
 	UpdatePort(context.Context, *UpdatePortRequest) (*UpdatePortResponse, error)
 	mustEmbedUnimplementedWorkspacesServiceServer()
 }
@@ -220,6 +233,9 @@ func (UnimplementedWorkspacesServiceServer) StopWorkspace(context.Context, *Stop
 }
 func (UnimplementedWorkspacesServiceServer) DeleteWorkspace(context.Context, *DeleteWorkspaceRequest) (*DeleteWorkspaceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteWorkspace not implemented")
+}
+func (UnimplementedWorkspacesServiceServer) SetWorkspaceDescription(context.Context, *SetWorkspaceDescriptionRequest) (*SetWorkspaceDescriptionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetWorkspaceDescription not implemented")
 }
 func (UnimplementedWorkspacesServiceServer) UpdatePort(context.Context, *UpdatePortRequest) (*UpdatePortResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdatePort not implemented")
@@ -384,6 +400,24 @@ func _WorkspacesService_DeleteWorkspace_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspacesService_SetWorkspaceDescription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetWorkspaceDescriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspacesServiceServer).SetWorkspaceDescription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gitpod.experimental.v1.WorkspacesService/SetWorkspaceDescription",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspacesServiceServer).SetWorkspaceDescription(ctx, req.(*SetWorkspaceDescriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _WorkspacesService_UpdatePort_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdatePortRequest)
 	if err := dec(in); err != nil {
@@ -436,6 +470,10 @@ var WorkspacesService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteWorkspace",
 			Handler:    _WorkspacesService_DeleteWorkspace_Handler,
+		},
+		{
+			MethodName: "SetWorkspaceDescription",
+			Handler:    _WorkspacesService_SetWorkspaceDescription_Handler,
 		},
 		{
 			MethodName: "UpdatePort",

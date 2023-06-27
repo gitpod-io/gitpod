@@ -7,6 +7,7 @@ package apiv1
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	connect "github.com/bufbuild/connect-go"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -288,6 +289,31 @@ func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Req
 	}
 
 	return connect.NewResponse(&v1.DeleteWorkspaceResponse{}), nil
+}
+
+func (s *WorkspaceService) SetWorkspaceDescription(ctx context.Context, req *connect.Request[v1.SetWorkspaceDescriptionRequest]) (*connect.Response[v1.SetWorkspaceDescriptionResponse], error) {
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
+	description := strings.TrimSpace(req.Msg.GetDescription())
+	if description == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Description cannot be empty."))
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conn.SetWorkspaceDescription(ctx, workspaceID, description)
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to change workspace description.")
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.SetWorkspaceDescriptionResponse{}), nil
 }
 
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
