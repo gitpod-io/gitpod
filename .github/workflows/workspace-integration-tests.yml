@@ -209,6 +209,7 @@ jobs:
               with:
                   name: test-results
                   paths: "test/tests/**/TEST-*.xml"
+              if: always()
             - name: Test Summary
               id: test_summary
               uses: test-summary/action@v2
