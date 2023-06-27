@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/docker/distribution/reference"
+	"github.com/opencontainers/go-digest"
 	"helm.sh/helm/v3/pkg/cli/values"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
@@ -121,6 +122,21 @@ func (r *RenderContext) ImageName(repo, name, tag string) string {
 	}
 
 	return ref
+}
+
+func (r *RenderContext) ImageDigest(repo, name string, digest digest.Digest) string {
+	ref := fmt.Sprintf("%s@%s", r.RepoName(repo, name), digest)
+	pref, err := reference.ParseNamed(ref)
+	if err != nil {
+		panic(fmt.Sprintf("cannot parse image ref %s: %v", ref, err))
+	}
+
+	canonical, err := reference.WithDigest(pref, digest)
+	if err != nil {
+		panic(fmt.Sprintf("image ref %s has no canonical version: %v", ref, err))
+	}
+
+	return canonical.String()
 }
 
 // generateValues generates the random values used throughout the context

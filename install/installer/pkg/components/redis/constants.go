@@ -4,15 +4,16 @@
 
 package redis
 
+import "github.com/opencontainers/go-digest"
+
 const (
 	Component = "redis"
 
 	PortName = "api"
 	Port     = 6379
 
-	RegistryRepo  = "registry.hub.docker.com"
-	RegistryImage = "library/redis"
-	ImageTag      = "7.0.8"
+	RegistryRepo  = "cgr.dev"
+	RegistryImage = "chainguard/redis"
 
 	ContainerName = "redis"
 
@@ -21,4 +22,8 @@ const (
 	ExporterContainerName = "exporter"
 	ExporterPortName      = "exporter"
 	ExporterPort          = 9500
+)
+
+var (
+	ImageDigest = digest.FromString("sha256:d2802dec2f97b47c7fb34eee0b4d658fd0574577271e5e426e2d949cc3d47110")
 )
