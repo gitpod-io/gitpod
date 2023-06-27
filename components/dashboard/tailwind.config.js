@@ -54,9 +54,14 @@ module.exports = {
                     from: { transform: "translateX(100%)" },
                     to: { transform: "translateX(0)" },
                 },
+                "fade-in": {
+                    "0%": { opacity: "0" },
+                    "100%": { opacity: "1" },
+                },
             },
             animation: {
                 "toast-in-right": "toast-in-right 0.3s ease-in-out",
+                "fade-in": "fade-in 3s linear",
             },
             transitionProperty: {
                 width: "width",
