@@ -2,32 +2,20 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License.AGPL.txt in the project root for license information.
 
-FROM cgr.dev/chainguard/node@sha256:95bb4763acb8e9702c956e093932be97ab118db410a0619bb3fdd334c9198006 as builder
-
-COPY components-server--app /installer/
+FROM node:16.13.0-slim as builder
+COPY components-ws-manager-bridge--app /installer/
 
 WORKDIR /app
 RUN /installer/install.sh
 
+# NodeJS v16.19
 FROM cgr.dev/chainguard/node@sha256:95bb4763acb8e9702c956e093932be97ab118db410a0619bb3fdd334c9198006
 ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
-# Using ssh-keygen for RSA keypair generation
-RUN apt-get update && apt-get install -yq \
-        openssh-client \
-        procps \
-        net-tools \
-        nano \
-        curl \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 EXPOSE 3000
 
 ENV PATH="/go/bin:${PATH}"
-
-# '--no-log-init': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-RUN useradd --no-log-init --create-home --uid 31001 --home-dir /app/ unode
 COPY --from=builder /app /app/
-USER unode
 WORKDIR /app/node_modules/@gitpod/server
 
 ARG __GIT_COMMIT
