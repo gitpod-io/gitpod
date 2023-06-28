@@ -14,7 +14,7 @@ ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
 
 EXPOSE 3000
 
-COPY --from=builder /app /app/
+COPY --from=builder --chown=node:node /app /app/
 WORKDIR /app/node_modules/@gitpod/server
 
 ARG __GIT_COMMIT
@@ -22,4 +22,4 @@ ARG VERSION
 
 ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
 ENV GITPOD_BUILD_VERSION=${VERSION}
-CMD yarn start
+CMD ["./dist/main.js"]
