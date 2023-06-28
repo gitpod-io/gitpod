@@ -32,8 +32,8 @@ import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Configuration } from "./config";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { performance } from "perf_hooks";
-import { PrebuildUpdater } from "./prebuild-updater";
 import { WorkspaceInstanceController } from "./workspace-instance-controller";
+import { PrebuildUpdaterDB } from "./prebuild-updater-db";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -64,8 +64,8 @@ export class WorkspaceManagerBridge implements Disposable {
     @inject(IAnalyticsWriter)
     protected readonly analytics: IAnalyticsWriter;
 
-    @inject(PrebuildUpdater)
-    protected readonly prebuildUpdater: PrebuildUpdater;
+    @inject(PrebuildUpdaterDB)
+    protected readonly prebuildUpdater: PrebuildUpdaterDB;
 
     @inject(WorkspaceInstanceController)
     protected readonly workspaceInstanceController: WorkspaceInstanceController; // bound in "transient" mode: we expect to receive a fresh instance here
