@@ -14,7 +14,7 @@ resource "google_compute_instance" "default" {
     initialize_params {
       image = "projects/workspace-clusters/global/images/${var.vm_image}"
       type  = "pd-ssd"
-      size  = 512
+      size  = 256
     }
   }
 
