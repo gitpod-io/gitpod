@@ -210,18 +210,22 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 
 func logGitpodStatus(t *testing.T, client klient.Client, namespace string) {
 	t.Logf("Gitpod components status:")
-	for _, component := range components {
-		var pods corev1.PodList
-		err := client.Resources(namespace).List(context.Background(), &pods, func(opts *metav1.ListOptions) {
-			opts.LabelSelector = fmt.Sprintf("component=%v", component)
-		})
-		if err != nil {
-			t.Logf("  %s: cannot list pods: %v", component, err)
-			continue
-		}
+	var allPods corev1.PodList
+	err := client.Resources(namespace).List(context.Background(), &allPods)
+	if err != nil {
+		t.Logf("failed to list pods: %v", err)
+		return
+	}
 
-		t.Logf("  %s:", component)
-		for _, p := range pods.Items {
+	for _, component := range components {
+		var pods []corev1.Pod
+		for _, pod := range allPods.Items {
+			if component.Matches(pod) {
+				pods = append(pods, pod)
+			}
+		}
+		t.Logf("  %s:", component.name)
+		for _, p := range pods {
 			var restarts int
 			ready := true
 			for _, c := range p.Status.ContainerStatuses {
@@ -242,7 +246,7 @@ func logGitpodStatus(t *testing.T, client klient.Client, namespace string) {
 
 func isPreviewReady(client klient.Client, namespace string) (ready bool, reason string, err error) {
 	ready = true
-	var reasons map[component]string
+	reasons := make(map[component]string)
 	var allPods corev1.PodList
 	err = client.Resources(namespace).List(context.Background(), &allPods)
 	if err != nil {
