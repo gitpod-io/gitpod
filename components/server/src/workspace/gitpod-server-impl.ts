@@ -3013,7 +3013,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         try {
             await this.teamDB.transaction(async (db) => {
-                // Remove each member
                 for (let member of members) {
                     await db.removeMemberFromTeam(member.userId, teamId);
                 }
