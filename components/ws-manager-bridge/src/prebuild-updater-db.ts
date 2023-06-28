@@ -9,13 +9,13 @@ import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceStatus, WorkspaceType } from "@gitpod/ws-manager/lib";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PrebuildStateMapper } from "../../src/prebuild-state-mapper";
-import { PrebuildUpdater } from "../../src/prebuild-updater";
+import { PrebuildStateMapper } from "./prebuild-state-mapper";
+import { PrebuildUpdater } from "./prebuild-updater";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { MessageBusIntegration } from "../../src/messagebus-integration";
-import { PrometheusMetricsExporter } from "../../src/prometheus-metrics-exporter";
-import { filterStatus } from "../../src/bridge";
+import { MessageBusIntegration } from "./messagebus-integration";
+import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
+import { filterStatus } from "./bridge";
 
 @injectable()
 export class PrebuildUpdaterDB implements PrebuildUpdater {

@@ -82,7 +82,7 @@ export const containerModule = new ContainerModule((bind) => {
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
     bind(PrebuildStateMapper).toSelf().inSingletonScope();
-    bind(PrebuildUpdater).to(PrebuildUpdaterNoOp).inSingletonScope();
+    bind(PrebuildUpdater).to(PrebuildUpdaterDB).inSingletonScope();
 
     bind(DebugApp).toSelf().inSingletonScope();
 

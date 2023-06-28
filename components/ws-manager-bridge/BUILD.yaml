@@ -46,4 +46,4 @@ scripts:
       telepresence --swap-deployment ws-manager-bridge \
                    --method inject-tcp \
                    --expose 18080:8080 \
-                   --run  yarn start-ee
+                   --run  yarn start
