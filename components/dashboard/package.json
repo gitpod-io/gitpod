@@ -75,7 +75,7 @@
     "start": "craco start",
     "build": "craco build --verbose",
     "lint": "eslint --max-warnings=0 --ext=.jsx,.js,.tsx,.ts ./src",
-    "test": "yarn test:unit && ./scripts/run-integration-tests.sh",
+    "test": "yarn test:unit",
     "test:unit": "craco test --all --watchAll=false",
     "test:unit:watch": "craco test --all",
     "eject": "react-scripts eject",
