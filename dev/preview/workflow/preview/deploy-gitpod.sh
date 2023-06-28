@@ -257,7 +257,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" workspace.resources.requests.cpu "100m"
 yq w -i "${INSTALLER_CONFIG_PATH}" workspace.resources.requests.memory "256Mi"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.procLimit 1000
 
-# create two workspace classes (default and small) in server-config configmap
+# create two workspace classes (g1-standard and g1-small) in server-config configmap
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-standard"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].category "GENERAL PURPOSE"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[0].displayName "Standard"
@@ -273,16 +273,18 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].descr
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].powerups "2"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[1].credits.perMinute "0.1666666667"
 
-# create two workspace classes (default and small) in ws-manager configmap
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].name "g1-standard"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].resources.requests.cpu "100m"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].resources.requests.memory "128Mi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["default"].resources.limits.storage "10Gi"
+# create two workspace classes (g1-standard and g1-small) in ws-manager configmap
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].name "g1-standard"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.requests.cpu "100m"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.requests.memory "128Mi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.limits.storage "10Gi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-standard"].resources.limits.ephemeral-storage "10Gi"
 
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].name "g1-small"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].resources.requests.cpu "100m"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].resources.requests.memory "128Mi"
-yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["small"].resources.limits.storage "5Gi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].name "g1-small"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.requests.cpu "100m"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.requests.memory "128Mi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.limits.storage "5Gi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.classes["g1-small"].resources.limits.ephemeral-storage "5Gi"
 
 #
 # configureObjectStorage
@@ -418,13 +420,13 @@ yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers[
 yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
 yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
 
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers[+].name' "workspace"
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers[+].name' "workspace"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
 
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers[+].name' "workspace"
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
-yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers[+].name' "workspace"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_PREVENT_METADATA_ACCESS"
+yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_PREVENT_METADATA_ACCESS).value' "true"
 
 #
 # includeAnalytics
@@ -448,17 +450,17 @@ if [[ "${GITPOD_ANALYTICS}" == "segment" ]]; then
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
   yq w -i "${INSTALLER_CONFIG_PATH}" 'workspace.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
 
-  # add to default workspace class
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.default.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
+  # add to g1-standard workspace class
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-standard.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
 
-  # add to small workspace class
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
-  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
+  # add to g1-small workspace class
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_WRITER"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_WRITER).value' "segment"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env[+].name' "GITPOD_ANALYTICS_SEGMENT_ENDPOINT"
+  yq w -i "${INSTALLER_CONFIG_PATH}" 'experimental.workspace.classes.g1-small.templates.default.spec.containers.(name==workspace).env.(name==GITPOD_ANALYTICS_SEGMENT_ENDPOINT).value' "https://${DOMAIN}/analytics"
 else
   yq w -i "${INSTALLER_CONFIG_PATH}" analytics.writer ""
 fi
