@@ -5,8 +5,6 @@
 package main
 
 import (
-	"fmt"
-	"reflect"
 	"strings"
 	"testing"
 
@@ -15,96 +13,6 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestCollectPrebuilds(t *testing.T) {
-	tests := []struct {
-		name     string
-		config   *protocol.GitpodConfig
-		expected []string // list of expected aliases and qualifiers
-	}{
-		{
-			name: "no products",
-			config: &protocol.GitpodConfig{
-				Jetbrains: &protocol.Jetbrains{},
-			},
-			expected: []string{},
-		},
-		{
-			name: "one product, latest version",
-			config: &protocol.GitpodConfig{
-				Jetbrains: &protocol.Jetbrains{
-					Intellij: &protocol.JetbrainsProduct{
-						Prebuilds: &protocol.Prebuilds{
-							Version: "latest",
-						},
-					},
-				},
-			},
-			expected: []string{"intellij, latest"},
-		},
-		{
-			name: "one product, stable version",
-			config: &protocol.GitpodConfig{
-				Jetbrains: &protocol.Jetbrains{
-					Intellij: &protocol.JetbrainsProduct{
-						Prebuilds: &protocol.Prebuilds{
-							Version: "stable",
-						},
-					},
-				},
-			},
-			expected: []string{"intellij, stable"},
-		},
-		{
-			name: "one product, both versions",
-			config: &protocol.GitpodConfig{
-				Jetbrains: &protocol.Jetbrains{
-					Intellij: &protocol.JetbrainsProduct{
-						Prebuilds: &protocol.Prebuilds{
-							Version: "both",
-						},
-					},
-				},
-			},
-			expected: []string{"intellij, stable", "intellij, latest"},
-		},
-		{
-			name: "multiple products, mixed versions",
-			config: &protocol.GitpodConfig{
-				Jetbrains: &protocol.Jetbrains{
-					Intellij: &protocol.JetbrainsProduct{
-						Prebuilds: &protocol.Prebuilds{
-							Version: "stable",
-						},
-					},
-					Goland: &protocol.JetbrainsProduct{
-						Prebuilds: &protocol.Prebuilds{
-							Version: "latest",
-						},
-					},
-					Clion: &protocol.JetbrainsProduct{
-						Prebuilds: &protocol.Prebuilds{
-							Version: "both",
-						},
-					},
-				},
-			},
-			expected: []string{"clion, stable", "clion, latest", "goland, latest", "intellij, stable"},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			actual := []string{}
-			collectPrebuilds(test.config, func(alias string, qualifier string) {
-				actual = append(actual, fmt.Sprintf("%s, %s", alias, qualifier))
-			})
-			if !reflect.DeepEqual(actual, test.expected) {
-				t.Errorf("expected %v, got %v", test.expected, actual)
-			}
-		})
-	}
-}
 
 func TestGetProductConfig(t *testing.T) {
 	expectation := &protocol.JetbrainsProduct{}

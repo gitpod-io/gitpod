@@ -1,4 +1,7 @@
 {
+  "name": "intellij",
+  "displayName": "IntelliJ IDEA",
+  "version": "latest",
   "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
@@ -22,9 +25,12 @@
     "GP_EXTERNAL_BROWSER": "/ide-desktop/intellij-latest/bin/idea-cli preview"
   },
   "prebuild": {
-    "name": "GITPOD_JB_WARMUP_TASK",
-    "entrypointArgs": [
-      "warmup"
-    ]
+    "args": [
+      "warmup",
+      "intellij"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "latest"
+    }
   }
 }

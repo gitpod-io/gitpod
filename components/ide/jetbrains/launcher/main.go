@@ -90,12 +90,6 @@ func main() {
 	log.Info(ServiceName + ": " + Version)
 	startTime := time.Now()
 
-	wsInfo, err := resolveWorkspaceInfo(context.Background())
-	if err != nil || wsInfo == nil {
-		log.WithError(err).WithField("wsInfo", wsInfo).Error("resolve workspace info failed")
-		return
-	}
-
 	var port string
 	var warmup bool
 
@@ -104,6 +98,10 @@ func main() {
 	}
 
 	if os.Args[1] == "warmup" {
+		if len(os.Args) < 3 {
+			log.Fatalf("Usage: %s %s <alias>\n", os.Args[0], os.Args[1])
+		}
+
 		warmup = true
 	} else {
 		if len(os.Args) < 3 {
@@ -114,11 +112,6 @@ func main() {
 	}
 
 	alias := os.Args[2]
-	if warmup && alias == "" {
-		warmUpAll(wsInfo)
-		return
-	}
-
 	label := "Open JetBrains IDE"
 	if len(os.Args) > 3 {
 		label = os.Args[3]
@@ -145,6 +138,12 @@ func main() {
 		return
 	}
 
+	wsInfo, err := resolveWorkspaceInfo(context.Background())
+	if err != nil || wsInfo == nil {
+		log.WithError(err).WithField("wsInfo", wsInfo).Error("resolve workspace info failed")
+		return
+	}
+
 	launchCtx := &LaunchContext{
 		startTime: startTime,
 
@@ -162,7 +161,6 @@ func main() {
 	}
 
 	if launchCtx.warmup {
-		waitForTasksToFinish()
 		launch(launchCtx)
 		return
 	}
@@ -383,50 +381,6 @@ func resolveWorkspaceInfo(ctx context.Context) (*supervisor.WorkspaceInfoRespons
 		}
 	}
 	return nil, errors.New("failed with attempt 10 times")
-}
-
-// warmUpAll warmup all jetbrains IDEs
-func warmUpAll(wsInfo *supervisor.WorkspaceInfoResponse) {
-	projectDir := wsInfo.GetCheckoutLocation()
-	gitpodConfig, err := parseGitpodConfig(projectDir)
-	if err != nil {
-		log.WithError(err).Fatal("failed to parse .gitpod.yml")
-	}
-	collectPrebuilds(gitpodConfig, func(alias string, qualifier string) {
-		warmUpLog := log.WithField("alias", alias).WithField("qualifier", qualifier)
-		warmUpLog.Info("warmup: starting...")
-		cmd := exec.Command("/ide-desktop/jb-launcher", "warmup", alias)
-		cmd.Env = append(os.Environ(), "JETBRAINS_BACKEND_QUALIFIER="+qualifier)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		if err := cmd.Run(); err != nil {
-			warmUpLog.WithError(err).Fatal("warmup: failed to run")
-		}
-		warmUpLog.Info("warmup: done")
-	})
-}
-
-// collectPrebuilds collects all prebuilds from .gitpod.yml
-func collectPrebuilds(gitpodConfig *gitpod.GitpodConfig, acceptor func(alias string, qualifier string)) {
-	if gitpodConfig.Jetbrains == nil {
-		return
-	}
-	v := reflect.ValueOf(gitpodConfig.Jetbrains).Elem()
-	t := v.Type()
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Field(i)
-		alias := strings.ToLower(t.Field(i).Name)
-		product, ok := f.Interface().(*gitpod.JetbrainsProduct)
-		if ok && product != nil && product.Prebuilds != nil {
-			if product.Prebuilds.Version != "latest" {
-				acceptor(alias, "stable")
-
-			}
-			if product.Prebuilds.Version != "stable" {
-				acceptor(alias, "latest")
-			}
-		}
-	}
 }
 
 func launch(launchCtx *LaunchContext) {
@@ -916,67 +870,4 @@ func resolveProjectContextDir(launchCtx *LaunchContext) string {
 	}
 
 	return launchCtx.projectDir
-}
-
-func waitForTasksToFinish() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	var conn *grpc.ClientConn
-	var err error
-
-	for {
-		conn, err = dial(ctx)
-		if err == nil {
-			err = checkTasks(ctx, conn)
-		}
-
-		if err == nil {
-			return
-		}
-
-		log.WithError(err).Error("launcher: failed to check tasks status")
-
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(1 * time.Second):
-		}
-	}
-}
-
-func checkTasks(ctx context.Context, conn *grpc.ClientConn) error {
-	client := supervisor.NewStatusServiceClient(conn)
-	tasksResponse, err := client.TasksStatus(ctx, &supervisor.TasksStatusRequest{Observe: true})
-	if err != nil {
-		return xerrors.Errorf("failed get tasks status client: %w", err)
-	}
-
-	for {
-		var runningTasksCounter int
-
-		resp, err := tasksResponse.Recv()
-		if err != nil {
-			return err
-		}
-
-		for _, task := range resp.Tasks {
-			if task.State != supervisor.TaskState_closed && task.Presentation.Name != "GITPOD_JB_WARMUP_TASK" {
-				runningTasksCounter++
-			}
-		}
-		if runningTasksCounter == 0 {
-			break
-		}
-	}
-
-	return nil
-}
-
-func dial(ctx context.Context) (*grpc.ClientConn, error) {
-	supervisorConn, err := grpc.DialContext(ctx, util.GetSupervisorAddress(), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		err = xerrors.Errorf("failed connecting to supervisor: %w", err)
-	}
-	return supervisorConn, err
 }

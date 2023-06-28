@@ -1,4 +1,7 @@
 {
+  "name": "clion",
+  "displayName": "CLion",
+  "version": "stable",
   "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
@@ -22,9 +25,12 @@
     "GP_EXTERNAL_BROWSER": "/ide-desktop/clion/bin/idea-cli preview"
   },
   "prebuild": {
-    "name": "GITPOD_JB_WARMUP_TASK",
-    "entrypointArgs": [
-      "warmup"
-    ]
+    "args": [
+      "warmup",
+      "clion"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "stable"
+    }
   }
 }

@@ -1,4 +1,7 @@
 {
+  "name": "pycharm",
+  "displayName": "PyCharm",
+  "version": "stable",
   "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
@@ -22,9 +25,12 @@
     "GP_EXTERNAL_BROWSER": "/ide-desktop/pycharm/bin/idea-cli preview"
   },
   "prebuild": {
-    "name": "GITPOD_JB_WARMUP_TASK",
-    "entrypointArgs": [
-      "warmup"
-    ]
+    "args": [
+      "warmup",
+      "pycharm"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "stable"
+    }
   }
 }

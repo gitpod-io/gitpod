@@ -1,4 +1,7 @@
 {
+  "name": "rider",
+  "displayName": "Rider",
+  "version": "stable",
   "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
@@ -22,9 +25,12 @@
     "GP_EXTERNAL_BROWSER": "/ide-desktop/rider/bin/idea-cli preview"
   },
   "prebuild": {
-    "name": "GITPOD_JB_WARMUP_TASK",
-    "entrypointArgs": [
-      "warmup"
-    ]
+    "args": [
+      "warmup",
+      "rider"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "stable"
+    }
   }
 }

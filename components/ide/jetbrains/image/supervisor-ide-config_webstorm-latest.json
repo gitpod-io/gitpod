@@ -1,4 +1,7 @@
 {
+  "name": "webstorm",
+  "displayName": "WebStorm",
+  "version": "latest",
   "entrypoint": "/ide-desktop/jb-launcher",
   "entrypointArgs": [
     "{DESKTOPIDEPORT}",
@@ -22,9 +25,12 @@
     "GP_EXTERNAL_BROWSER": "/ide-desktop/webstorm-latest/bin/idea-cli preview"
   },
   "prebuild": {
-    "name": "GITPOD_JB_WARMUP_TASK",
-    "entrypointArgs": [
-      "warmup"
-    ]
+    "args": [
+      "warmup",
+      "webstorm"
+    ],
+    "env": {
+      "JETBRAINS_BACKEND_QUALIFIER": "latest"
+    }
   }
 }

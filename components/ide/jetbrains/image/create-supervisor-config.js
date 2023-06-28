@@ -44,6 +44,9 @@ const ideConfigs = [
     ideConfigs.forEach((ideConfig) => {
         const name = ideConfig.name + (qualifier === "stable" ? "" : "-" + qualifier);
         const template = {
+            name: ideConfig.name,
+            displayName: ideConfig.displayName,
+            version: qualifier,
             entrypoint: `/ide-desktop/jb-launcher`,
             entrypointArgs: ["{DESKTOPIDEPORT}", ideConfig.name, `Open in ${ideConfig.displayName}`],
             readinessProbe: {
@@ -63,8 +66,10 @@ const ideConfigs = [
                 GP_EXTERNAL_BROWSER: `/ide-desktop/${name}/bin/idea-cli preview`,
             },
             prebuild: {
-                name: `GITPOD_JB_WARMUP_TASK`,
-                entrypointArgs: ["warmup"],
+                args: ["warmup", ideConfig.name],
+                env: {
+                    JETBRAINS_BACKEND_QUALIFIER: qualifier,
+                },
             },
         };
         fs.writeFileSync(`supervisor-ide-config_${name}.json`, JSON.stringify(template, null, 2), "utf-8");
