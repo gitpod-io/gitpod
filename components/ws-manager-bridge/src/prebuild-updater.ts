@@ -17,7 +17,7 @@ import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
 import { filterStatus } from "./bridge";
 
 @injectable()
-export class PrebuildUpdaterDB {
+export class PrebuildUpdater {
     @inject(PrebuildStateMapper)
     protected readonly prebuildStateMapper: PrebuildStateMapper;
 

@@ -37,7 +37,7 @@ import { Client } from "@gitpod/gitpod-protocol/lib/experiments/types";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./workspace-instance-controller";
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
-import { PrebuildUpdaterDB } from "./prebuild-updater-db";
+import { PrebuildUpdater } from "./prebuild-updater";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
@@ -82,7 +82,7 @@ export const containerModule = new ContainerModule((bind) => {
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
     bind(PrebuildStateMapper).toSelf().inSingletonScope();
-    bind(PrebuildUpdaterDB).toSelf().inSingletonScope();
+    bind(PrebuildUpdater).toSelf().inSingletonScope();
 
     bind(DebugApp).toSelf().inSingletonScope();
 

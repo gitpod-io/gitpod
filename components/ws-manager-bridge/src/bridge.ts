@@ -33,7 +33,7 @@ import { Configuration } from "./config";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { performance } from "perf_hooks";
 import { WorkspaceInstanceController } from "./workspace-instance-controller";
-import { PrebuildUpdaterDB } from "./prebuild-updater-db";
+import { PrebuildUpdater } from "./prebuild-updater";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -64,8 +64,8 @@ export class WorkspaceManagerBridge implements Disposable {
     @inject(IAnalyticsWriter)
     protected readonly analytics: IAnalyticsWriter;
 
-    @inject(PrebuildUpdaterDB)
-    protected readonly prebuildUpdater: PrebuildUpdaterDB;
+    @inject(PrebuildUpdater)
+    protected readonly prebuildUpdater: PrebuildUpdater;
 
     @inject(WorkspaceInstanceController)
     protected readonly workspaceInstanceController: WorkspaceInstanceController; // bound in "transient" mode: we expect to receive a fresh instance here

@@ -18,7 +18,7 @@ import { MessageBusIntegration } from "./messagebus-integration";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ClientProvider } from "./wsman-subscriber";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
-import { PrebuildUpdaterDB } from "./prebuild-updater-db";
+import { PrebuildUpdater } from "./prebuild-updater";
 
 export const WorkspaceInstanceController = Symbol("WorkspaceInstanceController");
 
@@ -61,8 +61,8 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
     @inject(MessageBusIntegration)
     protected readonly messagebus: MessageBusIntegration;
 
-    @inject(PrebuildUpdaterDB)
-    protected readonly prebuildUpdater: PrebuildUpdaterDB;
+    @inject(PrebuildUpdater)
+    protected readonly prebuildUpdater: PrebuildUpdater;
 
     @inject(IAnalyticsWriter)
     protected readonly analytics: IAnalyticsWriter;
