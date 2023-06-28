@@ -235,14 +235,6 @@ export class ProjectsService {
             }
             throw err;
         }
-
-        this.analytics.track({
-            userId: callerID,
-            event: "project_deleted",
-            properties: {
-                project_id: projectId,
-            },
-        });
     }
 
     async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
