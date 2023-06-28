@@ -94,22 +94,26 @@ func (*DaemonAgent) CreateBucket(args *api.CreateBucketRequest, resp *api.Create
 func (*DaemonAgent) GetWorkspaceResources(args *api.GetWorkspaceResourcesRequest, resp *api.GetWorkspaceResourcesResponse) error {
 	*resp = api.GetWorkspaceResourcesResponse{}
 
-	filepath.WalkDir("/mnt/node-cgroups", func(path string, d fs.DirEntry, err error) error {
+	return filepath.WalkDir("/mnt/node-cgroups", func(path string, d fs.DirEntry, err error) error {
 		if strings.Contains(path, args.ContainerId) {
 			cpu := cgroups_v2.NewCpuController(path)
 			quota, _, err := cpu.Max()
 			if err != nil {
-				return err
+				return fmt.Errorf("cannot get cpu.max: %w", err)
 			}
-
 			resp.Found = true
 			resp.CpuQuota = int64(quota)
+
+			io := cgroups_v2.NewIOController(path)
+			devices, err := io.Max()
+			if err != nil {
+				return fmt.Errorf("cannot get io.max: %w", err)
+			}
+			resp.IOMax = devices
 		}
 
 		return nil
 	})
-
-	return nil
 }
 
 func (*DaemonAgent) VerifyRateLimitingRule(args *api.VerifyRateLimitingRuleRequest, resp *api.VerifyRateLimitingRuleResponse) error {

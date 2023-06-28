@@ -99,7 +99,7 @@ func TestProcessLimit(t *testing.T) {
 					}
 					t.Logf("workspace stopped and failed (as expected): %v", s)
 				}
-				return ctx
+				return testCtx
 			}
 
 			t.Logf("checking output for fork errors due to process limiting")

@@ -4,6 +4,8 @@
 
 package api
 
+import "github.com/gitpod-io/gitpod/common-go/cgroups"
+
 // CreateBucketRequest is the argument for CreateBucket
 type CreateBucketRequest struct {
 	Owner, Workspace string
@@ -18,6 +20,7 @@ type GetWorkspaceResourcesRequest struct {
 
 type GetWorkspaceResourcesResponse struct {
 	CpuQuota int64
+	IOMax    []cgroups.DeviceIOMax
 	Found    bool
 }
 

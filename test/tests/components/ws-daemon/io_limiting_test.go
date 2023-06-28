@@ -7,7 +7,11 @@ package wsdaemon
 import (
 	"context"
 	"testing"
+	"time"
 
+	daemon "github.com/gitpod-io/gitpod/test/pkg/agent/daemon/api"
+	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 )
@@ -17,9 +21,95 @@ func TestIOLimiting(t *testing.T) {
 		WithLabel("component", "ws-daemon").
 		Assess("verify if io limiting works fine", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 			t.Parallel()
-			// TODO(toru): check it with dd command
-			// Note(toru): this feature is disable on a default preview env
-			t.Skip("unimplemented")
+
+			ctx, cancel := context.WithTimeout(testCtx, time.Duration(5*time.Minute))
+			defer cancel()
+
+			api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			t.Cleanup(func() {
+				api.Done(t)
+			})
+
+			daemonConfig := getDaemonConfig(ctx, t, cfg)
+			if daemonConfig.IOLimitConfig.ReadBandwidthPerSecond.IsZero() {
+				t.Fatal("io limiting ReadBandwidthPerSecond is not enabled")
+			}
+			if daemonConfig.IOLimitConfig.WriteBandwidthPerSecond.IsZero() {
+				t.Fatal("io limiting WriteBandwidthPerSecond is not enabled")
+			}
+
+			nfo, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			t.Cleanup(func() {
+				sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer scancel()
+
+				sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+				defer sapi.Done(t)
+
+				if _, err = stopWs(true, sapi); err != nil {
+					t.Errorf("cannot stop workspace: %q", err)
+				}
+			})
+
+			daemonClient, daemonCloser, err := integration.Instrument(integration.ComponentWorkspaceDaemon, "daemon", cfg.Namespace(), kubeconfig, cfg.Client(),
+				integration.WithWorkspacekitLift(false),
+				integration.WithContainer("ws-daemon"),
+			)
+
+			if err != nil {
+				t.Fatal(err)
+			}
+			integration.DeferCloser(t, daemonCloser)
+
+			var pod corev1.Pod
+			if err := cfg.Client().Resources().Get(ctx, "ws-"+nfo.Req.Id, cfg.Namespace(), &pod); err != nil {
+				t.Fatal(err)
+			}
+
+			time.Sleep(10 * time.Second)
+
+			containerId := getWorkspaceContainerId(&pod)
+			var resp daemon.GetWorkspaceResourcesResponse
+			if err = daemonClient.Call("DaemonAgent.GetWorkspaceResources", daemon.GetWorkspaceResourcesRequest{
+				ContainerId: containerId,
+			}, &resp); err != nil {
+				t.Fatalf("cannot get workspace resources: %q", err)
+			}
+
+			t.Logf("workspace resources: %+v", resp)
+			if resp.Found == false {
+				t.Fatalf("cannot find workspace resources")
+			}
+			if len(resp.IOMax) == 0 {
+				t.Fatalf("cannot find workspace io max")
+			}
+
+			// rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.Req.Id))
+			// integration.DeferCloser(t, closer)
+			// if err != nil {
+			// 	t.Fatalf("unexpected error instrumenting workspace: %v", err)
+			// }
+			// defer rsa.Close()
+
+			// t.Logf("running gp top")
+			// var res agent.ExecResponse
+			// err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
+			// 	Dir:     "/workspace",
+			// 	Command: "gp",
+			// 	Env:     []string{"SUPERVISOR_ADDR=10.0.5.2:22999"},
+			// 	Args:    []string{"top", "--json"},
+			// }, &res)
+			// if err != nil {
+			// 	t.Fatal(err)
+			// }
+			// if res.ExitCode != 0 {
+			// 	t.Fatalf("gp top failed (%d): %s", res.ExitCode, res.Stderr)
+			// }
+
 			return testCtx
 		}).Feature()
 
