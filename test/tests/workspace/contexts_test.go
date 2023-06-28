@@ -112,7 +112,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 		WithLabel("component", "server").
 		Assess("should run context tests", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
 
-			sctx, scancel := context.WithTimeout(testCtx, time.Duration(5*len(tests))*time.Minute)
+			sctx, scancel := context.WithTimeout(testCtx, time.Duration(10*len(tests))*time.Minute)
 			defer scancel()
 
 			api := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())

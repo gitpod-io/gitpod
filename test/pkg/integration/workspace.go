@@ -304,6 +304,13 @@ func LaunchWorkspaceDirectly(t *testing.T, ctx context.Context, api *ComponentAP
 	t.Log("wait for workspace to be fully up and running")
 	lastStatus, err := WaitForWorkspaceStart(t, ctx, req.Id, req.Metadata.MetaId, api, options.WaitForOpts...)
 	if err != nil {
+		// Check if the preview env is in a good state, and log details if not.
+		previewReady, reason, previewErr := isPreviewReady(api.client, api.namespace)
+		if previewErr != nil {
+			t.Logf("error checking if preview is ready: %v", previewErr)
+		} else if !previewReady {
+			t.Logf("preview env is not ready: %s", reason)
+		}
 		return nil, nil, xerrors.Errorf("cannot wait for workspace start: %w", err)
 	}
 	t.Log("successful launch of the workspace")
@@ -665,7 +672,7 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 				continue
 			}
 
-			t.Logf("status: %s, %s", s.Id, s.Phase)
+			t.Logf("subscribe status: %s, %s", s.Id, s.Phase)
 
 			done2, err := checkStatus(s)
 			if err != nil {
@@ -683,7 +690,7 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 		wsman, err := api.WorkspaceManager()
 		if err != nil {
 			api.ClearWorkspaceManagerClientCache()
-			return nil, true, nil
+			return nil, false, err
 		}
 		desc, err := wsman.DescribeWorkspace(ctx, &wsmanapi.DescribeWorkspaceRequest{
 			Id: instanceID,
@@ -691,12 +698,24 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 		if err != nil {
 			scode := status.Code(err)
 			if scode == codes.NotFound || strings.Contains(err.Error(), "not found") {
-				if !cfg.CanFail {
-					return nil, false, xerrors.New("the workspace couldn't find")
+				if cfg.WaitForStopped {
+					t.Logf("describe: workspace couldn't be found, but we're expecting it to stop, so wait for subscribe to give us the last status")
+					return nil, false, nil
 				}
-				return nil, false, nil
+				if !cfg.CanFail {
+					return nil, true, xerrors.New("the workspace couldn't be found")
+				}
+				return nil, true, nil
 			}
+			return nil, false, err
 		}
+
+		if desc == nil || desc.Status == nil {
+			t.Logf("describe status is nil: %s", instanceID)
+			return nil, false, nil
+		}
+
+		t.Logf("describe status: %s, %s", desc.Status.Id, desc.Status.Phase)
 
 		done, err := checkStatus(desc.Status)
 		return desc.Status, done, err
@@ -709,6 +728,9 @@ func WaitForWorkspaceStart(t *testing.T, ctx context.Context, instanceID string,
 			// For in case missed the status change
 			desc, done, err := handle()
 			if !done {
+				if err != nil {
+					t.Logf("error checking workspace status, trying again later: %v", err)
+				}
 				continue
 			} else if err != nil {
 				return nil, err
