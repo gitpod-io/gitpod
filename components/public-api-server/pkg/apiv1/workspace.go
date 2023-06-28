@@ -48,13 +48,7 @@ func (s *WorkspaceService) GetWorkspace(ctx context.Context, req *connect.Reques
 		return nil, proxy.ConvertError(err)
 	}
 
-	authProviders, err := conn.GetAuthProviders(ctx)
-	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get auth providers.")
-		return nil, proxy.ConvertError(err)
-	}
-
-	workspace, err := convertWorkspaceInfo(ws, authProviders)
+	workspace, err := convertWorkspaceInfo(ws)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to convert workspace.")
 		return nil, err
@@ -152,15 +146,9 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 		return nil, proxy.ConvertError(err)
 	}
 
-	authProviders, err := conn.GetAuthProviders(ctx)
-	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get auth providers.")
-		return nil, proxy.ConvertError(err)
-	}
-
 	res := make([]*v1.Workspace, 0, len(serverResp))
 	for _, ws := range serverResp {
-		workspace, err := convertWorkspaceInfo(ws, authProviders)
+		workspace, err := convertWorkspaceInfo(ws)
 		if err != nil {
 			// convertWorkspaceInfo returns gRPC errors
 			return nil, err
@@ -243,13 +231,7 @@ func (s *WorkspaceService) StartWorkspace(ctx context.Context, req *connect.Requ
 		return nil, proxy.ConvertError(err)
 	}
 
-	authProviders, err := conn.GetAuthProviders(ctx)
-	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get auth providers.")
-		return nil, proxy.ConvertError(err)
-	}
-
-	workspace, err := convertWorkspaceInfo(ws, authProviders)
+	workspace, err := convertWorkspaceInfo(ws)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to convert workspace.")
 		return nil, err
@@ -281,13 +263,7 @@ func (s *WorkspaceService) StopWorkspace(ctx context.Context, req *connect.Reque
 		return nil, proxy.ConvertError(err)
 	}
 
-	authProviders, err := conn.GetAuthProviders(ctx)
-	if err != nil {
-		log.Extract(ctx).WithError(err).Error("Failed to get auth providers.")
-		return nil, proxy.ConvertError(err)
-	}
-
-	workspace, err := convertWorkspaceInfo(ws, authProviders)
+	workspace, err := convertWorkspaceInfo(ws)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to convert workspace.")
 		return nil, err
@@ -336,22 +312,11 @@ func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 }
 
 // convertWorkspaceInfo convers a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
-func convertWorkspaceInfo(input *protocol.WorkspaceInfo, authProviders []*protocol.AuthProviderInfo) (*v1.Workspace, error) {
+func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
 	instance, err := convertWorkspaceInstance(input.LatestInstance, input.Workspace.Context, input.Workspace.Config, input.Workspace.Shareable)
 	if err != nil {
 		return nil, err
 	}
-
-	providerHostname := ""
-	providerType := ""
-	if input.Workspace.Context.Repository != nil {
-		providerHostname = input.Workspace.Context.Repository.Host
-		providerInfo := findAuthProvider(providerHostname, authProviders)
-		if providerInfo != nil {
-			providerType = providerInfo.AuthProviderType
-		}
-	}
-
 	return &v1.Workspace{
 		WorkspaceId: input.Workspace.ID,
 		OwnerId:     input.Workspace.OwnerID,
@@ -361,10 +326,6 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo, authProviders []*protoc
 			Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
 				NormalizedContextUrl: input.Workspace.ContextURL,
 				Commit:               "",
-				Provider: &v1.WorkspaceContext_GitProvider{
-					Type:     providerType,
-					Hostname: providerHostname,
-				},
 			}},
 		},
 		Description: input.Workspace.Description,
@@ -478,13 +439,4 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 			RecentFolders: recentFolders,
 		},
 	}, nil
-}
-
-func findAuthProvider(hostname string, authProviders []*protocol.AuthProviderInfo) *protocol.AuthProviderInfo {
-	for _, provider := range authProviders {
-		if hostname == provider.Host {
-			return provider
-		}
-	}
-	return nil
 }

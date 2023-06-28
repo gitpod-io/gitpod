@@ -73,7 +73,6 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 		serverMock, client := setupWorkspacesService(t)
 
 		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
-		serverMock.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 
 		resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
 			WorkspaceId: workspaceID,
@@ -131,7 +130,6 @@ func TestWorkspaceService_StartWorkspace(t *testing.T) {
 			WorkspaceURL: workspaceTestData[0].Protocol.LatestInstance.IdeURL,
 		}, nil)
 		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
-		serverMock.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 
 		resp, err := client.StartWorkspace(context.Background(), connect.NewRequest(&v1.StartWorkspaceRequest{
 			WorkspaceId: workspaceID,
@@ -186,7 +184,6 @@ func TestWorkspaceService_StopWorkspace(t *testing.T) {
 
 		serverMock.EXPECT().StopWorkspace(gomock.Any(), workspaceID).Return(nil)
 		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&workspaceTestData[0].Protocol, nil)
-		serverMock.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 
 		resp, err := client.StopWorkspace(context.Background(), connect.NewRequest(&v1.StopWorkspaceRequest{
 			WorkspaceId: workspaceID,
@@ -369,7 +366,6 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 					}
 					return nil, nil
 				})
-				srv.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 			},
 			PageSize: 42,
 			Expectation: Expectation{
@@ -396,7 +392,6 @@ func TestWorkspaceService_ListWorkspaces(t *testing.T) {
 
 			if test.Workspaces != nil {
 				serverMock.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Return(test.Workspaces, nil)
-				serverMock.EXPECT().GetAuthProviders(gomock.Any()).Return(authProviderTestData, nil)
 			} else if test.Setup != nil {
 				test.Setup(t, serverMock)
 			}
@@ -602,10 +597,6 @@ var workspaceTestData = []workspaceTestDataEntry{
 				Details: &v1.WorkspaceContext_Git_{
 					Git: &v1.WorkspaceContext_Git{
 						NormalizedContextUrl: "https://github.com/gitpod-io/gitpod",
-						Provider: &v1.WorkspaceContext_GitProvider{
-							Type:     "GitHub",
-							Hostname: "github.com",
-						},
 					},
 				},
 			},
@@ -648,14 +639,6 @@ var workspaceTestData = []workspaceTestDataEntry{
 	},
 }
 
-var authProviderTestData = []*protocol.AuthProviderInfo{
-	{
-		AuthProviderID:   "f2effcfd-3dd2-4187-b584-256e88a424f2",
-		Host:             "github.com",
-		AuthProviderType: "GitHub",
-	},
-}
-
 func TestConvertWorkspaceInfo(t *testing.T) {
 	type Expectation struct {
 		Result *v1.Workspace
@@ -663,14 +646,12 @@ func TestConvertWorkspaceInfo(t *testing.T) {
 	}
 	tests := []struct {
 		Name        string
-		Input1      protocol.WorkspaceInfo
-		Input2      []*protocol.AuthProviderInfo
+		Input       protocol.WorkspaceInfo
 		Expectation Expectation
 	}{
 		{
 			Name:        "happy path",
-			Input1:      workspaceTestData[0].Protocol,
-			Input2:      authProviderTestData,
+			Input:       workspaceTestData[0].Protocol,
 			Expectation: Expectation{Result: workspaceTestData[0].API},
 		},
 	}
@@ -681,7 +662,7 @@ func TestConvertWorkspaceInfo(t *testing.T) {
 				act Expectation
 				err error
 			)
-			act.Result, err = convertWorkspaceInfo(&test.Input1, test.Input2)
+			act.Result, err = convertWorkspaceInfo(&test.Input)
 			if err != nil {
 				act.Error = err.Error()
 			}
@@ -702,7 +683,7 @@ func FuzzConvertWorkspaceInfo(f *testing.F) {
 		}
 
 		// we really just care for panics
-		_, _ = convertWorkspaceInfo(&nfo, authProviderTestData)
+		_, _ = convertWorkspaceInfo(&nfo)
 	})
 }
 
