@@ -52,7 +52,7 @@ export class Authorizer {
         await this.authorizer.writeRelationships(
             v1.WriteRelationshipsRequest.create({
                 updates: [
-                    this.removeOrganizationOwnerRoleUpdates(orgID, userID),
+                    this.addOrganizationOwnerRoleUpdates(orgID, userID),
                     this.addOrganizationMemberRoleUpdates(orgID, userID),
                 ],
             }),
@@ -124,6 +124,13 @@ export class Authorizer {
         return v1.RelationshipUpdate.create({
             operation: v1.RelationshipUpdate_Operation.TOUCH,
             relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
+        });
+    }
+
+    private addOrganizationOwnerRoleUpdates(orgID: string, userID: string): v1.RelationshipUpdate {
+        return v1.RelationshipUpdate.create({
+            operation: v1.RelationshipUpdate_Operation.TOUCH,
+            relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
         });
     }
 
