@@ -32,8 +32,8 @@ import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Configuration } from "./config";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { performance } from "perf_hooks";
-import { PrebuildUpdater } from "./prebuild-updater";
 import { WorkspaceInstanceController } from "./workspace-instance-controller";
+import { PrebuildUpdater } from "./prebuild-updater";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 

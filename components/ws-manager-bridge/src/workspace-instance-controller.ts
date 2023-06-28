@@ -15,10 +15,10 @@ import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { DBWithTracing, TracedUserDB, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { MessageBusIntegration } from "./messagebus-integration";
-import { PrebuildUpdater } from "./prebuild-updater";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ClientProvider } from "./wsman-subscriber";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
+import { PrebuildUpdater } from "./prebuild-updater";
 
 export const WorkspaceInstanceController = Symbol("WorkspaceInstanceController");
 

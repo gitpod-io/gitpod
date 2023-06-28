@@ -32,12 +32,12 @@ import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/anal
 import { IClientCallMetrics } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { PrometheusClientCallMetrics } from "@gitpod/gitpod-protocol/lib/messaging/client-call-metrics";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
-import { PrebuildUpdater, PrebuildUpdaterNoOp } from "./prebuild-updater";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { Client } from "@gitpod/gitpod-protocol/lib/experiments/types";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./workspace-instance-controller";
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
+import { PrebuildUpdater } from "./prebuild-updater";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
@@ -82,7 +82,7 @@ export const containerModule = new ContainerModule((bind) => {
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
     bind(PrebuildStateMapper).toSelf().inSingletonScope();
-    bind(PrebuildUpdater).to(PrebuildUpdaterNoOp).inSingletonScope();
+    bind(PrebuildUpdater).toSelf().inSingletonScope();
 
     bind(DebugApp).toSelf().inSingletonScope();
 
