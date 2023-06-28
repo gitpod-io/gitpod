@@ -82,4 +82,32 @@ export class SpiceDBAuthorizer {
             log.error("[spicedb] Failed to write relationships.", err, { req });
         }
     }
+
+    async deleteRelationships(
+        req: v1.DeleteRelationshipsRequest,
+        experimentsFields?: {
+            orgID?: string;
+        },
+    ): Promise<v1.DeleteRelationshipsResponse | undefined> {
+        if (!this.client) {
+            return undefined;
+        }
+
+        const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+            teamId: experimentsFields?.orgID,
+        });
+        if (!featureEnabled) {
+            return undefined;
+        }
+
+        try {
+            const response = await this.client.deleteRelationships(req);
+            log.info("[spicedb] Succesfully deleted relationships.", { response, request: req });
+
+            return response;
+        } catch (err) {
+            // While in we're running two authorization systems in parallel, we do not hard fail on writes.
+            log.error("[spicedb] Failed to delete relationships.", err, { req });
+        }
+    }
 }

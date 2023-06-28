@@ -3001,24 +3001,32 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("deleteTeam");
         traceAPIParams(ctx, { teamId, userId: user.id });
 
-        await this.guardTeamOperation(teamId, "delete", "not_implemented");
+        const { team, members } = await this.guardTeamOperation(teamId, "delete", "delete");
 
-        const teamProjects = await this.projectsService.getTeamProjects(teamId);
-        teamProjects.forEach((project) => {
+        const projects = await this.projectsService.getTeamProjects(teamId);
+
+        projects.forEach((project) => {
             /** no await */ this.deleteProject(ctx, project.id).catch((err) => {
                 /** ignore */
             });
         });
 
-        const teamMembers = await this.teamDB.findMembersByTeam(teamId);
-        teamMembers.forEach((member) => {
-            /** no await */ this.removeTeamMember(ctx, teamId, member.userId).catch((err) => {
-                /** ignore */
+        try {
+            await this.teamDB.transaction(async (db) => {
+                // Remove each member
+                for (let member of members) {
+                    await db.removeMemberFromTeam(member.userId, teamId);
+                }
+
+                await db.deleteTeam(teamId);
+
+                await this.auth.deleteOrganization(teamId);
             });
-        });
+        } catch (err) {
+            await this.auth.addOrganization(team, members, projects);
+        }
 
         // TODO: delete setting
-        await this.teamDB.deleteTeam(teamId);
 
         return this.analytics.track({
             userId: user.id,

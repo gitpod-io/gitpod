@@ -23,20 +23,16 @@ schema: |-
     // Any user in the organization can try to leave their organization
     permission leave = owner + member
 
+    // Owners can delete the organization,
+    // and through this process also disconnect all users from the organization
+    permission delete = owner
+
     // Only owners can create new projects
     permission create_project = owner
 
     // Only owners can change settings
     permission read_settings = owner
     permission write_settings = owner
-
-    // Only owners can change Git providers
-    permission read_git_provider = owner + member
-    permission write_git_provider = owner
-
-    // Only owners can create and modify billing information
-    permission read_billing = member + owner
-    permission write_billing = owner
   }
 
   definition project {
@@ -90,12 +86,11 @@ relationships: |-
 assertions:
   assertTrue:
     - organization:org_1#read_info@user:user_0
-    # user 1 can read git providers because they are a member
-    - organization:org_1#read_git_provider@user:user_1
     # user 0 can edit project_0, because they are the Org Owner
     - project:project_1#write_info@user:user_0
     - organization:org_1#write_settings@user:user_0
-    - organization:org_1#write_git_provider@user:user_0
+    # Org Owner can delete the organization
+    - organization:org_1#delete@user:user_0
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -106,8 +101,6 @@ assertions:
     - organization:org_1#read_members@user:user_3
     - organization:org_1#write_members@user:user_3
     - organization:org_1#write_settings@user:user_1
-    # members are not allowed to:
-    - organization:org_1#write_git_provider@user:user_1
 # validation should assert that a particular relation exists between an entity, and a subject
 # validations are not used to assert that a permission exists
 validation:
@@ -135,9 +128,5 @@ validation:
     - "[user:user_1] is <project:project_2#viewer>"
   project:project_2#write_info:
     - "[user:user_0] is <organization:org_2#owner>"
-  organization:org_1#read_billing:
-  - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
-  - "[user:user_1] is <organization:org_1#member>"
-  - "[user:user_2] is <organization:org_1#member>"
-  organization:org_1#write_billing:
+  organization:org_1#delete:
   - "[user:user_0] is <organization:org_1#owner>"

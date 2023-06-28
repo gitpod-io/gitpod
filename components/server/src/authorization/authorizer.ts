@@ -9,7 +9,7 @@ import { inject, injectable } from "inversify";
 
 import { OrganizationPermission, Permission, Relation, ResourceType } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
-import { TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { Organization, Project, TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class Authorizer {
@@ -51,10 +51,7 @@ export class Authorizer {
     async addOrganizationOwnerRole(orgID: string, userID: string): Promise<void> {
         await this.authorizer.writeRelationships(
             v1.WriteRelationshipsRequest.create({
-                updates: [
-                    this.addOrganizationOwnerRoleUpdates(orgID, userID),
-                    this.addOrganizationMemberRoleUpdates(orgID, userID),
-                ],
+                updates: this.addOrganizationOwnerRoleUpdates(orgID, userID),
             }),
             {
                 orgID,
@@ -120,6 +117,45 @@ export class Authorizer {
         );
     }
 
+    async deleteOrganization(orgID: string): Promise<void> {
+        await this.authorizer.deleteRelationships(
+            v1.DeleteRelationshipsRequest.create({
+                relationshipFilter: v1.RelationshipFilter.create({
+                    resourceType: "organization",
+                    optionalResourceId: orgID,
+                }),
+            }),
+        );
+    }
+
+    async addOrganization(org: Organization, members: TeamMemberInfo[], projects: Project[]): Promise<void> {
+        const updates: v1.RelationshipUpdate[] = [];
+
+        for (let member of members) {
+            updates.concat(this.addOrganizationRoleUpdates(org.id, member.userId, member.role));
+        }
+
+        for (let project of projects) {
+            updates.concat(this.addProjectToOrgUpdates(org.id, project.id));
+        }
+
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: updates,
+            }),
+            {
+                orgID: org.id,
+            },
+        );
+    }
+
+    private addOrganizationRoleUpdates(orgID: string, userID: string, role: TeamMemberRole): v1.RelationshipUpdate[] {
+        if (role === "owner") {
+            return this.addOrganizationOwnerRoleUpdates(orgID, userID);
+        }
+        return [this.addOrganizationMemberRoleUpdates(orgID, userID)];
+    }
+
     private addOrganizationMemberRoleUpdates(orgID: string, userID: string): v1.RelationshipUpdate {
         return v1.RelationshipUpdate.create({
             operation: v1.RelationshipUpdate_Operation.TOUCH,
@@ -127,11 +163,14 @@ export class Authorizer {
         });
     }
 
-    private addOrganizationOwnerRoleUpdates(orgID: string, userID: string): v1.RelationshipUpdate {
-        return v1.RelationshipUpdate.create({
-            operation: v1.RelationshipUpdate_Operation.TOUCH,
-            relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
-        });
+    private addOrganizationOwnerRoleUpdates(orgID: string, userID: string): v1.RelationshipUpdate[] {
+        return [
+            this.addOrganizationMemberRoleUpdates(orgID, userID),
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.TOUCH,
+                relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
+            }),
+        ];
     }
 
     private removeOrganizationOwnerRoleUpdates(orgID: string, userID: string): v1.RelationshipUpdate {
