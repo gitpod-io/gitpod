@@ -208,9 +208,45 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 	}
 }
 
+func logGitpodStatus(t *testing.T, client klient.Client, namespace string) {
+	t.Logf("Gitpod components status:")
+	var allPods corev1.PodList
+	err := client.Resources(namespace).List(context.Background(), &allPods)
+	if err != nil {
+		t.Logf("failed to list pods: %v", err)
+		return
+	}
+
+	for _, component := range components {
+		var pods []corev1.Pod
+		for _, pod := range allPods.Items {
+			if component.Matches(pod) {
+				pods = append(pods, pod)
+			}
+		}
+		t.Logf("  %s:", component.name)
+		for _, p := range pods {
+			var restarts int
+			ready := true
+			for _, c := range p.Status.ContainerStatuses {
+				restarts += int(c.RestartCount)
+				if !c.Ready {
+					ready = false
+				}
+			}
+			var started *time.Duration
+			if p.Status.StartTime != nil {
+				s := time.Since(p.Status.StartTime.Time).Round(time.Second)
+				started = &s
+			}
+			t.Logf("    %s:\t %s,\t startTime: %v,\t restarts: %d,\t ready: %v", p.Name, p.Status.Phase, started, restarts, ready)
+		}
+	}
+}
+
 func isPreviewReady(client klient.Client, namespace string) (ready bool, reason string, err error) {
 	ready = true
-	var reasons map[component]string
+	reasons := make(map[component]string)
 	var allPods corev1.PodList
 	err = client.Resources(namespace).List(context.Background(), &allPods)
 	if err != nil {

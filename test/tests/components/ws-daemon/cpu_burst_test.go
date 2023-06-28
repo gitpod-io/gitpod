@@ -48,6 +48,12 @@ func TestCpuBurst(t *testing.T) {
 			return ctx
 		}
 
+		if daemonConfig.CpuLimitConfig.Limit == 0 {
+			t.Fatal("cpu limit is not set")
+		}
+		if daemonConfig.CpuLimitConfig.BurstLimit == 0 {
+			t.Fatal("cpu burst limit is not set")
+		}
 		daemonConfig.CpuLimitConfig.Limit = daemonConfig.CpuLimitConfig.Limit * 100_000
 		daemonConfig.CpuLimitConfig.BurstLimit = daemonConfig.CpuLimitConfig.BurstLimit * 100_000
 
