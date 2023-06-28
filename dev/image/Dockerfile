@@ -252,6 +252,10 @@ RUN brew install tmux tmuxinator
 # Install redis-server
 RUN brew install redis@7.0
 
+# Install zed & spicedb CLI
+RUN brew install authzed/tap/zed
+RUN brew install authzed/tap/spicedb
+
 # Copy our own tools
 ENV NEW_KUBECDL=2
 COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/

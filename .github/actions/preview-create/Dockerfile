@@ -1,4 +1,4 @@
-FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:kylos101-prebuild-jam-gha.5832
+FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-dev-image-gha.12149
 
 USER root
 ENV OCI_TOOL_VERSION="0.2.0"
