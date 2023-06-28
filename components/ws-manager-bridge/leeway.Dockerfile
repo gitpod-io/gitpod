@@ -12,10 +12,7 @@ RUN /installer/install.sh
 FROM cgr.dev/chainguard/node@sha256:95bb4763acb8e9702c956e093932be97ab118db410a0619bb3fdd334c9198006
 ENV NODE_OPTIONS=--unhandled-rejections=warn
 EXPOSE 3000
-# '--no-log-init': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-# RUN useradd --no-log-init --create-home --uid 31002 --home-dir /app/ unode
-COPY --from=builder /app /app/
-# USER unode
+COPY --from=builder --chown=node:node /app /app/
 WORKDIR /app/node_modules/@gitpod/ws-manager-bridge
 
 ARG __GIT_COMMIT
