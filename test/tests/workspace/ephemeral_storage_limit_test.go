@@ -6,6 +6,7 @@ package workspace
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -75,7 +76,29 @@ func TestEphemeralStorageLimit(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			t.Logf("workspace stopped: %v", status)
+			t.Logf("workspace stopped, checking for failed condition")
+			if status == nil || status.Conditions == nil {
+				t.Fatalf("workspace status is empty: %v", status)
+			}
+			if status.Conditions.Failed == "" {
+				t.Fatalf("expected failed condition but got none: %v", status)
+			}
+
+			expectedFailures := []string{
+				"Evicted: Pod ephemeral local storage usage exceeds the total limit of containers ",
+				"container workspace completed; containers of a workspace pod are not supposed to do that",
+			}
+			foundExpectedFailure := false
+			for _, ef := range expectedFailures {
+				if strings.Contains(status.Conditions.Failed, ef) {
+					foundExpectedFailure = true
+					break
+				}
+			}
+			if !foundExpectedFailure {
+				t.Fatalf("expected failed condition to contain one of %v but got: %v", expectedFailures, status.Conditions.Failed)
+			}
+			t.Logf("workspace failed as expected: %v", status.Conditions.Failed)
 
 			return testCtx
 		}).
