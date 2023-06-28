@@ -19,6 +19,7 @@ export type OrganizationPermission =
     | "read_members"
     | "write_members"
     | "leave"
+    | "delete"
     | "read_settings"
     | "write_settings"
     | "read_git_provider"
