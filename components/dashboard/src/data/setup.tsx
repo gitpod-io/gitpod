@@ -14,6 +14,7 @@ import {
 import { QueryCache, QueryClient, QueryKey } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { FunctionComponent } from "react";
+import pThrottle from "p-throttle";
 
 // This is used to version the cache
 // If data we cache changes in a non-backwards compatible way, increment this version
@@ -71,18 +72,26 @@ function createIDBPersister(idbValidKey: IDBValidKey = "gitpodQueryClient"): Per
     // If we get an error performing an operation, we'll disable persistance and assume it's not supported
     let persistanceActive = true;
 
+    const throttle = pThrottle({
+        interval: 500,
+        limit: 1,
+        strict: true,
+    });
+
+    const throttledSet = throttle(async (client: PersistedClient) => {
+        await set(idbValidKey, client);
+    });
+
     return {
         persistClient: async (client: PersistedClient) => {
             if (!persistanceActive) {
                 return;
             }
 
-            try {
-                await set(idbValidKey, client);
-            } catch (e) {
+            throttledSet(client).catch((e) => {
                 console.error("unable to persist query client");
                 persistanceActive = false;
-            }
+            });
         },
         restoreClient: async () => {
             try {
