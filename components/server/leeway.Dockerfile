@@ -3,33 +3,18 @@
 # See License.AGPL.txt in the project root for license information.
 
 FROM node:16.13.0-slim as builder
-
-RUN apt-get update && apt-get install -y build-essential python3
-
 COPY components-server--app /installer/
 
 WORKDIR /app
 RUN /installer/install.sh
 
-FROM node:16.13.0-slim
+# NodeJS v16.19
+FROM cgr.dev/chainguard/node@sha256:95bb4763acb8e9702c956e093932be97ab118db410a0619bb3fdd334c9198006
 ENV NODE_OPTIONS="--unhandled-rejections=warn --max_old_space_size=2048"
-# Using ssh-keygen for RSA keypair generation
-RUN apt-get update && apt-get install -yq \
-        openssh-client \
-        procps \
-        net-tools \
-        nano \
-        curl \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
 EXPOSE 3000
 
-ENV PATH="/go/bin:${PATH}"
-
-# '--no-log-init': see https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user
-RUN useradd --no-log-init --create-home --uid 31001 --home-dir /app/ unode
-COPY --from=builder /app /app/
-USER unode
+COPY --from=builder --chown=node:node /app /app/
 WORKDIR /app/node_modules/@gitpod/server
 
 ARG __GIT_COMMIT
@@ -37,4 +22,4 @@ ARG VERSION
 
 ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
 ENV GITPOD_BUILD_VERSION=${VERSION}
-CMD exec yarn start
+CMD ["./dist/main.js"]
