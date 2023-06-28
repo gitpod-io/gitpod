@@ -75,7 +75,7 @@
     "nice-grpc-client-middleware-retry": "^2.0.1",
     "node-fetch": "^2.6.7",
     "opentracing": "^0.14.4",
-    "p-throttle": "^4.1.1",
+    "p-throttle": "^5.1.0",
     "passport": "^0.4.1",
     "passport-dummy": "^0.0.1",
     "passport-gitlab2": "5.0.0",
