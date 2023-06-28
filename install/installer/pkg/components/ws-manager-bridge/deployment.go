@@ -152,7 +152,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							}),
 							SecurityContext: &corev1.SecurityContext{
 								Privileged:               pointer.Bool(false),
-								RunAsUser:                pointer.Int64(31001),
 								AllowPrivilegeEscalation: pointer.Bool(false),
 							},
 							Env: common.CustomizeEnvvar(ctx, Component, common.MergeEnv(
