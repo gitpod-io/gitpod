@@ -2697,10 +2697,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return fromDB.value;
     }
 
-    public async getTeams(ctx: TraceContext): Promise<Team[]> {
+    public async getTeams(ctx: TraceContext): Promise<Organization[]> {
         // Note: this operation is per-user only, hence needs no resource guard
-        const user = await this.checkUser("getTeams");
-        return this.teamDB.findTeamsByUser(user.id);
+        const user = await this.checkUser("getOrganizations");
+        const orgs = await this.teamDB.findTeamsByUser(user.id);
+
+        const filterOrg = async (org: Organization): Promise<Organization | undefined> => {
+            const members = await this.teamDB.findMembersByTeam(org.id);
+            if (!(await this.hasOrgOperationPermission(org, members, "get", "read_info"))) {
+                return undefined;
+            }
+            return org;
+        };
+
+        const accessibleOrgs = [];
+        for (const check of orgs.map(filterOrg)) {
+            const org = await check;
+            if (org) {
+                accessibleOrgs.push(org);
+            }
+        }
+        return accessibleOrgs;
     }
 
     public async getTeam(ctx: TraceContext, teamId: string): Promise<Team> {
