@@ -4,84 +4,133 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamMemberRole } from "@gitpod/gitpod-protocol";
-import { objectRef, relationship, subject } from "./definitions";
 import { v1 } from "@authzed/authzed-node";
+import { TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { inject, injectable } from "inversify";
+import { objectRef, relationship, subject } from "./definitions";
+import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 
-export function organizationRole(orgID: string, userID: string, role: TeamMemberRole): v1.WriteRelationshipsRequest {
-    return role === "owner" ? addOrganizationOwnerRole(orgID, userID) : addOrganizationMemberRole(orgID, userID);
-}
+@injectable()
+export class AuthRelationships {
+    constructor(@inject(SpiceDBAuthorizer) private readonly authorizer: SpiceDBAuthorizer) {}
 
-export function addOrganizationOwnerRole(orgID: string, userID: string): v1.WriteRelationshipsRequest {
-    return v1.WriteRelationshipsRequest.create({
-        updates: [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.TOUCH,
-                relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
-            }),
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.TOUCH,
-                relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
-            }),
-        ],
-    });
-}
+    async organizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
+        if (role === "owner") {
+            await this.addOrganizationOwnerRole(orgID, userID);
+        } else {
+            await this.addOrganizationMemberRole(orgID, userID);
+        }
+    }
 
-export function addOrganizationMemberRole(orgID: string, userID: string): v1.WriteRelationshipsRequest {
-    return v1.WriteRelationshipsRequest.create({
-        updates: [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.TOUCH,
-                relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
+    async addOrganizationOwnerRole(orgID: string, userID: string): Promise<void> {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.TOUCH,
+                        relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
+                    }),
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.TOUCH,
+                        relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
+                    }),
+                ],
             }),
-        ],
-    });
-}
+            {
+                orgID,
+            },
+        );
+    }
 
-export function deleteOwnerRole(orgID: string, userID: string): v1.WriteRelationshipsRequest {
-    return v1.WriteRelationshipsRequest.create({
-        updates: [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.DELETE,
-                relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
+    async addOrganizationMemberRole(orgID: string, userID: string): Promise<void> {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.TOUCH,
+                        relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
+                    }),
+                ],
             }),
-        ],
-    });
-}
+            {
+                orgID,
+            },
+        );
+    }
 
-export function removeUserFromOrg(orgID: string, userID: string): v1.WriteRelationshipsRequest {
-    return v1.WriteRelationshipsRequest.create({
-        updates: [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.DELETE,
-                relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
+    async deleteOwnerRole(orgID: string, userID: string): Promise<void> {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.DELETE,
+                        relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
+                    }),
+                ],
             }),
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.DELETE,
-                relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
-            }),
-        ],
-    });
-}
+            {
+                orgID,
+            },
+        );
+    }
 
-export function addProjectToOrg(orgID: string, projectID: string): v1.WriteRelationshipsRequest {
-    return v1.WriteRelationshipsRequest.create({
-        updates: [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.TOUCH,
-                relationship: relationship(objectRef("project", projectID), "org", subject("organization", orgID)),
+    async removeUserFromOrg(orgID: string, userID: string): Promise<void> {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.DELETE,
+                        relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
+                    }),
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.DELETE,
+                        relationship: relationship(objectRef("organization", orgID), "owner", subject("user", userID)),
+                    }),
+                ],
             }),
-        ],
-    });
-}
+            {
+                orgID,
+            },
+        );
+    }
 
-export function removeProjectFromOrg(orgID: string, projectID: string): v1.WriteRelationshipsRequest {
-    return v1.WriteRelationshipsRequest.create({
-        updates: [
-            v1.RelationshipUpdate.create({
-                operation: v1.RelationshipUpdate_Operation.DELETE,
-                relationship: relationship(objectRef("project", projectID), "org", subject("organization", orgID)),
+    async addProjectToOrg(orgID: string, projectID: string): Promise<void> {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.TOUCH,
+                        relationship: relationship(
+                            objectRef("project", projectID),
+                            "org",
+                            subject("organization", orgID),
+                        ),
+                    }),
+                ],
             }),
-        ],
-    });
+            {
+                orgID,
+            },
+        );
+    }
+
+    async removeProjectFromOrg(orgID: string, projectID: string): Promise<void> {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.DELETE,
+                        relationship: relationship(
+                            objectRef("project", projectID),
+                            "org",
+                            subject("organization", orgID),
+                        ),
+                    }),
+                ],
+            }),
+            {
+                orgID,
+            },
+        );
+    }
 }

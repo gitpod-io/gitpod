@@ -25,8 +25,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ResponseError } from "vscode-ws-jsonrpc";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
-import { Authorizer } from "../authorization/perms";
-import { addProjectToOrg, removeProjectFromOrg } from "../authorization/relationships";
+import { AuthRelationships } from "../authorization/relationships";
 
 @injectable()
 export class ProjectsService {
@@ -36,7 +35,7 @@ export class ProjectsService {
     @inject(Config) protected readonly config: Config;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(WebhookEventDB) protected readonly webhookEventDB: WebhookEventDB;
-    @inject(Authorizer) protected readonly authorizer: Authorizer;
+    @inject(AuthRelationships) protected readonly authRelationships: AuthRelationships;
 
     async getProject(projectId: string): Promise<Project | undefined> {
         return this.projectDB.findProjectById(projectId);
@@ -157,10 +156,10 @@ export class ProjectsService {
             await this.projectDB.transaction(async (db) => {
                 await db.storeProject(project);
 
-                await this.authorizer.writeRelationships(addProjectToOrg(teamId, project.id));
+                await this.authRelationships.addProjectToOrg(teamId, project.id);
             });
         } catch (err) {
-            await this.authorizer.writeRelationships(removeProjectFromOrg(teamId, project.id));
+            await this.authRelationships.removeProjectFromOrg(teamId, project.id);
             throw err;
         }
         await this.onDidCreateProject(project, installer);
@@ -228,11 +227,11 @@ export class ProjectsService {
                 orgId = project.teamId;
                 await db.markDeleted(projectId);
 
-                await this.authorizer.writeRelationships(removeProjectFromOrg(orgId, projectId));
+                await this.authRelationships.removeProjectFromOrg(orgId, projectId);
             });
         } catch (err) {
             if (orgId) {
-                await this.authorizer.writeRelationships(addProjectToOrg(orgId, projectId));
+                await this.authRelationships.addProjectToOrg(orgId, projectId);
             }
             throw err;
         }

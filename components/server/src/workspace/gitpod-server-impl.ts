@@ -140,7 +140,11 @@ import { ConfigProvider, InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
 import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { PartialProject, OrganizationSettings } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import {
+    PartialProject,
+    OrganizationSettings,
+    Organization,
+} from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { ClientMetadata, traceClientMetadata } from "../websocket/websocket-connection-manager";
 import {
     AdditionalUserData,
@@ -167,19 +171,6 @@ import {
     ConfigCatClientFactory,
     getExperimentsClientForBackend,
 } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { Authorizer, CheckResult, NotPermitted } from "../authorization/perms";
-import {
-    ReadOrganizationMembers,
-    ReadOrganizationInfo,
-    WriteOrganizationMembers,
-    WriteOrganizationInfo,
-    WriteOrganizationSettings,
-    ReadOrganizationSettings,
-    ReadGitProvider,
-    WriteGitProvider,
-    ReadBilling,
-    WriteBilling,
-} from "../authorization/checks";
 import { increaseDashboardErrorBoundaryCounter, reportCentralizedPermsValidation } from "../prometheus-metrics";
 import { RegionService } from "./region-service";
 import { isWorkspaceRegion, WorkspaceRegion } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
@@ -209,7 +200,8 @@ import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { OrganizationPermission } from "../authorization/definitions";
-import { addOrganizationOwnerRole, organizationRole, removeUserFromOrg } from "../authorization/relationships";
+import { AuthRelationships } from "../authorization/relationships";
+import { AuthPermissions } from "../authorization/permissions";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -275,7 +267,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(ConfigCatClientFactory) private readonly configCatClientFactory: ConfigCatClientFactory,
 
-        @inject(Authorizer) protected readonly authorizer: Authorizer,
+        @inject(AuthRelationships) private readonly authRelationships: AuthRelationships,
+        @inject(AuthPermissions) private readonly authPermissions: AuthPermissions,
 
         @inject(BillingModes) private readonly billingModes: BillingModes,
         @inject(StripeService) private readonly stripeService: StripeService,
@@ -2645,111 +2638,63 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
-        const checkAgainstDB = async (): Promise<{ team: Team; members: TeamMemberInfo[] }> => {
-            // We deliberately wrap the entiry check in try-catch, because we're using Promise.all, which rejects if any of the promises reject.
-            const team = await this.teamDB.findTeamById(teamId);
-            if (!team) {
-                // We return Permission Denied because we don't want to leak the existence, or not of the Organization.
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${teamId}`);
-            }
-
-            const members = await this.teamDB.findMembersByTeam(team.id);
-            await this.guardAccess({ kind: "team", subject: team, members }, op);
-
-            return { team, members };
-        };
-
-        const checkWithCentralizedPerms = async (): Promise<CheckResult> => {
-            if (fineGrainedOp === "not_implemented") {
-                throw new Error("Operation not implemented.");
-            }
-
-            const result = await this.guardOrganizationOperationWithCentralizedPerms(teamId, fineGrainedOp);
-            if (result.err) {
-                throw result.err;
-            }
-
-            return result;
-        };
-
-        const [fromDB, fromCentralizedPerms] = await Promise.allSettled([
-            // Permission checks against the DB will throw, if the user is not permitted to perform the action, or if iteraction with
-            // dependencies (DB) fail.
-            checkAgainstDB(),
-
-            // Centralized perms checks only throw, when an interaction error occurs - connection not available or similar.
-            // When the user is not permitted to perform the action, the call will resolve, encoding the result in the response.
-            checkWithCentralizedPerms(),
-        ]);
-
-        // check against DB resolved, which means the user is permitted to perform the action
-        if (fromDB.status === "fulfilled") {
-            if (fromCentralizedPerms.status === "fulfilled") {
-                // we got a result from centralized perms, but we still need to check if the outcome was such that the user is permitted
-                reportCentralizedPermsValidation(fineGrainedOp, fromCentralizedPerms.value.permitted === true);
-            } else {
-                // centralized perms promise rejected, we do not have an agreement
-                reportCentralizedPermsValidation(fineGrainedOp, false);
-            }
-
-            // Always return the result from the DB check
-            return fromDB.value;
-        } else {
-            // The check agains the DB failed. This means the user does not have access.
-
-            if (fromCentralizedPerms.status === "fulfilled") {
-                // we got a result from centralized perms, but we still need to check if the outcome was such that the user is NOT permitted
-                reportCentralizedPermsValidation(fineGrainedOp, fromCentralizedPerms.value.permitted === false);
-            } else {
-                // centralized perms promise rejected, we do not have an agreement
-                reportCentralizedPermsValidation(fineGrainedOp, false);
-            }
-
-            // We re-throw the error from the DB permission check, to propagate it upstream.
-            throw fromDB.reason;
+        const team = await this.teamDB.findTeamById(teamId);
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `Organization ID: ${teamId} not found.`);
         }
+
+        const members = await this.teamDB.findMembersByTeam(team.id);
+
+        if (!(await this.hasOrgOperationPermission(team, members, op, fineGrainedOp))) {
+            // if user has read permission, throw 403, otherwise 404
+            if (await this.hasOrgOperationPermission(team, members, "get", "read_info")) {
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${teamId}`);
+            } else {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, `Organization ID: ${teamId} not found.`);
+            }
+        }
+        return { team, members };
     }
 
-    private async guardOrganizationOperationWithCentralizedPerms(
-        orgId: string,
-        op: OrganizationPermission,
-    ): Promise<CheckResult> {
-        const user = await this.checkUser();
-
-        const experimentMetadata = {
-            userID: user.id,
-            orgID: orgId,
+    private async hasOrgOperationPermission(
+        org: Organization,
+        members: TeamMemberInfo[],
+        op: ResourceAccessOp,
+        fineGrainedOp: OrganizationPermission | "not_implemented",
+    ): Promise<boolean> {
+        const user = await this.checkUser("hasOrgOperationPermission");
+        const checkAgainstDB = async () => {
+            try {
+                await this.guardAccess({ kind: "team", subject: org, members }, op);
+                return true;
+            } catch (error) {
+                if (error.code === ErrorCodes.PERMISSION_DENIED) {
+                    return false;
+                } else {
+                    throw error;
+                }
+            }
         };
-
-        switch (op) {
-            case "read_info":
-                return await this.authorizer.check(ReadOrganizationInfo(user.id, orgId), experimentMetadata);
-            case "write_info":
-                return await this.authorizer.check(WriteOrganizationInfo(user.id, orgId), experimentMetadata);
-
-            case "read_members":
-                return await this.authorizer.check(ReadOrganizationMembers(user.id, orgId), experimentMetadata);
-            case "write_members":
-                return await this.authorizer.check(WriteOrganizationMembers(user.id, orgId), experimentMetadata);
-
-            case "write_settings":
-                return await this.authorizer.check(WriteOrganizationSettings(user.id, orgId), experimentMetadata);
-            case "read_settings":
-                return await this.authorizer.check(ReadOrganizationSettings(user.id, orgId), experimentMetadata);
-
-            case "write_git_provider":
-                return await this.authorizer.check(WriteGitProvider(user.id, orgId), experimentMetadata);
-            case "read_git_provider":
-                return await this.authorizer.check(ReadGitProvider(user.id, orgId), experimentMetadata);
-
-            case "read_billing":
-                return await this.authorizer.check(ReadBilling(user.id, orgId), experimentMetadata);
-            case "write_billing":
-                return await this.authorizer.check(WriteBilling(user.id, orgId), experimentMetadata);
-
-            default:
-                return NotPermitted;
+        if (fineGrainedOp === "not_implemented") {
+            // we ignore fine grained permissions if not implemented
+            return checkAgainstDB();
         }
+        // run check against old DB logic and new permission system in parallel
+        const [fromDB, fromCentralizedPerms] = await Promise.allSettled([
+            checkAgainstDB(),
+            this.authPermissions.hasPermissionOnOrg(user.id, fineGrainedOp, org.id),
+        ]);
+
+        // report what we got from centralized perms
+        if (fromCentralizedPerms.status === "fulfilled") {
+            reportCentralizedPermsValidation(fineGrainedOp, !!fromCentralizedPerms.value);
+        }
+        // if fromDB errored we throw here
+        if (fromDB.status === "rejected") {
+            throw fromDB.reason;
+        }
+
+        return fromDB.value;
     }
 
     public async getTeams(ctx: TraceContext): Promise<Team[]> {
@@ -2804,12 +2749,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             team = await this.teamDB.transaction(async (db) => {
                 team = await db.createTeam(user.id, name);
-                await this.authorizer.writeRelationships(addOrganizationOwnerRole(team.id, user.id));
+                await this.authRelationships.addOrganizationOwnerRole(team.id, user.id);
                 return team;
             });
         } catch (err) {
             if (team! && team.id) {
-                await this.authorizer.writeRelationships(removeUserFromOrg(team.id, user.id));
+                await this.authRelationships.removeUserFromOrg(team.id, user.id);
             }
 
             throw err;
@@ -2905,19 +2850,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "invalid role name");
         }
 
-        const requestor = await this.checkAndBlockUser("setTeamMemberRole");
         const { team } = await this.guardTeamOperation(teamId, "update", "write_members");
-
         try {
             await this.teamDB.transaction(async (db) => {
                 await db.setTeamMemberRole(userId, teamId, role);
-                await this.authorizer.writeRelationships(organizationRole(team.id, userId, role), {
-                    teamID: team.id,
-                    userID: requestor.id,
-                });
+                await this.authRelationships.organizationRole(team.id, userId, role);
             });
         } catch (err) {
-            await this.authorizer.writeRelationships(removeUserFromOrg(team.id, userId));
+            await this.authRelationships.removeUserFromOrg(team.id, userId);
 
             throw err;
         }
@@ -2965,11 +2905,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             await this.teamDB.transaction(async (db) => {
                 await db.removeMemberFromTeam(userToBeRemoved.id, orgID);
-                await this.authorizer.writeRelationships(removeUserFromOrg(orgID, userId));
+                await this.authRelationships.removeUserFromOrg(orgID, userId);
             });
         } catch (err) {
             // Rollback to the original role the user had
-            await this.authorizer.writeRelationships(organizationRole(orgID, userId, membership.role));
+            await this.authRelationships.organizationRole(orgID, userId, membership.role);
         }
 
         this.analytics.track({
