@@ -37,6 +37,8 @@ github.com/fatih/gomodifytags v1.14.0 h1:4D0ZKYMUgY3bvDn2S7TwOJAsgg5o3UhpwDZtkP9
 github.com/fatih/gomodifytags v1.14.0/go.mod h1:TbUyEjH1Zo0GkJd2Q52oVYqYcJ0eGNqG8bsiOb75P9c=
 github.com/fatih/structtag v1.2.0 h1:/OdNE99OxoI/PqaW/SuSK9uxxT3f/tcSZgon/ssNSx4=
 github.com/fatih/structtag v1.2.0/go.mod h1:mBJUNpUnHmRKrKlQQlmCrh5PuhftFbNv8Ys4/aAZl94=
+github.com/gitpod-io/gitpod/components/scrubber v0.0.0-20230530092704-f7d81a8eef6f h1:VTHRKVTtUrId4hsyngsVJ7Iz6GURXxg2LsgynXjU92k=
+github.com/gitpod-io/gitpod/components/scrubber v0.0.0-20230530092704-f7d81a8eef6f/go.mod h1:qpqEkax6GYdO9Rt47AMMuDbwtr3eTH02i8iRlbIL8mU=
 github.com/go-kit/kit v0.9.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-logfmt/logfmt v0.4.0/go.mod h1:3RMwSq7FuexP4Kalkev3ejPJsZTpXXBr9+V4qmtdjCk=
 github.com/go-logr/logr v1.2.0/go.mod h1:jdQByPbusPIv2/zmleS9BjJVeZ6kBagPoEUsqbVz/1A=

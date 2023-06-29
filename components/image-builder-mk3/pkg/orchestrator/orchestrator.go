@@ -28,7 +28,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -149,12 +148,6 @@ func (o *Orchestrator) ResolveBaseImage(ctx context.Context, req *protocol.Resol
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
 
-	reqs, _ := protojson.Marshal(req)
-	safeReqs, _ := log.RedactJSON(reqs)
-	safeReqsLog := make(map[string]interface{})
-	_ = json.Unmarshal(safeReqs, &safeReqsLog)
-	log.WithFields(safeReqsLog).Debug("ResolveBaseImage")
-
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 
 	refstr, err := o.getAbsoluteImageRef(ctx, req.Ref, reqauth)
@@ -172,12 +165,6 @@ func (o *Orchestrator) ResolveWorkspaceImage(ctx context.Context, req *protocol.
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ResolveWorkspaceImage")
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
-
-	reqs, _ := protojson.Marshal(req)
-	safeReqs, _ := log.RedactJSON(reqs)
-	safeReqsLog := make(map[string]interface{})
-	_ = json.Unmarshal(safeReqs, &safeReqsLog)
-	log.WithFields(safeReqsLog).Debug("ResolveWorkspaceImage")
 
 	reqauth := o.AuthResolver.ResolveRequestAuth(req.Auth)
 	baseref, err := o.getBaseImageRef(ctx, req.Source, reqauth)

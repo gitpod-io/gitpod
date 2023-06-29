@@ -53,6 +53,36 @@ func TestKeyValue(t *testing.T) {
 	}
 }
 
+var (
+	_ TrustedValue = &TrustedStructToTest{}
+)
+
+type StructToTest struct {
+	Username string
+	Email    string
+	Password string
+}
+
+type TrustedStructToTest struct {
+	StructToTest
+}
+
+func (TrustedStructToTest) isTrustedValue() {}
+
+func scrubStructToTestAsTrustedValue(v *StructToTest) TrustedValue {
+	return scrubStructToTest(v)
+}
+
+func scrubStructToTest(v *StructToTest) *TrustedStructToTest {
+	return &TrustedStructToTest{
+		StructToTest: StructToTest{
+			Username: v.Username,
+			Email:    "trusted:" + Default.Value(v.Email),
+			Password: "trusted:" + Default.KeyValue("password", v.Password),
+		},
+	}
+}
+
 func TestStruct(t *testing.T) {
 	type Expectation struct {
 		Error  string
@@ -126,6 +156,40 @@ func TestStruct(t *testing.T) {
 					Hashed:   "[redacted:md5:acbd18db4cc2f85cedef654fccc4a4d8]",
 					Redacted: "[redacted]",
 					Email:    "foo",
+				},
+			},
+		},
+		{
+			Name: "trusted struct",
+			Struct: scrubStructToTest(&StructToTest{
+				Username: "foo",
+				Email:    "foo@bar.com",
+				Password: "foobar",
+			}),
+			Expectation: Expectation{
+				Result: &TrustedStructToTest{
+					StructToTest: StructToTest{
+						Username: "foo",
+						Email:    "trusted:[redacted:email]",
+						Password: "trusted:[redacted]",
+					},
+				},
+			},
+		},
+		{
+			Name: "trusted interface",
+			Struct: scrubStructToTestAsTrustedValue(&StructToTest{
+				Username: "foo",
+				Email:    "foo@bar.com",
+				Password: "foobar",
+			}),
+			Expectation: Expectation{
+				Result: &TrustedStructToTest{
+					StructToTest: StructToTest{
+						Username: "foo",
+						Email:    "trusted:[redacted:email]",
+						Password: "trusted:[redacted]",
+					},
 				},
 			},
 		},
