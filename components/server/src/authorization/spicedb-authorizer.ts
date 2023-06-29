@@ -29,14 +29,14 @@ export class SpiceDBAuthorizer {
         },
     ): Promise<boolean> {
         if (!this.client) {
-            return false;
+            return true;
         }
 
         const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
             teamId: experimentsFields?.orgID,
         });
         if (!featureEnabled) {
-            return false;
+            return true;
         }
 
         const timer = spicedbClientLatency.startTimer();
