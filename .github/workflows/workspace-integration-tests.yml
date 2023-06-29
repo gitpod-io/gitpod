@@ -205,7 +205,7 @@ jobs:
             - uses: actions/upload-artifact@v3
               with:
                   name: test-results
-                  paths: "test/tests/**/TEST-*.xml"
+                  path: "test/tests/**/TEST-*.xml"
               if: always()
             - name: Test Summary
               id: test_summary

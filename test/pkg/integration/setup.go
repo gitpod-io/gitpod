@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"text/tabwriter"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -209,13 +210,16 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 }
 
 func logGitpodStatus(t *testing.T, client klient.Client, namespace string) {
-	t.Logf("Gitpod components status:")
 	var allPods corev1.PodList
 	err := client.Resources(namespace).List(context.Background(), &allPods)
 	if err != nil {
-		t.Logf("failed to list pods: %v", err)
+		t.Logf("failed to list pods to log gitpod status: %v", err)
 		return
 	}
+
+	var buf strings.Builder
+	tw := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
+	_, _ = tw.Write([]byte("Component\tPod\tReady\tStatus\tRestarts\tAge\n"))
 
 	for _, component := range components {
 		var pods []corev1.Pod
@@ -224,24 +228,25 @@ func logGitpodStatus(t *testing.T, client klient.Client, namespace string) {
 				pods = append(pods, pod)
 			}
 		}
-		t.Logf("  %s:", component.name)
 		for _, p := range pods {
 			var restarts int
-			ready := true
+			var ready int
 			for _, c := range p.Status.ContainerStatuses {
 				restarts += int(c.RestartCount)
-				if !c.Ready {
-					ready = false
+				if c.Ready {
+					ready += 1
 				}
 			}
-			var started *time.Duration
+			var age *time.Duration
 			if p.Status.StartTime != nil {
 				s := time.Since(p.Status.StartTime.Time).Round(time.Second)
-				started = &s
+				age = &s
 			}
-			t.Logf("    %s:\t %s,\t startTime: %v,\t restarts: %d,\t ready: %v", p.Name, p.Status.Phase, started, restarts, ready)
+			_, _ = tw.Write([]byte(fmt.Sprintf("%s\t%s\t%d/%d\t%v\t%d\t%v\n", component.name, p.Name, ready, len(p.Status.ContainerStatuses), p.Status.Phase, restarts, age)))
 		}
 	}
+	tw.Flush()
+	t.Logf("Gitpod components status:\n" + buf.String())
 }
 
 func isPreviewReady(client klient.Client, namespace string) (ready bool, reason string, err error) {
