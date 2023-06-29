@@ -40,6 +40,9 @@ import { useDirtyState } from "../hooks/use-dirty-state";
 import { LinkButton } from "../components/LinkButton";
 import { InputField } from "../components/forms/InputField";
 import Alert from "../components/Alert";
+import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
+import { isGitpodIo } from "../utils";
+import FeedbackFormModal from "../feedback-form/FeedbackModal";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -179,6 +182,8 @@ export function CreateWorkspacePage() {
         );
     }, [workspaces.data, workspaceContext.data]);
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload | undefined>(undefined);
+
+    const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
     const createWorkspace = useCallback(
         async (options?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl" | "organizationId">) => {
@@ -395,6 +400,54 @@ export function CreateWorkspacePage() {
                             loading={workspaceContext.isLoading}
                         />
                     </InputField>
+
+                    {selectedIde === "code-desktop" && (
+                        <>
+                            <Alert
+                                className="mt-4"
+                                type="info"
+                                icon={<Exclamation2 className="w-4 h-4"></Exclamation2>}
+                                iconColor="text-yellow-400 dark:text-yellow-900"
+                            >
+                                To make VS Code Desktop open seamlessly we will add a single entry to your local SSH
+                                configuration. Gitpod does not read any of your existing SSH configurations.&nbsp;
+                                <a
+                                    className="gp-link"
+                                    href="https://deploy-preview-3800--gitpod-kumquat.netlify.app/docs/references/ides-and-editors/vscode-desktop-local-ssh"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    More Detail
+                                </a>
+                                <div className="flex mt-2 text-sm">
+                                    Common on&nbsp;
+                                    <a
+                                        href="https://github.com/gitpod-io/gitpod/issues/18109"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="gp-link"
+                                    >
+                                        feedback issue
+                                    </a>
+                                    {isGitpodIo() && (
+                                        <span>
+                                            &nbsp;or {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                                            <a
+                                                className="gp-link"
+                                                href="#"
+                                                onClick={() => setFeedbackFormVisible(true)}
+                                            >
+                                                submit feedback
+                                            </a>
+                                        </span>
+                                    )}
+                                    {isFeedbackFormVisible && (
+                                        <FeedbackFormModal onClose={() => setFeedbackFormVisible(false)} />
+                                    )}
+                                </div>
+                            </Alert>
+                        </>
+                    )}
 
                     <InputField error={errorWsClass}>
                         <SelectWorkspaceClassComponent
