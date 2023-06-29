@@ -34,14 +34,6 @@ export class Project extends Message<Project> {
   teamId = "";
 
   /**
-   * User ID is the User this Project belongs to.
-   * user_id will be empty if the Project belongs to a Team, in which case team_id will be set.
-   *
-   * @generated from field: string user_id = 3;
-   */
-  userId = "";
-
-  /**
    * Name is the name of the Project.
    * Required.
    *
@@ -90,7 +82,6 @@ export class Project extends Message<Project> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "team_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 4, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 5, name: "slug", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "clone_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
@@ -452,13 +443,6 @@ export class GetProjectResponse extends Message<GetProjectResponse> {
  */
 export class ListProjectsRequest extends Message<ListProjectsRequest> {
   /**
-   * User ID filters Projects owned by user_id
-   *
-   * @generated from field: string user_id = 1;
-   */
-  userId = "";
-
-  /**
    * Team ID filters Projects owned by team_id
    *
    * @generated from field: string team_id = 2;
@@ -480,7 +464,6 @@ export class ListProjectsRequest extends Message<ListProjectsRequest> {
   static readonly runtime = proto3;
   static readonly typeName = "gitpod.experimental.v1.ListProjectsRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "team_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 3, name: "pagination", kind: "message", T: Pagination },
   ]);
@@ -612,4 +595,3 @@ export class DeleteProjectResponse extends Message<DeleteProjectResponse> {
     return proto3.util.equals(DeleteProjectResponse, a, b);
   }
 }
-

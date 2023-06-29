@@ -95,7 +95,6 @@ type APIInterface interface {
 	// Projects
 	CreateProject(ctx context.Context, options *CreateProjectOptions) (*Project, error)
 	DeleteProject(ctx context.Context, projectID string) error
-	GetUserProjects(ctx context.Context) ([]*Project, error)
 	GetTeamProjects(ctx context.Context, teamID string) ([]*Project, error)
 
 	WorkspaceUpdates(ctx context.Context, workspaceID string) (<-chan *WorkspaceInstance, error)
@@ -238,7 +237,6 @@ const (
 	// Projects
 	FunctionCreateProject   FunctionName = "createProject"
 	FunctionDeleteProject   FunctionName = "deleteProject"
-	FunctionGetUserProjects FunctionName = "getUserProjects"
 	FunctionGetTeamProjects FunctionName = "getTeamProjects"
 
 	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
@@ -1472,16 +1470,6 @@ func (gp *APIoverJSONRPC) DeleteProject(ctx context.Context, projectID string) (
 	}
 	_params := []interface{}{projectID}
 	err = gp.C.Call(ctx, string(FunctionDeleteProject), _params, nil)
-	return
-}
-
-func (gp *APIoverJSONRPC) GetUserProjects(ctx context.Context) (res []*Project, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	_params := []interface{}{}
-	err = gp.C.Call(ctx, string(FunctionGetUserProjects), _params, &res)
 	return
 }
 

@@ -50,23 +50,10 @@ func (s *ProjectsService) CreateProject(ctx context.Context, req *connect.Reques
 		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Clone URL is a required argument."))
 	}
 
-	userID, teamID := spec.GetUserId(), spec.GetTeamId()
-	if userID != "" && teamID != "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Specifying both User ID and Team ID is not allowed."))
-	}
-
-	if userID != "" {
-		_, err := uuid.Parse(userID)
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("User ID is not a valid UUID."))
-		}
-	}
-
-	if teamID != "" {
-		_, err := uuid.Parse(teamID)
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is not a valid UUID."))
-		}
+	teamID := spec.GetTeamId()
+	_, err := uuid.Parse(teamID)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is not a valid UUID."))
 	}
 
 	conn, err := s.getConnection(ctx)
@@ -77,7 +64,6 @@ func (s *ProjectsService) CreateProject(ctx context.Context, req *connect.Reques
 	project, err := conn.CreateProject(ctx, &protocol.CreateProjectOptions{
 		Name:              name,
 		Slug:              slug,
-		UserID:            userID,
 		TeamID:            teamID,
 		CloneURL:          cloneURL,
 		AppInstallationID: "undefined", // sadly that's how we store cases where there is no AppInstallationID
@@ -92,13 +78,9 @@ func (s *ProjectsService) CreateProject(ctx context.Context, req *connect.Reques
 }
 
 func (s *ProjectsService) ListProjects(ctx context.Context, req *connect.Request[v1.ListProjectsRequest]) (*connect.Response[v1.ListProjectsResponse], error) {
-	userID, teamID := req.Msg.GetUserId(), req.Msg.GetTeamId()
-	if userID == "" && teamID == "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Neither User ID nor Team ID specified. Specify one of them."))
-	}
-
-	if userID != "" && teamID != "" {
-		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Specifying both User ID and Team ID is not allowed."))
+	teamID := req.Msg.GetTeamId()
+	if teamID == "" {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Organization ID not specified."))
 	}
 
 	conn, err := s.getConnection(ctx)
@@ -108,22 +90,10 @@ func (s *ProjectsService) ListProjects(ctx context.Context, req *connect.Request
 
 	var projects []*protocol.Project
 
-	if userID != "" {
-		_, err := uuid.Parse(userID)
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("User ID is not a valid UUID."))
-		}
-
-		projects, err = conn.GetUserProjects(ctx)
-		if err != nil {
-			return nil, proxy.ConvertError(err)
-		}
-	}
-
 	if teamID != "" {
 		_, err := uuid.Parse(teamID)
 		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Team ID is not a valid UUID."))
+			return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("Organization ID is not a valid UUID."))
 		}
 
 		projects, err = conn.GetTeamProjects(ctx, teamID)
@@ -191,7 +161,6 @@ func projectToAPIResponse(p *protocol.Project) *v1.Project {
 	return &v1.Project{
 		Id:           p.ID,
 		TeamId:       p.TeamID,
-		UserId:       p.UserID,
 		Name:         p.Name,
 		CloneUrl:     p.CloneURL,
 		CreationTime: parseGitpodTimeStampOrDefault(p.CreationTime),

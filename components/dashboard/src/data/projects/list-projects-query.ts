@@ -8,7 +8,6 @@ import { Project } from "@gitpod/gitpod-protocol";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { listAllProjects } from "../../service/public-api";
-import { useCurrentUser } from "../../user-context";
 import { useCurrentOrg } from "../organizations/orgs-query";
 
 type TeamOrUserID = {
@@ -22,30 +21,22 @@ export type ListProjectsQueryResults = {
 
 export const useListProjectsQuery = () => {
     const team = useCurrentOrg().data;
-    const user = useCurrentUser();
 
     const teamId = team?.id;
-    const userId = user?.id;
 
     return useQuery<ListProjectsQueryResults>({
         // Projects are either tied to current team, otherwise current user
-        queryKey: getListProjectsQueryKey({ teamId, userId }),
+        queryKey: getListProjectsQueryKey({ teamId }),
         cacheTime: 1000 * 60 * 60 * 1, // 1 hour
         queryFn: async () => {
-            if (!userId && !teamId) {
+            if (!teamId) {
                 return {
                     projects: [],
                     latestPrebuilds: new Map(),
                 };
             }
 
-            let projects: Project[] = [];
-            if (teamId) {
-                projects = await listAllProjects({ teamId });
-            } else {
-                projects = await listAllProjects({ userId });
-            }
-
+            const projects = await listAllProjects({ teamId });
             return {
                 projects,
             };

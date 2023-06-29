@@ -74,7 +74,6 @@ export async function listAllProjects(opts: { userId?: string; teamId?: string }
 
     const response = await projectsService.listProjects({
         teamId: opts.teamId,
-        userId: opts.userId,
         pagination,
     });
     const results = response.projects;
@@ -86,7 +85,6 @@ export async function listAllProjects(opts: { userId?: string; teamId?: string }
         };
         const response = await projectsService.listProjects({
             teamId: opts.teamId,
-            userId: opts.userId,
             pagination,
         });
         results.push(...response.projects);
@@ -103,7 +101,6 @@ export function projectToProtocol(project: Project): ProtocolProject {
         creationTime: project.creationTime?.toDate().toISOString() || "",
         slug: project.slug,
         teamId: project.teamId,
-        userId: project.userId,
         appInstallationId: "undefined",
         settings: {
             allowUsingPreviousPrebuilds: project.settings?.prebuild?.usePreviousPrebuilds,

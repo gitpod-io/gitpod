@@ -923,6 +923,55 @@ export class WorkspaceContext extends Message<WorkspaceContext> {
 }
 
 /**
+ * GitProvider describes the git provider
+ *
+ * @generated from message gitpod.experimental.v1.WorkspaceContext.GitProvider
+ */
+export class WorkspaceContext_GitProvider extends Message<WorkspaceContext_GitProvider> {
+  /**
+   * type is the git provider type, e.g. 'github', 'gitlab', 'bitbucked'
+   *
+   * @generated from field: string type = 1;
+   */
+  type = "";
+
+  /**
+   * hostname is the git provider hostname
+   *
+   * @generated from field: string hostname = 2;
+   */
+  hostname = "";
+
+  constructor(data?: PartialMessage<WorkspaceContext_GitProvider>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.WorkspaceContext.GitProvider";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "type", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "hostname", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceContext_GitProvider {
+    return new WorkspaceContext_GitProvider().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceContext_GitProvider {
+    return new WorkspaceContext_GitProvider().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceContext_GitProvider {
+    return new WorkspaceContext_GitProvider().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceContext_GitProvider | PlainMessage<WorkspaceContext_GitProvider> | undefined, b: WorkspaceContext_GitProvider | PlainMessage<WorkspaceContext_GitProvider> | undefined): boolean {
+    return proto3.util.equals(WorkspaceContext_GitProvider, a, b);
+  }
+}
+
+/**
  * Explicit Git context
  *
  * @generated from message gitpod.experimental.v1.WorkspaceContext.Git
@@ -938,6 +987,13 @@ export class WorkspaceContext_Git extends Message<WorkspaceContext_Git> {
    */
   commit = "";
 
+  /**
+   * provider is the git provider
+   *
+   * @generated from field: gitpod.experimental.v1.WorkspaceContext.GitProvider provider = 3;
+   */
+  provider?: WorkspaceContext_GitProvider;
+
   constructor(data?: PartialMessage<WorkspaceContext_Git>) {
     super();
     proto3.util.initPartial(data, this);
@@ -948,6 +1004,7 @@ export class WorkspaceContext_Git extends Message<WorkspaceContext_Git> {
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "normalized_context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 2, name: "commit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "provider", kind: "message", T: WorkspaceContext_GitProvider },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceContext_Git {
@@ -1176,6 +1233,13 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
    */
   ports: Port[] = [];
 
+  /**
+   * recent_folders is the opened folders inside the workspace. Used to determine the folder path to load the workspace in.
+   *
+   * @generated from field: repeated string recent_folders = 8;
+   */
+  recentFolders: string[] = [];
+
   constructor(data?: PartialMessage<WorkspaceInstanceStatus>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1191,6 +1255,7 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
     { no: 5, name: "url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
     { no: 6, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel) },
     { no: 7, name: "ports", kind: "message", T: Port, repeated: true },
+    { no: 8, name: "recent_folders", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInstanceStatus {
