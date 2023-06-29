@@ -10,29 +10,23 @@ import { User, Workspace } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
-import { WorkspaceDeletionService } from "../workspace/workspace-deletion-service";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { Config } from "../config";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
-import { StripeService } from "./stripe-service";
-import { BillingModes } from "../billing/billing-mode";
 
 @injectable()
 export class UserDeletionService {
-    @inject(Config) protected readonly config: Config;
-    @inject(UserDB) protected readonly db: UserDB;
-    @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
-    @inject(UserStorageResourcesDB) protected readonly userStorageResourcesDb: UserStorageResourcesDB;
-    @inject(TeamDB) protected readonly teamDb: TeamDB;
-    @inject(ProjectDB) protected readonly projectDb: ProjectDB;
-    @inject(StorageClient) protected readonly storageClient: StorageClient;
-    @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
-    @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
-    @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
-    @inject(StripeService) protected readonly stripeService: StripeService;
-    @inject(BillingModes) protected readonly billingMode: BillingModes;
+    constructor(
+        @inject(UserDB) private readonly db: UserDB,
+        @inject(WorkspaceDB) private readonly workspaceDb: WorkspaceDB,
+        @inject(UserStorageResourcesDB) private readonly userStorageResourcesDb: UserStorageResourcesDB,
+        @inject(TeamDB) private readonly teamDb: TeamDB,
+        @inject(ProjectDB) private readonly projectDb: ProjectDB,
+        @inject(StorageClient) private readonly storageClient: StorageClient,
+        @inject(WorkspaceStarter) private readonly workspaceStarter: WorkspaceStarter,
+        @inject(AuthProviderService) private readonly authProviderService: AuthProviderService,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+    ) {}
 
     /**
      * This method deletes a User logically. The contract here is that after running this method without receiving an
@@ -89,8 +83,6 @@ export class UserDeletionService {
             this.deleteSoleOwnedTeams(id),
             // Team memberships
             this.deleteTeamMemberships(id),
-            // User projects
-            this.deleteUserProjects(id),
         ]);
 
         // Track the deletion Event for Analytics Purposes
@@ -114,7 +106,7 @@ export class UserDeletionService {
         });
     }
 
-    protected anonymizeUser(user: User) {
+    private anonymizeUser(user: User) {
         user.avatarUrl = "deleted-avatarUrl";
         user.fullName = "deleted-fullName";
         user.name = "deleted-Name";
@@ -123,18 +115,18 @@ export class UserDeletionService {
         }
     }
 
-    protected deleteIdentities(user: User) {
+    private deleteIdentities(user: User) {
         for (const identity of user.identities) {
             identity.deleted = true; // This triggers the HARD DELETION of the identity
         }
     }
 
-    protected async deleteTokens(db: UserDB, user: User) {
+    private async deleteTokens(db: UserDB, user: User) {
         const tokenDeletions = user.identities.map((identity) => db.deleteTokens(identity));
         await Promise.all(tokenDeletions);
     }
 
-    protected async anonymizeAllWorkspaces(userId: string) {
+    private async anonymizeAllWorkspaces(userId: string) {
         const workspaces = await this.workspaceDb.findWorkspacesByUser(userId);
 
         await Promise.all(
@@ -145,7 +137,7 @@ export class UserDeletionService {
         );
     }
 
-    protected async deleteUserBucket(userId: string) {
+    private async deleteUserBucket(userId: string) {
         try {
             await this.storageClient.deleteUserContent(userId);
         } catch (error) {
@@ -153,26 +145,20 @@ export class UserDeletionService {
         }
     }
 
-    protected async deleteTeamMemberships(userId: string) {
+    private async deleteTeamMemberships(userId: string) {
         const teams = await this.teamDb.findTeamsByUser(userId);
         await Promise.all(teams.map((t) => this.teamDb.removeMemberFromTeam(userId, t.id)));
     }
 
-    protected async deleteSoleOwnedTeams(userId: string) {
+    private async deleteSoleOwnedTeams(userId: string) {
         const ownedTeams = await this.teamDb.findTeamsByUserAsSoleOwner(userId);
 
         for (const team of ownedTeams) {
-            const teamProjects = await this.projectDb.findTeamProjects(team.id);
+            const teamProjects = await this.projectDb.findProjects(team.id);
             await Promise.all(teamProjects.map((project) => this.projectDb.markDeleted(project.id)));
         }
 
         await Promise.all(ownedTeams.map((t) => this.teamDb.deleteTeam(t.id)));
-    }
-
-    protected async deleteUserProjects(id: string) {
-        const userProjects = await this.projectDb.findUserProjects(id);
-
-        await Promise.all(userProjects.map((project) => this.projectDb.markDeleted(project.id)));
     }
 
     anonymizeWorkspace(ws: Workspace) {

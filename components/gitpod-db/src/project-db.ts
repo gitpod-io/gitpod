@@ -12,8 +12,7 @@ export interface ProjectDB extends TransactionalDB<ProjectDB> {
     findProjectById(projectId: string): Promise<Project | undefined>;
     findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined>;
     findProjectsByCloneUrls(cloneUrls: string[]): Promise<(Project & { teamOwners?: string[] })[]>;
-    findTeamProjects(teamId: string): Promise<Project[]>;
-    findUserProjects(userId: string): Promise<Project[]>;
+    findProjects(orgID: string): Promise<Project[]>;
     findProjectsBySearchTerm(
         offset: number,
         limit: number,

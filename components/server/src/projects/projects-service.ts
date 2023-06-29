@@ -29,24 +29,22 @@ import { Authorizer } from "../authorization/authorizer";
 
 @injectable()
 export class ProjectsService {
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
-    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(Config) protected readonly config: Config;
-    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
-    @inject(WebhookEventDB) protected readonly webhookEventDB: WebhookEventDB;
-    @inject(Authorizer) protected readonly auth: Authorizer;
+    constructor(
+        @inject(ProjectDB) private readonly projectDB: ProjectDB,
+        @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
+        @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
+        @inject(Config) private readonly config: Config,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(WebhookEventDB) private readonly webhookEventDB: WebhookEventDB,
+        @inject(Authorizer) private readonly auth: Authorizer,
+    ) {}
 
     async getProject(projectId: string): Promise<Project | undefined> {
         return this.projectDB.findProjectById(projectId);
     }
 
     async getTeamProjects(teamId: string): Promise<Project[]> {
-        return this.projectDB.findTeamProjects(teamId);
-    }
-
-    async getUserProjects(userId: string): Promise<Project[]> {
-        return this.projectDB.findUserProjects(userId);
+        return this.projectDB.findProjects(teamId);
     }
 
     async getProjectsByCloneUrls(cloneUrls: string[]): Promise<(Project & { teamOwners?: string[] })[]> {
@@ -74,7 +72,7 @@ export class ProjectsService {
         return await refreshPromise;
     }
 
-    protected getRepositoryProvider(project: Project) {
+    private getRepositoryProvider(project: Project) {
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const repositoryProvider =
             parsedUrl && this.hostContextProvider.get(parsedUrl.host)?.services?.repositoryProvider;
@@ -179,7 +177,7 @@ export class ProjectsService {
         return project;
     }
 
-    protected async onDidCreateProject(project: Project, installer: User) {
+    private async onDidCreateProject(project: Project, installer: User) {
         // Pre-fetch project details in the background -- don't await
         /** no await */ this.getProjectOverviewCached(installer, project).catch((err) => {
             /** ignore */

@@ -100,14 +100,9 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         return result;
     }
 
-    public async findTeamProjects(teamId: string): Promise<Project[]> {
+    public async findProjects(orgId: string): Promise<Project[]> {
         const repo = await this.getRepo();
-        return repo.find({ where: { teamId, markedDeleted: false }, order: { name: "ASC" } });
-    }
-
-    public async findUserProjects(userId: string): Promise<Project[]> {
-        const repo = await this.getRepo();
-        return repo.find({ where: { userId, markedDeleted: false }, order: { name: "ASC" } });
+        return repo.find({ where: { teamId: orgId, markedDeleted: false }, order: { name: "ASC" } });
     }
 
     public async findProjectsBySearchTerm(

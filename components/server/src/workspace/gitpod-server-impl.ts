@@ -354,7 +354,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         for (const team of teams) {
             allProjects.push(...(await this.projectsService.getTeamProjects(team.id)).map((p) => p.id));
         }
-        allProjects.push(...(await this.projectsService.getUserProjects(this.userID)).map((p) => p.id));
         return allProjects;
     }
 
@@ -3064,12 +3063,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardTeamOperation(teamId, "get", "not_implemented");
         return this.projectsService.getTeamProjects(teamId);
-    }
-
-    public async getUserProjects(ctx: TraceContext): Promise<Project[]> {
-        // Note: this operation is per-user only, hence needs no resource guard
-        const user = await this.checkAndBlockUser("getUserProjects");
-        return this.projectsService.getUserProjects(user.id);
     }
 
     public async findPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {

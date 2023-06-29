@@ -179,7 +179,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     createProject(params: CreateProjectParams): Promise<Project>;
     deleteProject(projectId: string): Promise<void>;
     getTeamProjects(teamId: string): Promise<Project[]>;
-    getUserProjects(): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
     getPrebuildEvents(projectId: string): Promise<PrebuildEvent[]>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
