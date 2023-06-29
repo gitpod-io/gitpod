@@ -496,7 +496,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.networkLimits.bucketSi
 #
 # Configure DB
 #
-yq w -i "${INSTALLER_CONFIG_PATH}" database.inClusterMySql_8_0 "false"
+yq w -i "${INSTALLER_CONFIG_PATH}" database.inClusterMySql_8_0 "true"
 
 log_success "Generated config at $INSTALLER_CONFIG_PATH"
 
