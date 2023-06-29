@@ -129,6 +129,7 @@ import { DatabaseGarbageCollector } from "./jobs/database-gc";
 import { OTSGarbageCollector } from "./jobs/ots-gc";
 import { SnapshotsJob } from "./jobs/snapshots";
 import { APIStatsService } from "./api/stats";
+import { OrganizationService } from "./organizations/organizations-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -253,6 +254,7 @@ export const productionContainerModule = new ContainerModule(
         bind(HeadlessLogService).toSelf().inSingletonScope();
         bind(HeadlessLogController).toSelf().inSingletonScope();
 
+        bind(OrganizationService).toSelf().inSingletonScope();
         bind(ProjectsService).toSelf().inSingletonScope();
         bind(EnvVarService).toSelf().inSingletonScope();
 

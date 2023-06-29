@@ -12,7 +12,6 @@ import {
     TracedWorkspaceDB,
     DBGitpodToken,
     UserStorageResourcesDB,
-    TeamDB,
     ProjectDB,
     EmailDomainFilterDB,
 } from "@gitpod/gitpod-db/lib";
@@ -208,6 +207,7 @@ import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { OrganizationPermission } from "../authorization/definitions";
 import { addOrganizationOwnerRole, organizationRole, removeUserFromOrg } from "../authorization/relationships";
+import { OrganizationService } from "../organizations/organizations-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -252,7 +252,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(UserDeletionService) private readonly userDeletionService: UserDeletionService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(AuthorizationService) private readonly authorizationService: AuthorizationService,
-        @inject(TeamDB) private readonly teamDB: TeamDB,
         @inject(LinkedInService) private readonly linkedInService: LinkedInService,
 
         @inject(AppInstallationDB) private readonly appInstallationDB: AppInstallationDB,
@@ -283,6 +282,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(EnvVarService)
         private readonly envVarService: EnvVarService,
+        @inject(OrganizationService) private readonly orgsService: OrganizationService,
     ) {}
 
     /** Id the uniquely identifies this server instance */
@@ -357,7 +357,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // update all project this user has access to
         const allProjects: string[] = [];
-        const teams = await this.teamDB.findTeamsByUser(this.userID);
+        const teams = await this.orgsService.findOrgsByUser(this.userID);
         for (const team of teams) {
             allProjects.push(...(await this.projectsService.getTeamProjects(team.id)).map((p) => p.id));
         }
@@ -882,7 +882,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (projectId) {
             const project = await this.projectsService.getProject(projectId);
             if (project && project.teamId) {
-                return await this.teamDB.findMembersByTeam(project.teamId);
+                return await this.orgsService.findMembersByOrg(project.teamId);
             }
         }
         return [];
@@ -2635,26 +2635,26 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     private async guardTeamOperation(
-        teamId: string,
+        orgId: string,
         op: ResourceAccessOp,
         fineGrainedOp: OrganizationPermission | "not_implemented",
     ): Promise<{ team: Team; members: TeamMemberInfo[] }> {
-        if (!uuidValidate(teamId)) {
+        if (!uuidValidate(orgId)) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
         const checkAgainstDB = async (): Promise<{ team: Team; members: TeamMemberInfo[] }> => {
             // We deliberately wrap the entiry check in try-catch, because we're using Promise.all, which rejects if any of the promises reject.
-            const team = await this.teamDB.findTeamById(teamId);
-            if (!team) {
+            const org = await this.orgsService.findOrgById(orgId);
+            if (!org) {
                 // We return Permission Denied because we don't want to leak the existence, or not of the Organization.
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${teamId}`);
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${orgId}`);
             }
 
-            const members = await this.teamDB.findMembersByTeam(team.id);
-            await this.guardAccess({ kind: "team", subject: team, members }, op);
+            const members = await this.orgsService.findMembersByOrg(org.id);
+            await this.guardAccess({ kind: "team", subject: org, members }, op);
 
-            return { team, members };
+            return { team: org, members };
         };
 
         const checkWithCentralizedPerms = async (): Promise<CheckResult> => {
@@ -2662,7 +2662,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 throw new Error("Operation not implemented.");
             }
 
-            const result = await this.guardOrganizationOperationWithCentralizedPerms(teamId, fineGrainedOp);
+            const result = await this.guardOrganizationOperationWithCentralizedPerms(orgId, fineGrainedOp);
             if (result.err) {
                 throw result.err;
             }
@@ -2748,7 +2748,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeams(ctx: TraceContext): Promise<Team[]> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = await this.checkUser("getTeams");
-        return this.teamDB.findTeamsByUser(user.id);
+        return this.orgsService.findOrgsByUser(user.id);
     }
 
     public async getTeam(ctx: TraceContext, teamId: string): Promise<Team> {
@@ -2760,13 +2760,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return team;
     }
 
-    public async updateTeam(ctx: TraceContext, teamId: string, team: Pick<Team, "name">): Promise<Team> {
-        traceAPIParams(ctx, { teamId });
+    public async updateTeam(ctx: TraceContext, orgId: string, orgUpdate: Pick<Team, "name">): Promise<Team> {
+        traceAPIParams(ctx, { teamId: orgId });
         await this.checkUser("updateTeam");
 
-        await this.guardTeamOperation(teamId, "update", "write_info");
+        await this.guardTeamOperation(orgId, "update", "write_info");
 
-        const updatedTeam = await this.teamDB.updateTeam(teamId, team);
+        const updatedTeam = await this.orgsService.updateOrg(orgId, orgUpdate);
         return updatedTeam;
     }
 
@@ -2793,20 +2793,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         }
 
-        let team: Team;
-        try {
-            team = await this.teamDB.transaction(async (db) => {
-                team = await db.createTeam(user.id, name);
-                await this.authorizer.writeRelationships(addOrganizationOwnerRole(team.id, user.id));
-                return team;
-            });
-        } catch (err) {
-            if (team! && team.id) {
-                await this.authorizer.writeRelationships(removeUserFromOrg(team.id, user.id));
-            }
-
-            throw err;
-        }
+        // OrganizationService.createOrg is checking for permissions
+        const team = await this.orgsService.createOrg(user.id, name);
 
         const invite = await this.getGenericInvite(ctx, team.id);
 
@@ -2842,17 +2830,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         }
 
-        // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
-        const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
-        if (!invite || invite.invalidationTime !== "") {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "The invite link is no longer valid.");
-        }
-        ctx.span?.setTag("teamId", invite.teamId);
-        if (await this.teamDB.hasActiveSSO(invite.teamId)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
-        }
-        const result = await this.teamDB.addMemberToTeam(user.id, invite.teamId);
-        const org = await this.getTeam(ctx, invite.teamId);
+        const { result, orgId } = await this.orgsService.joinTeam(ctx, user.id, inviteId);
+
+        // take care of account verification, etc.
+        const org = await this.getTeam(ctx, orgId);
         if (org !== undefined) {
             try {
                 // verify the new member if this org a paying customer
@@ -2867,12 +2848,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 log.warn("Failed to verify new org member", e);
             }
         }
+
         if (result !== "already_member") {
             this.analytics.track({
                 userId: user.id,
                 event: "team_joined",
                 properties: {
-                    team_id: invite.teamId,
+                    team_id: orgId,
                     team_name: org?.name,
                     invite_id: inviteId,
                 },
@@ -2884,11 +2866,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     public async setTeamMemberRole(
         ctx: TraceContext,
-        teamId: string,
+        orgId: string,
         userId: string,
         role: TeamMemberRole,
     ): Promise<void> {
-        traceAPIParams(ctx, { teamId, userId, role });
+        traceAPIParams(ctx, { teamId: orgId, userId, role });
 
         if (!uuidValidate(userId)) {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
@@ -2898,22 +2880,15 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "invalid role name");
         }
 
-        const requestor = await this.checkAndBlockUser("setTeamMemberRole");
-        const { team } = await this.guardTeamOperation(teamId, "update", "write_members");
+        const currentUser = await this.checkAndBlockUser("setTeamMemberRole");
+        await this.guardTeamOperation(orgId, "update", "write_members");
 
-        try {
-            await this.teamDB.transaction(async (db) => {
-                await db.setTeamMemberRole(userId, teamId, role);
-                await this.authorizer.writeRelationships(organizationRole(team.id, userId, role), {
-                    teamID: team.id,
-                    userID: requestor.id,
-                });
-            });
-        } catch (err) {
-            await this.authorizer.writeRelationships(removeUserFromOrg(team.id, userId));
-
-            throw err;
-        }
+        await this.orgsService.setOrgMemberRole({
+            currentUserId: currentUser.id,
+            targetUserId: userId,
+            orgId,
+            role,
+        });
     }
 
     public async removeTeamMember(ctx: TraceContext, orgID: string, userId: string): Promise<void> {
@@ -2923,50 +2898,24 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
         }
 
-        const requestor = await this.checkAndBlockUser("removeTeamMember");
+        const currentUser = await this.checkAndBlockUser("removeTeamMember");
 
         // The user is leaving a team, if they are removing themselves from the team.
-        const currentUserLeavingTeam = requestor.id === userId;
+        const currentUserLeavingTeam = currentUser.id === userId;
         if (!currentUserLeavingTeam) {
             await this.guardTeamOperation(orgID, "update", "write_members");
         } else {
             await this.guardTeamOperation(orgID, "get", "leave");
         }
 
-        // Check for existing membership.
-        const membership = await this.teamDB.findTeamMembership(userId, orgID);
-        if (!membership) {
-            throw new ResponseError(
-                ErrorCodes.NOT_FOUND,
-                `Could not find membership for user '${userId}' in organization '${orgID}'`,
-            );
-        }
-
-        // Check if user's account belongs to the Org.
-        const userToBeRemoved = currentUserLeavingTeam ? requestor : await this.userDB.findUserById(userId);
-        if (!userToBeRemoved) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Could not find user '${userId}'`);
-        }
-        // Only invited members can be removed from the Org, but organizational accounts cannot.
-        if (userToBeRemoved.organizationId && orgID === userToBeRemoved.organizationId) {
-            throw new ResponseError(
-                ErrorCodes.PRECONDITION_FAILED,
-                `User's account '${userId}' belongs to the organization '${orgID}'`,
-            );
-        }
-
-        try {
-            await this.teamDB.transaction(async (db) => {
-                await db.removeMemberFromTeam(userToBeRemoved.id, orgID);
-                await this.authorizer.writeRelationships(removeUserFromOrg(orgID, userId));
-            });
-        } catch (err) {
-            // Rollback to the original role the user had
-            await this.authorizer.writeRelationships(organizationRole(orgID, userId, membership.role));
-        }
+        await this.orgsService.removeTeamMember(ctx, {
+            currentUserId: currentUser.id,
+            targetUserId: userId,
+            orgId: orgID,
+        });
 
         this.analytics.track({
-            userId: requestor.id,
+            userId: currentUser.id,
             event: "team_user_removed",
             properties: {
                 team_id: orgID,
@@ -2975,32 +2924,22 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         });
     }
 
-    public async getGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
-        traceAPIParams(ctx, { teamId });
+    public async getGenericInvite(ctx: TraceContext, orgId: string): Promise<TeamMembershipInvite> {
+        traceAPIParams(ctx, { teamId: orgId });
 
         await this.checkUser("getGenericInvite");
-        await this.guardTeamOperation(teamId, "get", "write_members");
+        await this.guardTeamOperation(orgId, "get", "write_members");
 
-        if (await this.teamDB.hasActiveSSO(teamId)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
-        }
-
-        const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
-        if (invite) {
-            return invite;
-        }
-        return this.teamDB.resetGenericInvite(teamId);
+        return this.orgsService.getGenericInvite(orgId);
     }
 
-    public async resetGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
-        traceAPIParams(ctx, { teamId });
+    public async resetGenericInvite(ctx: TraceContext, orgId: string): Promise<TeamMembershipInvite> {
+        traceAPIParams(ctx, { teamId: orgId });
 
         await this.checkAndBlockUser("resetGenericInvite");
-        await this.guardTeamOperation(teamId, "update", "write_members");
-        if (await this.teamDB.hasActiveSSO(teamId)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
-        }
-        return this.teamDB.resetGenericInvite(teamId);
+        await this.guardTeamOperation(orgId, "update", "write_members");
+
+        return this.orgsService.resetGenericInvite(orgId);
     }
 
     private async guardProjectOperation(user: User, projectId: string, op: ResourceAccessOp): Promise<void> {
@@ -3035,11 +2974,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         return this.projectsService.deleteProject(projectId);
     }
 
-    public async deleteTeam(ctx: TraceContext, teamId: string): Promise<void> {
+    public async deleteTeam(ctx: TraceContext, orgId: string): Promise<void> {
         const user = await this.checkAndBlockUser("deleteTeam");
-        traceAPIParams(ctx, { teamId, userId: user.id });
+        traceAPIParams(ctx, { teamId: orgId, userId: user.id });
 
-        await this.guardTeamOperation(teamId, "delete", "not_implemented");
+        await this.guardTeamOperation(orgId, "delete", "not_implemented");
+
+        await this.orgsService.deleteOrg(ctx, orgId);
 
         const teamProjects = await this.projectsService.getTeamProjects(teamId);
         teamProjects.forEach((project) => {
