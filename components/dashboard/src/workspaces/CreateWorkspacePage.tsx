@@ -437,7 +437,7 @@ export function CreateWorkspacePage() {
                             configuration. Gitpod does not read any of your existing SSH configurations.&nbsp;
                             <a
                                 className="gp-link"
-                                href="https://deploy-preview-3800--gitpod-kumquat.netlify.app/docs/references/ides-and-editors/vscode-desktop-local-ssh"
+                                href="https://www.gitpod.io/docs/references/ides-and-editors/vscode-desktop-local-ssh"
                                 target="_blank"
                                 rel="noreferrer"
                             >
