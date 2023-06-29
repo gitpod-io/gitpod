@@ -11,7 +11,6 @@ import (
 var idpCmd = &cobra.Command{
 	Use:    "idp",
 	Short:  "Interact Gitpod's OIDC identity provider",
-	Hidden: true,
 }
 
 func init() {
