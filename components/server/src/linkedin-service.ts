@@ -54,8 +54,8 @@ export class LinkedInService {
     private async getLinkedInProfile(accessToken: string): Promise<LinkedInProfile> {
         // TODO: update these to use newer versioned apis
         const profileUrl =
-            "https://api.linkedin.com/v2/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))";
-        const emailUrl = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";
+            "https://api.linkedin.com/rest/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))";
+        const emailUrl = "https://api.linkedin.com/rest/emailAddress?q=members&projection=(elements*(handle~))";
 
         // Fetch both the user's profile and email address in parallel
         const [profileResponse, emailResponse] = await Promise.all([
@@ -63,12 +63,14 @@ export class LinkedInService {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
+                    "LinkedIn-Version": "202306",
                 },
             }),
             fetch(emailUrl, {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
+                    "LinkedIn-Version": "202306",
                 },
             }),
         ]);
