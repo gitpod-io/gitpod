@@ -36,6 +36,7 @@ export interface AlertProps {
     onClose?: () => void;
     showIcon?: boolean;
     iconColor?: string;
+    iconSize?: string;
     icon?: React.ReactNode;
     rounded?: boolean;
     children?: React.ReactNode;
@@ -119,7 +120,7 @@ export default function Alert(props: AlertProps) {
             )}
         >
             {showIcon && (
-                <span className={`mt-1 mr-4 h-4 w-4 ${props.iconColor ?? info.iconColor}`}>
+                <span className={`mt-1 mr-4 ${props.iconSize ?? "h-4 w-4"} ${props.iconColor ?? info.iconColor}`}>
                     {props.icon ?? info.icon}
                 </span>
             )}

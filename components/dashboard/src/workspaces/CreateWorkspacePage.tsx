@@ -401,54 +401,6 @@ export function CreateWorkspacePage() {
                         />
                     </InputField>
 
-                    {selectedIde === "code-desktop" && (
-                        <>
-                            <Alert
-                                className="mt-4"
-                                type="info"
-                                icon={<Exclamation2 className="w-4 h-4"></Exclamation2>}
-                                iconColor="text-yellow-400 dark:text-yellow-900"
-                            >
-                                To make VS Code Desktop open seamlessly we will add a single entry to your local SSH
-                                configuration. Gitpod does not read any of your existing SSH configurations.&nbsp;
-                                <a
-                                    className="gp-link"
-                                    href="https://deploy-preview-3800--gitpod-kumquat.netlify.app/docs/references/ides-and-editors/vscode-desktop-local-ssh"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    More Detail
-                                </a>
-                                <div className="flex mt-2 text-sm">
-                                    Common on&nbsp;
-                                    <a
-                                        href="https://github.com/gitpod-io/gitpod/issues/18109"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="gp-link"
-                                    >
-                                        feedback issue
-                                    </a>
-                                    {isGitpodIo() && (
-                                        <span>
-                                            &nbsp;or {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-                                            <a
-                                                className="gp-link"
-                                                href="#"
-                                                onClick={() => setFeedbackFormVisible(true)}
-                                            >
-                                                submit feedback
-                                            </a>
-                                        </span>
-                                    )}
-                                    {isFeedbackFormVisible && (
-                                        <FeedbackFormModal onClose={() => setFeedbackFormVisible(false)} />
-                                    )}
-                                </div>
-                            </Alert>
-                        </>
-                    )}
-
                     <InputField error={errorWsClass}>
                         <SelectWorkspaceClassComponent
                             onSelectionChange={setSelectedWsClass}
@@ -470,6 +422,57 @@ export function CreateWorkspacePage() {
                         {createWorkspaceMutation.isStarting ? "Opening Workspace ..." : "Continue"}
                     </Button>
                 </div>
+
+                {selectedIde === "code-desktop" && (
+                    <div className="px-6">
+                        <Alert
+                            light
+                            className="mt-4 bg-gray-100 dark:bg-gray-800"
+                            type="info"
+                            iconSize="w-8 h-8"
+                            icon={<Exclamation2 className="h-full w-full" />}
+                            iconColor="text-gray-500"
+                        >
+                            To make VS Code Desktop open seamlessly we will add a single entry to your local SSH
+                            configuration. Gitpod does not read any of your existing SSH configurations.&nbsp;
+                            <a
+                                className="gp-link"
+                                href="https://deploy-preview-3800--gitpod-kumquat.netlify.app/docs/references/ides-and-editors/vscode-desktop-local-ssh"
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                More Detail
+                            </a>
+                            <div className="flex mt-2 text-sm">
+                                Common on&nbsp;
+                                <a
+                                    href="https://github.com/gitpod-io/gitpod/issues/18109"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="gp-link"
+                                >
+                                    feedback issue
+                                </a>
+                                {isGitpodIo() && (
+                                    <span>
+                                        &nbsp;or {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                                        <a
+                                            className="gp-link"
+                                            // eslint-disable-next-line no-script-url
+                                            href="javascript:void(0)"
+                                            onClick={() => setFeedbackFormVisible(true)}
+                                        >
+                                            submit feedback
+                                        </a>
+                                    </span>
+                                )}
+                                {isFeedbackFormVisible && (
+                                    <FeedbackFormModal onClose={() => setFeedbackFormVisible(false)} />
+                                )}
+                            </div>
+                        </Alert>
+                    </div>
+                )}
                 {workspaceContext.data && (
                     <RememberOptions
                         disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
