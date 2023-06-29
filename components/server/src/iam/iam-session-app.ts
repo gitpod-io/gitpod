@@ -13,8 +13,8 @@ import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Identity, User } from "@gitpod/gitpod-protocol";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
-import { ResponseError } from "vscode-ws-jsonrpc";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
+import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class IamSessionApp {
@@ -40,8 +40,9 @@ export class IamSessionApp {
                 res.status(200).json(result);
             } catch (error) {
                 log.error("Error creating session on behalf of IAM", error);
-                if (error instanceof ResponseError) {
-                    res.status(error.code).json({ message: error.message });
+                const errorCode = ErrorCode.getErrorCode(error);
+                if (errorCode) {
+                    res.status(errorCode).json({ message: error.message });
                     return;
                 }
 

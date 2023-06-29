@@ -22,6 +22,7 @@
         "skipLibCheck": true,
         "useUnknownInCatchVariables": false,
         "typeRoots": [
+            "./typings",
             "../../node_modules/@types"
         ]
     },

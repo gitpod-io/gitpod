@@ -38,8 +38,7 @@ import { asyncHandler } from "../express-util";
 import { ContextParser } from "../workspace/context-parser-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
-import { ResponseError } from "vscode-ws-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCode } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 /**
  * GitHub app urls:
@@ -110,73 +109,69 @@ export class GithubApp {
                     res.redirect(301, this.getBadgeImageURL());
                 });
 
-        app.on("installation.created", (ctx) => {
-            catchError(
-                (async () => {
-                    const targetAccountName = `${ctx.payload.installation.account.login}`;
-                    const installationId = `${ctx.payload.installation.id}`;
+        app.on("installation.created", async (ctx) => {
+            try {
+                const targetAccountName = `${ctx.payload.installation.account.login}`;
+                const installationId = `${ctx.payload.installation.id}`;
 
-                    // cf. https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#installation
-                    const authId = `${ctx.payload.sender.id}`;
+                // cf. https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#installation
+                const authId = `${ctx.payload.sender.id}`;
 
-                    const user = await this.userDB.findUserByIdentity({
-                        authProviderId: this.config.githubApp?.authProviderId || "unknown",
-                        authId,
-                    });
-                    const userId = user ? user.id : undefined;
-                    await this.appInstallationDB.recordNewInstallation(
-                        "github",
-                        "platform",
-                        installationId,
-                        userId,
-                        authId,
-                    );
-                    log.debug({ userId }, "New installation recorded", { userId, authId, targetAccountName });
-                })(),
-            );
+                const user = await this.userDB.findUserByIdentity({
+                    authProviderId: this.config.githubApp?.authProviderId || "unknown",
+                    authId,
+                });
+                const userId = user ? user.id : undefined;
+                await this.appInstallationDB.recordNewInstallation(
+                    "github",
+                    "platform",
+                    installationId,
+                    userId,
+                    authId,
+                );
+                log.debug({ userId }, "New installation recorded", { userId, authId, targetAccountName });
+            } catch (error) {
+                log.error("Failed to record new installation", error);
+            }
         });
         app.on("installation.deleted", (ctx) => {
-            catchError(
-                (async () => {
-                    const installationId = `${ctx.payload.installation.id}`;
-                    await this.appInstallationDB.recordUninstallation("github", "platform", installationId);
-                })(),
-            );
+            catchError(async () => {
+                const installationId = `${ctx.payload.installation.id}`;
+                await this.appInstallationDB.recordUninstallation("github", "platform", installationId);
+            });
         });
 
         app.on("repository.renamed", (ctx) => {
-            catchError(
-                (async () => {
-                    const { action, repository, installation } = ctx.payload;
-                    if (!installation) {
-                        return;
-                    }
-                    if (action === "renamed") {
-                        // HINT(AT): This is undocumented, but the event payload contains something like
-                        // "changes": { "repository": { "name": { "from": "test-repo-123" } } }
-                        // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
-                        const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
-                        if (oldName) {
-                            const project = await this.projectDB.findProjectByCloneUrl(
-                                `https://github.com/${repository.owner.login}/${oldName}.git`,
-                            );
-                            if (project) {
-                                project.cloneUrl = repository.clone_url;
-                                await this.projectDB.storeProject(project);
-                            }
+            catchError(async () => {
+                const { action, repository, installation } = ctx.payload;
+                if (!installation) {
+                    return;
+                }
+                if (action === "renamed") {
+                    // HINT(AT): This is undocumented, but the event payload contains something like
+                    // "changes": { "repository": { "name": { "from": "test-repo-123" } } }
+                    // To implement this in a more robust way, we'd need to store `repository.id` with the project, next to the cloneUrl.
+                    const oldName = (ctx.payload as any)?.changes?.repository?.name?.from;
+                    if (oldName) {
+                        const project = await this.projectDB.findProjectByCloneUrl(
+                            `https://github.com/${repository.owner.login}/${oldName}.git`,
+                        );
+                        if (project) {
+                            project.cloneUrl = repository.clone_url;
+                            await this.projectDB.storeProject(project);
                         }
                     }
-                })(),
-            );
+                }
+            });
             // TODO(at): handle deleted as well
         });
 
         app.on("push", (ctx) => {
-            catchError(this.handlePushEvent(ctx));
+            catchError(() => this.handlePushEvent(ctx));
         });
 
         app.on(["pull_request.opened", "pull_request.synchronize", "pull_request.reopened"], (ctx) => {
-            catchError(this.handlePullRequest(ctx));
+            catchError(() => this.handlePullRequest(ctx));
         });
 
         options.getRouter &&
@@ -675,15 +670,18 @@ export class GithubApp {
     }
 }
 
-function catchError<R>(p: Promise<R>): void {
-    p.catch((err) => {
+async function catchError(func: () => Promise<void>): Promise<void> {
+    try {
+        func();
+    } catch (err) {
         let logger = log.error;
-        if (err instanceof ResponseError) {
-            logger = ErrorCodes.isUserError(err.code) ? log.info : log.error;
+        const errorCode = ErrorCode.getErrorCode(err);
+        if (errorCode && ErrorCode.isUserError(errorCode)) {
+            logger = log.info;
         }
 
         logger("Failed to handle github event", err);
-    });
+    }
 }
 
 export namespace GithubApp {

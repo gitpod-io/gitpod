@@ -26,7 +26,7 @@ import { OneTimeSecretServer } from "../one-time-secret-server";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
 import { ResponseError } from "vscode-jsonrpc";
 import * as fs from "fs/promises";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
@@ -404,11 +404,12 @@ export class UserController {
                         .catch((err) => log.warn(logCtx, "workspacePageClose: failed to track ide close signal", err));
                     res.sendStatus(200);
                 } catch (e) {
-                    if (e instanceof ResponseError) {
-                        res.status(e.code).send(e.message);
+                    const errorCode = ErrorCode.getErrorCode(e);
+                    if (errorCode) {
+                        res.status(errorCode).send(e.message);
                         log.warn(
                             logCtx,
-                            `workspacePageClose: server sendHeartBeat respond with code: ${e.code}, message: ${e.message}`,
+                            `workspacePageClose: server sendHeartBeat respond with code: ${errorCode}, message: ${e.message}`,
                         );
                         return;
                     }

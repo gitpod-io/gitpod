@@ -8,8 +8,7 @@ import { TeamDB } from "@gitpod/gitpod-db/lib";
 import { Organization, TeamMembershipInvite } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
-import { ResponseError } from "vscode-ws-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationPermission } from "../authorization/definitions";
 
 @injectable()
@@ -51,7 +50,7 @@ export class OrganizationService {
         if (invite) {
             await this.checkPermissionAndThrow(userId, "invite_members", orgID);
             if (await this.teamDB.hasActiveSSO(orgID)) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
             }
             return invite;
         }
@@ -61,7 +60,7 @@ export class OrganizationService {
     public async resetGenericInvite(userId: string, orgID: string): Promise<TeamMembershipInvite> {
         await this.checkPermissionAndThrow(userId, "invite_members", orgID);
         if (await this.teamDB.hasActiveSSO(orgID)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
         return this.teamDB.resetGenericInvite(orgID);
     }
@@ -72,9 +71,12 @@ export class OrganizationService {
         }
         // check if the user has read permission
         if ("read_info" === permission || !(await this.auth.hasPermissionOnOrganization(userId, "read_info", orgID))) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Organization ${orgID} not found.`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgID} not found.`);
         }
 
-        throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `You do not have ${permission} on organization ${orgID}`);
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `You do not have ${permission} on organization ${orgID}`,
+        );
     }
 }

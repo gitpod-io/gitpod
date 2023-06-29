@@ -12,7 +12,7 @@ import {
     RateLimiterError,
     User,
 } from "@gitpod/gitpod-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ConnectionHandler } from "@gitpod/gitpod-protocol/lib/messaging/handler";
 import {
     JsonRpcConnectionHandler,
@@ -418,20 +418,20 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             return result;
         } catch (e) {
             const traceID = span.context().toTraceId();
-
-            if (e instanceof ResponseError) {
-                increaseApiCallCounter(method, e.code);
-                observeAPICallsDuration(method, e.code, timer());
+            const errorCode = ErrorCode.getErrorCode(e);
+            if (errorCode) {
+                increaseApiCallCounter(method, errorCode);
+                observeAPICallsDuration(method, errorCode, timer());
                 TraceContext.setJsonRPCError(ctx, method, e);
 
-                const severityLogger = ErrorCodes.isUserError(e.code) ? log.info : log.error;
+                const severityLogger = ErrorCode.isUserError(errorCode) ? log.info : log.error;
                 severityLogger(
                     { userId },
-                    `JSON RPC Request ${method} failed with user error: ${e.code}/"${e.message}"`,
+                    `JSON RPC Request ${method} failed with user error: ${errorCode}/"${e.message}"`,
                     {
                         method,
                         args,
-                        code: e.code,
+                        code: errorCode,
                         message: e.message,
                     },
                 );

@@ -264,7 +264,7 @@ export class PrebuildManager {
                     "Prebuild is rate limited. Please contact Gitpod if you believe this happened in error.";
                 await this.workspaceDB.trace({ span }).storePrebuiltWorkspace(prebuild);
                 span.setTag("ratelimited", true);
-            } else if (project && (await this.shouldSkipInactiveProject(project))) {
+            } else if (project && (await this.shouldSkipInactiveProject(user.id, project))) {
                 prebuild.state = "aborted";
                 prebuild.error =
                     "Project is inactive. Please start a new workspace for this project to re-enable prebuilds.";
@@ -442,8 +442,8 @@ export class PrebuildManager {
         return false;
     }
 
-    private async shouldSkipInactiveProject(project: Project): Promise<boolean> {
-        return await this.projectService.isProjectConsideredInactive(project.id);
+    private async shouldSkipInactiveProject(userID: string, project: Project): Promise<boolean> {
+        return await this.projectService.isProjectConsideredInactive(userID, project.id);
     }
 
     private async shouldSkipInactiveRepository(ctx: TraceContext, cloneURL: string): Promise<boolean> {
