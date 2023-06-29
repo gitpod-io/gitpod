@@ -37,7 +37,6 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
         redirectUri: `${window.location.origin}/linkedin`,
         scope: "r_liteprofile r_emailaddress",
         onSuccess: (code) => {
-            console.log("success", code);
             getGitpodService()
                 .server.connectWithLinkedIn(code)
                 .then((profile) => {
@@ -49,7 +48,7 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
                     toast(
                         <>
                             <span>Error connecting with LinkedIn</span>
-                            {error.message && <span className="font-mono text-sm">{error.message}</span>}
+                            {error.message && <span className="font-mono text-xs">{error.message}</span>}
                         </>,
                     );
                 });
