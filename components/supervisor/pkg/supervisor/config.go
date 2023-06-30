@@ -183,6 +183,10 @@ type IDEConfig struct {
 	} `json:"prebuild"`
 }
 
+func (c IDEConfig) PrebuildTaskName() string {
+	return "ide-prebuild-" + c.Name
+}
+
 // Validate validates this configuration.
 func (c IDEConfig) Validate() error {
 	if c.Entrypoint == "" {
@@ -469,13 +473,15 @@ func (c Config) getGitpodTasks() (tasks []TaskConfig, err error) {
 		}
 	}
 
-	if c.isPrebuild() {
+	if c.isPrebuild() && c.isHeadless() {
+		// if prebuild with running IDEs then there is going to be a race condition
+		// between IDE itself and its prebuild
 		var prevTaskID string
 		for _, ideConfig := range c.DesktopIDEs {
 			if ideConfig == nil || ideConfig.Prebuild == nil {
 				continue
 			}
-			taskID := "ide-prebuild-" + ideConfig.Name
+			taskID := ideConfig.PrebuildTaskName()
 
 			var before string
 			if prevTaskID == "" {
