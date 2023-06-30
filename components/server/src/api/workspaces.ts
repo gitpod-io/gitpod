@@ -25,6 +25,8 @@ import {
     StreamWorkspaceStatusRequest,
     UpdatePortRequest,
     UpdatePortResponse,
+    UpdateWorkspaceUserPinRequest,
+    UpdateWorkspaceUserPinResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1";
 
 @injectable()
@@ -59,6 +61,10 @@ export class APIWorkspacesService implements ServiceImpl<typeof WorkspacesServic
     }
 
     async deleteWorkspace(req: DeleteWorkspaceRequest): Promise<DeleteWorkspaceResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+
+    async updateWorkspaceUserPin(req: UpdateWorkspaceUserPinRequest): Promise<UpdateWorkspaceUserPinResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 

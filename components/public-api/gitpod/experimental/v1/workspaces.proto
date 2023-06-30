@@ -144,6 +144,9 @@ message Workspace {
 
     // status is the current status of this Workspace.
     WorkspaceStatus status = 6;
+
+    // pinned indicates whether this Workspace is pinned.
+    bool pinned = 7;
 }
 
 // WorkspaceStatus represents the currently observed status of a Workspace, including data about child resources that belong to this Workspace.

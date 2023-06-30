@@ -350,6 +350,7 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 		Status: &v1.WorkspaceStatus{
 			Instance: instance,
 		},
+		Pinned: input.Workspace.Pinned,
 	}, nil
 }
 
