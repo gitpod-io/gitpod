@@ -2814,17 +2814,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         }
 
-        // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
-        const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
-        if (!invite || invite.invalidationTime !== "") {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "The invite link is no longer valid.");
-        }
-        ctx.span?.setTag("teamId", invite.teamId);
-        if (await this.teamDB.hasActiveSSO(invite.teamId)) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
-        }
-        const result = await this.teamDB.addMemberToTeam(user.id, invite.teamId);
-        const org = await this.getTeam(ctx, invite.teamId);
+        const result = await this.organizationService.joinOrganization(user.id, inviteId);
+        const org = await this.getTeam(ctx, result.orgId);
         if (org !== undefined) {
             try {
                 // verify the new member if this org a paying customer
@@ -2839,12 +2830,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 log.warn("Failed to verify new org member", e);
             }
         }
-        if (result !== "already_member") {
+        if (result.added) {
             this.analytics.track({
                 userId: user.id,
                 event: "team_joined",
                 properties: {
-                    team_id: invite.teamId,
+                    team_id: result.orgId,
                     team_name: org?.name,
                     invite_id: inviteId,
                 },
@@ -2862,6 +2853,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     ): Promise<void> {
         traceAPIParams(ctx, { teamId, userId, role });
 
+        const requestor = await this.checkAndBlockUser("setTeamMemberRole");
+
         if (!uuidValidate(userId)) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
         }
@@ -2870,17 +2863,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid role name");
         }
 
-        const { team } = await this.guardTeamOperation(teamId, "update", "write_members");
-        try {
-            await this.teamDB.transaction(async (db) => {
-                await db.setTeamMemberRole(userId, teamId, role);
-                await this.auth.addOrganizationRole(team.id, userId, role);
-            });
-        } catch (err) {
-            await this.auth.removeUserFromOrg(team.id, userId);
-
-            throw err;
-        }
+        await this.guardTeamOperation(teamId, "update", "write_members");
+        await this.organizationService.setOrganizationMemberRole(requestor.id, teamId, userId, role);
     }
 
     public async removeTeamMember(ctx: TraceContext, orgID: string, userId: string): Promise<void> {
@@ -2900,37 +2884,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await this.guardTeamOperation(orgID, "get", "leave");
         }
 
-        // Check for existing membership.
-        const membership = await this.teamDB.findTeamMembership(userId, orgID);
-        if (!membership) {
-            throw new ApplicationError(
-                ErrorCodes.NOT_FOUND,
-                `Could not find membership for user '${userId}' in organization '${orgID}'`,
-            );
-        }
-
-        // Check if user's account belongs to the Org.
-        const userToBeRemoved = currentUserLeavingTeam ? requestor : await this.userDB.findUserById(userId);
-        if (!userToBeRemoved) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Could not find user '${userId}'`);
-        }
-        // Only invited members can be removed from the Org, but organizational accounts cannot.
-        if (userToBeRemoved.organizationId && orgID === userToBeRemoved.organizationId) {
-            throw new ApplicationError(
-                ErrorCodes.PRECONDITION_FAILED,
-                `User's account '${userId}' belongs to the organization '${orgID}'`,
-            );
-        }
-
-        try {
-            await this.teamDB.transaction(async (db) => {
-                await db.removeMemberFromTeam(userToBeRemoved.id, orgID);
-                await this.auth.removeUserFromOrg(orgID, userId);
-            });
-        } catch (err) {
-            // Rollback to the original role the user had
-            await this.auth.addOrganizationRole(orgID, userId, membership.role);
-        }
+        await this.organizationService.removeOrganizationMember(requestor.id, orgID, userId);
 
         this.analytics.track({
             userId: requestor.id,
@@ -2996,31 +2950,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("deleteTeam");
         traceAPIParams(ctx, { teamId, userId: user.id });
 
-        const { team, members } = await this.guardTeamOperation(teamId, "delete", "delete");
+        await this.guardTeamOperation(teamId, "delete", "delete");
 
-        const projects = await this.projectsService.getProjects(user.id, teamId);
-
-        projects.forEach((project) => {
-            /** no await */ this.deleteProject(ctx, project.id).catch((err) => {
-                /** ignore */
-            });
-        });
-
-        try {
-            await this.teamDB.transaction(async (db) => {
-                for (let member of members) {
-                    await db.removeMemberFromTeam(member.userId, teamId);
-                }
-
-                await db.deleteTeam(teamId);
-
-                await this.auth.deleteOrganization(teamId);
-            });
-        } catch (err) {
-            await this.auth.addOrganization(team, members, projects);
-        }
-
-        // TODO: delete setting
+        await this.organizationService.deleteOrganization(user.id, teamId);
 
         return this.analytics.track({
             userId: user.id,
