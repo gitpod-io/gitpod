@@ -253,6 +253,7 @@ jobs:
         env:
           DB_HOST: "mysql"
           DB_PORT: "23306"
+          NODE_OPTIONS: "--max_old_space_size=4096"
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
           SEGMENT_IO_TOKEN: '${{ steps.secrets.outputs.segment-io-token }}'
