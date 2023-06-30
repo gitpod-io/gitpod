@@ -246,9 +246,11 @@ export class AuthProviderService {
 
     async isHostReachable(host: string): Promise<boolean> {
         try {
-            const resp = await fetch(`https://${host}`, { timeout: 2000, method: "HEAD" });
+            const resp = await fetch(`https://${host}`, { timeout: 2000 });
             return resp.ok;
-        } catch (error) {}
+        } catch (error) {
+            console.log(`Host is not reachable: ${host}`);
+        }
         return false;
     }
 }
