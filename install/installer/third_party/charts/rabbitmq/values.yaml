@@ -10,6 +10,7 @@ rabbitmq:
     registry: cgr.dev
     repository: chainguard/rabbitmq
     tag: latest
+    debug: true
   enabled: true
   fullnameOverride: "messagebus"
   persistence:
