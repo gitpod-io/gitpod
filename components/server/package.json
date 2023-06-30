@@ -16,9 +16,9 @@
     "clean:node": "rimraf node_modules",
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
     "lint": "yarn tslint -p .",
-    "test": ". $(leeway run components/gitpod-db:db-test-env) && mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
+    "test": ". $(leeway run components/gitpod-db:db-test-env) && TS_NODE_FILES=true mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
     "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run; };r",
-    "db-test-run": "mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
+    "db-test-run": "TS_NODE_FILES=true mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
     "telepresence": "telepresence --swap-deployment server --method inject-tcp --run yarn start-inspect"
   },
   "files": [
