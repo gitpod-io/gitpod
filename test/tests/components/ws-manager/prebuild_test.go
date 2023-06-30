@@ -187,7 +187,7 @@ const (
 // - stop the regular workspace
 // - relaunch the regular workspace
 // - make sure the file foobar.txt exists
-func TestOpenWorkspaceFromPrebuildSerialOnly(t *testing.T) {
+func TestOpenWorkspaceFromPrebuild(t *testing.T) {
 	f := features.New("prebuild").
 		WithLabel("component", "ws-manager").
 		Assess("it should open workspace from prebuild successfully", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -208,6 +208,7 @@ func TestOpenWorkspaceFromPrebuildSerialOnly(t *testing.T) {
 
 			for _, test := range tests {
 				t.Run(test.Name, func(t *testing.T) {
+					t.Parallel()
 
 					ctx, cancel := context.WithTimeout(testCtx, time.Duration(10*len(tests))*time.Minute)
 					defer cancel()

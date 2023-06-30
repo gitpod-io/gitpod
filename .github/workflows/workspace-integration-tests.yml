@@ -183,17 +183,7 @@ jobs:
 
                   cd "${GITHUB_WORKSPACE}/test"
                   set +e
-                  go test -p 4 -v $WORKSPACE_TEST_LIST "${args[@]}" -run '.*SerialOnly$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-SERIAL.xml" -iocopy
-                  RC=${PIPESTATUS[0]}
-                  set -e
-
-                  if [ "${RC}" -ne "0" ]; then
-                    FAILURE_COUNT=$((FAILURE_COUNT+1))
-                  fi
-
-                  set +e
-                  # running tests in parallel saves time, but is flakey.
-                  go test -p 1 --parallel 1 -v $WORKSPACE_TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
+                  go test -p 5 -v $WORKSPACE_TEST_LIST "${args[@]}" -args --parallel 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}.xml" -iocopy
                   RC=${PIPESTATUS[0]}
                   set -e
 

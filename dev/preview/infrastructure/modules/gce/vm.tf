@@ -5,7 +5,7 @@ data "google_compute_default_service_account" "default" {
 resource "google_compute_instance" "default" {
   provider = google
 
-  name                      = var.preview_name
+  name                      = local.vm_name
   machine_type              = local.machine_type
   zone                      = "us-central1-a"
   allow_stopping_for_update = true
@@ -16,6 +16,13 @@ resource "google_compute_instance" "default" {
       type  = "pd-ssd"
       size  = 256
     }
+  }
+
+  scratch_disk {
+    interface = "NVME"
+  }
+  scratch_disk {
+    interface = "NVME"
   }
 
   tags = ["preview"]
@@ -70,8 +77,9 @@ data "kubernetes_secret" "harvester-k3s-dockerhub-pull-account" {
 }
 
 locals {
+  vm_name = "preview-${var.preview_name}"
   bootstrap_script = templatefile("${path.module}/../../scripts/bootstrap-k3s.sh", {
-    vm_name = var.preview_name
+    vm_name = local.vm_name
   })
 
   trustmanager_script = file("${path.module}/../../scripts/install-trustmanager.sh")
@@ -84,7 +92,7 @@ locals {
   cloudinit_user_data = templatefile("${path.module}/cloudinit.yaml", {
     dockerhub_user      = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["username"]
     dockerhub_passwd    = data.kubernetes_secret.harvester-k3s-dockerhub-pull-account.data["password"]
-    vm_name             = var.preview_name
+    vm_name             = local.vm_name
     ssh_authorized_keys = var.ssh_key
   })
 
