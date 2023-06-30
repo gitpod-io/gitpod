@@ -12,13 +12,12 @@ import {
     TeamMembershipInvite,
     User,
 } from "@gitpod/gitpod-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { randomBytes } from "crypto";
 import { inject, injectable, optional } from "inversify";
 import slugify from "slugify";
 import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
-import { ResponseError } from "vscode-jsonrpc";
 import { TeamDB } from "../team-db";
 import { DBTeam } from "./entity/db-team";
 import { DBTeamMembership } from "./entity/db-team-membership";
@@ -144,7 +143,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
     public async updateTeam(teamId: string, team: Pick<Team, "name">): Promise<Team> {
         const name = team.name && team.name.trim();
         if (!name) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "No update provided");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "No update provided");
         }
 
         // Storing entry in a TX to avoid potential slug dupes caused by racing requests.
@@ -153,7 +152,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
 
             const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
             if (!existingTeam) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "Organization not found");
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "Organization not found");
             }
 
             // no changes
@@ -162,7 +161,10 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             }
 
             if (name.length > 32) {
-                throw new ResponseError(ErrorCodes.INVALID_VALUE, "The name must be between 1 and 32 characters long");
+                throw new ApplicationError(
+                    ErrorCodes.INVALID_VALUE,
+                    "The name must be between 1 and 32 characters long",
+                );
             }
             existingTeam.name = name;
             existingTeam.slug = await this.createUniqueSlug(teamRepo, name);
@@ -173,17 +175,20 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
 
     public async createTeam(userId: string, name: string): Promise<Team> {
         if (!name) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Name cannot be empty");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Name cannot be empty");
         }
         name = name.trim();
         if (name.length < 3) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "Please choose a name that is at least three characters long.",
             );
         }
         if (name.length > 64) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Please choose a name that is at most 64 characters long.");
+            throw new ApplicationError(
+                ErrorCodes.BAD_REQUEST,
+                "Please choose a name that is at most 64 characters long.",
+            );
         }
 
         // Storing new entry in a TX to avoid potential dupes caused by racing requests.
@@ -228,7 +233,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
             slug = slug + "-" + randomBytes(4).toString("hex");
         }
         if (tries >= 5) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 `Failed to create a unique slug for the '${name}'`,
             );
@@ -259,7 +264,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
@@ -281,7 +286,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
 
@@ -292,13 +297,13 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
                 deleted: false,
             });
             if (ownerCount <= 1) {
-                throw new ResponseError(ErrorCodes.CONFLICT, "An organization must retain at least one owner");
+                throw new ApplicationError(ErrorCodes.CONFLICT, "An organization must retain at least one owner");
             }
         }
 
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!membership) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this organization");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "The user is not currently a member of this organization");
         }
         membership.role = role;
         await membershipRepo.save(membership);
@@ -308,12 +313,12 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         const teamRepo = await this.getTeamRepo();
         const team = await teamRepo.findOne(teamId);
         if (!team || !!team.deleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "An organization with this ID could not be found");
         }
         const membershipRepo = await this.getMembershipRepo();
         const membership = await membershipRepo.findOne({ teamId, userId, deleted: false });
         if (!membership) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "The given user is not currently a member of this organization or does not exist.",
             );
@@ -326,7 +331,7 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         const inviteRepo = await this.getMembershipInviteRepo();
         const invite = await inviteRepo.findOne(inviteId);
         if (!invite) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "No invite found for the given ID.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "No invite found for the given ID.");
         }
         return invite;
     }

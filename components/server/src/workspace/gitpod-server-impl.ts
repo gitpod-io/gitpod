@@ -83,7 +83,7 @@ import {
     AdminModifyRoleOrPermissionRequest,
     WorkspaceAndInstance,
 } from "@gitpod/gitpod-protocol/lib/admin-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Cancelable } from "@gitpod/gitpod-protocol/lib/util/cancelable";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
@@ -117,7 +117,7 @@ import * as crypto from "crypto";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { v4 as uuidv4, validate as uuidValidate } from "uuid";
-import { Disposable, ResponseError } from "vscode-jsonrpc";
+import { Disposable } from "vscode-jsonrpc";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { HostContextProvider } from "../auth/host-context-provider";
@@ -559,7 +559,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private async guardAccess(resource: GuardedResource, op: ResourceAccessOp) {
         if (!(await this.resourceAccessGuard.canAccess(resource, op))) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,
                 `operation not permitted: missing ${op} permission on ${resource.kind}`,
             );
@@ -593,16 +593,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     private async checkUser(methodName?: string, logPayload?: {}, ctx?: LogContext): Promise<User> {
         // Generally, a user session is required.
         if (!this.userID) {
-            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
+            throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "User is not authenticated. Please login.");
         }
 
         const user = await this.userDB.findUserById(this.userID);
         if (!user) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "User does not exist.");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "User does not exist.");
         }
 
         if (user.markedDeleted === true) {
-            throw new ResponseError(ErrorCodes.USER_DELETED, "User has been deleted.");
+            throw new ApplicationError(ErrorCodes.USER_DELETED, "User has been deleted.");
         }
         const userContext: LogContext = {
             ...ctx,
@@ -631,7 +631,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 payload = { ...logPayload, ...payload };
             }
             log.debug(userContext, `${methodName || "checkAndBlockUser"}: blocked`, payload);
-            throw new ResponseError(ErrorCodes.USER_BLOCKED, "You've been blocked.");
+            throw new ApplicationError(ErrorCodes.USER_BLOCKED, "You've been blocked.");
         }
         return user;
     }
@@ -988,18 +988,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         if (!!workspace.softDeleted) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Workspace not found!");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found!");
         }
 
         // no matter if the workspace is shared or not, you cannot create a new instance
         await this.guardAccess({ kind: "workspaceInstance", subject: undefined, workspace }, "create");
 
         if (workspace.type !== "regular") {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start irregular workspace.");
+            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start irregular workspace.");
         }
 
         if (workspace.deleted) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start a deleted workspace.");
+            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start a deleted workspace.");
         }
         const envVarsPromise = this.envVarService.resolve(workspace);
         const projectPromise = workspace.projectId
@@ -1045,7 +1045,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } catch (err) {
             log.error(logCtx, "stopWorkspace error: ", err);
             if (isClusterMaintenanceError(err)) {
-                throw new ResponseError(
+                throw new ApplicationError(
                     ErrorCodes.PRECONDITION_FAILED,
                     "Cannot stop the workspace because the workspace cluster is under maintenance. Please try again in a few minutes",
                 );
@@ -1092,7 +1092,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser(method);
         if (!this.authorizationService.hasPermission(user, requiredPermission)) {
             log.warn({ userId: user.id }, "unauthorised admin access", { authorised: false, method, params });
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
         log.info({ userId: user.id }, "admin access", { authorised: true, method, params });
     }
@@ -1202,12 +1202,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             const wsi = await this.workspaceDb.trace(ctx).findInstanceById(instanceId);
             if (!wsi) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "workspace does not exist");
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "workspace does not exist");
             }
 
             const ws = await this.workspaceDb.trace(ctx).findById(wsi.workspaceId);
             if (!ws) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "workspace does not exist");
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, "workspace does not exist");
             }
             await this.guardAccess({ kind: "workspaceInstance", subject: wsi, workspace: ws }, "update");
 
@@ -1268,7 +1268,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     private async internalGetWorkspace(user: User, id: string, db: WorkspaceDB): Promise<Workspace> {
         const workspace = await db.findById(id);
         if (!workspace) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Workspace not found.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Workspace not found.");
         }
         return workspace;
     }
@@ -1379,14 +1379,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 }).catch();
                 const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(context.snapshotId);
                 if (!snapshot) {
-                    throw new ResponseError(
+                    throw new ApplicationError(
                         ErrorCodes.NOT_FOUND,
                         "No snapshot with id '" + context.snapshotId + "' found.",
                     );
                 }
                 const workspace = await this.workspaceDb.trace(ctx).findById(snapshot.originalWorkspaceId);
                 if (!workspace) {
-                    throw new ResponseError(
+                    throw new ApplicationError(
                         ErrorCodes.NOT_FOUND,
                         "No workspace with id '" + snapshot.originalWorkspaceId + "' found.",
                     );
@@ -1401,7 +1401,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                     if (UnauthorizedError.is(error)) {
                         throw error;
                     }
-                    throw new ResponseError(
+                    throw new ApplicationError(
                         ErrorCodes.PERMISSION_DENIED,
                         `Snapshot URLs require read access to the underlying repository. Please request access from the repository owner.`,
                     );
@@ -1530,13 +1530,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     private handleError(error: any, logContext: LogContext, normalizedContextUrl: string) {
         if (NotFoundError.is(error)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Repository not found.", error.data);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Repository not found.", error.data);
         }
         if (UnauthorizedError.is(error)) {
-            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
+            throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
         }
         if (InvalidGitpodYMLError.is(error)) {
-            throw new ResponseError(ErrorCodes.INVALID_GITPOD_YML, error.message);
+            throw new ApplicationError(ErrorCodes.INVALID_GITPOD_YML, error.message);
         }
 
         const errorCode = this.parseErrorCode(error);
@@ -1545,7 +1545,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw error;
         }
         log.debug(logContext, error);
-        throw new ResponseError(
+        throw new ApplicationError(
             ErrorCodes.CONTEXT_PARSE_ERROR,
             error && error.message ? error.message : `Cannot create workspace for URL: ${normalizedContextUrl}`,
         );
@@ -1625,7 +1625,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const project = await this.projectsService.getProject(projectId);
         if (!project) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
         await this.guardProjectOperation(user, projectId, "get");
 
@@ -1644,7 +1644,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const project = await this.projectsService.getProject(projectId);
         if (!project) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
         await this.guardProjectOperation(user, projectId, "update");
 
@@ -1653,7 +1653,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             : (await this.projectsService.getBranchDetails(user, project)).filter((b) => b.isDefault);
         if (branchDetails.length !== 1) {
             log.debug({ userId: user.id }, "Cannot find branch details.", { project, branchName });
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.NOT_FOUND,
                 `Could not find ${!branchName ? "a default branch" : `branch '${branchName}'`} in repository ${
                     project.cloneUrl
@@ -1747,15 +1747,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return; // we don't want to block workspace starts because of internal errors
         }
         if (!!result.needsVerification) {
-            throw new ResponseError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
+            throw new ApplicationError(ErrorCodes.NEEDS_VERIFICATION, `Please verify your account.`);
         }
         if (!!result.usageLimitReachedOnCostCenter) {
-            throw new ResponseError(ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED, "Increase usage limit and try again.", {
-                attributionId: result.usageLimitReachedOnCostCenter,
-            });
+            throw new ApplicationError(
+                ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
+                "Increase usage limit and try again.",
+                {
+                    attributionId: result.usageLimitReachedOnCostCenter,
+                },
+            );
         }
         if (!!result.hitParallelWorkspaceLimit) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.TOO_MANY_RUNNING_WORKSPACES,
                 `You cannot run more than ${result.hitParallelWorkspaceLimit.max} workspaces at the same time. Please stop a workspace before starting another one.`,
             );
@@ -1926,21 +1930,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkUser("setWorkspaceTimeout");
 
         if (!(await this.entitlementService.maySetTimeout(user, new Date()))) {
-            throw new ResponseError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
+            throw new ApplicationError(ErrorCodes.PLAN_PROFESSIONAL_REQUIRED, "Plan upgrade is required");
         }
 
         let validatedDuration;
         try {
             validatedDuration = WorkspaceTimeoutDuration.validate(duration);
         } catch (err) {
-            throw new ResponseError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
+            throw new ApplicationError(ErrorCodes.INVALID_VALUE, "Invalid duration : " + err.message);
         }
 
         const workspace = await this.internalGetWorkspace(user, workspaceId, this.workspaceDb.trace(ctx));
         const runningInstances = await this.workspaceDb.trace(ctx).findRegularRunningInstances(user.id);
         const runningInstance = runningInstances.find((i) => i.workspaceId === workspaceId);
         if (!runningInstance) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspace: workspace }, "update");
 
@@ -1993,7 +1997,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (!instance || !workspace) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
         }
 
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
@@ -2173,7 +2177,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const logInfo = instance.imageBuildInfo?.log;
         if (!logInfo) {
             log.error(logCtx, "cannot watch imagebuild logs for workspaceId: no image build info available");
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
                 "cannot watch imagebuild logs for workspaceId",
             );
@@ -2213,7 +2217,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } catch (err) {
             // This error is most likely a temporary one (too early). We defer to the client whether they want to keep on trying or not.
             log.debug(logCtx, "cannot watch imagebuild logs for workspaceId", err);
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.HEADLESS_LOG_NOT_YET_AVAILABLE,
                 "cannot watch imagebuild logs for workspaceId",
             );
@@ -2230,7 +2234,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const ws = await this.workspaceDb.trace(ctx).findByInstanceId(instanceId);
         if (!ws) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${instanceId} not found`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${instanceId} not found`);
         }
 
         const wsiPromise = this.workspaceDb.trace(ctx).findInstanceById(instanceId);
@@ -2240,12 +2244,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const wsi = await wsiPromise;
         if (!wsi) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace instance for ${instanceId} not found`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace instance for ${instanceId} not found`);
         }
 
         const urls = await this.headlessLogService.getHeadlessLogURLs(logCtx, wsi, ws.ownerId);
         if (!urls || (typeof urls.streams === "object" && Object.keys(urls.streams).length === 0)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
         }
         return urls;
     }
@@ -2300,7 +2304,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser();
 
         if (!this.config.githubApp?.enabled) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.NOT_FOUND,
                 "No GitHub app enabled for this installation. Please talk to your administrator.",
             );
@@ -2320,7 +2324,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const instance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
         if (!instance) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
         }
         await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "get");
 
@@ -2336,7 +2340,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             snapshotUrl = resp.getUrl();
         } catch (err) {
             if (isClusterMaintenanceError(err)) {
-                throw new ResponseError(
+                throw new ApplicationError(
                     ErrorCodes.PRECONDITION_FAILED,
                     "Cannot take a snapshot because the workspace cluster is under maintenance. Please try again in a few minutes",
                 );
@@ -2363,7 +2367,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     /**
      * @param snapshotId
-     * @throws ResponseError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
+     * @throws ApplicationError with either NOT_FOUND or SNAPSHOT_ERROR in case the snapshot is not done yet.
      */
     async waitForSnapshot(ctx: TraceContext, snapshotId: string): Promise<void> {
         traceAPIParams(ctx, { snapshotId });
@@ -2372,7 +2376,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const snapshot = await this.workspaceDb.trace(ctx).findSnapshotById(snapshotId);
         if (!snapshot) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `No snapshot with id '${snapshotId}' found.`);
         }
         const snapshotWorkspace = await this.guardSnaphotAccess(ctx, user.id, snapshot.originalWorkspaceId);
         await this.internalDoWaitForWorkspace({ workspaceOwner: snapshotWorkspace.ownerId, snapshot });
@@ -2386,7 +2390,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (!workspace || workspace.ownerId !== user.id) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
 
         const snapshots = await this.workspaceDb.trace(ctx).findSnapshotsByWorkspaceId(workspaceId);
@@ -2400,7 +2404,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             await this.snapshotService.waitForSnapshot(opts);
         } catch (err) {
             // wrap in SNAPSHOT_ERROR to signal this call should not be retried.
-            throw new ResponseError(ErrorCodes.SNAPSHOT_ERROR, err.toString());
+            throw new ApplicationError(ErrorCodes.SNAPSHOT_ERROR, err.toString());
         }
     }
 
@@ -2451,7 +2455,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // validate input
         const validationError = UserEnvVar.validate(variable);
         if (validationError) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, validationError);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, validationError);
         }
 
         variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
@@ -2469,7 +2473,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // this is a new variable - make sure the user does not have too many (don't DOS our database using gp env)
             const varCount = existingVars.length;
             if (varCount > this.config.maxEnvvarPerUserCount) {
-                throw new ResponseError(
+                throw new ApplicationError(
                     ErrorCodes.PERMISSION_DENIED,
                     `cannot have more than ${this.config.maxEnvvarPerUserCount} environment variables`,
                 );
@@ -2509,7 +2513,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         if (!variable.id) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.NOT_FOUND,
                 `cannot delete '${variable.name}' in scope '${variable.repositoryPattern}'`,
             );
@@ -2608,7 +2612,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("deleteProjectEnvironmentVariable");
         const envVar = await this.projectsService.getProjectEnvironmentVariableById(variableId);
         if (!envVar) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project environment variable not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project environment variable not found");
         }
         await this.guardProjectOperation(user, envVar.projectId, "update");
         return this.projectsService.deleteProjectEnvironmentVariable(envVar.id);
@@ -2619,7 +2623,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const workspace = await this.workspaceDb.trace(ctx).findById(workspaceId);
         if (!workspace || workspace.ownerId !== userId) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
         }
         await this.guardAccess({ kind: "snapshot", subject: undefined, workspace }, "create");
 
@@ -2632,12 +2636,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         fineGrainedOp: OrganizationPermission | "not_implemented",
     ): Promise<{ team: Team; members: TeamMemberInfo[] }> {
         if (!uuidValidate(teamId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "organization ID must be a valid UUID");
         }
 
         const team = await this.teamDB.findTeamById(teamId);
         if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Organization ID: ${teamId} not found.`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ID: ${teamId} not found.`);
         }
 
         const members = await this.teamDB.findMembersByTeam(team.id);
@@ -2645,9 +2649,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!(await this.hasOrgOperationPermission(team, members, op, fineGrainedOp))) {
             // if user has read permission, throw 403, otherwise 404
             if (await this.hasOrgOperationPermission(team, members, "get", "read_info")) {
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${teamId}`);
+                throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, `No access to Organization ID: ${teamId}`);
             } else {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, `Organization ID: ${teamId} not found.`);
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ID: ${teamId} not found.`);
             }
         }
         return { team, members };
@@ -2753,7 +2757,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const mayCreateOrganization = await this.userService.mayCreateOrJoinOrganization(user);
         if (!mayCreateOrganization) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,
                 "Organizational accounts are not allowed to create new organizations",
             );
@@ -2802,7 +2806,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const mayCreateOrganization = await this.userService.mayCreateOrJoinOrganization(user);
         if (!mayCreateOrganization) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,
                 "Organizational accounts are not allowed to join other organizations",
             );
@@ -2811,11 +2815,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
         const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
         if (!invite || invite.invalidationTime !== "") {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "The invite link is no longer valid.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "The invite link is no longer valid.");
         }
         ctx.span?.setTag("teamId", invite.teamId);
         if (await this.teamDB.hasActiveSSO(invite.teamId)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
         const result = await this.teamDB.addMemberToTeam(user.id, invite.teamId);
         const org = await this.getTeam(ctx, invite.teamId);
@@ -2857,11 +2861,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId, userId, role });
 
         if (!uuidValidate(userId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
         }
 
         if (!TeamMemberRole.isValid(role)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "invalid role name");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "invalid role name");
         }
 
         const { team } = await this.guardTeamOperation(teamId, "update", "write_members");
@@ -2881,7 +2885,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId: orgID, userId });
 
         if (!uuidValidate(userId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "user ID must be a valid UUID");
         }
 
         const requestor = await this.checkAndBlockUser("removeTeamMember");
@@ -2897,7 +2901,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Check for existing membership.
         const membership = await this.teamDB.findTeamMembership(userId, orgID);
         if (!membership) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.NOT_FOUND,
                 `Could not find membership for user '${userId}' in organization '${orgID}'`,
             );
@@ -2906,11 +2910,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Check if user's account belongs to the Org.
         const userToBeRemoved = currentUserLeavingTeam ? requestor : await this.userDB.findUserById(userId);
         if (!userToBeRemoved) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Could not find user '${userId}'`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Could not find user '${userId}'`);
         }
         // Only invited members can be removed from the Org, but organizational accounts cannot.
         if (userToBeRemoved.organizationId && orgID === userToBeRemoved.organizationId) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.PRECONDITION_FAILED,
                 `User's account '${userId}' belongs to the organization '${orgID}'`,
             );
@@ -2943,7 +2947,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardTeamOperation(teamId, "get", "write_members");
 
         if (await this.teamDB.hasActiveSSO(teamId)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
 
         const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
@@ -2959,7 +2963,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.checkAndBlockUser("resetGenericInvite");
         await this.guardTeamOperation(teamId, "update", "write_members");
         if (await this.teamDB.hasActiveSSO(teamId)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
         return this.teamDB.resetGenericInvite(teamId);
     }
@@ -2967,13 +2971,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     private async guardProjectOperation(user: User, projectId: string, op: ResourceAccessOp): Promise<void> {
         const project = await this.projectsService.getProject(projectId);
         if (!project) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
         // TODO(janx): This if/else block should probably become a GuardedProject.
         if (project.userId) {
             if (user.id !== project.userId) {
                 // Projects owned by a single user can only be accessed by that user
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Not allowed to access this project");
+                throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Not allowed to access this project");
             }
         } else {
             // Anyone who can read a team's information (i.e. any team member) can manage team projects
@@ -3131,7 +3135,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("getProjectOverview");
         const project = await this.projectsService.getProject(projectId);
         if (!project) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
         await this.guardProjectOperation(user, projectId, "get");
         try {
@@ -3142,7 +3146,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return result;
         } catch (error) {
             if (UnauthorizedError.is(error)) {
-                throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
+                throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
             }
             throw error;
         }
@@ -3162,13 +3166,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const project = await this.projectsService.getProject(projectId);
         if (!project) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
         await this.guardProjectOperation(user, projectId, "update");
 
         const prebuild = await this.workspaceDb.trace(ctx).findPrebuildByID(prebuildId);
         if (!prebuild) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Prebuild not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Prebuild not found");
         }
         // Explicitly stopping the prebuild workspace now automaticaly cancels the prebuild
         await this.stopWorkspace(ctx, prebuild.buildWorkspaceId);
@@ -3187,13 +3191,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             url = new URL(params.cloneUrl);
         } catch (err) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
         }
         const availableRepositories = await this.getProviderRepositoriesForUser(ctx, { provider: url.host });
         if (!availableRepositories.some((r) => r.cloneUrl === params.cloneUrl)) {
             // The error message is derived from internals of `getProviderRepositoriesForUser` and
             // `getRepositoriesForAutomatedPrebuilds`, which require admin permissions to be present.
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "Repository URL seems to be inaccessible, or admin permissions are missing.",
             );
@@ -3323,11 +3327,11 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             result = await this.userDB.findUserById(userId);
         } catch (e) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
 
         if (!result) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
         return result;
     }
@@ -3347,7 +3351,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
             return res;
         } catch (e) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 
@@ -3369,7 +3373,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
             return res;
         } catch (e) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 
@@ -3423,7 +3427,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             await this.userDeletionService.deleteUser(userId);
         } catch (e) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 
@@ -3432,13 +3436,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             const user = await this.userDB.findUserById(userId);
             if (!user) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, `No user with id ${userId} found.`);
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `No user with id ${userId} found.`);
             }
             this.verificationService.markVerified(user);
             await this.userDB.updateUserPartial(user);
             return user;
         } catch (e) {
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, e.toString());
         }
     }
 
@@ -3449,7 +3453,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const target = await this.userDB.findUserById(req.id);
         if (!target) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
 
         const rolesOrPermissions = new Set((target.rolesOrPermissions || []) as string[]);
@@ -3474,7 +3478,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardAdminAccess("adminModifyPermanentWorkspaceFeatureFlag", { req }, Permission.ADMIN_USERS);
         const target = await this.userDB.findUserById(req.id);
         if (!target) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
 
         const featureSettings: UserFeatureSettings = target.featureFlags || {};
@@ -3519,7 +3523,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const result = await this.workspaceDb.trace(ctx).findWorkspaceAndInstance(workspaceId);
         if (!result) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
         return result;
     }
@@ -3556,13 +3560,16 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.workspaceDb.trace(ctx).transaction(async (db) => {
             const ws = await db.findById(workspaceId);
             if (!ws) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, `No workspace with id '${workspaceId}' found.`);
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `No workspace with id '${workspaceId}' found.`);
             }
             if (!ws.softDeleted) {
                 return;
             }
             if (!!ws.contentDeletedTime) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, "The workspace content was already garbage-collected.");
+                throw new ApplicationError(
+                    ErrorCodes.NOT_FOUND,
+                    "The workspace content was already garbage-collected.",
+                );
             }
             // @ts-ignore
             ws.softDeleted = null;
@@ -3613,7 +3620,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const team = await this.teamDB.findTeamById(teamId);
         if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Team not found");
         }
         const members = await this.teamDB.findMembersByTeam(team.id);
         return members;
@@ -3644,7 +3651,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("updateOwnAuthProvider");
         if (user.id !== entry.ownerId) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Not allowed to modify this resource.");
+            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "Not allowed to modify this resource.");
         }
 
         const safeProvider = this.redactUpdateOwnAuthProviderParams({ entry });
@@ -3670,7 +3677,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return AuthProviderEntry.redact(result);
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to update the provider.";
-            throw new ResponseError(ErrorCodes.CONFLICT, message);
+            throw new ApplicationError(ErrorCodes.CONFLICT, message);
         }
     }
     private redactUpdateOwnAuthProviderParams({ entry }: GitpodServer.UpdateOwnAuthProviderParams) {
@@ -3699,13 +3706,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const ownProviders = await this.authProviderService.getAuthProvidersOfUser(user.id);
         const authProvider = ownProviders.find((p) => p.id === params.id);
         if (!authProvider) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "User resource not found.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "User resource not found.");
         }
         try {
             await this.authProviderService.deleteAuthProvider(authProvider);
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to delete the provider.";
-            throw new ResponseError(ErrorCodes.CONFLICT, message);
+            throw new ApplicationError(ErrorCodes.CONFLICT, message);
         }
     }
 
@@ -3728,7 +3735,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
 
         if (!newProvider.organizationId || !uuidValidate(newProvider.organizationId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, newProvider.organizationId);
@@ -3736,7 +3743,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.guardTeamOperation(newProvider.organizationId, "update", "write_git_provider");
 
         if (!newProvider.host) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "Must provider a host value when creating a new auth provider.",
             );
@@ -3762,7 +3769,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return AuthProviderEntry.redact(result);
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to create the provider.";
-            throw new ResponseError(ErrorCodes.CONFLICT, message);
+            throw new ApplicationError(ErrorCodes.CONFLICT, message);
         }
     }
 
@@ -3783,7 +3790,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         };
 
         if (!providerUpdate.organizationId || !uuidValidate(providerUpdate.organizationId)) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, providerUpdate.organizationId);
@@ -3795,7 +3802,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return AuthProviderEntry.redact(result);
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to update the provider.";
-            throw new ResponseError(ErrorCodes.CONFLICT, message);
+            throw new ApplicationError(ErrorCodes.CONFLICT, message);
         }
     }
 
@@ -3817,7 +3824,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } catch (error) {
             const message =
                 error && error.message ? error.message : "Error retreiving auth providers for organization.";
-            throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, message);
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, message);
         }
     }
 
@@ -3828,7 +3835,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const team = await this.getTeam(ctx, params.organizationId);
         if (!team) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid organizationId");
         }
 
         await this.guardWithFeatureFlag("orgGitAuthProviders", user, team.id);
@@ -3839,14 +3846,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const orgProviders = await this.authProviderService.getAuthProvidersOfOrg(team.id);
         const authProvider = orgProviders.find((p) => p.id === params.id && p.organizationId === params.organizationId);
         if (!authProvider) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Provider resource not found.");
         }
 
         try {
             await this.authProviderService.deleteAuthProvider(authProvider);
         } catch (error) {
             const message = error && error.message ? error.message : "Failed to delete the provider.";
-            throw new ResponseError(ErrorCodes.CONFLICT, message);
+            throw new ApplicationError(ErrorCodes.CONFLICT, message);
         }
     }
 
@@ -3880,7 +3887,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             teamId,
         });
         if (!isEnabled) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Method not available");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Method not available");
         }
     }
 
@@ -3985,7 +3992,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.checkAndBlockUser("getLinkedInClientID");
         const clientId = this.config.linkedInSecrets?.clientId;
         if (!clientId) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 "LinkedIn is not properly configured (no Client ID)",
             );
@@ -4024,9 +4031,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         switch (err.code) {
             case grpc.status.RESOURCE_EXHAUSTED:
-                return new ResponseError(ErrorCodes.TOO_MANY_REQUESTS, err.details);
+                return new ApplicationError(ErrorCodes.TOO_MANY_REQUESTS, err.details);
             default:
-                return new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
+                return new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, err.details);
         }
     }
 
@@ -4086,7 +4093,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         lvlmap.set("owner", AdmissionLevel.ADMIT_OWNER_ONLY);
         lvlmap.set("everyone", AdmissionLevel.ADMIT_EVERYONE);
         if (!lvlmap.has(level)) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Invalid admission level.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invalid admission level.");
         }
 
         const workspace = await this.internalGetWorkspace(user, workspaceId, this.workspaceDb.trace(ctx));
@@ -4095,7 +4102,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (level != "owner" && workspace.organizationId) {
             const settings = await this.teamDB.findOrgSettings(workspace.organizationId);
             if (settings?.workspaceSharingDisabled) {
-                throw new ResponseError(
+                throw new ApplicationError(
                     ErrorCodes.PERMISSION_DENIED,
                     "An Organization Owner has disabled workspace sharing for workspaces in this Organization. ",
                 );
@@ -4124,7 +4131,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.checkAndBlockUser("getStripePublishableKey");
         const publishableKey = this.config.stripeSecrets?.publishableKey;
         if (!publishableKey) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 "Stripe is not properly configured (no publishable key)",
             );
@@ -4136,7 +4143,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
         try {
@@ -4145,7 +4152,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return subscriptionId;
         } catch (error) {
             log.error(`Failed to get Stripe Subscription ID for '${attributionId}'`, error);
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 `Failed to get Stripe Subscription ID for '${attributionId}'`,
             );
@@ -4155,7 +4162,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getPriceInformation(ctx: TraceContext, attributionId: string): Promise<string | undefined> {
         const attrId = AttributionId.parse(attributionId);
         if (!attrId) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
 
         await this.guardTeamOperation(attrId.teamId, "update", "write_billing");
@@ -4166,7 +4173,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("createStripeCustomerIfNeeded");
         const attrId = AttributionId.parse(attributionId);
         if (!attrId) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attributionId '${attributionId}'`);
         }
 
         const org = (await this.guardTeamOperation(attrId.teamId, "update", "write_billing")).team;
@@ -4185,7 +4192,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             // NOTE: this is a temporary workaround, as long as we're not automatically re-create the customer
             // entity on Stripe to support a switch of currencies, we're taking an exit here.
             if (customer.currency && customer.currency !== currency) {
-                throw new ResponseError(
+                throw new ApplicationError(
                     ErrorCodes.SUBSCRIPTION_ERROR,
                     `Your previous subscription was in ${customer.currency}. If you'd like to change currencies, please contact our support.`,
                     { hint: "currency", oldValue: customer.currency, value: currency },
@@ -4207,7 +4214,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             return;
         } catch (error) {
             log.error(`Failed to create Stripe customer profile for '${attributionId}'`, error);
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 `Failed to create Stripe customer profile for '${attributionId}'`,
             );
@@ -4223,7 +4230,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id`);
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
         await this.guardTeamOperation(attrId.teamId, "update", "write_billing");
@@ -4237,9 +4244,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
             if (error instanceof ClientError) {
-                throw new ResponseError(error.code, error.details);
+                throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, error.details);
             }
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 `Failed to subscribe '${attributionId}' to Stripe`,
             );
@@ -4255,7 +4262,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
         try {
@@ -4294,9 +4301,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
             if (error instanceof ClientError) {
-                throw new ResponseError(error.code, error.details);
+                throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, error.details);
             }
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 `Failed to subscribe '${attributionId}' to Stripe`,
             );
@@ -4309,7 +4316,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
         let returnUrl = this.config.hostUrl
@@ -4321,7 +4328,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             url = await this.stripeService.getPortalUrlForAttributionId(attributionId, returnUrl);
         } catch (error) {
             log.error(`Failed to get Stripe portal URL for '${attributionId}'`, error);
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.INTERNAL_SERVER_ERROR,
                 `Failed to get Stripe portal URL for '${attributionId}'`,
             );
@@ -4333,7 +4340,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
         await this.checkAndBlockUser("getCostCenter");
@@ -4359,10 +4366,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
         if (typeof usageLimit !== "number" || usageLimit < 0) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
         }
         await this.checkAndBlockUser("setUsageLimit");
         await this.guardCostCenterAccess(ctx, attrId, "update", "write_billing");
@@ -4378,7 +4385,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         if (response.costCenter?.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 `Setting a usage limit is not valid for non-Stripe billing strategies`,
             );
@@ -4395,7 +4402,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
         const attributionId = AttributionId.parse(req.attributionId);
         if (!attributionId) {
-            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
+            throw new ApplicationError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
                 attributionId: req.attributionId,
             });
         }
@@ -4408,7 +4415,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.checkAndBlockUser("listUsage");
         const parsedAttributionId = AttributionId.parse(attributionId);
         if (!parsedAttributionId) {
-            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
+            throw new ApplicationError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
                 attributionId,
             });
         }
@@ -4421,7 +4428,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const { from, to } = req;
         const attributionId = AttributionId.parse(req.attributionId);
         if (!attributionId) {
-            throw new ResponseError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
+            throw new ApplicationError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
                 attributionId: req.attributionId,
             });
         }
@@ -4469,7 +4476,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         fineGrainedOp: OrganizationPermission | "not_implemented",
     ): Promise<{ team: Team; members: TeamMemberInfo[] }> {
         if (attributionId.kind !== "team") {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Invalid attributionId");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Invalid attributionId");
         }
 
         return await this.guardTeamOperation(attributionId.teamId, operation, fineGrainedOp);
@@ -4497,12 +4504,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("adminGetBillingMode");
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
 
         const parsedAttributionId = AttributionId.parse(attributionId);
         if (!parsedAttributionId) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
         }
         return this.billingModes.getBillingMode(parsedAttributionId, new Date());
     }
@@ -4511,7 +4518,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
         const user = await this.checkAndBlockUser("adminGetCostCenter");
@@ -4525,10 +4532,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
         if (typeof usageLimit !== "number" || usageLimit < 0) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
         }
         const user = await this.checkAndBlockUser("adminSetUsageLimit");
         await this.guardAdminAccess("adminSetUsageLimit", { id: user.id }, Permission.ADMIN_USERS);
@@ -4537,7 +4544,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // backward compatibility for cost centers that were created before introduction of BillingStrategy
         if (!response.costCenter) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Couldn't find cost center with id ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Couldn't find cost center with id ${attributionId}`);
         }
         const stripeSubscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(attributionId);
         if (stripeSubscriptionId != undefined) {

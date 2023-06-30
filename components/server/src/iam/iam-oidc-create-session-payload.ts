@@ -4,18 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ResponseError } from "vscode-ws-jsonrpc";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export namespace OIDCCreateSessionPayload {
     export function validate(payload: any): OIDCCreateSessionPayload {
         if (typeof payload !== "object") {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "OIDC Create Session Payload is not an object.");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "OIDC Create Session Payload is not an object.");
         }
 
         // validate payload.idToken
         if (!hasField(payload, "idToken")) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "OIDC Create Session Payload does not contain idToken object.",
             );
@@ -23,29 +22,29 @@ export namespace OIDCCreateSessionPayload {
 
         // validate payload.claims
         if (!hasField(payload, "claims")) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.BAD_REQUEST,
                 "OIDC Create Session Payload does not contain claims object.",
             );
         }
         if (hasEmptyField(payload.claims, "iss")) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Claim 'iss' (issuer) is missing");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Claim 'iss' (issuer) is missing");
         }
         if (hasEmptyField(payload.claims, "sub")) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Claim 'sub' (subject) is missing");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Claim 'sub' (subject) is missing");
         }
         if (hasEmptyField(payload.claims, "name")) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Claim 'name' is missing");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Claim 'name' is missing");
         }
         if (hasEmptyField(payload.claims, "email")) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "Claim 'email' is missing");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Claim 'email' is missing");
         }
 
         if (hasEmptyField(payload, "organizationId")) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "OrganizationId is missing");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "OrganizationId is missing");
         }
         if (hasEmptyField(payload, "oidcClientConfigId")) {
-            throw new ResponseError(ErrorCodes.BAD_REQUEST, "OIDC client config id missing");
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "OIDC client config id missing");
         }
 
         return payload as OIDCCreateSessionPayload;

@@ -22,12 +22,11 @@ import {
     Workspace,
     WorkspaceContext,
 } from "@gitpod/gitpod-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { generateWorkspaceID } from "@gitpod/gitpod-protocol/lib/util/generate-workspace-id";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
-import { ResponseError } from "vscode-jsonrpc";
 import { RepoURL } from "../repohost";
 import { ConfigProvider } from "./config-provider";
 import { ImageSourceProvider } from "./image-source-provider";
@@ -315,7 +314,7 @@ export class WorkspaceFactory {
         try {
             const snapshot = await this.db.trace({ span }).findSnapshotById(context.snapshotId);
             if (!snapshot) {
-                throw new ResponseError(
+                throw new ApplicationError(
                     ErrorCodes.NOT_FOUND,
                     "No snapshot with id '" + context.snapshotId + "' found.",
                 );

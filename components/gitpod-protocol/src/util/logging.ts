@@ -14,10 +14,11 @@ let component: string | undefined;
 let version: string | undefined;
 
 export interface LogContext {
-    instanceId?: string;
+    organizationId?: string;
     sessionId?: string;
     userId?: string;
     workspaceId?: string;
+    instanceId?: string;
 }
 export namespace LogContext {
     export function from(params: { userId?: string; user?: any; request?: any }) {

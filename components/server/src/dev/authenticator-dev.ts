@@ -8,8 +8,7 @@ import * as express from "express";
 import { injectable, inject } from "inversify";
 import { UserDB } from "@gitpod/gitpod-db/lib";
 import { Strategy as DummyStrategy } from "passport-dummy";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { ResponseError } from "vscode-jsonrpc";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { Authenticator } from "../auth/authenticator";
 import { AuthProvider } from "../auth/auth-provider";
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
@@ -46,7 +45,7 @@ class DummyAuthProvider implements AuthProvider {
     readonly strategy = new DummyStrategy(async (done) => {
         const maybeUser = await this.userDb.findUserById(DevData.createTestUser().id);
         if (!maybeUser) {
-            done(new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "No dev user in DB."), undefined);
+            done(new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "No dev user in DB."), undefined);
         }
         try {
             done(undefined, maybeUser);

@@ -24,9 +24,8 @@ import { reportJWTCookieIssued } from "../prometheus-metrics";
 import { OwnerResourceGuard, ResourceAccessGuard, ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { ClientMetadata } from "../websocket/websocket-connection-manager";
-import { ResponseError } from "vscode-jsonrpc";
 import * as fs from "fs/promises";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { GitpodServerImpl } from "../workspace/gitpod-server-impl";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
 import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
@@ -95,12 +94,12 @@ export class UserController {
                     log.debug({ userId }, "OTS based login started.");
                     const secret = await this.otsDb.get(req.params.key);
                     if (!secret) {
-                        throw new ResponseError(401, "Invalid OTS key");
+                        throw new ApplicationError(401, "Invalid OTS key");
                     }
 
                     const user = await this.userDb.findUserById(userId);
                     if (!user) {
-                        throw new ResponseError(404, "User not found");
+                        throw new ApplicationError(404, "User not found");
                     }
 
                     await verifyAndHandle(req, res, user, secret);
@@ -130,7 +129,7 @@ export class UserController {
             try {
                 const token = req.params.token;
                 if (!token) {
-                    throw new ResponseError(ErrorCodes.BAD_REQUEST, "missing token");
+                    throw new ApplicationError(ErrorCodes.BAD_REQUEST, "missing token");
                 }
                 const credentials = await this.readAdminCredentials();
                 credentials.validate(token);
@@ -140,7 +139,7 @@ export class UserController {
                 const user = await this.userDb.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID);
                 if (!user) {
                     // We respond with NOT_AUTHENTICATED to prevent gleaning whether the user, or token are invalid.
-                    throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Admin user not found");
+                    throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Admin user not found");
                 }
 
                 // Ensure admin user is owner of any Org.
@@ -193,7 +192,7 @@ export class UserController {
                     .update(user.id + this.config.session.secret)
                     .digest("hex");
                 if (secretHash !== secret) {
-                    throw new ResponseError(401, "OTS secret not verified");
+                    throw new ApplicationError(401, "OTS secret not verified");
                 }
 
                 // mimick the shape of a successful login
@@ -404,7 +403,7 @@ export class UserController {
                         .catch((err) => log.warn(logCtx, "workspacePageClose: failed to track ide close signal", err));
                     res.sendStatus(200);
                 } catch (e) {
-                    if (e instanceof ResponseError) {
+                    if (ApplicationError.hasErrorCode(e)) {
                         res.status(e.code).send(e.message);
                         log.warn(
                             logCtx,
@@ -612,13 +611,13 @@ export class UserController {
 
         // Credentials do not have to be present in the system, if admin level sign-in is entirely disabled.
         if (!credentialsFilePath) {
-            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "No admin credentials");
+            throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "No admin credentials");
         }
 
         const contents = await fs.readFile(credentialsFilePath, { encoding: "utf8" });
         const payload = await JSON.parse(contents);
 
-        const err = new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Invalid admin credentials.");
+        const err = new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "Invalid admin credentials.");
 
         if (!payload.expiresAt) {
             log.error("Admin credentials file does not contain expiry timestamp.");
@@ -656,7 +655,7 @@ class AdminCredentials {
         const nowInSeconds = new Date().getTime() / 1000;
         if (nowInSeconds >= this.expiresAt) {
             log.error("Admin credentials are expired.");
-            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "invalid token");
+            throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "invalid token");
         }
 
         const tokensMatch = crypto.timingSafeEqual(
@@ -665,7 +664,7 @@ class AdminCredentials {
         );
 
         if (!tokensMatch) {
-            throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "invalid token");
+            throw new ApplicationError(ErrorCodes.NOT_AUTHENTICATED, "invalid token");
         }
     }
 }

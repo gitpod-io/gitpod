@@ -9,7 +9,6 @@ import { TracingConfig, initTracerFromEnv } from "jaeger-client";
 import { Sampler, SamplingDecision } from "./jaeger-client-types";
 import { initGlobalTracer } from "opentracing";
 import { injectable } from "inversify";
-import { ResponseError } from "vscode-jsonrpc";
 import { log, LogContext } from "./logging";
 
 export interface TraceContext {
@@ -92,7 +91,7 @@ export namespace TraceContext {
     export function setJsonRPCError(
         ctx: TraceContext,
         method: string,
-        err: ResponseError<any>,
+        err: Error & { code: number },
         withStatusCode: boolean = false,
     ) {
         if (!ctx.span) {
