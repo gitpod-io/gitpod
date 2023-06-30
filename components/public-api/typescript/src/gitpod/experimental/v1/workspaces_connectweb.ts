@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
+import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse, UpdateWorkspaceUserPinRequest, UpdateWorkspaceUserPinResponse} from "./workspaces_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -109,6 +109,15 @@ export const WorkspacesService = {
       name: "DeleteWorkspace",
       I: DeleteWorkspaceRequest,
       O: DeleteWorkspaceResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc gitpod.experimental.v1.WorkspacesService.UpdateWorkspaceUserPin
+     */
+    updateWorkspaceUserPin: {
+      name: "UpdateWorkspaceUserPin",
+      I: UpdateWorkspaceUserPinRequest,
+      O: UpdateWorkspaceUserPinResponse,
       kind: MethodKind.Unary,
     },
     /**

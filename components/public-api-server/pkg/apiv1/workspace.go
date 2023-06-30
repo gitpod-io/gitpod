@@ -290,6 +290,26 @@ func (s *WorkspaceService) DeleteWorkspace(ctx context.Context, req *connect.Req
 	return connect.NewResponse(&v1.DeleteWorkspaceResponse{}), nil
 }
 
+func (s *WorkspaceService) UpdateWorkspaceUserPin(ctx context.Context, req *connect.Request[v1.UpdateWorkspaceUserPinRequest]) (*connect.Response[v1.UpdateWorkspaceUserPinResponse], error) {
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	err = conn.UpdateWorkspaceUserPin(ctx, workspaceID, (*protocol.PinAction)(&req.Msg.Action))
+	if err != nil {
+		log.Extract(ctx).WithError(err).Error("Failed to update pin")
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(&v1.UpdateWorkspaceUserPinResponse{}), nil
+}
+
 func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	const (
 		defaultLimit = 20
@@ -309,7 +329,7 @@ func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	return int(pagination.PageSize), nil
 }
 
-// convertWorkspaceInfo convers a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
+// convertWorkspaceInfo converts a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
 func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
 	instance, err := convertWorkspaceInstance(input.LatestInstance, input.Workspace.Shareable)
 	if err != nil {

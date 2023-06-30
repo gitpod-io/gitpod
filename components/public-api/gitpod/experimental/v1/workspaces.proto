@@ -39,6 +39,8 @@ service WorkspacesService {
     // Deleted workspaces cannot be started again.
     rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {}
 
+    rpc UpdateWorkspaceUserPin(UpdateWorkspaceUserPinRequest) returns (UpdateWorkspaceUserPinResponse) {}
+
     rpc UpdatePort(UpdatePortRequest) returns (UpdatePortResponse) {}
 }
 
@@ -109,6 +111,15 @@ message DeleteWorkspaceRequest {
 }
 
 message DeleteWorkspaceResponse {}
+
+message UpdateWorkspaceUserPinRequest {
+    string workspace_id = 1;
+    string action = 2;
+}
+
+message UpdateWorkspaceUserPinResponse {
+    Workspace result = 1;
+}
 
 ////////////////////////////////
 // Shared messages come here

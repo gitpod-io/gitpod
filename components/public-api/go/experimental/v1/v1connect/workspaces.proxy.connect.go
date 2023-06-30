@@ -89,6 +89,16 @@ func (s *ProxyWorkspacesServiceHandler) DeleteWorkspace(ctx context.Context, req
 	return connect_go.NewResponse(resp), nil
 }
 
+func (s *ProxyWorkspacesServiceHandler) UpdateWorkspaceUserPin(ctx context.Context, req *connect_go.Request[v1.UpdateWorkspaceUserPinRequest]) (*connect_go.Response[v1.UpdateWorkspaceUserPinResponse], error) {
+	resp, err := s.Client.UpdateWorkspaceUserPin(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}
+
 func (s *ProxyWorkspacesServiceHandler) UpdatePort(ctx context.Context, req *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error) {
 	resp, err := s.Client.UpdatePort(ctx, req.Msg)
 	if err != nil {

@@ -733,6 +733,86 @@ export class DeleteWorkspaceResponse extends Message<DeleteWorkspaceResponse> {
 }
 
 /**
+ * @generated from message gitpod.experimental.v1.UpdateWorkspaceUserPinRequest
+ */
+export class UpdateWorkspaceUserPinRequest extends Message<UpdateWorkspaceUserPinRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: string action = 2;
+   */
+  action = "";
+
+  constructor(data?: PartialMessage<UpdateWorkspaceUserPinRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdateWorkspaceUserPinRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "action", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceUserPinRequest {
+    return new UpdateWorkspaceUserPinRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkspaceUserPinRequest {
+    return new UpdateWorkspaceUserPinRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkspaceUserPinRequest {
+    return new UpdateWorkspaceUserPinRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateWorkspaceUserPinRequest | PlainMessage<UpdateWorkspaceUserPinRequest> | undefined, b: UpdateWorkspaceUserPinRequest | PlainMessage<UpdateWorkspaceUserPinRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateWorkspaceUserPinRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.UpdateWorkspaceUserPinResponse
+ */
+export class UpdateWorkspaceUserPinResponse extends Message<UpdateWorkspaceUserPinResponse> {
+  /**
+   * @generated from field: gitpod.experimental.v1.Workspace result = 1;
+   */
+  result?: Workspace;
+
+  constructor(data?: PartialMessage<UpdateWorkspaceUserPinResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdateWorkspaceUserPinResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "result", kind: "message", T: Workspace },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceUserPinResponse {
+    return new UpdateWorkspaceUserPinResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateWorkspaceUserPinResponse {
+    return new UpdateWorkspaceUserPinResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateWorkspaceUserPinResponse {
+    return new UpdateWorkspaceUserPinResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateWorkspaceUserPinResponse | PlainMessage<UpdateWorkspaceUserPinResponse> | undefined, b: UpdateWorkspaceUserPinResponse | PlainMessage<UpdateWorkspaceUserPinResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateWorkspaceUserPinResponse, a, b);
+  }
+}
+
+/**
  * Workspace describes a single workspace
  *
  * @generated from message gitpod.experimental.v1.Workspace
