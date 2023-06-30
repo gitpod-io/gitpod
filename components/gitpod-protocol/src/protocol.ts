@@ -31,6 +31,8 @@ export interface User {
     /** Optional for backwards compatibility */
     fullName?: string;
 
+    emails: User.Email[];
+
     identities: Identity[];
 
     /**
@@ -66,6 +68,17 @@ export namespace User {
     }
     export function getIdentity(user: User, authProviderId: string): Identity | undefined {
         return user.identities.find((id) => id.authProviderId === authProviderId);
+    }
+
+    export interface Email {
+        value: string;
+        primary: boolean;
+        verified: boolean;
+        verifiedVia?: string;
+        updatedAt: string;
+        provider: string; // github.com, idp.comp.org
+        organizationId?: string;
+        personal: boolean;
     }
 
     /**

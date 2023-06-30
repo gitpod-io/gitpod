@@ -45,6 +45,28 @@ export class DBUser implements User {
     })
     fullName?: string;
 
+    @Column({
+        type: "simple-json",
+        transformer: (() => {
+            return {
+                to(value: any): any {
+                    return JSON.stringify(value);
+                },
+                from(value: any): any {
+                    try {
+                        const obj = JSON.parse(value);
+                        if (Array.isArray(obj)) {
+                            return obj;
+                        }
+                    } catch (error) {}
+                    // empty by default
+                    return [];
+                },
+            };
+        })(),
+    })
+    emails: User.Email[];
+
     @OneToMany((type) => DBIdentity, (identity) => identity.user, {
         eager: true,
         cascade: ["insert", "update"], // we do delete on our own
