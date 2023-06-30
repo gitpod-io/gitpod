@@ -301,7 +301,12 @@ func (s *WorkspaceService) UpdateWorkspaceUserPin(ctx context.Context, req *conn
 		return nil, err
 	}
 
-	err = conn.UpdateWorkspaceUserPin(ctx, workspaceID, (*protocol.PinAction)(&req.Msg.Action))
+	action := protocol.PinActionUnpin
+	if req.Msg.GetPinned() {
+		action = protocol.PinActionPin
+	}
+
+	err = conn.UpdateWorkspaceUserPin(ctx, workspaceID, &action)
 	if err != nil {
 		log.Extract(ctx).WithError(err).Error("Failed to update pin")
 		return nil, proxy.ConvertError(err)

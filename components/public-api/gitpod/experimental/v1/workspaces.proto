@@ -114,7 +114,7 @@ message DeleteWorkspaceResponse {}
 
 message UpdateWorkspaceUserPinRequest {
     string workspace_id = 1;
-    string action = 2;
+    bool pinned = 2;
 }
 
 message UpdateWorkspaceUserPinResponse {

@@ -247,6 +247,62 @@ func TestWorkspaceService_DeleteWorkspace(t *testing.T) {
 	})
 }
 
+func TestWorkspaceService_UpdateWorkspaceUserPin(t *testing.T) {
+
+	//workspaceID := workspaceTestData[0].Protocol.Workspace.ID
+
+	t.Run("invalid argument when workspace ID is missing", func(t *testing.T) {
+		_, client := setupWorkspacesService(t)
+
+		_, err := client.UpdateWorkspaceUserPin(context.Background(), connect.NewRequest(&v1.UpdateWorkspaceUserPinRequest{
+			WorkspaceId: "",
+			Pinned:      true,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	t.Run("invalid argument when workspace ID does not validate", func(t *testing.T) {
+		_, client := setupWorkspacesService(t)
+
+		_, err := client.UpdateWorkspaceUserPin(context.Background(), connect.NewRequest(&v1.UpdateWorkspaceUserPinRequest{
+			WorkspaceId: "some-random-not-valid-workspace-id",
+			Pinned:      true,
+		}))
+		require.Error(t, err)
+		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+	})
+
+	// t.Run("not found when workspace does not exist", func(t *testing.T) {
+	// 	serverMock, client := setupWorkspacesService(t)
+
+	// 	serverMock.EXPECT().UpdateWorkspaceUserPin(gomock.Any(), workspaceID, protocol.PinActionPin).Return(&jsonrpc2.Error{
+	// 		Code:    404,
+	// 		Message: "not found",
+	// 	})
+
+	// 	_, err := client.UpdateWorkspaceUserPin(context.Background(), connect.NewRequest(&v1.UpdateWorkspaceUserPinRequest{
+	// 		WorkspaceId: workspaceID,
+	// 		Pinned:      true,
+	// 	}))
+	// 	require.Error(t, err)
+	// 	require.Equal(t, connect.CodeNotFound, connect.CodeOf(err))
+	// })
+
+	// t.Run("delegates to server", func(t *testing.T) {
+	// 	serverMock, client := setupWorkspacesService(t)
+
+	// 	serverMock.EXPECT().UpdateWorkspaceUserPin(gomock.Any(), workspaceID, true).Return(nil)
+
+	// 	resp, err := client.UpdateWorkspaceUserPin(context.Background(), connect.NewRequest(&v1.UpdateWorkspaceUserPinRequest{
+	// 		WorkspaceId: workspaceID,
+	// 	}))
+	// 	require.NoError(t, err)
+
+	// 	requireEqualProto(t, &v1.UpdateWorkspaceUserPinResponse{}, resp.Msg)
+	// })
+}
+
 func TestWorkspaceService_GetOwnerToken(t *testing.T) {
 	const (
 		foundWorkspaceID = "easycz-seer-xl8o1zacpyw"

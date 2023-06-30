@@ -742,9 +742,9 @@ export class UpdateWorkspaceUserPinRequest extends Message<UpdateWorkspaceUserPi
   workspaceId = "";
 
   /**
-   * @generated from field: string action = 2;
+   * @generated from field: bool pinned = 2;
    */
-  action = "";
+  pinned = false;
 
   constructor(data?: PartialMessage<UpdateWorkspaceUserPinRequest>) {
     super();
@@ -755,7 +755,7 @@ export class UpdateWorkspaceUserPinRequest extends Message<UpdateWorkspaceUserPi
   static readonly typeName = "gitpod.experimental.v1.UpdateWorkspaceUserPinRequest";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "action", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "pinned", kind: "scalar", T: 8 /* ScalarType.BOOL */ },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateWorkspaceUserPinRequest {
