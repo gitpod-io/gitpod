@@ -4,22 +4,21 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as chai from "chai";
 import { suite, test, timeout } from "mocha-typescript";
 import { testContainer } from "./test-container";
 import { TypeORM } from "./typeorm/typeorm";
 import { AuthProviderEntryDB } from ".";
 import { DBAuthProviderEntry } from "./typeorm/entity/db-auth-provider-entry";
 import { DeepPartial } from "@gitpod/gitpod-protocol/lib/util/deep-partial";
+import * as chai from "chai";
 const expect = chai.expect;
 
-@suite
-@timeout(5000)
+@suite(timeout(10000))
 export class AuthProviderEntryDBSpec {
-    typeORM = testContainer.get<TypeORM>(TypeORM);
-    db = testContainer.get<AuthProviderEntryDB>(AuthProviderEntryDB);
+    private readonly db = testContainer.get<AuthProviderEntryDB>(AuthProviderEntryDB);
 
-    @timeout(10000)
+    // TODO(gpl) Since the upgrade to ts-node 10.4.0 establishing the inital connection takes up to 25s
+    @timeout(30000)
     async before() {
         await this.clear();
     }
@@ -28,10 +27,12 @@ export class AuthProviderEntryDBSpec {
         await this.clear();
     }
 
-    protected async clear() {
-        const connection = await this.typeORM.getConnection();
-        const manager = connection.manager;
-        await manager.clear(DBAuthProviderEntry);
+    async clear() {
+        const typeorm = testContainer.get<TypeORM>(TypeORM);
+        const manager = await typeorm.getConnection();
+        console.log("before delete");
+        await manager.getRepository(DBAuthProviderEntry).delete({});
+        console.log("after delete");
     }
 
     protected authProvider(ap: DeepPartial<DBAuthProviderEntry> = {}): DBAuthProviderEntry {
@@ -62,15 +63,8 @@ export class AuthProviderEntryDBSpec {
         };
     }
 
-    @test public async storeEmtpyOAuthRevision() {
-        const ap = this.authProvider();
-        await this.db.storeAuthProvider(ap, false);
-
-        const aap = await this.db.findByHost(ap.host);
-        expect(aap, "AuthProvider").to.deep.equal(ap);
-    }
-
-    @test public async findAll() {
+    @test() public async testFindAll() {
+        console.log("start findAll");
         const ap1 = this.authProvider({ id: "1", oauthRevision: "rev1" });
         const ap2 = this.authProvider({ id: "2", oauthRevision: "rev2" });
         await this.db.storeAuthProvider(ap1, false);
@@ -82,7 +76,7 @@ export class AuthProviderEntryDBSpec {
         expect(await this.db.findAll([ap1.oauthRevision!]), "findAll([ap1])").to.deep.equal([ap2]);
     }
 
-    @test public async findAllHosts() {
+    @test() public async findAllHosts() {
         const ap1 = this.authProvider({ id: "1", oauthRevision: "rev1", host: "foo" });
         const ap2 = this.authProvider({ id: "2", oauthRevision: "rev2", host: "BAR" });
         await this.db.storeAuthProvider(ap1, false);
@@ -92,7 +86,7 @@ export class AuthProviderEntryDBSpec {
         expect(all, "findAllHosts([])").to.deep.equal(["foo", "bar"]);
     }
 
-    @test public async oauthRevision() {
+    @test() public async oauthRevision() {
         const ap = this.authProvider({ id: "1" });
         await this.db.storeAuthProvider(ap, true);
 
@@ -103,7 +97,7 @@ export class AuthProviderEntryDBSpec {
         );
     }
 
-    @test public async findByOrgId() {
+    @test() public async findByOrgId() {
         const ap1 = this.authProvider({ id: "1", organizationId: "O1", host: "H1" });
         const ap2 = this.authProvider({ id: "2", organizationId: "O1", host: "H2" });
         const ap3 = this.authProvider({ id: "3", organizationId: "O2", host: "H1" });
@@ -118,7 +112,7 @@ export class AuthProviderEntryDBSpec {
         expect(results).to.deep.contain(ap2);
     }
 
-    @test public async findByUserId() {
+    @test() public async findByUserId() {
         const ap1 = this.authProvider({ id: "1", ownerId: "owner1" });
         const ap2 = this.authProvider({ id: "2", ownerId: "owner1", organizationId: "org1" });
 

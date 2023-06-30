@@ -28,7 +28,7 @@
         "mocha": "^5.0.0",
         "mocha-typescript": "^1.1.11",
         "rimraf": "^2.6.2",
-        "ts-node": "^9.0.0",
+        "ts-node": "^10.4.0",
         "typescript": "~4.4.2",
         "typescript-json-schema": "^0.50.1",
         "typescript-parser": "^2.6.1"
