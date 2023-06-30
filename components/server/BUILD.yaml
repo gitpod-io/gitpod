@@ -3,6 +3,7 @@ packages:
     type: yarn
     srcs:
       - "src/**"
+      - "typings/**"
       - "test/**"
       - package.json
       - mocha.opts
@@ -42,6 +43,7 @@ packages:
     type: yarn
     srcs:
       - "src/**"
+      - "typings/**"
       - "test/**"
       - package.json
       - mocha.opts

@@ -18,7 +18,6 @@ import { AuthProviderService } from "./auth-provider-service";
 import { UserService } from "../user/user-service";
 import { increaseLoginCounter } from "../prometheus-metrics";
 import { SignInJWT } from "./jwt";
-import "../express"; // helps ts-loader to find the merged declarations in Express.User
 
 @injectable()
 export class Authenticator {
