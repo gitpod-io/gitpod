@@ -129,6 +129,7 @@ import { WorkspaceDownloadService } from "./workspace/workspace-download-service
 import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceStarter } from "./workspace/workspace-starter";
 import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
+import { OrganizationService } from "./orgs/organization-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -253,6 +254,7 @@ export const productionContainerModule = new ContainerModule(
         bind(HeadlessLogService).toSelf().inSingletonScope();
         bind(HeadlessLogController).toSelf().inSingletonScope();
 
+        bind(OrganizationService).toSelf().inSingletonScope();
         bind(ProjectsService).toSelf().inSingletonScope();
         bind(EnvVarService).toSelf().inSingletonScope();
 

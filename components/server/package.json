@@ -17,7 +17,9 @@
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
     "lint": "yarn tslint -p .",
     "test": ". $(leeway run components/gitpod-db:db-test-env) && mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
-    "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn db-test-run; };r",
+    "spicedb-testing": "if netstat -tuln | grep ':50051 '; then echo '`spicedb serve-testing` is already running.'; else spicedb serve-testing --load-configs /workspace/gitpod/install/installer/pkg/components/spicedb/data/schema.yaml; fi",
+    "stop-spicedb-testing": "PID=$(lsof -t -i:50051); if [ -z \"$PID\" ]; then echo '`spicedb serve-testing` is not running'; else kill -INT $PID && echo 'Stopped `spicedb serve-testing`'; fi",
+    "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env);yarn spicedb-testing & yarn db-test-run; yarn stop-spicedb-testing; };r",
     "db-test-run": "mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
     "telepresence": "telepresence --swap-deployment server --method inject-tcp --run yarn start-inspect"
   },
