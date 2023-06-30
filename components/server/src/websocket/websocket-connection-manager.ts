@@ -12,7 +12,7 @@ import {
     RateLimiterError,
     User,
 } from "@gitpod/gitpod-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ConnectionHandler } from "@gitpod/gitpod-protocol/lib/messaging/handler";
 import {
     JsonRpcConnectionHandler,
@@ -402,13 +402,13 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
 
             // explicitly guard against wrong method names
             if (!isValidFunctionName(method)) {
-                throw new ResponseError(ErrorCodes.BAD_REQUEST, `Unknown method '${method}'`);
+                throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Unknown method '${method}'`);
             }
 
             // access guard
             if (!this.accessGuard.canAccess(method)) {
                 // logging/tracing is done in 'catch' clause
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Request ${method} is not allowed`);
+                throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, `Request ${method} is not allowed`);
             }
 
             // actual call
@@ -418,13 +418,12 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
             return result;
         } catch (e) {
             const traceID = span.context().toTraceId();
-
-            if (e instanceof ResponseError) {
+            if (ApplicationError.hasErrorCode(e)) {
                 increaseApiCallCounter(method, e.code);
                 observeAPICallsDuration(method, e.code, timer());
                 TraceContext.setJsonRPCError(ctx, method, e);
 
-                const severityLogger = ErrorCodes.isUserError(e.code) ? log.info : log.error;
+                const severityLogger = ErrorCode.isUserError(e.code) ? log.info : log.error;
                 severityLogger(
                     { userId },
                     `JSON RPC Request ${method} failed with user error: ${e.code}/"${e.message}"`,
@@ -435,10 +434,11 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                         message: e.message,
                     },
                 );
+                throw new ResponseError(e.code, e.message);
             } else {
                 TraceContext.setError(ctx, e); // this is a "real" error
 
-                const err = new ResponseError(
+                const err = new ApplicationError(
                     ErrorCodes.INTERNAL_SERVER_ERROR,
                     `Internal server error. Please quote trace ID: '${traceID}' when reaching to Gitpod Support`,
                 );
@@ -447,8 +447,8 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                 TraceContext.setJsonRPCError(ctx, method, err, true);
 
                 log.error({ userId }, `Request ${method} failed with internal server error`, e, { method, args });
+                throw new ResponseError(ErrorCodes.INTERNAL_SERVER_ERROR, e.message);
             }
-            throw e;
         } finally {
             span.finish();
         }

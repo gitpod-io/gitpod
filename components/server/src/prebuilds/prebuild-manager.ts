@@ -34,8 +34,7 @@ import { StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { error } from "console";
 import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
 import { PrebuildRateLimiterConfig } from "../workspace/prebuild-rate-limiter";
-import { ResponseError } from "vscode-ws-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UserService } from "../user/user-service";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { EnvVarService } from "../workspace/env-var-service";
@@ -132,10 +131,13 @@ export class PrebuildManager {
 
         try {
             if (user.blocked) {
-                throw new ResponseError(ErrorCodes.USER_BLOCKED, `Blocked users cannot start prebuilds (${user.name})`);
+                throw new ApplicationError(
+                    ErrorCodes.USER_BLOCKED,
+                    `Blocked users cannot start prebuilds (${user.name})`,
+                );
             }
             if (!project) {
-                throw new ResponseError(
+                throw new ApplicationError(
                     ErrorCodes.PROJECT_REQUIRED,
                     `Running prebuilds without a project is no longer supported. Please add '${cloneURL}' as a project in a team.`,
                 );
@@ -305,9 +307,13 @@ export class PrebuildManager {
             return; // we don't want to block workspace starts because of internal errors
         }
         if (!!result.usageLimitReachedOnCostCenter) {
-            throw new ResponseError(ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED, "Increase usage limit and try again.", {
-                attributionId: result.usageLimitReachedOnCostCenter,
-            });
+            throw new ApplicationError(
+                ErrorCodes.PAYMENT_SPENDING_LIMIT_REACHED,
+                "Increase usage limit and try again.",
+                {
+                    organizationId,
+                },
+            );
         }
     }
 

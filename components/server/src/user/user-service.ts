@@ -15,8 +15,7 @@ import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
-import { ResponseError } from "vscode-ws-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { UsageService } from "./usage-service";
 
 export interface CreateUserParams {
@@ -122,7 +121,7 @@ export class UserService {
     async blockUser(targetUserId: string, block: boolean): Promise<User> {
         const target = await this.userDb.findUserById(targetUserId);
         if (!target) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "not found");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
         }
 
         target.blocked = !!block;
@@ -277,7 +276,7 @@ export class UserService {
     async updateUser(userID: string, update: Partial<User>): Promise<User> {
         const user = await this.userDb.findUserById(userID);
         if (!user) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "User does not exist.");
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "User does not exist.");
         }
 
         const allowedFields: (keyof User)[] = ["fullName", "additionalData"];

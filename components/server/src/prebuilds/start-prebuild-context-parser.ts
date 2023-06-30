@@ -5,9 +5,8 @@
  */
 
 import { User, WorkspaceContext, ContextURL } from "@gitpod/gitpod-protocol";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { injectable } from "inversify";
-import { ResponseError } from "vscode-ws-jsonrpc";
 import { IPrefixContextParser } from "../workspace/context-parser";
 
 @injectable()
@@ -21,7 +20,7 @@ export class StartPrebuildContextParser implements IPrefixContextParser {
     }
 
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
-        throw new ResponseError(
+        throw new ApplicationError(
             ErrorCodes.PROJECT_REQUIRED,
             `Running prebuilds without a project is no longer supported. Please add your repository as a project in a team.`,
         );

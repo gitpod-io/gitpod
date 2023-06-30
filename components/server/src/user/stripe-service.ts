@@ -14,8 +14,7 @@ import {
     stripeClientRequestsCompletedDurationSeconds,
 } from "../prometheus-metrics";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
-import { ResponseError } from "vscode-ws-jsonrpc";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class StripeService {
@@ -53,7 +52,7 @@ export class StripeService {
     async getPortalUrlForAttributionId(attributionId: string, returnUrl: string): Promise<string> {
         const customerId = await this.findCustomerByAttributionId(attributionId);
         if (!customerId) {
-            throw new ResponseError(
+            throw new ApplicationError(
                 ErrorCodes.NOT_FOUND,
                 `No Stripe Customer ID for attribution ID '${attributionId}'`,
             );

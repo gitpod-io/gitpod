@@ -5,11 +5,12 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { MessageConnection, ResponseError } from "vscode-jsonrpc";
+import { MessageConnection } from "vscode-jsonrpc";
 import { Event, Emitter } from "../util/event";
 import { Disposable } from "../util/disposable";
 import { ConnectionHandler } from "./handler";
 import { log } from "../util/logging";
+import { ApplicationError } from "./error";
 
 export type JsonRpcServer<Client> = Disposable & {
     /**
@@ -142,7 +143,7 @@ export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
         try {
             return await this.target[method](...args);
         } catch (e) {
-            if (e instanceof ResponseError) {
+            if (ApplicationError.hasErrorCode(e)) {
                 log.info(`Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
             } else {
                 log.error(`Request ${method} failed with internal server error`, e, { method, args });
