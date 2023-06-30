@@ -48,7 +48,7 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
                     toast(
                         <>
                             <span>Error connecting with LinkedIn</span>
-                            {error.message && <span className="font-mono text-xs">{error.message}</span>}
+                            {error.message && <pre className="mt-2 whitespace-normal text-xs">{error.message}</pre>}
                         </>,
                     );
                 });
