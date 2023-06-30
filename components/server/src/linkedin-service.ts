@@ -75,6 +75,7 @@ export class LinkedInService {
         ]);
 
         const profileData = await profileResponse.json();
+        console.log("profileData", profileData);
         if (profileData.error) {
             throw new Error("Could not get LinkedIn lite profile: " + profileData.error_description);
         }
@@ -83,6 +84,7 @@ export class LinkedInService {
         }
 
         const emailData = await emailResponse.json();
+        console.log("emailData", emailData);
         if (emailData.error) {
             throw new Error("Could not get LinkedIn email address: " + emailData.error_description);
         }
