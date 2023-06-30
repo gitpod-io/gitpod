@@ -45,6 +45,7 @@ import { PersonalAccessTokenDBImpl } from "./typeorm/personal-access-token-db-im
 import { LinkedInProfileDBImpl } from "./typeorm/linked-in-profile-db-impl";
 import { LinkedInProfileDB } from "./linked-in-profile-db";
 import { DataCache, DataCacheNoop } from "./data-cache";
+import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = (cacheClass = DataCacheNoop) =>
@@ -53,6 +54,7 @@ export const dbContainerModule = (cacheClass = DataCacheNoop) =>
         bind(TypeORM).toSelf().inSingletonScope();
         bind(DBWithTracing).toSelf().inSingletonScope();
         bind(DataCache).to(cacheClass).inSingletonScope();
+        bind(TracingManager).toSelf().inSingletonScope();
 
         bind(TypeORMBlockedRepositoryDBImpl).toSelf().inSingletonScope();
         bind(BlockedRepositoryDB).toService(TypeORMBlockedRepositoryDBImpl);

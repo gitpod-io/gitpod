@@ -19,12 +19,13 @@ import {
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PartialProject, ProjectUsage } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
+import { PartialProject } from "@gitpod/gitpod-protocol/lib/teams-projects-protocol";
 import { Config } from "../config";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { URL } from "url";
 import { Authorizer } from "../authorization/authorizer";
+import { ProjectPermission } from "../authorization/definitions";
 
 @injectable()
 export class ProjectsService {
@@ -38,19 +39,60 @@ export class ProjectsService {
         @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
-    async getProject(projectId: string): Promise<Project | undefined> {
-        return this.projectDB.findProjectById(projectId);
+    async getProject(userId: string, projectId: string): Promise<Project | undefined> {
+        const project = await this.projectDB.findProjectById(projectId);
+        if (project && !(await this.auth.hasPermissionOnProject(userId, "read_info", project))) {
+            return undefined;
+        }
+        return project;
     }
 
-    async getTeamProjects(teamId: string): Promise<Project[]> {
-        return this.projectDB.findProjects(teamId);
+    /**
+     *
+     * @param userId
+     * @param orgId
+     * @returns any user visible projects on the given org
+     */
+    async getProjects(userId: string, orgId: string): Promise<Project[]> {
+        const projects = await this.projectDB.findProjects(orgId);
+        return await this.filterProjectsByPermission(projects, userId, "read_info");
     }
 
-    async getProjectsByCloneUrls(cloneUrls: string[]): Promise<(Project & { teamOwners?: string[] })[]> {
-        return this.projectDB.findProjectsByCloneUrls(cloneUrls);
+    private async filterProjectsByPermission<T extends Project>(
+        projects: T[],
+        userId: string,
+        permission: ProjectPermission,
+    ): Promise<T[]> {
+        const filteredProjects: T[] = [];
+        const filter = async (project: Project) => {
+            if (await this.auth.hasPermissionOnProject(userId, permission, project)) {
+                return project;
+            }
+            return undefined;
+        };
+
+        for (const projectPromise of projects.map(filter)) {
+            const project = await projectPromise;
+            if (project) {
+                filteredProjects.push(project as T);
+            }
+        }
+        return filteredProjects;
+    }
+
+    async getProjectsByCloneUrls(
+        userId: string,
+        cloneUrls: string[],
+    ): Promise<(Project & { teamOwners?: string[] })[]> {
+        //FIXME we intentionally allow to query for projects that the user does not have access to
+        const projects = await this.projectDB.findProjectsByCloneUrls(cloneUrls);
+        return projects;
     }
 
     async getProjectOverviewCached(user: User, project: Project): Promise<Project.Overview | undefined> {
+        if (!(await this.auth.hasPermissionOnProject(user.id, "read_info", project))) {
+            return undefined;
+        }
         // Check for a cached project overview (fast!)
         const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
 
@@ -79,6 +121,10 @@ export class ProjectsService {
     }
 
     async getBranchDetails(user: User, project: Project, branchName?: string): Promise<Project.BranchDetails[]> {
+        if (!(await this.auth.hasPermissionOnProject(user.id, "read_info", project))) {
+            return [];
+        }
+
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
             return [];
@@ -119,6 +165,17 @@ export class ProjectsService {
         { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
     ): Promise<Project> {
+        if (!(await this.auth.hasPermissionOnOrganization(installer.id, "create_project", teamId))) {
+            if (!this.auth.hasPermissionOnOrganization(installer.id, "read_info", teamId)) {
+                // throw 404
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${teamId} not found.`);
+            }
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                `You do not have permission to create a project on organization ${teamId}.`,
+            );
+        }
+
         if (cloneUrl.length >= 1000) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be less than 1k characters.");
         }
@@ -129,14 +186,14 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
         }
 
-        const projects = await this.getProjectsByCloneUrls([cloneUrl]);
+        const projects = await this.getProjectsByCloneUrls(installer.id, [cloneUrl]);
         if (projects.length > 0) {
             throw new Error("Project for repository already exists.");
         }
         // If the desired project slug already exists in this team or user account, add a unique suffix to avoid collisions.
         let uniqueSlug = slug;
         let uniqueSuffix = 0;
-        const existingProjects = await this.getTeamProjects(teamId!);
+        const existingProjects = await this.getProjects(installer.id, teamId!);
         while (existingProjects.some((p) => p.slug === uniqueSlug)) {
             uniqueSuffix++;
             uniqueSlug = `${slug}-${uniqueSuffix}`;
@@ -212,7 +269,18 @@ export class ProjectsService {
         }
     }
 
-    async deleteProject(projectId: string): Promise<void> {
+    async deleteProject(userId: string, projectId: string): Promise<void> {
+        //TODO we need the project for the auth check as we are using the orgid for the feature flag check. this lookup should be removed once we have removed the featureflag
+        const project = await this.getProject(userId, projectId);
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
+        }
+        if (!(await this.auth.hasPermissionOnProject(userId, "delete", project))) {
+            throw new ApplicationError(
+                ErrorCodes.PERMISSION_DENIED,
+                `You do not have permission to delete project ${projectId}.`,
+            );
+        }
         let orgId: string | undefined = undefined;
         try {
             await this.projectDB.transaction(async (db) => {
@@ -234,7 +302,7 @@ export class ProjectsService {
         }
     }
 
-    async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
+    async findPrebuilds(userId: string, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const { projectId, prebuildId } = params;
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
@@ -280,37 +348,63 @@ export class ProjectsService {
         return result;
     }
 
-    async updateProjectPartial(partialProject: PartialProject): Promise<void> {
+    async updateProjectPartial(userId: string, partialProject: PartialProject): Promise<void> {
         return this.projectDB.updateProject(partialProject);
     }
 
     async setProjectEnvironmentVariable(
+        userId: string,
         projectId: string,
         name: string,
         value: string,
         censored: boolean,
     ): Promise<void> {
+        const project = await this.getProject(userId, projectId);
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
+        }
+        await this.checkPermissionAndThrow(userId, "write_info", project);
         return this.projectDB.setProjectEnvironmentVariable(projectId, name, value, censored);
     }
 
-    async getProjectEnvironmentVariables(projectId: string): Promise<ProjectEnvVar[]> {
+    async getProjectEnvironmentVariables(userId: string, projectId: string): Promise<ProjectEnvVar[]> {
+        const project = await this.getProject(userId, projectId);
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
+        }
         return this.projectDB.getProjectEnvironmentVariables(projectId);
     }
 
-    async getProjectEnvironmentVariableById(variableId: string): Promise<ProjectEnvVar | undefined> {
-        return this.projectDB.getProjectEnvironmentVariableById(variableId);
+    async getProjectEnvironmentVariableById(userId: string, variableId: string): Promise<ProjectEnvVar | undefined> {
+        const result = await this.projectDB.getProjectEnvironmentVariableById(variableId);
+        if (result) {
+            const project = await this.getProject(userId, result.projectId);
+            if (!project) {
+                return undefined;
+            }
+        }
+        return result;
     }
 
-    async deleteProjectEnvironmentVariable(variableId: string): Promise<void> {
+    async deleteProjectEnvironmentVariable(userId: string, variableId: string): Promise<void> {
+        const variable = await this.getProjectEnvironmentVariableById(userId, variableId);
+        if (!variable) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
+        }
+        const project = await this.getProject(userId, variable.projectId);
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
+        }
+        await this.checkPermissionAndThrow(userId, "write_info", project);
         return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
 
-    async getProjectUsage(projectId: string): Promise<ProjectUsage | undefined> {
-        return this.projectDB.getProjectUsage(projectId);
-    }
-
-    async isProjectConsideredInactive(projectId: string): Promise<boolean> {
-        const usage = await this.getProjectUsage(projectId);
+    async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {
+        const project = await this.getProject(userId, projectId);
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
+        }
+        const usage = await this.projectDB.getProjectUsage(projectId);
         if (!usage?.lastWorkspaceStart) {
             return false;
         }
@@ -320,7 +414,12 @@ export class ProjectsService {
         return now - lastUse > inactiveProjectTime;
     }
 
-    async getPrebuildEvents(cloneUrl: string): Promise<PrebuildEvent[]> {
+    async getPrebuildEvents(userId: string, cloneUrl: string): Promise<PrebuildEvent[]> {
+        const project = await this.projectDB.findProjectByCloneUrl(cloneUrl);
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${cloneUrl} not found.`);
+        }
+        await this.checkPermissionAndThrow(userId, "read_info", project);
         const events = await this.webhookEventDB.findByCloneUrl(cloneUrl, 100);
         return events.map((we) => ({
             id: we.id,
@@ -332,5 +431,20 @@ export class ProjectsService {
             projectId: we.projectId,
             status: we.prebuildStatus || we.status,
         }));
+    }
+
+    private async checkPermissionAndThrow(userId: string, permission: ProjectPermission, project: Project) {
+        if (await this.auth.hasPermissionOnProject(userId, permission, project)) {
+            return;
+        }
+        // check if the user has read permission
+        if ("read_info" === permission || !(await this.auth.hasPermissionOnProject(userId, "read_info", project))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${project.id} not found.`);
+        }
+
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `You do not have ${permission} on project ${project.id}`,
+        );
     }
 }

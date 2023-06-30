@@ -356,7 +356,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const allProjects: string[] = [];
         const teams = await this.teamDB.findTeamsByUser(this.userID);
         for (const team of teams) {
-            allProjects.push(...(await this.projectsService.getTeamProjects(team.id)).map((p) => p.id));
+            allProjects.push(...(await this.projectsService.getProjects(this.userID, team.id)).map((p) => p.id));
         }
         return allProjects;
     }
@@ -875,8 +875,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     }
 
     private async getTeamMembersByProject(projectId: string | undefined): Promise<TeamMemberInfo[]> {
+        const user = await this.checkUser("getTeamMembersByProject");
         if (projectId) {
-            const project = await this.projectsService.getProject(projectId);
+            const project = await this.projectsService.getProject(user.id, projectId);
             if (project && project.teamId) {
                 return await this.teamDB.findMembersByTeam(project.teamId);
             }
@@ -1092,13 +1093,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         await this.workspaceStarter.stopWorkspaceInstance(ctx, instance.id, instance.region, reason, policy);
     }
 
-    private async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName) {
+    private async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName): Promise<User> {
         const user = await this.checkAndBlockUser(method);
         if (!this.authorizationService.hasPermission(user, requiredPermission)) {
             log.warn({ userId: user.id }, "unauthorised admin access", { authorised: false, method, params });
             throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
         log.info({ userId: user.id }, "admin access", { authorised: true, method, params });
+        return user;
     }
 
     public async updateWorkspaceUserPin(
@@ -1591,7 +1593,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         } else {
             log.info({ userId: user.id }, `Unsupported provider: "${params.provider}"`, { params });
         }
-        const projects = await this.projectsService.getProjectsByCloneUrls(repositories.map((r) => r.cloneUrl));
+        const projects = await this.projectsService.getProjectsByCloneUrls(
+            user.id,
+            repositories.map((r) => r.cloneUrl),
+        );
 
         const cloneUrlToProject = new Map(projects.map((p) => [p.cloneUrl, p]));
 
@@ -1627,13 +1632,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { projectId });
         const user = await this.checkAndBlockUser("getPrebuildEvents");
 
-        const project = await this.projectsService.getProject(projectId);
+        const project = await this.projectsService.getProject(user.id, projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
         await this.guardProjectOperation(user, projectId, "get");
 
-        const events = await this.projectsService.getPrebuildEvents(project.cloneUrl);
+        const events = await this.projectsService.getPrebuildEvents(user.id, project.cloneUrl);
         return events;
     }
 
@@ -1646,7 +1651,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("triggerPrebuild");
 
-        const project = await this.projectsService.getProject(projectId);
+        const project = await this.projectsService.getProject(user.id, projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
@@ -2601,25 +2606,25 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { projectId, name }); // value may contain secrets
         const user = await this.checkAndBlockUser("setProjectEnvironmentVariable");
         await this.guardProjectOperation(user, projectId, "update");
-        return this.projectsService.setProjectEnvironmentVariable(projectId, name, value, censored);
+        return this.projectsService.setProjectEnvironmentVariable(user.id, projectId, name, value, censored);
     }
 
     async getProjectEnvironmentVariables(ctx: TraceContext, projectId: string): Promise<ProjectEnvVar[]> {
         traceAPIParams(ctx, { projectId });
         const user = await this.checkAndBlockUser("getProjectEnvironmentVariables");
         await this.guardProjectOperation(user, projectId, "get");
-        return await this.projectsService.getProjectEnvironmentVariables(projectId);
+        return await this.projectsService.getProjectEnvironmentVariables(user.id, projectId);
     }
 
     async deleteProjectEnvironmentVariable(ctx: TraceContext, variableId: string): Promise<void> {
         traceAPIParams(ctx, { variableId });
         const user = await this.checkAndBlockUser("deleteProjectEnvironmentVariable");
-        const envVar = await this.projectsService.getProjectEnvironmentVariableById(variableId);
+        const envVar = await this.projectsService.getProjectEnvironmentVariableById(user.id, variableId);
         if (!envVar) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project environment variable not found");
         }
         await this.guardProjectOperation(user, envVar.projectId, "update");
-        return this.projectsService.deleteProjectEnvironmentVariable(envVar.id);
+        return this.projectsService.deleteProjectEnvironmentVariable(user.id, envVar.id);
     }
 
     private async guardSnaphotAccess(ctx: TraceContext, userId: string, workspaceId: string): Promise<Workspace> {
@@ -2773,27 +2778,27 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         }
 
-        const team = await this.organizationService.createOrganization(user.id, name);
+        const org = await this.organizationService.createOrganization(user.id, name);
 
-        const invite = await this.getGenericInvite(ctx, team.id);
+        const invite = await this.organizationService.getOrCreateGenericInvite(user.id, org.id);
 
         // create a cost center
         await this.usageService.getCostCenter({
-            attributionId: AttributionId.render(AttributionId.create(team)),
+            attributionId: AttributionId.render(AttributionId.create(org)),
         });
 
-        ctx.span?.setTag("teamId", team.id);
+        ctx.span?.setTag("teamId", org.id);
         this.analytics.track({
             userId: user.id,
             event: "team_created",
             properties: {
-                id: team.id,
-                name: team.name,
-                created_at: team.creationTime,
-                invite_id: invite!.id,
+                id: org.id,
+                name: org.name,
+                created_at: org.creationTime,
+                invite_id: invite.id,
             },
         });
-        return team!;
+        return org;
     }
 
     public async joinTeam(ctx: TraceContext, inviteId: string): Promise<Team> {
@@ -2951,11 +2956,12 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("resetGenericInvite");
         await this.guardTeamOperation(teamId, "update", "write_members");
+
         return this.organizationService.resetGenericInvite(user.id, teamId);
     }
 
     private async guardProjectOperation(user: User, projectId: string, op: ResourceAccessOp): Promise<void> {
-        const project = await this.projectsService.getProject(projectId);
+        const project = await this.projectsService.getProject(user.id, projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
@@ -2983,7 +2989,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 project_id: projectId,
             },
         });
-        return this.projectsService.deleteProject(projectId);
+        return this.projectsService.deleteProject(user.id, projectId);
     }
 
     public async deleteTeam(ctx: TraceContext, teamId: string): Promise<void> {
@@ -2992,7 +2998,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const { team, members } = await this.guardTeamOperation(teamId, "delete", "delete");
 
-        const projects = await this.projectsService.getTeamProjects(teamId);
+        const projects = await this.projectsService.getProjects(user.id, teamId);
 
         projects.forEach((project) => {
             /** no await */ this.deleteProject(ctx, project.id).catch((err) => {
@@ -3049,10 +3055,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getTeamProjects(ctx: TraceContext, teamId: string): Promise<Project[]> {
         traceAPIParams(ctx, { teamId });
 
-        await this.checkUser("getTeamProjects");
+        const user = await this.checkUser("getTeamProjects");
 
         await this.guardTeamOperation(teamId, "get", "not_implemented");
-        return this.projectsService.getTeamProjects(teamId);
+        return this.projectsService.getProjects(user.id, teamId);
     }
 
     public async findPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
@@ -3060,7 +3066,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("findPrebuilds");
         await this.guardProjectOperation(user, params.projectId, "get");
-        return this.projectsService.findPrebuilds(params);
+        return this.projectsService.findPrebuilds(user.id, params);
     }
 
     public async getPrebuild(ctx: TraceContext, prebuildId: string): Promise<PrebuildWithStatus | undefined> {
@@ -3119,7 +3125,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { projectId });
 
         const user = await this.checkAndBlockUser("getProjectOverview");
-        const project = await this.projectsService.getProject(projectId);
+        const project = await this.projectsService.getProject(user.id, projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
@@ -3127,7 +3133,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         try {
             const result = await this.projectsService.getProjectOverviewCached(user, project);
             if (result) {
-                result.isConsideredInactive = await this.projectsService.isProjectConsideredInactive(project.id);
+                result.isConsideredInactive = await this.projectsService.isProjectConsideredInactive(
+                    user.id,
+                    project.id,
+                );
             }
             return result;
         } catch (error) {
@@ -3140,9 +3149,9 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
     async adminFindPrebuilds(ctx: TraceContext, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         traceAPIParams(ctx, { params });
-        await this.guardAdminAccess("adminFindPrebuilds", { params }, Permission.ADMIN_PROJECTS);
+        const user = await this.guardAdminAccess("adminFindPrebuilds", { params }, Permission.ADMIN_PROJECTS);
 
-        return this.projectsService.findPrebuilds(params);
+        return this.projectsService.findPrebuilds(user.id, params);
     }
 
     async cancelPrebuild(ctx: TraceContext, projectId: string, prebuildId: string): Promise<void> {
@@ -3150,7 +3159,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("cancelPrebuild");
 
-        const project = await this.projectsService.getProject(projectId);
+        const project = await this.projectsService.getProject(user.id, projectId);
         if (!project) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Project not found");
         }
@@ -3230,7 +3239,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 (partial[f] as any) = partialProject[f];
             }
         }
-        await this.projectsService.updateProjectPartial(partial);
+        await this.projectsService.updateProjectPartial(user.id, partial);
     }
 
     public async getGitpodTokens(ctx: TraceContext): Promise<GitpodToken[]> {

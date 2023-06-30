@@ -214,7 +214,7 @@ export class HeadlessLogController {
 
         let teamMembers: TeamMemberInfo[] = [];
         if (workspace?.projectId) {
-            const p = await this.projectService.getProject(workspace.projectId);
+            const p = await this.projectService.getProject(user.id, workspace.projectId);
             if (p?.teamId) {
                 teamMembers = await this.teamDb.findMembersByTeam(p.teamId);
             }

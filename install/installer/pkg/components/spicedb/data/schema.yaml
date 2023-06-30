@@ -50,6 +50,7 @@ schema: |-
     // A subject is an editor, if:
     //  * the user is directly assigned as an editor
     relation editor: user
+
     // A subject is a viewer, if:
     //  * the user is directly assigned as a viewer
     //  * the project has granted access to everyone in an organization
@@ -57,12 +58,18 @@ schema: |-
 
     // Project can be modified by:
     //  * Organization owners
-    //  * The user has direct editor relation
+    //  * editors
     permission write_info = org->owner + editor
+
     // Project can be accessed by:
     //  * Anyone with write_info permission
-    //  * Direct viewers
+    //  * viewers
     permission read_info = write_info + viewer
+
+    // Project can be deleted by:
+    //  * Organization owners
+    //  * editors
+    permission delete = org->owner + editor
   }
 
 # relationships to be used for assertions & validation

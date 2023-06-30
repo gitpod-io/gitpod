@@ -90,7 +90,7 @@ class TestEnvVarService {
             },
         } as UserDB;
         this.envVarService["projectsService"] = {
-            getProjectEnvironmentVariables: (_) => {
+            getProjectEnvironmentVariables: (userId: string, projectId: string) => {
                 return Promise.resolve(projectEnvVar as ProjectEnvVar[]);
             },
         } as ProjectsService;

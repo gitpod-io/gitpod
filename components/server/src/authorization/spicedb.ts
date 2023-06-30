@@ -14,13 +14,13 @@ export function spicedbClientFromEnv(): SpiceDBClient {
     const token = process.env["SPICEDB_PRESHARED_KEY"];
     if (!token) {
         log.error("[spicedb] No preshared key configured.");
-        return;
+        return undefined;
     }
 
     const address = process.env["SPICEDB_ADDRESS"];
     if (!address) {
         log.error("[spicedb] No service address configured.");
-        return;
+        return undefined;
     }
 
     return v1.NewClient(token, address, v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS).promises;
