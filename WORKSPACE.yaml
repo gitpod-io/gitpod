@@ -28,6 +28,8 @@ provenance:
   enabled: true
   slsa: true
 defaultVariant:
+  env:
+    - NODE_OPTIONS=--max_old_space_size=8192
   srcs:
     exclude:
       # Make sure we don't include node_modules/**/*.ts by accident
