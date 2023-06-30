@@ -78,50 +78,50 @@ var Helm = common.CompositeHelmFunc(
 
 		// Create an init container to convert the password variable to the password value
 		// This is so we can use a secret for the custom message bus password in the config
-		initContainer := []corev1.Container{
-			{
-				Name:  "credential-injector",
-				Image: cfg.ImageName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), InitContainerImage, InitContainerTag),
-				Args: []string{
-					"sh",
-					"-c",
-					fmt.Sprintf(`sed "s/%s/${PASSWORD}/" /app/load_definition.json > %s`, passwordReplaceString, loadDefinitionsFile),
-				},
-				Env: []corev1.EnvVar{
-					{
-						Name: "PASSWORD",
-						ValueFrom: &corev1.EnvVarSource{
-							SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: corev1.LocalObjectReference{
-									Name: msgBusPasswordSecret,
-								},
-								Key: "rabbitmq-password",
-							},
-						},
-					},
-				},
-				VolumeMounts: append(
-					[]corev1.VolumeMount{
-						// Mount the load definition
-						{
-							MountPath: "/app",
-							Name:      "load-definition-volume", // Set by Helm chart
-						},
-					},
-					volumeMounts...,
-				),
-			},
-		}
+		// initContainer := []corev1.Container{
+		// 	{
+		// 		Name:  "credential-injector",
+		// 		Image: cfg.ImageName(common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL), InitContainerImage, InitContainerTag),
+		// 		Args: []string{
+		// 			"sh",
+		// 			"-c",
+		// 			fmt.Sprintf(`sed "s/%s/${PASSWORD}/" /app/load_definition.json > %s`, passwordReplaceString, loadDefinitionsFile),
+		// 		},
+		// 		Env: []corev1.EnvVar{
+		// 			{
+		// 				Name: "PASSWORD",
+		// 				ValueFrom: &corev1.EnvVarSource{
+		// 					SecretKeyRef: &corev1.SecretKeySelector{
+		// 						LocalObjectReference: corev1.LocalObjectReference{
+		// 							Name: msgBusPasswordSecret,
+		// 						},
+		// 						Key: "rabbitmq-password",
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 		VolumeMounts: append(
+		// 			[]corev1.VolumeMount{
+		// 				// Mount the load definition
+		// 				{
+		// 					MountPath: "/app",
+		// 					Name:      "load-definition-volume", // Set by Helm chart
+		// 				},
+		// 			},
+		// 			volumeMounts...,
+		// 		),
+		// 	},
+		// }
 
-		initContainerYaml, err := yaml.Marshal(initContainer)
-		if err != nil {
-			return nil, err
-		}
+		// initContainerYaml, err := yaml.Marshal(initContainer)
+		// if err != nil {
+		// 	return nil, err
+		// }
 
-		initContainerTemplate, err := helm.KeyFileValue("rabbitmq.initContainers", initContainerYaml)
-		if err != nil {
-			return nil, err
-		}
+		// initContainerTemplate, err := helm.KeyFileValue("rabbitmq.initContainers", initContainerYaml)
+		// if err != nil {
+		// 	return nil, err
+		// }
 
 		imageRegistry := common.ThirdPartyContainerRepo(cfg.Config.Repository, common.ChainguardRegistryURL)
 
@@ -164,7 +164,7 @@ var Helm = common.CompositeHelmFunc(
 				// This is too complex to be sent as a string
 				FileValues: []string{
 					affinityTemplate,
-					initContainerTemplate,
+					// initContainerTemplate,
 					volumeMountsTemplate,
 					volumesTemplate,
 				},
