@@ -238,7 +238,7 @@ func Run(options ...RunOption) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	internalPorts := []uint32{uint32(cfg.IDEPort), uint32(cfg.APIEndpointPort), uint32(cfg.SSHPort)}
-	if cfg.DesktopIDE != nil {
+	if cfg.GetDesktopIDE() != nil {
 		internalPorts = append(internalPorts, desktopIDEPort)
 	}
 	if cfg.isDebugWorkspace() {
@@ -271,7 +271,7 @@ func Run(options ...RunOption) {
 		}, tokenService)
 	}
 
-	if cfg.DesktopIDE != nil {
+	if cfg.GetDesktopIDE() != nil {
 		desktopIdeReady = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 	}
 	if !cfg.isHeadless() && !opts.RunGP && !cfg.isDebugWorkspace() {
@@ -377,9 +377,9 @@ func Run(options ...RunOption) {
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
 	go startAndWatchIDE(ctx, cfg, &cfg.IDE, &ideWG, cstate, ideReady, WebIDE, supervisorMetrics)
-	if cfg.DesktopIDE != nil {
+	if cfg.GetDesktopIDE() != nil {
 		ideWG.Add(1)
-		go startAndWatchIDE(ctx, cfg, cfg.DesktopIDE, &ideWG, cstate, desktopIdeReady, DesktopIDE, supervisorMetrics)
+		go startAndWatchIDE(ctx, cfg, cfg.GetDesktopIDE(), &ideWG, cstate, desktopIdeReady, DesktopIDE, supervisorMetrics)
 	}
 
 	var (
@@ -949,7 +949,7 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	getEnv := func(name string) string {
 		return envs[name]
 	}
-	for _, ide := range []*IDEConfig{&cfg.IDE, cfg.DesktopIDE} {
+	for _, ide := range []*IDEConfig{&cfg.IDE, cfg.GetDesktopIDE()} {
 		if ide == nil || ide.Env == nil {
 			continue
 		}
@@ -1792,7 +1792,7 @@ func trackReadiness(ctx context.Context, w analytics.Writer, cfg *Config, cstate
 		<-ideReady.Wait()
 		trackFn(cfg, readinessKindIDE)
 	}()
-	if cfg.DesktopIDE != nil {
+	if cfg.GetDesktopIDE() != nil {
 		go func() {
 			<-desktopIdeReady.Wait()
 			trackFn(cfg, readinessKindDesktopIDE)
