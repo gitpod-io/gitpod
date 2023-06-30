@@ -82,16 +82,23 @@ export namespace User {
     }
 
     /**
-     * Returns a primary email address of a user.
+     * Returns the primary email address of a user stored in their account.
      *
-     * For accounts owned by an organization, it returns the email of the most recently used SSO identity.
+     * If no email address is stored in user's account, using the previous strategy for compatibility:
      *
-     * For personal accounts, first it looks for a email stored by the user, and falls back to any of the Git provider identities.
+     * - For accounts owned by an organization, it returns the email of the most recently used SSO identity.
+     * - For personal accounts, first it looks for a email stored by the user, and falls back to any of the Git provider identities.
      *
      * @param user
      * @returns A primaryEmail, or undefined.
      */
     export function getPrimaryEmail(user: User): string | undefined {
+        // Persisted email address has priority over the computed values.
+        const email = user.emails.find((email) => email.primary);
+        if (email) {
+            email.value;
+        }
+
         // If the accounts is owned by an organization, use the email of the most recently
         // used SSO identity.
         if (User.isOrganizationOwned(user)) {
