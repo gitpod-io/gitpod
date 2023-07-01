@@ -249,7 +249,7 @@ func TestWorkspaceService_DeleteWorkspace(t *testing.T) {
 
 func TestWorkspaceService_UpdateWorkspaceUserPin(t *testing.T) {
 
-	//workspaceID := workspaceTestData[0].Protocol.Workspace.ID
+	// workspaceID := workspaceTestData[0].Protocol.Workspace.ID
 
 	t.Run("invalid argument when workspace ID is missing", func(t *testing.T) {
 		_, client := setupWorkspacesService(t)
@@ -292,7 +292,7 @@ func TestWorkspaceService_UpdateWorkspaceUserPin(t *testing.T) {
 	// t.Run("delegates to server", func(t *testing.T) {
 	// 	serverMock, client := setupWorkspacesService(t)
 
-	// 	serverMock.EXPECT().UpdateWorkspaceUserPin(gomock.Any(), workspaceID, true).Return(nil)
+	// 	serverMock.EXPECT().UpdateWorkspaceUserPin(gomock.Any(), workspaceID, protocol.PinActionPin).Return(nil)
 
 	// 	resp, err := client.UpdateWorkspaceUserPin(context.Background(), connect.NewRequest(&v1.UpdateWorkspaceUserPinRequest{
 	// 		WorkspaceId: workspaceID,
