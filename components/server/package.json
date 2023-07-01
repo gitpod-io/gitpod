@@ -90,7 +90,7 @@
     "ws": "^7.4.6"
   },
   "devDependencies": {
-    "@testdeck/mocha": "0.1.2",
+    "@testdeck/mocha": "^0.3.3",
     "@types/amqplib": "^0.8.2",
     "@types/assert": "^1.5.6",
     "@types/base-64": "^1.0.0",
@@ -123,7 +123,6 @@
     "deep-equal-in-any-order": "^2.0.0",
     "expect": "^1.20.2",
     "mocha": "^5.0.0",
-    "mocha-typescript": "^1.1.11",
     "rimraf": "^3.0.2",
     "source-map-loader": "^0.2.3",
     "standard": "^16.0.3",

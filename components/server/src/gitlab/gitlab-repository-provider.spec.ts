@@ -5,10 +5,10 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { expect } from "chai";
 import { Container, ContainerModule } from "inversify";
-import { suite, retries, test, timeout } from "mocha-typescript";
+import { suite, retries, test, timeout, skip } from "@testdeck/mocha";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { DevData } from "../dev/dev-data";
@@ -18,7 +18,7 @@ import { GitlabContextParser } from "./gitlab-context-parser";
 import { GitlabRepositoryProvider } from "./gitlab-repository-provider";
 import { GitLabTokenHelper } from "./gitlab-token-helper";
 
-@suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB"))
+@suite(timeout(10000), retries(2), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB")))
 class TestGitlabRepositoryProvider {
     static readonly AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
         id: "Public-GitLab",

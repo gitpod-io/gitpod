@@ -5,10 +5,10 @@
  */
 
 import { User } from "@gitpod/gitpod-protocol";
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { expect } from "chai";
 import { Container, ContainerModule } from "inversify";
-import { suite, retries, test, timeout } from "mocha-typescript";
+import { suite, retries, test, timeout, skip } from "@testdeck/mocha";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { DevData } from "../dev/dev-data";
 import { TokenProvider } from "../user/token-provider";
@@ -17,7 +17,7 @@ import { GitHubRestApi } from "./api";
 import { GithubFileProvider } from "./file-provider";
 import { GitHubTokenHelper } from "./github-token-helper";
 
-@suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_GITHUB"))
+@suite(timeout(10000), retries(2), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_GITHUB")))
 class TestFileProvider {
     static readonly AUTH_HOST_CONFIG: Partial<AuthProviderParams> = {
         id: "Public-GitHub",

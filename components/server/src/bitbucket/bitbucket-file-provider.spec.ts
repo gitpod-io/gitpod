@@ -7,7 +7,7 @@
 import { Commit, Repository, User } from "@gitpod/gitpod-protocol";
 import * as chai from "chai";
 import { Container, ContainerModule } from "inversify";
-import { retries, suite, test, timeout } from "mocha-typescript";
+import { retries, skip, suite, test, timeout } from "@testdeck/mocha";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { DevData } from "../dev/dev-data";
@@ -16,9 +16,9 @@ import { BitbucketApiFactory, BasicAuthBitbucketApiFactory } from "./bitbucket-a
 import { BitbucketFileProvider } from "./bitbucket-file-provider";
 import { BitbucketTokenHelper } from "./bitbucket-token-handler";
 const expect = chai.expect;
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 
-@suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET"))
+@suite(timeout(10000), retries(2), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET")))
 class TestBitbucketFileProvider {
     protected fileProvider: BitbucketFileProvider;
     protected user: User;

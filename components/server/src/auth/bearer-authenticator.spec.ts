@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import { PersonalAccessToken } from "./bearer-authenticator";
 import { expect } from "chai";
 

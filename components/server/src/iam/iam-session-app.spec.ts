@@ -5,7 +5,7 @@
  */
 
 import { Container, ContainerModule } from "inversify";
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { SessionHandler } from "../session-handler";
 import { IamSessionApp } from "./iam-session-app";
 import { Config } from "../config";

@@ -10,7 +10,7 @@ if (typeof (Symbol as any).asyncIterator === "undefined") {
 }
 import "reflect-metadata";
 
-import { suite, test, timeout, retries } from "mocha-typescript";
+import { suite, test, timeout, retries, skip } from "@testdeck/mocha";
 import * as chai from "chai";
 const expect = chai.expect;
 
@@ -23,10 +23,10 @@ import { AuthProviderParams } from "../auth/auth-provider";
 import { TokenProvider } from "../user/token-provider";
 import { GitHubTokenHelper } from "./github-token-helper";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { GithubRepositoryProvider } from "./github-repository-provider";
 
-@suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_GITHUB"))
+@suite(timeout(10000), retries(2), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_GITHUB")))
 class TestGithubContextRepositoryProvider {
     protected provider: GithubRepositoryProvider;
     protected user: User;

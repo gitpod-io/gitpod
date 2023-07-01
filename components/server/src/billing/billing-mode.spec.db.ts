@@ -15,7 +15,7 @@ import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage
 import * as chai from "chai";
 import * as deepEqualInAnyOrder from "deep-equal-in-any-order";
 import { Container, ContainerModule } from "inversify";
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import Stripe from "stripe";
 import { Config } from "../config";
 import { UsageService } from "../user/usage-service";

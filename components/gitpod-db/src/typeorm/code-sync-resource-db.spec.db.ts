@@ -6,7 +6,7 @@
 
 import uuid = require("uuid");
 import * as chai from "chai";
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { testContainer } from "../test-container";
 import { CodeSyncResourceDB } from "./code-sync-resource-db";
 import { IUserDataManifest, SyncResource } from "./entity/db-code-sync-resource";

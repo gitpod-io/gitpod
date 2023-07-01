@@ -3,7 +3,7 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License.AGPL.txt in the project root for license information.
  */
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { APIUserService } from "./user";
 import { Container } from "inversify";
 import { TeamDB, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";

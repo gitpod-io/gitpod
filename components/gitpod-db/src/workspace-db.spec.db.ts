@@ -6,7 +6,7 @@
 
 import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { fail } from "assert";
 
 import { WorkspaceInstance, Workspace, PrebuiltWorkspace, CommitContext } from "@gitpod/gitpod-protocol";

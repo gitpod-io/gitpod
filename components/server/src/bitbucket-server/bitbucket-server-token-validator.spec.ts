@@ -4,9 +4,9 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+import { ifEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 import { Container, ContainerModule } from "inversify";
-import { retries, suite, test, timeout } from "mocha-typescript";
+import { retries, skip, suite, test, timeout } from "@testdeck/mocha";
 import { expect } from "chai";
 import { BitbucketServerApi } from "./bitbucket-server-api";
 import { BitbucketServerTokenValidator } from "./bitbucket-server-token-validator";
@@ -14,7 +14,7 @@ import { AuthProviderParams } from "../auth/auth-provider";
 import { BitbucketServerTokenHelper } from "./bitbucket-server-token-handler";
 import { TokenProvider } from "../user/token-provider";
 
-@suite(timeout(10000), retries(0), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER"))
+@suite(timeout(10000), retries(0), skip(ifEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET_SERVER")))
 class TestBitbucketServerTokenValidator {
     protected validator: BitbucketServerTokenValidator;
 

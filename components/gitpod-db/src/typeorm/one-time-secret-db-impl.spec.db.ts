@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { testContainer } from "../test-container";
 import { TypeORM } from "./typeorm";
 import { DBUser } from "./entity/db-user";
