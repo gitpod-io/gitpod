@@ -12,6 +12,7 @@ export type ButtonProps = {
     type?: "primary" | "secondary" | "danger" | "danger.secondary" | "transparent";
     // TODO: determine how to handle small/medium (block does w-full atm)
     size?: "small" | "medium" | "block";
+    spacing?: "compact" | "default";
     disabled?: boolean;
     loading?: boolean;
     className?: string;
@@ -35,6 +36,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             loading = false,
             autoFocus = false,
             size,
+            spacing = "default",
             icon,
             children,
             onClick,
@@ -48,7 +50,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     "cursor-pointer my-auto",
                     "text-sm font-medium whitespace-nowrap",
                     "rounded-md focus:outline-none focus:ring transition ease-in-out",
-                    size === "small" ? "px-0 py-0" : "px-4 py-2",
+                    spacing === "compact" ? ["px-0 py-0"] : null,
+                    spacing === "default" ? ["px-4 py-2"] : null,
                     type === "primary"
                         ? [
                               "bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600",
