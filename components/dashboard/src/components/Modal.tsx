@@ -26,6 +26,7 @@ type Props = {
     visible: boolean;
     closeable?: boolean;
     disableFocusLock?: boolean;
+    disableAutoFocus?: boolean;
     className?: string;
     onClose: () => void;
     onSubmit?: () => void | Promise<void>;
@@ -39,6 +40,7 @@ export const Modal: FC<Props> = ({
     children,
     closeable = true,
     disableFocusLock = false,
+    disableAutoFocus = false,
     className,
     onClose,
     onSubmit,
@@ -81,7 +83,7 @@ export const Modal: FC<Props> = ({
                 {/* Modal outer-container for positioning */}
                 <div className="flex justify-center items-center w-screen h-screen">
                     <FocusOn
-                        autoFocus
+                        autoFocus={!disableAutoFocus}
                         onClickOutside={handleClickOutside}
                         onEscapeKey={handleEscape}
                         focusLock={!disableFocusLock}

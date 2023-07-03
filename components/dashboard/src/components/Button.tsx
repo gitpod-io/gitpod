@@ -48,7 +48,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     "cursor-pointer my-auto",
                     "text-sm font-medium whitespace-nowrap",
                     "rounded-md focus:outline-none focus:ring transition ease-in-out",
-                    size === "small" ? "px-1 py-1" : "px-4 py-2",
+                    size === "small" ? "px-0 py-0" : "px-4 py-2",
                     type === "primary"
                         ? [
                               "bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600",

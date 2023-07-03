@@ -32,7 +32,7 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
         <div className={`w-full relative max-w-lg ${className ?? ""}`}>
             <TextInput value={value} disabled className="w-full pr-8 overscoll-none" />
 
-            <Tooltip content={copied ? "Copied" : tip} className="absolute top-2 right-1">
+            <Tooltip content={copied ? "Copied" : tip} className="absolute top-2.5 right-1">
                 <Button
                     type="transparent"
                     htmlType="button"
