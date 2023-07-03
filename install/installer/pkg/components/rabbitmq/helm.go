@@ -5,6 +5,7 @@
 package rabbitmq
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"strings"
 
@@ -76,6 +77,10 @@ var Helm = common.CompositeHelmFunc(
 
 		loadDefinitionsFile := "/gitpod-config/load_definition.json"
 
+		hasher := sha256.New()
+		hasher.Write([]byte("uq4KxOLtrA-QsDTfuwQ-"))
+		sum := hasher.Sum(nil)
+
 		// Create an init container to convert the password variable to the password value
 		// This is so we can use a secret for the custom message bus password in the config
 		initContainer := []corev1.Container{
@@ -85,7 +90,7 @@ var Helm = common.CompositeHelmFunc(
 				Args: []string{
 					"sh",
 					"-c",
-					fmt.Sprintf(`HASHED_PW=$(echo $PASSWORD | sha256sum); sed "s/%s/${HASHED_PW}/" /app/load_definition.json > %s`, passwordReplaceString, loadDefinitionsFile),
+					fmt.Sprintf(`sed "s/%s/%s/" /app/load_definition.json > %s`, passwordReplaceString, string(sum), loadDefinitionsFile),
 				},
 				Env: []corev1.EnvVar{
 					{
