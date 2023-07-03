@@ -177,44 +177,31 @@ jobs:
 
                   FAILURE_COUNT=0
 
-                  WORKSPACE_TEST_LIST=("$CONTENT_SERVICE_TESTS" "$IMAGE_BUILDER_TESTS" "$WS_DAEMON_TESTS" "$WS_MANAGER_TESTS" "$WORKSPACE_TESTS")
-                  for TEST_PATH in "${WORKSPACE_TEST_LIST[@]}"
-                  do
-                      TEST_NAME=$(basename "${TEST_PATH}")
-                      echo "running integration for ${TEST_NAME}"
+                  WORKSPACE_TEST_LIST="$CONTENT_SERVICE_TESTS $IMAGE_BUILDER_TESTS $WS_DAEMON_TESTS $WS_MANAGER_TESTS $WORKSPACE_TESTS"
+                  TEST_NAME="workspace"
+                  echo "running integration for ${TEST_NAME}-parallel"
 
-                      cd "${TEST_PATH}"
-                      set +e
-                      go test -p 1 -v ./... "${args[@]}" -run '.*SerialOnly$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-SERIAL.xml" -iocopy
-                      RC=${PIPESTATUS[0]}
-                      set -e
+                  cd "${GITHUB_WORKSPACE}/test"
+                  set +e
+                  go test -p 10 -v $WORKSPACE_TEST_LIST "${args[@]}" -parallel-features=true 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}.xml" -iocopy
+                  RC=${PIPESTATUS[0]}
+                  set -e
 
-                      if [ "${RC}" -ne "0" ]; then
-                        FAILURE_COUNT=$((FAILURE_COUNT+1))
-                      fi
-
-                      set +e
-                      # running tests in parallel saves time, but is flakey.
-                      go test -p 1 --parallel 1 -v ./... "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
-                      RC=${PIPESTATUS[0]}
-                      set -e
-
-                      if [ "${RC}" -ne "0" ]; then
-                        FAILURE_COUNT=$((FAILURE_COUNT+1))
-                      fi
-                  done
+                  if [ "${RC}" -ne "0" ]; then
+                    FAILURE_COUNT=$((FAILURE_COUNT+1))
+                  fi
 
                   exit $FAILURE_COUNT
             - uses: actions/upload-artifact@v3
               with:
                   name: test-results
-                  paths: "test/tests/**/TEST-*.xml"
+                  path: "test/**/TEST-*.xml"
               if: always()
             - name: Test Summary
               id: test_summary
               uses: test-summary/action@v2
               with:
-                  paths: "test/tests/**/TEST-*.xml"
+                  paths: "test/**/TEST-*.xml"
                   show: "all"
               if: always()
             - name: Slack Notification

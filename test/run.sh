@@ -81,7 +81,6 @@ fi
 args+=( "-kubeconfig=${KUBECONFIG:-/home/gitpod/.kube/config}" )
 args+=( "-namespace=${NAMESPACE:-default}" )
 args+=( "-timeout=60m" )
-args+=( "-p=2" )
 
 if [[ "${GITPOD_REPO_ROOT:-}" != "" ]]; then
   echo "Running in Gitpod workspace. Fetching USERNAME and USER_TOKEN"
@@ -110,22 +109,11 @@ if [ "$TEST_SUITE" == "workspace" ]; then
   LOG_FILE="${LOGS_DIR}/${TEST_NAME}.log"
 
   cd "$THIS_DIR"
-  echo "running integration for ${TEST_NAME}-parallel"
+  echo "running integration for ${TEST_NAME}"
 
   set +e
   # shellcheck disable=SC2086
-  go test -parallel 4 -v $TEST_LIST "${args[@]}" -run '.*[^.SerialOnly]$' 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}-PARALLEL.xml" -iocopy
-  RC=${PIPESTATUS[0]}
-  set -e
-
-  if [ "${RC}" -ne "0" ]; then
-    FAILURE_COUNT=$((FAILURE_COUNT+1))
-  fi
-
-  echo "running integration for ${TEST_NAME}-serial-only"
-  set +e
-  # shellcheck disable=SC2086
-  go test --parallel 1 -v $TEST_LIST "${args[@]}" -run '.*SerialOnly$' 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}-SERIAL.xml" -iocopy
+  go test -p 10 -v $TEST_LIST "${args[@]}" -parallel-features=true 2>&1  | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "${RESULTS_DIR}/TEST-${TEST_NAME}.xml" -iocopy
   RC=${PIPESTATUS[0]}
   set -e
 

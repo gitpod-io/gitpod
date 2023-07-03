@@ -30,7 +30,7 @@ import (
 const (
 	gitpodBuiltinUserID             = "builtin-user-workspace-probe-0000000"
 	perCallTimeout                  = 5 * time.Minute
-	ParallelLunchableWorkspaceLimit = 4
+	ParallelLunchableWorkspaceLimit = 10
 )
 
 var (
