@@ -147,8 +147,8 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         }
 
         // Storing entry in a TX to avoid potential slug dupes caused by racing requests.
-        return await this.internalTransaction<DBTeam>(async (em) => {
-            const teamRepo = em.getRepository<DBTeam>(DBTeam);
+        return await this.transaction<DBTeam>(async (_, ctx) => {
+            const teamRepo = ctx.entityManager.getRepository<DBTeam>(DBTeam);
 
             const existingTeam = await teamRepo.findOne({ id: teamId, deleted: false, markedDeleted: false });
             if (!existingTeam) {
@@ -192,8 +192,8 @@ export class TeamDBImpl extends TransactionalDBImpl<TeamDB> implements TeamDB {
         }
 
         // Storing new entry in a TX to avoid potential dupes caused by racing requests.
-        const team = await this.internalTransaction<DBTeam>(async (em) => {
-            const teamRepo = em.getRepository<DBTeam>(DBTeam);
+        const team = await this.transaction<DBTeam>(async (_, ctx) => {
+            const teamRepo = ctx.entityManager.getRepository<DBTeam>(DBTeam);
 
             const slug = await this.createUniqueSlug(teamRepo, name);
 

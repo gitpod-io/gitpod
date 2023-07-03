@@ -11,7 +11,6 @@ import { Authorizer } from "../authorization/authorizer";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationPermission } from "../authorization/definitions";
 import { ProjectsService } from "../projects/projects-service";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class OrganizationService {
@@ -46,16 +45,12 @@ export class OrganizationService {
         await this.checkPermissionAndThrow(userId, "delete", orgId);
         const projects = await this.projectsService.getProjects(userId, orgId);
 
-        //TODO this should be done in the one transaction below
-        projects.forEach((project) => {
-            this.projectsService.deleteProject(userId, project.id).catch((err) => {
-                log.error(err);
-            });
-        });
-
         const members = await this.teamDB.findMembersByTeam(orgId);
         try {
-            await this.teamDB.transaction(async (db) => {
+            await this.teamDB.transaction(async (db, ctx) => {
+                for (let project of projects) {
+                    await this.projectsService.deleteProject(userId, project.id, ctx);
+                }
                 for (let member of members) {
                     await db.removeMemberFromTeam(member.userId, orgId);
                 }
