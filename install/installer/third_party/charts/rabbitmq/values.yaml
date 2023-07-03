@@ -6,6 +6,10 @@ global:
   kubeVersion: 1.21.0
 
 rabbitmq:
+  image:
+    registry: cgr.dev
+    repository: chainguard/rabbitmq
+    digest: sha256:2dbccc1c5082e9f901c620dba178614b708a3ccebdd9de12187581df2a2dc669
   enabled: true
   fullnameOverride: "messagebus"
   persistence:
