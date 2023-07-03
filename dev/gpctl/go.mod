@@ -99,6 +99,8 @@ replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // l
 
 replace github.com/gitpod-io/gitpod/components/public-api/go => ../../components/public-api/go // leeway
 
+replace github.com/gitpod-io/gitpod/components/scrubber => ../../components/scrubber // leeway
+
 replace github.com/gitpod-io/gitpod/content-service/api => ../../components/content-service-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../../components/gitpod-protocol/go // leeway

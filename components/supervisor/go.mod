@@ -148,19 +148,21 @@ require (
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
-replace github.com/gitpod-io/gitpod/content-service => ../content-service // leeway
-
 replace github.com/gitpod-io/gitpod/components/public-api/go => ../public-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/components/scrubber => ../scrubber // leeway
+
+replace github.com/gitpod-io/gitpod/content-service => ../content-service // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
 
+replace github.com/gitpod-io/gitpod/ide-metrics-api => ../ide-metrics-api/go // leeway
+
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon/api => ../ws-daemon-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ide-metrics-api => ../ide-metrics-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.26.2 // leeway indirect from components/common-go:lib
 

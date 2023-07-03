@@ -133,9 +133,9 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 )
 
-replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
-
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
+
+replace github.com/gitpod-io/gitpod/components/scrubber => ../scrubber // leeway
 
 replace github.com/gitpod-io/gitpod/registry-facade => ../registry-facade // leeway
 

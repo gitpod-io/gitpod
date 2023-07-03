@@ -103,15 +103,17 @@ replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.8 // track bre
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
+replace github.com/gitpod-io/gitpod/components/scrubber => ../scrubber // leeway
+
 replace github.com/gitpod-io/gitpod/content-service => ../content-service // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
 
+replace github.com/gitpod-io/gitpod/image-builder/api => ../image-builder-api/go // leeway
+
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../registry-facade-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../ws-manager-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/image-builder/api => ../image-builder-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.26.2 // leeway indirect from components/common-go:lib
 

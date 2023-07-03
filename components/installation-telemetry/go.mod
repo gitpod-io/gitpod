@@ -29,6 +29,8 @@ require (
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
+replace github.com/gitpod-io/gitpod/components/scrubber => ../scrubber // leeway
+
 replace k8s.io/api => k8s.io/api v0.26.2 // leeway indirect from components/common-go:lib
 
 replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.26.2 // leeway indirect from components/common-go:lib
