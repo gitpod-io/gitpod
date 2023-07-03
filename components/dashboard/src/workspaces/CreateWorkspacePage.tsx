@@ -473,14 +473,14 @@ function LocalSSHWarning(props: { className: string }) {
                 Gitpod does not read any of your existing SSH configurations.&nbsp;
                 <a
                     className="gp-link"
-                    href="https://www.gitpod.io/docs/references/ides-and-editors/vscode-desktop-local-ssh"
+                    href="https://www.gitpod.io/docs/references/ides-and-editors/vscode#modify-ssh-config-file"
                     target="_blank"
                     rel="noreferrer"
                 >
                     More Detail
                 </a>
                 <div className="flex mt-2 text-sm">
-                    Common on&nbsp;
+                    Comment on&nbsp;
                     <a
                         href="https://github.com/gitpod-io/gitpod/issues/18109"
                         target="_blank"
