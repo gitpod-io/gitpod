@@ -755,7 +755,7 @@ func installPlugins(config *gitpod.GitpodConfig, launchCtx *LaunchContext) error
 
 	// delete alien_plugins.txt to suppress 3rd-party plugins consent on startup to workaround backend startup freeze
 	err = os.Remove(launchCtx.projectConfigDir + "/alien_plugins.txt")
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) && !strings.Contains(err.Error(), "no such file or directory") {
 		log.WithError(err).Error("failed to suppress 3rd-party plugins consent")
 	}
 
