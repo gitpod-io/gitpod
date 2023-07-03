@@ -43,6 +43,7 @@ import Alert from "../components/Alert";
 import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
 import { isGitpodIo } from "../utils";
 import FeedbackFormModal from "../feedback-form/FeedbackModal";
+import { useFeatureFlag } from "../data/featureflag-query";
 
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
@@ -182,8 +183,6 @@ export function CreateWorkspacePage() {
         );
     }, [workspaces.data, workspaceContext.data]);
     const [selectAccountError, setSelectAccountError] = useState<SelectAccountPayload | undefined>(undefined);
-
-    const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
     const createWorkspace = useCallback(
         async (options?: Omit<GitpodServer.CreateWorkspaceOptions, "contextUrl" | "organizationId">) => {
@@ -423,56 +422,7 @@ export function CreateWorkspacePage() {
                     </Button>
                 </div>
 
-                {selectedIde === "code-desktop" && (
-                    <div className="px-6">
-                        <Alert
-                            light
-                            className="mt-4 bg-gray-100 dark:bg-gray-800"
-                            type="info"
-                            iconSize="w-8 h-8"
-                            icon={<Exclamation2 className="h-full w-full" />}
-                            iconColor="text-gray-500"
-                        >
-                            To make VS Code Desktop open seamlessly we will add a single entry to your local SSH
-                            configuration. Gitpod does not read any of your existing SSH configurations.&nbsp;
-                            <a
-                                className="gp-link"
-                                href="https://www.gitpod.io/docs/references/ides-and-editors/vscode-desktop-local-ssh"
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                More Detail
-                            </a>
-                            <div className="flex mt-2 text-sm">
-                                Common on&nbsp;
-                                <a
-                                    href="https://github.com/gitpod-io/gitpod/issues/18109"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="gp-link"
-                                >
-                                    feedback issue
-                                </a>
-                                {isGitpodIo() && (
-                                    <span>
-                                        &nbsp;or {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-                                        <a
-                                            className="gp-link"
-                                            // eslint-disable-next-line no-script-url
-                                            href="javascript:void(0)"
-                                            onClick={() => setFeedbackFormVisible(true)}
-                                        >
-                                            submit feedback
-                                        </a>
-                                    </span>
-                                )}
-                                {isFeedbackFormVisible && (
-                                    <FeedbackFormModal onClose={() => setFeedbackFormVisible(false)} />
-                                )}
-                            </div>
-                        </Alert>
-                    </div>
-                )}
+                {selectedIde === "code-desktop" && <LocalSSHWarning className="px-6" />}
                 {workspaceContext.data && (
                     <RememberOptions
                         disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
@@ -497,6 +447,64 @@ export function CreateWorkspacePage() {
                     </div>
                 )}
             </div>
+        </div>
+    );
+}
+
+function LocalSSHWarning(props: { className: string }) {
+    const isLocalSSHProxyEnabled = useFeatureFlag("gitpod_desktop_use_local_ssh_proxy");
+    const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
+
+    if (!isLocalSSHProxyEnabled) {
+        return null;
+    }
+
+    return (
+        <div className={props.className}>
+            <Alert
+                light
+                className="mt-4 bg-gray-100 dark:bg-gray-800"
+                type="info"
+                iconSize="w-8 h-8"
+                icon={<Exclamation2 className="h-full w-full" />}
+                iconColor="text-gray-500"
+            >
+                To make VS Code Desktop open seamlessly we will add a single entry to your local SSH configuration.
+                Gitpod does not read any of your existing SSH configurations.&nbsp;
+                <a
+                    className="gp-link"
+                    href="https://www.gitpod.io/docs/references/ides-and-editors/vscode-desktop-local-ssh"
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    More Detail
+                </a>
+                <div className="flex mt-2 text-sm">
+                    Common on&nbsp;
+                    <a
+                        href="https://github.com/gitpod-io/gitpod/issues/18109"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="gp-link"
+                    >
+                        feedback issue
+                    </a>
+                    {isGitpodIo() && (
+                        <span>
+                            &nbsp;or {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                            <a
+                                className="gp-link"
+                                // eslint-disable-next-line no-script-url
+                                href="javascript:void(0)"
+                                onClick={() => setFeedbackFormVisible(true)}
+                            >
+                                submit feedback
+                            </a>
+                        </span>
+                    )}
+                    {isFeedbackFormVisible && <FeedbackFormModal onClose={() => setFeedbackFormVisible(false)} />}
+                </div>
+            </Alert>
         </div>
     );
 }
