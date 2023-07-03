@@ -45,7 +45,8 @@ type IDEMetricsServer struct {
 	aggregatedHistogramMap   map[string]*allowListCollector
 	reportedUnexpectedMetric map[string]struct{}
 
-	errorReporter errorreporter.ErrorReporter
+	errorReporter                    errorreporter.ErrorReporter
+	reportedUnexpectedErrorComponent map[string]struct{}
 
 	api.UnimplementedMetricsServiceServer
 }
@@ -249,6 +250,11 @@ func (s *IDEMetricsServer) ReportError(ctx context.Context, req *api.ReportError
 		}
 	}
 	if !allow {
+		_, reported := s.reportedUnexpectedErrorComponent[req.Component]
+		if !reported {
+			s.reportedUnexpectedErrorComponent[req.Component] = struct{}{}
+			log.WithField("component", req.Component).Error("errors: unexpected component")
+		}
 		return nil, errors.New("invalid component name")
 	}
 	s.errorReporter.Report(errorreporter.ReportedErrorEvent{
@@ -341,14 +347,15 @@ func (s *IDEMetricsServer) ReloadConfig(cfg *config.ServiceConfiguration) {
 func NewMetricsServer(cfg *config.ServiceConfiguration, srvReg prometheus.Registerer, metricsReg prometheus.Registerer) *IDEMetricsServer {
 	r := errorreporter.NewFromEnvironment()
 	s := &IDEMetricsServer{
-		serviceRegistry:          srvReg,
-		metricsRegistry:          metricsReg,
-		config:                   cfg,
-		counterMap:               make(map[string]*allowListCollector),
-		histogramMap:             make(map[string]*allowListCollector),
-		aggregatedHistogramMap:   make(map[string]*allowListCollector),
-		reportedUnexpectedMetric: make(map[string]struct{}),
-		errorReporter:            r,
+		serviceRegistry:                  srvReg,
+		metricsRegistry:                  metricsReg,
+		config:                           cfg,
+		counterMap:                       make(map[string]*allowListCollector),
+		histogramMap:                     make(map[string]*allowListCollector),
+		aggregatedHistogramMap:           make(map[string]*allowListCollector),
+		reportedUnexpectedMetric:         make(map[string]struct{}),
+		errorReporter:                    r,
+		reportedUnexpectedErrorComponent: make(map[string]struct{}),
 	}
 	s.prepareMetrics()
 	return s

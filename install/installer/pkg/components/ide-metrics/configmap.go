@@ -425,9 +425,9 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	errorReporting := config.ErrorReportingConfiguration{
 		AllowComponents: []string{
 			"supervisor-frontend",
-			"vscode-workbench",
-			"vscode-server",
-			"vscode-web",
+			// "vscode-workbench",
+			// "vscode-server",
+			// "vscode-web",
 			"gitpod-cli",
 			"vscode-desktop-extension",
 		},
