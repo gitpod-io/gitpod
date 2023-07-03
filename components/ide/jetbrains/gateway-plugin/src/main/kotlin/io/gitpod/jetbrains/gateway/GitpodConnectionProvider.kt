@@ -113,7 +113,7 @@ class GitpodConnectionProvider : GatewayConnectionProvider {
         val phaseMessage = JLabel()
         val statusMessage = JLabel()
         val errorMessage = JBTextArea().apply {
-            isEditable = true
+            isEditable = false
             wrapStyleWord = true
             lineWrap = true
             border = null
