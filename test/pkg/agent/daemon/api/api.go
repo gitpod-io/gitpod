@@ -20,3 +20,11 @@ type GetWorkspaceResourcesResponse struct {
 	CpuQuota int64
 	Found    bool
 }
+
+type GetNftRulesetsRequest struct {
+	ContainerId string
+}
+
+type GetNftRulesetsResponse struct {
+	Output string
+}

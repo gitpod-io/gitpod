@@ -7,10 +7,13 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,6 +22,9 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/test/pkg/agent/daemon/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/mitchellh/go-ps"
+	"github.com/prometheus/procfs"
+	"golang.org/x/xerrors"
 )
 
 func main() {
@@ -104,4 +110,85 @@ func (*DaemonAgent) GetWorkspaceResources(args *api.GetWorkspaceResourcesRequest
 	})
 
 	return nil
+}
+
+func (*DaemonAgent) GetNftRulesets(args *api.GetNftRulesetsRequest, resp *api.GetNftRulesetsResponse) error {
+	ring0Pid, err := findWorkspaceRing0Pid(args.ContainerId)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("nsenter", "-t", strconv.Itoa(ring0Pid), "-n", "nft", "list", "ruleset")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to run nsenter: %w out: %s", err, out)
+	}
+	*resp = api.GetNftRulesetsResponse{}
+	resp.Output = string(out)
+	return nil
+}
+
+// findWorkspaceRing0Pid finds the ring0 process for a workspace container.
+// It first looks up the container's process, then finds the ring0 process among its children.
+func findWorkspaceRing0Pid(containerId string) (int, error) {
+	// Hack: need to use both procfs and go-ps, as the former provides a process' command line,
+	// while the latter provides the parent PID. Neither does both ¯\_(ツ)_/¯
+	pfs, err := procfs.NewFS("/proc")
+	if err != nil {
+		return 0, err
+	}
+	procs, err := ps.Processes()
+	if err != nil {
+		return 0, err
+	}
+	var containerProc ps.Process
+	for _, p := range procs {
+		if processContainsArg(pfs, p.Pid(), containerId) {
+			containerProc = p
+			break
+		}
+	}
+	if containerProc == nil {
+		return 0, xerrors.Errorf("no process found for container id %s", containerId)
+	}
+
+	// Find ring0 among the container's child processes.
+	ring0Pid, found := findRing0(pfs, procs, containerProc)
+	if !found {
+		return 0, xerrors.Errorf("no ring0 process found for container id %s", containerId)
+	}
+	return ring0Pid, nil
+}
+
+func processContainsArg(pfs procfs.FS, pid int, arg string) bool {
+	p, err := pfs.Proc(pid)
+	if err != nil {
+		return false
+	}
+	cmd, _ := p.CmdLine()
+	for _, c := range cmd {
+		if strings.Contains(c, arg) {
+			return true
+		}
+	}
+	return false
+}
+
+func findRing0(pfs procfs.FS, all []ps.Process, fromParent ps.Process) (int, bool) {
+	for _, proc := range all {
+		if proc.PPid() != fromParent.Pid() {
+			continue
+		}
+		if processContainsArg(pfs, proc.Pid(), "ring0") {
+			// We found the ring0 process.
+			return proc.Pid(), true
+		}
+
+		// Try looking for ring0 in any child processes.
+		pid, found := findRing0(pfs, all, proc)
+		if found {
+			return pid, true
+		}
+	}
+	return 0, false
 }
