@@ -209,24 +209,24 @@ export class RedisListener implements LocalMessageBroker {
             }
         });
 
-        this.disposables.push(
-            this.messageBusIntegration.listenForPrebuildUpdatableQueue(
-                (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => {
-                    TraceContext.setOWI(ctx, { workspaceId: evt.workspaceID });
+        // this.disposables.push(
+        //     this.messageBusIntegration.listenForPrebuildUpdatableQueue(
+        //         (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => {
+        //             TraceContext.setOWI(ctx, { workspaceId: evt.workspaceID });
 
-                    const listeners =
-                        this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
-                    for (const l of listeners) {
-                        try {
-                            l(ctx, evt);
-                        } catch (err) {
-                            TraceContext.setError(ctx, err);
-                            log.error({ workspaceId: evt.workspaceID }, "listenForPrebuildUpdatableQueue", err);
-                        }
-                    }
-                },
-            ),
-        );
+        //             const listeners =
+        //                 this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
+        //             for (const l of listeners) {
+        //                 try {
+        //                     l(ctx, evt);
+        //                 } catch (err) {
+        //                     TraceContext.setError(ctx, err);
+        //                     log.error({ workspaceId: evt.workspaceID }, "listenForPrebuildUpdatableQueue", err);
+        //                 }
+        //             }
+        //         },
+        //     ),
+        // );
     }
 
     private async onInstanceUpdate(instanceID: string): Promise<void> {
