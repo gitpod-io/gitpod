@@ -26,6 +26,7 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 import { URL } from "url";
 import { Authorizer } from "../authorization/authorizer";
 import { ProjectPermission } from "../authorization/definitions";
+import { TransactionalContext } from "@gitpod/gitpod-db/lib/typeorm/transactional-db-impl";
 
 @injectable()
 export class ProjectsService {
@@ -266,7 +267,7 @@ export class ProjectsService {
         }
     }
 
-    async deleteProject(userId: string, projectId: string): Promise<void> {
+    async deleteProject(userId: string, projectId: string, transactionCtx?: TransactionalContext): Promise<void> {
         //TODO we need the project for the auth check as we are using the orgid for the feature flag check. this lookup should be removed once we have removed the featureflag
         const project = await this.getProject(userId, projectId);
         if (!project) {
@@ -280,8 +281,7 @@ export class ProjectsService {
         }
         let orgId: string | undefined = undefined;
         try {
-            await this.projectDB.transaction(async (db) => {
-                // TODO(gpl): This is a case where we'd need to extend the service + API to also accept the orgId as first parameter
+            await this.projectDB.transaction(transactionCtx, async (db) => {
                 const project = await db.findProjectById(projectId);
                 if (!project) {
                     throw new Error("Project does not exist");
