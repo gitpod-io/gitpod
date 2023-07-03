@@ -50,6 +50,7 @@ schema: |-
     // A subject is an editor, if:
     //  * the user is directly assigned as an editor
     relation editor: user
+
     // A subject is a viewer, if:
     //  * the user is directly assigned as a viewer
     //  * the project has granted access to everyone in an organization
@@ -57,12 +58,18 @@ schema: |-
 
     // Project can be modified by:
     //  * Organization owners
-    //  * The user has direct editor relation
+    //  * editors
     permission write_info = org->owner + editor
+
     // Project can be accessed by:
     //  * Anyone with write_info permission
-    //  * Direct viewers
+    //  * viewers
     permission read_info = write_info + viewer
+
+    // Project can be deleted by:
+    //  * Organization owners
+    //  * editors
+    permission delete = org->owner + editor
   }
 
 # relationships to be used for assertions & validation
@@ -78,7 +85,6 @@ relationships: |-
   // project_1 can be accessed by anyone in the organization - it's visibility is public
   project:project_1#viewer@organization:org_1#member
 
-
   // We have another organization org_2, which has some users, some of which are also members of org_1
   organization:org_2#member@user:user_0
   organization:org_2#owner@user:user_0
@@ -89,6 +95,18 @@ relationships: |-
   project:project_2#org@organization:org_2
   // user_1 is viewer of project_2
   project:project_2#viewer@user:user_1
+
+# validation should assert that a particular relation exists between an entity, and a subject
+# validations are not used to assert that a permission exists
+validation:
+  organization:org_1#member:
+    - "[user:user_0] is <organization:org_1#member>"
+    - "[user:user_1] is <organization:org_1#member>"
+    - "[user:user_2] is <organization:org_1#member>"
+  organization:org_1#owner:
+    - "[user:user_0] is <organization:org_1#owner>"
+  project:project_1#org:
+    - "[organization:org_1] is <project:project_1#org>"
 
 
 # assertions should assert that a particular permission holds, or not
@@ -108,8 +126,10 @@ assertions:
     # user 1 can read and invite members to the organization
     - organization:org_1#read_members@user:user_1
     - organization:org_1#invite_members@user:user_1
-    # Org Owner can delete the organization
+    # Org owner can delete the organization
     - organization:org_1#delete@user:user_0
+    # Org owner can delete projects
+    - project:project_1#delete@user:user_0
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -125,48 +145,7 @@ assertions:
     - organization:org_1#write_members@user:user_1
     # members are not allowed to:
     - organization:org_1#write_git_provider@user:user_1
-# validation should assert that a particular relation exists between an entity, and a subject
-# validations are not used to assert that a permission exists
-validation:
-  organization:org_1#member:
-    - "[user:user_0] is <organization:org_1#member>"
-    - "[user:user_1] is <organization:org_1#member>"
-    - "[user:user_2] is <organization:org_1#member>"
-  organization:org_1#leave:
-    - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
-    - "[user:user_1] is <organization:org_1#member>"
-    - "[user:user_2] is <organization:org_1#member>"
-  organization:org_1#owner:
-    - "[user:user_0] is <organization:org_1#owner>"
-  organization:org_1#read_settings:
-    - "[user:user_0] is <organization:org_1#owner>"
-  organization:org_1#write_settings:
-    - "[user:user_0] is <organization:org_1#owner>"
-  project:project_1#read_info:
-    - "[organization:org_1#member] is <project:project_1#viewer>"
-    - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
-    - "[user:user_1] is <organization:org_1#member>"
-    - "[user:user_2] is <organization:org_1#member>"
-  project:project_2#read_info:
-    - "[user:user_0] is <organization:org_2#owner>"
-    - "[user:user_1] is <project:project_2#viewer>"
-  project:project_2#write_info:
-    - "[user:user_0] is <organization:org_2#owner>"
-  organization:org_1#read_billing:
-  - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
-  - "[user:user_1] is <organization:org_1#member>"
-  - "[user:user_2] is <organization:org_1#member>"
-  organization:org_1#write_billing:
-  - "[user:user_0] is <organization:org_1#owner>"
-  organization:org_1#delete:
-  - "[user:user_0] is <organization:org_1#owner>"
-  organization:org_1#read_members:
-  - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
-  - "[user:user_1] is <organization:org_1#member>"
-  - "[user:user_2] is <organization:org_1#member>"
-  organization:org_1#write_members:
-  - "[user:user_0] is <organization:org_1#owner>"
-  organization:org_1#invite_members:
-  - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
-  - "[user:user_1] is <organization:org_1#member>"
-  - "[user:user_2] is <organization:org_1#member>"
+    # org member can not delete org
+    - organization:org_1#delete@user:user_1
+    # org members can not delete project
+    - project:project_1#delete@user:user_1

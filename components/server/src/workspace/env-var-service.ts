@@ -43,7 +43,7 @@ export class EnvVarService {
         };
 
         const projectEnvVars = workspace.projectId
-            ? await this.projectsService.getProjectEnvironmentVariables(workspace.projectId)
+            ? await this.projectsService.getProjectEnvironmentVariables(workspace.ownerId, workspace.projectId)
             : [];
         if (workspace.type === "prebuild") {
             // prebuild does not have access to user env vars and cannot be started via prewfix URL
