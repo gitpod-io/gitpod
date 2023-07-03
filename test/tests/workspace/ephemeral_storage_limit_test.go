@@ -86,6 +86,7 @@ func TestEphemeralStorageLimit(t *testing.T) {
 
 			expectedFailures := []string{
 				"Evicted: Pod ephemeral local storage usage exceeds the total limit of containers ",
+				// Until WKS-215 is fixed we can sometimes see the below error:
 				"container workspace completed; containers of a workspace pod are not supposed to do that",
 			}
 			foundExpectedFailure := false
