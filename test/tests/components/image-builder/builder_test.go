@@ -27,6 +27,8 @@ func TestBaseImageBuild(t *testing.T) {
 	f := features.New("database").
 		WithLabel("component", "image-builder").
 		Assess("it should build a base image", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
 			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
@@ -107,6 +109,8 @@ func TestParallelBaseImageBuild(t *testing.T) {
 	f := features.New("image-builder").
 		WithLabel("component", "image-builder").
 		Assess("it should allow parallel build of images", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
 			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 

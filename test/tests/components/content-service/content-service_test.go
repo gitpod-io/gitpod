@@ -66,6 +66,8 @@ func TestUploadUrl(t *testing.T) {
 	f := features.New("UploadUrlRequest").
 		WithLabel("component", "content-service").
 		Assess("it should run content-service tests", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
 			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
@@ -126,6 +128,8 @@ func TestDownloadUrl(t *testing.T) {
 	f := features.New("DownloadUrl").
 		WithLabel("component", "server").
 		Assess("it should pass download URL tests", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
 			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 
@@ -172,6 +176,8 @@ func TestUploadDownloadBlob(t *testing.T) {
 	f := features.New("UploadDownloadBlob").
 		WithLabel("component", "server").
 		Assess("it should upload and download blob", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
+			t.Parallel()
+
 			ctx, cancel := context.WithTimeout(testCtx, 5*time.Minute)
 			defer cancel()
 

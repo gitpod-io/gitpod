@@ -18,11 +18,15 @@ resource "google_compute_instance" "default" {
     }
   }
 
-  scratch_disk {
-    interface = "NVME"
-  }
-  scratch_disk {
-    interface = "NVME"
+  # Attach two local SSDs when large VM is enabled.
+  # These increase the containerd and workspace lvm volume sizes,
+  # allowing us to e.g. run more e2e tests in parallel without
+  # running into node disk pressure.
+  dynamic "scratch_disk" {
+    for_each = var.with_large_vm == true ? [1, 2] : []
+    content {
+      interface = "NVME"
+    }
   }
 
   tags = ["preview"]
