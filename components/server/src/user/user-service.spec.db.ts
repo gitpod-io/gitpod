@@ -6,7 +6,7 @@
 
 import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { Container } from "inversify";
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
 import { UserService } from "./user-service";
 import * as chai from "chai";

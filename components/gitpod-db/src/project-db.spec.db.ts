@@ -6,7 +6,7 @@
 
 import * as chai from "chai";
 const expect = chai.expect;
-import { suite, test } from "mocha-typescript";
+import { suite, test } from "@testdeck/mocha";
 import { TypeORM } from "./typeorm/typeorm";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { testContainer } from "./test-container";

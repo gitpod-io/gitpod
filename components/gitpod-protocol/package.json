@@ -11,6 +11,7 @@
     ],
     "devDependencies": {
         "@grpc/grpc-js": "^1.3.7",
+        "@testdeck/mocha": "^0.3.3",
         "@types/analytics-node": "^3.1.9",
         "@types/chai-subset": "^1.3.3",
         "@types/cookie": "^0.4.1",
@@ -26,7 +27,6 @@
         "chai": "^4.3.4",
         "chai-subset": "^1.6.0",
         "mocha": "^5.0.0",
-        "mocha-typescript": "^1.1.11",
         "rimraf": "^2.6.2",
         "ts-node": "^10.4.0",
         "typescript": "~4.4.2",

@@ -5,7 +5,7 @@
  */
 
 import * as chai from "chai";
-import { suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "@testdeck/mocha";
 import { testContainer } from "./test-container";
 import { TypeORM } from "./typeorm/typeorm";
 import { WebhookEventDB } from "./webhook-event-db";
