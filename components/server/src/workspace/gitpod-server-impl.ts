@@ -201,6 +201,7 @@ import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { OrganizationPermission } from "../authorization/definitions";
 import { Authorizer } from "../authorization/authorizer";
+import { OrganizationService } from "../orgs/organization-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -245,7 +246,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(UserDeletionService) private readonly userDeletionService: UserDeletionService,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(AuthorizationService) private readonly authorizationService: AuthorizationService,
+
         @inject(TeamDB) private readonly teamDB: TeamDB,
+        @inject(OrganizationService) private readonly organizationService: OrganizationService,
+
         @inject(LinkedInService) private readonly linkedInService: LinkedInService,
 
         @inject(AppInstallationDB) private readonly appInstallationDB: AppInstallationDB,
@@ -2692,7 +2696,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
         // report what we got from centralized perms
         if (fromCentralizedPerms.status === "fulfilled") {
-            reportCentralizedPermsValidation(fineGrainedOp, fromDB.value === fromCentralizedPerms.value);
+            if (
+                await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
+                    teamId: org.id,
+                })
+            ) {
+                reportCentralizedPermsValidation(fineGrainedOp, fromDB.value === fromCentralizedPerms.value);
+            }
         }
 
         return fromDB.value;
@@ -2763,20 +2773,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
         }
 
-        let team: Team;
-        try {
-            team = await this.teamDB.transaction(async (db) => {
-                team = await db.createTeam(user.id, name);
-                await this.auth.addOrganizationOwnerRole(team.id, user.id);
-                return team;
-            });
-        } catch (err) {
-            if (team! && team.id) {
-                await this.auth.removeUserFromOrg(team.id, user.id);
-            }
-
-            throw err;
-        }
+        const team = await this.organizationService.createOrganization(user.id, name);
 
         const invite = await this.getGenericInvite(ctx, team.id);
 
@@ -2943,29 +2940,18 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     public async getGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         traceAPIParams(ctx, { teamId });
 
-        await this.checkUser("getGenericInvite");
+        const user = await this.checkUser("getGenericInvite");
         await this.guardTeamOperation(teamId, "get", "write_members");
 
-        if (await this.teamDB.hasActiveSSO(teamId)) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
-        }
-
-        const invite = await this.teamDB.findGenericInviteByTeamId(teamId);
-        if (invite) {
-            return invite;
-        }
-        return this.teamDB.resetGenericInvite(teamId);
+        return this.organizationService.getOrCreateInvite(user.id, teamId);
     }
 
     public async resetGenericInvite(ctx: TraceContext, teamId: string): Promise<TeamMembershipInvite> {
         traceAPIParams(ctx, { teamId });
 
-        await this.checkAndBlockUser("resetGenericInvite");
+        const user = await this.checkAndBlockUser("resetGenericInvite");
         await this.guardTeamOperation(teamId, "update", "write_members");
-        if (await this.teamDB.hasActiveSSO(teamId)) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
-        }
-        return this.teamDB.resetGenericInvite(teamId);
+        return this.organizationService.resetInvite(user.id, teamId);
     }
 
     private async guardProjectOperation(user: User, projectId: string, op: ResourceAccessOp): Promise<void> {
