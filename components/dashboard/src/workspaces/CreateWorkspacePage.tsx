@@ -20,7 +20,7 @@ import { UsageLimitReachedModal } from "../components/UsageLimitReachedModal";
 import { CheckboxInputField } from "../components/forms/CheckboxInputField";
 import { Heading1 } from "../components/typography/headings";
 import { useAuthProviders } from "../data/auth-providers/auth-provider-query";
-import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
+import { useCurrentOrg } from "../data/organizations/orgs-query";
 import { useListProjectsQuery } from "../data/projects/list-projects-query";
 import { useCreateWorkspaceMutation } from "../data/workspaces/create-workspace-mutation";
 import { useListWorkspacesQuery } from "../data/workspaces/list-workspaces-query";
@@ -44,7 +44,6 @@ import Alert from "../components/Alert";
 export function CreateWorkspacePage() {
     const { user, setUser } = useContext(UserContext);
     const currentOrg = useCurrentOrg().data;
-    const organizations = useOrganizations();
     const projects = useListProjectsQuery();
     const workspaces = useListWorkspacesQuery({ limit: 50 });
     const location = useLocation();
@@ -81,11 +80,11 @@ export function CreateWorkspacePage() {
             return;
         }
         let workspaceAutoStartOptions = (user.additionalData?.workspaceAutostartOptions || []).filter(
-            (e) => e.cloneURL !== cloneURL,
+            (e) => !(e.cloneURL === cloneURL && e.organizationId === currentOrg.id),
         );
 
         // we only keep the last 20 options
-        workspaceAutoStartOptions = workspaceAutoStartOptions.slice(-20);
+        workspaceAutoStartOptions = workspaceAutoStartOptions.slice(-40);
 
         if (rememberOptions) {
             workspaceAutoStartOptions.push({
@@ -266,32 +265,14 @@ export function CreateWorkspacePage() {
 
     // when workspaceContext is available, we look up if options are remembered
     useEffect(() => {
-        if (!organizations.data) {
-            return;
-        }
         const cloneURL = CommitContext.is(workspaceContext.data) && workspaceContext.data.repository.cloneUrl;
         if (!cloneURL || autostart) {
             return undefined;
         }
         const rememberedOptions = (user?.additionalData?.workspaceAutostartOptions || []).find(
-            (e) => e.cloneURL === cloneURL,
+            (e) => e.cloneURL === cloneURL && e.organizationId === currentOrg?.id,
         );
         if (rememberedOptions) {
-            // if it's another org, we simply redirect using the same hash and let the reloaded page handle everything again.
-            if (rememberedOptions.organizationId !== currentOrg?.id) {
-                const org = organizations.data.find((o) => o.id === rememberedOptions.organizationId);
-                if (org) {
-                    let searchParams = `org=${encodeURIComponent(rememberedOptions.organizationId)}`;
-                    // if autostart was disabled (i.e. user was manually changing the contextURL) we need to pass it on
-                    if (autostart === false) {
-                        searchParams += "&autostart=false";
-                    }
-                    const redirect = `${location.pathname}?${searchParams}${location.hash}`;
-                    history.push(redirect);
-                } else {
-                    console.warn("Could not find organization", rememberedOptions.organizationId);
-                }
-            }
             setRememberOptions(true);
             if (!selectedIdeIsDirty) {
                 setSelectedIde(rememberedOptions.ideSettings?.defaultIde, false);
