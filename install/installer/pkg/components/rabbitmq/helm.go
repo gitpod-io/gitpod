@@ -85,7 +85,7 @@ var Helm = common.CompositeHelmFunc(
 				Args: []string{
 					"sh",
 					"-c",
-					fmt.Sprintf(`sed "s/%s/${PASSWORD}/" /app/load_definition.json > %s`, passwordReplaceString, loadDefinitionsFile),
+					fmt.Sprintf(`HASHED_PW=$(echo $PASSWORD | sha256sum); sed "s/%s/${HASHED_PW}/" /app/load_definition.json > %s`, passwordReplaceString, loadDefinitionsFile),
 				},
 				Env: []corev1.EnvVar{
 					{
