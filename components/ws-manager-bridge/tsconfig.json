@@ -21,8 +21,7 @@
         "sourceMap": true,
         "declaration": true,
         "declarationMap": true,
-        "skipLibCheck": true,
-        "useUnknownInCatchVariables": false
+        "skipLibCheck": true
     },
     "include": [
         "src",

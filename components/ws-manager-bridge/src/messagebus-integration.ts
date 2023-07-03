@@ -13,6 +13,7 @@ import {
     PrebuildWithStatus,
 } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { RedisClient } from "./client";
 
 @injectable()
 export class MessageBusIntegration extends AbstractMessageBusIntegration {
@@ -84,5 +85,22 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         if (this.channel) {
             this.channel.close();
         }
+    }
+}
+
+@injectable()
+export class RedisPublisher {
+    constructor(@inject(RedisClient) private readonly redis: RedisClient) {}
+
+    async notifyOnPrebuildUpdate(prebuildID: string) {
+        await this.redis.get().publish("chan:prebuilds", prebuildID);
+    }
+
+    async notifyOnInstanceUpdate(instanceID: string) {
+        await this.redis.get().publish("chan:instances", instanceID);
+    }
+
+    async notifyHeadlessUpdate(workspaceID: string) {
+        await this.redis.get().publish("chan:headless", workspaceID);
     }
 }

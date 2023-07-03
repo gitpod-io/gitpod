@@ -12,23 +12,19 @@ import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { MessageBusIntegration } from "./messagebus-integration";
+import { MessageBusIntegration, RedisPublisher } from "./messagebus-integration";
 import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
 import { filterStatus } from "./bridge";
 
 @injectable()
 export class PrebuildUpdater {
-    @inject(PrebuildStateMapper)
-    protected readonly prebuildStateMapper: PrebuildStateMapper;
-
-    @inject(TracedWorkspaceDB)
-    protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-
-    @inject(MessageBusIntegration)
-    protected readonly messagebus: MessageBusIntegration;
-
-    @inject(PrometheusMetricsExporter)
-    protected readonly prometheusExporter: PrometheusMetricsExporter;
+    constructor(
+        @inject(PrebuildStateMapper) private readonly prebuildStateMapper: PrebuildStateMapper,
+        @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
+        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
+        @inject(PrometheusMetricsExporter) private readonly prometheusExporter: PrometheusMetricsExporter,
+        @inject(RedisPublisher) private readonly redisPublisher: RedisPublisher,
+    ) {}
 
     async updatePrebuiltWorkspace(ctx: TraceContext, userId: string, status: WorkspaceStatus.AsObject) {
         if (status.spec && status.spec.type != WorkspaceType.PREBUILD) {
@@ -93,11 +89,13 @@ export class PrebuildUpdater {
                     workspaceID: workspaceId,
                     text: "",
                 });
+                await this.redisPublisher.notifyHeadlessUpdate(workspaceId);
 
                 // prebuild info
                 const info = (await this.workspaceDB.trace({ span }).findPrebuildInfos([updatedPrebuild.id]))[0];
                 if (info) {
                     this.messagebus.notifyOnPrebuildUpdate({ info, status: updatedPrebuild.state });
+                    this.redisPublisher.notifyOnPrebuildUpdate(updatedPrebuild.id);
                 }
             }
         } catch (e) {
@@ -122,6 +120,7 @@ export class PrebuildUpdater {
                 const info = (await this.workspaceDB.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
                 if (info) {
                     this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });
+                    this.redisPublisher.notifyOnPrebuildUpdate(prebuild.id);
                 }
             }
         }
