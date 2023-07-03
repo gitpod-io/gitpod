@@ -18,7 +18,8 @@ schema: |-
 
     // Operations on Organization's Members
     permission read_members = member + owner
-    permission write_members = member + owner
+    permission invite_members = member + owner
+    permission write_members = owner
 
     // Any user in the organization can try to leave their organization
     permission leave = owner + member
@@ -100,6 +101,13 @@ assertions:
     - project:project_1#write_info@user:user_0
     - organization:org_1#write_settings@user:user_0
     - organization:org_1#write_git_provider@user:user_0
+    # user 0 can invite members to the organization
+    - organization:org_1#read_members@user:user_0
+    - organization:org_1#write_members@user:user_0
+    - organization:org_1#invite_members@user:user_0
+    # user 1 can read and invite members to the organization
+    - organization:org_1#read_members@user:user_1
+    - organization:org_1#invite_members@user:user_1
     # Org Owner can delete the organization
     - organization:org_1#delete@user:user_0
   assertFalse:
@@ -109,9 +117,12 @@ assertions:
     # non-member/owner cannot access organization
     - organization:org_1#read_info@user:user_3
     - organization:org_1#write_info@user:user_3
+    - organization:org_1#write_settings@user:user_1
     - organization:org_1#read_members@user:user_3
     - organization:org_1#write_members@user:user_3
-    - organization:org_1#write_settings@user:user_1
+    - organization:org_1#invite_members@user:user_3
+    # user 1 (member) can not write members
+    - organization:org_1#write_members@user:user_1
     # members are not allowed to:
     - organization:org_1#write_git_provider@user:user_1
 # validation should assert that a particular relation exists between an entity, and a subject
@@ -149,3 +160,13 @@ validation:
   - "[user:user_0] is <organization:org_1#owner>"
   organization:org_1#delete:
   - "[user:user_0] is <organization:org_1#owner>"
+  organization:org_1#read_members:
+  - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
+  - "[user:user_1] is <organization:org_1#member>"
+  - "[user:user_2] is <organization:org_1#member>"
+  organization:org_1#write_members:
+  - "[user:user_0] is <organization:org_1#owner>"
+  organization:org_1#invite_members:
+  - "[user:user_0] is <organization:org_1#member>/<organization:org_1#owner>"
+  - "[user:user_1] is <organization:org_1#member>"
+  - "[user:user_2] is <organization:org_1#member>"

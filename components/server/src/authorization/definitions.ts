@@ -17,6 +17,7 @@ export type OrganizationPermission =
     | "read_info"
     | "write_info"
     | "read_members"
+    | "invite_members"
     | "write_members"
     | "leave"
     | "delete"
