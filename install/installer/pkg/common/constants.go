@@ -17,6 +17,7 @@ const (
 	BlobServeServicePort        = 4000
 	CertManagerCAIssuer         = "gitpod-ca-issuer"
 	DockerRegistryURL           = "docker.io"
+	ChainguardRegistryURL       = "cgr.dev"
 	DockerRegistryName          = "registry"
 	GitpodContainerRegistry     = "eu.gcr.io/gitpod-core-dev/build"
 	InClusterDbSecret           = "mysql"

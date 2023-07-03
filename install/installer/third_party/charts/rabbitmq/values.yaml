@@ -9,7 +9,7 @@ rabbitmq:
   image:
     registry: cgr.dev
     repository: chainguard/rabbitmq
-    digest: sha256:cbc1a72dfc0f1e874d5f95360a548f3e786a718393dc1e8c869c735c002a63ca
+    digest: sha256:0789ae3045e86393a03718ea9d74d68161f4d9bf56ef08e537945e4908d04ae0
   enabled: true
   fullnameOverride: "messagebus"
   persistence:

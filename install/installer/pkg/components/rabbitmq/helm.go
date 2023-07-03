@@ -123,7 +123,7 @@ var Helm = common.CompositeHelmFunc(
 			return nil, err
 		}
 
-		imageRegistry := common.ThirdPartyContainerRepo(cfg.Config.Repository, common.DockerRegistryURL)
+		imageRegistry := common.ThirdPartyContainerRepo(cfg.Config.Repository, common.ChainguardRegistryURL)
 
 		// Add pod annotation in case config/secrets change
 		var hashObj []runtime.Object
