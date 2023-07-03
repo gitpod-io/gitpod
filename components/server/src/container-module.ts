@@ -19,7 +19,6 @@ import { newAnalyticsWriterFromEnv } from "@gitpod/gitpod-protocol/lib/util/anal
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
 import { IClientCallMetrics, defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import { prometheusClientMiddleware } from "@gitpod/gitpod-protocol/lib/util/nice-grpc";
-import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { IDEServiceClient, IDEServiceDefinition } from "@gitpod/ide-service-api/lib/ide.pb";
 import { ImageBuilderClientCallMetrics, ImageBuilderClientProvider } from "@gitpod/image-builder/lib";
 import { BillingServiceClient, BillingServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
@@ -213,8 +212,6 @@ export const productionContainerModule = new ContainerModule(
             }))
             .inSingletonScope();
         bind(HostContextProvider).to(HostContextProviderImpl).inSingletonScope();
-
-        bind(TracingManager).toSelf().inSingletonScope();
 
         bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
         bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();

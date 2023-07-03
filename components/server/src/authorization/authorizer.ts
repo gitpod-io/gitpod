@@ -7,9 +7,9 @@
 import { v1 } from "@authzed/authzed-node";
 import { inject, injectable } from "inversify";
 
-import { OrganizationPermission, Permission, Relation, ResourceType } from "./definitions";
+import { OrganizationPermission, Permission, ProjectPermission, Relation, ResourceType } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
-import { Organization, Project, TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { Organization, TeamMemberInfo, Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class Authorizer {
@@ -27,15 +27,21 @@ export class Authorizer {
             subject: subject("user", userId),
             permission,
             resource: objectRef("organization", orgId),
-            consistency: v1.Consistency.create({
-                requirement: {
-                    oneofKind: "fullyConsistent",
-                    fullyConsistent: true,
-                },
-            }),
+            consistency,
         });
 
         return this.authorizer.check(req, { orgID: orgId });
+    }
+
+    async hasPermissionOnProject(userId: string, permission: ProjectPermission, project: Project): Promise<boolean> {
+        const req = v1.CheckPermissionRequest.create({
+            subject: subject("user", userId),
+            permission,
+            resource: objectRef("project", project.id),
+            consistency,
+        });
+
+        return this.authorizer.check(req, { orgID: project.teamId });
     }
 
     // write operations below
@@ -233,3 +239,10 @@ function subject(type: ResourceType, id: string, relation?: Relation | Permissio
         optionalRelation: relation,
     });
 }
+
+const consistency = v1.Consistency.create({
+    requirement: {
+        oneofKind: "fullyConsistent",
+        fullyConsistent: true,
+    },
+});
