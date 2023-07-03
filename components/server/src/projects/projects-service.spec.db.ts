@@ -4,29 +4,18 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { v1 } from "@authzed/authzed-node";
 import { DBUser, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";
-import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
 import { DBProject } from "@gitpod/gitpod-db/lib/typeorm/entity/db-project";
+import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
+import { Organization, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import * as chai from "chai";
-import { Container, ContainerModule } from "inversify";
+import { Container } from "inversify";
 import "mocha";
-import { v4 as uuidv4 } from "uuid";
-import { Authorizer } from "../authorization/authorizer";
-import { SpiceDBClient } from "../authorization/spicedb";
-import { SpiceDBAuthorizer } from "../authorization/spicedb-authorizer";
-import { OrganizationService } from "../orgs/organization-service";
-import { ProjectsService } from "./projects-service";
-import { Config } from "../config";
-import { AuthProviderService } from "../auth/auth-provider-service";
-import { IAnalyticsWriter, NullAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { HostContainerMapping } from "../auth/host-container-mapping";
-import { HostContextProvider, HostContextProviderFactory } from "../auth/host-context-provider";
-import { AuthProviderParams } from "../auth/auth-provider";
-import { HostContextProviderImpl } from "../auth/host-context-provider-impl";
-import { Organization, User } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-ws-jsonrpc";
+import { OrganizationService } from "../orgs/organization-service";
+import { serviceTestingContainerModule } from "../test/service-testing-container-module";
+import { ProjectsService } from "./projects-service";
 
 const expect = chai.expect;
 
@@ -38,35 +27,7 @@ describe("ProjectsService", async () => {
 
     beforeEach(async () => {
         container = testContainer.createChild();
-        container.load(
-            new ContainerModule((bind) => {
-                bind(OrganizationService).toSelf().inSingletonScope();
-                bind(ProjectsService).toSelf().inSingletonScope();
-                bind(Config).toConstantValue({});
-                bind(AuthProviderService).toSelf().inSingletonScope();
-                bind(IAnalyticsWriter).toConstantValue(NullAnalyticsWriter);
-                // hostcontext
-                bind(HostContainerMapping).toSelf().inSingletonScope();
-                bind(HostContextProviderFactory)
-                    .toDynamicValue(({ container }) => ({
-                        createHostContext: (config: AuthProviderParams) =>
-                            HostContextProviderImpl.createHostContext(container, config),
-                    }))
-                    .inSingletonScope();
-                bind(HostContextProvider).to(HostContextProviderImpl).inSingletonScope();
-
-                // auth
-                bind(SpiceDBClient)
-                    .toDynamicValue(() => {
-                        const token = uuidv4();
-                        return v1.NewClient(token, "localhost:50051", v1.ClientSecurity.INSECURE_PLAINTEXT_CREDENTIALS)
-                            .promises;
-                    })
-                    .inSingletonScope();
-                bind(SpiceDBAuthorizer).toSelf().inSingletonScope();
-                bind(Authorizer).toSelf().inSingletonScope();
-            }),
-        );
+        container.load(serviceTestingContainerModule);
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
@@ -146,12 +107,8 @@ describe("ProjectsService", async () => {
 
         await ps.deleteProjectEnvironmentVariable(owner.id, envVars[0].id);
 
-        try {
-            await ps.getProjectEnvironmentVariableById(owner.id, envVars[0].id);
-            expect.fail("should not be able to get deleted env var");
-        } catch (error) {
-            expect(error.message).to.contain("not found");
-        }
+        const deletedEnvVar = await ps.getProjectEnvironmentVariableById(owner.id, envVars[0].id);
+        expect(deletedEnvVar).to.be.undefined;
 
         const emptyEnvVars = await ps.getProjectEnvironmentVariables(owner.id, project.id);
         expect(emptyEnvVars.length).to.equal(0);
