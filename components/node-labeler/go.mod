@@ -73,21 +73,9 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // leeway
+replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
-replace github.com/gitpod-io/gitpod/content-service/api => ../../components/content-service-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/components/public-api => ../../components/public-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/registry-facade/api => ../../components/registry-facade-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-daemon/api => ../../components/ws-daemon-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-manager-bridge/api => ../../components/ws-manager-bridge-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-manager/api => ../../components/ws-manager-api/go // leeway
+replace github.com/gitpod-io/gitpod/components/scrubber => ../scrubber // leeway
 
 replace k8s.io/api => k8s.io/api v0.26.2 // leeway indirect from components/common-go:lib
 

@@ -39,6 +39,8 @@ require (
 
 replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // leeway
 
+replace github.com/gitpod-io/gitpod/components/scrubber => ../../components/scrubber // leeway
+
 replace github.com/gitpod-io/gitpod/content-service/api => ../../components/content-service-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-manager/api => ../../components/ws-manager-api/go // leeway

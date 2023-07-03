@@ -80,14 +80,4 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
-replace github.com/gitpod-io/gitpod/ws-manager-bridge/api => ../ws-manager-bridge-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
-
 replace github.com/gitpod-io/gitpod/gpctl => ../../dev/gpctl
-
-replace k8s.io/api => k8s.io/api v0.26.2 // leeway indirect from components/common-go:lib
-
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.26.2 // leeway indirect from components/common-go:lib
-
-replace k8s.io/client-go => k8s.io/client-go v0.26.2 // leeway indirect from components/common-go:lib

@@ -78,11 +78,13 @@ require (
 	gorm.io/plugin/opentelemetry v0.1.1 // indirect
 )
 
-replace github.com/gitpod-io/gitpod/components/gitpod-db/go => ../gitpod-db/go // leeway
-
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
+replace github.com/gitpod-io/gitpod/components/gitpod-db/go => ../gitpod-db/go // leeway
+
 replace github.com/gitpod-io/gitpod/components/public-api/go => ../public-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/components/scrubber => ../scrubber // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
 
