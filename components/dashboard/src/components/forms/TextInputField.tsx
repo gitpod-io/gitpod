@@ -70,7 +70,7 @@ type TextInputProps = {
     placeholder?: string;
     disabled?: boolean;
     required?: boolean;
-    onChange: (newValue: string) => void;
+    onChange?: (newValue: string) => void;
     onBlur?: () => void;
 };
 
@@ -78,7 +78,7 @@ export const TextInput: FunctionComponent<TextInputProps> = memo(
     ({ type = "text", value, className, id, placeholder, disabled = false, required = false, onChange, onBlur }) => {
         const handleChange = useCallback(
             (e) => {
-                onChange(e.target.value);
+                onChange && onChange(e.target.value);
             },
             [onChange],
         );

@@ -9,8 +9,7 @@ import { FC, ForwardedRef, ReactNode, forwardRef } from "react";
 import { ReactComponent as SpinnerWhite } from "../icons/SpinnerWhite.svg";
 
 export type ButtonProps = {
-    // TODO: determine if we want danger.secondary
-    type?: "primary" | "secondary" | "danger" | "danger.secondary";
+    type?: "primary" | "secondary" | "danger" | "danger.secondary" | "transparent";
     // TODO: determine how to handle small/medium (block does w-full atm)
     size?: "small" | "medium" | "block";
     disabled?: boolean;
@@ -19,7 +18,7 @@ export type ButtonProps = {
     autoFocus?: boolean;
     htmlType?: "button" | "submit" | "reset";
     icon?: ReactNode;
-    children: ReactNode;
+    children?: ReactNode;
     onClick?: ButtonOnClickHandler;
 };
 
@@ -46,9 +45,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             <button
                 type={htmlType}
                 className={classNames(
-                    "cursor-pointer px-4 py-2 my-auto",
+                    "cursor-pointer my-auto",
                     "text-sm font-medium whitespace-nowrap",
                     "rounded-md focus:outline-none focus:ring transition ease-in-out",
+                    size === "small" ? "px-1 py-1" : "px-4 py-2",
                     type === "primary"
                         ? [
                               "bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600",
@@ -68,6 +68,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                               "text-red-600 hover:text-red-700",
                           ]
                         : null,
+                    type === "transparent" ? ["bg-transparent hover:bg-transparent"] : null,
                     {
                         "w-full": size === "block",
                         "cursor-default opacity-50 pointer-events-none": disabled || loading,
@@ -99,10 +100,10 @@ const ButtonContent: FC<ButtonContentProps> = ({ loading, icon, children }) => {
 
     return (
         <div className="flex items-center justify-center space-x-2">
-            <span className="flex items-center w-5 h-5">
+            <span className="flex justify-center items-center w-5 h-5">
                 {loading ? <SpinnerWhite className="animate-spin" /> : icon ? icon : null}
             </span>
-            <span>{children}</span>
+            {children && <span>{children}</span>}
         </div>
     );
 };
