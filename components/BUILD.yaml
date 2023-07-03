@@ -72,7 +72,6 @@ packages:
       - components/supervisor:docker
       - components/installation-telemetry:docker
       - components/workspacekit:docker
-      - components/workspace-rollout-job:docker
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
       - components/ws-manager-bridge:docker
@@ -124,7 +123,6 @@ packages:
       - components/supervisor/frontend:app
       - components/installation-telemetry:app
       - components/workspacekit:app
-      - components/workspace-rollout-job:app
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
       - components/ide-metrics:app

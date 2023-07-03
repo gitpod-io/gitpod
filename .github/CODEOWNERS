@@ -77,7 +77,6 @@
 /components/supervisor @gitpod-io/engineering-ide
 /components/usage @gitpod-io/engineering-webapp
 /components/usage-api @gitpod-io/engineering-webapp
-/components/workspace-rollout-job @gitpod-io/engineering-workspace
 /components/workspacekit @gitpod-io/engineering-workspace
 /components/ws-daemon-api @gitpod-io/engineering-workspace
 /components/ws-daemon @gitpod-io/engineering-workspace
