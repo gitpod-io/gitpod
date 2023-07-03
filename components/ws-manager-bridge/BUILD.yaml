@@ -2,7 +2,6 @@ packages:
   - name: app
     type: yarn
     srcs:
-      - "ee/**/*.ts"
       - "src/**/*.ts"
       - package.json
       - mocha.opts

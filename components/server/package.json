@@ -15,7 +15,8 @@
     "clean": "rimraf dist",
     "clean:node": "rimraf node_modules",
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
-    "lint": "yarn tslint -p .",
+    "lint": "yarn eslint src/**/*.ts",
+    "format": "yarn eslint src/**/*.ts --fix",
     "test": ". $(leeway run components/gitpod-db:db-test-env) && TS_NODE_FILES=true mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
     "spicedb-testing": "if netstat -tuln | grep ':50051 '; then echo '`spicedb serve-testing` is already running.'; else spicedb serve-testing --load-configs /workspace/gitpod/install/installer/pkg/components/spicedb/data/schema.yaml; fi",
     "stop-spicedb-testing": "PID=$(lsof -t -i:50051); if [ -z \"$PID\" ]; then echo '`spicedb serve-testing` is not running'; else kill -INT $PID && echo 'Stopped `spicedb serve-testing`'; fi",
@@ -70,7 +71,6 @@
     "jsonwebtoken": "^9.0.0",
     "lodash.debounce": "^4.0.8",
     "longjohn": "^0.2.12",
-    "minio": "^7.1.1",
     "nice-grpc-client-middleware-retry": "^2.0.1",
     "node-fetch": "^2.6.7",
     "opentracing": "^0.14.4",
@@ -110,7 +110,6 @@
     "@types/http-proxy": "^1.17.7",
     "@types/js-yaml": "^4.0.3",
     "@types/lodash.debounce": "^4.0.6",
-    "@types/minio": "^7.1.1",
     "@types/mocha": "^2.2.45",
     "@types/node": "^16.11.0",
     "@types/node-fetch": "^2.6.1",
@@ -130,8 +129,6 @@
     "standard": "^16.0.3",
     "supertest": "^6.3.3",
     "ts-node": "^10.4.0",
-    "tslint": "^6.1.3",
-    "typescript": "~4.4.2",
     "watch": "^1.0.2"
   }
 }

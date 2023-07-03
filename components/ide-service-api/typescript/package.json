@@ -20,7 +20,6 @@
   },
   "devDependencies": {
     "grpc-tools": "^1.12.4",
-    "typescript": "~4.4.2",
     "typescript-formatter": "^7.2.2"
   }
 }
