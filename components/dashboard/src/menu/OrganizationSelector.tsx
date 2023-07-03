@@ -258,14 +258,17 @@ const useGetOrgURL = () => {
             // Default to root path when switching orgs
             let path = "/";
             let hash = "";
+            const search = new URLSearchParams();
+            search.append("org", orgID);
 
             // If we're on the new workspace page, try to maintain the location and context url
             if (/^\/new(\/$)?$/.test(location.pathname)) {
                 path = `/new`;
                 hash = location.hash;
+                search.append("autostart", "false");
             }
 
-            return `${path}?org=${encodeURIComponent(orgID)}${hash}`;
+            return `${path}?${search.toString()}${hash}`;
         },
         [location.hash, location.pathname],
     );
