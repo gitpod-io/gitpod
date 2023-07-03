@@ -88,7 +88,7 @@ Optionally, TLS can be used to create the connection.`,
 					break
 				}
 				if err == amqp.ErrCredentials {
-					fail(fmt.Sprintf("Invalid credentials for the messagebus. Check MESSAGEBUS_USERNAME and MESSAGEBUS_PASSWORD. dsn: %s", dsn))
+					fail("Invalid credentials for the messagebus. Check MESSAGEBUS_USERNAME and MESSAGEBUS_PASSWORD.")
 				}
 
 				<-time.After(time.Second)
