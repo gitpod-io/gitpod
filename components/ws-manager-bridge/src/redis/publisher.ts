@@ -7,20 +7,27 @@
 import { inject, injectable } from "inversify";
 import { RedisClient } from "./client";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { Metrics } from "../metrics";
 
 @injectable()
 export class RedisPublisher {
-    constructor(@inject(RedisClient) private readonly client: RedisClient) {}
+    constructor(
+        @inject(RedisClient) private readonly client: RedisClient,
+        @inject(Metrics) private readonly metrics: Metrics,
+    ) {}
 
     async publishPrebuildUpdate(): Promise<void> {
         log.debug("[redis] Publish prebuild udpate invoked.");
+        this.metrics.reportUpdatePublished("prebuild");
     }
 
     async publishInstanceUpdate(): Promise<void> {
         log.debug("[redis] Publish instance udpate invoked.");
+        this.metrics.reportUpdatePublished("wsinstance");
     }
 
     async publishHeadlessUpdate(): Promise<void> {
         log.debug("[redis] Publish headless udpate invoked.");
+        this.metrics.reportUpdatePublished("headless");
     }
 }

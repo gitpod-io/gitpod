@@ -13,7 +13,7 @@ import { MessageBusIntegration } from "./messagebus-integration";
 import { Configuration } from "./config";
 import * as fs from "fs";
 import { WorkspaceManagerBridgeFactory, WorkspaceManagerBridge } from "./bridge";
-import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
+import { Metrics } from "./metrics";
 import { BridgeController, WorkspaceManagerClientProviderConfigSource } from "./bridge-controller";
 import { filePathTelepresenceAware } from "@gitpod/gitpod-protocol/lib/env";
 import {
@@ -61,7 +61,7 @@ export const containerModule = new ContainerModule((bind) => {
     bind(ClusterServiceServer).toSelf().inSingletonScope();
     bind(ClusterService).toSelf().inRequestScope();
 
-    bind(PrometheusMetricsExporter).toSelf().inSingletonScope();
+    bind(Metrics).toSelf().inSingletonScope();
 
     bind(Configuration)
         .toDynamicValue((ctx) => {

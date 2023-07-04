@@ -10,7 +10,7 @@ import { DisposableCollection, RunningWorkspaceInfo, WorkspaceInstance } from "@
 import { inject, injectable } from "inversify";
 import { Configuration } from "./config";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
+import { Metrics } from "./metrics";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { DBWithTracing, TracedUserDB, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
@@ -50,7 +50,7 @@ export interface WorkspaceInstanceController {
 export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceController {
     constructor(
         @inject(Configuration) private readonly config: Configuration,
-        @inject(PrometheusMetricsExporter) private readonly prometheusExporter: PrometheusMetricsExporter,
+        @inject(Metrics) private readonly prometheusExporter: Metrics,
         @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
         @inject(TracedUserDB) private readonly userDB: DBWithTracing<UserDB>,
         @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,

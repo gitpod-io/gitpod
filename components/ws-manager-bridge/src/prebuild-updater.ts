@@ -13,7 +13,7 @@ import { PrebuildStateMapper } from "./prebuild-state-mapper";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { MessageBusIntegration } from "./messagebus-integration";
-import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
+import { Metrics } from "./metrics";
 import { filterStatus } from "./bridge";
 import { RedisPublisher } from "./redis/publisher";
 
@@ -23,7 +23,7 @@ export class PrebuildUpdater {
         @inject(PrebuildStateMapper) private readonly prebuildStateMapper: PrebuildStateMapper,
         @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
         @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
-        @inject(PrometheusMetricsExporter) private readonly prometheusExporter: PrometheusMetricsExporter,
+        @inject(Metrics) private readonly prometheusExporter: Metrics,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
     ) {}
 

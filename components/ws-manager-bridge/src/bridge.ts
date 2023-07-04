@@ -26,7 +26,7 @@ import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TracedWorkspaceDB, DBWithTracing } from "@gitpod/gitpod-db/lib/traced-db";
-import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
+import { Metrics } from "./metrics";
 import { ClientProvider, WsmanSubscriber } from "./wsman-subscriber";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
 import { Configuration } from "./config";
@@ -53,7 +53,7 @@ export class WorkspaceManagerBridge implements Disposable {
     constructor(
         @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
         @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
-        @inject(PrometheusMetricsExporter) private readonly prometheusExporter: PrometheusMetricsExporter,
+        @inject(Metrics) private readonly prometheusExporter: Metrics,
         @inject(Configuration) private readonly config: Configuration,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(PrebuildUpdater) private readonly prebuildUpdater: PrebuildUpdater,
