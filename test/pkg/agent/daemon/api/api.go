@@ -19,9 +19,10 @@ type GetWorkspaceResourcesRequest struct {
 }
 
 type GetWorkspaceResourcesResponse struct {
-	CpuQuota int64
-	IOMax    []cgroups.DeviceIOMax
-	Found    bool
+	CpuQuota   int64
+	Found      bool
+	IOMax      []cgroups.DeviceIOMax
+	FoundIOMax bool
 }
 
 type VerifyRateLimitingRuleRequest struct {

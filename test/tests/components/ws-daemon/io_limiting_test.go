@@ -70,8 +70,6 @@ func TestIOLimiting(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			time.Sleep(10 * time.Second)
-
 			containerId := getWorkspaceContainerId(&pod)
 			var resp daemon.GetWorkspaceResourcesResponse
 			if err = daemonClient.Call("DaemonAgent.GetWorkspaceResources", daemon.GetWorkspaceResourcesRequest{
@@ -81,34 +79,21 @@ func TestIOLimiting(t *testing.T) {
 			}
 
 			t.Logf("workspace resources: %+v", resp)
-			if resp.Found == false {
-				t.Fatalf("cannot find workspace resources")
+			if resp.FoundIOMax == false {
+				t.Fatalf("cannot find io max")
 			}
 			if len(resp.IOMax) == 0 {
 				t.Fatalf("cannot find workspace io max")
 			}
 
-			// rsa, closer, err := integration.Instrument(integration.ComponentWorkspace, "workspace", cfg.Namespace(), kubeconfig, cfg.Client(), integration.WithInstanceID(nfo.Req.Id))
-			// integration.DeferCloser(t, closer)
-			// if err != nil {
-			// 	t.Fatalf("unexpected error instrumenting workspace: %v", err)
-			// }
-			// defer rsa.Close()
-
-			// t.Logf("running gp top")
-			// var res agent.ExecResponse
-			// err = rsa.Call("WorkspaceAgent.Exec", &agent.ExecRequest{
-			// 	Dir:     "/workspace",
-			// 	Command: "gp",
-			// 	Env:     []string{"SUPERVISOR_ADDR=10.0.5.2:22999"},
-			// 	Args:    []string{"top", "--json"},
-			// }, &res)
-			// if err != nil {
-			// 	t.Fatal(err)
-			// }
-			// if res.ExitCode != 0 {
-			// 	t.Fatalf("gp top failed (%d): %s", res.ExitCode, res.Stderr)
-			// }
+			for _, ioMax := range resp.IOMax {
+				if ioMax.Read != uint64(daemonConfig.IOLimitConfig.ReadBandwidthPerSecond.Value()) {
+					t.Fatalf("expected max read bandwidth %v but got %v", daemonConfig.IOLimitConfig.ReadBandwidthPerSecond.Value(), ioMax.Read)
+				}
+				if ioMax.Write != uint64(daemonConfig.IOLimitConfig.WriteBandwidthPerSecond.Value()) {
+					t.Fatalf("expected max write bandwidth %v but got %v", daemonConfig.IOLimitConfig.WriteBandwidthPerSecond.Value(), ioMax.Write)
+				}
+			}
 
 			return testCtx
 		}).Feature()
