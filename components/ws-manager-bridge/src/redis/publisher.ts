@@ -19,7 +19,7 @@ export class RedisPublisher {
 
     async publishInstanceUpdate(): Promise<void> {
         log.debug("[redis] Publish instance udpate invoked.");
-        this.metrics.reportUpdatePublished("wsinstance");
+        this.metrics.reportUpdatePublished("workspace-instance");
     }
 
     async publishHeadlessUpdate(): Promise<void> {

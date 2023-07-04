@@ -98,7 +98,7 @@ export class Metrics {
         });
     }
 
-    reportUpdatePublished(type: "wsinstance" | "prebuild" | "headless", err?: Error): void {
+    reportUpdatePublished(type: "workspace-instance" | "prebuild" | "headless", err?: Error): void {
         this.updatesPublishedTotal.inc({ type, error: err ? "true" : "false" });
     }
 
