@@ -37,4 +37,8 @@ export interface Configuration {
 
     // clusterSyncIntervalSeconds configures how often we sync workspace cluster information
     clusterSyncIntervalSeconds: number;
+
+    redis: {
+        address: string;
+    };
 }

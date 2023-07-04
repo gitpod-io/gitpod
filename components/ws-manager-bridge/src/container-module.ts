@@ -37,6 +37,7 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./workspace-instance-controller";
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
+import { RedisClient } from "./redis/client";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
@@ -89,4 +90,6 @@ export const containerModule = new ContainerModule((bind) => {
     bind(WorkspaceInstanceController).to(WorkspaceInstanceControllerImpl).inTransientScope();
 
     bind(AppClusterWorkspaceInstancesController).toSelf().inSingletonScope();
+
+    bind(RedisClient).toSelf().inSingletonScope();
 });
