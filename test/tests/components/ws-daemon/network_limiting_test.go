@@ -7,8 +7,6 @@ package wsdaemon
 import (
 	"context"
 	"os"
-	"regexp"
-	"strings"
 	"testing"
 	"time"
 
@@ -18,27 +16,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
-)
-
-var (
-	expectedRules = []*regexp.Regexp{regexp.MustCompile(`(?s)table ip gitpod {
-	counter ws-connection-drop-stats {
-		packets 0 bytes 0
-	}
-
-	set ws-connections {
-		type ipv4_addr
-		size 65535
-		flags dynamic,timeout
-		elements = { 0\.0\.0\.0 limit rate over 3000\/minute burst 3000 packets timeout 1m expires [0-9a-z]+ }
-	}
-
-	chain ratelimit {
-		type filter hook postrouting priority filter; policy accept;
-		ip protocol tcp ct state new add @ws-connections { ip daddr & 0\.0\.0\.0 timeout 1m limit rate over 3000\/minute burst 3000 packets } counter name "ws-connection-drop-stats" drop
-	}
-}`),
-	}
 )
 
 func TestNetworkLimiting(t *testing.T) {
@@ -107,22 +84,16 @@ func TestNetworkLimiting(t *testing.T) {
 			t.Logf("checking nftable rules for rate limiting")
 			containerId := getCalicoContainerId(&pod)
 
-			var resp daemon.GetNftRulesetsResponse
-			err = daemonClient.Call("DaemonAgent.GetNftRulesets", daemon.GetNftRulesetsRequest{
+			// time.Sleep(10 * time.Second)
+			var resp daemon.VerifyRateLimitingRuleResponse
+			err = daemonClient.Call("DaemonAgent.VerifyRateLimitingRule", daemon.VerifyRateLimitingRuleRequest{
 				ContainerId: containerId,
 			}, &resp)
 			if err != nil {
-				t.Errorf("cannot get nft rulesets for container %s: %v", containerId, err)
+				t.Errorf("error verifying rate limiting rule for container %s: %v", containerId, err)
 			}
-			t.Logf("rulesets in workspace:")
-			println(resp.Output)
-			t.Logf("checking %d expected rulesets", len(expectedRules))
-			for _, rule := range expectedRules {
-				out := strings.ReplaceAll(resp.Output, "\r", "")
-				if !rule.MatchString(out) {
-					t.Errorf("expected the following ruleset to be present but wasn't:\n%s", rule.String())
-				}
-			}
+
+			t.Logf("verified rate limiting rule")
 
 			return testCtx
 		}).Feature()
