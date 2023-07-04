@@ -471,6 +471,22 @@ func main() {
 				},
 			},
 			{
+				Name:  "dump-network-info",
+				Usage: "dump network info",
+				Action: func(c *cli.Context) error {
+					links, err := netlink.LinkList()
+					if err != nil {
+						return xerrors.Errorf("cannot list network links: %v", err)
+					}
+
+					for _, link := range links {
+						fmt.Printf("%v", link)
+					}
+
+					return nil
+				},
+			},
+			{
 				Name:  "setup-connection-limit",
 				Usage: "set up network connection rate limiting",
 				Flags: []cli.Flag{
