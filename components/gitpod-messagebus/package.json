@@ -9,7 +9,6 @@
     "src"
   ],
   "scripts": {
-    "prepare": "yarn clean && yarn build",
     "build": "npx tsc",
     "build:clean": "yarn clean && yarn build",
     "rebuild": "yarn build:clean",
