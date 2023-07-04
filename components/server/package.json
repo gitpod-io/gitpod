@@ -6,7 +6,6 @@
   "scripts": {
     "start": "node ./dist/main.js",
     "start-inspect": "node --inspect=0.0.0.0:9229 ./dist/main.js",
-    "prepare": "yarn clean && yarn build",
     "build": "yarn lint && npx tsc",
     "build:clean": "yarn clean && yarn build",
     "rebuild": "yarn build:clean",
@@ -15,13 +14,12 @@
     "clean": "rimraf dist",
     "clean:node": "rimraf node_modules",
     "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
-    "lint": "yarn eslint src/**/*.ts",
-    "format": "yarn eslint src/**/*.ts --fix",
-    "test": ". $(leeway run components/gitpod-db:db-test-env) && TS_NODE_FILES=true mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
+    "lint": "yarn tslint -p .",
+    "test": ". $(leeway run components/gitpod-db:db-test-env) && yarn test:unit && (yarn start-spicedb & (yarn test:db && yarn stop-spicedb))",
+    "test:unit": "TS_NODE_FILES=true mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'",
+    "test:db": "TS_NODE_FILES=true mocha --opts mocha.opts './**/*.spec.db.ts' --exclude './node_modules/**'",
     "start-spicedb": "if netstat -tuln | grep ':50051 '; then echo '`spicedb serve-testing` is already running.'; else spicedb serve-testing --load-configs /workspace/gitpod/install/installer/pkg/components/spicedb/data/schema.yaml; fi",
     "stop-spicedb": "PID=$(lsof -t -i:50051); if [ -z \"$PID\" ]; then echo '`spicedb serve-testing` is not running'; else kill -INT $PID && echo 'Stopped `spicedb serve-testing`'; fi",
-    "db-test": "r(){ . $(leeway run components/gitpod-db:db-test-env); yarn start-spicedb & yarn db-test-run; yarn stop-spicedb; };r",
-    "db-test-run": "TS_NODE_FILES=true mocha --opts mocha.opts '**/*.spec.db.ts' --exclude './node_modules/**'",
     "telepresence": "telepresence --swap-deployment server --method inject-tcp --run yarn start-inspect"
   },
   "files": [

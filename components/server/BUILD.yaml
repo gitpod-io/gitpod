@@ -20,7 +20,7 @@ packages:
       - components/usage-api/typescript:lib
       - components/ide-service-api/typescript:lib
       - components/public-api/typescript:lib
-      - :dbtest
+      - components/gitpod-db:dbtest-init
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock
@@ -40,37 +40,3 @@ packages:
       image:
         - ${imageRepoBase}/server:${version}
         - ${imageRepoBase}/server:commit-${__git_commit}
-  - name: dbtest
-    type: yarn
-    srcs:
-      - "src/**"
-      - "typings/**"
-      - "test/**"
-      - .eslintrc
-      - package.json
-      - mocha.opts
-      - tslint.yaml
-    deps:
-      - components/gitpod-db:dbtest-init
-      - components/gitpod-db:lib
-      - components/content-service-api/typescript:lib
-      - components/gitpod-messagebus:lib
-      - components/gitpod-protocol:lib
-      - components/image-builder-api/typescript:lib
-      - components/ws-manager-api/typescript:lib
-      - components/supervisor-api/typescript-grpcweb:lib
-      - components/usage-api/typescript:lib
-      - components/ide-service-api/typescript:lib
-      - components/public-api/typescript:lib
-    config:
-      packaging: library
-      yarnLock: ${coreYarnLockBase}/yarn.lock
-      tsconfig: tsconfig.json
-      commands:
-        test: ["yarn", "db-test"]
-        build: ["yarn", "build"]
-scripts:
-  - name: telepresence
-    script: |
-      # Leave redirect for posterity
-      yarn telepresence
