@@ -82,9 +82,7 @@ jobs:
       (needs.configuration.outputs.preview_enable == 'true')
     needs: [ configuration ]
     concurrency:
-      group: ${{ github.head_ref || github.ref_name }}-build-previewctl
-      # see comment in build-gitpod below for context
-      cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
+      group: ${{ github.workflow }}-${{ github.ref }}-build-previewctl
     runs-on: [ self-hosted ]
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-dev-image-gha.12149
@@ -330,8 +328,7 @@ jobs:
     needs: [ configuration, build-previewctl, build-gitpod, infrastructure ]
     runs-on: [ self-hosted ]
     concurrency:
-      group: ${{ github.head_ref || github.ref_name }}-install
-      cancel-in-progress: true
+      group: ${{ github.workflow }}-${{ github.ref }}-install
     steps:
       - uses: actions/checkout@v3
       - name: Deploy Gitpod to the preview environment
@@ -374,8 +371,7 @@ jobs:
     needs: [ infrastructure, build-previewctl ]
     runs-on: [ self-hosted ]
     concurrency:
-      group: ${{ github.head_ref || github.ref_name }}-monitoring
-      cancel-in-progress: true
+      group: ${{ github.workflow }}-${{ github.ref }}-monitoring
     steps:
       - uses: actions/checkout@v3
       - name: Deploy monitoring satellite to the preview environment
@@ -396,8 +392,7 @@ jobs:
           - /tmp:/tmp
     if: needs.configuration.outputs.with_integration_tests != ''
     concurrency:
-      group: ${{ github.head_ref || github.ref_name }}-integration-test
-      cancel-in-progress: true
+      group: ${{ github.workflow }}-${{ github.ref }}-integration-test
     steps:
       - uses: actions/checkout@v3
       - name: Run integration test
