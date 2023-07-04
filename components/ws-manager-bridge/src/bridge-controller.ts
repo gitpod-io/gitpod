@@ -15,7 +15,7 @@ import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster"
 import { Queue } from "@gitpod/gitpod-protocol";
 import { defaultGRPCOptions } from "@gitpod/gitpod-protocol/lib/util/grpc";
 import * as grpc from "@grpc/grpc-js";
-import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
+import { Metrics } from "./metrics";
 
 @injectable()
 export class BridgeController {
@@ -31,8 +31,8 @@ export class BridgeController {
     @inject(WorkspaceClusterDB)
     protected readonly db: WorkspaceClusterDB;
 
-    @inject(PrometheusMetricsExporter)
-    protected readonly metrics: PrometheusMetricsExporter;
+    @inject(Metrics)
+    protected readonly metrics: Metrics;
 
     protected readonly bridges: Map<string, WorkspaceManagerBridge> = new Map();
     protected readonly reconcileQueue: Queue = new Queue();
