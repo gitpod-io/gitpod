@@ -473,14 +473,42 @@ func main() {
 			{
 				Name:  "dump-network-info",
 				Usage: "dump network info",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name: "tag",
+					},
+				},
 				Action: func(c *cli.Context) error {
 					links, err := netlink.LinkList()
 					if err != nil {
 						return xerrors.Errorf("cannot list network links: %v", err)
 					}
 
+					tag := c.String("tag")
+
 					for _, link := range links {
-						fmt.Printf("%v", link)
+						attrs := link.Attrs()
+
+						ip4, _ := netlink.AddrList(link, netlink.FAMILY_V4)
+						ip6, _ := netlink.AddrList(link, netlink.FAMILY_V6)
+
+						log.Infof("%v", struct {
+							Tag   string
+							Name  string
+							Type  string
+							Ip4   []netlink.Addr
+							Ip6   []netlink.Addr
+							Flags net.Flags
+							MTU   int
+						}{
+							Tag:   tag,
+							Name:  attrs.Name,
+							Type:  link.Type(),
+							Ip4:   ip4,
+							Ip6:   ip6,
+							Flags: attrs.Flags,
+							MTU:   attrs.MTU,
+						})
 					}
 
 					return nil
