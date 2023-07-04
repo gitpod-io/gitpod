@@ -83,8 +83,6 @@ func TestNetworkLimiting(t *testing.T) {
 
 			t.Logf("checking nftable rules for rate limiting")
 			containerId := getCalicoContainerId(&pod)
-
-			// time.Sleep(10 * time.Second)
 			var resp daemon.VerifyRateLimitingRuleResponse
 			err = daemonClient.Call("DaemonAgent.VerifyRateLimitingRule", daemon.VerifyRateLimitingRuleRequest{
 				ContainerId: containerId,
