@@ -13,7 +13,7 @@ require (
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-20230530092704-f7d81a8eef6f // indirect
+	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-00010101000000-000000000000 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

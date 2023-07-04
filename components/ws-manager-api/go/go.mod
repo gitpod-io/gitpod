@@ -9,6 +9,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/onsi/ginkgo/v2 v2.8.0
 	github.com/onsi/gomega v1.25.0
+	github.com/sirupsen/logrus v1.9.0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.52.3
 	google.golang.org/protobuf v1.28.1
@@ -25,7 +26,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.9.0 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-20230530092704-f7d81a8eef6f // indirect
+	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-00010101000000-000000000000 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/zapr v1.2.3 // indirect
 	github.com/go-openapi/jsonpointer v0.19.5 // indirect
@@ -61,7 +62,6 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/rogpeppe/go-internal v1.10.0 // indirect
-	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/slok/go-http-metrics v0.10.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.1 // indirect
@@ -95,6 +95,8 @@ require (
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
+
+replace github.com/gitpod-io/gitpod/components/scrubber => ../../scrubber // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
 

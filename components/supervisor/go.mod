@@ -46,7 +46,7 @@ require (
 )
 
 require (
-	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-20230530092704-f7d81a8eef6f // indirect
+	github.com/gitpod-io/gitpod/components/scrubber v0.0.0-00010101000000-000000000000 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	inet.af/tcpproxy v0.0.0-20221017015627-91f861402626
 )

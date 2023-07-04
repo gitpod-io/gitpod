@@ -33,8 +33,6 @@ github.com/felixge/httpsnoop v1.0.3 h1:s/nj+GCswXYzN5v2DpNMuMQYe+0DDwt5WVCU6CWBd
 github.com/felixge/httpsnoop v1.0.3/go.mod h1:m8KPJKqk1gH5J9DgRY2ASl2lWCfGKXixSwevea8zH2U=
 github.com/fsnotify/fsnotify v1.6.0 h1:n+5WquG0fcWoWp6xPWfHdbskMCQaFnG6PfBrh1Ky4HY=
 github.com/fsnotify/fsnotify v1.6.0/go.mod h1:sl3t1tCWJFWoRz9R8WJCbQihKKwmorjAbSClcnxKAGw=
-github.com/gitpod-io/gitpod/components/scrubber v0.0.0-20230530092704-f7d81a8eef6f h1:VTHRKVTtUrId4hsyngsVJ7Iz6GURXxg2LsgynXjU92k=
-github.com/gitpod-io/gitpod/components/scrubber v0.0.0-20230530092704-f7d81a8eef6f/go.mod h1:qpqEkax6GYdO9Rt47AMMuDbwtr3eTH02i8iRlbIL8mU=
 github.com/gitpod-io/golang-crypto v0.0.0-20220823040820-b59f56dfbab3 h1:/tzCOhhOZCWxTdJ1rZqYubx+LIEVy+QYbJkTMGegcoo=
 github.com/gitpod-io/golang-crypto v0.0.0-20220823040820-b59f56dfbab3/go.mod h1:tJgr4p01k+N5SV9KHeHLPsEYMCEpc0dTSNGPif2ZWac=
 github.com/go-kit/kit v0.9.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
