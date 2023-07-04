@@ -5,7 +5,13 @@
  */
 
 import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
-import { OrgMemberRole, Organization, TeamMembershipInvite } from "@gitpod/gitpod-protocol";
+import {
+    OrgMemberInfo,
+    OrgMemberRole,
+    Organization,
+    OrganizationSettings,
+    TeamMembershipInvite,
+} from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -20,9 +26,47 @@ export class OrganizationService {
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
-    /**
-     * createOrganization creates a new organization
-     */
+
+    async listOrganizationsForMember(userId: string, memberId: string): Promise<Organization[]> {
+        const orgs = await this.teamDB.findTeamsByUser(memberId);
+        const result: Organization[] = [];
+        for (const org of orgs) {
+            if (await this.auth.hasPermissionOnOrganization(userId, "read_info", org.id)) {
+                result.push(org);
+            }
+        }
+        return result;
+    }
+
+    async getOrganization(userId: string, orgId: string): Promise<Organization> {
+        await this.checkPermissionAndThrow(userId, "read_info", orgId);
+        const result = await this.teamDB.findTeamById(orgId);
+        if (!result) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+        return result;
+    }
+
+    async updateOrganization(
+        userId: string,
+        orgId: string,
+        changes: Pick<Organization, "name">,
+    ): Promise<Organization> {
+        await this.checkPermissionAndThrow(userId, "write_info", orgId);
+        return this.teamDB.updateTeam(orgId, changes);
+    }
+
+    async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
+        await this.checkPermissionAndThrow(userId, "read_settings", orgId);
+        return (await this.teamDB.findOrgSettings(orgId)) || {};
+    }
+
+    async updateSettings(userId: string, orgId: string, settings: OrganizationSettings): Promise<OrganizationSettings> {
+        await this.checkPermissionAndThrow(userId, "write_settings", orgId);
+        await this.teamDB.setOrgSettings(orgId, settings);
+        return settings;
+    }
+
     async createOrganization(userId: string, name: string): Promise<Organization> {
         let result: Organization;
         try {
@@ -65,10 +109,15 @@ export class OrganizationService {
         }
     }
 
+    public async listMembers(userId: string, orgId: string): Promise<OrgMemberInfo[]> {
+        await this.checkPermissionAndThrow(userId, "read_members", orgId);
+        return this.teamDB.findMembersByTeam(orgId);
+    }
+
     public async getOrCreateInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
+        await this.checkPermissionAndThrow(userId, "invite_members", orgId);
         const invite = await this.teamDB.findGenericInviteByTeamId(orgId);
         if (invite) {
-            await this.checkPermissionAndThrow(userId, "invite_members", orgId);
             if (await this.teamDB.hasActiveSSO(orgId)) {
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
             }

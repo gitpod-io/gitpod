@@ -40,9 +40,13 @@ export class ProjectsService {
         @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
-    async getProject(userId: string, projectId: string): Promise<Project | undefined> {
+    async getProject(userId: string, projectId: string): Promise<Project> {
         await this.checkPermissionAndThrow(userId, "read_info", projectId);
-        return this.projectDB.findProjectById(projectId);
+        const project = await this.projectDB.findProjectById(projectId);
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
+        }
+        return project;
     }
 
     async getProjects(userId: string, orgId: string): Promise<Project[]> {
@@ -78,7 +82,7 @@ export class ProjectsService {
         return projects;
     }
 
-    async getProjectOverviewCached(user: User, project: Project): Promise<Project.Overview | undefined> {
+    async getProjectOverviewCached(user: User, project: Project): Promise<Project.Overview> {
         await this.checkPermissionAndThrow(user.id, "read_info", project);
         // Check for a cached project overview (fast!)
         const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
@@ -359,29 +363,22 @@ export class ProjectsService {
         return this.projectDB.getProjectEnvironmentVariables(projectId);
     }
 
-    async getProjectEnvironmentVariableById(userId: string, variableId: string): Promise<ProjectEnvVar | undefined> {
+    async getProjectEnvironmentVariableById(userId: string, variableId: string): Promise<ProjectEnvVar> {
         const result = await this.projectDB.getProjectEnvironmentVariableById(variableId);
-        if (result) {
-            try {
-                await this.checkPermissionAndThrow(userId, "read_info", result.projectId);
-            } catch (err) {
-                // we return undefined if the user does not have access to the project
-                return undefined;
-            }
+        if (!result) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
+        }
+        try {
+            await this.checkPermissionAndThrow(userId, "read_info", result.projectId);
+        } catch (err) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
         }
         return result;
     }
 
     async deleteProjectEnvironmentVariable(userId: string, variableId: string): Promise<void> {
         const variable = await this.getProjectEnvironmentVariableById(userId, variableId);
-        if (!variable) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
-        }
-        const project = await this.getProject(userId, variable.projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
-        }
-        await this.checkPermissionAndThrow(userId, "write_info", project);
+        await this.checkPermissionAndThrow(userId, "write_info", variable.projectId);
         return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
 

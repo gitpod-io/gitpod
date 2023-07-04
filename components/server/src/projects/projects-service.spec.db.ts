@@ -147,8 +147,7 @@ describe("ProjectsService", async () => {
 
         await ps.deleteProjectEnvironmentVariable(owner.id, envVars[0].id);
 
-        const deletedEnvVar = await ps.getProjectEnvironmentVariableById(owner.id, envVars[0].id);
-        expect(deletedEnvVar).to.be.undefined;
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjectEnvironmentVariableById(owner.id, envVars[0].id));
 
         const emptyEnvVars = await ps.getProjectEnvironmentVariables(owner.id, project.id);
         expect(emptyEnvVars.length).to.equal(0);
@@ -164,38 +163,23 @@ describe("ProjectsService", async () => {
         expect(envVars[0].name).to.equal("FOO");
 
         // let's try to get the env var as a stranger
-        const variable = await ps.getProjectEnvironmentVariableById(stranger.id, envVars[0].id);
-        expect(variable).to.be.undefined;
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjectEnvironmentVariableById(stranger.id, envVars[0].id));
 
         // let's try to delete the env var as a stranger
-        try {
-            await ps.deleteProjectEnvironmentVariable(stranger.id, envVars[0].id);
-            expect.fail("should not be able to delete env var as stranger");
-        } catch (error) {
-            expectErrorCode(error, ErrorCodes.NOT_FOUND);
-        }
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProjectEnvironmentVariable(stranger.id, envVars[0].id));
 
         // let's try to get the env vars as a stranger
-        try {
-            await ps.getProjectEnvironmentVariables(stranger.id, project.id);
-            expect.fail("should not be able to get env vars as stranger");
-        } catch (error) {
-            expectErrorCode(error, ErrorCodes.NOT_FOUND);
-        }
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjectEnvironmentVariables(stranger.id, project.id));
     });
 });
 
-async function expectError(errorCode: ErrorCode, code: () => Promise<any>) {
+export async function expectError(errorCode: ErrorCode, code: () => Promise<any>) {
     try {
         await code();
         expect.fail("expected error: " + errorCode);
-    } catch (error) {
-        expectErrorCode(error, errorCode);
+    } catch (err) {
+        expect(err && ApplicationError.hasErrorCode(err) && err.code).to.equal(errorCode);
     }
-}
-
-function expectErrorCode(err: any, errorCode: ErrorCode) {
-    expect(err && ApplicationError.hasErrorCode(err) && err.code).to.equal(errorCode);
 }
 
 async function createTestProject(ps: ProjectsService, org: Organization, owner: User) {
