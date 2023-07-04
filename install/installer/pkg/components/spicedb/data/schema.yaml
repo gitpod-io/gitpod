@@ -64,7 +64,7 @@ schema: |-
     // Project can be accessed by:
     //  * Anyone with write_info permission
     //  * viewers
-    permission read_info = write_info + viewer
+    permission read_info = write_info + viewer + org->member
 
     // Project can be deleted by:
     //  * Organization owners
@@ -130,6 +130,8 @@ assertions:
     - organization:org_1#delete@user:user_0
     # Org owner can delete projects
     - project:project_1#delete@user:user_0
+    # Org member can view projects
+    - project:project_1#read_info@user:user_1
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
