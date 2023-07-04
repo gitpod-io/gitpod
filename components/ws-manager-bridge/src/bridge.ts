@@ -364,7 +364,10 @@ export class WorkspaceManagerBridge implements Disposable {
                 await lifecycleHandler();
             }
             await this.messagebus.notifyOnInstanceUpdate(ctx, userId, instance);
-            await this.publisher.publishInstanceUpdate();
+            await this.publisher.publishInstanceUpdate({
+                instanceID: instance.id,
+                workspaceID: instance.workspaceId,
+            });
         } catch (e) {
             TraceContext.setError({ span }, e);
             throw e;
