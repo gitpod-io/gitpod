@@ -422,7 +422,7 @@ export function CreateWorkspacePage() {
                     </Button>
                 </div>
 
-                {selectedIde === "code-desktop" && <LocalSSHWarning className="px-6" />}
+                {selectedIde === "code-desktop" && <LocalSSHWarning className="mx-6 mt-3 rounded-lg overflow-hidden" />}
                 {workspaceContext.data && (
                     <RememberOptions
                         disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
@@ -463,7 +463,7 @@ function LocalSSHWarning(props: { className: string }) {
         <div className={props.className}>
             <Alert
                 light
-                className="mt-4 bg-gray-100 dark:bg-gray-800"
+                className="bg-gray-100 dark:bg-gray-800"
                 type="info"
                 iconSize="w-8 h-8"
                 icon={<Exclamation2 className="h-full w-full" />}
