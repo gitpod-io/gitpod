@@ -20,7 +20,7 @@ import { Attributes } from "@gitpod/gitpod-protocol/lib/experiments/types";
 import { reportRedisUpdateCompleted, reportRedisUpdateReceived } from "../prometheus-metrics";
 
 @injectable()
-export class RedisListener implements LocalMessageBroker {
+export class RedisSubscriber implements LocalMessageBroker {
     constructor(
         @inject(RedisClient) private readonly redis: RedisClient,
         @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,

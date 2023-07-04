@@ -129,6 +129,7 @@ import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceStarter } from "./workspace/workspace-starter";
 import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { OrganizationService } from "./orgs/organization-service";
+import { RedisSubscriber } from "./messaging/redis-subscriber";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -356,5 +357,6 @@ export const productionContainerModule = new ContainerModule(
         // Redis
         bind(RedisClient).toSelf().inSingletonScope();
         bind(RedisMutex).toSelf().inSingletonScope();
+        bind(RedisSubscriber).toSelf().inSingletonScope();
     },
 );
