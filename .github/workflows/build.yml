@@ -104,6 +104,7 @@ jobs:
         env:
           HOME: /home/gitpod
           PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
+          LEEWAY_SEGMENT_KEY: '${{ secrets.LEEWAY_SEGMENT_KEY }}'
         run: |
           # Authenticate with GCP so we can use the Leeway cache
           export PREVIEW_ENV_DEV_SA_KEY_PATH="$HOME/.config/gcloud/preview-environment-dev-sa.json"
@@ -221,6 +222,7 @@ jobs:
         env:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
+          LEEWAY_SEGMENT_KEY: '${{ secrets.LEEWAY_SEGMENT_KEY }}'
         shell: bash
         working-directory: /workspace/gitpod
         run: |
@@ -262,6 +264,7 @@ jobs:
           JB_MARKETPLACE_PUBLISH_TOKEN: '${{ steps.secrets.outputs.jb-marketplace-publish-token }}'
           PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
           CODECOV_TOKEN: '${{ steps.secrets.outputs.codecov-token }}'
+          LEEWAY_SEGMENT_KEY: '${{ secrets.LEEWAY_SEGMENT_KEY }}'
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""

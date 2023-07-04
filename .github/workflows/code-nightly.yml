@@ -35,6 +35,8 @@ jobs:
           codeVersion=$(curl https://raw.githubusercontent.com/gitpod-io/openvscode-server/$codeHeadCommit/package.json | jq .version)
           cd components/ide/code
           leeway build -Dversion=nightly -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DcodeCommit=$codeHeadCommit -DcodeVersion=$codeVersion -DcodeQuality=insider .:docker
+        env:
+          LEEWAY_REMOTE_CACHE_BUCKET: '${{ needs.configuration.outputs.leeway_cache_bucket }}'
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
