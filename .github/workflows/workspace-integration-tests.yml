@@ -210,7 +210,7 @@ jobs:
               env:
                   SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
                   SLACK_COLOR: ${{ job.status }}
-                  SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }} tests passed, ${{ steps.test_summary.outputs.failed }} tests failed, ${{ steps.test_summary.outputs.skipped }} tests skipped in ${{ steps.test_summary.outputs.time }}"
+                  SLACK_MESSAGE: "${{ steps.test_summary.outputs.* }}\n\n ${{ steps.test_summary.outputs.passed }} tests passed, ${{ steps.test_summary.outputs.failed }} tests failed, ${{ steps.test_summary.outputs.skipped }} tests skipped in ${{ steps.test_summary.outputs.duration }}"
 
     delete:
       name: Delete preview environment
