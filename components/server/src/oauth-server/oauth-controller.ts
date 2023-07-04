@@ -142,7 +142,7 @@ export class OAuthController {
             }
 
             // Check for approval of this client
-            if (!this.hasApproval(user, clientID.toString(), req, res)) {
+            if (!(await this.hasApproval(user, clientID.toString(), req, res))) {
                 res.sendStatus(400);
                 return;
             }

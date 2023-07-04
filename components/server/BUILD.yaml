@@ -5,6 +5,7 @@ packages:
       - "src/**"
       - "typings/**"
       - "test/**"
+      - .eslintrc
       - package.json
       - mocha.opts
       - tslint.yaml
@@ -45,6 +46,7 @@ packages:
       - "src/**"
       - "typings/**"
       - "test/**"
+      - .eslintrc
       - package.json
       - mocha.opts
       - tslint.yaml

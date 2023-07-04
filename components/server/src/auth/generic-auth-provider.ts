@@ -735,7 +735,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
     }
 
     protected get sanitizedStrategyOptions(): Omit<StrategyOptionsWithRequest, "clientSecret"> {
-        const { clientSecret, ...sanitizedOptions } = this.defaultStrategyOptions;
+        const { ...sanitizedOptions } = this.defaultStrategyOptions;
         return sanitizedOptions;
     }
 

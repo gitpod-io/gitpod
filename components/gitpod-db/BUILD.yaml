@@ -3,6 +3,7 @@ packages:
     type: yarn
     srcs:
       - "src/**/*.ts"
+      - .eslintrc
       - package.json
       - mocha.opts
     deps:
@@ -17,6 +18,7 @@ packages:
     type: yarn
     srcs:
       - "src/**/*.ts"
+      - .eslintrc
       - package.json
     deps:
       - components/gitpod-protocol:lib
@@ -29,6 +31,7 @@ packages:
     type: yarn
     srcs:
       - "src/**/*.ts"
+      - .eslintrc
       - package.json
       - mocha.opts
     deps:
