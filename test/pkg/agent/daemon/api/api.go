@@ -21,10 +21,8 @@ type GetWorkspaceResourcesResponse struct {
 	Found    bool
 }
 
-type GetNftRulesetsRequest struct {
+type VerifyRateLimitingRuleRequest struct {
 	ContainerId string
 }
 
-type GetNftRulesetsResponse struct {
-	Output string
-}
+type VerifyRateLimitingRuleResponse struct{}

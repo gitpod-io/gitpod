@@ -11,9 +11,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -22,8 +20,10 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/test/pkg/agent/daemon/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
+	"github.com/google/nftables"
 	"github.com/mitchellh/go-ps"
 	"github.com/prometheus/procfs"
+	"github.com/vishvananda/netns"
 	"golang.org/x/xerrors"
 )
 
@@ -112,19 +112,63 @@ func (*DaemonAgent) GetWorkspaceResources(args *api.GetWorkspaceResourcesRequest
 	return nil
 }
 
-func (*DaemonAgent) GetNftRulesets(args *api.GetNftRulesetsRequest, resp *api.GetNftRulesetsResponse) error {
+func (*DaemonAgent) VerifyRateLimitingRule(args *api.VerifyRateLimitingRuleRequest, resp *api.VerifyRateLimitingRuleResponse) error {
+	*resp = api.VerifyRateLimitingRuleResponse{}
 	ring0Pid, err := findWorkspaceRing0Pid(args.ContainerId)
 	if err != nil {
 		return err
 	}
 
-	cmd := exec.Command("nsenter", "-t", strconv.Itoa(ring0Pid), "-n", "nft", "list", "ruleset")
-	out, err := cmd.CombinedOutput()
+	netns, err := netns.GetFromPid(int(ring0Pid))
 	if err != nil {
-		return fmt.Errorf("failed to run nsenter: %w out: %s", err, out)
+		return fmt.Errorf("could not get handle for network namespace: %w", err)
 	}
-	*resp = api.GetNftRulesetsResponse{}
-	resp.Output = string(out)
+
+	nftconn, err := nftables.New(nftables.WithNetNSFd(int(netns)))
+	if err != nil {
+		return fmt.Errorf("could not establish netlink connection for nft: %w", err)
+	}
+
+	gitpodTable := &nftables.Table{
+		Name:   "gitpod",
+		Family: nftables.TableFamilyIPv4,
+	}
+
+	// Check if drop stats counter exists.
+	counterObject, err := nftconn.GetObject(&nftables.CounterObj{
+		Table: gitpodTable,
+		Name:  "ws-connection-drop-stats",
+	})
+	if err != nil {
+		return fmt.Errorf("could not get connection drop stats: %w", err)
+	}
+	_, ok := counterObject.(*nftables.CounterObj)
+	if !ok {
+		return fmt.Errorf("could not cast counter object")
+	}
+
+	// Check if set exists.
+	_, err = nftconn.GetSetByName(gitpodTable, "ws-connections")
+	if err != nil {
+		return fmt.Errorf("could not get set ws-connections: %w", err)
+	}
+
+	// Check if ratelimit chain exists.
+	chains, err := nftconn.ListChains()
+	if err != nil {
+		return fmt.Errorf("could not list chains: %w", err)
+	}
+	var found bool
+	for _, c := range chains {
+		if c.Name == "ratelimit" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("chain ratelimit not found")
+	}
+
 	return nil
 }
 
