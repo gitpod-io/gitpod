@@ -88,6 +88,7 @@ jobs:
         env:
           DISPLAY: ':10'
           LEEWAY_MAX_PROVENANCE_BUNDLE_SIZE: '8388608'
+          LEEWAY_REMOTE_CACHE_BUCKET: '${{ needs.configuration.outputs.leeway_cache_bucket }}'
           TEST_USE_LATEST: ${{ inputs.use_latest }}
         run: |
           export GATEWAY_LINK=$(jq -r '.inputs.secret_gateway_link' $GITHUB_EVENT_PATH)
