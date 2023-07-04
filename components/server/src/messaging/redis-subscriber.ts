@@ -5,7 +5,6 @@
  */
 
 import { RedisClient } from "../redis/client";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import {
     HeadlessWorkspaceEventListener,
     LocalMessageBroker,
@@ -13,7 +12,12 @@ import {
     WorkspaceInstanceUpdateListener,
 } from "./local-message-broker";
 import { inject, injectable } from "inversify";
-import { Disposable, DisposableCollection, WorkspaceInstanceUpdatesChannel } from "@gitpod/gitpod-protocol";
+import {
+    Disposable,
+    DisposableCollection,
+    RedisWorkspaceInstanceUpdate,
+    WorkspaceInstanceUpdatesChannel,
+} from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { Attributes } from "@gitpod/gitpod-protocol/lib/experiments/types";
@@ -21,10 +25,7 @@ import { reportRedisUpdateCompleted, reportRedisUpdateReceived } from "../promet
 
 @injectable()
 export class RedisSubscriber implements LocalMessageBroker {
-    constructor(
-        @inject(RedisClient) private readonly redis: RedisClient,
-        @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
-    ) {}
+    constructor(@inject(RedisClient) private readonly redis: RedisClient) {}
 
     protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
 
@@ -63,38 +64,15 @@ export class RedisSubscriber implements LocalMessageBroker {
     private async onMessage(channel: string, message: string): Promise<void> {
         switch (channel) {
             case "chan:instances":
-                const instanceID = message;
-                return this.onInstanceUpdate(instanceID);
+                const parsed = JSON.parse(message) as RedisWorkspaceInstanceUpdate;
+                return this.onInstanceUpdate(parsed);
             default:
                 throw new Error(`Redis Pub/Sub received message on unknown channel: ${channel}`);
         }
     }
 
-    private async onInstanceUpdate(instanceID: string): Promise<void> {
-        const instance = await this.workspaceDB.findInstanceById(instanceID);
-        if (!instance) {
-            return;
-        }
-
-        const workspace = await this.workspaceDB.findByInstanceId(instanceID);
-        if (!workspace) {
-            return;
-        }
-
-        const ctx = {};
-        const listeners = this.workspaceInstanceUpdateListeners.get(workspace.ownerId) || [];
-        // broadcast to all subscribers
-        for (const l of listeners) {
-            try {
-                l(ctx, instance);
-            } catch (err) {
-                log.error(
-                    { userId: workspace.ownerId, instanceId: instance.id },
-                    "Failed to notify subscriber about workspace instance updates",
-                    err,
-                );
-            }
-        }
+    private async onInstanceUpdate(update: RedisWorkspaceInstanceUpdate): Promise<void> {
+        log.debug("[redis] Received instance update", { update });
     }
 
     async stop() {
