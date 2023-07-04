@@ -1575,17 +1575,12 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 				},
 				LogToStdout: true,
 			})
-			outcome := "success"
-			if err != nil {
-				outcome = "failure"
-			}
 			w.Track(analytics.TrackMessage{
 				Identity: analytics.Identity{UserID: cfg.OwnerId},
 				Event:    "gitpod_activate_docker",
 				Properties: map[string]interface{}{
 					"instanceId":     cfg.WorkspaceInstanceID,
 					"workspaceId":    cfg.WorkspaceID,
-					"outcome":        outcome,
 					"debugWorkspace": cfg.isDebugWorkspace(),
 				},
 			})
