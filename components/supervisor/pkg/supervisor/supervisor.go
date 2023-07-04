@@ -50,6 +50,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/analytics"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/common-go/process"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
@@ -1603,7 +1604,10 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 			cancel()
 			return err
 		})
-		if err != nil && !errors.Is(err, context.Canceled) && err.Error() != "signal: killed" {
+		if err != nil &&
+			!errors.Is(err, context.Canceled) &&
+			!process.IsNotChildProcess(err) &&
+			!strings.Contains(err.Error(), "signal: ") {
 			log.WithError(err).Error("cannot provide Docker activation socket")
 		}
 	}
