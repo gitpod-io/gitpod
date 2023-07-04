@@ -274,7 +274,10 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
         await this.onStopped(ctx, info.workspace.ownerId, info.latestInstance);
 
         await this.messagebus.notifyOnInstanceUpdate(ctx, info.workspace.ownerId, info.latestInstance);
-        await this.publisher.publishInstanceUpdate();
+        await this.publisher.publishInstanceUpdate({
+            instanceID: info.latestInstance.id,
+            workspaceID: info.workspace.id,
+        });
 
         await this.prebuildUpdater.stopPrebuildInstance(ctx, info.latestInstance);
     }
