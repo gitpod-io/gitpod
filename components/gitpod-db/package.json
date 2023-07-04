@@ -3,7 +3,6 @@
   "license": "AGPL-3.0",
   "version": "0.1.5",
   "scripts": {
-    "prepare": "yarn clean && yarn build",
     "build": "yarn lint && npx tsc",
     "build:clean": "yarn clean && yarn build",
     "lint": "yarn eslint src/**/*.ts",
