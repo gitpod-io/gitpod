@@ -14,14 +14,13 @@ import { Server } from "../server";
 import { Container } from "inversify";
 import { productionContainerModule } from "../container-module";
 import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
-import { GitpodClient, GitpodServer } from "@gitpod/gitpod-protocol";
 
 const expect = chai.expect;
 
 type TestApp = {
     httpServer: http.Server;
     app: express.Application;
-    server: Server<GitpodClient, GitpodServer>;
+    server: Server;
 };
 
 @suite
@@ -58,7 +57,7 @@ class TestAuthenticationGitHub {
     }
 
     @test.skip async testAuthenticationOnRepositories() {
-        let response = await chai.request(this.testApp.app).get("/github/TypeFox/the-product-test-repo/pull/9");
+        const response = await chai.request(this.testApp.app).get("/github/TypeFox/the-product-test-repo/pull/9");
         expect(response).to.have.status(302);
     }
 }

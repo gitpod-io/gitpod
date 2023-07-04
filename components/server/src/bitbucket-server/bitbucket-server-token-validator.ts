@@ -41,7 +41,7 @@ export class BitbucketServerTokenValidator implements IGitTokenValidator {
             if (owner === userProfile.slug) {
                 writeAccessToRepo = true;
             } else {
-                let permission = await this.api.getPermission(token, {
+                const permission = await this.api.getPermission(token, {
                     repoKind: repoKind as any,
                     owner,
                     username,

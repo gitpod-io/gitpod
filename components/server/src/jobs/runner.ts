@@ -50,7 +50,7 @@ export class JobRunner {
             this.snapshotsJob,
         ];
 
-        for (let job of jobs) {
+        for (const job of jobs) {
             log.info(`Registered job ${job.name} in job runner.`, {
                 jobName: job.name,
                 frequencyMs: job.frequencyMs,

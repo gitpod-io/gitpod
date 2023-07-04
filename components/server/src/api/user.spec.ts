@@ -59,7 +59,7 @@ export class APIUserServiceSpec {
 
         const sut = this.container.get<APIUserService>(APIUserService);
 
-        for (let scenario of scenarios) {
+        for (const scenario of scenarios) {
             try {
                 await sut.blockUser(scenario);
                 expect.fail("blockUser did not throw an exception");

@@ -232,7 +232,7 @@ export class ProjectsService {
         });
 
         // Install the prebuilds webhook if possible
-        let { userId, teamId, cloneUrl } = project;
+        const { userId, teamId, cloneUrl } = project;
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         const hostContext = parsedUrl?.host ? this.hostContextProvider.get(parsedUrl?.host) : undefined;
         const authProvider = hostContext && hostContext.authProvider.info;
@@ -311,7 +311,7 @@ export class ProjectsService {
             if (params.latest) {
                 limit = 1;
             }
-            let branch = params.branch;
+            const branch = params.branch;
             const prebuilds = await this.workspaceDb
                 .trace({})
                 .findPrebuiltWorkspacesByProject(project.id, branch, limit);

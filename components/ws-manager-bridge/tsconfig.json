@@ -1,6 +1,5 @@
 {
     "compilerOptions": {
-        "rootDir": ".",
         "experimentalDecorators": true,
         "outDir": "dist",
         "lib": [

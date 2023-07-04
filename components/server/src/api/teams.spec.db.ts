@@ -85,7 +85,7 @@ export class APITeamsServiceSpec {
             new GetTeamRequest({ teamId: "foo-bar" }), // not a valid UUID
         ];
 
-        for (let payload of payloads) {
+        for (const payload of payloads) {
             try {
                 await this.client.getTeam(payload);
                 expect.fail("get team did not throw an exception");

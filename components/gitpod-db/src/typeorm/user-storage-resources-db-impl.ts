@@ -51,7 +51,7 @@ export class TypeORMUserStorageResourcesDBImpl implements UserStorageResourcesDB
 
     protected async getResource(userId: string, uri: string): Promise<DBUserStorageResource | undefined> {
         const repo = await this.getUserStorageResourceRepo();
-        let query = repo
+        const query = repo
             .createQueryBuilder("resource")
             .where("resource.uri = :uri AND resource.userId = :userId", { userId: userId, uri: uri });
         const resource = await query.getOne();

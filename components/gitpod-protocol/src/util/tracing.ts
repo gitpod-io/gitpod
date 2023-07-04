@@ -248,7 +248,7 @@ export class PerOperationSampler implements Sampler {
     }
 
     isSampled(operation: string, tags: any): boolean {
-        let shouldSample = this.strategies[operation];
+        const shouldSample = this.strategies[operation];
         if (shouldSample === undefined) {
             if (!this.fallback.isSampled) {
                 return false;

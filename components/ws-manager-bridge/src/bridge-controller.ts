@@ -68,7 +68,7 @@ export class BridgeController {
             const toDelete: string[] = [];
             try {
                 for (const [name, bridge] of this.bridges) {
-                    let cluster = allClusters.get(name);
+                    const cluster = allClusters.get(name);
                     if (!cluster) {
                         log.debug("reconcile: cluster not present anymore, stopping", { name });
                         bridge.stop();

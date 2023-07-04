@@ -89,7 +89,7 @@ export class UserController {
             _userId?: string,
         ) => {
             return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-                let userId = _userId || req.params.userId;
+                const userId = _userId || req.params.userId;
                 try {
                     log.debug({ userId }, "OTS based login started.");
                     const secret = await this.otsDb.get(req.params.key);
@@ -246,7 +246,7 @@ export class UserController {
                     );
             }
 
-            let redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
+            const redirectToUrl = this.getSafeReturnToParam(req) || this.config.hostUrl.toString();
 
             if (req.isAuthenticated()) {
                 req.logout();

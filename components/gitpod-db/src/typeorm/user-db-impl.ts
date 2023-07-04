@@ -563,7 +563,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         const scopes = accessToken.scopes.map((s) => s.name);
 
         // Does the token already exist?
-        var dbToken: GitpodToken;
+        let dbToken: GitpodToken;
         const tokenHash = crypto.createHash("sha256").update(accessToken.accessToken, "utf8").digest("hex");
         const userAndToken = await this.findUserByGitpodToken(tokenHash);
         if (userAndToken) {

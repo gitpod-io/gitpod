@@ -142,7 +142,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
 
         // `cloneUrl` is stored redundandly to optimize for `getWorkspaceCountByCloneURL`.
         // As clone URLs are lesser constrained we want to shorten the value to work well with the indexed column.
-        let cloneUrl: string = this.toCloneUrl255((workspace as any).context?.repository?.cloneUrl || "");
+        const cloneUrl: string = this.toCloneUrl255((workspace as any).context?.repository?.cloneUrl || "");
 
         dbWorkspace.cloneUrl = cloneUrl;
         return await workspaceRepo.save(dbWorkspace);
@@ -983,8 +983,8 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         orderDir: "ASC" | "DESC",
         query?: AdminGetWorkspacesQuery,
     ): Promise<{ total: number; rows: WorkspaceAndInstance[] }> {
-        let whereConditions = [];
-        let whereConditionParams: any = {};
+        const whereConditions = [];
+        const whereConditionParams: any = {};
         let instanceIdQuery: boolean = false;
 
         if (query) {
@@ -1038,7 +1038,7 @@ export class TypeORMWorkspaceDBImpl extends TransactionalDBImpl<WorkspaceDB> imp
         // We need to select the latest wsi for a workspace. It's the same problem we have in 'find' (the "/workspaces" query, see above), so we use the same approach.
         // Only twist is that we might be searching for an instance directly ('instanceIdQuery').
         const workspaceRepo = await this.getWorkspaceRepo();
-        let qb = workspaceRepo
+        const qb = workspaceRepo
             .createQueryBuilder("ws")
             // We need to put the subquery into the join condition (ON) here to be able to reference `ws.id` which is
             // not possible in a subquery on JOIN (e.g. 'LEFT JOIN (SELECT ... WHERE i.workspaceId = ws.id)')

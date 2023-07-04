@@ -122,8 +122,6 @@ export class AuthProviderService {
     }
 
     async updateOrgAuthProvider(entry: AuthProviderEntry.UpdateOrgEntry): Promise<AuthProviderEntry> {
-        let authProvider: AuthProviderEntry;
-
         const { id, organizationId } = entry;
         // TODO can we change this to query for the provider by id and org instead of loading all from org?
         const existing = (await this.authProviderDB.findByOrgId(organizationId)).find((p) => p.id === id);
@@ -144,7 +142,7 @@ export class AuthProviderService {
             clientId: entry.clientId,
             clientSecret: entry.clientSecret || existing.oauth.clientSecret, // FE may send empty ("") if not changed
         };
-        authProvider = {
+        const authProvider: AuthProviderEntry = {
             ...existing,
             oauth,
             status: "pending",

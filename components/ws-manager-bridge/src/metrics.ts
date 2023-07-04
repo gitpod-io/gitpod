@@ -130,7 +130,7 @@ export class Metrics {
     }
 
     updateClusterMetrics(clusters: WorkspaceClusterWoTLS[]): void {
-        let newActiveClusterNames = new Set<string>();
+        const newActiveClusterNames = new Set<string>();
         clusters.forEach((cluster) => {
             this.clusterCordoned.labels(cluster.name).set(cluster.state === "cordoned" ? 1 : 0);
             this.clusterScore.labels(cluster.name).set(cluster.score);

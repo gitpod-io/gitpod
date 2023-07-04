@@ -679,12 +679,12 @@ export class WorkspaceStarter {
     }
 
     private async createMetadata(workspace: Workspace): Promise<WorkspaceMetadata> {
-        let metadata = new WorkspaceMetadata();
+        const metadata = new WorkspaceMetadata();
         metadata.setOwner(workspace.ownerId);
         metadata.setMetaId(workspace.id);
         if (workspace.projectId) {
             metadata.setProject(workspace.projectId);
-            let project = await this.projectDB.findProjectById(workspace.projectId);
+            const project = await this.projectDB.findProjectById(workspace.projectId);
             if (project && project.teamId) {
                 metadata.setTeam(project.teamId);
             }
@@ -703,7 +703,7 @@ export class WorkspaceStarter {
     ): Promise<StartWorkspaceResponse.AsObject | undefined> {
         let lastInstallation = "";
         const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance, region);
-        for await (let cluster of clusters) {
+        for await (const cluster of clusters) {
             try {
                 // getStartManager will throw an exception if there's no cluster available and hence exit the loop
                 const { manager, installation } = cluster;
@@ -902,7 +902,7 @@ export class WorkspaceStarter {
                 featureFlags.push("workspace_psi");
             }
 
-            let workspaceClass = await getWorkspaceClassForInstance(
+            const workspaceClass = await getWorkspaceClassForInstance(
                 ctx,
                 workspace,
                 previousInstance,
@@ -1478,7 +1478,7 @@ export class WorkspaceStarter {
         const allowSetTimeoutPromise = this.entitlementService.maySetTimeout(user, new Date());
         const workspaceLifetimePromise = this.entitlementService.getDefaultWorkspaceLifetime(user, new Date());
 
-        let featureFlags = instance.configuration!.featureFlags || [];
+        const featureFlags = instance.configuration!.featureFlags || [];
 
         const sysEnvvars: EnvironmentVariable[] = [];
         for (const e of ideConfig.envvars) {
@@ -1517,7 +1517,7 @@ export class WorkspaceStarter {
             if (allowSetTimeout) {
                 if (user.additionalData?.workspaceTimeout) {
                     try {
-                        let timeout = WorkspaceTimeoutDuration.validate(user.additionalData?.workspaceTimeout);
+                        const timeout = WorkspaceTimeoutDuration.validate(user.additionalData?.workspaceTimeout);
                         spec.setTimeout(timeout);
                     } catch (err) {}
                 }
@@ -1783,8 +1783,8 @@ export class WorkspaceStarter {
 
         const cloneUrl = context.repository.cloneUrl;
 
-        var cloneTarget: string | undefined;
-        var targetMode: CloneTargetMode;
+        let cloneTarget: string | undefined;
+        let targetMode: CloneTargetMode;
         if (context.localBranch) {
             targetMode = CloneTargetMode.LOCAL_BRANCH;
             cloneTarget = context.localBranch;

@@ -129,12 +129,12 @@ export class UserService {
     }
 
     async findUserForLogin(params: { candidate: IdentityLookup }) {
-        let user = await this.userDb.findUserByIdentity(params.candidate);
+        const user = await this.userDb.findUserByIdentity(params.candidate);
         return user;
     }
 
     async findOrgOwnedUser(params: { organizationId: string; email: string }): Promise<MaybeUser> {
-        let user = await this.userDb.findOrgOwnedUser(params.organizationId, params.email);
+        const user = await this.userDb.findOrgOwnedUser(params.organizationId, params.email);
         return user;
     }
 

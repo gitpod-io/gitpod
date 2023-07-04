@@ -23,7 +23,7 @@ import { UnauthorizedError } from "../errors";
 import { RepoURL } from "../repohost";
 import { HostContextProvider } from "./host-context-provider";
 
-declare var resourceInstance: GuardedResource;
+declare let resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
 
 export type GuardedResource =

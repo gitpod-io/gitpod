@@ -25,7 +25,7 @@ const defaultConfig: GithubAppConfig = {
 @injectable()
 export class GithubAppRules {
     protected mergeWithDefaultConfig(cfg: WorkspaceConfig | undefined): GithubAppConfig {
-        let result: GithubAppConfig = defaultConfig;
+        const result: GithubAppConfig = defaultConfig;
 
         if (!cfg || !cfg.github) {
             return result;

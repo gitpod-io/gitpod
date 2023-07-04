@@ -38,13 +38,13 @@ export class WorkspaceClusterImagebuilderClientProvider implements ImageBuilderC
         region?: WorkspaceRegion,
     ): Promise<PromisifiedImageBuilderClient> {
         const clusters = await this.clientProvider.getStartClusterSets(user, workspace, instance, region);
-        for await (let cluster of clusters) {
+        for await (const cluster of clusters) {
             const info = await this.source.getWorkspaceCluster(cluster.installation);
             if (!info) {
                 continue;
             }
 
-            var client = this.connectionCache.get(info.name);
+            let client = this.connectionCache.get(info.name);
             if (!client) {
                 client = this.clientProvider.createConnection(ImageBuilderClient, info, defaultGRPCOptions);
                 this.connectionCache.set(info.name, client);

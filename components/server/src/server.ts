@@ -27,7 +27,7 @@ import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
 import { OneTimeSecretServer } from "./one-time-secret-server";
-import { Disposable, DisposableCollection, GitpodClient, GitpodServer } from "@gitpod/gitpod-protocol";
+import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { BearerAuth, isBearerAuthError } from "./auth/bearer-authenticator";
 import { HostContextProvider } from "./auth/host-context-provider";
 import { CodeSyncService } from "./code-sync/code-sync-service";
@@ -56,7 +56,7 @@ import { RedisMutex } from "./redis/mutex";
 import { JobRunner } from "./jobs/runner";
 
 @injectable()
-export class Server<C extends GitpodClient, S extends GitpodServer> {
+export class Server {
     static readonly EVENT_ON_START = "start";
 
     @inject(Config) protected readonly config: Config;
