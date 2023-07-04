@@ -31,6 +31,8 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(jobsDurationSeconds);
     registry.registerMetric(redisCacheGetLatencyHistogram);
     registry.registerMetric(redisCacheRequestsTotal);
+    registry.registerMetric(redisUpdatesReceived);
+    registry.registerMetric(redisUpdatesCompletedTotal);
 }
 
 const loginCounter = new prometheusClient.Counter({
@@ -313,3 +315,23 @@ export const redisCacheSetLatencyHistogram = new prometheusClient.Histogram({
     labelNames: ["cache_group"],
     buckets: [0.01, 0.1, 0.2, 0.5, 1, 2, 5, 10],
 });
+
+export const redisUpdatesReceived = new prometheusClient.Counter({
+    name: "gitpod_redis_updates_received_total",
+    help: "Counter of udpates recieved over Redis Pub/Sub",
+    labelNames: ["channel"],
+});
+
+export function reportRedisUpdateReceived(channel: string) {
+    redisUpdatesReceived.inc({ channel });
+}
+
+export const redisUpdatesCompletedTotal = new prometheusClient.Counter({
+    name: "gitpod_redis_updates_completed_total",
+    help: "Counter of udpates recieved over Redis Pub/Sub which completed",
+    labelNames: ["channel", "error"],
+});
+
+export function reportRedisUpdateCompleted(channel: string, err?: Error) {
+    redisUpdatesCompletedTotal.inc({ channel, error: err ? "true" : "false" });
+}

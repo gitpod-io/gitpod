@@ -13,10 +13,11 @@ import {
     WorkspaceInstanceUpdateListener,
 } from "./local-message-broker";
 import { inject, injectable } from "inversify";
-import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
+import { Disposable, DisposableCollection, WorkspaceInstanceUpdatesChannel } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { Attributes } from "@gitpod/gitpod-protocol/lib/experiments/types";
+import { reportRedisUpdateCompleted, reportRedisUpdateReceived } from "../prometheus-metrics";
 
 @injectable()
 export class RedisListener implements LocalMessageBroker {
@@ -30,7 +31,7 @@ export class RedisListener implements LocalMessageBroker {
     protected readonly disposables = new DisposableCollection();
 
     async start(): Promise<void> {
-        const channels = ["chan:instances", "chan:prebuilds"];
+        const channels = [WorkspaceInstanceUpdatesChannel];
         const client = this.redis.get();
 
         for (let chan of channels) {
@@ -39,20 +40,34 @@ export class RedisListener implements LocalMessageBroker {
         }
 
         client.on("message", async (channel: string, message: string) => {
+            reportRedisUpdateReceived(channel);
+
             const featureEnabled = await this.isRedisPubSubEnabled({});
             if (!featureEnabled) {
                 log.debug("[redis] Redis listener is disabled through feature flag", { channel, message });
                 return;
             }
 
-            switch (channel) {
-                case "chan:instances":
-                    const instanceID = message;
-                    return this.onInstanceUpdate(instanceID);
-                default:
-                    log.error("[redis] Received message on unknown channel", { channel, message });
+            let err: Error | undefined;
+            try {
+                await this.onMessage(channel, message);
+            } catch (e) {
+                err = e;
+                log.error("[redis] Failed to handle message from Pub/Sub", { channel, message });
+            } finally {
+                reportRedisUpdateCompleted(channel, err);
             }
         });
+    }
+
+    private async onMessage(channel: string, message: string): Promise<void> {
+        switch (channel) {
+            case "chan:instances":
+                const instanceID = message;
+                return this.onInstanceUpdate(instanceID);
+            default:
+                throw new Error(`Redis Pub/Sub received message on unknown channel: ${channel}`);
+        }
     }
 
     private async onInstanceUpdate(instanceID: string): Promise<void> {
@@ -75,7 +90,7 @@ export class RedisListener implements LocalMessageBroker {
             } catch (err) {
                 log.error(
                     { userId: workspace.ownerId, instanceId: instance.id },
-                    "listenForWorkspaceInstanceUpdates",
+                    "Failed to notify subscriber about workspace instance updates",
                     err,
                 );
             }
