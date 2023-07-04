@@ -21,6 +21,7 @@ import (
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 type DaemonConfig struct {
@@ -29,6 +30,12 @@ type DaemonConfig struct {
 		Limit      int64 `json:"limit,string"`
 		BurstLimit int64 `json:"burstLimit,string"`
 	} `json:"cpuLimit"`
+	IOLimitConfig struct {
+		WriteBandwidthPerSecond resource.Quantity `json:"writeBandwidthPerSecond"`
+		ReadBandwidthPerSecond  resource.Quantity `json:"readBandwidthPerSecond"`
+		WriteIOPS               int64             `json:"writeIOPS"`
+		ReadIOPS                int64             `json:"readIOPS"`
+	} `json:"ioLimit"`
 }
 
 func TestCpuBurst(t *testing.T) {
@@ -45,7 +52,7 @@ func TestCpuBurst(t *testing.T) {
 
 		daemonConfig := getDaemonConfig(ctx, t, cfg)
 		if !daemonConfig.CpuLimitConfig.Enabled {
-			return ctx
+			t.Fatal("cpu limiting is not enabled")
 		}
 
 		if daemonConfig.CpuLimitConfig.Limit == 0 {

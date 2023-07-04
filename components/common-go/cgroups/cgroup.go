@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -132,4 +133,60 @@ func ReadPSIValue(path string) (PSI, error) {
 type PSI struct {
 	Some uint64
 	Full uint64
+}
+
+var (
+	deviceIORegex = regexp.MustCompile(`([0-9]+):([0-9]+) rbps=([0-9]+) wbps=([0-9]+)`)
+)
+
+type DeviceIOMax struct {
+	Major uint64
+	Minor uint64
+	Read  uint64
+	Write uint64
+}
+
+func ReadIOMax(path string) ([]DeviceIOMax, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var devices []DeviceIOMax
+	for _, line := range strings.Split(string(content), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		matches := deviceIORegex.FindStringSubmatch(line)
+		if len(matches) != 5 {
+			return nil, fmt.Errorf("invalid line in %s: %s", path, line)
+		}
+
+		major, err := strconv.ParseUint(matches[1], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse major number: %w", err)
+		}
+		minor, err := strconv.ParseUint(matches[2], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse minor number: %w", err)
+		}
+		read, err := strconv.ParseUint(matches[3], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse read bytes: %w", err)
+		}
+		write, err := strconv.ParseUint(matches[4], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse write bytes: %w", err)
+		}
+		devices = append(devices, DeviceIOMax{
+			Major: major,
+			Minor: minor,
+			Read:  read,
+			Write: write,
+		})
+	}
+
+	return devices, nil
 }

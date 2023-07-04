@@ -96,19 +96,30 @@ func (*DaemonAgent) GetWorkspaceResources(args *api.GetWorkspaceResourcesRequest
 
 	filepath.WalkDir("/mnt/node-cgroups", func(path string, d fs.DirEntry, err error) error {
 		if strings.Contains(path, args.ContainerId) {
+			var returnErr error
 			cpu := cgroups_v2.NewCpuController(path)
 			quota, _, err := cpu.Max()
-			if err != nil {
-				return err
+			if err == nil {
+				resp.Found = true
+				resp.CpuQuota = int64(quota)
+			} else {
+				returnErr = err
 			}
 
-			resp.Found = true
-			resp.CpuQuota = int64(quota)
+			io := cgroups_v2.NewIOController(path)
+			devices, err := io.Max()
+			if err == nil {
+				resp.FoundIOMax = true
+				resp.IOMax = devices
+			} else {
+				returnErr = err
+			}
+
+			return returnErr
 		}
 
 		return nil
 	})
-
 	return nil
 }
 

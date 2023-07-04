@@ -71,7 +71,7 @@ func TestRunDocker(t *testing.T) {
 			if resp.ExitCode != 0 {
 				if strings.Contains(resp.Stderr, "toomanyrequests") {
 					t.Skip("skip because we hit the rate limit of the dockerhub")
-					return ctx
+					return testCtx
 				}
 				t.Fatalf("docker run failed: %s\n%s", resp.Stdout, resp.Stderr)
 			}
