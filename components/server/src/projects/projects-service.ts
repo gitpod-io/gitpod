@@ -41,26 +41,20 @@ export class ProjectsService {
     ) {}
 
     async getProject(userId: string, projectId: string): Promise<Project | undefined> {
-        const project = await this.projectDB.findProjectById(projectId);
-        if (project && !(await this.auth.hasPermissionOnProject(userId, "read_info", project))) {
-            return undefined;
-        }
-        return project;
+        await this.checkPermissionAndThrow(userId, "read_info", projectId);
+        return this.projectDB.findProjectById(projectId);
     }
 
     async getProjects(userId: string, orgId: string): Promise<Project[]> {
+        const canReadOrgInfo = await this.auth.hasPermissionOnOrganization(userId, "read_info", orgId);
+        if (!canReadOrgInfo) {
+            // throw 404
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found.`);
+        }
         const projects = await this.projectDB.findProjects(orgId);
-        return await this.filterProjectsByPermission(projects, userId, "read_info");
-    }
-
-    private async filterProjectsByPermission<T extends Project>(
-        projects: T[],
-        userId: string,
-        permission: ProjectPermission,
-    ): Promise<T[]> {
-        const filteredProjects: T[] = [];
+        const filteredProjects: Project[] = [];
         const filter = async (project: Project) => {
-            if (await this.auth.hasPermissionOnProject(userId, permission, project)) {
+            if (await this.auth.hasPermissionOnProject(userId, "read_info", project)) {
                 return project;
             }
             return undefined;
@@ -69,7 +63,7 @@ export class ProjectsService {
         for (const projectPromise of projects.map(filter)) {
             const project = await projectPromise;
             if (project) {
-                filteredProjects.push(project as T);
+                filteredProjects.push(project);
             }
         }
         return filteredProjects;
@@ -85,9 +79,7 @@ export class ProjectsService {
     }
 
     async getProjectOverviewCached(user: User, project: Project): Promise<Project.Overview | undefined> {
-        if (!(await this.auth.hasPermissionOnProject(user.id, "read_info", project))) {
-            return undefined;
-        }
+        await this.checkPermissionAndThrow(user.id, "read_info", project);
         // Check for a cached project overview (fast!)
         const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
 
@@ -116,14 +108,11 @@ export class ProjectsService {
     }
 
     async getBranchDetails(user: User, project: Project, branchName?: string): Promise<Project.BranchDetails[]> {
-        const canReadProjectInfo = await this.auth.hasPermissionOnProject(user.id, "read_info", project);
-        if (!canReadProjectInfo) {
-            return [];
-        }
+        await this.checkPermissionAndThrow(user.id, "read_info", project);
 
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
-            return [];
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `Invalid clone URL on project ${project.id}.`);
         }
         const { owner, repo } = parsedUrl;
         const repositoryProvider = this.getRepositoryProvider(project);
@@ -181,6 +170,11 @@ export class ProjectsService {
         try {
             new URL(cloneUrl);
         } catch (err) {
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
+        }
+
+        const parsedUrl = RepoURL.parseRepoUrl(cloneUrl);
+        if (!parsedUrl) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be a valid URL.");
         }
 
@@ -256,7 +250,6 @@ export class ProjectsService {
                 // install a webhook.
                 if (await repositoryService.canInstallAutomatedPrebuilds(installer, cloneUrl)) {
                     log.info("Update prebuild installation for project.", {
-                        cloneUrl,
                         teamId,
                         userId,
                         installerId: installer.id,
@@ -268,17 +261,8 @@ export class ProjectsService {
     }
 
     async deleteProject(userId: string, projectId: string, transactionCtx?: TransactionalContext): Promise<void> {
-        //TODO we need the project for the auth check as we are using the orgid for the feature flag check. this lookup should be removed once we have removed the featureflag
-        const project = await this.getProject(userId, projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
-        }
-        if (!(await this.auth.hasPermissionOnProject(userId, "delete", project))) {
-            throw new ApplicationError(
-                ErrorCodes.PERMISSION_DENIED,
-                `You do not have permission to delete project ${projectId}.`,
-            );
-        }
+        await this.checkPermissionAndThrow(userId, "delete", projectId);
+
         let orgId: string | undefined = undefined;
         try {
             await this.projectDB.transaction(transactionCtx, async (db) => {
@@ -301,13 +285,14 @@ export class ProjectsService {
 
     async findPrebuilds(userId: string, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const { projectId, prebuildId } = params;
+        await this.checkPermissionAndThrow(userId, "read_info", projectId);
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
-            return [];
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
         }
         const parsedUrl = RepoURL.parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
-            return [];
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, `Invalid clone URL on project ${projectId}.`);
         }
         const result: PrebuildWithStatus[] = [];
 
@@ -346,6 +331,15 @@ export class ProjectsService {
     }
 
     async updateProjectPartial(userId: string, partialProject: PartialProject): Promise<void> {
+        await this.checkPermissionAndThrow(userId, "write_info", partialProject.id);
+
+        const partial: PartialProject = { id: partialProject.id };
+        const allowedFields: (keyof Project)[] = ["settings"];
+        for (const f of allowedFields) {
+            if (f in partialProject) {
+                (partial[f] as any) = partialProject[f];
+            }
+        }
         return this.projectDB.updateProject(partialProject);
     }
 
@@ -356,27 +350,22 @@ export class ProjectsService {
         value: string,
         censored: boolean,
     ): Promise<void> {
-        const project = await this.getProject(userId, projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
-        }
-        await this.checkPermissionAndThrow(userId, "write_info", project);
+        await this.checkPermissionAndThrow(userId, "write_info", projectId);
         return this.projectDB.setProjectEnvironmentVariable(projectId, name, value, censored);
     }
 
     async getProjectEnvironmentVariables(userId: string, projectId: string): Promise<ProjectEnvVar[]> {
-        const project = await this.getProject(userId, projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
-        }
+        await this.checkPermissionAndThrow(userId, "read_info", projectId);
         return this.projectDB.getProjectEnvironmentVariables(projectId);
     }
 
     async getProjectEnvironmentVariableById(userId: string, variableId: string): Promise<ProjectEnvVar | undefined> {
         const result = await this.projectDB.getProjectEnvironmentVariableById(variableId);
         if (result) {
-            const project = await this.getProject(userId, result.projectId);
-            if (!project) {
+            try {
+                await this.checkPermissionAndThrow(userId, "read_info", result.projectId);
+            } catch (err) {
+                // we return undefined if the user does not have access to the project
                 return undefined;
             }
         }
@@ -397,10 +386,7 @@ export class ProjectsService {
     }
 
     async isProjectConsideredInactive(userId: string, projectId: string): Promise<boolean> {
-        const project = await this.getProject(userId, projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
-        }
+        await this.checkPermissionAndThrow(userId, "read_info", projectId);
         const usage = await this.projectDB.getProjectUsage(projectId);
         if (!usage?.lastWorkspaceStart) {
             return false;
@@ -414,9 +400,13 @@ export class ProjectsService {
     async getPrebuildEvents(userId: string, cloneUrl: string): Promise<PrebuildEvent[]> {
         const project = await this.projectDB.findProjectByCloneUrl(cloneUrl);
         if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${cloneUrl} not found.`);
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project with ${cloneUrl} not found.`);
         }
-        await this.checkPermissionAndThrow(userId, "read_info", project);
+        try {
+            await this.checkPermissionAndThrow(userId, "read_info", project);
+        } catch (err) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project with ${cloneUrl} not found.`);
+        }
         const events = await this.webhookEventDB.findByCloneUrl(cloneUrl, 100);
         return events.map((we) => ({
             id: we.id,
@@ -430,7 +420,22 @@ export class ProjectsService {
         }));
     }
 
-    private async checkPermissionAndThrow(userId: string, permission: ProjectPermission, project: Project) {
+    private async checkPermissionAndThrow(
+        userId: string,
+        permission: ProjectPermission,
+        projectOrId: Project | string,
+    ) {
+        // TODO remove the unnecessary project lookup once we have removed the feature flag check and no longer need the org id.
+        let project: Project | undefined;
+        if (typeof projectOrId === "string") {
+            project = await this.projectDB.findProjectById(projectOrId);
+            if (!project) {
+                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectOrId} not found.`);
+            }
+        } else {
+            project = projectOrId;
+        }
+
         if (await this.auth.hasPermissionOnProject(userId, permission, project)) {
             return;
         }

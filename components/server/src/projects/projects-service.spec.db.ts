@@ -12,16 +12,17 @@ import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-s
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { ResponseError } from "vscode-ws-jsonrpc";
 import { OrganizationService } from "../orgs/organization-service";
 import { serviceTestingContainerModule } from "../test/service-testing-container-module";
 import { ProjectsService } from "./projects-service";
+import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 const expect = chai.expect;
 
 describe("ProjectsService", async () => {
     let container: Container;
     let owner: User;
+    let member: User;
     let stranger: User;
     let org: Organization;
 
@@ -33,9 +34,12 @@ describe("ProjectsService", async () => {
         });
         const userDB = container.get<UserDB>(UserDB);
         owner = await userDB.newUser();
+        member = await userDB.newUser();
         stranger = await userDB.newUser();
         const orgService = container.get(OrganizationService);
         org = await orgService.createOrganization(owner.id, "my-org");
+        const invite = await orgService.getOrCreateInvite(owner.id, org.id);
+        await orgService.joinOrganization(member.id, invite.id);
     });
 
     afterEach(async () => {
@@ -63,24 +67,15 @@ describe("ProjectsService", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
 
-        const foundProject = await ps.getProject(stranger.id, project.id);
-        expect(foundProject).to.be.undefined;
-
-        const projects = await ps.getProjects(stranger.id, project.id);
-        expect(projects.length).to.equal(0);
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProject(stranger.id, project.id));
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
     });
 
-    it("should not let strangers find projects", async () => {
+    it("should not let strangers delete projects", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
 
-        try {
-            await ps.deleteProject(stranger.id, project.id);
-            expect.fail("should not be able to delete projects");
-        } catch (error) {
-            ResponseError;
-            expect(error).to.not.be.undefined;
-        }
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProject(stranger.id, project.id));
     });
 
     it("should let owners delete their projects", async () => {
@@ -88,10 +83,55 @@ describe("ProjectsService", async () => {
         const project = await createTestProject(ps, org, owner);
         await ps.deleteProject(owner.id, project.id);
 
-        let foundProject = await ps.getProject(owner.id, project.id);
-        expect(foundProject).to.be.undefined;
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProject(owner.id, project.id));
+
         const projects = await ps.getProjects(owner.id, org.id);
         expect(projects.length).to.equal(0);
+    });
+
+    it("should let owners update their project settings", async () => {
+        const ps = container.get(ProjectsService);
+        const project = await createTestProject(ps, org, owner);
+        await ps.updateProjectPartial(owner.id, {
+            id: project.id,
+            settings: {
+                useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
+            },
+        });
+
+        const updatedProject = await ps.getProject(owner.id, project.id);
+
+        expect(updatedProject?.settings?.useIncrementalPrebuilds).to.not.equal(
+            project.settings?.useIncrementalPrebuilds,
+        );
+    });
+
+    it("should not let members update project settings", async () => {
+        const ps = container.get(ProjectsService);
+        const project = await createTestProject(ps, org, owner);
+
+        await expectError(ErrorCodes.PERMISSION_DENIED, () =>
+            ps.updateProjectPartial(member.id, {
+                id: project.id,
+                settings: {
+                    useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
+                },
+            }),
+        );
+    });
+
+    it("should not let strangers update project settings", async () => {
+        const ps = container.get(ProjectsService);
+        const project = await createTestProject(ps, org, owner);
+
+        await expectError(ErrorCodes.NOT_FOUND, () =>
+            ps.updateProjectPartial(stranger.id, {
+                id: project.id,
+                settings: {
+                    useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
+                },
+            }),
+        );
     });
 
     it("should let owners create, delete and get project env vars", async () => {
@@ -132,7 +172,7 @@ describe("ProjectsService", async () => {
             await ps.deleteProjectEnvironmentVariable(stranger.id, envVars[0].id);
             expect.fail("should not be able to delete env var as stranger");
         } catch (error) {
-            expect(error.message).to.contain("not found");
+            expectErrorCode(error, ErrorCodes.NOT_FOUND);
         }
 
         // let's try to get the env vars as a stranger
@@ -140,10 +180,23 @@ describe("ProjectsService", async () => {
             await ps.getProjectEnvironmentVariables(stranger.id, project.id);
             expect.fail("should not be able to get env vars as stranger");
         } catch (error) {
-            expect(error.message).to.contain("not found");
+            expectErrorCode(error, ErrorCodes.NOT_FOUND);
         }
     });
 });
+
+async function expectError(errorCode: ErrorCode, code: () => Promise<any>) {
+    try {
+        await code();
+        expect.fail("expected error: " + errorCode);
+    } catch (error) {
+        expectErrorCode(error, errorCode);
+    }
+}
+
+function expectErrorCode(err: any, errorCode: ErrorCode) {
+    expect(err && ApplicationError.hasErrorCode(err) && err.code).to.equal(errorCode);
+}
 
 async function createTestProject(ps: ProjectsService, org: Organization, owner: User) {
     return await ps.createProject(
