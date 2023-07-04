@@ -9,6 +9,7 @@ import {
     WorkspaceInstance,
     WorkspaceTimeoutDuration,
     WORKSPACE_TIMEOUT_DEFAULT_LONG,
+    WORKSPACE_LIFETIME_LONG,
 } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { BillingTier } from "@gitpod/gitpod-protocol/lib/protocol";
@@ -63,6 +64,13 @@ export interface EntitlementService {
      * @param date The date for which we want to know the default workspace timeout (depends on active subscription)
      */
     getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration>;
+
+    /**
+     * Returns the default workspace lifetime for the given user at a given point in time
+     * @param user
+     * @param date The date for which we want to know the default workspace timeout (depends on active subscription)
+     */
+    getDefaultWorkspaceLifetime(user: User, date: Date): Promise<WorkspaceTimeoutDuration>;
 
     /**
      * Returns true if the user ought to land on a workspace cluster that provides more resources
@@ -153,6 +161,21 @@ export class EntitlementServiceImpl implements EntitlementService {
         } catch (err) {
             log.error({ userId: user.id }, "EntitlementService error: getDefaultWorkspaceTimeout", err);
             return WORKSPACE_TIMEOUT_DEFAULT_LONG;
+        }
+    }
+
+    async getDefaultWorkspaceLifetime(user: User, date: Date = new Date()): Promise<WorkspaceTimeoutDuration> {
+        try {
+            const billingMode = await this.billingModes.getBillingModeForUser(user, date);
+            switch (billingMode.mode) {
+                case "none":
+                    return WORKSPACE_LIFETIME_LONG;
+                case "usage-based":
+                    return this.ubp.getDefaultWorkspaceLifetime(user, date);
+            }
+        } catch (err) {
+            log.error({ userId: user.id }, "EntitlementService error: getDefaultWorkspaceLifetime", err);
+            return WORKSPACE_LIFETIME_LONG;
         }
     }
 

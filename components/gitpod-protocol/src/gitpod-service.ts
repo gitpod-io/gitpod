@@ -340,6 +340,8 @@ export namespace WorkspaceTimeoutDuration {
 export const WORKSPACE_TIMEOUT_DEFAULT_SHORT: WorkspaceTimeoutDuration = "30m";
 export const WORKSPACE_TIMEOUT_DEFAULT_LONG: WorkspaceTimeoutDuration = "60m";
 export const WORKSPACE_TIMEOUT_EXTENDED: WorkspaceTimeoutDuration = "180m";
+export const WORKSPACE_LIFETIME_SHORT: WorkspaceTimeoutDuration = "8h";
+export const WORKSPACE_LIFETIME_LONG: WorkspaceTimeoutDuration = "36h";
 
 export const createServiceMock = function <C extends GitpodClient, S extends GitpodServer>(
     methods: Partial<JsonRpcProxy<S>>,
