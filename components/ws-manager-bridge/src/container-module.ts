@@ -38,6 +38,7 @@ import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
 import { RedisClient } from "./redis/client";
+import { RedisPublisher } from "./redis/publisher";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
@@ -92,4 +93,5 @@ export const containerModule = new ContainerModule((bind) => {
     bind(AppClusterWorkspaceInstancesController).toSelf().inSingletonScope();
 
     bind(RedisClient).toSelf().inSingletonScope();
+    bind(RedisPublisher).toSelf().inSingletonScope();
 });
