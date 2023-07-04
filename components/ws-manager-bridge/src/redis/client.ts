@@ -22,7 +22,7 @@ export class RedisClient {
             host,
             enableReadyCheck: true,
             keepAlive: 10 * 1000,
-            connectionName: "server",
+            connectionName: "ws-man-bridge",
         });
     }
 
