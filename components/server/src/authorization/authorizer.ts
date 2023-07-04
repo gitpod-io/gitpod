@@ -137,11 +137,11 @@ export class Authorizer {
     async addOrganization(org: Organization, members: TeamMemberInfo[], projects: Project[]): Promise<void> {
         const updates: v1.RelationshipUpdate[] = [];
 
-        for (let member of members) {
+        for (const member of members) {
             updates.concat(this.addOrganizationRoleUpdates(org.id, member.userId, member.role));
         }
 
-        for (let project of projects) {
+        for (const project of projects) {
             updates.concat(this.addProjectToOrgUpdates(org.id, project.id));
         }
 

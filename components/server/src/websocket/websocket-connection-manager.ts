@@ -216,7 +216,7 @@ export class WebsocketConnectionManager implements ConnectionHandler {
         const gitpodServer = this.serverFactory();
 
         let resourceGuard: ResourceAccessGuard;
-        let explicitGuard = (expressReq as WithResourceAccessGuard).resourceGuard;
+        const explicitGuard = (expressReq as WithResourceAccessGuard).resourceGuard;
         if (!!explicitGuard) {
             resourceGuard = explicitGuard;
         } else if (!!user) {

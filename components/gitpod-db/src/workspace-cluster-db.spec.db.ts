@@ -175,7 +175,7 @@ export class WorkspaceClusterDBSpec {
 
         await this.db.deleteByName("eu71");
 
-        let wscs = await this.db.findFiltered({});
+        const wscs = await this.db.findFiltered({});
         expect(wscs.length).to.equal(1);
     }
 

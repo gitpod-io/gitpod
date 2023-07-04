@@ -647,7 +647,7 @@ export namespace SSHPublicKeyValue {
 
     export function getFingerprint(value: SSHPublicKeyValue) {
         const data = getData(value);
-        let buf = Buffer.from(data.key, "base64");
+        const buf = Buffer.from(data.key, "base64");
         // gitlab style
         // const hash = createHash("md5").update(buf).digest("hex");
         // github style

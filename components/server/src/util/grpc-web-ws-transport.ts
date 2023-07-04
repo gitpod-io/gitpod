@@ -46,7 +46,7 @@ export function WebsocketTransport(): TransportFactory {
 function websocketRequest(options: TransportOptions): Transport {
     options.debug && debug("websocketRequest", options);
 
-    let webSocketAddress = constructWebSocketAddress(options.url);
+    const webSocketAddress = constructWebSocketAddress(options.url);
 
     const sendQueue: Array<Uint8Array | WebsocketSignal> = [];
     let ws: WebSocket;

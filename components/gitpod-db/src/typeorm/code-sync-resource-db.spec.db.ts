@@ -103,7 +103,7 @@ export class CodeSyncResourceDBSpec {
             },
         });
 
-        let extensionsRev = await this.db.insert(
+        const extensionsRev = await this.db.insert(
             this.userId,
             SyncResource.Extensions,
             undefined,
@@ -141,7 +141,7 @@ export class CodeSyncResourceDBSpec {
                 return;
             }
 
-            for (let rev of oldRevs) {
+            for (const rev of oldRevs) {
                 await this.db.deleteResource(this.userId, kind, rev, undefined, async () => {});
             }
         };
@@ -310,7 +310,7 @@ export class CodeSyncResourceDBSpec {
             },
         });
 
-        let extensionsRev = await this.db.insert(
+        const extensionsRev = await this.db.insert(
             this.userId,
             SyncResource.Extensions,
             collection1,
@@ -354,7 +354,7 @@ export class CodeSyncResourceDBSpec {
 
         const collection2 = await this.db.createCollection(this.userId);
 
-        let keybindingsRev = await this.db.insert(
+        const keybindingsRev = await this.db.insert(
             this.userId,
             SyncResource.Keybindings,
             collection2,

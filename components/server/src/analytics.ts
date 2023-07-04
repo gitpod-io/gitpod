@@ -104,7 +104,7 @@ function getAnonymousId(request: Request) {
 }
 
 function resolveIdentities(user: User) {
-    let identities: { github_slug?: String; gitlab_slug?: String; bitbucket_slug?: String } = {};
+    const identities: { github_slug?: String; gitlab_slug?: String; bitbucket_slug?: String } = {};
     user.identities.forEach((value) => {
         switch (value.authProviderId) {
             case "Public-GitHub": {

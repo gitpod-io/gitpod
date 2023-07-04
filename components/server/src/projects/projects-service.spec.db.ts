@@ -57,7 +57,7 @@ describe("ProjectsService", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
 
-        let foundProject = await ps.getProject(owner.id, project.id);
+        const foundProject = await ps.getProject(owner.id, project.id);
         expect(foundProject?.id).to.equal(project.id);
         const projects = await ps.getProjects(owner.id, org.id);
         expect(projects.length).to.equal(1);

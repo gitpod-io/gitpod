@@ -5,8 +5,8 @@
   "scripts": {
     "build": "yarn lint && npx tsc",
     "build:clean": "yarn clean && yarn build",
-    "lint": "yarn eslint src/**/*.ts",
-    "format": "yarn eslint src/**/*.ts --fix",
+    "lint": "yarn eslint src/*.ts src/**/*.ts",
+    "lint:fix": "yarn eslint src/*.ts src/**/*.ts --fix",
     "rebuild": "yarn build:clean",
     "build:watch": "watch 'yarn build' .",
     "test": "yarn db-test",

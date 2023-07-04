@@ -142,7 +142,7 @@ export class WorkspaceManagerBridge implements Disposable {
 
         // We can't just handle the status update directly, but have to "serialize" it to ensure the updates stay in order.
         // If we did not do this, the async nature of our code would allow for one message to overtake the other.
-        let q = this.queues.get(instanceId) || new Queue();
+        const q = this.queues.get(instanceId) || new Queue();
         q.enqueue(() => handler(ctx, msg)).catch((e) => log.error({ instanceId }, e));
         this.queues.set(instanceId, q);
     }

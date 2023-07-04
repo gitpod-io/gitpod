@@ -20,7 +20,7 @@ class TestWorkspaceStarter {
             code: 9,
         };
 
-        let result = isClusterMaintenanceError(err);
+        const result = isClusterMaintenanceError(err);
         expect(result).to.be.true;
     }
 
@@ -31,7 +31,7 @@ class TestWorkspaceStarter {
             code: 9,
         };
 
-        let result = isClusterMaintenanceError(err);
+        const result = isClusterMaintenanceError(err);
         expect(result).to.be.false;
     }
 
@@ -41,7 +41,7 @@ class TestWorkspaceStarter {
             code: 8,
         };
 
-        let result = isResourceExhaustedError(err);
+        const result = isResourceExhaustedError(err);
         expect(result).to.be.true;
     }
 }

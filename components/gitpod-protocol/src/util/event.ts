@@ -127,8 +127,7 @@ export class Emitter<T> {
                 }
                 this._callbacks.add(listener, thisArgs);
 
-                let result: Disposable;
-                result = {
+                const result = {
                     dispose: () => {
                         this._callbacks!.remove(listener, thisArgs);
                         result.dispose = Emitter._noop;

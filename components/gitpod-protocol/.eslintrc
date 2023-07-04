@@ -9,8 +9,8 @@
         "sourceType": "module"
     },
     "rules": {
-        "no-var": "off",
-        "prefer-const": "off",
+        "no-var": "error",
+        "prefer-const": "error",
         "@typescript-eslint/ban-ts-comment": "off",
         "@typescript-eslint/ban-types": "off",
         "@typescript-eslint/explicit-module-boundary-types": "off",

@@ -114,7 +114,7 @@ export class IDEService {
         }
         if (ideConfig.tasks) {
             try {
-                let ideTasks: TaskConfig[] = JSON.parse(ideConfig.tasks);
+                const ideTasks: TaskConfig[] = JSON.parse(ideConfig.tasks);
                 tasks.push(...ideTasks);
             } catch (e) {
                 console.error("failed get tasks from ide config:", e);

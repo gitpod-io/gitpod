@@ -48,10 +48,10 @@ export class OrganizationService {
         const members = await this.teamDB.findMembersByTeam(orgId);
         try {
             await this.teamDB.transaction(async (db, ctx) => {
-                for (let project of projects) {
+                for (const project of projects) {
                     await this.projectsService.deleteProject(userId, project.id, ctx);
                 }
-                for (let member of members) {
+                for (const member of members) {
                     await db.removeMemberFromTeam(member.userId, orgId);
                 }
 

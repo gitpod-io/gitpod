@@ -161,7 +161,7 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
         listeners.push(listener);
         return Disposable.create(() => {
             const ls = listeners!;
-            let idx = ls.findIndex((l) => l === listener);
+            const idx = ls.findIndex((l) => l === listener);
             if (idx !== -1) {
                 ls.splice(idx, 1);
             }

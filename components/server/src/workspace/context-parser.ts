@@ -57,9 +57,9 @@ export abstract class AbstractContextParser implements IContextParser {
             segments.splice(0, lenghtOfRelativePath);
         }
 
-        var owner: string = segments[0];
-        var repoName: string = segments[1];
-        var moreSegmentsStart: number = 2;
+        const owner: string = segments[0];
+        const repoName: string = segments[1];
+        const moreSegmentsStart: number = 2;
         const endsWithRepoName = segments.length === moreSegmentsStart;
         const searchParams = url.searchParams;
         return {

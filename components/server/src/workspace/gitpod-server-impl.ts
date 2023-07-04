@@ -2155,6 +2155,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         const logCtx: LogContext = { userId: user.id, workspaceId };
+        // eslint-disable-next-line prefer-const
         let { instance, workspace } = await this.internGetCurrentWorkspaceInstance(ctx, user, workspaceId);
         if (!instance) {
             log.debug(logCtx, `No running instance for workspaceId.`);
@@ -3852,7 +3853,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const userId = this.userID;
         const { ip, userAgent } = this.clientHeaderFields;
         const anonymousId = event.anonymousId || createCookielessId(ip, userAgent);
-        let msg = {
+        const msg = {
             messageId: event.messageId,
             context: {},
             properties: event.properties,
@@ -4245,7 +4246,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
-        let returnUrl = this.config.hostUrl
+        const returnUrl = this.config.hostUrl
             .with(() => ({ pathname: `/billing`, search: `org=${attrId.kind === "team" ? attrId.teamId : "0"}` }))
             .toString();
         await this.guardTeamOperation(attrId.teamId, "update", "write_billing");

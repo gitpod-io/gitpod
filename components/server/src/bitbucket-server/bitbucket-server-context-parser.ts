@@ -79,7 +79,7 @@ export class BitbucketServerContextParser extends AbstractContextParser implemen
             segments.splice(0, lenghtOfRelativePath);
         }
 
-        let firstSegment = segments[0];
+        const firstSegment = segments[0];
         let owner: string = segments[1];
         let repoKind: "users" | "projects";
         let repoName;

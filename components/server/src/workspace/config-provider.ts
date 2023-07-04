@@ -95,10 +95,10 @@ export class ConfigProvider {
             if (!config.image) {
                 config.image = this.config.workspaceDefaults.workspaceImage;
             } else if (ImageConfigFile.is(config.image)) {
-                let dockerfilePath = [configBasePath, config.image.file].filter((s) => !!s).join("/");
+                const dockerfilePath = [configBasePath, config.image.file].filter((s) => !!s).join("/");
                 let repo = commit.repository;
                 let rev = commit.revision;
-                let image = config.image!;
+                const image = config.image!;
 
                 if (config._origin === "definitely-gp") {
                     repo = ConfigProvider.DEFINITELY_GP_REPO;
@@ -297,13 +297,13 @@ export class ConfigProvider {
         }
 
         if (!cfg.checkoutLocation) {
-            let inferredCfg = await inferredConfig;
+            const inferredCfg = await inferredConfig;
             if (inferredCfg) {
                 cfg.checkoutLocation = inferredCfg.checkoutLocation;
             }
         }
         if (!cfg.workspaceLocation) {
-            let inferredCfg = await inferredConfig;
+            const inferredCfg = await inferredConfig;
             if (inferredCfg) {
                 cfg.workspaceLocation = inferredCfg.workspaceLocation;
             }

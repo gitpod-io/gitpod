@@ -125,9 +125,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     // Workspace timeout
     setWorkspaceTimeout(workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult>;
     getWorkspaceTimeout(workspaceId: string): Promise<GetWorkspaceTimeoutResult>;
-    sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void>;
-
-    updateWorkspaceUserPin(id: string, action: GitpodServer.PinAction): Promise<void>;
 
     // Port management
     getOpenPorts(workspaceId: string): Promise<WorkspaceInstancePort[]>;
@@ -347,9 +344,7 @@ export const createServiceMock = function <C extends GitpodClient, S extends Git
     return new GitpodServiceImpl<C, S>(createServerMock(methods));
 };
 
-export const createServerMock = function <C extends GitpodClient, S extends GitpodServer>(
-    methods: Partial<JsonRpcProxy<S>>,
-): JsonRpcProxy<S> {
+export const createServerMock = function <S extends GitpodServer>(methods: Partial<JsonRpcProxy<S>>): JsonRpcProxy<S> {
     methods.setClient = methods.setClient || (() => {});
     methods.dispose = methods.dispose || (() => {});
     return new Proxy<JsonRpcProxy<S>>(methods as any as JsonRpcProxy<S>, {

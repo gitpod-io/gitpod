@@ -111,13 +111,13 @@ export class ClusterService implements IClusterServiceServer {
 
                 // store the ws-manager into the database
                 let perfereability = Preferability.NONE;
-                let govern = true;
+                const govern = true;
                 let state: WorkspaceClusterState = "available";
                 if (req.hints) {
                     perfereability = req.hints.perfereability;
                     state = mapCordoned(req.hints.cordoned);
                 }
-                let score = mapPreferabilityToScore(perfereability);
+                const score = mapPreferabilityToScore(perfereability);
                 if (score === undefined) {
                     throw new GRPCError(grpc.status.INVALID_ARGUMENT, `unknown preferability ${perfereability}`);
                 }

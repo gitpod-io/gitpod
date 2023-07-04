@@ -51,7 +51,7 @@ export class WsmanSubscriber implements Disposable {
                     this.sub.on("data", (incoming: SubscribeResponse) => {
                         const status = incoming.getStatus();
                         if (!!status) {
-                            let header: any = {};
+                            const header: any = {};
                             if (!!incoming.getHeaderMap()) {
                                 incoming.getHeaderMap().forEach((v: string, k: string) => (header[k] = v));
                             }

@@ -70,7 +70,7 @@ export class TeamDBSpec {
                 expect.fail("Unexpected error: " + error);
             }
         }
-        let team = await this.teamDB.createTeam(user.id, "      I ♥ gitpod        ");
+        const team = await this.teamDB.createTeam(user.id, "      I ♥ gitpod        ");
         expect(team.name).to.be.eq("I ♥ gitpod");
         expect(team.slug).to.be.eq("i-love-gitpod");
     }

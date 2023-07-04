@@ -83,12 +83,13 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     }
 
     public async parseURL(user: User, contextUrl: string): Promise<URLParts> {
-        var { host, owner, repoName, moreSegments, searchParams } = await super.parseURL(user, contextUrl);
+        // eslint-disable-next-line prefer-const
+        let { host, owner, repoName, moreSegments, searchParams } = await super.parseURL(user, contextUrl);
         // TODO: we remove the /-/ in the path in the next line as quick fix for #3809 -- improve this in the long term
         const segments = [owner, repoName, ...moreSegments.filter((s) => s !== "-")]
             // Replace URL encoded '#' sign. Don't use decodeURI() because GitLab seems to be inconsistent in what needs to be decoded and what not.
             .map((x) => x.replace(/%23/g, "#"));
-        var moreSegmentsStart: number = 2;
+        let moreSegmentsStart: number = 2;
         /*
             We cannot deduce the namespace (aka `owner`) and project name (aka `repoName`) from the URI with certainty.
 
@@ -104,7 +105,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
 
             Therefore we try it by calling the API to ask if this is a project or not and adding another path segments step by step.
         */
-        for (var i = 1; i < segments.length; ++i) {
+        for (let i = 1; i < segments.length; ++i) {
             owner = segments.slice(0, i).join("/");
             repoName = segments[i];
             moreSegmentsStart = i + 1;
