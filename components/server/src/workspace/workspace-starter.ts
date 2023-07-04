@@ -198,7 +198,7 @@ export class WorkspaceStarter {
         @inject(TracedUserDB) private readonly userDB: DBWithTracing<UserDB>,
         @inject(TokenProvider) private readonly tokenProvider: TokenProvider,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
-        @inject(MessageBusIntegration) private readonly messageBus: MessageBusIntegration,
+        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
         @inject(AuthorizationService) private readonly authService: AuthorizationService,
         @inject(ImageBuilderClientProvider) private readonly imagebuilderClientProvider: ImageBuilderClientProvider,
         @inject(ImageSourceProvider) private readonly imageSourceProvider: ImageSourceProvider,
@@ -209,7 +209,6 @@ export class WorkspaceStarter {
         @inject(BlockedRepositoryDB) private readonly blockedRepositoryDB: BlockedRepositoryDB,
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
-        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
     ) {}
     public async startWorkspace(
         ctx: TraceContext,
@@ -714,7 +713,7 @@ export class WorkspaceStarter {
                 instance.region = installation;
                 await this.workspaceDb.trace(ctx).storeInstance(instance);
                 try {
-                    await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+                    await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
                 } catch (err) {
                     // if sending the notification fails that's no reason to stop the workspace creation.
                     // If the dashboard misses this event it will catch up at the next one.
@@ -767,7 +766,7 @@ export class WorkspaceStarter {
             if (prebuild) {
                 const info = (await this.workspaceDb.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
                 if (info) {
-                    await this.messageBus.notifyOnPrebuildUpdate({ info, status: "queued" });
+                    await this.messagebus.notifyOnPrebuildUpdate({ info, status: "queued" });
                 }
             }
         } catch (e) {
@@ -795,7 +794,7 @@ export class WorkspaceStarter {
             instance.status.conditions.failed = err.toString();
             instance.status.message = `Workspace cannot be started: ${err}`;
             await this.workspaceDb.trace({ span }).storeInstance(instance);
-            await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+            await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
 
             // If we just attempted to start a workspace for a prebuild - and that failed, we have to fail the prebuild itself.
             await this.failPrebuildWorkspace({ span }, err, workspace);
@@ -821,10 +820,9 @@ export class WorkspaceStarter {
                     prebuild.error = err.toString();
 
                     await this.workspaceDb.trace({ span }).storePrebuiltWorkspace(prebuild);
-                    await this.messageBus.notifyHeadlessUpdate({ span }, workspace.ownerId, workspace.id, {
+                    await this.messagebus.notifyHeadlessUpdate({ span }, workspace.ownerId, workspace.id, {
                         type: HeadlessWorkspaceEventType.Failed,
                         workspaceID: workspace.id, // required in prebuild-queue-maintainer.ts
-                        text: "",
                     });
                 }
             }
@@ -1209,7 +1207,7 @@ export class WorkspaceStarter {
             instance = await this.workspaceDb
                 .trace({ span })
                 .updateInstancePartial(instance.id, { workspaceImage, status });
-            await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+            await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
 
             let buildResult: BuildResponse;
             try {
@@ -1283,7 +1281,7 @@ export class WorkspaceStarter {
             await this.failPrebuildWorkspace({ span }, err, workspace);
 
             // Push updated workspace instance over messagebus
-            await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+            await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
 
             TraceContext.setError({ span }, err);
             const looksLikeUserError = (msg: string): boolean => {
