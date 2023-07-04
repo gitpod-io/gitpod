@@ -1,0 +1,48 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+)
+
+// TokenResponse represents the structure of the token response
+type TokenResponse struct {
+	Token string `json:"token"`
+}
+
+func main() {
+	// Define the endpoint to retrieve the token
+	http.HandleFunc("/token", getTokenHandler)
+
+	// Start the server on port 8080
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func getTokenHandler(w http.ResponseWriter, r *http.Request) {
+	// Generate or retrieve the token from a secure source
+	token := generateToken()
+
+	// Create the token response
+	response := TokenResponse{
+		Token: token,
+	}
+
+	// Set the response content type
+	w.Header().Set("Content-Type", "application/json")
+
+	// Encode the response as JSON
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println("Error encoding token response:", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
+func generateToken() string {
+	// Your token generation logic goes here
+	// This is just a placeholder
+	return "myToken"
+}
