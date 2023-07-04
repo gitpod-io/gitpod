@@ -52,6 +52,7 @@ export class RedisSubscriber implements LocalMessageBroker {
             let err: Error | undefined;
             try {
                 await this.onMessage(channel, message);
+                log.debug("[redis] Succesfully handled update", { channel, message });
             } catch (e) {
                 err = e;
                 log.error("[redis] Failed to handle message from Pub/Sub", { channel, message });
