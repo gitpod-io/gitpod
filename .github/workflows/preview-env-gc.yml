@@ -8,7 +8,7 @@ jobs:
         name: "Find stale preview environments"
         runs-on: [self-hosted]
         container:
-            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-dev-image-gha.12149
+            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
         outputs:
             names: ${{ steps.set-matrix.outputs.names }}
             count: ${{ steps.set-matrix.outputs.count }}

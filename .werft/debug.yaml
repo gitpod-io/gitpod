@@ -48,7 +48,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-dev-image-gha.12149
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
     workingDir: /workspace
     imagePullPolicy: IfNotPresent
     volumeMounts:

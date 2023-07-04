@@ -85,7 +85,7 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}-build-previewctl
     runs-on: [ self-hosted ]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-dev-image-gha.12149
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
       volumes:
         - /var/tmp:/var/tmp
         - /tmp:/tmp
@@ -153,7 +153,7 @@ jobs:
         ports:
           - 23306:23306
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-dev-image-gha.12149
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
       volumes:
         - /var/tmp/${{ needs.configuration.outputs.leeway_cache_bucket }}:/var/tmp
         - /tmp:/tmp
@@ -386,7 +386,7 @@ jobs:
     needs: [ configuration, build-previewctl, build-gitpod, infrastructure, install ]
     runs-on: [ self-hosted ]
     container:
-        image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-dev-image-gha.12149
+        image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
         volumes:
           - /var/tmp:/var/tmp
           - /tmp:/tmp

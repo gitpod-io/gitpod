@@ -78,7 +78,7 @@ jobs:
         if: ${{ needs.configuration.outputs.skip == 'false' }}
         runs-on: [self-hosted]
         container:
-            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:se-update-dev-image-gha.12149
+            image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
             volumes:
                 - /var/tmp:/var/tmp
                 - /tmp:/tmp
