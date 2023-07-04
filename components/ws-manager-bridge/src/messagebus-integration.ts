@@ -62,15 +62,8 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
             throw new Error("Not connected to message bus");
         }
 
-        const topic = this.messageBusHelper.getWsTopicForPublishing(userId, workspaceId, "headless-log");
-        const msg = Buffer.from(JSON.stringify(evt));
-        await this.messageBusHelper.assertWorkspaceExchange(this.channel);
-        await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, msg, {
-            trace: ctx,
-        });
-
         // Prebuild updatables use a single queue to implement round-robin handling of updatables.
-        // We need to write to that queue in addition to the regular log exchange.
+        const msg = Buffer.from(JSON.stringify(evt));
         if (!HeadlessWorkspaceEventType.isRunning(evt.type)) {
             await MessageBusHelperImpl.assertPrebuildWorkspaceUpdatableQueue(this.channel!);
             await super.publishToQueue(MessageBusHelperImpl.PREBUILD_UPDATABLE_QUEUE, msg, {

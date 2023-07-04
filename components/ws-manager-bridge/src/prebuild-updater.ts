@@ -91,7 +91,6 @@ export class PrebuildUpdater {
                 await this.messagebus.notifyHeadlessUpdate({ span }, userId, workspaceId, {
                     type: update.type,
                     workspaceID: workspaceId,
-                    text: "",
                 });
 
                 // prebuild info
