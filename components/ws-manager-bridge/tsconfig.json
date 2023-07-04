@@ -25,7 +25,6 @@
         "useUnknownInCatchVariables": false
     },
     "include": [
-        "src",
-        "ee/src"
+        "src"
     ]
 }

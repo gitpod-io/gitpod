@@ -2,8 +2,8 @@ packages:
   - name: app
     type: yarn
     srcs:
-      - "ee/**/*.ts"
       - "src/**/*.ts"
+      - .eslintrc
       - package.json
       - mocha.opts
     deps:
