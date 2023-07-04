@@ -34,6 +34,7 @@ import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster"
 import { performance } from "perf_hooks";
 import { WorkspaceInstanceController } from "./workspace-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
+import { RedisPublisher } from "./redis/publisher";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -49,26 +50,16 @@ export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url">;
 
 @injectable()
 export class WorkspaceManagerBridge implements Disposable {
-    @inject(TracedWorkspaceDB)
-    protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-
-    @inject(MessageBusIntegration)
-    protected readonly messagebus: MessageBusIntegration;
-
-    @inject(PrometheusMetricsExporter)
-    protected readonly prometheusExporter: PrometheusMetricsExporter;
-
-    @inject(Configuration)
-    protected readonly config: Configuration;
-
-    @inject(IAnalyticsWriter)
-    protected readonly analytics: IAnalyticsWriter;
-
-    @inject(PrebuildUpdater)
-    protected readonly prebuildUpdater: PrebuildUpdater;
-
-    @inject(WorkspaceInstanceController)
-    protected readonly workspaceInstanceController: WorkspaceInstanceController; // bound in "transient" mode: we expect to receive a fresh instance here
+    constructor(
+        @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
+        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
+        @inject(PrometheusMetricsExporter) private readonly prometheusExporter: PrometheusMetricsExporter,
+        @inject(Configuration) private readonly config: Configuration,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(PrebuildUpdater) private readonly prebuildUpdater: PrebuildUpdater,
+        @inject(WorkspaceInstanceController) private readonly workspaceInstanceController: WorkspaceInstanceController, // bound in "transient" mode: we expect to receive a fresh instance here
+        @inject(RedisPublisher) private readonly publisher: RedisPublisher,
+    ) {}
 
     protected readonly disposables = new DisposableCollection();
     protected readonly queues = new Map<string, Queue>();
@@ -377,6 +368,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 await lifecycleHandler();
             }
             await this.messagebus.notifyOnInstanceUpdate(ctx, userId, instance);
+            await this.publisher.publishInstanceUpdate();
         } catch (e) {
             TraceContext.setError({ span }, e);
             throw e;

@@ -19,6 +19,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ClientProvider } from "./wsman-subscriber";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { PrebuildUpdater } from "./prebuild-updater";
+import { RedisPublisher } from "./redis/publisher";
 
 export const WorkspaceInstanceController = Symbol("WorkspaceInstanceController");
 
@@ -47,25 +48,16 @@ export interface WorkspaceInstanceController {
  */
 @injectable()
 export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceController {
-    @inject(Configuration) protected readonly config: Configuration;
-
-    @inject(PrometheusMetricsExporter)
-    protected readonly prometheusExporter: PrometheusMetricsExporter;
-
-    @inject(TracedWorkspaceDB)
-    protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-
-    @inject(TracedUserDB)
-    protected readonly userDB: DBWithTracing<UserDB>;
-
-    @inject(MessageBusIntegration)
-    protected readonly messagebus: MessageBusIntegration;
-
-    @inject(PrebuildUpdater)
-    protected readonly prebuildUpdater: PrebuildUpdater;
-
-    @inject(IAnalyticsWriter)
-    protected readonly analytics: IAnalyticsWriter;
+    constructor(
+        @inject(Configuration) private readonly config: Configuration,
+        @inject(PrometheusMetricsExporter) private readonly prometheusExporter: PrometheusMetricsExporter,
+        @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
+        @inject(TracedUserDB) private readonly userDB: DBWithTracing<UserDB>,
+        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
+        @inject(PrebuildUpdater) private readonly prebuildUpdater: PrebuildUpdater,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
+        @inject(RedisPublisher) private readonly publisher: RedisPublisher,
+    ) {}
 
     protected readonly disposables = new DisposableCollection();
 
@@ -282,6 +274,8 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
         await this.onStopped(ctx, info.workspace.ownerId, info.latestInstance);
 
         await this.messagebus.notifyOnInstanceUpdate(ctx, info.workspace.ownerId, info.latestInstance);
+        await this.publisher.publishInstanceUpdate();
+
         await this.prebuildUpdater.stopPrebuildInstance(ctx, info.latestInstance);
     }
 
