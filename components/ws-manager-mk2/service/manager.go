@@ -284,6 +284,15 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 	}
 	controllerutil.AddFinalizer(&ws, workspacev1.GitpodFinalizerName)
 
+	exists, err := wsm.workspaceExists(ctx, req.Metadata.MetaId)
+	if err != nil {
+		return nil, fmt.Errorf("cannot check if workspace %s exists: %w", req.Metadata.MetaId, err)
+	}
+
+	if exists {
+		return nil, status.Errorf(codes.AlreadyExists, "workspace %s already exists", req.Metadata.MetaId)
+	}
+
 	err = wsm.createWorkspaceSecret(ctx, &ws, envSecretName, wsm.Config.Namespace, envData)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create env secret for workspace %s: %w", req.Id, err)
@@ -322,6 +331,22 @@ func (wsm *WorkspaceManagerServer) StartWorkspace(ctx context.Context, req *wsma
 		Url:        wsr.Status.URL,
 		OwnerToken: wsr.Status.OwnerToken,
 	}, nil
+}
+
+func (wsm *WorkspaceManagerServer) workspaceExists(ctx context.Context, id string) (bool, error) {
+	var workspaces workspacev1.WorkspaceList
+	err := wsm.Client.List(ctx, &workspaces, client.MatchingLabels{wsk8s.WorkspaceIDLabel: id})
+	if err != nil {
+		return false, err
+	}
+
+	for _, ws := range workspaces.Items {
+		if ws.Status.Phase != workspacev1.WorkspacePhaseStopped {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func isProtectedEnvVar(name string, sysEnvvars []*wsmanapi.EnvironmentVariable) bool {
