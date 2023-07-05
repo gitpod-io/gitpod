@@ -52,6 +52,7 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 						api.Done(t)
 					})
 
+					username := username + "-example"
 					_, err := api.CreateUser(username, userToken)
 					if err != nil {
 						t.Fatal(err)

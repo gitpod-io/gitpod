@@ -46,6 +46,7 @@ func TestRegularWorkspacePorts(t *testing.T) {
 				api.Done(t)
 			})
 
+			username := username + "-ports"
 			_, err := api.CreateUser(username, userToken)
 			if err != nil {
 				t.Fatal(err)

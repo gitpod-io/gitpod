@@ -7,6 +7,7 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"testing"
@@ -48,6 +49,10 @@ func TestDiskActions(t *testing.T) {
 }
 
 func runDiskTests(t *testing.T, tests []DiskTest) {
+	userToken, _ := os.LookupEnv("USER_TOKEN")
+	integration.SkipWithoutUsername(t, username)
+	integration.SkipWithoutUserToken(t, userToken)
+
 	f := features.New("ResourceLimiting").
 		WithLabel("component", "workspace").
 		Assess("it can enforce disk limits", func(testCtx context.Context, t *testing.T, cfg *envconf.Config) context.Context {
@@ -64,6 +69,12 @@ func runDiskTests(t *testing.T, tests []DiskTest) {
 					report.SetupReport(t, report.FeatureResourceLimit, fmt.Sprintf("Test to open %v", test.ContextURL))
 
 					t.Parallel()
+
+					username := username + "-disk-" + test.Name
+					_, err := api.CreateUser(username, userToken)
+					if err != nil {
+						t.Fatal(err)
+					}
 
 					nfo, stopWs, err := integration.LaunchWorkspaceFromContextURL(t, ctx, test.ContextURL, username, api)
 					if err != nil {

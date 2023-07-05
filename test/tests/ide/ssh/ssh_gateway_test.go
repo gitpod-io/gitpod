@@ -38,6 +38,7 @@ func TestSSHGatewayConnection(t *testing.T) {
 				api.Done(t)
 			})
 
+			username := username + "-ssh-gateway"
 			_, err := api.CreateUser(username, userToken)
 			if err != nil {
 				t.Fatal(err)

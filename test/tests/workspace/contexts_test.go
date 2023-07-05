@@ -118,8 +118,9 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 			api := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
 			defer api.Done(t)
 
-			for _, test := range tests {
+			for i, test := range tests {
 				test := test
+				i := i
 				t.Run(test.ContextURL, func(t *testing.T) {
 					report.SetupReport(t, report.FeatureContentInit, fmt.Sprintf("Test to open %v", test.ContextURL))
 					if test.Skip {
@@ -134,6 +135,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 					api := integration.NewComponentAPI(ctx, cfg.Namespace(), kubeconfig, cfg.Client())
 					defer api.Done(t)
 
+					username := fmt.Sprintf("%s-context-%d", username, i)
 					_, err := api.CreateUser(username, userToken)
 					if err != nil {
 						t.Fatal(err)

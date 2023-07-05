@@ -36,6 +36,7 @@ func TestNetworkLimiting(t *testing.T) {
 				api.Done(t)
 			})
 
+			username := username + "-network-limit"
 			_, err := api.CreateUser(username, userToken)
 			if err != nil {
 				t.Fatal(err)
