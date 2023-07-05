@@ -81,6 +81,72 @@ func TestWorkspaceService_GetWorkspace(t *testing.T) {
 
 		requireEqualProto(t, workspaceTestData[0].API, resp.Msg.GetResult())
 	})
+
+	t.Run("returns a proper RecentFolders with when config.WorkspaceLocation exists", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		wsInfo := workspaceTestData[0].Protocol
+		wsInfo.Workspace = nil
+		wsWorkspace := *workspaceTestData[0].Protocol.Workspace
+		wsWorkspace.Config = &protocol.WorkspaceConfig{
+			WorkspaceLocation: "gitpod/gitpod-ws.code-workspace",
+		}
+		wsInfo.Workspace = &wsWorkspace
+
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&wsInfo, nil)
+
+		resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.NoError(t, err)
+
+		expectedWs := *workspaceTestData[0].API
+		expectedWs.Status = nil
+		expectedWsStatus := *workspaceTestData[0].API.Status
+		expectedWsStatus.Instance = nil
+		expectedInstance := *workspaceTestData[0].API.Status.Instance
+		expectedInstance.Status = nil
+		expectedInstanceStatus := *workspaceTestData[0].API.Status.Instance.Status
+		expectedInstanceStatus.RecentFolders = []string{"/workspace/gitpod/gitpod-ws.code-workspace"}
+		expectedInstance.Status = &expectedInstanceStatus
+		expectedWsStatus.Instance = &expectedInstance
+		expectedWs.Status = &expectedWsStatus
+
+		requireEqualProto(t, expectedWs, resp.Msg.GetResult())
+	})
+
+	t.Run("returns a proper RecentFolders with when config.CheckoutLocation exists", func(t *testing.T) {
+		serverMock, client := setupWorkspacesService(t)
+
+		wsInfo := workspaceTestData[0].Protocol
+		wsInfo.Workspace = nil
+		wsWorkspace := *workspaceTestData[0].Protocol.Workspace
+		wsWorkspace.Config = &protocol.WorkspaceConfig{
+			CheckoutLocation: "foo",
+		}
+		wsInfo.Workspace = &wsWorkspace
+
+		serverMock.EXPECT().GetWorkspace(gomock.Any(), workspaceID).Return(&wsInfo, nil)
+
+		resp, err := client.GetWorkspace(context.Background(), connect.NewRequest(&v1.GetWorkspaceRequest{
+			WorkspaceId: workspaceID,
+		}))
+		require.NoError(t, err)
+
+		expectedWs := *workspaceTestData[0].API
+		expectedWs.Status = nil
+		expectedWsStatus := *workspaceTestData[0].API.Status
+		expectedWsStatus.Instance = nil
+		expectedInstance := *workspaceTestData[0].API.Status.Instance
+		expectedInstance.Status = nil
+		expectedInstanceStatus := *workspaceTestData[0].API.Status.Instance.Status
+		expectedInstanceStatus.RecentFolders = []string{"/workspace/foo"}
+		expectedInstance.Status = &expectedInstanceStatus
+		expectedWsStatus.Instance = &expectedInstance
+		expectedWs.Status = &expectedWsStatus
+
+		requireEqualProto(t, expectedWs, resp.Msg.GetResult())
+	})
 }
 
 func TestWorkspaceService_StartWorkspace(t *testing.T) {
@@ -551,6 +617,10 @@ var workspaceTestData = []workspaceTestDataEntry{
 				Context: &protocol.WorkspaceContext{
 					NormalizedContextURL: "https://github.com/gitpod-io/protocol.git",
 					Title:                "tes ttitle",
+					Repository: &protocol.Repository{
+						Host: "github.com",
+						Name: "gitpod",
+					},
 				},
 				Description: "test description",
 			},
@@ -627,6 +697,7 @@ var workspaceTestData = []workspaceTestDataEntry{
 								Protocol: v1.PortProtocol_PORT_PROTOCOL_HTTPS,
 							},
 						},
+						RecentFolders: []string{"/workspace/gitpod"},
 					},
 				},
 			},

@@ -1718,6 +1718,10 @@ type WorkspaceContext struct {
 	ForceCreateNewWorkspace bool   `json:"forceCreateNewWorkspace,omitempty"`
 	NormalizedContextURL    string `json:"normalizedContextURL,omitempty"`
 	Title                   string `json:"title,omitempty"`
+
+	// Commit context
+	Repository *Repository `json:"repository,omitempty"`
+	Revision   string      `json:"revision,omitempty"`
 }
 
 // WorkspaceImageSourceDocker is the WorkspaceImageSourceDocker message type
