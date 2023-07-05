@@ -32,7 +32,7 @@ function Tooltip(props: TooltipProps) {
     }, [update, props.content]);
 
     // Adds a 500ms delay to showing tooltip so we don't show them until user pauses a bit like native browser tooltips
-    const handlShow = useCallback(() => {
+    const handleShow = useCallback(() => {
         const timeout = setTimeout(() => {
             setExpanded(true);
         }, 500);
@@ -49,8 +49,8 @@ function Tooltip(props: TooltipProps) {
 
     return (
         <span
-            onMouseEnter={handlShow}
-            onFocus={handlShow}
+            onMouseEnter={handleShow}
+            onFocus={handleShow}
             onMouseLeave={handleHide}
             onBlur={handleHide}
             ref={setTriggerEl}

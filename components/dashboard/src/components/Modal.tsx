@@ -6,7 +6,7 @@
 
 import { FC, FormEvent, ReactNode, useCallback } from "react";
 import { Portal } from "react-portal";
-import { AutoFocusInside, FocusOn } from "react-focus-on";
+import { FocusOn, AutoFocusInside } from "react-focus-on";
 import cn from "classnames";
 import { Heading2 } from "./typography/headings";
 import Alert, { AlertProps } from "./Alert";
