@@ -6,7 +6,8 @@
 
 import { FC, useCallback } from "react";
 import Tooltip from "../components/Tooltip";
-import copy from "../images/copy.svg";
+import { ReactComponent as CopyIcon } from "../images/copy.svg";
+import { ReactComponent as CheckIcon } from "../images/check-currentColor.svg";
 import { copyToClipboard } from "../utils";
 import { Button } from "./Button";
 import { TextInput } from "./forms/TextInputField";
@@ -32,12 +33,14 @@ export const InputWithCopy: FC<Props> = ({ value, tip = "Click to copy", classNa
         <div className={`w-full relative max-w-lg ${className ?? ""}`}>
             <TextInput value={value} disabled className="w-full pr-8 overscoll-none" />
 
-            <Tooltip content={copied ? "Copied" : tip} className="absolute top-2.5 right-1">
+            <Tooltip content={tip} className="absolute top-1.5 right-1">
                 <Button
                     type="transparent"
                     htmlType="button"
                     spacing="compact"
-                    icon={<img src={copy} alt="copy icon" title={tip} className="w-3.5 h-3.5" />}
+                    icon={
+                        copied ? <CheckIcon className="text-green-500 w-5 h-5" /> : <CopyIcon className="w-3.5 h-3.5" />
+                    }
                     onClick={handleCopyToClipboard}
                 />
             </Tooltip>

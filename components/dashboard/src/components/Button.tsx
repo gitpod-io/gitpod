@@ -50,7 +50,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                     "cursor-pointer my-auto",
                     "text-sm font-medium whitespace-nowrap",
                     "rounded-md focus:outline-none focus:ring transition ease-in-out",
-                    spacing === "compact" ? ["px-0 py-0"] : null,
+                    spacing === "compact" ? ["px-1 py-1"] : null,
                     spacing === "default" ? ["px-4 py-2"] : null,
                     type === "primary"
                         ? [
@@ -71,7 +71,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                               "text-red-600 hover:text-red-700",
                           ]
                         : null,
-                    type === "transparent" ? ["bg-transparent hover:bg-transparent"] : null,
+                    type === "transparent"
+                        ? [
+                              "bg-transparent hover:bg-gray-600 hover:bg-opacity-10 dark:hover:bg-gray-200 dark:hover:bg-opacity-10",
+                          ]
+                        : null,
                     {
                         "w-full": size === "block",
                         "cursor-default opacity-50 pointer-events-none": disabled || loading,
