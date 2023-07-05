@@ -382,6 +382,17 @@ func (wbs *InWorkspaceServiceServer) SetupPairVeths(ctx context.Context, req *ap
 	}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("SetupPairVeths: cannot setup a peer veths")
+
+		nsi.Nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+			c.Args = append(c.Args, "dump-network-info",
+				fmt.Sprintf("--tag=%v", "pod"))
+		}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
+
+		nsi.Nsinsider(wbs.Session.InstanceID, int(pid), func(c *exec.Cmd) {
+			c.Args = append(c.Args, "dump-network-info",
+				fmt.Sprintf("--tag=%v", "workspace"))
+		}, nsi.EnterMountNS(true), nsi.EnterPidNS(true), nsi.EnterNetNS(true))
+
 		return nil, status.Errorf(codes.Internal, "cannot setup a peer veths")
 	}
 
