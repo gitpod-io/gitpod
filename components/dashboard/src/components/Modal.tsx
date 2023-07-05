@@ -6,7 +6,7 @@
 
 import { FC, FormEvent, ReactNode, useCallback } from "react";
 import { Portal } from "react-portal";
-import { FocusOn, AutoFocusInside } from "react-focus-on";
+import { AutoFocusInside, FocusOn } from "react-focus-on";
 import cn from "classnames";
 import { Heading2 } from "./typography/headings";
 import Alert, { AlertProps } from "./Alert";
@@ -25,8 +25,8 @@ type Props = {
     children: ReactNode;
     visible: boolean;
     closeable?: boolean;
+    autoFocus?: boolean;
     disableFocusLock?: boolean;
-    disableAutoFocus?: boolean;
     className?: string;
     onClose: () => void;
     onSubmit?: () => void | Promise<void>;
@@ -39,8 +39,8 @@ export const Modal: FC<Props> = ({
     visible,
     children,
     closeable = true,
+    autoFocus = false,
     disableFocusLock = false,
-    disableAutoFocus = false,
     className,
     onClose,
     onSubmit,
@@ -83,7 +83,7 @@ export const Modal: FC<Props> = ({
                 {/* Modal outer-container for positioning */}
                 <div className="flex justify-center items-center w-screen h-screen">
                     <FocusOn
-                        autoFocus={!disableAutoFocus}
+                        autoFocus={autoFocus}
                         onClickOutside={handleClickOutside}
                         onEscapeKey={handleEscape}
                         focusLock={!disableFocusLock}

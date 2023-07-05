@@ -189,9 +189,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     );
 
     return (
-        // Don't auto-focus if editing to avoid tooltip automatically showing on redirect uri copy button
-        // TODO: determine if there's a better way to handle this 👆
-        <Modal visible onClose={props.onClose} onSubmit={activate} disableAutoFocus={!isNew}>
+        <Modal visible onClose={props.onClose} onSubmit={activate} autoFocus={isNew}>
             <ModalHeader>{isNew ? "New Git Provider" : "Git Provider"}</ModalHeader>
             <ModalBody>
                 {isNew && (
