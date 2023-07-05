@@ -21,4 +21,4 @@ ARG VERSION
 ENV GITPOD_BUILD_GIT_COMMIT=${__GIT_COMMIT}
 ENV GITPOD_BUILD_VERSION=${VERSION}
 
-CMD ["./dist/src/index.js"]
+CMD ["./dist/index.js"]
