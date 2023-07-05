@@ -457,7 +457,7 @@ func main() {
 						Gw:    vethIp,
 					}
 					if err := netlink.RouteReplace(&defaultGw); err != nil {
-						return xerrors.Errorf("failed to set up deafult gw: %v", err)
+						return xerrors.Errorf("failed to set up default gw (%v): %v", vethIp.String(), err)
 					}
 
 					return nil
