@@ -1,0 +1,83 @@
+name: Lacework Inline Scanner
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types: [completed]
+    branches:
+      - 'main'
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
+        description: "What Gitpod version to scan for CVEs"
+
+jobs:
+  configuration:
+    name: Configuration
+    runs-on: [self-hosted]
+    outputs:
+      skip: ${{ steps.configuration.outputs.skip }}
+      version: ${{ steps.configuration.outputs.version }}
+    steps:
+      - name: "Set outputs"
+        id: configuration
+        run: |
+            if [[ '${{ github.event.inputs.name }}' != '' ]]; then
+                # The workflow was triggered by workflow_dispatch
+                {
+                    echo "version=${{ github.event.inputs.version }}"
+                    echo "skip=false"
+                } >> $GITHUB_OUTPUT
+            else
+                # The workflow was triggered by workflow_run
+                {
+                    echo "version=main-gha.${{ github.event.workflow_run.run_number }}"
+                    echo "skip=${{ github.event.workflow_run.conclusion == 'failure' }}"
+                } >> $GITHUB_OUTPUT
+            fi
+
+  scan-images:
+    # TODO(gpl) Could easily be run on ubuntu:latest if we pushed some bash in lw-scan-images.sh into the installer
+    runs-on: [self-hosted]
+    name: Scan all docker images for CVEs
+    # Only run if the build was successful
+    if: ${{ needs.configuration.outputs.skip == 'false' }}
+    steps:
+      # Most of this is taken over from the Build workflow/preview-env-check-regressions workflow
+      - uses: actions/checkout@v3
+      - name: Configure workspace
+        run: |
+          cp -r /__w/gitpod/gitpod /workspace
+          # Needed by google-github-actions/setup-gcloud
+          sudo chown -R gitpod:gitpod /__t
+          # Needed by docker/login-action
+          sudo chmod goa+rw /var/run/docker.sock
+      - id: auth
+        uses: google-github-actions/auth@v1
+        with:
+          token_format: access_token
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      # TODO(gpl) How to configure proper docker.io access here, so that the inline scanner does not fail?
+      - uses: docker/login-action@v2
+        with:
+          registry: eu.gcr.io
+          username: oauth2accesstoken
+          password: "${{ steps.auth.outputs.access_token }}"
+      - name: Get Secrets from GCP
+        id: 'secrets'
+        uses: 'google-github-actions/get-secretmanager-secrets@v1'
+        with:
+          secrets: |-
+            lacework-access-token:gitpod-core-dev/lacework-access-token
+      - name: Lacework Inline Scanner
+        id: lacework-inline-scanner
+        shell: bash
+        working-directory: /workspace/gitpod
+        env:
+          VERSION: ${{needs.configuration.outputs.version}}
+          LW_ACCESS_TOKEN: '${{ steps.secrets.outputs.lacework-access-token }}'
+        run: |
+          ./scripts/lw-scan-images.sh
