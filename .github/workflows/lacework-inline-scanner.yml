@@ -38,10 +38,10 @@ jobs:
             fi
 
   scan-images:
+    name: Scan all docker images for CVEs
     # TODO(gpl) Could easily be run on ubuntu:latest if we pushed some bash in lw-scan-images.sh into the installer
     runs-on: [self-hosted]
-    name: Scan all docker images for CVEs
-    # Only run if the build was successful
+    needs: [configuration]
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     steps:
       # Most of this is taken over from the Build workflow/preview-env-check-regressions workflow
