@@ -26,9 +26,6 @@ import { BillingModes } from "./billing-mode";
 import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { UsageService } from "../user/usage-service";
 
-const MAX_PARALLEL_WORKSPACES_FREE = 4;
-const MAX_PARALLEL_WORKSPACES_PAID = 16;
-
 /**
  * EntitlementService implementation for Usage-Based Pricing (UBP)
  */
@@ -84,9 +81,9 @@ export class EntitlementServiceUBP implements EntitlementService {
 
     protected async getMaxParallelWorkspaces(user: User, date: Date): Promise<number> {
         if (await this.hasPaidSubscription(user, date)) {
-            return MAX_PARALLEL_WORKSPACES_PAID;
+            return this.config.maxParallelWorkspacesPaid;
         } else {
-            return MAX_PARALLEL_WORKSPACES_FREE;
+            return this.config.maxParallelWorkspacesFree;
         }
     }
 

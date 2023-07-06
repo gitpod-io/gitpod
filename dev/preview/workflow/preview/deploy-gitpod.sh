@@ -258,6 +258,7 @@ yq w -i "${INSTALLER_CONFIG_PATH}" workspace.resources.requests.memory "256Mi"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.procLimit 1000
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.ioLimits.writeBandwidthPerSecond "250Mi"
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.workspace.ioLimits.readBandwidthPerSecond "300Mi"
+yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.server.maxParallelWorkspacesFree 16
 
 # create two workspace classes (g1-standard and g1-small) in server-config configmap
 yq w -i "${INSTALLER_CONFIG_PATH}" experimental.webapp.workspaceClasses[+].id "g1-standard"

@@ -192,6 +192,21 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	_, _, authCfg := auth.GetConfig(ctx)
 
+	maxParallelWorkspacesFree := 4
+	maxParallelWorkspacesPaid := 16
+	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
+		if cfg.WebApp == nil || cfg.WebApp.Server == nil {
+			return nil
+		}
+		if cfg.WebApp.Server.MaxParallelWorkspacesFree != nil {
+			maxParallelWorkspacesFree = *cfg.WebApp.Server.MaxParallelWorkspacesFree
+		}
+		if cfg.WebApp.Server.MaxParallelWorkspacesPaid != nil {
+			maxParallelWorkspacesPaid = *cfg.WebApp.Server.MaxParallelWorkspacesPaid
+		}
+		return nil
+	})
+
 	// todo(sje): all these values are configurable
 	scfg := ConfigSerialized{
 		Version:               ctx.VersionManifest.Version,
@@ -242,6 +257,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 		DisableDynamicAuthProviderLogin:   disableDynamicAuthProviderLogin,
 		MaxEnvvarPerUserCount:             4048,
 		MaxConcurrentPrebuildsPerRef:      10,
+		MaxParallelWorkspacesFree:         int32(maxParallelWorkspacesFree),
+		MaxParallelWorkspacesPaid:         int32(maxParallelWorkspacesPaid),
 		IncrementalPrebuilds:              IncrementalPrebuilds{CommitHistory: 100, RepositoryPasslist: []string{}},
 		BlockNewUsers:                     ctx.Config.BlockNewUsers,
 		DefaultBaseImageRegistryWhitelist: defaultBaseImageRegistryWhitelist,

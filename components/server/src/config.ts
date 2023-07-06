@@ -149,6 +149,9 @@ export interface ConfigSerialized {
     /** maxConcurrentPrebuildsPerRef is the maximum number of prebuilds we allow per ref type at any given time */
     maxConcurrentPrebuildsPerRef: number;
 
+    maxParallelWorkspacesFree: number;
+    maxParallelWorkspacesPaid: number;
+
     incrementalPrebuilds: {
         repositoryPasslist: string[];
         commitHistory: number;

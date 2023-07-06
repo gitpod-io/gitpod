@@ -253,6 +253,8 @@ type ServerConfig struct {
 	InactivityPeriodForReposInDays    *int              `json:"inactivityPeriodForReposInDays"`
 	ShowSetupModal                    *bool             `json:"showSetupModal"`
 	IsSingleOrgInstallation           bool              `json:"isSingleOrgInstallation"`
+	MaxParallelWorkspacesFree         *int              `json:"maxParallelWorkspacesFree"`
+	MaxParallelWorkspacesPaid         *int              `json:"maxParallelWorkspacesPaid"`
 
 	// @deprecated use containerRegistry.privateBaseImageAllowList instead
 	DefaultBaseImageRegistryWhiteList []string `json:"defaultBaseImageRegistryWhitelist"`

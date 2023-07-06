@@ -26,6 +26,8 @@ type ConfigSerialized struct {
 	DisableDynamicAuthProviderLogin   bool        `json:"disableDynamicAuthProviderLogin"`
 	MaxEnvvarPerUserCount             int32       `json:"maxEnvvarPerUserCount"`
 	MaxConcurrentPrebuildsPerRef      int32       `json:"maxConcurrentPrebuildsPerRef"`
+	MaxParallelWorkspacesFree         int32       `json:"maxParallelWorkspacesFree"`
+	MaxParallelWorkspacesPaid         int32       `json:"maxParallelWorkspacesPaid"`
 	MakeNewUsersAdmin                 bool        `json:"makeNewUsersAdmin"`
 	DefaultBaseImageRegistryWhitelist []string    `json:"defaultBaseImageRegistryWhitelist"`
 	RunDbDeleter                      bool        `json:"runDbDeleter"`
