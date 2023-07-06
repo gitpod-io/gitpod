@@ -33,7 +33,7 @@ on:
         required: true
 jobs:
   jetbrains-smoke-test-linux:
-    runs-on: ubuntu-latest
+    runs-on: gitpod-runners
     steps:
       - name: Generate Summary
         if: always()

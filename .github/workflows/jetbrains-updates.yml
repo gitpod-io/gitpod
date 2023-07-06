@@ -7,7 +7,7 @@ on:
 
 jobs:
     update-jetbrains:
-        runs-on: ubuntu-latest
+        runs-on: gitpod-runners
         steps:
             - uses: actions/checkout@v3
             - name: Check for updates

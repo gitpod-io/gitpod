@@ -6,7 +6,7 @@ on:
 name: SpiceDB
 jobs:
   scan-repo:
-    runs-on: ubuntu-latest
+    runs-on: gitpod-runners
     name: Validate schema
     steps:
     - name: Checkout

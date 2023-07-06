@@ -14,7 +14,7 @@ on:
 jobs:
   configuration:
     name: Configure job parameters
-    runs-on: [ self-hosted ]
+    runs-on: gitpod-runners
     concurrency:
       # github.head_ref is set by a pull_request event - contains the name of the source branch of the PR
       # github.ref_name is set if the event is NOT a pull_request - it contains only the branch name.
@@ -83,7 +83,7 @@ jobs:
     needs: [ configuration ]
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-build-previewctl
-    runs-on: [ self-hosted ]
+    runs-on: gitpod-runners
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
       volumes:
@@ -121,7 +121,7 @@ jobs:
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
       (needs.configuration.outputs.preview_enable == 'true') &&
       (needs.configuration.outputs.is_main_branch != 'true')
-    runs-on: [ self-hosted ]
+    runs-on: gitpod-runners
     concurrency:
       group: ${{ github.head_ref || github.ref_name }}-infrastructure
     steps:
@@ -140,7 +140,7 @@ jobs:
   build-gitpod:
     name: Build Gitpod
     needs: [ configuration ]
-    runs-on: [ self-hosted ]
+    runs-on: gitpod-runners
     concurrency:
       group: ${{ github.head_ref || github.ref_name }}-build-gitpod
       # For the main branch we always want the build job to run to completion
@@ -301,7 +301,7 @@ jobs:
             test-coverage-report
 
   install-app:
-    runs-on: ubuntu-latest
+    runs-on: gitpod-runners
     needs: [ configuration, build-gitpod ]
     if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
     steps:
@@ -329,7 +329,7 @@ jobs:
   install:
     name: "Install Gitpod"
     needs: [ configuration, build-previewctl, build-gitpod, infrastructure ]
-    runs-on: [ self-hosted ]
+    runs-on: gitpod-runners
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-install
     steps:
@@ -372,7 +372,7 @@ jobs:
   monitoring:
     name: "Install Monitoring Satellite"
     needs: [ infrastructure, build-previewctl ]
-    runs-on: [ self-hosted ]
+    runs-on: gitpod-runners
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-monitoring
     steps:
@@ -387,7 +387,7 @@ jobs:
   integration-test:
     name: "Run integration test"
     needs: [ configuration, build-previewctl, build-gitpod, infrastructure, install ]
-    runs-on: [ self-hosted ]
+    runs-on: gitpod-runners
     container:
         image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
         volumes:

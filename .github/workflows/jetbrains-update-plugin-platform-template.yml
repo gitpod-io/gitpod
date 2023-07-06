@@ -29,7 +29,7 @@ on:
 jobs:
     update-plugin-platform:
         name: Update Platform Version from ${{ inputs.pluginName }}
-        runs-on: ubuntu-latest
+        runs-on: gitpod-runners
         steps:
             - name: Checkout Repository
               uses: actions/checkout@v3

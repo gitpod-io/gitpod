@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: gitpod-runners
     permissions:
       contents: write
       pull-requests: write
