@@ -130,7 +130,7 @@ func socketActivationForDocker(parentCtx context.Context, wg *sync.WaitGroup, te
 		if errors.Is(err, failedForRetryError) {
 			go func() {
 				notifyErr := notifyDockerUpFail()
-				if notifyErr != nil {
+				if notifyErr != nil && !errors.Is(notifyErr, context.Canceled) {
 					log.WithError(notifyErr).Error("cannot notify about docker-up failure")
 				}
 			}()
