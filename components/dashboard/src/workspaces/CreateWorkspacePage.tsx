@@ -40,9 +40,6 @@ import { useDirtyState } from "../hooks/use-dirty-state";
 import { LinkButton } from "../components/LinkButton";
 import { InputField } from "../components/forms/InputField";
 import Alert from "../components/Alert";
-import { ReactComponent as Exclamation2 } from "../images/exclamation2.svg";
-import { isGitpodIo } from "../utils";
-import FeedbackFormModal from "../feedback-form/FeedbackModal";
 import { useFeatureFlag } from "../data/featureflag-query";
 
 export function CreateWorkspacePage() {
@@ -453,7 +450,6 @@ export function CreateWorkspacePage() {
 
 function LocalSSHWarning(props: { className: string }) {
     const isLocalSSHProxyEnabled = useFeatureFlag("gitpod_desktop_use_local_ssh_proxy");
-    const [isFeedbackFormVisible, setFeedbackFormVisible] = useState<boolean>(false);
 
     if (!isLocalSSHProxyEnabled) {
         return null;
@@ -461,14 +457,7 @@ function LocalSSHWarning(props: { className: string }) {
 
     return (
         <div className={props.className}>
-            <Alert
-                light
-                className="bg-gray-100 dark:bg-gray-800"
-                type="info"
-                iconSize="w-8 h-8"
-                icon={<Exclamation2 className="h-full w-full" />}
-                iconColor="text-gray-500"
-            >
+            <Alert light className="bg-gray-100 dark:bg-gray-800" type="info">
                 To make VS Code Desktop open seamlessly we will add a single entry to your local SSH configuration.
                 Gitpod does not read any of your existing SSH configurations.&nbsp;
                 <a
@@ -477,7 +466,7 @@ function LocalSSHWarning(props: { className: string }) {
                     target="_blank"
                     rel="noreferrer"
                 >
-                    More Detail
+                    Learn more
                 </a>
                 <div className="flex mt-2 text-sm">
                     Comment on&nbsp;
@@ -489,20 +478,6 @@ function LocalSSHWarning(props: { className: string }) {
                     >
                         feedback issue
                     </a>
-                    {isGitpodIo() && (
-                        <span>
-                            &nbsp;or {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-                            <a
-                                className="gp-link"
-                                // eslint-disable-next-line no-script-url
-                                href="javascript:void(0)"
-                                onClick={() => setFeedbackFormVisible(true)}
-                            >
-                                submit feedback
-                            </a>
-                        </span>
-                    )}
-                    {isFeedbackFormVisible && <FeedbackFormModal onClose={() => setFeedbackFormVisible(false)} />}
                 </div>
             </Alert>
         </div>

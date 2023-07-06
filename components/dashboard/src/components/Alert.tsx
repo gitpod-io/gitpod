@@ -35,8 +35,6 @@ export interface AlertProps {
     autoFocusClose?: boolean;
     onClose?: () => void;
     showIcon?: boolean;
-    iconColor?: string;
-    iconSize?: string;
     icon?: React.ReactNode;
     rounded?: boolean;
     children?: React.ReactNode;
@@ -119,11 +117,7 @@ export default function Alert(props: AlertProps) {
                 rounded ? "rounded" : "",
             )}
         >
-            {showIcon && (
-                <span className={`mt-1 mr-4 ${props.iconSize ?? "h-4 w-4"} ${props.iconColor ?? info.iconColor}`}>
-                    {props.icon ?? info.icon}
-                </span>
-            )}
+            {showIcon && <span className={`mt-1 mr-4 h-4 w-4 ${info.iconColor}`}>{props.icon ?? info.icon}</span>}
             <span className="flex-1 text-left">{props.children}</span>
             {props.closable && (
                 <span className={`mt-1 ml-4`}>
