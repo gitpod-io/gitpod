@@ -6,6 +6,7 @@
 
 import React, { FunctionComponent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Arrow from "./Arrow";
+import classNames from "classnames";
 
 export interface DropDown2Element {
     id: string;
@@ -16,6 +17,7 @@ export interface DropDown2Element {
 export interface DropDown2Props {
     getElements: (searchString: string) => DropDown2Element[];
     disabled?: boolean;
+    loading?: boolean;
     searchPlaceholder?: string;
     disableSearch?: boolean;
     expanded?: boolean;
@@ -23,25 +25,35 @@ export interface DropDown2Props {
     allOptions?: string;
 }
 
-export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
-    const [showDropDown, setShowDropDown] = useState<boolean>(!props?.disabled && !!props.expanded);
+export const DropDown2: FunctionComponent<DropDown2Props> = ({
+    disabled = false,
+    loading = false,
+    expanded = false,
+    searchPlaceholder,
+    allOptions,
+    getElements,
+    disableSearch,
+    children,
+    onSelectionChange,
+}) => {
+    const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !loading && !!expanded);
     const nodeRef: RefObject<HTMLDivElement> = useRef(null);
     const onSelected = useCallback(
         (elementId: string) => {
-            props.onSelectionChange(elementId);
+            onSelectionChange(elementId);
             setShowDropDown(false);
         },
-        [props],
+        [onSelectionChange],
     );
     const [search, setSearch] = useState<string>("");
-    const filteredOptions = useMemo(() => props.getElements(search), [props, search]);
+    const filteredOptions = useMemo(() => getElements(search), [getElements, search]);
     const [selectedElementTemp, setSelectedElementTemp] = useState<string | undefined>(filteredOptions[0]?.id);
 
     // reset search when the drop down is expanded or closed
     useEffect(() => {
         setSearch("");
-        if (props.allOptions) {
-            setSelectedElementTemp(props.allOptions);
+        if (allOptions) {
+            setSelectedElementTemp(allOptions);
         }
         if (showDropDown && selectedElementTemp) {
             document.getElementById(selectedElementTemp)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -51,11 +63,11 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
     }, [showDropDown]);
 
     const toggleDropDown = useCallback(() => {
-        if (props?.disabled) {
+        if (disabled || loading) {
             return;
         }
         setShowDropDown(!showDropDown);
-    }, [props?.disabled, setShowDropDown, showDropDown]);
+    }, [disabled, loading, showDropDown]);
 
     const setFocussedElement = useCallback(
         (element: string) => {
@@ -99,7 +111,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
             if (e.key === "Enter") {
                 if (showDropDown && selectedElementTemp && filteredOptions.some((e) => e.id === selectedElementTemp)) {
                     e.preventDefault();
-                    props.onSelectionChange(selectedElementTemp);
+                    onSelectionChange(selectedElementTemp);
                     setShowDropDown(false);
                 }
                 if (!showDropDown) {
@@ -112,7 +124,15 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
                 e.preventDefault();
             }
         },
-        [filteredOptions, props, search, selectedElementTemp, setFocussedElement, showDropDown, toggleDropDown],
+        [
+            filteredOptions,
+            onSelectionChange,
+            search,
+            selectedElementTemp,
+            setFocussedElement,
+            showDropDown,
+            toggleDropDown,
+        ],
     );
 
     const handleBlur = useCallback(
@@ -134,20 +154,26 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
             onBlur={handleBlur}
             ref={nodeRef}
             tabIndex={0}
-            className={"relative flex flex-col rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-300"}
+            className={classNames(
+                "relative flex flex-col rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-300",
+                loading && "animate-pulse",
+            )}
         >
             <div
-                className={
-                    "h-16 bg-gray-100 dark:bg-gray-800 flex items-center px-2 " +
-                    (showDropDown
-                        ? "rounded-t-lg filter drop-shadow-xl"
-                        : props?.disabled
-                        ? "rounded-lg opacity-80 "
-                        : "rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer")
-                }
+                className={classNames(
+                    "h-16 bg-gray-100 dark:bg-gray-800 flex items-center px-2",
+                    // when open, just have border radius on top
+                    showDropDown ? "rounded-t-lg" : "rounded-lg",
+                    // Dropshadow when expanded
+                    showDropDown && "filter drop-shadow-xl",
+                    // hover when not disabled or expanded
+                    !showDropDown && !disabled && !loading && "hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer",
+                    // opacity when disabled or loading
+                    (disabled || loading) && "opacity-80",
+                )}
                 onClick={toggleDropDown}
             >
-                {props.children}
+                {children}
                 <div className="flex-grow" />
                 <div className="mr-2">
                     <Arrow direction={showDropDown ? "up" : "down"} />
@@ -155,13 +181,13 @@ export const DropDown2: FunctionComponent<DropDown2Props> = (props) => {
             </div>
             {showDropDown && (
                 <div className="absolute w-full top-12 bg-gray-100 dark:bg-gray-800 rounded-b-lg mt-3 z-50 p-2 filter drop-shadow-xl">
-                    {!props.disableSearch && (
+                    {!disableSearch && (
                         <div className="h-12">
                             <input
                                 type="text"
                                 autoFocus
                                 className={"w-full focus rounded-lg"}
-                                placeholder={props.searchPlaceholder}
+                                placeholder={searchPlaceholder}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
