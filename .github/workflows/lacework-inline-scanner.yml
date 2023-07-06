@@ -23,7 +23,7 @@ jobs:
       - name: "Set outputs"
         id: configuration
         run: |
-            if [[ '${{ github.event.inputs.name }}' != '' ]]; then
+            if [[ '${{ github.event.workflow_run.run_number }}' == '' ]]; then
                 # The workflow was triggered by workflow_dispatch
                 {
                     echo "version=${{ github.event.inputs.version }}"
