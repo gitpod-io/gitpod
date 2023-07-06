@@ -135,6 +135,8 @@ func socketActivationForDocker(parentCtx context.Context, wg *sync.WaitGroup, te
 				}
 			}()
 		}
+
+		time.Sleep(1 * time.Second)
 	}
 }
 
