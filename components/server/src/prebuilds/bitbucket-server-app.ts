@@ -14,6 +14,7 @@ import { CommitContext, CommitInfo, Project, StartPrebuildResult, User, WebhookE
 import { RepoURL } from "../repohost";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ContextParser } from "../workspace/context-parser-service";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class BitbucketServerApp {
@@ -64,10 +65,10 @@ export class BitbucketServerApp {
                         span.finish();
                     }
                 } else {
-                    console.warn(`Ignoring unsupported BBS event.`, { headers: req.headers });
+                    log.warn(`Ignoring unsupported BBS event.`, { headers: req.headers });
                 }
             } catch (err) {
-                console.error(`Couldn't handle request.`, err, { headers: req.headers });
+                log.error(`Couldn't handle request.`, err, { headers: req.headers });
             } finally {
                 // we always respond with OK, when we received a valid event.
                 res.sendStatus(200);
@@ -119,10 +120,11 @@ export class BitbucketServerApp {
             const commit = context.revision;
             const projectAndOwner = await this.findProjectAndOwner(cloneUrl, user);
             if (projectAndOwner.project) {
-                /* tslint:disable-next-line */
-                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
-                    lastWebhookReceived: new Date().toISOString(),
-                });
+                this.projectDB
+                    .updateProjectUsage(projectAndOwner.project.id, {
+                        lastWebhookReceived: new Date().toISOString(),
+                    })
+                    .catch((err) => log.error("cannot update project usage", err));
             }
             await this.webhookEvents.updateEvent(event.id, {
                 authorizedUserId: user.id,
@@ -133,7 +135,7 @@ export class BitbucketServerApp {
             });
             const config = await this.prebuildManager.fetchConfig({ span }, user, context);
             if (!this.prebuildManager.shouldPrebuild(config)) {
-                console.log("Bitbucket push event: No config. No prebuild.");
+                log.info("Bitbucket push event: No config. No prebuild.");
                 await this.webhookEvents.updateEvent(event.id, {
                     prebuildStatus: "ignored_unconfigured",
                     status: "processed",
@@ -141,7 +143,7 @@ export class BitbucketServerApp {
                 return undefined;
             }
 
-            console.debug("Bitbucket Server push event: Starting prebuild.", { contextUrl });
+            log.debug("Bitbucket Server push event: Starting prebuild.", { contextUrl });
 
             const commitInfo = await this.getCommitInfo(user, cloneUrl, commit);
 
@@ -163,7 +165,7 @@ export class BitbucketServerApp {
                 return ws;
             }
         } catch (e) {
-            console.error("Error processing Bitbucket Server webhook event", e);
+            log.error("Error processing Bitbucket Server webhook event", e);
             await this.webhookEvents.updateEvent(event.id, {
                 prebuildStatus: "prebuild_trigger_failed",
                 status: "processed",

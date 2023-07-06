@@ -222,10 +222,11 @@ export class WorkspaceStarter {
         span.setTag("workspaceId", workspace.id);
 
         if (workspace.projectId && workspace.type === "regular") {
-            /* tslint:disable-next-line */
-            /** no await */ this.projectDB.updateProjectUsage(workspace.projectId, {
-                lastWorkspaceStart: new Date().toISOString(),
-            });
+            this.projectDB
+                .updateProjectUsage(workspace.projectId, {
+                    lastWorkspaceStart: new Date().toISOString(),
+                })
+                .catch((err) => log.error("cannot update project usage", err));
         }
 
         options = options || {};

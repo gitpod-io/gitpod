@@ -146,10 +146,11 @@ export class GitHubEnterpriseApp {
             const cloneURL = payload.repository.clone_url;
             const projectAndOwner = await this.findProjectAndOwner(cloneURL, user);
             if (projectAndOwner.project) {
-                /* tslint:disable-next-line */
-                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
-                    lastWebhookReceived: new Date().toISOString(),
-                });
+                this.projectDB
+                    .updateProjectUsage(projectAndOwner.project.id, {
+                        lastWebhookReceived: new Date().toISOString(),
+                    })
+                    .catch((err) => log.error("cannot update project usage", err));
             }
             const contextURL = this.createContextUrl(payload);
             span.setTag("contextURL", contextURL);

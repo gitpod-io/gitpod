@@ -29,7 +29,7 @@ schema: |-
     permission delete = owner
 
     // Only owners can create new projects
-    permission create_project = owner
+    permission create_project = member + owner
 
     // Only owners can change settings
     permission read_settings = owner
@@ -132,6 +132,8 @@ assertions:
     - project:project_1#delete@user:user_0
     # Org member can view projects
     - project:project_1#read_info@user:user_1
+    # Org member can create projects
+    - organization:org_1#create_project@user:user_1
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10

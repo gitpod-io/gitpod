@@ -14,6 +14,7 @@ import { TokenService } from "../user/token-service";
 import { ContextParser } from "../workspace/context-parser-service";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { RepoURL } from "../repohost";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class BitbucketApp {
@@ -114,10 +115,11 @@ export class BitbucketApp {
         try {
             const projectAndOwner = await this.findProjectAndOwner(data.gitCloneUrl, user);
             if (projectAndOwner.project) {
-                /* tslint:disable-next-line */
-                /** no await */ this.projectDB.updateProjectUsage(projectAndOwner.project.id, {
-                    lastWebhookReceived: new Date().toISOString(),
-                });
+                this.projectDB
+                    .updateProjectUsage(projectAndOwner.project.id, {
+                        lastWebhookReceived: new Date().toISOString(),
+                    })
+                    .catch((err) => log.error("cannot update project usage", err));
             }
 
             const contextURL = this.createContextUrl(data);

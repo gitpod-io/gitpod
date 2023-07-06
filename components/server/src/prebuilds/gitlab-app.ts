@@ -142,12 +142,11 @@ export class GitLabApp {
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;
             const projectAndOwner = await this.findProjectAndOwner(context.repository.cloneUrl, user);
             if (projectAndOwner.project) {
-                /* tslint:disable-next-line */
-                /** no await */ this.projectDB
+                this.projectDB
                     .updateProjectUsage(projectAndOwner.project.id, {
                         lastWebhookReceived: new Date().toISOString(),
                     })
-                    .catch((e) => log.error(e));
+                    .catch((e) => log.error("cannot update project usage", e));
             }
             await this.webhookEvents.updateEvent(event.id, {
                 authorizedUserId: user.id,
