@@ -53,46 +53,42 @@ describe("ProjectsService", async () => {
         await repo.delete(stranger.id);
     });
 
-    it("should let owners find their projects", async () => {
+    it("should getProject and getProjects", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
 
-        const foundProject = await ps.getProject(owner.id, project.id);
+        let foundProject = await ps.getProject(owner.id, project.id);
         expect(foundProject?.id).to.equal(project.id);
-        const projects = await ps.getProjects(owner.id, org.id);
-        expect(projects.length).to.equal(1);
-    });
 
-    it("should not let strangers find projects", async () => {
-        const ps = container.get(ProjectsService);
-        const project = await createTestProject(ps, org, owner);
+        let projects = await ps.getProjects(owner.id, org.id);
+        expect(projects.length).to.equal(1);
+
+        foundProject = await ps.getProject(member.id, project.id);
+        expect(foundProject?.id).to.equal(project.id);
+
+        projects = await ps.getProjects(member.id, org.id);
+        expect(projects.length).to.equal(1);
 
         await expectError(ErrorCodes.NOT_FOUND, () => ps.getProject(stranger.id, project.id));
         await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
     });
 
-    it("should not let strangers delete projects", async () => {
+    it("should deleteProject", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
 
+        await expectError(ErrorCodes.PERMISSION_DENIED, () => ps.deleteProject(member.id, project.id));
         await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProject(stranger.id, project.id));
-    });
 
-    it("should let owners delete their projects", async () => {
-        const ps = container.get(ProjectsService);
-        const project = await createTestProject(ps, org, owner);
         await ps.deleteProject(owner.id, project.id);
-
-        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProject(owner.id, project.id));
-
         const projects = await ps.getProjects(owner.id, org.id);
         expect(projects.length).to.equal(0);
     });
 
-    it("should let owners update their project settings", async () => {
+    it("should updateProject", async () => {
         const ps = container.get(ProjectsService);
         const project = await createTestProject(ps, org, owner);
-        await ps.updateProjectPartial(owner.id, {
+        await ps.updateProject(owner.id, {
             id: project.id,
             settings: {
                 useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
@@ -104,28 +100,17 @@ describe("ProjectsService", async () => {
         expect(updatedProject?.settings?.useIncrementalPrebuilds).to.not.equal(
             project.settings?.useIncrementalPrebuilds,
         );
-    });
-
-    it("should not let members update project settings", async () => {
-        const ps = container.get(ProjectsService);
-        const project = await createTestProject(ps, org, owner);
 
         await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            ps.updateProjectPartial(member.id, {
+            ps.updateProject(member.id, {
                 id: project.id,
                 settings: {
                     useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
                 },
             }),
         );
-    });
-
-    it("should not let strangers update project settings", async () => {
-        const ps = container.get(ProjectsService);
-        const project = await createTestProject(ps, org, owner);
-
         await expectError(ErrorCodes.NOT_FOUND, () =>
-            ps.updateProjectPartial(stranger.id, {
+            ps.updateProject(stranger.id, {
                 id: project.id,
                 settings: {
                     useIncrementalPrebuilds: !project.settings?.useIncrementalPrebuilds,
@@ -147,11 +132,30 @@ describe("ProjectsService", async () => {
 
         await ps.deleteProjectEnvironmentVariable(owner.id, envVars[0].id);
 
-        const deletedEnvVar = await ps.getProjectEnvironmentVariableById(owner.id, envVars[0].id);
-        expect(deletedEnvVar).to.be.undefined;
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjectEnvironmentVariableById(owner.id, envVars[0].id));
 
         const emptyEnvVars = await ps.getProjectEnvironmentVariables(owner.id, project.id);
         expect(emptyEnvVars.length).to.equal(0);
+    });
+
+    it("should not let members create, delete but allow get project env vars", async () => {
+        const ps = container.get(ProjectsService);
+        const project = await createTestProject(ps, org, owner);
+        await ps.setProjectEnvironmentVariable(owner.id, project.id, "FOO", "BAR", false);
+
+        const envVars = await ps.getProjectEnvironmentVariables(member.id, project.id);
+        expect(envVars[0].name).to.equal("FOO");
+
+        const envVarById = await ps.getProjectEnvironmentVariableById(member.id, envVars[0].id);
+        expect(envVarById?.name).to.equal("FOO");
+
+        await expectError(ErrorCodes.PERMISSION_DENIED, () =>
+            ps.deleteProjectEnvironmentVariable(member.id, envVars[0].id),
+        );
+
+        await expectError(ErrorCodes.PERMISSION_DENIED, () =>
+            ps.setProjectEnvironmentVariable(member.id, project.id, "FOO", "BAR", false),
+        );
     });
 
     it("should not let strangers create, delete and get project env vars", async () => {
@@ -164,47 +168,59 @@ describe("ProjectsService", async () => {
         expect(envVars[0].name).to.equal("FOO");
 
         // let's try to get the env var as a stranger
-        const variable = await ps.getProjectEnvironmentVariableById(stranger.id, envVars[0].id);
-        expect(variable).to.be.undefined;
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjectEnvironmentVariableById(stranger.id, envVars[0].id));
 
         // let's try to delete the env var as a stranger
-        try {
-            await ps.deleteProjectEnvironmentVariable(stranger.id, envVars[0].id);
-            expect.fail("should not be able to delete env var as stranger");
-        } catch (error) {
-            expectErrorCode(error, ErrorCodes.NOT_FOUND);
-        }
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.deleteProjectEnvironmentVariable(stranger.id, envVars[0].id));
 
         // let's try to get the env vars as a stranger
-        try {
-            await ps.getProjectEnvironmentVariables(stranger.id, project.id);
-            expect.fail("should not be able to get env vars as stranger");
-        } catch (error) {
-            expectErrorCode(error, ErrorCodes.NOT_FOUND);
-        }
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjectEnvironmentVariables(stranger.id, project.id));
+    });
+
+    it("should findProjects", async () => {
+        const ps = container.get(ProjectsService);
+        const project = await createTestProject(ps, org, owner);
+        await createTestProject(ps, org, owner, "my-project-2", "https://github.com/foo/bar.git");
+        await createTestProject(ps, org, member, "my-project-3", "https://github.com/foo/baz.git");
+
+        const foundProjects = await ps.findProjects(owner.id, {
+            orderBy: "name",
+        });
+        expect(foundProjects.total).to.equal(3);
+        expect(foundProjects.rows[0].name).to.equal(project.name);
+        expect(foundProjects.rows[1].name).to.equal("my-project-2");
+        expect(foundProjects.rows[2].name).to.equal("my-project-3");
+
+        const projects = await ps.getProjects(member.id, org.id);
+        expect(projects.length).to.equal(3);
+
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProject(stranger.id, project.id));
+        await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
     });
 });
 
-async function expectError(errorCode: ErrorCode, code: () => Promise<any>) {
+export async function expectError(errorCode: ErrorCode, code: () => Promise<any>) {
     try {
         await code();
         expect.fail("expected error: " + errorCode);
-    } catch (error) {
-        expectErrorCode(error, errorCode);
+    } catch (err) {
+        expect(err && ApplicationError.hasErrorCode(err) && err.code).to.equal(errorCode);
     }
 }
 
-function expectErrorCode(err: any, errorCode: ErrorCode) {
-    expect(err && ApplicationError.hasErrorCode(err) && err.code).to.equal(errorCode);
-}
-
-async function createTestProject(ps: ProjectsService, org: Organization, owner: User) {
+async function createTestProject(
+    ps: ProjectsService,
+    org: Organization,
+    owner: User,
+    name = "my-project",
+    cloneUrl = "https://github.com/gipod-io/gitpod.git",
+) {
     return await ps.createProject(
         {
-            name: "my-project",
-            slug: "my-project",
+            name,
+            slug: name,
             teamId: org.id,
-            cloneUrl: "https://github.com/gipod-io/gitpod.git",
+            cloneUrl,
             appInstallationId: "noid",
         },
         owner,

@@ -40,9 +40,13 @@ export class ProjectsService {
         @inject(Authorizer) private readonly auth: Authorizer,
     ) {}
 
-    async getProject(userId: string, projectId: string): Promise<Project | undefined> {
+    async getProject(userId: string, projectId: string): Promise<Project> {
         await this.checkPermissionAndThrow(userId, "read_info", projectId);
-        return this.projectDB.findProjectById(projectId);
+        const project = await this.projectDB.findProjectById(projectId);
+        if (!project) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
+        }
+        return project;
     }
 
     async getProjects(userId: string, orgId: string): Promise<Project[]> {
@@ -52,6 +56,35 @@ export class ProjectsService {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found.`);
         }
         const projects = await this.projectDB.findProjects(orgId);
+        return await this.filterByReadAccess(userId, projects);
+    }
+
+    async findProjects(
+        userId: string,
+        searchOptions: {
+            offset?: number;
+            limit?: number;
+            orderBy?: keyof Project;
+            orderDir?: "ASC" | "DESC";
+            searchTerm?: string;
+        },
+    ): Promise<{ total: number; rows: Project[] }> {
+        const projects = await this.projectDB.findProjectsBySearchTerm(
+            searchOptions.offset || 0,
+            searchOptions.limit || 1000,
+            searchOptions.orderBy || "creationTime",
+            searchOptions.orderDir || "ASC",
+            searchOptions.searchTerm || "",
+        );
+        const rows = await this.filterByReadAccess(userId, projects.rows);
+        const total = projects.total;
+        return {
+            total,
+            rows,
+        };
+    }
+
+    private async filterByReadAccess(userId: string, projects: Project[]) {
         const filteredProjects: Project[] = [];
         const filter = async (project: Project) => {
             if (await this.auth.hasPermissionOnProject(userId, "read_info", project)) {
@@ -69,6 +102,25 @@ export class ProjectsService {
         return filteredProjects;
     }
 
+    async findProjectsByCloneUrl(userId: string, cloneUrl: string): Promise<Project[]> {
+        // TODO (se): currently we only allow one project per cloneUrl
+        const project = await this.projectDB.findProjectByCloneUrl(cloneUrl);
+        if (project && (await this.auth.hasPermissionOnProject(userId, "read_info", project))) {
+            return [project];
+        }
+        return [];
+    }
+
+    async markActive(userId: string, projectId: string): Promise<void> {
+        await this.checkPermissionAndThrow(userId, "read_info", projectId);
+        await this.projectDB.updateProjectUsage(projectId, {
+            lastWorkspaceStart: new Date().toISOString(),
+        });
+    }
+
+    /**
+     * @deprecated this is a temporary method until we allow mutliple projects per cloneURL
+     */
     async getProjectsByCloneUrls(
         userId: string,
         cloneUrls: string[],
@@ -78,7 +130,8 @@ export class ProjectsService {
         return projects;
     }
 
-    async getProjectOverviewCached(user: User, project: Project): Promise<Project.Overview | undefined> {
+    async getProjectOverview(user: User, projectId: string): Promise<Project.Overview> {
+        const project = await this.getProject(user.id, projectId);
         await this.checkPermissionAndThrow(user.id, "read_info", project);
         // Check for a cached project overview (fast!)
         const cachedPromise = this.projectDB.findCachedProjectOverview(project.id);
@@ -227,8 +280,8 @@ export class ProjectsService {
 
     private async onDidCreateProject(project: Project, installer: User) {
         // Pre-fetch project details in the background -- don't await
-        /** no await */ this.getProjectOverviewCached(installer, project).catch((err) => {
-            /** ignore */
+        this.getProjectOverview(installer, project.id).catch((err) => {
+            log.error(`Error pre-fetching project details for project ${project.id}: ${err}`);
         });
 
         // Install the prebuilds webhook if possible
@@ -274,6 +327,13 @@ export class ProjectsService {
                 await db.markDeleted(projectId);
 
                 await this.auth.removeProjectFromOrg(orgId, projectId);
+            });
+            this.analytics.track({
+                userId,
+                event: "project_deleted",
+                properties: {
+                    project_id: projectId,
+                },
             });
         } catch (err) {
             if (orgId) {
@@ -330,7 +390,7 @@ export class ProjectsService {
         return result;
     }
 
-    async updateProjectPartial(userId: string, partialProject: PartialProject): Promise<void> {
+    async updateProject(userId: string, partialProject: PartialProject): Promise<void> {
         await this.checkPermissionAndThrow(userId, "write_info", partialProject.id);
 
         const partial: PartialProject = { id: partialProject.id };
@@ -359,29 +419,22 @@ export class ProjectsService {
         return this.projectDB.getProjectEnvironmentVariables(projectId);
     }
 
-    async getProjectEnvironmentVariableById(userId: string, variableId: string): Promise<ProjectEnvVar | undefined> {
+    async getProjectEnvironmentVariableById(userId: string, variableId: string): Promise<ProjectEnvVar> {
         const result = await this.projectDB.getProjectEnvironmentVariableById(variableId);
-        if (result) {
-            try {
-                await this.checkPermissionAndThrow(userId, "read_info", result.projectId);
-            } catch (err) {
-                // we return undefined if the user does not have access to the project
-                return undefined;
-            }
+        if (!result) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
+        }
+        try {
+            await this.checkPermissionAndThrow(userId, "read_info", result.projectId);
+        } catch (err) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
         }
         return result;
     }
 
     async deleteProjectEnvironmentVariable(userId: string, variableId: string): Promise<void> {
         const variable = await this.getProjectEnvironmentVariableById(userId, variableId);
-        if (!variable) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
-        }
-        const project = await this.getProject(userId, variable.projectId);
-        if (!project) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Environment Variable ${variableId} not found.`);
-        }
-        await this.checkPermissionAndThrow(userId, "write_info", project);
+        await this.checkPermissionAndThrow(userId, "write_info", variable.projectId);
         return this.projectDB.deleteProjectEnvironmentVariable(variableId);
     }
 

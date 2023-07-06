@@ -5,12 +5,19 @@
  */
 
 import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
-import { OrgMemberRole, Organization, TeamMembershipInvite } from "@gitpod/gitpod-protocol";
+import {
+    OrgMemberInfo,
+    OrgMemberRole,
+    Organization,
+    OrganizationSettings,
+    TeamMembershipInvite,
+} from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationPermission } from "../authorization/definitions";
 import { ProjectsService } from "../projects/projects-service";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 
 @injectable()
 export class OrganizationService {
@@ -19,10 +26,39 @@ export class OrganizationService {
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(ProjectsService) private readonly projectsService: ProjectsService,
         @inject(Authorizer) private readonly auth: Authorizer,
+        @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
     ) {}
-    /**
-     * createOrganization creates a new organization
-     */
+
+    async listOrganizationsByMember(userId: string, memberId: string): Promise<Organization[]> {
+        //TODO check if user has access to member
+        const orgs = await this.teamDB.findTeamsByUser(memberId);
+        const result: Organization[] = [];
+        for (const org of orgs) {
+            if (await this.auth.hasPermissionOnOrganization(userId, "read_info", org.id)) {
+                result.push(org);
+            }
+        }
+        return result;
+    }
+
+    async getOrganization(userId: string, orgId: string): Promise<Organization> {
+        await this.checkPermissionAndThrow(userId, "read_info", orgId);
+        const result = await this.teamDB.findTeamById(orgId);
+        if (!result) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
+        }
+        return result;
+    }
+
+    async updateOrganization(
+        userId: string,
+        orgId: string,
+        changes: Pick<Organization, "name">,
+    ): Promise<Organization> {
+        await this.checkPermissionAndThrow(userId, "write_info", orgId);
+        return this.teamDB.updateTeam(orgId, changes);
+    }
+
     async createOrganization(userId: string, name: string): Promise<Organization> {
         let result: Organization;
         try {
@@ -38,6 +74,15 @@ export class OrganizationService {
 
             throw err;
         }
+        this.analytics.track({
+            userId,
+            event: "team_created",
+            properties: {
+                id: result.id,
+                name: result.name,
+                created_at: result.creationTime,
+            },
+        });
         return result;
     }
 
@@ -59,16 +104,28 @@ export class OrganizationService {
 
                 await this.auth.deleteOrganization(orgId);
             });
+            return this.analytics.track({
+                userId: userId,
+                event: "team_deleted",
+                properties: {
+                    team_id: orgId,
+                },
+            });
         } catch (err) {
             const org = await this.teamDB.findTeamById(orgId);
             await this.auth.addOrganization(org!, members, projects);
         }
     }
 
+    public async listMembers(userId: string, orgId: string): Promise<OrgMemberInfo[]> {
+        await this.checkPermissionAndThrow(userId, "read_members", orgId);
+        return this.teamDB.findMembersByTeam(orgId);
+    }
+
     public async getOrCreateInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
+        await this.checkPermissionAndThrow(userId, "invite_members", orgId);
         const invite = await this.teamDB.findGenericInviteByTeamId(orgId);
         if (invite) {
-            await this.checkPermissionAndThrow(userId, "invite_members", orgId);
             if (await this.teamDB.hasActiveSSO(orgId)) {
                 throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
             }
@@ -85,22 +142,7 @@ export class OrganizationService {
         return this.teamDB.resetGenericInvite(orgId);
     }
 
-    private async checkPermissionAndThrow(userId: string, permission: OrganizationPermission, orgId: string) {
-        if (await this.auth.hasPermissionOnOrganization(userId, permission, orgId)) {
-            return;
-        }
-        // check if the user has read permission
-        if ("read_info" === permission || !(await this.auth.hasPermissionOnOrganization(userId, "read_info", orgId))) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found.`);
-        }
-
-        throw new ApplicationError(
-            ErrorCodes.PERMISSION_DENIED,
-            `You do not have ${permission} on organization ${orgId}`,
-        );
-    }
-
-    public async joinOrganization(userId: string, inviteId: string): Promise<{ added: boolean; orgId: string }> {
+    public async joinOrganization(userId: string, inviteId: string): Promise<string> {
         // Invites can be used by anyone, as long as they know the invite ID, hence needs no resource guard
         const invite = await this.teamDB.findTeamMembershipInviteById(inviteId);
         if (!invite || invite.invalidationTime !== "") {
@@ -111,12 +153,17 @@ export class OrganizationService {
         }
         try {
             return await this.teamDB.transaction(async (db) => {
-                const result = await this.teamDB.addMemberToTeam(userId, invite.teamId);
+                await this.teamDB.addMemberToTeam(userId, invite.teamId);
                 await this.auth.addOrganizationRole(invite.teamId, userId, invite.role);
-                return {
-                    added: result === "added",
-                    orgId: invite.teamId,
-                };
+                this.analytics.track({
+                    userId: userId,
+                    event: "team_joined",
+                    properties: {
+                        team_id: invite.teamId,
+                        invite_id: inviteId,
+                    },
+                });
+                return invite.teamId;
             });
         } catch (err) {
             await this.auth.removeUserFromOrg(invite.teamId, userId);
@@ -194,6 +241,41 @@ export class OrganizationService {
         } catch (err) {
             // Rollback to the original role the user had
             await this.auth.addOrganizationRole(orgId, memberId, membership.role);
+            throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, err);
         }
+        this.analytics.track({
+            userId,
+            event: "team_user_removed",
+            properties: {
+                team_id: orgId,
+                removed_user_id: userId,
+            },
+        });
+    }
+
+    async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
+        await this.checkPermissionAndThrow(userId, "read_settings", orgId);
+        return (await this.teamDB.findOrgSettings(orgId)) || {};
+    }
+
+    async updateSettings(userId: string, orgId: string, settings: OrganizationSettings): Promise<OrganizationSettings> {
+        await this.checkPermissionAndThrow(userId, "write_settings", orgId);
+        await this.teamDB.setOrgSettings(orgId, settings);
+        return settings;
+    }
+
+    private async checkPermissionAndThrow(userId: string, permission: OrganizationPermission, orgId: string) {
+        if (await this.auth.hasPermissionOnOrganization(userId, permission, orgId)) {
+            return;
+        }
+        // check if the user has read permission
+        if ("read_info" === permission || !(await this.auth.hasPermissionOnOrganization(userId, "read_info", orgId))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found.`);
+        }
+
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `You do not have ${permission} on organization ${orgId}`,
+        );
     }
 }

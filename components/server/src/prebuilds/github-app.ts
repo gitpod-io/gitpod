@@ -261,10 +261,11 @@ export class GithubApp {
             const cloneURL = ctx.payload.repository.clone_url;
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
             if (project) {
-                /* tslint:disable-next-line */
-                /** no await */ this.projectDB.updateProjectUsage(project.id, {
-                    lastWebhookReceived: new Date().toISOString(),
-                });
+                this.projectDB
+                    .updateProjectUsage(project.id, {
+                        lastWebhookReceived: new Date().toISOString(),
+                    })
+                    .catch((err) => log.error("cannot update project usage", err));
             }
             await this.webhookEvents.updateEvent(event.id, { projectId: project?.id, cloneUrl: cloneURL });
 
@@ -424,10 +425,11 @@ export class GithubApp {
             const contextURL = pr.html_url;
             let { user, project } = await this.findOwnerAndProject(installationId, cloneURL);
             if (project) {
-                /* tslint:disable-next-line */
-                /** no await */ this.projectDB.updateProjectUsage(project.id, {
-                    lastWebhookReceived: new Date().toISOString(),
-                });
+                this.projectDB
+                    .updateProjectUsage(project.id, {
+                        lastWebhookReceived: new Date().toISOString(),
+                    })
+                    .catch((err) => log.error("Error updating project usage", err));
             }
 
             const context = (await this.contextParser.handle({ span }, user, contextURL)) as CommitContext;

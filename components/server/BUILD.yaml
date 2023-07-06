@@ -8,7 +8,6 @@ packages:
       - .eslintrc
       - package.json
       - mocha.opts
-      - tslint.yaml
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
