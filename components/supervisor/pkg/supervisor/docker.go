@@ -54,7 +54,7 @@ func socketActivationForDocker(parentCtx context.Context, wg *sync.WaitGroup, te
 	}
 
 	var notificationSent bool
-	var notificationDisabled bool
+	var notificationDisabled = cfg.isHeadless() || logFile == nil
 	notifyDockerUpFail := func() error {
 		if notificationDisabled || notificationSent {
 			return nil
