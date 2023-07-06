@@ -189,7 +189,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
     );
 
     return (
-        <Modal visible onClose={props.onClose} onSubmit={activate}>
+        <Modal visible onClose={props.onClose} onSubmit={activate} autoFocus={isNew}>
             <ModalHeader>{isNew ? "New Git Provider" : "Git Provider"}</ModalHeader>
             <ModalBody>
                 {isNew && (
@@ -203,6 +203,7 @@ export const GitIntegrationModal: FunctionComponent<Props> = (props) => {
                         disabled={!isNew}
                         label="Provider Type"
                         value={type}
+                        topMargin={false}
                         onChange={(val) => setType(val as ProviderType)}
                     >
                         <option value="GitHub">GitHub</option>
