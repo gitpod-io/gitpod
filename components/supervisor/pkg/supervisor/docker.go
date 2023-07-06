@@ -32,7 +32,7 @@ import (
 // if exit error happens one after another within dockerStartErrorBurstDuration then we're in the burst
 // and should stop trying after maxBurstDockerStartAttempts
 const (
-	maxBurstDockerStartAttempts   = 15
+	maxBurstDockerStartAttempts   = 8
 	dockerStartErrorBurstDuration = time.Minute * 1
 	maxIntervalBetweenDockerStart = 15 * time.Second
 
