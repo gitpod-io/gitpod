@@ -43,14 +43,13 @@ jobs:
     runs-on: [self-hosted]
     needs: [configuration]
     if: ${{ needs.configuration.outputs.skip == 'false' }}
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
     steps:
       # Most of this is taken over from the Build workflow/preview-env-check-regressions workflow
       - uses: actions/checkout@v3
       - name: Configure workspace
         run: |
-          cp -r /__w/gitpod/gitpod /workspace
-          # Needed by google-github-actions/setup-gcloud
-          sudo chown -R gitpod:gitpod /__t
           # Needed by docker/login-action
           sudo chmod goa+rw /var/run/docker.sock
       - id: auth
@@ -75,11 +74,10 @@ jobs:
       - name: Lacework Inline Scanner
         id: lacework-inline-scanner
         shell: bash
-        working-directory: /workspace/gitpod
         env:
           VERSION: ${{needs.configuration.outputs.version}}
           LW_ACCESS_TOKEN: '${{ steps.secrets.outputs.lacework-access-token }}'
           # TODO(gpl) See docker.io access above
           EXCLUDE_DOCKER_IO: true
         run: |
-          ./scripts/lw-scan-images.sh
+          $GITHUB_WORKSPACE/scripts/lw-scan-images.sh
