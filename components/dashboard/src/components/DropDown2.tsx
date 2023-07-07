@@ -4,7 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import React, { FunctionComponent, RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+    FC,
+    FunctionComponent,
+    ReactNode,
+    RefObject,
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
 import Arrow from "./Arrow";
 import classNames from "classnames";
 
@@ -156,7 +166,6 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
             tabIndex={0}
             className={classNames(
                 "relative flex flex-col rounded-lg  focus:outline-none focus:ring-2 focus:ring-blue-300",
-                loading && "animate-pulse",
             )}
         >
             <div
@@ -169,7 +178,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                     // hover when not disabled or expanded
                     !showDropDown && !disabled && !loading && "hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer",
                     // opacity when disabled or loading
-                    (disabled || loading) && "opacity-80",
+                    (disabled || loading) && "opacity-70",
                 )}
                 onClick={toggleDropDown}
             >
@@ -230,6 +239,43 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                     </ul>
                 </div>
             )}
+        </div>
+    );
+};
+
+type DropDown2SelectedElementProps = {
+    iconSrc: string;
+    loading?: boolean;
+    title: ReactNode;
+    subtitle: ReactNode;
+    htmlTitle?: string;
+};
+
+export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
+    iconSrc,
+    loading = false,
+    title,
+    subtitle,
+    htmlTitle,
+}) => {
+    return (
+        <div className={classNames("flex items-center", loading && "animate-pulse")} title={htmlTitle}>
+            <div className="mx-2 my-3 flex-shrink-0">
+                <img className="w-8 filter-grayscale" src={iconSrc} alt="logo" />
+            </div>
+            <div className="flex-col ml-1 flex-grow">
+                {loading ? (
+                    <div className="flex-col space-y-2">
+                        <div className="bg-gray-300 dark:bg-gray-500 h-4 w-24" />
+                        <div className="bg-gray-300 dark:bg-gray-500 h-2 w-40" />
+                    </div>
+                ) : (
+                    <>
+                        <div className="text-gray-700 dark:text-gray-300 font-semibold">{title}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</div>
+                    </>
+                )}
+            </div>
         </div>
     );
 };

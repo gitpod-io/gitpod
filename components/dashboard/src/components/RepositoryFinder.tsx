@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
-import { DropDown2, DropDown2Element } from "./DropDown2";
+import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
 import Repository from "../icons/Repository.svg";
 
 const LOCAL_STORAGE_KEY = "open-in-gitpod-search-data";
@@ -74,19 +74,14 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
     );
 
     const element = (
-        <div className="flex h-12" title={displayContextUrl(props.initialValue) || "Repository"}>
-            <div className="mx-2 my-2">
-                <img className="w-8 filter-grayscale self-center" src={Repository} alt="logo" />
-            </div>
-            <div className="flex-col ml-1 mt-1 flex-grow">
-                <div className="flex font-semibold text-gray-700">
-                    <div className="text-gray-700 dark:text-gray-300 truncate w-80">
-                        {displayContextUrl(props.initialValue) || "Select a repository"}
-                    </div>
-                </div>
-                <div className={"flex text-xs text-gray-500 dark:text-gray-400 font-semibold "}>Context URL</div>
-            </div>
-        </div>
+        <DropDown2SelectedElement
+            iconSrc={Repository}
+            htmlTitle={displayContextUrl(props.initialValue) || "Repository"}
+            title={
+                <div className="truncate w-80">{displayContextUrl(props.initialValue) || "Select a repository"}</div>
+            }
+            subtitle="Context URL"
+        />
     );
 
     if (!props.setSelection) {

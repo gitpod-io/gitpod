@@ -5,8 +5,8 @@
  */
 
 import { IDEOption, IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
-import { useCallback, useEffect, useMemo } from "react";
-import { DropDown2, DropDown2Element } from "./DropDown2";
+import { FC, useCallback, useEffect, useMemo } from "react";
+import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
 import Editor from "../icons/Editor.svg";
 import { useIDEOptions } from "../data/ide-options/ide-options-query";
 
@@ -109,7 +109,7 @@ export default function SelectIDEComponent({
             <IdeOptionElementSelected
                 option={ideOptions?.options[ide]}
                 useLatest={!!useLatest}
-                iconOnly={ideOptionsLoading || loading}
+                loading={ideOptionsLoading || loading}
             />
         </DropDown2>
     );
@@ -124,14 +124,14 @@ function parseId(id: string): { ide: string; useLatest: boolean } {
 interface IdeOptionElementProps {
     option: IDEOption | undefined;
     useLatest: boolean;
-    iconOnly?: boolean;
+    loading?: boolean;
 }
 
 function capitalize(label?: string) {
     return label && label[0].toLocaleUpperCase() + label.slice(1);
 }
 
-function IdeOptionElementSelected({ option, useLatest, iconOnly = false }: IdeOptionElementProps): JSX.Element {
+const IdeOptionElementSelected: FC<IdeOptionElementProps> = ({ option, useLatest, loading = false }) => {
     let version: string | undefined, label: string | undefined, title: string;
     if (!option) {
         title = "Select Editor";
@@ -142,37 +142,35 @@ function IdeOptionElementSelected({ option, useLatest, iconOnly = false }: IdeOp
     }
 
     return (
-        <div className="flex items-center" title={title}>
-            <div className="mx-2 my-3">
-                <img className="w-8 filter-grayscale self-center" src={Editor} alt="logo" />
-            </div>
-            <div className="flex-col ml-1 flex-grow">
-                {!iconOnly && (
-                    <>
-                        <div className="text-gray-700 dark:text-gray-300 font-semibold">
-                            {title} <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
-                            <span className="text-gray-400 dark:text-gray-500 font-normal">{version}</span>{" "}
-                            {useLatest && (
-                                <div className="ml-1 rounded-xl bg-gray-200 dark:bg-gray-600 px-2 inline text-sm text-gray-500 dark:text-gray-400 font-normal">
-                                    Latest
-                                </div>
-                            )}
+        <DropDown2SelectedElement
+            iconSrc={Editor}
+            loading={loading}
+            htmlTitle={title}
+            title={
+                <div>
+                    {title} <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
+                    <span className="text-gray-400 dark:text-gray-500 font-normal">{version}</span>{" "}
+                    {useLatest && (
+                        <div className="ml-1 rounded-xl bg-gray-200 dark:bg-gray-600 px-2 inline text-sm text-gray-500 dark:text-gray-400 font-normal">
+                            Latest
                         </div>
-                        <div className="flex text-xs text-gray-500 dark:text-gray-400">
-                            <div className="font-semibold">Editor</div>
-                            {label && (
-                                <>
-                                    <div className="mx-1">&middot;</div>
-                                    <div>{capitalize(label)}</div>
-                                </>
-                            )}
-                        </div>
-                    </>
-                )}
-            </div>
-        </div>
+                    )}
+                </div>
+            }
+            subtitle={
+                <div className="flex">
+                    <div className="font-semibold">Editor</div>
+                    {label && (
+                        <>
+                            <div className="mx-1">&middot;</div>
+                            <div>{capitalize(label)}</div>
+                        </>
+                    )}
+                </div>
+            }
+        />
     );
-}
+};
 
 function IdeOptionElementInDropDown(p: IdeOptionElementProps): JSX.Element {
     const { option, useLatest } = p;

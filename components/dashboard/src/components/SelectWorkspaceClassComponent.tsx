@@ -5,9 +5,9 @@
  */
 
 import { SupportedWorkspaceClass } from "@gitpod/gitpod-protocol/lib/workspace-class";
-import { useCallback, useEffect, useMemo } from "react";
+import { FC, useCallback, useEffect, useMemo } from "react";
 import WorkspaceClass from "../icons/WorkspaceClass.svg";
-import { DropDown2, DropDown2Element } from "./DropDown2";
+import { DropDown2, DropDown2Element, DropDown2SelectedElement } from "./DropDown2";
 import { useWorkspaceClasses } from "../data/workspaces/workspace-classes-query";
 
 interface SelectWorkspaceClassProps {
@@ -72,42 +72,38 @@ export default function SelectWorkspaceClassComponent({
         >
             <WorkspaceClassDropDownElementSelected
                 wsClass={selectedWsClass}
-                iconOnly={workspaceClassesLoading || loading}
+                loading={workspaceClassesLoading || loading}
             />
         </DropDown2>
     );
 }
 
-function WorkspaceClassDropDownElementSelected(props: {
-    iconOnly?: boolean;
+type WorkspaceClassDropDownElementSelectedProps = {
     wsClass?: SupportedWorkspaceClass;
-}): JSX.Element {
-    const c = props.wsClass;
-    let title = "Select class";
-    if (c) {
-        title = c.displayName;
-    }
+    loading?: boolean;
+};
+
+const WorkspaceClassDropDownElementSelected: FC<WorkspaceClassDropDownElementSelectedProps> = ({
+    wsClass,
+    loading = false,
+}) => {
+    const title = wsClass?.displayName ?? "Select class";
+
     return (
-        <div className="flex h-12" title={title}>
-            <div className="mx-2 my-2">
-                <img className="w-8 filter-grayscale self-center" src={WorkspaceClass} alt="logo" />
-            </div>
-            <div className="flex-col ml-1 mt-1 flex-grow">
-                {!props.iconOnly && (
-                    <>
-                        <div className="text-gray-700 dark:text-gray-300 font-semibold truncate w-80">{title}</div>
-                        <div className="flex text-xs text-gray-500 dark:text-gray-400">
-                            <div className="font-semibold">
-                                Class <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
-                                <span className="text-gray-500 dark:text-gray-400 font-normal">{c?.description}</span>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-        </div>
+        <DropDown2SelectedElement
+            iconSrc={WorkspaceClass}
+            loading={loading}
+            htmlTitle={title}
+            title={<div className="truncate w-80">{title}</div>}
+            subtitle={
+                <div className="font-semibold">
+                    Class <span className="text-gray-300 dark:text-gray-600 font-normal">&middot;</span>{" "}
+                    <span className="text-gray-500 dark:text-gray-400 font-normal">{wsClass?.description ?? ""}</span>
+                </div>
+            }
+        />
     );
-}
+};
 
 function WorkspaceClassDropDownElement(props: { wsClass: SupportedWorkspaceClass }): JSX.Element {
     const c = props.wsClass;
