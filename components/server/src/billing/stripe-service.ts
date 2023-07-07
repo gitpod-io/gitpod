@@ -18,14 +18,15 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 
 @injectable()
 export class StripeService {
-    @inject(Config) protected readonly config: Config;
+    constructor(
+        @inject(Config) private readonly config: Config,
+        @inject(BillingServiceDefinition.name)
+        private readonly billingService: BillingServiceClient,
+    ) {}
 
-    protected _stripe: Stripe | undefined;
+    private _stripe: Stripe | undefined;
 
-    @inject(BillingServiceDefinition.name)
-    protected readonly billingService: BillingServiceClient;
-
-    protected getStripe(): Stripe {
+    private getStripe(): Stripe {
         if (!this._stripe) {
             if (!this.config.stripeSecrets?.secretKey) {
                 throw new Error("Stripe is not properly configured");

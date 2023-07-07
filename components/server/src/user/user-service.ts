@@ -14,9 +14,7 @@ import { AuthUser } from "../auth/auth-provider";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
-import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { UsageService } from "./usage-service";
 
 export interface CreateUserParams {
     identity: Identity;
@@ -29,12 +27,6 @@ export interface CheckIsBlockedParams {
     user?: User;
 }
 
-export interface UsageLimitReachedResult {
-    reached: boolean;
-    almostReached?: boolean;
-    attributionId: AttributionId;
-}
-
 @injectable()
 export class UserService {
     constructor(
@@ -42,7 +34,6 @@ export class UserService {
         @inject(EmailDomainFilterDB) private readonly domainFilterDb: EmailDomainFilterDB,
         @inject(UserDB) private readonly userDb: UserDB,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
-        @inject(UsageService) private readonly usageService: UsageService,
     ) {}
 
     public async createUser({ identity, token, userUpdate }: CreateUserParams): Promise<User> {
@@ -77,45 +68,6 @@ export class UserService {
             // blocked = if user already blocked OR is not allowed to pass
             newUser.blocked = newUser.blocked || !canPass;
         }
-    }
-
-    /**
-     * @param user
-     * @param workspace - optional, in which case the default billing account will be checked
-     * @returns
-     */
-    async checkUsageLimitReached(user: User, organizationId: string): Promise<UsageLimitReachedResult> {
-        const attributionId = AttributionId.createFromOrganizationId(organizationId);
-        const creditBalance = await this.usageService.getCurrentBalance(attributionId);
-        const currentInvoiceCredits = creditBalance.usedCredits;
-        const usageLimit = creditBalance.usageLimit;
-        if (currentInvoiceCredits >= usageLimit) {
-            log.info({ userId: user.id }, "Usage limit reached", {
-                attributionId,
-                currentInvoiceCredits,
-                usageLimit,
-            });
-            return {
-                reached: true,
-                attributionId,
-            };
-        } else if (currentInvoiceCredits > usageLimit * 0.8) {
-            log.info({ userId: user.id }, "Usage limit almost reached", {
-                attributionId,
-                currentInvoiceCredits,
-                usageLimit,
-            });
-            return {
-                reached: false,
-                almostReached: true,
-                attributionId,
-            };
-        }
-
-        return {
-            reached: false,
-            attributionId,
-        };
     }
 
     async blockUser(targetUserId: string, block: boolean): Promise<User> {
