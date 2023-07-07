@@ -11,7 +11,7 @@ import {
     PrebuildUpdateListener,
     WorkspaceInstanceUpdateListener,
 } from "./local-message-broker";
-import { inject, injectable } from "inversify";
+import { inject, injectable, postConstruct } from "inversify";
 import {
     Disposable,
     DisposableCollection,
@@ -22,6 +22,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { Attributes } from "@gitpod/gitpod-protocol/lib/experiments/types";
 import { reportRedisUpdateCompleted, reportRedisUpdateReceived } from "../prometheus-metrics";
+import { Redis } from "ioredis";
 
 @injectable()
 export class RedisSubscriber implements LocalMessageBroker {
@@ -31,16 +32,22 @@ export class RedisSubscriber implements LocalMessageBroker {
 
     protected readonly disposables = new DisposableCollection();
 
+    private client: Redis;
+
+    @postConstruct()
+    protected initialize(): void {
+        this.client = this.redis.new("server-subscriber");
+    }
+
     async start(): Promise<void> {
         const channels = [WorkspaceInstanceUpdatesChannel];
-        const client = this.redis.get();
 
         for (const chan of channels) {
-            await client.subscribe(chan);
-            this.disposables.push(Disposable.create(() => client.unsubscribe(chan)));
+            await this.client.subscribe(chan);
+            this.disposables.push(Disposable.create(() => this.client.unsubscribe(chan)));
         }
 
-        client.on("message", async (channel: string, message: string) => {
+        this.client.on("message", async (channel: string, message: string) => {
             reportRedisUpdateReceived(channel);
 
             const featureEnabled = await this.isRedisPubSubEnabled({});

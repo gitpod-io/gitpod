@@ -29,4 +29,15 @@ export class RedisClient {
     public get(): Redis {
         return this.client;
     }
+
+    public new(connectionName: string): Redis {
+        const [host, port] = this.config.redis.address.split(":");
+        return new Redis({
+            port: Number(port),
+            host,
+            enableReadyCheck: true,
+            keepAlive: 10 * 1000,
+            connectionName: connectionName,
+        });
+    }
 }
