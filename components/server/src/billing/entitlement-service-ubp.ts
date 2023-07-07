@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { TeamDB } from "@gitpod/gitpod-db/lib";
 import {
     BillingTier,
     Team,
@@ -19,12 +19,8 @@ import {
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { inject, injectable } from "inversify";
 import { EntitlementService, HitParallelWorkspaceLimit, MayStartWorkspaceResult } from "./entitlement-service";
-import { Config } from "../config";
-import { UserService } from "../user/user-service";
-import { StripeService } from "../user/stripe-service";
-import { BillingModes } from "./billing-mode";
 import { CostCenter_BillingStrategy } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
-import { UsageService } from "../user/usage-service";
+import { UsageService } from "../orgs/usage-service";
 
 const MAX_PARALLEL_WORKSPACES_FREE = 4;
 const MAX_PARALLEL_WORKSPACES_PAID = 16;
@@ -34,13 +30,10 @@ const MAX_PARALLEL_WORKSPACES_PAID = 16;
  */
 @injectable()
 export class EntitlementServiceUBP implements EntitlementService {
-    @inject(Config) protected readonly config: Config;
-    @inject(UserDB) protected readonly userDb: UserDB;
-    @inject(BillingModes) protected readonly billingModes: BillingModes;
-    @inject(UserService) protected readonly userService: UserService;
-    @inject(StripeService) protected readonly stripeService: StripeService;
-    @inject(UsageService) protected readonly usageService: UsageService;
-    @inject(TeamDB) protected readonly teamDB: TeamDB;
+    constructor(
+        @inject(UsageService) private readonly usageService: UsageService,
+        @inject(TeamDB) private readonly teamDB: TeamDB,
+    ) {}
 
     async mayStartWorkspace(
         user: User,
@@ -70,19 +63,19 @@ export class EntitlementServiceUBP implements EntitlementService {
         };
     }
 
-    protected async checkUsageLimitReached(
+    private async checkUsageLimitReached(
         user: User,
         organizationId: string,
         date: Date,
     ): Promise<AttributionId | undefined> {
-        const result = await this.userService.checkUsageLimitReached(user, organizationId);
+        const result = await this.usageService.checkUsageLimitReached(user.id, organizationId);
         if (result.reached) {
             return result.attributionId;
         }
         return undefined;
     }
 
-    protected async getMaxParallelWorkspaces(user: User, date: Date): Promise<number> {
+    private async getMaxParallelWorkspaces(user: User, date: Date): Promise<number> {
         if (await this.hasPaidSubscription(user, date)) {
             return MAX_PARALLEL_WORKSPACES_PAID;
         } else {

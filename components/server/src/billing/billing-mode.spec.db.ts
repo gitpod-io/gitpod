@@ -18,7 +18,7 @@ import { Container, ContainerModule } from "inversify";
 import { suite, test, timeout } from "@testdeck/mocha";
 import Stripe from "stripe";
 import { Config } from "../config";
-import { UsageService } from "../user/usage-service";
+import { UsageService } from "../orgs/usage-service";
 import { BillingModes, BillingModesImpl } from "./billing-mode";
 chai.use(deepEqualInAnyOrder);
 const expect = chai.expect;

@@ -181,7 +181,7 @@ import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
-import { StripeService } from "../user/stripe-service";
+import { StripeService } from "../billing/stripe-service";
 import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import {
     BillingServiceClient,

@@ -5,6 +5,7 @@
  */
 
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import {
     CostCenter_BillingStrategy,
     UsageServiceClient,
@@ -38,4 +39,44 @@ export class UsageService {
         });
         return response.costCenter?.billingStrategy;
     }
+
+    async checkUsageLimitReached(userId: string, organizationId: string): Promise<UsageLimitReachedResult> {
+        const attributionId = AttributionId.createFromOrganizationId(organizationId);
+        const creditBalance = await this.getCurrentBalance(attributionId);
+        const currentInvoiceCredits = creditBalance.usedCredits;
+        const usageLimit = creditBalance.usageLimit;
+        if (currentInvoiceCredits >= usageLimit) {
+            log.info({ userId }, "Usage limit reached", {
+                attributionId,
+                currentInvoiceCredits,
+                usageLimit,
+            });
+            return {
+                reached: true,
+                attributionId,
+            };
+        } else if (currentInvoiceCredits > usageLimit * 0.8) {
+            log.info({ userId }, "Usage limit almost reached", {
+                attributionId,
+                currentInvoiceCredits,
+                usageLimit,
+            });
+            return {
+                reached: false,
+                almostReached: true,
+                attributionId,
+            };
+        }
+
+        return {
+            reached: false,
+            attributionId,
+        };
+    }
+}
+
+export interface UsageLimitReachedResult {
+    reached: boolean;
+    almostReached?: boolean;
+    attributionId: AttributionId;
 }
