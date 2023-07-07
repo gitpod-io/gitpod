@@ -38,10 +38,9 @@ export class OneTimeSecretServer {
                     return;
                 }
 
-                log.info(`provided secret ${key}`);
                 res.status(200).send(secret);
             } catch (err) {
-                log.error("cannot provide one-time secret", err);
+                log.error("Cannot provide one-time secret", err);
                 res.sendStatus(500);
                 TraceContext.setError({ span }, err);
             } finally {
