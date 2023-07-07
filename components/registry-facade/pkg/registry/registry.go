@@ -30,7 +30,7 @@ import (
 	distv2 "github.com/docker/distribution/registry/api/v2"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/gorilla/mux"
-	httpapi "github.com/ipfs/go-ipfs-http-client"
+	httpapi "github.com/ipfs/kubo/client/rpc"
 	ma "github.com/multiformats/go-multiaddr"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
