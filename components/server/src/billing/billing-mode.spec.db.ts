@@ -24,8 +24,10 @@ chai.use(deepEqualInAnyOrder);
 const expect = chai.expect;
 
 type StripeSubscription = Pick<Stripe.Subscription, "id"> & { customer: string };
-class UsageServiceMock implements UsageService {
-    constructor(protected readonly subscription?: StripeSubscription) {}
+class UsageServiceMock extends UsageService {
+    constructor(protected readonly subscription?: StripeSubscription) {
+        super(undefined as any);
+    }
 
     async getCurrentBalance(attributionId: AttributionId): Promise<{ usedCredits: number; usageLimit: number }> {
         throw new Error("Mock: not implemented");

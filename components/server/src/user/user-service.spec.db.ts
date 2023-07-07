@@ -4,51 +4,35 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
-import { Container } from "inversify";
-import { suite, test } from "@testdeck/mocha";
-import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
-import { UserService } from "./user-service";
+import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import * as chai from "chai";
-import { dbContainerModule } from "@gitpod/gitpod-db/lib/container-module";
-import { productionContainerModule } from "../container-module";
-import { Config } from "../config";
+import { Container } from "inversify";
+import { createTestContainer } from "../test/service-testing-container-module";
+import { UserService } from "./user-service";
+import { DBUser, TypeORM } from "@gitpod/gitpod-db/lib";
 
 const expect = chai.expect;
 
-const testContainer = new Container();
-testContainer.load(dbContainerModule());
-testContainer.load(productionContainerModule);
-testContainer.rebind(Config).toConstantValue({
-    blockNewUsers: {
-        enabled: false,
-    },
-} as any);
+describe("UserService", async () => {
+    let container: Container;
+    let userService: UserService;
 
-@suite
-class UserServiceSpec {
-    userDB = testContainer.get<UserDB>(UserDB);
+    beforeEach(async () => {
+        container = createTestContainer();
+        Experiments.configureTestingClient({
+            centralizedPermissions: true,
+        });
+        userService = container.get<UserService>(UserService);
+    });
 
-    async before() {
-        await this.wipeRepos();
-    }
+    afterEach(async () => {
+        const typeorm = container.get(TypeORM);
+        const conn = await typeorm.getConnection();
+        await conn.getRepository(DBUser).clear();
+    });
 
-    async after() {
-        await this.wipeRepos();
-    }
-
-    async wipeRepos() {
-        const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const mnr = await typeorm.getConnection();
-        await mnr.getRepository(DBUser).delete({});
-        await mnr.getRepository(DBTeam).delete({});
-    }
-
-    @test
-    public async updateLoggedInUser_avatarUrlNotUpdatable() {
-        const sut = testContainer.get<UserService>(UserService);
-
-        const user = await sut.createUser({
+    it("updateLoggedInUser_avatarUrlNotUpdatable", async () => {
+        const user = await userService.createUser({
             identity: {
                 authId: "foo",
                 authName: "bar",
@@ -57,13 +41,11 @@ class UserServiceSpec {
             },
         });
 
-        const updated = await sut.updateUser(user.id, {
+        const updated = await userService.updateUser(user.id, {
             avatarUrl: "evil-payload",
         });
 
         // The update to avatarUrl is not applied
         expect(updated.avatarUrl).is.undefined;
-    }
-}
-
-module.exports = new UserServiceSpec();
+    });
+});
