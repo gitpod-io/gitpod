@@ -123,7 +123,7 @@ spec:
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesCrashlooping.md
         summary: Pod is crash looping in {{ $labels.cluster }}.
-        description: "FINE TUNE: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is stuck in crashlooping for at least 1 minutes"
+        description: "FINE TUNE: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is stuck in crashlooping for at least 1 minute"
 
     - alert: StartWorkspace_InternalErrors
       expr: sum(increase(gitpod_server_api_calls_total{method="startWorkspace", statusCode=~"5.*"}[1m])) by (cluster) > 5
