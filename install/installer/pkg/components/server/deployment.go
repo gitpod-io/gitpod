@@ -308,7 +308,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 							},
 							volumes...,
 						),
-						InitContainers: []corev1.Container{*common.DatabaseWaiterContainer(ctx), *common.MessageBusWaiterContainer(ctx)},
+						InitContainers: []corev1.Container{
+							*common.DatabaseWaiterContainer(ctx),
+							*common.MessageBusWaiterContainer(ctx),
+							*common.RedisWaiterContainer(ctx),
+						},
 						Containers: []corev1.Container{{
 							Name:            Component,
 							Image:           ctx.ImageName(ctx.Config.Repository, Component, ctx.VersionManifest.Components.Server.Version),
