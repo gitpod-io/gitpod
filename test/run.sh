@@ -84,18 +84,20 @@ args+=( "-timeout=60m" )
 
 if [[ "${GITPOD_REPO_ROOT:-}" != "" ]]; then
   echo "Running in Gitpod workspace. Fetching USER_NAME and USER_TOKEN"
-  USER_NAME="$(kubectl --context=dev -n werft get secret integration-test-user -o jsonpath='{.data.username}' | base64 -d)"
+  #USER_NAME="$(kubectl --context=dev -n werft get secret integration-test-user -o jsonpath='{.data.username}' | base64 -d)"
   USER_TOKEN="$(kubectl --context=dev -n werft get secret integration-test-user -o jsonpath='{.data.token}' | base64 -d)"
-  export USER_NAME
+  #export USER_NAME
   export USER_TOKEN
 else
   echo "Using INTEGRATION_TEST_USERNAME and INTEGRATION_TEST_USER_TOKEN for USER_NAME and USER_TOKEN"
-  USER_NAME="${INTEGRATION_TEST_USERNAME}"
+  #USER_NAME="${INTEGRATION_TEST_USERNAME}"
   USER_TOKEN="${INTEGRATION_TEST_USER_TOKEN}"
-  export USER_NAME
+  #export USER_NAME
   export USER_TOKEN
 fi
 
+# Leave empty to generate a unique user per test, to allow parallel test execution without reaching the max parallel workspace limit.
+USER_NAME="${INTEGRATION_TEST_USERNAME:-${USER_NAME:-}}"
 [[ "$USER_NAME" != "" ]] && args+=( "-username=$USER_NAME" )
 
 go install github.com/jstemmer/go-junit-report/v2@latest

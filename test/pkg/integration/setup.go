@@ -15,6 +15,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/google/uuid"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -140,6 +141,9 @@ func Setup(ctx context.Context) (string, string, env.Environment, bool, string, 
 		waitOnGitpodRunning(e.Namespace(), waitGitpodReady),
 	)
 
+	if username == "" {
+		username = uuid.NewString()
+	}
 	return username, e.Namespace(), testenv, enterprise, kubeconfig, gitlab
 }
 

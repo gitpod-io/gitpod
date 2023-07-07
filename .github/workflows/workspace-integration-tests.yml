@@ -139,7 +139,7 @@ jobs:
               shell: bash
               env:
                   ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  USERNAME: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USERNAME }}
+                  # USER_NAME: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USERNAME }}
                   USER_TOKEN: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
                   PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
                   PREVIEW_NAME: ${{ needs.configuration.outputs.name }}

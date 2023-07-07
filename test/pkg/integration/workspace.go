@@ -28,15 +28,15 @@ import (
 )
 
 const (
-	gitpodBuiltinUserID             = "builtin-user-workspace-probe-0000000"
-	perCallTimeout                  = 5 * time.Minute
-	ParallelLunchableWorkspaceLimit = 10
+	gitpodBuiltinUserID              = "builtin-user-workspace-probe-0000000"
+	perCallTimeout                   = 5 * time.Minute
+	ParallelLaunchableWorkspaceLimit = 4
 )
 
 var (
 	ErrWorkspaceInstanceStopping = fmt.Errorf("workspace instance is stopping")
 	ErrWorkspaceInstanceStopped  = fmt.Errorf("workspace instance has stopped")
-	parallelLimiter              = make(chan struct{}, ParallelLunchableWorkspaceLimit)
+	parallelLimiter              = make(chan struct{}, ParallelLaunchableWorkspaceLimit)
 )
 
 type launchWorkspaceDirectlyOptions struct {
