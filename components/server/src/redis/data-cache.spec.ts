@@ -16,7 +16,7 @@ const client: IORedis.Redis = new Redis();
 class DataCacheRedisMock extends DataCacheRedis {
     constructor() {
         super();
-        this.redis = { get: () => client } as any;
+        this.redis = client as any;
     }
 }
 
