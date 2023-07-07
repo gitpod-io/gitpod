@@ -323,7 +323,7 @@ export const redisUpdatesReceived = new prometheusClient.Counter({
 });
 
 export function reportRedisUpdateReceived(channel: string) {
-    redisUpdatesReceived.inc({ channel });
+    redisUpdatesReceived.labels(channel).inc();
 }
 
 export const redisUpdatesCompletedTotal = new prometheusClient.Counter({
@@ -333,5 +333,5 @@ export const redisUpdatesCompletedTotal = new prometheusClient.Counter({
 });
 
 export function reportRedisUpdateCompleted(channel: string, err?: Error) {
-    redisUpdatesCompletedTotal.inc({ channel, error: err ? "true" : "false" });
+    redisUpdatesCompletedTotal.labels(channel, err ? "true" : "false").inc();
 }
