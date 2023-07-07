@@ -5,15 +5,15 @@
  */
 
 import { inject, injectable } from "inversify";
+import { Redis } from "ioredis";
 import Redlock, { RedlockAbortSignal } from "redlock";
-import { RedisClient } from "./client";
 
 @injectable()
 export class RedisMutex {
-    @inject(RedisClient) protected redis: RedisClient;
+    @inject(Redis) protected redis: Redis;
 
     private client(): Redlock {
-        return new Redlock([this.redis.get()], {
+        return new Redlock([this.redis], {
             // The expected clock drift; for more details see:
             // http://redis.io/topics/distlock
             driftFactor: 0.01, // multiplied by lock ttl to determine drift time

@@ -4,14 +4,13 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { RedisClient } from "../redis/client";
 import {
     HeadlessWorkspaceEventListener,
     LocalMessageBroker,
     PrebuildUpdateListener,
     WorkspaceInstanceUpdateListener,
 } from "./local-message-broker";
-import { inject, injectable, postConstruct } from "inversify";
+import { inject, injectable } from "inversify";
 import {
     Disposable,
     DisposableCollection,
@@ -26,28 +25,21 @@ import { Redis } from "ioredis";
 
 @injectable()
 export class RedisSubscriber implements LocalMessageBroker {
-    constructor(@inject(RedisClient) private readonly redis: RedisClient) {}
+    constructor(@inject(Redis) private readonly redis: Redis) {}
 
     protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
 
     protected readonly disposables = new DisposableCollection();
 
-    private client: Redis;
-
-    @postConstruct()
-    protected initialize(): void {
-        this.client = this.redis.new("server-subscriber");
-    }
-
     async start(): Promise<void> {
         const channels = [WorkspaceInstanceUpdatesChannel];
 
         for (const chan of channels) {
-            await this.client.subscribe(chan);
-            this.disposables.push(Disposable.create(() => this.client.unsubscribe(chan)));
+            await this.redis.subscribe(chan);
+            this.disposables.push(Disposable.create(() => this.redis.unsubscribe(chan)));
         }
 
-        this.client.on("message", async (channel: string, message: string) => {
+        this.redis.on("message", async (channel: string, message: string) => {
             reportRedisUpdateReceived(channel);
 
             const featureEnabled = await this.isRedisPubSubEnabled({});
