@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/openvsx-proxy
 
-go 1.19
+go 1.20
 
 require (
 	github.com/allegro/bigcache v1.2.1

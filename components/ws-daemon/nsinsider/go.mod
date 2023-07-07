@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/ws-daemon/nsinsider
 
-go 1.19
+go 1.20
 
 replace github.com/seccomp/libseccomp-golang => github.com/gitpod-io/libseccomp-golang v0.9.2-0.20220203100026-45179215fdb1 // leeway indirect from components/workspacekit:lib
 

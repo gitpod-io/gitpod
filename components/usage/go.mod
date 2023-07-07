@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/usage
 
-go 1.19
+go 1.20
 
 require (
 	github.com/alicebob/miniredis/v2 v2.30.2

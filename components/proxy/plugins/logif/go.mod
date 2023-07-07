@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/proxy/plugins/logif
 
-go 1.19
+go 1.20
 
 replace github.com/gitpod-io/gitpod/proxy/plugins/jsonselect => ../jsonselect
 

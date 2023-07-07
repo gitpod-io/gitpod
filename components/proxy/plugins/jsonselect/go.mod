@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/proxy/plugins/jsonselect
 
-go 1.19
+go 1.20
 
 require (
 	github.com/buger/jsonparser v1.1.1

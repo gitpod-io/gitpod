@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/components/gitpod-db/go
 
-go 1.19
+go 1.20
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 

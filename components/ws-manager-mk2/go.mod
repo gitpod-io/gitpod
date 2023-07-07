@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/ws-manager-mk2
 
-go 1.19
+go 1.20
 
 require (
 	github.com/aws/smithy-go v1.13.3

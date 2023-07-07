@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/ws-daemon
 
-go 1.19
+go 1.20
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26

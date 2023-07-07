@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/content-service-api/util
 
-go 1.19
+go 1.20
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../../go
 
