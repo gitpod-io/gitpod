@@ -35,7 +35,7 @@ export class RedisSubscriber implements LocalMessageBroker {
         const channels = [WorkspaceInstanceUpdatesChannel];
         const client = this.redis.get();
 
-        for (let chan of channels) {
+        for (const chan of channels) {
             await client.subscribe(chan);
             this.disposables.push(Disposable.create(() => client.unsubscribe(chan)));
         }
@@ -103,7 +103,7 @@ export class RedisSubscriber implements LocalMessageBroker {
         listeners.push(listener);
         return Disposable.create(() => {
             const ls = listeners!;
-            let idx = ls.findIndex((l) => l === listener);
+            const idx = ls.findIndex((l) => l === listener);
             if (idx !== -1) {
                 ls.splice(idx, 1);
             }
