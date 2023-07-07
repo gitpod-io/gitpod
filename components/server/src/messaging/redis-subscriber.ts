@@ -63,7 +63,7 @@ export class RedisSubscriber implements LocalMessageBroker {
 
     private async onMessage(channel: string, message: string): Promise<void> {
         switch (channel) {
-            case "chan:instances":
+            case WorkspaceInstanceUpdatesChannel:
                 const parsed = JSON.parse(message) as RedisWorkspaceInstanceUpdate;
                 return this.onInstanceUpdate(parsed);
             default:
