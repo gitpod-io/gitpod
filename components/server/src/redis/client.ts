@@ -4,29 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { inject, injectable, postConstruct } from "inversify";
 import { Redis } from "ioredis";
-import { Config } from "../config";
 
-@injectable()
-export class RedisClient {
-    @inject(Config) protected config: Config;
-
-    private client: Redis;
-
-    @postConstruct()
-    protected initialize(): void {
-        const [host, port] = this.config.redis.address.split(":");
-        this.client = new Redis({
-            port: Number(port),
-            host,
-            enableReadyCheck: true,
-            keepAlive: 10 * 1000,
-            connectionName: "server",
-        });
-    }
-
-    public get(): Redis {
-        return this.client;
-    }
+export function newRedisClient(host: string, port: number): Redis {
+    return new Redis({
+        port: Number(port),
+        host,
+        enableReadyCheck: true,
+        keepAlive: 10 * 1000,
+        connectionName: "server",
+    });
 }

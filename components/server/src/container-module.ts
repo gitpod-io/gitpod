@@ -88,7 +88,7 @@ import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { ProjectsService } from "./projects/projects-service";
-import { RedisClient } from "./redis/client";
+import { newRedisClient } from "./redis/client";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
 import { SessionHandler } from "./session-handler";
@@ -129,6 +129,8 @@ import { WorkspaceFactory } from "./workspace/workspace-factory";
 import { WorkspaceStarter } from "./workspace/workspace-starter";
 import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { OrganizationService } from "./orgs/organization-service";
+import { RedisSubscriber } from "./messaging/redis-subscriber";
+import { Redis } from "ioredis";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -354,7 +356,13 @@ export const productionContainerModule = new ContainerModule(
         bind(JobRunner).toSelf().inSingletonScope();
 
         // Redis
-        bind(RedisClient).toSelf().inSingletonScope();
+        bind(Redis).toDynamicValue((ctx) => {
+            const config = ctx.container.get<Config>(Config);
+            const [host, port] = config.redis.address.split(":");
+            return newRedisClient(host, Number(port));
+        });
+
         bind(RedisMutex).toSelf().inSingletonScope();
+        bind(RedisSubscriber).toSelf().inSingletonScope();
     },
 );

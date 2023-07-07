@@ -46,59 +46,21 @@ import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
 import { API } from "./api/server";
-import { SnapshotService } from "./workspace/snapshot-service";
 import { GithubApp } from "./prebuilds/github-app";
 import { GitLabApp } from "./prebuilds/gitlab-app";
 import { BitbucketApp } from "./prebuilds/bitbucket-app";
 import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
-import { RedisMutex } from "./redis/mutex";
 import { JobRunner } from "./jobs/runner";
+import { RedisSubscriber } from "./messaging/redis-subscriber";
 
 @injectable()
 export class Server {
     static readonly EVENT_ON_START = "start";
 
-    @inject(Config) protected readonly config: Config;
-    @inject(TypeORM) protected readonly typeOrm: TypeORM;
-    @inject(SessionHandler) protected sessionHandler: SessionHandler;
-    @inject(Authenticator) protected authenticator: Authenticator;
-    @inject(UserController) protected readonly userController: UserController;
-    @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager;
-    @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
-    @inject(LocalMessageBroker) protected readonly localMessageBroker: LocalMessageBroker;
-    @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
-    @inject(LivenessController) protected readonly livenessController: LivenessController;
-    @inject(MonitoringEndpointsApp) protected readonly monitoringEndpointsApp: MonitoringEndpointsApp;
-    @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService;
-    @inject(HeadlessLogController) protected readonly headlessLogController: HeadlessLogController;
-    @inject(DebugApp) protected readonly debugApp: DebugApp;
-
-    @inject(GithubApp) protected readonly githubApp: GithubApp;
-    @inject(GitLabApp) protected readonly gitLabApp: GitLabApp;
-    @inject(BitbucketApp) protected readonly bitbucketApp: BitbucketApp;
-    @inject(BitbucketServerApp) protected readonly bitbucketServerApp: BitbucketServerApp;
-    @inject(GitHubEnterpriseApp) protected readonly gitHubEnterpriseApp: GitHubEnterpriseApp;
-
-    @inject(JobRunner) protected readonly jobRunner: JobRunner;
-
-    @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
-    @inject(SnapshotService) protected readonly snapshotService: SnapshotService;
-
-    @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
-
-    @inject(RedisMutex) protected readonly mutex: RedisMutex;
-
-    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
-    @inject(OAuthController) protected readonly oauthController: OAuthController;
-    @inject(NewsletterSubscriptionController)
-    protected readonly newsletterSubscriptionController: NewsletterSubscriptionController;
-
-    @inject(IamSessionApp) protected readonly iamSessionAppCreator: IamSessionApp;
     protected iamSessionApp?: express.Application;
     protected iamSessionAppServer?: http.Server;
 
-    @inject(API) protected readonly api: API;
     protected apiServer?: http.Server;
 
     protected readonly eventEmitter = new EventEmitter();
@@ -107,6 +69,38 @@ export class Server {
     protected monitoringApp?: express.Application;
     protected monitoringHttpServer?: http.Server;
     protected disposables = new DisposableCollection();
+
+    constructor(
+        @inject(Config) private readonly config: Config,
+        @inject(TypeORM) private readonly typeOrm: TypeORM,
+        @inject(SessionHandler) private readonly sessionHandler: SessionHandler,
+        @inject(Authenticator) private readonly authenticator: Authenticator,
+        @inject(UserController) private readonly userController: UserController,
+        @inject(WebsocketConnectionManager) private readonly websocketConnectionHandler: WebsocketConnectionManager,
+        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
+        @inject(LocalMessageBroker) private readonly localMessageBroker: LocalMessageBroker,
+        @inject(WorkspaceDownloadService) private readonly workspaceDownloadService: WorkspaceDownloadService,
+        @inject(LivenessController) private readonly livenessController: LivenessController,
+        @inject(MonitoringEndpointsApp) private readonly monitoringEndpointsApp: MonitoringEndpointsApp,
+        @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService,
+        @inject(HeadlessLogController) private readonly headlessLogController: HeadlessLogController,
+        @inject(DebugApp) private readonly debugApp: DebugApp,
+        @inject(GithubApp) private readonly githubApp: GithubApp,
+        @inject(GitLabApp) private readonly gitLabApp: GitLabApp,
+        @inject(BitbucketApp) private readonly bitbucketApp: BitbucketApp,
+        @inject(BitbucketServerApp) private readonly bitbucketServerApp: BitbucketServerApp,
+        @inject(GitHubEnterpriseApp) private readonly gitHubEnterpriseApp: GitHubEnterpriseApp,
+        @inject(JobRunner) private readonly jobRunner: JobRunner,
+        @inject(OneTimeSecretServer) private readonly oneTimeSecretServer: OneTimeSecretServer,
+        @inject(BearerAuth) private readonly bearerAuth: BearerAuth,
+        @inject(HostContextProvider) private readonly hostCtxProvider: HostContextProvider,
+        @inject(OAuthController) private readonly oauthController: OAuthController,
+        @inject(NewsletterSubscriptionController)
+        private readonly newsletterSubscriptionController: NewsletterSubscriptionController,
+        @inject(IamSessionApp) private readonly iamSessionAppCreator: IamSessionApp,
+        @inject(API) private readonly api: API,
+        @inject(RedisSubscriber) private readonly redisSubscriber: RedisSubscriber,
+    ) {}
 
     public async init(app: express.Application) {
         log.setVersion(this.config.version);
@@ -281,6 +275,9 @@ export class Server {
         // Start local message broker
         await this.localMessageBroker.start();
         this.disposables.push(Disposable.create(() => this.localMessageBroker.stop().catch(log.error)));
+
+        await this.redisSubscriber.start();
+        this.disposables.push(Disposable.create(() => this.redisSubscriber.stop().catch(log.error)));
 
         // Start periodic jobs
         this.jobRunner.start();
