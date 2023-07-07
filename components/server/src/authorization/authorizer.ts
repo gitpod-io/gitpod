@@ -7,7 +7,14 @@
 import { v1 } from "@authzed/authzed-node";
 import { inject, injectable } from "inversify";
 
-import { OrganizationPermission, Permission, ProjectPermission, Relation, ResourceType } from "./definitions";
+import {
+    InstallationID,
+    OrganizationPermission,
+    Permission,
+    ProjectPermission,
+    Relation,
+    ResourceType,
+} from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { Organization, TeamMemberInfo, Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
 
@@ -137,12 +144,24 @@ export class Authorizer {
     async addOrganization(org: Organization, members: TeamMemberInfo[], projects: Project[]): Promise<void> {
         const updates: v1.RelationshipUpdate[] = [];
 
+        // every org belongs to the installation
+        updates.push(
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.TOUCH,
+                relationship: relationship(
+                    objectRef("organization", org.id),
+                    "installation",
+                    subject("installation", InstallationID),
+                ),
+            }),
+        );
+
         for (const member of members) {
-            updates.concat(this.addOrganizationRoleUpdates(org.id, member.userId, member.role));
+            updates.push(...this.addOrganizationRoleUpdates(org.id, member.userId, member.role));
         }
 
         for (const project of projects) {
-            updates.concat(this.addProjectToOrgUpdates(org.id, project.id));
+            updates.push(...this.addProjectToOrgUpdates(org.id, project.id));
         }
 
         await this.authorizer.writeRelationships(
@@ -152,6 +171,40 @@ export class Authorizer {
             {
                 orgID: org.id,
             },
+        );
+    }
+
+    async addAdminRole(userID: string) {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.TOUCH,
+                        relationship: relationship(
+                            objectRef("installation", InstallationID),
+                            "admin",
+                            subject("user", userID),
+                        ),
+                    }),
+                ],
+            }),
+        );
+    }
+
+    async removeAdminRole(userID: string) {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.DELETE,
+                        relationship: relationship(
+                            objectRef("installation", InstallationID),
+                            "admin",
+                            subject("user", userID),
+                        ),
+                    }),
+                ],
+            }),
         );
     }
 

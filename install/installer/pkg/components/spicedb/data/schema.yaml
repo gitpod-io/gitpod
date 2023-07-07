@@ -5,50 +5,55 @@
 schema: |-
   definition user {}
 
+  // There's only one global installation
+  definition installation {
+
+    // only users that are not owned by an org are considered installation-level users
+    relation user: user
+    relation admin: user
+
+    // orgs can only be created by installation-level users
+    permission create_organization = user
+
+  }
+
   definition organization {
+    relation installation: installation
+
     // Every user in an organization is automatically a member
     relation member: user
     // Some users in an organization may additionally have the `owner` role
-    // granting them more privilidges with respect to the organization.
     relation owner: user
 
+    // synthetic permission for installation->admin (because https://github.com/authzed/spicedb/issues/15)
+    permission installation_admin = installation->admin
+
     // General operations on organization
-    permission read_info = member + owner
-    permission write_info = owner
+    permission read_info = member + owner + installation->admin
+    permission write_info = owner + installation->admin
+    permission delete = owner + installation->admin
+
+    permission read_settings = owner + installation->admin
+    permission write_settings = owner + installation->admin
 
     // Operations on Organization's Members
-    permission read_members = member + owner
-    permission invite_members = member + owner
-    permission write_members = owner
+    permission read_members = member + owner + installation->admin
+    permission invite_members = member + owner + installation->admin
+    permission write_members = owner + installation->admin
+    permission leave = owner + member + installation->admin
 
-    // Any user in the organization can try to leave their organization
-    permission leave = owner + member
+    permission create_project = member + owner + installation->admin
 
-    // Owners can delete the organization,
-    // and through this process also disconnect all users from the organization
-    permission delete = owner
+    permission read_git_provider = owner + member + installation->admin
+    permission write_git_provider = owner + installation->admin
 
-    // Only owners can create new projects
-    permission create_project = member + owner
-
-    // Only owners can change settings
-    permission read_settings = owner
-    permission write_settings = owner
-
-    // Only owners can change Git providers
-    permission read_git_provider = owner + member
-    permission write_git_provider = owner
-
-    // Only owners can create and modify billing information
-    permission read_billing = member + owner
-    permission write_billing = owner
+    permission read_billing = member + owner + installation->admin
+    permission write_billing = owner + installation->admin
   }
 
   definition project {
     relation org: organization
 
-    // A subject is an editor, if:
-    //  * the user is directly assigned as an editor
     relation editor: user
 
     // A subject is a viewer, if:
@@ -56,25 +61,18 @@ schema: |-
     //  * the project has granted access to everyone in an organization
     relation viewer: user | organization#member
 
-    // Project can be modified by:
-    //  * Organization owners
-    //  * editors
-    permission write_info = org->owner + editor
-
-    // Project can be accessed by:
-    //  * Anyone with write_info permission
-    //  * viewers
-    permission read_info = write_info + viewer + org->member
-
-    // Project can be deleted by:
-    //  * Organization owners
-    //  * editors
-    permission delete = org->owner + editor
+    permission write_info = org->owner + editor + org->installation_admin
+    permission read_info = write_info + viewer + org->member + org->installation_admin
+    permission delete = org->owner + editor + org->installation_admin
   }
-
 # relationships to be used for assertions & validation
 relationships: |-
+  // we have one installation
+  installation:installation_0#user@user:user_0
+  installation:installation_0#admin@user:user_admin
+
   // We have an organization org_1, which has some members & owners
+  organization:org_1#installation@installation:installation_0
   organization:org_1#member@user:user_0
   organization:org_1#owner@user:user_0
   organization:org_1#member@user:user_1
@@ -99,6 +97,10 @@ relationships: |-
 # validation should assert that a particular relation exists between an entity, and a subject
 # validations are not used to assert that a permission exists
 validation:
+  installation:installation_0#user:
+    - "[user:user_0] is <installation:installation_0#user>"
+  installation:installation_0#admin:
+    - "[user:user_admin] is <installation:installation_0#admin>"
   organization:org_1#member:
     - "[user:user_0] is <organization:org_1#member>"
     - "[user:user_1] is <organization:org_1#member>"
@@ -112,6 +114,7 @@ validation:
 # assertions should assert that a particular permission holds, or not
 assertions:
   assertTrue:
+    # user 0 can read org_1 because they are a member
     - organization:org_1#read_info@user:user_0
     # user 1 can read git providers because they are a member
     - organization:org_1#read_git_provider@user:user_1
@@ -134,6 +137,13 @@ assertions:
     - project:project_1#read_info@user:user_1
     # Org member can create projects
     - organization:org_1#create_project@user:user_1
+    # installation user can create orgs
+    - installation:installation_0#create_organization@user:user_0
+    # Installation admin can do what org owners can
+    - project:project_1#delete@user:user_admin
+    - organization:org_1#delete@user:user_admin
+    - organization:org_1#write_settings@user:user_admin
+    - organization:org_1#write_git_provider@user:user_admin
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -153,3 +163,5 @@ assertions:
     - organization:org_1#delete@user:user_1
     # org members can not delete project
     - project:project_1#delete@user:user_1
+    # installation admin can not create an org
+    - installation:installation_0#create_organization@user:user_admin

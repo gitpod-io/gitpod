@@ -15,6 +15,7 @@ import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { Authorizer } from "../authorization/authorizer";
 
 export interface CreateUserParams {
     identity: Identity;
@@ -34,6 +35,7 @@ export class UserService {
         @inject(EmailDomainFilterDB) private readonly domainFilterDb: EmailDomainFilterDB,
         @inject(UserDB) private readonly userDb: UserDB,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
+        @inject(Authorizer) private readonly authorizer: Authorizer,
     ) {}
 
     public async createUser({ identity, token, userUpdate }: CreateUserParams): Promise<User> {
@@ -78,6 +80,45 @@ export class UserService {
 
         target.blocked = !!block;
         return await this.userDb.storeUser(target);
+    }
+
+    async setAdminRole(userId: string, targetUserId: string, admin: boolean): Promise<User> {
+        //TODO check if user has permission on targetUser to change admin role using auth system
+        const user = await this.userDb.findUserById(userId);
+        if (!user?.rolesOrPermissions || !user?.rolesOrPermissions.includes("admin")) {
+            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "permission denied");
+        }
+
+        const target = await this.userDb.findUserById(targetUserId);
+        if (!target) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
+        }
+        const rolesAndPermissions = target.rolesOrPermissions || [];
+        const newRoles = [...rolesAndPermissions.filter((r) => r !== "admin")];
+        if (admin) {
+            // add admin role
+            newRoles.push("admin");
+        }
+
+        try {
+            return await this.userDb.transaction(async (userDb) => {
+                target.rolesOrPermissions = newRoles;
+                const updatedUser = await userDb.storeUser(target);
+                if (admin) {
+                    await this.authorizer.addAdminRole(target.id);
+                } else {
+                    await this.authorizer.removeAdminRole(target.id);
+                }
+                return updatedUser;
+            });
+        } catch (err) {
+            if (admin) {
+                await this.authorizer.removeAdminRole(target.id);
+            } else {
+                await this.authorizer.addAdminRole(target.id);
+            }
+            throw err;
+        }
     }
 
     async findUserForLogin(params: { candidate: IdentityLookup }) {

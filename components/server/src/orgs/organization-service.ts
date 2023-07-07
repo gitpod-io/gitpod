@@ -64,7 +64,8 @@ export class OrganizationService {
         try {
             result = await this.teamDB.transaction(async (db) => {
                 result = await db.createTeam(userId, name);
-                await this.auth.addOrganizationOwnerRole(result.id, userId);
+                const members = await db.findMembersByTeam(result.id);
+                await this.auth.addOrganization(result, members, []);
                 return result;
             });
         } catch (err) {
