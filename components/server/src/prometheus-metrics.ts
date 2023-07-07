@@ -238,17 +238,12 @@ export function reportCentralizedPermsValidation(operation: string, matches: boo
 export const spicedbClientLatency = new prometheusClient.Histogram({
     name: "gitpod_spicedb_client_requests_completed_seconds",
     help: "Histogram of completed spicedb client requests",
-    labelNames: ["operation", "permission", "outcome"],
+    labelNames: ["operation", "outcome"],
 });
 
-export function observespicedbClientLatency(
-    operation: string,
-    permission: string,
-    outcome: Error | undefined,
-    durationInSeconds: number,
-) {
+export function observespicedbClientLatency(operation: string, outcome: Error | undefined, durationInSeconds: number) {
     spicedbClientLatency.observe(
-        { operation, permission, outcome: outcome === undefined ? "success" : "error" },
+        { operation, outcome: outcome === undefined ? "success" : "error" },
         durationInSeconds,
     );
 }
