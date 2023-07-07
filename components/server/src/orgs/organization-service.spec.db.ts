@@ -8,14 +8,14 @@ import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { User } from "@gitpod/ide-service-api/lib/ide.pb";
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
 import { expectError } from "../projects/projects-service.spec.db";
-import { Organization } from "@gitpod/gitpod-protocol";
+import { Organization, User } from "@gitpod/gitpod-protocol";
+import { UserService } from "../user/user-service";
 
 const expect = chai.expect;
 
@@ -26,6 +26,7 @@ describe("OrganizationService", async () => {
     let owner: User;
     let member: User;
     let stranger: User;
+    let admin: User;
     let org: Organization;
 
     beforeEach(async () => {
@@ -43,6 +44,12 @@ describe("OrganizationService", async () => {
         await os.joinOrganization(member.id, invite.id);
 
         stranger = await userDB.newUser();
+
+        const userService = container.get<UserService>(UserService);
+        admin = await userDB.newUser();
+        admin.rolesOrPermissions = ["admin"];
+        await userDB.storeUser(admin);
+        await userService.setAdminRole(admin.id, admin.id, true);
     });
 
     afterEach(async () => {
@@ -176,5 +183,15 @@ describe("OrganizationService", async () => {
 
         await expectError(ErrorCodes.PERMISSION_DENIED, () => os.updateSettings(member.id, org.id, settings));
         await expectError(ErrorCodes.NOT_FOUND, () => os.updateSettings(stranger.id, org.id, settings));
+    });
+
+    it("should allow admins to do its thing", async () => {
+        await os.updateOrganization(admin.id, org.id, { name: "Name Changed" });
+        const updated = await os.getOrganization(admin.id, org.id);
+        expect(updated.name).to.equal("Name Changed");
+
+        await os.updateSettings(admin.id, org.id, { workspaceSharingDisabled: true });
+        const settings = await os.getSettings(admin.id, org.id);
+        expect(settings.workspaceSharingDisabled).to.be.true;
     });
 });

@@ -4,15 +4,23 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+export const InstallationID = "1";
+export const InstallationResourceType = "installation";
 export const OrganizationResourceType = "organization";
 export const ProjectResourceType = "project";
 export const UserResourceType = "user";
-export type ResourceType = typeof OrganizationResourceType | typeof ProjectResourceType | typeof UserResourceType;
+export type ResourceType =
+    | typeof InstallationResourceType
+    | typeof OrganizationResourceType
+    | typeof ProjectResourceType
+    | typeof UserResourceType;
 
-export type OrganizationRelation = "owner" | "member";
-export type ProjectRelation = "org";
-export type Relation = OrganizationRelation | ProjectRelation;
+export type InstallationRelation = "user" | "admin";
+export type OrganizationRelation = "installation" | "owner" | "member";
+export type ProjectRelation = "org" | "editor" | "viewer";
+export type Relation = InstallationRelation | OrganizationRelation | ProjectRelation;
 
+export type InstallationPermission = "create_organization";
 export type OrganizationPermission =
     | "read_info"
     | "write_info"
@@ -21,12 +29,12 @@ export type OrganizationPermission =
     | "write_members"
     | "leave"
     | "delete"
+    | "create_project"
     | "read_settings"
     | "write_settings"
     | "read_git_provider"
     | "write_git_provider"
     | "read_billing"
-    | "write_billing"
-    | "create_project";
+    | "write_billing";
 export type ProjectPermission = "write_info" | "read_info" | "delete";
 export type Permission = OrganizationPermission;
