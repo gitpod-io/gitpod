@@ -99,7 +99,7 @@ export class Metrics {
     }
 
     reportUpdatePublished(type: "workspace-instance" | "prebuild" | "headless", err?: Error): void {
-        this.updatesPublishedTotal.inc({ type, error: err ? "true" : "false" });
+        this.updatesPublishedTotal.labels(type, err ? "true" : "false").inc();
     }
 
     observeWorkspaceStartupTime(instance: WorkspaceInstance): void {
