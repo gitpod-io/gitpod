@@ -117,6 +117,7 @@ export class ProjectDBImpl extends TransactionalDBImpl<ProjectDB> implements Pro
         const queryBuilder = projectRepo
             .createQueryBuilder("project")
             .where("project.cloneUrl LIKE :searchTerm", { searchTerm: `%${searchTerm}%` })
+            .andWhere("project.markedDeleted = false")
             .skip(offset)
             .take(limit)
             .orderBy(orderBy, orderDir);

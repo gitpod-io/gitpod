@@ -4,16 +4,16 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";
-import { DBProject } from "@gitpod/gitpod-db/lib/typeorm/entity/db-project";
+import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
+import { DBProject } from "@gitpod/gitpod-db/lib/typeorm/entity/db-project";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
-import { serviceTestingContainerModule } from "../test/service-testing-container-module";
+import { createTestContainer } from "../test/service-testing-container-module";
 import { ProjectsService } from "./projects-service";
 import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
@@ -27,30 +27,34 @@ describe("ProjectsService", async () => {
     let org: Organization;
 
     beforeEach(async () => {
-        container = testContainer.createChild();
-        container.load(serviceTestingContainerModule);
+        container = createTestContainer();
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
         const userDB = container.get<UserDB>(UserDB);
+
+        // create the owner
         owner = await userDB.newUser();
-        member = await userDB.newUser();
-        stranger = await userDB.newUser();
+
+        // create the org
         const orgService = container.get(OrganizationService);
         org = await orgService.createOrganization(owner.id, "my-org");
+
+        // create and add a member
+        member = await userDB.newUser();
         const invite = await orgService.getOrCreateInvite(owner.id, org.id);
         await orgService.joinOrganization(member.id, invite.id);
+
+        // create a stranger
+        stranger = await userDB.newUser();
     });
 
     afterEach(async () => {
-        // Clean-up database
-        const typeorm = testContainer.get(TypeORM);
-        const dbConn = await typeorm.getConnection();
-        await dbConn.getRepository(DBTeam).delete({});
-        await dbConn.getRepository(DBProject).delete({});
-        const repo = (await typeorm.getConnection()).getRepository(DBUser);
-        await repo.delete(owner.id);
-        await repo.delete(stranger.id);
+        const typeorm = container.get(TypeORM);
+        const conn = await typeorm.getConnection();
+        await conn.getRepository(DBUser).clear();
+        await conn.getRepository(DBTeam).clear();
+        await conn.getRepository(DBProject).clear();
     });
 
     it("should getProject and getProjects", async () => {
@@ -213,9 +217,9 @@ async function createTestProject(
     org: Organization,
     owner: User,
     name = "my-project",
-    cloneUrl = "https://github.com/gipod-io/gitpod.git",
+    cloneUrl = "https://github.com/gitpod-io/gitpod.git",
 ) {
-    return await ps.createProject(
+    const project = await ps.createProject(
         {
             name,
             slug: name,
@@ -225,4 +229,5 @@ async function createTestProject(
         },
         owner,
     );
+    return project;
 }

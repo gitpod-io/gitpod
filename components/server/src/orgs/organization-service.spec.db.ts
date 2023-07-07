@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TypeORM, UserDB, testContainer } from "@gitpod/gitpod-db/lib";
+import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -12,7 +12,7 @@ import { User } from "@gitpod/ide-service-api/lib/ide.pb";
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { serviceTestingContainerModule } from "../test/service-testing-container-module";
+import { createTestContainer } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
 import { expectError } from "../projects/projects-service.spec.db";
 import { Organization } from "@gitpod/gitpod-protocol";
@@ -29,8 +29,7 @@ describe("OrganizationService", async () => {
     let org: Organization;
 
     beforeEach(async () => {
-        container = testContainer.createChild();
-        container.load(serviceTestingContainerModule);
+        container = createTestContainer();
         Experiments.configureTestingClient({
             centralizedPermissions: true,
         });
@@ -49,12 +48,9 @@ describe("OrganizationService", async () => {
     afterEach(async () => {
         // Clean-up database
         const typeorm = container.get(TypeORM);
-        const dbConn = await typeorm.getConnection();
-        await dbConn.getRepository(DBTeam).delete({});
-        const repo = (await typeorm.getConnection()).getRepository(DBUser);
-        await repo.delete(owner.id);
-        await repo.delete(member.id);
-        await repo.delete(stranger.id);
+        const conn = await typeorm.getConnection();
+        await conn.getRepository(DBTeam).clear();
+        await conn.getRepository(DBUser).clear();
     });
 
     it("should deleteOrganization", async () => {

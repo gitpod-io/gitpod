@@ -99,7 +99,7 @@ import { NewsletterSubscriptionController } from "./user/newsletter-subscription
 import { StripeService } from "./user/stripe-service";
 import { TokenProvider } from "./user/token-provider";
 import { TokenService } from "./user/token-service";
-import { NoOpUsageService, UsageService, UsageServiceImpl } from "./user/usage-service";
+import { UsageService } from "./user/usage-service";
 import { ServerFactory, UserController } from "./user/user-controller";
 import { UserDeletionService } from "./user/user-deletion-service";
 import { UserService } from "./user/user-service";
@@ -298,8 +298,7 @@ export const productionContainerModule = new ContainerModule(
 
         bind(VerificationService).toSelf().inSingletonScope();
 
-        bind(UsageServiceImpl).toSelf().inSingletonScope();
-        bind(UsageService).toService(UsageServiceImpl);
+        bind(UsageService).toSelf().inSingletonScope();
 
         bind(LinkedInService).toSelf().inSingletonScope();
 
@@ -354,17 +353,7 @@ export const productionContainerModule = new ContainerModule(
         bind(SnapshotsJob).toSelf().inSingletonScope();
         bind(JobRunner).toSelf().inSingletonScope();
 
-        // TODO(gpl) Remove as part of fixing https://github.com/gitpod-io/gitpod/issues/14129
-        rebind(UsageService)
-            .toDynamicValue((ctx) => {
-                const config = ctx.container.get<Config>(Config);
-                if (config.enablePayment) {
-                    return ctx.container.get<UsageServiceImpl>(UsageServiceImpl);
-                }
-                return new NoOpUsageService();
-            })
-            .inSingletonScope();
-
+        // Redis
         bind(RedisClient).toSelf().inSingletonScope();
         bind(RedisMutex).toSelf().inSingletonScope();
     },
