@@ -54,7 +54,7 @@ export class RedisSubscriber implements LocalMessageBroker {
                 log.debug("[redis] Succesfully handled update", { channel, message });
             } catch (e) {
                 err = e;
-                log.error("[redis] Failed to handle message from Pub/Sub", { channel, message });
+                log.error("[redis] Failed to handle message from Pub/Sub", e, { channel, message });
             } finally {
                 reportRedisUpdateCompleted(channel, err);
             }
