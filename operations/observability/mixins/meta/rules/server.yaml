@@ -113,7 +113,7 @@ spec:
     - alert: WebAppServicesCrashloopingInternal
       # Reasoning: alert if any pod is stuck in crashlooping more than 1 minute.
       # Used for fine tuning the alert above (WebAppServicesCrashlooping)!
-      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|messagebus|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster, pod) > 1
+      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|messagebus|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster, pod) > 0
       # Let's be more ambitious than 5m
       for: 1m
       labels:
