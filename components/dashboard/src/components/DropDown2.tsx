@@ -27,7 +27,6 @@ export interface DropDown2Element {
 export interface DropDown2Props {
     getElements: (searchString: string) => DropDown2Element[];
     disabled?: boolean;
-    loading?: boolean;
     searchPlaceholder?: string;
     disableSearch?: boolean;
     expanded?: boolean;
@@ -37,7 +36,6 @@ export interface DropDown2Props {
 
 export const DropDown2: FunctionComponent<DropDown2Props> = ({
     disabled = false,
-    loading = false,
     expanded = false,
     searchPlaceholder,
     allOptions,
@@ -46,7 +44,7 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     children,
     onSelectionChange,
 }) => {
-    const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !loading && !!expanded);
+    const [showDropDown, setShowDropDown] = useState<boolean>(!disabled && !!expanded);
     const nodeRef: RefObject<HTMLDivElement> = useRef(null);
     const onSelected = useCallback(
         (elementId: string) => {
@@ -73,11 +71,11 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
     }, [showDropDown]);
 
     const toggleDropDown = useCallback(() => {
-        if (disabled || loading) {
+        if (disabled) {
             return;
         }
         setShowDropDown(!showDropDown);
-    }, [disabled, loading, showDropDown]);
+    }, [disabled, showDropDown]);
 
     const setFocussedElement = useCallback(
         (element: string) => {
@@ -176,9 +174,9 @@ export const DropDown2: FunctionComponent<DropDown2Props> = ({
                     // Dropshadow when expanded
                     showDropDown && "filter drop-shadow-xl",
                     // hover when not disabled or expanded
-                    !showDropDown && !disabled && !loading && "hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer",
-                    // opacity when disabled or loading
-                    (disabled || loading) && "opacity-70",
+                    !showDropDown && !disabled && "hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer",
+                    // opacity when disabled
+                    disabled && "opacity-70",
                 )}
                 onClick={toggleDropDown}
             >

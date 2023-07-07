@@ -68,7 +68,6 @@ export default function SelectWorkspaceClassComponent({
             disableSearch={true}
             allOptions={selectedWsClass?.id}
             disabled={workspaceClassesLoading || loading || disabled}
-            loading={workspaceClassesLoading || loading}
         >
             <WorkspaceClassDropDownElementSelected
                 wsClass={selectedWsClass}

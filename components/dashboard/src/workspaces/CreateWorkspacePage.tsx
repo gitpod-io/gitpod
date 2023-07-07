@@ -382,7 +382,6 @@ export function CreateWorkspacePage() {
                             setSelection={handleContextURLChange}
                             initialValue={contextURL}
                             disabled={createWorkspaceMutation.isStarting}
-                            loading={workspaceContext.isLoading}
                         />
                     </InputField>
 

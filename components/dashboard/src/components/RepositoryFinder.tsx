@@ -81,6 +81,7 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
                 <div className="truncate w-80">{displayContextUrl(props.initialValue) || "Select a repository"}</div>
             }
             subtitle="Context URL"
+            loading={props.loading}
         />
     );
 
@@ -95,7 +96,6 @@ export default function RepositoryFinder(props: RepositoryFinderProps) {
             expanded={!props.initialValue}
             onSelectionChange={props.setSelection}
             disabled={props.disabled}
-            loading={props.loading}
             searchPlaceholder="Paste repository URL or type to find suggestions"
         >
             {element}
