@@ -9,7 +9,7 @@ on:
 jobs:
     delete:
         if: github.event.ref_type == 'branch' || github.event.inputs.name != ''
-        runs-on: [self-hosted]
+        runs-on: ${{ needs.create-runner.outputs.label }}
         steps:
             - uses: actions/checkout@v3
             - name: Delete preview environment

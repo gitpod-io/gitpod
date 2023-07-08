@@ -21,7 +21,7 @@ on:
 jobs:
     configuration:
         name: Configuration
-        runs-on: [self-hosted]
+        runs-on: ${{ needs.create-runner.outputs.label }}
         container:
             image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
             volumes:
@@ -86,7 +86,7 @@ jobs:
 
     infrastructure:
       needs: [ configuration ]
-      runs-on: [ self-hosted ]
+      runs-on: ${{ needs.create-runner.outputs.label }}
       concurrency:
         group: ${{ needs.configuration.outputs.name }}-infrastructure
       steps:
@@ -111,7 +111,7 @@ jobs:
     check:
         name: Check for regressions
         needs: [configuration, infrastructure]
-        runs-on: [self-hosted]
+        runs-on: ${{ needs.create-runner.outputs.label }}
         container:
             image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
             volumes:
@@ -227,7 +227,7 @@ jobs:
       name: Delete preview environment
       needs: [ configuration, infrastructure, check ]
       if: github.event.inputs.skip_delete != 'true' && always()
-      runs-on: [ self-hosted ]
+      runs-on: ${{ needs.create-runner.outputs.label }}
       container:
         image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
         volumes:
