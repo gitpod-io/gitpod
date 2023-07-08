@@ -17,11 +17,16 @@ jobs:
     outputs:
       label: ${{ steps.create-runner.outputs.label }}
     steps:
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
       - id: create-runner
         uses: aledbf/gce-github-runner@main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          service_account_key: ${{ secrets.GCP_CREDENTIALS }}
+          project_id: gitpod-core-dev
 
   configuration:
     name: Configure job parameters
