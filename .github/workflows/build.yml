@@ -18,11 +18,16 @@ jobs:
       label: ${{ steps.create-runner.outputs.label }}
     steps:
       - uses: actions/checkout@v3
-      - id: auth
-        name: 'Authenticate to Google Cloud'
-        uses: 'google-github-actions/auth@v1'
+      - id: gcp-auth-setup
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
         with:
           credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+      - id: gcloud-auth
+        name: gcloud auth activate-service-account
+        shell: bash
+        run: |
+          gcloud auth activate-service-account --key-file "/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
       - id: create-runner
         uses: aledbf/gce-github-runner@main
         with:
