@@ -31,7 +31,7 @@ jobs:
       - id: create-runner
         uses: aledbf/gce-github-runner@main
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_SELF_HOSTED_RUNNER }}
           project_id: gitpod-core-dev
 
   configuration:
