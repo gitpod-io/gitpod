@@ -665,7 +665,7 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"PREBUILD\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le, cluster)\n  )",
+          "expr": "histogram_quantile(\n  0.95, \n  sum(\n      rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type!=\"Prebuild\",cluster!~\"prod-meta.*|ephemeral.*\"}[1d])\n    ) by (le, cluster)\n  )",
           "hide": false,
           "interval": "",
           "legendFormat": "{{cluster}}",

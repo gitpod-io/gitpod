@@ -112,12 +112,12 @@
       "seriesOverrides": [
         {
           "$$hashKey": "object:119",
-          "alias": "REGULAR",
+          "alias": "Regular",
           "color": "#73BF69"
         },
         {
           "$$hashKey": "object:120",
-          "alias": "PREBUILD",
+          "alias": "Prebuild",
           "color": "#5794F2"
         },
         {
@@ -136,7 +136,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(gitpod_ws_manager_workspace_phase_total{phase=\"RUNNING\"}) by (type)",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_phase_total{phase=\"Running\"}) by (type)",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{ type }}",
@@ -149,7 +149,7 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "expr": "sum(gitpod_ws_manager_workspace_activity_total{active=\"false\"})",
+          "expr": "sum(gitpod_ws_manager_mk2_workspace_activity_total{active=\"false\"})",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "Pending workspaces",
@@ -235,12 +235,12 @@
       "seriesOverrides": [
         {
           "$$hashKey": "object:179",
-          "alias": "REGULAR",
+          "alias": "Regular",
           "color": "#73BF69"
         },
         {
           "$$hashKey": "object:180",
-          "alias": "PREBUILD",
+          "alias": "Prebuild",
           "color": "#5794F2"
         },
         {
@@ -258,7 +258,7 @@
             "type": "prometheus",
             "uid": "$datasource"
           },
-          "expr": "sum(\n  rate(gitpod_ws_manager_workspace_stops_total{reason=\"failed\"}[5m])\n) by (cluster, type)\n",
+          "expr": "sum(\n  rate(gitpod_ws_manager_mk2_workspace_stops_total{reason=\"failed\"}[5m])\n) by (cluster, type)\n",
           "format": "time_series",
           "intervalFactor": 2,
           "legendFormat": "{{type}}",
@@ -332,7 +332,7 @@
             "type": "prometheus",
             "uid": "$datasource"
           },
-          "expr": "sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type=\"REGULAR\"}[$__rate_interval])) by (le)",
+          "expr": "sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type=\"Regular\"}[$__rate_interval])) by (le)",
           "format": "heatmap",
           "intervalFactor": 2,
           "legendFormat": "{{le}}",
