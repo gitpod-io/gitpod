@@ -96,7 +96,7 @@ export class RedisSubscriber implements LocalMessageBroker {
     }
 
     listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable {
-        return this.doRegister(userId, listener, this.workspaceInstanceUpdateListeners);
+        return this.doRegister(userId, listener, this.workspaceInstanceUpdateListeners, "workspace-instance");
     }
 
     protected doRegister<L>(
