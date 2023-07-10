@@ -24,8 +24,8 @@ import { CachingBlobServiceClientProvider } from "../util/content-service-sugar"
 const defaultContentLimit = "1Mb";
 const supportShells = ["bash", "zsh", "fish"];
 
-function toObjectName(shell: string, host: string, repo: string): string {
-    return `shell-history/${host}/${encodeURIComponent(repo)}/${shell}`;
+function toObjectName(shell: string): string {
+    return `shell-history/${shell}`;
 }
 
 @injectable()
@@ -68,26 +68,19 @@ export class ShellHistoryService {
             return next();
         });
 
-        router.get("/v1/:shell/:host/:repo(*)", this.getResources.bind(this));
-        router.post(
-            "/v1/:shell/:host/:repo(*)",
-            express.text({ limit: defaultContentLimit }),
-            this.postResource.bind(this),
-        );
+        router.get("/v1/:shell", this.getResources.bind(this));
+        router.post("/v1/:shell", express.text({ limit: defaultContentLimit }), this.postResource.bind(this));
 
         return router;
     }
 
-    private async getResources(
-        req: express.Request<{ shell: string; host: string; repo: string }>,
-        res: express.Response,
-    ) {
+    private async getResources(req: express.Request<{ shell: string }>, res: express.Response) {
         if (!User.is(req.user)) {
             res.sendStatus(400);
             return;
         }
 
-        const { shell, host, repo } = req.params;
+        const { shell } = req.params;
 
         const resourceKey = supportShells.find((key) => key === shell);
         if (!resourceKey) {
@@ -98,7 +91,7 @@ export class ShellHistoryService {
         const contentType = req.headers["content-type"] || "*/*";
         const request = new DownloadUrlRequest();
         request.setOwnerId(req.user.id);
-        request.setName(toObjectName(shell, host, repo));
+        request.setName(toObjectName(shell));
         request.setContentType(contentType);
         let content: string;
         try {
@@ -126,16 +119,13 @@ export class ShellHistoryService {
         return;
     }
 
-    private async postResource(
-        req: express.Request<{ shell: string; host: string; repo: string }>,
-        res: express.Response,
-    ) {
+    private async postResource(req: express.Request<{ shell: string }>, res: express.Response) {
         if (!User.is(req.user)) {
             res.sendStatus(400);
             return;
         }
 
-        const { shell, host, repo } = req.params;
+        const { shell } = req.params;
 
         const resourceKey = supportShells.find((key) => key === shell);
         if (!resourceKey) {
@@ -148,7 +138,7 @@ export class ShellHistoryService {
 
         const request = new UploadUrlRequest();
         request.setOwnerId(userId);
-        request.setName(toObjectName(shell, host, repo));
+        request.setName(toObjectName(shell));
         request.setContentType(contentType);
         const blobsClient = this.blobsProvider.getDefault();
         const urlResponse = await util.promisify<UploadUrlRequest, UploadUrlResponse>(
