@@ -48,11 +48,7 @@ export class RedisSubscriber implements LocalMessageBroker {
     protected readonly disposables = new DisposableCollection();
 
     async start(): Promise<void> {
-<<<<<<< HEAD
-        const channels = [WorkspaceInstanceUpdatesChannel, PrebuildUpdatesChannel];
-=======
-        const channels = [WorkspaceInstanceUpdatesChannel, HeadlessUpdatesChannel];
->>>>>>> 65ff502c2 ([server] Broadcast headless updates to subscribers)
+        const channels = [WorkspaceInstanceUpdatesChannel, PrebuildUpdatesChannel, HeadlessUpdatesChannel];
 
         for (const chan of channels) {
             await this.redis.subscribe(chan);
