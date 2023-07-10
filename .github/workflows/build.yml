@@ -466,7 +466,6 @@ jobs:
     - install
     - monitoring
     - integration-test
-    - delete-runner
     steps:
       - uses: actions/checkout@v3
       - id: auth
