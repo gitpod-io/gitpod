@@ -6,14 +6,17 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
+  create-runner:
+    uses: ./.github/workflows/create_runner.yml
+    secrets: inherit
+
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [create-runner]
+    container:
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
     steps:
       - uses: actions/checkout@v3
-      - name: Auth Google Cloud SDK
-        uses: google-github-actions/auth@v0
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v0
         with:
@@ -47,3 +50,20 @@ jobs:
         env:
           SLACK_WEBHOOK: ${{ secrets.IDE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
+
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - configuration
+      - build-previewctl
+      - infrastructure
+      - build-gitpod
+      - install-app
+      - install
+      - monitoring
+      - integration-test
+    uses: ./.github/workflows/remove_runner.yml
+    secrets: inherit
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}

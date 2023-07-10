@@ -21,27 +21,8 @@ on:
 
 jobs:
   create-runner:
-    runs-on: ubuntu-latest
-    outputs:
-      label: ${{ steps.create-runner.outputs.label }}
-    steps:
-      - uses: actions/checkout@v3
-      - id: auth
-        name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      - id: gcloud-auth
-        name: gcloud auth activate-service-account
-        shell: bash
-        run: |
-          gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
-      - id: create-runner
-        uses: gitpod-io/gce-github-runner@main
-        with:
-          token: ${{ secrets.GH_SELF_HOSTED_RUNNER }}
-          project_id: gitpod-core-dev
-          machine_zone: europe-west1-b
+    uses: ./.github/workflows/create_runner.yml
+    secrets: inherit
 
   configuration:
     name: Configuration
@@ -213,32 +194,13 @@ jobs:
 
   delete-runner:
     if: always()
-    runs-on: ubuntu-latest
     needs:
       - create-runner
       - configuration
       - infrastructure
       - check
       - delete
-    steps:
-      - uses: actions/checkout@v3
-      - id: auth
-        name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v1
-        with:
-          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      - id: gcloud-auth
-        name: gcloud auth activate-service-account
-        shell: bash
-        run: |
-          if [ -z "${{ needs.create-runner.outputs.label }}" ];then
-            exit 0
-          fi
-
-          if [ -z "$(gcloud compute instances list | grep "${{ needs.create-runner.outputs.label }}")" ]; then
-            // vm is gone
-            exit 0
-          fi
-
-          gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
-          gcloud compute instances delete ${{ needs.create-runner.outputs.label }} --quiet --zone europe-west1-b
+    uses: ./.github/workflows/remove_runner.yml
+    secrets: inherit
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}

@@ -288,7 +288,7 @@ jobs:
             test-coverage-report
 
   install-app:
-    runs-on: ubuntu-latest
+    runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [configuration, build-gitpod, create-runner]
     if: ${{ needs.configuration.outputs.is_main_branch == 'true' }}
     steps:
