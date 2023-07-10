@@ -27,6 +27,7 @@ jobs:
   configuration:
     name: Configuration
     runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [create-runner]
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
     outputs:
@@ -87,7 +88,7 @@ jobs:
           SLACK_MESSAGE: "Workspace Integration Tests failed"
 
   infrastructure:
-    needs: [configuration]
+    needs: [configuration, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     concurrency:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
@@ -112,7 +113,7 @@ jobs:
 
   check:
     name: Check for regressions
-    needs: [configuration, infrastructure]
+    needs: [configuration, infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
@@ -224,7 +225,7 @@ jobs:
 
   delete:
     name: Delete preview environment
-    needs: [configuration, infrastructure, check]
+    needs: [configuration, infrastructure, check, create-runner]
     if: github.event.inputs.skip_delete != 'true' && always()
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
