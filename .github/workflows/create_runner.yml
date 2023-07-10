@@ -34,3 +34,4 @@ jobs:
           token: ${{ secrets.GH_SELF_HOSTED_RUNNER }}
           project_id: gitpod-core-dev
           machine_zone: europe-west1-b
+          repository: gitpod-io/gce-github-runner
