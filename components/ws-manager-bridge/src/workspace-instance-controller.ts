@@ -275,6 +275,7 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
 
         await this.messagebus.notifyOnInstanceUpdate(ctx, info.workspace.ownerId, info.latestInstance);
         await this.publisher.publishInstanceUpdate({
+            ownerID: info.workspace.ownerId,
             instanceID: info.latestInstance.id,
             workspaceID: info.workspace.id,
         });

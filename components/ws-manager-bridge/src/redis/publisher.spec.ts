@@ -37,6 +37,7 @@ class TestRedisPublisher {
         const publisher = this.container.get(RedisPublisher);
         expect(() => {
             publisher.publishInstanceUpdate({
+                ownerID: "123-owner",
                 instanceID: "123",
                 workspaceID: "foo-bar-123",
             });

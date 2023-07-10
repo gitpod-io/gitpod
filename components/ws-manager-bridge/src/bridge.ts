@@ -365,6 +365,7 @@ export class WorkspaceManagerBridge implements Disposable {
             }
             await this.messagebus.notifyOnInstanceUpdate(ctx, userId, instance);
             await this.publisher.publishInstanceUpdate({
+                ownerID: userId,
                 instanceID: instance.id,
                 workspaceID: instance.workspaceId,
             });
