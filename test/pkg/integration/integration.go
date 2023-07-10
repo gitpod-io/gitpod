@@ -208,30 +208,29 @@ func (r *RpcClient) Call(serviceMethod string, args any, reply any) error {
 	var err error
 	var new *RpcClient
 	for i := 0; i < connectFailureMaxTries; i++ {
-		if r != nil {
-			if err = r.client.Call(serviceMethod, args, reply); err != nil {
-				log.Warnf("rpc call %s failed (attempt %d): %v", serviceMethod, i, err)
-				if i == connectFailureMaxTries-1 {
-					return err
-				}
-
-				time.Sleep(10 * time.Second)
-				r.Close()
-				new, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
-				if err != nil {
-					time.Sleep(10 * time.Second)
-					continue
-				}
-				r = new
-			}
-		} else {
+		if r == nil {
 			new, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
 			if err != nil {
+				log.Warnf("failed to re-instrument (attempt %d): %v", i, err)
 				time.Sleep(10 * time.Second)
 				continue
 			}
 			r = new
 		}
+
+		err = r.client.Call(serviceMethod, args, reply)
+		if err == nil {
+			return nil
+		}
+
+		log.Warnf("rpc call %s failed (attempt %d): %v", serviceMethod, i, err)
+		if i == connectFailureMaxTries-1 {
+			return err
+		}
+
+		time.Sleep(10 * time.Second)
+		r.Close()
+		r = nil // Try to Instrument again next attempt
 	}
 	return err
 }
@@ -446,7 +445,10 @@ L:
 func shutdownAgent(podExec *PodExec, kubeconfig string, podName string, namespace string, containerName string) error {
 	cmd := []string{"curl", "localhost:8080/shutdown"}
 	_, _, _, err := podExec.ExecCmd(cmd, podName, namespace, containerName)
-	return err
+	if err != nil {
+		return fmt.Errorf("curl failed: %v", err)
+	}
+	return nil
 }
 
 func getFreePort() (int, error) {
