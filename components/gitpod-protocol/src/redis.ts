@@ -7,6 +7,7 @@
 export const WorkspaceInstanceUpdatesChannel = "chan:workspace-instances";
 
 export type RedisWorkspaceInstanceUpdate = {
+    ownerID: string;
     instanceID: string;
     workspaceID: string;
 };
