@@ -53,6 +53,7 @@ import { BitbucketServerApp } from "./prebuilds/bitbucket-server-app";
 import { GitHubEnterpriseApp } from "./prebuilds/github-enterprise-app";
 import { JobRunner } from "./jobs/runner";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
+import { ShellHistoryService } from "./shell-history-sync/shell-history-service";
 
 @injectable()
 export class Server {
@@ -83,6 +84,7 @@ export class Server {
         @inject(LivenessController) private readonly livenessController: LivenessController,
         @inject(MonitoringEndpointsApp) private readonly monitoringEndpointsApp: MonitoringEndpointsApp,
         @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService,
+        @inject(ShellHistoryService) private readonly shellHistoryService: ShellHistoryService,
         @inject(HeadlessLogController) private readonly headlessLogController: HeadlessLogController,
         @inject(DebugApp) private readonly debugApp: DebugApp,
         @inject(GithubApp) private readonly githubApp: GithubApp,
@@ -292,6 +294,7 @@ export class Server {
         app.use(this.oneTimeSecretServer.apiRouter);
         app.use("/workspace-download", this.workspaceDownloadService.apiRouter);
         app.use("/code-sync", this.codeSyncService.apiRouter);
+        app.use("/shell-history", this.shellHistoryService.apiRouter);
         app.use(HEADLESS_LOGS_PATH_PREFIX, this.headlessLogController.headlessLogs);
         app.use(HEADLESS_LOG_DOWNLOAD_PATH_PREFIX, this.headlessLogController.headlessLogDownload);
         app.use("/live", this.livenessController.apiRouter);
