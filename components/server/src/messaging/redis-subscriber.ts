@@ -214,6 +214,7 @@ export class RedisSubscriber implements LocalMessageBroker {
             "none",
             {},
         );
+        log.debug("Enabled types in redis publisher:", enabledTypes);
         return enabledTypes.indexOf(type) >= 0;
     }
 }
