@@ -47,15 +47,7 @@ export class RedisSubscriber implements LocalMessageBroker {
     protected readonly disposables = new DisposableCollection();
 
     async start(): Promise<void> {
-<<<<<<< HEAD
         const channels = [WorkspaceInstanceUpdatesChannel, PrebuildUpdatesChannel, HeadlessUpdatesChannel];
-=======
-<<<<<<< HEAD
-        const channels = [WorkspaceInstanceUpdatesChannel, PrebuildUpdatesChannel];
-=======
-        const channels = [WorkspaceInstanceUpdatesChannel, HeadlessUpdatesChannel];
->>>>>>> 65ff502c2 ([server] Broadcast headless updates to subscribers)
->>>>>>> fec28cc1e ([server] Broadcast headless updates to subscribers)
 
         for (const chan of channels) {
             await this.redis.subscribe(chan);
@@ -223,10 +215,7 @@ export class RedisSubscriber implements LocalMessageBroker {
             LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY,
             listener,
             this.headlessWorkspaceEventListeners,
-<<<<<<< HEAD
             "prebuild-updatable",
-=======
->>>>>>> fec28cc1e ([server] Broadcast headless updates to subscribers)
         );
     }
 
