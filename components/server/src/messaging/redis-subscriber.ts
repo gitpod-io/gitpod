@@ -19,7 +19,11 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { reportRedisUpdateCompleted, reportRedisUpdateReceived } from "../prometheus-metrics";
+import {
+    reportRedisUpdateCompleted,
+    reportRedisUpdateReceived,
+    updateSubscribersRegistered,
+} from "../prometheus-metrics";
 import { Redis } from "ioredis";
 
 @injectable()
@@ -92,21 +96,28 @@ export class RedisSubscriber implements LocalMessageBroker {
     }
 
     listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable {
-        return this.doRegister(userId, listener, this.workspaceInstanceUpdateListeners);
+        return this.doRegister(userId, listener, this.workspaceInstanceUpdateListeners, "workspace-instance");
     }
 
-    protected doRegister<L>(key: string, listener: L, listenersStore: Map<string, L[]>): Disposable {
+    protected doRegister<L>(
+        key: string,
+        listener: L,
+        listenersStore: Map<string, L[]>,
+        type: "workspace-instance" | "prebuild" | "prebuild-updatable",
+    ): Disposable {
         let listeners = listenersStore.get(key);
         if (listeners === undefined) {
             listeners = [];
             listenersStore.set(key, listeners);
         }
         listeners.push(listener);
+        updateSubscribersRegistered.labels(type).inc();
         return Disposable.create(() => {
             const ls = listeners!;
             const idx = ls.findIndex((l) => l === listener);
             if (idx !== -1) {
                 ls.splice(idx, 1);
+                updateSubscribersRegistered.labels(type).dec();
             }
             if (ls.length === 0) {
                 listenersStore.delete(key);
