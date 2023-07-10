@@ -27,7 +27,6 @@ jobs:
           PR_DESC: "${{ steps.pr-details.outputs.pr_body }}"
           MAIN_BRANCH: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
-          LEEWAY_REMOTE_CACHE_BUCKET: "${{ needs.configuration.outputs.leeway_cache_bucket }}"
         run: |
           gcloud auth configure-docker --quiet
 
