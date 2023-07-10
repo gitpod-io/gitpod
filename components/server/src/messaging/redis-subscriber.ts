@@ -14,6 +14,9 @@ import { inject, injectable } from "inversify";
 import {
     Disposable,
     DisposableCollection,
+    PrebuildUpdatesChannel,
+    PrebuildWithStatus,
+    RedisPrebuildUpdate,
     RedisWorkspaceInstanceUpdate,
     WorkspaceInstanceUpdatesChannel,
 } from "@gitpod/gitpod-protocol";
@@ -35,11 +38,12 @@ export class RedisSubscriber implements LocalMessageBroker {
     ) {}
 
     protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
+    protected prebuildUpdateListeners: Map<string, PrebuildUpdateListener[]> = new Map();
 
     protected readonly disposables = new DisposableCollection();
 
     async start(): Promise<void> {
-        const channels = [WorkspaceInstanceUpdatesChannel];
+        const channels = [WorkspaceInstanceUpdatesChannel, PrebuildUpdatesChannel];
 
         for (const chan of channels) {
             await this.redis.subscribe(chan);
@@ -65,8 +69,8 @@ export class RedisSubscriber implements LocalMessageBroker {
     private async onMessage(channel: string, message: string): Promise<void> {
         switch (channel) {
             case WorkspaceInstanceUpdatesChannel:
-                const enabled = await this.isRedisPubSubByTypeEnabled("workspace-instance");
-                if (!enabled) {
+                const wsInstanceTypeEnabled = await this.isRedisPubSubByTypeEnabled("workspace-instance");
+                if (!wsInstanceTypeEnabled) {
                     log.debug("[redis] Redis workspace instance update is disabled through feature flag", {
                         channel,
                         message,
@@ -74,8 +78,19 @@ export class RedisSubscriber implements LocalMessageBroker {
                     return;
                 }
 
-                const parsed = JSON.parse(message) as RedisWorkspaceInstanceUpdate;
-                return this.onInstanceUpdate(parsed);
+                return this.onInstanceUpdate(JSON.parse(message) as RedisWorkspaceInstanceUpdate);
+
+            case PrebuildUpdatesChannel:
+                const prebuildTypeEnabled = await this.isRedisPubSubByTypeEnabled("prebuild");
+                if (!prebuildTypeEnabled) {
+                    log.debug("[redis] Redis prebuild update is disabled through feature flag", {
+                        channel,
+                        message,
+                    });
+                    return;
+                }
+                return this.onPrebuildUpdate(JSON.parse(message) as RedisPrebuildUpdate);
+
             default:
                 throw new Error(`Redis Pub/Sub received message on unknown channel: ${channel}`);
         }
@@ -112,13 +127,48 @@ export class RedisSubscriber implements LocalMessageBroker {
         }
     }
 
+    private async onPrebuildUpdate(update: RedisPrebuildUpdate): Promise<void> {
+        log.debug("[redis] Received prebuild update", { update });
+
+        if (!update.projectID || !update.prebuildID || !update.status) {
+            return;
+        }
+
+        const listeners = this.prebuildUpdateListeners.get(update.projectID) || [];
+        if (listeners.length === 0) {
+            return;
+        }
+
+        const ctx = {};
+        const info = (await this.workspaceDB.findPrebuildInfos([update.prebuildID]))[0];
+        if (!info) {
+            return;
+        }
+
+        const prebuildWithStatus: PrebuildWithStatus = {
+            info: info,
+            status: update.status,
+        };
+
+        for (const l of listeners) {
+            try {
+                l(ctx, prebuildWithStatus);
+            } catch (err) {
+                log.error(
+                    "Failed to broadcast workspace instance update.",
+                    { projectId: update.projectID, instanceId: update.instanceID, workspaceId: update.workspaceID },
+                    err,
+                );
+            }
+        }
+    }
+
     async stop() {
         this.disposables.dispose();
     }
 
     listenForPrebuildUpdates(projectId: string, listener: PrebuildUpdateListener): Disposable {
-        // TODO: not implemented
-        return Disposable.create(() => {});
+        return this.doRegister(projectId, listener, this.prebuildUpdateListeners);
     }
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
