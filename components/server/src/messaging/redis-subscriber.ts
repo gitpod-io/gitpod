@@ -25,10 +25,14 @@ import {
     updateSubscribersRegistered,
 } from "../prometheus-metrics";
 import { Redis } from "ioredis";
+import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 
 @injectable()
 export class RedisSubscriber implements LocalMessageBroker {
-    constructor(@inject(Redis) private readonly redis: Redis) {}
+    constructor(
+        @inject(Redis) private readonly redis: Redis,
+        @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
+    ) {}
 
     protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
 
@@ -79,6 +83,33 @@ export class RedisSubscriber implements LocalMessageBroker {
 
     private async onInstanceUpdate(update: RedisWorkspaceInstanceUpdate): Promise<void> {
         log.debug("[redis] Received instance update", { update });
+
+        if (!update.ownerID || !update.instanceID) {
+            return;
+        }
+
+        const listeners = this.workspaceInstanceUpdateListeners.get(update.ownerID) || [];
+        if (listeners.length === 0) {
+            return;
+        }
+
+        const ctx = {};
+        const instance = await this.workspaceDB.findInstanceById(update.instanceID);
+        if (!instance) {
+            return;
+        }
+
+        for (const l of listeners) {
+            try {
+                l(ctx, instance);
+            } catch (err) {
+                log.error(
+                    { userId: update.ownerID, instanceId: instance.id, workspaceId: update.workspaceID },
+                    "Failed to broadcast workspace instance update.",
+                    err,
+                );
+            }
+        }
     }
 
     async stop() {
