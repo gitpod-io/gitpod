@@ -1092,6 +1092,7 @@ func downloadShellHistory(shell, target string, cfg *Config, tknsrv *InMemoryTok
 		return err
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tknres.Token))
+	req.Header.Set("Content-type", "text/plain")
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
@@ -1152,6 +1153,7 @@ func uploadShellHistory(shell string, source string, cfg *Config, tknsrv *InMemo
 		return err
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tknres.Token))
+	req.Header.Set("Content-type", "text/plain")
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
