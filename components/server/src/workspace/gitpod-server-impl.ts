@@ -201,6 +201,7 @@ import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/time
 import { OrganizationPermission } from "../authorization/definitions";
 import { Authorizer } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
+import { RedisSubscriber } from "../messaging/redis-subscriber";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -276,8 +277,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(BillingServiceDefinition.name) private readonly billingService: BillingServiceClient,
         @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
-        @inject(EnvVarService)
-        private readonly envVarService: EnvVarService,
+        @inject(EnvVarService) private readonly envVarService: EnvVarService,
+        @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
     ) {}
 
     /** Id the uniquely identifies this server instance */
@@ -474,6 +475,19 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                         },
                     );
                     this.disposables.push(resetListener);
+
+                    const resetListenerFromRedis = this.subscriber.listenForWorkspaceInstanceUpdates(
+                        ws.ownerId,
+                        (ctx, instance) => {
+                            if (instance.id === wsi.id) {
+                                this.forwardInstanceUpdateToClient(ctx, instance);
+                                if (instance.status.phase === "stopped") {
+                                    resetListenerFromRedis.dispose();
+                                }
+                            }
+                        },
+                    );
+                    this.disposables.push(resetListenerFromRedis);
                 }
 
                 const result = makeResult(wsi.id);
@@ -543,11 +557,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         // TODO(cw): the instance update is not subject to resource access guards, hence provides instance info
         //           to clients who might not otherwise have access to that information.
-        this.disposables.push(
+        this.disposables.pushAll([
             this.localMessageBroker.listenForWorkspaceInstanceUpdates(this.userID, (ctx, instance) =>
                 this.forwardInstanceUpdateToClient(ctx, instance),
             ),
-        );
+            this.subscriber.listenForWorkspaceInstanceUpdates(this.userID, (ctx, instance) =>
+                this.forwardInstanceUpdateToClient(ctx, instance),
+            ),
+        ]);
     }
 
     private forwardInstanceUpdateToClient(ctx: TraceContext, instance: WorkspaceInstance) {
