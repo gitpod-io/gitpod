@@ -55,14 +55,7 @@ jobs:
     if: always()
     needs:
       - create-runner
-      - configuration
-      - build-previewctl
-      - infrastructure
-      - build-gitpod
-      - install-app
-      - install
-      - monitoring
-      - integration-test
+      - build
     uses: ./.github/workflows/remove_runner.yml
     secrets: inherit
     with:
