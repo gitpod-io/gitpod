@@ -101,7 +101,7 @@ jobs:
               shell: bash
               env:
                   ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  # USER_NAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
+                  # USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
                   USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
                   PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
                   PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
@@ -129,7 +129,7 @@ jobs:
                   args=()
                   args+=( "-kubeconfig=/home/gitpod/.kube/config" )
                   args+=( "-namespace=default" )
-                  [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
+                  # [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
                   args+=( "-timeout=60m" )
 
                   IDE_TESTS_DIR="$GITHUB_WORKSPACE/test/tests/ide"
