@@ -85,9 +85,9 @@ export class RedisSubscriber implements LocalMessageBroker {
                 return this.onInstanceUpdate(JSON.parse(message) as RedisWorkspaceInstanceUpdate);
 
             case PrebuildUpdatesChannel:
-                const prebuildTypeEnabled = await this.isRedisPubSubByTypeEnabled("prebuild");
-                if (!prebuildTypeEnabled) {
-                    log.debug("[redis] Redis prebuild update is disabled through feature flag", {
+                const headlessUpdateEnabled = await this.isRedisPubSubByTypeEnabled("prebuild-updatable");
+                if (!headlessUpdateEnabled) {
+                    log.debug("[redis] Redis headless update is disabled through feature flag", {
                         channel,
                         message,
                     });
