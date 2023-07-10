@@ -19,7 +19,6 @@ import {
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
-import { Attributes } from "@gitpod/gitpod-protocol/lib/experiments/types";
 import { reportRedisUpdateCompleted, reportRedisUpdateReceived } from "../prometheus-metrics";
 import { Redis } from "ioredis";
 
@@ -42,12 +41,6 @@ export class RedisSubscriber implements LocalMessageBroker {
         this.redis.on("message", async (channel: string, message: string) => {
             reportRedisUpdateReceived(channel);
 
-            const featureEnabled = await this.isRedisPubSubEnabled({});
-            if (!featureEnabled) {
-                log.debug("[redis] Redis listener is disabled through feature flag", { channel, message });
-                return;
-            }
-
             let err: Error | undefined;
             try {
                 await this.onMessage(channel, message);
@@ -64,6 +57,15 @@ export class RedisSubscriber implements LocalMessageBroker {
     private async onMessage(channel: string, message: string): Promise<void> {
         switch (channel) {
             case WorkspaceInstanceUpdatesChannel:
+                const enabled = await this.isRedisPubSubByTypeEnabled("workspace-instance");
+                if (!enabled) {
+                    log.debug("[redis] Redis workspace instance update is disabled through feature flag", {
+                        channel,
+                        message,
+                    });
+                    return;
+                }
+
                 const parsed = JSON.parse(message) as RedisWorkspaceInstanceUpdate;
                 return this.onInstanceUpdate(parsed);
             default:
@@ -112,8 +114,14 @@ export class RedisSubscriber implements LocalMessageBroker {
         });
     }
 
-    private async isRedisPubSubEnabled(attributes: Attributes): Promise<boolean> {
-        const enabled = await getExperimentsClientForBackend().getValueAsync("enableRedisPubSub", false, attributes);
-        return enabled;
+    private async isRedisPubSubByTypeEnabled(
+        type: "workspace-instance" | "prebuild" | "prebuild-updatable",
+    ): Promise<boolean> {
+        const enabledTypes = await getExperimentsClientForBackend().getValueAsync(
+            "enableRedisPubSubByUpdateType",
+            "none",
+            {},
+        );
+        return enabledTypes.indexOf(type) >= 0;
     }
 }

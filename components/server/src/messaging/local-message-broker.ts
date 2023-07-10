@@ -15,6 +15,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { inject, injectable } from "inversify";
 import { MessageBusIntegration } from "../workspace/messagebus-integration";
+import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 
 export interface PrebuildUpdateListener {
     (ctx: TraceContext, evt: PrebuildWithStatus): void;
@@ -69,7 +70,12 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
         this.disposables.push(
             this.messageBusIntegration.listenForPrebuildUpdates(
                 undefined,
-                (ctx: TraceContext, update: PrebuildWithStatus) => {
+                async (ctx: TraceContext, update: PrebuildWithStatus) => {
+                    const enabled = await this.isRedisPubSubByTypeEnabled("prebuild");
+                    if (enabled) {
+                        log.debug("[messagebus] Prebuild listener is disabled through feature flag");
+                        return;
+                    }
                     TraceContext.setOWI(ctx, { workspaceId: update.info.buildWorkspaceId });
 
                     const listeners = this.prebuildUpdateListeners.get(update.info.projectId) || [];
@@ -91,7 +97,12 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
         );
         this.disposables.push(
             this.messageBusIntegration.listenForPrebuildUpdatableQueue(
-                (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => {
+                async (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => {
+                    const enabled = await this.isRedisPubSubByTypeEnabled("prebuild-updatable");
+                    if (enabled) {
+                        log.debug("[messagebus] Prebuild updatable listener is disabled through feature flag");
+                        return;
+                    }
                     TraceContext.setOWI(ctx, { workspaceId: evt.workspaceID });
 
                     const listeners =
@@ -110,7 +121,13 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
         this.disposables.push(
             this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
                 undefined,
-                (ctx: TraceContext, instance: WorkspaceInstance, userId: string | undefined) => {
+                async (ctx: TraceContext, instance: WorkspaceInstance, userId: string | undefined) => {
+                    const enabled = await this.isRedisPubSubByTypeEnabled("workspace-instance");
+                    if (enabled) {
+                        log.debug("[messagebus] Workspace instance listner is disabled through feature flag");
+                        return;
+                    }
+
                     TraceContext.setOWI(ctx, { userId, instanceId: instance.id });
 
                     if (!userId) {
@@ -169,5 +186,16 @@ export class LocalRabbitMQBackedMessageBroker implements LocalMessageBroker {
                 listenersStore.delete(key);
             }
         });
+    }
+
+    private async isRedisPubSubByTypeEnabled(
+        type: "workspace-instance" | "prebuild" | "prebuild-updatable",
+    ): Promise<boolean> {
+        const enabledTypes = await getExperimentsClientForBackend().getValueAsync(
+            "enableRedisPubSubByUpdateType",
+            "none",
+            {},
+        );
+        return enabledTypes.indexOf(type) >= 0;
     }
 }
