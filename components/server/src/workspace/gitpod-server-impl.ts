@@ -324,23 +324,24 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     private async listenForPrebuildUpdates() {
         // 'registering for prebuild updates for all projects this user has access to
         const projects = await this.getAccessibleProjects();
-        for (const projectId of projects) {
-            this.disposables.push(
-                this.localMessageBroker.listenForPrebuildUpdates(
-                    projectId,
-                    (ctx: TraceContext, update: PrebuildWithStatus) =>
-                        TraceContext.withSpan(
-                            "forwardPrebuildUpdateToClient",
-                            (ctx) => {
-                                traceClientMetadata(ctx, this.clientMetadata);
-                                TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
 
-                                this.client?.onPrebuildUpdate(update);
-                            },
-                            ctx,
-                        ),
-                ),
+        const handler = (ctx: TraceContext, update: PrebuildWithStatus) =>
+            TraceContext.withSpan(
+                "forwardPrebuildUpdateToClient",
+                (ctx) => {
+                    traceClientMetadata(ctx, this.clientMetadata);
+                    TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
+
+                    this.client?.onPrebuildUpdate(update);
+                },
+                ctx,
             );
+
+        for (const projectId of projects) {
+            this.disposables.pushAll([
+                this.localMessageBroker.listenForPrebuildUpdates(projectId, handler),
+                this.subscriber.listenForPrebuildUpdates(projectId, handler),
+            ]);
         }
 
         // TODO(at) we need to keep the list of accessible project up to date
@@ -3088,22 +3089,21 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const project = await this.projectsService.createProject(params, user);
         // update client registration for the logged in user
-        this.disposables.push(
-            this.localMessageBroker.listenForPrebuildUpdates(
-                project.id,
-                (ctx: TraceContext, update: PrebuildWithStatus) =>
-                    TraceContext.withSpan(
-                        "forwardPrebuildUpdateToClient",
-                        (ctx) => {
-                            traceClientMetadata(ctx, this.clientMetadata);
-                            TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
+        const prebuildUpdateHandler = (ctx: TraceContext, update: PrebuildWithStatus) =>
+            TraceContext.withSpan(
+                "forwardPrebuildUpdateToClient",
+                (ctx) => {
+                    traceClientMetadata(ctx, this.clientMetadata);
+                    TraceContext.setJsonRPCMetadata(ctx, "onPrebuildUpdate");
 
-                            this.client?.onPrebuildUpdate(update);
-                        },
-                        ctx,
-                    ),
-            ),
-        );
+                    this.client?.onPrebuildUpdate(update);
+                },
+                ctx,
+            );
+        this.disposables.pushAll([
+            this.localMessageBroker.listenForPrebuildUpdates(project.id, prebuildUpdateHandler),
+            this.subscriber.listenForPrebuildUpdates(project.id, prebuildUpdateHandler),
+        ]);
 
         return project;
     }
