@@ -16,7 +16,7 @@ WORKDIR /gp-code
 RUN yarn --cwd remote --frozen-lockfile --network-timeout 180000
 
 
-FROM gitpod/openvscode-server-linux-build-agent:bionic-x64 as code_builder
+FROM gitpod/openvscode-server-linux-build-agent:focal-x64 as code_builder
 
 ARG NODE_VERSION=16.19.0
 ARG NVM_DIR="/root/.nvm"
