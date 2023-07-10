@@ -452,3 +452,31 @@ jobs:
             previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
             $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
+
+  delete-runner:
+    if: always()
+    runs-on: ubuntu-latest
+    needs:
+    - create-runner
+    - configuration
+    - build-previewctl
+    - infrastructure
+    - build-gitpod
+    - install-app
+    - install
+    - monitoring
+    - integration-test
+    - delete-runner
+    steps:
+      - uses: actions/checkout@v3
+      - id: auth
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
+      - id: gcloud-auth
+        name: gcloud auth activate-service-account
+        shell: bash
+        run: |
+          gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
+          gcloud compute instances delete ${{ needs.create-runner.outputs.label }} --quiet
