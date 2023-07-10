@@ -1,6 +1,6 @@
 name: Check gitpod.yaml changes
 on:
-  pull_request_target:
+  pull_request:
     paths:
       - ".gitpod.yml"
       - ".github/workflows/check-gitpodyaml.yml"

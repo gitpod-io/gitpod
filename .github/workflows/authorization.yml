@@ -1,5 +1,5 @@
 on:
-  pull_request_target:
+  pull_request:
     paths:
       - install/installer/pkg/components/spicedb/data/**
       - .github/workflows/authorization.yml

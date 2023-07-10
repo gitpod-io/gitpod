@@ -1,6 +1,6 @@
 name: Team Labeler
 on:
-  pull_request_target:
+  pull_request:
     types: [review_requested]
 jobs:
   label:

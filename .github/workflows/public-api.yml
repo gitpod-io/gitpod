@@ -1,6 +1,6 @@
 name: public-api-compatibility
 on:
-  pull_request_target:
+  pull_request:
     paths:
     - components/public-api/**
 jobs:
