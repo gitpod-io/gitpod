@@ -4,10 +4,12 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { HeadlessWorkspaceEventType } from "./headless-workspace-log";
 import { PrebuiltWorkspaceState } from "./protocol";
 
 export const WorkspaceInstanceUpdatesChannel = "chan:workspace-instances";
 export const PrebuildUpdatesChannel = "chan:prebuilds";
+export const HeadlessUpdatesChannel = "chan:headless";
 
 export type RedisWorkspaceInstanceUpdate = {
     ownerID: string;
@@ -20,4 +22,9 @@ export type RedisPrebuildUpdate = {
     prebuildID: string;
     workspaceID: string;
     projectID: string;
+};
+
+export type RedisHeadlessUpdate = {
+    workspaceID: string;
+    type: HeadlessWorkspaceEventType;
 };
