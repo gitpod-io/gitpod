@@ -6,11 +6,9 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { FC, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { useLocation } from "react-router";
 import { Location } from "history";
 import { countries } from "countries-list";
-import gitpodIcon from "../icons/gitpod.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useCurrentUser } from "../user-context";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
@@ -73,10 +71,6 @@ export default function Menu() {
             <header className="app-container flex flex-col pt-4" data-analytics='{"button_type":"menu"}'>
                 <div className="flex justify-between h-10 mb-3 w-full">
                     <div className="flex items-center">
-                        {/* hidden on smaller screens */}
-                        <Link to="/" className="hidden md:inline pr-3 w-10">
-                            <img src={gitpodIcon} className="h-6" alt="Gitpod's logo" />
-                        </Link>
                         <OrganizationSelector />
                         {/* hidden on smaller screens (in it's own menu below on smaller screens) */}
                         <div className="hidden md:block pl-2">
