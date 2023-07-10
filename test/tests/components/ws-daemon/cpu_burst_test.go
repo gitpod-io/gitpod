@@ -14,7 +14,6 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 	"sigs.k8s.io/e2e-framework/pkg/features"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	daemon "github.com/gitpod-io/gitpod/test/pkg/agent/daemon/api"
 	wsapi "github.com/gitpod-io/gitpod/test/pkg/agent/workspace/api"
@@ -140,7 +139,7 @@ func TestCpuBurst(t *testing.T) {
 			}, &cpuResp)
 
 			if err != nil && err.Error() != "unexpected EOF" {
-				log.WithError(err).Error("could not perform cpu burn")
+				t.Logf("error performing cpu burn: %q", err)
 			}
 		}()
 
