@@ -293,6 +293,21 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
+	@shellhistory path /shell-history*
+	handle @shellhistory {
+		gitpod.cors_origin {
+			any_domain true
+		}
+
+		import compression
+
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_connection
+
+			flush_interval -1
+		}
+	}
+
 	@local_app {
 		path /static/bin/gitpod-local-companion-*
 	}
