@@ -477,5 +477,10 @@ jobs:
         name: gcloud auth activate-service-account
         shell: bash
         run: |
+          if [ -z "${{ needs.create-runner.outputs.label }}" ];then
+            echo "There is no VM running."
+            exit 0
+          fi
+
           gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
           gcloud compute instances delete ${{ needs.create-runner.outputs.label }} --quiet
