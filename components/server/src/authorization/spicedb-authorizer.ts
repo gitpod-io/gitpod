@@ -40,18 +40,18 @@ export class SpiceDBAuthorizer {
         }
 
         const timer = spicedbClientLatency.startTimer();
+        let error: Error | undefined;
         try {
             const response = await this.client.checkPermission(req);
             const permitted = response.permissionship === v1.CheckPermissionResponse_Permissionship.HAS_PERMISSION;
 
-            observeSpicedbClientLatency("check", req.permission, undefined, timer());
-
             return permitted;
         } catch (err) {
-            // while in we're running two authorization systems in parallel, we do not hard fail on checks.
+            error = err;
             log.error("[spicedb] Failed to perform authorization check.", err, { req });
-            observeSpicedbClientLatency("check", req.permission, err, timer());
             return false;
+        } finally {
+            observeSpicedbClientLatency("check", error, timer());
         }
     }
 
@@ -72,14 +72,18 @@ export class SpiceDBAuthorizer {
             return undefined;
         }
 
+        const timer = spicedbClientLatency.startTimer();
+        let error: Error | undefined;
         try {
             const response = await this.client.writeRelationships(req);
             log.info("[spicedb] Succesfully wrote relationships.", { response, request: req });
 
             return response;
         } catch (err) {
-            // While in we're running two authorization systems in parallel, we do not hard fail on writes.
+            error = err;
             log.error("[spicedb] Failed to write relationships.", err, { req });
+        } finally {
+            observeSpicedbClientLatency("write", error, timer());
         }
     }
 
@@ -100,14 +104,19 @@ export class SpiceDBAuthorizer {
             return undefined;
         }
 
+        const timer = spicedbClientLatency.startTimer();
+        let error: Error | undefined;
         try {
             const response = await this.client.deleteRelationships(req);
             log.info("[spicedb] Succesfully deleted relationships.", { response, request: req });
 
             return response;
         } catch (err) {
+            error = err;
             // While in we're running two authorization systems in parallel, we do not hard fail on writes.
             log.error("[spicedb] Failed to delete relationships.", err, { req });
+        } finally {
+            observeSpicedbClientLatency("delete", error, timer());
         }
     }
 }
