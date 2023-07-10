@@ -468,17 +468,15 @@ function LocalSSHWarning(props: { className: string }) {
                 >
                     Learn more
                 </a>
-                <div className="flex mt-2 text-sm">
-                    Comment on&nbsp;
-                    <a
-                        href="https://github.com/gitpod-io/gitpod/issues/18109"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="gp-link"
-                    >
-                        feedback issue
-                    </a>
-                </div>
+                &nbsp;&middot;&nbsp;
+                <a
+                    className="gp-link"
+                    href="https://github.com/gitpod-io/gitpod/issues/18109"
+                    target="_blank"
+                    rel="noreferrer"
+                >
+                    Send feedback
+                </a>
             </Alert>
         </div>
     );
