@@ -6,20 +6,10 @@ on:
     - cron: "0 0 * * *"
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-go@v2
-        with:
-          go-version: '1.19'
-      - name: Download leeway
-        run: cd /usr/bin && curl -fsSL https://github.com/gitpod-io/leeway/releases/download/v0.7.3/leeway_0.7.3_Linux_x86_64.tar.gz | sudo tar xz
-      - name: Download golangci-lint
-        run: cd /usr/local && curl -fsSL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.49.0
-      - name: Download GoKart
-        run: cd /usr/local/bin && curl -L https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv gokart
+      - uses: actions/checkout@v3
       - name: Auth Google Cloud SDK
         uses: google-github-actions/auth@v0
         with:
@@ -28,15 +18,26 @@ jobs:
         uses: google-github-actions/setup-gcloud@v0
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-      - run: |
+      - id: build-code
+        name: Build
+        env:
+          PR_DESC: "${{ steps.pr-details.outputs.pr_body }}"
+          MAIN_BRANCH: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
+          LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
+          LEEWAY_REMOTE_CACHE_BUCKET: "${{ needs.configuration.outputs.leeway_cache_bucket }}"
+        run: |
           gcloud auth configure-docker --quiet
-          export LEEWAY_WORKSPACE_ROOT=$(pwd)
+
           codeHeadCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/main)
           codeVersion=$(curl https://raw.githubusercontent.com/gitpod-io/openvscode-server/$codeHeadCommit/package.json | jq .version)
-          cd components/ide/code
-          leeway build -Dversion=nightly -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build -DcodeCommit=$codeHeadCommit -DcodeVersion=$codeVersion -DcodeQuality=insider .:docker
-        env:
-          LEEWAY_REMOTE_CACHE_BUCKET: '${{ needs.configuration.outputs.leeway_cache_bucket }}'
+
+          leeway build \
+            -Dversion=nightly \
+            -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build \
+            -DcodeCommit=$codeHeadCommit \
+            -DcodeVersion=$codeVersion \
+            -DcodeQuality=insider \
+            .:docker
       - name: Get previous job's status
         id: lastrun
         uses: filiptronicek/get-last-job-status@main
