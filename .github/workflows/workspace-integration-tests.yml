@@ -20,6 +20,10 @@ on:
     - cron: "0 3,12 * * *"
 
 jobs:
+  create-runner:
+    uses: ./.github/workflows/create_runner.yml
+    secrets: inherit
+
   configuration:
     name: Configuration
     runs-on: ${{ needs.create-runner.outputs.label }}
@@ -232,3 +236,16 @@ jobs:
         with:
           name: ${{ needs.configuration.outputs.name }}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
+
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - configuration
+      - infrastructure
+      - check
+      - delete
+    uses: ./.github/workflows/remove_runner.yml
+    secrets: inherit
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}
