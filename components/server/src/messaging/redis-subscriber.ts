@@ -168,7 +168,7 @@ export class RedisSubscriber implements LocalMessageBroker {
     }
 
     listenForPrebuildUpdates(projectId: string, listener: PrebuildUpdateListener): Disposable {
-        return this.doRegister(projectId, listener, this.prebuildUpdateListeners);
+        return this.doRegister(projectId, listener, this.prebuildUpdateListeners, "prebuild");
     }
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
