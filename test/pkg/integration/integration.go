@@ -206,19 +206,18 @@ type RpcClient struct {
 
 func (r *RpcClient) Call(serviceMethod string, args any, reply any) error {
 	var err error
-	var new *RpcClient
+	cl := r
 	for i := 0; i < connectFailureMaxTries; i++ {
-		if r == nil {
-			new, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
+		if cl == nil {
+			cl, _, err = Instrument(r.component, r.agentName, r.namespace, r.kubeconfig, r.kclient, r.opts...)
 			if err != nil {
 				log.Warnf("failed to re-instrument (attempt %d): %v", i, err)
 				time.Sleep(10 * time.Second)
 				continue
 			}
-			r = new
 		}
 
-		err = r.client.Call(serviceMethod, args, reply)
+		err = cl.client.Call(serviceMethod, args, reply)
 		if err == nil {
 			return nil
 		}
@@ -229,8 +228,8 @@ func (r *RpcClient) Call(serviceMethod string, args any, reply any) error {
 		}
 
 		time.Sleep(10 * time.Second)
-		r.Close()
-		r = nil // Try to Instrument again next attempt
+		cl.Close()
+		cl = nil // Try to Instrument again next attempt
 	}
 	return err
 }
