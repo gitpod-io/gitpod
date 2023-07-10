@@ -41,9 +41,9 @@ type TelemetryConfig struct {
 }
 
 type CommonConfig struct {
-	// @deprecated
+	// Deprecated.
 	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
-	// @deprecated use a secret instead in messageBus.credentials
+	// Deprecated use a secret instead in messageBus.credentials
 	StaticMessagebusPassword string `json:"staticMessagebusPassword"`
 }
 

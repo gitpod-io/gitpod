@@ -231,10 +231,6 @@ func (v version) ClusterValidation(rcfg interface{}) cluster.ValidationChecks {
 		})))
 	}
 
-	if cfg.MessageBus != nil && cfg.MessageBus.Credentials != nil {
-		res = append(res, cluster.CheckSecret(cfg.MessageBus.Credentials.Name, cluster.CheckSecretRequiredData("rabbitmq-password")))
-	}
-
 	res = append(res, experimental.ClusterValidation(cfg.Experimental)...)
 
 	return res
