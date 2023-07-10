@@ -1156,10 +1156,10 @@ func uploadShellHistory(shell string, source string, cfg *Config, tknsrv *InMemo
 	if err != nil {
 		return err
 	}
-
 	defer resp.Body.Close()
-	if err != nil {
-		return err
+
+	if resp.StatusCode != 200 {
+		return xerrors.Errorf("cannot upload shell history, status: %d", resp.StatusCode)
 	}
 	return nil
 }
