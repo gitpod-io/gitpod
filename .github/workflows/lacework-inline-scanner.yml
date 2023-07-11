@@ -4,7 +4,7 @@ on:
     workflows: ["Build"]
     types: [completed]
     branches:
-      - 'main'
+      - "main"
   workflow_dispatch:
     inputs:
       version:
@@ -13,6 +13,10 @@ on:
         description: "What Gitpod version to scan for CVEs"
 
 jobs:
+  create-runner:
+    uses: ./.github/workflows/create_runner.yml
+    secrets: inherit
+
   configuration:
     name: Configuration
     runs-on: ${{ needs.create-runner.outputs.label }}
@@ -23,19 +27,19 @@ jobs:
       - name: "Set outputs"
         id: configuration
         run: |
-            if [[ '${{ github.event.workflow_run.run_number }}' == '' ]]; then
-                # The workflow was triggered by workflow_dispatch
-                {
-                    echo "version=${{ github.event.inputs.version }}"
-                    echo "skip=false"
-                } >> $GITHUB_OUTPUT
-            else
-                # The workflow was triggered by workflow_run
-                {
-                    echo "version=main-gha.${{ github.event.workflow_run.run_number }}"
-                    echo "skip=${{ github.event.workflow_run.conclusion == 'failure' }}"
-                } >> $GITHUB_OUTPUT
-            fi
+          if [[ '${{ github.event.workflow_run.run_number }}' == '' ]]; then
+              # The workflow was triggered by workflow_dispatch
+              {
+                  echo "version=${{ github.event.inputs.version }}"
+                  echo "skip=false"
+              } >> $GITHUB_OUTPUT
+          else
+              # The workflow was triggered by workflow_run
+              {
+                  echo "version=main-gha.${{ github.event.workflow_run.run_number }}"
+                  echo "skip=${{ github.event.workflow_run.conclusion == 'failure' }}"
+              } >> $GITHUB_OUTPUT
+          fi
 
   scan-images:
     name: Scan all docker images for CVEs
@@ -66,8 +70,8 @@ jobs:
           username: oauth2accesstoken
           password: "${{ steps.auth.outputs.access_token }}"
       - name: Get Secrets from GCP
-        id: 'secrets'
-        uses: 'google-github-actions/get-secretmanager-secrets@v1'
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v1"
         with:
           secrets: |-
             lacework-access-token:gitpod-core-dev/lacework-access-token
@@ -76,8 +80,19 @@ jobs:
         shell: bash
         env:
           VERSION: ${{needs.configuration.outputs.version}}
-          LW_ACCESS_TOKEN: '${{ steps.secrets.outputs.lacework-access-token }}'
+          LW_ACCESS_TOKEN: "${{ steps.secrets.outputs.lacework-access-token }}"
           # TODO(gpl) See docker.io access above
           EXCLUDE_DOCKER_IO: true
         run: |
           $GITHUB_WORKSPACE/scripts/lw-scan-images.sh
+
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - configuration
+      - scan-images
+    uses: ./.github/workflows/remove_runner.yml
+    secrets: inherit
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}
