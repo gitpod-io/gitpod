@@ -15,6 +15,7 @@ jobs:
   delete:
     if: github.event.ref_type == 'branch' || github.event.inputs.name != ''
     runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [create-runner]
     steps:
       - uses: actions/checkout@v3
       - name: Delete preview environment
