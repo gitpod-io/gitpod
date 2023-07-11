@@ -29,10 +29,10 @@ jobs:
             exit 0
           fi
 
+          gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
           if [ -z "$(gcloud compute instances list | grep "${{ inputs.runner-label }}")" ]; then
             // vm is gone
             exit 0
           fi
 
-          gcloud auth activate-service-account --key-file "${{ steps.auth.outputs.credentials_file_path }}"
           gcloud compute instances delete ${{ inputs.runner-label }} --quiet --zone europe-west1-b
