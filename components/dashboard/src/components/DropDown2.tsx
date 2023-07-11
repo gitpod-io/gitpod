@@ -264,8 +264,8 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
             <div className="flex-col ml-1 flex-grow">
                 {loading ? (
                     <div className="flex-col space-y-2">
-                        <div className="bg-gray-300 dark:bg-gray-500 h-4 w-24" />
-                        <div className="bg-gray-300 dark:bg-gray-500 h-2 w-40" />
+                        <div className="bg-gray-300 dark:bg-gray-500 h-4 w-24 rounded" />
+                        <div className="bg-gray-300 dark:bg-gray-500 h-2 w-40 rounded" />
                     </div>
                 ) : (
                     <>
