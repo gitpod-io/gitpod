@@ -34,6 +34,7 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(redisUpdatesReceived);
     registry.registerMetric(redisUpdatesCompletedTotal);
     registry.registerMetric(updateSubscribersRegistered);
+    registry.registerMetric(updatesPublishedTotal);
 }
 
 const loginCounter = new prometheusClient.Counter({
@@ -337,3 +338,13 @@ export const updateSubscribersRegistered = new prometheusClient.Gauge({
     help: "Gauge of subscribers registered",
     labelNames: ["type"],
 });
+
+export const updatesPublishedTotal = new prometheusClient.Counter({
+    name: "gitpod_server_updates_published_total",
+    help: "Counter of events published to Redis by type and error",
+    labelNames: ["type", "error"],
+});
+
+export function reportUpdatePublished(type: "workspace-instance" | "prebuild" | "headless", err?: Error): void {
+    updatesPublishedTotal.labels(type, err ? "true" : "false").inc();
+}
