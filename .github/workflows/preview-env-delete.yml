@@ -1,19 +1,34 @@
 name: "Preview environment delete"
 on:
-    workflow_dispatch:
-        inputs:
-            name:
-                required: true
-                description: "The name of the preview environment to delete"
-    delete:
+  workflow_dispatch:
+    inputs:
+      name:
+        required: true
+        description: "The name of the preview environment to delete"
+  delete:
+
 jobs:
-    delete:
-        if: github.event.ref_type == 'branch' || github.event.inputs.name != ''
-        runs-on: ${{ needs.create-runner.outputs.label }}
-        steps:
-            - uses: actions/checkout@v3
-            - name: Delete preview environment
-              uses: ./.github/actions/delete-preview
-              with:
-                  name: ${{ github.event.inputs.name || github.event.ref}}
-                  sa_key: ${{ secrets.GCP_CREDENTIALS }}
+  create-runner:
+    uses: ./.github/workflows/create_runner.yml
+    secrets: inherit
+
+  delete:
+    if: github.event.ref_type == 'branch' || github.event.inputs.name != ''
+    runs-on: ${{ needs.create-runner.outputs.label }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Delete preview environment
+        uses: ./.github/actions/delete-preview
+        with:
+          name: ${{ github.event.inputs.name || github.event.ref}}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - delete
+    uses: ./.github/workflows/remove_runner.yml
+    secrets: inherit
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}
