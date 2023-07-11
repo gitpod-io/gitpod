@@ -131,6 +131,7 @@ import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { OrganizationService } from "./orgs/organization-service";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { Redis } from "ioredis";
+import { RedisPublisher } from "./redis/publisher";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -364,5 +365,6 @@ export const productionContainerModule = new ContainerModule(
 
         bind(RedisMutex).toSelf().inSingletonScope();
         bind(RedisSubscriber).toSelf().inSingletonScope();
+        bind(RedisPublisher).toSelf().inSingletonScope();
     },
 );
