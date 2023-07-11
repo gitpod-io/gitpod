@@ -46,13 +46,12 @@ spec:
 
     # Rollout alerts
     - alert: JsonRpcApiErrorRates
-      # Reasoning: the values are taken from past data
       expr: sum(rate(gitpod_server_api_calls_total{statusCode!~"2.*|3.*|4.*"}[5m])) by (cluster) / sum(rate(gitpod_server_api_calls_total[5m])) by (cluster) > 0.04
       for: 5m
       labels:
-        # sent to the team internal channel until we fine tuned it
-        severity: warning
+        severity: critical
         team: webapp
+        dedicated: included
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodApiErrorRate.md
         summary: The error rate of the JSON RPC API is high on {{ $labels.cluster }}. Investigation required.
@@ -105,6 +104,7 @@ spec:
       labels:
         severity: critical
         team: webapp
+        dedicated: included
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/WebAppServicesCrashlooping.md
         summary: Pod is crash looping in {{ $labels.cluster }}.
