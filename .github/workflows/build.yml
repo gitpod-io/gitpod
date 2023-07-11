@@ -103,10 +103,10 @@ jobs:
         id: build
         shell: bash
         env:
-          LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
           LEEWAY_SEGMENT_KEY: ""
           PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
         run: |
+          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
           export PREVIEW_ENV_DEV_SA_KEY_PATH="$GITHUB_WORKSPACE/.config/gcloud/preview-environment-dev-sa.json"
           echo "LEEWAY_WORKSPACE_ROOT: $LEEWAY_WORKSPACE_ROOT"
           echo "PREVIEW_ENV_DEV_SA_KEY_PATH: $PREVIEW_ENV_DEV_SA_KEY_PATH"
@@ -179,9 +179,9 @@ jobs:
       - name: Leeway Vet
         shell: bash
         env:
-          LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
           LEEWAY_SEGMENT_KEY: ""
         run: |
+          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
           leeway vet --ignore-warnings
       - name: Pre-Commit Checks
         shell: bash
@@ -195,9 +195,9 @@ jobs:
       - name: Check License Headers
         shell: bash
         env:
-          LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
           LEEWAY_SEGMENT_KEY: ""
         run: |
+          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
           RESULT=0
           LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || RESULT=$?
           if [ $RESULT -ne 0 ]; then
@@ -218,10 +218,10 @@ jobs:
         env:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
-          LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
           LEEWAY_SEGMENT_KEY: ""
         shell: bash
         run: |
+          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
           RESULT=0
           set -x
           leeway build dev:all \
@@ -259,9 +259,9 @@ jobs:
           JB_MARKETPLACE_PUBLISH_TOKEN: "${{ steps.secrets.outputs.jb-marketplace-publish-token }}"
           PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
           CODECOV_TOKEN: "${{ steps.secrets.outputs.codecov-token }}"
-          LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
           LEEWAY_SEGMENT_KEY: ""
         run: |
+          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
           [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
@@ -427,9 +427,9 @@ jobs:
           TEST_BUILD_ID: ${{ github.run_id }}
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
-          LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
           LEEWAY_SEGMENT_KEY: ""
         run: |
+          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
           set -euo pipefail
 
           echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
