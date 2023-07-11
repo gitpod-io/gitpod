@@ -126,7 +126,6 @@ export class PrebuildUpdater {
                 if (info) {
                     await this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });
                     await this.publisher.publishPrebuildUpdate({
-                        instanceID: instance.id,
                         projectID: prebuild.projectId || "",
                         prebuildID: prebuild.id,
                         status: prebuild.state,
