@@ -115,6 +115,7 @@ jobs:
           mkdir -p "$(dirname "$PREVIEW_ENV_DEV_SA_KEY_PATH")"
           echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
           gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          gcloud auth configure-docker --quiet
 
           leeway build dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}"
           echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}" -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
