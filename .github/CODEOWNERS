@@ -28,7 +28,6 @@
 /components/image-builder-bob @gitpod-io/engineering-workspace
 /components/image-builder-mk3 @gitpod-io/engineering-workspace
 /components/installation-telemetry @gitpod-io/engineering-security-infrastructure-and-delivery
-/components/kots-config-check @gitpod-io/engineering-security-infrastructure-and-delivery
 /install @gitpod-io/engineering-security-infrastructure-and-delivery
 # By default anything in in /install/installer is shared.
 /install/installer

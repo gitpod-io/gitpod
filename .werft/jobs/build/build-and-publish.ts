@@ -42,8 +42,6 @@ export async function buildAndPublish(werft: Werft, jobConfig: JobConfig) {
         imageRepoBase: imageRepo,
         localAppVersion: localAppVersion,
         SEGMENT_IO_TOKEN: process.env.SEGMENT_IO_TOKEN,
-        REPLICATED_API_TOKEN: process.env.REPLICATED_API_TOKEN,
-        REPLICATED_APP: process.env.REPLICATED_APP,
         npmPublishTrigger: publishToNpm ? Date.now().toString() : "false",
     }).map(([key, value]) => `-D${key}=${value}`).join(" ");
 
