@@ -101,10 +101,14 @@ jobs:
         env:
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
           LEEWAY_SEGMENT_KEY: ""
-          PREVIEW_ENV_DEV_SA_KEY_PATH: ${{ env.GITHUB_WORKSPACE }}/.config/gcloud/preview-environment-dev-sa.json
           PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
         run: |
+          export PREVIEW_ENV_DEV_SA_KEY_PATH="$GITHUB_WORKSPACE/.config/gcloud/preview-environment-dev-sa.json"
+          echo "LEEWAY_WORKSPACE_ROOT: $LEEWAY_WORKSPACE_ROOT"
+          echo "PREVIEW_ENV_DEV_SA_KEY_PATH: $PREVIEW_ENV_DEV_SA_KEY_PATH"
+
           # Authenticate with GCP so we can use the Leeway cache
+          mkdir -p "$(dirname "$PREVIEW_ENV_DEV_SA_KEY_PATH")"
           echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
           gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
