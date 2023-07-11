@@ -6,8 +6,6 @@
 
 import { ContainerModule } from "inversify";
 
-import { MessageBusHelper, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
-import { MessagebusConfiguration } from "@gitpod/gitpod-messagebus/lib/config";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import {
     ConfigCatClientFactory,
@@ -73,7 +71,6 @@ import { WebhookEventGarbageCollector } from "./jobs/webhook-gc";
 import { WorkspaceGarbageCollector } from "./jobs/workspace-gc";
 import { LinkedInService } from "./linkedin-service";
 import { LivenessController } from "./liveness/liveness-controller";
-import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messaging/local-message-broker";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { OAuthController } from "./oauth-server/oauth-controller";
 import { OneTimeSecretServer } from "./one-time-secret-server";
@@ -117,7 +114,6 @@ import { HeadlessLogController } from "./workspace/headless-log-controller";
 import { HeadlessLogService } from "./workspace/headless-log-service";
 import { ImageSourceProvider } from "./workspace/image-source-provider";
 import { ImageBuildPrefixContextParser } from "./workspace/imagebuild-prefix-context-parser";
-import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { OpenPrebuildPrefixContextParser } from "./workspace/open-prebuild-prefix-context-parser";
 import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser";
 import { SnapshotContextParser } from "./workspace/snapshot-context-parser";
@@ -168,11 +164,6 @@ export const productionContainerModule = new ContainerModule(
 
         bind(ServerFactory).toAutoFactory(GitpodServerImpl);
         bind(UserController).toSelf().inSingletonScope();
-
-        bind(MessagebusConfiguration).toSelf().inSingletonScope();
-        bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
-        bind(MessageBusIntegration).toSelf().inSingletonScope();
-        bind(LocalMessageBroker).to(LocalRabbitMQBackedMessageBroker).inSingletonScope();
 
         bind(GitpodServerImpl).toSelf();
         bind(WebsocketConnectionManager)

@@ -19,7 +19,6 @@ import { toIWebSocket } from "@gitpod/gitpod-protocol/lib/messaging/node/connect
 import { WsExpressHandler, WsRequestHandler } from "./express/ws-handler";
 import { isAllowedWebsocketDomain, bottomErrorHandler, unhandledToError } from "./express-util";
 import { createWebSocketConnection } from "vscode-ws-jsonrpc/lib";
-import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { AddressInfo } from "net";
 import { WorkspaceDownloadService } from "./workspace/workspace-download-service";
@@ -41,7 +40,6 @@ import {
 import { NewsletterSubscriptionController } from "./user/newsletter-subscription-controller";
 import { Config } from "./config";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
-import { LocalMessageBroker } from "./messaging/local-message-broker";
 import { WsConnectionHandler } from "./express/ws-connection-handler";
 import { LivenessController } from "./liveness/liveness-controller";
 import { IamSessionApp } from "./iam/iam-session-app";
@@ -77,8 +75,6 @@ export class Server {
         @inject(Authenticator) private readonly authenticator: Authenticator,
         @inject(UserController) private readonly userController: UserController,
         @inject(WebsocketConnectionManager) private readonly websocketConnectionHandler: WebsocketConnectionManager,
-        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
-        @inject(LocalMessageBroker) private readonly localMessageBroker: LocalMessageBroker,
         @inject(WorkspaceDownloadService) private readonly workspaceDownloadService: WorkspaceDownloadService,
         @inject(LivenessController) private readonly livenessController: LivenessController,
         @inject(MonitoringEndpointsApp) private readonly monitoringEndpointsApp: MonitoringEndpointsApp,
@@ -268,13 +264,6 @@ export class Server {
         // Report current websocket connections
         this.installWebsocketConnectionGauge();
         this.installWebsocketClientContextGauge();
-
-        // Connect to message bus
-        await this.messagebus.connect();
-
-        // Start local message broker
-        await this.localMessageBroker.start();
-        this.disposables.push(Disposable.create(() => this.localMessageBroker.stop().catch(log.error)));
 
         await this.redisSubscriber.start();
         this.disposables.push(Disposable.create(() => this.redisSubscriber.stop().catch(log.error)));

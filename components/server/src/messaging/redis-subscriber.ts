@@ -6,8 +6,6 @@
 
 import {
     HeadlessWorkspaceEventListener,
-    LocalMessageBroker,
-    LocalRabbitMQBackedMessageBroker,
     PrebuildUpdateListener,
     WorkspaceInstanceUpdateListener,
 } from "./local-message-broker";
@@ -33,8 +31,10 @@ import {
 import { Redis } from "ioredis";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 
+const UNDEFINED_KEY = "undefined";
+
 @injectable()
-export class RedisSubscriber implements LocalMessageBroker {
+export class RedisSubscriber {
     constructor(
         @inject(Redis) private readonly redis: Redis,
         @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
@@ -185,8 +185,7 @@ export class RedisSubscriber implements LocalMessageBroker {
             return;
         }
 
-        const listeners =
-            this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
+        const listeners = this.headlessWorkspaceEventListeners.get(UNDEFINED_KEY) || [];
         if (listeners.length === 0) {
             return;
         }
@@ -211,12 +210,7 @@ export class RedisSubscriber implements LocalMessageBroker {
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
         // we're being cheap here in re-using a map where it just needs to be a plain array.
-        return this.doRegister(
-            LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY,
-            listener,
-            this.headlessWorkspaceEventListeners,
-            "prebuild-updatable",
-        );
+        return this.doRegister(UNDEFINED_KEY, listener, this.headlessWorkspaceEventListeners, "prebuild-updatable");
     }
 
     listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable {
