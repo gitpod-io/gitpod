@@ -79,11 +79,21 @@ func TestCpuBurst(t *testing.T) {
 		}
 
 		ws, stopWs, err := integration.LaunchWorkspaceDirectly(t, ctx, api, integration.WithRequestModifier(swr))
-		defer stopWs(true, api)
-
 		if err != nil {
 			t.Fatal(err)
 		}
+		defer func() {
+			sctx, scancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer scancel()
+
+			sapi := integration.NewComponentAPI(sctx, cfg.Namespace(), kubeconfig, cfg.Client())
+			defer sapi.Done(t)
+
+			_, err = stopWs(true, sapi)
+			if err != nil {
+				t.Errorf("cannot stop workspace: %q", err)
+			}
+		}()
 
 		daemonClient, daemonCloser, err := integration.Instrument(integration.ComponentWorkspaceDaemon, "daemon", cfg.Namespace(), kubeconfig, cfg.Client(),
 			integration.WithWorkspacekitLift(false),
