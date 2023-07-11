@@ -100,7 +100,7 @@ jobs:
         shell: bash
         env:
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          LEEWAY_SEGMENT_KEY: ""
           PREVIEW_ENV_DEV_SA_KEY_PATH: ${{ env.GITHUB_WORKSPACE }}/.config/gcloud/preview-environment-dev-sa.json
           PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
         run: |
@@ -172,7 +172,7 @@ jobs:
         shell: bash
         env:
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          LEEWAY_SEGMENT_KEY: ""
         run: |
           leeway vet --ignore-warnings
       - name: Pre-Commit Checks
@@ -188,7 +188,7 @@ jobs:
         shell: bash
         env:
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          LEEWAY_SEGMENT_KEY: ""
         run: |
           RESULT=0
           LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || RESULT=$?
@@ -211,7 +211,7 @@ jobs:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          LEEWAY_SEGMENT_KEY: ""
         shell: bash
         run: |
           RESULT=0
@@ -252,7 +252,7 @@ jobs:
           PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
           CODECOV_TOKEN: "${{ steps.secrets.outputs.codecov-token }}"
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          LEEWAY_SEGMENT_KEY: ""
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
@@ -420,7 +420,7 @@ jobs:
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          LEEWAY_SEGMENT_KEY: ""
         run: |
           set -euo pipefail
 
