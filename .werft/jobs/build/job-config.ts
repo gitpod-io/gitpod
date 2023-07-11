@@ -22,8 +22,6 @@ export interface JobConfig {
     publishRelease: boolean;
     publishToJBMarketplace: boolean;
     publishToNpm: string;
-    publishToKots: boolean;
-    replicatedChannel: string;
     storage: string;
     storageClass: string;
     version: string;
@@ -37,7 +35,6 @@ export interface JobConfig {
     workspaceFeatureFlags: string[];
     previewEnvironment: PreviewEnvironmentConfig;
     repository: Repository;
-    replicatedVersion: string;
     observability: Observability;
     withLargeVM: boolean;
     certIssuer: string;
@@ -91,13 +88,10 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
     const storage = buildConfig["storage"] || "";
     const withUpgradeTests = "with-upgrade-tests" in buildConfig && !mainBuild;
     const fromVersion = withUpgradeTests ? buildConfig["from-version"] : "";
-    const replicatedChannel = buildConfig["channel"];
     const cluster = buildConfig["cluster"];
     const withSelfHostedPreview = "with-sh-preview" in buildConfig;
-    const replicatedVersion = withSelfHostedPreview ? buildConfig["version"] : "";
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const publishToJBMarketplace = "publish-to-jb-marketplace" in buildConfig || mainBuild;
-    const publishToKots = "publish-to-kots" in buildConfig || withSelfHostedPreview || mainBuild;
 
     const localAppVersion = mainBuild || "with-localapp-version" in buildConfig ? version : "unknown";
     const cleanSlateDeployment = mainBuild || "with-clean-slate-deployment" in buildConfig;
@@ -165,9 +159,6 @@ export function jobConfig(werft: Werft, context: any): JobConfig {
         publishRelease,
         publishToJBMarketplace,
         publishToNpm,
-        publishToKots,
-        replicatedChannel,
-        replicatedVersion,
         repository,
         storage,
         storageClass,

@@ -236,11 +236,6 @@ RUN curl -fsSLO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJS
     tar -tzf gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz | xargs rm -f && \
     rm -f gojsontoyaml_${GOJSONTOYAML_VERSION}_linux_amd64.tar.gz
 
-# Install Replicated and KOTS
-RUN curl https://raw.githubusercontent.com/replicatedhq/replicated/$(curl -s https://api.github.com/repos/replicatedhq/replicated/releases/latest | jq -r '.name')/install.sh | sudo bash && \
-    curl https://kots.io/install | sudo bash && \
-    bash -c "echo . \<\(kubectl kots completion bash\) >> ~/.bashrc"
-
 # Install fish shell
 RUN sudo apt-add-repository -y ppa:fish-shell/release-3 && \
     sudo apt update && \

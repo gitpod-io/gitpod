@@ -99,16 +99,6 @@ pod:
         secretKeyRef:
           name: slack-webhook-urls
           key: self_hosted_jobs
-    - name: REPLICATED_API_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: replicated
-          key: token
-    - name: REPLICATED_APP
-      valueFrom:
-        secretKeyRef:
-          name: replicated
-          key: app
     - name: self_hosted_jobs
       value: "true"
     command:

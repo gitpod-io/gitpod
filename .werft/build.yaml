@@ -181,16 +181,6 @@ pod:
           key: segmentIOToken
     - name: JAVA_HOME
       value: /home/gitpod/.sdkman/candidates/java/current
-    - name: REPLICATED_APP
-      valueFrom:
-        secretKeyRef:
-          name: replicated
-          key: app
-    - name: REPLICATED_API_TOKEN
-      valueFrom:
-        secretKeyRef:
-          name: replicated
-          key: token
     # Used by the Werft CLI through werft-credential-helper.sh
     - name: WERFT_GITHUB_TOKEN_PATH
       value: "/mnt/secrets/github-token-gitpod-bot/token"
