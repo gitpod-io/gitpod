@@ -62,7 +62,8 @@ export function CreateWorkspacePage() {
             ? props.ideSettings.defaultIde
             : user?.additionalData?.ideSettings?.defaultIde;
     const [selectedIde, setSelectedIde, selectedIdeIsDirty] = useDirtyState(defaultIde);
-    const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(props.workspaceClass);
+    const defaultWorkspaceClass = props.workspaceClass;
+    const [selectedWsClass, setSelectedWsClass, selectedWsClassIsDirty] = useDirtyState(defaultWorkspaceClass);
     const [errorWsClass, setErrorWsClass] = useState<string | undefined>(undefined);
     const [contextURL, setContextURL] = useState<string | undefined>(
         StartWorkspaceOptions.parseContextUrl(location.hash),
@@ -129,9 +130,9 @@ export function CreateWorkspacePage() {
 
         if (!project) {
             // If no project and user hasn't changed ws class, reset it to default value
-            // Empty value causes SelectWorkspaceClassComponent to use the dfeault ws class
+            // Empty value causes SelectWorkspaceClassComponent to use the default ws class
             if (!selectedWsClassIsDirty) {
-                setSelectedWsClass("", false);
+                setSelectedWsClass(defaultWorkspaceClass, false);
             }
             return;
         }
@@ -141,7 +142,7 @@ export function CreateWorkspacePage() {
         if (wsClass?.regular && !selectedWsClassIsDirty) {
             setSelectedWsClass(wsClass?.regular, false);
         }
-    }, [project, props.workspaceClass, selectedWsClassIsDirty, setSelectedWsClass]);
+    }, [defaultWorkspaceClass, project, props.workspaceClass, selectedWsClassIsDirty, setSelectedWsClass]);
 
     // In addition to updating state, we want to update the url hash as well
     // This allows the contextURL to persist if user changes orgs, or copies/shares url
@@ -380,7 +381,7 @@ export function CreateWorkspacePage() {
                         <RepositoryFinder
                             setSelection={handleContextURLChange}
                             initialValue={contextURL}
-                            disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
+                            disabled={createWorkspaceMutation.isStarting}
                         />
                     </InputField>
 
@@ -390,7 +391,8 @@ export function CreateWorkspacePage() {
                             setError={setErrorIde}
                             selectedIdeOption={selectedIde}
                             useLatest={useLatestIde}
-                            disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
+                            disabled={createWorkspaceMutation.isStarting}
+                            loading={workspaceContext.isLoading}
                         />
                     </InputField>
 
@@ -399,7 +401,8 @@ export function CreateWorkspacePage() {
                             onSelectionChange={setSelectedWsClass}
                             setError={setErrorWsClass}
                             selectedWorkspaceClass={selectedWsClass}
-                            disabled={workspaceContext.isLoading || createWorkspaceMutation.isStarting}
+                            disabled={createWorkspaceMutation.isStarting}
+                            loading={workspaceContext.isLoading}
                         />
                     </InputField>
                 </div>
