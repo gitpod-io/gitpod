@@ -19,6 +19,5 @@ export type RedisPrebuildUpdate = {
     status: PrebuiltWorkspaceState;
     prebuildID: string;
     workspaceID: string;
-    instanceID: string;
     projectID: string;
 };
