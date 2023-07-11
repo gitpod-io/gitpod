@@ -257,7 +257,12 @@ export const DropDown2SelectedElement: FC<DropDown2SelectedElementProps> = ({
     htmlTitle,
 }) => {
     return (
-        <div className={classNames("flex items-center", loading && "animate-pulse")} title={htmlTitle}>
+        <div
+            className={classNames("flex items-center", loading && "animate-pulse")}
+            title={htmlTitle}
+            aria-live="polite"
+            aria-busy={loading}
+        >
             <div className="mx-2 my-3 flex-shrink-0">
                 <img className="w-8 filter-grayscale" src={iconSrc} alt="logo" />
             </div>
