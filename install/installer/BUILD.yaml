@@ -38,6 +38,7 @@ packages:
       - components/usage:lib
       - components/usage-api/go:lib
       - components/node-labeler:lib
+      - dev/addlicense:app
     env:
       - CGO_ENABLED=0
     prep:
