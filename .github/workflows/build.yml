@@ -278,6 +278,19 @@ jobs:
           set +x
 
           cat report.html >> $GITHUB_STEP_SUMMARY
+
+          SUMMARY_SIZE=$(wc -c < $GITHUB_STEP_SUMMARY)
+          if [[ $SUMMARY_SIZE -gt 1000000 ]]; then
+            head -c 1000000 $GITHUB_STEP_SUMMARY > $GITHUB_STEP_SUMMARY.tmp
+            mv $GITHUB_STEP_SUMMARY.tmp $GITHUB_STEP_SUMMARY
+            (
+              echo '.....'
+              echo ''
+              echo ':x: **WARNING: Summary is too large and has been truncated.**'
+              echo ''
+            )  >> $GITHUB_STEP_SUMMARY
+          fi
+
           exit $RESULT
       - name: "Upload Test Coverage Report"
         uses: actions/upload-artifact@v3
