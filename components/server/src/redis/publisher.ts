@@ -16,6 +16,9 @@ import { Redis } from "ioredis";
 import { reportUpdatePublished } from "../prometheus-metrics";
 
 @injectable()
+// RedisPublisher is a copy from ws-manager-bridge/src/redis/publisher.go until we find a better
+// way to share the publisher across packages.
+// WEB-621
 export class RedisPublisher {
     constructor(@inject(Redis) private readonly client: Redis) {}
 
