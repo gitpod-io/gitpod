@@ -16,7 +16,6 @@ import {
     Disposable,
     DisposableCollection,
     HeadlessUpdatesChannel,
-    HeadlessWorkspaceEvent,
     PrebuildUpdatesChannel,
     PrebuildWithStatus,
     RedisHeadlessUpdate,
