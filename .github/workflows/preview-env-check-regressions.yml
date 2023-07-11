@@ -18,7 +18,12 @@ on:
                 default: gcp
 
 jobs:
+    create-runner:
+        uses: ./.github/workflows/create_runner.yml
+        secrets: inherit
+
     configuration:
+        needs: [ create-runner ]
         name: Configuration
         runs-on: ${{ needs.create-runner.outputs.label }}
         outputs:
@@ -50,7 +55,7 @@ jobs:
 
     infrastructure:
         name: Create preview environment infrastructure
-        needs: [ configuration ]
+        needs: [ configuration, create-runner ]
         runs-on: ${{ needs.create-runner.outputs.label }}
         concurrency:
             group: ${{ needs.configuration.outputs.name }}-infrastructure
@@ -74,7 +79,7 @@ jobs:
 
     check:
         name: Check for regressions
-        needs: [configuration, infrastructure]
+        needs: [ configuration, infrastructure, create-runner ]
         if: ${{ needs.configuration.outputs.skip == 'false' }}
         runs-on: ${{ needs.create-runner.outputs.label }}
         container:
@@ -160,7 +165,7 @@ jobs:
 
     delete:
         name: Delete preview environment
-        needs: [ configuration, infrastructure, check ]
+        needs: [ configuration, infrastructure, check, create-runner ]
         if: always()
         runs-on: ${{ needs.create-runner.outputs.label }}
         steps:
@@ -170,3 +175,16 @@ jobs:
               with:
                   name: ${{ needs.configuration.outputs.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
+
+    delete-runner:
+        if: always()
+        needs:
+        - create-runner
+        - configuration
+        - infrastructure
+        - check
+        - delete
+        uses: ./.github/workflows/remove_runner.yml
+        secrets: inherit
+        with:
+            runner-label: ${{ needs.create-runner.outputs.label }}
