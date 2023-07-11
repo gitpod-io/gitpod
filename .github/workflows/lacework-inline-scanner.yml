@@ -20,6 +20,7 @@ jobs:
   configuration:
     name: Configuration
     runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [create-runner]
     outputs:
       skip: ${{ steps.configuration.outputs.skip }}
       version: ${{ steps.configuration.outputs.version }}
@@ -45,7 +46,7 @@ jobs:
     name: Scan all docker images for CVEs
     # TODO(gpl) Could easily be run on ubuntu:latest if we pushed some bash in lw-scan-images.sh into the installer
     runs-on: ${{ needs.create-runner.outputs.label }}
-    needs: [configuration]
+    needs: [configuration,create-runner]
     if: ${{ needs.configuration.outputs.skip == 'false' }}
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
