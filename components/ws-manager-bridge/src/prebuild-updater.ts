@@ -95,7 +95,13 @@ export class PrebuildUpdater {
                 const info = (await this.workspaceDB.trace({ span }).findPrebuildInfos([updatedPrebuild.id]))[0];
                 if (info) {
                     await this.messagebus.notifyOnPrebuildUpdate({ info, status: updatedPrebuild.state });
-                    await this.publisher.publishPrebuildUpdate();
+                    await this.publisher.publishPrebuildUpdate({
+                        instanceID: instanceId,
+                        projectID: prebuild.projectId || "",
+                        prebuildID: updatedPrebuild.id,
+                        status: updatedPrebuild.state,
+                        workspaceID: workspaceId,
+                    });
                 }
             }
         } catch (e) {
@@ -120,7 +126,13 @@ export class PrebuildUpdater {
                 const info = (await this.workspaceDB.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
                 if (info) {
                     await this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });
-                    await this.publisher.publishPrebuildUpdate();
+                    await this.publisher.publishPrebuildUpdate({
+                        instanceID: instance.id,
+                        projectID: prebuild.projectId || "",
+                        prebuildID: prebuild.id,
+                        status: prebuild.state,
+                        workspaceID: instance.workspaceId,
+                    });
                 }
             }
         }

@@ -8,7 +8,12 @@ import { inject, injectable } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Metrics } from "../metrics";
 import { RedisClient } from "./client";
-import { RedisWorkspaceInstanceUpdate, WorkspaceInstanceUpdatesChannel } from "@gitpod/gitpod-protocol";
+import {
+    PrebuildUpdatesChannel,
+    RedisPrebuildUpdate,
+    RedisWorkspaceInstanceUpdate,
+    WorkspaceInstanceUpdatesChannel,
+} from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class RedisPublisher {
@@ -17,9 +22,20 @@ export class RedisPublisher {
         @inject(Metrics) private readonly metrics: Metrics,
     ) {}
 
-    async publishPrebuildUpdate(): Promise<void> {
+    async publishPrebuildUpdate(update: RedisPrebuildUpdate): Promise<void> {
         log.debug("[redis] Publish prebuild udpate invoked.");
-        this.metrics.reportUpdatePublished("prebuild");
+
+        let err: Error | undefined;
+        try {
+            const serialized = JSON.stringify(update);
+            await this.client.get().publish(PrebuildUpdatesChannel, serialized);
+            log.debug("[redis] Succesfully published prebuild update.", update);
+        } catch (e) {
+            err = e;
+            log.error("[redis] Failed to publish prebuild update.", e, update);
+        } finally {
+            this.metrics.reportUpdatePublished("prebuild", err);
+        }
     }
 
     async publishInstanceUpdate(update: RedisWorkspaceInstanceUpdate): Promise<void> {
