@@ -71,7 +71,6 @@ jobs:
         env:
           PR_DESC: "${{ steps.pr-details.outputs.pr_body }}"
           MAIN_BRANCH: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
-          LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
         shell: bash
         run: |
           {
@@ -100,12 +99,12 @@ jobs:
         id: build
         shell: bash
         env:
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
-          LEEWAY_SEGMENT_KEY: "${{ secrets.LEEWAY_SEGMENT_KEY }}"
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+          PREVIEW_ENV_DEV_SA_KEY_PATH: ${{ env.GITHUB_WORKSPACE }}/.config/gcloud/preview-environment-dev-sa.json
+          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
         run: |
           # Authenticate with GCP so we can use the Leeway cache
-          export PREVIEW_ENV_DEV_SA_KEY_PATH="$HOME/.config/gcloud/preview-environment-dev-sa.json"
           echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
           gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
@@ -171,10 +170,11 @@ jobs:
           password: "${{ steps.auth.outputs.access_token }}"
       - name: Leeway Vet
         shell: bash
-        run: |
-          leeway vet --ignore-warnings
         env:
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+        run: |
+          leeway vet --ignore-warnings
       - name: Pre-Commit Checks
         shell: bash
         run: |
@@ -188,6 +188,7 @@ jobs:
         shell: bash
         env:
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         run: |
           RESULT=0
           LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || RESULT=$?
@@ -209,8 +210,8 @@ jobs:
         env:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
-          LEEWAY_SEGMENT_KEY: "${{ secrets.LEEWAY_SEGMENT_KEY }}"
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         shell: bash
         run: |
           RESULT=0
@@ -250,8 +251,8 @@ jobs:
           JB_MARKETPLACE_PUBLISH_TOKEN: "${{ steps.secrets.outputs.jb-marketplace-publish-token }}"
           PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
           CODECOV_TOKEN: "${{ steps.secrets.outputs.codecov-token }}"
-          LEEWAY_SEGMENT_KEY: "${{ secrets.LEEWAY_SEGMENT_KEY }}"
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         run: |
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
@@ -316,13 +317,11 @@ jobs:
   install:
     name: "Install Gitpod"
     needs:
-      [
-        configuration,
-        build-previewctl,
-        build-gitpod,
-        infrastructure,
-        create-runner,
-      ]
+      - configuration
+      - build-previewctl
+      - build-gitpod
+      - infrastructure
+      - create-runner
     runs-on: ${{ needs.create-runner.outputs.label }}
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}-install
@@ -381,14 +380,12 @@ jobs:
   integration-test:
     name: "Run integration test"
     needs:
-      [
-        configuration,
-        build-previewctl,
-        build-gitpod,
-        infrastructure,
-        install,
-        create-runner,
-      ]
+      - configuration
+      - build-previewctl
+      - build-gitpod
+      - infrastructure
+      - install
+      - create-runner
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
@@ -403,15 +400,14 @@ jobs:
           ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INTEGRATION_TEST_USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
           INTEGRATION_TEST_USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
           PREVIEW_NAME: ${{ github.head_ref || github.ref_name }}
           TEST_SUITS: ${{ needs.configuration.outputs.with_integration_tests }}
           TEST_USE_LATEST_VERSION: ${{ needs.configuration.outputs.latest_ide_version }}
           TEST_BUILD_ID: ${{ github.run_id }}
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
-          PREVIEW_ENV_DEV_SA_KEY_PATH: ${{ env.GITHUB_WORKSPACE }}"/.config/gcloud/preview-environment-dev-sa.json"
           LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         run: |
           set -euo pipefail
 
