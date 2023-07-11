@@ -103,7 +103,7 @@ jobs:
         id: build
         shell: bash
         env:
-          LEEWAY_SEGMENT_KEY: ""
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
           PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
         run: |
           export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
@@ -180,7 +180,7 @@ jobs:
       - name: Leeway Vet
         shell: bash
         env:
-          LEEWAY_SEGMENT_KEY: ""
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         run: |
           export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           leeway vet --ignore-warnings
@@ -207,7 +207,7 @@ jobs:
         env:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
-          LEEWAY_SEGMENT_KEY: ""
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         shell: bash
         run: |
           export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
@@ -249,7 +249,7 @@ jobs:
           JB_MARKETPLACE_PUBLISH_TOKEN: "${{ steps.secrets.outputs.jb-marketplace-publish-token }}"
           PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
           CODECOV_TOKEN: "${{ steps.secrets.outputs.codecov-token }}"
-          LEEWAY_SEGMENT_KEY: ""
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         run: |
           export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
@@ -417,7 +417,7 @@ jobs:
           TEST_BUILD_ID: ${{ github.run_id }}
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
-          LEEWAY_SEGMENT_KEY: ""
+          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         run: |
           export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           set -euo pipefail
