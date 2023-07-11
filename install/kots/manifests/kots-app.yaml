@@ -33,14 +33,14 @@ spec:
     # @link https://www.gitpod.io/docs/self-hosted/latest/monitoring
     - title: Running Workspaces
       queries:
-        - query: 'sum(gitpod_ws_manager_workspace_phase_total{phase="RUNNING"}) by (type)'
+        - query: 'sum(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running"}) by (type)'
           legend: "Type: {{ type }}"
-        - query: 'sum(gitpod_ws_manager_workspace_activity_total{active="false"})'
+        - query: 'sum(gitpod_ws_manager_mk2_workspace_activity_total{active="false"})'
           legend: "Pending workspaces"
     - title: Workspace Failures per second
-      query: 'sum(rate(gitpod_ws_manager_workspace_stops_total{reason="failed"}[5m])) by (cluster, type) or vector(0)'
+      query: 'sum(rate(gitpod_ws_manager_mk2_workspace_stops_total{reason="failed"}[5m])) by (cluster, type) or vector(0)'
       legend: "{{ type }}"
     - title: Regular Workspace Startup Time
       yAxisFormat: s
-      query: 'sum(rate(gitpod_ws_manager_workspace_startup_seconds_bucket{type="REGULAR"}[5m])) by (le)'
+      query: 'sum(rate(gitpod_ws_manager_mk2_workspace_startup_seconds_bucket{type="Regular"}[5m])) by (le)'
       legend: "{{ le }}"

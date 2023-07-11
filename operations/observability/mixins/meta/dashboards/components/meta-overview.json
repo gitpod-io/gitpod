@@ -778,7 +778,7 @@
             "uid": "${datasource}"
           },
           "exemplar": true,
-          "expr": "sum(\n  rate(gitpod_ws_manager_workspace_stops_total{cluster=~\"$cluster\", reason=\"failed\"}[5m])\n) by (cluster, type)\n",
+          "expr": "sum(\n  rate(gitpod_ws_manager_mk2_workspace_stops_total{cluster=~\"$cluster\", reason=\"failed\"}[5m])\n) by (cluster, type)\n",
           "interval": "",
           "legendFormat": "{{cluster}} {{type}}",
           "refId": "A"

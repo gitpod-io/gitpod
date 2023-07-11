@@ -917,43 +917,43 @@
       "repeat": "cluster",
       "seriesOverrides": [
         {
-          "alias": "REGULAR - INITIALIZING",
+          "alias": "Regular - Initializing",
           "color": "#C8F2C2"
         },
         {
-          "alias": "REGULAR - CREATING",
+          "alias": "Regular - Creating",
           "color": "#96D98D"
         },
         {
-          "alias": "REGULAR - PENDING",
+          "alias": "Regular - Pending",
           "color": "#56A64B"
         },
         {
-          "alias": "REGULAR - STOPPING",
+          "alias": "Regular - Stopping",
           "color": "#37872D"
         },
         {
-          "alias": "REGULAR - STOPPED",
+          "alias": "Regular - Stopped",
           "color": "rgb(30, 80, 30)"
         },
         {
-          "alias": "PREBUILD - INITIALIZING",
+          "alias": "Prebuild - Initializing",
           "color": "#C0D8FF"
         },
         {
-          "alias": "PREBUILD - CREATING",
+          "alias": "Prebuild - Creating",
           "color": "#8AB8FF"
         },
         {
-          "alias": "PREBUILD - PENDING",
+          "alias": "Prebuild - Pending",
           "color": "#3274D9"
         },
         {
-          "alias": "PREBUILD - STOPPING",
+          "alias": "Prebuild - Stopping",
           "color": "#1F60C4"
         },
         {
-          "alias": "PREBUILD - STOPPED",
+          "alias": "Prebuild - Stopped",
           "color": "rgb(30, 30, 80)"
         }
       ],
@@ -1076,11 +1076,11 @@
       "repeat": "cluster",
       "seriesOverrides": [
         {
-          "alias": "REGULAR",
+          "alias": "Regular",
           "color": "#73BF69"
         },
         {
-          "alias": "PREBUILD",
+          "alias": "Prebuild",
           "color": "#5794F2"
         },
         {
