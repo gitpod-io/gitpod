@@ -106,7 +106,7 @@ jobs:
           LEEWAY_SEGMENT_KEY: ""
           PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
+          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           export PREVIEW_ENV_DEV_SA_KEY_PATH="$GITHUB_WORKSPACE/.config/gcloud/preview-environment-dev-sa.json"
           echo "LEEWAY_WORKSPACE_ROOT: $LEEWAY_WORKSPACE_ROOT"
           echo "PREVIEW_ENV_DEV_SA_KEY_PATH: $PREVIEW_ENV_DEV_SA_KEY_PATH"
@@ -181,7 +181,7 @@ jobs:
         env:
           LEEWAY_SEGMENT_KEY: ""
         run: |
-          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
+          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           leeway vet --ignore-warnings
       - name: Pre-Commit Checks
         shell: bash
@@ -197,7 +197,7 @@ jobs:
         env:
           LEEWAY_SEGMENT_KEY: ""
         run: |
-          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
+          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           RESULT=0
           LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || RESULT=$?
           if [ $RESULT -ne 0 ]; then
@@ -221,7 +221,7 @@ jobs:
           LEEWAY_SEGMENT_KEY: ""
         shell: bash
         run: |
-          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
+          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           RESULT=0
           set -x
           leeway build dev:all \
@@ -261,7 +261,7 @@ jobs:
           CODECOV_TOKEN: "${{ steps.secrets.outputs.codecov-token }}"
           LEEWAY_SEGMENT_KEY: ""
         run: |
-          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
+          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
           [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
@@ -429,7 +429,7 @@ jobs:
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
           LEEWAY_SEGMENT_KEY: ""
         run: |
-          export LEEWAY_WORKSPACE_ROOT="${{ env.GITHUB_WORKSPACE }}"
+          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           set -euo pipefail
 
           echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
