@@ -17,7 +17,7 @@ jobs:
       (github.event.issue.author_association == 'OWNER' || github.event.issue.author_association == 'MEMBER') &&
       (github.event.issue.pull_request && contains(github.event.comment.body, '/gh run')) &&
       (contains(github.event.comment.body, 'recreate-vm'))
-    runs-on: ${{ needs.create-runner.outputs.label }}
+    runs-on: ubuntu-latest
     # Technically we don't need these here, as we don't reuse them between jobs, but it's good to have them in a single place
     outputs:
       branch: ${{ steps.comment-branch.outputs.head_ref }}
@@ -100,8 +100,8 @@ jobs:
   # Comment if this job failed, so there's some feedback
   comment-fail:
     if: (always() && contains(needs.*.result, 'failure'))
-    needs: [configure]
-    runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [ configure ]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v6
         with:

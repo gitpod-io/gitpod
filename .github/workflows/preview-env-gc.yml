@@ -4,9 +4,14 @@ on:
     schedule:
         - cron: "0 */4 * * *"
 jobs:
+    create-runner:
+        uses: ./.github/workflows/create_runner.yml
+        secrets: inherit
+
     stale:
         name: "Find stale preview environments"
         runs-on: ${{ needs.create-runner.outputs.label }}
+        needs: [ create-runner ]
         container:
             image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-bump-leeway-075-gha.12686
         outputs:
@@ -42,7 +47,7 @@ jobs:
 
     delete:
         name: "Delete preview environment"
-        needs: [stale]
+        needs: [ stale, create-runner ]
         runs-on: ${{ needs.create-runner.outputs.label }}
         if: ${{ needs.stale.outputs.count > 0 }}
         strategy:
@@ -56,3 +61,14 @@ jobs:
               with:
                   name: ${{ matrix.name }}
                   sa_key: ${{ secrets.GCP_CREDENTIALS }}
+
+    delete-runner:
+        if: always()
+        needs:
+        - create-runner
+        - stale
+        - delete
+        uses: ./.github/workflows/remove_runner.yml
+        secrets: inherit
+        with:
+            runner-label: ${{ needs.create-runner.outputs.label }}
