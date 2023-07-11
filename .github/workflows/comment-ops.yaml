@@ -10,6 +10,10 @@ on:
 # Therefore we can't find out easily which PR the comment that triggered the action belongs to
 
 jobs:
+  create-runner:
+    uses: ./.github/workflows/create_runner.yml
+    secrets: inherit
+
   configure:
     # We *MUST* always check the author_association, which tells us if the person is an owner of the repo, or member of the org (i.e. has permissions)
     # Otherwise they can execute arbitrary code if the triggered workflow (i.e. the build) is modified, as it's being run by the github-actions bot, and it always has permissions
@@ -18,6 +22,7 @@ jobs:
       (github.event.issue.pull_request && contains(github.event.comment.body, '/gh run')) &&
       (contains(github.event.comment.body, 'recreate-vm'))
     runs-on: ${{ needs.create-runner.outputs.label }}
+    needs: [ create-runner ]
     # Technically we don't need these here, as we don't reuse them between jobs, but it's good to have them in a single place
     outputs:
       branch: ${{ steps.comment-branch.outputs.head_ref }}
@@ -100,7 +105,7 @@ jobs:
   # Comment if this job failed, so there's some feedback
   comment-fail:
     if: (always() && contains(needs.*.result, 'failure'))
-    needs: [configure]
+    needs: [ configure, create-runner ]
     runs-on: ${{ needs.create-runner.outputs.label }}
     steps:
       - uses: actions/github-script@v6
@@ -116,3 +121,14 @@ jobs:
               comment_id: ${{ github.event.comment.id }},
               body: commentBody
             })
+
+  delete-runner:
+    if: always()
+    needs:
+      - create-runner
+      - configure
+      - comment-fail
+    uses: ./.github/workflows/remove_runner.yml
+    secrets: inherit
+    with:
+      runner-label: ${{ needs.create-runner.outputs.label }}
