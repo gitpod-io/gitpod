@@ -26,8 +26,9 @@ jobs:
         env:
           PR_DESC: "${{ steps.pr-details.outputs.pr_body }}"
           MAIN_BRANCH: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
-          LEEWAY_WORKSPACE_ROOT: ${{ env.GITHUB_WORKSPACE }}
         run: |
+          export LEEWAY_WORKSPACE_ROOT=$GITHUB_WORKSPACE
+
           gcloud auth configure-docker --quiet
 
           codeHeadCommit=$(curl -H 'Accept: application/vnd.github.VERSION.sha' https://api.github.com/repos/gitpod-io/openvscode-server/commits/gp-code/main)
