@@ -216,6 +216,7 @@ export class RedisSubscriber implements LocalMessageBroker {
             LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY,
             listener,
             this.headlessWorkspaceEventListeners,
+            "prebuild-updatable",
         );
     }
 
