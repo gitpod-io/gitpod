@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
+import { AuthProviderEntry, AuthProviderInfo, User } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import React, { useCallback, useContext, useEffect, useState } from "react";
@@ -98,10 +98,12 @@ function GitProviders() {
                     separator: true,
                 });
             }
-            const connectedWithSecondProvider = authProviders.data?.some(
-                (p) => p.authProviderId !== provider.authProviderId && isConnected(p.authProviderId),
-            );
-            if (connectedWithSecondProvider) {
+            const canDisconnect =
+                (user && User.isOrganizationOwned(user)) ||
+                authProviders.data?.some(
+                    (p) => p.authProviderId !== provider.authProviderId && isConnected(p.authProviderId),
+                );
+            if (canDisconnect) {
                 result.push({
                     title: "Disconnect",
                     customFontStyle: "text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300",
