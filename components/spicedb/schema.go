@@ -35,7 +35,7 @@ func GetBootstrapFiles() ([]File, error) {
 
 	var filesWithContents []File
 	for _, f := range files {
-		b, err := fs.ReadFile(bootstrapFiles, fmt.Sprintf("%s/%s", "data", f.Name()))
+		b, err := fs.ReadFile(bootstrapFiles, fmt.Sprintf("%s/%s", "schema", f.Name()))
 		if err != nil {
 			return nil, err
 		}
