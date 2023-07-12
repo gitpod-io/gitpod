@@ -112,7 +112,7 @@ export const ErrorCodes = {
     SNAPSHOT_ERROR: 630 as const,
 
     // 640 Headless logs are not available (yet)
-    HEADLESS_LOG_NOT_YET_AVAILABLE: 640 as const,
+    HEADLESS_LOG_NOT_YET_AVAILABLE: 444 as const,
 
     // 650 Invalid Value
     INVALID_VALUE: 650 as const,
