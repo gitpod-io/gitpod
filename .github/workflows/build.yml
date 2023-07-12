@@ -209,6 +209,9 @@ jobs:
           cat report.html >> $GITHUB_STEP_SUMMARY
 
           exit $RESULT
+      - uses: "authzed/action-spicedb@v1"
+        with:
+          version: "latest"
       - name: Leeway Build
         id: leeway
         shell: bash
@@ -230,6 +233,11 @@ jobs:
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
           [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
+
+          # TODO: remove this hack required by server|
+          sudo mkdir -p /workspace
+          sudo chmod 777 /workspace
+          ln -s $GITHUB_WORKSPACE /workspace/gitpod
 
           RESULT=0
           set -x
