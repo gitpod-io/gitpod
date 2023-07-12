@@ -737,7 +737,7 @@ func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequ
 }
 
 // CreateSSHKeyPair create a ssh key pair for the workspace.
-func (ss *ControlService) CreateSSHKeyPair(context.Context, *api.CreateSSHKeyPairRequest) (response *api.CreateSSHKeyPairResponse, err error) {
+func (ss *ControlService) CreateSSHKeyPair(ctx context.Context, req *api.CreateSSHKeyPairRequest) (response *api.CreateSSHKeyPairResponse, err error) {
 	home := "/home/gitpod/"
 	if ss.privateKey != "" && ss.publicKey != "" {
 		checkKey := func() error {
@@ -758,40 +758,48 @@ func (ss *ControlService) CreateSSHKeyPair(context.Context, *api.CreateSSHKeyPai
 		}
 		log.WithError(err).Error("check authorized_keys failed, will recreate")
 	}
-	dir, err := os.MkdirTemp(os.TempDir(), "ssh-key-*")
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create tmpfile: %w", err)
+	type keyPair struct{ PublicKey, PrivateKey []byte }
+	createRandomSSHKeyPair := func(ctx context.Context, home string) (*keyPair, error) {
+		dir, err := os.MkdirTemp(os.TempDir(), "ssh-key-*")
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create tmpfile: %w", err)
+		}
+		err = prepareSSHKey(ctx, filepath.Join(dir, "ssh"))
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create ssh key pair: %w", err)
+		}
+		bPublic, err := os.ReadFile(filepath.Join(dir, "ssh.pub"))
+		if err != nil {
+			return nil, xerrors.Errorf("cannot read publickey: %w", err)
+		}
+		bPrivate, err := os.ReadFile(filepath.Join(dir, "ssh"))
+		if err != nil {
+			return nil, xerrors.Errorf("cannot read privatekey: %w", err)
+		}
+		err = os.MkdirAll(filepath.Join(home, ".ssh"), 0o700)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot create dir ~/.ssh/: %w", err)
+		}
+		f, err := os.OpenFile(filepath.Join(home, ".ssh/authorized_keys"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o600)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot open file ~/.ssh/authorized_keys: %w", err)
+		}
+		_, err = f.Write(bPublic)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot write file ~.ssh/authorized_keys: %w", err)
+		}
+		err = os.Chown(filepath.Join(home, ".ssh/authorized_keys"), gitpodUID, gitpodGID)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot chown SSH authorized_keys file: %w", err)
+		}
+		return &keyPair{PublicKey: bPublic, PrivateKey: bPrivate}, nil
 	}
-	err = prepareSSHKey(context.Background(), filepath.Join(dir, "ssh"))
+	generated, err := createRandomSSHKeyPair(ctx, home)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot create ssh key pair: %w", err)
+		return nil, status.Errorf(codes.Internal, "cannot create ssh key pair: %v", err)
 	}
-	bPublic, err := os.ReadFile(filepath.Join(dir, "ssh.pub"))
-	if err != nil {
-		return nil, xerrors.Errorf("cannot read publickey: %w", err)
-	}
-	bPrivate, err := os.ReadFile(filepath.Join(dir, "ssh"))
-	if err != nil {
-		return nil, xerrors.Errorf("cannot read privatekey: %w", err)
-	}
-	err = os.MkdirAll(filepath.Join(home, ".ssh"), 0o700)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot create dir ~/.ssh/: %w", err)
-	}
-	f, err := os.OpenFile(filepath.Join(home, ".ssh/authorized_keys"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o600)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot open file ~/.ssh/authorized_keys: %w", err)
-	}
-	_, err = f.Write(bPublic)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot write file ~.ssh/authorized_keys: %w", err)
-	}
-	err = os.Chown(filepath.Join(home, ".ssh/authorized_keys"), gitpodUID, gitpodGID)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot chown SSH authorized_keys file: %w", err)
-	}
-	ss.privateKey = string(bPrivate)
-	ss.publicKey = string(bPublic)
+	ss.privateKey = string(generated.PrivateKey)
+	ss.publicKey = string(generated.PublicKey)
 	return &api.CreateSSHKeyPairResponse{
 		PrivateKey: ss.privateKey,
 	}, err
