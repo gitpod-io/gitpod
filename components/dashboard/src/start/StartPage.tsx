@@ -92,7 +92,7 @@ export interface StartWorkspaceError {
 export function StartPage(props: StartPageProps) {
     const { phase, error } = props;
     let title = props.title || getPhaseTitle(phase, error);
-    useDocumentTitle("Starting — Gitpod");
+    useDocumentTitle("Starting");
     return (
         <div className="w-screen h-screen align-middle">
             <div className="flex flex-col mx-auto items-center text-center h-screen">
