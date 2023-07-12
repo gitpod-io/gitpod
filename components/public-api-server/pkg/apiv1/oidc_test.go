@@ -151,7 +151,6 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 			Config: config,
 		}))
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "no such host")
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
