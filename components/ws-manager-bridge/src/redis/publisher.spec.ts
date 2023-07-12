@@ -25,7 +25,7 @@ class TestRedisPublisher {
         this.container.load(
             new ContainerModule((bind) => {
                 bind(Metrics).toSelf().inSingletonScope();
-                bind(RedisMock).toConstantValue(client);
+                bind(Redis).toConstantValue(client);
                 bind(RedisPublisher).toSelf().inSingletonScope();
             }),
         );
