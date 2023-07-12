@@ -747,7 +747,7 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, v1connect.OIDCServiceClient, *gorm.DB) {
 	t.Helper()
 
-	dbConn := dbtest.ConnectForTests(t).Debug()
+	dbConn := dbtest.ConnectForTests(t)
 
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
