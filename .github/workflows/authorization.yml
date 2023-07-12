@@ -1,7 +1,7 @@
 on:
   pull_request:
     paths:
-      - install/installer/pkg/components/spicedb/data/**
+      - components/spicedb/**
       - .github/workflows/authorization.yml
 
 name: SpiceDB
@@ -16,4 +16,4 @@ jobs:
       - name: Validate SpiceDB schema
         uses: authzed/action-spicedb-validate@v1.0.1
         with:
-          validationfile: "install/installer/pkg/components/spicedb/data/schema.yaml"
+          validationfile: "components/spicedb/schema.yaml"

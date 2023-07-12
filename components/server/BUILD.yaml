@@ -8,7 +8,6 @@ packages:
       - .eslintrc
       - package.json
       - mocha.opts
-      - ../../install/installer/pkg/components/spicedb/data/schema.yaml
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
@@ -21,6 +20,7 @@ packages:
       - components/ide-service-api/typescript:lib
       - components/public-api/typescript:lib
       - components/gitpod-db:dbtest-init
+      - components/spicedb:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock

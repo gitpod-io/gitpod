@@ -1,0 +1,5 @@
+packages:
+  - name: lib
+    type: generic
+    srcs:
+      - "schema.yaml"
