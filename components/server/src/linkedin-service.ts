@@ -34,7 +34,6 @@ export class LinkedInService {
             );
         }
         const redirectUri = this.config.hostUrl.with({ pathname: "/linkedin" }).toString();
-        // TODO: update this to use newer versioned apis if needed
         const url = `https://www.linkedin.com/oauth/v2/accessToken?grant_type=authorization_code&code=${code}&redirect_uri=${redirectUri}&client_id=${clientId}&client_secret=${clientSecret}`;
         const response = await fetch(url, {
             method: "POST",
@@ -52,7 +51,6 @@ export class LinkedInService {
     // Retrieve the user's profile from LinkedIn using the following API:
     // https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin
     private async getLinkedInProfile(accessToken: string): Promise<LinkedInProfile> {
-        // TODO: update these to use newer versioned apis
         const profileUrl =
             "https://api.linkedin.com/v2/me?projection=(id,firstName,lastName,profilePicture(displayImage~:playableStreams))";
         const emailUrl = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";
@@ -63,7 +61,6 @@ export class LinkedInService {
                 method: "GET",
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
-                    // "LinkedIn-Version": "202306",
                 },
             }),
             fetch(emailUrl, {
@@ -75,7 +72,6 @@ export class LinkedInService {
         ]);
 
         const profileData = await profileResponse.json();
-        console.log("profileData", profileData);
         if (profileData.error) {
             throw new Error("Could not get LinkedIn lite profile: " + profileData.error_description);
         }
@@ -84,7 +80,6 @@ export class LinkedInService {
         }
 
         const emailData = await emailResponse.json();
-        console.log("emailData", emailData);
         if (emailData.error) {
             throw new Error("Could not get LinkedIn email address: " + emailData.error_description);
         }
