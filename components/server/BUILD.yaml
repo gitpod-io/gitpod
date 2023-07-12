@@ -8,6 +8,7 @@ packages:
       - .eslintrc
       - package.json
       - mocha.opts
+      - ../../install/installer/pkg/components/spicedb/data/schema.yaml
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
