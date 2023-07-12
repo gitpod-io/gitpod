@@ -25,7 +25,7 @@ func bootstrap(ctx *common.RenderContext) ([]runtime.Object, error) {
 
 	cmData := make(map[string]string)
 	for _, f := range files {
-		cmData[f.name] = f.data
+		cmData[f.Name] = f.Data
 	}
 
 	return []runtime.Object{
@@ -72,7 +72,7 @@ func getBootstrapConfig(ctx *common.RenderContext) (corev1.Volume, corev1.Volume
 	}
 
 	for _, f := range files {
-		paths = append(paths, filepath.Join(mountPath, f.name))
+		paths = append(paths, filepath.Join(mountPath, f.Name))
 	}
 
 	return volume, mount, paths, nil
