@@ -85,7 +85,6 @@ import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { ProjectsService } from "./projects/projects-service";
-import { newRedisClient } from "./redis/client";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
 import { SessionHandler } from "./session-handler";
@@ -128,6 +127,7 @@ import { OrganizationService } from "./orgs/organization-service";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { Redis } from "ioredis";
 import { RedisPublisher } from "./redis/publisher";
+import { newRedisClient } from "@gitpod/gitpod-db/lib";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -351,7 +351,7 @@ export const productionContainerModule = new ContainerModule(
         bind(Redis).toDynamicValue((ctx) => {
             const config = ctx.container.get<Config>(Config);
             const [host, port] = config.redis.address.split(":");
-            return newRedisClient(host, Number(port));
+            return newRedisClient({ host, port: Number(port), connectionName: "server" });
         });
 
         bind(RedisMutex).toSelf().inSingletonScope();
