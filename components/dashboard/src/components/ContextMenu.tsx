@@ -106,7 +106,7 @@ function ContextMenu(props: ContextMenuProps) {
             </div>
             {expanded ? (
                 <div
-                    className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 filter drop-shadow-xl rounded-lg truncated ${
+                    className={`mt-2 py-1 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-50 dark:border-gray-800 filter drop-shadow-xl rounded-lg truncated ${
                         props.customClasses || "w-48 right-0"
                     }`}
                     data-analytics='{"button_type":"context_menu"}'
@@ -170,8 +170,6 @@ export const MenuEntry: FunctionComponent<MenuEntryProps> = ({
     separator = false,
     customContent,
     customFontStyle,
-    isFirst,
-    isLast,
     onClick,
 }) => {
     const clickable = href || link || onClick;
@@ -180,14 +178,12 @@ export const MenuEntry: FunctionComponent<MenuEntryProps> = ({
         <div
             title={title}
             className={cn(
-                "px-4 py-2 flex leading-1 text-sm",
-                customFontStyle || "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100",
+                "px-2 py-1 my-0.5 flex leading-1 text-sm rounded-md mx-2",
+                customFontStyle || "text-gray-600 dark:text-gray-400 rounded-md mt-1",
                 {
-                    "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700": clickable,
-                    "bg-gray-50 dark:bg-gray-800": active,
-                    "rounded-t-lg": isFirst,
-                    "rounded-b-lg": isLast,
-                    "border-b border-gray-200 dark:border-gray-800": separator,
+                    "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800": clickable,
+                    "dark:bg-gray-900": active,
+                    "border-0": separator,
                 },
             )}
         >

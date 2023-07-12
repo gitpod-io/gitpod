@@ -9,38 +9,24 @@ import { FunctionComponent } from "react";
 import { consistentClassname } from "./consistent-classname";
 import "./styles.css";
 
-const SIZE_CLASSES = {
-    small: "w-6 h-6",
-    medium: "w-10 h-10",
-};
-
-const TEXT_SIZE_CLASSES = {
-    small: "text-sm",
-    medium: "text-xl",
-};
-
 export type OrgIconProps = {
     id: string;
     name: string;
-    size?: keyof typeof SIZE_CLASSES;
     className?: string;
 };
-export const OrgIcon: FunctionComponent<OrgIconProps> = ({ id, name, size = "medium", className }) => {
+export const OrgIcon: FunctionComponent<OrgIconProps> = ({ id, name, className }) => {
     const logoBGClass = consistentClassname(id);
     const initials = getOrgInitials(name);
-    const sizeClasses = SIZE_CLASSES[size];
-    const textClass = TEXT_SIZE_CLASSES[size];
 
     return (
         <div
             className={classNames(
-                "rounded-full flex items-center justify-center flex-shrink-0",
-                sizeClasses,
+                "rounded-full flex items-center justify-center flex-shrink-0 w-6 h-6",
                 logoBGClass,
                 className,
             )}
         >
-            <span className={`text-white font-semibold ${textClass}`}>{initials}</span>
+            <span className="text-white font-semibold ">{initials}</span>
         </div>
     );
 };

@@ -45,7 +45,6 @@ export const SetupLayout: FC<Props> = ({
                                 <OrgIcon
                                     id={currentOrg?.data?.id || "empty"}
                                     name={currentOrg.data?.name || ""}
-                                    size="small"
                                     className="mr-2"
                                 />
                                 {currentOrg.data?.name}

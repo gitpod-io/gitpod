@@ -6,7 +6,7 @@
 
 import { FunctionComponent, useCallback } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
-import { OrgIcon, OrgIconProps } from "../components/org-icon/OrgIcon";
+import { OrgIcon } from "../components/org-icon/OrgIcon";
 import { useCurrentUser } from "../user-context";
 import { useCurrentOrg, useOrganizations } from "../data/organizations/orgs-query";
 import { useLocation } from "react-router";
@@ -28,7 +28,7 @@ export default function OrganizationSelector() {
     let activeOrgEntry = !currentOrg.data
         ? {
               title: userFullName,
-              customContent: <CurrentOrgEntry title={userFullName} subtitle="Personal Account" />,
+              customContent: <CurrentOrgEntry id={`1`} title={userFullName} subtitle="Personal Account" />,
               active: false,
               separator: false,
               tight: true,
@@ -37,6 +37,7 @@ export default function OrganizationSelector() {
               title: currentOrg.data.name,
               customContent: (
                   <CurrentOrgEntry
+                      id={currentOrg.data.id}
                       title={currentOrg.data.name}
                       subtitle={
                           !!currentOrg.data.members
@@ -113,29 +114,21 @@ export default function OrganizationSelector() {
             ),
             // marking as active for styles
             active: true,
-            separator: true,
+            separator: false,
             link: getOrgURL(org.id),
         }));
 
     const entries = [
         activeOrgEntry,
-        ...linkEntries,
         ...otherOrgEntries,
+        ...linkEntries,
         ...(canCreateOrgs
             ? [
                   {
                       title: "Create a new organization",
                       customContent: (
-                          <div className="w-full text-gray-500 flex items-center">
+                          <div className="w-full text-gray-400 dark:text-gray-500 flex items-center">
                               <span className="flex-1">New Organization</span>
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5">
-                                  <path
-                                      fill="currentColor"
-                                      fillRule="evenodd"
-                                      d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z"
-                                      clipRule="evenodd"
-                                  />
-                              </svg>
                           </div>
                       ),
                       link: "/orgs/new",
@@ -148,17 +141,12 @@ export default function OrganizationSelector() {
 
     const selectedTitle = currentOrg?.data ? currentOrg.data.name : userFullName;
     const classes =
-        "flex h-full text-base py-0 text-gray-500 bg-gray-50  dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-700";
+        "flex h-full text-base py-0 text-gray-500 bg-gray-50 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-700";
     return (
         <ContextMenu customClasses="w-64 left-0" menuEntries={entries}>
             <div className={`${classes} rounded-2xl pl-1`}>
                 <div className="py-1 pr-1 flex font-semibold whitespace-nowrap max-w-xs overflow-hidden">
-                    <OrgIcon
-                        id={currentOrg?.data?.id || user?.id || "empty"}
-                        name={selectedTitle}
-                        size="small"
-                        className="mr-2"
-                    />
+                    <OrgIcon id={currentOrg?.data?.id || user?.id || "empty"} name={selectedTitle} className="mr-2" />
                     {selectedTitle}
                 </div>
                 <div className="flex h-full pl-0 pr-1 py-1.5 text-gray-50">
@@ -189,31 +177,30 @@ type OrgEntryProps = {
     id: string;
     title: string;
     subtitle: string;
-    iconSize?: OrgIconProps["size"];
 };
-export const OrgEntry: FunctionComponent<OrgEntryProps> = ({ id, title, subtitle, iconSize }) => {
+export const OrgEntry: FunctionComponent<OrgEntryProps> = ({ id, title }) => {
     return (
         <div className="w-full text-gray-400 flex items-center">
-            <OrgIcon id={id} name={title} className="mr-4" size={iconSize} />
+            <OrgIcon id={id} name={title} className="mr-2" />
             <div className="flex flex-col">
-                <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
-                <span>{subtitle}</span>
+                <span className="text-gray-600 dark:text-gray-300 text-sm font-semibold">{title}</span>
             </div>
         </div>
     );
 };
 
 type CurrentOrgEntryProps = {
+    id: string;
     title: string;
     subtitle: string;
 };
-const CurrentOrgEntry: FunctionComponent<CurrentOrgEntryProps> = ({ title, subtitle }) => {
+const CurrentOrgEntry: FunctionComponent<CurrentOrgEntryProps> = ({ id, title }) => {
     return (
-        <div className="w-full text-gray-400 flex items-center justify-between">
-            <div className="flex flex-col">
-                <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{title}</span>
-                <span>{subtitle}</span>
-            </div>
+        <div className="w-full text-gray-400 flex items-center">
+            <OrgIcon id={id} name={title} className="mr-2 shrink-0" />
+            <span className="flex-auto">
+                <span className="text-gray-600 dark:text-gray-300 text-sm font-semibold">{title}</span>
+            </span>
 
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" className="dark:hidden" fill="none">
                 <path
