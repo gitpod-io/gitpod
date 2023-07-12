@@ -95,28 +95,14 @@ jobs:
       previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
     steps:
       - uses: actions/checkout@v3
-      - name: Configure workspace
-        run: |
-          # Needed by docker/login-action
-          sudo chmod goa+rw /var/run/docker.sock
+      - uses: ./.github/actions/setup-environment
+        with:
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Build previewctl
         id: build
         shell: bash
-        env:
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
         run: |
-          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
-          export PREVIEW_ENV_DEV_SA_KEY_PATH="$GITHUB_WORKSPACE/.config/gcloud/preview-environment-dev-sa.json"
-          echo "LEEWAY_WORKSPACE_ROOT: $LEEWAY_WORKSPACE_ROOT"
-          echo "PREVIEW_ENV_DEV_SA_KEY_PATH: $PREVIEW_ENV_DEV_SA_KEY_PATH"
-
-          # Authenticate with GCP so we can use the Leeway cache
-          mkdir -p "$(dirname "$PREVIEW_ENV_DEV_SA_KEY_PATH")"
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          gcloud auth configure-docker --quiet
-
           leeway build dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}"
           echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}" -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
 
@@ -165,24 +151,13 @@ jobs:
         DB_PORT: "23306"
     steps:
       - uses: actions/checkout@v3
-      - id: auth
-        uses: google-github-actions/auth@v1
+      - uses: ./.github/actions/setup-environment
         with:
-          token_format: access_token
-          credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
-      - uses: docker/login-action@v2
-        with:
-          registry: eu.gcr.io
-          username: oauth2accesstoken
-          password: "${{ steps.auth.outputs.access_token }}"
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Leeway Vet
         shell: bash
-        env:
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         run: |
-          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           leeway vet --ignore-warnings
       - name: Pre-Commit Checks
         shell: bash
@@ -207,12 +182,11 @@ jobs:
         env:
           JAVA_HOME: /home/gitpod/.sdkman/candidates/java/current
           VERSION: ${{needs.configuration.outputs.version}}
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         shell: bash
         run: |
-          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           RESULT=0
           set -x
+
           leeway build dev:all \
             --docker-build-options network=host \
             --cache remote \
@@ -249,9 +223,7 @@ jobs:
           JB_MARKETPLACE_PUBLISH_TOKEN: "${{ steps.secrets.outputs.jb-marketplace-publish-token }}"
           PUBLISH_TO_JBPM: ${{ needs.configuration.outputs.publish_to_jbmp == 'true'  || needs.configuration.outputs.is_main_branch == 'true' }}
           CODECOV_TOKEN: "${{ steps.secrets.outputs.codecov-token }}"
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         run: |
-          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
           [[ "$PR_NO_CACHE" = "true" ]] && CACHE="none"       || CACHE="remote"
           [[ "$PR_NO_TEST"  = "true" ]] && TEST="--dont-test" || TEST=""
           [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
@@ -405,6 +377,10 @@ jobs:
       group: ${{ github.workflow }}-${{ github.ref }}-integration-test
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-environment
+        with:
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Run integration test
         shell: bash
         env:
@@ -417,14 +393,7 @@ jobs:
           TEST_BUILD_ID: ${{ github.run_id }}
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
-          LEEWAY_SEGMENT_KEY: ${{ secrets.LEEWAY_SEGMENT_KEY }}
         run: |
-          export LEEWAY_WORKSPACE_ROOT="$GITHUB_WORKSPACE"
-          set -euo pipefail
-
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
           leeway run dev/preview/previewctl:install
 
           echo "Setting up access to core-dev and harvester"
