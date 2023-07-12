@@ -31,11 +31,12 @@ import { WorkspaceInstanceController } from "./workspace-instance-controller";
  */
 @injectable()
 export class AppClusterWorkspaceInstancesController implements Disposable {
-    @inject(Configuration) protected readonly config: Configuration;
-
-    @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
-
-    @inject(WorkspaceInstanceController) protected readonly workspaceInstanceController: WorkspaceInstanceController;
+    constructor(
+        @inject(Configuration) private readonly config: Configuration,
+        @inject(WorkspaceDB) private readonly workspaceDb: WorkspaceDB,
+        @inject(WorkspaceInstanceController)
+        private readonly workspaceInstanceController: WorkspaceInstanceController,
+    ) {}
 
     protected readonly dispoables = new DisposableCollection();
 

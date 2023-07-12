@@ -55,20 +55,14 @@ export class ClusterService implements IClusterServiceServer {
     // Satisfy the grpc.UntypedServiceImplementation interface.
     [name: string]: any;
 
-    @inject(WorkspaceClusterDB)
-    protected readonly clusterDB: WorkspaceClusterDB;
-
-    @inject(WorkspaceDB)
-    protected readonly workspaceDB: WorkspaceDB;
-
-    @inject(BridgeController)
-    protected readonly bridgeController: BridgeController;
-
-    @inject(WorkspaceManagerClientProvider)
-    protected readonly clientProvider: WorkspaceManagerClientProvider;
-
-    @inject(WorkspaceManagerClientProviderCompositeSource)
-    protected readonly allClientProvider: WorkspaceManagerClientProviderSource;
+    constructor(
+        @inject(WorkspaceClusterDB) private readonly clusterDB: WorkspaceClusterDB,
+        @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
+        @inject(BridgeController) private readonly bridgeController: BridgeController,
+        @inject(WorkspaceManagerClientProvider) private readonly clientProvider: WorkspaceManagerClientProvider,
+        @inject(WorkspaceManagerClientProviderCompositeSource)
+        private readonly allClientProvider: WorkspaceManagerClientProviderSource,
+    ) {}
 
     // using a queue to make sure we do concurrency right
     protected readonly queue: Queue = new Queue();
