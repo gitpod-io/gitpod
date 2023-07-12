@@ -17,9 +17,9 @@ import (
 //go:embed schema/*.yaml
 var bootstrapFiles embed.FS
 
-type file struct {
-	name string
-	data string
+type File struct {
+	Name string
+	Data string
 }
 
 type SpiceDBSchema struct {
@@ -27,13 +27,13 @@ type SpiceDBSchema struct {
 	Relationships string `yaml:"relationships"`
 }
 
-func GetBootstrapFiles() ([]file, error) {
-	files, err := fs.ReadDir(bootstrapFiles, "data")
+func GetBootstrapFiles() ([]File, error) {
+	files, err := fs.ReadDir(bootstrapFiles, "schema")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read bootstrap files: %w", err)
 	}
 
-	var filesWithContents []file
+	var filesWithContents []File
 	for _, f := range files {
 		b, err := fs.ReadFile(bootstrapFiles, fmt.Sprintf("%s/%s", "data", f.Name()))
 		if err != nil {
@@ -58,15 +58,15 @@ func GetBootstrapFiles() ([]file, error) {
 		// import data into a running instance - we do not want that.
 		// We cannot split the definitions across multiple files as that would prevent us from performing CI validation,
 		// and we do not want to duplicate the schema.
-		filesWithContents = append(filesWithContents, file{
-			name: f.Name(),
-			data: string(data),
+		filesWithContents = append(filesWithContents, File{
+			Name: f.Name(),
+			Data: string(data),
 		})
 	}
 
 	// ensure output is stable
 	sort.Slice(filesWithContents, func(i, j int) bool {
-		return strings.Compare(filesWithContents[i].name, filesWithContents[j].name) == -1
+		return strings.Compare(filesWithContents[i].Name, filesWithContents[j].Name) == -1
 	})
 
 	return filesWithContents, nil
