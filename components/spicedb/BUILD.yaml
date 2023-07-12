@@ -1,0 +1,19 @@
+packages:
+  - name: schema
+    type: generic
+    srcs:
+      - "schema/*.yaml"
+
+  - name: lib
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+      - "schema/*.yaml"
+    deps:
+      - components/spicedb:schema
+    env:
+      - CGO_ENABLED=0
+    config:
+      packaging: library
