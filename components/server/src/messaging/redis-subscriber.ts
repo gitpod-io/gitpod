@@ -156,7 +156,7 @@ export class RedisSubscriber implements LocalMessageBroker {
             } catch (err) {
                 log.error(
                     "Failed to broadcast workspace instance update.",
-                    { projectId: update.projectID, instanceId: update.instanceID, workspaceId: update.workspaceID },
+                    { projectId: update.projectID, workspaceId: update.workspaceID },
                     err,
                 );
             }

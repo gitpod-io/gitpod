@@ -119,6 +119,7 @@ import { ResolvedEnvVars } from "./env-var-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { WorkspaceClassesConfig } from "./workspace-classes";
+import { RedisPublisher } from "../redis/publisher";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
@@ -209,6 +210,7 @@ export class WorkspaceStarter {
         @inject(BlockedRepositoryDB) private readonly blockedRepositoryDB: BlockedRepositoryDB,
         @inject(EntitlementService) private readonly entitlementService: EntitlementService,
         @inject(RedisMutex) private readonly redisMutex: RedisMutex,
+        @inject(RedisPublisher) private readonly publisher: RedisPublisher,
     ) {}
     public async startWorkspace(
         ctx: TraceContext,
@@ -452,6 +454,11 @@ export class WorkspaceStarter {
                 });
                 await this.userDB.trace({ span }).deleteGitpodTokensNamedLike(workspace.ownerId, `${instance.id}-%`);
                 await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, updated);
+                await this.publisher.publishInstanceUpdate({
+                    instanceID: updated.id,
+                    ownerID: workspace.ownerId,
+                    workspaceID: workspace.id,
+                });
             }
             return;
         }
@@ -715,6 +722,11 @@ export class WorkspaceStarter {
                 await this.workspaceDb.trace(ctx).storeInstance(instance);
                 try {
                     await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+                    await this.publisher.publishInstanceUpdate({
+                        instanceID: instance.id,
+                        ownerID: workspace.ownerId,
+                        workspaceID: workspace.id,
+                    });
                 } catch (err) {
                     // if sending the notification fails that's no reason to stop the workspace creation.
                     // If the dashboard misses this event it will catch up at the next one.
@@ -768,6 +780,12 @@ export class WorkspaceStarter {
                 const info = (await this.workspaceDb.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
                 if (info) {
                     await this.messagebus.notifyOnPrebuildUpdate({ info, status: "queued" });
+                    await this.publisher.publishPrebuildUpdate({
+                        prebuildID: prebuild.id,
+                        projectID: info.projectId,
+                        status: "queued",
+                        workspaceID: workspaceId,
+                    });
                 }
             }
         } catch (e) {
@@ -796,6 +814,11 @@ export class WorkspaceStarter {
             instance.status.message = `Workspace cannot be started: ${err}`;
             await this.workspaceDb.trace({ span }).storeInstance(instance);
             await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+            await this.publisher.publishInstanceUpdate({
+                instanceID: instance.id,
+                ownerID: workspace.ownerId,
+                workspaceID: workspace.id,
+            });
 
             // If we just attempted to start a workspace for a prebuild - and that failed, we have to fail the prebuild itself.
             await this.failPrebuildWorkspace({ span }, err, workspace);
@@ -825,6 +848,7 @@ export class WorkspaceStarter {
                         type: HeadlessWorkspaceEventType.Failed,
                         workspaceID: workspace.id, // required in prebuild-queue-maintainer.ts
                     });
+                    await this.publisher.publishHeadlessUpdate();
                 }
             }
         } catch (err) {
@@ -1209,6 +1233,11 @@ export class WorkspaceStarter {
                 .trace({ span })
                 .updateInstancePartial(instance.id, { workspaceImage, status });
             await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+            await this.publisher.publishInstanceUpdate({
+                instanceID: instance.id,
+                ownerID: workspace.ownerId,
+                workspaceID: workspace.id,
+            });
 
             let buildResult: BuildResponse;
             try {
@@ -1283,6 +1312,11 @@ export class WorkspaceStarter {
 
             // Push updated workspace instance over messagebus
             await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+            await this.publisher.publishInstanceUpdate({
+                workspaceID: workspace.ownerId,
+                instanceID: instance.id,
+                ownerID: workspace.ownerId,
+            });
 
             TraceContext.setError({ span }, err);
             const looksLikeUserError = (msg: string): boolean => {
