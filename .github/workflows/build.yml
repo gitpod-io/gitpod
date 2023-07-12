@@ -263,13 +263,6 @@ jobs:
           fi
 
           exit $RESULT
-      - name: "Upload Test Coverage Report"
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-coverage-report
-          if-no-files-found: ignore
-          path: |
-            test-coverage-report
 
   install-app:
     runs-on: ${{ needs.create-runner.outputs.label }}
