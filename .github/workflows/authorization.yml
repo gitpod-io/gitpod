@@ -16,4 +16,4 @@ jobs:
       - name: Validate SpiceDB schema
         uses: authzed/action-spicedb-validate@v1.0.1
         with:
-          validationfile: "components/spicedb/schema.yaml"
+          validationfile: "components/spicedb/schema/schema.yaml"
