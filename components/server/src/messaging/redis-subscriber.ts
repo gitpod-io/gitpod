@@ -7,6 +7,7 @@
 import {
     HeadlessWorkspaceEventListener,
     LocalMessageBroker,
+    LocalRabbitMQBackedMessageBroker,
     PrebuildUpdateListener,
     WorkspaceInstanceUpdateListener,
 } from "./local-message-broker";
@@ -14,8 +15,10 @@ import { inject, injectable } from "inversify";
 import {
     Disposable,
     DisposableCollection,
+    HeadlessUpdatesChannel,
     PrebuildUpdatesChannel,
     PrebuildWithStatus,
+    RedisHeadlessUpdate,
     RedisPrebuildUpdate,
     RedisWorkspaceInstanceUpdate,
     WorkspaceInstanceUpdatesChannel,
@@ -39,11 +42,12 @@ export class RedisSubscriber implements LocalMessageBroker {
 
     protected workspaceInstanceUpdateListeners: Map<string, WorkspaceInstanceUpdateListener[]> = new Map();
     protected prebuildUpdateListeners: Map<string, PrebuildUpdateListener[]> = new Map();
+    protected headlessWorkspaceEventListeners: Map<string, HeadlessWorkspaceEventListener[]> = new Map();
 
     protected readonly disposables = new DisposableCollection();
 
     async start(): Promise<void> {
-        const channels = [WorkspaceInstanceUpdatesChannel, PrebuildUpdatesChannel];
+        const channels = [WorkspaceInstanceUpdatesChannel, PrebuildUpdatesChannel, HeadlessUpdatesChannel];
 
         for (const chan of channels) {
             await this.redis.subscribe(chan);
@@ -90,6 +94,17 @@ export class RedisSubscriber implements LocalMessageBroker {
                     return;
                 }
                 return this.onPrebuildUpdate(JSON.parse(message) as RedisPrebuildUpdate);
+
+            case HeadlessUpdatesChannel:
+                const headlessTypeEnabled = await this.isRedisPubSubByTypeEnabled("prebuild-updatable");
+                if (!headlessTypeEnabled) {
+                    log.debug("[redis] Redis headless update is disabled through feature flag", {
+                        channel,
+                        message,
+                    });
+                    return;
+                }
+                return this.onHeadlessUpdate(JSON.parse(message) as RedisHeadlessUpdate);
 
             default:
                 throw new Error(`Redis Pub/Sub received message on unknown channel: ${channel}`);
@@ -163,6 +178,29 @@ export class RedisSubscriber implements LocalMessageBroker {
         }
     }
 
+    private async onHeadlessUpdate(update: RedisHeadlessUpdate): Promise<void> {
+        log.debug("[redis] Received prebuild update", { update });
+
+        if (!update.type || !update.workspaceID) {
+            return;
+        }
+
+        const listeners =
+            this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
+        if (listeners.length === 0) {
+            return;
+        }
+
+        const ctx = {};
+        for (const l of listeners) {
+            try {
+                l(ctx, update);
+            } catch (err) {
+                log.error("Failed to broadcast headless update.", update, err);
+            }
+        }
+    }
+
     async stop() {
         this.disposables.dispose();
     }
@@ -172,8 +210,13 @@ export class RedisSubscriber implements LocalMessageBroker {
     }
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
-        // TODO: not implemented
-        return Disposable.create(() => {});
+        // we're being cheap here in re-using a map where it just needs to be a plain array.
+        return this.doRegister(
+            LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY,
+            listener,
+            this.headlessWorkspaceEventListeners,
+            "prebuild-updatable",
+        );
     }
 
     listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable {

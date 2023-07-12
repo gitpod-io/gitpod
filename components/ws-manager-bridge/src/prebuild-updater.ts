@@ -7,7 +7,7 @@
 import { inject, injectable } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceStatus, WorkspaceType } from "@gitpod/ws-manager/lib";
-import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { HeadlessWorkspaceEventType, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
@@ -89,7 +89,12 @@ export class PrebuildUpdater {
                     type: update.type,
                     workspaceID: workspaceId,
                 });
-                await this.publisher.publishHeadlessUpdate();
+                if (!HeadlessWorkspaceEventType.isRunning(update.type)) {
+                    await this.publisher.publishHeadlessUpdate({
+                        type: update.type,
+                        workspaceID: workspaceId,
+                    });
+                }
 
                 // prebuild info
                 const info = (await this.workspaceDB.trace({ span }).findPrebuildInfos([updatedPrebuild.id]))[0];

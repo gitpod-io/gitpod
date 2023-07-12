@@ -848,7 +848,10 @@ export class WorkspaceStarter {
                         type: HeadlessWorkspaceEventType.Failed,
                         workspaceID: workspace.id, // required in prebuild-queue-maintainer.ts
                     });
-                    await this.publisher.publishHeadlessUpdate();
+                    await this.publisher.publishHeadlessUpdate({
+                        type: HeadlessWorkspaceEventType.Failed,
+                        workspaceID: workspace.id,
+                    });
                 }
             }
         } catch (err) {
