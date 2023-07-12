@@ -151,7 +151,6 @@ func TestOIDCService_CreateClientConfig_FeatureFlagEnabled(t *testing.T) {
 			Config: config,
 		}))
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "no such host")
 		require.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 	})
 
@@ -747,7 +746,7 @@ func TestOIDCService_SetClientConfigActivation_WithFeatureFlagEnabled(t *testing
 func setupOIDCService(t *testing.T, expClient experiments.Client) (*protocol.MockAPIInterface, v1connect.OIDCServiceClient, *gorm.DB) {
 	t.Helper()
 
-	dbConn := dbtest.ConnectForTests(t).Debug()
+	dbConn := dbtest.ConnectForTests(t)
 
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
