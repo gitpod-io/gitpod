@@ -2,7 +2,7 @@ packages:
   - name: schema
     type: generic
     srcs:
-      - "schema/schema.yaml"
+      - "schema/*.yaml"
 
   - name: lib
     type: go
@@ -10,6 +10,7 @@ packages:
       - go.mod
       - go.sum
       - "**/*.go"
+      - "schema/*.yaml"
     deps:
       - components/spicedb:schema
     env:

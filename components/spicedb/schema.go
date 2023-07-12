@@ -1,3 +1,7 @@
+// Copyright (c) 2023 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License.AGPL.txt in the project root for license information.
+
 package spicedb
 
 import (
@@ -10,7 +14,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-//go:embed data/*.yaml
+//go:embed schema/*.yaml
 var bootstrapFiles embed.FS
 
 type file struct {
