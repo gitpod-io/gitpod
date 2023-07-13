@@ -458,11 +458,11 @@ function LocalSSHWarning(props: { className: string }) {
     return (
         <div className={props.className}>
             <Alert light className="bg-gray-100 dark:bg-gray-800" type="info">
-                Choosing VS Code for Desktop will add a single entry to your local SSH configuration.
-                Gitpod won't interfere with your existing SSH configurations.&nbsp;
+                Choosing VS Code for Desktop will add a single entry to your local SSH configuration. Gitpod won't
+                interfere with your existing SSH configurations.&nbsp;
                 <a
                     className="gp-link"
-                    href="https://www.gitpod.io/docs/references/ides-and-editors/vscode#ssh-configuration-modifications"
+                    href="https://www.gitpod.io/docs/references/ides-and-editors/vscode#connecting-to-vs-code-desktop"
                     target="_blank"
                     rel="noreferrer"
                 >
