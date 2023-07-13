@@ -27,9 +27,9 @@ export class BridgeController {
         @inject(Metrics) private readonly metrics: Metrics,
     ) {}
 
-    protected readonly bridges: Map<string, WorkspaceManagerBridge> = new Map();
-    protected readonly reconcileQueue: Queue = new Queue();
-    protected reconcileTimer: NodeJS.Timeout | undefined = undefined;
+    private readonly bridges: Map<string, WorkspaceManagerBridge> = new Map();
+    private readonly reconcileQueue: Queue = new Queue();
+    private reconcileTimer: NodeJS.Timeout | undefined = undefined;
 
     public async start() {
         const scheduleReconcile = async () => {
@@ -54,7 +54,7 @@ export class BridgeController {
         await this.reconcile();
     }
 
-    protected async reconcile() {
+    private async reconcile() {
         return this.reconcileQueue.enqueue(async () => {
             const allClusters = await this.getAllWorkspaceClusters();
             log.info("reconciling clusters...", { allClusters: Array.from(allClusters.keys()) });
@@ -87,7 +87,7 @@ export class BridgeController {
         });
     }
 
-    protected async createAndStartBridge(cluster: WorkspaceClusterInfo): Promise<WorkspaceManagerBridge> {
+    private async createAndStartBridge(cluster: WorkspaceClusterInfo): Promise<WorkspaceManagerBridge> {
         const bridge = this.bridgeFactory() as WorkspaceManagerBridge;
         const grpcOptions: grpc.ClientOptions = {
             ...defaultGRPCOptions,
@@ -135,7 +135,7 @@ export class WorkspaceManagerClientProviderConfigSource implements WorkspaceMana
         return this.clusters;
     }
 
-    protected get clusters(): WorkspaceCluster[] {
+    private get clusters(): WorkspaceCluster[] {
         return this.config.staticBridges.map((c) => {
             if (!c.tls) {
                 return c;

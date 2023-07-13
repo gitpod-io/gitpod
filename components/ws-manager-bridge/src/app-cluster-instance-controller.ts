@@ -38,7 +38,7 @@ export class AppClusterWorkspaceInstancesController implements Disposable {
         private readonly workspaceInstanceController: WorkspaceInstanceController,
     ) {}
 
-    protected readonly dispoables = new DisposableCollection();
+    private readonly dispoables = new DisposableCollection();
 
     public async start() {
         const disposable = repeat(
@@ -48,7 +48,7 @@ export class AppClusterWorkspaceInstancesController implements Disposable {
         this.dispoables.push(disposable);
     }
 
-    protected async controlAppClusterManagedWorkspaceInstances() {
+    private async controlAppClusterManagedWorkspaceInstances() {
         const appClusterInstallation = this.config.installation;
 
         const span = TraceContext.startSpan("controlAppClusterManagedWorkspaceInstances");
