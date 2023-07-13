@@ -17,6 +17,7 @@ import {
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { Organization, TeamMemberInfo, Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 @injectable()
 export class Authorizer {
@@ -38,6 +39,21 @@ export class Authorizer {
         });
 
         return this.authorizer.check(req, { orgID: orgId });
+    }
+
+    async checkOrgPermissionAndThrow(userId: string, permission: OrganizationPermission, orgId: string) {
+        if (await this.hasPermissionOnOrganization(userId, permission, orgId)) {
+            return;
+        }
+        // check if the user has read permission
+        if ("read_info" === permission || !(await this.hasPermissionOnOrganization(userId, "read_info", orgId))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found.`);
+        }
+
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `You do not have ${permission} on organization ${orgId}`,
+        );
     }
 
     async hasPermissionOnProject(userId: string, permission: ProjectPermission, project: Project): Promise<boolean> {

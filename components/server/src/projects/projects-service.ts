@@ -50,11 +50,7 @@ export class ProjectsService {
     }
 
     async getProjects(userId: string, orgId: string): Promise<Project[]> {
-        const canReadOrgInfo = await this.auth.hasPermissionOnOrganization(userId, "read_info", orgId);
-        if (!canReadOrgInfo) {
-            // throw 404
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found.`);
-        }
+        await this.auth.checkOrgPermissionAndThrow(userId, "read_info", orgId);
         const projects = await this.projectDB.findProjects(orgId);
         return await this.filterByReadAccess(userId, projects);
     }
@@ -203,18 +199,7 @@ export class ProjectsService {
         { name, slug, cloneUrl, teamId, appInstallationId }: CreateProjectParams,
         installer: User,
     ): Promise<Project> {
-        const canCreateProject = await this.auth.hasPermissionOnOrganization(installer.id, "create_project", teamId);
-        if (!canCreateProject) {
-            const canReadOrgInfo = await this.auth.hasPermissionOnOrganization(installer.id, "read_info", teamId);
-            if (!canReadOrgInfo) {
-                // throw 404
-                throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${teamId} not found.`);
-            }
-            throw new ApplicationError(
-                ErrorCodes.PERMISSION_DENIED,
-                `You do not have permission to create a project on organization ${teamId}.`,
-            );
-        }
+        await this.auth.checkOrgPermissionAndThrow(installer.id, "create_project", teamId);
 
         if (cloneUrl.length >= 1000) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Clone URL must be less than 1k characters.");

@@ -17,3 +17,27 @@ packages:
       - CGO_ENABLED=0
     config:
       packaging: library
+scripts:
+  - name: start-spicedb
+    description: "Starts spicedb if not already running."
+    deps: []
+    script: |
+      leeway run components/spicedb:stop-spicedb
+      docker run --rm --name test-spicedb -p50051:50051 -v $(pwd)/schema/schema.yaml:/schema.yaml -d authzed/spicedb serve-testing --load-configs /schema.yaml
+      # wait for port 50051 to be open
+      while ! nc -z localhost 50051; do
+          sleep 0.1
+      done
+      echo "Started spicedb."
+  - name: stop-spicedb
+    description: "Stops spicedb if running."
+    deps: []
+    script: |
+      if docker stop test-spicedb > /dev/null 2>&1; then
+          echo "Stopped spicedb."
+      fi
+  - name: report-spicedb
+    description: "Reports spicedb's current state."
+    deps: []
+    script: |
+      spicedn

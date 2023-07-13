@@ -49,6 +49,9 @@ schema: |-
 
     permission read_billing = member + owner + installation->admin
     permission write_billing = owner + installation->admin
+
+    // can add credit notes and change the spending limits even for free users
+    permission write_billing_admin = installation->admin
   }
 
   definition project {

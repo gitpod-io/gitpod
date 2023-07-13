@@ -15,7 +15,6 @@ import {
 import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { OrganizationPermission } from "../authorization/definitions";
 import { ProjectsService } from "../projects/projects-service";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 
@@ -42,7 +41,7 @@ export class OrganizationService {
     }
 
     async getOrganization(userId: string, orgId: string): Promise<Organization> {
-        await this.checkPermissionAndThrow(userId, "read_info", orgId);
+        await this.auth.checkOrgPermissionAndThrow(userId, "read_info", orgId);
         const result = await this.teamDB.findTeamById(orgId);
         if (!result) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found`);
@@ -55,7 +54,7 @@ export class OrganizationService {
         orgId: string,
         changes: Pick<Organization, "name">,
     ): Promise<Organization> {
-        await this.checkPermissionAndThrow(userId, "write_info", orgId);
+        await this.auth.checkOrgPermissionAndThrow(userId, "write_info", orgId);
         return this.teamDB.updateTeam(orgId, changes);
     }
 
@@ -88,7 +87,7 @@ export class OrganizationService {
     }
 
     public async deleteOrganization(userId: string, orgId: string): Promise<void> {
-        await this.checkPermissionAndThrow(userId, "delete", orgId);
+        await this.auth.checkOrgPermissionAndThrow(userId, "delete", orgId);
         const projects = await this.projectsService.getProjects(userId, orgId);
 
         const members = await this.teamDB.findMembersByTeam(orgId);
@@ -119,12 +118,12 @@ export class OrganizationService {
     }
 
     public async listMembers(userId: string, orgId: string): Promise<OrgMemberInfo[]> {
-        await this.checkPermissionAndThrow(userId, "read_members", orgId);
+        await this.auth.checkOrgPermissionAndThrow(userId, "read_members", orgId);
         return this.teamDB.findMembersByTeam(orgId);
     }
 
     public async getOrCreateInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
-        await this.checkPermissionAndThrow(userId, "invite_members", orgId);
+        await this.auth.checkOrgPermissionAndThrow(userId, "invite_members", orgId);
         const invite = await this.teamDB.findGenericInviteByTeamId(orgId);
         if (invite) {
             if (await this.teamDB.hasActiveSSO(orgId)) {
@@ -136,7 +135,7 @@ export class OrganizationService {
     }
 
     public async resetInvite(userId: string, orgId: string): Promise<TeamMembershipInvite> {
-        await this.checkPermissionAndThrow(userId, "invite_members", orgId);
+        await this.auth.checkOrgPermissionAndThrow(userId, "invite_members", orgId);
         if (await this.teamDB.hasActiveSSO(orgId)) {
             throw new ApplicationError(ErrorCodes.NOT_FOUND, "Invites are disabled for SSO-enabled organizations.");
         }
@@ -178,7 +177,7 @@ export class OrganizationService {
         memberId: string,
         role: OrgMemberRole,
     ): Promise<void> {
-        await this.checkPermissionAndThrow(userId, "write_members", orgId);
+        await this.auth.checkOrgPermissionAndThrow(userId, "write_members", orgId);
         if (role !== "owner") {
             const members = await this.teamDB.findMembersByTeam(orgId);
             if (!members.some((m) => m.userId !== memberId && m.role === "owner")) {
@@ -201,9 +200,9 @@ export class OrganizationService {
     public async removeOrganizationMember(userId: string, orgId: string, memberId: string): Promise<void> {
         // The user is leaving a team, if they are removing themselves from the team.
         if (userId === memberId) {
-            await this.checkPermissionAndThrow(userId, "read_info", orgId);
+            await this.auth.checkOrgPermissionAndThrow(userId, "read_info", orgId);
         } else {
-            await this.checkPermissionAndThrow(userId, "write_members", orgId);
+            await this.auth.checkOrgPermissionAndThrow(userId, "write_members", orgId);
         }
 
         // Check for existing membership.
@@ -255,28 +254,13 @@ export class OrganizationService {
     }
 
     async getSettings(userId: string, orgId: string): Promise<OrganizationSettings> {
-        await this.checkPermissionAndThrow(userId, "read_settings", orgId);
+        await this.auth.checkOrgPermissionAndThrow(userId, "read_settings", orgId);
         return (await this.teamDB.findOrgSettings(orgId)) || {};
     }
 
     async updateSettings(userId: string, orgId: string, settings: OrganizationSettings): Promise<OrganizationSettings> {
-        await this.checkPermissionAndThrow(userId, "write_settings", orgId);
+        await this.auth.checkOrgPermissionAndThrow(userId, "write_settings", orgId);
         await this.teamDB.setOrgSettings(orgId, settings);
         return settings;
-    }
-
-    private async checkPermissionAndThrow(userId: string, permission: OrganizationPermission, orgId: string) {
-        if (await this.auth.hasPermissionOnOrganization(userId, permission, orgId)) {
-            return;
-        }
-        // check if the user has read permission
-        if ("read_info" === permission || !(await this.auth.hasPermissionOnOrganization(userId, "read_info", orgId))) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Organization ${orgId} not found.`);
-        }
-
-        throw new ApplicationError(
-            ErrorCodes.PERMISSION_DENIED,
-            `You do not have ${permission} on organization ${orgId}`,
-        );
     }
 }
