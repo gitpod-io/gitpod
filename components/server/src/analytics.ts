@@ -49,11 +49,9 @@ export function createCookielessId(ip?: string, ua?: string): string | number | 
     if (!ip || !ua) {
         return "unidentified-user"; //use placeholder if we cannot resolve IP and user agent
     }
-    const date = new Date();
-    const today = `${date.getDate()}/${date.getMonth()}/${date.getFullYear()}`;
     return crypto
         .createHash("sha512")
-        .update(ip + ua + today)
+        .update(ip + ua)
         .digest("hex");
 }
 
