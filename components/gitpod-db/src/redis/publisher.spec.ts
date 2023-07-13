@@ -7,7 +7,6 @@
 import { suite, test } from "@testdeck/mocha";
 import * as chai from "chai";
 import { RedisPublisher } from "./publisher";
-import { Metrics } from "../metrics";
 import { Container, ContainerModule } from "inversify";
 import { Redis } from "ioredis";
 
@@ -24,7 +23,6 @@ class TestRedisPublisher {
         this.container = new Container();
         this.container.load(
             new ContainerModule((bind) => {
-                bind(Metrics).toSelf().inSingletonScope();
                 bind(Redis).toConstantValue(client);
                 bind(RedisPublisher).toSelf().inSingletonScope();
             }),

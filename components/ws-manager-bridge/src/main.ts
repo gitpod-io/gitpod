@@ -14,6 +14,7 @@ import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ClusterServiceServer } from "./cluster-service-server";
 import { BridgeController } from "./bridge-controller";
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
+import { redisMetricsRegistry } from "@gitpod/gitpod-db/lib";
 
 log.enableJSONLogging("ws-manager-bridge", undefined, LogrusLogLevel.getFromEnv());
 
@@ -29,7 +30,9 @@ export const start = async (container: Container) => {
         prometheusClient.collectDefaultMetrics();
         metricsApp.get("/metrics", async (req, res) => {
             res.set("Content-Type", prometheusClient.register.contentType);
-            res.send(await prometheusClient.register.metrics());
+
+            const mergedRegistry = prometheusClient.Registry.merge([prometheusClient.register, redisMetricsRegistry()]);
+            res.send(await mergedRegistry.metrics());
         });
         const metricsPort = 9500;
         const metricsHttpServer = metricsApp.listen(metricsPort, "localhost", () => {

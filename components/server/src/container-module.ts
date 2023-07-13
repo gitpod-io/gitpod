@@ -126,8 +126,7 @@ import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { OrganizationService } from "./orgs/organization-service";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { Redis } from "ioredis";
-import { RedisPublisher } from "./redis/publisher";
-import { newRedisClient } from "@gitpod/gitpod-db/lib";
+import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
