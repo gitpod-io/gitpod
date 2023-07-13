@@ -38,7 +38,7 @@ export default function NewTeamPage() {
         }
     };
 
-    useDocumentTitle("New Organization — Gitpod");
+    useDocumentTitle("New Organization");
 
     return (
         <div className="flex flex-col w-96 mt-24 mx-auto items-center">
