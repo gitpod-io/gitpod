@@ -125,7 +125,7 @@ export class EntitlementServiceUBP implements EntitlementService {
         // Member of paid team?
         const teams = await this.teamDB.findTeamsByUser(user.id);
         const isTeamSubscribedPromises = teams.map(async (team: Team) => {
-            const billingStrategy = await this.usageService.getCurrentBillingStategy(AttributionId.create(team));
+            const { billingStrategy } = await this.usageService.getCostCenter(user.id, team.id);
             return billingStrategy === CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
         });
         // Return the first truthy promise, or false if all the promises were falsy.

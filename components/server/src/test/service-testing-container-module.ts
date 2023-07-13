@@ -17,12 +17,10 @@ import { HostContextProviderImpl } from "../auth/host-context-provider-impl";
 import { SpiceDBClient } from "../authorization/spicedb";
 import { Config } from "../config";
 import { StorageClient } from "../storage/storage-client";
-import { IDEServiceClientMock } from "./mocks/ide-service-mock";
-import { StorageClientMock } from "./mocks/storage-client-mock";
-import { UsageServiceClientMock } from "./mocks/usage-service-client-mock";
-import { WorkspaceManagerClientProviderMock } from "./mocks/workspace-manager-client-mock";
 import { testContainer } from "@gitpod/gitpod-db/lib";
 import { productionContainerModule } from "../container-module";
+import { createMock } from "./mocks/mock";
+import { UsageServiceClientMock } from "./mocks/usage-service-client-mock";
 
 /**
  * Expects a fully configured production container and
@@ -31,10 +29,10 @@ import { productionContainerModule } from "../container-module";
  *  - replaces the analytics writer with a null analytics writer
  */
 const mockApplyingContainerModule = new ContainerModule((bind, unbound, isbound, rebind) => {
-    rebind(UsageServiceDefinition.name).to(UsageServiceClientMock).inSingletonScope();
-    rebind(StorageClient).to(StorageClientMock).inSingletonScope();
-    rebind(WorkspaceManagerClientProvider).toConstantValue(new WorkspaceManagerClientProviderMock());
-    rebind(IDEServiceDefinition.name).to(IDEServiceClientMock).inSingletonScope();
+    rebind(UsageServiceDefinition.name).toConstantValue(createMock(new UsageServiceClientMock()));
+    rebind(StorageClient).toConstantValue(createMock());
+    rebind(WorkspaceManagerClientProvider).toConstantValue(createMock());
+    rebind(IDEServiceDefinition.name).toConstantValue(createMock());
 
     rebind<Partial<Config>>(Config).toConstantValue({
         blockNewUsers: {

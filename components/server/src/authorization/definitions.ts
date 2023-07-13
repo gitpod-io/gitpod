@@ -35,6 +35,7 @@ export type OrganizationPermission =
     | "read_git_provider"
     | "write_git_provider"
     | "read_billing"
-    | "write_billing";
+    | "write_billing"
+    | "write_billing_admin";
 export type ProjectPermission = "write_info" | "read_info" | "delete";
 export type Permission = OrganizationPermission;

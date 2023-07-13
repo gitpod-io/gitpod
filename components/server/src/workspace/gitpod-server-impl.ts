@@ -182,19 +182,11 @@ import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 import { BitbucketAppSupport } from "../bitbucket/bitbucket-app-support";
 import { StripeService } from "../billing/stripe-service";
-import { UsageServiceDefinition } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import {
     BillingServiceClient,
     BillingServiceDefinition,
     StripeCustomer,
 } from "@gitpod/usage-api/lib/usage/v1/billing.pb";
-import {
-    CostCenter,
-    CostCenter_BillingStrategy,
-    ListUsageRequest_Ordering,
-    UsageServiceClient,
-    Usage_Kind,
-} from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { ClientError } from "nice-grpc-common";
 import { BillingModes } from "../billing/billing-mode";
 import { goDurationToHumanReadable } from "@gitpod/gitpod-protocol/lib/util/timeutil";
@@ -202,6 +194,7 @@ import { OrganizationPermission } from "../authorization/definitions";
 import { Authorizer } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
+import { UsageService } from "../orgs/usage-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -273,7 +266,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         @inject(BillingModes) private readonly billingModes: BillingModes,
         @inject(StripeService) private readonly stripeService: StripeService,
-        @inject(UsageServiceDefinition.name) private readonly usageService: UsageServiceClient,
+        @inject(UsageService) private readonly usageService: UsageService,
         @inject(BillingServiceDefinition.name) private readonly billingService: BillingServiceClient,
         @inject(EmailDomainFilterDB) private emailDomainFilterdb: EmailDomainFilterDB,
 
@@ -2794,9 +2787,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const org = await this.organizationService.createOrganization(user.id, name);
         // create a cost center
-        await this.usageService.getCostCenter({
-            attributionId: AttributionId.render(AttributionId.create(org)),
-        });
+        await this.usageService.getCostCenter(user.id, org.id);
 
         ctx.span?.setTag("teamId", org.id);
         return org;
@@ -4132,6 +4123,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         paymentIntentId: string,
         usageLimit: number,
     ): Promise<number | undefined> {
+        const user = await this.checkAndBlockUser("subscribeToStripe");
         const attrId = AttributionId.parse(attributionId);
         if (attrId === undefined) {
             log.error(`Invalid attribution id: ${attributionId}`);
@@ -4153,24 +4145,17 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             });
 
             // Creating a cost center for this customer
-            const { costCenter } = await this.usageService.setCostCenter({
-                costCenter: {
-                    attributionId: attributionId,
-                    spendingLimit: usageLimit,
-                    billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE,
-                },
-            });
-
+            // TODO stripe should be the authority to change the billing strategy. On subscribe -> set to stripe, on unsubscribe -> set to other
+            await this.usageService.subscribeToStripe(user.id, attrId.teamId, usageLimit);
+            const costCenter = await this.usageService.getCostCenter(user.id, attrId.teamId);
             // marking all members as verified
-            if (attrId.kind === "team") {
-                try {
-                    await this.verificationService.verifyOrgMembers(attrId.teamId);
-                } catch (err) {
-                    log.error(`Failed to verify org members`, err, { organizationId: attrId.teamId });
-                }
+            try {
+                await this.verificationService.verifyOrgMembers(attrId.teamId);
+            } catch (err) {
+                log.error(`Failed to verify org members`, err, { organizationId: attrId.teamId });
             }
 
-            return costCenter?.spendingLimit;
+            return costCenter.spendingLimit;
         } catch (error) {
             log.error(`Failed to subscribe '${attributionId}' to Stripe`, error);
             if (error instanceof ClientError) {
@@ -4216,23 +4201,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
 
-        await this.checkAndBlockUser("getCostCenter");
+        const user = await this.checkAndBlockUser("getCostCenter");
         await this.guardCostCenterAccess(ctx, attrId, "get", "read_billing");
 
-        const { costCenter } = await this.usageService.getCostCenter({ attributionId });
-        return this.translateCostCenter(costCenter);
-    }
-
-    private translateCostCenter(costCenter?: CostCenter): CostCenterJSON | undefined {
-        return costCenter
-            ? {
-                  ...costCenter,
-                  billingCycleStart: costCenter.billingCycleStart
-                      ? costCenter.billingCycleStart.toISOString()
-                      : undefined,
-                  nextBillingTime: costCenter.nextBillingTime ? costCenter.nextBillingTime.toISOString() : undefined,
-              }
-            : undefined;
+        return await this.usageService.getCostCenter(user.id, attrId.teamId);
     }
 
     async setUsageLimit(ctx: TraceContext, attributionId: string, usageLimit: number): Promise<void> {
@@ -4244,32 +4216,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (typeof usageLimit !== "number" || usageLimit < 0) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
         }
-        await this.checkAndBlockUser("setUsageLimit");
+        const user = await this.checkAndBlockUser("setUsageLimit");
         await this.guardCostCenterAccess(ctx, attrId, "update", "write_billing");
 
-        const response = await this.usageService.getCostCenter({ attributionId });
-
-        // backward compatibility for cost centers that were created before introduction of BillingStrategy
-        if (response.costCenter) {
-            const stripeSubscriptionId = await this.findStripeSubscriptionId(ctx, attributionId);
-            if (stripeSubscriptionId != undefined) {
-                response.costCenter.billingStrategy = CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
-            }
-        }
-
-        if (response.costCenter?.billingStrategy !== CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE) {
-            throw new ApplicationError(
-                ErrorCodes.BAD_REQUEST,
-                `Setting a usage limit is not valid for non-Stripe billing strategies`,
-            );
-        }
-        await this.usageService.setCostCenter({
-            costCenter: {
-                attributionId,
-                spendingLimit: usageLimit,
-                billingStrategy: response.costCenter.billingStrategy,
-            },
-        });
+        await this.usageService.setUsageLimit(user.id, attrId.teamId, usageLimit);
     }
 
     async listUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
@@ -4279,13 +4229,13 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 attributionId: req.attributionId,
             });
         }
-        await this.checkAndBlockUser("listUsage");
+        const user = await this.checkAndBlockUser("listUsage");
         await this.guardCostCenterAccess(ctx, attributionId, "get", "not_implemented");
-        return this.internalListUsage(ctx, req);
+        return this.usageService.listUsage(user.id, req);
     }
 
     async getUsageBalance(ctx: TraceContext, attributionId: string): Promise<number> {
-        await this.checkAndBlockUser("listUsage");
+        const user = await this.checkAndBlockUser("listUsage");
         const parsedAttributionId = AttributionId.parse(attributionId);
         if (!parsedAttributionId) {
             throw new ApplicationError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
@@ -4293,53 +4243,8 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             });
         }
         await this.guardCostCenterAccess(ctx, parsedAttributionId, "get", "read_billing");
-        const result = await this.usageService.getBalance({ attributionId });
-        return result.credits;
-    }
-
-    private async internalListUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
-        const { from, to } = req;
-        const attributionId = AttributionId.parse(req.attributionId);
-        if (!attributionId) {
-            throw new ApplicationError(ErrorCodes.INVALID_COST_CENTER, "Bad attribution ID", {
-                attributionId: req.attributionId,
-            });
-        }
-        traceAPIParams(ctx, { attributionId });
-        const response = await this.usageService.listUsage({
-            attributionId: AttributionId.render(attributionId),
-            from: from ? new Date(from) : undefined,
-            to: to ? new Date(to) : undefined,
-            order: ListUsageRequest_Ordering.ORDERING_DESCENDING,
-            pagination: {
-                page: req.pagination?.page,
-                perPage: req.pagination?.perPage,
-            },
-        });
-        return {
-            usageEntriesList: response.usageEntries.map((u) => {
-                return {
-                    id: u.id,
-                    attributionId: u.attributionId,
-                    effectiveTime: u.effectiveTime && u.effectiveTime.getTime(),
-                    credits: u.credits,
-                    description: u.description,
-                    draft: u.draft,
-                    workspaceInstanceId: u.workspaceInstanceId,
-                    kind: u.kind === Usage_Kind.KIND_WORKSPACE_INSTANCE ? "workspaceinstance" : "invoice",
-                    metadata: !!u.metadata ? JSON.parse(u.metadata) : undefined,
-                };
-            }),
-            pagination: response.pagination
-                ? {
-                      page: response.pagination.page,
-                      perPage: response.pagination.perPage,
-                      total: response.pagination.total,
-                      totalPages: response.pagination.totalPages,
-                  }
-                : undefined,
-            creditsUsed: response.creditsUsed,
-        };
+        const result = await this.usageService.getCurrentBalance(user.id, parsedAttributionId.teamId);
+        return result.usedCredits;
     }
 
     private async guardCostCenterAccess(
@@ -4365,10 +4270,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
     async getBillingModeForTeam(ctx: TraceContextWithSpan, teamId: string): Promise<BillingMode> {
         traceAPIParams(ctx, { teamId });
 
-        await this.checkAndBlockUser("getBillingModeForTeam");
-        const { team } = await this.guardTeamOperation(teamId, "get", "not_implemented");
+        const user = await this.checkAndBlockUser("getBillingModeForTeam");
+        await this.guardTeamOperation(teamId, "get", "not_implemented");
 
-        return this.billingModes.getBillingModeForTeam(team, new Date());
+        return this.billingModes.getBillingMode(user.id, teamId, new Date());
     }
 
     // (SaaS) – admin
@@ -4384,7 +4289,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         if (!parsedAttributionId) {
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, "Unable to parse attributionId");
         }
-        return this.billingModes.getBillingMode(parsedAttributionId, new Date());
+        return this.billingModes.getBillingMode(user.id, parsedAttributionId.teamId, new Date());
     }
 
     async adminGetCostCenter(ctx: TraceContext, attributionId: string): Promise<CostCenterJSON | undefined> {
@@ -4397,8 +4302,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkAndBlockUser("adminGetCostCenter");
         await this.guardAdminAccess("adminGetCostCenter", { id: user.id }, Permission.ADMIN_USERS);
 
-        const { costCenter } = await this.usageService.getCostCenter({ attributionId });
-        return this.translateCostCenter(costCenter);
+        return await this.usageService.getCostCenter(user.id, attrId.teamId);
     }
 
     async adminSetUsageLimit(ctx: TraceContext, attributionId: string, usageLimit: number): Promise<void> {
@@ -4407,45 +4311,30 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             log.error(`Invalid attribution id: ${attributionId}`);
             throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
         }
-        if (typeof usageLimit !== "number" || usageLimit < 0) {
-            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Unexpected usageLimit value: ${usageLimit}`);
-        }
-        const user = await this.checkAndBlockUser("adminSetUsageLimit");
-        await this.guardAdminAccess("adminSetUsageLimit", { id: user.id }, Permission.ADMIN_USERS);
+        const adminUser = await this.checkAndBlockUser("adminSetUsageLimit");
+        await this.guardAdminAccess("adminSetUsageLimit", { id: adminUser.id }, Permission.ADMIN_USERS);
 
-        const response = await this.usageService.getCostCenter({ attributionId });
-
-        // backward compatibility for cost centers that were created before introduction of BillingStrategy
-        if (!response.costCenter) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Couldn't find cost center with id ${attributionId}`);
-        }
-        const stripeSubscriptionId = await this.stripeService.findUncancelledSubscriptionByAttributionId(attributionId);
-        if (stripeSubscriptionId != undefined) {
-            response.costCenter.billingStrategy = CostCenter_BillingStrategy.BILLING_STRATEGY_STRIPE;
-        }
-
-        await this.usageService.setCostCenter({
-            costCenter: {
-                attributionId,
-                spendingLimit: usageLimit,
-                billingStrategy: response.costCenter.billingStrategy,
-            },
-        });
+        await this.usageService.setUsageLimit(adminUser.id, attrId.teamId, usageLimit);
     }
 
     async adminListUsage(ctx: TraceContext, req: ListUsageRequest): Promise<ListUsageResponse> {
         traceAPIParams(ctx, { req });
-        const user = await this.checkAndBlockUser("adminListUsage");
-        await this.guardAdminAccess("adminListUsage", { id: user.id }, Permission.ADMIN_USERS);
-        return this.internalListUsage(ctx, req);
+        const adminUser = await this.checkAndBlockUser("adminListUsage");
+        await this.guardAdminAccess("adminListUsage", { id: adminUser.id }, Permission.ADMIN_USERS);
+        return this.usageService.listUsage(adminUser.id, req);
     }
 
     async adminGetUsageBalance(ctx: TraceContext, attributionId: string): Promise<number> {
         traceAPIParams(ctx, { attributionId });
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
         const user = await this.checkAndBlockUser("adminGetUsageBalance");
         await this.guardAdminAccess("adminGetUsageBalance", { id: user.id }, Permission.ADMIN_USERS);
-        const result = await this.usageService.getBalance({ attributionId });
-        return result.credits;
+        const result = await this.usageService.getCurrentBalance(user.id, attrId.teamId);
+        return result.usedCredits;
     }
 
     async adminAddUsageCreditNote(
@@ -4455,14 +4344,14 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         description: string,
     ): Promise<void> {
         traceAPIParams(ctx, { attributionId, credits, note: description });
+        const attrId = AttributionId.parse(attributionId);
+        if (attrId === undefined) {
+            log.error(`Invalid attribution id: ${attributionId}`);
+            throw new ApplicationError(ErrorCodes.BAD_REQUEST, `Invalid attibution id: ${attributionId}`);
+        }
         const user = await this.checkAndBlockUser("adminAddUsageCreditNote");
         await this.guardAdminAccess("adminAddUsageCreditNote", { id: user.id }, Permission.ADMIN_USERS);
-        await this.usageService.addUsageCreditNote({
-            attributionId,
-            credits,
-            description,
-            userId: user.id,
-        });
+        await this.usageService.addCreditNote(user.id, attrId.teamId, credits, description);
     }
 
     async adminGetBlockedEmailDomains(ctx: TraceContextWithSpan): Promise<EmailDomainFilterEntry[]> {
