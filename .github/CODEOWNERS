@@ -13,7 +13,6 @@
 /components/ee/agent-smith @gitpod-io/team-engine
 /components/gitpod-cli @gitpod-io/team-experience
 /components/gitpod-db @gitpod-io/team-experience
-/components/gitpod-messagebus @gitpod-io/team-experience
 /components/gitpod-protocol @gitpod-io/team-experience
 /components/gitpod-protocol/java @gitpod-io/team-experience
 /components/gitpod-protocol/src/typings/globals.ts @gitpod-io/team-experience

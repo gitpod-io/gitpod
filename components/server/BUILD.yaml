@@ -11,7 +11,6 @@ packages:
     deps:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
-      - components/gitpod-messagebus:lib
       - components/gitpod-protocol:lib
       - components/image-builder-api/typescript:lib
       - components/ws-manager-api/typescript:lib

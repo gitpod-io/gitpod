@@ -41,7 +41,6 @@
     "@gitbeaker/node": "^35.7.0",
     "@gitpod/content-service": "0.1.5",
     "@gitpod/gitpod-db": "0.1.5",
-    "@gitpod/gitpod-messagebus": "0.1.5",
     "@gitpod/gitpod-protocol": "0.1.5",
     "@gitpod/ide-service-api": "0.1.5",
     "@gitpod/image-builder": "0.1.5",
@@ -54,7 +53,6 @@
     "@octokit/rest": "18.6.1",
     "@probot/get-private-key": "^1.1.1",
     "@types/jaeger-client": "^3.18.3",
-    "amqplib": "^0.8.0",
     "base-64": "^1.0.0",
     "bitbucket": "^2.7.0",
     "body-parser": "^1.19.2",
@@ -98,7 +96,6 @@
   },
   "devDependencies": {
     "@testdeck/mocha": "^0.3.3",
-    "@types/amqplib": "^0.8.2",
     "@types/assert": "^1.5.6",
     "@types/base-64": "^1.0.0",
     "@types/body-parser": "^1.19.1",

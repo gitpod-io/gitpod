@@ -47,7 +47,6 @@ func categorizeRPCError(err error) *connect.Error {
 			return connect.NewError(connect.CodeFailedPrecondition, fmt.Errorf(rpcErr.Message))
 		case 429:
 			return connect.NewError(connect.CodeResourceExhausted, fmt.Errorf(rpcErr.Message))
-		// components/gitpod-messagebus/src/jsonrpc-server.ts#47
 		case 470:
 			return connect.NewError(connect.CodePermissionDenied, fmt.Errorf(rpcErr.Message))
 		case -32603:
