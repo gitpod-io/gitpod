@@ -429,6 +429,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 			// "vscode-server",
 			// "vscode-web",
 			"gitpod-cli",
+			"gitpod-web",
+			"gitpod-remote-ssh",
 			"vscode-desktop-extension",
 		},
 	}
