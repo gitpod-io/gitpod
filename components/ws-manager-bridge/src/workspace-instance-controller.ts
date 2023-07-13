@@ -18,7 +18,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ClientProvider } from "./wsman-subscriber";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { PrebuildUpdater } from "./prebuild-updater";
-import { RedisPublisher } from "./redis/publisher";
+import { RedisPublisher } from "@gitpod/gitpod-db/lib";
 
 export const WorkspaceInstanceController = Symbol("WorkspaceInstanceController");
 
