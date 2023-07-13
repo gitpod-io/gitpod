@@ -65,7 +65,7 @@ export class ClusterService implements IClusterServiceServer {
     ) {}
 
     // using a queue to make sure we do concurrency right
-    protected readonly queue: Queue = new Queue();
+    private readonly queue: Queue = new Queue();
 
     public register(
         call: grpc.ServerUnaryCall<RegisterRequest, RegisterResponse>,
@@ -299,7 +299,7 @@ export class ClusterService implements IClusterServiceServer {
         });
     }
 
-    protected triggerReconcile(action: string, name: string) {
+    private triggerReconcile(action: string, name: string) {
         const payload = { action, name };
         log.info("reconcile: on request", payload);
         this.bridgeController
@@ -409,13 +409,12 @@ function getClientInfo(call: grpc.ServerUnaryCall<any, any>) {
 // "grpc" does not allow additional methods on it's "ServiceServer"s so we have an additional wrapper here
 @injectable()
 export class ClusterServiceServer {
-    @inject(Configuration)
-    protected readonly config: Configuration;
+    constructor(
+        @inject(Configuration) private readonly config: Configuration,
+        @inject(ClusterService) private readonly service: ClusterService,
+    ) {}
 
-    @inject(ClusterService)
-    protected readonly service: ClusterService;
-
-    protected server: grpc.Server | undefined = undefined;
+    private server: grpc.Server | undefined = undefined;
 
     public async start() {
         // Default value for maxSessionMemory is 10 which is low for this gRPC server
