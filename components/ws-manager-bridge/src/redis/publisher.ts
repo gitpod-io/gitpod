@@ -57,7 +57,7 @@ export class RedisPublisher {
         let err: Error | undefined;
         try {
             const serialized = JSON.stringify(update);
-            await this.client.get().publish(HeadlessUpdatesChannel, serialized);
+            await this.redis.publish(HeadlessUpdatesChannel, serialized);
             log.debug("[redis] Succesfully published headless update.", update);
         } catch (e) {
             err = e;
