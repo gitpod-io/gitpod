@@ -22,7 +22,6 @@ import {
     WorkspaceInstanceUpdatesChannel,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import {
     reportRedisUpdateCompleted,
     reportRedisUpdateReceived,
@@ -73,37 +72,12 @@ export class RedisSubscriber {
     private async onMessage(channel: string, message: string): Promise<void> {
         switch (channel) {
             case WorkspaceInstanceUpdatesChannel:
-                const wsInstanceTypeEnabled = await this.isRedisPubSubByTypeEnabled("workspace-instance");
-                if (!wsInstanceTypeEnabled) {
-                    log.debug("[redis] Redis workspace instance update is disabled through feature flag", {
-                        channel,
-                        message,
-                    });
-                    return;
-                }
-
                 return this.onInstanceUpdate(JSON.parse(message) as RedisWorkspaceInstanceUpdate);
 
             case PrebuildUpdatesChannel:
-                const prebuildTypeEnabled = await this.isRedisPubSubByTypeEnabled("prebuild");
-                if (!prebuildTypeEnabled) {
-                    log.debug("[redis] Redis prebuild update is disabled through feature flag", {
-                        channel,
-                        message,
-                    });
-                    return;
-                }
                 return this.onPrebuildUpdate(JSON.parse(message) as RedisPrebuildUpdate);
 
             case HeadlessUpdatesChannel:
-                const headlessTypeEnabled = await this.isRedisPubSubByTypeEnabled("prebuild-updatable");
-                if (!headlessTypeEnabled) {
-                    log.debug("[redis] Redis headless update is disabled through feature flag", {
-                        channel,
-                        message,
-                    });
-                    return;
-                }
                 return this.onHeadlessUpdate(JSON.parse(message) as RedisHeadlessUpdate);
 
             default:
@@ -241,17 +215,5 @@ export class RedisSubscriber {
                 listenersStore.delete(key);
             }
         });
-    }
-
-    private async isRedisPubSubByTypeEnabled(
-        type: "workspace-instance" | "prebuild" | "prebuild-updatable",
-    ): Promise<boolean> {
-        const enabledTypes = await getExperimentsClientForBackend().getValueAsync(
-            "enableRedisPubSubByUpdateType",
-            "none",
-            {},
-        );
-        log.debug("Enabled types in redis publisher:", enabledTypes);
-        return enabledTypes.indexOf(type) >= 0;
     }
 }
