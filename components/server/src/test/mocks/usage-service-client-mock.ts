@@ -5,80 +5,87 @@
  */
 
 import {
-    AddUsageCreditNoteResponse,
+    AddUsageCreditNoteRequest,
+    CostCenter,
     CostCenter_BillingStrategy,
-    GetBalanceResponse,
+    GetBalanceRequest,
     GetCostCenterResponse,
-    ListUsageRequest_Ordering,
-    ListUsageResponse,
-    ReconcileUsageResponse,
-    ResetUsageResponse,
+    ListUsageRequest,
     SetCostCenterResponse,
     UsageServiceClient,
 } from "@gitpod/usage-api/lib/usage/v1/usage.pb";
 import { injectable } from "inversify";
-import { CallOptions } from "nice-grpc-common";
 
 @injectable()
-export class UsageServiceClientMock implements UsageServiceClient {
-    getCostCenter(
-        request: { attributionId?: string | undefined },
-        options?: CallOptions | undefined,
-    ): Promise<GetCostCenterResponse> {
-        throw new Error("Method not implemented.");
+export class UsageServiceClientMock implements Partial<UsageServiceClient> {
+    private costCenters: Map<string, CostCenter> = new Map();
+
+    getCostCenter(request: { attributionId?: string | undefined }): Promise<GetCostCenterResponse> {
+        if (!request.attributionId) {
+            throw new Error("attributionId is required");
+        }
+        let costCenter = this.costCenters.get(request.attributionId);
+        // if we don't have one we create a new one
+        if (!costCenter) {
+            costCenter = {
+                attributionId: request.attributionId,
+                spendingLimit: 0,
+                billingStrategy: CostCenter_BillingStrategy.BILLING_STRATEGY_OTHER,
+                nextBillingTime: new Date(),
+                billingCycleStart: new Date(),
+            };
+            this.costCenters.set(request.attributionId, costCenter);
+        }
+
+        return Promise.resolve({
+            costCenter,
+        });
     }
-    setCostCenter(
-        request: {
-            costCenter?:
-                | {
-                      attributionId?: string | undefined;
-                      spendingLimit?: number | undefined;
-                      billingStrategy?: CostCenter_BillingStrategy | undefined;
-                      nextBillingTime?: Date | undefined;
-                      billingCycleStart?: Date | undefined;
-                  }
-                | undefined;
-        },
-        options?: CallOptions | undefined,
-    ): Promise<SetCostCenterResponse> {
-        throw new Error("Method not implemented.");
+    async setCostCenter(request: {
+        costCenter?:
+            | {
+                  attributionId?: string | undefined;
+                  spendingLimit?: number | undefined;
+                  billingStrategy?: CostCenter_BillingStrategy | undefined;
+                  nextBillingTime?: Date | undefined;
+                  billingCycleStart?: Date | undefined;
+              }
+            | undefined;
+    }): Promise<SetCostCenterResponse> {
+        // update an existing cost center
+        if (request.costCenter?.attributionId) {
+            const costCenter = this.costCenters.get(request.costCenter.attributionId);
+            if (costCenter) {
+                this.costCenters.set(request.costCenter.attributionId, {
+                    ...costCenter,
+                    ...request.costCenter,
+                });
+                return {
+                    costCenter,
+                };
+            }
+        }
+        throw new Error("cost center not found");
     }
-    reconcileUsage(
-        request: { from?: Date | undefined; to?: Date | undefined },
-        options?: CallOptions | undefined,
-    ): Promise<ReconcileUsageResponse> {
-        throw new Error("Method not implemented.");
+
+    async listUsage(req: ListUsageRequest) {
+        return {
+            creditsUsed: 0,
+            pagination: {
+                page: 1,
+                perPage: 10,
+                total: 30,
+                totalPages: 3,
+            },
+            usageEntries: [],
+        };
     }
-    resetUsage(request: {}, options?: CallOptions | undefined): Promise<ResetUsageResponse> {
-        throw new Error("Method not implemented.");
+    async getBalance(req: GetBalanceRequest) {
+        return {
+            credits: 0,
+        };
     }
-    listUsage(
-        request: {
-            attributionId?: string | undefined;
-            from?: Date | undefined;
-            to?: Date | undefined;
-            order?: ListUsageRequest_Ordering | undefined;
-            pagination?: { perPage?: number | undefined; page?: number | undefined } | undefined;
-        },
-        options?: CallOptions | undefined,
-    ): Promise<ListUsageResponse> {
-        throw new Error("Method not implemented.");
-    }
-    getBalance(
-        request: { attributionId?: string | undefined },
-        options?: CallOptions | undefined,
-    ): Promise<GetBalanceResponse> {
-        throw new Error("Method not implemented.");
-    }
-    addUsageCreditNote(
-        request: {
-            attributionId?: string | undefined;
-            credits?: number | undefined;
-            description?: string | undefined;
-            userId?: string | undefined;
-        },
-        options?: CallOptions | undefined,
-    ): Promise<AddUsageCreditNoteResponse> {
-        throw new Error("Method not implemented.");
+    async addUsageCreditNote(req: AddUsageCreditNoteRequest) {
+        return {};
     }
 }
