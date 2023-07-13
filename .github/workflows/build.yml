@@ -263,6 +263,35 @@ jobs:
           fi
 
           exit $RESULT
+      - name: Tag the release
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git config --global user.name $GITHUB_USER
+          git config --global user.email $GITHUB_EMAIL
+          git tag -a ${VERSION} -m "Release ${VERSION}"
+          git push origin ${VERSION}
+        env:
+          GITHUB_USER: roboquat
+          GITHUB_EMAIL: roboquat@gitpod.io
+          VERSION: ${{ needs.configuration.outputs.version }}
+      - name: Trigger release workflow in dedicated
+        if: github.ref == 'refs/heads/main'
+        run: |
+          curl -f -X POST \
+            -H "Authorization: token ${TOKEN}" \
+            -H "Accept: application/vnd.github.everest-preview+json" \
+            "https://api.github.com/repos/gitpod-io/gitpod-dedicated/dispatches" \
+            -d '{
+              "event_type": "create_release",
+              "client_payload": {
+                "env": "staging",
+                "release": "${{needs.configuration.outputs.version}}",
+                "installation_repo": "https://github.com/gitpod-io/gitpod",
+                "installation_commit": "${{github.sha}}"
+              }
+            }'
+        env:
+          TOKEN: ${{ secrets.GH_WORKFLOW_TRIGGER_PAT }}
 
   install-app:
     runs-on: ${{ needs.create-runner.outputs.label }}
