@@ -31,7 +31,7 @@ jobs:
 
           gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
           if [ -z "$(gcloud compute instances list | grep "${{ inputs.runner-label }}")" ]; then
-            // vm is gone
+            # vm is gone
             exit 0
           fi
 
