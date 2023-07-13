@@ -67,7 +67,7 @@
     "fs-extra": "^10.0.0",
     "google-protobuf": "^3.19.1",
     "inversify": "^6.0.1",
-    "1is": "^5.3.2",
+    "ioredis": "^5.3.2",
     "ioredis-mock": "^8.7.0",
     "js-yaml": "^3.10.0",
     "json-stream": "^1.0.0",
