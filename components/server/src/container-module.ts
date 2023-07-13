@@ -53,7 +53,7 @@ import { LoginCompletionHandler } from "./auth/login-completion-handler";
 import { VerificationService } from "./auth/verification-service";
 import { Authorizer } from "./authorization/authorizer";
 import { SpiceDBClient, spicedbClientFromEnv } from "./authorization/spicedb";
-import { BillingModes, BillingModesImpl } from "./billing/billing-mode";
+import { BillingModes } from "./billing/billing-mode";
 import { EntitlementService, EntitlementServiceImpl } from "./billing/entitlement-service";
 import { EntitlementServiceUBP } from "./billing/entitlement-service-ubp";
 import { BitbucketAppSupport } from "./bitbucket/bitbucket-app-support";
@@ -345,7 +345,7 @@ export const productionContainerModule = new ContainerModule(
         bind(EntitlementServiceUBP).toSelf().inSingletonScope();
         bind(EntitlementServiceImpl).toSelf().inSingletonScope();
         bind(EntitlementService).to(EntitlementServiceImpl).inSingletonScope();
-        bind(BillingModes).to(BillingModesImpl).inSingletonScope();
+        bind(BillingModes).toSelf().inSingletonScope();
 
         // Periodic jobs
         bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();

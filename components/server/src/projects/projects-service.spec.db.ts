@@ -16,6 +16,7 @@ import { OrganizationService } from "../orgs/organization-service";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { ProjectsService } from "./projects-service";
 import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { SpiceDBAuthorizer } from "../authorization/spicedb-authorizer";
 
 const expect = chai.expect;
 
@@ -40,6 +41,8 @@ describe("ProjectsService", async () => {
         const orgService = container.get(OrganizationService);
         org = await orgService.createOrganization(owner.id, "my-org");
 
+        const a = container.get(SpiceDBAuthorizer);
+        await a.logRelationships();
         // create and add a member
         member = await userDB.newUser();
         const invite = await orgService.getOrCreateInvite(owner.id, org.id);
