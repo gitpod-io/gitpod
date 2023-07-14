@@ -148,23 +148,18 @@ jobs:
 
           printf -v start_time '%(%s)T'
 
-          export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-          export HOME="/home/gitpod"
-          export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
-
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
 
           leeway run dev/preview/previewctl:install
 
           echo "Setting up access to core-dev and harvester"
-          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          previewctl get-credentials --gcp-service-account ${{ steps.auth.outputs.credentials_file_path }}
 
-          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account ${{ steps.auth.outputs.credentials_file_path }}
 
           # start integration test
           args=()
-          args+=( "-kubeconfig=/home/gitpod/.kube/config" )
+          args+=( "-kubeconfig=$HOME/.kube/config" )
           args+=( "-namespace=default" )
           [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
           args+=( "-timeout=180m" )

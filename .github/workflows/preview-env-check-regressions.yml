@@ -100,12 +100,7 @@ jobs:
               run: |
                   set -euo pipefail
 
-                  export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-                  export HOME="/home/gitpod"
-                  export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
-
-                  echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-                  gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+                  gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
 
                   leeway run dev/preview/previewctl:install
 
@@ -116,7 +111,7 @@ jobs:
 
                   # start integration test
                   args=()
-                  args+=( "-kubeconfig=/home/gitpod/.kube/config" )
+                  args+=( "-kubeconfig=$HOME/.kube/config" )
                   args+=( "-namespace=default" )
                   [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
                   args+=( "-timeout=60m" )
