@@ -42,6 +42,7 @@ jobs:
       pr_no_diff_skip: ${{ steps.pr-diff.outputs.pr_no_diff_skip }}
       with_werft: ${{ steps.output.outputs.with-werft }}
       with_integration_tests: ${{ steps.output.outputs.with_integration_tests }}
+      with_monitoring: ${{ contains( steps.pr-details.outputs.pr_body, '[x] with-monitoring') }}
       latest_ide_version: ${{ contains( steps.pr-details.outputs.pr_body, '[x] latest-ide-version=true') }}
       leeway_cache_bucket: ${{ steps.output.outputs.leeway_cache_bucket }}
       pr_number: ${{ steps.pr-details.outputs.number }}
@@ -372,6 +373,7 @@ jobs:
     name: "Install Monitoring Satellite"
     needs: [infrastructure, build-previewctl, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
+    if: needs.configuration.outputs.with_monitoring == 'true'
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-monitoring
       cancel-in-progress: true
