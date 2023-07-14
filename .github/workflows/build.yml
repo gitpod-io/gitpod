@@ -15,6 +15,9 @@ jobs:
   create-runner:
     uses: ./.github/workflows/create_runner.yml
     secrets: inherit
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}
+      cancel-in-progress: false
 
   configuration:
     name: Configure job parameters
