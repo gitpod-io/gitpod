@@ -15,15 +15,17 @@ jobs:
   create-runner:
     uses: ./.github/workflows/create_runner.yml
     secrets: inherit
+    concurrency:
+      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-create-runner
+      cancel-in-progress: false
 
   configuration:
     name: Configure job parameters
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     concurrency:
-      # github.head_ref is set by a pull_request event - contains the name of the source branch of the PR
-      # github.ref_name is set if the event is NOT a pull_request - it contains only the branch name.
-      group: ${{ github.head_ref || github.ref_name }}-configuration
+      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-configuration
+      cancel-in-progress: true
     outputs:
       is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
@@ -40,6 +42,7 @@ jobs:
       pr_no_diff_skip: ${{ steps.pr-diff.outputs.pr_no_diff_skip }}
       with_werft: ${{ steps.output.outputs.with-werft }}
       with_integration_tests: ${{ steps.output.outputs.with_integration_tests }}
+      with_monitoring: ${{ contains( steps.pr-details.outputs.pr_body, '[x] with-monitoring') }}
       latest_ide_version: ${{ contains( steps.pr-details.outputs.pr_body, '[x] latest-ide-version=true') }}
       leeway_cache_bucket: ${{ steps.output.outputs.leeway_cache_bucket }}
       pr_number: ${{ steps.pr-details.outputs.number }}
@@ -87,7 +90,7 @@ jobs:
       (needs.configuration.outputs.preview_enable == 'true')
     needs: [configuration, create-runner]
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-build-previewctl
+      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-build-previewctl
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
@@ -115,7 +118,7 @@ jobs:
       (needs.configuration.outputs.is_main_branch != 'true')
     runs-on: ${{ needs.create-runner.outputs.label }}
     concurrency:
-      group: ${{ github.head_ref || github.ref_name }}-infrastructure
+      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-infrastructure
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
@@ -135,9 +138,7 @@ jobs:
     needs: [configuration, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     concurrency:
-      group: ${{ github.head_ref || github.ref_name }}-build-gitpod
-      # For the main branch we always want the build job to run to completion
-      # For other branches we only care about the "latest" version, so it is fine to cancel in-progress builds
+      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-build-gitpod
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     services:
       mysql:
@@ -329,8 +330,8 @@ jobs:
       - create-runner
     runs-on: ${{ needs.create-runner.outputs.label }}
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-install
-      cancel-in-progress: true
+      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-install
+      cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     steps:
       - uses: actions/checkout@v3
       - name: Deploy Gitpod to the preview environment
@@ -372,8 +373,9 @@ jobs:
     name: "Install Monitoring Satellite"
     needs: [infrastructure, build-previewctl, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
+    if: needs.configuration.outputs.with_monitoring == 'true'
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-monitoring
+      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-monitoring
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
@@ -398,7 +400,7 @@ jobs:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
     if: needs.configuration.outputs.with_integration_tests != ''
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}-integration-test
+      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-integration-test
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
@@ -444,3 +446,6 @@ jobs:
     secrets: inherit
     with:
       runner-label: ${{ needs.create-runner.outputs.label }}
+    concurrency:
+      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-delete-runner
+      cancel-in-progress: false

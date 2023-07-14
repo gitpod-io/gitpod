@@ -61,6 +61,7 @@ gitpod:summary
       If enabled this will create the environment on GCE infra
 - [ ] with-integration-tests=all
       Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`
+- [ ] with-monitoring
 </details>
 
 /hold
