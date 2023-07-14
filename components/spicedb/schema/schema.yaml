@@ -9,11 +9,11 @@ schema: |-
   definition installation {
 
     // only users that are not owned by an org are considered installation-level users
-    relation user: user
+    relation member: user
     relation admin: user
 
     // orgs can only be created by installation-level users
-    permission create_organization = user
+    permission create_organization = member + admin
 
   }
 
@@ -33,7 +33,7 @@ schema: |-
     permission write_info = owner + installation->admin
     permission delete = owner + installation->admin
 
-    permission read_settings = owner + installation->admin
+    permission read_settings = member + owner + installation->admin
     permission write_settings = owner + installation->admin
 
     // Operations on Organization's Members
@@ -64,14 +64,14 @@ schema: |-
     //  * the project has granted access to everyone in an organization
     relation viewer: user | organization#member
 
-    permission write_info = org->owner + editor + org->installation_admin
-    permission read_info = write_info + viewer + org->member + org->installation_admin
-    permission delete = org->owner + editor + org->installation_admin
+    permission read_info = viewer + org->member + editor + org->owner + org->installation_admin
+    permission write_info = editor + org->owner + org->installation_admin
+    permission delete = editor + org->owner + org->installation_admin
   }
 # relationships to be used for assertions & validation
 relationships: |-
   // we have one installation
-  installation:installation_0#user@user:user_0
+  installation:installation_0#member@user:user_0
   installation:installation_0#admin@user:user_admin
 
   // We have an organization org_1, which has some members & owners
@@ -100,8 +100,8 @@ relationships: |-
 # validation should assert that a particular relation exists between an entity, and a subject
 # validations are not used to assert that a permission exists
 validation:
-  installation:installation_0#user:
-    - "[user:user_0] is <installation:installation_0#user>"
+  installation:installation_0#member:
+    - "[user:user_0] is <installation:installation_0#member>"
   installation:installation_0#admin:
     - "[user:user_admin] is <installation:installation_0#admin>"
   organization:org_1#member:
@@ -147,6 +147,8 @@ assertions:
     - organization:org_1#delete@user:user_admin
     - organization:org_1#write_settings@user:user_admin
     - organization:org_1#write_git_provider@user:user_admin
+    # installation admin can create an org
+    - installation:installation_0#create_organization@user:user_admin
   assertFalse:
     # user 10 cannot access project_1
     - project:project_1#read_info@user:user_10
@@ -166,5 +168,3 @@ assertions:
     - organization:org_1#delete@user:user_1
     # org members can not delete project
     - project:project_1#delete@user:user_1
-    # installation admin can not create an org
-    - installation:installation_0#create_organization@user:user_admin

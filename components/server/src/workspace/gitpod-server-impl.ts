@@ -2845,7 +2845,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         }
 
         await this.guardTeamOperation(teamId, "update", "write_members");
-        await this.organizationService.setOrganizationMemberRole(requestor.id, teamId, userId, role);
+        await this.organizationService.addOrUpdateMember(requestor.id, teamId, userId, role);
     }
 
     public async removeTeamMember(ctx: TraceContext, orgID: string, userId: string): Promise<void> {
@@ -3497,7 +3497,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             { teamId, userId: memberId, role },
             Permission.ADMIN_WORKSPACES,
         );
-        return this.organizationService.setOrganizationMemberRole(user.id, teamId, memberId, role);
+        return this.organizationService.addOrUpdateMember(user.id, teamId, memberId, role);
     }
 
     async getOwnAuthProviders(ctx: TraceContext): Promise<AuthProviderEntry[]> {
