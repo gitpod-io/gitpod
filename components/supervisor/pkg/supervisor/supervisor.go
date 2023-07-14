@@ -5,6 +5,7 @@
 package supervisor
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/rsa"
@@ -22,6 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
@@ -126,6 +128,8 @@ const (
 const (
 	// KindGit marks any kind of Git access token.
 	KindGit = "git"
+	// KindGitpod marks tokens that provide access to the Gitpod server API.
+	KindGitpod = "gitpod"
 )
 
 type ShutdownReason int16
@@ -372,6 +376,11 @@ func Run(options ...RunOption) {
 		// We need to checkout dotfiles first, because they may be changing the path which affects the IDE.
 		// TODO(cw): provide better feedback if the IDE start fails because of the dotfiles (provide any feedback at all).
 		installDotfiles(ctx, cfg, tokenService)
+		err := downloadShellHistory("bash", ".bash_history", cfg, tokenService)
+		if err != nil {
+			log.WithError(err).Error("failed to download bash history")
+		}
+
 	}
 
 	var ideWG sync.WaitGroup
@@ -470,6 +479,15 @@ func Run(options ...RunOption) {
 	terminalShutdownCtx, cancelTermination := context.WithTimeout(context.Background(), cfg.GetTerminationGracePeriod())
 	defer cancelTermination()
 	cancel()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		err := uploadShellHistory("bash", ".bash_history", cfg, tokenService)
+		if err != nil {
+			log.WithError(err).Error("failed to upload shell history")
+			return
+		}
+	}()
 	ideWG.Wait()
 	// terminate all terminal processes once the IDE is gone
 	termMux.Close(terminalShutdownCtx)
@@ -1007,7 +1025,6 @@ func buildChildProcEnv(cfg *Config, envvars []string, runGP bool) []string {
 	}
 
 	if _, ok := envs["HISTFILE"]; !ok {
-		envs["HISTFILE"] = "/workspace/.gitpod/.shell_history"
 		envs["PROMPT_COMMAND"] = "history -a"
 	}
 
@@ -1050,6 +1067,103 @@ func downloadEnvvarOTS(url string) (res map[string]string, err error) {
 		res[e.Name] = e.Value
 	}
 	return res, nil
+}
+
+func downloadShellHistory(shell, target string, cfg *Config, tknsrv *InMemoryTokenService) (err error) {
+	_, host, err := cfg.GitpodAPIEndpoint()
+	if err != nil {
+		return err
+	}
+	tknres, err := tknsrv.GetToken(context.Background(), &api.GetTokenRequest{
+		Kind: KindGitpod,
+		Host: host,
+		Scope: []string{
+			"function:accessShellHistoryStorage",
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	uri := fmt.Sprintf("%s/shell-history/v1/%s", cfg.GitpodHost, shell)
+	req, err := http.NewRequest(http.MethodGet, uri, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tknres.Token))
+	req.Header.Set("Content-type", "text/plain")
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+	if resp.StatusCode == 404 {
+		return nil
+	}
+	if resp.StatusCode != 200 {
+		return xerrors.Errorf("cannot download shell history, status: %d", resp.StatusCode)
+	}
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	p := path.Join("/home/gitpod/", target)
+	err = os.WriteFile(p, content, os.ModeAppend|0600)
+	if err != nil {
+		return err
+	}
+	err = os.Chown(p, gitpodUID, gitpodGID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func uploadShellHistory(shell string, source string, cfg *Config, tknsrv *InMemoryTokenService) (err error) {
+	p := path.Join("/home/gitpod/", source)
+	content, err := ioutil.ReadFile(p)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+	_, host, err := cfg.GitpodAPIEndpoint()
+	if err != nil {
+		return err
+	}
+	tknres, err := tknsrv.GetToken(context.Background(), &api.GetTokenRequest{
+		Kind: KindGitpod,
+		Host: host,
+		Scope: []string{
+			"function:accessShellHistoryStorage",
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	uri := fmt.Sprintf("%s/shell-history/v1/%s", cfg.GitpodHost, shell)
+	req, err := http.NewRequest(http.MethodPost, uri, bytes.NewReader(content))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tknres.Token))
+	req.Header.Set("Content-type", "text/plain")
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return xerrors.Errorf("cannot upload shell history, status: %d", resp.StatusCode)
+	}
+	return nil
 }
 
 func runIDEReadinessProbe(cfg *Config, ideConfig *IDEConfig, ide IDEKind) (desktopIDEStatus *DesktopIDEStatus) {

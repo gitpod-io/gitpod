@@ -22,7 +22,6 @@ func TestBuildChildProcEnv(t *testing.T) {
 			"HOME=/home/gitpod",
 			"USER=gitpod",
 			"BROWSER=/.supervisor/browser.sh",
-			"HISTFILE=/workspace/.gitpod/.shell_history",
 			"PROMPT_COMMAND=history -a",
 		)
 	}
@@ -94,7 +93,6 @@ func TestBuildChildProcEnv(t *testing.T) {
 			Expectation: []string{
 				"HOME=/home/gitpod",
 				"BROWSER=/.supervisor/browser.sh",
-				"HISTFILE=/workspace/.gitpod/.shell_history",
 				"PROMPT_COMMAND=history -a", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod", "foo=bar"},
 		},
 		{
@@ -104,7 +102,6 @@ func TestBuildChildProcEnv(t *testing.T) {
 			Expectation: []string{
 				"HOME=/home/gitpod",
 				"BROWSER=/.supervisor/browser.sh",
-				"HISTFILE=/workspace/.gitpod/.shell_history",
 				"PROMPT_COMMAND=history -a", "SUPERVISOR_ADDR=localhost:8080", "USER=gitpod"},
 		},
 	}

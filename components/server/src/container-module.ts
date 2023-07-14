@@ -131,6 +131,7 @@ import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { OrganizationService } from "./orgs/organization-service";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { Redis } from "ioredis";
+import { ShellHistoryService } from "./shell-history-sync/shell-history-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -245,6 +246,8 @@ export const productionContainerModule = new ContainerModule(
         bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();
 
         bind(CodeSyncService).toSelf().inSingletonScope();
+
+        bind(ShellHistoryService).toSelf().inSingletonScope();
 
         bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 

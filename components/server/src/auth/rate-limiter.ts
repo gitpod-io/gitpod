@@ -9,10 +9,12 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 export const accessCodeSyncStorage = "accessCodeSyncStorage";
+export const accessShellHistoryStorage = "accessShellHistoryStorage";
 export const accessHeadlessLogs = "accessHeadlessLogs";
 type GitpodServerMethodType =
     | keyof Omit<GitpodServer, "dispose" | "setClient">
     | typeof accessCodeSyncStorage
+    | typeof accessShellHistoryStorage
     | typeof accessHeadlessLogs;
 type GroupKey = "default" | "startWorkspace" | "createWorkspace" | "phoneVerification" | "sendHeartBeat";
 type GroupsConfig = {
@@ -166,6 +168,7 @@ const defaultFunctions: FunctionsConfig = {
     adminSaveBlockedEmailDomain: { group: "default", points: 1 },
 
     accessCodeSyncStorage: { group: "default", points: 1 },
+    accessShellHistoryStorage: { group: "default", points: 1 },
 
     accessHeadlessLogs: { group: "default", points: 1 },
 
