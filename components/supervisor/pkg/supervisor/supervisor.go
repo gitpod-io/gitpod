@@ -407,7 +407,7 @@ func Run(options ...RunOption) {
 
 	if !opts.RunGP {
 		wg.Add(1)
-		go socketActivationForDocker(ctx, &wg, termMux, cfg, telemetry, notificationService)
+		go socketActivationForDocker(ctx, &wg, termMux, cfg, telemetry, notificationService, cstate)
 	}
 
 	if cfg.isHeadless() {

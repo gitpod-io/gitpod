@@ -44,11 +44,18 @@ var (
 	failedForRetryError = errors.New("failed for retry start docker-up")
 )
 
-func socketActivationForDocker(parentCtx context.Context, wg *sync.WaitGroup, term *terminal.Mux, cfg *Config, telemetry analytics.Writer, notifications *NotificationService) {
+func socketActivationForDocker(parentCtx context.Context, wg *sync.WaitGroup, term *terminal.Mux, cfg *Config, telemetry analytics.Writer, notifications *NotificationService, cstate ContentState) {
 	defer wg.Done()
 
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
+
+	// only start activation if content is ready
+	<-cstate.ContentReady()
+
+	if ctx.Err() != nil {
+		return
+	}
 
 	logFile, err := openDockerUpLogFile()
 	if err != nil {
