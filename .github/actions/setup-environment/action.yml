@@ -28,12 +28,8 @@ runs:
       run: |
         gcloud auth configure-docker eu.gcr.io --quiet
 
-        PREVIEW_ENV_DEV_SA_KEY_PATH="$GITHUB_WORKSPACE/.config/gcloud/preview-environment-dev-sa.json"
-        mkdir -p "$(dirname "$PREVIEW_ENV_DEV_SA_KEY_PATH")"
-        echo "${{ inputs.sa_key }}" > "$PREVIEW_ENV_DEV_SA_KEY_PATH"
-
         {
             echo "LEEWAY_SEGMENT_KEY=${{ inputs.leeway_segment_key }}"
             echo "LEEWAY_WORKSPACE_ROOT=$GITHUB_WORKSPACE"
-            echo "PREVIEW_ENV_DEV_SA_KEY_PATH=$PREVIEW_ENV_DEV_SA_KEY_PATH"
+            echo "PREVIEW_ENV_DEV_SA_KEY_PATH=${{ steps.auth.outputs.credentials_file_path }}"
         }  >> "$GITHUB_ENV"
