@@ -4,7 +4,7 @@
 
 FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:base
 
-ENV TRIGGER_REBUILD 40
+ENV TRIGGER_REBUILD 41
 
 USER root
 
@@ -260,10 +260,6 @@ COPY dev-kubecdl--app/kubecdl dev-gpctl--app/gpctl /usr/bin/
 RUN bash -c "echo . \<\(gpctl completion bash\) >> ~/.bashrc"
 
 ENV PATH=$PATH:/workspace/bin
-
-# Setting the environment variable here so that it will be accessible to all tasks and
-# terminal sessions in Gitpod workspaces.
-ENV PREVIEW_ENV_DEV_SA_KEY_PATH=/home/gitpod/.config/gcloud/preview-environment-dev-sa.json
 
 # So we can parse the report.html output by leeway, and remove the output produced by this image build
 # why? it's too verbose, exceeding the Github Actions summary limit
