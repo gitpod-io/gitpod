@@ -18,11 +18,14 @@ jobs:
     needs: [create-runner]
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-environment
+        with:
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Delete preview environment
         uses: ./.github/actions/delete-preview
         with:
           name: ${{ github.event.inputs.name || github.event.ref}}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
 
   delete-runner:
     if: always()
