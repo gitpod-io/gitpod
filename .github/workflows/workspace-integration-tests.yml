@@ -94,12 +94,15 @@ jobs:
       group: ${{ needs.configuration.outputs.name }}-infrastructure
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-environment
+        with:
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: gce
           large_vm: true
       - name: Deploy Gitpod to the preview environment
@@ -108,7 +111,6 @@ jobs:
         uses: ./.github/actions/deploy-gitpod
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           version: ${{ needs.configuration.outputs.version}}
 
   check:
@@ -227,11 +229,14 @@ jobs:
       image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-environment
+        with:
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Delete preview environment
         uses: ./.github/actions/delete-preview
         with:
           name: ${{ needs.configuration.outputs.name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
 
   delete-runner:
     if: always()

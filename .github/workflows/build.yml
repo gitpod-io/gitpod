@@ -127,7 +127,6 @@ jobs:
         uses: ./.github/actions/preview-create
         with:
           name: ${{ github.head_ref || github.ref_name }}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           large_vm: ${{ needs.configuration.outputs.with_large_vm }}
@@ -340,7 +339,6 @@ jobs:
         with:
           name: ${{ github.head_ref || github.ref_name }}
           version: ${{needs.configuration.outputs.version}}
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           with_dedicated_emu: ${{needs.configuration.outputs.with_dedicated_emulation}}
           analytics: ${{needs.configuration.outputs.analytics}}
@@ -379,11 +377,14 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-environment
+        with:
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Deploy monitoring satellite to the preview environment
         id: deploy-monitoring-satellite
         uses: ./.github/actions/deploy-monitoring-satellite
         with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
 
   integration-test:
