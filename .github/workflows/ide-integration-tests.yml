@@ -128,7 +128,7 @@ jobs:
 
           # start integration test
           args=()
-          args+=( "-kubeconfig=/home/gitpod/.kube/config" )
+          args+=( "-kubeconfig=$HOME/.kube/config" )
           args+=( "-namespace=default" )
           [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
           args+=( "-timeout=60m" )

@@ -16,7 +16,6 @@ EXCLUDE_DOCKER_IO="${EXCLUDE_DOCKER_IO:-"false"}"
 TMP=$(mktemp -d)
 echo "workdir: $TMP"
 
-HOME="/home/gitpod"
 BIN="$HOME/bin"
 mkdir -p "$BIN"
 
