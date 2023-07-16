@@ -1,4 +1,4 @@
-FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
+FROM eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-token-gha.13623
 
 USER root
 ENV OCI_TOOL_VERSION="0.2.0"
