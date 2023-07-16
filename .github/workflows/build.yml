@@ -4,12 +4,14 @@ pull_request:
   push:
   workflow_dispatch:
     inputs:
-      recreate_vm:
+      recreate_vm: 
         required: true
         type: string
         description: "Whether to recreate the VM"
         default: "false"
-
+        
+      build/generate/recreate: new yml file "true"
+      secret: create if needed
 jobs:
   create-runner:
     uses: ./.github/workflows/create_runner.yml
