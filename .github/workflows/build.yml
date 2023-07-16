@@ -135,7 +135,7 @@ jobs:
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           large_vm: ${{ needs.configuration.outputs.with_large_vm }}
           recreate_vm: ${{ inputs.recreate_vm }}
-          sa_key: ${{ steps.auth.outputs.credentials_file_path }}
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
   build-gitpod:
     name: Build Gitpod
@@ -352,8 +352,6 @@ jobs:
           with_dedicated_emu: ${{needs.configuration.outputs.with_dedicated_emulation}}
           analytics: ${{needs.configuration.outputs.analytics}}
           workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
-          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-          sa_key: ${{ steps.auth.outputs.credentials_file_path }}
       - uses: actions/github-script@v6
         if: needs.configuration.outputs.pr_number != '' && contains(needs.configuration.outputs.pr_body, 'gitpod:summary')
         with:
@@ -397,8 +395,6 @@ jobs:
         uses: ./.github/actions/deploy-monitoring-satellite
         with:
           previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
-          sa_key: ${{ steps.auth.outputs.credentials_file_path }}
-          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
   integration-test:
     name: "Run integration test"
     needs:

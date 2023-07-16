@@ -58,5 +58,5 @@ scripts:
       fi
 
       echo "Downloading previewctl for $PREVIEWCTL_IMAGE"
-      oci-tool fetch file -o $HOME/bin/previewctl --platform=linux-amd64 "$PREVIEWCTL_IMAGE" app/previewctl
-      chmod +x $HOME/bin/previewctl
+      sudo oci-tool fetch file -o /usr/local/bin/previewctl --platform=linux-amd64 "$PREVIEWCTL_IMAGE" app/previewctl
+      sudo chmod +x /usr/local/bin/previewctl
