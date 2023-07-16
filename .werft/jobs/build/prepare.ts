@@ -49,7 +49,6 @@ async function createVM(werft: Werft, config: JobConfig) {
         "GOOGLE_APPLICATION_CREDENTIALS": GCLOUD_SERVICE_ACCOUNT_PATH,
         "TF_VAR_cert_issuer": config.certIssuer,
         "TF_VAR_preview_name": config.previewEnvironment.destname,
-        "TF_VAR_with_large_vm": `${config.withLargeVM}`,
         "TF_VAR_infra_provider": `${infra}`,
     }
 

@@ -23,7 +23,7 @@ resource "google_compute_instance" "default" {
   # allowing us to e.g. run more e2e tests in parallel without
   # running into node disk pressure.
   dynamic "scratch_disk" {
-    for_each = var.with_large_vm == true ? [1, 2] : []
+    for_each = [1, 2]
     content {
       interface = "NVME"
     }
@@ -100,5 +100,5 @@ locals {
     ssh_authorized_keys = var.ssh_key
   })
 
-  machine_type = var.with_large_vm ? "n2d-standard-32" : var.vm_type
+  machine_type = "n2d-standard-16"
 }

@@ -63,8 +63,6 @@ jobs:
                       * with-preview - whether to create a preview environment for this PR
                       -->
                       - [x] /werft with-preview
-                      - [x] /werft with-large-vm
-                      - [x] /werft with-gce-vm
                       - [x] with-integration-tests=jetbrains
                       - [x] latest-ide-version=false
 

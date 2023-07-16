@@ -30,10 +30,8 @@ jobs:
       is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
       preview_enable: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-preview') }}
-      preview_infra_provider: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-gce-vm') && 'gce' || 'harvester' }}
       build_no_cache: ${{ contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
       build_no_test: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft no-test') }}
-      with_large_vm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft with-large-vm') }}
       publish_to_npm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-npm') }}
       publish_to_jbmp: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft publish-to-jb-marketplace') }}
       with_dedicated_emulation: ${{ contains( steps.pr-details.outputs.pr_body, '[X] with-dedicated-emulation') }}
@@ -104,8 +102,6 @@ jobs:
         uses: ./.github/actions/preview-create
         with:
           name: ${{ github.head_ref || github.ref_name }}
-          infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
-          large_vm: ${{ needs.configuration.outputs.with_large_vm }}
           recreate_vm: ${{ inputs.recreate_vm }}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
@@ -397,8 +393,6 @@ jobs:
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
         run: |
-          leeway run dev/preview/previewctl:install
-
           echo "Setting up access to core-dev and harvester"
           previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
           previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"

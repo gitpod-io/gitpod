@@ -53,9 +53,3 @@ variable "gcp_project_dns" {
   default     = "gitpod-core-dev"
   description = "The GCP project in which to create DNS records"
 }
-
-variable "with_large_vm" {
-  type        = bool
-  default     = false
-  description = "Flag to decide whether to use a larger VM"
-}

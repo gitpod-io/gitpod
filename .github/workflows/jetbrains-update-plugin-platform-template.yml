@@ -102,8 +102,6 @@ jobs:
                       ## Werft options:
                       - [x] /werft publish-to-jb-marketplace
                       - [x] /werft with-preview
-                      - [x] /werft with-large-vm
-                      - [x] /werft with-gce-vm
                       - [x] with-integration-tests=jetbrains
                       - [x] latest-ide-version=${{ contains(inputs.pluginId, 'latest') }}
 
@@ -145,8 +143,6 @@ jobs:
 
                       ## Werft options:
                       - [x] /werft with-preview
-                      - [x] /werft with-large-vm
-                      - [x] /werft with-gce-vm
                       - [x] with-integration-tests=jetbrains
                       - [x] latest-ide-version=${{ contains(inputs.pluginId, 'latest') }}
 

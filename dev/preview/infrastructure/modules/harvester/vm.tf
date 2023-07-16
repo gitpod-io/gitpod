@@ -100,6 +100,6 @@ locals {
     })
   })
 
-  vm_cpu    = var.with_large_vm ? 12 : 6
-  vm_memory = var.with_large_vm ? "24Gi" : "12Gi"
+  vm_cpu    = 12
+  vm_memory = "24Gi"
 }

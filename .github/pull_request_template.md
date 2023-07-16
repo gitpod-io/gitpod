@@ -56,9 +56,6 @@ gitpod:summary
 - [ ] /werft with-local-preview
       If enabled this will build `install/preview`
 - [ ] /werft with-preview
-- [ ] /werft with-large-vm
-- [ ] /werft with-gce-vm
-      If enabled this will create the environment on GCE infra
 - [ ] with-integration-tests=all
       Valid options are `all`, `workspace`, `webapp`, `ide`, `jetbrains`, `vscode`, `ssh`
 - [ ] with-monitoring

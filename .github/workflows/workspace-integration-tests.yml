@@ -103,7 +103,6 @@ jobs:
         uses: ./.github/actions/preview-create
         with:
           name: ${{ needs.configuration.outputs.name }}
-          infrastructure_provider: gce
           large_vm: true
       - name: Deploy Gitpod to the preview environment
         if: github.event.inputs.skip_deploy != 'true'
@@ -151,8 +150,6 @@ jobs:
           printf -v start_time '%(%s)T'
 
           gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
-
-          leeway run dev/preview/previewctl:install
 
           echo "Setting up access to core-dev and harvester"
           previewctl get-credentials --gcp-service-account ${{ steps.auth.outputs.credentials_file_path }}

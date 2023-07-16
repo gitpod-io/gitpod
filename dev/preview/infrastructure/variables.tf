@@ -1,9 +1,3 @@
-variable "infra_provider" {
-  type        = string
-  default     = "harvester"
-  description = "the provider for the infra: [harvester, gce]"
-}
-
 variable "preview_name" {
   type        = string
   description = "The preview environment's name"
@@ -54,10 +48,4 @@ variable "gce_use_spot" {
   type        = bool
   default     = true
   description = "Flag to decide whether to use spot instances"
-}
-
-variable "with_large_vm" {
-  type        = bool
-  default     = false
-  description = "Flag to decide whether to use a larger VM"
 }

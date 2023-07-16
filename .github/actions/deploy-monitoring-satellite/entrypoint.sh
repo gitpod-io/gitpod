@@ -9,8 +9,6 @@ mkdir "$HOME/bin"
 
 gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
-leeway run dev/preview/previewctl:download
-
 echo "previewctl get-credentials"
 previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 

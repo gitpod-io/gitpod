@@ -33,8 +33,6 @@ jobs:
 
           gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
 
-          leeway run dev/preview/previewctl:install
-
           previewctl get-credentials --gcp-service-account ${{ steps.auth.outputs.credentials_file_path }}
           previewctl list stale | jq --null-input --raw-input --compact-output '[inputs | select(length>0)]' > /tmp/stale-json
           echo "names=$(cat /tmp/stale-json)" >> $GITHUB_OUTPUT

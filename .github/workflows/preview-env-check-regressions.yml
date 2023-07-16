@@ -12,10 +12,6 @@ on:
       version:
         required: true
         description: "The version of Gitpod to install"
-      infrastructure_provider:
-        description: "The infrastructure provider to use. Valid options: harvester, gcp"
-        required: false
-        default: gcp
 
 jobs:
   create-runner:
@@ -30,7 +26,6 @@ jobs:
       skip: ${{ steps.configuration.outputs.skip }}
       name: ${{ steps.configuration.outputs.name }}
       version: ${{ steps.configuration.outputs.version }}
-      infrastructure_provider: ${{ steps.configuration.outputs.infrastructure_provider }}
     steps:
       - name: "Set outputs"
         id: configuration
@@ -40,7 +35,6 @@ jobs:
               {
                   echo "version=${{ github.event.inputs.version }}"
                   echo "name=${{ github.event.inputs.name }}"
-                  echo "infrastructure_provider=${{ github.event.inputs.infrastructure_provider }}"
                   echo "skip=false"
               } >> $GITHUB_OUTPUT
           else
@@ -48,7 +42,6 @@ jobs:
               {
                   echo "version=main-gha.${{ github.event.workflow_run.run_number }}"
                   echo "name=preview-regression-check-main-${{ github.run_id }}-${{ github.run_attempt }}"
-                  echo "infrastructure_provider=harvester"
                   echo "skip=${{ github.event.workflow_run.conclusion == 'failure' }}"
               } >> $GITHUB_OUTPUT
           fi
@@ -70,7 +63,6 @@ jobs:
         uses: ./.github/actions/preview-create
         with:
           name: ${{ needs.configuration.outputs.name }}
-          infrastructure_provider: ${{ needs.configuration.outputs.infrastructure_provider }}
           large_vm: false
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
@@ -103,8 +95,6 @@ jobs:
           set -euo pipefail
 
           gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
-
-          leeway run dev/preview/previewctl:install
 
           echo "Setting up access to core-dev and harvester"
           previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
