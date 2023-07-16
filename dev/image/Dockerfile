@@ -264,3 +264,12 @@ ENV PATH=$PATH:/workspace/bin
 # So we can parse the report.html output by leeway, and remove the output produced by this image build
 # why? it's too verbose, exceeding the Github Actions summary limit
 RUN go install github.com/ericchiang/pup@v0.4.0
+
+ENV OCI_TOOL_VERSION="0.2.0"
+RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v${OCI_TOOL_VERSION}/oci-tool_${OCI_TOOL_VERSION}_linux_amd64.tar.gz | sudo tar xz -C /usr/local/bin && sudo chmod +x /usr/local/bin/oci-tool
+
+# Install the latest previewctl available in the container registry
+# here the trade-off is to build previewctl in CI all the time or once when previewctl changes, rebuilding this image
+ENV PREVIEWCTL_IMAGE=eu.gcr.io/gitpod-core-dev/build/previewctl:aledbf-token-gha.13622
+RUN sudo oci-tool fetch file -o /usr/local/bin/previewctl --platform=linux-amd64 "$PREVIEWCTL_IMAGE" app/previewctl \
+    && sudo chmod +x /usr/local/bin/previewctl
