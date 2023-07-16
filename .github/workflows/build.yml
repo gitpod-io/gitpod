@@ -1,6 +1,5 @@
-name: Build
-on:
-  pull_request:
+
+pull_request:
     types: [opened, edited]
   push:
   workflow_dispatch:
