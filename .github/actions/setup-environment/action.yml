@@ -22,14 +22,26 @@ runs:
       shell: bash
       run: |
         gcloud auth activate-service-account --key-file ${{ steps.auth.outputs.credentials_file_path }}
-    - id: env-vars
-      name: configure env variables
+        gcloud auth configure-docker eu.gcr.io --quiet
+    - id: create-env-file
+      name: Create .env file
       shell: bash
       run: |
-        gcloud auth configure-docker eu.gcr.io --quiet
+        ENV_DIRECTORY=$(mktemp -d)
 
-        {
-            echo "LEEWAY_SEGMENT_KEY=${{ inputs.leeway_segment_key }}"
-            echo "LEEWAY_WORKSPACE_ROOT=$GITHUB_WORKSPACE"
-            echo "PREVIEW_ENV_DEV_SA_KEY_PATH=${{ steps.auth.outputs.credentials_file_path }}"
-        }  >> "$GITHUB_ENV"
+        cp "${{ steps.auth.outputs.credentials_file_path }}" "$ENV_DIRECTORY"
+
+        echo "creating .env file"
+        cat <<EOF >$ENV_DIRECTORY/.env
+        LEEWAY_SEGMENT_KEY=${{ inputs.leeway_segment_key }}
+        LEEWAY_WORKSPACE_ROOT=$GITHUB_WORKSPACE
+        PREVIEW_ENV_DEV_SA_KEY_PATH=$ENV_DIRECTORY/$(basename ${{ steps.auth.outputs.credentials_file_path }})
+        EOF
+
+        echo "ENV_DIRECTORY=$ENV_DIRECTORY" >> "$GITHUB_ENV"
+    - id: load-env-file
+      name: Load .env file
+      uses: xom9ikk/dotenv@v2
+      with:
+        path: ${{ env.ENV_DIRECTORY }}
+        load-mode: strict
