@@ -30,7 +30,7 @@ jobs:
       is_main_branch: ${{ (github.head_ref || github.ref) == 'refs/heads/main' }}
       version: ${{ steps.branches.outputs.sanitized-branch-name }}-gha.${{github.run_number}}
       preview_enable: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-preview') }}
-      preview_infra_provider: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft with-gce-vm') && 'gce' || 'harvester' }}
+      preview_infra_provider: 'gce'
       build_no_cache: ${{ contains( steps.pr-details.outputs.pr_body, '[x] leeway-no-cache') }}
       build_no_test: ${{ contains( steps.pr-details.outputs.pr_body, '[x] /werft no-test') }}
       with_large_vm: ${{ contains( steps.pr-details.outputs.pr_body, '[X] /werft with-large-vm') }}
@@ -95,6 +95,10 @@ jobs:
       cancel-in-progress: true
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-environment
+        with:
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Create preview environment infrastructure
         id: create
         uses: ./.github/actions/preview-create
@@ -305,6 +309,10 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     steps:
       - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-environment
+        with:
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
       - name: Deploy Gitpod to the preview environment
         id: deploy-gitpod
         uses: ./.github/actions/deploy-gitpod
@@ -390,9 +398,12 @@ jobs:
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
         run: |
           echo "Setting up access to core-dev and harvester"
-          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          export PREVIEW_ENV_DEV_SA_KEY_PATH="$GOOGLE_APPLICATION_CREDENTIALS"
+          gcloud auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIALS}"
+          echo "Previewctl get-credentials"
+          previewctl get-credentials --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
+          echo "Previewctl install-context"
+          previewctl install-context  --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
 
           $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
 

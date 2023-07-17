@@ -3,6 +3,7 @@
 # shellcheck disable=SC2034
 
 set -euo pipefail
+set -x
 
 SCRIPT_PATH=$(realpath "$(dirname "$0")")
 
@@ -28,13 +29,13 @@ TF_DATA_DIR="${TARGET_DIR}"
 static_plan="$(realpath "${TARGET_DIR}")/$(basename "${TARGET_DIR}").plan"
 PLAN_LOCATION="${PLAN_LOCATION:-$static_plan}"
 
+# avoid harvester entirely
+TF_VAR_infra_provider="gce"
+
 # export all variables
 shopt -os allexport
 
 terraform_init
-
-# avoid harvester entirely
-export TF_VAR_infra_provider="gce"
 
 PLAN_EXIT_CODE=0
 terraform_plan || PLAN_EXIT_CODE=$?

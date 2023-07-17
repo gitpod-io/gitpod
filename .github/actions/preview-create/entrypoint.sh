@@ -1,33 +1,31 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2155
 
 set -euo pipefail
 
-export HOME=/home/gitpod
-export PREVIEW_ENV_DEV_SA_KEY_PATH="$HOME/.config/gcloud/preview-environment-dev-sa.json"
-# shellcheck disable=SC2155
-export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-export PATH="$PATH:$HOME/bin"
+mkdir -p "$HOME/.kube"
 
-mkdir $HOME/bin
+export KUBECONFIG="$HOME/.kube/config"
+export PREVIEW_ENV_DEV_SA_KEY_PATH="$GOOGLE_APPLICATION_CREDENTIALS"
 
-echo "${INPUT_SA_KEY}" >"${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+gcloud auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIALS}"
 
-previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+echo "Previewctl get-credentials"
+previewctl get-credentials --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
 
 replace="module.preview_gce[0].google_compute_instance.default"
-if [[ "${INPUT_INFRASTRUCTURE_PROVIDER}" = "harvester " ]]; then
-  replace="module.preview_harvester[0].harvester_virtualmachine.harvester"
-fi
 
 if [[ "${INPUT_RECREATE_VM:-x}" == "true" ]]; then
   export TF_CLI_ARGS_plan="-replace=${replace}"
 fi
 
-TF_VAR_preview_name="$(previewctl get-name --branch "${INPUT_NAME}")"
-export TF_VAR_preview_name
-export TF_VAR_infra_provider="${INPUT_INFRASTRUCTURE_PROVIDER}"
+export TF_VAR_preview_name="$(previewctl get-name --branch "${INPUT_NAME}")"
 export TF_VAR_with_large_vm="${INPUT_LARGE_VM}"
 export TF_INPUT=0
 export TF_IN_AUTOMATION=true
+export TF_VAR_kubeconfig_path=$KUBECONFIG
+
 leeway run dev/preview:create-preview
+
+echo "Previewctl install-context"
+previewctl install-context  --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"

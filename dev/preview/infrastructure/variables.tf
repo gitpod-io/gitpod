@@ -1,6 +1,6 @@
 variable "infra_provider" {
   type        = string
-  default     = "harvester"
+  default     = "gce"
   description = "the provider for the infra: [harvester, gce]"
 }
 
