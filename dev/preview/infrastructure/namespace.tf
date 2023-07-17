@@ -3,4 +3,8 @@ resource "kubernetes_namespace" "preview_namespace" {
   metadata {
     name = "preview-${var.preview_name}"
   }
+
+  lifecycle {
+    ignore_changes = [metadata]
+  }
 }
