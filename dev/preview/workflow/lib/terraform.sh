@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # this script is meant to be sourced
 
 FILE_PATH=$(dirname "${BASH_SOURCE[0]}")

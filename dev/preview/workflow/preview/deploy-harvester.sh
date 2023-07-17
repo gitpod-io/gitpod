@@ -31,6 +31,8 @@ PLAN_LOCATION="${PLAN_LOCATION:-$static_plan}"
 # export all variables
 shopt -os allexport
 
+terraform workspace select "$TF_WORKSPACE" || terraform workspace new "$TF_WORKSPACE"
+
 terraform_init
 
 # avoid harvester entirely
