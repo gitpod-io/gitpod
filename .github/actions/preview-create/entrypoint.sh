@@ -5,6 +5,7 @@ set -euo pipefail
 set -x
 
 mkdir -p "$HOME/.kube"
+export KUBECONFIG="$HOME/.kube/config"
 
 CREDENTIALS_FILE=$(mktemp)
 echo "${INPUT_SA_KEY}" >> "${CREDENTIALS_FILE}"
