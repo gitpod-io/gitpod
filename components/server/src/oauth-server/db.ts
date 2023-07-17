@@ -82,6 +82,26 @@ function createVSCodeClient(protocol: "vscode" | "vscode-insiders" | "vscodium")
     };
 }
 
+const desktopClient: OAuthClient = {
+    id: "gitpod-desktop",
+    name: "Gitpod Deskop",
+    redirectUris: ["gitpod://complete-auth"],
+    allowedGrants: ["authorization_code"],
+    scopes: [
+        { name: "function:getGitpodTokenScopes" },
+        { name: "function:getLoggedInUser" },
+        { name: "function:accessCodeSyncStorage" },
+        { name: "function:getOwnerToken" },
+        { name: "function:getWorkspace" },
+        { name: "function:getWorkspaces" },
+        { name: "function:getSSHPublicKeys" },
+        { name: "function:startWorkspace" },
+        { name: "function:stopWorkspace" },
+        { name: "function:deleteWorkspace" },
+        { name: "resource:default" },
+    ],
+};
+
 const vscode = createVSCodeClient("vscode");
 const vscodeInsiders = createVSCodeClient("vscode-insiders");
 const vscodium = createVSCodeClient("vscodium");
@@ -93,6 +113,7 @@ export const inMemoryDatabase: InMemory = {
         [vscode.id]: vscode,
         [vscodeInsiders.id]: vscodeInsiders,
         [vscodium.id]: vscodium,
+        [desktopClient.id]: desktopClient,
     },
     tokens: {},
     scopes: {},
