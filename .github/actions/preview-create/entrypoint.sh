@@ -2,6 +2,7 @@
 # shellcheck disable=SC2155
 
 set -euo pipefail
+set -x
 
 export PREVIEW_ENV_DEV_SA_KEY_PATH="$GOOGLE_APPLICATION_CREDENTIALS"
 
