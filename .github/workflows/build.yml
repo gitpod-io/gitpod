@@ -391,8 +391,7 @@ jobs:
         run: |
           echo "Setting up access to core-dev and harvester"
           previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 30s --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
           $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
 
