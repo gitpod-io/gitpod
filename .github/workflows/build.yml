@@ -83,35 +83,8 @@ jobs:
             echo "leeway_cache_bucket=$([[ "$MAIN_BRANCH"  = "true" ]] && echo "gitpod-core-leeway-cache-main" || echo "gitpod-core-leeway-cache-branch")"
           } >> $GITHUB_OUTPUT
 
-  build-previewctl:
-    name: Build previewctl
-    if: |
-      (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
-      (needs.configuration.outputs.preview_enable == 'true')
-    needs: [configuration, create-runner]
-    concurrency:
-      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-build-previewctl
-      cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
-    runs-on: ${{ needs.create-runner.outputs.label }}
-    container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
-    outputs:
-      previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-environment
-        with:
-          sa_key: ${{ secrets.GCP_CREDENTIALS }}
-          leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
-      - name: Build previewctl
-        id: build
-        shell: bash
-        run: |
-          leeway build dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}"
-          echo "previewctl_hash=$(leeway describe dev/preview/previewctl:docker -Dversion="${{needs.configuration.outputs.version}}" -t '{{ .Metadata.Version }}')" >> $GITHUB_OUTPUT
-
   infrastructure:
-    needs: [configuration, build-previewctl, create-runner]
+    needs: [configuration, create-runner]
     if: |
       (needs.configuration.outputs.pr_no_diff_skip != 'true') &&
       (needs.configuration.outputs.preview_enable == 'true') &&
@@ -129,7 +102,6 @@ jobs:
           name: ${{ github.head_ref || github.ref_name }}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           infrastructure_provider: ${{ needs.configuration.outputs.preview_infra_provider }}
-          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           large_vm: ${{ needs.configuration.outputs.with_large_vm }}
           recreate_vm: ${{ inputs.recreate_vm }}
 
@@ -324,7 +296,6 @@ jobs:
     name: "Install Gitpod"
     needs:
       - configuration
-      - build-previewctl
       - build-gitpod
       - infrastructure
       - create-runner
@@ -341,7 +312,6 @@ jobs:
           name: ${{ github.head_ref || github.ref_name }}
           version: ${{needs.configuration.outputs.version}}
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
-          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
           with_dedicated_emu: ${{needs.configuration.outputs.with_dedicated_emulation}}
           analytics: ${{needs.configuration.outputs.analytics}}
           workspace_feature_flags: ${{needs.configuration.outputs.workspace_feature_flags}}
@@ -371,7 +341,7 @@ jobs:
 
   monitoring:
     name: "Install Monitoring Satellite"
-    needs: [infrastructure, build-previewctl, create-runner]
+    needs: [infrastructure, create-runner]
     runs-on: ${{ needs.create-runner.outputs.label }}
     if: needs.configuration.outputs.with_monitoring == 'true'
     concurrency:
@@ -384,13 +354,11 @@ jobs:
         uses: ./.github/actions/deploy-monitoring-satellite
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
-          previewctl_hash: ${{ needs.build-previewctl.outputs.previewctl_hash }}
 
   integration-test:
     name: "Run integration test"
     needs:
       - configuration
-      - build-previewctl
       - build-gitpod
       - infrastructure
       - install
@@ -421,8 +389,6 @@ jobs:
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
         run: |
-          leeway run dev/preview/previewctl:install
-
           echo "Setting up access to core-dev and harvester"
           previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
 
@@ -435,7 +401,6 @@ jobs:
     needs:
       - create-runner
       - configuration
-      - build-previewctl
       - infrastructure
       - build-gitpod
       - install-app
