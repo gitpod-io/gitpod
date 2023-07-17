@@ -29,14 +29,14 @@ See %s/user/keys for a guide on setting them up.
 		ctx, cancel := context.WithTimeout(cmd.Context(), 10*time.Second)
 		defer cancel()
 
-		if wsInfo, err := gitpod.GetWSInfo(ctx); err == nil {
-			sshCommand := fmt.Sprintf("ssh '%s@%s.ssh.%s'", wsInfo.WorkspaceId, wsInfo.WorkspaceId, wsInfo.WorkspaceClusterHost)
-			fmt.Println(sshCommand)
-			return nil
-		} else {
+		wsInfo, err := gitpod.GetWSInfo(ctx)
+		if err != nil {
 			return fmt.Errorf("cannot get workspace info: %w", err)
 		}
 
+		sshCommand := fmt.Sprintf("ssh '%s@%s.ssh.%s'", wsInfo.WorkspaceId, wsInfo.WorkspaceId, wsInfo.WorkspaceClusterHost)
+		fmt.Println(sshCommand)
+		return nil
 	},
 }
 
