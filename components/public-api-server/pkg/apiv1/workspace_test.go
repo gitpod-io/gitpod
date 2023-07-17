@@ -662,7 +662,7 @@ var workspaceTestData = []workspaceTestDataEntry{
 				ContextUrl: "https://github.com/gitpod-io/gitpod",
 				Details: &v1.WorkspaceContext_Git_{
 					Git: &v1.WorkspaceContext_Git{
-						NormalizedContextUrl: "https://github.com/gitpod-io/gitpod",
+						NormalizedContextUrl: "https://github.com/gitpod-io/protocol.git",
 					},
 				},
 			},
