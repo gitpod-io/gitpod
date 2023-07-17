@@ -60,7 +60,7 @@ export const useAnalyticsTracking = () => {
     }, []);
 
     useEffect(() => {
-        if (loading || !user || !user.additionalData?.profile?.onboardedTimestamp || isOrbitalLoaded) {
+        if (loading || !user || !user.additionalData?.profile?.onboardedTimestamp || !isOrbitalLoaded) {
             return;
         }
 
