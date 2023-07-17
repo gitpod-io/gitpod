@@ -60,6 +60,14 @@ export const useAnalyticsTracking = () => {
     }, []);
 
     useEffect(() => {
+        if (!isOrbitalLoaded) {
+            return;
+        }
+
+        orbital("customConfig", { theme: { colorScheme: isDark ? "dark" : "light" } });
+    }, [isDark, isOrbitalLoaded, orbital]);
+
+    useEffect(() => {
         if (loading || !user || !user.additionalData?.profile?.onboardedTimestamp || !isOrbitalLoaded) {
             return;
         }
@@ -69,13 +77,5 @@ export const useAnalyticsTracking = () => {
         orbital("trigger", "YyOnOjsPDZN0", { force: true, position: "bottom_center" });
 
         return orbital("reset");
-    }, [isDark, isOrbitalLoaded, loading, orbital, user]);
-
-    useEffect(() => {
-        if (!isOrbitalLoaded) {
-            return;
-        }
-
-        orbital("customConfig", { theme: { colorScheme: isDark ? "dark" : "light" } });
-    }, [isDark, isOrbitalLoaded, orbital]);
+    }, [isOrbitalLoaded, loading, orbital, user]);
 };
