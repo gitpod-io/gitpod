@@ -11,7 +11,9 @@ echo "${INPUT_SA_KEY}" >> "${CREDENTIALS_FILE}"
 export PREVIEW_ENV_DEV_SA_KEY_PATH="${CREDENTIALS_FILE}"
 
 gcloud auth activate-service-account --key-file "${CREDENTIALS_FILE}"
+
 previewctl get-credentials --gcp-service-account "${CREDENTIALS_FILE}"
+previewctl install-context --gcp-service-account "${CREDENTIALS_FILE}" --timeout 10m
 
 replace="module.preview_gce[0].google_compute_instance.default"
 
