@@ -2,7 +2,8 @@
 # shellcheck disable=SC2155
 
 set -euo pipefail
-set -x
+
+export KUBECONFIG="$GITHUB_WORKSPACE/.kubeconfig"
 
 export PREVIEW_ENV_DEV_SA_KEY_PATH="$GOOGLE_APPLICATION_CREDENTIALS"
 

@@ -15,7 +15,6 @@ chmod +x "$HOME/bin/installer"
 echo "Download versions.yaml"
 oci-tool fetch file -o /tmp/versions.yaml --platform=linux-amd64 "eu.gcr.io/gitpod-core-dev/build/versions:${VERSION}" versions.yaml
 
-
 export PREVIEW_ENV_DEV_SA_KEY_PATH="$GOOGLE_APPLICATION_CREDENTIALS"
 
 gcloud auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIALS}"
