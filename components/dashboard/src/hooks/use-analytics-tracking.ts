@@ -68,8 +68,14 @@ export const useAnalyticsTracking = () => {
 
         orbital("trigger", "YyOnOjsPDZN0", { force: true, position: "bottom_center" });
 
-        orbital("customConfig", { theme: { colorScheme: isDark ? "dark" : "light" } });
-
         return orbital("reset");
     }, [isDark, isOrbitalLoaded, loading, orbital, user]);
+
+    useEffect(() => {
+        if (!isOrbitalLoaded) {
+            return;
+        }
+
+        orbital("customConfig", { theme: { colorScheme: isDark ? "dark" : "light" } });
+    }, [isDark, isOrbitalLoaded, orbital]);
 };
