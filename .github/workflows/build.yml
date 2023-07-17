@@ -390,8 +390,12 @@ jobs:
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
         run: |
           echo "Setting up access to core-dev and harvester"
-          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 30s --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
+          export PREVIEW_ENV_DEV_SA_KEY_PATH="$GOOGLE_APPLICATION_CREDENTIALS"
+          gcloud auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIALS}"
+          echo "Previewctl get-credentials"
+          previewctl get-credentials --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
+          echo "Previewctl install-context"
+          previewctl install-context --log-level debug --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
 
           $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
 
