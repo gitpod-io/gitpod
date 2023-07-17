@@ -64,6 +64,7 @@ export const useAnalyticsTracking = () => {
             return;
         }
 
+        console.log(`Changing theme to ${isDark ? "dark" : "light"}`);
         orbital("customConfig", { theme: { colorScheme: isDark ? "dark" : "light" } });
     }, [isDark, isOrbitalLoaded, orbital]);
 
@@ -72,8 +73,10 @@ export const useAnalyticsTracking = () => {
             return;
         }
 
+        console.debug("IDing user");
         orbital("identify", user.id);
 
+        console.debug("Triggering modal");
         orbital("trigger", "YyOnOjsPDZN0", { force: true, position: "bottom_center" });
 
         return orbital("reset");
