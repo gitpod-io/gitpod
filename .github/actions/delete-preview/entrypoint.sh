@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2155
 
 set -euo pipefail
 
@@ -13,7 +14,6 @@ previewctl install-context  --timeout 10m --gcp-service-account "${GOOGLE_APPLIC
 
 export TF_INPUT=0
 export TF_IN_AUTOMATION=true
-TF_VAR_preview_name="$(previewctl get-name --branch "${INPUT_NAME}")"
-export TF_VAR_preview_name
+export TF_VAR_preview_name="$(previewctl get-name --branch "${INPUT_NAME}")"
 
 leeway run dev/preview:delete-preview

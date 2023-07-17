@@ -165,7 +165,6 @@ jobs:
         shell: bash
         run: |
           RESULT=0
-          set -x
 
           leeway build dev:all \
             --docker-build-options network=host \
@@ -209,7 +208,7 @@ jobs:
           [[ "${PUBLISH_TO_NPM}" = 'true' ]] && NPM_PUBLISH_TRIGGER=$(date +%s%3N) || NPM_PUBLISH_TRIGGER="false"
 
           RESULT=0
-          set -x
+
           # CI=true is a var set by GHA. Unsetting it for the build, as yarn builds treat warnings as errors if that var is set to true
           CI= leeway build \
             --cache $CACHE \

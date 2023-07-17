@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2155
 
 set -euo pipefail
 
-# shellcheck disable=SC2155
 export VERSION="${INPUT_VERSION}"
 export PATH="$PATH:$HOME/bin"
 
@@ -24,8 +24,7 @@ previewctl get-credentials --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIA
 echo "Previewctl install-context"
 previewctl install-context  --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
 
-PREVIEW_NAME="$(previewctl get-name --branch "${INPUT_NAME}")"
-export PREVIEW_NAME
+export PREVIEW_NAME="$(previewctl get-name --branch "${INPUT_NAME}")"
 
 for var in WITH_DEDICATED_EMU ANALYTICS WORKSPACE_FEATURE_FLAGS; do
   input_var="INPUT_${var}"
