@@ -41,7 +41,7 @@ async function decideHarvesterVMCreation(werft: Werft, config: JobConfig) {
 // Readiness is not guaranted.
 async function createVM(werft: Werft, config: JobConfig) {
     const infra = config.withGceVm ? "gce" : "harvester"
-    const replace = config.withGceVm ? "module.preview_gce[0].google_compute_instance.default" : "module.preview_harvester[0].harvester_virtualmachine.harvester"
+    const replace = "module.preview_gce[0].google_compute_instance.default"
 
     const environment = {
         // We pass the GCP credentials explicitly, otherwise for some reason TF doesn't pick them up

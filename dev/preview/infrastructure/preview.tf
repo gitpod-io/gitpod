@@ -27,16 +27,14 @@ module "dns" {
   preview_ip = join(
     "",
     [
-      length(module.preview_gce) > 0 ? module.preview_gce[0].preview_ip : "",
-      length(module.preview_harvester) > 0 ? module.preview_harvester[0].preview_ip : ""
+      module.preview_gce[0].preview_ip
     ],
   )
 
   workspace_ip = join(
     "",
     [
-      length(module.preview_gce) > 0 ? module.preview_gce[0].workspace_ip : "",
-      length(module.preview_harvester) > 0 ? module.preview_harvester[0].workspace_ip : ""
+      module.preview_gce[0].workspace_ip
     ],
   )
 
