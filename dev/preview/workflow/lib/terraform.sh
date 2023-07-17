@@ -28,11 +28,7 @@ function delete_workspace() {
 
 function create_workspace() {
   local workspace=$1
-  if terraform workspace list | grep -q "${workspace}"; then
-    return 0
-  else
-    terraform workspace new "${workspace}"
-  fi
+  terraform workspace select "${workspace}" || terraform workspace new "${workspace}"
 }
 
 function terraform_init() {
@@ -109,7 +105,7 @@ function terraform_output() {
 
   pushd "${TARGET_DIR}" >/dev/null || return "${ERROR_CHANGE_DIR}"
 
-  terraform output -${format} "${var}" 2>/dev/null
+  terraform output "-${format}" "${var}" 2>/dev/null
 
   popd >/dev/null || return "${ERROR_CHANGE_DIR}"
 }

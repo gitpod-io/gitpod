@@ -275,6 +275,6 @@ RUN curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v${OCI_TO
 
 # Install the latest previewctl available in the container registry
 # here the trade-off is to build previewctl in CI all the time or once when previewctl changes, rebuilding this image
-ENV PREVIEWCTL_IMAGE=eu.gcr.io/gitpod-core-dev/build/previewctl:aledbf-token-gha.13622
+ENV PREVIEWCTL_IMAGE=eu.gcr.io/gitpod-core-dev/build/previewctl:cleanup-ci-previewctl
 RUN sudo oci-tool fetch file -o /usr/local/bin/previewctl --platform=linux-amd64 "$PREVIEWCTL_IMAGE" app/previewctl \
     && sudo chmod +x /usr/local/bin/previewctl
