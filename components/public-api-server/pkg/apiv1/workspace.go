@@ -317,20 +317,14 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 	if err != nil {
 		return nil, err
 	}
-	// Align to https://github.com/gitpod-io/gitpod/blob/0bb6aaad9d4923d5510de865437f22c7f726833f/components/server/src/workspace/workspace-starter.ts#L1375-L1378
-	contextUrl := input.Workspace.ContextURL
-	if input.Workspace.Context != nil && len(input.Workspace.Context.NormalizedContextURL) > 0 {
-		contextUrl = input.Workspace.Context.NormalizedContextURL
-	}
-
 	return &v1.Workspace{
 		WorkspaceId: input.Workspace.ID,
 		OwnerId:     input.Workspace.OwnerID,
 		ProjectId:   "",
 		Context: &v1.WorkspaceContext{
-			ContextUrl: contextUrl,
+			ContextUrl: input.Workspace.ContextURL,
 			Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
-				NormalizedContextUrl: input.Workspace.ContextURL,
+				NormalizedContextUrl: input.Workspace.Context.NormalizedContextURL,
 				Commit:               "",
 			}},
 		},
