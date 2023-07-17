@@ -5,7 +5,7 @@ set -euo pipefail
 
 mkdir -p "$HOME/.kube"
 
-export KUBECONFIG="HOME/.kube/config"
+export KUBECONFIG="$HOME/.kube/config"
 export PREVIEW_ENV_DEV_SA_KEY_PATH="$GOOGLE_APPLICATION_CREDENTIALS"
 
 gcloud auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIALS}"
