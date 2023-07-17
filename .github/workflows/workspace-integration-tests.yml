@@ -86,6 +86,7 @@ jobs:
           SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
           SLACK_COLOR: ${{ job.status }}
           SLACK_MESSAGE: "Workspace Integration Tests failed"
+          SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|See workflow logs here>"
 
   infrastructure:
     needs: [configuration, create-runner]

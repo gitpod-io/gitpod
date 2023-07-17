@@ -162,6 +162,7 @@ jobs:
                   SLACK_WEBHOOK: '${{ steps.secrets.outputs.devx-slack-webhook }}'
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_MESSAGE: "`${{ needs.configuration.outputs.version}}` smoke test failed"
+                  SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|See workflow logs here>"
 
     delete:
         name: Delete preview environment
