@@ -9,8 +9,12 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/serverapi"
@@ -102,4 +106,41 @@ func getMissingScopes(required []string, provided map[string]struct{}) []string 
 		}
 	}
 	return missing
+}
+
+const (
+	minIntervalBetweenGitStatusUpdates = 5 * time.Second
+)
+
+type GitStatusService struct {
+	content ContentState
+	git     *git.Client
+
+	mu         sync.Mutex
+	lastUpdate time.Time
+	lastStatus *csapi.GitStatus
+	lastErr    error
+}
+
+func (s *GitStatusService) Status(ctx context.Context) (*csapi.GitStatus, time.Time, error) {
+	<-s.content.ContentReady()
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if time.Since(s.lastUpdate) < minIntervalBetweenGitStatusUpdates {
+		return s.lastStatus, s.lastUpdate, s.lastErr
+	}
+
+	s.lastStatus, s.lastErr = s.status(ctx)
+	s.lastUpdate = time.Now()
+	return s.lastStatus, s.lastUpdate, s.lastErr
+}
+
+func (s *GitStatusService) status(ctx context.Context) (*csapi.GitStatus, error) {
+	stat, err := s.git.Status(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return stat.ToAPI(), nil
 }

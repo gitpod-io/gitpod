@@ -13,6 +13,8 @@ import Tooltip from "../components/Tooltip";
 import dayjs from "dayjs";
 import { WorkspaceEntryOverflowMenu } from "./WorkspaceOverflowMenu";
 import { WorkspaceStatusIndicator } from "./WorkspaceStatusIndicator";
+import { useRepoStatusQuery } from "../data/repo/repo-status-query";
+import classNames from "classnames";
 
 type Props = {
     info: WorkspaceInfo;
@@ -23,11 +25,11 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
     const [menuActive, setMenuActive] = useState(false);
 
     const workspace = info.workspace;
-    const currentBranch =
-        info.latestInstance?.status.repo?.branch || Workspace.getBranchName(info.workspace) || "<unknown>";
     const project = getProjectPath(workspace);
     const normalizedContextUrl = ContextURL.getNormalizedURL(workspace)?.toString();
     const normalizedContextUrlDescription = normalizedContextUrl || workspace.contextURL; // Instead of showing nothing, we prefer to show the raw content instead
+    const repoStatisResult = useRepoStatusQuery(info).data;
+    const currentBranch = repoStatisResult?.status?.branch || "Fetching git status...";
 
     const changeMenuState = (state: boolean) => {
         setMenuActive(state);
@@ -77,11 +79,16 @@ export const WorkspaceEntry: FunctionComponent<Props> = ({ info, shortVersion })
                         </a>
                     </ItemField>
                     <ItemField className="w-2/12 flex flex-col my-auto">
-                        <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">
+                        <div
+                            className={classNames(
+                                "text-gray-500 dark:text-gray-400 overflow-ellipsis truncate",
+                                !repoStatisResult && "animate-pulse",
+                            )}
+                        >
                             <Tooltip content={currentBranch}>{currentBranch}</Tooltip>
                         </div>
                         <div className="mr-auto">
-                            <PendingChangesDropdown workspaceInstance={info.latestInstance} />
+                            <PendingChangesDropdown info={info} />
                         </div>
                     </ItemField>
                     <ItemField className="w-2/12 flex my-auto">

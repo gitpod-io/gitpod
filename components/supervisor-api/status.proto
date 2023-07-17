@@ -8,6 +8,7 @@ package supervisor;
 
 import "google/api/annotations.proto";
 import "port.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
 option java_package = "io.gitpod.supervisor.api";
@@ -79,6 +80,13 @@ service StatusService {
     rpc ResourcesStatus(ResourcesStatuRequest) returns (ResourcesStatusResponse) {
         option (google.api.http) = {
             get: "/v1/status/resources"
+        };
+    }
+
+    // GitStatus provides workspace git status information.
+    rpc GitStatus(GitStatusRequest) returns (GitStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/git"
         };
     }
 
@@ -272,4 +280,40 @@ enum ResourceStatusSeverity {
     normal = 0;
     warning = 1;
     danger = 2;
+}
+
+message GitStatusRequest {}
+message GitStatusResponse {
+    // status is the current git status
+    // can be nil if the workspace is not a git repository
+    GitStatus status = 1;
+    // last_update is the timestamp when the git status was last updated
+    google.protobuf.Timestamp last_update = 2;
+}
+
+// GitStatus describes the current Git working copy status, akin to a combination of "git status" and "git branch"
+message GitStatus {
+    // branch is branch we're currently on
+    string branch = 1;
+
+    // latest_commit is the most recent commit on the current branch
+    string latest_commit = 2;
+
+    // uncommited_files is an array of uncommitted files, possibly truncated
+    repeated string uncommited_files = 3;
+
+    // the total number of uncommited files
+    int32 total_uncommited_files = 6;
+
+    // untracked_files is an array of untracked files in the workspace, possibly truncated
+    repeated string untracked_files = 4;
+
+    // the total number of untracked files
+    int32 total_untracked_files = 7;
+
+    // unpushed_commits is an array of unpushed changes in the workspace, possibly truncated
+    repeated string unpushed_commits = 5;
+
+    // the total number of unpushed changes
+    int32 total_unpushed_commits = 8;
 }

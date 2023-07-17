@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -100,6 +101,7 @@ type statusService struct {
 	ideReady        *ideReadyState
 	desktopIdeReady *ideReadyState
 	topService      *TopService
+	git             *GitStatusService
 
 	api.UnimplementedStatusServiceServer
 }
@@ -995,4 +997,31 @@ func (s *portService) RetryAutoExpose(ctx context.Context, req *api.RetryAutoExp
 // ResourcesStatus provides workspace resources status information.
 func (s *statusService) ResourcesStatus(ctx context.Context, in *api.ResourcesStatuRequest) (*api.ResourcesStatusResponse, error) {
 	return s.topService.data, nil
+}
+
+// GitStatus provides git status information.
+func (s *statusService) GitStatus(ctx context.Context, in *api.GitStatusRequest) (*api.GitStatusResponse, error) {
+	status, lastUpdate, err := s.git.Status(ctx)
+	if err != nil {
+		return nil, err
+	}
+	lastUpdateTimestamp := timestamppb.New(lastUpdate)
+	if status == nil {
+		return &api.GitStatusResponse{
+			LastUpdate: lastUpdateTimestamp,
+		}, nil
+	}
+	return &api.GitStatusResponse{
+		Status: &api.GitStatus{
+			Branch:               status.Branch,
+			LatestCommit:         status.LatestCommit,
+			UncommitedFiles:      status.UncommitedFiles,
+			TotalUncommitedFiles: int32(status.TotalUncommitedFiles),
+			UntrackedFiles:       status.UntrackedFiles,
+			TotalUntrackedFiles:  int32(status.TotalUntrackedFiles),
+			UnpushedCommits:      status.UnpushedCommits,
+			TotalUnpushedCommits: int32(status.TotalUnpushedCommits),
+		},
+		LastUpdate: lastUpdateTimestamp,
+	}, nil
 }

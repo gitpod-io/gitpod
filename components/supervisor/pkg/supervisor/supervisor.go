@@ -357,6 +357,10 @@ func Run(options ...RunOption) {
 			ideReady:        ideReady,
 			desktopIdeReady: desktopIdeReady,
 			topService:      topService,
+			git: &GitStatusService{
+				content: cstate,
+				git:     &git.Client{Location: cfg.RepoRoot},
+			},
 		},
 		termMuxSrv,
 		RegistrableTokenService{Service: tokenService},

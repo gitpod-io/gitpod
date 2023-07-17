@@ -4,35 +4,40 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import ContextMenu, { ContextMenuEntry } from "./ContextMenu";
 import CaretDown from "../icons/CaretDown.svg";
+import { useRepoStatusQuery } from "../data/repo/repo-status-query";
+import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 
-export default function PendingChangesDropdown(props: { workspaceInstance?: WorkspaceInstance }) {
-    const repo = props.workspaceInstance?.status?.repo;
+export default function PendingChangesDropdown({ info }: { info: Partial<WorkspaceInfo> }) {
+    const { data } = useRepoStatusQuery(info);
+    if (!data) {
+        return null;
+    }
+    const repoStatus = data.status;
     const headingStyle = "text-gray-500 dark:text-gray-400 text-left";
     const itemStyle = "text-gray-400 dark:text-gray-500 text-left -mt-5";
     const menuEntries: ContextMenuEntry[] = [];
     let totalChanges = 0;
-    if (repo) {
-        if ((repo.totalUntrackedFiles || 0) > 0) {
-            totalChanges += repo.totalUntrackedFiles || 0;
+    if (repoStatus) {
+        if ((repoStatus.totalUntrackedFiles || 0) > 0) {
+            totalChanges += repoStatus.totalUntrackedFiles || 0;
             menuEntries.push({ title: "Untracked Files", customFontStyle: headingStyle });
-            (repo.untrackedFiles || []).forEach((item) =>
+            (repoStatus.untrackedFiles || []).forEach((item) =>
                 menuEntries.push({ title: item, customFontStyle: itemStyle }),
             );
         }
-        if ((repo.totalUncommitedFiles || 0) > 0) {
-            totalChanges += repo.totalUncommitedFiles || 0;
+        if ((repoStatus.totalUncommitedFiles || 0) > 0) {
+            totalChanges += repoStatus.totalUncommitedFiles || 0;
             menuEntries.push({ title: "Uncommitted Files", customFontStyle: headingStyle });
-            (repo.uncommitedFiles || []).forEach((item) =>
+            (repoStatus.uncommitedFiles || []).forEach((item) =>
                 menuEntries.push({ title: item, customFontStyle: itemStyle }),
             );
         }
-        if ((repo.totalUnpushedCommits || 0) > 0) {
-            totalChanges += repo.totalUnpushedCommits || 0;
+        if ((repoStatus.totalUnpushedCommits || 0) > 0) {
+            totalChanges += repoStatus.totalUnpushedCommits || 0;
             menuEntries.push({ title: "Unpushed Commits", customFontStyle: headingStyle });
-            (repo.unpushedCommits || []).forEach((item) =>
+            (repoStatus.unpushedCommits || []).forEach((item) =>
                 menuEntries.push({ title: item, customFontStyle: itemStyle }),
             );
         }

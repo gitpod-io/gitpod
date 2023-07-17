@@ -43,6 +43,8 @@ type StatusServiceClient interface {
 	TasksStatus(ctx context.Context, in *TasksStatusRequest, opts ...grpc.CallOption) (StatusService_TasksStatusClient, error)
 	// ResourcesStatus provides workspace resources status information.
 	ResourcesStatus(ctx context.Context, in *ResourcesStatuRequest, opts ...grpc.CallOption) (*ResourcesStatusResponse, error)
+	// GitStatus provides workspace git status information.
+	GitStatus(ctx context.Context, in *GitStatusRequest, opts ...grpc.CallOption) (*GitStatusResponse, error)
 }
 
 type statusServiceClient struct {
@@ -162,6 +164,15 @@ func (c *statusServiceClient) ResourcesStatus(ctx context.Context, in *Resources
 	return out, nil
 }
 
+func (c *statusServiceClient) GitStatus(ctx context.Context, in *GitStatusRequest, opts ...grpc.CallOption) (*GitStatusResponse, error) {
+	out := new(GitStatusResponse)
+	err := c.cc.Invoke(ctx, "/supervisor.StatusService/GitStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StatusServiceServer is the server API for StatusService service.
 // All implementations must embed UnimplementedStatusServiceServer
 // for forward compatibility
@@ -183,6 +194,8 @@ type StatusServiceServer interface {
 	TasksStatus(*TasksStatusRequest, StatusService_TasksStatusServer) error
 	// ResourcesStatus provides workspace resources status information.
 	ResourcesStatus(context.Context, *ResourcesStatuRequest) (*ResourcesStatusResponse, error)
+	// GitStatus provides workspace git status information.
+	GitStatus(context.Context, *GitStatusRequest) (*GitStatusResponse, error)
 	mustEmbedUnimplementedStatusServiceServer()
 }
 
@@ -210,6 +223,9 @@ func (UnimplementedStatusServiceServer) TasksStatus(*TasksStatusRequest, StatusS
 }
 func (UnimplementedStatusServiceServer) ResourcesStatus(context.Context, *ResourcesStatuRequest) (*ResourcesStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResourcesStatus not implemented")
+}
+func (UnimplementedStatusServiceServer) GitStatus(context.Context, *GitStatusRequest) (*GitStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GitStatus not implemented")
 }
 func (UnimplementedStatusServiceServer) mustEmbedUnimplementedStatusServiceServer() {}
 
@@ -356,6 +372,24 @@ func _StatusService_ResourcesStatus_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StatusService_GitStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GitStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StatusServiceServer).GitStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/supervisor.StatusService/GitStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StatusServiceServer).GitStatus(ctx, req.(*GitStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StatusService_ServiceDesc is the grpc.ServiceDesc for StatusService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -382,6 +416,10 @@ var StatusService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResourcesStatus",
 			Handler:    _StatusService_ResourcesStatus_Handler,
+		},
+		{
+			MethodName: "GitStatus",
+			Handler:    _StatusService_GitStatus_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
