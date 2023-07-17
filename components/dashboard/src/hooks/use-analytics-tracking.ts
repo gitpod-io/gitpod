@@ -7,9 +7,17 @@
 import { useEffect } from "react";
 import { useHistory } from "react-router";
 import { trackButtonOrAnchor, trackPathChange } from "../Analytics";
+import { useUserLoader } from "./use-user-loader";
+import { useTheme } from "../theme-context";
+import { useOrbital } from "./use-orbital";
 
 export const useAnalyticsTracking = () => {
     const history = useHistory();
+    const { user, loading } = useUserLoader();
+    const { isDark } = useTheme();
+
+    // Todo(ft): only enable on gitpod.io
+    const { orbital, isLoaded: isOrbitalLoaded } = useOrbital("4aErj3uvRbye");
 
     // listen and notify Segment of client-side path updates
     useEffect(() => {
@@ -50,4 +58,18 @@ export const useAnalyticsTracking = () => {
         window.addEventListener("click", handleButtonOrAnchorTracking, true);
         return () => window.removeEventListener("click", handleButtonOrAnchorTracking, true);
     }, []);
+
+    useEffect(() => {
+        if (loading || !user || !user.additionalData?.profile?.onboardedTimestamp || isOrbitalLoaded) {
+            return;
+        }
+
+        orbital("identify", user.id);
+
+        orbital("trigger", "YyOnOjsPDZN0", { force: true, position: "bottom_center" });
+
+        orbital("customConfig", { theme: { colorScheme: isDark ? "dark" : "light" } });
+
+        return orbital("reset");
+    }, [isDark, isOrbitalLoaded, loading, orbital, user]);
 };
