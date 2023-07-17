@@ -84,7 +84,7 @@ function createVSCodeClient(protocol: "vscode" | "vscode-insiders" | "vscodium")
 
 const desktopClient: OAuthClient = {
     id: "gitpod-desktop",
-    name: "Gitpod Deskop",
+    name: "Gitpod Desktop",
     redirectUris: ["gitpod://complete-auth"],
     allowedGrants: ["authorization_code"],
     scopes: [
