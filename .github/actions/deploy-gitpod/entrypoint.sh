@@ -23,7 +23,7 @@ gcloud auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIAL
 echo "Previewctl get-credentials"
 previewctl get-credentials --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
 echo "Previewctl install-context"
-previewctl install-context --log-level debug --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
+previewctl install-context  --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
 
 PREVIEW_NAME="$(previewctl get-name --branch "${INPUT_NAME}")"
 export PREVIEW_NAME

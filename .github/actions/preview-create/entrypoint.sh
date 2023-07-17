@@ -10,8 +10,6 @@ gcloud auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIAL
 
 echo "Previewctl get-credentials"
 previewctl get-credentials --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
-echo "Previewctl install-context"
-previewctl install-context --log-level debug --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
 
 replace="module.preview_gce[0].google_compute_instance.default"
 
@@ -25,3 +23,6 @@ export TF_INPUT=0
 export TF_IN_AUTOMATION=true
 
 leeway run dev/preview:create-preview
+
+echo "Previewctl install-context"
+previewctl install-context  --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"

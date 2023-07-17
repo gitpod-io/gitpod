@@ -399,7 +399,7 @@ jobs:
           echo "Previewctl get-credentials"
           previewctl get-credentials --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
           echo "Previewctl install-context"
-          previewctl install-context --log-level debug --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
+          previewctl install-context  --timeout 10m --gcp-service-account "${GOOGLE_APPLICATION_CREDENTIALS}"
 
           $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
 
