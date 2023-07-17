@@ -3,8 +3,9 @@
 
 set -euo pipefail
 
-export KUBECONFIG="$GITHUB_WORKSPACE/.kubeconfig"
+mkdir -p "$HOME/.kube"
 
+export KUBECONFIG="HOME/.kube/config"
 export PREVIEW_ENV_DEV_SA_KEY_PATH="$GOOGLE_APPLICATION_CREDENTIALS"
 
 gcloud auth activate-service-account --key-file "${GOOGLE_APPLICATION_CREDENTIALS}"
@@ -22,6 +23,7 @@ export TF_VAR_preview_name="$(previewctl get-name --branch "${INPUT_NAME}")"
 export TF_VAR_with_large_vm="${INPUT_LARGE_VM}"
 export TF_INPUT=0
 export TF_IN_AUTOMATION=true
+export TF_VAR_kubeconfig_path=$KUBECONFIG
 
 leeway run dev/preview:create-preview
 
