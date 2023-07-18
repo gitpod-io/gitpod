@@ -168,3 +168,4 @@ jobs:
                   SLACK_WEBHOOK: ${{ secrets.slackWebhook }}
                   SLACK_COLOR: ${{ job.status }}
                   SLACK_TITLE: ${{ inputs.productName }}
+                  SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
