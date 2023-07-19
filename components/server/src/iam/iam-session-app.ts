@@ -12,17 +12,20 @@ import { UserService } from "../user/user-service";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Identity, User } from "@gitpod/gitpod-protocol";
-import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
 import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { OrganizationService } from "../orgs/organization-service";
 
 @injectable()
 export class IamSessionApp {
-    @inject(SessionHandler) protected readonly sessionHandler: SessionHandler;
-    @inject(Authenticator) protected readonly authenticator: Authenticator;
-    @inject(UserService) protected readonly userService: UserService;
-    @inject(TeamDB) protected readonly teamDb: TeamDB;
-    @inject(SessionHandler) protected readonly session: SessionHandler;
+    constructor(
+        @inject(SessionHandler) private readonly sessionHandler: SessionHandler,
+        @inject(Authenticator) private readonly authenticator: Authenticator,
+        @inject(UserService) private readonly userService: UserService,
+        @inject(OrganizationService) private readonly orgService: OrganizationService,
+        @inject(SessionHandler) private readonly session: SessionHandler,
+    ) {}
 
     public getMiddlewares() {
         return [express.json(), this.sessionHandler.http(), ...this.authenticator.initHandlers];
@@ -53,7 +56,7 @@ export class IamSessionApp {
         return app;
     }
 
-    protected async doCreateSession(req: express.Request, res: express.Response) {
+    private async doCreateSession(req: express.Request, res: express.Response) {
         const payload = OIDCCreateSessionPayload.validate(req.body);
 
         const existingUser = await this.findExistingOIDCUser(payload);
@@ -76,7 +79,7 @@ export class IamSessionApp {
      * Maps from OIDC profile (ID token) to `Identity` which is used for the primary
      * lookup of existing users as well as for creating new accounts.
      */
-    protected mapOIDCProfileToIdentity(payload: OIDCCreateSessionPayload): Identity {
+    private mapOIDCProfileToIdentity(payload: OIDCCreateSessionPayload): Identity {
         const {
             claims: { sub, name, email, aud },
         } = payload;
@@ -88,7 +91,7 @@ export class IamSessionApp {
         };
     }
 
-    protected async findExistingOIDCUser(payload: OIDCCreateSessionPayload): Promise<User | undefined> {
+    private async findExistingOIDCUser(payload: OIDCCreateSessionPayload): Promise<User | undefined> {
         // Direct lookup
         let existingUser = await this.userService.findUserForLogin({
             candidate: this.mapOIDCProfileToIdentity(payload),
@@ -112,7 +115,7 @@ export class IamSessionApp {
     /**
      * Updates `User.identities[current IdP]` entry
      */
-    protected async updateOIDCUserOnSignin(user: User, payload: OIDCCreateSessionPayload) {
+    private async updateOIDCUserOnSignin(user: User, payload: OIDCCreateSessionPayload) {
         const recent = this.mapOIDCProfileToIdentity(payload);
         const existingIdentity = user.identities.find((identity) => identity.authId === recent.authId);
 
@@ -126,7 +129,7 @@ export class IamSessionApp {
         }
     }
 
-    protected async createNewOIDCUser(payload: OIDCCreateSessionPayload): Promise<User> {
+    private async createNewOIDCUser(payload: OIDCCreateSessionPayload): Promise<User> {
         const { claims, organizationId } = payload;
 
         // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
@@ -139,21 +142,7 @@ export class IamSessionApp {
             },
         });
 
-        // Check: Is this the first login? If yes, make the logged-in user the owner
-        const memberInfos = await this.teamDb.findMembersByTeam(organizationId);
-        const firstMember = memberInfos.filter((m) => m.userId !== BUILTIN_INSTLLATION_ADMIN_USER_ID).length === 0;
-        await this.teamDb.addMemberToTeam(user.id, organizationId);
-        if (firstMember) {
-            await this.teamDb.setTeamMemberRole(user.id, organizationId, "owner");
-
-            // remove the admin-user from the org
-            try {
-                await this.teamDb.removeMemberFromTeam(BUILTIN_INSTLLATION_ADMIN_USER_ID, organizationId);
-            } catch {
-                // ignore errors if membership would not exist.
-            }
-        }
-
+        await this.orgService.addOrUpdateMember(BUILTIN_INSTLLATION_ADMIN_USER_ID, organizationId, user.id, "member");
         return user;
     }
 }

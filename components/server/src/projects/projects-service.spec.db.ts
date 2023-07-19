@@ -4,9 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
-import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
-import { DBProject } from "@gitpod/gitpod-db/lib/typeorm/entity/db-project";
+import { TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import * as chai from "chai";
@@ -17,6 +15,7 @@ import { createTestContainer } from "../test/service-testing-container-module";
 import { ProjectsService } from "./projects-service";
 import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { SpiceDBAuthorizer } from "../authorization/spicedb-authorizer";
+import { resetDB } from "../test/reset-db";
 
 const expect = chai.expect;
 
@@ -53,11 +52,8 @@ describe("ProjectsService", async () => {
     });
 
     afterEach(async () => {
-        const typeorm = container.get(TypeORM);
-        const conn = await typeorm.getConnection();
-        await conn.getRepository(DBUser).clear();
-        await conn.getRepository(DBTeam).clear();
-        await conn.getRepository(DBProject).clear();
+        // Clean-up database
+        await resetDB(container.get(TypeORM));
     });
 
     it("should getProject and getProjects", async () => {
@@ -211,6 +207,9 @@ export async function expectError(errorCode: ErrorCode, code: () => Promise<any>
         await code();
         expect.fail("expected error: " + errorCode);
     } catch (err) {
+        if (!ApplicationError.hasErrorCode(err)) {
+            throw err;
+        }
         expect(err && ApplicationError.hasErrorCode(err) && err.code).to.equal(errorCode);
     }
 }

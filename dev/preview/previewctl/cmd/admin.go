@@ -130,7 +130,7 @@ func createAdminCredentials(ctx context.Context, expiry time.Duration) (string, 
 			"admin.json": secretContents,
 		},
 	}
-	_, err = secretsAPI.Get(ctx, secret.ObjectMeta.Name, metav1.GetOptions{})
+	existingSecret, err := secretsAPI.Get(ctx, secret.ObjectMeta.Name, metav1.GetOptions{})
 	if err != nil {
 		// secret does not yet exist, create it
 		_, err = secretsAPI.Create(ctx, secret, metav1.CreateOptions{})
@@ -139,7 +139,8 @@ func createAdminCredentials(ctx context.Context, expiry time.Duration) (string, 
 		}
 	} else {
 		// secret exists, update it
-		_, err = secretsAPI.Update(ctx, secret, metav1.UpdateOptions{})
+		existingSecret.Data = secret.Data // Update the Data of the existing secret
+		_, err = secretsAPI.Update(ctx, existingSecret, metav1.UpdateOptions{})
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to update secret with admin credentials: %w", err)
 		}

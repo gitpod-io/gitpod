@@ -9,7 +9,8 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { UserService } from "./user-service";
-import { DBUser, TypeORM } from "@gitpod/gitpod-db/lib";
+import { TypeORM } from "@gitpod/gitpod-db/lib";
+import { resetDB } from "../test/reset-db";
 
 const expect = chai.expect;
 
@@ -27,8 +28,7 @@ describe("UserService", async () => {
 
     afterEach(async () => {
         const typeorm = container.get(TypeORM);
-        const conn = await typeorm.getConnection();
-        await conn.getRepository(DBUser).clear();
+        await resetDB(typeorm);
     });
 
     it("updateLoggedInUser_avatarUrlNotUpdatable", async () => {
