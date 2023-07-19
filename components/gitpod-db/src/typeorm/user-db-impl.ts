@@ -50,7 +50,7 @@ import { TransactionalDBImpl } from "./transactional-db-impl";
 import { TypeORM } from "./typeorm";
 
 // OAuth token expiry
-const tokenExpiryInFuture = new DateInterval("7d");
+const tokenExpiryInFuture = new DateInterval("1m");
 
 /** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
 export let encryptionService: EncryptionService;
