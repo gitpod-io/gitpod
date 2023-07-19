@@ -54,7 +54,7 @@ RUN install-packages mysql-client
 RUN cd /usr/bin && curl -fsSL https://github.com/cert-manager/cert-manager/releases/download/v1.8.2/cmctl-linux-amd64.tar.gz | tar xzv --no-anchored cmctl
 
 # gokart
-RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.4.0/gokart_0.4.0_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
+RUN cd /usr/bin && curl -fsSL https://github.com/praetorian-inc/gokart/releases/download/v0.5.1/gokart_0.5.1_linux_x86_64.tar.gz | tar xzv --no-anchored gokart
 
 # leeway
 ARG LEEWAY_VERSION=0.7.6
@@ -178,13 +178,13 @@ ENV DB_HOST=127.0.0.1
 # awscliv2
 # See also: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-version.html
 # See also: https://github.com/aws/aws-cli/blob/v2/CHANGELOG.rst
-RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.7.25.zip" -o "awscliv2.zip" \
+RUN curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.13.1.zip" -o "awscliv2.zip" \
     && unzip awscliv2.zip \
     && sudo ./aws/install \
     && rm -f awscliv2.zip
 
 # Install Terraform
-ARG RELEASE_URL="https://releases.hashicorp.com/terraform/1.3.1/terraform_1.3.1_linux_amd64.zip"
+ARG RELEASE_URL="https://releases.hashicorp.com/terraform/1.5.3/terraform_1.5.3_linux_amd64.zip"
 RUN mkdir -p ~/.terraform \
     && cd ~/.terraform \
     && curl -fsSL -o terraform_linux_amd64.zip ${RELEASE_URL} \
@@ -207,11 +207,11 @@ RUN sudo install-packages shellcheck \
     && sudo python3 -m pip install pre-commit
 
 # gh (Github CLI) binary:
-RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.11.3/gh_2.11.3_linux_amd64.tar.gz \
+RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.32.0/gh_2.32.0_linux_amd64.tar.gz \
     | sudo tar xzv --strip-components=2 gh_2.11.3_linux_amd64/bin/gh
 
 # Install observability-related binaries
-ARG PROM_VERSION="2.36.0"
+ARG PROM_VERSION="2.45.0"
 RUN curl -LO https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
     tar -xzvf prometheus-${PROM_VERSION}.linux-amd64.tar.gz && \
     sudo mv prometheus-${PROM_VERSION}.linux-amd64/promtool /usr/local/bin/promtool && \
@@ -239,8 +239,7 @@ RUN curl -fsSLO https://github.com/brancz/gojsontoyaml/releases/download/v${GOJS
 
 # Install fish shell
 RUN sudo apt-add-repository -y ppa:fish-shell/release-3 && \
-    sudo apt update && \
-    sudo apt install -y fish
+    sudo install-packages fish
 
 # Install tmux + tmuxinator
 RUN brew install tmux tmuxinator
