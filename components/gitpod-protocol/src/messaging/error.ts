@@ -22,7 +22,7 @@ export class ApplicationError extends Error {
 }
 
 export namespace ApplicationError {
-    export function hasErrorCode(e: any): e is Error & { code: ErrorCode } {
+    export function hasErrorCode(e: any): e is Error & { code: ErrorCode; data?: any } {
         return e && e.code !== undefined;
     }
 }
