@@ -13,11 +13,13 @@ import { Button } from "../components/Button";
 import SignInWithLinkedIn from "../images/sign-in-with-linkedin.svg";
 import { getGitpodService } from "../service/service";
 import { LinkedInProfile } from "@gitpod/gitpod-protocol";
+import { useToast } from "../components/toasts/Toasts";
 
 type Props = {
     onSuccess(profile: LinkedInProfile): void;
 };
 export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
+    const { toast } = useToast();
     const {
         data: clientID,
         isLoading,
@@ -35,7 +37,6 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
         redirectUri: `${window.location.origin}/linkedin`,
         scope: "r_liteprofile r_emailaddress",
         onSuccess: (code) => {
-            console.log("success", code);
             getGitpodService()
                 .server.connectWithLinkedIn(code)
                 .then((profile) => {
@@ -43,6 +44,13 @@ export const LinkedInBanner: FC<Props> = ({ onSuccess }) => {
                 })
                 .catch((error) => {
                     console.error("LinkedIn connection failed", error);
+
+                    toast(
+                        <>
+                            <span>Error connecting with LinkedIn</span>
+                            {error.message && <pre className="mt-2 whitespace-normal text-xs">{error.message}</pre>}
+                        </>,
+                    );
                 });
         },
         onError: (error) => {
