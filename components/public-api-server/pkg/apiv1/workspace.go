@@ -163,6 +163,42 @@ func (s *WorkspaceService) ListWorkspaces(ctx context.Context, req *connect.Requ
 	), nil
 }
 
+func (s *WorkspaceService) UpdateRepoStatus(ctx context.Context, req *connect.Request[v1.UpdateRepoStatusRequest]) (*connect.Response[v1.UpdateRepoStatusResponse], error) {
+	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := getConnection(ctx, s.connectionPool)
+	if err != nil {
+		return nil, err
+	}
+
+	var status *protocol.WorkspaceInstanceRepoStatus
+	if req.Msg.GetStatus() != nil {
+		status = &protocol.WorkspaceInstanceRepoStatus{
+			Branch:               req.Msg.GetStatus().GetBranch(),
+			LatestCommit:         req.Msg.GetStatus().GetLatestCommit(),
+			TotalUncommitedFiles: float64(req.Msg.GetStatus().GetTotalUncommitedFiles()),
+			TotalUntrackedFiles:  float64(req.Msg.GetStatus().GetTotalUntrackedFiles()),
+			TotalUnpushedCommits: float64(req.Msg.GetStatus().GetTotalUnpushedCommits()),
+			UncommitedFiles:      req.Msg.GetStatus().GetUncommitedFiles(),
+			UntrackedFiles:       req.Msg.GetStatus().GetUntrackedFiles(),
+			UnpushedCommits:      req.Msg.GetStatus().GetUnpushedCommits(),
+		}
+	}
+
+	err = conn.UpdateRepoStatus(ctx, workspaceID, status)
+	if err != nil {
+		log.Extract(ctx).Error("Failed to update repo status")
+		return nil, proxy.ConvertError(err)
+	}
+
+	return connect.NewResponse(
+		&v1.UpdateRepoStatusResponse{},
+	), nil
+}
+
 func (s *WorkspaceService) UpdatePort(ctx context.Context, req *connect.Request[v1.UpdatePortRequest]) (*connect.Response[v1.UpdatePortResponse], error) {
 	workspaceID, err := validateWorkspaceID(ctx, req.Msg.GetWorkspaceId())
 	if err != nil {
@@ -420,6 +456,20 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 	}
 	recentFolders = append(recentFolders, filepath.Join("/workspace", location))
 
+	var repoStatus *v1.RepoStatus
+	if wsi.Status.Repo != nil {
+		repoStatus = &v1.RepoStatus{
+			Branch:               wsi.Status.Repo.Branch,
+			LatestCommit:         wsi.Status.Repo.LatestCommit,
+			TotalUncommitedFiles: int32(wsi.Status.Repo.TotalUncommitedFiles),
+			TotalUntrackedFiles:  int32(wsi.Status.Repo.TotalUntrackedFiles),
+			TotalUnpushedCommits: int32(wsi.Status.Repo.TotalUnpushedCommits),
+			UncommitedFiles:      wsi.Status.Repo.UncommitedFiles,
+			UntrackedFiles:       wsi.Status.Repo.UntrackedFiles,
+			UnpushedCommits:      wsi.Status.Repo.UnpushedCommits,
+		}
+	}
+
 	return &v1.WorkspaceInstance{
 		InstanceId:  wsi.ID,
 		WorkspaceId: wsi.WorkspaceID,
@@ -437,6 +487,7 @@ func convertWorkspaceInstance(wsi *protocol.WorkspaceInstance, wsCtx *protocol.W
 			},
 			Ports:         ports,
 			RecentFolders: recentFolders,
+			Status:        repoStatus,
 		},
 	}, nil
 }

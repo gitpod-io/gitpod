@@ -59,6 +59,7 @@ type APIInterface interface {
 	GetOpenPorts(ctx context.Context, workspaceID string) (res []*WorkspaceInstancePort, err error)
 	OpenPort(ctx context.Context, workspaceID string, port *WorkspaceInstancePort) (res *WorkspaceInstancePort, err error)
 	ClosePort(ctx context.Context, workspaceID string, port float32) (err error)
+	UpdateRepoStatus(ctx context.Context, workspaceID string, status *WorkspaceInstanceRepoStatus) (err error)
 	GetUserStorageResource(ctx context.Context, options *GetUserStorageResourceOptions) (res string, err error)
 	UpdateUserStorageResource(ctx context.Context, options *UpdateUserStorageResourceOptions) (err error)
 	GetWorkspaceEnvVars(ctx context.Context, workspaceID string) (res []*EnvVar, err error)
@@ -1018,6 +1019,24 @@ func (gp *APIoverJSONRPC) ClosePort(ctx context.Context, workspaceID string, por
 	_params = append(_params, port)
 
 	err = gp.C.Call(ctx, "closePort", _params, nil)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// UpdateRepoStatus calls updateRepoStatus on the server
+func (gp *APIoverJSONRPC) UpdateRepoStatus(ctx context.Context, workspaceID string, status *WorkspaceInstanceRepoStatus) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+	_params = append(_params, workspaceID)
+	_params = append(_params, status)
+
+	err = gp.C.Call(ctx, "updateRepoStatus", _params, nil)
 	if err != nil {
 		return
 	}

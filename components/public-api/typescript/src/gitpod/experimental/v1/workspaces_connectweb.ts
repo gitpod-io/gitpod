@@ -9,7 +9,7 @@
 /* eslint-disable */
 /* @ts-nocheck */
 
-import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse} from "./workspaces_pb.js";
+import {CreateAndStartWorkspaceRequest, CreateAndStartWorkspaceResponse, DeleteWorkspaceRequest, DeleteWorkspaceResponse, GetOwnerTokenRequest, GetOwnerTokenResponse, GetWorkspaceRequest, GetWorkspaceResponse, ListWorkspacesRequest, ListWorkspacesResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, StreamWorkspaceStatusRequest, StreamWorkspaceStatusResponse, UpdatePortRequest, UpdatePortResponse, UpdateRepoStatusRequest, UpdateRepoStatusResponse} from "./workspaces_pb.js";
 import {MethodKind} from "@bufbuild/protobuf";
 
 /**
@@ -118,6 +118,17 @@ export const WorkspacesService = {
       name: "UpdatePort",
       I: UpdatePortRequest,
       O: UpdatePortResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * UpdateRepoStatus updates the status of a repository in a workspace.
+     *
+     * @generated from rpc gitpod.experimental.v1.WorkspacesService.UpdateRepoStatus
+     */
+    updateRepoStatus: {
+      name: "UpdateRepoStatus",
+      I: UpdateRepoStatusRequest,
+      O: UpdateRepoStatusResponse,
       kind: MethodKind.Unary,
     },
   }

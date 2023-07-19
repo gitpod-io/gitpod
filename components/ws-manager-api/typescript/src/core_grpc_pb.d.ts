@@ -30,6 +30,7 @@ interface IWorkspaceManagerService extends grpc.ServiceDefinition<grpc.UntypedSe
     deleteVolumeSnapshot: IWorkspaceManagerService_IDeleteVolumeSnapshot;
     updateSSHKey: IWorkspaceManagerService_IUpdateSSHKey;
     describeCluster: IWorkspaceManagerService_IDescribeCluster;
+    updateGitStatus: IWorkspaceManagerService_IUpdateGitStatus;
 }
 
 interface IWorkspaceManagerService_IGetWorkspaces extends grpc.MethodDefinition<core_pb.GetWorkspacesRequest, core_pb.GetWorkspacesResponse> {
@@ -158,6 +159,15 @@ interface IWorkspaceManagerService_IDescribeCluster extends grpc.MethodDefinitio
     responseSerialize: grpc.serialize<core_pb.DescribeClusterResponse>;
     responseDeserialize: grpc.deserialize<core_pb.DescribeClusterResponse>;
 }
+interface IWorkspaceManagerService_IUpdateGitStatus extends grpc.MethodDefinition<core_pb.UpdateGitStatusRequest, core_pb.UpdateGitStatusResponse> {
+    path: "/wsman.WorkspaceManager/UpdateGitStatus";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<core_pb.UpdateGitStatusRequest>;
+    requestDeserialize: grpc.deserialize<core_pb.UpdateGitStatusRequest>;
+    responseSerialize: grpc.serialize<core_pb.UpdateGitStatusResponse>;
+    responseDeserialize: grpc.deserialize<core_pb.UpdateGitStatusResponse>;
+}
 
 export const WorkspaceManagerService: IWorkspaceManagerService;
 
@@ -176,6 +186,7 @@ export interface IWorkspaceManagerServer extends grpc.UntypedServiceImplementati
     deleteVolumeSnapshot: grpc.handleUnaryCall<core_pb.DeleteVolumeSnapshotRequest, core_pb.DeleteVolumeSnapshotResponse>;
     updateSSHKey: grpc.handleUnaryCall<core_pb.UpdateSSHKeyRequest, core_pb.UpdateSSHKeyResponse>;
     describeCluster: grpc.handleUnaryCall<core_pb.DescribeClusterRequest, core_pb.DescribeClusterResponse>;
+    updateGitStatus: grpc.handleUnaryCall<core_pb.UpdateGitStatusRequest, core_pb.UpdateGitStatusResponse>;
 }
 
 export interface IWorkspaceManagerClient {
@@ -220,6 +231,9 @@ export interface IWorkspaceManagerClient {
     describeCluster(request: core_pb.DescribeClusterRequest, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
     describeCluster(request: core_pb.DescribeClusterRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
     describeCluster(request: core_pb.DescribeClusterRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
+    updateGitStatus(request: core_pb.UpdateGitStatusRequest, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateGitStatusResponse) => void): grpc.ClientUnaryCall;
+    updateGitStatus(request: core_pb.UpdateGitStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateGitStatusResponse) => void): grpc.ClientUnaryCall;
+    updateGitStatus(request: core_pb.UpdateGitStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateGitStatusResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class WorkspaceManagerClient extends grpc.Client implements IWorkspaceManagerClient {
@@ -265,4 +279,7 @@ export class WorkspaceManagerClient extends grpc.Client implements IWorkspaceMan
     public describeCluster(request: core_pb.DescribeClusterRequest, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
     public describeCluster(request: core_pb.DescribeClusterRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
     public describeCluster(request: core_pb.DescribeClusterRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.DescribeClusterResponse) => void): grpc.ClientUnaryCall;
+    public updateGitStatus(request: core_pb.UpdateGitStatusRequest, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateGitStatusResponse) => void): grpc.ClientUnaryCall;
+    public updateGitStatus(request: core_pb.UpdateGitStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateGitStatusResponse) => void): grpc.ClientUnaryCall;
+    public updateGitStatus(request: core_pb.UpdateGitStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: core_pb.UpdateGitStatusResponse) => void): grpc.ClientUnaryCall;
 }

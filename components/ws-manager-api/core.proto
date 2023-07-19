@@ -49,6 +49,9 @@ service WorkspaceManager {
 
     // describeCluster provides information about the cluster
     rpc DescribeCluster(DescribeClusterRequest) returns (DescribeClusterResponse) {}
+
+    // UpdateGitStatus updates the git status of a workspace
+    rpc UpdateGitStatus(UpdateGitStatusRequest) returns (UpdateGitStatusResponse) {}
 }
 
 // MetadataFilter describes conditions for matching a set of workspaces.
@@ -728,3 +731,15 @@ message WorkspaceClass {
     string Id = 1;
     string DisplayName = 2;
 }
+
+// UpdateGitStatusRequest describes the update of the git status of a workspace
+message UpdateGitStatusRequest {
+    // ID is the unique identifier of the workspace
+    string id = 1;
+
+    // repo details the Git working copy status of the workspace.
+    contentservice.GitStatus repo = 2;
+}
+
+// UpdateGitStatusResponse is the answer to a UpdateGitStatusRequest
+message UpdateGitStatusResponse {}

@@ -54,6 +54,8 @@ type WorkspacesServiceClient interface {
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
+	// UpdateRepoStatus updates the status of a repository in a workspace.
+	UpdateRepoStatus(context.Context, *connect_go.Request[v1.UpdateRepoStatusRequest]) (*connect_go.Response[v1.UpdateRepoStatusResponse], error)
 }
 
 // NewWorkspacesServiceClient constructs a client for the gitpod.experimental.v1.WorkspacesService
@@ -111,6 +113,11 @@ func NewWorkspacesServiceClient(httpClient connect_go.HTTPClient, baseURL string
 			baseURL+"/gitpod.experimental.v1.WorkspacesService/UpdatePort",
 			opts...,
 		),
+		updateRepoStatus: connect_go.NewClient[v1.UpdateRepoStatusRequest, v1.UpdateRepoStatusResponse](
+			httpClient,
+			baseURL+"/gitpod.experimental.v1.WorkspacesService/UpdateRepoStatus",
+			opts...,
+		),
 	}
 }
 
@@ -125,6 +132,7 @@ type workspacesServiceClient struct {
 	stopWorkspace           *connect_go.Client[v1.StopWorkspaceRequest, v1.StopWorkspaceResponse]
 	deleteWorkspace         *connect_go.Client[v1.DeleteWorkspaceRequest, v1.DeleteWorkspaceResponse]
 	updatePort              *connect_go.Client[v1.UpdatePortRequest, v1.UpdatePortResponse]
+	updateRepoStatus        *connect_go.Client[v1.UpdateRepoStatusRequest, v1.UpdateRepoStatusResponse]
 }
 
 // ListWorkspaces calls gitpod.experimental.v1.WorkspacesService.ListWorkspaces.
@@ -172,6 +180,11 @@ func (c *workspacesServiceClient) UpdatePort(ctx context.Context, req *connect_g
 	return c.updatePort.CallUnary(ctx, req)
 }
 
+// UpdateRepoStatus calls gitpod.experimental.v1.WorkspacesService.UpdateRepoStatus.
+func (c *workspacesServiceClient) UpdateRepoStatus(ctx context.Context, req *connect_go.Request[v1.UpdateRepoStatusRequest]) (*connect_go.Response[v1.UpdateRepoStatusResponse], error) {
+	return c.updateRepoStatus.CallUnary(ctx, req)
+}
+
 // WorkspacesServiceHandler is an implementation of the gitpod.experimental.v1.WorkspacesService
 // service.
 type WorkspacesServiceHandler interface {
@@ -198,6 +211,8 @@ type WorkspacesServiceHandler interface {
 	// Deleted workspaces cannot be started again.
 	DeleteWorkspace(context.Context, *connect_go.Request[v1.DeleteWorkspaceRequest]) (*connect_go.Response[v1.DeleteWorkspaceResponse], error)
 	UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error)
+	// UpdateRepoStatus updates the status of a repository in a workspace.
+	UpdateRepoStatus(context.Context, *connect_go.Request[v1.UpdateRepoStatusRequest]) (*connect_go.Response[v1.UpdateRepoStatusResponse], error)
 }
 
 // NewWorkspacesServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -252,6 +267,11 @@ func NewWorkspacesServiceHandler(svc WorkspacesServiceHandler, opts ...connect_g
 		svc.UpdatePort,
 		opts...,
 	))
+	mux.Handle("/gitpod.experimental.v1.WorkspacesService/UpdateRepoStatus", connect_go.NewUnaryHandler(
+		"/gitpod.experimental.v1.WorkspacesService/UpdateRepoStatus",
+		svc.UpdateRepoStatus,
+		opts...,
+	))
 	return "/gitpod.experimental.v1.WorkspacesService/", mux
 }
 
@@ -292,4 +312,8 @@ func (UnimplementedWorkspacesServiceHandler) DeleteWorkspace(context.Context, *c
 
 func (UnimplementedWorkspacesServiceHandler) UpdatePort(context.Context, *connect_go.Request[v1.UpdatePortRequest]) (*connect_go.Response[v1.UpdatePortResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.UpdatePort is not implemented"))
+}
+
+func (UnimplementedWorkspacesServiceHandler) UpdateRepoStatus(context.Context, *connect_go.Request[v1.UpdateRepoStatusRequest]) (*connect_go.Response[v1.UpdateRepoStatusResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("gitpod.experimental.v1.WorkspacesService.UpdateRepoStatus is not implemented"))
 }

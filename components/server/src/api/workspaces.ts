@@ -25,6 +25,8 @@ import {
     StreamWorkspaceStatusRequest,
     UpdatePortRequest,
     UpdatePortResponse,
+    UpdateRepoStatusRequest,
+    UpdateRepoStatusResponse,
 } from "@gitpod/public-api/lib/gitpod/experimental/v1";
 
 @injectable()
@@ -63,6 +65,10 @@ export class APIWorkspacesService implements ServiceImpl<typeof WorkspacesServic
     }
 
     async updatePort(req: UpdatePortRequest): Promise<UpdatePortResponse> {
+        throw new ConnectError("unimplemented", Code.Unimplemented);
+    }
+
+    async updateRepoStatus(req: UpdateRepoStatusRequest): Promise<UpdateRepoStatusResponse> {
         throw new ConnectError("unimplemented", Code.Unimplemented);
     }
 }

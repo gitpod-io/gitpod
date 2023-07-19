@@ -1260,6 +1260,49 @@ export namespace WorkspaceClass {
     }
 }
 
+export class UpdateGitStatusRequest extends jspb.Message {
+    getId(): string;
+    setId(value: string): UpdateGitStatusRequest;
+
+    hasRepo(): boolean;
+    clearRepo(): void;
+    getRepo(): content_service_api_initializer_pb.GitStatus | undefined;
+    setRepo(value?: content_service_api_initializer_pb.GitStatus): UpdateGitStatusRequest;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpdateGitStatusRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: UpdateGitStatusRequest): UpdateGitStatusRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UpdateGitStatusRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UpdateGitStatusRequest;
+    static deserializeBinaryFromReader(message: UpdateGitStatusRequest, reader: jspb.BinaryReader): UpdateGitStatusRequest;
+}
+
+export namespace UpdateGitStatusRequest {
+    export type AsObject = {
+        id: string,
+        repo?: content_service_api_initializer_pb.GitStatus.AsObject,
+    }
+}
+
+export class UpdateGitStatusResponse extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): UpdateGitStatusResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: UpdateGitStatusResponse): UpdateGitStatusResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: UpdateGitStatusResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): UpdateGitStatusResponse;
+    static deserializeBinaryFromReader(message: UpdateGitStatusResponse, reader: jspb.BinaryReader): UpdateGitStatusResponse;
+}
+
+export namespace UpdateGitStatusResponse {
+    export type AsObject = {
+    }
+}
+
 export enum StopWorkspacePolicy {
     NORMALLY = 0,
     IMMEDIATELY = 1,

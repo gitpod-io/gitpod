@@ -40,6 +40,9 @@ service WorkspacesService {
     rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {}
 
     rpc UpdatePort(UpdatePortRequest) returns (UpdatePortResponse) {}
+
+    // UpdateRepoStatus updates the status of a repository in a workspace.
+    rpc UpdateRepoStatus(UpdateRepoStatusRequest) returns (UpdateRepoStatusResponse) {}
 }
 
 message ListWorkspacesRequest {
@@ -295,7 +298,7 @@ message WorkspaceInstanceStatus {
     // repo details the Git working copy status of the workspace.
     // Note: this is a best-effort field and more often than not will not be present. Its absence does not
     // indicate the absence of a working copy.
-    // contentservice.GitStatus repo = 7;
+    RepoStatus status = 9;
 }
 
 // PortPolicy defines the accssbility policy of a workspace port is guarded by an authentication in the proxy
@@ -367,3 +370,35 @@ message UpdatePortRequest {
 }
 
 message UpdatePortResponse {}
+
+// RepoStatus describes the current working copy status, akin to a combination of "git status" and "git branch"
+message RepoStatus {
+    // branch is branch we're currently on
+    string branch = 1;
+
+    // latest_commit is the most recent commit on the current branch
+    string latest_commit = 2;
+
+    // uncommited_files is an array of uncommitted files, possibly truncated
+    repeated string uncommited_files = 3;
+
+    // the total number of uncommited files
+    int32 total_uncommited_files = 6;
+
+    // untracked_files is an array of untracked files in the workspace, possibly truncated
+    repeated string untracked_files = 4;
+
+    // the total number of untracked files
+    int32 total_untracked_files = 7;
+
+    // unpushed_commits is an array of unpushed changes in the workspace, possibly truncated
+    repeated string unpushed_commits = 5;
+
+    // the total number of unpushed changes
+    int32 total_unpushed_commits = 8;
+}
+message UpdateRepoStatusRequest {
+    string workspace_id = 1;
+    RepoStatus status = 2;
+}
+message UpdateRepoStatusResponse {}

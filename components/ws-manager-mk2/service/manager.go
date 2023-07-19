@@ -580,6 +580,17 @@ func (wsm *WorkspaceManagerServer) SetTimeout(ctx context.Context, req *wsmanapi
 	return &wsmanapi.SetTimeoutResponse{}, nil
 }
 
+func (wsm *WorkspaceManagerServer) UpdateGitStatus(ctx context.Context, req *wsmanapi.UpdateGitStatusRequest) (*wsmanapi.UpdateGitStatusResponse, error) {
+	err := wsm.modifyWorkspace(ctx, req.Id, true, func(ws *workspacev1.Workspace) error {
+		ws.Status.GitStatus = toGitStatus(req.Repo)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &wsmanapi.UpdateGitStatusResponse{}, nil
+}
+
 func (wsm *WorkspaceManagerServer) ControlPort(ctx context.Context, req *wsmanapi.ControlPortRequest) (*wsmanapi.ControlPortResponse, error) {
 	if req.Spec == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "missing spec")
@@ -1125,6 +1136,22 @@ func convertGitStatus(gs *workspacev1.GitStatus) *csapi.GitStatus {
 		return nil
 	}
 	return &csapi.GitStatus{
+		Branch:               gs.Branch,
+		LatestCommit:         gs.LatestCommit,
+		UncommitedFiles:      gs.UncommitedFiles,
+		TotalUncommitedFiles: gs.TotalUncommitedFiles,
+		UntrackedFiles:       gs.UntrackedFiles,
+		TotalUntrackedFiles:  gs.TotalUntrackedFiles,
+		UnpushedCommits:      gs.UnpushedCommits,
+		TotalUnpushedCommits: gs.TotalUnpushedCommits,
+	}
+}
+
+func toGitStatus(gs *csapi.GitStatus) *workspacev1.GitStatus {
+	if gs == nil {
+		return nil
+	}
+	return &workspacev1.GitStatus{
 		Branch:               gs.Branch,
 		LatestCommit:         gs.LatestCommit,
 		UncommitedFiles:      gs.UncommitedFiles,

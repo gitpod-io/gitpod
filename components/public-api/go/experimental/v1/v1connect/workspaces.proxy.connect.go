@@ -98,3 +98,13 @@ func (s *ProxyWorkspacesServiceHandler) UpdatePort(ctx context.Context, req *con
 
 	return connect_go.NewResponse(resp), nil
 }
+
+func (s *ProxyWorkspacesServiceHandler) UpdateRepoStatus(ctx context.Context, req *connect_go.Request[v1.UpdateRepoStatusRequest]) (*connect_go.Response[v1.UpdateRepoStatusResponse], error) {
+	resp, err := s.Client.UpdateRepoStatus(ctx, req.Msg)
+	if err != nil {
+		// TODO(milan): Convert to correct status code
+		return nil, err
+	}
+
+	return connect_go.NewResponse(resp), nil
+}

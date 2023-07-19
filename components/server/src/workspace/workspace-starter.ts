@@ -1584,6 +1584,7 @@ export class WorkspaceStarter {
             "function:getOpenPorts",
             "function:openPort",
             "function:closePort",
+            "function:updateRepoStatus",
             "function:generateNewGitpodToken",
             "function:takeSnapshot",
             "function:waitForSnapshot",

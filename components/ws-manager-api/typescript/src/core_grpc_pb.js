@@ -298,6 +298,28 @@ function deserialize_wsman_TakeSnapshotResponse(buffer_arg) {
   return core_pb.TakeSnapshotResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_wsman_UpdateGitStatusRequest(arg) {
+  if (!(arg instanceof core_pb.UpdateGitStatusRequest)) {
+    throw new Error('Expected argument of type wsman.UpdateGitStatusRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_UpdateGitStatusRequest(buffer_arg) {
+  return core_pb.UpdateGitStatusRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsman_UpdateGitStatusResponse(arg) {
+  if (!(arg instanceof core_pb.UpdateGitStatusResponse)) {
+    throw new Error('Expected argument of type wsman.UpdateGitStatusResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsman_UpdateGitStatusResponse(buffer_arg) {
+  return core_pb.UpdateGitStatusResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_wsman_UpdateSSHKeyRequest(arg) {
   if (!(arg instanceof core_pb.UpdateSSHKeyRequest)) {
     throw new Error('Expected argument of type wsman.UpdateSSHKeyRequest');
@@ -489,6 +511,18 @@ describeCluster: {
     requestDeserialize: deserialize_wsman_DescribeClusterRequest,
     responseSerialize: serialize_wsman_DescribeClusterResponse,
     responseDeserialize: deserialize_wsman_DescribeClusterResponse,
+  },
+  // UpdateGitStatus updates the git status of a workspace
+updateGitStatus: {
+    path: '/wsman.WorkspaceManager/UpdateGitStatus',
+    requestStream: false,
+    responseStream: false,
+    requestType: core_pb.UpdateGitStatusRequest,
+    responseType: core_pb.UpdateGitStatusResponse,
+    requestSerialize: serialize_wsman_UpdateGitStatusRequest,
+    requestDeserialize: deserialize_wsman_UpdateGitStatusRequest,
+    responseSerialize: serialize_wsman_UpdateGitStatusResponse,
+    responseDeserialize: deserialize_wsman_UpdateGitStatusResponse,
   },
 };
 

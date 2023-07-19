@@ -1240,6 +1240,15 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
    */
   recentFolders: string[] = [];
 
+  /**
+   * repo details the Git working copy status of the workspace.
+   * Note: this is a best-effort field and more often than not will not be present. Its absence does not
+   * indicate the absence of a working copy.
+   *
+   * @generated from field: gitpod.experimental.v1.RepoStatus status = 9;
+   */
+  status?: RepoStatus;
+
   constructor(data?: PartialMessage<WorkspaceInstanceStatus>) {
     super();
     proto3.util.initPartial(data, this);
@@ -1256,6 +1265,7 @@ export class WorkspaceInstanceStatus extends Message<WorkspaceInstanceStatus> {
     { no: 6, name: "admission", kind: "enum", T: proto3.getEnumType(AdmissionLevel) },
     { no: 7, name: "ports", kind: "message", T: Port, repeated: true },
     { no: 8, name: "recent_folders", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 9, name: "status", kind: "message", T: RepoStatus },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceInstanceStatus {
@@ -1668,5 +1678,176 @@ export class UpdatePortResponse extends Message<UpdatePortResponse> {
 
   static equals(a: UpdatePortResponse | PlainMessage<UpdatePortResponse> | undefined, b: UpdatePortResponse | PlainMessage<UpdatePortResponse> | undefined): boolean {
     return proto3.util.equals(UpdatePortResponse, a, b);
+  }
+}
+
+/**
+ * RepoStatus describes the current working copy status, akin to a combination of "git status" and "git branch"
+ *
+ * @generated from message gitpod.experimental.v1.RepoStatus
+ */
+export class RepoStatus extends Message<RepoStatus> {
+  /**
+   * branch is branch we're currently on
+   *
+   * @generated from field: string branch = 1;
+   */
+  branch = "";
+
+  /**
+   * latest_commit is the most recent commit on the current branch
+   *
+   * @generated from field: string latest_commit = 2;
+   */
+  latestCommit = "";
+
+  /**
+   * uncommited_files is an array of uncommitted files, possibly truncated
+   *
+   * @generated from field: repeated string uncommited_files = 3;
+   */
+  uncommitedFiles: string[] = [];
+
+  /**
+   * the total number of uncommited files
+   *
+   * @generated from field: int32 total_uncommited_files = 6;
+   */
+  totalUncommitedFiles = 0;
+
+  /**
+   * untracked_files is an array of untracked files in the workspace, possibly truncated
+   *
+   * @generated from field: repeated string untracked_files = 4;
+   */
+  untrackedFiles: string[] = [];
+
+  /**
+   * the total number of untracked files
+   *
+   * @generated from field: int32 total_untracked_files = 7;
+   */
+  totalUntrackedFiles = 0;
+
+  /**
+   * unpushed_commits is an array of unpushed changes in the workspace, possibly truncated
+   *
+   * @generated from field: repeated string unpushed_commits = 5;
+   */
+  unpushedCommits: string[] = [];
+
+  /**
+   * the total number of unpushed changes
+   *
+   * @generated from field: int32 total_unpushed_commits = 8;
+   */
+  totalUnpushedCommits = 0;
+
+  constructor(data?: PartialMessage<RepoStatus>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.RepoStatus";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "branch", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "latest_commit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 3, name: "uncommited_files", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 6, name: "total_uncommited_files", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 4, name: "untracked_files", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 7, name: "total_untracked_files", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+    { no: 5, name: "unpushed_commits", kind: "scalar", T: 9 /* ScalarType.STRING */, repeated: true },
+    { no: 8, name: "total_unpushed_commits", kind: "scalar", T: 5 /* ScalarType.INT32 */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): RepoStatus {
+    return new RepoStatus().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): RepoStatus {
+    return new RepoStatus().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): RepoStatus {
+    return new RepoStatus().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: RepoStatus | PlainMessage<RepoStatus> | undefined, b: RepoStatus | PlainMessage<RepoStatus> | undefined): boolean {
+    return proto3.util.equals(RepoStatus, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.UpdateRepoStatusRequest
+ */
+export class UpdateRepoStatusRequest extends Message<UpdateRepoStatusRequest> {
+  /**
+   * @generated from field: string workspace_id = 1;
+   */
+  workspaceId = "";
+
+  /**
+   * @generated from field: gitpod.experimental.v1.RepoStatus status = 2;
+   */
+  status?: RepoStatus;
+
+  constructor(data?: PartialMessage<UpdateRepoStatusRequest>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdateRepoStatusRequest";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "workspace_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "status", kind: "message", T: RepoStatus },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateRepoStatusRequest {
+    return new UpdateRepoStatusRequest().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateRepoStatusRequest {
+    return new UpdateRepoStatusRequest().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateRepoStatusRequest {
+    return new UpdateRepoStatusRequest().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateRepoStatusRequest | PlainMessage<UpdateRepoStatusRequest> | undefined, b: UpdateRepoStatusRequest | PlainMessage<UpdateRepoStatusRequest> | undefined): boolean {
+    return proto3.util.equals(UpdateRepoStatusRequest, a, b);
+  }
+}
+
+/**
+ * @generated from message gitpod.experimental.v1.UpdateRepoStatusResponse
+ */
+export class UpdateRepoStatusResponse extends Message<UpdateRepoStatusResponse> {
+  constructor(data?: PartialMessage<UpdateRepoStatusResponse>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.UpdateRepoStatusResponse";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): UpdateRepoStatusResponse {
+    return new UpdateRepoStatusResponse().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): UpdateRepoStatusResponse {
+    return new UpdateRepoStatusResponse().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): UpdateRepoStatusResponse {
+    return new UpdateRepoStatusResponse().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: UpdateRepoStatusResponse | PlainMessage<UpdateRepoStatusResponse> | undefined, b: UpdateRepoStatusResponse | PlainMessage<UpdateRepoStatusResponse> | undefined): boolean {
+    return proto3.util.equals(UpdateRepoStatusResponse, a, b);
   }
 }

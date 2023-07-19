@@ -71,6 +71,7 @@ import {
     RoleOrPermission,
     WORKSPACE_TIMEOUT_DEFAULT_SHORT,
     PortProtocol,
+    WorkspaceInstanceRepoStatus,
 } from "@gitpod/gitpod-protocol";
 import { BlockedRepository } from "@gitpod/gitpod-protocol/lib/blocked-repositories-protocol";
 import {
@@ -102,6 +103,7 @@ import {
     AdmissionLevel,
     ControlAdmissionRequest,
     ControlPortRequest,
+    UpdateGitStatusRequest,
     DescribeWorkspaceRequest,
     MarkActiveRequest,
     PortSpec,
@@ -195,6 +197,7 @@ import { Authorizer } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
+import { GitStatus } from "@gitpod/content-service/lib";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -2042,6 +2045,47 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
 
         return ports;
+    }
+
+    public async updateRepoStatus(
+        ctx: TraceContext,
+        workspaceId: string,
+        status: Required<WorkspaceInstanceRepoStatus> | undefined,
+    ): Promise<void> {
+        traceAPIParams(ctx, { workspaceId, status });
+        traceWI(ctx, { workspaceId });
+
+        const user = await this.checkAndBlockUser("updateRepoStatus");
+
+        const workspace = await this.internalGetWorkspace(user, workspaceId, this.workspaceDb.trace(ctx));
+        const instance = await this.workspaceDb.trace(ctx).findCurrentInstance(workspaceId);
+        if (!instance) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `workspace ${workspaceId} has no instance`);
+        }
+        traceWI(ctx, { instanceId: instance.id });
+        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspace }, "update");
+
+        const req = new UpdateGitStatusRequest();
+        req.setId(instance.id);
+        if (status) {
+            const gitStatus = new GitStatus();
+            gitStatus.setBranch(status.branch);
+            gitStatus.setLatestCommit(status.latestCommit);
+            gitStatus.setUncommitedFilesList(status.uncommitedFiles);
+            gitStatus.setTotalUncommitedFiles(status.totalUncommitedFiles);
+            gitStatus.setUntrackedFilesList(status.untrackedFiles);
+            gitStatus.setTotalUntrackedFiles(status.totalUntrackedFiles);
+            gitStatus.setUnpushedCommitsList(status.unpushedCommits);
+            gitStatus.setTotalUnpushedCommits(status.totalUnpushedCommits);
+            req.setRepo(gitStatus);
+        }
+
+        try {
+            const client = await this.workspaceManagerClientProvider.get(instance.region);
+            await client.updateGitStatus(ctx, req);
+        } catch (e) {
+            throw this.mapGrpcError(e);
+        }
     }
 
     public async openPort(

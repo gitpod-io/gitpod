@@ -354,6 +354,21 @@ func (mr *MockWorkspaceManagerServerMockRecorder) TakeSnapshot(arg0, arg1 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TakeSnapshot", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).TakeSnapshot), arg0, arg1)
 }
 
+// UpdateGitStatus mocks base method.
+func (m *MockWorkspaceManagerServer) UpdateGitStatus(arg0 context.Context, arg1 *api.UpdateGitStatusRequest) (*api.UpdateGitStatusResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGitStatus", arg0, arg1)
+	ret0, _ := ret[0].(*api.UpdateGitStatusResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateGitStatus indicates an expected call of UpdateGitStatus.
+func (mr *MockWorkspaceManagerServerMockRecorder) UpdateGitStatus(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitStatus", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).UpdateGitStatus), arg0, arg1)
+}
+
 // UpdateSSHKey mocks base method.
 func (m *MockWorkspaceManagerServer) UpdateSSHKey(arg0 context.Context, arg1 *api.UpdateSSHKeyRequest) (*api.UpdateSSHKeyResponse, error) {
 	m.ctrl.T.Helper()
@@ -785,6 +800,26 @@ func (mr *MockWorkspaceManagerClientMockRecorder) TakeSnapshot(arg0, arg1 interf
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TakeSnapshot", reflect.TypeOf((*MockWorkspaceManagerClient)(nil).TakeSnapshot), varargs...)
+}
+
+// UpdateGitStatus mocks base method.
+func (m *MockWorkspaceManagerClient) UpdateGitStatus(arg0 context.Context, arg1 *api.UpdateGitStatusRequest, arg2 ...grpc.CallOption) (*api.UpdateGitStatusResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateGitStatus", varargs...)
+	ret0, _ := ret[0].(*api.UpdateGitStatusResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateGitStatus indicates an expected call of UpdateGitStatus.
+func (mr *MockWorkspaceManagerClientMockRecorder) UpdateGitStatus(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGitStatus", reflect.TypeOf((*MockWorkspaceManagerClient)(nil).UpdateGitStatus), varargs...)
 }
 
 // UpdateSSHKey mocks base method.

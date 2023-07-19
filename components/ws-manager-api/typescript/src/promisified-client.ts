@@ -30,6 +30,8 @@ import {
     TakeSnapshotResponse,
     UpdateSSHKeyRequest,
     UpdateSSHKeyResponse,
+    UpdateGitStatusRequest,
+    UpdateGitStatusResponse,
 } from "./core_pb";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
@@ -397,6 +399,31 @@ export class PromisifiedWorkspaceManagerClient implements Disposable {
                         },
                     );
                 }),
+        );
+    }
+
+    public updateGitStatus(ctx: TraceContext, request: UpdateGitStatusRequest): Promise<UpdateGitStatusResponse> {
+        return this.retryIfUnavailable(
+            (attempt: number) =>
+                new Promise<UpdateGitStatusResponse>((resolve, reject) => {
+                    const span = TraceContext.startSpan(`/ws-manager/updateGitStatus`, ctx);
+                    span.log({ attempt });
+                    this.client.updateGitStatus(
+                        request,
+                        withTracing({ span }),
+                        this.getDefaultUnaryOptions(),
+                        (err, resp) => {
+                            span.finish();
+                            if (err) {
+                                TraceContext.setError(ctx, err);
+                                reject(err);
+                            } else {
+                                resolve(resp);
+                            }
+                        }
+                    );
+                }
+            )
         );
     }
 

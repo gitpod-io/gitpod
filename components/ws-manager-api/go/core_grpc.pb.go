@@ -54,6 +54,8 @@ type WorkspaceManagerClient interface {
 	UpdateSSHKey(ctx context.Context, in *UpdateSSHKeyRequest, opts ...grpc.CallOption) (*UpdateSSHKeyResponse, error)
 	// describeCluster provides information about the cluster
 	DescribeCluster(ctx context.Context, in *DescribeClusterRequest, opts ...grpc.CallOption) (*DescribeClusterResponse, error)
+	// UpdateGitStatus updates the git status of a workspace
+	UpdateGitStatus(ctx context.Context, in *UpdateGitStatusRequest, opts ...grpc.CallOption) (*UpdateGitStatusResponse, error)
 }
 
 type workspaceManagerClient struct {
@@ -213,6 +215,15 @@ func (c *workspaceManagerClient) DescribeCluster(ctx context.Context, in *Descri
 	return out, nil
 }
 
+func (c *workspaceManagerClient) UpdateGitStatus(ctx context.Context, in *UpdateGitStatusRequest, opts ...grpc.CallOption) (*UpdateGitStatusResponse, error) {
+	out := new(UpdateGitStatusResponse)
+	err := c.cc.Invoke(ctx, "/wsman.WorkspaceManager/UpdateGitStatus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // WorkspaceManagerServer is the server API for WorkspaceManager service.
 // All implementations must embed UnimplementedWorkspaceManagerServer
 // for forward compatibility
@@ -245,6 +256,8 @@ type WorkspaceManagerServer interface {
 	UpdateSSHKey(context.Context, *UpdateSSHKeyRequest) (*UpdateSSHKeyResponse, error)
 	// describeCluster provides information about the cluster
 	DescribeCluster(context.Context, *DescribeClusterRequest) (*DescribeClusterResponse, error)
+	// UpdateGitStatus updates the git status of a workspace
+	UpdateGitStatus(context.Context, *UpdateGitStatusRequest) (*UpdateGitStatusResponse, error)
 	mustEmbedUnimplementedWorkspaceManagerServer()
 }
 
@@ -293,6 +306,9 @@ func (UnimplementedWorkspaceManagerServer) UpdateSSHKey(context.Context, *Update
 }
 func (UnimplementedWorkspaceManagerServer) DescribeCluster(context.Context, *DescribeClusterRequest) (*DescribeClusterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DescribeCluster not implemented")
+}
+func (UnimplementedWorkspaceManagerServer) UpdateGitStatus(context.Context, *UpdateGitStatusRequest) (*UpdateGitStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateGitStatus not implemented")
 }
 func (UnimplementedWorkspaceManagerServer) mustEmbedUnimplementedWorkspaceManagerServer() {}
 
@@ -562,6 +578,24 @@ func _WorkspaceManager_DescribeCluster_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _WorkspaceManager_UpdateGitStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateGitStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(WorkspaceManagerServer).UpdateGitStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsman.WorkspaceManager/UpdateGitStatus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(WorkspaceManagerServer).UpdateGitStatus(ctx, req.(*UpdateGitStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // WorkspaceManager_ServiceDesc is the grpc.ServiceDesc for WorkspaceManager service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -620,6 +654,10 @@ var WorkspaceManager_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DescribeCluster",
 			Handler:    _WorkspaceManager_DescribeCluster_Handler,
+		},
+		{
+			MethodName: "UpdateGitStatus",
+			Handler:    _WorkspaceManager_UpdateGitStatus_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
