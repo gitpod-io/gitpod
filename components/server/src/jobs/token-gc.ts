@@ -27,6 +27,7 @@ export class TokenGarbageCollector implements Job {
         log.debug("token-gc: start collecting...");
         try {
             await this.userDb.deleteExpiredTokenEntries(new Date().toISOString());
+            await this.userDb.deleteExpiredAccessTokens(new Date().toISOString());
             log.debug("token-gc: done collecting.");
         } catch (err) {
             TraceContext.setError({ span }, err);

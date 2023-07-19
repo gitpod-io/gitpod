@@ -34,5 +34,8 @@ export class DBGitpodToken implements GitpodToken {
     created: string;
 
     @Column()
+    expiryDate?: string;
+
+    @Column()
     deleted?: boolean;
 }

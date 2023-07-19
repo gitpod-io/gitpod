@@ -671,11 +671,14 @@ export interface GitpodToken {
     /** The user the token belongs to. */
     userId: string;
 
-    /** Scopes (e.g. limition to read-only) */
+    /** Scopes (e.g. limitation to read-only) */
     scopes: string[];
 
     /** Created timestamp */
     created: string;
+
+    /** The date after which the token should not be usable */
+    expiryDate?: string;
 
     // token is deleted on the database and about to be collected by periodic deleter
     deleted?: boolean;

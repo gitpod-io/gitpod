@@ -86,6 +86,13 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository, Trans
     deleteExpiredTokenEntries(date: string): Promise<void>;
 
     /**
+     * Delete expired GitpodTokenEntries
+     *
+     * @param date All tokens with an expiry date before (older than) this ISO8601 formatted date are considered expired and will be deleted.
+     */
+    deleteExpiredAccessTokens(date: string): Promise<void>;
+
+    /**
      * Update TokenEntry by id
      *
      * @param tokenEntry

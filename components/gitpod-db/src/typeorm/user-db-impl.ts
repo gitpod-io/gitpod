@@ -555,7 +555,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
     async issueRefreshToken(accessToken: OAuthToken): Promise<OAuthToken> {
         // NOTE(rl): this exists for the OAuth server code - Gitpod tokens are non-refreshable (atm)
         accessToken.refreshToken = "refreshtokentoken";
-        accessToken.refreshTokenExpiresAt = new DateInterval("30d").getEndDate();
+        accessToken.refreshTokenExpiresAt = new DateInterval("365d").getEndDate();
         await this.persist(accessToken);
         return accessToken;
     }
@@ -587,6 +587,7 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
                 userId: accessToken.user.id.toString(),
                 scopes: scopes,
                 created: new Date().toISOString(),
+                expiryDate: accessToken.accessTokenExpiresAt.toISOString(),
             };
             return this.storeGitpodToken(dbToken);
         }
@@ -594,6 +595,18 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
     async revoke(accessTokenToken: OAuthToken): Promise<void> {
         const tokenHash = crypto.createHash("sha256").update(accessTokenToken.accessToken, "utf8").digest("hex");
         this.deleteGitpodToken(tokenHash);
+    }
+    public async deleteExpiredAccessTokens(date: string): Promise<void> {
+        const repo = await this.getTokenRepo();
+        await repo.query(
+            `
+            UPDATE d_b_token_entry AS te
+                SET te.deleted = TRUE
+                WHERE te.expiryDate != ''
+                    AND te.expiryDate <= ?;
+            `,
+            [date],
+        );
     }
     async isRefreshTokenRevoked(refreshToken: OAuthToken): Promise<boolean> {
         return Date.now() > (refreshToken.refreshTokenExpiresAt?.getTime() ?? 0);
