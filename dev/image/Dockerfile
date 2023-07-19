@@ -208,7 +208,7 @@ RUN sudo install-packages shellcheck \
 
 # gh (Github CLI) binary:
 RUN cd /usr/bin && curl -fsSL https://github.com/cli/cli/releases/download/v2.32.0/gh_2.32.0_linux_amd64.tar.gz \
-    | sudo tar xzv --strip-components=2 gh_2.11.3_linux_amd64/bin/gh
+    | sudo tar xzv --strip-components=2 gh_2.32.0_linux_amd64/bin/gh
 
 # Install observability-related binaries
 ARG PROM_VERSION="2.45.0"
