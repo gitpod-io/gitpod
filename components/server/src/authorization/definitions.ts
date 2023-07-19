@@ -5,37 +5,44 @@
  */
 
 export const InstallationID = "1";
-export const InstallationResourceType = "installation";
-export const OrganizationResourceType = "organization";
-export const ProjectResourceType = "project";
-export const UserResourceType = "user";
-export type ResourceType =
-    | typeof InstallationResourceType
-    | typeof OrganizationResourceType
-    | typeof ProjectResourceType
-    | typeof UserResourceType;
+export type ResourceType = UserResourceType | InstallationResourceType | OrganizationResourceType | ProjectResourceType;
 
-export type InstallationRelation = "user" | "admin";
-export type OrganizationRelation = "installation" | "owner" | "member";
-export type ProjectRelation = "org" | "editor" | "viewer";
 export type Relation = InstallationRelation | OrganizationRelation | ProjectRelation;
 
+export type Permission = InstallationPermission | OrganizationPermission | ProjectPermission;
+
+export type UserResourceType = "user";
+
+export type InstallationResourceType = "installation";
+
+export type InstallationRelation = "member" | "admin";
+
 export type InstallationPermission = "create_organization";
+
+export type OrganizationResourceType = "organization";
+
+export type OrganizationRelation = "installation" | "member" | "owner";
+
 export type OrganizationPermission =
+    | "installation_admin"
     | "read_info"
     | "write_info"
+    | "delete"
+    | "read_settings"
+    | "write_settings"
     | "read_members"
     | "invite_members"
     | "write_members"
     | "leave"
-    | "delete"
     | "create_project"
-    | "read_settings"
-    | "write_settings"
     | "read_git_provider"
     | "write_git_provider"
     | "read_billing"
     | "write_billing"
     | "write_billing_admin";
-export type ProjectPermission = "write_info" | "read_info" | "delete";
-export type Permission = OrganizationPermission;
+
+export type ProjectResourceType = "project";
+
+export type ProjectRelation = "org" | "editor" | "viewer";
+
+export type ProjectPermission = "read_info" | "write_info" | "delete";
