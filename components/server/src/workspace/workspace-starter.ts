@@ -1149,6 +1149,21 @@ export class WorkspaceStarter {
                 disposable.dispose();
             }
 
+            if (result.getStatus() != BuildStatus.DONE_SUCCESS) {
+                log.info(
+                    {
+                        instanceId: instance.id,
+                        userId: workspace.ownerId,
+                        workspaceId: workspace.id,
+                        organizationId: workspace.organizationId,
+                    },
+                    "Resolve workspace was unsuccessful",
+                    {
+                        buildStatus: result.getStatus(),
+                    },
+                );
+            }
+
             return result.getStatus() != BuildStatus.DONE_SUCCESS;
         } catch (err) {
             TraceContext.setError({ span }, err);
