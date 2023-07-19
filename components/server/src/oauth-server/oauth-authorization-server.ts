@@ -24,11 +24,9 @@ export function createAuthorizationServer(
     jwtSecret: string,
 ): AuthorizationServer {
     const authorizationServer = new AuthorizationServer(
-        authCodeRepository,
         clientRepository,
         tokenRepository,
         scopeRepository,
-        userRepository,
         new JwtService(jwtSecret),
         {
             // Be explicit, communicate intent. Default is true but let's not assume that
@@ -36,6 +34,10 @@ export function createAuthorizationServer(
         },
     );
 
-    authorizationServer.enableGrantType("authorization_code", new DateInterval("5m"));
+    authorizationServer.enableGrantType(
+        { grant: "authorization_code", userRepository, authCodeRepository },
+        new DateInterval("5m"),
+    );
+    authorizationServer.enableGrantType("refresh_token");
     return authorizationServer;
 }

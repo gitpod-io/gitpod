@@ -49,7 +49,7 @@
     "@gitpod/usage-api": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",
     "@improbable-eng/grpc-web-node-http-transport": "^0.14.0",
-    "@jmondi/oauth2-server": "^2.6.1",
+    "@jmondi/oauth2-server": "^3.0.2",
     "@octokit/rest": "18.6.1",
     "@probot/get-private-key": "^1.1.1",
     "@types/jaeger-client": "^3.18.3",
@@ -90,7 +90,6 @@
     "redlock": "^5.0.0-beta.2",
     "reflect-metadata": "^0.1.10",
     "stripe": "^9.0.0",
-
     "twilio": "^3.78.0",
     "uuid": "^8.3.2",
     "vscode-ws-jsonrpc": "^0.2.0",

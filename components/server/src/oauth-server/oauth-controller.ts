@@ -8,8 +8,8 @@ import { AuthCodeRepositoryDB } from "@gitpod/gitpod-db/lib/typeorm/auth-code-re
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { OAuthRequest, OAuthResponse } from "@jmondi/oauth2-server";
-import { handleExpressResponse, handleExpressError } from "@jmondi/oauth2-server/dist/adapters/express";
+import { OAuthRequest } from "@jmondi/oauth2-server";
+import { handleExpressResponse, handleExpressError } from "@jmondi/oauth2-server/express";
 import * as express from "express";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
@@ -173,9 +173,8 @@ export class OAuthController {
         });
 
         router.post("/oauth/token", async (req: express.Request, res: express.Response) => {
-            const response = new OAuthResponse(res);
             try {
-                const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);
+                const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req);
                 return handleExpressResponse(res, oauthResponse);
             } catch (e) {
                 try {

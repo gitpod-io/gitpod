@@ -86,7 +86,7 @@ const desktopClient: OAuthClient = {
     id: "gitpod-desktop",
     name: "Gitpod Desktop",
     redirectUris: ["gitpod://complete-auth"],
-    allowedGrants: ["authorization_code"],
+    allowedGrants: ["authorization_code", "refresh_token"],
     scopes: [
         { name: "function:getGitpodTokenScopes" },
         { name: "function:getLoggedInUser" },
