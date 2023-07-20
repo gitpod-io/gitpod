@@ -72,10 +72,10 @@ export const useAnalyticsTracking = () => {
             theme: {
                 colorScheme: isDark ? "dark" : "light",
                 colorsLight: {
-                    primary: "#059669",
+                    primary: "#292524",
                 },
                 colorsDark: {
-                    primary: "#047857",
+                    primary: "#fff",
                 },
             },
         });
