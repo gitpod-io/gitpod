@@ -23,7 +23,7 @@ export const EmptyMessage: FC<Props> = ({ title, subtitle, buttonText, onClick, 
     return (
         <div
             className={classNames(
-                "w-full flex justify-center mt-2 rounded-xl bg-gray-100 dark:bg-gray-900 px-4 py-14",
+                "w-full flex justify-center mt-2 rounded-xl bg-gray-100 dark:bg-gray-800 px-4 py-14",
                 className,
             )}
         >
