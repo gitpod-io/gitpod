@@ -71,12 +71,12 @@ export const useAnalyticsTracking = () => {
         orbital("customConfig", {
             theme: {
                 colorScheme: isDark ? "dark" : "light",
-            },
-            colorsLight: {
-                primary: "#059669",
-            },
-            colorsDark: {
-                primary: "#047857",
+                colorsLight: {
+                    primary: "#059669",
+                },
+                colorsDark: {
+                    primary: "#047857",
+                },
             },
         });
 
