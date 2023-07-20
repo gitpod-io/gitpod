@@ -434,7 +434,7 @@ class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T>
                         message: e.message,
                     },
                 );
-                throw new ResponseError(e.code, e.message);
+                throw new ResponseError(e.code, e.message, e.data);
             } else {
                 TraceContext.setError(ctx, e); // this is a "real" error
 
