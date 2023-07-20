@@ -81,7 +81,10 @@ var ring0Cmd = &cobra.Command{
 		defer log.Info("ring0 stopped")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-		defer cancel()
+		defer func() {
+			log.Info("cancel ring0 context")
+			cancel()
+		}()
 
 		client, err := connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
@@ -97,15 +100,22 @@ var ring0Cmd = &cobra.Command{
 		client.Close()
 
 		defer func() {
+			log.Info("begin tearing down ring0 in defer")
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
+			defer func() {
+				log.Info("cancel ring0 context in defer")
+				cancel()
+			}()
 
 			client, err := connectToInWorkspaceDaemonService(ctx)
 			if err != nil {
 				log.WithError(err).Error("cannot connect to daemon from ring0 in defer")
 				return
 			}
-			defer client.Close()
+			defer func() {
+				log.Info("close in-worksapce service in ring0 in defer")
+				client.Close()
+			}()
 
 			_, err = client.Teardown(ctx, &daemonapi.TeardownRequest{})
 			if err != nil {
