@@ -110,6 +110,12 @@
         },
         {
             "path": "components/server"
+        },
+        {
+            "path": "components/spicedb"
+        },
+        {
+            "path": "components/spicedb/codegen"
         }
     ],
     "settings": {
