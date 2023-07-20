@@ -613,9 +613,9 @@ var workspaceTestData = []workspaceTestDataEntry{
 				BaseImageNameResolved: "foo:bar",
 				ID:                    "gitpodio-gitpod-isq6xj458lj",
 				OwnerID:               "fake-owner-id",
-				ContextURL:            "https://github.com/gitpod-io/gitpod",
+				ContextURL:            "open-prebuild/126ac54a-5922-4a45-9a18-670b057bf540/https://github.com/gitpod-io/gitpod/pull/18291",
 				Context: &protocol.WorkspaceContext{
-					NormalizedContextURL: "https://github.com/gitpod-io/protocol.git",
+					NormalizedContextURL: "https://github.com/gitpod-io/gitpod/pull/18291",
 					Title:                "tes ttitle",
 					Repository: &protocol.Repository{
 						Host: "github.com",
@@ -659,10 +659,10 @@ var workspaceTestData = []workspaceTestDataEntry{
 			WorkspaceId: "gitpodio-gitpod-isq6xj458lj",
 			OwnerId:     "fake-owner-id",
 			Context: &v1.WorkspaceContext{
-				ContextUrl: "https://github.com/gitpod-io/gitpod",
+				ContextUrl: "open-prebuild/126ac54a-5922-4a45-9a18-670b057bf540/https://github.com/gitpod-io/gitpod/pull/18291",
 				Details: &v1.WorkspaceContext_Git_{
 					Git: &v1.WorkspaceContext_Git{
-						NormalizedContextUrl: "https://github.com/gitpod-io/gitpod",
+						NormalizedContextUrl: "https://github.com/gitpod-io/gitpod/pull/18291",
 					},
 				},
 			},
