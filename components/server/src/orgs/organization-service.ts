@@ -12,12 +12,12 @@ import {
     OrganizationSettings,
     TeamMembershipInvite,
 } from "@gitpod/gitpod-protocol";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
-import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ProjectsService } from "../projects/projects-service";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class OrganizationService {
@@ -75,15 +75,21 @@ export class OrganizationService {
 
             throw err;
         }
-        this.analytics.track({
-            userId,
-            event: "team_created",
-            properties: {
-                id: result.id,
-                name: result.name,
-                created_at: result.creationTime,
-            },
-        });
+        try {
+            const invite = await this.teamDB.resetGenericInvite(result.id);
+            this.analytics.track({
+                userId,
+                event: "team_created",
+                properties: {
+                    id: result.id,
+                    name: result.name,
+                    created_at: result.creationTime,
+                    invite_id: invite.id,
+                },
+            });
+        } catch (error) {
+            log.error("Failed to track team_created event.", error);
+        }
         return result;
     }
 
