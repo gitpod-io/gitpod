@@ -49,15 +49,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                 className={classNames(
                     "cursor-pointer my-auto",
                     "text-sm font-medium whitespace-nowrap",
-                    "rounded-md focus:outline-none focus:ring transition ease-in-out",
+                    "rounded-xl focus:outline-none focus:ring transition ease-in-out",
                     spacing === "compact" ? ["px-1 py-1"] : null,
                     spacing === "default" ? ["px-4 py-2"] : null,
-                    type === "primary"
-                        ? [
-                              "bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600",
-                              "text-gray-100 dark:text-green-100",
-                          ]
-                        : null,
+                    type === "primary" ? ["bg-gitpod-kumquat", "text-gray-800 dark:text-gray-900"] : null,
                     type === "secondary"
                         ? [
                               "bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600",

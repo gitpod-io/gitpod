@@ -54,7 +54,7 @@
 @layer components {
     /* TODO: deprecate button styles in favor of using <Button> component and handling there */
     button {
-        @apply cursor-pointer px-4 py-2 my-auto bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 text-gray-100 dark:text-green-100 text-sm font-medium rounded-md focus:outline-none focus:ring transition ease-in-out;
+        @apply cursor-pointer px-4 py-2 my-auto bg-gitpod-kumquat text-gray-800 text-sm font-medium rounded-xl focus:outline-none focus:ring transition ease-in-out;
     }
     button.secondary {
         @apply bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-100 hover:text-gray-600;

@@ -28,12 +28,9 @@ module.exports = {
                 sky: colors.sky,
                 rose: colors.rose,
                 "gitpod-black": "#161616",
-                "gitpod-gray": "#8E8787",
                 "gitpod-red": "#CE4A3E",
-                "gitpod-kumquat-light": "#FFE4BC",
                 "gitpod-kumquat": "#FFB45B",
-                "gitpod-kumquat-dark": "#FF8A00",
-                "gitpod-kumquat-darker": "#f28300",
+                "gitpod-kumquat-light": "#FFE4BC",
                 "gitpod-kumquat-gradient": "linear-gradient(137.41deg, #FFAD33 14.37%, #FF8A00 91.32%)",
             },
             container: {

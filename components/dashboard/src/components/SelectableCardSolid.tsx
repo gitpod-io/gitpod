@@ -27,19 +27,19 @@ function SelectableCardSolid(props: SelectableCardSolidProps) {
 
     return (
         <div
-            className={`rounded-xl px-3 py-3 flex flex-col cursor-pointer group transition ease-in-out ${
+            className={`rounded-xl px-2 py-2 flex flex-col cursor-pointer group transition ease-in-out ${
                 isFocused ? "ring-2 ring-blue-500" : ""
             } ${
                 props.selected
-                    ? "bg-gray-800 dark:bg-gray-100"
-                    : "bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    ? "border-4 border-gray-500 dark:border-gray-50"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-800 border-4 border-gray-100 dark:border-gray-800"
             } ${props.className || ""}`}
             onClick={props.onClick}
         >
             <div className="flex items-center">
                 <p
                     className={`w-full pl-1 text-base font-semibold truncate ${
-                        props.selected ? "text-gray-100 dark:text-gray-600" : "text-gray-600 dark:text-gray-500"
+                        props.selected ? "text-gray-600 dark:text-gray-400" : "text-gray-600 dark:text-gray-400"
                     }`}
                     title={props.title}
                 >
