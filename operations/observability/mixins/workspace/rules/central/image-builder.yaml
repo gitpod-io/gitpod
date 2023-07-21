@@ -31,8 +31,8 @@ spec:
           dedicated: included
         annotations:
           runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceDeploymentCrashlooping.md
-          summary: image-builder is crash looping in cluster {{ $labels.cluster }}
-          description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 2 minutes.
+          summary: image-builder-mk3 is crash looping in cluster {{ $labels.cluster }}
+          description: Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) is restarting {{ printf "%.2f" $value }} times / 3 minutes.
         expr: |
           increase(kube_pod_container_status_restarts_total{container="image-builder-mk3", cluster!~"ephemeral.*"}[1m]) > 3
         for: 3m
