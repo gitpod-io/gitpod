@@ -1,8 +1,7 @@
 #
-# For the CODEONWERS file we don't want to have a specific CODEOWNER.
-# A single review from anyone who is allowed to review PRs is sufficent.
+# Changes to the CODEONWERS file have to get reviewed by Engineering Leadership.
 #
-/.github/CODEOWNERS
+/.github/CODEOWNERS @gitpod-io/engineering-leadership
 
 /components/blobserve @gitpod-io/team-experience
 /components/common-go @gitpod-io/engineering-staff-engineers
