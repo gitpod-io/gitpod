@@ -15,7 +15,8 @@ spec:
       rules:
       - alert: GitpodNodeLabelerCrashLooping
         labels:
-          severity: warning
+          severity: critical
+          dedicated: included
         annotations:
           runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceDeploymentCrashlooping.md
           summary: node-labeler is crashlooping in cluster {{ $labels.cluster }}.
