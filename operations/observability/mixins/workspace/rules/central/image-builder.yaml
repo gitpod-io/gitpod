@@ -22,9 +22,9 @@ spec:
           summary: image-builder duration is unusually high in cluster {{ $labels.cluster }}
           description: This means customers are waiting for image builds, potentially
         expr: |
-          (avg_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="ImageBuild"}[1h])-avg_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="ImageBuild"}[1d]))
+          (avg_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="ImageBuild", cluster!~"ephemeral.*"}[1h])-avg_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="ImageBuild", cluster!~"ephemeral.*"}[1d]))
           /
-          stddev_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="ImageBuild"}[14d]) >=2.0
+          stddev_over_time(gitpod_ws_manager_mk2_workspace_phase_total{phase="Running", type="ImageBuild", cluster!~"ephemeral.*"}[14d]) >=2.0
       - alert: GitpodImageBuilderCrashlooping
         labels:
           severity: critical
