@@ -970,11 +970,12 @@ export interface WorkspaceConfig {
      * Where the config object originates from.
      *
      * repo - from the repository
+     * definitly-gp - from github.com/gitpod-io/definitely-gp
      * derived - computed based on analyzing the repository
      * additional-content - config comes from additional content, usually provided through the project's configuration
      * default - our static catch-all default config
      */
-    _origin?: "repo" | "derived" | "additional-content" | "default";
+    _origin?: "repo" | "definitely-gp" | "derived" | "additional-content" | "default";
 
     /**
      * Set of automatically infered feature flags. That's not something the user can set, but
