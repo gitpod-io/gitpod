@@ -311,12 +311,18 @@ func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	return int(pagination.PageSize), nil
 }
 
-// convertWorkspaceInfo convers a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
+// convertWorkspaceInfo converts a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
 func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
 	instance, err := convertWorkspaceInstance(input.LatestInstance, input.Workspace.Context, input.Workspace.Config, input.Workspace.Shareable)
 	if err != nil {
 		return nil, err
 	}
+
+	branch := ""
+	if input.LatestInstance.Status.Repo != nil {
+		branch = input.LatestInstance.Status.Repo.Branch
+	}
+
 	return &v1.Workspace{
 		WorkspaceId: input.Workspace.ID,
 		OwnerId:     input.Workspace.OwnerID,
@@ -325,7 +331,16 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 			ContextUrl: input.Workspace.ContextURL,
 			Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
 				NormalizedContextUrl: input.Workspace.Context.NormalizedContextURL,
-				Commit:               "",
+				Commit:               input.Workspace.Context.Revision,
+				// Todo(ft): Figure out how to extract the branch from ws.Context.Ref, similar to getBranchName() in gitpod-protocol
+				Branch: branch,
+				Repository: &v1.WorkspaceContext_Repository{
+					Private:       input.Workspace.Context.Repository.Private,
+					Owner:         input.Workspace.Context.Repository.Owner,
+					Name:          input.Workspace.Context.Repository.Name,
+					DefaultBranch: input.Workspace.Context.Repository.DefaultBranch,
+					CloneUrl:      input.Workspace.Context.Repository.CloneURL,
+				},
 			}},
 		},
 		Description: input.Workspace.Description,
