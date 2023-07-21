@@ -28,7 +28,7 @@ spec:
           severity: critical
           dedicated: included
         annotations:
-          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceDeploymentReplicasMismatch.md
+          runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceDeploymentReplicaMismatch.md
           summary: The desired number of replicas for ws-manager-mk2 are not available in cluster {{ $labels.cluster }}
           description: The mismatch is {{ printf "%.2f" $value }} .
         expr: |
