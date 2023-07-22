@@ -663,6 +663,9 @@ var workspaceTestData = []workspaceTestDataEntry{
 				Details: &v1.WorkspaceContext_Git_{
 					Git: &v1.WorkspaceContext_Git{
 						NormalizedContextUrl: "https://github.com/gitpod-io/gitpod/pull/18291",
+						Repository: &v1.WorkspaceContext_Repository{
+							Name: "gitpod",
+						},
 					},
 				},
 			},
