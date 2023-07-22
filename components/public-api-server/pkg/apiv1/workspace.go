@@ -317,12 +317,6 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 	if err != nil {
 		return nil, err
 	}
-
-	branch := ""
-	if input.LatestInstance.Status.Repo != nil {
-		branch = input.LatestInstance.Status.Repo.Branch
-	}
-
 	return &v1.Workspace{
 		WorkspaceId: input.Workspace.ID,
 		OwnerId:     input.Workspace.OwnerID,
