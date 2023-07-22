@@ -164,12 +164,10 @@ message WorkspaceContext {
     // Explicit Git context
     message Git {
         string normalized_context_url = 1;
-        string branch = 2;
-        string commit = 3;
-        Repository repository = 4;
+        Repository repository = 2;
 
         // provider is the git provider
-        GitProvider provider = 5;
+        GitProvider provider = 3;
     }
 
     // Workspace was created from a prebuild

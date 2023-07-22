@@ -331,9 +331,6 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 			ContextUrl: input.Workspace.ContextURL,
 			Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
 				NormalizedContextUrl: input.Workspace.Context.NormalizedContextURL,
-				Commit:               input.Workspace.Context.Revision,
-				// Todo(ft): Figure out how to extract the branch from ws.Context.Ref, similar to getBranchName() in gitpod-protocol
-				Branch: branch,
 				Repository: &v1.WorkspaceContext_Repository{
 					Private:       input.Workspace.Context.Repository.Private,
 					Owner:         input.Workspace.Context.Repository.Owner,

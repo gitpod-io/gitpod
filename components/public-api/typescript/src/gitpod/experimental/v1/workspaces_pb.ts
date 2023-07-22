@@ -1046,24 +1046,14 @@ export class WorkspaceContext_Git extends Message<WorkspaceContext_Git> {
   normalizedContextUrl = "";
 
   /**
-   * @generated from field: string branch = 2;
-   */
-  branch = "";
-
-  /**
-   * @generated from field: string commit = 3;
-   */
-  commit = "";
-
-  /**
-   * @generated from field: gitpod.experimental.v1.WorkspaceContext.Repository repository = 4;
+   * @generated from field: gitpod.experimental.v1.WorkspaceContext.Repository repository = 2;
    */
   repository?: WorkspaceContext_Repository;
 
   /**
    * provider is the git provider
    *
-   * @generated from field: gitpod.experimental.v1.WorkspaceContext.GitProvider provider = 5;
+   * @generated from field: gitpod.experimental.v1.WorkspaceContext.GitProvider provider = 3;
    */
   provider?: WorkspaceContext_GitProvider;
 
@@ -1076,10 +1066,8 @@ export class WorkspaceContext_Git extends Message<WorkspaceContext_Git> {
   static readonly typeName = "gitpod.experimental.v1.WorkspaceContext.Git";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "normalized_context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "branch", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "commit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "repository", kind: "message", T: WorkspaceContext_Repository },
-    { no: 5, name: "provider", kind: "message", T: WorkspaceContext_GitProvider },
+    { no: 2, name: "repository", kind: "message", T: WorkspaceContext_Repository },
+    { no: 3, name: "provider", kind: "message", T: WorkspaceContext_GitProvider },
   ]);
 
   static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceContext_Git {
