@@ -4,7 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TeamDB, UserDB } from "@gitpod/gitpod-db/lib";
 import {
     OrgMemberInfo,
     OrgMemberRole,
@@ -12,11 +12,12 @@ import {
     OrganizationSettings,
     TeamMembershipInvite,
 } from "@gitpod/gitpod-protocol";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable } from "inversify";
 import { Authorizer } from "../authorization/authorizer";
-import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { ProjectsService } from "../projects/projects-service";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 
 @injectable()
 export class OrganizationService {
@@ -74,15 +75,21 @@ export class OrganizationService {
 
             throw err;
         }
-        this.analytics.track({
-            userId,
-            event: "team_created",
-            properties: {
-                id: result.id,
-                name: result.name,
-                created_at: result.creationTime,
-            },
-        });
+        try {
+            const invite = await this.teamDB.resetGenericInvite(result.id);
+            this.analytics.track({
+                userId,
+                event: "team_created",
+                properties: {
+                    id: result.id,
+                    name: result.name,
+                    created_at: result.creationTime,
+                    invite_id: invite.id,
+                },
+            });
+        } catch (error) {
+            log.error("Failed to track team_created event.", error);
+        }
         return result;
     }
 
@@ -171,7 +178,7 @@ export class OrganizationService {
         }
     }
 
-    public async setOrganizationMemberRole(
+    public async addOrUpdateMember(
         userId: string,
         orgId: string,
         memberId: string,
@@ -184,16 +191,35 @@ export class OrganizationService {
                 throw new ApplicationError(ErrorCodes.CONFLICT, "Cannot remove the last owner of an organization.");
             }
         }
+        const members = await this.teamDB.findMembersByTeam(orgId);
+        const firstMember = members.filter((m) => m.userId !== BUILTIN_INSTLLATION_ADMIN_USER_ID).length === 0;
+        if (firstMember) {
+            // first member (that is not an admin) is going to be an owner
+            role = "owner";
+            log.info({ userId: memberId }, "First member of organization, setting role to owner.");
+        }
 
         try {
             await this.teamDB.transaction(async (db) => {
+                await db.addMemberToTeam(memberId, orgId);
                 await db.setTeamMemberRole(memberId, orgId, role);
                 await this.auth.addOrganizationRole(orgId, memberId, role);
+                if (role === "member") {
+                    await this.auth.removeOrganizationOwnerRole(orgId, memberId);
+                }
             });
         } catch (err) {
+            //TODO simply removing the user is not necessarily the right thing to do here, as the user might have been a member before
             await this.auth.removeUserFromOrg(orgId, memberId);
-
             throw err;
+        }
+        // we can remove the built-in installation admin now
+        if (firstMember) {
+            try {
+                await this.removeOrganizationMember(memberId, orgId, BUILTIN_INSTLLATION_ADMIN_USER_ID);
+            } catch (error) {
+                log.warn("Failed to remove built-in installation admin from organization.", error);
+            }
         }
     }
 

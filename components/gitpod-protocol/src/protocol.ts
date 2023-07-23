@@ -1169,6 +1169,14 @@ export namespace ImageConfigFile {
         return typeof config === "object" && "file" in config;
     }
 }
+export interface ExternalImageConfigFile extends ImageConfigFile {
+    externalSource: Commit;
+}
+export namespace ExternalImageConfigFile {
+    export function is(config: any | undefined): config is ExternalImageConfigFile {
+        return typeof config === "object" && "file" in config && "externalSource" in config;
+    }
+}
 
 export interface WorkspaceContext {
     title: string;

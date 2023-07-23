@@ -4,18 +4,17 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
-import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { Organization, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
+import { expectError } from "../projects/projects-service.spec.db";
+import { resetDB } from "../test/reset-db";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
-import { expectError } from "../projects/projects-service.spec.db";
-import { Organization, User } from "@gitpod/gitpod-protocol";
-import { UserService } from "../user/user-service";
 
 const expect = chai.expect;
 
@@ -45,19 +44,16 @@ describe("OrganizationService", async () => {
 
         stranger = await userDB.newUser();
 
-        const userService = container.get<UserService>(UserService);
-        admin = await userDB.newUser();
-        admin.rolesOrPermissions = ["admin"];
-        await userDB.storeUser(admin);
-        await userService.setAdminRole(admin.id, admin.id, true);
+        const adminUser = await userDB.findUserById(BUILTIN_INSTLLATION_ADMIN_USER_ID)!;
+        if (!adminUser) {
+            throw new Error("admin user not found");
+        }
+        admin = adminUser;
     });
 
     afterEach(async () => {
         // Clean-up database
-        const typeorm = container.get(TypeORM);
-        const conn = await typeorm.getConnection();
-        await conn.getRepository(DBTeam).clear();
-        await conn.getRepository(DBUser).clear();
+        await resetDB(container.get(TypeORM));
     });
 
     it("should deleteOrganization", async () => {
@@ -102,22 +98,25 @@ describe("OrganizationService", async () => {
 
     it("should setOrganizationMemberRole and removeOrganizationMember", async () => {
         await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            os.setOrganizationMemberRole(member.id, org.id, owner.id, "member"),
+            os.addOrUpdateMember(member.id, org.id, owner.id, "member"),
         );
 
         // try upgrade the member to owner
         await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            os.setOrganizationMemberRole(member.id, org.id, member.id, "owner"),
+            os.addOrUpdateMember(member.id, org.id, member.id, "owner"),
         );
 
         // try removing the owner
         await expectError(ErrorCodes.PERMISSION_DENIED, () => os.removeOrganizationMember(member.id, org.id, owner.id));
 
         // owners can upgrade members
-        await os.setOrganizationMemberRole(owner.id, org.id, member.id, "owner");
+        await os.addOrUpdateMember(owner.id, org.id, member.id, "owner");
 
         // owner can downgrade themselves
-        await os.setOrganizationMemberRole(owner.id, org.id, owner.id, "member");
+        await os.addOrUpdateMember(owner.id, org.id, owner.id, "member");
+
+        // assert that the member no longer has owner permissions
+        await expectError(ErrorCodes.PERMISSION_DENIED, () => os.deleteOrganization(owner.id, org.id));
 
         // owner and member have switched roles now
         const previouslyMember = member;
@@ -125,9 +124,7 @@ describe("OrganizationService", async () => {
         owner = previouslyMember;
 
         // owner can downgrade themselves only if they are not the last owner
-        await expectError(ErrorCodes.CONFLICT, () =>
-            os.setOrganizationMemberRole(owner.id, org.id, owner.id, "member"),
-        );
+        await expectError(ErrorCodes.CONFLICT, () => os.addOrUpdateMember(owner.id, org.id, owner.id, "member"));
 
         // owner can delete themselves only if they are not the last owner
         await expectError(ErrorCodes.CONFLICT, () => os.removeOrganizationMember(owner.id, org.id, owner.id));
@@ -193,5 +190,17 @@ describe("OrganizationService", async () => {
         await os.updateSettings(admin.id, org.id, { workspaceSharingDisabled: true });
         const settings = await os.getSettings(admin.id, org.id);
         expect(settings.workspaceSharingDisabled).to.be.true;
+    });
+
+    it("should remove the admin on first join", async () => {
+        const myOrg = await os.createOrganization(BUILTIN_INSTLLATION_ADMIN_USER_ID, "My Org");
+        expect((await os.listMembers(BUILTIN_INSTLLATION_ADMIN_USER_ID, myOrg.id)).length).to.eq(1);
+
+        // add a another member which should become owner
+        await os.addOrUpdateMember(BUILTIN_INSTLLATION_ADMIN_USER_ID, myOrg.id, owner.id, "member");
+        // admin should have been removed
+        const members = await os.listMembers(owner.id, myOrg.id);
+        expect(members.length).to.eq(1);
+        expect(members.some((m) => m.userId === owner.id && m.role === "owner")).to.be.true;
     });
 });

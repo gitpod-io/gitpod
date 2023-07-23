@@ -14,10 +14,10 @@ export default function PillMenuItem(p: {
     onClick?: (event: React.MouseEvent) => void;
 }) {
     let classes =
-        "flex block font-medium dark:text-gray-400 px-3 py-1 rounded-2xl transition ease-in-out font-semibold " +
+        "flex block font-medium dark:text-gray-400 px-3 py-1 rounded-2xl transition ease-in-out " +
         (p.selected
-            ? "text-gray-50 bg-gray-800 dark:text-gray-900 dark:bg-gray-50"
-            : "hover:bg-gray-100 dark:hover:bg-gray-700");
+            ? "text-gray-500 bg-gray-50 dark:text-gray-100 dark:bg-gray-800"
+            : "hover:bg-gray-100 dark:hover:bg-gray-800");
     if (p.additionalClasses) {
         classes = classes + " " + p.additionalClasses;
     }

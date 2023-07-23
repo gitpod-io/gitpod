@@ -10,10 +10,14 @@ import * as path from "path";
 
 import {
     AdditionalContentContext,
+    Commit,
     CommitContext,
+    ExternalImageConfigFile,
+    ImageConfigFile,
     ImageConfigString,
     NamedWorkspaceFeatureFlag,
     ProjectConfig,
+    Repository,
     User,
     WithDefaultConfig,
     WorkspaceConfig,
@@ -47,6 +51,7 @@ export class ConfigProvider {
             commit,
         });
         const logContext: LogContext = { userId: user.id };
+        let configBasePath = "";
         try {
             let customConfig: WorkspaceConfig | undefined;
             let literalConfig: ProjectConfig | undefined;
@@ -55,6 +60,7 @@ export class ConfigProvider {
                 const cc = await this.fetchCustomConfig(ctx, user, commit);
                 if (!!cc) {
                     customConfig = cc.customConfig;
+                    configBasePath = cc.configBasePath;
                     literalConfig = cc.literalConfig;
                 }
             }
@@ -75,6 +81,24 @@ export class ConfigProvider {
             const config = customConfig;
             if (!config.image) {
                 config.image = this.config.workspaceDefaults.workspaceImage;
+            } else if (ImageConfigFile.is(config.image)) {
+                const dockerfilePath = [configBasePath, config.image.file].filter((s) => !!s).join("/");
+                const repo = commit.repository;
+                const rev = commit.revision;
+                const image = config.image!;
+
+                if (!(AdditionalContentContext.is(commit) && commit.additionalFiles[dockerfilePath])) {
+                    config.image = <ExternalImageConfigFile>{
+                        ...image,
+                        externalSource: await this.fetchWorkspaceImageSourceDocker(
+                            { span },
+                            repo,
+                            rev,
+                            user,
+                            dockerfilePath,
+                        ),
+                    };
+                }
             }
 
             config.vscode = {
@@ -189,6 +213,45 @@ export class ConfigProvider {
             image: this.config.workspaceDefaults.workspaceImage,
             ideCredentials: crypto.randomBytes(32).toString("base64"),
         };
+    }
+
+    private async fetchWorkspaceImageSourceDocker(
+        ctx: TraceContext,
+        repository: Repository,
+        revisionOrTagOrBranch: string,
+        user: User,
+        dockerFilePath: string,
+    ): Promise<Commit> {
+        const span = TraceContext.startSpan("fetchWorkspaceImageSourceDocker", ctx);
+        span.addTags({
+            repository,
+            revisionOrTagOrBranch,
+            dockerFilePath,
+        });
+
+        try {
+            const host = repository.host;
+            const hostContext = this.hostContextProvider.get(host);
+            if (!hostContext || !hostContext.services) {
+                throw new Error(`Cannot fetch workspace image source for host: ${host}`);
+            }
+            const repoHost = hostContext.services;
+            const lastDockerFileSha = await repoHost.fileProvider.getLastChangeRevision(
+                repository,
+                revisionOrTagOrBranch,
+                user,
+                dockerFilePath,
+            );
+            return {
+                repository,
+                revision: lastDockerFileSha,
+            };
+        } catch (e) {
+            TraceContext.setError({ span }, e);
+            throw e;
+        } finally {
+            span.finish();
+        }
     }
 
     private async validateConfig(config: WorkspaceConfig, user: User): Promise<void> {

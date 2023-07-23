@@ -9,7 +9,7 @@ packages:
     srcs:
       - go.mod
       - go.sum
-      - "**/*.go"
+      - "*.go"
       - "schema/*.yaml"
     deps:
       - components/spicedb:schema
@@ -52,8 +52,8 @@ scripts:
           echo "Stopped spicedb."
       fi
 
-  - name: report-spicedb
-    description: "Reports spicedb's current state."
+  - name: generate-ts
+    description: "Generate definition in typescript."
     deps: []
     script: |
-      spicedn
+      (cd codegen && go run .)

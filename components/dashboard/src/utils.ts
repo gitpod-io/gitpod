@@ -96,6 +96,7 @@ export function isWebsiteSlug(pathName: string) {
         "code-of-conduct",
         "contact",
         "docs",
+        "events",
         "features",
         "for",
         "gitpod-vs-github-codespaces",
@@ -110,6 +111,7 @@ export function isWebsiteSlug(pathName: string) {
         "support",
         "terms",
         "values",
+        "webinars",
     ];
     return slugs.some((slug) => pathName.startsWith("/" + slug + "/") || pathName === "/" + slug);
 }

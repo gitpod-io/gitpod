@@ -18,13 +18,21 @@ import {
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { Organization, TeamMemberInfo, Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class Authorizer {
     constructor(
         @inject(SpiceDBAuthorizer)
         private authorizer: SpiceDBAuthorizer,
-    ) {}
+    ) {
+        this.initialize().catch((err) => log.error("Failed to add installation admin", err));
+    }
+
+    private async initialize(): Promise<void> {
+        await this.addAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID);
+    }
 
     async hasPermissionOnOrganization(
         userId: string,

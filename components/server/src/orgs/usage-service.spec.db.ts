@@ -4,8 +4,7 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import { DBUser, TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
-import { DBTeam } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team";
+import { TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { AttributionId } from "@gitpod/gitpod-protocol/lib/attribution";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
@@ -26,6 +25,7 @@ import { createTestContainer } from "../test/service-testing-container-module";
 import { UserService } from "../user/user-service";
 import { OrganizationService } from "./organization-service";
 import { UsageService } from "./usage-service";
+import { resetDB } from "../test/reset-db";
 
 const expect = chai.expect;
 
@@ -71,9 +71,7 @@ describe("UsageService", async () => {
     afterEach(async () => {
         // Clean-up database
         const typeorm = container.get(TypeORM);
-        const conn = await typeorm.getConnection();
-        await conn.getRepository(DBTeam).clear();
-        await conn.getRepository(DBUser).clear();
+        await resetDB(typeorm);
     });
 
     it("getCostCenter permissions", async () => {

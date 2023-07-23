@@ -55,7 +55,6 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/activation"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/config"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/metrics"
@@ -408,7 +407,7 @@ func Run(options ...RunOption) {
 
 	if !opts.RunGP {
 		wg.Add(1)
-		go socketActivationForDocker(ctx, &wg, termMux, cfg, telemetry)
+		go socketActivationForDocker(ctx, &wg, termMux, cfg, telemetry, notificationService, cstate)
 	}
 
 	if cfg.isHeadless() {
@@ -1295,6 +1294,8 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 			return
 		}
 
+		log.Infof("tunnel ssh: Connected from %s", conn.RemoteAddr())
+
 		conn2, err := net.Dial("tcp", net.JoinHostPort("localhost", strconv.FormatInt(int64(cfg.SSHPort), 10)))
 		if err != nil {
 			log.WithError(err).Error("tunnel ssh: dial to ssh server failed")
@@ -1302,7 +1303,10 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		}
 
 		go io.Copy(conn, conn2)
-		_, _ = io.Copy(conn2, conn)
+		_, err = io.Copy(conn2, conn)
+		if err != nil {
+			log.WithError(err).Error("tunnel ssh: error returned from io.copy")
+		}
 
 		conn.Close()
 		conn2.Close()
@@ -1544,73 +1548,6 @@ func recordInitializerMetrics(path string, metrics *metrics.SupervisorMetrics) {
 
 	for _, m := range ready.Metrics {
 		metrics.InitializerHistogram.WithLabelValues(m.Type).Observe(float64(m.Size) / m.Duration.Seconds())
-	}
-}
-
-func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *terminal.Mux, cfg *Config, w analytics.Writer) {
-	defer wg.Done()
-
-	fn := "/var/run/docker.sock"
-	l, err := net.Listen("unix", fn)
-	if err != nil {
-		log.WithError(err).Error("cannot provide Docker activation socket")
-		return
-	}
-
-	go func() {
-		<-ctx.Done()
-		l.Close()
-	}()
-
-	_ = os.Chown(fn, gitpodUID, gitpodGID)
-	for ctx.Err() == nil {
-		err = activation.Listen(ctx, l, func(socketFD *os.File) error {
-			defer socketFD.Close()
-			cmd := exec.Command("/usr/bin/docker-up")
-			cmd.Env = append(os.Environ(), "LISTEN_FDS=1")
-			cmd.ExtraFiles = []*os.File{socketFD}
-			alias, err := term.Start(cmd, terminal.TermOptions{
-				Annotations: map[string]string{
-					"gitpod.supervisor": "true",
-				},
-				LogToStdout: true,
-			})
-			outcome := "success"
-			if err != nil {
-				outcome = "failure"
-			}
-			w.Track(analytics.TrackMessage{
-				Identity: analytics.Identity{UserID: cfg.OwnerId},
-				Event:    "gitpod_activate_docker",
-				Properties: map[string]interface{}{
-					"instanceId":     cfg.WorkspaceInstanceID,
-					"workspaceId":    cfg.WorkspaceID,
-					"outcome":        outcome,
-					"debugWorkspace": cfg.isDebugWorkspace(),
-				},
-			})
-			if err != nil {
-				return err
-			}
-			pty, ok := term.Get(alias)
-			if !ok {
-				return errors.New("cannot find pty")
-			}
-			ptyCtx, cancel := context.WithCancel(context.Background())
-			go func(ptyCtx context.Context) {
-				select {
-				case <-ctx.Done():
-					_ = pty.Command.Process.Signal(syscall.SIGTERM)
-				case <-ptyCtx.Done():
-				}
-			}(ptyCtx)
-			_, err = pty.Wait()
-			cancel()
-			return err
-		})
-		if err != nil && !errors.Is(err, context.Canceled) && err.Error() != "signal: killed" {
-			log.WithError(err).Error("cannot provide Docker activation socket")
-		}
 	}
 }
 
