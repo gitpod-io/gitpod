@@ -14,7 +14,7 @@
         "downlevelIteration": true,
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es6",
+        "target": "ES2021",
         "jsx": "react",
         "sourceMap": true,
         "declaration": true,
@@ -22,8 +22,7 @@
         "skipLibCheck": true,
         "useUnknownInCatchVariables": false,
         "typeRoots": [
-            "./src/typings",
-            "../../node_modules/@types"
+            "./src/typings"
         ]
     },
     "include": [

@@ -15,7 +15,7 @@
         "downlevelIteration": true,
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es2017",
+        "target": "ES2021",
         "jsx": "react",
         "sourceMap": true,
         "declaration": true,
