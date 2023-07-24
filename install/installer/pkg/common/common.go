@@ -466,26 +466,6 @@ func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 	}
 }
 
-func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
-	return &corev1.Container{
-		Name:  "msgbus-waiter",
-		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
-		Args: []string{
-			"-v",
-			"messagebus",
-		},
-		SecurityContext: &corev1.SecurityContext{
-			Privileged:               pointer.Bool(false),
-			AllowPrivilegeEscalation: pointer.Bool(false),
-			RunAsUser:                pointer.Int64(31001),
-		},
-		Env: MergeEnv(
-			MessageBusEnv(&ctx.Config),
-			ProxyEnv(&ctx.Config),
-		),
-	}
-}
-
 func RedisWaiterContainer(ctx *RenderContext) *corev1.Container {
 	return &corev1.Container{
 		Name:  "redis-waiter",
