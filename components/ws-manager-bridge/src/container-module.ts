@@ -7,9 +7,6 @@
 require("reflect-metadata");
 
 import { ContainerModule } from "inversify";
-import { MessageBusHelper, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
-import { MessagebusConfiguration } from "@gitpod/gitpod-messagebus/lib/config";
-import { MessageBusIntegration } from "./messagebus-integration";
 import { Configuration } from "./config";
 import * as fs from "fs";
 import { WorkspaceManagerBridgeFactory, WorkspaceManagerBridge } from "./bridge";
@@ -41,10 +38,6 @@ import { RedisClient } from "./redis/client";
 import { RedisPublisher } from "./redis/publisher";
 
 export const containerModule = new ContainerModule((bind) => {
-    bind(MessagebusConfiguration).toSelf().inSingletonScope();
-    bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
-    bind(MessageBusIntegration).toSelf().inSingletonScope();
-
     bind(BridgeController).toSelf().inSingletonScope();
 
     bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();

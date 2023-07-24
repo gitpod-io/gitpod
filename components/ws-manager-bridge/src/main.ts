@@ -9,7 +9,6 @@ import * as express from "express";
 import * as prometheusClient from "prom-client";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
-import { MessageBusIntegration } from "./messagebus-integration";
 import { TypeORM } from "@gitpod/gitpod-db/lib/typeorm/typeorm";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ClusterServiceServer } from "./cluster-service-server";
@@ -22,9 +21,6 @@ export const start = async (container: Container) => {
     try {
         const db = container.get(TypeORM);
         await db.connect();
-
-        const msgbus = container.get(MessageBusIntegration);
-        await msgbus.connect();
 
         const tracingManager = container.get(TracingManager);
         tracingManager.setup("ws-manager-bridge");
