@@ -13,6 +13,7 @@ import { TypeORM } from "./typeorm/typeorm";
 import { Repository } from "typeorm";
 import { UserStorageResourcesDB } from "./user-storage-resources-db";
 import { DBUserStorageResource } from "./typeorm/entity/db-user-storage-resource";
+import { resetDB } from "./test/reset-db";
 
 @suite
 class UserStorageResourcesDBSpec {
@@ -20,12 +21,11 @@ class UserStorageResourcesDBSpec {
     resourcesDb = testContainer.get<UserStorageResourcesDB>(UserStorageResourcesDB);
 
     protected async getRepo(): Promise<Repository<DBUserStorageResource>> {
-        return (await (await this.typeORM.getConnection()).manager).getRepository(DBUserStorageResource);
+        return (await this.typeORM.getConnection()).manager.getRepository(DBUserStorageResource);
     }
 
     async after() {
-        const repo = await this.getRepo();
-        await repo.createQueryBuilder("resource").delete().execute();
+        await resetDB(this.typeORM);
     }
 
     @test(timeout(10000))

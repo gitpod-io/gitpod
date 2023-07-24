@@ -15,7 +15,7 @@ import { createTestContainer } from "../test/service-testing-container-module";
 import { ProjectsService } from "./projects-service";
 import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { SpiceDBAuthorizer } from "../authorization/spicedb-authorizer";
-import { resetDB } from "../test/reset-db";
+import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 
 const expect = chai.expect;
 

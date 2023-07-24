@@ -14,10 +14,7 @@ import { DBIdentity } from "./typeorm/entity/db-identity";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
 import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
-import { DBUser } from "./typeorm/entity/db-user";
-import { DBWorkspace } from "./typeorm/entity/db-workspace";
-import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
-import { DBGitpodToken } from "./typeorm/entity/db-gitpod-token";
+import { resetDB } from "./test/reset-db";
 
 const _IDENTITY1: Identity = {
     authProviderId: "GitHub",
@@ -55,12 +52,7 @@ class UserDBSpec {
 
     async wipeRepos() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const mnr = await typeorm.getConnection();
-        await mnr.getRepository(DBUser).delete({});
-        await mnr.getRepository(DBIdentity).delete({});
-        await mnr.getRepository(DBWorkspace).delete({});
-        await mnr.getRepository(DBWorkspaceInstance).delete({});
-        await mnr.getRepository(DBGitpodToken).delete({});
+        await resetDB(typeorm);
     }
 
     // Copy to avoid pollution

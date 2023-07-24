@@ -49,3 +49,12 @@ export class EncryptionServiceImpl implements EncryptionService {
         return JSON.parse(data) as T;
     }
 }
+
+/** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
+export namespace GlobalEncryptionService {
+    export let encryptionService: EncryptionService;
+}
+
+export function getGlobalEncryptionService() {
+    return GlobalEncryptionService.encryptionService;
+}

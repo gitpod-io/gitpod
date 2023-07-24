@@ -40,6 +40,7 @@ export class DBSnapshot implements Snapshot {
     @Column({
         // because we introduced this as an afterthought the default is 'available'
         default: <SnapshotState>"available",
+        type: "varchar",
     })
     @Index("ind_state")
     state: SnapshotState;

@@ -4,16 +4,15 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
-import * as chai from "chai";
-const expect = chai.expect;
+import { Project } from "@gitpod/gitpod-protocol";
 import { suite, test } from "@testdeck/mocha";
+import * as chai from "chai";
+import { testContainer } from "./test-container";
+import { resetDB } from "./test/reset-db";
+import { ProjectDBImpl } from "./typeorm/project-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
 import { TypeORMUserDBImpl } from "./typeorm/user-db-impl";
-import { testContainer } from "./test-container";
-import { ProjectDBImpl } from "./typeorm/project-db-impl";
-import { DBProject } from "./typeorm/entity/db-project";
-import { DBUser } from "./typeorm/entity/db-user";
-import { Project } from "@gitpod/gitpod-protocol";
+const expect = chai.expect;
 
 @suite
 class ProjectDBSpec {
@@ -30,9 +29,7 @@ class ProjectDBSpec {
 
     async wipeRepo() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        await manager.getRepository(DBProject).delete({});
-        await manager.getRepository(DBUser).delete({});
+        await resetDB(typeorm);
     }
 
     @test()

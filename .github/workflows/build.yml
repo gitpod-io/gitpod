@@ -240,6 +240,7 @@ jobs:
             $TEST \
             -Dversion=$VERSION \
             --docker-build-options network=host \
+            --max-concurrent-tasks 1 \
             -DlocalAppVersion=$VERSION \
             -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
