@@ -170,7 +170,6 @@ var (
 		{name: "node-labeler"},
 		{name: "proxy"},
 		{name: "public-api-server"},
-		{name: "rabbitmq", labelKey: "app.kubernetes.io/name"}, // messagebus
 		{name: "redis"},
 		{name: "registry-facade"},
 		{name: "server"},

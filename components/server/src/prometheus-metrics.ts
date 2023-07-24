@@ -14,7 +14,6 @@ export function registerServerMetrics(registry: prometheusClient.Registry) {
     registry.registerMetric(apiCallDurationHistogram);
     registry.registerMetric(httpRequestTotal);
     registry.registerMetric(httpRequestDuration);
-    registry.registerMetric(messagebusTopicReads);
     registry.registerMetric(gitpodVersionInfo);
     registry.registerMetric(instanceStartsSuccessTotal);
     registry.registerMetric(instanceStartsFailedTotal);
@@ -140,18 +139,6 @@ export function observeHttpRequestDuration(
     durationInSeconds: number,
 ) {
     httpRequestDuration.observe({ method, route, statusCode }, durationInSeconds);
-}
-
-const messagebusTopicReads = new prometheusClient.Counter({
-    name: "gitpod_server_topic_reads_total",
-    help: "The amount of reads from messagebus topics.",
-    labelNames: ["topic"],
-});
-
-export function increaseMessagebusTopicReads(topic: string) {
-    messagebusTopicReads.inc({
-        topic,
-    });
 }
 
 const gitpodVersionInfo = new prometheusClient.Gauge({

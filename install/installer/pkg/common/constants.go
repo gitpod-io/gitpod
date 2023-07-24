@@ -21,7 +21,6 @@ const (
 	GitpodContainerRegistry     = "eu.gcr.io/gitpod-core-dev/build"
 	InClusterDbSecret           = "mysql"
 	InClusterMessageQueueName   = "rabbitmq"
-	InClusterMessageQueueTLS    = "messagebus-certificates-secret-core"
 	KubeRBACProxyRepo           = "quay.io"
 	KubeRBACProxyImage          = "brancz/kube-rbac-proxy"
 	KubeRBACProxyTag            = "v0.14.2"
