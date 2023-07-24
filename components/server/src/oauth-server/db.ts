@@ -98,6 +98,7 @@ const desktopClient: OAuthClient = {
         { name: "function:startWorkspace" },
         { name: "function:stopWorkspace" },
         { name: "function:deleteWorkspace" },
+        { name: "function:getTeams" },
         { name: "resource:default" },
     ],
 };
