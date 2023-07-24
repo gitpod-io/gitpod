@@ -4,15 +4,14 @@
  * See License.AGPL.txt in the project root for license information.
  */
 
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { suite, test, timeout } from "@testdeck/mocha";
-import { testContainer } from "../test-container";
-import { UserDB } from "../user-db";
-import { TypeORM } from "./typeorm";
-import { DBUser } from "./entity/db-user";
 import * as chai from "chai";
 import { TeamDB } from "../team-db";
-import { DBTeam } from "./entity/db-team";
-import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { testContainer } from "../test-container";
+import { resetDB } from "../test/reset-db";
+import { UserDB } from "../user-db";
+import { TypeORM } from "./typeorm";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -30,9 +29,7 @@ export class TeamDBSpec {
 
     async wipeRepo() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        await manager.getRepository(DBTeam).delete({});
-        await manager.getRepository(DBUser).delete({});
+        await resetDB(typeorm);
     }
 
     @test()

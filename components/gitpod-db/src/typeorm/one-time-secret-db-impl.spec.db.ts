@@ -7,10 +7,10 @@
 import { suite, test, timeout } from "@testdeck/mocha";
 import { testContainer } from "../test-container";
 import { TypeORM } from "./typeorm";
-import { DBUser } from "./entity/db-user";
 import * as chai from "chai";
 import { OneTimeSecretDB } from "../one-time-secret-db";
 import { DBOneTimeSecret } from "./entity/db-one-time-secret";
+import { resetDB } from "../test/reset-db";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -27,9 +27,7 @@ export class OneTimeSecretSpec {
 
     async wipeRepo() {
         const typeorm = testContainer.get<TypeORM>(TypeORM);
-        const manager = await typeorm.getConnection();
-        await manager.getRepository(DBOneTimeSecret).delete({});
-        await manager.getRepository(DBUser).delete({});
+        await resetDB(typeorm);
     }
 
     @test()

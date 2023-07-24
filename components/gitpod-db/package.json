@@ -35,6 +35,7 @@
   "devDependencies": {
     "@testdeck/mocha": "^0.3.3",
     "@types/chai": "^4.2.2",
+    "@types/mocha": "^2.2.45",
     "@types/mysql": "^2.15.0",
     "@types/uuid": "^8.3.1",
     "@typescript-eslint/eslint-plugin": "^4.5.0",

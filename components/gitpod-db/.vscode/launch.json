@@ -8,7 +8,7 @@
                 "DB_PORT": "23306",
                 "DB_ENCRYPTION_KEYS": "[{\"name\":\"general\",\"version\":1,\"primary\":true,\"material\":\"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c=\"}]"
             },
-            "name": "Run Mocha Test in Editor",
+            "name": "Run all Tests - in Editor",
             "program": "${workspaceFolder}/node_modules/.bin/_mocha",
             "args": [
                 "--opts",
@@ -16,9 +16,7 @@
                 "--colors",
                 "--timeout",
                 "999999",
-                "${file}",
-                "-g",
-                "${selectedText}"
+                "${file}"
             ],
             "internalConsoleOptions": "openOnSessionStart"
         }

@@ -13,10 +13,9 @@ import { WorkspaceInstance, Workspace, PrebuiltWorkspace, CommitContext } from "
 import { testContainer } from "./test-container";
 import { TypeORMWorkspaceDBImpl } from "./typeorm/workspace-db-impl";
 import { TypeORM } from "./typeorm/typeorm";
-import { DBWorkspace } from "./typeorm/entity/db-workspace";
 import { DBPrebuiltWorkspace } from "./typeorm/entity/db-prebuilt-workspace";
-import { DBWorkspaceInstance } from "./typeorm/entity/db-workspace-instance";
 import { secondsBefore } from "@gitpod/gitpod-protocol/lib/util/timeutil";
+import { resetDB } from "./test/reset-db";
 
 @suite
 class WorkspaceDBSpec {
@@ -185,10 +184,7 @@ class WorkspaceDBSpec {
     }
 
     async wipeRepo() {
-        const mnr = await this.typeorm.getConnection();
-        await mnr.getRepository(DBWorkspace).delete({});
-        await mnr.getRepository(DBWorkspaceInstance).delete({});
-        await mnr.getRepository(DBPrebuiltWorkspace).delete({});
+        await resetDB(this.typeorm);
     }
 
     @test(timeout(10000))

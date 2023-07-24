@@ -23,5 +23,5 @@ export const encryptionModule: interfaces.ContainerModuleCallBack = (bind) => {
     bind(KeyProvider).to(KeyProviderImpl).inSingletonScope();
 
     bind(EncryptionEngine).to(EncryptionEngineImpl).inSingletonScope();
-    bind(EncryptionService).to(EncryptionServiceImpl).inSingletonScope();
+    bind<EncryptionService>(EncryptionService).to(EncryptionServiceImpl).inSingletonScope();
 };

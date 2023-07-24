@@ -85,11 +85,15 @@ export class DBWorkspace implements Workspace {
 
     @Index("ind_type")
     @Column({
+        type: "varchar",
         default: "regular",
     })
     type: WorkspaceType;
 
-    @Column()
+    @Column({
+        type: "varchar",
+        default: "",
+    })
     softDeleted?: WorkspaceSoftDeletion;
 
     @Column({

@@ -31,7 +31,9 @@ export class DBWebhookEvent implements WebhookEvent {
     @Column()
     rawEvent: string;
 
-    @Column()
+    @Column({
+        type: "varchar",
+    })
     @Index("ind_status")
     status: WebhookEvent.Status;
 
@@ -44,6 +46,7 @@ export class DBWebhookEvent implements WebhookEvent {
     @Column({
         default: "",
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED,
+        type: "varchar",
     })
     @Index("ind_prebuildStatus")
     prebuildStatus?: WebhookEvent.PrebuildStatus;

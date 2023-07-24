@@ -46,12 +46,20 @@ import { LinkedInProfileDBImpl } from "./typeorm/linked-in-profile-db-impl";
 import { LinkedInProfileDB } from "./linked-in-profile-db";
 import { DataCache, DataCacheNoop } from "./data-cache";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { EncryptionService, GlobalEncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = (cacheClass = DataCacheNoop) =>
     new ContainerModule((bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
         bind(Config).toSelf().inSingletonScope();
-        bind(TypeORM).toSelf().inSingletonScope();
+        bind(TypeORM)
+            .toSelf()
+            .inSingletonScope()
+            .onActivation((ctx, orm) => {
+                // HACK we need to initialize the global encryption service.
+                GlobalEncryptionService.encryptionService = ctx.container.get(EncryptionService);
+                return orm;
+            });
         bind(DBWithTracing).toSelf().inSingletonScope();
         bind(TracingManager).toSelf().inSingletonScope();
         bind(DataCache).to(cacheClass).inSingletonScope();
