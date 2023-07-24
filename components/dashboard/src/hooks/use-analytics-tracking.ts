@@ -17,7 +17,7 @@ export const useAnalyticsTracking = () => {
     const { isDark } = useTheme();
 
     // Todo(ft): only enable on gitpod.io
-    const { orbital, isLoaded: isOrbitalLoaded } = useOrbital("4aErj3uvRbye");
+    const { orbital, isLoaded: isOrbitalLoaded, discoveryIds } = useOrbital("4aErj3uvRbye");
 
     // listen and notify Segment of client-side path updates
     useEffect(() => {
@@ -80,9 +80,11 @@ export const useAnalyticsTracking = () => {
             },
         });
 
-        console.debug("Triggering modal");
-        orbital("trigger", "YyOnOjsPDZN0", { force: true, position: "bottom_left" });
+        for (const id of discoveryIds) {
+            console.debug("Triggering modal", id);
+            orbital("trigger", id, { force: true, position: "bottom_left" });
+        }
 
         return orbital("reset");
-    }, [isDark, isOrbitalLoaded, loading, orbital, user]);
+    }, [discoveryIds, isDark, isOrbitalLoaded, loading, orbital, user]);
 };

@@ -5,9 +5,11 @@
  */
 
 import { useEffect, useState } from "react";
+import { getExperimentsClient } from "../experiments/client";
 
 export const useOrbital = (spaceId: string) => {
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
+    const [discoveryIds, setDiscoveryIds] = useState<string[]>([]);
 
     useEffect(() => {
         if (document.getElementById("orbital-client")) return;
@@ -25,8 +27,22 @@ export const useOrbital = (spaceId: string) => {
         orbitalScript.addEventListener("load", () => setIsLoaded(true), { once: true, capture: false });
     });
 
+    useEffect(() => {
+        const client = getExperimentsClient();
+
+        (async () => {
+            const featureFlagValue = await client.getValueAsync("enabledOrbitalDiscoveries", "", {
+                gitpodHost: window.location.host,
+            });
+            setDiscoveryIds(featureFlagValue.split(",").filter((value) => !!value));
+        })();
+
+        return client.dispose();
+    }, []);
+
     return {
         isLoaded,
+        discoveryIds,
         //@ts-ignore
         orbital: window["orbital"] as unknown as any,
     };
