@@ -25,7 +25,7 @@ export const useOrbital = (spaceId: string) => {
         orbitalScript.setAttribute("async", "");
         body.appendChild(orbitalScript);
         orbitalScript.addEventListener("load", () => setIsLoaded(true), { once: true, capture: false });
-    });
+    }, [spaceId]);
 
     useEffect(() => {
         const client = getExperimentsClient();
@@ -37,7 +37,7 @@ export const useOrbital = (spaceId: string) => {
             setDiscoveryIds(featureFlagValue.split(",").filter((value) => !!value));
         })();
 
-        return client.dispose();
+        return client.dispose;
     }, []);
 
     return {
