@@ -121,6 +121,7 @@ type Config struct {
 
 	Database Database `json:"database" validate:"required"`
 
+	// Deprecated.
 	MessageBus *MessageBus `json:"messageBus,omitempty"`
 
 	ObjectStorage ObjectStorage `json:"objectStorage" validate:"required"`

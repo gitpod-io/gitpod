@@ -90,16 +90,6 @@ export class Metrics {
             help: "Counter of total instances marked stopped by the ws-manager-bridge",
             labelNames: ["previous_phase"],
         });
-
-        this.updatesPublishedTotal = new prom.Counter({
-            name: "gitpod_ws_manager_bridge_updates_published_total",
-            help: "Counter of events published to Redis by type and error",
-            labelNames: ["type", "error"],
-        });
-    }
-
-    reportUpdatePublished(type: "workspace-instance" | "prebuild" | "headless", err?: Error): void {
-        this.updatesPublishedTotal.labels(type, err ? "true" : "false").inc();
     }
 
     observeWorkspaceStartupTime(instance: WorkspaceInstance): void {

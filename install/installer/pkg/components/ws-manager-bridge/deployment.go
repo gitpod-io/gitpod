@@ -50,24 +50,11 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		})
 	}
 
-	msgBugSecret := corev1.LocalObjectReference{Name: common.InClusterMessageQueueName}
-	if ctx.Config.MessageBus != nil && ctx.Config.MessageBus.Credentials != nil {
-		msgBugSecret = corev1.LocalObjectReference{Name: ctx.Config.MessageBus.Credentials.Name}
-	}
-
 	hashObj = append(hashObj, &corev1.Pod{
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
 					Env: []corev1.EnvVar{
-						{
-							Name: "MESSAGEBUS_PASSWORD",
-							ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-								LocalObjectReference: msgBugSecret,
-								Key:                  "rabbitmq-password",
-							}},
-						},
-
 						{
 							// If the database type changes, this pod may stay up if no other changes are made.
 							Name: "DATABASE_TYPE",
@@ -141,7 +128,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						),
 						InitContainers: []corev1.Container{
 							*common.DatabaseWaiterContainer(ctx),
-							*common.MessageBusWaiterContainer(ctx),
 							*common.RedisWaiterContainer(ctx),
 						},
 						Containers: []corev1.Container{{
@@ -162,7 +148,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								common.DefaultEnv(&ctx.Config),
 								common.WorkspaceTracingEnv(ctx, Component),
 								common.AnalyticsEnv(&ctx.Config),
-								common.MessageBusEnv(&ctx.Config),
 								common.DatabaseEnv(&ctx.Config),
 								common.ConfigcatEnv(ctx),
 								[]corev1.EnvVar{{

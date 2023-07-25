@@ -82,7 +82,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 		common.DatabaseEnv(&ctx.Config),
 		common.WebappTracingEnv(ctx, Component),
 		common.AnalyticsEnv(&ctx.Config),
-		common.MessageBusEnv(&ctx.Config),
 		common.ConfigcatEnv(ctx),
 		spicedb.Env(ctx),
 		[]corev1.EnvVar{
@@ -310,7 +309,6 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 						),
 						InitContainers: []corev1.Container{
 							*common.DatabaseWaiterContainer(ctx),
-							*common.MessageBusWaiterContainer(ctx),
 							*common.RedisWaiterContainer(ctx),
 						},
 						Containers: []corev1.Container{{

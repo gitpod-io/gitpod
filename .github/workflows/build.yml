@@ -240,6 +240,7 @@ jobs:
             $TEST \
             -Dversion=$VERSION \
             --docker-build-options network=host \
+            --max-concurrent-tasks 1 \
             -DlocalAppVersion=$VERSION \
             -DSEGMENT_IO_TOKEN=$SEGMENT_IO_TOKEN \
             -DpublishToNPM="${PUBLISH_TO_NPM}" \
@@ -275,24 +276,6 @@ jobs:
           GITHUB_USER: roboquat
           GITHUB_EMAIL: roboquat@gitpod.io
           VERSION: ${{ needs.configuration.outputs.version }}
-      - name: Trigger release workflow in dedicated
-        if: github.ref == 'refs/heads/main'
-        run: |
-          curl -f -X POST \
-            -H "Authorization: token ${TOKEN}" \
-            -H "Accept: application/vnd.github.everest-preview+json" \
-            "https://api.github.com/repos/gitpod-io/gitpod-dedicated/dispatches" \
-            -d '{
-              "event_type": "create_release",
-              "client_payload": {
-                "env": "staging",
-                "release": "${{needs.configuration.outputs.version}}",
-                "installation_repo": "https://github.com/gitpod-io/gitpod",
-                "installation_commit": "${{github.sha}}"
-              }
-            }'
-        env:
-          TOKEN: ${{ secrets.GH_WORKFLOW_TRIGGER_PAT }}
 
   install-app:
     runs-on: ${{ needs.create-runner.outputs.label }}
@@ -421,6 +404,7 @@ jobs:
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
         run: |
+          export HOME="/home/gitpod"
           leeway run dev/preview/previewctl:install
 
           echo "Setting up access to core-dev and harvester"

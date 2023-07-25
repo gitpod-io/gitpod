@@ -137,7 +137,6 @@ import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-
 import { HeadlessLogService, HeadlessLogEndpoint } from "./headless-log-service";
 import { ConfigProvider, InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
-import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { IDEOptions } from "@gitpod/gitpod-protocol/lib/ide-protocol";
 import {
     PartialProject,
@@ -215,7 +214,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(TracedWorkspaceDB) private readonly workspaceDb: DBWithTracing<WorkspaceDB>,
         @inject(WorkspaceFactory) private readonly workspaceFactory: WorkspaceFactory,
         @inject(WorkspaceDeletionService) private readonly workspaceDeletionService: WorkspaceDeletionService,
-        @inject(LocalMessageBroker) private readonly localMessageBroker: LocalMessageBroker,
         @inject(ContextParser) private contextParser: ContextParser,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
 
@@ -331,10 +329,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
             );
 
         for (const projectId of projects) {
-            this.disposables.pushAll([
-                this.localMessageBroker.listenForPrebuildUpdates(projectId, handler),
-                this.subscriber.listenForPrebuildUpdates(projectId, handler),
-            ]);
+            this.disposables.pushAll([this.subscriber.listenForPrebuildUpdates(projectId, handler)]);
         }
 
         // TODO(at) we need to keep the list of accessible project up to date
@@ -457,19 +452,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 //
                 const ws = await this.workspaceDb.trace(ctx).findById(workspaceID);
                 if (!!ws && !!wsi && ws.ownerId !== this.userID) {
-                    const resetListener = this.localMessageBroker.listenForWorkspaceInstanceUpdates(
-                        ws.ownerId,
-                        (ctx, instance) => {
-                            if (instance.id === wsi.id) {
-                                this.forwardInstanceUpdateToClient(ctx, instance);
-                                if (instance.status.phase === "stopped") {
-                                    resetListener.dispose();
-                                }
-                            }
-                        },
-                    );
-                    this.disposables.push(resetListener);
-
                     const resetListenerFromRedis = this.subscriber.listenForWorkspaceInstanceUpdates(
                         ws.ownerId,
                         (ctx, instance) => {
@@ -552,9 +534,6 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // TODO(cw): the instance update is not subject to resource access guards, hence provides instance info
         //           to clients who might not otherwise have access to that information.
         this.disposables.pushAll([
-            this.localMessageBroker.listenForWorkspaceInstanceUpdates(this.userID, (ctx, instance) =>
-                this.forwardInstanceUpdateToClient(ctx, instance),
-            ),
             this.subscriber.listenForWorkspaceInstanceUpdates(this.userID, (ctx, instance) =>
                 this.forwardInstanceUpdateToClient(ctx, instance),
             ),
@@ -2872,7 +2851,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         const user = await this.checkUser("getGenericInvite");
-        await this.guardTeamOperation(teamId, "get", "write_members");
+        await this.guardTeamOperation(teamId, "update", "write_members");
 
         return this.organizationService.getOrCreateInvite(user.id, teamId);
     }
@@ -3091,10 +3070,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
                 },
                 ctx,
             );
-        this.disposables.pushAll([
-            this.localMessageBroker.listenForPrebuildUpdates(project.id, prebuildUpdateHandler),
-            this.subscriber.listenForPrebuildUpdates(project.id, prebuildUpdateHandler),
-        ]);
+        this.disposables.pushAll([this.subscriber.listenForPrebuildUpdates(project.id, prebuildUpdateHandler)]);
 
         return project;
     }

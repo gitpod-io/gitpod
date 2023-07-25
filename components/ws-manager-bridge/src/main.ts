@@ -9,12 +9,12 @@ import * as express from "express";
 import * as prometheusClient from "prom-client";
 import { log, LogrusLogLevel } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { DebugApp } from "@gitpod/gitpod-protocol/lib/util/debug-app";
-import { MessageBusIntegration } from "./messagebus-integration";
 import { TypeORM } from "@gitpod/gitpod-db/lib/typeorm/typeorm";
 import { TracingManager } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { ClusterServiceServer } from "./cluster-service-server";
 import { BridgeController } from "./bridge-controller";
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
+import { redisMetricsRegistry } from "@gitpod/gitpod-db/lib";
 
 log.enableJSONLogging("ws-manager-bridge", undefined, LogrusLogLevel.getFromEnv());
 
@@ -23,9 +23,6 @@ export const start = async (container: Container) => {
         const db = container.get(TypeORM);
         await db.connect();
 
-        const msgbus = container.get(MessageBusIntegration);
-        await msgbus.connect();
-
         const tracingManager = container.get(TracingManager);
         tracingManager.setup("ws-manager-bridge");
 
@@ -33,7 +30,9 @@ export const start = async (container: Container) => {
         prometheusClient.collectDefaultMetrics();
         metricsApp.get("/metrics", async (req, res) => {
             res.set("Content-Type", prometheusClient.register.contentType);
-            res.send(await prometheusClient.register.metrics());
+
+            const mergedRegistry = prometheusClient.Registry.merge([prometheusClient.register, redisMetricsRegistry()]);
+            res.send(await mergedRegistry.metrics());
         });
         const metricsPort = 9500;
         const metricsHttpServer = metricsApp.listen(metricsPort, "localhost", () => {

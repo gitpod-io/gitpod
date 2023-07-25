@@ -5,7 +5,6 @@
  */
 
 import { inject, injectable } from "inversify";
-import { MessageBusIntegration } from "./messagebus-integration";
 import {
     Disposable,
     Queue,
@@ -34,7 +33,7 @@ import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster"
 import { performance } from "perf_hooks";
 import { WorkspaceInstanceController } from "./workspace-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
-import { RedisPublisher } from "./redis/publisher";
+import { RedisPublisher } from "@gitpod/gitpod-db/lib";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -52,7 +51,6 @@ export type WorkspaceClusterInfo = Pick<WorkspaceCluster, "name" | "url">;
 export class WorkspaceManagerBridge implements Disposable {
     constructor(
         @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
-        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
         @inject(Metrics) private readonly metrics: Metrics,
         @inject(Configuration) private readonly config: Configuration,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
@@ -363,7 +361,6 @@ export class WorkspaceManagerBridge implements Disposable {
             if (!!lifecycleHandler) {
                 await lifecycleHandler();
             }
-            await this.messagebus.notifyOnInstanceUpdate(ctx, userId, instance);
             await this.publisher.publishInstanceUpdate({
                 ownerID: userId,
                 instanceID: instance.id,

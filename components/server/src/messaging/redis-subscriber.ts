@@ -6,8 +6,6 @@
 
 import {
     HeadlessWorkspaceEventListener,
-    LocalMessageBroker,
-    LocalRabbitMQBackedMessageBroker,
     PrebuildUpdateListener,
     WorkspaceInstanceUpdateListener,
 } from "./local-message-broker";
@@ -24,7 +22,6 @@ import {
     WorkspaceInstanceUpdatesChannel,
 } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
 import {
     reportRedisUpdateCompleted,
     reportRedisUpdateReceived,
@@ -33,8 +30,10 @@ import {
 import { Redis } from "ioredis";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 
+const UNDEFINED_KEY = "undefined";
+
 @injectable()
-export class RedisSubscriber implements LocalMessageBroker {
+export class RedisSubscriber {
     constructor(
         @inject(Redis) private readonly redis: Redis,
         @inject(WorkspaceDB) private readonly workspaceDB: WorkspaceDB,
@@ -73,37 +72,12 @@ export class RedisSubscriber implements LocalMessageBroker {
     private async onMessage(channel: string, message: string): Promise<void> {
         switch (channel) {
             case WorkspaceInstanceUpdatesChannel:
-                const wsInstanceTypeEnabled = await this.isRedisPubSubByTypeEnabled("workspace-instance");
-                if (!wsInstanceTypeEnabled) {
-                    log.debug("[redis] Redis workspace instance update is disabled through feature flag", {
-                        channel,
-                        message,
-                    });
-                    return;
-                }
-
                 return this.onInstanceUpdate(JSON.parse(message) as RedisWorkspaceInstanceUpdate);
 
             case PrebuildUpdatesChannel:
-                const prebuildTypeEnabled = await this.isRedisPubSubByTypeEnabled("prebuild");
-                if (!prebuildTypeEnabled) {
-                    log.debug("[redis] Redis prebuild update is disabled through feature flag", {
-                        channel,
-                        message,
-                    });
-                    return;
-                }
                 return this.onPrebuildUpdate(JSON.parse(message) as RedisPrebuildUpdate);
 
             case HeadlessUpdatesChannel:
-                const headlessTypeEnabled = await this.isRedisPubSubByTypeEnabled("prebuild-updatable");
-                if (!headlessTypeEnabled) {
-                    log.debug("[redis] Redis headless update is disabled through feature flag", {
-                        channel,
-                        message,
-                    });
-                    return;
-                }
                 return this.onHeadlessUpdate(JSON.parse(message) as RedisHeadlessUpdate);
 
             default:
@@ -185,8 +159,7 @@ export class RedisSubscriber implements LocalMessageBroker {
             return;
         }
 
-        const listeners =
-            this.headlessWorkspaceEventListeners.get(LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY) || [];
+        const listeners = this.headlessWorkspaceEventListeners.get(UNDEFINED_KEY) || [];
         if (listeners.length === 0) {
             return;
         }
@@ -211,12 +184,7 @@ export class RedisSubscriber implements LocalMessageBroker {
 
     listenForPrebuildUpdatableEvents(listener: HeadlessWorkspaceEventListener): Disposable {
         // we're being cheap here in re-using a map where it just needs to be a plain array.
-        return this.doRegister(
-            LocalRabbitMQBackedMessageBroker.UNDEFINED_KEY,
-            listener,
-            this.headlessWorkspaceEventListeners,
-            "prebuild-updatable",
-        );
+        return this.doRegister(UNDEFINED_KEY, listener, this.headlessWorkspaceEventListeners, "prebuild-updatable");
     }
 
     listenForWorkspaceInstanceUpdates(userId: string, listener: WorkspaceInstanceUpdateListener): Disposable {
@@ -247,17 +215,5 @@ export class RedisSubscriber implements LocalMessageBroker {
                 listenersStore.delete(key);
             }
         });
-    }
-
-    private async isRedisPubSubByTypeEnabled(
-        type: "workspace-instance" | "prebuild" | "prebuild-updatable",
-    ): Promise<boolean> {
-        const enabledTypes = await getExperimentsClientForBackend().getValueAsync(
-            "enableRedisPubSubByUpdateType",
-            "none",
-            {},
-        );
-        log.debug("Enabled types in redis publisher:", enabledTypes);
-        return enabledTypes.indexOf(type) >= 0;
     }
 }

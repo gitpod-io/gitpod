@@ -27,7 +27,7 @@ import {
     OAuthToken,
     OAuthUser,
 } from "@jmondi/oauth2-server";
-import { inject, injectable, postConstruct, optional } from "inversify";
+import { inject, injectable, optional } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -52,9 +52,6 @@ import { TypeORM } from "./typeorm";
 // OAuth token expiry
 const tokenExpiryInFuture = new DateInterval("7d");
 
-/** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
-export let encryptionService: EncryptionService;
-
 const userCacheKeyPrefix = "user:";
 function getUserCacheKey(id: string): string {
     return userCacheKeyPrefix + id;
@@ -69,12 +66,6 @@ export class TypeORMUserDBImpl extends TransactionalDBImpl<UserDB> implements Us
         @optional() transactionalEM?: EntityManager,
     ) {
         super(typeorm, transactionalEM);
-    }
-
-    @postConstruct()
-    init() {
-        /** Publish the instance of EncryptionService our entities should use */
-        encryptionService = this.encryptionService;
     }
 
     protected createTransactionalDB(transactionalEM: EntityManager): UserDB {

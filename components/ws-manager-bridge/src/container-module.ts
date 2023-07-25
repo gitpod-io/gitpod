@@ -7,9 +7,6 @@
 require("reflect-metadata");
 
 import { ContainerModule } from "inversify";
-import { MessageBusHelper, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
-import { MessagebusConfiguration } from "@gitpod/gitpod-messagebus/lib/config";
-import { MessageBusIntegration } from "./messagebus-integration";
 import { Configuration } from "./config";
 import * as fs from "fs";
 import { WorkspaceManagerBridgeFactory, WorkspaceManagerBridge } from "./bridge";
@@ -37,14 +34,10 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./workspace-instance-controller";
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
-import { RedisClient } from "./redis/client";
-import { RedisPublisher } from "./redis/publisher";
+import { Redis } from "ioredis";
+import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 
 export const containerModule = new ContainerModule((bind) => {
-    bind(MessagebusConfiguration).toSelf().inSingletonScope();
-    bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
-    bind(MessageBusIntegration).toSelf().inSingletonScope();
-
     bind(BridgeController).toSelf().inSingletonScope();
 
     bind(PrometheusClientCallMetrics).toSelf().inSingletonScope();
@@ -92,6 +85,10 @@ export const containerModule = new ContainerModule((bind) => {
 
     bind(AppClusterWorkspaceInstancesController).toSelf().inSingletonScope();
 
-    bind(RedisClient).toSelf().inSingletonScope();
+    bind(Redis).toDynamicValue((ctx) => {
+        const config = ctx.container.get<Configuration>(Configuration);
+        const [host, port] = config.redis.address.split(":");
+        return newRedisClient({ host, port: Number(port), connectionName: "server" });
+    });
     bind(RedisPublisher).toSelf().inSingletonScope();
 });

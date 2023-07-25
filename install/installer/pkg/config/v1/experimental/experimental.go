@@ -41,9 +41,9 @@ type TelemetryConfig struct {
 }
 
 type CommonConfig struct {
-	// @deprecated
+	// Deprecated.
 	PodConfig map[string]*PodConfig `json:"podConfig,omitempty"`
-	// @deprecated use a secret instead in messageBus.credentials
+	// Deprecated use a secret instead in messageBus.credentials
 	StaticMessagebusPassword string `json:"staticMessagebusPassword"`
 }
 
@@ -192,7 +192,12 @@ type SpiceDBConfig struct {
 }
 
 type WebAppConfig struct {
-	PublicAPI                    *PublicAPIConfig       `json:"publicApi,omitempty"`
+	PublicAPI *PublicAPIConfig `json:"publicApi,omitempty"`
+
+	// PublicURL lets you override the publically reachable endpoints of gitpod (currently only public api endpoint)
+	// If not set, default will be api.${Domain}
+	PublicURL string `json:"publicUrl,omitempty"`
+
 	Server                       *ServerConfig          `json:"server,omitempty"`
 	ProxyConfig                  *ProxyConfig           `json:"proxy,omitempty"`
 	WorkspaceManagerBridge       *WsManagerBridgeConfig `json:"wsManagerBridge,omitempty"`

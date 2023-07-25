@@ -70,18 +70,6 @@ spec:
         summary: The websocket connection rate is higher than usual. Investigation required.
         description: Websocket connection rate high
 
-    - alert: MessagebusNotRunning
-      expr: sum(up{job="messagebus"}) by (cluster) < 1
-      for: 2m
-      labels:
-        # sent to the team internal channel until we fine tuned it
-        severity: warning
-        team: webapp
-      annotations:
-        runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/MessagebusNotRunning.md
-        summary: The messagebus pod is not running in {{ $labels.cluster }}. Workspace information is not being correctly propagated into web app clusters. Investigation required.
-        description: Messagebus pod not running
-
     - alert: ServerHighCPUUsage
       # Reasoning: high rates of CPU consumption should only be temporary.
       expr: avg(rate(container_cpu_usage_seconds_total{container!="POD", pod=~"server-.*"}[5m])) by (cluster) > 0.4
@@ -98,7 +86,7 @@ spec:
 
     - alert: WebAppServicesCrashlooping
       # Reasoning: alert if any pod is stuck in crashlooping more than 5 minute.
-      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|messagebus|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster, pod) > 0
+      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster, pod) > 0
       # Five minutes sound high, but that's the only value that's higher than recent history
       for: 5m
       labels:
@@ -113,7 +101,7 @@ spec:
     - alert: WebAppServicesCrashloopingInternal
       # Reasoning: alert if any pod is stuck in crashlooping more than 1 minute.
       # Used for fine tuning the alert above (WebAppServicesCrashlooping)!
-      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|messagebus|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster, pod) > 0
+      expr: sum(increase(kube_pod_container_status_restarts_total{container!="POD", pod=~"(content-service|dashboard|db|proxy|server|ws-manager-bridge|usage)-.*"}[5m])) by (cluster, pod) > 0
       # Let's be more ambitious than 5m
       for: 1m
       labels:

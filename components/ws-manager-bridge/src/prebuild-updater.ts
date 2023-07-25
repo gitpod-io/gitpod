@@ -12,17 +12,15 @@ import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { PrebuildStateMapper } from "./prebuild-state-mapper";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { MessageBusIntegration } from "./messagebus-integration";
 import { Metrics } from "./metrics";
 import { filterStatus } from "./bridge";
-import { RedisPublisher } from "./redis/publisher";
+import { RedisPublisher } from "@gitpod/gitpod-db/lib";
 
 @injectable()
 export class PrebuildUpdater {
     constructor(
         @inject(PrebuildStateMapper) private readonly prebuildStateMapper: PrebuildStateMapper,
         @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
-        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
         @inject(Metrics) private readonly prometheusExporter: Metrics,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
     ) {}
@@ -85,10 +83,6 @@ export class PrebuildUpdater {
 
                 // notify updates
                 // headless update
-                await this.messagebus.notifyHeadlessUpdate({ span }, userId, workspaceId, {
-                    type: update.type,
-                    workspaceID: workspaceId,
-                });
                 if (!HeadlessWorkspaceEventType.isRunning(update.type)) {
                     await this.publisher.publishHeadlessUpdate({
                         type: update.type,
@@ -99,7 +93,6 @@ export class PrebuildUpdater {
                 // prebuild info
                 const info = (await this.workspaceDB.trace({ span }).findPrebuildInfos([updatedPrebuild.id]))[0];
                 if (info) {
-                    await this.messagebus.notifyOnPrebuildUpdate({ info, status: updatedPrebuild.state });
                     await this.publisher.publishPrebuildUpdate({
                         projectID: prebuild.projectId || "",
                         prebuildID: updatedPrebuild.id,
@@ -129,7 +122,6 @@ export class PrebuildUpdater {
                 // notify about prebuild updated
                 const info = (await this.workspaceDB.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
                 if (info) {
-                    await this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });
                     await this.publisher.publishPrebuildUpdate({
                         projectID: prebuild.projectId || "",
                         prebuildID: prebuild.id,

@@ -6,8 +6,6 @@
 
 import { inject, injectable } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Metrics } from "../metrics";
-import { RedisClient } from "./client";
 import {
     HeadlessUpdatesChannel,
     PrebuildUpdatesChannel,
@@ -16,13 +14,12 @@ import {
     RedisWorkspaceInstanceUpdate,
     WorkspaceInstanceUpdatesChannel,
 } from "@gitpod/gitpod-protocol";
+import { Redis } from "ioredis";
+import { reportUpdatePublished } from "./metrics";
 
 @injectable()
 export class RedisPublisher {
-    constructor(
-        @inject(RedisClient) private readonly client: RedisClient,
-        @inject(Metrics) private readonly metrics: Metrics,
-    ) {}
+    constructor(@inject(Redis) private readonly redis: Redis) {}
 
     async publishPrebuildUpdate(update: RedisPrebuildUpdate): Promise<void> {
         log.debug("[redis] Publish prebuild udpate invoked.");
@@ -30,13 +27,13 @@ export class RedisPublisher {
         let err: Error | undefined;
         try {
             const serialized = JSON.stringify(update);
-            await this.client.get().publish(PrebuildUpdatesChannel, serialized);
+            await this.redis.publish(PrebuildUpdatesChannel, serialized);
             log.debug("[redis] Succesfully published prebuild update.", update);
         } catch (e) {
             err = e;
             log.error("[redis] Failed to publish prebuild update.", e, update);
         } finally {
-            this.metrics.reportUpdatePublished("prebuild", err);
+            reportUpdatePublished("prebuild", err);
         }
     }
 
@@ -44,13 +41,13 @@ export class RedisPublisher {
         let err: Error | undefined;
         try {
             const serialized = JSON.stringify(update);
-            await this.client.get().publish(WorkspaceInstanceUpdatesChannel, serialized);
+            await this.redis.publish(WorkspaceInstanceUpdatesChannel, serialized);
             log.debug("[redis] Succesfully published instance update.", update);
         } catch (e) {
             err = e;
             log.error("[redis] Failed to publish instance update.", e, update);
         } finally {
-            this.metrics.reportUpdatePublished("workspace-instance", err);
+            reportUpdatePublished("workspace-instance", err);
         }
     }
 
@@ -60,13 +57,13 @@ export class RedisPublisher {
         let err: Error | undefined;
         try {
             const serialized = JSON.stringify(update);
-            await this.client.get().publish(HeadlessUpdatesChannel, serialized);
+            await this.redis.publish(HeadlessUpdatesChannel, serialized);
             log.debug("[redis] Succesfully published headless update.", update);
         } catch (e) {
             err = e;
             log.error("[redis] Failed to publish headless update.", e, update);
         } finally {
-            this.metrics.reportUpdatePublished("headless", err);
+            reportUpdatePublished("headless", err);
         }
     }
 }

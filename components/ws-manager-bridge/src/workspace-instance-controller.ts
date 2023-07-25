@@ -14,12 +14,11 @@ import { Metrics } from "./metrics";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { DBWithTracing, TracedUserDB, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
-import { MessageBusIntegration } from "./messagebus-integration";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { ClientProvider } from "./wsman-subscriber";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { PrebuildUpdater } from "./prebuild-updater";
-import { RedisPublisher } from "./redis/publisher";
+import { RedisPublisher } from "@gitpod/gitpod-db/lib";
 
 export const WorkspaceInstanceController = Symbol("WorkspaceInstanceController");
 
@@ -53,7 +52,6 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
         @inject(Metrics) private readonly prometheusExporter: Metrics,
         @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
         @inject(TracedUserDB) private readonly userDB: DBWithTracing<UserDB>,
-        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
         @inject(PrebuildUpdater) private readonly prebuildUpdater: PrebuildUpdater,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(RedisPublisher) private readonly publisher: RedisPublisher,
@@ -273,7 +271,6 @@ export class WorkspaceInstanceControllerImpl implements WorkspaceInstanceControl
         // important: call this after the DB update
         await this.onStopped(ctx, info.workspace.ownerId, info.latestInstance);
 
-        await this.messagebus.notifyOnInstanceUpdate(ctx, info.workspace.ownerId, info.latestInstance);
         await this.publisher.publishInstanceUpdate({
             ownerID: info.workspace.ownerId,
             instanceID: info.latestInstance.id,

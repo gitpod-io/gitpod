@@ -41,7 +41,9 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
     })
     branch?: string;
 
-    @Column()
+    @Column({
+        type: "varchar",
+    })
     @Index("ind_6a04b7005d5ad0e664725f9f17")
     state: PrebuiltWorkspaceState;
 

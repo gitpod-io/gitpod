@@ -69,6 +69,11 @@ export default function MembersPage() {
         return owners?.length === 1 && owners[0].userId === user?.id;
     }, [org.data?.members, user?.id]);
 
+    const isOwner = useMemo(() => {
+        const owners = org.data?.members.filter((m) => m.role === "owner");
+        return !!owners?.some((o) => o.userId === user?.id);
+    }, [org.data?.members, user?.id]);
+
     const filteredMembers =
         org.data?.members.filter((m) => {
             if (!!roleFilter && m.role !== roleFilter) {
@@ -122,17 +127,19 @@ export default function MembersPage() {
                             ]}
                         />
                     </div>
-                    <button
-                        onClick={() => {
-                            trackEvent("invite_url_requested", {
-                                invite_url: inviteUrl || "",
-                            });
-                            setShowInviteModal(true);
-                        }}
-                        className="ml-2"
-                    >
-                        Invite Members
-                    </button>
+                    {isOwner && (
+                        <button
+                            onClick={() => {
+                                trackEvent("invite_url_requested", {
+                                    invite_url: inviteUrl || "",
+                                });
+                                setShowInviteModal(true);
+                            }}
+                            className="ml-2"
+                        >
+                            Invite Members
+                        </button>
+                    )}
                 </div>
                 <ItemsList className="mt-2">
                     <Item header={true} className="grid grid-cols-3">

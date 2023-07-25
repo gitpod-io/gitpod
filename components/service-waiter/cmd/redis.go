@@ -16,7 +16,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
-// messagebusCmd represents the messagebus command
 var redisCmd = &cobra.Command{
 	Use:   "redis",
 	Short: "waits for redis to become reachable",

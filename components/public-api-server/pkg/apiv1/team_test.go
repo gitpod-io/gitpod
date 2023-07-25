@@ -173,6 +173,38 @@ func TestTeamsService_ListTeams(t *testing.T) {
 			},
 		}, response.Msg)
 	})
+
+	t.Run("returns team with members and no invite for non-owner", func(t *testing.T) {
+		ctx := context.Background()
+		serverMock, client := setupTeamService(t)
+
+		teamMembers := []*protocol.TeamMemberInfo{
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Alice Alice",
+				Role:     protocol.TeamMember_Owner,
+			}),
+			newTeamMember(&protocol.TeamMemberInfo{
+				FullName: "Bob Bob",
+				Role:     protocol.TeamMember_Member,
+			}),
+		}
+		team := newTeam(&protocol.Team{
+			Name: "Team A",
+		})
+		serverMock.EXPECT().GetTeams(gomock.Any()).Return([]*protocol.Team{team}, nil)
+
+		// Mock for populating team details
+		serverMock.EXPECT().GetTeamMembers(gomock.Any(), team.ID).Return(teamMembers, nil)
+		serverMock.EXPECT().GetGenericInvite(gomock.Any(), team.ID).Return(nil, &jsonrpc2.Error{Code: 403, Message: "not access"})
+
+		response, err := client.ListTeams(ctx, connect.NewRequest(&v1.ListTeamsRequest{}))
+		require.NoError(t, err)
+		requireEqualProto(t, &v1.ListTeamsResponse{
+			Teams: []*v1.Team{
+				teamToAPIResponse(team, teamMembers, nil),
+			},
+		}, response.Msg)
+	})
 }
 
 func TestTeamService_GetTeam(t *testing.T) {

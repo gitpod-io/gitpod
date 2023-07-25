@@ -15,7 +15,15 @@ import {
     WorkspaceInitializer,
 } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
-import { DBWithTracing, ProjectDB, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import {
+    DBWithTracing,
+    ProjectDB,
+    RedisPublisher,
+    TracedUserDB,
+    TracedWorkspaceDB,
+    UserDB,
+    WorkspaceDB,
+} from "@gitpod/gitpod-db/lib";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
     AdditionalContentContext,
@@ -117,9 +125,7 @@ import { TokenProvider } from "../user/token-provider";
 import { UserService } from "../user/user-service";
 import { ResolvedEnvVars } from "./env-var-service";
 import { ImageSourceProvider } from "./image-source-provider";
-import { MessageBusIntegration } from "./messagebus-integration";
 import { WorkspaceClassesConfig } from "./workspace-classes";
-import { RedisPublisher } from "../redis/publisher";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;
@@ -199,7 +205,6 @@ export class WorkspaceStarter {
         @inject(TracedUserDB) private readonly userDB: DBWithTracing<UserDB>,
         @inject(TokenProvider) private readonly tokenProvider: TokenProvider,
         @inject(HostContextProvider) private readonly hostContextProvider: HostContextProvider,
-        @inject(MessageBusIntegration) private readonly messagebus: MessageBusIntegration,
         @inject(AuthorizationService) private readonly authService: AuthorizationService,
         @inject(ImageBuilderClientProvider) private readonly imagebuilderClientProvider: ImageBuilderClientProvider,
         @inject(ImageSourceProvider) private readonly imageSourceProvider: ImageSourceProvider,
@@ -453,7 +458,6 @@ export class WorkspaceStarter {
                     stoppedTime: new Date().toISOString(),
                 });
                 await this.userDB.trace({ span }).deleteGitpodTokensNamedLike(workspace.ownerId, `${instance.id}-%`);
-                await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, updated);
                 await this.publisher.publishInstanceUpdate({
                     instanceID: updated.id,
                     ownerID: workspace.ownerId,
@@ -721,7 +725,6 @@ export class WorkspaceStarter {
                 instance.region = installation;
                 await this.workspaceDb.trace(ctx).storeInstance(instance);
                 try {
-                    await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
                     await this.publisher.publishInstanceUpdate({
                         instanceID: instance.id,
                         ownerID: workspace.ownerId,
@@ -779,7 +782,6 @@ export class WorkspaceStarter {
             if (prebuild) {
                 const info = (await this.workspaceDb.trace({ span }).findPrebuildInfos([prebuild.id]))[0];
                 if (info) {
-                    await this.messagebus.notifyOnPrebuildUpdate({ info, status: "queued" });
                     await this.publisher.publishPrebuildUpdate({
                         prebuildID: prebuild.id,
                         projectID: info.projectId,
@@ -813,7 +815,6 @@ export class WorkspaceStarter {
             instance.status.conditions.failed = err.toString();
             instance.status.message = `Workspace cannot be started: ${err}`;
             await this.workspaceDb.trace({ span }).storeInstance(instance);
-            await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
             await this.publisher.publishInstanceUpdate({
                 instanceID: instance.id,
                 ownerID: workspace.ownerId,
@@ -844,10 +845,6 @@ export class WorkspaceStarter {
                     prebuild.error = err.toString();
 
                     await this.workspaceDb.trace({ span }).storePrebuiltWorkspace(prebuild);
-                    await this.messagebus.notifyHeadlessUpdate({ span }, workspace.ownerId, workspace.id, {
-                        type: HeadlessWorkspaceEventType.Failed,
-                        workspaceID: workspace.id, // required in prebuild-queue-maintainer.ts
-                    });
                     await this.publisher.publishHeadlessUpdate({
                         type: HeadlessWorkspaceEventType.Failed,
                         workspaceID: workspace.id,
@@ -1250,7 +1247,6 @@ export class WorkspaceStarter {
             instance = await this.workspaceDb
                 .trace({ span })
                 .updateInstancePartial(instance.id, { workspaceImage, status });
-            await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
             await this.publisher.publishInstanceUpdate({
                 instanceID: instance.id,
                 ownerID: workspace.ownerId,
@@ -1328,8 +1324,7 @@ export class WorkspaceStarter {
             // Mark the PrebuildWorkspace as failed
             await this.failPrebuildWorkspace({ span }, err, workspace);
 
-            // Push updated workspace instance over messagebus
-            await this.messagebus.notifyOnInstanceUpdate(workspace.ownerId, instance);
+            // Publish updated workspace instance
             await this.publisher.publishInstanceUpdate({
                 workspaceID: workspace.ownerId,
                 instanceID: instance.id,

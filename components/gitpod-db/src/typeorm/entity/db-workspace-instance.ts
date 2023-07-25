@@ -80,7 +80,9 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
      * This field is a databse-only copy of status.phase for the sole purpose of creating indexes on it.
      * Is replicated inside workspace-db-impl.ts/storeInstance.
      */
-    @Column()
+    @Column({
+        type: "varchar",
+    })
     @Index("ind_phasePersisted")
     phasePersisted: WorkspaceInstancePhase;
 

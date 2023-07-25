@@ -18,7 +18,6 @@ import {
     WorkspaceConfig,
 } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { LocalMessageBroker } from "../messaging/local-message-broker";
 import { repeat } from "@gitpod/gitpod-protocol/lib/util/repeat";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 
@@ -44,7 +43,6 @@ export type AuthenticatedGithubProvider = (
 export class PrebuildStatusMaintainer implements Disposable {
     constructor(
         @inject(TracedWorkspaceDB) private readonly workspaceDB: DBWithTracing<WorkspaceDB>,
-        @inject(LocalMessageBroker) private readonly localMessageBroker: LocalMessageBroker,
         @inject(RedisSubscriber) private readonly subscriber: RedisSubscriber,
     ) {}
 
@@ -56,9 +54,6 @@ export class PrebuildStatusMaintainer implements Disposable {
         this.githubApiProvider = githubApiProvider;
 
         this.disposables.pushAll([
-            this.localMessageBroker.listenForPrebuildUpdatableEvents((ctx, msg) =>
-                this.handlePrebuildFinished(ctx, msg),
-            ),
             this.subscriber.listenForPrebuildUpdatableEvents((ctx, msg) => this.handlePrebuildFinished(ctx, msg)),
         ]);
         this.disposables.push(repeat(this.periodicUpdatableCheck.bind(this), MAX_UPDATABLE_AGE / 2));

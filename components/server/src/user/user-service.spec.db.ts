@@ -10,7 +10,7 @@ import { Container } from "inversify";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { UserService } from "./user-service";
 import { TypeORM } from "@gitpod/gitpod-db/lib";
-import { resetDB } from "../test/reset-db";
+import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 
 const expect = chai.expect;
 

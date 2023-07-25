@@ -10,6 +10,8 @@ import { suite, test, timeout } from "@testdeck/mocha";
 import { testContainer } from "../test-container";
 import { CodeSyncResourceDB } from "./code-sync-resource-db";
 import { IUserDataManifest, SyncResource } from "./entity/db-code-sync-resource";
+import { resetDB } from "../test/reset-db";
+import { TypeORM } from "./typeorm";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -23,8 +25,7 @@ export class CodeSyncResourceDBSpec {
     }
 
     async after(): Promise<void> {
-        await this.db.deleteSettingsSyncResources(this.userId, () => Promise.resolve());
-        await this.db.deleteCollection(this.userId, undefined, () => Promise.resolve());
+        await resetDB(testContainer.get<TypeORM>(TypeORM));
     }
 
     @test()

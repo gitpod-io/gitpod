@@ -12,9 +12,9 @@ import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { expectError } from "../projects/projects-service.spec.db";
-import { resetDB } from "../test/reset-db";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
+import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 
 const expect = chai.expect;
 

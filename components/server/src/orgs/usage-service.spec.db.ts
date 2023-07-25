@@ -25,7 +25,7 @@ import { createTestContainer } from "../test/service-testing-container-module";
 import { UserService } from "../user/user-service";
 import { OrganizationService } from "./organization-service";
 import { UsageService } from "./usage-service";
-import { resetDB } from "../test/reset-db";
+import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 
 const expect = chai.expect;
 

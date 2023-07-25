@@ -12,7 +12,9 @@ import { Transformer } from "../transformer";
 @Entity()
 @Index("ind_dbsync", ["creationTime"]) // DBSync
 export class DBAppInstallation implements AppInstallation {
-    @PrimaryColumn()
+    @PrimaryColumn({
+        type: "varchar",
+    })
     platform: AppInstallationPlatform;
 
     @PrimaryColumn()
@@ -27,7 +29,9 @@ export class DBAppInstallation implements AppInstallation {
     @Column()
     platformUserID?: string;
 
-    @PrimaryColumn()
+    @PrimaryColumn({
+        type: "varchar",
+    })
     state: AppInstallationState;
 
     @Column({

@@ -236,48 +236,6 @@ func AnalyticsEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	}}
 }
 
-func MessageBusEnv(cfg *config.Config) (res []corev1.EnvVar) {
-	clusterObj := corev1.LocalObjectReference{Name: InClusterMessageQueueName}
-	tlsObj := corev1.LocalObjectReference{Name: InClusterMessageQueueTLS}
-
-	credsSecret := clusterObj
-	if cfg.MessageBus != nil && cfg.MessageBus.Credentials != nil {
-		credsSecret = corev1.LocalObjectReference{Name: cfg.MessageBus.Credentials.Name}
-	}
-
-	return []corev1.EnvVar{{
-		Name: "MESSAGEBUS_USERNAME",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: clusterObj,
-			Key:                  "username",
-		}},
-	}, {
-		Name: "MESSAGEBUS_PASSWORD",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: credsSecret,
-			Key:                  "rabbitmq-password",
-		}},
-	}, {
-		Name: "MESSAGEBUS_CA",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: tlsObj,
-			Key:                  "ca.crt",
-		}},
-	}, {
-		Name: "MESSAGEBUS_CERT",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: tlsObj,
-			Key:                  "tls.crt",
-		}},
-	}, {
-		Name: "MESSAGEBUS_KEY",
-		ValueFrom: &corev1.EnvVarSource{SecretKeyRef: &corev1.SecretKeySelector{
-			LocalObjectReference: tlsObj,
-			Key:                  "tls.key",
-		}},
-	}}
-}
-
 func DatabaseEnv(cfg *config.Config) (res []corev1.EnvVar) {
 	var (
 		secretRef corev1.LocalObjectReference
@@ -503,26 +461,6 @@ func DatabaseWaiterContainer(ctx *RenderContext) *corev1.Container {
 		},
 		Env: MergeEnv(
 			DatabaseEnv(&ctx.Config),
-			ProxyEnv(&ctx.Config),
-		),
-	}
-}
-
-func MessageBusWaiterContainer(ctx *RenderContext) *corev1.Container {
-	return &corev1.Container{
-		Name:  "msgbus-waiter",
-		Image: ctx.ImageName(ctx.Config.Repository, "service-waiter", ctx.VersionManifest.Components.ServiceWaiter.Version),
-		Args: []string{
-			"-v",
-			"messagebus",
-		},
-		SecurityContext: &corev1.SecurityContext{
-			Privileged:               pointer.Bool(false),
-			AllowPrivilegeEscalation: pointer.Bool(false),
-			RunAsUser:                pointer.Int64(31001),
-		},
-		Env: MergeEnv(
-			MessageBusEnv(&ctx.Config),
 			ProxyEnv(&ctx.Config),
 		),
 	}

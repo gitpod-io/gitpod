@@ -6,8 +6,6 @@
 
 import { ContainerModule } from "inversify";
 
-import { MessageBusHelper, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
-import { MessagebusConfiguration } from "@gitpod/gitpod-messagebus/lib/config";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import {
     ConfigCatClientFactory,
@@ -73,7 +71,6 @@ import { WebhookEventGarbageCollector } from "./jobs/webhook-gc";
 import { WorkspaceGarbageCollector } from "./jobs/workspace-gc";
 import { LinkedInService } from "./linkedin-service";
 import { LivenessController } from "./liveness/liveness-controller";
-import { LocalMessageBroker, LocalRabbitMQBackedMessageBroker } from "./messaging/local-message-broker";
 import { MonitoringEndpointsApp } from "./monitoring-endpoints";
 import { OAuthController } from "./oauth-server/oauth-controller";
 import { OneTimeSecretServer } from "./one-time-secret-server";
@@ -88,7 +85,6 @@ import { PrebuildManager } from "./prebuilds/prebuild-manager";
 import { PrebuildStatusMaintainer } from "./prebuilds/prebuilt-status-maintainer";
 import { StartPrebuildContextParser } from "./prebuilds/start-prebuild-context-parser";
 import { ProjectsService } from "./projects/projects-service";
-import { newRedisClient } from "./redis/client";
 import { RedisMutex } from "./redis/mutex";
 import { Server } from "./server";
 import { SessionHandler } from "./session-handler";
@@ -117,7 +113,6 @@ import { HeadlessLogController } from "./workspace/headless-log-controller";
 import { HeadlessLogService } from "./workspace/headless-log-service";
 import { ImageSourceProvider } from "./workspace/image-source-provider";
 import { ImageBuildPrefixContextParser } from "./workspace/imagebuild-prefix-context-parser";
-import { MessageBusIntegration } from "./workspace/messagebus-integration";
 import { OpenPrebuildPrefixContextParser } from "./workspace/open-prebuild-prefix-context-parser";
 import { ReferrerPrefixParser } from "./workspace/referrer-prefix-context-parser";
 import { SnapshotContextParser } from "./workspace/snapshot-context-parser";
@@ -131,7 +126,7 @@ import { SpiceDBAuthorizer } from "./authorization/spicedb-authorizer";
 import { OrganizationService } from "./orgs/organization-service";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { Redis } from "ioredis";
-import { RedisPublisher } from "./redis/publisher";
+import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -168,11 +163,6 @@ export const productionContainerModule = new ContainerModule(
 
         bind(ServerFactory).toAutoFactory(GitpodServerImpl);
         bind(UserController).toSelf().inSingletonScope();
-
-        bind(MessagebusConfiguration).toSelf().inSingletonScope();
-        bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
-        bind(MessageBusIntegration).toSelf().inSingletonScope();
-        bind(LocalMessageBroker).to(LocalRabbitMQBackedMessageBroker).inSingletonScope();
 
         bind(GitpodServerImpl).toSelf();
         bind(WebsocketConnectionManager)
@@ -360,7 +350,7 @@ export const productionContainerModule = new ContainerModule(
         bind(Redis).toDynamicValue((ctx) => {
             const config = ctx.container.get<Config>(Config);
             const [host, port] = config.redis.address.split(":");
-            return newRedisClient(host, Number(port));
+            return newRedisClient({ host, port: Number(port), connectionName: "server" });
         });
 
         bind(RedisMutex).toSelf().inSingletonScope();
