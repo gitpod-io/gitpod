@@ -422,6 +422,7 @@ jobs:
           TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
         run: |
+          export HOME="/home/gitpod"
           leeway run dev/preview/previewctl:install
 
           echo "Setting up access to core-dev and harvester"
