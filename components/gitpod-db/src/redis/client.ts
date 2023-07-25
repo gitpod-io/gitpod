@@ -6,12 +6,12 @@
 
 import { Redis } from "ioredis";
 
-export function newRedisClient(host: string, port: number): Redis {
+export function newRedisClient(opts: { host: string; port: number; connectionName: string }): Redis {
     return new Redis({
-        port: Number(port),
-        host,
+        port: opts.port,
+        host: opts.host,
         enableReadyCheck: true,
         keepAlive: 10 * 1000,
-        connectionName: "server",
+        connectionName: opts.connectionName,
     });
 }
