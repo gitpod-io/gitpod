@@ -29,15 +29,7 @@ type Config struct {
 	IDE        *IDEConfig         `json:"ide,omitempty"`    // @deprecated
 	Common     *CommonConfig      `json:"common,omitempty"` // @deprecated
 	Overrides  *[]Overrides       `json:"overrides,omitempty"`
-	Telemetry  *TelemetryConfig   `json:"telemetry,omitempty"`  // @deprecated
 	AgentSmith *agentSmith.Config `json:"agentSmith,omitempty"` // @deprecated
-}
-
-// @deprecated
-type TelemetryConfig struct {
-	Data struct {
-		Platform string `json:"platform"`
-	} `json:"data"`
 }
 
 type CommonConfig struct {

@@ -169,5 +169,4 @@ Additional config parameters that are in experimental state
 |`experimental.ide.openvsxProxy.serviceAnnotations`||N|  ||
 |`experimental.ide.ideMetrics.enabledErrorReporting`|bool|N|  ||
 |`experimental.common.podConfig`||N|  ||
-|`experimental.telemetry.data`||N|  ||
 |`experimental.agentSmith`||N|  ||
