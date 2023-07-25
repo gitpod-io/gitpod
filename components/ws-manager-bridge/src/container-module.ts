@@ -34,9 +34,8 @@ import { getExperimentsClientForBackend } from "@gitpod/gitpod-protocol/lib/expe
 import { WorkspaceInstanceController, WorkspaceInstanceControllerImpl } from "./workspace-instance-controller";
 import { AppClusterWorkspaceInstancesController } from "./app-cluster-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
-import { RedisPublisher } from "./redis/publisher";
 import { Redis } from "ioredis";
-import { newRedisClient } from "@gitpod/gitpod-db/lib";
+import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
 
 export const containerModule = new ContainerModule((bind) => {
     bind(BridgeController).toSelf().inSingletonScope();

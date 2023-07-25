@@ -15,7 +15,15 @@ import {
     WorkspaceInitializer,
 } from "@gitpod/content-service/lib";
 import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
-import { DBWithTracing, ProjectDB, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import {
+    DBWithTracing,
+    ProjectDB,
+    RedisPublisher,
+    TracedUserDB,
+    TracedWorkspaceDB,
+    UserDB,
+    WorkspaceDB,
+} from "@gitpod/gitpod-db/lib";
 import { BlockedRepositoryDB } from "@gitpod/gitpod-db/lib/blocked-repository-db";
 import {
     AdditionalContentContext,
@@ -118,7 +126,6 @@ import { UserService } from "../user/user-service";
 import { ResolvedEnvVars } from "./env-var-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
-import { RedisPublisher } from "../redis/publisher";
 
 export interface StartWorkspaceOptions extends GitpodServer.StartWorkspaceOptions {
     rethrow?: boolean;

@@ -15,14 +15,11 @@ import {
     WorkspaceInstanceUpdatesChannel,
 } from "@gitpod/gitpod-protocol";
 import { Redis } from "ioredis";
-import { reportUpdatePublished } from "../prometheus-metrics";
+import { reportUpdatePublished } from "./metrics";
 
 @injectable()
-// RedisPublisher is a copy from ws-manager-bridge/src/redis/publisher.go until we find a better
-// way to share the publisher across packages.
-// WEB-621
 export class RedisPublisher {
-    constructor(@inject(Redis) private readonly client: Redis) {}
+    constructor(@inject(Redis) private readonly redis: Redis) {}
 
     async publishPrebuildUpdate(update: RedisPrebuildUpdate): Promise<void> {
         log.debug("[redis] Publish prebuild udpate invoked.");
@@ -30,7 +27,7 @@ export class RedisPublisher {
         let err: Error | undefined;
         try {
             const serialized = JSON.stringify(update);
-            await this.client.publish(PrebuildUpdatesChannel, serialized);
+            await this.redis.publish(PrebuildUpdatesChannel, serialized);
             log.debug("[redis] Succesfully published prebuild update.", update);
         } catch (e) {
             err = e;
@@ -44,7 +41,7 @@ export class RedisPublisher {
         let err: Error | undefined;
         try {
             const serialized = JSON.stringify(update);
-            await this.client.publish(WorkspaceInstanceUpdatesChannel, serialized);
+            await this.redis.publish(WorkspaceInstanceUpdatesChannel, serialized);
             log.debug("[redis] Succesfully published instance update.", update);
         } catch (e) {
             err = e;
@@ -60,7 +57,7 @@ export class RedisPublisher {
         let err: Error | undefined;
         try {
             const serialized = JSON.stringify(update);
-            await this.client.publish(HeadlessUpdatesChannel, serialized);
+            await this.redis.publish(HeadlessUpdatesChannel, serialized);
             log.debug("[redis] Succesfully published headless update.", update);
         } catch (e) {
             err = e;

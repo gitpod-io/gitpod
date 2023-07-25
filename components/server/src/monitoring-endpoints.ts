@@ -7,17 +7,18 @@
 import * as express from "express";
 import { injectable } from "inversify";
 import * as prometheusClient from "prom-client";
-import { registerDBMetrics } from "@gitpod/gitpod-db/lib";
+import { redisMetricsRegistry, registerDBMetrics } from "@gitpod/gitpod-db/lib";
 import { registerServerMetrics } from "./prometheus-metrics";
 
 @injectable()
 export class MonitoringEndpointsApp {
     public create(): express.Application {
-        const registry = prometheusClient.register;
+        let registry = prometheusClient.register;
 
         prometheusClient.collectDefaultMetrics({ register: registry });
         registerDBMetrics(registry);
         registerServerMetrics(registry);
+        registry = prometheusClient.Registry.merge([registry, redisMetricsRegistry()]);
 
         const monApp = express();
         monApp.get("/metrics", async (req, res) => {

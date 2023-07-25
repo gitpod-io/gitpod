@@ -14,7 +14,7 @@ import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-d
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { Metrics } from "./metrics";
 import { filterStatus } from "./bridge";
-import { RedisPublisher } from "./redis/publisher";
+import { RedisPublisher } from "@gitpod/gitpod-db/lib";
 
 @injectable()
 export class PrebuildUpdater {

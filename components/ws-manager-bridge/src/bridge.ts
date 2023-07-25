@@ -33,7 +33,7 @@ import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster"
 import { performance } from "perf_hooks";
 import { WorkspaceInstanceController } from "./workspace-instance-controller";
 import { PrebuildUpdater } from "./prebuild-updater";
-import { RedisPublisher } from "./redis/publisher";
+import { RedisPublisher } from "@gitpod/gitpod-db/lib";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
