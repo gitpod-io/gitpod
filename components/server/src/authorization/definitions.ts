@@ -7,11 +7,15 @@
 export const InstallationID = "1";
 export type ResourceType = UserResourceType | InstallationResourceType | OrganizationResourceType | ProjectResourceType;
 
-export type Relation = InstallationRelation | OrganizationRelation | ProjectRelation;
+export type Relation = UserRelation | InstallationRelation | OrganizationRelation | ProjectRelation;
 
-export type Permission = InstallationPermission | OrganizationPermission | ProjectPermission;
+export type Permission = UserPermission | InstallationPermission | OrganizationPermission | ProjectPermission;
 
 export type UserResourceType = "user";
+
+export type UserRelation = "self" | "container";
+
+export type UserPermission = "read_info" | "write_info" | "suspend";
 
 export type InstallationResourceType = "installation";
 

@@ -134,11 +134,11 @@ export class IamSessionApp {
 
         // Until we support SKIM (or any other means to sync accounts) we create new users here as a side-effect of the login
         const user = await this.userService.createUser({
+            organizationId,
             identity: { ...this.mapOIDCProfileToIdentity(payload), lastSigninTime: new Date().toISOString() },
             userUpdate: (user) => {
                 user.name = claims.name;
                 user.avatarUrl = claims.picture;
-                user.organizationId = organizationId;
             },
         });
 

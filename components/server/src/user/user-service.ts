@@ -18,6 +18,7 @@ import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messag
 import { Authorizer } from "../authorization/authorizer";
 
 export interface CreateUserParams {
+    organizationId?: string;
     identity: Identity;
     token?: Token;
     userUpdate?: (user: User) => void;
@@ -38,10 +39,20 @@ export class UserService {
         @inject(Authorizer) private readonly authorizer: Authorizer,
     ) {}
 
-    public async createUser({ identity, token, userUpdate }: CreateUserParams): Promise<User> {
+    public async findUserById(userId: string, id: string): Promise<User> {
+        await this.authorizer.checkUserPermissionAndThrow(userId, "read_info", id);
+        const result = await this.userDb.findUserById(id);
+        if (!result) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
+        }
+        return result;
+    }
+
+    public async createUser({ organizationId, identity, token, userUpdate }: CreateUserParams): Promise<User> {
         log.debug("Creating new user.", { identity, "login-flow": true });
 
         let newUser = await this.userDb.newUser();
+        newUser.organizationId = organizationId;
         if (userUpdate) {
             userUpdate(newUser);
         }
@@ -54,9 +65,27 @@ export class UserService {
         this.handleNewUser(newUser);
         // new users should not see the migration message
         AdditionalUserData.set(newUser, { shouldSeeMigrationMessage: false });
-        newUser = await this.userDb.storeUser(newUser);
-        if (token) {
-            await this.userDb.storeSingleToken(identity, token);
+        try {
+            newUser = await this.userDb.transaction(async (userDb) => {
+                const result = await userDb.storeUser(newUser);
+                await this.authorizer.addUser(result.id);
+                if (organizationId) {
+                    await this.authorizer.addOrganizationMemberRole(organizationId, result.id);
+                } else {
+                    await this.authorizer.addInstallationMemberRole(result.id);
+                }
+                if (token) {
+                    await this.userDb.storeSingleToken(identity, token);
+                }
+                return result;
+            });
+        } catch (error) {
+            if (organizationId) {
+                await this.authorizer.removeUserFromOrg(organizationId, newUser.id);
+            } else {
+                await this.authorizer.removeInstallationMemberRole(newUser.id);
+            }
+            throw error;
         }
         return newUser;
     }

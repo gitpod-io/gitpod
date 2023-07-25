@@ -32,8 +32,8 @@ export class SpiceDBAuthorizer {
 
     async check(
         req: v1.CheckPermissionRequest,
-        experimentsFields?: {
-            orgID?: string;
+        experimentsFields: {
+            userId: string;
         },
     ): Promise<boolean> {
         if (!this.client) {
@@ -41,7 +41,9 @@ export class SpiceDBAuthorizer {
         }
 
         const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-            teamId: experimentsFields?.orgID,
+            user: {
+                id: experimentsFields.userId,
+            },
         });
         if (!featureEnabled) {
             return true;
@@ -63,20 +65,8 @@ export class SpiceDBAuthorizer {
         }
     }
 
-    async writeRelationships(
-        req: v1.WriteRelationshipsRequest,
-        experimentsFields?: {
-            orgID?: string;
-        },
-    ): Promise<v1.WriteRelationshipsResponse | undefined> {
+    async writeRelationships(req: v1.WriteRelationshipsRequest): Promise<v1.WriteRelationshipsResponse | undefined> {
         if (!this.client) {
-            return undefined;
-        }
-
-        const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-            teamId: experimentsFields?.orgID,
-        });
-        if (!featureEnabled) {
             return undefined;
         }
 
@@ -95,20 +85,8 @@ export class SpiceDBAuthorizer {
         }
     }
 
-    async deleteRelationships(
-        req: v1.DeleteRelationshipsRequest,
-        experimentsFields?: {
-            orgID?: string;
-        },
-    ): Promise<v1.DeleteRelationshipsResponse | undefined> {
+    async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<v1.DeleteRelationshipsResponse | undefined> {
         if (!this.client) {
-            return undefined;
-        }
-
-        const featureEnabled = await getExperimentsClientForBackend().getValueAsync("centralizedPermissions", false, {
-            teamId: experimentsFields?.orgID,
-        });
-        if (!featureEnabled) {
             return undefined;
         }
 
