@@ -2851,7 +2851,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         traceAPIParams(ctx, { teamId });
 
         const user = await this.checkUser("getGenericInvite");
-        await this.guardTeamOperation(teamId, "get", "write_members");
+        await this.guardTeamOperation(teamId, "update", "write_members");
 
         return this.organizationService.getOrCreateInvite(user.id, teamId);
     }
