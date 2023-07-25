@@ -6,6 +6,7 @@ package proxy
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/baseserver"
@@ -102,6 +103,7 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var trustedSegmentKey string
 	var untrustedSegmentKey string
 	var segmentEndpoint string
+	publicUrl := fmt.Sprintf("api.%s", ctx.Config.Domain)
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil {
 			frontendDevEnabled = cfg.WebApp.ProxyConfig.FrontendDevEnabled
@@ -109,6 +111,17 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 				trustedSegmentKey = cfg.WebApp.ProxyConfig.AnalyticsPlugin.TrustedSegmentKey
 				untrustedSegmentKey = cfg.WebApp.ProxyConfig.AnalyticsPlugin.UntrustedSegmentKey
 				segmentEndpoint = cfg.WebApp.ProxyConfig.AnalyticsPlugin.SegmentEndpoint
+			}
+		}
+		if cfg.WebApp != nil && cfg.WebApp.PublicURL != "" {
+			parsedPublicURL, err := url.Parse(cfg.WebApp.PublicURL)
+			if err != nil {
+				return err
+			}
+
+			publicUrl, err = url.JoinPath(parsedPublicURL.Hostname(), parsedPublicURL.Path)
+			if err != nil {
+				return err
 			}
 		}
 		if cfg.WebApp != nil && cfg.WebApp.ProxyConfig != nil && cfg.WebApp.ProxyConfig.Configcat != nil && cfg.WebApp.ProxyConfig.Configcat.FromConfigMap != "" {
@@ -266,6 +279,9 @@ func deployment(ctx *common.RenderContext) ([]runtime.Object, error) {
 								[]corev1.EnvVar{{
 									Name:  "PROXY_DOMAIN",
 									Value: ctx.Config.Domain,
+								}, {
+									Name:  "PUBLIC_API_URL",
+									Value: publicUrl,
 								}, {
 									Name:  "FRONTEND_DEV_ENABLED",
 									Value: fmt.Sprintf("%t", frontendDevEnabled),

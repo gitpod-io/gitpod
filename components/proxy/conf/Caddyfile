@@ -154,7 +154,7 @@
 }
 
 # public-api
-api.{$GITPOD_DOMAIN} {
+{$PUBLIC_API_URL} {
 	log {
 		level DEBUG
 		output stdout
