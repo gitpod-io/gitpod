@@ -13,9 +13,10 @@ import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { ProjectsService } from "./projects-service";
-import { ApplicationError, ErrorCode, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { SpiceDBAuthorizer } from "../authorization/spicedb-authorizer";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
+import { expectError } from "../test/expect-utils";
 
 const expect = chai.expect;
 
@@ -201,18 +202,6 @@ describe("ProjectsService", async () => {
         await expectError(ErrorCodes.NOT_FOUND, () => ps.getProjects(stranger.id, org.id));
     });
 });
-
-export async function expectError(errorCode: ErrorCode, code: () => Promise<any>) {
-    try {
-        await code();
-        expect.fail("expected error: " + errorCode);
-    } catch (err) {
-        if (!ApplicationError.hasErrorCode(err)) {
-            throw err;
-        }
-        expect(err && ApplicationError.hasErrorCode(err) && err.code).to.equal(errorCode);
-    }
-}
 
 async function createTestProject(
     ps: ProjectsService,

@@ -35,7 +35,7 @@ import { error } from "console";
 import { IncrementalPrebuildsService } from "./incremental-prebuilds-service";
 import { PrebuildRateLimiterConfig } from "../workspace/prebuild-rate-limiter";
 import { ErrorCodes, ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { EntitlementService, MayStartWorkspaceResult } from "../billing/entitlement-service";
 import { EnvVarService } from "../workspace/env-var-service";
 
@@ -63,7 +63,7 @@ export class PrebuildManager {
     @inject(Config) protected readonly config: Config;
     @inject(ProjectsService) protected readonly projectService: ProjectsService;
     @inject(IncrementalPrebuildsService) protected readonly incrementalPrebuildsService: IncrementalPrebuildsService;
-    @inject(UserService) protected readonly userService: UserService;
+    @inject(UserAuthentication) protected readonly userService: UserAuthentication;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
     @inject(EntitlementService) protected readonly entitlementService: EntitlementService;
     @inject(EnvVarService) private readonly envVarService: EnvVarService;

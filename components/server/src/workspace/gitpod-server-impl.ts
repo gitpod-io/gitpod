@@ -127,7 +127,7 @@ import { RepoURL } from "../repohost/repo-url";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
 import { UserDeletionService } from "../user/user-deletion-service";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { ContextParser } from "./context-parser-service";
 import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
 import { WorkspaceDeletionService } from "./workspace-deletion-service";
@@ -194,6 +194,7 @@ import { Authorizer } from "../authorization/authorizer";
 import { OrganizationService } from "../orgs/organization-service";
 import { RedisSubscriber } from "../messaging/redis-subscriber";
 import { UsageService } from "../orgs/usage-service";
+import { UserService } from "../user/user-service";
 
 // shortcut
 export const traceWI = (ctx: TraceContext, wi: Omit<LogContext, "userId">) => TraceContext.setOWI(ctx, wi); // userId is already taken care of in WebsocketConnectionManager
@@ -232,6 +233,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         @inject(UserDB) private readonly userDB: UserDB,
         @inject(BlockedRepositoryDB) private readonly blockedRepostoryDB: BlockedRepositoryDB,
         @inject(TokenProvider) private readonly tokenProvider: TokenProvider,
+        @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
         @inject(UserStorageResourcesDB) private readonly userStorageResourcesDB: UserStorageResourcesDB,
         @inject(UserDeletionService) private readonly userDeletionService: UserDeletionService,
@@ -638,24 +640,10 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         const user = await this.checkUser("updateLoggedInUser");
         await this.guardAccess({ kind: "user", subject: user }, "update");
 
-        //hang on to user profile before it's overwritten for analytics below
-        const oldProfile = User.getProfile(user);
-
-        const updatedUser = await this.userService.updateUser(user.id, update);
-
-        //track event and user profile if profile of partialUser changed
-        const newProfile = User.getProfile(updatedUser);
-        if (User.Profile.hasChanges(oldProfile, newProfile)) {
-            this.analytics.track({
-                userId: user.id,
-                event: "profile_changed",
-                properties: { new: newProfile, old: oldProfile },
-            });
-            this.analytics.identify({
-                userId: user.id,
-                traits: { email: newProfile.email, company: newProfile.company, name: newProfile.name },
-            });
-        }
+        const updatedUser = await this.userService.updateUser(user.id, {
+            ...update,
+            id: user.id,
+        });
 
         return updatedUser;
     }
@@ -2756,7 +2744,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = await this.checkAndBlockUser("createTeam");
 
-        const mayCreateOrganization = await this.userService.mayCreateOrJoinOrganization(user);
+        const mayCreateOrganization = await this.userAuthentication.mayCreateOrJoinOrganization(user);
         if (!mayCreateOrganization) {
             throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,
@@ -2777,7 +2765,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         const user = await this.checkAndBlockUser("joinTeam");
 
-        const mayCreateOrganization = await this.userService.mayCreateOrJoinOrganization(user);
+        const mayCreateOrganization = await this.userAuthentication.mayCreateOrJoinOrganization(user);
         if (!mayCreateOrganization) {
             throw new ApplicationError(
                 ErrorCodes.PERMISSION_DENIED,
@@ -3244,7 +3232,7 @@ export class GitpodServerImpl implements GitpodServerWithTracing, Disposable {
 
         await this.guardAdminAccess("adminBlockUser", { req }, Permission.ADMIN_USERS);
 
-        const targetUser = await this.userService.blockUser(req.id, req.blocked);
+        const targetUser = await this.userAuthentication.blockUser(req.id, req.blocked);
 
         const stoppedWorkspaces = await this.workspaceStarter.stopRunningWorkspacesForUser(
             ctx,

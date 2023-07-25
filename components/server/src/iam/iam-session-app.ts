@@ -8,7 +8,7 @@ import { injectable, inject } from "inversify";
 import * as express from "express";
 import { SessionHandler } from "../session-handler";
 import { Authenticator } from "../auth/authenticator";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Identity, User } from "@gitpod/gitpod-protocol";
@@ -16,12 +16,14 @@ import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
 import { reportJWTCookieIssued } from "../prometheus-metrics";
 import { ApplicationError } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { OrganizationService } from "../orgs/organization-service";
+import { UserService } from "../user/user-service";
 
 @injectable()
 export class IamSessionApp {
     constructor(
         @inject(SessionHandler) private readonly sessionHandler: SessionHandler,
         @inject(Authenticator) private readonly authenticator: Authenticator,
+        @inject(UserAuthentication) private readonly userAuthentication: UserAuthentication,
         @inject(UserService) private readonly userService: UserService,
         @inject(OrganizationService) private readonly orgService: OrganizationService,
         @inject(SessionHandler) private readonly session: SessionHandler,
@@ -93,7 +95,7 @@ export class IamSessionApp {
 
     private async findExistingOIDCUser(payload: OIDCCreateSessionPayload): Promise<User | undefined> {
         // Direct lookup
-        let existingUser = await this.userService.findUserForLogin({
+        let existingUser = await this.userAuthentication.findUserForLogin({
             candidate: this.mapOIDCProfileToIdentity(payload),
         });
         if (existingUser) {
@@ -101,7 +103,7 @@ export class IamSessionApp {
         }
 
         // Organizational account lookup by email address
-        existingUser = await this.userService.findOrgOwnedUser({
+        existingUser = await this.userAuthentication.findOrgOwnedUser({
             organizationId: payload.organizationId,
             email: payload.claims.email,
         });
@@ -121,7 +123,7 @@ export class IamSessionApp {
 
         // Update entry
         if (existingIdentity) {
-            await this.userService.updateUserIdentity(user, {
+            await this.userAuthentication.updateUserIdentity(user, {
                 ...existingIdentity,
                 primaryEmail: recent.primaryEmail,
                 lastSigninTime: new Date().toISOString(),

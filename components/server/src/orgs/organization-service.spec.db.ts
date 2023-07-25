@@ -11,10 +11,10 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { expectError } from "../projects/projects-service.spec.db";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { OrganizationService } from "./organization-service";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
+import { expectError } from "../test/expect-utils";
 
 const expect = chai.expect;
 
@@ -57,8 +57,8 @@ describe("OrganizationService", async () => {
     });
 
     it("should deleteOrganization", async () => {
-        await expectError(ErrorCodes.PERMISSION_DENIED, () => os.deleteOrganization(member.id, org.id));
-        await expectError(ErrorCodes.NOT_FOUND, () => os.deleteOrganization(stranger.id, org.id));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.deleteOrganization(member.id, org.id));
+        await expectError(ErrorCodes.NOT_FOUND, os.deleteOrganization(stranger.id, org.id));
 
         await os.deleteOrganization(owner.id, org.id);
     });
@@ -78,8 +78,8 @@ describe("OrganizationService", async () => {
         const invite4 = await os.resetInvite(member.id, org.id);
         expect(invite4.id).to.not.equal(invite3.id);
 
-        await expectError(ErrorCodes.NOT_FOUND, () => os.getOrCreateInvite(stranger.id, org.id));
-        await expectError(ErrorCodes.NOT_FOUND, () => os.resetInvite(stranger.id, org.id));
+        await expectError(ErrorCodes.NOT_FOUND, os.getOrCreateInvite(stranger.id, org.id));
+        await expectError(ErrorCodes.NOT_FOUND, os.resetInvite(stranger.id, org.id));
     });
 
     it("should listMembers", async () => {
@@ -97,17 +97,13 @@ describe("OrganizationService", async () => {
     });
 
     it("should setOrganizationMemberRole and removeOrganizationMember", async () => {
-        await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            os.addOrUpdateMember(member.id, org.id, owner.id, "member"),
-        );
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.addOrUpdateMember(member.id, org.id, owner.id, "member"));
 
         // try upgrade the member to owner
-        await expectError(ErrorCodes.PERMISSION_DENIED, () =>
-            os.addOrUpdateMember(member.id, org.id, member.id, "owner"),
-        );
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.addOrUpdateMember(member.id, org.id, member.id, "owner"));
 
         // try removing the owner
-        await expectError(ErrorCodes.PERMISSION_DENIED, () => os.removeOrganizationMember(member.id, org.id, owner.id));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.removeOrganizationMember(member.id, org.id, owner.id));
 
         // owners can upgrade members
         await os.addOrUpdateMember(owner.id, org.id, member.id, "owner");
@@ -116,7 +112,7 @@ describe("OrganizationService", async () => {
         await os.addOrUpdateMember(owner.id, org.id, owner.id, "member");
 
         // assert that the member no longer has owner permissions
-        await expectError(ErrorCodes.PERMISSION_DENIED, () => os.deleteOrganization(owner.id, org.id));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.deleteOrganization(owner.id, org.id));
 
         // owner and member have switched roles now
         const previouslyMember = member;
@@ -124,16 +120,16 @@ describe("OrganizationService", async () => {
         owner = previouslyMember;
 
         // owner can downgrade themselves only if they are not the last owner
-        await expectError(ErrorCodes.CONFLICT, () => os.addOrUpdateMember(owner.id, org.id, owner.id, "member"));
+        await expectError(ErrorCodes.CONFLICT, os.addOrUpdateMember(owner.id, org.id, owner.id, "member"));
 
         // owner can delete themselves only if they are not the last owner
-        await expectError(ErrorCodes.CONFLICT, () => os.removeOrganizationMember(owner.id, org.id, owner.id));
+        await expectError(ErrorCodes.CONFLICT, os.removeOrganizationMember(owner.id, org.id, owner.id));
 
         // members can remove themselves
         await os.removeOrganizationMember(member.id, org.id, member.id);
 
         // try remove the member again
-        await expectError(ErrorCodes.NOT_FOUND, () => os.removeOrganizationMember(member.id, org.id, member.id));
+        await expectError(ErrorCodes.NOT_FOUND, os.removeOrganizationMember(member.id, org.id, member.id));
     });
 
     it("should listOrganizationsByMember", async () => {
@@ -154,7 +150,7 @@ describe("OrganizationService", async () => {
         const foundByMember = await os.getOrganization(member.id, org.id);
         expect(foundByMember.name).to.equal(org.name);
 
-        await expectError(ErrorCodes.NOT_FOUND, () => os.getOrganization(stranger.id, org.id));
+        await expectError(ErrorCodes.NOT_FOUND, os.getOrganization(stranger.id, org.id));
     });
 
     it("should updateOrganization", async () => {
@@ -163,8 +159,8 @@ describe("OrganizationService", async () => {
         const updated = await os.getOrganization(owner.id, org.id);
         expect(updated.name).to.equal(org.name);
 
-        await expectError(ErrorCodes.PERMISSION_DENIED, () => os.updateOrganization(member.id, org.id, org));
-        await expectError(ErrorCodes.NOT_FOUND, () => os.updateOrganization(stranger.id, org.id, org));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.updateOrganization(member.id, org.id, org));
+        await expectError(ErrorCodes.NOT_FOUND, os.updateOrganization(stranger.id, org.id, org));
     });
 
     it("should getSettings and updateSettings", async () => {
@@ -178,8 +174,8 @@ describe("OrganizationService", async () => {
         const updated = await os.getSettings(owner.id, org.id);
         expect(updated.workspaceSharingDisabled).to.be.true;
 
-        await expectError(ErrorCodes.PERMISSION_DENIED, () => os.updateSettings(member.id, org.id, settings));
-        await expectError(ErrorCodes.NOT_FOUND, () => os.updateSettings(stranger.id, org.id, settings));
+        await expectError(ErrorCodes.PERMISSION_DENIED, os.updateSettings(member.id, org.id, settings));
+        await expectError(ErrorCodes.NOT_FOUND, os.updateSettings(stranger.id, org.id, settings));
     });
 
     it("should allow admins to do its thing", async () => {
