@@ -30,7 +30,8 @@ const (
 func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var stripeSecretPath string
 	var personalAccessTokenSigningKeyPath string
-	var publicUrlPrefix string
+
+	publicUrl := fmt.Sprintf("https://api.%s", ctx.Config.Domain)
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
 		_, _, stripeSecretPath, _ = getStripeConfig(cfg)
@@ -43,10 +44,8 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	})
 
 	_ = ctx.WithExperimental(func(cfg *experimental.Config) error {
-		publicUrlPrefix = cfg.WebApp.PublicURL
-		if publicUrlPrefix == "" {
-			// we set the default value prefix for api to be "api", and this maintains backward compatibility
-			publicUrlPrefix = "api"
+		if cfg.WebApp != nil && cfg.WebApp.PublicURL != "" {
+			publicUrl = cfg.WebApp.PublicURL
 		}
 		return nil
 	})
@@ -57,7 +56,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	redisCfg := redis.GetConfiguration(ctx)
 
 	cfg := config.Configuration{
-		PublicURL:                         fmt.Sprintf("https://%s.%s", publicUrlPrefix, ctx.Config.Domain),
+		PublicURL:                         publicUrl,
 		GitpodServiceURL:                  common.ClusterURL("ws", server.Component, ctx.Namespace, server.ContainerPort),
 		StripeWebhookSigningSecretPath:    stripeSecretPath,
 		PersonalAccessTokenSigningKeyPath: personalAccessTokenSigningKeyPath,

@@ -194,8 +194,8 @@ type SpiceDBConfig struct {
 type WebAppConfig struct {
 	PublicAPI *PublicAPIConfig `json:"publicApi,omitempty"`
 
-	// PublicURL lets you override the subdomain of publically reachable endpoints of gitpod,
-	// like the public api endpoint (default to `api`)
+	// PublicURL lets you override the publically reachable endpoints of gitpod (currently only public api endpoint)
+	// If not set, default will be api.${Domain}
 	PublicURL string `json:"publicUrl,omitempty"`
 
 	Server                       *ServerConfig          `json:"server,omitempty"`
