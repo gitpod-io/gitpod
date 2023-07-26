@@ -6,6 +6,13 @@
 
 import { useEffect, useState } from "react";
 import { getExperimentsClient } from "../experiments/client";
+import type { orbital } from "@useorbital/client-types/types";
+
+declare global {
+    interface Window {
+        orbital: orbital;
+    }
+}
 
 export const useOrbital = (spaceId: string) => {
     const [isLoaded, setIsLoaded] = useState<boolean>(false);
@@ -43,7 +50,6 @@ export const useOrbital = (spaceId: string) => {
     return {
         isLoaded,
         discoveryIds,
-        //@ts-ignore
-        orbital: window["orbital"] as unknown as any,
+        orbital: window["orbital"],
     };
 };
