@@ -201,7 +201,7 @@ func waitOnGitpodRunning(namespace string, waitTimeout time.Duration) env.Func {
 			return true, nil
 		})
 		if err != nil {
-			return ctx, nil
+			return ctx, err
 		}
 
 		return ctx, nil
