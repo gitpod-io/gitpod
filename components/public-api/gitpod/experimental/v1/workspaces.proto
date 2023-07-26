@@ -156,9 +156,6 @@ message WorkspaceContext {
     message Repository {
         string name = 1;
         string owner = 2;
-        string default_branch = 3;
-        string clone_url = 4;
-        bool private = 5;
     }
 
     // Explicit Git context
