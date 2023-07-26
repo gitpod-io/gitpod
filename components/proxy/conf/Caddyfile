@@ -172,6 +172,25 @@ http:// {
 	redir https://{host}{uri} permanent
 }
 
+https://services.{$GITPOD_DOMAIN} {
+	import enable_log
+	import remove_server_header
+	import ssl_configuration
+	import security_headers
+
+	handle /idp/* {
+		uri strip_prefix /idp/
+
+		reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
+	}
+
+	handle /apps/* {
+		uri strip_prefix /apps/
+
+		service http://server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
+	}
+}
+
 https://{$GITPOD_DOMAIN} {
 	import enable_log
 	import remove_server_header
