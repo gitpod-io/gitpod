@@ -180,14 +180,12 @@ https://services.{$GITPOD_DOMAIN} {
 	import ssl_configuration
 	import security_headers
 
-	handle /idp/* {
-		uri strip_prefix /idp/
-
+	handle /idp {
 		reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
 	}
 
-	handle /apps/* {
-		uri strip_prefix /apps/
+	handle_path /apps/* {
+		rewrite * /api/apps/{path}
 
 		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 	}
