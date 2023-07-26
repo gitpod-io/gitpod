@@ -172,6 +172,8 @@ http:// {
 	redir https://{host}{uri} permanent
 }
 
+# The services directly correlate to Public Services exposed by Dedicated
+# When adding new endpoints, please notify Team Engine
 https://services.{$GITPOD_DOMAIN} {
 	import enable_log
 	import remove_server_header
@@ -187,7 +189,7 @@ https://services.{$GITPOD_DOMAIN} {
 	handle /apps/* {
 		uri strip_prefix /apps/
 
-		service http://server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 	}
 }
 
