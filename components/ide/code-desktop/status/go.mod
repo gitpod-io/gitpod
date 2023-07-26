@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/code-desktop/status
 
-go 1.19
+go 1.20
 
 require google.golang.org/grpc v1.52.3
 

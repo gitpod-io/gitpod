@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/common-go
 
-go 1.19
+go 1.20
 
 require (
 	github.com/HdrHistogram/hdrhistogram-go v1.1.0 // indirect

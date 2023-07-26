@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/gitpod-cli
 
-go 1.19
+go 1.20
 
 require (
 	github.com/bufbuild/connect-go v1.5.2
