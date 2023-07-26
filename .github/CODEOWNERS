@@ -98,16 +98,6 @@
 # a single review should be enough
 /operations/observability/mixins/cross-teams
 
-# werft is shared between all teams
-/.werft
-/.werft/ide-* @gitpod-io/team-experience
-/.werft/platform-* @gitpod-io/team-engine
-/.werft/webapp-* @gitpod-io/team-experience
-/.werft/workspace-* @gitpod-io/team-engine
-/.werft/self-hosted-* @gitpod-io/team-engine
-/.werft/*installer-tests* @gitpod-io/team-engine
-/.werft/jobs/build/self-hosted-* @gitpod-io/team-engine
-
 .github/workflows/ide-*.yml @gitpod-io/team-experience
 .github/workflows/jetbrains-*.yml @gitpod-io/team-experience
 .github/workflows/code-nightly.yml @gitpod-io/team-experience
