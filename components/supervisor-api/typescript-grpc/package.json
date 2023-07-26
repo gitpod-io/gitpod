@@ -9,7 +9,7 @@
     "lib"
   ],
   "dependencies": {
-    "@grpc/grpc-js": "^1.8.17",
+    "@grpc/grpc-js": "1.8.8",
     "google-protobuf": "^3.19.1"
   },
   "devDependencies": {
