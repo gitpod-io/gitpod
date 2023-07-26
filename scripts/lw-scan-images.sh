@@ -26,30 +26,45 @@ if [ ! -f "$SCANNER" ]; then
   chmod +x "$SCANNER"
 fi
 
-echo "Gathering list of _all_ images for $VERSION"
+OCI_TOOL="$BIN/oci-tool"
+OCI_TOOL_VERSION="0.2.0"
+if [ ! -f "$OCI_TOOL" ]; then
+  curl -fsSL https://github.com/csweichel/oci-tool/releases/download/v${OCI_TOOL_VERSION}/oci-tool_${OCI_TOOL_VERSION}_linux_amd64.tar.gz | tar xz -C "$(dirname "$OCI_TOOL")" && chmod +x "$OCI_TOOL"
+fi
+
+echo "=== Gathering list of _all_ images for $VERSION"
 # TODO(gpl) If we like this approach we should think about moving this into the installer as "list-images" or similar
 #           This would also remove the dependency to our dev image (yq4)
-docker run -v "$TMP":/workdir "eu.gcr.io/gitpod-core-dev/build/installer:${VERSION}" config init -c "/workdir/config.yaml" --log-level=warn
-docker run -v "$TMP":/workdir "eu.gcr.io/gitpod-core-dev/build/installer:${VERSION}" render -c "/workdir/config.yaml" --no-validation > "$TMP/rendered.yaml"
+INSTALLER="$TMP/installer"
+"$OCI_TOOL" fetch file -o "$INSTALLER" --platform=linux-amd64 "eu.gcr.io/gitpod-core-dev/build/installer:${VERSION}" app/installer
+echo ""
+chmod +x "$INSTALLER"
+# Extract list of images from rendered YAMLs
+"$INSTALLER" config init -c "$TMP/config.yaml" --log-level=warn
+"$INSTALLER" render -c "$TMP/config.yaml" --no-validation > "$TMP/rendered.yaml"
 yq4 --no-doc '(.. | select(key == "image" and tag == "!!str"))' "$TMP/rendered.yaml" > "$TMP/images.txt"
+
 # shellcheck disable=SC2002
-echo "Found $(cat "$TMP/images.txt" | wc -l) images to scan"
+TOTAL_IMAGES=$(cat "$TMP/images.txt" | wc -l)
+echo "=== Found $TOTAL_IMAGES images to scan"
 
 # Scan all images, and push the result to Lacework
 # There, we can see the results in the "Vulnerabilities" tab, by searching for the Gitpod version
 # Note: Does not fail on CVEs!
+COUNTER=0
 while IFS= read -r IMAGE_REF; do
+  ((COUNTER=COUNTER+1))
   # TODO(gpl) Unclear why we can't access the docker.io images the GitHub workflow; it works from a workspace?
   if [[ "$EXCLUDE_DOCKER_IO" == "true" ]]; then
     if [[ "$IMAGE_REF" == "docker.io/"* ]]; then
-      echo "Skipping docker.io image: $IMAGE_REF"
+      echo "= Skipping docker.io image: $IMAGE_REF"
       continue
     fi
   fi
 
   NAME=$(echo "$IMAGE_REF" | cut -d ":" -f 1)
   TAG=$(echo "$IMAGE_REF" | cut -d ":" -f 2)
-  echo "Scanning $NAME : $TAG"
+  echo "= Scanning $NAME : $TAG [$COUNTER / $TOTAL_IMAGES]"
   "$SCANNER" image evaluate "$NAME" "$TAG" \
     --account-name gitpod \
     --access-token "$LW_ACCESS_TOKEN" \
