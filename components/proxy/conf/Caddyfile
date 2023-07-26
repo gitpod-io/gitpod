@@ -155,10 +155,7 @@
 
 # public-api
 api.{$GITPOD_DOMAIN} {
-	log {
-		level DEBUG
-		output stdout
-	}
+	import enable_log
 
 	gitpod.cors_origin {
 		allowed_origins https://{$GITPOD_DOMAIN}
