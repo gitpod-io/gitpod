@@ -5,6 +5,5 @@
 package gitpod
 
 const (
-	Component             = "gitpod"
-	TelemetryCronSchedule = "@daily"
+	Component = "gitpod"
 )

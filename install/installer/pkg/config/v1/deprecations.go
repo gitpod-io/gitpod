@@ -195,26 +195,6 @@ var deprecatedFields = map[string]deprecatedField{
 			return nil
 		},
 	},
-	"experimental.telemetry.data.platform": {
-		Selector: func(cfg *Config) (bool, any) {
-			val := cfg.Experimental.Telemetry.Data.Platform
-			return val != "", val
-		},
-		MapValue: func(cfg *Config) error {
-			if cfg.Telemetry != nil && cfg.Telemetry.Data != nil && cfg.Telemetry.Data.Platform != "" {
-				return errors.New("cannot set telemetry platform in both telemetry and experimental")
-			}
-			if cfg.Telemetry == nil {
-				cfg.Telemetry = &TelemetryConfig{}
-			}
-			if cfg.Telemetry.Data == nil {
-				cfg.Telemetry.Data = &TelemetryData{}
-			}
-
-			cfg.Telemetry.Data.Platform = cfg.Experimental.Telemetry.Data.Platform
-			return nil
-		},
-	},
 	"objectStorage.maximumBackupCount": {
 		Selector: func(cfg *Config) (bool, any) {
 			val := cfg.ObjectStorage.MaximumBackupCount
