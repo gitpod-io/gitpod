@@ -5,6 +5,7 @@
  */
 
 export * from "./test-container";
+export * from "./test/reset-db";
 export * from "./typeorm/entity/db-user";
 export * from "./typeorm/entity/db-identity";
 export * from "./typeorm/entity/db-workspace-instance";

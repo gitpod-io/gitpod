@@ -14,6 +14,7 @@ import {
     ProjectPermission,
     Relation,
     ResourceType,
+    UserPermission,
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { Organization, TeamMemberInfo, Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
@@ -46,7 +47,7 @@ export class Authorizer {
             consistency,
         });
 
-        return this.authorizer.check(req, { orgID: orgId });
+        return this.authorizer.check(req, { userId });
     }
 
     async checkOrgPermissionAndThrow(userId: string, permission: OrganizationPermission, orgId: string) {
@@ -64,18 +65,71 @@ export class Authorizer {
         );
     }
 
-    async hasPermissionOnProject(userId: string, permission: ProjectPermission, project: Project): Promise<boolean> {
+    async hasPermissionOnProject(userId: string, permission: ProjectPermission, projectId: string): Promise<boolean> {
         const req = v1.CheckPermissionRequest.create({
             subject: subject("user", userId),
             permission,
-            resource: objectRef("project", project.id),
+            resource: objectRef("project", projectId),
             consistency,
         });
 
-        return this.authorizer.check(req, { orgID: project.teamId });
+        return this.authorizer.check(req, { userId });
+    }
+
+    async checkProjectPermissionAndThrow(userId: string, permission: ProjectPermission, projectId: string) {
+        if (await this.hasPermissionOnProject(userId, permission, projectId)) {
+            return;
+        }
+        // check if the user has read permission
+        if ("read_info" === permission || !(await this.hasPermissionOnProject(userId, "read_info", projectId))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `Project ${projectId} not found.`);
+        }
+
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `You do not have ${permission} on project ${projectId}`,
+        );
+    }
+
+    async hasPermissionOnUser(userId: string, permission: UserPermission, userResourceId: string): Promise<boolean> {
+        const req = v1.CheckPermissionRequest.create({
+            subject: subject("user", userId),
+            permission,
+            resource: objectRef("user", userResourceId),
+            consistency,
+        });
+
+        return this.authorizer.check(req, { userId });
+    }
+
+    async checkUserPermissionAndThrow(userId: string, permission: UserPermission, resourceUserId: string) {
+        if (await this.hasPermissionOnUser(userId, permission, resourceUserId)) {
+            return;
+        }
+        if ("read_info" === permission || !(await this.hasPermissionOnUser(userId, "read_info", resourceUserId))) {
+            throw new ApplicationError(ErrorCodes.NOT_FOUND, `User ${resourceUserId} not found.`);
+        }
+
+        throw new ApplicationError(
+            ErrorCodes.PERMISSION_DENIED,
+            `You do not have ${permission} on user ${resourceUserId}`,
+        );
     }
 
     // write operations below
+
+    async addUser(userId: string) {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.TOUCH,
+                        relationship: relationship(objectRef("user", userId), "self", subject("user", userId)),
+                    }),
+                ],
+            }),
+        );
+    }
 
     async addOrganizationRole(orgID: string, userID: string, role: TeamMemberRole): Promise<void> {
         if (role === "owner") {
@@ -90,9 +144,6 @@ export class Authorizer {
             v1.WriteRelationshipsRequest.create({
                 updates: this.addOrganizationOwnerRoleUpdates(orgID, userID),
             }),
-            {
-                orgID,
-            },
         );
     }
 
@@ -101,9 +152,6 @@ export class Authorizer {
             v1.WriteRelationshipsRequest.create({
                 updates: this.addOrganizationMemberRoleUpdates(orgID, userID),
             }),
-            {
-                orgID,
-            },
         );
     }
 
@@ -112,9 +160,6 @@ export class Authorizer {
             v1.WriteRelationshipsRequest.create({
                 updates: this.removeOrganizationOwnerRoleUpdates(orgID, userID),
             }),
-            {
-                orgID,
-            },
         );
     }
 
@@ -126,9 +171,6 @@ export class Authorizer {
                     ...this.removeOrganizationOwnerRoleUpdates(orgID, userID),
                 ],
             }),
-            {
-                orgID,
-            },
         );
     }
 
@@ -137,9 +179,6 @@ export class Authorizer {
             v1.WriteRelationshipsRequest.create({
                 updates: this.addProjectToOrgUpdates(orgID, projectID),
             }),
-            {
-                orgID,
-            },
         );
     }
 
@@ -148,9 +187,6 @@ export class Authorizer {
             v1.WriteRelationshipsRequest.create({
                 updates: this.removeProjectFromOrgUpdates(orgID, projectID),
             }),
-            {
-                orgID,
-            },
         );
     }
 
@@ -192,9 +228,40 @@ export class Authorizer {
             v1.WriteRelationshipsRequest.create({
                 updates: updates,
             }),
-            {
-                orgID: org.id,
-            },
+        );
+    }
+
+    async addInstallationMemberRole(userID: string) {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.TOUCH,
+                        relationship: relationship(
+                            objectRef("installation", InstallationID),
+                            "member",
+                            subject("user", userID),
+                        ),
+                    }),
+                ],
+            }),
+        );
+    }
+
+    async removeInstallationMemberRole(userID: string) {
+        await this.authorizer.writeRelationships(
+            v1.WriteRelationshipsRequest.create({
+                updates: [
+                    v1.RelationshipUpdate.create({
+                        operation: v1.RelationshipUpdate_Operation.DELETE,
+                        relationship: relationship(
+                            objectRef("installation", InstallationID),
+                            "member",
+                            subject("user", userID),
+                        ),
+                    }),
+                ],
+            }),
         );
     }
 
@@ -245,6 +312,10 @@ export class Authorizer {
                 operation: v1.RelationshipUpdate_Operation.TOUCH,
                 relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
             }),
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.TOUCH,
+                relationship: relationship(objectRef("user", userID), "container", subject("organization", orgID)),
+            }),
         ];
     }
 
@@ -272,6 +343,10 @@ export class Authorizer {
             v1.RelationshipUpdate.create({
                 operation: v1.RelationshipUpdate_Operation.DELETE,
                 relationship: relationship(objectRef("organization", orgID), "member", subject("user", userID)),
+            }),
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.DELETE,
+                relationship: relationship(objectRef("user", userID), "container", subject("organization", orgID)),
             }),
         ];
     }
