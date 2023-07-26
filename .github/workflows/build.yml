@@ -433,6 +433,4 @@ jobs:
       gcp_credentials: ${{ secrets.GCP_CREDENTIALS }}
     with:
       runner-label: ${{ needs.create-runner.outputs.label }}
-    concurrency:
-      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-delete-runner
-      cancel-in-progress: false
+      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}
