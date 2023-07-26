@@ -14,7 +14,7 @@ jobs:
     runs-on: ${{ needs.create-runner.outputs.label }}
     needs: [create-runner]
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-oci-tool-gha.14121
     steps:
       - uses: actions/checkout@v3
       - name: Set up Google Cloud SDK

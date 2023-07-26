@@ -25,7 +25,7 @@ pod:
       secretName: aks-credentials
   containers:
   - name: nightly-test
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-oci-tool-gha.14121
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:

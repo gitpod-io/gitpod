@@ -14,7 +14,7 @@ import { Code, ConnectError, PromiseClient, createPromiseClient } from "@bufbuil
 import { AddressInfo } from "net";
 import { TeamsService as TeamsServiceDefinition } from "@gitpod/public-api/lib/gitpod/experimental/v1/teams_connectweb";
 import { WorkspaceStarter } from "../workspace/workspace-starter";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { APITeamsService } from "./teams";
 import { v4 as uuidv4 } from "uuid";
 import * as chai from "chai";
@@ -44,7 +44,7 @@ export class APITeamsServiceSpec {
         this.container.bind(APIStatsService).toSelf().inSingletonScope();
 
         this.container.bind(WorkspaceStarter).toConstantValue({} as WorkspaceStarter);
-        this.container.bind(UserService).toConstantValue({} as UserService);
+        this.container.bind(UserAuthentication).toConstantValue({} as UserAuthentication);
 
         // Clean-up database
         const typeorm = testContainer.get<TypeORM>(TypeORM);

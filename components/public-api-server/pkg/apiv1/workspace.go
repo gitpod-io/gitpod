@@ -311,7 +311,7 @@ func getLimitFromPagination(pagination *v1.Pagination) (int, error) {
 	return int(pagination.PageSize), nil
 }
 
-// convertWorkspaceInfo convers a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
+// convertWorkspaceInfo converts a "protocol workspace" to a "public API workspace". Returns gRPC errors if things go wrong.
 func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) {
 	instance, err := convertWorkspaceInstance(input.LatestInstance, input.Workspace.Context, input.Workspace.Config, input.Workspace.Shareable)
 	if err != nil {
@@ -325,7 +325,10 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 			ContextUrl: input.Workspace.ContextURL,
 			Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
 				NormalizedContextUrl: input.Workspace.Context.NormalizedContextURL,
-				Commit:               "",
+				Repository: &v1.WorkspaceContext_Repository{
+					Name:  input.Workspace.Context.Repository.Name,
+					Owner: input.Workspace.Context.Repository.Owner,
+				},
 			}},
 		},
 		Description: input.Workspace.Description,

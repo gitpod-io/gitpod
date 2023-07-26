@@ -929,7 +929,7 @@ export class WorkspaceContext extends Message<WorkspaceContext> {
  */
 export class WorkspaceContext_GitProvider extends Message<WorkspaceContext_GitProvider> {
   /**
-   * type is the git provider type, e.g. 'github', 'gitlab', 'bitbucked'
+   * type is the git provider type, e.g. 'github', 'gitlab', 'bitbucket'
    *
    * @generated from field: string type = 1;
    */
@@ -972,6 +972,51 @@ export class WorkspaceContext_GitProvider extends Message<WorkspaceContext_GitPr
 }
 
 /**
+ * Repository describes the originating repository
+ *
+ * @generated from message gitpod.experimental.v1.WorkspaceContext.Repository
+ */
+export class WorkspaceContext_Repository extends Message<WorkspaceContext_Repository> {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name = "";
+
+  /**
+   * @generated from field: string owner = 2;
+   */
+  owner = "";
+
+  constructor(data?: PartialMessage<WorkspaceContext_Repository>) {
+    super();
+    proto3.util.initPartial(data, this);
+  }
+
+  static readonly runtime = proto3;
+  static readonly typeName = "gitpod.experimental.v1.WorkspaceContext.Repository";
+  static readonly fields: FieldList = proto3.util.newFieldList(() => [
+    { no: 1, name: "name", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "owner", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+  ]);
+
+  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): WorkspaceContext_Repository {
+    return new WorkspaceContext_Repository().fromBinary(bytes, options);
+  }
+
+  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): WorkspaceContext_Repository {
+    return new WorkspaceContext_Repository().fromJson(jsonValue, options);
+  }
+
+  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): WorkspaceContext_Repository {
+    return new WorkspaceContext_Repository().fromJsonString(jsonString, options);
+  }
+
+  static equals(a: WorkspaceContext_Repository | PlainMessage<WorkspaceContext_Repository> | undefined, b: WorkspaceContext_Repository | PlainMessage<WorkspaceContext_Repository> | undefined): boolean {
+    return proto3.util.equals(WorkspaceContext_Repository, a, b);
+  }
+}
+
+/**
  * Explicit Git context
  *
  * @generated from message gitpod.experimental.v1.WorkspaceContext.Git
@@ -983,9 +1028,9 @@ export class WorkspaceContext_Git extends Message<WorkspaceContext_Git> {
   normalizedContextUrl = "";
 
   /**
-   * @generated from field: string commit = 2;
+   * @generated from field: gitpod.experimental.v1.WorkspaceContext.Repository repository = 2;
    */
-  commit = "";
+  repository?: WorkspaceContext_Repository;
 
   /**
    * provider is the git provider
@@ -1003,7 +1048,7 @@ export class WorkspaceContext_Git extends Message<WorkspaceContext_Git> {
   static readonly typeName = "gitpod.experimental.v1.WorkspaceContext.Git";
   static readonly fields: FieldList = proto3.util.newFieldList(() => [
     { no: 1, name: "normalized_context_url", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "commit", kind: "scalar", T: 9 /* ScalarType.STRING */ },
+    { no: 2, name: "repository", kind: "message", T: WorkspaceContext_Repository },
     { no: 3, name: "provider", kind: "message", T: WorkspaceContext_GitProvider },
   ]);
 
@@ -1127,7 +1172,7 @@ export class WorkspaceInstance extends Message<WorkspaceInstance> {
   instanceId = "";
 
   /**
-   * Worksapce ID is the unique identifier of the workspace this instance belongs to
+   * Workspace ID is the unique identifier of the workspace this instance belongs to
    *
    * @generated from field: string workspace_id = 2;
    */

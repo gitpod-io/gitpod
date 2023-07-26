@@ -25,7 +25,6 @@
 /components/image-builder-api @gitpod-io/team-engine
 /components/image-builder-bob @gitpod-io/team-engine
 /components/image-builder-mk3 @gitpod-io/team-engine
-/components/installation-telemetry @gitpod-io/team-engine
 /install @gitpod-io/team-engine
 # By default anything in in /install/installer is shared.
 /install/installer

@@ -3,7 +3,15 @@
 # See License.AGPL.txt in the project root for license information.
 
 schema: |-
-  definition user {}
+  definition user {
+    relation self: user
+    relation container: organization | installation
+
+    // permissions
+    permission read_info = self + container->member + container->owner + container->admin
+    permission write_info = self + container->owner + container->admin
+    permission suspend = self + container->owner + container->admin
+  }
 
   // There's only one global installation
   definition installation {
@@ -72,6 +80,8 @@ schema: |-
 relationships: |-
   // we have one installation
   installation:installation_0#member@user:user_0
+  user:user_0#container@installation:installation_0
+
   installation:installation_0#admin@user:user_admin
 
   // We have an organization org_1, which has some members & owners

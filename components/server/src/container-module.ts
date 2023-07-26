@@ -98,7 +98,7 @@ import { TokenService } from "./user/token-service";
 import { UsageService } from "./orgs/usage-service";
 import { ServerFactory, UserController } from "./user/user-controller";
 import { UserDeletionService } from "./user/user-deletion-service";
-import { UserService } from "./user/user-service";
+import { UserAuthentication } from "./user/user-authentication";
 import { contentServiceBinder } from "./util/content-service-sugar";
 import { WebsocketConnectionManager } from "./websocket/websocket-connection-manager";
 import { ConfigProvider } from "./workspace/config-provider";
@@ -127,6 +127,7 @@ import { OrganizationService } from "./orgs/organization-service";
 import { RedisSubscriber } from "./messaging/redis-subscriber";
 import { Redis } from "ioredis";
 import { RedisPublisher, newRedisClient } from "@gitpod/gitpod-db/lib";
+import { UserService } from "./user/user-service";
 
 export const productionContainerModule = new ContainerModule(
     (bind, unbind, isBound, rebind, unbindAsync, onActivation, onDeactivation) => {
@@ -136,6 +137,7 @@ export const productionContainerModule = new ContainerModule(
             .inSingletonScope();
         bind(IDEService).toSelf().inSingletonScope();
 
+        bind(UserAuthentication).toSelf().inSingletonScope();
         bind(UserService).toSelf().inSingletonScope();
         bind(UserDeletionService).toSelf().inSingletonScope();
         bind(AuthorizationService).to(AuthorizationServiceImpl).inSingletonScope();
