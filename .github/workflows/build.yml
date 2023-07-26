@@ -94,7 +94,7 @@ jobs:
       cancel-in-progress: ${{ needs.configuration.outputs.is_main_branch == 'false' }}
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-oci-tool-gha.14121
     outputs:
       previewctl_hash: ${{ steps.build.outputs.previewctl_hash }}
     steps:
@@ -149,7 +149,7 @@ jobs:
         ports:
           - 23306:23306
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-oci-tool-gha.14121
       env:
         DB_HOST: "mysql"
         DB_PORT: "23306"
@@ -380,7 +380,7 @@ jobs:
       - create-runner
     runs-on: ${{ needs.create-runner.outputs.label }}
     container:
-      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-new-dev-image-gha.13182
+      image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-oci-tool-gha.14121
     if: needs.configuration.outputs.with_integration_tests != ''
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-integration-test
