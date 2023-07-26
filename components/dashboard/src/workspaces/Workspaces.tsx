@@ -112,7 +112,7 @@ const WorkspacesPage: FunctionComponent = () => {
                                         className="flex cursor-pointer py-6 px-6 flex-row text-gray-400 bg-gray-50  hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-xl mb-2"
                                     >
                                         <div className="pr-2">
-                                            <Arrow direction={showInactive ? "up" : "down"} />
+                                            <Arrow direction={showInactive ? "down" : "right"} />
                                         </div>
                                         <div className="flex flex-grow flex-col ">
                                             <div className="font-medium text-gray-500 dark:text-gray-200 truncate">
