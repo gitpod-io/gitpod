@@ -15,7 +15,7 @@ import { HostContextProvider } from "./host-context-provider";
 import { AuthFlow, AuthProvider } from "./auth-provider";
 import { TokenProvider } from "../user/token-provider";
 import { AuthProviderService } from "./auth-provider-service";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { increaseLoginCounter } from "../prometheus-metrics";
 import { SignInJWT } from "./jwt";
 
@@ -29,7 +29,7 @@ export class Authenticator {
     @inject(HostContextProvider) protected hostContextProvider: HostContextProvider;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-    @inject(UserService) protected readonly userService: UserService;
+    @inject(UserAuthentication) protected readonly userService: UserAuthentication;
     @inject(SignInJWT) protected readonly signInJWT: SignInJWT;
 
     @postConstruct()
@@ -45,9 +45,8 @@ export class Authenticator {
         });
         passport.deserializeUser(async (id, done) => {
             try {
-                let user = await this.userDb.findUserById(id as string);
+                const user = await this.userDb.findUserById(id as string);
                 if (user) {
-                    user = await this.userService.onAfterUserLoad(user);
                     done(null, user);
                 } else {
                     done(new Error("User not found."));

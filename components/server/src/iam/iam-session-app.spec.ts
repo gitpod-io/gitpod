@@ -10,7 +10,7 @@ import { SessionHandler } from "../session-handler";
 import { IamSessionApp } from "./iam-session-app";
 import { Config } from "../config";
 import { Authenticator } from "../auth/authenticator";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 
 import * as passport from "passport";
 import * as express from "express";
@@ -20,6 +20,7 @@ import * as chai from "chai";
 import { OIDCCreateSessionPayload } from "./iam-oidc-create-session-payload";
 import { TeamMemberInfo, TeamMemberRole, User } from "@gitpod/gitpod-protocol";
 import { OrganizationService } from "../orgs/organization-service";
+import { UserService } from "../user/user-service";
 const expect = chai.expect;
 
 @suite(timeout(10000))
@@ -40,7 +41,8 @@ class TestIamSessionApp {
         createUser: (params) => {
             return { id: "id-new-user" } as any;
         },
-
+    };
+    protected userAuthenticationMock: Partial<UserAuthentication> = {
         findUserForLogin: async (params) => {
             if (params.candidate?.authId === this.knownSubjectID) {
                 return this.knownUser as any;
@@ -108,6 +110,7 @@ class TestIamSessionApp {
                 bind(IamSessionApp).toSelf().inSingletonScope();
                 bind(Authenticator).toConstantValue(<any>{}); // unused
                 bind(Config).toConstantValue(<any>{}); // unused
+                bind(UserAuthentication).toConstantValue(this.userAuthenticationMock as any);
                 bind(UserService).toConstantValue(this.userServiceMock as any);
                 bind(OrganizationService).toConstantValue(this.orgServiceMock as any);
             }),
@@ -211,7 +214,7 @@ class TestIamSessionApp {
         ];
 
         let newEmail: string | undefined;
-        this.userServiceMock.updateUserIdentity = async (user, updatedIdentity) => {
+        this.userAuthenticationMock.updateUserIdentity = async (user, updatedIdentity) => {
             newEmail = updatedIdentity.primaryEmail;
         };
 
@@ -236,7 +239,7 @@ class TestIamSessionApp {
         ];
 
         let updateUserIdentityCalled = false;
-        this.userServiceMock.updateUserIdentity = async () => {
+        this.userAuthenticationMock.updateUserIdentity = async () => {
             updateUserIdentityCalled = true;
         };
 

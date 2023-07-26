@@ -19,13 +19,13 @@ import {
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
-import { expectError } from "../projects/projects-service.spec.db";
 import { Mock } from "../test/mocks/mock";
 import { createTestContainer } from "../test/service-testing-container-module";
-import { UserService } from "../user/user-service";
 import { OrganizationService } from "./organization-service";
 import { UsageService } from "./usage-service";
 import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
+import { expectError } from "../test/expect-utils";
+import { UserService } from "../user/user-service";
 
 const expect = chai.expect;
 
@@ -78,7 +78,7 @@ describe("UsageService", async () => {
         expect(await us.getCostCenter(member.id, org.id)).to.not.be.undefined;
         expect(await us.getCostCenter(owner.id, org.id)).to.not.be.undefined;
         expect(await us.getCostCenter(admin.id, org.id)).to.not.be.undefined;
-        await expectError(ErrorCodes.NOT_FOUND, () => us.getCostCenter(stranger.id, org.id));
+        await expectError(ErrorCodes.NOT_FOUND, us.getCostCenter(stranger.id, org.id));
     });
 
     it("setUsageLimit permissions", async () => {
@@ -90,8 +90,8 @@ describe("UsageService", async () => {
         });
         await us.setUsageLimit(admin.id, org.id, 200);
         await us.setUsageLimit(owner.id, org.id, 200);
-        await expectError(ErrorCodes.PERMISSION_DENIED, () => us.setUsageLimit(member.id, org.id, 200));
-        await expectError(ErrorCodes.NOT_FOUND, () => us.setUsageLimit(stranger.id, org.id, 200));
+        await expectError(ErrorCodes.PERMISSION_DENIED, us.setUsageLimit(member.id, org.id, 200));
+        await expectError(ErrorCodes.NOT_FOUND, us.setUsageLimit(stranger.id, org.id, 200));
 
         await usageServiceMock.setCostCenter({
             costCenter: {
@@ -100,9 +100,9 @@ describe("UsageService", async () => {
             },
         });
         await us.setUsageLimit(admin.id, org.id, 200);
-        await expectError(ErrorCodes.PERMISSION_DENIED, () => us.setUsageLimit(owner.id, org.id, 200));
-        await expectError(ErrorCodes.PERMISSION_DENIED, () => us.setUsageLimit(member.id, org.id, 200));
-        await expectError(ErrorCodes.NOT_FOUND, () => us.setUsageLimit(stranger.id, org.id, 200));
+        await expectError(ErrorCodes.PERMISSION_DENIED, us.setUsageLimit(owner.id, org.id, 200));
+        await expectError(ErrorCodes.PERMISSION_DENIED, us.setUsageLimit(member.id, org.id, 200));
+        await expectError(ErrorCodes.NOT_FOUND, us.setUsageLimit(stranger.id, org.id, 200));
     });
 
     it("listUsage permissions", async () => {
@@ -117,14 +117,14 @@ describe("UsageService", async () => {
             },
         };
         await us.listUsage(member.id, req);
-        await expectError(ErrorCodes.NOT_FOUND, () => us.listUsage(stranger.id, req));
+        await expectError(ErrorCodes.NOT_FOUND, us.listUsage(stranger.id, req));
         await us.listUsage(owner.id, req);
         await us.listUsage(admin.id, req);
     });
 
     it("getCurrentBalance permissions", async () => {
         await us.getCurrentBalance(member.id, org.id);
-        await expectError(ErrorCodes.NOT_FOUND, () => us.getCurrentBalance(stranger.id, org.id));
+        await expectError(ErrorCodes.NOT_FOUND, us.getCurrentBalance(stranger.id, org.id));
         await us.getCurrentBalance(owner.id, org.id);
         await us.getCurrentBalance(admin.id, org.id);
     });
@@ -136,7 +136,7 @@ describe("UsageService", async () => {
         await expectError(ErrorCodes.PERMISSION_DENIED, () =>
             us.addCreditNote(member.id, org.id, 100, "some description"),
         );
-        await expectError(ErrorCodes.NOT_FOUND, () => us.addCreditNote(stranger.id, org.id, 100, "some description"));
+        await expectError(ErrorCodes.NOT_FOUND, us.addCreditNote(stranger.id, org.id, 100, "some description"));
         await us.addCreditNote(admin.id, org.id, 100, "some description");
     });
 
@@ -144,7 +144,7 @@ describe("UsageService", async () => {
         await us.checkUsageLimitReached(owner.id, org.id);
         await us.checkUsageLimitReached(member.id, org.id);
         await us.checkUsageLimitReached(admin.id, org.id);
-        await expectError(ErrorCodes.NOT_FOUND, () => us.checkUsageLimitReached(stranger.id, org.id));
+        await expectError(ErrorCodes.NOT_FOUND, us.checkUsageLimitReached(stranger.id, org.id));
     });
 
     it("checkUsageLimitReached logic", async () => {

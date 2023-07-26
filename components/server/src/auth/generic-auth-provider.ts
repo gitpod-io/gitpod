@@ -24,7 +24,7 @@ import {
 import { Config } from "../config";
 import { getRequestingClientInfo } from "../express-util";
 import { TokenProvider } from "../user/token-provider";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { AuthProviderService } from "./auth-provider-service";
 import { LoginCompletionHandler } from "./login-completion-handler";
 import { increaseLoginCounter } from "../prometheus-metrics";
@@ -34,6 +34,7 @@ import { daysBefore, isDateSmaller } from "@gitpod/gitpod-protocol/lib/util/time
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { VerificationService } from "../auth/verification-service";
 import { SignInJWT } from "./jwt";
+import { UserService } from "../user/user-service";
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -68,6 +69,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(UserDB) protected userDb: UserDB;
     @inject(Config) protected config: Config;
+    @inject(UserAuthentication) protected readonly userAuthentication: UserAuthentication;
     @inject(UserService) protected readonly userService: UserService;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
@@ -583,7 +585,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
 
                 // we need to check current provider authorizations first...
                 try {
-                    await this.userService.asserNoTwinAccount(
+                    await this.userAuthentication.asserNoTwinAccount(
                         currentGitpodUser,
                         this.host,
                         this.authProviderId,
@@ -602,12 +604,12 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 }
             } else {
                 // no user session present, let's initiate a login
-                currentGitpodUser = await this.userService.findUserForLogin({ candidate });
+                currentGitpodUser = await this.userAuthentication.findUserForLogin({ candidate });
 
                 if (!currentGitpodUser) {
                     // signup new accounts with email adresses already taken is disallowed
                     try {
-                        await this.userService.asserNoAccountWithEmail(primaryEmail);
+                        await this.userAuthentication.asserNoAccountWithEmail(primaryEmail);
                     } catch (error) {
                         log.warn(`Login attempt with matching email address.`, {
                             ...defaultLogPayload,
@@ -633,9 +635,14 @@ export abstract class GenericAuthProvider implements AuthProvider {
                 const elevateScopes = authFlow.overrideScopes
                     ? undefined
                     : await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
-                const isBlocked = await this.userService.isBlocked({ user: currentGitpodUser });
+                const isBlocked = await this.userAuthentication.isBlocked({ user: currentGitpodUser });
 
-                const user = await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token);
+                const user = await this.userAuthentication.updateUserOnLogin(
+                    currentGitpodUser,
+                    authUser,
+                    candidate,
+                    token,
+                );
                 currentGitpodUser = user;
 
                 flowContext = <VerifyResult.WithUser>{
@@ -646,7 +653,7 @@ export abstract class GenericAuthProvider implements AuthProvider {
                     elevateScopes,
                 };
             } else {
-                const isBlocked = await this.userService.isBlocked({ primaryEmail });
+                const isBlocked = await this.userAuthentication.isBlocked({ primaryEmail });
                 flowContext = <VerifyResult.WithIdentity>{
                     candidate,
                     token,

@@ -122,7 +122,7 @@ import {
 import { RedisMutex } from "../redis/mutex";
 import { AuthorizationService } from "../user/authorization-service";
 import { TokenProvider } from "../user/token-provider";
-import { UserService } from "../user/user-service";
+import { UserAuthentication } from "../user/user-authentication";
 import { ResolvedEnvVars } from "./env-var-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { WorkspaceClassesConfig } from "./workspace-classes";
@@ -208,7 +208,7 @@ export class WorkspaceStarter {
         @inject(AuthorizationService) private readonly authService: AuthorizationService,
         @inject(ImageBuilderClientProvider) private readonly imagebuilderClientProvider: ImageBuilderClientProvider,
         @inject(ImageSourceProvider) private readonly imageSourceProvider: ImageSourceProvider,
-        @inject(UserService) private readonly userService: UserService,
+        @inject(UserAuthentication) private readonly userService: UserAuthentication,
         @inject(IAnalyticsWriter) private readonly analytics: IAnalyticsWriter,
         @inject(OneTimeSecretServer) private readonly otsServer: OneTimeSecretServer,
         @inject(ProjectDB) private readonly projectDB: ProjectDB,
