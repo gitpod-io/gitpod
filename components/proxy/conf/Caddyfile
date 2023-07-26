@@ -185,8 +185,6 @@ https://services.{$GITPOD_DOMAIN} {
 	}
 
 	handle_path /apps/* {
-		rewrite * /api/apps{path}	# results in /api/apps/gitlab for example
-
 		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 	}
 }
