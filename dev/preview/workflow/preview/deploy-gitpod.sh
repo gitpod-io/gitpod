@@ -553,7 +553,7 @@ done
 # Run post-process script
 #
 
-WITH_VM=true "$ROOT/.werft/jobs/build/installer/post-process.sh" "${PREVIEW_NAME}" "${GITPOD_AGENT_SMITH_TOKEN}"
+WITH_VM=true "$SCRIPT_PATH/post-process.sh" "${PREVIEW_NAME}" "${GITPOD_AGENT_SMITH_TOKEN}"
 
 #
 # Cleanup from post-processing
