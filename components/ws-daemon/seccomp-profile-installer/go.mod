@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/containerd/containerd v1.6.21
-	github.com/opencontainers/runtime-spec v1.1.0-rc.1
+	github.com/opencontainers/runtime-spec v1.1.0
 )
 
 require (

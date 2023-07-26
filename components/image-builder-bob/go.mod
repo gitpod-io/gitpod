@@ -11,7 +11,7 @@ require (
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.1
 	github.com/moby/buildkit v0.11.6
-	github.com/opencontainers/runtime-spec v1.1.0-rc.1
+	github.com/opencontainers/runtime-spec v1.1.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.0
 	golang.org/x/sync v0.1.0

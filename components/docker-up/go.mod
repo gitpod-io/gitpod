@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/opencontainers/runtime-spec v1.1.0-rc.1
+	github.com/opencontainers/runtime-spec v1.1.0
 	github.com/rootless-containers/rootlesskit v1.1.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/pflag v1.0.5
