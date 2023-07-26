@@ -184,7 +184,7 @@ https://services.{$GITPOD_DOMAIN} {
 		reverse_proxy public-api-server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9002
 	}
 
-	handle_path /apps/* {
+	handle /apps/* {
 		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
 	}
 }
