@@ -232,7 +232,7 @@ func (bh *blobHandler) retrieveFromSource(ctx context.Context, src BlobSource, w
 
 	var n int64
 	t0 := time.Now()
-	err = wait.ExponentialBackoffWithContext(ctx, backoffParams, func() (done bool, err error) {
+	err = wait.ExponentialBackoffWithContext(ctx, backoffParams, func(ctx context.Context) (done bool, err error) {
 		n, err = io.CopyBuffer(w, rc, *bp)
 		if err == nil {
 			return true, nil
