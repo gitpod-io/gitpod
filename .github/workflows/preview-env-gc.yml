@@ -7,8 +7,8 @@ jobs:
   create-runner:
     uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@secrets
     secrets:
-      runner_token: ${{ secrets.GH_SELF_HOSTED_RUNNER }}
-      gcp_credentials: ${{ secrets.GCP_CREDENTIALS }}
+      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
 
   stale:
     name: "Find stale preview environments"
