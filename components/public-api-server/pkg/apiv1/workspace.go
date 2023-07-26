@@ -326,8 +326,8 @@ func convertWorkspaceInfo(input *protocol.WorkspaceInfo) (*v1.Workspace, error) 
 			Details: &v1.WorkspaceContext_Git_{Git: &v1.WorkspaceContext_Git{
 				NormalizedContextUrl: input.Workspace.Context.NormalizedContextURL,
 				Repository: &v1.WorkspaceContext_Repository{
-					Owner: input.Workspace.Context.Repository.Owner,
 					Name:  input.Workspace.Context.Repository.Name,
+					Owner: input.Workspace.Context.Repository.Owner,
 				},
 			}},
 		},
