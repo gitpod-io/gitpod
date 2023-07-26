@@ -5,8 +5,9 @@
  */
 
 import { v1 } from "@authzed/authzed-node";
-import { inject, injectable } from "inversify";
 
+import { Organization, Project, TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     InstallationID,
     OrganizationPermission,
@@ -17,23 +18,29 @@ import {
     UserPermission,
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
-import { Organization, TeamMemberInfo, Project, TeamMemberRole } from "@gitpod/gitpod-protocol";
-import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
-@injectable()
+export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
+    const target = new Authorizer(spiceDbAuthorizer);
+    const initialized = target.addAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID);
+    return new Proxy(target, {
+        get(target, propKey, receiver) {
+            const originalMethod = target[propKey as keyof typeof target];
+
+            if (typeof originalMethod === "function") {
+                return async function (...args: any[]) {
+                    await initialized;
+                    return (originalMethod as any).apply(target, args);
+                };
+            } else {
+                return originalMethod;
+            }
+        },
+    });
+}
+
 export class Authorizer {
-    constructor(
-        @inject(SpiceDBAuthorizer)
-        private authorizer: SpiceDBAuthorizer,
-    ) {
-        this.initialize().catch((err) => log.error("Failed to add installation admin", err));
-    }
-
-    private async initialize(): Promise<void> {
-        await this.addAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID);
-    }
+    constructor(private authorizer: SpiceDBAuthorizer) {}
 
     async hasPermissionOnOrganization(
         userId: string,

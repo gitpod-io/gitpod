@@ -22,14 +22,6 @@ export class SpiceDBAuthorizer {
         private client: SpiceDBClient,
     ) {}
 
-    /**
-     * @deprecated only for testing
-     */
-    async logRelationships() {
-        //        const resources = await this.client?.readRelationships({});
-        //log.info(JSON.stringify(resources, undefined, 2));
-    }
-
     async check(
         req: v1.CheckPermissionRequest,
         experimentsFields: {
