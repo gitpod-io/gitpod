@@ -35,7 +35,7 @@ fi
 echo "=== Gathering list of _all_ images for $VERSION"
 # TODO(gpl) If we like this approach we should think about moving this into the installer as "list-images" or similar
 #           This would also remove the dependency to our dev image (yq4)
-INSTALLER="$BIN/installer"
+INSTALLER="$TMP/installer"
 "$OCI_TOOL" fetch file -o "$INSTALLER" --platform=linux-amd64 "eu.gcr.io/gitpod-core-dev/build/installer:${VERSION}" app/installer
 echo ""
 chmod +x "$INSTALLER"
