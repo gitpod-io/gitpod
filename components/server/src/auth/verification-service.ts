@@ -8,7 +8,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { inject, injectable, postConstruct } from "inversify";
 import { Config } from "../config";
-import { Twilio } from "twilio";
+import { Twilio } from "twilio/lib";
 import { ServiceContext } from "twilio/lib/rest/verify/v2/service";
 import { TeamDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { ConfigCatClientFactory } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
