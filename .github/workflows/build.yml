@@ -13,8 +13,10 @@ on:
 
 jobs:
   create-runner:
-    uses: ./.github/workflows/create_runner.yml
-    secrets: inherit
+    uses: gitpod-io/gce-github-runner/.github/workflows/create-vm.yml@secrets
+    secrets:
+      runner_token: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_TOKEN }}
+      gcp_credentials: ${{ secrets.SELF_HOSTED_GITHUB_RUNNER_GCP_CREDENTIALS }}
     concurrency:
       group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-create-runner
       cancel-in-progress: false
@@ -426,10 +428,9 @@ jobs:
       - install
       - monitoring
       - integration-test
-    uses: ./.github/workflows/remove_runner.yml
-    secrets: inherit
+    uses: gitpod-io/gce-github-runner/.github/workflows/delete-vm.yml@secrets
+    secrets:
+      gcp_credentials: ${{ secrets.GCP_CREDENTIALS }}
     with:
       runner-label: ${{ needs.create-runner.outputs.label }}
-    concurrency:
-      group: ${{ github.ref == 'refs/heads/main' && github.run_id || github.sha }}-delete-runner
-      cancel-in-progress: false
+      machine-zone: ${{ needs.create-runner.outputs.machine-zone }}
