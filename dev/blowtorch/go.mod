@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/Pallinder/go-randomdata v1.2.0
 	github.com/Shopify/toxiproxy v2.1.4+incompatible
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.4.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	k8s.io/api v0.27.3

@@ -11,9 +11,9 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/h2non/filetype v1.0.8
 	github.com/hashicorp/golang-lru v0.5.4
-	github.com/prometheus/client_golang v1.15.1
-	github.com/prometheus/procfs v0.9.0
-	github.com/sirupsen/logrus v1.9.0
+	github.com/prometheus/client_golang v1.16.0
+	github.com/prometheus/procfs v0.10.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.4.0
 	golang.org/x/sys v0.8.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
