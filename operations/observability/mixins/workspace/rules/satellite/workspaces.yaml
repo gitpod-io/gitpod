@@ -22,6 +22,8 @@ spec:
     - alert: GitpodWorkspaceTooManyRegularNotActiveMk2
       labels:
         severity: critical
+        # TODO: uncomment after recording rule import is working in Grafana Cloud
+        # dedicated: included
       for: 10m
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceTooManyRegularNotActive.md
@@ -35,6 +37,8 @@ spec:
     - alert: GitpodWorkspacesNotStartingMk2
       labels:
         severity: critical
+        # TODO: uncomment after recording rule import is working in Grafana Cloud
+        # dedicated: included
       for: 10m
       annotations:
         runbook_url: https://github.com/gitpod-io/runbooks/blob/main/runbooks/GitpodWorkspaceNotStarting.md
