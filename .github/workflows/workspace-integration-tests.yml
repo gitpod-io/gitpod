@@ -127,104 +127,20 @@ jobs:
         with:
           token_format: access_token
           credentials_json: "${{ secrets.GCP_CREDENTIALS }}"
-      # do this step as early as possible, so that Slack Notify failure has the secret
-      # any earlier, and it conflicts with create previ
       - name: Get Secrets from GCP
         id: "secrets"
         uses: "google-github-actions/get-secretmanager-secrets@v1"
         with:
           secrets: |-
             WORKSPACE_SLACK_WEBHOOK:gitpod-core-dev/workspace-slack-webhook
-            WORKSPACE_INTEGRATION_TEST_USERNAME:gitpod-core-dev/workspace-integration-test-username
-            WORKSPACE_INTEGRATION_TEST_USER_TOKEN:gitpod-core-dev/workspace-integration-test-user-token
+
       - name: Integration Test
         id: integration-test
-        shell: bash
-        env:
-          ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          USERNAME: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USERNAME }}
-          USER_TOKEN: ${{ steps.secrets.outputs.WORKSPACE_INTEGRATION_TEST_USER_TOKEN }}
-          PREVIEW_ENV_DEV_SA_KEY: ${{ secrets.GCP_CREDENTIALS }}
-          PREVIEW_NAME: ${{ needs.configuration.outputs.name }}
-        run: |
-          set -euo pipefail
-
-          printf -v start_time '%(%s)T'
-
-          export LEEWAY_WORKSPACE_ROOT="$(pwd)"
-          export HOME="/home/gitpod"
-          export PREVIEW_ENV_DEV_SA_KEY_PATH="/home/gitpod/.config/gcloud/preview-environment-dev-sa.json"
-
-          echo "${PREVIEW_ENV_DEV_SA_KEY}" > "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-          gcloud auth activate-service-account --key-file "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          leeway run dev/preview/previewctl:install
-
-          echo "Setting up access to core-dev and harvester"
-          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          # start integration test
-          args=()
-          args+=( "-kubeconfig=/home/gitpod/.kube/config" )
-          args+=( "-namespace=default" )
-          [[ "$USERNAME" != "" ]] && args+=( "-username=$USERNAME" )
-          args+=( "-timeout=180m" )
-
-          BASE_TESTS_DIR="$GITHUB_WORKSPACE/test/tests"
-          CONTENT_SERVICE_TESTS="$BASE_TESTS_DIR/components/content-service"
-          IMAGE_BUILDER_TESTS="$BASE_TESTS_DIR/components/image-builder"
-          WS_DAEMON_TESTS="$BASE_TESTS_DIR/components/ws-daemon"
-          WS_MANAGER_TESTS="$BASE_TESTS_DIR/components/ws-manager"
-          WORKSPACE_TESTS="$BASE_TESTS_DIR/workspace"
-
-          go install github.com/jstemmer/go-junit-report/v2@latest
-
-          FAILURE_COUNT=0
-
-          WORKSPACE_TEST_LIST="$CONTENT_SERVICE_TESTS $IMAGE_BUILDER_TESTS $WS_DAEMON_TESTS $WS_MANAGER_TESTS $WORKSPACE_TESTS"
-          TEST_NAME="workspace"
-          echo "running integration for ${TEST_NAME}-parallel"
-
-          cd "${GITHUB_WORKSPACE}/test"
-          set +e
-          go test -p 10 -v $WORKSPACE_TEST_LIST "${args[@]}" -parallel-features=true 2>&1 | go-junit-report -subtest-mode=exclude-parents -set-exit-code -out "TEST-${TEST_NAME}.xml" -iocopy
-          RC=${PIPESTATUS[0]}
-          set -e
-
-          if [ "${RC}" -ne "0" ]; then
-            FAILURE_COUNT=$((FAILURE_COUNT+1))
-          fi
-
-          printf -v end_time '%(%s)T'
-          duration_sec=$((end_time - start_time))
-          duration_min=$((duration_sec / 60))
-          duration_sec=$((duration_sec % 60))
-          duration="${duration_min}m${duration_sec}s"
-          echo "duration=${duration}" >> $GITHUB_OUTPUT
-
-          exit $FAILURE_COUNT
-      - uses: actions/upload-artifact@v3
+        uses: ./.github/actions/integration-tests
         with:
-          name: test-results
-          path: "test/**/TEST-*.xml"
-        if: always()
-      - name: Test Summary
-        id: test_summary
-        uses: test-summary/action@v2
-        with:
-          paths: "test/**/TEST-*.xml"
-          show: "all"
-        if: always()
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        if: success() || failure()
-        env:
-          SLACK_WEBHOOK: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
-          SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: "${{ steps.test_summary.outputs.passed }} tests passed, ${{ steps.test_summary.outputs.failed }} tests failed, ${{ steps.test_summary.outputs.skipped }} tests skipped (took ${{ steps.integration-test.outputs.duration }})"
-          SLACK_FOOTER: "<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|Workflow logs>"
+          preview_name: ${{ needs.configuration.outputs.name }}
+          test_suite: workspace
+          notify_slack_webhook: ${{ steps.secrets.outputs.WORKSPACE_SLACK_WEBHOOK }}
 
   delete:
     name: Delete preview environment
