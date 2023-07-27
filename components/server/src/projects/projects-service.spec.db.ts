@@ -5,17 +5,17 @@
  */
 
 import { TypeORM, UserDB } from "@gitpod/gitpod-db/lib";
+import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
 import { Organization, User } from "@gitpod/gitpod-protocol";
 import { Experiments } from "@gitpod/gitpod-protocol/lib/experiments/configcat-server";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as chai from "chai";
 import { Container } from "inversify";
 import "mocha";
 import { OrganizationService } from "../orgs/organization-service";
+import { expectError } from "../test/expect-utils";
 import { createTestContainer } from "../test/service-testing-container-module";
 import { ProjectsService } from "./projects-service";
-import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import { resetDB } from "@gitpod/gitpod-db/lib/test/reset-db";
-import { expectError } from "../test/expect-utils";
 
 const expect = chai.expect;
 

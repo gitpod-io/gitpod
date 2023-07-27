@@ -3,8 +3,7 @@
         "outDir": "dist",
         "experimentalDecorators": true,
         "lib": [
-            "es6",
-            "esnext.asynciterable"
+            "ES2021"
         ],
         "strict": true,
         "noEmitOnError": false,

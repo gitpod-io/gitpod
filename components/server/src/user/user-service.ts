@@ -43,7 +43,7 @@ export class UserService {
         try {
             newUser = await this.userDb.transaction(async (userDb) => {
                 const result = await userDb.storeUser(newUser);
-                await this.authorizer.addUser(result.id);
+                await this.authorizer.addUser(result.id, organizationId);
                 if (organizationId) {
                     await this.authorizer.addOrganizationMemberRole(organizationId, result.id);
                 } else {
@@ -140,7 +140,7 @@ export class UserService {
                 target.rolesOrPermissions = newRoles;
                 const updatedUser = await userDb.storeUser(target);
                 if (admin) {
-                    await this.authorizer.addAdminRole(target.id);
+                    await this.authorizer.addInstallationAdminRole(target.id);
                 } else {
                     await this.authorizer.removeAdminRole(target.id);
                 }
@@ -150,7 +150,7 @@ export class UserService {
             if (admin) {
                 await this.authorizer.removeAdminRole(target.id);
             } else {
-                await this.authorizer.addAdminRole(target.id);
+                await this.authorizer.addInstallationAdminRole(target.id);
             }
             throw err;
         }

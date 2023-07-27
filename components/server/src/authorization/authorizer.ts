@@ -6,23 +6,27 @@
 
 import { v1 } from "@authzed/authzed-node";
 
-import { Organization, Project, TeamMemberInfo, TeamMemberRole } from "@gitpod/gitpod-protocol";
+import { Organization, Project, TeamMemberInfo, TeamMemberRole, User } from "@gitpod/gitpod-protocol";
 import { ApplicationError, ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import {
     InstallationID,
+    InstallationRelation,
     OrganizationPermission,
+    OrganizationRelation,
     Permission,
     ProjectPermission,
+    ProjectRelation,
     Relation,
     ResourceType,
     UserPermission,
+    UserRelation,
 } from "./definitions";
 import { SpiceDBAuthorizer } from "./spicedb-authorizer";
 import { BUILTIN_INSTLLATION_ADMIN_USER_ID } from "@gitpod/gitpod-db/lib";
 
 export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorizer): Authorizer {
     const target = new Authorizer(spiceDbAuthorizer);
-    const initialized = target.addAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID);
+    const initialized = target.addInstallationAdminRole(BUILTIN_INSTLLATION_ADMIN_USER_ID);
     return new Proxy(target, {
         get(target, propKey, receiver) {
             const originalMethod = target[propKey as keyof typeof target];
@@ -37,6 +41,24 @@ export function createInitializingAuthorizer(spiceDbAuthorizer: SpiceDBAuthorize
             }
         },
     });
+}
+
+export const installation = {
+    type: "installation",
+    id: InstallationID,
+};
+
+export type Resource = typeof installation | User | Organization | Project;
+export namespace Resource {
+    export function getType(res: Resource): ResourceType {
+        return (res as any).type === "installation"
+            ? "installation"
+            : User.is(res)
+            ? "user"
+            : Project.is(res)
+            ? "project"
+            : "organization";
+    }
 }
 
 export class Authorizer {
@@ -125,15 +147,52 @@ export class Authorizer {
 
     // write operations below
 
-    async addUser(userId: string) {
+    public async removeAllRelationships(type: ResourceType, id: string) {
+        await this.authorizer.deleteRelationships(
+            v1.DeleteRelationshipsRequest.create({
+                relationshipFilter: {
+                    resourceType: type,
+                    optionalResourceId: id,
+                },
+            }),
+        );
+
+        // iterate over all resource types and remove by subject
+        for (const resourcetype of ["installation", "user", "organization", "project"] as ResourceType[]) {
+            await this.authorizer.deleteRelationships(
+                v1.DeleteRelationshipsRequest.create({
+                    relationshipFilter: {
+                        resourceType: resourcetype,
+                        optionalResourceId: "",
+                        optionalRelation: "",
+                        optionalSubjectFilter: {
+                            subjectType: type,
+                            optionalSubjectId: id,
+                        },
+                    },
+                }),
+            );
+        }
+    }
+
+    async addUser(userId: string, owningOrgId?: string) {
+        const updates = [
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.TOUCH,
+                relationship: relationship(objectRef("user", userId), "self", subject("user", userId)),
+            }),
+            v1.RelationshipUpdate.create({
+                operation: v1.RelationshipUpdate_Operation.TOUCH,
+                relationship: relationship(
+                    objectRef("user", userId),
+                    "container",
+                    owningOrgId ? subject("organization", owningOrgId) : subject("installation", InstallationID),
+                ),
+            }),
+        ];
         await this.authorizer.writeRelationships(
             v1.WriteRelationshipsRequest.create({
-                updates: [
-                    v1.RelationshipUpdate.create({
-                        operation: v1.RelationshipUpdate_Operation.TOUCH,
-                        relationship: relationship(objectRef("user", userId), "self", subject("user", userId)),
-                    }),
-                ],
+                updates,
             }),
         );
     }
@@ -193,17 +252,6 @@ export class Authorizer {
         await this.authorizer.writeRelationships(
             v1.WriteRelationshipsRequest.create({
                 updates: this.removeProjectFromOrgUpdates(orgID, projectID),
-            }),
-        );
-    }
-
-    async deleteOrganization(orgID: string): Promise<void> {
-        await this.authorizer.deleteRelationships(
-            v1.DeleteRelationshipsRequest.create({
-                relationshipFilter: v1.RelationshipFilter.create({
-                    resourceType: "organization",
-                    optionalResourceId: orgID,
-                }),
             }),
         );
     }
@@ -272,7 +320,7 @@ export class Authorizer {
         );
     }
 
-    async addAdminRole(userID: string) {
+    async addInstallationAdminRole(userID: string) {
         await this.authorizer.writeRelationships(
             v1.WriteRelationshipsRequest.create({
                 updates: [
@@ -374,6 +422,76 @@ export class Authorizer {
                 relationship: relationship(objectRef("project", projectID), "org", subject("organization", orgID)),
             }),
         ];
+    }
+
+    public async readRelationships(
+        inst: typeof installation,
+        relation: InstallationRelation,
+        target: Resource,
+    ): Promise<Relationship[]>;
+    public async readRelationships(user: User, relation: UserRelation, target: Resource): Promise<Relationship[]>;
+    public async readRelationships(
+        org: Organization,
+        relation: OrganizationRelation,
+        target: Resource,
+    ): Promise<Relationship[]>;
+    public async readRelationships(
+        project: Project,
+        relation: ProjectRelation,
+        target: Resource,
+    ): Promise<Relationship[]>;
+    public async readRelationships(subject: Resource, relation?: Relation, object?: Resource): Promise<Relationship[]>;
+    public async readRelationships(subject: Resource, relation?: Relation, object?: Resource): Promise<Relationship[]> {
+        const relationShips = await this.authorizer.readRelationships({
+            consistency: v1.Consistency.create({
+                requirement: {
+                    oneofKind: "fullyConsistent",
+                    fullyConsistent: true,
+                },
+            }),
+            relationshipFilter: {
+                resourceType: Resource.getType(subject),
+                optionalResourceId: subject.id,
+                optionalRelation: relation || "",
+                optionalSubjectFilter: object && {
+                    subjectType: Resource.getType(object),
+                    optionalSubjectId: object?.id,
+                },
+            },
+        });
+        return relationShips
+            .map((rel) => {
+                const subject = rel.relationship?.subject?.object;
+                const object = rel.relationship?.resource;
+                const relation = rel.relationship?.relation;
+                if (!subject || !object || !relation) {
+                    throw new Error("Invalid relationship");
+                }
+                return new Relationship(
+                    object.objectType as ResourceType,
+                    object.objectId!,
+                    relation as Relation,
+                    subject.objectType as ResourceType,
+                    subject.objectId!,
+                );
+            })
+            .sort((a, b) => {
+                return a.toString().localeCompare(b.toString());
+            });
+    }
+}
+
+export class Relationship {
+    constructor(
+        public readonly subjectType: ResourceType,
+        public readonly subjectID: string,
+        public readonly relation: Relation,
+        public readonly objectType: ResourceType,
+        public readonly objectID: string,
+    ) {}
+
+    public toString(): string {
+        return `${this.subjectType}:${this.subjectID}#${this.relation}@${this.objectType}:${this.objectID}`;
     }
 }
 

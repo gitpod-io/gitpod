@@ -109,7 +109,7 @@ export class OrganizationService {
 
                 await db.deleteTeam(orgId);
 
-                await this.auth.deleteOrganization(orgId);
+                await this.auth.removeAllRelationships("organization", orgId);
             });
             return this.analytics.track({
                 userId: userId,

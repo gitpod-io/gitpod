@@ -66,7 +66,7 @@ export class SpiceDBAuthorizer {
         let error: Error | undefined;
         try {
             const response = await this.client.writeRelationships(req);
-            log.info("[spicedb] Succesfully wrote relationships.", { response, request: req });
+            log.info("[spicedb] Successfully wrote relationships.", { response, request: req });
 
             return response;
         } catch (err) {
@@ -77,24 +77,43 @@ export class SpiceDBAuthorizer {
         }
     }
 
-    async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<v1.DeleteRelationshipsResponse | undefined> {
+    async deleteRelationships(req: v1.DeleteRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
         if (!this.client) {
-            return undefined;
+            return [];
         }
 
         const timer = spicedbClientLatency.startTimer();
         let error: Error | undefined;
         try {
-            const response = await this.client.deleteRelationships(req);
-            log.info("[spicedb] Succesfully deleted relationships.", { response, request: req });
-
-            return response;
+            const existing = await this.client.readRelationships(v1.ReadRelationshipsRequest.create(req));
+            if (existing.length > 0) {
+                const response = await this.client.deleteRelationships(req);
+                const after = await this.client.readRelationships(v1.ReadRelationshipsRequest.create(req));
+                if (after.length > 0) {
+                    log.error("[spicedb] Failed to delete relationships.", { existing, after, request: req });
+                }
+                log.info(`[spicedb] Successfully deleted ${existing.length} relationships.`, {
+                    response,
+                    request: req,
+                    existing,
+                });
+            }
+            return existing;
         } catch (err) {
             error = err;
             // While in we're running two authorization systems in parallel, we do not hard fail on writes.
+            //TODO throw new ApplicationError(ErrorCodes.INTERNAL_SERVER_ERROR, "Failed to delete relationships.");
             log.error("[spicedb] Failed to delete relationships.", err, { req });
+            return [];
         } finally {
             observeSpicedbClientLatency("delete", error, timer());
         }
+    }
+
+    async readRelationships(req: v1.ReadRelationshipsRequest): Promise<v1.ReadRelationshipsResponse[]> {
+        if (!this.client) {
+            return [];
+        }
+        return this.client.readRelationships(req);
     }
 }
