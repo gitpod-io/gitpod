@@ -20,7 +20,7 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 	targetChan, targetReqs, err := targetConn.OpenChannel(originChannel.ChannelType(), originChannel.ExtraData())
 	if err != nil {
 		log.WithFields(log.OWI("", session.WorkspaceID, session.InstanceID)).Error("open target channel error")
-		originChannel.Reject(ssh.ConnectionFailed, "open target channel error")
+		_ = originChannel.Reject(ssh.ConnectionFailed, "open target channel error")
 		return
 	}
 	defer targetChan.Close()
@@ -54,21 +54,21 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 	}()
 
 	go func() {
-		io.Copy(targetChan, originChan)
-		targetChan.CloseWrite()
+		_, _ = io.Copy(targetChan, originChan)
+		_ = targetChan.Close()
 	}()
 
 	go func() {
-		io.Copy(originChan, targetChan)
-		originChan.CloseWrite()
+		_, _ = io.Copy(originChan, targetChan)
+		_ = originChan.Close()
 	}()
 
 	go func() {
-		io.Copy(targetChan.Stderr(), originChan.Stderr())
+		_, _ = io.Copy(targetChan.Stderr(), originChan.Stderr())
 	}()
 
 	go func() {
-		io.Copy(originChan.Stderr(), targetChan.Stderr())
+		_, _ = io.Copy(originChan.Stderr(), targetChan.Stderr())
 	}()
 
 	wg := sync.WaitGroup{}
@@ -78,7 +78,6 @@ func (s *Server) ChannelForward(ctx context.Context, session *Session, targetCon
 			select {
 			case req, ok := <-sourceReqs:
 				if !ok {
-					targetChan.Close()
 					return
 				}
 				b, err := targetChan.SendRequest(req.Type, req.WantReply, req.Payload)
