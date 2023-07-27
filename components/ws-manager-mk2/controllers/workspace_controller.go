@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/ws-manager-mk2/pkg/maintenance"
@@ -440,7 +439,7 @@ func (r *WorkspaceReconciler) deleteSecret(ctx context.Context, name, namespace 
 		Factor:   1.5,
 		Jitter:   0.2,
 		Steps:    3,
-	}, func() (bool, error) {
+	}, func(ctx context.Context) (bool, error) {
 		var secret corev1.Secret
 		err := r.Client.Get(ctx, types.NamespacedName{Name: name, Namespace: namespace}, &secret)
 		if errors.IsNotFound(err) {
@@ -514,18 +513,18 @@ func (r *WorkspaceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Pod{}).
 		// Add a watch for Nodes, so that they're cached in memory and don't require calling the k8s API
 		// when reconciling workspaces.
-		Watches(&source.Kind{Type: &corev1.Node{}}, &handler.Funcs{
+		Watches(&corev1.Node{}, &handler.Funcs{
 			// Only enqueue events for workspaces when the node gets deleted,
 			// such that we can trigger their cleanup.
-			DeleteFunc: func(e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
+			DeleteFunc: func(ctx context.Context, e event.DeleteEvent, queue workqueue.RateLimitingInterface) {
 				if e.Object == nil {
 					return
 				}
 
 				var wsList workspacev1.WorkspaceList
-				err := r.List(context.Background(), &wsList)
+				err := r.List(ctx, &wsList)
 				if err != nil {
-					log.FromContext(context.Background()).Error(err, "cannot list workspaces")
+					log.FromContext(ctx).Error(err, "cannot list workspaces")
 					return
 				}
 				for _, ws := range wsList.Items {
