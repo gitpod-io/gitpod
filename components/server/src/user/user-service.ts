@@ -118,16 +118,8 @@ export class UserService {
     }
 
     async setAdminRole(userId: string, targetUserId: string, admin: boolean): Promise<User> {
-        //TODO check if user has permission on targetUser to change admin role using auth system
-        const user = await this.userDb.findUserById(userId);
-        if (!user?.rolesOrPermissions || !user?.rolesOrPermissions.includes("admin")) {
-            throw new ApplicationError(ErrorCodes.PERMISSION_DENIED, "permission denied");
-        }
-
-        const target = await this.userDb.findUserById(targetUserId);
-        if (!target) {
-            throw new ApplicationError(ErrorCodes.NOT_FOUND, "not found");
-        }
+        await this.authorizer.checkUserPermissionAndThrow(userId, "make_admin", targetUserId);
+        const target = await this.findUserById(userId, targetUserId);
         const rolesAndPermissions = target.rolesOrPermissions || [];
         const newRoles = [...rolesAndPermissions.filter((r) => r !== "admin")];
         if (admin) {
@@ -142,13 +134,13 @@ export class UserService {
                 if (admin) {
                     await this.authorizer.addInstallationAdminRole(target.id);
                 } else {
-                    await this.authorizer.removeAdminRole(target.id);
+                    await this.authorizer.removeInstallationAdminRole(target.id);
                 }
                 return updatedUser;
             });
         } catch (err) {
             if (admin) {
-                await this.authorizer.removeAdminRole(target.id);
+                await this.authorizer.removeInstallationAdminRole(target.id);
             } else {
                 await this.authorizer.addInstallationAdminRole(target.id);
             }

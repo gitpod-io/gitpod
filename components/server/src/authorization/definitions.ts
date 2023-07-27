@@ -15,7 +15,7 @@ export type UserResourceType = "user";
 
 export type UserRelation = "self" | "container";
 
-export type UserPermission = "read_info" | "write_info" | "suspend";
+export type UserPermission = "read_info" | "write_info" | "suspend" | "make_admin";
 
 export type InstallationResourceType = "installation";
 

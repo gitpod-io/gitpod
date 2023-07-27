@@ -337,7 +337,7 @@ export class Authorizer {
         );
     }
 
-    async removeAdminRole(userID: string) {
+    async removeInstallationAdminRole(userID: string) {
         await this.authorizer.writeRelationships(
             v1.WriteRelationshipsRequest.create({
                 updates: [
