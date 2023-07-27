@@ -17,6 +17,19 @@ inputs:
   github_token:
     description: "The GitHub token to use when authenticating with GitHub"
     required: true
+  latest_ide_version:
+    description: "The latest IDE version to use"
+    required: false
+    default: ""
+  test_build_id:
+    description: "The build ID of the test run. Used in the IDE integration tests."
+    required: false
+  test_build_url:
+    description: "The build URL of the test run. Used in the IDE integration tests."
+    required: false
+  test_build_ref:
+    description: "The build ref of the test run. Used in the IDE integration tests."
+    required: false
 
 runs:
   using: "composite"
@@ -38,6 +51,10 @@ runs:
       env:
         PREVIEW_ENV_DEV_SA_KEY: ${{ inputs.sa_key }}
         PREVIEW_NAME: ${{ inputs.preview_name }}
+        TEST_USE_LATEST_VERSION: ${{ inputs.latest_ide_version }}
+        TEST_BUILD_ID: ${{ inputs.test_build_id }}
+        TEST_BUILD_URL: ${{ inputs.test_build_url }}
+        TEST_BUILD_REF: ${{ inputs.test_build_ref }}
       run: |
         export LEEWAY_WORKSPACE_ROOT="$(pwd)"
         export HOME="/home/gitpod"

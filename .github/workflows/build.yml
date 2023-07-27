@@ -393,28 +393,20 @@ jobs:
         with:
           sa_key: ${{ secrets.GCP_CREDENTIALS }}
           leeway_segment_key: ${{ secrets.LEEWAY_SEGMENT_KEY }}
+
       - name: Run integration test
-        shell: bash
-        env:
-          ROBOQUAT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          INTEGRATION_TEST_USERNAME: ${{ secrets.IDE_INTEGRATION_TEST_USERNAME }}
-          INTEGRATION_TEST_USER_TOKEN: ${{ secrets.IDE_INTEGRATION_TEST_USER_TOKEN }}
-          PREVIEW_NAME: ${{ github.head_ref || github.ref_name }}
-          TEST_SUITS: ${{ needs.configuration.outputs.with_integration_tests }}
-          TEST_USE_LATEST_VERSION: ${{ needs.configuration.outputs.latest_ide_version }}
-          TEST_BUILD_ID: ${{ github.run_id }}
-          TEST_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          TEST_BUILD_REF: ${{ github.head_ref || github.ref }}
-        run: |
-          export HOME="/home/gitpod"
-          leeway run dev/preview/previewctl:install
-
-          echo "Setting up access to core-dev and harvester"
-          previewctl get-credentials --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          previewctl install-context --branch "${PREVIEW_NAME}" --log-level debug --timeout 1m --gcp-service-account "${PREVIEW_ENV_DEV_SA_KEY_PATH}"
-
-          $GITHUB_WORKSPACE/test/run.sh -s ${TEST_SUITS}
+        id: integration-test
+        uses: ./.github/actions/integration-tests
+        with:
+          preview_name: ${{ github.head_ref || github.ref_name }}
+          test_suite: ${{ needs.configuration.outputs.with_integration_tests }}
+          notify_slack_webhook: ''
+          sa_key: ${{ secrets.GCP_CREDENTIALS }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          latest_ide_version: ${{ needs.configuration.outputs.latest_ide_version }}
+          test_build_id: ${{ github.run_id }}
+          test_build_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          test_build_ref: ${{ github.head_ref || github.ref }}
 
   delete-runner:
     if: always()
