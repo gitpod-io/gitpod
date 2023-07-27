@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/image-builder
 
-go 1.19
+go 1.20
 
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20210526225647-edb03dcab7bc

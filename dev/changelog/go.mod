@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/changelog
 
-go 1.19
+go 1.20
 
 require (
 	github.com/google/go-github/v38 v38.1.0

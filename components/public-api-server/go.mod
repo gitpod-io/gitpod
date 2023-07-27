@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/public-api-server
 
-go 1.19
+go 1.20
 
 require (
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20220708163326-82d177caec6e
